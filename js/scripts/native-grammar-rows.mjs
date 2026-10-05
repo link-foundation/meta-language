@@ -104,9 +104,11 @@ export function nativeRows(tree, source, { hidden = [], anonymous = [], extras =
     const inner = node.children.filter((child) => !trivia(child)).map(span);
     return inner.length === 0 ? [node.start, node.start] : [inner[0][0], inner.at(-1)[1]];
   };
+  // A MISSING leaf of such a kind is a token tree-sitter hides, so no row.
+  const hiddenMissing = (node) => node.type === 'missing' && (hiddenKinds.has(node.kind) || anonymousKinds.has(node.kind));
   const rows = [];
   const visit = (node, depth) => {
-    if (invisible(node) || (node.type === 'token' && anonymousKinds.has(node.kind))) return;
+    if (invisible(node) || (node.type === 'token' && anonymousKinds.has(node.kind)) || hiddenMissing(node)) return;
     const [start, end] = span(node);
     if (node.type === 'node') {
       rows.push([depth, node.field ?? null, term(node.kind), anonymousAlias(node.kind) ? 0 : 1, start, end, extraKinds.has(node.kind) ? 'X' : '']);

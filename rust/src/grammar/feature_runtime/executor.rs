@@ -333,6 +333,8 @@ impl<'c> Executor<'c> {
         let placed = concat(&with_leaf(&leaves[..kept], missing), &leaves[kept..]);
         let mut repaired = Res::new(start, state.clone(), placed, 0);
         repaired.cost = MISSING_COST;
+        // The leaf is open (see `sequence`) until a rule it ends reduces.
+        repaired.open = true;
         let mut results = vec![repaired];
         let key = (element, start, state.clone(), self.in_extra);
         let scan = if let Some(scan) = self.repair_memo.get(&key) {
@@ -625,7 +627,11 @@ impl<'c> Executor<'c> {
     // `keep`, when given, filters the complete sequences before they are
     // deduplicated, so a precedence filter never loses a valid parse to an
     // invalid one that reached the same end first, and its precedence is the
-    // one the sequence's parts are in progress under.
+    // one the sequence's parts are in progress under. A MISSING leaf is open
+    // until a rule it ends reduces (a rule other than a token, or an
+    // iteration): as tree-sitter inserts a missing token only where a rule
+    // reduces before the lookahead, no part of the same rule after it takes
+    // input (`[ 0 .92 ]` misses no `,` before `.92`).
     pub(super) fn sequence(
         &mut self,
         items: &[Expr],
@@ -661,6 +667,9 @@ impl<'c> Executor<'c> {
                         .as_ref()
                         .is_some_and(|rest| reduced_early(&right.children, rest))
                     {
+                        continue;
+                    }
+                    if left.open && right.end > left.end {
                         continue;
                     }
                     let mut joined = Res::join(left, right, in_token);

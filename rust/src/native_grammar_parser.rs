@@ -18,7 +18,9 @@
 //! node kind (`oracle_kinds`, from the rule's `(source-names (tree-sitter
 //! NAME))`). A kind `'TEXT`, an imported anonymous alias, is an anonymous
 //! node TEXT. An ERROR leaf is a named `ERROR` node and a MISSING leaf an
-//! empty MISSING node, named unless it stands for a literal.
+//! empty MISSING node, named unless it stands for a literal; a MISSING leaf
+//! of a `hidden` or `anonymous` kind is a token tree-sitter hides, so it is no
+//! node, though the node it is missing from still has an error.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
@@ -217,6 +219,11 @@ impl Projection<'_> {
         matches!(node, SyntaxTree::Token { kind: Some(kind), .. } if self.anonymous.contains(kind.as_str()))
     }
 
+    fn hidden_missing(&self, node: &SyntaxTree) -> bool {
+        matches!(node, SyntaxTree::Missing { kind: Some(kind), .. }
+            if self.hidden.contains(kind.as_str()) || self.anonymous.contains(kind.as_str()))
+    }
+
     /// Moves the leading trivia of a node before it.
     fn hoist(&self, node: &SyntaxTree) -> Vec<SyntaxTree> {
         let SyntaxTree::Node {
@@ -278,7 +285,9 @@ impl Projection<'_> {
         children
             .iter()
             .flat_map(|child| self.hoist(child))
-            .filter(|child| !self.invisible(child) && !self.anonymous(child))
+            .filter(|child| {
+                !self.invisible(child) && !self.anonymous(child) && !self.hidden_missing(child)
+            })
             .map(|child| {
                 let field = match &child {
                     SyntaxTree::Node { field, .. } | SyntaxTree::Token { field, .. } => {
@@ -306,9 +315,10 @@ impl Projection<'_> {
         };
         match node {
             SyntaxTree::Node { kind, children, .. } => {
+                let hidden_missing = children.iter().any(|child| self.hidden_missing(child));
                 let children = self.project(children);
                 NativeNode {
-                    has_error: children.iter().any(|(child, _)| child.has_error),
+                    has_error: hidden_missing || children.iter().any(|(child, _)| child.has_error),
                     is_extra: self.extras.contains(kind.as_str()),
                     children,
                     ..leaf(self.oracle_kind(kind), !anonymous_alias(kind))
@@ -356,6 +366,7 @@ impl Projection<'_> {
             .iter()
             .find(|leaf| !self.invisible(leaf))
             .map_or(length, |leaf| self.span(leaf).0);
+        let hidden_missing = children.iter().any(|child| self.hidden_missing(child));
         let children = self.project(children);
         NativeNode {
             term: self.oracle_kind(kind),
@@ -365,7 +376,7 @@ impl Projection<'_> {
             is_error: false,
             is_missing: false,
             is_extra: false,
-            has_error: children.iter().any(|(child, _)| child.has_error),
+            has_error: hidden_missing || children.iter().any(|(child, _)| child.has_error),
             children,
         }
     }

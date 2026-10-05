@@ -88,9 +88,12 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKind
     const inner = node.children.filter((child) => !trivia(child)).map(span);
     return inner.length === 0 ? [node.start, node.start] : [inner[0][0], inner.at(-1)[1]];
   };
+  // A MISSING leaf of such a kind is a token tree-sitter hides, so it is no
+  // node, though the node it is missing from still has an error.
+  const hiddenMissing = (node) => node.type === 'missing' && (hiddenKinds.has(node.kind) || anonymousKinds.has(node.kind));
   const project = (children) => children
     .flatMap(hoist)
-    .filter((child) => !invisible(child) && !(child.type === 'token' && anonymousKinds.has(child.kind)))
+    .filter((child) => !invisible(child) && !(child.type === 'token' && anonymousKinds.has(child.kind)) && !hiddenMissing(child))
     .map((child) => ({ node: projectNode(child), field: child.field ?? null }));
   const projectNode = (node) => {
     const [start, end] = span(node);
@@ -98,7 +101,7 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKind
       const children = project(node.children);
       return {
         term: term(node.kind), named: !anonymousAlias(node.kind), start, end, isError: false, isMissing: false,
-        isExtra: extraKinds.has(node.kind), hasError: children.some(({ node: child }) => child.hasError), children,
+        isExtra: extraKinds.has(node.kind), hasError: children.some(({ node: child }) => child.hasError) || node.children.some(hiddenMissing), children,
       };
     }
     if (node.type === 'error') {
@@ -119,7 +122,7 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKind
   const children = project(tree.children);
   return {
     term: oracleKind(tree.kind), named: true, start: first ? first.start : length, end: length, isError: false, isMissing: false,
-    isExtra: false, hasError: children.some(({ node }) => node.hasError), children,
+    isExtra: false, hasError: children.some(({ node }) => node.hasError) || tree.children.some(hiddenMissing), children,
   };
 }
 

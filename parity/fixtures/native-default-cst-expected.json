@@ -126,8 +126,7 @@
         [2,null,"section_name",1,0,20,""],
         [3,null,"[",0,0,1,""],
         [3,null,"text",1,1,20,""],
-        [3,null,"]",0,20,20,"M"],
-        [3,null,"newline",1,20,20,"M"]
+        [3,null,"]",0,20,20,"M"]
       ],
       "embedded": []
     },
@@ -181,14 +180,13 @@
       ],
       "recovery": [
         [0,null,"source",1,0,18,""],
-        [1,null,"location",1,0,17,""],
+        [1,null,"location",1,0,12,""],
         [2,null,"@@",0,0,2,""],
         [2,null,"linerange",1,3,7,""],
         [2,null,"linerange",1,8,12,""],
         [2,null,"@@",0,12,12,"M"],
-        [2,null,"anything",1,12,17,""],
-        [3,null,"ERROR",1,12,13,"E"],
-        [3,null,"-old",0,13,17,""]
+        [1,null,"deletion",1,13,17,""],
+        [2,null,"-",0,13,14,""]
       ],
       "embedded": []
     },
@@ -286,13 +284,13 @@
         [0,null,"file",1,0,10,""],
         [1,null,"object",1,0,9,""],
         [2,null,"{",0,0,1,""],
-        [2,null,"member",1,1,9,""],
+        [2,null,"member",1,1,8,""],
         [3,"name","identifier",1,1,6,""],
         [3,null,":",0,6,7,""],
-        [3,"value","object",1,7,9,""],
-        [4,null,"{",0,7,7,"M"],
-        [4,null,"}",0,8,9,""],
-        [2,null,"}",0,9,9,"M"]
+        [3,"value","array",1,7,8,""],
+        [4,null,"[",0,7,7,"M"],
+        [4,null,"]",0,8,8,"M"],
+        [2,null,"}",0,8,9,""]
       ],
       "embedded": []
     },
@@ -648,23 +646,15 @@
       ],
       "recovery": [
         [0,null,"source_file",1,0,27,""],
-        [1,null,"function_signature_item",1,0,9,""],
+        [1,null,"function_signature_item",1,0,24,""],
         [2,null,"fn",0,0,2,""],
         [2,"name","identifier",1,3,7,""],
         [2,"parameters","parameters",1,7,8,""],
         [3,null,"(",0,7,8,""],
         [3,null,")",0,8,8,"M"],
-        [2,null,";",0,9,9,"M"],
-        [1,null,"macro_invocation",1,9,26,""],
-        [2,null,"identifier",1,9,9,"M"],
-        [2,null,"!",0,9,9,"M"],
-        [2,null,"token_tree",1,9,26,""],
-        [3,null,"{",0,9,10,""],
-        [3,null,"let",0,15,18,""],
-        [3,null,"identifier",1,19,20,""],
-        [3,null,"=",0,21,22,""],
-        [3,null,";",0,23,24,""],
-        [3,null,"}",0,25,26,""]
+        [2,null,"ERROR",1,9,22,"E"],
+        [2,null,";",0,23,24,""],
+        [1,null,"ERROR",1,25,26,"E"]
       ],
       "embedded": []
     },
@@ -765,7 +755,6 @@
         [2,"kind","const",0,0,5,""],
         [2,null,"variable_declarator",1,5,5,""],
         [3,null,"identifier",1,5,5,"M"],
-        [2,null,"unnamed_token",1,6,6,"M"],
         [1,null,"statement_block",1,6,30,""],
         [2,null,"ERROR",1,6,20,"E"],
         [2,null,"{",0,21,22,""],

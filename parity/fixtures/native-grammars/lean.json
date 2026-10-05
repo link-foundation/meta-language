@@ -6502,7 +6502,7 @@
     },
     {
       "source": "\nexample : Foo := ⟨,⟩\nexample : Foo := ⟨, 1⟩\nexample : Foo := ⟨, 2,⟩\n",
-      "recovered": "(module (example ~\"\\n\" \"example\" ~\" \" \":\" ~\" \" type:(identifier \"Foo\") ~\" \" \":=\" body:(application name:(anonymous_constructor ~\" \" \"⟨\" (number (unnamed_token (ERROR@21..47 \",⟩\\nexample : Foo := ⟨,\") ~\" \" \"1\")) \"⟩\") arguments:(anonymous_constructor (MISSING@52 \"⟨\") ~\"\\n\" (ERROR@53..77 \"example : Foo := ⟨, 2,\") \"⟩\"))) ~\"\\n\")"
+      "recovered": "(module (example ~\"\\n\" \"example\" ~\" \" \":\" ~\" \" type:(identifier \"Foo\") ~\" \" \":=\" body:(application name:(anonymous_constructor ~\" \" \"⟨\" (number (unnamed_token (ERROR@21..47 \",⟩\\nexample : Foo := ⟨,\") ~\" \" \"1\")) \"⟩\") arguments:(number (unnamed_token ~\"\\n\" (ERROR@53..74 \"example : Foo := ⟨,\") ~\" \" \"2\")))) (ERROR@76..80 \",⟩\") ~\"\\n\")"
     },
     {
       "source": "\n#eval foo₁\n#eval x'\n#eval foo!\n#eval foo?\n#eval 𝒞\n",
@@ -6510,7 +6510,7 @@
     },
     {
       "source": "\n#eval ₁foo\n#eval 'x\n#eval !foo\n#eval foo.\n",
-      "recovered": "(module (hash_command ~\"\\n\" (unnamed_token \"#eval\") (application name:(character (MISSING@6 \"'\") ~\" \" (MISSING@7 unnamed_token) (ERROR@7..19 \"₁foo\\n#eval\") ~\" \" \"'\") arguments:(identifier \"x\"))) (hash_command ~\"\\n\" (unnamed_token \"#eval\") (unary_expression ~\" \" operator:\"!\" operand:(identifier \"foo\"))) (hash_command ~\"\\n\" (unnamed_token \"#eval\") ~\" \" (identifier \"foo\")) (ERROR@43..44 \".\") ~\"\\n\")"
+      "recovered": "(module (hash_command ~\"\\n\" (unnamed_token \"#eval\") (unary_expression ~\" \" (ERROR@7..28 \"₁foo\\n#eval 'x\\n#eval\") ~\" \" operator:\"!\" operand:(identifier \"foo\"))) (hash_command ~\"\\n\" (unnamed_token \"#eval\") ~\" \" (identifier \"foo\")) (ERROR@43..44 \".\") ~\"\\n\")"
     },
     {
       "source": "\nopen\n",
@@ -6538,19 +6538,19 @@
     },
     {
       "source": "\nattribute [-reducible] f\nattribute [simp, -inline, -reducible] Foo\n",
-      "recovered": "(module (attribute ~\"\\n\" \"attribute\" ~\" \" \"[\" (MISSING@12 identifier) (MISSING@12 \"]\") (application name:(list (ERROR@12..35 \"-reducible] f\\nattribute\") ~\" \" \"[\" (identifier \"simp\") \",\" (unary_expression ~\" \" operator:\"-\" operand:(identifier \"inline\")) \",\" (unary_expression ~\" \" operator:\"-\" operand:(identifier \"reducible\")) \"]\") ~\" \" arguments:(identifier \"Foo\"))) ~\"\\n\")"
+      "recovered": "(module (attribute ~\"\\n\" \"attribute\" ~\" \" \"[\" (ERROR@12..13 \"-\") (identifier \"reducible\") \"]\" (binary_expression left:(binary_expression ~\" \" left:(identifier \"f\") ~\"\\n\" (ERROR@26..42 \"attribute [simp,\") ~\" \" operator:\"-\" right:(identifier \"inline\")) (ERROR@50..51 \",\") ~\" \" operator:\"-\" right:(application name:(identifier \"reducible\") (ERROR@62..63 \"]\") ~\" \" arguments:(identifier \"Foo\")))) ~\"\\n\")"
     },
     {
       "source": "\nattribute [] f\n",
-      "recovered": "(module (attribute ~\"\\n\" \"attribute\" ~\" \" \"[\" (MISSING@12 identifier) \"]\" ~\" \" (identifier \"f\")) ~\"\\n\")"
+      "recovered": "(module (attribute ~\"\\n\" \"attribute\" (MISSING@10 \"[\") ~\" \" (MISSING@11 identifier) (MISSING@11 \"]\") (MISSING@11 identifier)) (ERROR@11..15 \"[] f\") ~\"\\n\")"
     },
     {
       "source": "\ndef foo.bar.baz := 12\n\nstructure Foo.Bar.Baz where\n  x : Nat\n\nclass Foo.Bar.Baz.Quux where\n  x : Nat\n\ninstance Spam.Eggs : Foo.Bar.Baz.Quux where\n  x := 3\n\ntheorem Foo.Bar.Baz.Quux.Cheese : 2 = 2 := rfl\n\ninductive A.B | C\n",
-      "recovered": "(module (definition ~\"\\n\" kind:\"def\" ~\" \" name:(identifier \"foo\") name:\".\" name:(identifier \"bar\") name:\".\" name:(identifier \"baz\") ~\" \" \":=\" (unnamed_token \" \") body:(number (unnamed_token \"12\")) (unnamed_token \"\")) (structure ~\"\\n\" ~\"\\n\" \"structure\" ~\" \" name:(identifier \"Foo\")) (inductive (MISSING@37 \"inductive\") (MISSING@37 identifier) constructors:(constructor (ERROR@37..218 \".Bar.Baz where\\n  x : Nat\\n\\nclass Foo.Bar.Baz.Quux where\\n  x : Nat\\n\\ninstance Spam.Eggs : Foo.Bar.Baz.Quux where\\n  x := 3\\n\\ntheorem Foo.Bar.Baz.Quux.Cheese : 2 = 2 := rfl\\n\\ninductive A.B\") ~\" \" \"|\" ~\" \" name:(identifier \"C\"))) ~\"\\n\")"
+      "recovered": "(module (definition ~\"\\n\" kind:\"def\" ~\" \" name:(identifier \"foo\") name:\".\" name:(identifier \"bar\") name:\".\" name:(identifier \"baz\") ~\" \" \":=\" (unnamed_token \" \") body:(number (unnamed_token \"12\")) (unnamed_token \"\")) (structure ~\"\\n\" ~\"\\n\" \"structure\" ~\" \" name:(identifier \"Foo\")) (ERROR@37..222 \".Bar.Baz where\\n  x : Nat\\n\\nclass Foo.Bar.Baz.Quux where\\n  x : Nat\\n\\ninstance Spam.Eggs : Foo.Bar.Baz.Quux where\\n  x := 3\\n\\ntheorem Foo.Bar.Baz.Quux.Cheese : 2 = 2 := rfl\\n\\ninductive A.B | C\") ~\"\\n\")"
     },
     {
       "source": "\ndef foo :=\n  let foo <- 12\n  foo\n",
-      "recovered": "(module (definition ~\"\\n\" kind:\"def\" ~\" \" name:(identifier \"foo\") ~\" \" \":=\" (unnamed_token \"\\n  \") body:(let \"let\" ~\" \" name:(identifier \"foo\") (MISSING@21 \":=\") ~\" \" value:(unary_expression operator:\"<-\" operand:(number ~\" \" (unnamed_token \"12\"))) (unnamed_token \"\") ~\"\\n\" ~\" \" ~\" \" body:(identifier \"foo\")) (unnamed_token \"\")) ~\"\\n\")"
+      "recovered": "(module (definition ~\"\\n\" kind:\"def\" ~\" \" name:(identifier \"foo\") ~\" \" \":=\" (unnamed_token \"\\n  \") body:(let \"let\" ~\" \" name:(identifier \"foo\") (MISSING@21 \":=\") ~\" \" (MISSING@22 identifier))) (ERROR@22..33 \"<- 12\\n  foo\") ~\"\\n\")"
     },
     {
       "source": "\nconstant\n",
@@ -6558,7 +6558,7 @@
     },
     {
       "source": "\nconstant Foo : Nat → Nat\n| _ => 3\n",
-      "recovered": "(module (constant ~\"\\n\" \"constant\" ~\" \" name:(identifier \"Foo\") ~\" \" \":\" type:(arrow ~\" \" domain:(identifier \"Nat\") ~\" \" \"→\" codomain:(application ~\" \" name:(identifier \"Nat\") arguments:(fun (MISSING@27 \"fun\") ~\"\\n\" (ERROR@28..29 \"|\") ~\" \" binders:(hole \"_\") ~\" \" \"=>\" (unnamed_token \" \") body:(number (unnamed_token \"3\")) (unnamed_token \"\"))))) ~\"\\n\")"
+      "recovered": "(module (constant ~\"\\n\" \"constant\" ~\" \" name:(identifier \"Foo\") ~\" \" \":\" type:(arrow ~\" \" domain:(identifier \"Nat\") ~\" \" \"→\" codomain:(binary_expression ~\" \" left:(identifier \"Nat\") ~\"\\n\" (ERROR@28..33 \"| _ =\") operator:\">\" right:(number ~\" \" (unnamed_token \"3\"))))) ~\"\\n\")"
     },
     {
       "source": "\naxiom : 1 = 2\n",
@@ -6574,7 +6574,7 @@
     },
     {
       "source": "\n#check λ ⟨a⟩ v ⟨w, x, y⟩ z => a\n",
-      "recovered": "(module (hash_command ~\"\\n\" (unnamed_token \"#check\") (fun ~\" \" \"λ\" (MISSING@10 identifier) ~\" \" (MISSING@11 \"=>\") (MISSING@11 unnamed_token) (MISSING@11 identifier))) (notation (MISSING@11 \"notation\") (anonymous_constructor \"⟨\" (identifier \"a\") \"⟩\") (application name:(application ~\" \" name:(identifier \"v\") arguments:(anonymous_constructor ~\" \" \"⟨\" (identifier \"w\") \",\" ~\" \" (identifier \"x\") \",\" ~\" \" (identifier \"y\") \"⟩\")) ~\" \" arguments:(identifier \"z\")) ~\" \" \"=>\" ~\" \" (identifier \"a\")) ~\"\\n\")"
+      "recovered": "(module (hash_command ~\"\\n\" (unnamed_token \"#check\") (fun ~\" \" \"λ\" (MISSING@10 identifier) ~\" \" (ERROR@11..36 \"⟨a⟩ v ⟨w, x, y⟩ z\") ~\" \" \"=>\" (unnamed_token \" \") body:(identifier \"a\") (unnamed_token \"\"))) ~\"\\n\")"
     },
     {
       "source": "\nvariable\n\n#check 2\n",
@@ -6594,7 +6594,7 @@
     },
     {
       "source": "\n#check (1, 2, 3,)\n#check [1, 2, 3,]\n#check #[1, 2, 3,]\nexample : Foo := ⟨1, 2,⟩\n@[foo, bar,] def foo := 12\ndef foo | 0, => 2 | _, => 3\n",
-      "recovered": "(module (hash_command ~\"\\n\" (unnamed_token \"#check\") (tuple ~\" \" \"(\" (number (unnamed_token \"1\")) \",\" (number ~\" \" (unnamed_token \"2\")) \",\" (number ~\" \" (unnamed_token \"3\")) \",\" (string (MISSING@17 \"\\\"\") (unnamed_token \")\\n#check [1, 2, 3,]\\n#check #[1, 2, 3,]\\nexample : Foo := ⟨1, 2,⟩\\n@[foo, bar,] def foo := 12\\ndef foo | 0, => 2 | _, => 3\\n\") (MISSING@140 \"\\\"\")) (MISSING@140 \")\"))))"
+      "recovered": "(module (hash_command ~\"\\n\" (unnamed_token \"#check\") (tuple ~\" \" \"(\" (number (unnamed_token \"1\")) \",\" (number ~\" \" (unnamed_token \"2\")) \",\" (number ~\" \" (unnamed_token \"3\")) \",\" (MISSING@17 identifier) \")\")) (hash_command ~\"\\n\" (unnamed_token \"#check\") (binary_expression ~\" \" (ERROR@26..131 \"[1, 2, 3,]\\n#check #[1, 2, 3,]\\nexample : Foo := ⟨1, 2,⟩\\n@[foo, bar,] def foo := 12\\ndef foo | 0, => 2 |\") ~\" \" left:(hole \"_\") (ERROR@133..136 \", =\") operator:\">\" right:(number ~\" \" (unnamed_token \"3\")))) ~\"\\n\")"
     },
     {
       "source": "\nmacro_rules\n  | `(tactic| foo) => `(tactic|trivial)\n  | `(tactic| bar) => `(tactic|apply foo bar)\n",

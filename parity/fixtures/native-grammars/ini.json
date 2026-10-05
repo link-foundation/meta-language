@@ -866,7 +866,7 @@
     },
     {
       "source": "[]\n",
-      "recovered": "(document (section (section_name \"[\" (MISSING@1 text) \"]\" (newline \"\\n\"))))"
+      "recovered": "(document (newline (ERROR@0..2 \"[]\") \"\\n\"))"
     },
     {
       "source": "[s\n",
@@ -890,11 +890,11 @@
     },
     {
       "source": "=v\n",
-      "recovered": "(document (setting (MISSING@0 setting_name) \"=\" (setting_value \"v\") (newline \"\\n\")))"
+      "recovered": "(document (newline (ERROR@0..2 \"=v\") \"\\n\"))"
     },
     {
       "source": "k=v\n=x\n",
-      "recovered": "(document (setting (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\")) (setting (MISSING@4 setting_name) \"=\" (setting_value \"x\") (newline \"\\n\")))"
+      "recovered": "(document (setting (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\")) (ERROR@4..6 \"=x\") ~\"\\n\")"
     },
     {
       "source": "k;=v\n",
@@ -902,7 +902,7 @@
     },
     {
       "source": "k#x=v\n",
-      "recovered": "(document (setting (setting_name \"k\") (MISSING@1 \"=\") (setting_value \"#x=v\") (newline \"\\n\")))"
+      "recovered": "(document (setting (setting_name \"k\") (ERROR@1..3 \"#x\") \"=\" (setting_value \"v\") (newline \"\\n\")))"
     },
     {
       "source": "k\tv=w\n",

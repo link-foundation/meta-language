@@ -1734,6 +1734,7 @@ function copyResult(result, changes) {
     precedence: result.precedence, tail: result.tail, ambiguous: result.ambiguous, cost: result.cost,
   };
   if (result.before !== undefined) copy.before = result.before;
+  if (result.open) copy.open = true;
   if (!('children' in changes)) shareChildren(copy, result);
   return Object.assign(copy, changes);
 }
@@ -1748,6 +1749,7 @@ function joinResults(left, right, inToken) {
     ambiguous: left.ambiguous || right.ambiguous,
     cost: left.cost + right.cost,
   };
+  if (right.open || (left.open && right.end === left.end)) joined.open = true;
   if (inToken) {
     joined.children = NO_CHILDREN;
     return joined;
@@ -1758,6 +1760,11 @@ function joinResults(left, right, inToken) {
   if (rightCount === 0) return shareChildren(joined, left);
   if (leftCount === 0) return shareChildren(joined, right);
   return shareChildren(joined, { [CHAIN]: { left: partOf(left), right: partOf(right), length: leftCount + rightCount, flat: null } });
+}
+
+// A result whose MISSING leaf the rule it ends has reduced (see `sequence`).
+function closed(result) {
+  return result.open ? copyResult(result, { open: false }) : result;
 }
 
 function longestResult(results) {
@@ -1951,7 +1958,8 @@ export class Executor {
     while (kept > 0 && isSeparator(leaves[kept - 1])) kept -= 1;
     const at = kept > 0 ? leaves[kept - 1].end : leaves[0]?.start ?? start;
     const placed = [...leaves.slice(0, kept), { type: 'missing', start: at, end: at, ...missing }, ...leaves.slice(kept)];
-    const results = [makeResult(start, state, placed, 0, MISSING_COST)];
+    // The leaf is open (see `sequence`) until a rule it ends reduces.
+    const results = [Object.assign(makeResult(start, state, placed, 0, MISSING_COST), { open: true })];
     let scans = this.repairMemo.get(element);
     if (!scans) this.repairMemo.set(element, scans = new Map());
     const key = `${start}|${state.key}|${this.inExtra}`;
@@ -2347,6 +2355,10 @@ export class Executor {
   // deduplicated, so a precedence filter never loses a valid parse to an
   // invalid one that reached the same end first; `owner` is that filter's
   // precedence, the one the sequence's parts are in progress under.
+  // A MISSING leaf is open until a rule it ends reduces (a rule other than a
+  // token, or an iteration): as tree-sitter inserts a missing token only where
+  // a rule reduces before the lookahead, no part of the same rule after it
+  // takes input (`[ 0 .92 ]` misses no `,` before `.92`).
   sequence(items, position, state, inToken, keep = null, owner = null) {
     const tokens = owner && this.longestTokens ? { ...this.longestTokens, owner } : this.longestTokens;
     const reductions = this.reducing && !inToken ? reductionFacts(this.reducing.grammar) : null;
@@ -2365,6 +2377,7 @@ export class Executor {
         if (pruned?.has(left)) continue;
         for (const right of rights) {
           if (rest && reducedEarly(right, rest)) continue;
+          if (left.open && right.end > left.end) continue;
           let joined = joinResults(left, right, inToken);
           if (split && index >= split.split) {
             const boundary = index === split.split ? left.end : boundaries.get(left);
@@ -2437,7 +2450,8 @@ export class Executor {
   }
 
   repetition(item, min, max, position, state, inToken) {
-    const join = (left, right) => joinResults(left, right, inToken);
+    // Each iteration reduces (see `sequence`).
+    const join = (left, right) => closed(joinResults(left, right, inToken));
     const zeroWidth = (left, right) => right.end === left.end && right.state.key === left.state.key;
     if (this.peg) {
       // Greedy and possessive: as many iterations as match, never fewer.
@@ -3146,7 +3160,7 @@ export class Executor {
       const acted = this.runAction(rule, result, node, position);
       if (acted) built.push(copyResult(acted, { children: [node], tail: null, ambiguous: false }));
     }
-    return built;
+    return built.map(closed);
   }
 
   // Runs the rule's action over one result: the node is fresh, so attributes
@@ -3306,7 +3320,12 @@ export class Executor {
       }
     }
     if (complete.length === 0) {
-      const failed = { ok: false, farthest: this.farthest, expected: [...this.expected].sort(), elementFarthest: this.elementFarthest };
+      // A round that repairs and completes nothing asks for the offset the
+      // result that reached farthest stopped at as its next repair point,
+      // before any farther element that failed: past that offset no result
+      // of the start rule went on.
+      const stopped = partial && this.repairPoints?.size > 0 && !this.repairPoints.has(partial.end);
+      const failed = { ok: false, farthest: this.farthest, expected: [...this.expected].sort(), elementFarthest: stopped ? partial.end : this.elementFarthest };
       if (this.repairPoints) failed.partial = partial ? this.root(startRule, partial.repaired, false) : this.errorRoot(startRule);
       return failed;
     }

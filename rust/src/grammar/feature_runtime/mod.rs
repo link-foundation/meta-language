@@ -370,7 +370,8 @@ const DEFAULT_MAX_REPAIRS: usize = 32;
 /// one more repair point, the farthest offset where an element failed without
 /// a repair, until a parse completes. After `max_repairs` rounds, or when no
 /// new point appears, the last round's partial tree stands, the rest of the
-/// input an ERROR leaf. Each round has its own step budget.
+/// input an ERROR leaf. Each round has its own step budget; a round that
+/// runs out of steps ends the rounds as well.
 fn repair_parse(
     failed: Outcome,
     max_repairs: usize,
@@ -390,7 +391,10 @@ fn repair_parse(
         if !points.insert(element_farthest.unwrap_or(*farthest)) {
             break;
         }
-        outcome = attempt(Some(&points))?;
+        outcome = match attempt(Some(&points)) {
+            Err(Abort::StepLimit) => break,
+            attempted => attempted?,
+        };
         if matches!(outcome, Outcome::Parsed(_)) {
             return Ok(outcome);
         }

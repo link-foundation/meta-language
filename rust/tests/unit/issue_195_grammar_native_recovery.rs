@@ -7,9 +7,13 @@
 //! executor builds the same trees, as
 //! js/tests/issue-195-grammar-native-recovery.test.js does for JavaScript.
 
-use meta_language::{FeatureGrammarParser, FeatureParseOptions, ParseOutcome, SyntaxTree};
+use meta_language::{
+    FeatureGrammarParser, FeatureParseOptions, LinkNetwork, ParseConfiguration, ParseOutcome,
+    SyntaxTree,
+};
 use serde_json::Value;
 
+use super::cst_sexpression::{normalize, render_network};
 use super::issue_195_native_grammar_rows::{cases, parser, source};
 use super::issue_195_observations::{Observation, record};
 
@@ -226,12 +230,12 @@ fn a_repair_inserts_a_missing_leaf_or_skips_input_as_an_error_leaf() {
     let json = parser(GRAMMARS[0].1);
     let tree =
         |source: &str, options: &FeatureParseOptions| rendered(&parse(&json, source, options));
-    // A missing separator and a missing closing bracket are inserted; as in
-    // tree-sitter, a MISSING leaf comes before the white space after the
-    // token it follows.
+    // A missing closing bracket is inserted where the rule it ends reduces
+    // before the next token; as in tree-sitter, a MISSING leaf comes before
+    // the white space after the token it follows.
     assert_eq!(
-        tree(r#"{"a" 1}"#, &recover()),
-        r#"(document (object "{" (pair key:(string "\"" (string_content "a") "\"") (MISSING@4 ":") ~" " value:(number "1")) "}"))"#
+        tree(r#"{"a" : [1, 2 }"#, &recover()),
+        r#"(document (object "{" (pair key:(string "\"" (string_content "a") "\"") ~" " ":" value:(array ~" " "[" (number "1") "," ~" " (number "2") (MISSING@12 "]") ~" ")) "}"))"#
     );
     assert_eq!(
         tree("[1, 2", &recover()),
@@ -316,6 +320,39 @@ fn a_later_error_is_repaired_where_it_is_not_by_skipping_the_input_after_an_earl
 }
 
 #[test]
+fn a_round_that_completes_nothing_asks_for_the_offset_its_farthest_result_stopped_at() {
+    // The first point, after `A.B`, completes nothing, as no MISSING leaf
+    // there is followed by the rest of its rule; the module stopped at the
+    // `.`, so that is the next point, and the `.` is one ERROR, as in
+    // tree-sitter. A round that runs out of steps ends the rounds, the last
+    // tree standing.
+    let lean = parser(GRAMMARS[12].1);
+    for (source, repair) in [
+        (
+            "\ndef foo.bar.baz := 12\n\ninductive A.B | C\n",
+            "ERROR@35..36",
+        ),
+        (
+            "\ndef foo.bar.baz := 12\n\nstructure Foo.Bar.Baz where\n  x : Nat\n\nclass Foo.Bar.Baz.Quux where\n  x : Nat\n\ninstance Spam.Eggs : Foo.Bar.Baz.Quux where\n  x := 3\n\ntheorem Foo.Bar.Baz.Quux.Cheese : 2 = 2 := rfl\n\ninductive A.B | C\n",
+            "ERROR@37..222",
+        ),
+    ] {
+        let outcome = parse(&lean, source, &recover());
+        assert_eq!(
+            outcome.rejection.as_ref().map(|rejection| rejection.reason),
+            Some("recovered"),
+            "{source:?}"
+        );
+        let tree = rendered(&outcome);
+        let repairs: Vec<&str> = tree
+            .split(['(', ' '])
+            .filter(|part| part.starts_with("ERROR@") || part.starts_with("MISSING@"))
+            .collect();
+        assert_eq!(repairs, [repair], "{tree}");
+    }
+}
+
+#[test]
 fn a_repaired_result_preempts_no_cheaper_one_where_the_scanner_scans_a_token_of_no_width() {
     // An object that skips the stray `@9` (cost 2) goes on past `e` to its
     // closing brace; a statement block repaired after a MISSING `}` (more
@@ -368,6 +405,43 @@ fn a_lexer_of_merged_lex_states_lexes_a_longer_token_no_item_of_its_state_takes(
             "{source:?}"
         );
     }
+}
+
+#[test]
+fn a_missing_token_is_inserted_only_where_a_rule_reduces_before_the_next_token() {
+    // Tree-sitter inserts a missing token only if the lookahead reduces in the
+    // state after it: no part of the rule the MISSING leaf ends takes input
+    // after it. A `,` missing before the number `.92` would let the array go
+    // on, so the number is skipped as an ERROR, with no MISSING `,` and no
+    // `as_expression` that a MISSING `as` would build.
+    let typescript = parser(GRAMMARS[10].1);
+    for (source, repair) in [
+        ("a = [ 0 .92 ] ;", "ERROR@8..11"),
+        (r#"x = new Map ( [ [ "A" , 0 .92 ] , ] ) ;"#, "ERROR@26..29"),
+    ] {
+        let tree = rendered(&parse(&typescript, source, &recover()));
+        let repairs: Vec<&str> = tree
+            .split(['(', ' '])
+            .filter(|part| part.starts_with("ERROR@") || part.starts_with("MISSING@"))
+            .collect();
+        assert_eq!(repairs, [repair], "{tree}");
+        assert!(!tree.contains("as_expression"), "{tree}");
+    }
+}
+
+#[test]
+fn the_public_tree_has_no_node_for_a_missing_token_of_a_hidden_kind() {
+    // A MISSING leaf of a hidden or anonymous kind is no node, as in
+    // tree-sitter, though the node that has it has an error.
+    let network = LinkNetwork::parse(
+        "def f : Nat \u{2192} Nat\n  | 0 =>",
+        "Lean",
+        ParseConfiguration::default(),
+    );
+    assert_eq!(
+        normalize(&render_network(&network, "Lean")),
+        "(module (definition name: (identifier) type: (arrow domain: (identifier) codomain: (identifier)) (match_arm patterns: (number) (MISSING identifier))))"
+    );
 }
 
 #[test]

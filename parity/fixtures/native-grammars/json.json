@@ -629,7 +629,7 @@
   "rejections": [
     {
       "source": "{\"a\" 1}",
-      "recovered": "(document (object \"{\" (pair key:(string \"\\\"\" (string_content \"a\") \"\\\"\") (MISSING@4 \":\") ~\" \" value:(number \"1\")) \"}\"))"
+      "recovered": "(document (object \"{\" (pair key:(string \"\\\"\" (string_content \"a\") \"\\\"\") (MISSING@4 \":\") ~\" \" (MISSING@5 true)) (ERROR@5..6 \"1\") \"}\"))"
     },
     {
       "source": "[1,]",

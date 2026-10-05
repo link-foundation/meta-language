@@ -66,7 +66,8 @@ function runParse(program, bytes, startRule, options, maxDepth, expectations, me
  * one more repair point, the farthest offset where an element failed without
  * a repair, until a parse completes. After `maxRepairs` rounds (default 32),
  * or when no new point appears, the last round's partial tree stands, the
- * rest of the input an ERROR leaf. Each round has its own step budget.
+ * rest of the input an ERROR leaf. Each round has its own step budget; a
+ * round that runs out of steps ends the rounds as well.
  */
 function repairParse(program, bytes, startRule, options, maxDepth, failed, keywords, expectations, memory) {
   const points = new Set();
@@ -76,10 +77,15 @@ function repairParse(program, bytes, startRule, options, maxDepth, failed, keywo
     const point = outcome.elementFarthest >= 0 ? outcome.elementFarthest : outcome.farthest;
     if (points.has(point)) break;
     points.add(point);
-    outcome = runParse(program, bytes, startRule, options, maxDepth, expectations, memory, (executor) => {
-      executor.repairPoints = points;
-      executor.keywords = keywords;
-    });
+    try {
+      outcome = runParse(program, bytes, startRule, options, maxDepth, expectations, memory, (executor) => {
+        executor.repairPoints = points;
+        executor.keywords = keywords;
+      });
+    } catch (error) {
+      if (!(error instanceof StepLimitReached)) throw error;
+      break;
+    }
     if (outcome.ok) return outcome;
   }
   return { ok: true, root: outcome.partial };

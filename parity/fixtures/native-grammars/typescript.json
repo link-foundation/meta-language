@@ -7290,7 +7290,7 @@
   "rejections": [
     {
       "source": "const = 1;",
-      "recovered": "(program (lexical_declaration kind:\"const\" (variable_declarator (MISSING@5 identifier) ~\" \" \"=\" ~\" \" value:(number \"1\")) \";\"))"
+      "recovered": "(program (lexical_declaration kind:\"const\" (variable_declarator (MISSING@5 identifier) ~\" \") (ERROR@6..9 \"= 1\") \";\"))"
     },
     {
       "source": "let x: = 1;",
@@ -7342,7 +7342,7 @@
     },
     {
       "source": "import {",
-      "recovered": "(program (import_statement \"import\" source:(string (MISSING@6 \"\\\"\") ~\" \" (string_fragment \"{\") (MISSING@8 \"\\\"\")) (unnamed_token \"\")))"
+      "recovered": "(program (ERROR@0..8 \"import {\"))"
     },
     {
       "source": "let x: number[;",

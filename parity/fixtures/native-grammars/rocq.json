@@ -10725,7 +10725,7 @@
     },
     {
       "source": "(* abc\n",
-      "recovered": "(source_file (sentence (parenthesized_tactic \"(\" (tactic_invocation (intros_tactic (MISSING@1 \"intro\") (intro_pattern \"*\"))) (MISSING@2 \")\") ~\" \") (MISSING@3 \".\")) (ERROR@3..6 \"abc\") ~\"\\n\")"
+      "recovered": "(source_file (sentence (parenthesized_tactic \"(\" (tactic_invocation (intros_tactic (MISSING@1 \"intro\"))) (MISSING@1 \")\")) (MISSING@1 \".\")) (sentence (bullet \"*\")) ~\" \" (ERROR@3..6 \"abc\") ~\"\\n\")"
     },
     {
       "source": "Module.\n",

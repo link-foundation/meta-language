@@ -1783,11 +1783,11 @@
     },
     {
       "source": "{a}",
-      "recovered": "(file (object \"{\" (member name:(identifier \"a\") (MISSING@2 \":\") value:(object (MISSING@2 \"{\") \"}\")) (MISSING@3 \"}\")))"
+      "recovered": "(file (object \"{\" (member name:(identifier \"a\") (MISSING@2 \":\") (MISSING@2 number)) \"}\"))"
     },
     {
       "source": "{a:}",
-      "recovered": "(file (object \"{\" (member name:(identifier \"a\") \":\" value:(object (MISSING@3 \"{\") \"}\")) (MISSING@4 \"}\")))"
+      "recovered": "(file (object \"{\" (member name:(identifier \"a\") \":\" value:(array (MISSING@3 \"[\") (MISSING@3 \"]\"))) \"}\"))"
     },
     {
       "source": "[",
@@ -1831,7 +1831,7 @@
     },
     {
       "source": "{\"a\" 1}",
-      "recovered": "(file (object \"{\" (member name:(string \"\\\"a\\\"\") (MISSING@4 \":\") ~\" \" value:(number \"1\")) \"}\"))"
+      "recovered": "(file (object \"{\" (ERROR@1..6 \"\\\"a\\\" 1\") \"}\"))"
     },
     {
       "source": "{1:1}",

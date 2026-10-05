@@ -24,6 +24,7 @@ impl Executor<'_> {
         state: &State,
         in_token: bool,
     ) -> Run<Vec<Res>> {
+        // Each iteration reduces (see `sequence`).
         let zero_width =
             |left: &Res, right: &Res| right.end == left.end && right.state == left.state;
         let below_max = |count: usize| max.is_none_or(|max| count < max);
@@ -41,10 +42,10 @@ impl Executor<'_> {
                 };
                 if zero_width(&current, &next) {
                     count = count.max(min);
-                    current = Res::join(&current, next, in_token);
+                    current = Res::join(&current, next, in_token).closed();
                     break;
                 }
-                current = Res::join(&current, next, in_token);
+                current = Res::join(&current, next, in_token).closed();
                 count += 1;
             }
             return Ok(if count >= min {
@@ -111,11 +112,11 @@ impl Executor<'_> {
                         // two structure fields) is a result too, as the parser
                         // shifts that token, though it is not extended again.
                         if count < min || right.children.iter().any(|child| child.scanned) {
-                            results.add(Res::join(left, right, in_token));
+                            results.add(Res::join(left, right, in_token).closed());
                         }
                         continue;
                     }
-                    next.add(Res::join(left, right, in_token));
+                    next.add(Res::join(left, right, in_token).closed());
                 }
             }
             frontier = next.items;

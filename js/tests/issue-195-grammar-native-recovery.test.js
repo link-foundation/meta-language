@@ -8,8 +8,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { compileGrammar, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
+import { LinkNetwork, compileGrammar, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
 import { NATIVE_GRAMMARS, fixturePath } from '../scripts/generate-native-grammar-fixtures.mjs';
+import { normalize, renderNetwork } from './support/cst-sexpression.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
@@ -84,10 +85,10 @@ test('automatic recovery leaves the trees of accepted input unchanged', (context
 test('a repair inserts a MISSING leaf or skips input as an ERROR leaf, whichever costs less', () => {
   const json = grammars.find(({ entry }) => entry.id === 'json').parser;
   const tree = (source, options = RECOVER) => renderSyntaxTree(json.parseTree(source, options).tree);
-  // A missing separator and a missing closing bracket are inserted; as in
-  // tree-sitter, a MISSING leaf comes before the white space after the token
-  // it follows.
-  assert.equal(tree('{"a" 1}'), '(document (object "{" (pair key:(string "\\"" (string_content "a") "\\"") (MISSING@4 ":") ~" " value:(number "1")) "}"))');
+  // A missing closing bracket is inserted where the rule it ends reduces
+  // before the next token; as in tree-sitter, a MISSING leaf comes before the
+  // white space after the token it follows.
+  assert.equal(tree('{"a" : [1, 2 }'), '(document (object "{" (pair key:(string "\\"" (string_content "a") "\\"") ~" " ":" value:(array ~" " "[" (number "1") "," ~" " (number "2") (MISSING@12 "]") ~" ")) "}"))');
   assert.equal(tree('[1, 2'), '(document (array "[" (number "1") "," ~" " (number "2") (MISSING@5 "]")))');
   // A stray value is skipped: deleting one byte costs less than inserting a comma.
   assert.equal(tree('[1, 2 3]'), '(document (array "[" (number "1") "," ~" " (number "2") ~" " (ERROR@6..7 "3") "]"))');
@@ -126,6 +127,21 @@ test('a later error is repaired where it is, not by skipping the input after an 
   assert.deepEqual(repairs({ ...RECOVER, maxRepairs: 1 }), ['MISSING@17', 'ERROR@17..62']);
 });
 
+test('a round that completes nothing asks for the offset its farthest result stopped at', () => {
+  // The first point, after `A.B`, completes nothing, as no MISSING leaf there
+  // is followed by the rest of its rule; the module stopped at the `.`, so
+  // that is the next point, and the `.` is one ERROR, as in tree-sitter. A
+  // round that runs out of steps ends the rounds, the last tree standing.
+  const lean = grammars.find(({ entry }) => entry.id === 'lean').parser;
+  const repairs = (source) => {
+    const outcome = lean.parseTree(source, RECOVER);
+    assert.equal(outcome.rejection?.reason, 'recovered', source);
+    return renderSyntaxTree(outcome.tree).match(/ERROR@\d+\.\.\d+|MISSING@\d+/gu);
+  };
+  assert.deepEqual(repairs('\ndef foo.bar.baz := 12\n\ninductive A.B | C\n'), ['ERROR@35..36']);
+  assert.deepEqual(repairs('\ndef foo.bar.baz := 12\n\nstructure Foo.Bar.Baz where\n  x : Nat\n\nclass Foo.Bar.Baz.Quux where\n  x : Nat\n\ninstance Spam.Eggs : Foo.Bar.Baz.Quux where\n  x := 3\n\ntheorem Foo.Bar.Baz.Quux.Cheese : 2 = 2 := rfl\n\ninductive A.B | C\n'), ['ERROR@37..222']);
+});
+
 test('a repaired result preempts no cheaper one where the scanner scans a token of no width', () => {
   // An object that skips the stray `@9` (cost 2) goes on past `e` to its
   // closing brace; a statement block repaired after a MISSING `}` (more cost)
@@ -154,6 +170,33 @@ test('a lexer of merged lex states lexes a longer token no item of its state tak
   for (const source of ['x = a . b ;', 'x = 1..toString ( ) ;', 'x = a ?. b ;']) {
     assert.ok(typescript.parseTree(source).ok, source);
   }
+});
+
+test('a MISSING token is inserted only where a rule reduces before the next token', () => {
+  // Tree-sitter inserts a missing token only if the lookahead reduces in the
+  // state after it: no part of the rule the MISSING leaf ends takes input
+  // after it. A `,` missing before the number `.92` would let the array go
+  // on, so the number is skipped as an ERROR, with no MISSING `,` and no
+  // `as_expression` that a MISSING `as` would build.
+  const typescript = grammars.find(({ entry }) => entry.id === 'typescript').parser;
+  for (const [source, repair] of [
+    ['a = [ 0 .92 ] ;', 'ERROR@8..11'],
+    ['x = new Map ( [ [ "A" , 0 .92 ] , ] ) ;', 'ERROR@26..29'],
+  ]) {
+    const rendered = renderSyntaxTree(typescript.parseTree(source, RECOVER).tree);
+    assert.deepEqual(rendered.match(/ERROR@\d+\.\.\d+|MISSING@\d+/gu), [repair], rendered);
+    assert.ok(!rendered.includes('as_expression'), rendered);
+  }
+});
+
+test('the public tree has no node for a MISSING token of a hidden kind', () => {
+  // A MISSING leaf of a hidden or anonymous kind is no node, as in
+  // tree-sitter, though the node that has it has an error.
+  const network = LinkNetwork.parse('def f : Nat → Nat\n  | 0 =>', 'Lean');
+  assert.equal(
+    normalize(renderNetwork(network, 'Lean')),
+    '(module (definition name: (identifier) type: (arrow domain: (identifier) codomain: (identifier)) (match_arm patterns: (number) (MISSING identifier))))',
+  );
 });
 
 test('a missing keyword is named by its literal', () => {

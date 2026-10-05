@@ -256,6 +256,9 @@ pub(super) struct Res {
     /// parts could begin with it (see `reduction_facts`), which the node
     /// built of it keeps.
     pub(super) before: Option<Lead>,
+    /// Whether the result ends with a MISSING leaf no rule it ends has
+    /// reduced yet (see `sequence`).
+    pub(super) open: bool,
 }
 
 impl Res {
@@ -270,6 +273,7 @@ impl Res {
             ambiguous: false,
             cost: 0,
             before: None,
+            open: false,
         }
     }
 
@@ -294,7 +298,15 @@ impl Res {
             ambiguous: left.ambiguous || right.ambiguous,
             cost: left.cost + right.cost,
             before: None,
+            open: right.open || left.open && right.end == left.end,
         }
+    }
+
+    /// The result, its MISSING leaf reduced by the rule it ends (see
+    /// `sequence`).
+    pub(super) const fn closed(mut self) -> Self {
+        self.open = false;
+        self
     }
 
     pub(super) fn key(&self) -> (usize, State) {

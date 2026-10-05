@@ -448,7 +448,7 @@ impl Executor<'_> {
                 });
             }
         }
-        Ok(built)
+        Ok(built.into_iter().map(Res::closed).collect())
     }
 
     // Runs the rule's action over one result: the node is fresh, so attributes
@@ -650,16 +650,26 @@ impl Executor<'_> {
         if complete.is_empty() {
             let mut expected: Vec<String> = self.expected.iter().map(ToString::to_string).collect();
             expected.sort();
+            let stopped = partial.as_ref().map(|(end, ..)| *end);
             let partial = self.repair_points.is_some().then(|| {
                 Rc::new(partial.map_or_else(
                     || self.error_root(start_rule),
                     |(_, _, result, trailing)| self.root(start_rule, &result, &trailing, false),
                 ))
             });
+            // A round that repairs and completes nothing asks for the offset
+            // the result that reached farthest stopped at as its next repair
+            // point, before any farther element that failed: past that offset
+            // no result of the start rule went on.
+            let stopped = stopped.filter(|end| {
+                self.repair_points
+                    .as_ref()
+                    .is_some_and(|points| !points.is_empty() && !points.contains(end))
+            });
             return Ok(Outcome::Failed {
                 farthest: self.farthest,
                 expected,
-                element_farthest: self.element_farthest,
+                element_farthest: stopped.or(self.element_farthest),
                 partial,
             });
         }

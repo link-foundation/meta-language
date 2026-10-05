@@ -1619,17 +1619,17 @@
     "planned:repository-directive:i195-grammar-native-json": {
       "path": "parity/fixtures/native-grammars/json.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged JSON grammar checked against its tree-sitter oracle",
-      "sha256": "960eab5cd2a195680d454533c6d018109b757180744b626235c9389c021a5537"
+      "sha256": "d3c9adb902c0f7e109e8a03d6fe7d1c6739c2fadcc7bc26d93b742cde7feb44f"
     },
     "planned:repository-directive:i195-grammar-native-ini": {
       "path": "parity/fixtures/native-grammars/ini.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged INI grammar checked against its tree-sitter oracle",
-      "sha256": "d2417efb3aff9fbcf0d3fbbc0c6038c33c9276e854384dcefc0eaef87e53bfab"
+      "sha256": "91035fa5a011d7ae26840acfc57fb75a0f742e833a9542c4008fc721e44d3120"
     },
     "planned:repository-directive:i195-grammar-native-diff": {
       "path": "parity/fixtures/native-grammars/diff.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged unified diff grammar checked against its tree-sitter oracle",
-      "sha256": "9c35ff9cf714f7ba386b5776b4e38ec763a23df25abe38aad25ad5b38714dab6"
+      "sha256": "0df6d2553b33360e20ffac0ad1102397025d576d79ff2845b2506e406380be00"
     },
     "planned:repository-directive:i195-grammar-native-csv": {
       "path": "parity/fixtures/native-grammars/csv.json",
@@ -1639,7 +1639,7 @@
     "planned:repository-directive:i195-grammar-native-json5": {
       "path": "parity/fixtures/native-grammars/json5.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged JSON5 grammar checked against its tree-sitter oracle",
-      "sha256": "4f9010bdb4fe5ad0a55f4efd268484a42c680837bc65d1291f683a55f65146e0"
+      "sha256": "b37ca3f0183e189b67252564afe76d267df8212d6001711e78ebda4158ba9466"
     },
     "planned:repository-directive:i195-grammar-native-scheme": {
       "path": "parity/fixtures/native-grammars/scheme.json",
@@ -1659,42 +1659,42 @@
     "planned:repository-directive:i195-grammar-native-rust": {
       "path": "parity/fixtures/native-grammars/rust.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Rust grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "c529c94240d7d067a5a9521871a07839479803718c1e032f60ac9efca6f86089"
+      "sha256": "1025fdb2b8306bd08bb83d27fd617672a1ac9a17e1a7775dc5891de67d23319c"
     },
     "planned:repository-directive:i195-grammar-native-javascript": {
       "path": "parity/fixtures/native-grammars/javascript.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged JavaScript grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "de46f2911ec5f5e1de16de90a3d8d42b77677d7a1855e7ed83f68d6f1457c9bc"
+      "sha256": "59ddcda4e44b325dea01ec4245f4ad5f6155c615721aaeaa29a4a56f707eb0dc"
     },
     "planned:repository-directive:i195-grammar-native-typescript": {
       "path": "parity/fixtures/native-grammars/typescript.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged TypeScript grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "eea159a5f279fbabcb3ead1678d5273475e429928f96007300bc4bc3d94a9a5f"
+      "sha256": "feba71d6f6701e9071835d1c51a6067fd2935c7f20385817fcc3d054097ccac9"
     },
     "planned:repository-directive:i195-grammar-native-tsx": {
       "path": "parity/fixtures/native-grammars/tsx.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged TSX grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "0021195f0815bdf41495008a3e5e014ec5f4afb8b4c62bf79cda54a6a388dfae"
+      "sha256": "8f4a63f58975565a830e39bd62d576e5e150b08c358168133293439bd090c6ac"
     },
     "planned:repository-directive:i195-grammar-native-lean": {
       "path": "parity/fixtures/native-grammars/lean.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Lean grammar imported with its native layout scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "2c83e797fbd1c7dc93b4b2b9307f71207854b3babe3b8c37d4f2cb98ba25c686"
+      "sha256": "88d05e7e9f6c1a89fe48a6d9d5c4236f28b78d2e4a1202349445aa3664234156"
     },
     "planned:repository-directive:i195-grammar-native-rocq": {
       "path": "parity/fixtures/native-grammars/rocq.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Rocq grammar imported from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "ce8442c35a9ada1ea31fad12e5bf9d9d6932eb81b2fd0a65edaf57f13131459e"
+      "sha256": "ddb9da06121d3c132e7d4d693d09e168808c59235c5e9fec525ec1f8416e961a"
     },
     "planned:repository-directive:i195-grammar-native-java": {
       "path": "parity/fixtures/native-grammars/java.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Java grammar imported from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "7d794b9f52c037ab4e71af761d2d654afe5cafda9f7d4331e2be6644559c5736"
+      "sha256": "877b0b2407152c3eeb8d5152fdef245f74ca88a556e9a8cddf3aa02196b2856b"
     },
     "planned:repository-directive:i195-grammar-native-recovery": {
       "path": "parity/fixtures/native-grammars/json.json",
       "selector": "docs/vision.md#grammar-feature-union: automatic error recovery of the native executor for every native grammar",
-      "sha256": "960eab5cd2a195680d454533c6d018109b757180744b626235c9389c021a5537"
+      "sha256": "d3c9adb902c0f7e109e8a03d6fe7d1c6739c2fadcc7bc26d93b742cde7feb44f"
     },
     "planned:repository-directive:i195-grammar-feature-union": {
       "path": "parity/fixtures/grammar-feature-union.json",

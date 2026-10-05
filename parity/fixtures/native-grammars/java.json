@@ -5652,11 +5652,11 @@
     },
     {
       "source": "/* abc\nclass A {}\n",
-      "recovered": "(program (class_declaration (modifiers (marker_annotation (MISSING@0 \"@\") (ERROR@0..2 \"/*\") ~\" \" name:(identifier \"abc\"))) ~\"\\n\" \"class\" ~\" \" name:(identifier \"A\") body:(class_body ~\" \" \"{\" \"}\")) ~\"\\n\")"
+      "recovered": "(program (class_declaration (ERROR@0..6 \"/* abc\") ~\"\\n\" \"class\" ~\" \" name:(identifier \"A\") body:(class_body ~\" \" \"{\" \"}\")) ~\"\\n\")"
     },
     {
       "source": "class { }\n",
-      "recovered": "(program (class_declaration \"class\" (MISSING@5 identifier) ~\" \" body:(class_body \"{\" ~\" \" \"}\")) ~\"\\n\")"
+      "recovered": "(program (expression_statement (ERROR@0..1 \"c\") (identifier \"lass\") (MISSING@5 \";\") ~\" \") (block \"{\" ~\" \" \"}\") ~\"\\n\")"
     },
     {
       "source": "class A { void f( }\n",
