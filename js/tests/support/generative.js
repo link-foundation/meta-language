@@ -192,7 +192,9 @@ export function relationHolds(relation, baseCst, variantCst) {
  * Oracle-free problems of a parsed network: exact reconstruction; every span inside the
  * source, on code point boundaries, with points that name its byte offsets; every Syntax
  * child inside its parent; and a verification report that is clean exactly when no link
- * carries an error or missing flag.
+ * carries an error, missing or has-error flag. A node may have an error with no flagged
+ * link inside it: tree-sitter hides a MISSING leaf of a hidden kind, as the native
+ * projection does, but the node it is missing from still has an error.
  */
 export function propertyProblems(network, source) {
   const problems = [];
@@ -211,7 +213,7 @@ export function propertyProblems(network, source) {
   let flagged = false;
   for (const link of links) {
     const { span, flags, linkType } = link.metadata();
-    if (flags?.isError || flags?.isMissing) flagged = true;
+    if (flags?.isError || flags?.isMissing || flags?.hasError) flagged = true;
     if (!span) continue;
     const { start, end } = span.byteRange;
     const where = `${linkType} ${link.metadata().term ?? ''} ${start}..${end}`;

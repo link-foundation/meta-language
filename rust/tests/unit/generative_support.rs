@@ -207,7 +207,10 @@ pub fn relation_holds(relation: &str, base: &str, variant: &str) -> bool {
 /// Oracle-free problems of a parsed network: exact reconstruction; every span
 /// inside the source, on code point boundaries, with points that name its byte
 /// offsets; every Syntax child inside its parent; and a verification report
-/// that is clean exactly when no link carries an error or missing flag.
+/// that is clean exactly when no link carries an error, missing or has-error
+/// flag. A node may have an error with no flagged link inside it: tree-sitter
+/// hides a MISSING leaf of a hidden kind, as the native projection does, but
+/// the node it is missing from still has an error.
 pub fn property_problems(network: &LinkNetwork, source: &str) -> Vec<String> {
     let mut problems = Vec::new();
     if network.reconstruct_text() != source {
@@ -222,7 +225,7 @@ pub fn property_problems(network: &LinkNetwork, source: &str) -> Vec<String> {
     for link in network.links() {
         let metadata = link.metadata();
         let flags = metadata.flags();
-        flagged |= flags.is_error() || flags.is_missing();
+        flagged |= flags.is_error() || flags.is_missing() || flags.has_error();
         let Some(span) = metadata.span() else {
             continue;
         };
