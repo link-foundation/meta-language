@@ -403,6 +403,48 @@ fn steps(tree: &Rc<Tree>, out: &mut Vec<Rc<Tree>>) {
     out.push(tree.clone());
 }
 
+/// Which of two leaves over one span a generalized LR parser keeps when one
+/// token rule lexed both and each was reduced alone to rules the other was
+/// not, and a declared conflict names one rule of each (Java's `b` of `a =
+/// b::m;`, reduced to an `unannotated_type` in one parse and to a
+/// `primary_expression` in the other): tree-sitter forks on the
+/// reduce/reduce conflict and, where the forks merge, keeps the tree of the
+/// lower symbol, the rule defined first. Greater when `a` is kept, Less when
+/// `b` is, and Equal when no declared conflict parts them. It mirrors
+/// forkedLeaves in js/src/grammar-runtime/executor.js.
+pub(super) fn forked_leaves(a: &Tree, b: &Tree, grammar: &GrammarFacts) -> Ordering {
+    if grammar.conflicts.is_empty()
+        || !a.alone
+        || !b.alone
+        || a.lexed.is_none()
+        || a.lexed != b.lexed
+    {
+        return Ordering::Equal;
+    }
+    let forks = |own: &Tree, other: &Tree| -> Vec<Name> {
+        own.forked_to
+            .iter()
+            .filter(|name| !other.forked_to.contains(name))
+            .cloned()
+            .collect()
+    };
+    let (mine, theirs) = (forks(a, b), forks(b, a));
+    if !grammar.conflicts.iter().any(|group| {
+        mine.iter().any(|name| group.contains(name))
+            && theirs.iter().any(|name| group.contains(name))
+    }) {
+        return Ordering::Equal;
+    }
+    let rank = |names: &[Name]| {
+        names
+            .iter()
+            .map(|name| grammar.ranks.get(name).copied().unwrap_or(usize::MAX))
+            .min()
+            .unwrap_or(usize::MAX)
+    };
+    rank(&theirs).cmp(&rank(&mine))
+}
+
 /// Which of two nodes of different kinds over the same tokens a generalized
 /// LR parser keeps when their parses forked at a conflict the grammar
 /// declares, or None when they did not: the two reduce alike up to the first
@@ -426,8 +468,14 @@ pub(super) fn forked_order(
     let (mut first, mut second) = (Vec::new(), Vec::new());
     steps(a, &mut first);
     steps(b, &mut second);
+    // Two leaves one token rule lexed are one step, whatever they are named
+    // (Java's `A`, a `type_identifier` and an `identifier`).
     let same = |x: &Tree, y: &Tree| {
-        x.ty == y.ty && x.kind == y.kind && x.start == y.start && x.end == y.end
+        x.ty == y.ty
+            && x.start == y.start
+            && x.end == y.end
+            && (x.kind == y.kind
+                || (x.ty == TreeType::Token && x.lexed.is_some() && x.lexed == y.lexed))
     };
     let at = first
         .iter()

@@ -17,7 +17,7 @@
       "features": {"scanner": 0, "conflict": 17, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 100, "rows": 5348, "bytes": 12987, "divergences": 0, "rejections": 33},
       "recovery": {"repaired": 33, "errorNodes": 7, "missingNodes": 41, "categories": {}},
-      "reuse": {"shared": 41, "specific": 142}
+      "reuse": {"shared": 43, "specific": 140}
     },
     {
       "grammar": "native-csv",
@@ -75,6 +75,24 @@
       "correctness": {"matches": 55, "rows": 444, "bytes": 710, "divergences": 9, "rejections": 15},
       "recovery": {"repaired": 15, "errorNodes": 6, "missingNodes": 13, "categories": {}},
       "reuse": {"shared": 2, "specific": 3}
+    },
+    {
+      "grammar": "native-java",
+      "language": "Java",
+      "links": "parity/grammars/native/java.lino",
+      "fixture": "parity/fixtures/native-grammars/java.json",
+      "oracle": "tree-sitter-java 0.23.5",
+      "sources": [
+        "https://github.com/tree-sitter/tree-sitter-java/blob/94703d5a6bed02b98e438d7cad1136c01a60ba2c/grammar.js",
+        "https://github.com/tree-sitter/tree-sitter-java/tree/94703d5a6bed02b98e438d7cad1136c01a60ba2c/test/corpus"
+      ],
+      "corpus": "https://github.com/tree-sitter/tree-sitter-java/tree/94703d5a6bed02b98e438d7cad1136c01a60ba2c/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/java.json",
+      "coverage": {"rules": {"normal": 120, "atomic": 0, "silent": 30, "token": 19}, "visibleRules": 120, "exercisedRules": 111, "checkedKinds": 133, "checkedFields": 36, "renamed": 29, "expandedWords": 3, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 13, "precedences": 0, "extra": 3, "kind": 1},
+      "correctness": {"matches": 146, "rows": 4848, "bytes": 11744, "divergences": 0, "rejections": 11},
+      "recovery": {"repaired": 11, "errorNodes": 3, "missingNodes": 16, "categories": {}},
+      "reuse": {"shared": 60, "specific": 109}
     },
     {
       "grammar": "native-javascript",
@@ -201,7 +219,7 @@
       "features": {"scanner": 6, "conflict": 9, "precedences": 0, "extra": 3, "kind": 3},
       "correctness": {"matches": 182, "rows": 7903, "bytes": 15796, "divergences": 0, "rejections": 38},
       "recovery": {"repaired": 38, "errorNodes": 15, "missingNodes": 58, "categories": {"native-skips-more": 14, "oracle-skips-more": 49, "same-repair-sites": 7, "same-skipped-bytes": 5}},
-      "reuse": {"shared": 50, "specific": 134}
+      "reuse": {"shared": 55, "specific": 129}
     },
     {
       "grammar": "native-scheme",

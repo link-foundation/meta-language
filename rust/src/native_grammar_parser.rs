@@ -49,6 +49,10 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
         include_str!("data/native-grammars/ini.lino"),
     ),
     (
+        "native-grammars/java.lino",
+        include_str!("data/native-grammars/java.lino"),
+    ),
+    (
         "native-grammars/javascript.lino",
         include_str!("data/native-grammars/javascript.lino"),
     ),

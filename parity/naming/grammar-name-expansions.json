@@ -44,6 +44,7 @@
     { "word": "impl", "replacement": "implementation", "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)." },
     { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
     { "word": "inst", "replacement": "instance", "reason": "An abbreviation of instance." },
+    { "word": "instanceof", "replacement": "instance_of", "reason": "The Java operator instanceof (The Java Language Specification, section 15.20.2) run together." },
     { "word": "interp", "replacement": "interpretation", "reason": "An abbreviation of interpretation." },
     { "word": "lhs", "replacement": "left_hand_side", "reason": "An abbreviation of left-hand side, the target of a JavaScript assignment or for-in head." },
     { "word": "lib", "replacement": "library", "reason": "An abbreviation of library." },
@@ -254,6 +255,28 @@
         "export_command": "grammar.export-statement",
         "instance_command": "grammar.instance-declaration"
       }
+    },
+    "java": {
+      "names": {
+        "_toplevel_statement": "top_level_statement",
+        "_string_literal": "single_line_string_literal",
+        "_multiline_string_literal": "text_block",
+        "_multiline_string_fragment": "text_block_fragment_choice",
+        "multiline_string_fragment": "text_block_fragment",
+        "_escape_sequence": "escape_sequence_choice",
+        "_annotation": "annotation_choice",
+        "_variable_declarator_id": "variable_declarator_identifier"
+      },
+      "concepts": {
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "modifiers": "grammar.modifier-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "type_parameters": "grammar.type-parameter-list",
+        "type_arguments": "grammar.type-argument-list",
+        "dimensions": "grammar.array-dimensions",
+        "wildcard": "grammar.wildcard-type-argument"
+      }
     }
   },
   "concepts": {
@@ -272,7 +295,10 @@
       "grammar.yield-expression": [{ "id": "grammar.return-expression", "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function." }],
       "grammar.type-argument-list": [{ "id": "grammar.type-parameter-list", "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes." }],
       "grammar.command": [{ "id": "grammar.statement", "reason": "A Lean command is one top-level declaration or directive of a module, which the elaborator reads in order, while a statement is one step of a block that runs in order." }],
-      "grammar.syntax-quotation": [{ "id": "grammar.syntax-quote", "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form." }]
+      "grammar.syntax-quotation": [{ "id": "grammar.syntax-quote", "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form." }],
+      "grammar.yield-statement": [{ "id": "grammar.return-statement", "reason": "A Java yield statement gives the value of the switch expression it ends, while a return statement ends a function and gives its result." }],
+      "grammar.annotation": [{ "id": "grammar.notation", "reason": "A Java annotation attaches metadata to a declaration or a type (The Java Language Specification, section 9.7), while a notation declares new syntax for terms." }],
+      "grammar.catch-type": [{ "id": "grammar.match-case", "reason": "A Java catch type names the exception types a catch clause handles, while a match case is one branch of a match expression." }]
     }
   }
 }

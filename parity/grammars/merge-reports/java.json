@@ -1,0 +1,257 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "java",
+  "native": "native-java",
+  "sources": [
+    {
+      "id": "tree-sitter-java",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-java 0.23.5",
+      "repository": "https://github.com/tree-sitter/tree-sitter-java",
+      "revision": "94703d5a6bed02b98e438d7cad1136c01a60ba2c",
+      "path": "src/grammar.json",
+      "sha256": "47ca521cd7a888d671d9f26301e8697fa686e04912032e959d242b5f25877eb6",
+      "license": "MIT"
+    }
+  ],
+  "rules": 169,
+  "keywords": [
+    "_",
+    "abstract",
+    "assert",
+    "boolean",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "class",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "exports",
+    "extends",
+    "false",
+    "final",
+    "finally",
+    "float",
+    "for",
+    "if",
+    "implements",
+    "import",
+    "instanceof",
+    "int",
+    "interface",
+    "long",
+    "module",
+    "native",
+    "new",
+    "null",
+    "open",
+    "opens",
+    "package",
+    "permits",
+    "private",
+    "protected",
+    "provides",
+    "public",
+    "record",
+    "requires",
+    "return",
+    "sealed",
+    "short",
+    "static",
+    "strictfp",
+    "super",
+    "switch",
+    "synchronized",
+    "this",
+    "throw",
+    "throws",
+    "to",
+    "transient",
+    "transitive",
+    "true",
+    "try",
+    "uses",
+    "void",
+    "volatile",
+    "when",
+    "while",
+    "with",
+    "yield"
+  ],
+  "renamed": [
+    {
+      "source": "_toplevel_statement",
+      "native": "top_level_statement"
+    },
+    {
+      "source": "_literal",
+      "native": "literal"
+    },
+    {
+      "source": "_string_literal",
+      "native": "single_line_string_literal"
+    },
+    {
+      "source": "_multiline_string_literal",
+      "native": "text_block"
+    },
+    {
+      "source": "_multiline_string_fragment",
+      "native": "text_block_fragment_choice"
+    },
+    {
+      "source": "_escape_sequence",
+      "native": "escape_sequence_choice"
+    },
+    {
+      "source": "instanceof_expression",
+      "native": "instance_of_expression"
+    },
+    {
+      "source": "dimensions_expr",
+      "native": "dimensions_expression"
+    },
+    {
+      "source": "_unqualified_object_creation_expression",
+      "native": "unqualified_object_creation_expression"
+    },
+    {
+      "source": "_wildcard_bounds",
+      "native": "wildcard_bounds"
+    },
+    {
+      "source": "_annotation",
+      "native": "annotation_choice"
+    },
+    {
+      "source": "_element_value",
+      "native": "element_value"
+    },
+    {
+      "source": "enum_declaration",
+      "native": "enumeration_declaration"
+    },
+    {
+      "source": "enum_body",
+      "native": "enumeration_body"
+    },
+    {
+      "source": "enum_body_declarations",
+      "native": "enumeration_body_declarations"
+    },
+    {
+      "source": "enum_constant",
+      "native": "enumeration_constant"
+    },
+    {
+      "source": "_class_body_declaration",
+      "native": "class_body_declaration"
+    },
+    {
+      "source": "_constructor_declarator",
+      "native": "constructor_declarator"
+    },
+    {
+      "source": "_name",
+      "native": "name"
+    },
+    {
+      "source": "_default_value",
+      "native": "default_value"
+    },
+    {
+      "source": "_variable_declarator_list",
+      "native": "variable_declarator_list"
+    },
+    {
+      "source": "_variable_declarator_id",
+      "native": "variable_declarator_identifier"
+    },
+    {
+      "source": "_variable_initializer",
+      "native": "variable_initializer"
+    },
+    {
+      "source": "_type",
+      "native": "type"
+    },
+    {
+      "source": "_unannotated_type",
+      "native": "unannotated_type"
+    },
+    {
+      "source": "_simple_type",
+      "native": "simple_type"
+    },
+    {
+      "source": "_method_header",
+      "native": "method_header"
+    },
+    {
+      "source": "_method_declarator",
+      "native": "method_declarator"
+    },
+    {
+      "source": "_reserved_identifier",
+      "native": "reserved_identifier"
+    }
+  ],
+  "expandedWords": [
+    "enum",
+    "expr",
+    "instanceof"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "program",
+        "concept": "grammar.program"
+      },
+      {
+        "rule": "true",
+        "concept": "grammar.true-value"
+      },
+      {
+        "rule": "false",
+        "concept": "grammar.false-value"
+      },
+      {
+        "rule": "character_literal",
+        "concept": "grammar.character-literal"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "name",
+        "concept": "grammar.name"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "block_comment",
+        "concept": "grammar.block-comment"
+      }
+    ],
+    "generated": 159
+  },
+  "approximations": [],
+  "unsupported": []
+}

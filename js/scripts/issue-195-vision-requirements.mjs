@@ -483,6 +483,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/tree_sitter_adapter.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-JAVA',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/java.json',
+    construct: 'native merged Java grammar imported from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/java.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned src/grammar.json of tree-sitter-java 0.23.5, with every rule renamed to its English name and its concept merged into the shared concepts, and every hand decision recorded in parity/grammars/merge-reports/java.json. Both executors build, for every source of the upstream test/corpus the oracle accepts and for hand-written sources, exactly the concrete syntax tree rows of the tree-sitter-java oracle with no ambiguity: packages, imports and modules, classes, records, interfaces, enumerations and annotation types, fields, methods and constructors, generic types and type parameters, local variables, statements, switch expressions and yield, lambdas, method references, object creation, binary, instanceof, ternary and cast expressions, annotations and their element values, literals, text blocks and comments included. Both executors reject invalid input the oracle recovers from and keep every source byte, comments and white space included, in the tree.',
+    assertions: [
+      'nativeJavaGrammarIsCanonicalLinks',
+      'nativeJavaTreesMatchOracle',
+      'nativeJavaRejectsInvalidInput',
+      'nativeJavaTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/src/programming-language-parser.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

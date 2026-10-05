@@ -113,6 +113,10 @@ const leanCorpus = (recovers) => upstreamCorpus('native-lean', (_file, title) =>
 // (`recovers`) or reads.
 const rocqCorpus = (recovers) => upstreamCorpus('native-rocq').filter((source) => oracleRecovers(source, 'Rocq') === recovers);
 
+// The cases of the pinned tree-sitter-java corpus the oracle recovers from
+// (`recovers`) or reads.
+const javaCorpus = (recovers) => upstreamCorpus('native-java').filter((source) => oracleRecovers(source, 'Java') === recovers);
+
 export const NATIVE_GRAMMARS = Object.freeze([
   {
     id: 'json',
@@ -813,6 +817,46 @@ export const NATIVE_GRAMMARS = Object.freeze([
       ...rocqCorpus(true),
       'Definition f :=', 'Definition', 'Definition x := 1', 'Definition f (x : nat := x.\n', 'Compute (1 +.\n', 'Definition s := "abc.\n',
       '(* abc\n', 'Module.\n', 'Inductive.\n', 'Definition x := [1; 2.\n', 'Theorem t : := I.\n',
+    ],
+  },
+  {
+    id: 'java',
+    language: 'Java',
+    grammar: 'parity/grammars/native/java.lino',
+    oracle: 'tree-sitter-java 0.23.5',
+    sources: [
+      `${grammarSourceOf('native-java').repository}/blob/${grammarSourceOf('native-java').revision}/grammar.js`,
+      `${grammarSourceOf('native-java').repository}/tree/${grammarSourceOf('native-java').revision}/${grammarSourceOf('native-java').corpus.path}`,
+    ],
+    // The grammar is the import of the grammar.json of tree-sitter-java
+    // 0.23.5, the one the oracle parser is generated from
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision the oracle reads, and a few
+    // sources more; the rejections are the cases the oracle recovers from,
+    // none at this revision, and a few sources more.
+    ...nativeGrammar('native-java'),
+    matches: [
+      ...javaCorpus(false),
+      '', 'class A {}\n', 'public class A { int x = 1; }\n', 'interface I { void f(); }\n', 'enum E { A, B }\n',
+      'record P(int x, int y) {}\n', 'package a.b;\nimport java.util.*;\n', 'class A { void f() { return; } }\n',
+      'class A { int f(int x) { return x + 1; } }\n', '// c\nclass A {} /* d */\n', '/** Doc. */\nclass A {}\n',
+      'class A { void f() { if (x) { y(); } else { z(); } } }\n', 'class A { void f() { for (int i = 0; i < n; i++) {} } }\n',
+      'class A { void f() { for (String s : list) {} } }\n', 'class A { void f() { while (true) break; } }\n',
+      'class A { void f() { try { g(); } catch (E e) {} finally {} } }\n', 'class A { void f() { switch (x) { case 1: break; default: } } }\n',
+      'class A { int f(int x) { return switch (x) { case 1 -> 2; default -> 3; }; } }\n', 'class A<T extends B> { T t; }\n',
+      'class A { List<String> l = new ArrayList<>(); }\n', 'class A { int[] a = {1, 2}; }\n', 'class A { Runnable r = () -> {}; }\n',
+      'class A { Function<A, B> f = x -> x; }\n', 'class A { void f() { a = b::m; } }\n', 'class A { void f() { A<B> c; } }\n',
+      '@A(v = 1) class C {}\n', '@Override\nclass A {}\n', 'class A { String s = "a" + \'b\'; }\n', 'class A { long x = 0x1FL; double d = 1.5e3; }\n',
+      'class A { boolean b = x instanceof String s; }\n', 'class A { Object o = (String) x; }\n', 'class A { int x = a ? b : c; }\n',
+      'class A { String s = """\n  text\n  """; }\n', 'class A { void f() throws E { throw new E(); } }\n', 'class A { static { x = 1; } }\n',
+      'class A { A() { super(); } }\n', 'class A { void f() { synchronized (this) {} } }\n', 'module m { requires a; exports b; }\n',
+    ],
+    divergences: [],
+    rejections: [
+      ...javaCorpus(true),
+      'class', 'class A {', 'class A { int x = ; }\n', 'class A { void f() { f(1, ); } }\n', 'class A { String s = "abc; }\n',
+      '/* abc\nclass A {}\n', 'class { }\n', 'class A { void f( }\n', 'class A { int[] a = {1, 2; }\n', 'class A { void f() { if x {} } }\n',
+      'import ;\n',
     ],
   },
 ]);

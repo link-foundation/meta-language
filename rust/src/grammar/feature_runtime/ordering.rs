@@ -7,8 +7,8 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use super::forking::{
-    GrammarFacts, Lead, declared_fork, forked_order, items_order, lookahead_of, shift_reduction,
-    token_at,
+    GrammarFacts, Lead, declared_fork, forked_leaves, forked_order, items_order, lookahead_of,
+    shift_reduction, token_at,
 };
 use super::parting::{
     chain_conflict, child_parting, has_node, holds_first, one_token, parting_end, reduced_first,
@@ -246,12 +246,13 @@ fn scanned_after_end(
 /// higher level wins and, on equal levels, the associativity of the reduced
 /// node, right to shift and left to reduce. `owner` is the precedence the
 /// two results are parts of, when a precedence expression holds them (see
-/// `extra_reduction`). Greater when `result` is kept, Less when `existing`
-/// is, Equal when neither. It mirrors shiftOrder in
-/// js/src/grammar-runtime/executor.js.
+/// `extra_reduction`), and `dynamic` the order of the two results' dynamic
+/// precedences, which a fork at a declared conflict reads first. Greater when
+/// `result` is kept, Less when `existing` is, Equal when neither. It mirrors
+/// shiftOrder in js/src/grammar-runtime/executor.js.
 pub(super) fn shift_order(
-    result: &Children,
-    existing: &Children,
+    (result, existing): (&Children, &Children),
+    dynamic: Ordering,
     orders: &[Vec<PrecedenceEntry>],
     grammar: &GrammarFacts,
     bytes: &[u8],
@@ -291,6 +292,22 @@ pub(super) fn shift_order(
                             .then_with(|| silent_parting(&b, &a, &left).reverse());
                         if parted != Ordering::Equal {
                             return parted;
+                        }
+                        // Or where one token rule lexed the leaf both reduced
+                        // alone, each to a rule a declared conflict names, as
+                        // children of one node (Java's `b` of `a = b::m;`, a
+                        // `type_identifier` of an `unannotated_type` and an
+                        // `identifier` of a `primary_expression`): the higher
+                        // dynamic precedence wins, and then the rule defined
+                        // first, as tree-sitter keeps where the forks merge.
+                        // Under nodes apart, the reductions above part the
+                        // two first (C's `aff;`, an `expression_statement`
+                        // against a silent `empty_declaration`).
+                        if same_parent(&left, &right) {
+                            let forked = forked_leaves(&a, &b, grammar);
+                            if forked != Ordering::Equal {
+                                return dynamic.then(forked);
+                            }
                         }
                     }
                     left.pop();
@@ -398,10 +415,31 @@ pub(super) fn shift_order(
                             return lone;
                         }
                     }
+                    // When their parses forked at a declared conflict,
+                    // tree-sitter keeps the higher dynamic precedence where
+                    // they merge, before the lower symbol (Java's `A<B> c;`,
+                    // a `generic_type` of dynamic precedence 10 against the
+                    // `binary_expression` `A < B`).
                     if let Some(forked) = forked_order(&a, &b, grammar, bytes) {
-                        return forked;
+                        return dynamic.then(forked);
                     }
-                    let order = compare_precedence(&reduction(&a), &reduction(&b), orders);
+                    // Where the reductions that close the two differ, those
+                    // decide the reduce/reduce conflict on the last token
+                    // (Java's `v = 1` of `@A(v = 1)`, an `element_value_pair`
+                    // that `_element_value` of precedence 2 closes, against
+                    // an `assignment_expression` of 1).
+                    let (close_a, close_b) = (closing_reduction(&a), closing_reduction(&b));
+                    let (own_a, own_b) = if PrecedenceTag::same(close_a.as_ref(), close_b.as_ref())
+                    {
+                        (None, None)
+                    } else {
+                        (close_a, close_b)
+                    };
+                    let order = compare_precedence(
+                        &own_a.unwrap_or_else(|| reduction(&a)),
+                        &own_b.unwrap_or_else(|| reduction(&b)),
+                        orders,
+                    );
                     if order != Ordering::Equal {
                         return order;
                     }
@@ -433,6 +471,37 @@ pub(super) fn shift_order(
                 }
             }
         }
+    }
+}
+
+/// Whether the leaves on top of two walks are children of one kind of node at
+/// one offset, so that no reduction above them parts the two first.
+fn same_parent(left: &[Walk], right: &[Walk]) -> bool {
+    let parent = |walk: &[Walk]| {
+        walk.iter().rev().find_map(|step| match step {
+            Walk::End(node) => Some(node.clone()),
+            _ => None,
+        })
+    };
+    match (parent(left), parent(right)) {
+        (None, None) => true,
+        (Some(x), Some(y)) => Rc::ptr_eq(&x, &y) || (x.kind == y.kind && x.start == y.start),
+        _ => false,
+    }
+}
+
+/// The precedence of the reduction that closes `node` on its last token, or
+/// None: the precedence the token was reduced with alone, or the one it was
+/// lexed under, or the one its last child node closes with (Java's
+/// `element_value_pair` `v = 1`, whose `1` the silent `_element_value` of
+/// precedence 2 reduced, while the pair itself is reduced with none). It
+/// mirrors closingReduction in js/src/grammar-runtime/executor.js.
+fn closing_reduction(node: &Tree) -> Option<PrecedenceTag> {
+    let last = meaningful(&node.children).pop()?;
+    match last.ty {
+        TreeType::Token => last.reduced.clone().or_else(|| last.precedence.clone()),
+        TreeType::Node => last.closes.clone(),
+        _ => None,
     }
 }
 
@@ -789,7 +858,14 @@ pub(super) fn settled_order(
                 tokens.map_or(Ordering::Equal, |tokens| preferred_tokens(a.0, b.0, tokens))
             }
             SettlingStep::Precedence => tokens.map_or(Ordering::Equal, |tokens| {
-                shift_order(a.0, b.0, tokens.orders, tokens.grammar, tokens.bytes, owner)
+                shift_order(
+                    (a.0, b.0),
+                    a.1.cmp(&b.1),
+                    tokens.orders,
+                    tokens.grammar,
+                    tokens.bytes,
+                    owner,
+                )
             }),
             SettlingStep::Dynamic => a.1.cmp(&b.1),
             SettlingStep::First | SettlingStep::Ambiguity => break,

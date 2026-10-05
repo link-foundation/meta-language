@@ -122,6 +122,11 @@ fn natives() -> Vec<Native> {
             Some(|| tree_sitter_ini::LANGUAGE.into())
         ),
         native!(
+            "native-java",
+            "java",
+            Some(|| tree_sitter_java::LANGUAGE.into())
+        ),
+        native!(
             "native-javascript",
             "javascript",
             Some(|| tree_sitter_javascript::LANGUAGE.into())

@@ -941,6 +941,12 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
     return null;
   };
   const skip = (stack) => { stack[stack.length - 1][1] += 1; };
+  // Whether the leaves next in the two are children of one kind of node at
+  // one offset, so that no reduction above them parts the two first.
+  const sameParent = (one, other) => {
+    const [x, y] = [one.at(-1)[2], other.at(-1)[2]];
+    return x === y || (x !== null && y !== null && x.kind === y.kind && x.start === y.start);
+  };
   const enter = (stack, node) => {
     skip(stack);
     stack.push([node.children, 0, node]);
@@ -952,6 +958,16 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
     if (a === b || (a.type !== 'node' && b.type !== 'node' && a.start === b.start && a.end === b.end)) {
       const parted = a === b ? 0 : silentParting(a, b, right) || -silentParting(b, a, left);
       if (parted !== 0) return parted;
+      // Or where one token rule lexed the leaf both reduced alone, each to a
+      // rule a declared conflict names, as children of one node (Java's `b`
+      // of `a = b::m;`, a `type_identifier` of an `unannotated_type` and an
+      // `identifier` of a `primary_expression`): the higher dynamic
+      // precedence wins, and then the rule defined first, as tree-sitter
+      // keeps where the forks merge. Under nodes apart, the reductions
+      // above part the two first (C's `aff;`, an `expression_statement`
+      // against a silent `empty_declaration`).
+      const forked = a === b || !sameParent(left, right) ? 0 : forkedLeaves(a, b, grammar);
+      if (forked !== 0) return Math.sign(result.dynamic - existing.dynamic) || forked;
       skip(left);
       skip(right);
       continue;
@@ -1003,9 +1019,19 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
         const [x, y] = [leftmostChain(a).at(-1).children.find((child) => !isTrivia(child)), leftmostChain(b).at(-1).children.find((child) => !isTrivia(child))];
         const lone = x?.type === 'token' && y?.type === 'token' && x.alone !== y.alone ? (x.alone ? -loneReduction(b, x, orders) : loneReduction(a, y, orders)) : 0;
         if (lone !== 0) return lone;
+        // When their parses forked at a declared conflict, tree-sitter
+        // keeps the higher dynamic precedence where they merge, before the
+        // lower symbol (Java's `A<B> c;`, a `generic_type` of dynamic
+        // precedence 10 against the `binary_expression` `A < B`).
         const forked = forkedOrder(a, b, grammar, bytes);
-        if (forked !== null) return forked;
-        const order = comparePrecedence(reduction(a), reduction(b), orders);
+        if (forked !== null) return Math.sign(result.dynamic - existing.dynamic) || forked;
+        // Where the reductions that close the two differ, those decide
+        // the reduce/reduce conflict on the last token (Java's `v = 1` of
+        // `@A(v = 1)`, an `element_value_pair` that `_element_value` of
+        // precedence 2 closes, against an `assignment_expression` of 1).
+        const [closeA, closeB] = [closingReduction(a), closingReduction(b)];
+        const apart = !samePrecedence(closeA, closeB);
+        const order = comparePrecedence((apart && closeA) || reduction(a), (apart && closeB) || reduction(b), orders);
         if (order !== 0) return order;
       }
     }
@@ -1021,6 +1047,33 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
     if (a.type === 'node') enter(left, a);
     if (b.type === 'node') enter(right, b);
   }
+}
+
+// The precedence of the reduction that closes `node` on its last token, or
+// null: the precedence the token was reduced with alone, or the one it was
+// lexed under, or the one its last child node closes with (Java's
+// `element_value_pair` `v = 1`, whose `1` the silent `_element_value` of
+// precedence 2 reduced, while the pair itself is reduced with none).
+function closingReduction(node) {
+  const last = node.children.findLast((child) => !isTrivia(child));
+  if (last?.type === 'token') return last.reduced ?? last.precedence ?? null;
+  return last?.type === 'node' ? last.closes ?? null : null;
+}
+
+// Which of two leaves over one span a generalized LR parser keeps when one
+// token rule lexed both and each was reduced alone to rules the other was
+// not, and a declared conflict names one rule of each (Java's `b` of
+// `a = b::m;`, reduced to an `unannotated_type` in one parse and to a
+// `primary_expression` in the other): tree-sitter forks on the
+// reduce/reduce conflict and, where the forks merge, keeps the tree of the
+// lower symbol, the rule defined first. 1 when `a` is kept, -1 when `b` is,
+// and 0 when no declared conflict parts them.
+function forkedLeaves(a, b, grammar) {
+  if (!grammar || grammar.conflicts.length === 0 || !a.alone || !b.alone || a.lexed === undefined || a.lexed !== b.lexed) return 0;
+  const [mine, theirs] = [[a, b], [b, a]].map(([own, other]) => (own.forkedTo ?? []).filter((name) => !other.forkedTo?.includes(name)));
+  if (!grammar.conflicts.some((group) => mine.some((name) => group.has(name)) && theirs.some((name) => group.has(name)))) return 0;
+  const rank = (names) => Math.min(...names.map((name) => grammar.ranks.get(name) ?? Infinity));
+  return Math.sign(rank(theirs) - rank(mine));
 }
 
 // Which of two results an LR parser keeps when one of them reduced a token
@@ -1213,7 +1266,10 @@ function forkedOrder(a, b, grammar, bytes = null) {
     return out;
   };
   const [first, second] = [steps(a, []), steps(b, [])];
-  const same = (x, y) => x.type === y.type && x.kind === y.kind && x.start === y.start && x.end === y.end;
+  // Two leaves one token rule lexed are one step, whatever they are named
+  // (Java's `A`, a `type_identifier` and an `identifier`).
+  const same = (x, y) => x.type === y.type && x.start === y.start && x.end === y.end
+    && (x.kind === y.kind || (x.type === 'token' && x.lexed !== undefined && x.lexed === y.lexed));
   let at = 0;
   while (at < first.length && at < second.length && same(first[at], second[at])) at += 1;
   if (at === 0 || at === first.length || at === second.length) return null;

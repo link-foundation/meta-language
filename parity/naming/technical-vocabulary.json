@@ -310,6 +310,18 @@
       "partsOfSpeech": ["verb"],
       "definition": "To turn off a flag or an option, as the Rocq command Unset does.",
       "source": "Rocq Reference Manual, section Flags, options and tables, Unset"
+    },
+    {
+      "word": "inferred",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Worked out by the compiler instead of written in the source, as the types of the parameters of the Java lambda expression (x, y) -> x + y are.",
+      "source": "The Java Language Specification, section 15.27.1, Lambda Parameters"
+    },
+    {
+      "word": "unannotated",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Written without annotations, as a Java type with no type annotations before it is.",
+      "source": "The Java Language Specification, section 8.3, UnannType"
     }
   ]
 }
