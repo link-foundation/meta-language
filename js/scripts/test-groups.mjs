@@ -18,7 +18,7 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 /** Test groups, each a pattern over the test file name without `.test.js`. */
 export const TEST_GROUPS = Object.freeze({
   grammar:
-    /^(?:grammar-|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|unicode-input-|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
+    /^(?:grammar-|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|issue-195-merge-real-reconciliation$|unicode-input-|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
   translation:
     /^(?:translation|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation$)/u,
   conformance:
