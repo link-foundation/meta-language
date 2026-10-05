@@ -332,6 +332,40 @@ fn a_repaired_result_preempts_no_cheaper_one_where_the_scanner_scans_a_token_of_
 }
 
 #[test]
+fn a_lexer_of_merged_lex_states_lexes_a_longer_token_no_item_of_its_state_takes() {
+    // Tree-sitter merges the lex states of parse states whose tokens do not
+    // conflict: after `0` only a member access `.` is valid, yet the lexer
+    // lexes the number `.9`, as no property name begins with `9`, and the
+    // error is the number, with no MISSING property name after a `.`. A `.` a
+    // property name follows, or the `.` after the number `1.`, stays a member
+    // access.
+    let typescript = parser(GRAMMARS[10].1);
+    for (source, offset, repair) in [
+        ("x = 0 .9 ;", 6, "ERROR@6..8"),
+        ("x = { c : 0 .9 , s : \"x\" } ;", 12, "ERROR@12..14"),
+    ] {
+        let outcome = parse(&typescript, source, &FeatureParseOptions::default());
+        assert_eq!(
+            outcome.rejection.and_then(|rejection| rejection.offset),
+            Some(offset),
+            "{source:?}"
+        );
+        let tree = rendered(&parse(&typescript, source, &recover()));
+        let repairs: Vec<&str> = tree
+            .split(['(', ' '])
+            .filter(|part| part.starts_with("ERROR@") || part.starts_with("MISSING@"))
+            .collect();
+        assert_eq!(repairs, [repair], "{tree}");
+    }
+    for source in ["x = a . b ;", "x = 1..toString ( ) ;", "x = a ?. b ;"] {
+        assert!(
+            parse(&typescript, source, &FeatureParseOptions::default()).ok,
+            "{source:?}"
+        );
+    }
+}
+
+#[test]
 fn a_missing_keyword_is_named_by_its_literal() {
     // A keyword token is its literal and a lookahead that no word character
     // follows; as tree-sitter names its keyword token, its MISSING leaf is

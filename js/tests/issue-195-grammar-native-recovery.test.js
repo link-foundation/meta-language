@@ -139,6 +139,23 @@ test('a repaired result preempts no cheaper one where the scanner scans a token 
   }
 });
 
+test('a lexer of merged lex states lexes a longer token no item of its state takes', () => {
+  // Tree-sitter merges the lex states of parse states whose tokens do not
+  // conflict: after `0` only a member access `.` is valid, yet the lexer lexes
+  // the number `.9`, as no property name begins with `9`, and the error is the
+  // number, with no MISSING property name after a `.`. A `.` a property name
+  // follows, or the `.` after the number `1.`, stays a member access.
+  const typescript = grammars.find(({ entry }) => entry.id === 'typescript').parser;
+  for (const [source, repair] of [['x = 0 .9 ;', 'ERROR@6..8'], ['x = { c : 0 .9 , s : "x" } ;', 'ERROR@12..14']]) {
+    assert.equal(typescript.parseTree(source).rejection?.offset, Number(repair.slice(6, repair.indexOf('.'))), source);
+    const rendered = renderSyntaxTree(typescript.parseTree(source, RECOVER).tree);
+    assert.deepEqual(rendered.match(/ERROR@\d+\.\.\d+|MISSING@\d+/gu), [repair], rendered);
+  }
+  for (const source of ['x = a . b ;', 'x = 1..toString ( ) ;', 'x = a ?. b ;']) {
+    assert.ok(typescript.parseTree(source).ok, source);
+  }
+});
+
 test('a missing keyword is named by its literal', () => {
   // A keyword token is its literal and a lookahead that no word character
   // follows; as tree-sitter names its keyword token, its MISSING leaf is the

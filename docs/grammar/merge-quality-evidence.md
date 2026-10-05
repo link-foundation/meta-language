@@ -140,7 +140,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-json5` | 36 | 36 | 28 | 34 | none |
 | `native-lean` | 42 | 42 | 25 | 51 | merged-extension 1, native-skips-more 20, oracle-skips-more 52, same-repair-sites 15, same-skipped-bytes 9 |
 | `native-racket` | 60 | 60 | 29 | 75 | none |
-| `native-rocq` | 12 | 12 | 2 | 25 | none |
+| `native-rocq` | 12 | 12 | 2 | 25 | native-skips-more 10, oracle-skips-more 53, same-repair-sites 2, same-skipped-bytes 7 |
 | `native-rust` | 38 | 38 | 15 | 58 | native-skips-more 14, oracle-skips-more 49, same-repair-sites 7, same-skipped-bytes 5 |
 | `native-scheme` | 50 | 50 | 28 | 28 | none |
 | `native-tsx` | 16 | 16 | 3 | 17 | none |

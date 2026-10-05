@@ -13,11 +13,15 @@ use std::sync::{Mutex, OnceLock};
 mod lead_sets;
 
 use super::precedence::nullable;
-use super::program::{Associativity, Expr, Name, PrecedenceTag, Rule, Target, compare_precedence};
+use super::program::{
+    Associativity, Expr, Name, PrecedenceTag, Rule, Target, Trivia, compare_precedence,
+};
 use super::results::{ChildList, Children, Tree, TreeType};
 use super::walk::{first_meaningful, meaningful, same_tree};
 use crate::grammar::{PrecedenceEntry, RuleKind};
-use lead_sets::{first_of, first_of_items, first_sets, follow_sets, left_corner_follow};
+use lead_sets::{
+    first_of, first_of_items, first_sets, follow_sets, left_corner_follow, literal_follow_sets,
+};
 
 /// The rules each rule takes directly as its first part, by rule name (see
 /// `shift_reduction`), the order the rules are defined in and the groups of
@@ -44,6 +48,19 @@ pub(super) struct GrammarFacts {
     /// The reductions before a following token, found once asked for (see
     /// `reduction_facts`).
     reductions: OnceLock<Reductions>,
+    /// What a lexer of merged lex states asks of the rules, found once asked
+    /// for (see `merged_lexing`).
+    merged: OnceLock<MergedLexing>,
+}
+
+/// What a lexer of merged lex states asks of a program (see `merged_longer`
+/// in lexing.rs): the token rules that are no extra, by rule index, and the
+/// tokens that may follow each literal, by its text. It mirrors mergedLexing
+/// in js/src/grammar-runtime/executor.js.
+#[derive(Debug, Default)]
+pub(super) struct MergedLexing {
+    pub(super) tokens: Vec<usize>,
+    pub(super) follow: HashMap<Vec<u8>, HashSet<Lead>>,
 }
 
 /// A token a parser may see first, as tree-sitter's FIRST sets name it: a
@@ -139,6 +156,7 @@ impl GrammarFacts {
             item_orders: Mutex::default(),
             forks: Mutex::default(),
             reductions: OnceLock::new(),
+            merged: OnceLock::new(),
         }
     }
 
@@ -153,6 +171,26 @@ impl GrammarFacts {
     pub(super) fn reductions(&self, rules: &[Rule]) -> &Reductions {
         self.reductions
             .get_or_init(|| reduction_facts(&self.conflicts, rules))
+    }
+
+    /// What a lexer of merged lex states asks of the program's `rules`, of
+    /// its `trivia` (see `MergedLexing`).
+    pub(super) fn merged_lexing(&self, rules: &[Rule], trivia: &[Trivia]) -> &MergedLexing {
+        self.merged.get_or_init(|| {
+            let extras: HashSet<&str> = trivia
+                .iter()
+                .filter_map(|trivia| trivia.kind.as_deref())
+                .collect();
+            MergedLexing {
+                tokens: (0..rules.len())
+                    .filter(|&index| {
+                        rules[index].kind == RuleKind::Token
+                            && !extras.contains(&*rules[index].name)
+                    })
+                    .collect(),
+                follow: literal_follow_sets(rules, &first_sets(rules)),
+            }
+        })
     }
 
     /// Whether a declared conflict names both rules.

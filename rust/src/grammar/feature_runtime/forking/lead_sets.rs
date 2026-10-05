@@ -173,6 +173,75 @@ pub(super) fn follow_walk(
     }
 }
 
+/// The tokens that may follow each literal the `rules` lex in syntactic
+/// context, by its text, wherever it occurs: the lookaheads of the literal's
+/// token in every LR state, by the FIRST sets `first` (see `first_sets`). It
+/// mirrors literalFollowSets in js/src/grammar-runtime/executor.js.
+pub(super) fn literal_follow_sets(
+    rules: &[Rule],
+    first: &[HashSet<Lead>],
+) -> HashMap<Vec<u8>, HashSet<Lead>> {
+    let follow = follow_sets(rules, first);
+    let mut sets = HashMap::new();
+    for (index, rule) in rules.iter().enumerate() {
+        if !matches!(rule.kind, RuleKind::Token | RuleKind::Atomic) {
+            literal_walk(&rule.expression, &follow[index], rules, first, &mut sets);
+        }
+    }
+    sets
+}
+
+/// Adds `after`, the tokens that may follow `expr`, to the sets of the
+/// literals within it (see `literal_follow_sets`).
+fn literal_walk(
+    expr: &Expr,
+    after: &HashSet<Lead>,
+    rules: &[Rule],
+    first: &[HashSet<Lead>],
+    sets: &mut HashMap<Vec<u8>, HashSet<Lead>>,
+) {
+    match expr {
+        Expr::Terminal {
+            matcher: Matcher::Literal(text),
+            ..
+        } => sets
+            .entry(text.clone())
+            .or_default()
+            .extend(after.iter().cloned()),
+        Expr::Seq(items) => {
+            let mut rest = after.clone();
+            for item in items.iter().rev() {
+                literal_walk(item, &rest, rules, first, sets);
+                let mut own = HashSet::new();
+                first_of(item, rules, first, &mut own);
+                if nullable(item) {
+                    own.extend(rest);
+                }
+                rest = own;
+            }
+        }
+        Expr::Repeat {
+            item, max: Some(1), ..
+        }
+        | Expr::Alias { item, .. }
+        | Expr::Capture { item, .. }
+        | Expr::Precedence { item, .. }
+        | Expr::DynamicPrecedence { item, .. } => literal_walk(item, after, rules, first, sets),
+        Expr::Repeat { item, .. } => {
+            let mut next = HashSet::new();
+            first_of(item, rules, first, &mut next);
+            next.extend(after.iter().cloned());
+            literal_walk(item, &next, rules, first, sets);
+        }
+        Expr::Choice { items, .. } => {
+            for item in items {
+                literal_walk(item, after, rules, first, sets);
+            }
+        }
+        _ => {}
+    }
+}
+
 /// The rules `expr` is a unit chain over (a choice, a precedence, a field or
 /// an alias over a rule), by rule index (see `left_corner_follow`).
 pub(super) fn units(expr: &Expr, found: &mut Vec<usize>) {

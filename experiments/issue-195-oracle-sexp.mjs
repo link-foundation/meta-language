@@ -15,4 +15,8 @@ const entry = languageEntry(language);
 const id = (entry.oracleGrammars ?? entry.grammars)[0].id;
 const parser = new Parser();
 parser.setLanguage(loadGrammarLanguage(gunzipSync(readFileSync(new URL(`../${grammarFile(lock.grammars[id], `${id}.wasm.gz`)}`, import.meta.url)))));
-for (const source of sources) console.log(parser.parse(source.replaceAll('\\n', '\n')).rootNode.toString());
+const parseBytes = (text) => {
+  const bytes = Buffer.from(text, 'utf8');
+  return parser.parse((index) => String.fromCharCode(...bytes.subarray(index, Math.min(bytes.length, index + 4096))));
+};
+for (const source of sources) console.log(parseBytes(source.replaceAll('\\n', '\n')).rootNode.toString());

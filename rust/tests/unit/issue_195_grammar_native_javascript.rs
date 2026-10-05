@@ -238,7 +238,9 @@ fn native_javascript_grammar_rejects_invalid_input() {
     }
     // The string fragment `//`, of lexical precedence 1, is no comment of
     // precedence 0 after the opening quote, though the comment is longer: the
-    // error is where it is, not at the end of a string the comment ran to.
+    // error is where it is, not at the end of a string the comment ran to: at
+    // the number `.1`, which a lexer of merged lex states lexes after `0`,
+    // where only a member access `.` is valid, as the oracle does.
     let recovering = FeatureParseOptions {
         error_recovery: Some(true),
         accept_recovery: Some(true),
@@ -260,9 +262,9 @@ fn native_javascript_grammar_rejects_invalid_input() {
             .collect()
     };
     for (source, offset) in [
-        ("x = a || 0 .1 ;", 12),
-        ("y = \"//\" ; x = a || 0 .1 ;", 23),
-        ("y = '/*' ; x = a || 0 .1 ;", 23),
+        ("x = a || 0 .1 ;", 11),
+        ("y = \"//\" ; x = a || 0 .1 ;", 22),
+        ("y = '/*' ; x = a || 0 .1 ;", 22),
     ] {
         let outcome = parser
             .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
@@ -274,18 +276,12 @@ fn native_javascript_grammar_rejects_invalid_input() {
         );
         assert_eq!(
             repairs(source),
-            [
-                format!("missing@{offset}-{offset}"),
-                format!("error@{offset}-{}", offset + 1)
-            ],
+            [format!("error@{offset}-{}", offset + 2)],
             "{source:?}"
         );
     }
     // An error after the string leaves the string as it is.
-    assert_eq!(
-        repairs("x = a || 0 .1 ; y = \"//\" ; z ;"),
-        ["missing@12-12", "error@12-13"]
-    );
+    assert_eq!(repairs("x = a || 0 .1 ; y = \"//\" ; z ;"), ["error@11-13"]);
     // A comment right after a closing quote stays a comment.
     for source in ["x = \"a\"// c\n", "x = \"a\"/* c */;"] {
         let tree = parse(&parser, source).unwrap_or_else(|| panic!("{source:?}"));

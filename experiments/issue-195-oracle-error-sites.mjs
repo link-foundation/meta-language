@@ -15,8 +15,12 @@ const entry = languageEntry(language);
 const id = (entry.oracleGrammars ?? entry.grammars)[0].id;
 const parser = new Parser();
 parser.setLanguage(loadGrammarLanguage(gunzipSync(readFileSync(new URL(`../${grammarFile(lock.grammars[id], `${id}.wasm.gz`)}`, import.meta.url)))));
+const parseBytes = (text) => {
+  const bytes = Buffer.from(text, 'utf8');
+  return parser.parse((index) => String.fromCharCode(...bytes.subarray(index, Math.min(bytes.length, index + 4096))));
+};
 const source = readFileSync(file, 'utf8');
-const tree = parser.parse(source);
+const tree = parseBytes(source);
 const walk = (node) => {
   if (node.type === 'ERROR' || node.isMissing) {
     console.log(JSON.stringify({ type: node.type, missing: node.isMissing, start: node.startIndex, text: source.slice(Math.max(0, node.startIndex - 60), node.startIndex + 60) }));

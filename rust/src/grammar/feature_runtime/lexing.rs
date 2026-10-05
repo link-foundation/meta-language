@@ -6,6 +6,7 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use super::executor::{Element, Executor, Run};
+use super::forking::Lead;
 use super::operations::State;
 use super::program::{Expr, InExtra, Matcher, Name, Target};
 use super::results::{
@@ -337,6 +338,71 @@ impl Executor<'_> {
         Ok(starts)
     }
 
+    /// Under `(matching longest)`, whether a lexer lexes another token than
+    /// the literal `text` over `[start, end)`: tree-sitter merges the lex
+    /// states of parse states whose tokens do not conflict, so a state's lexer
+    /// also lexes tokens no item of the state takes, and the longest token
+    /// wins. A token rule merges with a literal when it never matches the
+    /// literal's text and no token that may follow the literal anywhere in
+    /// the grammar, nor a separator, begins with the input it matches past
+    /// the literal. So in TypeScript's `0 .9` the number `.9` is lexed after
+    /// `0`, where only a member access `.` is valid, as no property name
+    /// begins with `9`; Lean's projection `.1` keeps its `.`, a number
+    /// following it. It mirrors mergedLonger in
+    /// js/src/grammar-runtime/executor.js.
+    fn merged_longer(&mut self, text: &[u8], start: usize, end: usize, state: &State) -> Run<bool> {
+        let program = self.program;
+        let merged = program
+            .grammar
+            .merged_lexing(&program.rules, &program.trivia);
+        let mut longer = false;
+        for &index in &merged.tokens {
+            let expression = &program.rules[index].expression;
+            let ends: Vec<usize> = self
+                .quietly(|this| this.evaluate(expression, start, state, true))?
+                .iter()
+                .map(|result| result.end)
+                .collect();
+            if ends.iter().any(|&reach| reach > end) && !ends.contains(&end) {
+                longer = true;
+                break;
+            }
+        }
+        if !longer || self.skip_trivia(end, state)?.end > end {
+            return Ok(false);
+        }
+        for key in merged.follow.get(text).into_iter().flatten() {
+            match key {
+                Lead::Literal(literal) => {
+                    if literal
+                        .first()
+                        .is_some_and(|byte| self.bytes.get(end) == Some(byte))
+                    {
+                        return Ok(false);
+                    }
+                }
+                Lead::Ref(name) => {
+                    if program.external.contains_key(&**name) {
+                        return Ok(false);
+                    }
+                    if let Some(&index) = program.rule_index.get(&**name)
+                        && matches!(
+                            program.rules[index].kind,
+                            RuleKind::Token | RuleKind::Atomic
+                        )
+                        && longest_result(self.quietly(|this| {
+                            this.reference(&Target::Rule(index), end, state, true)
+                        })?)
+                        .is_some_and(|result| result.end > end)
+                    {
+                        return Ok(false);
+                    }
+                }
+            }
+        }
+        Ok(true)
+    }
+
     /// A terminal: its matcher, its expectation and the id of the literal
     /// where a scanner's `expected` asks about it.
     pub(super) fn terminal(
@@ -372,15 +438,21 @@ impl Executor<'_> {
             && self.keywords.is_some()
             && matches!(matcher, Matcher::Literal(literal)
                 if self.longest_tokens.is_some_and(|tokens| tokens.ranks.immediate.contains(literal)));
-        let Some(end) = found
+        let mut found = found
             .or_else(|| matcher.matches(self.bytes, start, self.end))
             .filter(|end| {
                 !plain
                     || !self
                         .keywords
                         .is_some_and(|keywords| keywords.borrow().immediate_only((start, *end)))
-            })
-        else {
+            });
+        if let (Some(end), false, Matcher::Literal(literal)) = (found, in_token, matcher)
+            && self.lexing.is_some()
+            && self.merged_longer(literal, start, end, state)?
+        {
+            found = None;
+        }
+        let Some(end) = found else {
             self.fail(start, expectation);
             if in_token {
                 return Ok(Vec::new());

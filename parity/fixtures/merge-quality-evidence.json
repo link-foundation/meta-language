@@ -182,7 +182,7 @@
       "coverage": {"rules": {"normal": 203, "atomic": 0, "silent": 46, "token": 16}, "visibleRules": 203, "exercisedRules": 191, "checkedKinds": 203, "checkedFields": 29, "renamed": 84, "expandedWords": 27, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 0, "conflict": 16, "precedences": 2, "extra": 2, "kind": 0},
       "correctness": {"matches": 230, "rows": 9440, "bytes": 20820, "divergences": 0, "rejections": 12},
-      "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {}},
+      "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {"native-skips-more": 10, "oracle-skips-more": 53, "same-repair-sites": 2, "same-skipped-bytes": 7}},
       "reuse": {"shared": 29, "specific": 236}
     },
     {

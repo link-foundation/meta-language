@@ -537,6 +537,55 @@ function followSets(rules, first) {
   return sets;
 }
 
+// The tokens that may follow each literal the `rules` lex in syntactic
+// context, by its text, wherever it occurs: the lookaheads of the literal's
+// token in every LR state, by the FIRST sets `first`.
+function literalFollowSets(rules, first) {
+  const follow = followSets(rules, first);
+  const sets = new Map();
+  const walk = (expression, after) => {
+    switch (expression.kind) {
+      case 'literal': {
+        let set = sets.get(expression.value);
+        if (!set) sets.set(expression.value, (set = new Set()));
+        for (const key of after) set.add(key);
+        break;
+      }
+      case 'seq': {
+        let rest = after;
+        for (const item of [...expression.items].reverse()) {
+          walk(item, rest);
+          const own = firstOf(item, rules, first);
+          rest = nullable(item) ? new Set([...own, ...rest]) : own;
+        }
+        break;
+      }
+      case 'repeat0': case 'repeat1': case 'repeat':
+        walk(expression.item, new Set([...firstOf(expression.item, rules, first), ...after]));
+        break;
+      case 'choice': for (const item of expression.items) walk(item, after); break;
+      case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
+        walk(expression.item, after);
+    }
+  };
+  for (const [name, rule] of rules) if (rule.kind !== 'token' && rule.kind !== 'atomic') walk(rule.expression, follow.get(name));
+  return sets;
+}
+
+// What a lexer of merged lex states asks of `program`, computed once per
+// program (see `mergedLonger`): the token rules that are no extra, and the
+// tokens that may follow each literal.
+function mergedLexing(program) {
+  const grammar = grammarFacts(program);
+  if (!grammar.merged) {
+    grammar.first ??= firstSets(grammar.rules);
+    const extras = new Set(program.trivia.map(({ kind }) => kind).filter((kind) => kind !== null));
+    const tokens = [...program.rules].filter(([name, rule]) => rule.kind === 'token' && !extras.has(name)).map(([name, rule]) => ({ name, rule }));
+    grammar.merged = { tokens, follow: literalFollowSets(grammar.rules, grammar.first) };
+  }
+  return grammar.merged;
+}
+
 // The tokens that follow each of the `rules` where it is the first part of a
 // production, through its unit chains (a choice, a precedence, a field or an
 // alias over it): the lookaheads its reduction has in every LR state it
@@ -2062,6 +2111,38 @@ export class Executor {
     return this.view.unitToByte.get(unit + match[0].length) ?? -1;
   }
 
+  // Under `(matching longest)`, whether a lexer lexes another token than the
+  // literal `text` over `[start, end)`: tree-sitter merges the lex states of
+  // parse states whose tokens do not conflict, so a state's lexer also lexes
+  // tokens no item of the state takes, and the longest token wins. A token
+  // rule merges with a literal when it never matches the literal's text and
+  // no token that may follow the literal anywhere in the grammar, nor a
+  // separator, begins with the input it matches past the literal. So in
+  // TypeScript's `0 .9` the number `.9` is lexed after `0`, where only a
+  // member access `.` is valid, as no property name begins with `9`; Lean's
+  // projection `.1` keeps its `.`, a number following it.
+  mergedLonger(text, start, end, state) {
+    const { tokens, follow } = mergedLexing(this.program);
+    const longer = tokens.some(({ rule }) => {
+      const ends = this.quietly(() => this.evaluate(rule.expression, start, state, true)).map((result) => result.end);
+      return ends.some((reach) => reach > end) && !ends.includes(end);
+    });
+    if (!longer) return false;
+    if (this.skipTrivia(end, state).end > end) return false;
+    for (const key of follow.get(text) ?? []) {
+      const [kind, name] = [key.slice(0, key.indexOf(' ')), key.slice(key.indexOf(' ') + 1)];
+      if (kind === 'literal') {
+        if (this.bytes[end] === Buffer.from(name, 'utf8')[0]) return false;
+        continue;
+      }
+      if (this.program.externalTokens.has(name)) return false;
+      const rule = this.program.rules.get(name);
+      if (rule && (rule.kind === 'token' || rule.kind === 'atomic')
+        && (this.quietly(() => longestResult(this.evaluate({ kind: 'ref', name }, end, state, true))?.end ?? -1)) > end) return false;
+    }
+    return true;
+  }
+
   terminal(expression, position, state, inToken) {
     if (!inToken) this.requestItem(expression, position);
     let { end: start, leaves } = this.terminalStart(position, state, inToken);
@@ -2072,6 +2153,7 @@ export class Executor {
     // `KeywordLexing`) is not lexed plainly where the immediate one outranks it.
     const plain = !inToken && expression.kind === 'literal' && this.keywords?.tokens.immediate.has(expression.value);
     if (plain && end >= 0 && this.keywords.immediateOnly(start, end)) end = -1;
+    if (end >= 0 && !inToken && this.lexing && expression.kind === 'literal' && this.mergedLonger(expression.value, start, end, state)) end = -1;
     if (end < 0) {
       this.fail(start, expectationOf(expression));
       if (inToken) return [];
