@@ -812,7 +812,7 @@ pub(super) fn items_order(
         return order;
     }
     let (mut more, mut less) = (false, false);
-    for slot in key.4.iter().collect::<HashSet<_>>() {
+    for slot in &key.4 {
         for (_, item) in shift_items(grammar, slot) {
             if !item.rest.contains(lookahead) {
                 continue;

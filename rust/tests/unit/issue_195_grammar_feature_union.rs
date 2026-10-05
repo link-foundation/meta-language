@@ -741,11 +741,19 @@ fn external_scanners_and_semantic_actions_are_executable_link_definitions() {
     let runtime = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/grammar/feature_runtime");
     let host_code = Regex::new(r"\bunsafe\b|process::Command|libloading|dlopen").expect("pattern");
     let mut files = 0;
-    for entry in std::fs::read_dir(&runtime).expect("the runtime directory reads") {
-        let path = entry.expect("entry").path();
-        let source = std::fs::read_to_string(&path).expect("the source reads");
-        assert!(!host_code.is_match(&source), "{}", path.display());
-        files += 1;
+    // The runtime's submodules sit in directories of their own.
+    let mut directories = vec![runtime];
+    while let Some(directory) = directories.pop() {
+        for entry in std::fs::read_dir(&directory).expect("the runtime directory reads") {
+            let path = entry.expect("entry").path();
+            if path.is_dir() {
+                directories.push(path);
+                continue;
+            }
+            let source = std::fs::read_to_string(&path).expect("the source reads");
+            assert!(!host_code.is_match(&source), "{}", path.display());
+            files += 1;
+        }
     }
     assert!(files > 0);
     observe(

@@ -741,7 +741,7 @@ fn contains_node(outer: Node<'_>, inner: Node<'_>) -> bool {
         && (inner_start < inner_end || (outer_start < inner_start && inner_start < outer_end))
 }
 
-fn is_rocq_language(language: &str) -> bool {
+const fn is_rocq_language(language: &str) -> bool {
     language.eq_ignore_ascii_case("rocq") || language.eq_ignore_ascii_case("coq")
 }
 

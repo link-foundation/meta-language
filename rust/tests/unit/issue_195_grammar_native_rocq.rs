@@ -233,3 +233,64 @@ fn native_rocq_trees_keep_every_byte() {
         "native Rocq trees keep every byte",
     );
 }
+
+#[test]
+fn native_rocq_trees_follow_the_oracle_on_a_byte_order_mark_and_an_end_after_a_match() {
+    let fixture = fixture();
+    let rows = Rows::new(&fixture);
+    let parser = parser();
+    // The tree-sitter-rocq oracle rows of js/tests/issue-195-grammar-native-rocq.test.js:
+    // a tree-sitter lexer skips a byte order mark at the start of the input,
+    // and `end` after the `end` of a match is no keyword of the closed match.
+    for (source, oracle) in [
+        (
+            "\u{feff}Check x.",
+            serde_json::json!([
+                [0, null, "source_file", 1, 3, 11, ""],
+                [1, null, "sentence", 1, 3, 11, ""],
+                [2, null, "evaluation_command", 1, 3, 10, ""],
+                [3, null, "Check", 0, 3, 8, ""],
+                [3, null, "ident", 1, 9, 10, ""],
+                [2, null, ".", 0, 10, 11, ""]
+            ]),
+        ),
+        (
+            "Check match x with y => y end > 0 end.",
+            serde_json::json!([
+                [0, null, "source_file", 1, 0, 38, ""],
+                [1, null, "sentence", 1, 0, 38, ""],
+                [2, null, "evaluation_command", 1, 0, 37, ""],
+                [3, null, "Check", 0, 0, 5, ""],
+                [3, null, "comparison_operation", 1, 6, 37, ""],
+                [4, null, "match_expression", 1, 6, 29, ""],
+                [5, null, "match", 0, 6, 11, ""],
+                [5, null, "case_item", 1, 12, 13, ""],
+                [6, null, "ident", 1, 12, 13, ""],
+                [5, null, "with", 0, 14, 18, ""],
+                [5, null, "match_case", 1, 19, 25, ""],
+                [6, null, "pattern_option", 1, 19, 20, ""],
+                [7, "pattern", "ident", 1, 19, 20, ""],
+                [6, null, "=>", 0, 21, 23, ""],
+                [6, "body", "ident", 1, 24, 25, ""],
+                [5, null, "end", 0, 26, 29, ""],
+                [4, null, ">", 0, 30, 31, ""],
+                [4, null, "application", 1, 32, 37, ""],
+                [5, null, "number", 1, 32, 33, ""],
+                [5, null, "ident", 1, 34, 37, ""],
+                [2, null, ".", 0, 37, 38, ""]
+            ]),
+        ),
+    ] {
+        let tree = parse(&parser, source).unwrap_or_else(|| panic!("{source:?}"));
+        assert_eq!(Value::Array(rows.rows(&tree, source)), oracle, "{source:?}");
+    }
+    // An unclosed nested comment is no comment.
+    let outcome = parser
+        .parse_tree(b"(* Outer (* Inner *)", &FeatureParseOptions::default())
+        .expect("the parse runs");
+    assert!(!outcome.ok);
+    observe(
+        &["nativeRocqTreesMatchOracle", "nativeRocqRejectsInvalidInput"],
+        "native Rocq trees follow the oracle on a byte order mark and an end after a match",
+    );
+}

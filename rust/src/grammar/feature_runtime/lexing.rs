@@ -46,6 +46,19 @@ fn separator_run_kind(matcher: &Matcher, start: usize, end: usize) -> Option<Nam
     }
 }
 
+/// A UTF-8 byte order mark.
+const BYTE_ORDER_MARK: &[u8] = b"\xef\xbb\xbf";
+
+/// What an extra's text is where it starts (see `extra_node`).
+pub(super) enum Extra {
+    /// The node an extra of a rule that builds one makes, and its end.
+    Node(Rc<Tree>, usize),
+    /// A trivia leaf.
+    Leaf,
+    /// No extra.
+    None,
+}
+
 impl Executor<'_> {
     /// Skips trivia: repeatedly the longest match of any trivia expression
     /// allowed in the current mode. Inside an extra that builds a node, only
@@ -96,7 +109,16 @@ impl Executor<'_> {
         at_extra: bool,
     ) -> Run<usize> {
         let trivia = &self.program.trivia;
-        let mut cursor = position;
+        // A tree-sitter lexer skips a byte order mark at the start of the input.
+        let mut cursor = if position == 0
+            && self.longest_tokens.is_some()
+            && self.bytes.starts_with(BYTE_ORDER_MARK)
+        {
+            leaves.push(Rc::new(Tree::trivia_leaf(None, 0, BYTE_ORDER_MARK.len())));
+            BYTE_ORDER_MARK.len()
+        } else {
+            position
+        };
         loop {
             let mut best = cursor;
             let mut best_kind = None;
@@ -125,12 +147,16 @@ impl Executor<'_> {
             if best == cursor {
                 break;
             }
-            if let Some((node, end)) = self.extra_node(best_kind.as_ref(), cursor, best, state)? {
-                leaves.push(node);
-                cursor = end;
-            } else {
-                leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
-                cursor = best;
+            match self.extra_node(best_kind.as_ref(), cursor, best, state)? {
+                Extra::Node(node, end) => {
+                    leaves.push(node);
+                    cursor = end;
+                }
+                Extra::Leaf => {
+                    leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
+                    cursor = best;
+                }
+                Extra::None => break,
             }
         }
         Ok(cursor)
@@ -187,7 +213,8 @@ impl Executor<'_> {
 
     /// The node an extra of a rule that builds one makes of its text, parsed
     /// as syntax, as a tree-sitter extra of a rule that is no token is a node
-    /// with its children (Rust's doc comments); None for any other extra.
+    /// with its children (Rust's doc comments); a leaf for any other extra,
+    /// and none where the text is no extra.
     /// Under `(matching longest)` the parse is the one with the tokens a lexer
     /// prefers, which may end before the longest (Rust's `////` is a comment
     /// without a doc marker); otherwise the one that ends at `end`. Gives the
@@ -198,15 +225,16 @@ impl Executor<'_> {
         start: usize,
         end: usize,
         state: &State,
-    ) -> Run<Option<(Rc<Tree>, usize)>> {
+    ) -> Run<Extra> {
         let Some(&index) = kind.and_then(|kind| self.program.rule_index.get(&**kind)) else {
-            return Ok(None);
+            return Ok(Extra::Leaf);
         };
         if !matches!(self.program.rules[index].kind, RuleKind::Normal) {
-            return Ok(None);
+            return Ok(Extra::Leaf);
         }
         let outer = (self.in_extra, self.extra_start);
-        self.in_extra = if kind.is_some_and(|kind| self.program.nesting_extras.contains(kind)) {
+        let nesting = kind.is_some_and(|kind| self.program.nesting_extras.contains(kind));
+        self.in_extra = if nesting {
             InExtra::Nesting
         } else {
             InExtra::Flat
@@ -215,13 +243,23 @@ impl Executor<'_> {
         let results =
             self.quietly(|this| this.reference(&Target::Rule(index), start, state, false));
         (self.in_extra, self.extra_start) = outer;
+        let parsed: Vec<Res> = results?
+            .into_iter()
+            .filter(|result| result.cost == 0)
+            .collect();
+        // An extra other extras nest in is syntax to a tree-sitter lexer, which
+        // lexes the nested extras in it: where it has no parse as syntax, it is
+        // no extra, though its text matches as one token (Rocq's
+        // `(* a (* b *)`, whose inner comment closes and leaves the outer open).
+        if parsed.is_empty() && nesting {
+            return Ok(Extra::None);
+        }
         let mut best: Option<Res> = None;
-        for result in results? {
-            if result.cost != 0
-                || !result
-                    .children
-                    .iter()
-                    .any(|child| child.ty == TreeType::Node)
+        for result in parsed {
+            if !result
+                .children
+                .iter()
+                .any(|child| child.ty == TreeType::Node)
             {
                 continue;
             }
@@ -239,15 +277,17 @@ impl Executor<'_> {
                 best = Some(result);
             }
         }
-        Ok(best.and_then(|best| {
-            let node = best
-                .children
-                .iter()
-                .find(|child| child.ty == TreeType::Node)?;
-            let mut extra = (**node).clone();
-            extra.trivia = true;
-            Some((Rc::new(extra), best.end))
-        }))
+        Ok(best
+            .and_then(|best| {
+                let node = best
+                    .children
+                    .iter()
+                    .find(|child| child.ty == TreeType::Node)?;
+                let mut extra = (**node).clone();
+                extra.trivia = true;
+                Some(Extra::Node(Rc::new(extra), best.end))
+            })
+            .unwrap_or(Extra::Leaf))
     }
 
     /// The start of a terminal: after trivia in syntactic context, at once in token context.

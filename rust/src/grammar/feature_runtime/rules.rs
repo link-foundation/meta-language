@@ -118,7 +118,12 @@ impl Executor<'_> {
             let parent = self.call_stack.last().and_then(|frame| frame.borrow().call);
             keywords
                 .borrow_mut()
-                .call(position, matches!(rule.kind, RuleKind::Normal), parent)
+                .call(
+                    position,
+                    matches!(rule.kind, RuleKind::Normal),
+                    rule.node_kind.clone(),
+                    parent,
+                )
         });
         let entry = Rc::new(RefCell::new(Entry {
             evaluating: true,

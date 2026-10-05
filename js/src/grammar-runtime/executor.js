@@ -32,6 +32,8 @@ const DEFAULT_MAX_DEPTH = 1000;
 const DEFAULT_MEMO_LIMIT = 1_000_000;
 const DEFAULT_MEMORY_LIMIT = 2_000_000;
 const NO_CHILDREN = Object.freeze([]);
+// The text of an extra that is no extra where it starts (see `extraNode`).
+const NO_EXTRA = Object.freeze({});
 // The verdict of the precedence filter on a result whose right operand is a
 // node of one part: valid unless a result ends before the operand (see
 // `lonePending`).
@@ -1881,6 +1883,11 @@ export class Executor {
     const mode = state.modes[state.modes.length - 1];
     const leaves = [];
     let cursor = position;
+    // A tree-sitter lexer skips a byte order mark at the start of the input.
+    if (position === 0 && this.longestTokens && this.bytes[0] === 0xef && this.bytes[1] === 0xbb && this.bytes[2] === 0xbf) {
+      leaves.push({ type: 'token', kind: null, start: 0, end: 3, trivia: true });
+      cursor = 3;
+    }
     const context = this.scanContext;
     this.scanContext = position;
     try {
@@ -1899,6 +1906,7 @@ export class Executor {
       }
       if (best === cursor) break;
       const extra = this.extraNode(bestKind, cursor, best, state);
+      if (extra === NO_EXTRA) break;
       leaves.push(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true });
       cursor = extra?.end ?? best;
     }
@@ -1912,7 +1920,8 @@ export class Executor {
 
   // The node an extra of a rule that builds one makes of its text, parsed as
   // syntax, as a tree-sitter extra of a rule that is no token is a node with
-  // its children (Rust's doc comments); null for any other extra.
+  // its children (Rust's doc comments); null for any other extra, and
+  // NO_EXTRA where the text is no extra.
   // Under `(matching longest)` the parse is the one with the tokens a lexer
   // prefers, which may end before the longest (Rust's `////` is a comment
   // without a doc marker); otherwise the one that ends at `end`. Gives the
@@ -1925,8 +1934,13 @@ export class Executor {
     this.inExtra = this.program.nestingExtras.has(kind) ? 'nesting' : true;
     this.extraStart = start;
     try {
-      const results = this.quietly(() => this.evaluate({ kind: 'ref', name: kind }, start, state, false))
-        .filter((result) => result.cost === 0 && result.children.some((child) => child.type === 'node'));
+      const parsed = this.quietly(() => this.evaluate({ kind: 'ref', name: kind }, start, state, false)).filter((result) => result.cost === 0);
+      // An extra other extras nest in is syntax to a tree-sitter lexer, which
+      // lexes the nested extras in it: where it has no parse as syntax, it is
+      // no extra, though its text matches as one token (Rocq's
+      // `(* a (* b *)`, whose inner comment closes and leaves the outer open).
+      if (parsed.length === 0 && this.program.nestingExtras.has(kind)) return NO_EXTRA;
+      const results = parsed.filter((result) => result.children.some((child) => child.type === 'node'));
       let best = null;
       for (const result of results) {
         if (!this.lexing) {
@@ -2842,7 +2856,7 @@ export class Executor {
     // where it began and whether it builds a node: the parse states of a
     // keyword matched in it (see `KeywordLexing`).
     const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null, position };
-    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), builds: rule.kind === 'normal' });
+    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), builds: rule.kind === 'normal', rule: rule.nodeKind });
     this.retain(1);
     this.memo.set(key, entry);
     this.callStack.push(entry);
@@ -3329,11 +3343,13 @@ export class KeywordLexing {
 // external scanner scanned of no width does not count: the parser scanned it
 // before its lexer, in the parse state the next leaf is lexed in (JavaScript's
 // automatic semicolon before a line break and a keyword `class`). `last`
-// holds the end of each leaf, by its start.
+// holds the end of each leaf, by its start, and `rules` the farthest end of
+// a node of each rule, by its start and rule.
 function treeReach(root) {
   const starts = [];
   const ends = new Map();
   const last = new Map();
+  const rules = new Map();
   let open = [];
   const pending = [root];
   while (pending.length > 0) {
@@ -3341,6 +3357,8 @@ function treeReach(root) {
     if (isTrivia(node) || (node.type !== 'node' && node.start === node.end && scannedToken(node) === 1)) continue;
     if (node.type === 'node') {
       open.push(node.end);
+      const key = `${node.start}|${node.rule}`;
+      rules.set(key, Math.max(rules.get(key) ?? -1, node.end));
       for (let index = node.children.length - 1; index >= 0; index -= 1) pending.push(node.children[index]);
       continue;
     }
@@ -3349,7 +3367,7 @@ function treeReach(root) {
     if (open.length > 0) ends.set(node.start, Math.max(ends.get(node.start) ?? -1, ...open));
     open = [];
   }
-  return { starts, ends, last };
+  return { starts, ends, last, rules };
 }
 
 // Whether a keyword matched in `call` was in the parse state of the tree's
@@ -3364,22 +3382,35 @@ function inParseState(call, leaf, reach, seen) {
     if (seen.has(current)) continue;
     seen.add(current);
     if (current.builds && current.position < leaf.start) {
-      let [low, high] = [0, reach.starts.length];
-      while (low < high) {
-        const middle = (low + high) >> 1;
-        if (reach.starts[middle] < current.position) low = middle + 1;
-        else high = middle;
-      }
+      const low = firstStart(reach.starts, current.position);
       const first = reach.starts[low];
       if (first !== undefined && first < leaf.start && (reach.ends.get(first) ?? -1) < leaf.end) continue;
       // A call that begins inside a leaf of the tree lexed that leaf's text
       // otherwise (Rocq's `[` of a list where the tree has the token `=[`).
       const previous = reach.starts[low - 1];
       if (previous !== undefined && reach.last.get(previous) > current.position) continue;
+      // A node of the call's rule that the tree closes before a leaf
+      // preceding `leaf` is no longer in progress there: the call matched
+      // the keyword on a parse that read that leaf otherwise (Rocq's
+      // `match ... end > 0 end`, where the first `end` closes the match and
+      // the second is an identifier).
+      const own = reach.rules.get(`${current.position}|${current.rule}`);
+      if (own !== undefined && own < leaf.start && reach.starts[firstStart(reach.starts, own)] < leaf.start) continue;
     }
     pending.push(...current.parents);
   }
   return false;
+}
+
+// The index of the first of the ascending `starts` at or after `offset`.
+function firstStart(starts, offset) {
+  let [low, high] = [0, starts.length];
+  while (low < high) {
+    const middle = (low + high) >> 1;
+    if (starts[middle] < offset) low = middle + 1;
+    else high = middle;
+  }
+  return low;
 }
 
 /** The expectation a failed terminal records. */

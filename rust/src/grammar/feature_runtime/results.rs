@@ -469,20 +469,29 @@ pub(super) struct KeywordLexing {
 }
 
 /// One rule call of a parse under keyword lexing: where it began, whether it
-/// builds a node and the calls it was made from (`None` for none).
+/// builds a node, the kind of the node it builds and the calls it was made
+/// from (`None` for none).
 #[derive(Debug)]
 struct Call {
     position: usize,
     builds: bool,
+    rule: Name,
     parents: HashSet<Option<usize>>,
 }
 
 impl KeywordLexing {
     /// Records a rule call beginning at `position` made from `parent`; its index.
-    pub(super) fn call(&mut self, position: usize, builds: bool, parent: Option<usize>) -> usize {
+    pub(super) fn call(
+        &mut self,
+        position: usize,
+        builds: bool,
+        rule: Name,
+        parent: Option<usize>,
+    ) -> usize {
         self.calls.push(Call {
             position,
             builds,
+            rule,
             parents: HashSet::from([parent]),
         });
         self.calls.len() - 1
@@ -606,6 +615,20 @@ impl KeywordLexing {
                 {
                     continue;
                 }
+                // A node of the call's rule that the tree closes before a leaf
+                // preceding `leaf` is no longer in progress there: the call
+                // matched the keyword on a parse that read that leaf otherwise
+                // (Rocq's `match ... end > 0 end`, where the first `end` closes
+                // the match and the second is an identifier).
+                if let Some(&own) = reach.rules.get(&(call.position, call.rule.clone()))
+                    && own < leaf.start
+                    && reach
+                        .starts
+                        .get(reach.starts.partition_point(|start| *start < own))
+                        .is_some_and(|start| *start < leaf.start)
+                {
+                    continue;
+                }
             }
             pending.extend(call.parents.iter().copied());
         }
@@ -618,12 +641,14 @@ impl KeywordLexing {
 /// external scanner scanned of no width does not count: the parser scanned it
 /// before its lexer, in the parse state the next leaf is lexed in
 /// (JavaScript's automatic semicolon before a line break and a keyword
-/// `class`). `last` holds the end of each leaf, by its start. It mirrors
+/// `class`). `last` holds the end of each leaf, by its start, and `rules` the
+/// farthest end of a node of each rule, by its start and rule. It mirrors
 /// treeReach in js/src/grammar-runtime/executor.js.
 struct TreeReach {
     starts: Vec<usize>,
     ends: HashMap<usize, usize>,
     last: HashMap<usize, usize>,
+    rules: HashMap<(usize, Name), usize>,
 }
 
 impl TreeReach {
@@ -631,6 +656,7 @@ impl TreeReach {
         let mut starts = Vec::new();
         let mut ends = HashMap::new();
         let mut last = HashMap::new();
+        let mut rules = HashMap::new();
         let mut open: Option<usize> = None;
         let mut pending = vec![root];
         while let Some(node) = pending.pop() {
@@ -640,6 +666,10 @@ impl TreeReach {
             }
             if node.ty == TreeType::Node {
                 open = Some(open.map_or(node.end, |end| end.max(node.end)));
+                if let Some(rule) = &node.rule {
+                    let farthest = rules.entry((node.start, rule.clone())).or_insert(node.end);
+                    *farthest = (*farthest).max(node.end);
+                }
                 pending.extend(node.children.iter().rev().map(|child| &**child));
                 continue;
             }
@@ -651,7 +681,12 @@ impl TreeReach {
                 *farthest = (*farthest).max(end);
             }
         }
-        Self { starts, ends, last }
+        Self {
+            starts,
+            ends,
+            last,
+            rules,
+        }
     }
 }
 

@@ -117,6 +117,19 @@ test('native Rocq trees keep every byte of the source, comments and white space 
   observe(['nativeRocqTreesLossless'], context.name);
 });
 
+test('native Rocq trees follow the oracle on a byte order mark, an end after a match and an unclosed nested comment', (context) => {
+  // A tree-sitter lexer skips a byte order mark at the start of the input, and
+  // `end` after the `end` of a match is no keyword of the closed match.
+  for (const source of ['﻿Check x.', 'Check match x with y => y end > 0 end.']) {
+    const outcome = parser.parseTree(source);
+    assert.equal(outcome.ok, true, JSON.stringify(source));
+    assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'Rocq'), JSON.stringify(source));
+  }
+  // An unclosed nested comment is no comment.
+  assert.equal(parser.parseTree('(* Outer (* Inner *)').ok, false);
+  observe(['nativeRocqTreesMatchOracle', 'nativeRocqRejectsInvalidInput'], context.name);
+});
+
 test('the native Rocq fixture is current', () => {
   assert.equal(renderFixture(buildNativeGrammarFixture(entry)), read(fixturePath(entry)));
 });

@@ -20,3 +20,11 @@ parity/fixtures/issue-195-generative/** text eol=lf
 # docs/vision.md is the fixture of every repository-directive row and Rust tests slice its
 # sections at blank lines; Windows checkouts must not add CRs.
 docs/vision.md text eol=lf
+# Self-translation round-trips meta-language's own modules byte for byte, and the
+# self-translation and decorator corpora are compared byte for byte; Windows checkouts
+# must not add CRs. The vendored grammars keep their upstream bytes.
+rust/src/** text=auto eol=lf
+js/src/** text=auto eol=lf
+js/src/vendor/** -text
+parity/self-translation/** text=auto eol=lf
+parity/decorators/** text=auto eol=lf

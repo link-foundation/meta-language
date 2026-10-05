@@ -249,7 +249,7 @@ fn reconciliation_is_deterministic_and_keeps_a_reconciled_group_reusable() {
         },
     )
     .expect("the pair merges strictly");
-    assert!(strict.reused.is_empty());
+    assert_eq!(strict.reused, [] as [String; 0]);
     observe(
         &["correspondingRulesReconciled"],
         "reconciliation is deterministic",
