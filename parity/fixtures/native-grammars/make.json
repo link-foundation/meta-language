@@ -1,0 +1,2995 @@
+{
+  "schemaVersion": 1,
+  "id": "make",
+  "language": "Make",
+  "grammar": "parity/grammars/native/make.lino",
+  "oracle": "tree-sitter-make 1.1.1",
+  "sources": [
+    "https://github.com/tree-sitter-grammars/tree-sitter-make/blob/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/grammar.js",
+    "https://github.com/tree-sitter-grammars/tree-sitter-make/tree/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/test/corpus"
+  ],
+  "hidden": [],
+  "anonymous": [
+    "unnamed_token",
+    "raw_line"
+  ],
+  "extras": [
+    "comment"
+  ],
+  "oracleKinds": {
+    "thing": "_thing",
+    "ordinary_rule": "_ordinary_rule",
+    "static_pattern_rule": "_static_pattern_rule",
+    "targets_alias": "_targets",
+    "target_pattern": "_target_pattern",
+    "prerequisites_choice": "_prerequisites",
+    "normal_prerequisites": "_normal_prerequisites",
+    "order_only_prerequisites": "_order_only_prerequisites",
+    "prerequisites_pattern": "_prerequisites_pattern",
+    "attached_recipe_line": "_attached_recipe_line",
+    "prefixed_recipe_line": "_prefixed_recipe_line",
+    "variable_definition": "_variable_definition",
+    "search_path_assignment": "VPATH_assignment",
+    "recipe_prefix_assignment": "RECIPEPREFIX_assignment",
+    "target_or_pattern_assignment": "_target_or_pattern_assignment",
+    "directive": "_directive",
+    "search_path_directive": "vpath_directive",
+    "remove_export_directive": "unexport_directive",
+    "remove_definition_directive": "undefine_directive",
+    "else_if_directive": "elsif_directive",
+    "conditional_directives": "_conditional_directives",
+    "conditional_consequence": "_conditional_consequence",
+    "if_equal_directive": "ifeq_directive",
+    "if_not_equal_directive": "ifneq_directive",
+    "if_defined_directive": "ifdef_directive",
+    "if_not_defined_directive": "ifndef_directive",
+    "conditional_arguments_comparison": "_conditional_args_cmp",
+    "variable": "_variable",
+    "function": "_function",
+    "primary": "_primary",
+    "name": "_name",
+    "string_content": "_string",
+    "recipe_prefix": "_recipeprefix",
+    "raw_line": "_rawline",
+    "shell_text_without_split": "_shell_text_without_split",
+    "shell_command_alias": "_shell_command"
+  },
+  "matches": [
+    {
+      "source": "ifeq (\"string $(sort 1 2 3)\", 'string ${VAR}')\nendif\n\nifneq (arg0, arg1)\nendif\n\nifdef var\nendif\n\nifndef var\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,114,""],
+        [1,null,"conditional",1,0,54,""],
+        [2,"condition","ifeq_directive",1,0,47,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,null,"(",0,5,6,""],
+        [3,"arg0","string",1,6,28,""],
+        [4,"string","\"",0,6,7,""],
+        [4,"string","function_call",1,14,27,""],
+        [5,null,"$",0,14,15,""],
+        [5,null,"(",0,15,16,""],
+        [5,"function","sort",0,16,20,""],
+        [5,null,"arguments",1,21,26,""],
+        [6,"argument","text",1,21,26,""],
+        [5,null,")",0,26,27,""],
+        [4,"string","\"",0,27,28,""],
+        [3,null,",",0,28,29,""],
+        [3,"arg1","string",1,30,45,""],
+        [4,"string","'",0,30,31,""],
+        [4,"string","variable_reference",1,38,44,""],
+        [5,null,"$",0,38,39,""],
+        [5,null,"{",0,39,40,""],
+        [5,null,"word",1,40,43,""],
+        [5,null,"}",0,43,44,""],
+        [4,"string","'",0,44,45,""],
+        [3,null,")",0,45,46,""],
+        [2,null,"endif",0,47,52,""],
+        [1,null,"conditional",1,54,80,""],
+        [2,"condition","ifneq_directive",1,54,73,""],
+        [3,null,"ifneq",0,54,59,""],
+        [3,null,"(",0,60,61,""],
+        [3,"arg0","word",1,61,65,""],
+        [3,null,",",0,65,66,""],
+        [3,"arg1","word",1,67,71,""],
+        [3,null,")",0,71,72,""],
+        [2,null,"endif",0,73,78,""],
+        [1,null,"conditional",1,80,97,""],
+        [2,"condition","ifdef_directive",1,80,90,""],
+        [3,null,"ifdef",0,80,85,""],
+        [3,"variable","word",1,86,89,""],
+        [2,null,"endif",0,90,95,""],
+        [1,null,"conditional",1,97,114,""],
+        [2,"condition","ifndef_directive",1,97,108,""],
+        [3,null,"ifndef",0,97,103,""],
+        [3,"variable","word",1,104,107,""],
+        [2,null,"endif",0,108,113,""]
+      ]
+    },
+    {
+      "source": "ifeq (arg0, arg1)\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,24,""],
+        [1,null,"conditional",1,0,24,""],
+        [2,"condition","ifeq_directive",1,0,18,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,null,"(",0,5,6,""],
+        [3,"arg0","word",1,6,10,""],
+        [3,null,",",0,10,11,""],
+        [3,"arg1","word",1,12,16,""],
+        [3,null,")",0,16,17,""],
+        [2,null,"endif",0,18,23,""]
+      ]
+    },
+    {
+      "source": "ifeq 'arg0' 'arg1'\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,25,""],
+        [1,null,"conditional",1,0,25,""],
+        [2,"condition","ifeq_directive",1,0,19,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,"arg0","string",1,5,11,""],
+        [4,"string","'",0,5,6,""],
+        [4,"string","'",0,10,11,""],
+        [3,"arg1","string",1,12,18,""],
+        [4,"string","'",0,12,13,""],
+        [4,"string","'",0,17,18,""],
+        [2,null,"endif",0,19,24,""]
+      ]
+    },
+    {
+      "source": "ifeq \"arg0\" \"arg1\"\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,25,""],
+        [1,null,"conditional",1,0,25,""],
+        [2,"condition","ifeq_directive",1,0,19,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,"arg0","string",1,5,11,""],
+        [4,"string","\"",0,5,6,""],
+        [4,"string","\"",0,10,11,""],
+        [3,"arg1","string",1,12,18,""],
+        [4,"string","\"",0,12,13,""],
+        [4,"string","\"",0,17,18,""],
+        [2,null,"endif",0,19,24,""]
+      ]
+    },
+    {
+      "source": "ifeq \"arg0\" 'arg1'\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,25,""],
+        [1,null,"conditional",1,0,25,""],
+        [2,"condition","ifeq_directive",1,0,19,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,"arg0","string",1,5,11,""],
+        [4,"string","\"",0,5,6,""],
+        [4,"string","\"",0,10,11,""],
+        [3,"arg1","string",1,12,18,""],
+        [4,"string","'",0,12,13,""],
+        [4,"string","'",0,17,18,""],
+        [2,null,"endif",0,19,24,""]
+      ]
+    },
+    {
+      "source": "ifeq 'arg0' \"arg1\"\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,25,""],
+        [1,null,"conditional",1,0,25,""],
+        [2,"condition","ifeq_directive",1,0,19,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,"arg0","string",1,5,11,""],
+        [4,"string","'",0,5,6,""],
+        [4,"string","'",0,10,11,""],
+        [3,"arg1","string",1,12,18,""],
+        [4,"string","\"",0,12,13,""],
+        [4,"string","\"",0,17,18,""],
+        [2,null,"endif",0,19,24,""]
+      ]
+    },
+    {
+      "source": "ifeq (arg0, arg1)\nelse\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,29,""],
+        [1,null,"conditional",1,0,29,""],
+        [2,"condition","ifeq_directive",1,0,18,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,null,"(",0,5,6,""],
+        [3,"arg0","word",1,6,10,""],
+        [3,null,",",0,10,11,""],
+        [3,"arg1","word",1,12,16,""],
+        [3,null,")",0,16,17,""],
+        [2,null,"else_directive",1,18,23,""],
+        [3,null,"else",0,18,22,""],
+        [2,null,"endif",0,23,28,""]
+      ]
+    },
+    {
+      "source": "ifeq (arg0, arg1)\nelse ifeq (arg0, arg1)\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,47,""],
+        [1,null,"conditional",1,0,47,""],
+        [2,"condition","ifeq_directive",1,0,18,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,null,"(",0,5,6,""],
+        [3,"arg0","word",1,6,10,""],
+        [3,null,",",0,10,11,""],
+        [3,"arg1","word",1,12,16,""],
+        [3,null,")",0,16,17,""],
+        [2,null,"elsif_directive",1,18,41,""],
+        [3,null,"else",0,18,22,""],
+        [3,"condition","ifeq_directive",1,23,41,""],
+        [4,null,"ifeq",0,23,27,""],
+        [4,null,"(",0,28,29,""],
+        [4,"arg0","word",1,29,33,""],
+        [4,null,",",0,33,34,""],
+        [4,"arg1","word",1,35,39,""],
+        [4,null,")",0,39,40,""],
+        [2,null,"endif",0,41,46,""]
+      ]
+    },
+    {
+      "source": "ifeq (arg0, arg1)\nelse ifeq (arg0, arg1)\nelse\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,52,""],
+        [1,null,"conditional",1,0,52,""],
+        [2,"condition","ifeq_directive",1,0,18,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,null,"(",0,5,6,""],
+        [3,"arg0","word",1,6,10,""],
+        [3,null,",",0,10,11,""],
+        [3,"arg1","word",1,12,16,""],
+        [3,null,")",0,16,17,""],
+        [2,null,"elsif_directive",1,18,41,""],
+        [3,null,"else",0,18,22,""],
+        [3,"condition","ifeq_directive",1,23,41,""],
+        [4,null,"ifeq",0,23,27,""],
+        [4,null,"(",0,28,29,""],
+        [4,"arg0","word",1,29,33,""],
+        [4,null,",",0,33,34,""],
+        [4,"arg1","word",1,35,39,""],
+        [4,null,")",0,39,40,""],
+        [2,null,"else_directive",1,41,46,""],
+        [3,null,"else",0,41,45,""],
+        [2,null,"endif",0,46,51,""]
+      ]
+    },
+    {
+      "source": "ifeq (arg0, arg1)\nelse ifeq (arg0, arg1)\nelse ifneq (arg0, arg1)\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,71,""],
+        [1,null,"conditional",1,0,71,""],
+        [2,"condition","ifeq_directive",1,0,18,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,null,"(",0,5,6,""],
+        [3,"arg0","word",1,6,10,""],
+        [3,null,",",0,10,11,""],
+        [3,"arg1","word",1,12,16,""],
+        [3,null,")",0,16,17,""],
+        [2,null,"elsif_directive",1,18,41,""],
+        [3,null,"else",0,18,22,""],
+        [3,"condition","ifeq_directive",1,23,41,""],
+        [4,null,"ifeq",0,23,27,""],
+        [4,null,"(",0,28,29,""],
+        [4,"arg0","word",1,29,33,""],
+        [4,null,",",0,33,34,""],
+        [4,"arg1","word",1,35,39,""],
+        [4,null,")",0,39,40,""],
+        [2,null,"elsif_directive",1,41,65,""],
+        [3,null,"else",0,41,45,""],
+        [3,"condition","ifneq_directive",1,46,65,""],
+        [4,null,"ifneq",0,46,51,""],
+        [4,null,"(",0,52,53,""],
+        [4,"arg0","word",1,53,57,""],
+        [4,null,",",0,57,58,""],
+        [4,"arg1","word",1,59,63,""],
+        [4,null,")",0,63,64,""],
+        [2,null,"endif",0,65,70,""]
+      ]
+    },
+    {
+      "source": "ifeq (arg0, arg1)\nelse ifeq (arg0, arg1)\nelse ifneq (arg0, arg1)\nelse\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,76,""],
+        [1,null,"conditional",1,0,76,""],
+        [2,"condition","ifeq_directive",1,0,18,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,null,"(",0,5,6,""],
+        [3,"arg0","word",1,6,10,""],
+        [3,null,",",0,10,11,""],
+        [3,"arg1","word",1,12,16,""],
+        [3,null,")",0,16,17,""],
+        [2,null,"elsif_directive",1,18,41,""],
+        [3,null,"else",0,18,22,""],
+        [3,"condition","ifeq_directive",1,23,41,""],
+        [4,null,"ifeq",0,23,27,""],
+        [4,null,"(",0,28,29,""],
+        [4,"arg0","word",1,29,33,""],
+        [4,null,",",0,33,34,""],
+        [4,"arg1","word",1,35,39,""],
+        [4,null,")",0,39,40,""],
+        [2,null,"elsif_directive",1,41,65,""],
+        [3,null,"else",0,41,45,""],
+        [3,"condition","ifneq_directive",1,46,65,""],
+        [4,null,"ifneq",0,46,51,""],
+        [4,null,"(",0,52,53,""],
+        [4,"arg0","word",1,53,57,""],
+        [4,null,",",0,57,58,""],
+        [4,"arg1","word",1,59,63,""],
+        [4,null,")",0,63,64,""],
+        [2,null,"else_directive",1,65,70,""],
+        [3,null,"else",0,65,69,""],
+        [2,null,"endif",0,70,75,""]
+      ]
+    },
+    {
+      "source": "ifneq (,)\nall:\n\techo a\nelse\nall:\n\techo b\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,47,""],
+        [1,null,"conditional",1,0,47,""],
+        [2,"condition","ifneq_directive",1,0,10,""],
+        [3,null,"ifneq",0,0,5,""],
+        [3,null,"(",0,6,7,""],
+        [3,null,",",0,7,8,""],
+        [3,null,")",0,8,9,""],
+        [2,"consequence","rule",1,10,23,""],
+        [3,null,"targets",1,10,13,""],
+        [4,null,"word",1,10,13,""],
+        [3,null,":",0,13,14,""],
+        [3,null,"recipe",1,14,23,""],
+        [4,null,"\t",0,15,16,""],
+        [4,null,"recipe_line",1,16,22,""],
+        [5,null,"shell_text",1,16,22,""],
+        [2,null,"else_directive",1,23,41,""],
+        [3,null,"else",0,23,27,""],
+        [3,"consequence","rule",1,28,41,""],
+        [4,null,"targets",1,28,31,""],
+        [5,null,"word",1,28,31,""],
+        [4,null,":",0,31,32,""],
+        [4,null,"recipe",1,32,41,""],
+        [5,null,"\t",0,33,34,""],
+        [5,null,"recipe_line",1,34,40,""],
+        [6,null,"shell_text",1,34,40,""],
+        [2,null,"endif",0,41,46,""]
+      ]
+    },
+    {
+      "source": "foo:\nifeq (x,y)\n\techo a\nelse\n\techo b\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,43,""],
+        [1,null,"rule",1,0,43,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"recipe",1,4,43,""],
+        [3,null,"conditional",1,5,43,""],
+        [4,"condition","ifeq_directive",1,5,16,""],
+        [5,null,"ifeq",0,5,9,""],
+        [5,null,"(",0,10,11,""],
+        [5,"arg0","word",1,11,12,""],
+        [5,null,",",0,12,13,""],
+        [5,"arg1","word",1,13,14,""],
+        [5,null,")",0,14,15,""],
+        [4,"consequence","\t",0,16,17,""],
+        [4,"consequence","recipe_line",1,17,23,""],
+        [5,null,"shell_text",1,17,23,""],
+        [4,null,"else_directive",1,24,37,""],
+        [5,null,"else",0,24,28,""],
+        [5,"consequence","\t",0,29,30,""],
+        [5,"consequence","recipe_line",1,30,36,""],
+        [6,null,"shell_text",1,30,36,""],
+        [4,null,"endif",0,37,42,""]
+      ]
+    },
+    {
+      "source": "ifeq (a,b)\nall:\n\techo foo\n\n\techo foo\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,43,""],
+        [1,null,"conditional",1,0,43,""],
+        [2,"condition","ifeq_directive",1,0,11,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,null,"(",0,5,6,""],
+        [3,"arg0","word",1,6,7,""],
+        [3,null,",",0,7,8,""],
+        [3,"arg1","word",1,8,9,""],
+        [3,null,")",0,9,10,""],
+        [2,"consequence","rule",1,11,37,""],
+        [3,null,"targets",1,11,14,""],
+        [4,null,"word",1,11,14,""],
+        [3,null,":",0,14,15,""],
+        [3,null,"recipe",1,15,37,""],
+        [4,null,"\t",0,16,17,""],
+        [4,null,"recipe_line",1,17,25,""],
+        [5,null,"shell_text",1,17,25,""],
+        [4,null,"\t",0,27,28,""],
+        [4,null,"recipe_line",1,28,36,""],
+        [5,null,"shell_text",1,28,36,""],
+        [2,null,"endif",0,37,42,""]
+      ]
+    },
+    {
+      "source": "ifneq (a,b)\nall:\nifeq (a,b)\n\techo foo\nelse\n\techo bar\nendif\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,65,""],
+        [1,null,"conditional",1,0,65,""],
+        [2,"condition","ifneq_directive",1,0,12,""],
+        [3,null,"ifneq",0,0,5,""],
+        [3,null,"(",0,6,7,""],
+        [3,"arg0","word",1,7,8,""],
+        [3,null,",",0,8,9,""],
+        [3,"arg1","word",1,9,10,""],
+        [3,null,")",0,10,11,""],
+        [2,"consequence","rule",1,12,59,""],
+        [3,null,"targets",1,12,15,""],
+        [4,null,"word",1,12,15,""],
+        [3,null,":",0,15,16,""],
+        [3,null,"recipe",1,16,59,""],
+        [4,null,"conditional",1,17,59,""],
+        [5,"condition","ifeq_directive",1,17,28,""],
+        [6,null,"ifeq",0,17,21,""],
+        [6,null,"(",0,22,23,""],
+        [6,"arg0","word",1,23,24,""],
+        [6,null,",",0,24,25,""],
+        [6,"arg1","word",1,25,26,""],
+        [6,null,")",0,26,27,""],
+        [5,"consequence","\t",0,28,29,""],
+        [5,"consequence","recipe_line",1,29,37,""],
+        [6,null,"shell_text",1,29,37,""],
+        [5,null,"else_directive",1,38,53,""],
+        [6,null,"else",0,38,42,""],
+        [6,"consequence","\t",0,43,44,""],
+        [6,"consequence","recipe_line",1,44,52,""],
+        [7,null,"shell_text",1,44,52,""],
+        [5,null,"endif",0,53,58,""],
+        [2,null,"endif",0,59,64,""]
+      ]
+    },
+    {
+      "source": "define two-lines \necho foo\necho bar\nendef\n",
+      "rows": [
+        [0,null,"makefile",1,0,42,""],
+        [1,null,"define_directive",1,0,42,""],
+        [2,null,"define",0,0,6,""],
+        [2,"name","word",1,7,16,""],
+        [2,"value","raw_text",1,18,36,""],
+        [2,null,"endef",0,36,41,""]
+      ]
+    },
+    {
+      "source": "define two-lines = \necho foo\necho bar\nendef\n",
+      "rows": [
+        [0,null,"makefile",1,0,44,""],
+        [1,null,"define_directive",1,0,44,""],
+        [2,null,"define",0,0,6,""],
+        [2,"name","word",1,7,16,""],
+        [2,"operator","=",0,17,18,""],
+        [2,"value","raw_text",1,20,38,""],
+        [2,null,"endef",0,38,43,""]
+      ]
+    },
+    {
+      "source": " include foo *.mk\n-include foo *.mk\nsinclude foo *.mk\n",
+      "rows": [
+        [0,null,"makefile",1,1,54,""],
+        [1,null,"include_directive",1,1,18,""],
+        [2,null,"include",0,1,8,""],
+        [2,"filenames","list",1,9,17,""],
+        [3,null,"word",1,9,12,""],
+        [3,null,"word",1,13,17,""],
+        [1,null,"include_directive",1,18,36,""],
+        [2,null,"-include",0,18,26,""],
+        [2,"filenames","list",1,27,35,""],
+        [3,null,"word",1,27,30,""],
+        [3,null,"word",1,31,35,""],
+        [1,null,"include_directive",1,36,54,""],
+        [2,null,"sinclude",0,36,44,""],
+        [2,"filenames","list",1,45,53,""],
+        [3,null,"word",1,45,48,""],
+        [3,null,"word",1,49,53,""]
+      ]
+    },
+    {
+      "source": "vpath\nvpath %.p\nvpath %.p ../foo\n",
+      "rows": [
+        [0,null,"makefile",1,0,33,""],
+        [1,null,"vpath_directive",1,0,6,""],
+        [2,null,"vpath",0,0,5,""],
+        [1,null,"vpath_directive",1,6,16,""],
+        [2,null,"vpath",0,6,11,""],
+        [2,"pattern","word",1,12,15,""],
+        [1,null,"vpath_directive",1,16,33,""],
+        [2,null,"vpath",0,16,21,""],
+        [2,"pattern","word",1,22,25,""],
+        [2,"directories","paths",1,26,32,""],
+        [3,null,"word",1,26,32,""]
+      ]
+    },
+    {
+      "source": "vpath % foo:bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,16,""],
+        [1,null,"vpath_directive",1,0,16,""],
+        [2,null,"vpath",0,0,5,""],
+        [2,"pattern","word",1,6,7,""],
+        [2,"directories","paths",1,8,15,""],
+        [3,null,"word",1,8,11,""],
+        [3,null,":",0,11,12,""],
+        [3,null,"word",1,12,15,""]
+      ]
+    },
+    {
+      "source": "export\n",
+      "rows": [
+        [0,null,"makefile",1,0,7,""],
+        [1,null,"export_directive",1,0,7,""],
+        [2,null,"export",0,0,6,""]
+      ]
+    },
+    {
+      "source": "export foo bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"export_directive",1,0,15,""],
+        [2,null,"export",0,0,6,""],
+        [2,"variables","list",1,7,14,""],
+        [3,null,"word",1,7,10,""],
+        [3,null,"word",1,11,14,""]
+      ]
+    },
+    {
+      "source": "export foo = bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,17,""],
+        [1,null,"export_directive",1,0,17,""],
+        [2,null,"export",0,0,6,""],
+        [2,null,"variable_assignment",1,7,17,""],
+        [3,"name","word",1,7,10,""],
+        [3,"operator","=",0,11,12,""],
+        [3,"value","text",1,13,16,""]
+      ]
+    },
+    {
+      "source": "unexport\n",
+      "rows": [
+        [0,null,"makefile",1,0,9,""],
+        [1,null,"unexport_directive",1,0,9,""],
+        [2,null,"unexport",0,0,8,""]
+      ]
+    },
+    {
+      "source": "unexport foo bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,17,""],
+        [1,null,"unexport_directive",1,0,17,""],
+        [2,null,"unexport",0,0,8,""],
+        [2,"variables","list",1,9,16,""],
+        [3,null,"word",1,9,12,""],
+        [3,null,"word",1,13,16,""]
+      ]
+    },
+    {
+      "source": "override v = foo\n",
+      "rows": [
+        [0,null,"makefile",1,0,17,""],
+        [1,null,"override_directive",1,0,17,""],
+        [2,null,"override",0,0,8,""],
+        [2,null,"variable_assignment",1,9,17,""],
+        [3,"name","word",1,9,10,""],
+        [3,"operator","=",0,11,12,""],
+        [3,"value","text",1,13,16,""]
+      ]
+    },
+    {
+      "source": "override define foo =\nendef\n",
+      "rows": [
+        [0,null,"makefile",1,0,28,""],
+        [1,null,"override_directive",1,0,28,""],
+        [2,null,"override",0,0,8,""],
+        [2,null,"define_directive",1,9,28,""],
+        [3,null,"define",0,9,15,""],
+        [3,"name","word",1,16,19,""],
+        [3,"operator","=",0,20,21,""],
+        [3,null,"endef",0,22,27,""]
+      ]
+    },
+    {
+      "source": "override undefine foo\n",
+      "rows": [
+        [0,null,"makefile",1,0,22,""],
+        [1,null,"override_directive",1,0,22,""],
+        [2,null,"override",0,0,8,""],
+        [2,null,"undefine_directive",1,9,22,""],
+        [3,null,"undefine",0,9,17,""],
+        [3,"variable","word",1,18,21,""]
+      ]
+    },
+    {
+      "source": "undefine foo\n",
+      "rows": [
+        [0,null,"makefile",1,0,13,""],
+        [1,null,"undefine_directive",1,0,13,""],
+        [2,null,"undefine",0,0,8,""],
+        [2,"variable","word",1,9,12,""]
+      ]
+    },
+    {
+      "source": "private foo = bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"private_directive",1,0,18,""],
+        [2,null,"private",0,0,7,""],
+        [2,null,"variable_assignment",1,8,18,""],
+        [3,"name","word",1,8,11,""],
+        [3,"operator","=",0,12,13,""],
+        [3,"value","text",1,14,17,""]
+      ]
+    },
+    {
+      "source": "%.o : CFLAGS = -O\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"variable_assignment",1,0,18,""],
+        [2,"target_or_pattern","list",1,0,4,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,4,5,""],
+        [2,"name","word",1,6,12,""],
+        [2,"operator","=",0,13,14,""],
+        [2,"value","text",1,15,17,""]
+      ]
+    },
+    {
+      "source": "target:\n%.o:\n*.o:\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"rule",1,0,8,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [1,null,"rule",1,8,13,""],
+        [2,null,"targets",1,8,11,""],
+        [3,null,"word",1,8,11,""],
+        [2,null,":",0,11,12,""],
+        [1,null,"rule",1,13,18,""],
+        [2,null,"targets",1,13,16,""],
+        [3,null,"word",1,13,16,""],
+        [2,null,":",0,16,17,""]
+      ]
+    },
+    {
+      "source": "target %.o *.o:\n",
+      "rows": [
+        [0,null,"makefile",1,0,16,""],
+        [1,null,"rule",1,0,16,""],
+        [2,null,"targets",1,0,14,""],
+        [3,null,"word",1,0,6,""],
+        [3,null,"word",1,7,10,""],
+        [3,null,"word",1,11,14,""],
+        [2,null,":",0,14,15,""]
+      ]
+    },
+    {
+      "source": "foo(bar):\nfoo(bar baz):\n",
+      "rows": [
+        [0,null,"makefile",1,0,24,""],
+        [1,null,"rule",1,0,10,""],
+        [2,null,"targets",1,0,8,""],
+        [3,null,"archive",1,0,8,""],
+        [4,"archive","word",1,0,3,""],
+        [4,null,"(",0,3,4,""],
+        [4,"members","list",1,4,7,""],
+        [5,null,"word",1,4,7,""],
+        [4,null,")",0,7,8,""],
+        [2,null,":",0,8,9,""],
+        [1,null,"rule",1,10,24,""],
+        [2,null,"targets",1,10,22,""],
+        [3,null,"archive",1,10,22,""],
+        [4,"archive","word",1,10,13,""],
+        [4,null,"(",0,13,14,""],
+        [4,"members","list",1,14,21,""],
+        [5,null,"word",1,14,17,""],
+        [5,null,"word",1,18,21,""],
+        [4,null,")",0,21,22,""],
+        [2,null,":",0,22,23,""]
+      ]
+    },
+    {
+      "source": "foo %.n *.o &:\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"rule",1,0,15,""],
+        [2,null,"targets",1,0,12,""],
+        [3,null,"word",1,0,3,""],
+        [3,null,"word",1,4,7,""],
+        [3,null,"word",1,8,11,""],
+        [2,null,"&:",0,12,14,""]
+      ]
+    },
+    {
+      "source": "target: foo\ntarget: %.c\ntarget: *.d\n",
+      "rows": [
+        [0,null,"makefile",1,0,36,""],
+        [1,null,"rule",1,0,12,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,"normal","prerequisites",1,8,11,""],
+        [3,null,"word",1,8,11,""],
+        [1,null,"rule",1,12,24,""],
+        [2,null,"targets",1,12,18,""],
+        [3,null,"word",1,12,18,""],
+        [2,null,":",0,18,19,""],
+        [2,"normal","prerequisites",1,20,23,""],
+        [3,null,"word",1,20,23,""],
+        [1,null,"rule",1,24,36,""],
+        [2,null,"targets",1,24,30,""],
+        [3,null,"word",1,24,30,""],
+        [2,null,":",0,30,31,""],
+        [2,"normal","prerequisites",1,32,35,""],
+        [3,null,"word",1,32,35,""]
+      ]
+    },
+    {
+      "source": "target: foo %.b c.o\n",
+      "rows": [
+        [0,null,"makefile",1,0,20,""],
+        [1,null,"rule",1,0,20,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,"normal","prerequisites",1,8,19,""],
+        [3,null,"word",1,8,11,""],
+        [3,null,"word",1,12,15,""],
+        [3,null,"word",1,16,19,""]
+      ]
+    },
+    {
+      "source": "target: foo(foo) bar(foo bar)\n",
+      "rows": [
+        [0,null,"makefile",1,0,30,""],
+        [1,null,"rule",1,0,30,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,"normal","prerequisites",1,8,29,""],
+        [3,null,"archive",1,8,16,""],
+        [4,"archive","word",1,8,11,""],
+        [4,null,"(",0,11,12,""],
+        [4,"members","list",1,12,15,""],
+        [5,null,"word",1,12,15,""],
+        [4,null,")",0,15,16,""],
+        [3,null,"archive",1,17,29,""],
+        [4,"archive","word",1,17,20,""],
+        [4,null,"(",0,20,21,""],
+        [4,"members","list",1,21,28,""],
+        [5,null,"word",1,21,24,""],
+        [5,null,"word",1,25,28,""],
+        [4,null,")",0,28,29,""]
+      ]
+    },
+    {
+      "source": "target: foo\\\n\t%.b\\\nc.o\n",
+      "rows": [
+        [0,null,"makefile",1,0,23,""],
+        [1,null,"rule",1,0,23,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,"normal","prerequisites",1,8,22,""],
+        [3,null,"word",1,8,11,""],
+        [3,null,"\\",0,11,13,""],
+        [3,null,"word",1,14,17,""],
+        [3,null,"\\",0,17,19,""],
+        [3,null,"word",1,19,22,""]
+      ]
+    },
+    {
+      "source": "target: foo %.b c.o\\\n\tfoo %.b c.o\\\nfoo %.b c.o\n",
+      "rows": [
+        [0,null,"makefile",1,0,47,""],
+        [1,null,"rule",1,0,47,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,"normal","prerequisites",1,8,46,""],
+        [3,null,"word",1,8,11,""],
+        [3,null,"word",1,12,15,""],
+        [3,null,"word",1,16,19,""],
+        [3,null,"\\",0,19,21,""],
+        [3,null,"word",1,22,25,""],
+        [3,null,"word",1,26,29,""],
+        [3,null,"word",1,30,33,""],
+        [3,null,"\\",0,33,35,""],
+        [3,null,"word",1,35,38,""],
+        [3,null,"word",1,39,42,""],
+        [3,null,"word",1,43,46,""]
+      ]
+    },
+    {
+      "source": "foo: | bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,11,""],
+        [1,null,"rule",1,0,11,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"|",0,5,6,""],
+        [2,"order_only","prerequisites",1,7,10,""],
+        [3,null,"word",1,7,10,""]
+      ]
+    },
+    {
+      "source": "target: | foo %.b c.o\\\n\tfoo %.b c.o\\\nfoo %.b c.o\n",
+      "rows": [
+        [0,null,"makefile",1,0,49,""],
+        [1,null,"rule",1,0,49,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"|",0,8,9,""],
+        [2,"order_only","prerequisites",1,10,48,""],
+        [3,null,"word",1,10,13,""],
+        [3,null,"word",1,14,17,""],
+        [3,null,"word",1,18,21,""],
+        [3,null,"\\",0,21,23,""],
+        [3,null,"word",1,24,27,""],
+        [3,null,"word",1,28,31,""],
+        [3,null,"word",1,32,35,""],
+        [3,null,"\\",0,35,37,""],
+        [3,null,"word",1,37,40,""],
+        [3,null,"word",1,41,44,""],
+        [3,null,"word",1,45,48,""]
+      ]
+    },
+    {
+      "source": "target: foo \\\n\tbar | baz \\\nfoobar\n",
+      "rows": [
+        [0,null,"makefile",1,0,34,""],
+        [1,null,"rule",1,0,34,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,"normal","prerequisites",1,8,19,""],
+        [3,null,"word",1,8,11,""],
+        [3,null,"word",1,15,18,""],
+        [2,null,"|",0,19,20,""],
+        [2,"order_only","prerequisites",1,21,33,""],
+        [3,null,"word",1,21,24,""],
+        [3,null,"word",1,27,33,""]
+      ]
+    },
+    {
+      "source": "target: ;\n\ntarget:\n\t\n",
+      "rows": [
+        [0,null,"makefile",1,0,21,""],
+        [1,null,"rule",1,0,11,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,8,11,""],
+        [3,null,";",0,8,9,""],
+        [1,null,"rule",1,11,21,""],
+        [2,null,"targets",1,11,17,""],
+        [3,null,"word",1,11,17,""],
+        [2,null,":",0,17,18,""],
+        [2,null,"recipe",1,18,21,""],
+        [3,null,"\t",0,19,20,""]
+      ]
+    },
+    {
+      "source": "target:\n\techo \"foobar\"\n",
+      "rows": [
+        [0,null,"makefile",1,0,23,""],
+        [1,null,"rule",1,0,23,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,23,""],
+        [3,null,"\t",0,8,9,""],
+        [3,null,"recipe_line",1,9,22,""],
+        [4,null,"shell_text",1,9,22,""]
+      ]
+    },
+    {
+      "source": "target:\n\t@echo \"foobar\"\n\ntarget: ; @echo \"foobar\"\n",
+      "rows": [
+        [0,null,"makefile",1,0,50,""],
+        [1,null,"rule",1,0,25,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,25,""],
+        [3,null,"\t",0,8,9,""],
+        [3,null,"recipe_line",1,9,23,""],
+        [4,null,"@",0,9,10,""],
+        [4,null,"shell_text",1,10,23,""],
+        [1,null,"rule",1,25,50,""],
+        [2,null,"targets",1,25,31,""],
+        [3,null,"word",1,25,31,""],
+        [2,null,":",0,31,32,""],
+        [2,null,"recipe",1,33,50,""],
+        [3,null,";",0,33,34,""],
+        [3,null,"recipe_line",1,34,49,""],
+        [4,null,"@",0,34,36,""],
+        [4,null,"shell_text",1,36,49,""]
+      ]
+    },
+    {
+      "source": "target:\n\t# foo\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"rule",1,0,15,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,15,""],
+        [3,null,"\t",0,8,9,""],
+        [3,null,"recipe_line",1,9,14,""],
+        [4,null,"shell_text",1,9,14,""]
+      ]
+    },
+    {
+      "source": "target:\n\techo \"foo\\\nbar\"\n\ntarget:\n\techo \"foo\\\n\tbar\"\n",
+      "rows": [
+        [0,null,"makefile",1,0,52,""],
+        [1,null,"rule",1,0,26,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,26,""],
+        [3,null,"\t",0,8,9,""],
+        [3,null,"recipe_line",1,9,24,""],
+        [4,null,"shell_text",1,9,20,""],
+        [5,null,"\\",0,18,20,""],
+        [4,null,"shell_text",1,20,24,""],
+        [1,null,"rule",1,26,52,""],
+        [2,null,"targets",1,26,32,""],
+        [3,null,"word",1,26,32,""],
+        [2,null,":",0,32,33,""],
+        [2,null,"recipe",1,33,52,""],
+        [3,null,"\t",0,34,35,""],
+        [3,null,"recipe_line",1,35,51,""],
+        [4,null,"shell_text",1,35,46,""],
+        [5,null,"\\",0,44,46,""],
+        [4,null,"\t",0,46,47,""],
+        [4,null,"shell_text",1,47,51,""]
+      ]
+    },
+    {
+      "source": "target:\n\t@echo \"foo\\\nbar\"\n\ntarget:\n\t@echo \"foo\\\n\tbar\"\n",
+      "rows": [
+        [0,null,"makefile",1,0,54,""],
+        [1,null,"rule",1,0,27,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,27,""],
+        [3,null,"\t",0,8,9,""],
+        [3,null,"recipe_line",1,9,25,""],
+        [4,null,"@",0,9,10,""],
+        [4,null,"shell_text",1,10,21,""],
+        [5,null,"\\",0,19,21,""],
+        [4,null,"shell_text",1,21,25,""],
+        [1,null,"rule",1,27,54,""],
+        [2,null,"targets",1,27,33,""],
+        [3,null,"word",1,27,33,""],
+        [2,null,":",0,33,34,""],
+        [2,null,"recipe",1,34,54,""],
+        [3,null,"\t",0,35,36,""],
+        [3,null,"recipe_line",1,36,53,""],
+        [4,null,"@",0,36,37,""],
+        [4,null,"shell_text",1,37,48,""],
+        [5,null,"\\",0,46,48,""],
+        [4,null,"\t",0,48,49,""],
+        [4,null,"shell_text",1,49,53,""]
+      ]
+    },
+    {
+      "source": "target:\n\t@echo \"\\\\foo\\\n\tbar\"\n",
+      "rows": [
+        [0,null,"makefile",1,0,29,""],
+        [1,null,"rule",1,0,29,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,29,""],
+        [3,null,"\t",0,8,9,""],
+        [3,null,"recipe_line",1,9,28,""],
+        [4,null,"@",0,9,10,""],
+        [4,null,"shell_text",1,10,23,""],
+        [5,null,"\\",0,21,23,""],
+        [4,null,"\t",0,23,24,""],
+        [4,null,"shell_text",1,24,28,""]
+      ]
+    },
+    {
+      "source": "target:\n\tsed -e 's/\\([^-]*-g\\)/r\\1/'\n",
+      "rows": [
+        [0,null,"makefile",1,0,37,""],
+        [1,null,"rule",1,0,37,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,37,""],
+        [3,null,"\t",0,8,9,""],
+        [3,null,"recipe_line",1,9,36,""],
+        [4,null,"shell_text",1,9,36,""]
+      ]
+    },
+    {
+      "source": "target:\n\tfoo\n\tbar\n\tbaz\n",
+      "rows": [
+        [0,null,"makefile",1,0,23,""],
+        [1,null,"rule",1,0,23,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,23,""],
+        [3,null,"\t",0,8,9,""],
+        [3,null,"recipe_line",1,9,12,""],
+        [4,null,"shell_text",1,9,12,""],
+        [3,null,"\t",0,13,14,""],
+        [3,null,"recipe_line",1,14,17,""],
+        [4,null,"shell_text",1,14,17,""],
+        [3,null,"\t",0,18,19,""],
+        [3,null,"recipe_line",1,19,22,""],
+        [4,null,"shell_text",1,19,22,""]
+      ]
+    },
+    {
+      "source": "target:\n\n\tfoo\n# comment\n\tbaz\n",
+      "rows": [
+        [0,null,"makefile",1,0,29,""],
+        [1,null,"rule",1,0,29,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,29,""],
+        [3,null,"\t",0,9,10,""],
+        [3,null,"recipe_line",1,10,13,""],
+        [4,null,"shell_text",1,10,13,""],
+        [3,null,"comment",1,14,23,"X"],
+        [3,null,"\t",0,24,25,""],
+        [3,null,"recipe_line",1,25,28,""],
+        [4,null,"shell_text",1,25,28,""]
+      ]
+    },
+    {
+      "source": "all:   \n\t@echo foo\\\n\tbar\n",
+      "rows": [
+        [0,null,"makefile",1,0,25,""],
+        [1,null,"rule",1,0,25,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"recipe",1,7,25,""],
+        [3,null,"\t",0,8,9,""],
+        [3,null,"recipe_line",1,9,24,""],
+        [4,null,"@",0,9,10,""],
+        [4,null,"shell_text",1,10,20,""],
+        [5,null,"\\",0,18,20,""],
+        [4,null,"\t",0,20,21,""],
+        [4,null,"shell_text",1,21,24,""]
+      ]
+    },
+    {
+      "source": "target: ; echo \"foobar\"\n\ntarget: ;\n\techo \"foobar\"\n",
+      "rows": [
+        [0,null,"makefile",1,0,50,""],
+        [1,null,"rule",1,0,25,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,8,25,""],
+        [3,null,";",0,8,9,""],
+        [3,null,"recipe_line",1,9,23,""],
+        [4,null,"shell_text",1,9,23,""],
+        [1,null,"rule",1,25,50,""],
+        [2,null,"targets",1,25,31,""],
+        [3,null,"word",1,25,31,""],
+        [2,null,":",0,31,32,""],
+        [2,null,"recipe",1,33,50,""],
+        [3,null,";",0,33,34,""],
+        [3,null,"\t",0,35,36,""],
+        [3,null,"recipe_line",1,36,49,""],
+        [4,null,"shell_text",1,36,49,""]
+      ]
+    },
+    {
+      "source": "target: ; echo \"foo\\\nbar\"\n\ntarget: ; echo \"foo\\\n\tbar\"\n",
+      "rows": [
+        [0,null,"makefile",1,0,54,""],
+        [1,null,"rule",1,0,27,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,8,27,""],
+        [3,null,";",0,8,9,""],
+        [3,null,"recipe_line",1,9,25,""],
+        [4,null,"shell_text",1,9,21,""],
+        [5,null,"\\",0,19,21,""],
+        [4,null,"shell_text",1,21,25,""],
+        [1,null,"rule",1,27,54,""],
+        [2,null,"targets",1,27,33,""],
+        [3,null,"word",1,27,33,""],
+        [2,null,":",0,33,34,""],
+        [2,null,"recipe",1,35,54,""],
+        [3,null,";",0,35,36,""],
+        [3,null,"recipe_line",1,36,53,""],
+        [4,null,"shell_text",1,36,48,""],
+        [5,null,"\\",0,46,48,""],
+        [4,null,"\t",0,48,49,""],
+        [4,null,"shell_text",1,49,53,""]
+      ]
+    },
+    {
+      "source": "target: ; @echo \"foo\\\nbar\"\n\ntarget: ; @echo \"foo\\\n\tbar\"\n",
+      "rows": [
+        [0,null,"makefile",1,0,56,""],
+        [1,null,"rule",1,0,28,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,8,28,""],
+        [3,null,";",0,8,9,""],
+        [3,null,"recipe_line",1,9,26,""],
+        [4,null,"@",0,9,11,""],
+        [4,null,"shell_text",1,11,22,""],
+        [5,null,"\\",0,20,22,""],
+        [4,null,"shell_text",1,22,26,""],
+        [1,null,"rule",1,28,56,""],
+        [2,null,"targets",1,28,34,""],
+        [3,null,"word",1,28,34,""],
+        [2,null,":",0,34,35,""],
+        [2,null,"recipe",1,36,56,""],
+        [3,null,";",0,36,37,""],
+        [3,null,"recipe_line",1,37,55,""],
+        [4,null,"@",0,37,39,""],
+        [4,null,"shell_text",1,39,50,""],
+        [5,null,"\\",0,48,50,""],
+        [4,null,"\t",0,50,51,""],
+        [4,null,"shell_text",1,51,55,""]
+      ]
+    },
+    {
+      "source": "target:\n\n\techo \"foo\\\n\tbar\\\nbar\"\n\n\t\n\techo \"foobar\"\n\ntarget: ;\n\n\t@echo \"foo\\\n\tbar\\\nbar\"\n\n\techo \"foobar\"\n",
+      "rows": [
+        [0,null,"makefile",1,0,102,""],
+        [1,null,"rule",1,0,51,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,null,"recipe",1,7,51,""],
+        [3,null,"\t",0,9,10,""],
+        [3,null,"recipe_line",1,10,31,""],
+        [4,null,"shell_text",1,10,21,""],
+        [5,null,"\\",0,19,21,""],
+        [4,null,"\t",0,21,22,""],
+        [4,null,"shell_text",1,22,27,""],
+        [5,null,"\\",0,25,27,""],
+        [4,null,"shell_text",1,27,31,""],
+        [3,null,"\t",0,33,34,""],
+        [3,null,"\t",0,35,36,""],
+        [3,null,"recipe_line",1,36,49,""],
+        [4,null,"shell_text",1,36,49,""],
+        [1,null,"rule",1,51,102,""],
+        [2,null,"targets",1,51,57,""],
+        [3,null,"word",1,51,57,""],
+        [2,null,":",0,57,58,""],
+        [2,null,"recipe",1,59,102,""],
+        [3,null,";",0,59,60,""],
+        [3,null,"\t",0,62,63,""],
+        [3,null,"recipe_line",1,63,85,""],
+        [4,null,"@",0,63,64,""],
+        [4,null,"shell_text",1,64,75,""],
+        [5,null,"\\",0,73,75,""],
+        [4,null,"\t",0,75,76,""],
+        [4,null,"shell_text",1,76,81,""],
+        [5,null,"\\",0,79,81,""],
+        [4,null,"shell_text",1,81,85,""],
+        [3,null,"\t",0,87,88,""],
+        [3,null,"recipe_line",1,88,101,""],
+        [4,null,"shell_text",1,88,101,""]
+      ]
+    },
+    {
+      "source": "%.o: %.c\n\tgcc -c -o $@ $<\n",
+      "rows": [
+        [0,null,"makefile",1,0,26,""],
+        [1,null,"rule",1,0,26,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,"normal","prerequisites",1,5,8,""],
+        [3,null,"word",1,5,8,""],
+        [2,null,"recipe",1,8,26,""],
+        [3,null,"\t",0,9,10,""],
+        [3,null,"recipe_line",1,10,25,""],
+        [4,null,"shell_text",1,10,25,""],
+        [5,null,"automatic_variable",1,20,22,""],
+        [6,null,"$",0,20,21,""],
+        [6,null,"@",0,21,22,""],
+        [5,null,"automatic_variable",1,23,25,""],
+        [6,null,"$",0,23,24,""],
+        [6,null,"<",0,24,25,""]
+      ]
+    },
+    {
+      "source": "%.o: %.c\n\tgcc -c -o $(@) ${<}\n",
+      "rows": [
+        [0,null,"makefile",1,0,30,""],
+        [1,null,"rule",1,0,30,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,"normal","prerequisites",1,5,8,""],
+        [3,null,"word",1,5,8,""],
+        [2,null,"recipe",1,8,30,""],
+        [3,null,"\t",0,9,10,""],
+        [3,null,"recipe_line",1,10,29,""],
+        [4,null,"shell_text",1,10,29,""],
+        [5,null,"automatic_variable",1,20,24,""],
+        [6,null,"$",0,20,21,""],
+        [6,null,"(",0,21,22,""],
+        [6,null,"@",0,22,23,""],
+        [6,null,")",0,23,24,""],
+        [5,null,"automatic_variable",1,25,29,""],
+        [6,null,"$",0,25,26,""],
+        [6,null,"{",0,26,27,""],
+        [6,null,"<",0,27,28,""],
+        [6,null,"}",0,28,29,""]
+      ]
+    },
+    {
+      "source": "foo : bar/lose\n\tcd $(@D)\n\tgobble ${@F} > ../$@\n",
+      "rows": [
+        [0,null,"makefile",1,0,47,""],
+        [1,null,"rule",1,0,47,""],
+        [2,null,"targets",1,0,4,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,4,5,""],
+        [2,"normal","prerequisites",1,6,14,""],
+        [3,null,"word",1,6,14,""],
+        [2,null,"recipe",1,14,47,""],
+        [3,null,"\t",0,15,16,""],
+        [3,null,"recipe_line",1,16,24,""],
+        [4,null,"shell_text",1,16,24,""],
+        [5,null,"automatic_variable",1,19,24,""],
+        [6,null,"$",0,19,20,""],
+        [6,null,"(",0,20,21,""],
+        [6,null,"@",0,21,22,""],
+        [6,null,"D",0,22,23,""],
+        [6,null,")",0,23,24,""],
+        [3,null,"\t",0,25,26,""],
+        [3,null,"recipe_line",1,26,46,""],
+        [4,null,"shell_text",1,26,46,""],
+        [5,null,"automatic_variable",1,33,38,""],
+        [6,null,"$",0,33,34,""],
+        [6,null,"{",0,34,35,""],
+        [6,null,"@",0,35,36,""],
+        [6,null,"F",0,36,37,""],
+        [6,null,"}",0,37,38,""],
+        [5,null,"automatic_variable",1,44,46,""],
+        [6,null,"$",0,44,45,""],
+        [6,null,"@",0,45,46,""]
+      ]
+    },
+    {
+      "source": "foo: foo.1 bar.1 $$< $$^ $$+\n",
+      "rows": [
+        [0,null,"makefile",1,0,29,""],
+        [1,null,"rule",1,0,29,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,"normal","prerequisites",1,5,28,""],
+        [3,null,"word",1,5,10,""],
+        [3,null,"word",1,11,16,""],
+        [3,null,"automatic_variable",1,17,20,""],
+        [4,null,"$$",0,17,19,""],
+        [4,null,"<",0,19,20,""],
+        [3,null,"automatic_variable",1,21,24,""],
+        [4,null,"$$",0,21,23,""],
+        [4,null,"^",0,23,24,""],
+        [3,null,"automatic_variable",1,25,28,""],
+        [4,null,"$$",0,25,27,""],
+        [4,null,"+",0,27,28,""]
+      ]
+    },
+    {
+      "source": "%oo: $$< $$^ $$+ $$*\n",
+      "rows": [
+        [0,null,"makefile",1,0,21,""],
+        [1,null,"rule",1,0,21,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,"normal","prerequisites",1,5,20,""],
+        [3,null,"automatic_variable",1,5,8,""],
+        [4,null,"$$",0,5,7,""],
+        [4,null,"<",0,7,8,""],
+        [3,null,"automatic_variable",1,9,12,""],
+        [4,null,"$$",0,9,11,""],
+        [4,null,"^",0,11,12,""],
+        [3,null,"automatic_variable",1,13,16,""],
+        [4,null,"$$",0,13,15,""],
+        [4,null,"+",0,15,16,""],
+        [3,null,"automatic_variable",1,17,20,""],
+        [4,null,"$$",0,17,19,""],
+        [4,null,"*",0,19,20,""]
+      ]
+    },
+    {
+      "source": "target: prereq | prereq2\n\trecipe\n",
+      "rows": [
+        [0,null,"makefile",1,0,33,""],
+        [1,null,"rule",1,0,33,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,"normal","prerequisites",1,8,15,""],
+        [3,null,"word",1,8,14,""],
+        [2,null,"|",0,15,16,""],
+        [2,"order_only","prerequisites",1,17,24,""],
+        [3,null,"word",1,17,24,""],
+        [2,null,"recipe",1,24,33,""],
+        [3,null,"\t",0,25,26,""],
+        [3,null,"recipe_line",1,26,32,""],
+        [4,null,"shell_text",1,26,32,""]
+      ]
+    },
+    {
+      "source": "foo.o bar.o: %.o: %.c\n",
+      "rows": [
+        [0,null,"makefile",1,0,22,""],
+        [1,null,"rule",1,0,22,""],
+        [2,null,"targets",1,0,11,""],
+        [3,null,"word",1,0,5,""],
+        [3,null,"word",1,6,11,""],
+        [2,null,":",0,11,12,""],
+        [2,"target","pattern_list",1,13,16,""],
+        [3,null,"word",1,13,16,""],
+        [2,null,":",0,16,17,""],
+        [2,"prerequisite","pattern_list",1,18,21,""],
+        [3,null,"word",1,18,21,""]
+      ]
+    },
+    {
+      "source": "foo : bar : baz\n",
+      "rows": [
+        [0,null,"makefile",1,0,16,""],
+        [1,null,"rule",1,0,16,""],
+        [2,null,"targets",1,0,4,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,4,5,""],
+        [2,"target","pattern_list",1,6,10,""],
+        [3,null,"word",1,6,9,""],
+        [2,null,":",0,10,11,""],
+        [2,"prerequisite","pattern_list",1,12,15,""],
+        [3,null,"word",1,12,15,""]
+      ]
+    },
+    {
+      "source": "v = $(shell echo *.ls)\n",
+      "rows": [
+        [0,null,"makefile",1,0,23,""],
+        [1,null,"variable_assignment",1,0,23,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,22,""],
+        [3,null,"shell_function",1,4,22,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","shell",0,6,11,""],
+        [4,null,"shell_command",1,12,21,""],
+        [4,null,")",0,21,22,""]
+      ]
+    },
+    {
+      "source": "v = $(shell echo foo\\\n\tbar\\\nbaz)\n",
+      "rows": [
+        [0,null,"makefile",1,0,33,""],
+        [1,null,"variable_assignment",1,0,33,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,32,""],
+        [3,null,"shell_function",1,4,32,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","shell",0,6,11,""],
+        [4,null,"shell_command",1,12,31,""],
+        [4,null,")",0,31,32,""]
+      ]
+    },
+    {
+      "source": "v = $(shell echo foo$\\\n\tbar)\n\nv = $(shell echo foo$ bar)\n",
+      "rows": [
+        [0,null,"makefile",1,0,57,""],
+        [1,null,"variable_assignment",1,0,30,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,28,""],
+        [3,null,"shell_function",1,4,28,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","shell",0,6,11,""],
+        [4,null,"shell_command",1,12,27,""],
+        [5,null,"variable_reference",1,20,22,""],
+        [6,null,"$",0,20,21,""],
+        [6,null,"word",1,21,22,""],
+        [4,null,")",0,27,28,""],
+        [1,null,"variable_assignment",1,30,57,""],
+        [2,"name","word",1,30,31,""],
+        [2,"operator","=",0,32,33,""],
+        [2,"value","text",1,34,56,""],
+        [3,null,"shell_function",1,34,56,""],
+        [4,null,"$",0,34,35,""],
+        [4,null,"(",0,35,36,""],
+        [4,"function","shell",0,36,41,""],
+        [4,null,"shell_command",1,42,55,""],
+        [5,null,"variable_reference",1,50,52,""],
+        [6,null,"$",0,50,51,""],
+        [6,null,"word",1,51,52,""],
+        [4,null,")",0,55,56,""]
+      ]
+    },
+    {
+      "source": "v = $(shell echo \"\\(foo\\)\")\n",
+      "rows": [
+        [0,null,"makefile",1,0,28,""],
+        [1,null,"variable_assignment",1,0,28,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,27,""],
+        [3,null,"shell_function",1,4,27,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","shell",0,6,11,""],
+        [4,null,"shell_command",1,12,26,""],
+        [4,null,")",0,26,27,""]
+      ]
+    },
+    {
+      "source": "v = $(shell echo $$PWD)\n",
+      "rows": [
+        [0,null,"makefile",1,0,24,""],
+        [1,null,"variable_assignment",1,0,24,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,23,""],
+        [3,null,"shell_function",1,4,23,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","shell",0,6,11,""],
+        [4,null,"shell_command",1,12,22,""],
+        [5,null,"escape",1,17,19,""],
+        [4,null,")",0,22,23,""]
+      ]
+    },
+    {
+      "source": "v = $(shell echo $(foo) ${bar})\n",
+      "rows": [
+        [0,null,"makefile",1,0,32,""],
+        [1,null,"variable_assignment",1,0,32,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,31,""],
+        [3,null,"shell_function",1,4,31,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","shell",0,6,11,""],
+        [4,null,"shell_command",1,12,30,""],
+        [5,null,"variable_reference",1,17,23,""],
+        [6,null,"$",0,17,18,""],
+        [6,null,"(",0,18,19,""],
+        [6,null,"word",1,19,22,""],
+        [6,null,")",0,22,23,""],
+        [5,null,"variable_reference",1,24,30,""],
+        [6,null,"$",0,24,25,""],
+        [6,null,"{",0,25,26,""],
+        [6,null,"word",1,26,29,""],
+        [6,null,"}",0,29,30,""],
+        [4,null,")",0,30,31,""]
+      ]
+    },
+    {
+      "source": "v != echo *.ls\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"shell_assignment",1,0,15,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","!=",0,2,4,""],
+        [2,"value","shell_command",1,5,14,""]
+      ]
+    },
+    {
+      "source": "v != echo foo\\\n\tbar\\\nbaz\n",
+      "rows": [
+        [0,null,"makefile",1,0,25,""],
+        [1,null,"shell_assignment",1,0,25,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","!=",0,2,4,""],
+        [2,"value","shell_command",1,5,24,""]
+      ]
+    },
+    {
+      "source": "\n",
+      "rows": [
+        [0,null,"makefile",1,1,1,""]
+      ]
+    },
+    {
+      "source": "",
+      "rows": [
+        [0,null,"makefile",1,0,0,""]
+      ]
+    },
+    {
+      "source": "",
+      "rows": [
+        [0,null,"makefile",1,0,0,""]
+      ]
+    },
+    {
+      "source": "\n",
+      "rows": [
+        [0,null,"makefile",1,1,1,""]
+      ]
+    },
+    {
+      "source": "v = foo.o bar.o\n",
+      "rows": [
+        [0,null,"makefile",1,0,16,""],
+        [1,null,"variable_assignment",1,0,16,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,15,""]
+      ]
+    },
+    {
+      "source": "v := foo.o bar.o\n",
+      "rows": [
+        [0,null,"makefile",1,0,17,""],
+        [1,null,"variable_assignment",1,0,17,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator",":=",0,2,4,""],
+        [2,"value","text",1,5,16,""]
+      ]
+    },
+    {
+      "source": "v ::= foo.o bar.o\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"variable_assignment",1,0,18,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","::=",0,2,5,""],
+        [2,"value","text",1,6,17,""]
+      ]
+    },
+    {
+      "source": "var := foo\\\n       bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,23,""],
+        [1,null,"variable_assignment",1,0,23,""],
+        [2,"name","word",1,0,3,""],
+        [2,"operator",":=",0,4,6,""],
+        [2,"value","text",1,7,22,""]
+      ]
+    },
+    {
+      "source": "var := 'hello\\\nworld'\n",
+      "rows": [
+        [0,null,"makefile",1,0,22,""],
+        [1,null,"variable_assignment",1,0,22,""],
+        [2,"name","word",1,0,3,""],
+        [2,"operator",":=",0,4,6,""],
+        [2,"value","text",1,7,21,""]
+      ]
+    },
+    {
+      "source": "define two-lines\necho foo\necho bar\nendef\n",
+      "rows": [
+        [0,null,"makefile",1,0,41,""],
+        [1,null,"define_directive",1,0,41,""],
+        [2,null,"define",0,0,6,""],
+        [2,"name","word",1,7,16,""],
+        [2,"value","raw_text",1,17,35,""],
+        [2,null,"endef",0,35,40,""]
+      ]
+    },
+    {
+      "source": "define two-lines :=\necho foo\necho bar\nendef\n",
+      "rows": [
+        [0,null,"makefile",1,0,44,""],
+        [1,null,"define_directive",1,0,44,""],
+        [2,null,"define",0,0,6,""],
+        [2,"name","word",1,7,16,""],
+        [2,"operator",":=",0,17,19,""],
+        [2,"value","raw_text",1,20,38,""],
+        [2,null,"endef",0,38,43,""]
+      ]
+    },
+    {
+      "source": "define rule =\nfoo: bar\n\tbaz\nendef\n",
+      "rows": [
+        [0,null,"makefile",1,0,34,""],
+        [1,null,"define_directive",1,0,34,""],
+        [2,null,"define",0,0,6,""],
+        [2,"name","word",1,7,11,""],
+        [2,"operator","=",0,12,13,""],
+        [2,"value","raw_text",1,14,28,""],
+        [2,null,"endef",0,28,33,""]
+      ]
+    },
+    {
+      "source": " define  foo  = \n      bar\n endef\n",
+      "rows": [
+        [0,null,"makefile",1,1,34,""],
+        [1,null,"define_directive",1,1,34,""],
+        [2,null,"define",0,1,7,""],
+        [2,"name","word",1,9,12,""],
+        [2,"operator","=",0,14,15,""],
+        [2,"value","raw_text",1,17,27,""],
+        [2,null,"endef",0,27,33,""]
+      ]
+    },
+    {
+      "source": "define foo =\n#comment\nendef\n",
+      "rows": [
+        [0,null,"makefile",1,0,28,""],
+        [1,null,"define_directive",1,0,28,""],
+        [2,null,"define",0,0,6,""],
+        [2,"name","word",1,7,10,""],
+        [2,"operator","=",0,11,12,""],
+        [2,"value","raw_text",1,13,22,""],
+        [2,null,"endef",0,22,27,""]
+      ]
+    },
+    {
+      "source": "VPATH = foo:../bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,19,""],
+        [1,null,"VPATH_assignment",1,0,19,""],
+        [2,"name","VPATH",0,0,5,""],
+        [2,"operator","=",0,6,7,""],
+        [2,"value","paths",1,8,18,""],
+        [3,null,"word",1,8,11,""],
+        [3,null,":",0,11,12,""],
+        [3,null,"word",1,12,18,""]
+      ]
+    },
+    {
+      "source": "VPATH = foo;../bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,19,""],
+        [1,null,"VPATH_assignment",1,0,19,""],
+        [2,"name","VPATH",0,0,5,""],
+        [2,"operator","=",0,6,7,""],
+        [2,"value","paths",1,8,18,""],
+        [3,null,"word",1,8,11,""],
+        [3,null,";",0,11,12,""],
+        [3,null,"word",1,12,18,""]
+      ]
+    },
+    {
+      "source": "%.o : v = foo\n",
+      "rows": [
+        [0,null,"makefile",1,0,14,""],
+        [1,null,"variable_assignment",1,0,14,""],
+        [2,"target_or_pattern","list",1,0,4,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,4,5,""],
+        [2,"name","word",1,6,7,""],
+        [2,"operator","=",0,8,9,""],
+        [2,"value","text",1,10,13,""]
+      ]
+    },
+    {
+      "source": "v = \n",
+      "rows": [
+        [0,null,"makefile",1,0,5,""],
+        [1,null,"variable_assignment",1,0,5,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""]
+      ]
+    },
+    {
+      "source": "v = $(v) ${v}\n",
+      "rows": [
+        [0,null,"makefile",1,0,14,""],
+        [1,null,"variable_assignment",1,0,14,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,13,""],
+        [3,null,"variable_reference",1,4,8,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,null,"word",1,6,7,""],
+        [4,null,")",0,7,8,""],
+        [3,null,"variable_reference",1,9,13,""],
+        [4,null,"$",0,9,10,""],
+        [4,null,"{",0,10,11,""],
+        [4,null,"word",1,11,12,""],
+        [4,null,"}",0,12,13,""]
+      ]
+    },
+    {
+      "source": "v = $($(v)) $(${v}) ${${v}} ${$(v)}\n",
+      "rows": [
+        [0,null,"makefile",1,0,36,""],
+        [1,null,"variable_assignment",1,0,36,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,35,""],
+        [3,null,"variable_reference",1,4,11,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,null,"variable_reference",1,6,10,""],
+        [5,null,"$",0,6,7,""],
+        [5,null,"(",0,7,8,""],
+        [5,null,"word",1,8,9,""],
+        [5,null,")",0,9,10,""],
+        [4,null,")",0,10,11,""],
+        [3,null,"variable_reference",1,12,19,""],
+        [4,null,"$",0,12,13,""],
+        [4,null,"(",0,13,14,""],
+        [4,null,"variable_reference",1,14,18,""],
+        [5,null,"$",0,14,15,""],
+        [5,null,"{",0,15,16,""],
+        [5,null,"word",1,16,17,""],
+        [5,null,"}",0,17,18,""],
+        [4,null,")",0,18,19,""],
+        [3,null,"variable_reference",1,20,27,""],
+        [4,null,"$",0,20,21,""],
+        [4,null,"{",0,21,22,""],
+        [4,null,"variable_reference",1,22,26,""],
+        [5,null,"$",0,22,23,""],
+        [5,null,"{",0,23,24,""],
+        [5,null,"word",1,24,25,""],
+        [5,null,"}",0,25,26,""],
+        [4,null,"}",0,26,27,""],
+        [3,null,"variable_reference",1,28,35,""],
+        [4,null,"$",0,28,29,""],
+        [4,null,"{",0,29,30,""],
+        [4,null,"variable_reference",1,30,34,""],
+        [5,null,"$",0,30,31,""],
+        [5,null,"(",0,31,32,""],
+        [5,null,"word",1,32,33,""],
+        [5,null,")",0,33,34,""],
+        [4,null,"}",0,34,35,""]
+      ]
+    },
+    {
+      "source": "v := $(foo:.o=.c)\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"variable_assignment",1,0,18,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator",":=",0,2,4,""],
+        [2,"value","text",1,5,17,""],
+        [3,null,"substitution_reference",1,5,17,""],
+        [4,null,"$",0,5,6,""],
+        [4,null,"(",0,6,7,""],
+        [4,"text","word",1,7,10,""],
+        [4,null,":",0,10,11,""],
+        [4,"pattern","word",1,11,13,""],
+        [4,null,"=",0,13,14,""],
+        [4,"replacement","word",1,14,16,""],
+        [4,null,")",0,16,17,""]
+      ]
+    },
+    {
+      "source": "v := $(foo:%.o=%.c)\n",
+      "rows": [
+        [0,null,"makefile",1,0,20,""],
+        [1,null,"variable_assignment",1,0,20,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator",":=",0,2,4,""],
+        [2,"value","text",1,5,19,""],
+        [3,null,"substitution_reference",1,5,19,""],
+        [4,null,"$",0,5,6,""],
+        [4,null,"(",0,6,7,""],
+        [4,"text","word",1,7,10,""],
+        [4,null,":",0,10,11,""],
+        [4,"pattern","word",1,11,14,""],
+        [4,null,"=",0,14,15,""],
+        [4,"replacement","word",1,15,18,""],
+        [4,null,")",0,18,19,""]
+      ]
+    },
+    {
+      "source": "VPATH = foo/$(bar)\n",
+      "rows": [
+        [0,null,"makefile",1,0,19,""],
+        [1,null,"VPATH_assignment",1,0,19,""],
+        [2,"name","VPATH",0,0,5,""],
+        [2,"operator","=",0,6,7,""],
+        [2,"value","paths",1,8,18,""],
+        [3,null,"concatenation",1,8,18,""],
+        [4,null,"word",1,8,12,""],
+        [4,null,"variable_reference",1,12,18,""],
+        [5,null,"$",0,12,13,""],
+        [5,null,"(",0,13,14,""],
+        [5,null,"word",1,14,17,""],
+        [5,null,")",0,17,18,""]
+      ]
+    },
+    {
+      "source": "VPATH = $(foo)$(bar)\n",
+      "rows": [
+        [0,null,"makefile",1,0,21,""],
+        [1,null,"VPATH_assignment",1,0,21,""],
+        [2,"name","VPATH",0,0,5,""],
+        [2,"operator","=",0,6,7,""],
+        [2,"value","paths",1,8,20,""],
+        [3,null,"concatenation",1,8,20,""],
+        [4,null,"variable_reference",1,8,14,""],
+        [5,null,"$",0,8,9,""],
+        [5,null,"(",0,9,10,""],
+        [5,null,"word",1,10,13,""],
+        [5,null,")",0,13,14,""],
+        [4,null,"variable_reference",1,14,20,""],
+        [5,null,"$",0,14,15,""],
+        [5,null,"(",0,15,16,""],
+        [5,null,"word",1,16,19,""],
+        [5,null,")",0,19,20,""]
+      ]
+    },
+    {
+      "source": "VPATH := $($(foo)_$(bar))\n",
+      "rows": [
+        [0,null,"makefile",1,0,26,""],
+        [1,null,"VPATH_assignment",1,0,26,""],
+        [2,"name","VPATH",0,0,5,""],
+        [2,"operator",":=",0,6,8,""],
+        [2,"value","paths",1,9,25,""],
+        [3,null,"variable_reference",1,9,25,""],
+        [4,null,"$",0,9,10,""],
+        [4,null,"(",0,10,11,""],
+        [4,null,"concatenation",1,11,24,""],
+        [5,null,"variable_reference",1,11,17,""],
+        [6,null,"$",0,11,12,""],
+        [6,null,"(",0,12,13,""],
+        [6,null,"word",1,13,16,""],
+        [6,null,")",0,16,17,""],
+        [5,null,"word",1,17,18,""],
+        [5,null,"variable_reference",1,18,24,""],
+        [6,null,"$",0,18,19,""],
+        [6,null,"(",0,19,20,""],
+        [6,null,"word",1,20,23,""],
+        [6,null,")",0,23,24,""],
+        [4,null,")",0,24,25,""]
+      ]
+    },
+    {
+      "source": "v = echo \"foo\"  > bar\nv = echo \"foo\" !> bar\nv = echo \"foo\" 1> bar\nv = echo \"foo\" &> bar\n",
+      "rows": [
+        [0,null,"makefile",1,0,88,""],
+        [1,null,"variable_assignment",1,0,22,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,21,""],
+        [1,null,"variable_assignment",1,22,44,""],
+        [2,"name","word",1,22,23,""],
+        [2,"operator","=",0,24,25,""],
+        [2,"value","text",1,26,43,""],
+        [1,null,"variable_assignment",1,44,66,""],
+        [2,"name","word",1,44,45,""],
+        [2,"operator","=",0,46,47,""],
+        [2,"value","text",1,48,65,""],
+        [1,null,"variable_assignment",1,66,88,""],
+        [2,"name","word",1,66,67,""],
+        [2,"operator","=",0,68,69,""],
+        [2,"value","text",1,70,87,""]
+      ]
+    },
+    {
+      "source": "",
+      "rows": [
+        [0,null,"makefile",1,0,0,""]
+      ]
+    },
+    {
+      "source": "\n",
+      "rows": [
+        [0,null,"makefile",1,1,1,""]
+      ]
+    },
+    {
+      "source": "a = b\n",
+      "rows": [
+        [0,null,"makefile",1,0,6,""],
+        [1,null,"variable_assignment",1,0,6,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,5,""]
+      ]
+    },
+    {
+      "source": "a := b\n",
+      "rows": [
+        [0,null,"makefile",1,0,7,""],
+        [1,null,"variable_assignment",1,0,7,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator",":=",0,2,4,""],
+        [2,"value","text",1,5,6,""]
+      ]
+    },
+    {
+      "source": "a ::= b\n",
+      "rows": [
+        [0,null,"makefile",1,0,8,""],
+        [1,null,"variable_assignment",1,0,8,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","::=",0,2,5,""],
+        [2,"value","text",1,6,7,""]
+      ]
+    },
+    {
+      "source": "a ?= b\n",
+      "rows": [
+        [0,null,"makefile",1,0,7,""],
+        [1,null,"variable_assignment",1,0,7,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","?=",0,2,4,""],
+        [2,"value","text",1,5,6,""]
+      ]
+    },
+    {
+      "source": "a += b\n",
+      "rows": [
+        [0,null,"makefile",1,0,7,""],
+        [1,null,"variable_assignment",1,0,7,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","+=",0,2,4,""],
+        [2,"value","text",1,5,6,""]
+      ]
+    },
+    {
+      "source": "a != echo hi\n",
+      "rows": [
+        [0,null,"makefile",1,0,13,""],
+        [1,null,"shell_assignment",1,0,13,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","!=",0,2,4,""],
+        [2,"value","shell_command",1,5,12,""]
+      ]
+    },
+    {
+      "source": "a =\n",
+      "rows": [
+        [0,null,"makefile",1,0,4,""],
+        [1,null,"variable_assignment",1,0,4,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""]
+      ]
+    },
+    {
+      "source": "a = $(b) $(c)\n",
+      "rows": [
+        [0,null,"makefile",1,0,14,""],
+        [1,null,"variable_assignment",1,0,14,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,13,""],
+        [3,null,"variable_reference",1,4,8,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,null,"word",1,6,7,""],
+        [4,null,")",0,7,8,""],
+        [3,null,"variable_reference",1,9,13,""],
+        [4,null,"$",0,9,10,""],
+        [4,null,"(",0,10,11,""],
+        [4,null,"word",1,11,12,""],
+        [4,null,")",0,12,13,""]
+      ]
+    },
+    {
+      "source": "a = ${b}\n",
+      "rows": [
+        [0,null,"makefile",1,0,9,""],
+        [1,null,"variable_assignment",1,0,9,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,8,""],
+        [3,null,"variable_reference",1,4,8,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"{",0,5,6,""],
+        [4,null,"word",1,6,7,""],
+        [4,null,"}",0,7,8,""]
+      ]
+    },
+    {
+      "source": "a = $(b:.c=.o)\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"variable_assignment",1,0,15,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,14,""],
+        [3,null,"substitution_reference",1,4,14,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"text","word",1,6,7,""],
+        [4,null,":",0,7,8,""],
+        [4,"pattern","word",1,8,10,""],
+        [4,null,"=",0,10,11,""],
+        [4,"replacement","word",1,11,13,""],
+        [4,null,")",0,13,14,""]
+      ]
+    },
+    {
+      "source": "a = $(subst a,b,c)\n",
+      "rows": [
+        [0,null,"makefile",1,0,19,""],
+        [1,null,"variable_assignment",1,0,19,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,18,""],
+        [3,null,"function_call",1,4,18,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","subst",0,6,11,""],
+        [4,null,"arguments",1,12,17,""],
+        [5,"argument","text",1,12,17,""],
+        [4,null,")",0,17,18,""]
+      ]
+    },
+    {
+      "source": "a = $(shell ls)\n",
+      "rows": [
+        [0,null,"makefile",1,0,16,""],
+        [1,null,"variable_assignment",1,0,16,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,15,""],
+        [3,null,"shell_function",1,4,15,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","shell",0,6,11,""],
+        [4,null,"shell_command",1,12,14,""],
+        [4,null,")",0,14,15,""]
+      ]
+    },
+    {
+      "source": "a = $(wildcard *.c)\n",
+      "rows": [
+        [0,null,"makefile",1,0,20,""],
+        [1,null,"variable_assignment",1,0,20,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,19,""],
+        [3,null,"function_call",1,4,19,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","wildcard",0,6,14,""],
+        [4,null,"arguments",1,15,18,""],
+        [5,"argument","text",1,15,18,""],
+        [4,null,")",0,18,19,""]
+      ]
+    },
+    {
+      "source": "a = $(patsubst %.c,%.o,$(SRC))\n",
+      "rows": [
+        [0,null,"makefile",1,0,31,""],
+        [1,null,"variable_assignment",1,0,31,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,30,""],
+        [3,null,"function_call",1,4,30,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","patsubst",0,6,14,""],
+        [4,null,"arguments",1,15,29,""],
+        [5,"argument","text",1,15,29,""],
+        [6,null,"variable_reference",1,23,29,""],
+        [7,null,"$",0,23,24,""],
+        [7,null,"(",0,24,25,""],
+        [7,null,"word",1,25,28,""],
+        [7,null,")",0,28,29,""],
+        [4,null,")",0,29,30,""]
+      ]
+    },
+    {
+      "source": "a = $(foreach x,$(L),$(x).o)\n",
+      "rows": [
+        [0,null,"makefile",1,0,29,""],
+        [1,null,"variable_assignment",1,0,29,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,28,""],
+        [3,null,"function_call",1,4,28,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","foreach",0,6,13,""],
+        [4,null,"arguments",1,14,27,""],
+        [5,"argument","text",1,14,20,""],
+        [6,null,"variable_reference",1,16,20,""],
+        [7,null,"$",0,16,17,""],
+        [7,null,"(",0,17,18,""],
+        [7,null,"word",1,18,19,""],
+        [7,null,")",0,19,20,""],
+        [5,null,",",0,20,21,""],
+        [5,"argument","text",1,21,27,""],
+        [6,null,"variable_reference",1,21,25,""],
+        [7,null,"$",0,21,22,""],
+        [7,null,"(",0,22,23,""],
+        [7,null,"word",1,23,24,""],
+        [7,null,")",0,24,25,""],
+        [4,null,")",0,27,28,""]
+      ]
+    },
+    {
+      "source": "a = $(if $(b),c,d)\n",
+      "rows": [
+        [0,null,"makefile",1,0,19,""],
+        [1,null,"variable_assignment",1,0,19,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,18,""],
+        [3,null,"function_call",1,4,18,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","if",0,6,8,""],
+        [4,null,"arguments",1,9,17,""],
+        [5,"argument","text",1,9,17,""],
+        [6,null,"variable_reference",1,9,13,""],
+        [7,null,"$",0,9,10,""],
+        [7,null,"(",0,10,11,""],
+        [7,null,"word",1,11,12,""],
+        [7,null,")",0,12,13,""],
+        [4,null,")",0,17,18,""]
+      ]
+    },
+    {
+      "source": "a = $(call f,1,2)\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"variable_assignment",1,0,18,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,17,""],
+        [3,null,"function_call",1,4,17,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","call",0,6,10,""],
+        [4,null,"arguments",1,11,16,""],
+        [5,"argument","text",1,11,16,""],
+        [4,null,")",0,16,17,""]
+      ]
+    },
+    {
+      "source": "a = $(eval $(b))\n",
+      "rows": [
+        [0,null,"makefile",1,0,17,""],
+        [1,null,"variable_assignment",1,0,17,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,16,""],
+        [3,null,"function_call",1,4,16,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","eval",0,6,10,""],
+        [4,null,"arguments",1,11,15,""],
+        [5,"argument","text",1,11,15,""],
+        [6,null,"variable_reference",1,11,15,""],
+        [7,null,"$",0,11,12,""],
+        [7,null,"(",0,12,13,""],
+        [7,null,"word",1,13,14,""],
+        [7,null,")",0,14,15,""],
+        [4,null,")",0,15,16,""]
+      ]
+    },
+    {
+      "source": "a = $(origin b)\n",
+      "rows": [
+        [0,null,"makefile",1,0,16,""],
+        [1,null,"variable_assignment",1,0,16,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,15,""],
+        [3,null,"function_call",1,4,15,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","origin",0,6,12,""],
+        [4,null,"arguments",1,13,14,""],
+        [5,"argument","text",1,13,14,""],
+        [4,null,")",0,14,15,""]
+      ]
+    },
+    {
+      "source": "a = $(info é)\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"variable_assignment",1,0,15,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,14,""],
+        [3,null,"function_call",1,4,14,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","info",0,6,10,""],
+        [4,null,"arguments",1,11,13,""],
+        [5,"argument","text",1,11,13,""],
+        [4,null,")",0,13,14,""]
+      ]
+    },
+    {
+      "source": "a = $(error x)\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"variable_assignment",1,0,15,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,14,""],
+        [3,null,"function_call",1,4,14,""],
+        [4,null,"$",0,4,5,""],
+        [4,null,"(",0,5,6,""],
+        [4,"function","error",0,6,11,""],
+        [4,null,"arguments",1,12,13,""],
+        [5,"argument","text",1,12,13,""],
+        [4,null,")",0,13,14,""]
+      ]
+    },
+    {
+      "source": "a = $$HOME\n",
+      "rows": [
+        [0,null,"makefile",1,0,11,""],
+        [1,null,"variable_assignment",1,0,11,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,10,""],
+        [3,null,"escape",1,4,6,""]
+      ]
+    },
+    {
+      "source": "all:\n",
+      "rows": [
+        [0,null,"makefile",1,0,5,""],
+        [1,null,"rule",1,0,5,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""]
+      ]
+    },
+    {
+      "source": "all: a b\n",
+      "rows": [
+        [0,null,"makefile",1,0,9,""],
+        [1,null,"rule",1,0,9,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,"normal","prerequisites",1,5,8,""],
+        [3,null,"word",1,5,6,""],
+        [3,null,"word",1,7,8,""]
+      ]
+    },
+    {
+      "source": "all: a | b\n",
+      "rows": [
+        [0,null,"makefile",1,0,11,""],
+        [1,null,"rule",1,0,11,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,"normal","prerequisites",1,5,7,""],
+        [3,null,"word",1,5,6,""],
+        [2,null,"|",0,7,8,""],
+        [2,"order_only","prerequisites",1,9,10,""],
+        [3,null,"word",1,9,10,""]
+      ]
+    },
+    {
+      "source": "a b &: c\n",
+      "rows": [
+        [0,null,"makefile",1,0,9,""],
+        [1,null,"rule",1,0,9,""],
+        [2,null,"targets",1,0,4,""],
+        [3,null,"word",1,0,1,""],
+        [3,null,"word",1,2,3,""],
+        [2,null,"&:",0,4,6,""],
+        [2,"normal","prerequisites",1,7,8,""],
+        [3,null,"word",1,7,8,""]
+      ]
+    },
+    {
+      "source": "%.o: %.c\n\t$(CC) -c $< -o $@\n",
+      "rows": [
+        [0,null,"makefile",1,0,28,""],
+        [1,null,"rule",1,0,28,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,"normal","prerequisites",1,5,8,""],
+        [3,null,"word",1,5,8,""],
+        [2,null,"recipe",1,8,28,""],
+        [3,null,"\t",0,9,10,""],
+        [3,null,"recipe_line",1,10,27,""],
+        [4,null,"shell_text",1,10,27,""],
+        [5,null,"variable_reference",1,10,15,""],
+        [6,null,"$",0,10,11,""],
+        [6,null,"(",0,11,12,""],
+        [6,null,"word",1,12,14,""],
+        [6,null,")",0,14,15,""],
+        [5,null,"automatic_variable",1,19,21,""],
+        [6,null,"$",0,19,20,""],
+        [6,null,"<",0,20,21,""],
+        [5,null,"automatic_variable",1,25,27,""],
+        [6,null,"$",0,25,26,""],
+        [6,null,"@",0,26,27,""]
+      ]
+    },
+    {
+      "source": "all: ; echo hi\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"rule",1,0,15,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"recipe",1,5,15,""],
+        [3,null,";",0,5,6,""],
+        [3,null,"recipe_line",1,6,14,""],
+        [4,null,"shell_text",1,6,14,""]
+      ]
+    },
+    {
+      "source": "all:\n\techo a\n\techo b\n",
+      "rows": [
+        [0,null,"makefile",1,0,21,""],
+        [1,null,"rule",1,0,21,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"recipe",1,4,21,""],
+        [3,null,"\t",0,5,6,""],
+        [3,null,"recipe_line",1,6,12,""],
+        [4,null,"shell_text",1,6,12,""],
+        [3,null,"\t",0,13,14,""],
+        [3,null,"recipe_line",1,14,20,""],
+        [4,null,"shell_text",1,14,20,""]
+      ]
+    },
+    {
+      "source": "all:\n\t@echo a\n",
+      "rows": [
+        [0,null,"makefile",1,0,14,""],
+        [1,null,"rule",1,0,14,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"recipe",1,4,14,""],
+        [3,null,"\t",0,5,6,""],
+        [3,null,"recipe_line",1,6,13,""],
+        [4,null,"@",0,6,7,""],
+        [4,null,"shell_text",1,7,13,""]
+      ]
+    },
+    {
+      "source": "all:\n\t-rm x\n",
+      "rows": [
+        [0,null,"makefile",1,0,12,""],
+        [1,null,"rule",1,0,12,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"recipe",1,4,12,""],
+        [3,null,"\t",0,5,6,""],
+        [3,null,"recipe_line",1,6,11,""],
+        [4,null,"-",0,6,7,""],
+        [4,null,"shell_text",1,7,11,""]
+      ]
+    },
+    {
+      "source": "all:\n\t+make -C d\n",
+      "rows": [
+        [0,null,"makefile",1,0,17,""],
+        [1,null,"rule",1,0,17,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"recipe",1,4,17,""],
+        [3,null,"\t",0,5,6,""],
+        [3,null,"recipe_line",1,6,16,""],
+        [4,null,"+",0,6,7,""],
+        [4,null,"shell_text",1,7,16,""]
+      ]
+    },
+    {
+      "source": "all:\n\techo a \\\n\tb\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"rule",1,0,18,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"recipe",1,4,18,""],
+        [3,null,"\t",0,5,6,""],
+        [3,null,"recipe_line",1,6,17,""],
+        [4,null,"shell_text",1,6,15,""],
+        [5,null,"\\",0,13,15,""],
+        [4,null,"\t",0,15,16,""],
+        [4,null,"shell_text",1,16,17,""]
+      ]
+    },
+    {
+      "source": ".PHONY: all clean\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"rule",1,0,18,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"word",1,0,6,""],
+        [2,null,":",0,6,7,""],
+        [2,"normal","prerequisites",1,8,17,""],
+        [3,null,"word",1,8,11,""],
+        [3,null,"word",1,12,17,""]
+      ]
+    },
+    {
+      "source": "objs: a.o b.o\n",
+      "rows": [
+        [0,null,"makefile",1,0,14,""],
+        [1,null,"rule",1,0,14,""],
+        [2,null,"targets",1,0,4,""],
+        [3,null,"word",1,0,4,""],
+        [2,null,":",0,4,5,""],
+        [2,"normal","prerequisites",1,6,13,""],
+        [3,null,"word",1,6,9,""],
+        [3,null,"word",1,10,13,""]
+      ]
+    },
+    {
+      "source": "$(OBJ): %.o: %.c\n\tcc $<\n",
+      "rows": [
+        [0,null,"makefile",1,0,24,""],
+        [1,null,"rule",1,0,24,""],
+        [2,null,"targets",1,0,6,""],
+        [3,null,"variable_reference",1,0,6,""],
+        [4,null,"$",0,0,1,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,"word",1,2,5,""],
+        [4,null,")",0,5,6,""],
+        [2,null,":",0,6,7,""],
+        [2,"target","pattern_list",1,8,11,""],
+        [3,null,"word",1,8,11,""],
+        [2,null,":",0,11,12,""],
+        [2,"prerequisite","pattern_list",1,13,16,""],
+        [3,null,"word",1,13,16,""],
+        [2,null,"recipe",1,16,24,""],
+        [3,null,"\t",0,17,18,""],
+        [3,null,"recipe_line",1,18,23,""],
+        [4,null,"shell_text",1,18,23,""],
+        [5,null,"automatic_variable",1,21,23,""],
+        [6,null,"$",0,21,22,""],
+        [6,null,"<",0,22,23,""]
+      ]
+    },
+    {
+      "source": "a: b\n\n\n\tc\n",
+      "rows": [
+        [0,null,"makefile",1,0,10,""],
+        [1,null,"rule",1,0,10,""],
+        [2,null,"targets",1,0,1,""],
+        [3,null,"word",1,0,1,""],
+        [2,null,":",0,1,2,""],
+        [2,"normal","prerequisites",1,3,4,""],
+        [3,null,"word",1,3,4,""],
+        [2,null,"recipe",1,4,10,""],
+        [3,null,"\t",0,7,8,""],
+        [3,null,"recipe_line",1,8,9,""],
+        [4,null,"shell_text",1,8,9,""]
+      ]
+    },
+    {
+      "source": "include a.mk b.mk\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"include_directive",1,0,18,""],
+        [2,null,"include",0,0,7,""],
+        [2,"filenames","list",1,8,17,""],
+        [3,null,"word",1,8,12,""],
+        [3,null,"word",1,13,17,""]
+      ]
+    },
+    {
+      "source": "-include a.mk\n",
+      "rows": [
+        [0,null,"makefile",1,0,14,""],
+        [1,null,"include_directive",1,0,14,""],
+        [2,null,"-include",0,0,8,""],
+        [2,"filenames","list",1,9,13,""],
+        [3,null,"word",1,9,13,""]
+      ]
+    },
+    {
+      "source": "sinclude a.mk\n",
+      "rows": [
+        [0,null,"makefile",1,0,14,""],
+        [1,null,"include_directive",1,0,14,""],
+        [2,null,"sinclude",0,0,8,""],
+        [2,"filenames","list",1,9,13,""],
+        [3,null,"word",1,9,13,""]
+      ]
+    },
+    {
+      "source": "vpath %.c src\n",
+      "rows": [
+        [0,null,"makefile",1,0,14,""],
+        [1,null,"vpath_directive",1,0,14,""],
+        [2,null,"vpath",0,0,5,""],
+        [2,"pattern","word",1,6,9,""],
+        [2,"directories","paths",1,10,13,""],
+        [3,null,"word",1,10,13,""]
+      ]
+    },
+    {
+      "source": "vpath\n",
+      "rows": [
+        [0,null,"makefile",1,0,6,""],
+        [1,null,"vpath_directive",1,0,6,""],
+        [2,null,"vpath",0,0,5,""]
+      ]
+    },
+    {
+      "source": "export a = b\n",
+      "rows": [
+        [0,null,"makefile",1,0,13,""],
+        [1,null,"export_directive",1,0,13,""],
+        [2,null,"export",0,0,6,""],
+        [2,null,"variable_assignment",1,7,13,""],
+        [3,"name","word",1,7,8,""],
+        [3,"operator","=",0,9,10,""],
+        [3,"value","text",1,11,12,""]
+      ]
+    },
+    {
+      "source": "export\n",
+      "rows": [
+        [0,null,"makefile",1,0,7,""],
+        [1,null,"export_directive",1,0,7,""],
+        [2,null,"export",0,0,6,""]
+      ]
+    },
+    {
+      "source": "unexport a\n",
+      "rows": [
+        [0,null,"makefile",1,0,11,""],
+        [1,null,"unexport_directive",1,0,11,""],
+        [2,null,"unexport",0,0,8,""],
+        [2,"variables","list",1,9,10,""],
+        [3,null,"word",1,9,10,""]
+      ]
+    },
+    {
+      "source": "override a = b\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"override_directive",1,0,15,""],
+        [2,null,"override",0,0,8,""],
+        [2,null,"variable_assignment",1,9,15,""],
+        [3,"name","word",1,9,10,""],
+        [3,"operator","=",0,11,12,""],
+        [3,"value","text",1,13,14,""]
+      ]
+    },
+    {
+      "source": "private a = b\n",
+      "rows": [
+        [0,null,"makefile",1,0,14,""],
+        [1,null,"private_directive",1,0,14,""],
+        [2,null,"private",0,0,7,""],
+        [2,null,"variable_assignment",1,8,14,""],
+        [3,"name","word",1,8,9,""],
+        [3,"operator","=",0,10,11,""],
+        [3,"value","text",1,12,13,""]
+      ]
+    },
+    {
+      "source": "undefine a\n",
+      "rows": [
+        [0,null,"makefile",1,0,11,""],
+        [1,null,"undefine_directive",1,0,11,""],
+        [2,null,"undefine",0,0,8,""],
+        [2,"variable","word",1,9,10,""]
+      ]
+    },
+    {
+      "source": "define a\nb\nendef\n",
+      "rows": [
+        [0,null,"makefile",1,0,17,""],
+        [1,null,"define_directive",1,0,17,""],
+        [2,null,"define",0,0,6,""],
+        [2,"name","word",1,7,8,""],
+        [2,"value","raw_text",1,9,11,""],
+        [2,null,"endef",0,11,16,""]
+      ]
+    },
+    {
+      "source": "define a =\n  b\n  c\nendef\n",
+      "rows": [
+        [0,null,"makefile",1,0,25,""],
+        [1,null,"define_directive",1,0,25,""],
+        [2,null,"define",0,0,6,""],
+        [2,"name","word",1,7,8,""],
+        [2,"operator","=",0,9,10,""],
+        [2,"value","raw_text",1,11,19,""],
+        [2,null,"endef",0,19,24,""]
+      ]
+    },
+    {
+      "source": "ifeq ($(a),b)\nc = d\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,26,""],
+        [1,null,"conditional",1,0,26,""],
+        [2,"condition","ifeq_directive",1,0,14,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,null,"(",0,5,6,""],
+        [3,"arg0","variable_reference",1,6,10,""],
+        [4,null,"$",0,6,7,""],
+        [4,null,"(",0,7,8,""],
+        [4,null,"word",1,8,9,""],
+        [4,null,")",0,9,10,""],
+        [3,null,",",0,10,11,""],
+        [3,"arg1","word",1,11,12,""],
+        [3,null,")",0,12,13,""],
+        [2,"consequence","variable_assignment",1,14,20,""],
+        [3,"name","word",1,14,15,""],
+        [3,"operator","=",0,16,17,""],
+        [3,"value","text",1,18,19,""],
+        [2,null,"endif",0,20,25,""]
+      ]
+    },
+    {
+      "source": "ifneq \"a\" \"b\"\nc = d\nelse\nc = e\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,37,""],
+        [1,null,"conditional",1,0,37,""],
+        [2,"condition","ifneq_directive",1,0,14,""],
+        [3,null,"ifneq",0,0,5,""],
+        [3,"arg0","string",1,6,9,""],
+        [4,"string","\"",0,6,7,""],
+        [4,"string","\"",0,8,9,""],
+        [3,"arg1","string",1,10,13,""],
+        [4,"string","\"",0,10,11,""],
+        [4,"string","\"",0,12,13,""],
+        [2,"consequence","variable_assignment",1,14,20,""],
+        [3,"name","word",1,14,15,""],
+        [3,"operator","=",0,16,17,""],
+        [3,"value","text",1,18,19,""],
+        [2,null,"else_directive",1,20,31,""],
+        [3,null,"else",0,20,24,""],
+        [3,"consequence","variable_assignment",1,25,31,""],
+        [4,"name","word",1,25,26,""],
+        [4,"operator","=",0,27,28,""],
+        [4,"value","text",1,29,30,""],
+        [2,null,"endif",0,31,36,""]
+      ]
+    },
+    {
+      "source": "ifdef a\nb = c\nelse ifndef d\ne = f\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,40,""],
+        [1,null,"conditional",1,0,40,""],
+        [2,"condition","ifdef_directive",1,0,8,""],
+        [3,null,"ifdef",0,0,5,""],
+        [3,"variable","word",1,6,7,""],
+        [2,"consequence","variable_assignment",1,8,14,""],
+        [3,"name","word",1,8,9,""],
+        [3,"operator","=",0,10,11,""],
+        [3,"value","text",1,12,13,""],
+        [2,null,"elsif_directive",1,14,34,""],
+        [3,null,"else",0,14,18,""],
+        [3,"condition","ifndef_directive",1,19,28,""],
+        [4,null,"ifndef",0,19,25,""],
+        [4,"variable","word",1,26,27,""],
+        [3,"consequence","variable_assignment",1,28,34,""],
+        [4,"name","word",1,28,29,""],
+        [4,"operator","=",0,30,31,""],
+        [4,"value","text",1,32,33,""],
+        [2,null,"endif",0,34,39,""]
+      ]
+    },
+    {
+      "source": "ifndef a\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"conditional",1,0,15,""],
+        [2,"condition","ifndef_directive",1,0,9,""],
+        [3,null,"ifndef",0,0,6,""],
+        [3,"variable","word",1,7,8,""],
+        [2,null,"endif",0,9,14,""]
+      ]
+    },
+    {
+      "source": "# comment\n",
+      "rows": [
+        [0,null,"makefile",1,0,10,""],
+        [1,null,"comment",1,0,9,"X"]
+      ]
+    },
+    {
+      "source": "a = b # c\n",
+      "rows": [
+        [0,null,"makefile",1,0,10,""],
+        [1,null,"variable_assignment",1,0,10,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,9,""]
+      ]
+    },
+    {
+      "source": "all: # c\n\techo\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"rule",1,0,15,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,null,"comment",1,5,8,"X"],
+        [2,null,"recipe",1,8,15,""],
+        [3,null,"\t",0,9,10,""],
+        [3,null,"recipe_line",1,10,14,""],
+        [4,null,"shell_text",1,10,14,""]
+      ]
+    },
+    {
+      "source": "a = b \\\n  c\n",
+      "rows": [
+        [0,null,"makefile",1,0,12,""],
+        [1,null,"variable_assignment",1,0,12,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,11,""]
+      ]
+    },
+    {
+      "source": "a: b\n\t$(MAKE) $@\n",
+      "rows": [
+        [0,null,"makefile",1,0,17,""],
+        [1,null,"rule",1,0,17,""],
+        [2,null,"targets",1,0,1,""],
+        [3,null,"word",1,0,1,""],
+        [2,null,":",0,1,2,""],
+        [2,"normal","prerequisites",1,3,4,""],
+        [3,null,"word",1,3,4,""],
+        [2,null,"recipe",1,4,17,""],
+        [3,null,"\t",0,5,6,""],
+        [3,null,"recipe_line",1,6,16,""],
+        [4,null,"shell_text",1,6,16,""],
+        [5,null,"variable_reference",1,6,13,""],
+        [6,null,"$",0,6,7,""],
+        [6,null,"(",0,7,8,""],
+        [6,null,"word",1,8,12,""],
+        [6,null,")",0,12,13,""],
+        [5,null,"automatic_variable",1,14,16,""],
+        [6,null,"$",0,14,15,""],
+        [6,null,"@",0,15,16,""]
+      ]
+    },
+    {
+      "source": "a: b\n\techo $(@D) $(<F) $^ $+ $? $* $%\n",
+      "rows": [
+        [0,null,"makefile",1,0,38,""],
+        [1,null,"rule",1,0,38,""],
+        [2,null,"targets",1,0,1,""],
+        [3,null,"word",1,0,1,""],
+        [2,null,":",0,1,2,""],
+        [2,"normal","prerequisites",1,3,4,""],
+        [3,null,"word",1,3,4,""],
+        [2,null,"recipe",1,4,38,""],
+        [3,null,"\t",0,5,6,""],
+        [3,null,"recipe_line",1,6,37,""],
+        [4,null,"shell_text",1,6,37,""],
+        [5,null,"automatic_variable",1,11,16,""],
+        [6,null,"$",0,11,12,""],
+        [6,null,"(",0,12,13,""],
+        [6,null,"@",0,13,14,""],
+        [6,null,"D",0,14,15,""],
+        [6,null,")",0,15,16,""],
+        [5,null,"automatic_variable",1,17,22,""],
+        [6,null,"$",0,17,18,""],
+        [6,null,"(",0,18,19,""],
+        [6,null,"<",0,19,20,""],
+        [6,null,"F",0,20,21,""],
+        [6,null,")",0,21,22,""],
+        [5,null,"automatic_variable",1,23,25,""],
+        [6,null,"$",0,23,24,""],
+        [6,null,"^",0,24,25,""],
+        [5,null,"automatic_variable",1,26,28,""],
+        [6,null,"$",0,26,27,""],
+        [6,null,"+",0,27,28,""],
+        [5,null,"automatic_variable",1,29,31,""],
+        [6,null,"$",0,29,30,""],
+        [6,null,"?",0,30,31,""],
+        [5,null,"automatic_variable",1,32,34,""],
+        [6,null,"$",0,32,33,""],
+        [6,null,"*",0,33,34,""],
+        [5,null,"automatic_variable",1,35,37,""],
+        [6,null,"$",0,35,36,""],
+        [6,null,"%",0,36,37,""]
+      ]
+    },
+    {
+      "source": "VPATH = a:b\n",
+      "rows": [
+        [0,null,"makefile",1,0,12,""],
+        [1,null,"VPATH_assignment",1,0,12,""],
+        [2,"name","VPATH",0,0,5,""],
+        [2,"operator","=",0,6,7,""],
+        [2,"value","paths",1,8,11,""],
+        [3,null,"word",1,8,9,""],
+        [3,null,":",0,9,10,""],
+        [3,null,"word",1,10,11,""]
+      ]
+    },
+    {
+      "source": ".RECIPEPREFIX = >\n",
+      "rows": [
+        [0,null,"makefile",1,0,18,""],
+        [1,null,"RECIPEPREFIX_assignment",1,0,18,""],
+        [2,"name",".RECIPEPREFIX",0,0,13,""],
+        [2,"operator","=",0,14,15,""],
+        [2,"value","text",1,15,17,""]
+      ]
+    },
+    {
+      "source": "a.o: CFLAGS += -O2\n",
+      "rows": [
+        [0,null,"makefile",1,0,19,""],
+        [1,null,"variable_assignment",1,0,19,""],
+        [2,"target_or_pattern","list",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,"name","word",1,5,11,""],
+        [2,"operator","+=",0,12,14,""],
+        [2,"value","text",1,15,18,""]
+      ]
+    },
+    {
+      "source": "a = é\n",
+      "rows": [
+        [0,null,"makefile",1,0,7,""],
+        [1,null,"variable_assignment",1,0,7,""],
+        [2,"name","word",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"value","text",1,4,6,""]
+      ]
+    },
+    {
+      "source": "ifeq a b\nendif\n",
+      "rows": [
+        [0,null,"makefile",1,0,15,""],
+        [1,null,"conditional",1,0,15,""],
+        [2,"condition","ifeq_directive",1,0,9,""],
+        [3,null,"ifeq",0,0,4,""],
+        [3,"arg0","word",1,5,6,""],
+        [3,"arg1","word",1,7,8,""],
+        [2,null,"endif",0,9,14,""]
+      ]
+    },
+    {
+      "source": "a: \nb: c\n",
+      "rows": [
+        [0,null,"makefile",1,0,9,""],
+        [1,null,"rule",1,0,4,""],
+        [2,null,"targets",1,0,1,""],
+        [3,null,"word",1,0,1,""],
+        [2,null,":",0,1,2,""],
+        [1,null,"rule",1,4,9,""],
+        [2,null,"targets",1,4,5,""],
+        [3,null,"word",1,4,5,""],
+        [2,null,":",0,5,6,""],
+        [2,"normal","prerequisites",1,7,8,""],
+        [3,null,"word",1,7,8,""]
+      ]
+    }
+  ],
+  "divergences": [],
+  "rejections": [
+    {
+      "source": "\n.RECIPEPREFIX = >\n\ntarget:\n>echo \"foobar\"\n",
+      "recovered": "(makefile (recipe_prefix_assignment ~\"\\n\" name:\".RECIPEPREFIX\" (unnamed_token \" \") operator:\"=\" value:(text (unnamed_token \" >\")) (unnamed_token \"\\n\\n\")) (rule (targets (word \"target\")) \":\" (recipe (unnamed_token \"\\n\") (MISSING@28 \"\\t\") (recipe_line (shell_text (unnamed_token \">echo \\\"foobar\\\"\"))) (unnamed_token \"\\n\"))))"
+    },
+    {
+      "source": "\n.RECIPEPREFIX = a\n\ntarget:\naecho \"foobar\"\n",
+      "recovered": "(makefile (recipe_prefix_assignment ~\"\\n\" name:\".RECIPEPREFIX\" (unnamed_token \" \") operator:\"=\" value:(text (unnamed_token \" a\")) (unnamed_token \"\\n\\n\")) (rule (targets (word \"target\")) \":\" (unnamed_token \"\\n\")) (rule (targets (word \"aecho\") (unnamed_token \" \") (string string:\"\\\"\" string:(unnamed_token \"foobar\") string:\"\\\"\")) (MISSING@42 \":\") ~\"\\n\" (MISSING@43 unnamed_token)))"
+    },
+    {
+      "source": "\n.RECIPEPREFIX = >\n\ntarget: ;\n>echo \"foobar\"\n",
+      "recovered": "(makefile (recipe_prefix_assignment ~\"\\n\" name:\".RECIPEPREFIX\" (unnamed_token \" \") operator:\"=\" value:(text (unnamed_token \" >\")) (unnamed_token \"\\n\\n\")) (rule (targets (word \"target\")) \":\" (unnamed_token \" \") (recipe \";\" (unnamed_token \"\\n\") (MISSING@30 \"\\t\") (recipe_line (shell_text (unnamed_token \">echo \\\"foobar\\\"\"))) (unnamed_token \"\\n\"))))"
+    },
+    {
+      "source": "ifeq (a,b\n",
+      "recovered": "(makefile (conditional condition:(if_equal_directive \"ifeq\" ~\" \" \"(\" arg0:(word \"a\") \",\" arg1:(word \"b\") (MISSING@9 \")\") ~\"\\n\" (MISSING@10 unnamed_token)) (MISSING@10 \"endif\") (MISSING@10 unnamed_token)))"
+    },
+    {
+      "source": "ifeq (a,b)\n",
+      "recovered": "(makefile (conditional condition:(if_equal_directive \"ifeq\" ~\" \" \"(\" arg0:(word \"a\") \",\" arg1:(word \"b\") \")\" (unnamed_token \"\\n\")) (MISSING@11 \"endif\") (MISSING@11 unnamed_token)))"
+    },
+    {
+      "source": "define a\nb\n",
+      "recovered": "(makefile (define_directive \"define\" ~\" \" name:(word \"a\") (unnamed_token \"\\n\") value:(raw_text \"b\\n\") (MISSING@11) (MISSING@11 unnamed_token)))"
+    },
+    {
+      "source": "a = $(b\n",
+      "recovered": "(makefile (variable_assignment name:(word \"a\") (unnamed_token \" \") operator:\"=\" (unnamed_token \" \") value:(text (variable_reference \"$\" \"(\" (word \"b\") (MISSING@7 \")\") ~\"\\n\")) (MISSING@8 unnamed_token)))"
+    },
+    {
+      "source": "a: $(\n",
+      "recovered": "(makefile (rule (targets (word \"a\")) \":\" (unnamed_token \" \") normal:(prerequisites (variable_reference \"$\" \"(\" (MISSING@5 word) ~\"\\n\" (MISSING@6 \")\"))) (MISSING@6 unnamed_token)))"
+    },
+    {
+      "source": "endif\n",
+      "recovered": "(makefile (rule (targets (word \"endif\")) (MISSING@5 \":\") ~\"\\n\" (MISSING@6 unnamed_token)))"
+    },
+    {
+      "source": "else\n",
+      "recovered": "(makefile (rule (targets (word \"else\")) (MISSING@4 \":\") ~\"\\n\" (MISSING@5 unnamed_token)))"
+    },
+    {
+      "source": "endef\n",
+      "recovered": "(makefile (rule (targets (word \"endef\")) (MISSING@5 \":\") ~\"\\n\" (MISSING@6 unnamed_token)))"
+    },
+    {
+      "source": "a = ${b\n",
+      "recovered": "(makefile (variable_assignment name:(word \"a\") (unnamed_token \" \") operator:\"=\" (unnamed_token \" \") value:(text (variable_reference \"$\" \"{\" (word \"b\") (MISSING@7 \"}\") ~\"\\n\")) (MISSING@8 unnamed_token)))"
+    },
+    {
+      "source": "ifdef\n",
+      "recovered": "(makefile (conditional condition:(if_defined_directive \"ifdef\" (MISSING@5 word) ~\"\\n\" (MISSING@6 unnamed_token)) (MISSING@6 \"endif\") (MISSING@6 unnamed_token)))"
+    },
+    {
+      "source": "\techo\n",
+      "recovered": "(makefile (rule (targets ~\"\\t\" (word \"echo\")) (MISSING@5 \":\") ~\"\\n\" (MISSING@6 unnamed_token)))"
+    },
+    {
+      "source": "export a = $(\n",
+      "recovered": "(makefile (export_directive \"export\" (variable_assignment ~\" \" name:(word \"a\") (unnamed_token \" \") operator:\"=\" (unnamed_token \" \") value:(text (variable_reference \"$\" \"(\" (MISSING@13 word) ~\"\\n\" (MISSING@14 \")\"))) (MISSING@14 unnamed_token))))"
+    },
+    {
+      "source": "a: b\n\techo $(\n",
+      "recovered": "(makefile (rule (targets (word \"a\")) \":\" (unnamed_token \" \") normal:(prerequisites (word \"b\")) (recipe (unnamed_token \"\\n\") \"\\t\" (recipe_line (shell_text (unnamed_token \"echo \") (variable_reference \"$\" \"(\" (MISSING@13 word) ~\"\\n\" (MISSING@14 \")\")))) (MISSING@14 unnamed_token))))"
+    },
+    {
+      "source": "vpath %.c $(\n",
+      "recovered": "(makefile (search_path_directive \"vpath\" ~\" \" pattern:(word \"%.c\") directories:(paths (variable_reference ~\" \" \"$\" \"(\" (MISSING@12 word) ~\"\\n\" (MISSING@13 \")\"))) (MISSING@13 unnamed_token)))"
+    },
+    {
+      "source": "include $(\n",
+      "recovered": "(makefile (include_directive \"include\" filenames:(list (variable_reference ~\" \" \"$\" \"(\" (MISSING@10 word) ~\"\\n\" (MISSING@11 \")\"))) (MISSING@11 unnamed_token)))"
+    },
+    {
+      "source": ":\n",
+      "recovered": "(makefile (ERROR@0..2 \":\\n\"))"
+    },
+    {
+      "source": "$(a\n",
+      "recovered": "(makefile (rule (targets (variable_reference \"$\" \"(\" (word \"a\") (MISSING@3 \")\") ~\"\\n\")) (MISSING@4 \":\") (MISSING@4 unnamed_token)))"
+    },
+    {
+      "source": "override\n",
+      "recovered": "(makefile (override_directive \"override\" (variable_assignment (MISSING@8 word) ~\"\\n\" (MISSING@9 \"=\") (MISSING@9 unnamed_token))))"
+    },
+    {
+      "source": "a: private b = c\n",
+      "recovered": "(makefile (rule (targets (word \"a\")) \":\" (unnamed_token \" \") normal:(prerequisites (word \"private\") (unnamed_token \" \") (word \"b\") (unnamed_token \" \") (ERROR@13..15 \"= \") (word \"c\")) (unnamed_token \"\\n\")))"
+    },
+    {
+      "source": "a: export b = c\n",
+      "recovered": "(makefile (rule (targets (word \"a\")) \":\" (unnamed_token \" \") normal:(prerequisites (word \"export\") (unnamed_token \" \") (word \"b\") (unnamed_token \" \") (ERROR@12..14 \"= \") (word \"c\")) (unnamed_token \"\\n\")))"
+    },
+    {
+      "source": "# café\nall: é\n",
+      "recovered": "(makefile (rule (targets ~(comment \"# café\") ~\"\\n\" (word \"all\")) \":\" (unnamed_token \" \") (unnamed_token (ERROR@13..15 \"é\") \"\\n\")))"
+    },
+    {
+      "source": "a:\nb\n",
+      "recovered": "(makefile (rule (targets (word \"a\")) \":\" (unnamed_token \"\\n\")) (rule (targets (word \"b\")) (MISSING@4 \":\") ~\"\\n\" (MISSING@5 unnamed_token)))"
+    },
+    {
+      "source": "all:\necho\n",
+      "recovered": "(makefile (rule (targets (word \"all\")) \":\" (unnamed_token \"\\n\")) (rule (targets (word \"echo\")) (MISSING@9 \":\") ~\"\\n\" (MISSING@10 unnamed_token)))"
+    },
+    {
+      "source": "a: ;\n>b\n",
+      "recovered": "(makefile (rule (targets (word \"a\")) \":\" (unnamed_token \" \") (recipe \";\" (unnamed_token \"\\n\") (MISSING@5 \"\\t\") (recipe_line (shell_text (unnamed_token \">b\"))) (unnamed_token \"\\n\"))))"
+    }
+  ]
+}

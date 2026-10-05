@@ -10,7 +10,8 @@
 //! `issue_195_grammar_native_rocq.rs`, `issue_195_grammar_native_java.rs`,
 //! `issue_195_grammar_native_go.rs`, `issue_195_grammar_native_regex.rs`,
 //! `issue_195_grammar_native_graphql.rs`,
-//! `issue_195_grammar_native_proto.rs`):
+//! `issue_195_grammar_native_proto.rs`,
+//! `issue_195_grammar_native_make.rs`):
 //! they read a fixture of
 //! parity/fixtures/native-grammars/, parse with the Rust
 //! executor and project its trees to the rows of the tree-sitter oracle the

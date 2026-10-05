@@ -1,0 +1,258 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "make",
+  "native": "native-make",
+  "sources": [
+    {
+      "id": "tree-sitter-make",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-make 1.1.1",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-make",
+      "revision": "5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d",
+      "path": "src/grammar.json",
+      "sha256": "48643ddba43c8aff5860b194587fefa1e9da79b10e4b1653885fda9a44c76483",
+      "license": "MIT"
+    }
+  ],
+  "rules": 65,
+  "keywords": [
+    "D",
+    "F",
+    "VPATH",
+    "abspath",
+    "addprefix",
+    "addsuffix",
+    "and",
+    "basename",
+    "call",
+    "define",
+    "dir",
+    "else",
+    "endef",
+    "endif",
+    "error",
+    "eval",
+    "export",
+    "file",
+    "filter",
+    "filter-out",
+    "findstring",
+    "firstword",
+    "flavor",
+    "foreach",
+    "if",
+    "ifdef",
+    "ifeq",
+    "ifndef",
+    "ifneq",
+    "include",
+    "info",
+    "join",
+    "lastword",
+    "notdir",
+    "or",
+    "origin",
+    "override",
+    "patsubst",
+    "private",
+    "realpath",
+    "shell",
+    "sinclude",
+    "sort",
+    "strip",
+    "subst",
+    "suffix",
+    "undefine",
+    "unexport",
+    "value",
+    "vpath",
+    "warning",
+    "wildcard",
+    "word",
+    "wordlist",
+    "words"
+  ],
+  "renamed": [
+    {
+      "source": "_thing",
+      "native": "thing"
+    },
+    {
+      "source": "_ordinary_rule",
+      "native": "ordinary_rule"
+    },
+    {
+      "source": "_static_pattern_rule",
+      "native": "static_pattern_rule"
+    },
+    {
+      "source": "_targets",
+      "native": "targets_alias"
+    },
+    {
+      "source": "_target_pattern",
+      "native": "target_pattern"
+    },
+    {
+      "source": "_prerequisites",
+      "native": "prerequisites_choice"
+    },
+    {
+      "source": "_normal_prerequisites",
+      "native": "normal_prerequisites"
+    },
+    {
+      "source": "_order_only_prerequisites",
+      "native": "order_only_prerequisites"
+    },
+    {
+      "source": "_prerequisites_pattern",
+      "native": "prerequisites_pattern"
+    },
+    {
+      "source": "_attached_recipe_line",
+      "native": "attached_recipe_line"
+    },
+    {
+      "source": "_prefixed_recipe_line",
+      "native": "prefixed_recipe_line"
+    },
+    {
+      "source": "_variable_definition",
+      "native": "variable_definition"
+    },
+    {
+      "source": "VPATH_assignment",
+      "native": "search_path_assignment"
+    },
+    {
+      "source": "RECIPEPREFIX_assignment",
+      "native": "recipe_prefix_assignment"
+    },
+    {
+      "source": "_target_or_pattern_assignment",
+      "native": "target_or_pattern_assignment"
+    },
+    {
+      "source": "_directive",
+      "native": "directive"
+    },
+    {
+      "source": "vpath_directive",
+      "native": "search_path_directive"
+    },
+    {
+      "source": "unexport_directive",
+      "native": "remove_export_directive"
+    },
+    {
+      "source": "undefine_directive",
+      "native": "remove_definition_directive"
+    },
+    {
+      "source": "elsif_directive",
+      "native": "else_if_directive"
+    },
+    {
+      "source": "_conditional_directives",
+      "native": "conditional_directives"
+    },
+    {
+      "source": "_conditional_consequence",
+      "native": "conditional_consequence"
+    },
+    {
+      "source": "ifeq_directive",
+      "native": "if_equal_directive"
+    },
+    {
+      "source": "ifneq_directive",
+      "native": "if_not_equal_directive"
+    },
+    {
+      "source": "ifdef_directive",
+      "native": "if_defined_directive"
+    },
+    {
+      "source": "ifndef_directive",
+      "native": "if_not_defined_directive"
+    },
+    {
+      "source": "_conditional_args_cmp",
+      "native": "conditional_arguments_comparison"
+    },
+    {
+      "source": "_variable",
+      "native": "variable"
+    },
+    {
+      "source": "_function",
+      "native": "function"
+    },
+    {
+      "source": "_primary",
+      "native": "primary"
+    },
+    {
+      "source": "_name",
+      "native": "name"
+    },
+    {
+      "source": "_string",
+      "native": "string_content"
+    },
+    {
+      "source": "_recipeprefix",
+      "native": "recipe_prefix"
+    },
+    {
+      "source": "_rawline",
+      "native": "raw_line"
+    },
+    {
+      "source": "_shell_text_without_split",
+      "native": "shell_text_without_split"
+    },
+    {
+      "source": "_shell_command",
+      "native": "shell_command_alias"
+    }
+  ],
+  "expandedWords": [
+    "args",
+    "cmp",
+    "elsif",
+    "ifdef",
+    "ifeq",
+    "ifndef",
+    "ifneq",
+    "rawline",
+    "recipeprefix",
+    "undefine",
+    "unexport",
+    "vpath"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "list",
+        "concept": "grammar.list"
+      },
+      {
+        "rule": "name",
+        "concept": "grammar.name"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 61
+  },
+  "approximations": [],
+  "unsupported": []
+}

@@ -92,7 +92,7 @@
       "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 3, "kind": 0},
       "correctness": {"matches": 53, "rows": 1809, "bytes": 3211, "divergences": 0, "rejections": 29},
       "recovery": {"repaired": 29, "errorNodes": 8, "missingNodes": 40, "categories": {}},
-      "reuse": {"shared": 21, "specific": 53}
+      "reuse": {"shared": 23, "specific": 51}
     },
     {
       "grammar": "native-ini",
@@ -202,6 +202,24 @@
       "correctness": {"matches": 251, "rows": 5152, "bytes": 13446, "divergences": 1, "rejections": 42},
       "recovery": {"repaired": 42, "errorNodes": 34, "missingNodes": 41, "categories": {"merged-extension": 1, "native-skips-more": 34, "oracle-skips-more": 35, "same-repair-sites": 19, "same-skipped-bytes": 8}},
       "reuse": {"shared": 40, "specific": 107}
+    },
+    {
+      "grammar": "native-make",
+      "language": "Make",
+      "links": "parity/grammars/native/make.lino",
+      "fixture": "parity/fixtures/native-grammars/make.json",
+      "oracle": "tree-sitter-make 1.1.1",
+      "sources": [
+        "https://github.com/tree-sitter-grammars/tree-sitter-make/blob/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/grammar.js",
+        "https://github.com/tree-sitter-grammars/tree-sitter-make/tree/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/test/corpus"
+      ],
+      "corpus": "https://github.com/tree-sitter-grammars/tree-sitter-make/tree/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/make.json",
+      "coverage": {"rules": {"normal": 36, "atomic": 0, "silent": 25, "token": 4}, "visibleRules": 36, "exercisedRules": 35, "checkedKinds": 44, "checkedFields": 24, "renamed": 36, "expandedWords": 12, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 3, "kind": 0},
+      "correctness": {"matches": 168, "rows": 1985, "bytes": 4084, "divergences": 0, "rejections": 27},
+      "recovery": {"repaired": 27, "errorNodes": 4, "missingNodes": 54, "categories": {}},
+      "reuse": {"shared": 13, "specific": 52}
     },
     {
       "grammar": "native-proto",

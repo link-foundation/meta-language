@@ -1,7 +1,9 @@
 // Pins a tree-sitter grammar checkout for the import pipeline: writes the
 // gzipped src/grammar.json and test corpus (JSON of each corpus file) to
 // parity/grammars/sources/ and prints their sha256 (taken before
-// compression) for the parity/grammars/sources.json entry. A checkout with
+// compression) for the parity/grammars/sources.json entry. Every file of
+// test/corpus is a corpus file, whatever its extension (tree-sitter-make's
+// are `.mk`). A checkout with
 // several grammars over one corpus (tree-sitter-typescript's typescript and
 // tsx) names their directories; each DIRECTORY/src/grammar.json is written
 // as NAME.DIRECTORY.grammar.json.gz.
@@ -19,7 +21,7 @@ const grammars = directories.length === 0
   ? [[name, readFileSync(join(checkout, 'src/grammar.json'))]]
   : directories.map((directory) => [`${name}.${directory}`, readFileSync(join(checkout, directory, 'src/grammar.json'))]);
 const corpusDirectory = join(checkout, 'test/corpus');
-const files = Object.fromEntries(readdirSync(corpusDirectory).filter((file) => file.endsWith('.txt')).sort()
+const files = Object.fromEntries(readdirSync(corpusDirectory, { withFileTypes: true }).filter((entry) => entry.isFile()).map(({ name: file }) => file).sort()
   .map((file) => [file, readFileSync(join(corpusDirectory, file), 'utf8')]));
 const corpus = Buffer.from(`${JSON.stringify({ repository, revision, path: 'test/corpus', files }, null, 1)}\n`);
 for (const [file, grammar] of grammars) writeFileSync(join(target, `${file}.grammar.json.gz`), gzipSync(grammar, { level: 9 }));

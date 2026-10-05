@@ -17,6 +17,7 @@
     { "word": "calc", "replacement": "calculation", "reason": "The Lean calc keyword opens a calculation, a chain of relations proved step by step (Theorem Proving in Lean 4, section Calculational Proofs)." },
     { "word": "char", "replacement": "character", "reason": "An abbreviation of character; the C type char holds a character." },
     { "word": "chars", "replacement": "characters", "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string." },
+    { "word": "cmp", "replacement": "comparison", "reason": "An abbreviation of comparison: the parenthesized or quoted pair of arguments an ifeq or ifneq conditional of GNU make compares (GNU make manual, section 7.2 Syntax of Conditionals)." },
     { "word": "config", "replacement": "configuration", "reason": "An abbreviation of configuration." },
     { "word": "const", "replacement": "constant", "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)." },
     { "word": "db", "replacement": "database", "reason": "An abbreviation of database, as in a Rocq hint database (Rocq Reference Manual, section Hint databases)." },
@@ -31,6 +32,7 @@
     { "word": "elem", "replacement": "element", "reason": "An abbreviation of element, as in the interface elements, method elements and type elements of a Go interface type (The Go Programming Language Specification, Interface types)." },
     { "word": "elif", "replacement": "else_if", "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if." },
     { "word": "elifdef", "replacement": "else_if_defined", "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined." },
+    { "word": "elsif", "replacement": "else_if", "reason": "The else branch of a GNU make conditional that holds another conditional, `else ifeq ...` (GNU make manual, section 7.2 Syntax of Conditionals)." },
     { "word": "enum", "replacement": "enumeration", "reason": "An abbreviation of enumeration." },
     { "word": "eqn", "replacement": "equation", "reason": "An abbreviation of equation, as in the Rocq clause eqn:ident that names the equation of a case analysis (Rocq Reference Manual, section Tactics, destruct)." },
     { "word": "eval", "replacement": "evaluation", "reason": "An abbreviation of evaluation." },
@@ -45,6 +47,9 @@
     { "word": "hyp", "replacement": "hypothesis", "reason": "An abbreviation of hypothesis, a local assumption of a Rocq proof goal." },
     { "word": "ident", "replacement": "identifier", "reason": "An abbreviation of identifier." },
     { "word": "ifdef", "replacement": "if_defined", "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined." },
+    { "word": "ifeq", "replacement": "if_equal", "reason": "The GNU make conditional directive ifeq expands two arguments and tests that they are equal (GNU make manual, section 7.2 Syntax of Conditionals)." },
+    { "word": "ifndef", "replacement": "if_not_defined", "reason": "The GNU make conditional directive ifndef tests that a variable has an empty value (GNU make manual, section 7.2 Syntax of Conditionals); the preprocessing directive #ifndef (ISO/IEC 9899:2018 section 6.10.1) is if not defined." },
+    { "word": "ifneq", "replacement": "if_not_equal", "reason": "The GNU make conditional directive ifneq expands two arguments and tests that they differ (GNU make manual, section 7.2 Syntax of Conditionals)." },
     { "word": "impl", "replacement": "implementation", "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)." },
     { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
     { "word": "inst", "replacement": "instance", "reason": "An abbreviation of instance." },
@@ -65,6 +70,8 @@
     { "word": "ptr", "replacement": "pointer", "reason": "An abbreviation of pointer." },
     { "word": "qmark", "replacement": "question_mark", "reason": "An abbreviation of question mark; JavaScript's _ternary_qmark scans the ? of a conditional expression." },
     { "word": "qualid", "replacement": "qualified_identifier", "reason": "Rocq's qualified identifier, a dotted path to a global name (Rocq Reference Manual, section Qualified identifiers)." },
+    { "word": "rawline", "replacement": "raw_line", "reason": "A line of a GNU make define directive taken verbatim, as the value of the variable it defines (GNU make manual, section 6.8 Defining Multi-Line Variables)." },
+    { "word": "recipeprefix", "replacement": "recipe_prefix", "reason": "The GNU make variable .RECIPEPREFIX names the character that starts a recipe line instead of a tab (GNU make manual, section 6.14 Other Special Variables)." },
     { "word": "regex", "replacement": "regular_expression", "reason": "An abbreviation of regular expression, JavaScript's regex literal and its pattern and flags." },
     { "word": "rew", "replacement": "rewrite", "reason": "An abbreviation of rewrite, as in Rocq's rewriting notation rew [P] H in t." },
     { "word": "rpc", "replacement": "remote_procedure_call", "reason": "The Protocol Buffers keyword rpc declares a remote procedure call of a service (Protocol Buffers Language Specification, Service definition)." },
@@ -75,7 +82,10 @@
     { "word": "struct", "replacement": "structure", "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)." },
     { "word": "tryif", "replacement": "try_if", "reason": "The Rocq tactical tryif run together (Rocq Reference Manual, section Ltac, tryif)." },
     { "word": "typeclasses", "replacement": "type_classes", "reason": "Rocq's type classes run together, as in Typeclasses Transparent (Rocq Reference Manual, section Typeclasses)." },
-    { "word": "var", "replacement": "variable", "reason": "An abbreviation of variable." }
+    { "word": "undefine", "replacement": "remove_definition", "reason": "The GNU make undefine directive removes the definition of a variable (GNU make manual, section 6.9 Undefining Variables)." },
+    { "word": "unexport", "replacement": "remove_export", "reason": "The GNU make unexport directive stops passing a variable to the environment of sub-make and recipe commands (GNU make manual, section 5.7.2 Communicating Variables to a Sub-make)." },
+    { "word": "var", "replacement": "variable", "reason": "An abbreviation of variable." },
+    { "word": "vpath", "replacement": "search_path", "reason": "The GNU make VPATH variable and vpath directive name the directories to search for prerequisites (GNU make manual, sections 4.5.1 VPATH: Search Path for All Prerequisites and 4.5.2 The vpath Directive)." }
   ],
   "grammars": {
     "c": {
@@ -194,6 +204,7 @@
         "interpolated_string": "grammar.template-string",
         "interpolation": "grammar.template-substitution",
         "initialize": "grammar.initialization-command",
+        "variable": "grammar.variable-command",
         "include": "grammar.include-command",
         "omit": "grammar.omit-command",
         "opaque": "grammar.opaque-declaration",
@@ -353,6 +364,24 @@
         "syntax": "grammar.syntax-statement",
         "field": "grammar.field-declaration",
         "reserved_identifier": "grammar.quoted-field-name"
+      }
+    },
+    "make": {
+      "names": {
+        "_targets": "targets_alias",
+        "_prerequisites": "prerequisites_choice",
+        "_string": "string_content",
+        "_shell_command": "shell_command_alias"
+      },
+      "concepts": {
+        "rule": "grammar.build-rule",
+        "conditional": "grammar.if-statement",
+        "else_directive": "grammar.else-clause",
+        "function_call": "grammar.call-expression",
+        "arguments": "grammar.argument-list",
+        "_function": "grammar.function-expansion",
+        "paths": "grammar.path-list",
+        "_target_pattern": "grammar.static-target-pattern"
       }
     }
   },

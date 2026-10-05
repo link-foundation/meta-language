@@ -568,6 +568,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/lexing.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-MAKE',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/make.json',
+    construct: 'native merged Make grammar imported from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/make.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned src/grammar.json of tree-sitter-make 1.1.1, with every rule renamed to its English name and its concept merged into the shared concepts, and every hand decision recorded in parity/grammars/merge-reports/make.json. Both executors build, for every source of the upstream test/corpus the oracle reads and for hand-written sources, exactly the concrete syntax tree rows of the tree-sitter-make oracle with no ambiguity: ordinary, grouped, static pattern and double-colon rules with normal and order-only prerequisites and archive members, recipes on their own lines and after a semicolon with echo suppression, line splits and automatic variables, recursively and simply expanded, appended, conditional and shell assignments, target-specific and private variables, VPATH and .RECIPEPREFIX, define, include, vpath, export, unexport, override and undefine directives, ifeq, ifneq, ifdef and ifndef conditionals with else branches, variable and substitution references, function calls and the shell function; comments are extras. Both executors reject invalid input the oracle recovers from, a recipe line without its tab and an unclosed reference among it, and keep every source byte, line breaks included, in the tree.',
+    assertions: [
+      'nativeMakeGrammarIsCanonicalLinks',
+      'nativeMakeTreesMatchOracle',
+      'nativeMakeRejectsInvalidInput',
+      'nativeMakeTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/src/programming-language-parser.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/lexing.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

@@ -971,7 +971,7 @@
       "grammars": {
         "native-lean": {
           "version": "1.0.0",
-          "parserSha256": "029bf78de72314f0a1ba436f55b27641108d6989654a186a96cba2bb2822b2f5"
+          "parserSha256": "47b1810a4d04b2c37c5c00b59b34590fc953935d0005f5a2f719e4994a0c209c"
         }
       },
       "oracleGrammars": {
@@ -1569,6 +1569,87 @@
         [6,null,"decimal_lit",1,47,47,"M"],
         [4,null,";",0,48,49,""],
         [3,null,"}",0,50,51,""]
+      ],
+      "embedded": []
+    },
+    "Make": {
+      "grammars": {
+        "native-make": {
+          "version": "1.0.0",
+          "parserSha256": "9cfcded3b65f7a6e166f26bd17d1a144daac083bc32f0c0588e25f1f50a046d1"
+        }
+      },
+      "oracleGrammars": {
+        "make": {
+          "version": "1.1.1",
+          "parserSha256": "659bb2a3712bc6ecf77a96c82de2bc3062141f405c96d52582b2e01bd8722152"
+        }
+      },
+      "sourceSha256": "d6bfd12515e0f029fa9181f197a24a0c1dbfa3d16624fc965724f8b8fd0012b1",
+      "recoverySourceSha256": "49f5e4b0dad89ea86532c31a855575a44bfb67f5a43cc61764ffdf48c7502790",
+      "positive": [
+        [0,null,"makefile",1,0,82,""],
+        [1,null,"comment",1,0,7,"X"],
+        [1,null,"variable_assignment",1,8,17,""],
+        [2,"name","word",1,8,10,""],
+        [2,"operator","?=",0,11,13,""],
+        [2,"value","text",1,14,16,""],
+        [1,null,"variable_assignment",1,17,29,""],
+        [2,"name","word",1,17,21,""],
+        [2,"operator",":=",0,22,24,""],
+        [2,"value","text",1,25,27,""],
+        [1,null,"rule",1,29,40,""],
+        [2,null,"targets",1,29,32,""],
+        [3,null,"word",1,29,32,""],
+        [2,null,":",0,32,33,""],
+        [2,"normal","prerequisites",1,34,38,""],
+        [3,null,"word",1,34,38,""],
+        [1,null,"rule",1,40,70,""],
+        [2,null,"targets",1,40,44,""],
+        [3,null,"word",1,40,44,""],
+        [2,null,":",0,44,45,""],
+        [2,"normal","prerequisites",1,46,52,""],
+        [3,null,"word",1,46,52,""],
+        [2,null,"recipe",1,52,70,""],
+        [3,null,"\t",0,53,54,""],
+        [3,null,"recipe_line",1,54,68,""],
+        [4,null,"shell_text",1,54,68,""],
+        [5,null,"variable_reference",1,54,59,""],
+        [6,null,"$",0,54,55,""],
+        [6,null,"(",0,55,56,""],
+        [6,null,"word",1,56,58,""],
+        [6,null,")",0,58,59,""],
+        [5,null,"automatic_variable",1,63,65,""],
+        [6,null,"$",0,63,64,""],
+        [6,null,"@",0,64,65,""],
+        [5,null,"automatic_variable",1,66,68,""],
+        [6,null,"$",0,66,67,""],
+        [6,null,"<",0,67,68,""],
+        [1,null,"rule",1,70,82,""],
+        [2,null,"targets",1,70,76,""],
+        [3,null,"word",1,70,76,""],
+        [2,null,":",0,76,77,""],
+        [2,"normal","prerequisites",1,78,81,""],
+        [3,null,"word",1,78,81,""]
+      ],
+      "recovery": [
+        [0,null,"makefile",1,0,20,""],
+        [1,null,"rule",1,0,20,""],
+        [2,null,"targets",1,0,3,""],
+        [3,null,"word",1,0,3,""],
+        [2,null,":",0,3,4,""],
+        [2,"normal","prerequisites",1,5,9,""],
+        [3,null,"word",1,5,9,""],
+        [2,null,"recipe",1,9,20,""],
+        [3,null,"conditional",1,10,20,""],
+        [4,"condition","ifeq_directive",1,10,20,""],
+        [5,null,"ifeq",0,10,14,""],
+        [5,null,"(",0,15,16,""],
+        [5,"arg0","word",1,16,17,""],
+        [5,null,",",0,17,18,""],
+        [5,"arg1","word",1,18,19,""],
+        [5,null,")",0,19,19,"M"],
+        [4,null,"endif",0,20,20,"M"]
       ],
       "embedded": []
     }

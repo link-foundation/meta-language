@@ -133,6 +133,10 @@ const graphqlCorpus = (recovers) => upstreamCorpus('native-graphql').filter((sou
 // (`recovers`) or reads.
 const protoCorpus = (recovers) => upstreamCorpus('native-proto').filter((source) => oracleRecovers(source, 'Protocol Buffers') === recovers);
 
+// The cases of the pinned tree-sitter-make corpus the oracle recovers from
+// (`recovers`) or reads.
+const makeCorpus = (recovers) => upstreamCorpus('native-make').filter((source) => oracleRecovers(source, 'Make') === recovers);
+
 // ECMAScript reads a brace or a bracket that opens no quantifier or POSIX
 // class as a character (ECMA-262, Annex B.1.2, ExtendedPatternCharacter and
 // ClassAtom), and the native grammar does too; the tree-sitter-regex 0.25.0
@@ -1033,6 +1037,45 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'message', 'message M', 'message M {', 'message M { int32 a; }', 'message M { int32 a = ; }', 'syntax = ;', 'syntax "proto3";', 'import;', 'package;',
       'enum E { A }', 'service S { rpc F (A) (B); }', 'option = 1;', 'message M { map<string> m = 1; }', '}', 'message M { int32 a = 1 }', '"unterminated',
       'message M { int32 a = 1; } }', 'service S { rpc F (A) returns B; }', 'enum E { A = ; }', 'message M { reserved; }',
+    ],
+  },
+  {
+    id: 'make',
+    language: 'Make',
+    grammar: 'parity/grammars/native/make.lino',
+    oracle: 'tree-sitter-make 1.1.1',
+    sources: [
+      `${grammarSourceOf('native-make').repository}/blob/${grammarSourceOf('native-make').revision}/grammar.js`,
+      `${grammarSourceOf('native-make').repository}/tree/${grammarSourceOf('native-make').revision}/${grammarSourceOf('native-make').corpus.path}`,
+    ],
+    // The grammar is the import of the grammar.json of tree-sitter-make
+    // 1.1.1, the one the oracle parser is generated from
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision the oracle reads, and a few
+    // sources more, function calls, recipe prefixes, conditionals and
+    // directives included; the rejections are the corpus cases the oracle
+    // recovers from (a custom .RECIPEPREFIX, which it does not read) and
+    // sources it recovers from.
+    ...nativeGrammar('native-make'),
+    matches: [
+      ...makeCorpus(false),
+      '', '\n', 'a = b\n', 'a := b\n', 'a ::= b\n', 'a ?= b\n', 'a += b\n', 'a != echo hi\n', 'a =\n', 'a = $(b) $(c)\n', 'a = ${b}\n', 'a = $(b:.c=.o)\n',
+      'a = $(subst a,b,c)\n', 'a = $(shell ls)\n', 'a = $(wildcard *.c)\n', 'a = $(patsubst %.c,%.o,$(SRC))\n', 'a = $(foreach x,$(L),$(x).o)\n',
+      'a = $(if $(b),c,d)\n', 'a = $(call f,1,2)\n', 'a = $(eval $(b))\n', 'a = $(origin b)\n', 'a = $(info é)\n', 'a = $(error x)\n', 'a = $$HOME\n',
+      'all:\n', 'all: a b\n', 'all: a | b\n', 'a b &: c\n', '%.o: %.c\n\t$(CC) -c $< -o $@\n', 'all: ; echo hi\n', 'all:\n\techo a\n\techo b\n',
+      'all:\n\t@echo a\n', 'all:\n\t-rm x\n', 'all:\n\t+make -C d\n', 'all:\n\techo a \\\n\tb\n', '.PHONY: all clean\n', 'objs: a.o b.o\n',
+      '$(OBJ): %.o: %.c\n\tcc $<\n', 'a: b\n\n\n\tc\n', 'include a.mk b.mk\n', '-include a.mk\n', 'sinclude a.mk\n', 'vpath %.c src\n', 'vpath\n',
+      'export a = b\n', 'export\n', 'unexport a\n', 'override a = b\n', 'private a = b\n', 'undefine a\n', 'define a\nb\nendef\n', 'define a =\n  b\n  c\nendef\n',
+      'ifeq ($(a),b)\nc = d\nendif\n', 'ifneq "a" "b"\nc = d\nelse\nc = e\nendif\n', 'ifdef a\nb = c\nelse ifndef d\ne = f\nendif\n', 'ifndef a\nendif\n',
+      '# comment\n', 'a = b # c\n', 'all: # c\n\techo\n', 'a = b \\\n  c\n', 'a: b\n\t$(MAKE) $@\n', 'a: b\n\techo $(@D) $(<F) $^ $+ $? $* $%\n',
+      'VPATH = a:b\n', '.RECIPEPREFIX = >\n', 'a.o: CFLAGS += -O2\n', 'a = é\n', 'ifeq a b\nendif\n', 'a: \nb: c\n',
+    ],
+    divergences: [],
+    rejections: [
+      ...makeCorpus(true),
+      'ifeq (a,b\n', 'ifeq (a,b)\n', 'define a\nb\n', 'a = $(b\n', 'a: $(\n', 'endif\n', 'else\n', 'endef\n', 'a = ${b\n', 'ifdef\n', '\techo\n', 'export a = $(\n',
+      'a: b\n\techo $(\n', 'vpath %.c $(\n', 'include $(\n', ':\n', '$(a\n', 'override\n',
+      'a: private b = c\n', 'a: export b = c\n', '# café\nall: é\n', 'a:\nb\n', 'all:\necho\n', 'a: ;\n>b\n',
     ],
   },
 ]);

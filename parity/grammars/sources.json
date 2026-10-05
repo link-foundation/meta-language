@@ -341,6 +341,26 @@
         "sha256": "f9ee8ef95cc46e1f6e4c8e781c4cadbfb250264e752fa396a8c3b058f1ab810a"
       },
       "oracle": "proto"
+    },
+    {
+      "id": "tree-sitter-make",
+      "language": "make",
+      "native": "native-make",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-make 1.1.1",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-make",
+      "revision": "5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-make-1.1.1.grammar.json.gz",
+      "sha256": "48643ddba43c8aff5860b194587fefa1e9da79b10e4b1653885fda9a44c76483",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-make-1.1.1.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-make-1.1.1.corpus.json.gz",
+        "sha256": "5645df0c9c3b1045e26f74c33d179f7ab8ba692fbe695ea16fadb5150d2eddfc"
+      },
+      "oracle": "make"
     }
   ]
 }

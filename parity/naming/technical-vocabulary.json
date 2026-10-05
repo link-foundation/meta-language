@@ -2,9 +2,15 @@
   "description": "Words a canonical name may use besides the WordNet 3.1 lemmas: the function words that join the words of a phrase, and technical terms WordNet does not list, each with the reference that defines it and its parts of speech.",
   "functionWords": {
     "description": "Conjunctions, prepositions and articles; a phrase may use them between its words but never as the head of a concept.",
-    "words": ["a", "an", "and", "as", "at", "by", "for", "from", "if", "in", "into", "of", "on", "or", "the", "to", "unless", "with"]
+    "words": ["a", "an", "and", "as", "at", "by", "for", "from", "if", "in", "into", "of", "on", "or", "the", "to", "unless", "with", "without"]
   },
   "terms": [
+    {
+      "word": "makefile",
+      "partsOfSpeech": ["noun"],
+      "definition": "A file of rules and variables that tells make how to build the targets of a program.",
+      "source": "GNU make manual, section 3 Writing Makefiles"
+    },
     {
       "word": "nonterminal",
       "partsOfSpeech": ["noun", "adjective"],

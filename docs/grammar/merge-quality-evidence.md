@@ -40,6 +40,7 @@ grammar builds. The sources are the specifications and grammars merged.
 | `native-json` | tree-sitter-json 0.24.8 | curated | [1](https://www.rfc-editor.org/rfc/rfc8259) [2](https://ecma-international.org/publications-and-standards/standards/ecma-404/) [3](https://github.com/tree-sitter/tree-sitter-json/blob/v0.24.8/grammar.js) |
 | `native-json5` | tree-sitter-json5-orchard 0.1.0 | curated | [1](https://spec.json5.org/) [2](https://docs.rs/crate/tree-sitter-json5-orchard/0.1.0/source/grammar.js) |
 | `native-lean` | tree-sitter-lean4 0.3.0 | [upstream](https://github.com/wvhulle/tree-sitter-lean/tree/bd942cd2795016239be02b3b3d5ef635645ddd38/test/corpus) | [1](https://github.com/wvhulle/tree-sitter-lean/blob/bd942cd2795016239be02b3b3d5ef635645ddd38/grammar.js) [2](https://github.com/wvhulle/tree-sitter-lean/tree/bd942cd2795016239be02b3b3d5ef635645ddd38/test/corpus) |
+| `native-make` | tree-sitter-make 1.1.1 | [upstream](https://github.com/tree-sitter-grammars/tree-sitter-make/tree/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/test/corpus) | [1](https://github.com/tree-sitter-grammars/tree-sitter-make/blob/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/grammar.js) [2](https://github.com/tree-sitter-grammars/tree-sitter-make/tree/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/test/corpus) |
 | `native-proto` | tree-sitter-proto 0.6.0 | [upstream](https://github.com/coder3101/tree-sitter-proto/tree/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/test/corpus) | [1](https://github.com/coder3101/tree-sitter-proto/blob/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/grammar.js) [2](https://github.com/coder3101/tree-sitter-proto/tree/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/test/corpus) |
 | `native-racket` | tree-sitter-racket 0.25.0 | curated | [1](https://docs.racket-lang.org/reference/reader.html) [2](https://docs.rs/crate/tree-sitter-racket/0.25.0/source/grammar.js) |
 | `native-regex` | tree-sitter-regex 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-regex/blob/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/grammar.js) [2](https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus) |
@@ -70,6 +71,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-json` | 34 | 414 | 651 | 2 | 10 |
 | `native-json5` | 120 | 818 | 1503 | 26 | 36 |
 | `native-lean` | 251 | 5152 | 13446 | 1 | 42 |
+| `native-make` | 168 | 1985 | 4084 | 0 | 27 |
 | `native-proto` | 79 | 6291 | 26218 | 0 | 20 |
 | `native-racket` | 306 | 1165 | 1769 | 22 | 60 |
 | `native-regex` | 82 | 1036 | 1007 | 2 | 24 |
@@ -78,7 +80,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-scheme` | 264 | 908 | 1363 | 23 | 50 |
 | `native-tsx` | 157 | 6525 | 13617 | 0 | 16 |
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
-| all | 2704 | 70607 | 163727 | 101 | 477 |
+| all | 2872 | 72592 | 167811 | 101 | 504 |
 
 ## Coverage
 
@@ -103,6 +105,7 @@ language specification and checked against the oracle.
 | `native-json` | 5 | 0 | 1 | 5 | 5 of 5 (100%) | 12 | 2 | n/a | n/a | n/a | n/a |
 | `native-json5` | 4 | 0 | 1 | 7 | 4 of 4 (100%) | 11 | 2 | n/a | n/a | n/a | n/a |
 | `native-lean` | 106 | 0 | 28 | 13 | 86 of 106 (81%) | 97 | 50 | 35 | 8 | 0 | 0 |
+| `native-make` | 36 | 0 | 25 | 4 | 35 of 36 (97%) | 44 | 24 | 36 | 12 | 0 | 0 |
 | `native-proto` | 43 | 0 | 3 | 9 | 43 of 43 (100%) | 52 | 5 | 20 | 7 | 0 | 0 |
 | `native-racket` | 22 | 0 | 3 | 14 | 22 of 22 (100%) | 32 | 0 | n/a | n/a | n/a | n/a |
 | `native-regex` | 24 | 0 | 4 | 12 | 24 of 24 (100%) | 38 | 0 | 4 | 0 | 0 | 0 |
@@ -126,13 +129,14 @@ rules name a concept another native grammar names
 | `native-csv` | 0 | 0 | 0 | 0 | 0 | 3 | 5 |
 | `native-diff` | 0 | 0 | 0 | 1 | 0 | 2 | 22 |
 | `native-go` | 0 | 8 | 0 | 2 | 0 | 54 | 63 |
-| `native-graphql` | 0 | 0 | 0 | 3 | 0 | 21 | 53 |
+| `native-graphql` | 0 | 0 | 0 | 3 | 0 | 23 | 51 |
 | `native-ini` | 0 | 0 | 0 | 2 | 0 | 2 | 3 |
 | `native-java` | 0 | 13 | 0 | 3 | 1 | 68 | 101 |
 | `native-javascript` | 5 | 18 | 9 | 3 | 0 | 142 | 1 |
 | `native-json` | 0 | 0 | 0 | 2 | 0 | 11 | 0 |
 | `native-json5` | 0 | 0 | 0 | 2 | 0 | 11 | 1 |
 | `native-lean` | 1 | 11 | 0 | 2 | 0 | 40 | 107 |
+| `native-make` | 0 | 0 | 0 | 3 | 0 | 13 | 52 |
 | `native-proto` | 0 | 0 | 0 | 2 | 0 | 21 | 34 |
 | `native-racket` | 0 | 0 | 0 | 0 | 0 | 23 | 16 |
 | `native-regex` | 0 | 1 | 0 | 1 | 0 | 2 | 38 |
@@ -162,6 +166,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-json` | 10 | 10 | 8 | 4 | none |
 | `native-json5` | 36 | 36 | 29 | 32 | none |
 | `native-lean` | 42 | 42 | 34 | 41 | merged-extension 1, native-skips-more 34, oracle-skips-more 35, same-repair-sites 19, same-skipped-bytes 8 |
+| `native-make` | 27 | 27 | 4 | 54 | none |
 | `native-proto` | 20 | 20 | 12 | 19 | none |
 | `native-racket` | 60 | 60 | 29 | 75 | none |
 | `native-regex` | 24 | 24 | 7 | 32 | none |
@@ -197,6 +202,7 @@ loads the same modules and parses nothing.
 | `native-json` | 29.1 | 0.9 | 33.3× | 70.8 | 0.3 | 17.3 | 3.5 |
 | `native-json5` | 54.7 | 1.8 | 30.4× | 24.6 | 1.0 | 19.7 | 7.8 |
 | `native-lean` | 6972.6 | 25.2 | 276.4× | 12324.1 | 4.5 | 139.9 | 44.7 |
+| `native-make` | 966.8 | 4.4 | 220.4× | 432.3 | 1.5 | 119.7 | 4.8 |
 | `native-proto` | 644.6 | 10.2 | 63.2× | 98.9 | 1.7 | 104.6 | 8.7 |
 | `native-racket` | 231.7 | 5.0 | 46.3× | 90.5 | 1.7 | 45.3 | 9.7 |
 | `native-regex` | 196.9 | 5.2 | 38.1× | 258.4 | 0.6 | 32.0 | 12.2 |
@@ -227,6 +233,7 @@ without optimization, as the tests run them.
 | `native-json` | 147.2 | 6.2 | 23.7× | 58.5 | 0.2 | 0.2 |
 | `native-json5` | 320.5 | 2.5 | 127.3× | 166.2 | 0.5 | 1.0 |
 | `native-lean` | 25294.6 | n/a | n/a | 37711.2 | n/a | 15.4 |
+| `native-make` | 3320.8 | 3.2 | 1039.7× | 1308.5 | 1.1 | 1.6 |
 | `native-proto` | 2063.4 | 10.2 | 203.2× | 325.5 | 0.6 | 15.5 |
 | `native-racket` | 1406.2 | 2.1 | 657.1× | 246.0 | 1.3 | 3.0 |
 | `native-regex` | 678.6 | 2.2 | 306.6× | 431.9 | 0.5 | 0.8 |

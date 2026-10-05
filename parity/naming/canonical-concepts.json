@@ -13,6 +13,7 @@
       "role": "concept",
       "definition": "A named grammar production that binds a non-terminal to an expression.",
       "constraints": [
+        "Only the native Make grammar defines this construct.",
         "A rule binds exactly one nonterminal name to one grammar expression.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
         "The English and Russian grammar surfaces translate the rule name through this concept."
@@ -1523,6 +1524,10 @@
           "name": "list"
         },
         {
+          "source": "native:make",
+          "name": "list"
+        },
+        {
           "source": "native:racket",
           "name": "vector"
         },
@@ -1596,6 +1601,10 @@
         },
         {
           "source": "native:lean",
+          "name": "name"
+        },
+        {
+          "source": "native:make",
           "name": "name"
         },
         {
@@ -1730,6 +1739,10 @@
         },
         {
           "source": "native:lean",
+          "name": "string"
+        },
+        {
+          "source": "native:make",
           "name": "string"
         },
         {
@@ -1988,6 +2001,10 @@
         },
         {
           "source": "native:lean",
+          "name": "comment"
+        },
+        {
+          "source": "native:make",
           "name": "comment"
         },
         {
@@ -6735,6 +6752,10 @@
           "name": "if_statement"
         },
         {
+          "source": "native:make",
+          "name": "conditional"
+        },
+        {
           "source": "native:tsx",
           "name": "if_statement"
         },
@@ -6762,6 +6783,10 @@
         {
           "source": "native:javascript",
           "name": "else_clause"
+        },
+        {
+          "source": "native:make",
+          "name": "else_directive"
         },
         {
           "source": "native:rust",
@@ -7547,6 +7572,10 @@
           "name": "call_expression"
         },
         {
+          "source": "native:make",
+          "name": "function_call"
+        },
+        {
           "source": "native:rust",
           "name": "call_expression"
         },
@@ -7742,6 +7771,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "arguments"
+        },
+        {
+          "source": "native:make",
           "name": "arguments"
         },
         {
@@ -8150,6 +8183,10 @@
         },
         {
           "source": "native:lean",
+          "name": "word_characters"
+        },
+        {
+          "source": "native:make",
           "name": "word_characters"
         },
         {
@@ -15877,19 +15914,15 @@
       "formerNames": []
     },
     {
-      "id": "grammar.variable",
-      "phrase": "variable",
+      "id": "grammar.variable-command",
+      "phrase": "variable command",
       "role": "concept",
-      "definition": "A rule for a variable, the construct the upstream grammar names variable.",
+      "definition": "A rule for a variable command, the construct the upstream grammar names variable.",
       "constraints": [
-        "Native grammars share this concept only where the construct means the same in each language.",
+        "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
-        {
-          "source": "native:graphql",
-          "name": "variable"
-        },
         {
           "source": "native:lean",
           "name": "variable"
@@ -17524,12 +17557,16 @@
       "role": "concept",
       "definition": "A rule for a string content, the construct the upstream grammar names _string_content.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:lean",
+          "name": "string_content"
+        },
+        {
+          "source": "native:make",
           "name": "string_content"
         }
       ],
@@ -25801,12 +25838,16 @@
       "role": "concept",
       "definition": "A rule for a variable definition, the construct the upstream grammar names variable_definition.",
       "constraints": [
-        "Only the native GraphQL grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:graphql",
+          "name": "variable_definition"
+        },
+        {
+          "source": "native:make",
           "name": "variable_definition"
         }
       ],
@@ -25876,6 +25917,27 @@
         {
           "source": "native:graphql",
           "name": "alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable",
+      "phrase": "variable",
+      "role": "concept",
+      "definition": "A rule for a variable, the construct the upstream grammar names variable.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "variable"
+        },
+        {
+          "source": "native:make",
+          "name": "variable"
         }
       ],
       "formerNames": []
@@ -26005,12 +26067,16 @@
       "role": "concept",
       "definition": "A rule for a directive, the construct the upstream grammar names directive.",
       "constraints": [
-        "Only the native GraphQL grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:graphql",
+          "name": "directive"
+        },
+        {
+          "source": "native:make",
           "name": "directive"
         }
       ],
@@ -26760,6 +26826,890 @@
         {
           "source": "native:proto",
           "name": "reserved_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.makefile",
+      "phrase": "makefile",
+      "role": "concept",
+      "definition": "A rule for a makefile, the construct the upstream grammar names makefile.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "makefile"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.thing",
+      "phrase": "thing",
+      "role": "concept",
+      "definition": "A rule for a thing, the construct the upstream grammar names _thing.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "thing"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.build-rule",
+      "phrase": "build rule",
+      "role": "concept",
+      "definition": "A rule for a build rule, the construct the upstream grammar names rule.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "rule"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.ordinary-rule",
+      "phrase": "ordinary rule",
+      "role": "concept",
+      "definition": "A rule for an ordinary rule, the construct the upstream grammar names _ordinary_rule.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "ordinary_rule"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.static-pattern-rule",
+      "phrase": "static pattern rule",
+      "role": "concept",
+      "definition": "A rule for a static pattern rule, the construct the upstream grammar names _static_pattern_rule.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "static_pattern_rule"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.targets-alias",
+      "phrase": "targets alias",
+      "role": "concept",
+      "definition": "A rule for a targets alias, the construct the upstream grammar names _targets.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "targets_alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.static-target-pattern",
+      "phrase": "static target pattern",
+      "role": "concept",
+      "definition": "A rule for a static target pattern, the construct the upstream grammar names _target_pattern.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "target_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.prerequisites-choice",
+      "phrase": "prerequisites choice",
+      "role": "concept",
+      "definition": "A rule for a prerequisites choice, the construct the upstream grammar names _prerequisites.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "prerequisites_choice"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.normal-prerequisites",
+      "phrase": "normal prerequisites",
+      "role": "concept",
+      "definition": "A rule for a normal prerequisites, the construct the upstream grammar names _normal_prerequisites.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "normal_prerequisites"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.order-only-prerequisites",
+      "phrase": "order only prerequisites",
+      "role": "concept",
+      "definition": "A rule for an order only prerequisites, the construct the upstream grammar names _order_only_prerequisites.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "order_only_prerequisites"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.prerequisites-pattern",
+      "phrase": "prerequisites pattern",
+      "role": "concept",
+      "definition": "A rule for a prerequisites pattern, the construct the upstream grammar names _prerequisites_pattern.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "prerequisites_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.recipe",
+      "phrase": "recipe",
+      "role": "concept",
+      "definition": "A rule for a recipe, the construct the upstream grammar names recipe.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "recipe"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attached-recipe-line",
+      "phrase": "attached recipe line",
+      "role": "concept",
+      "definition": "A rule for an attached recipe line, the construct the upstream grammar names _attached_recipe_line.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "attached_recipe_line"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.prefixed-recipe-line",
+      "phrase": "prefixed recipe line",
+      "role": "concept",
+      "definition": "A rule for a prefixed recipe line, the construct the upstream grammar names _prefixed_recipe_line.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "prefixed_recipe_line"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.recipe-line",
+      "phrase": "recipe line",
+      "role": "concept",
+      "definition": "A rule for a recipe line, the construct the upstream grammar names recipe_line.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "recipe_line"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.search-path-assignment",
+      "phrase": "search path assignment",
+      "role": "concept",
+      "definition": "A rule for a search path assignment, the construct the upstream grammar names VPATH_assignment.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "search_path_assignment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.recipe-prefix-assignment",
+      "phrase": "recipe prefix assignment",
+      "role": "concept",
+      "definition": "A rule for a recipe prefix assignment, the construct the upstream grammar names RECIPEPREFIX_assignment.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "recipe_prefix_assignment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-assignment",
+      "phrase": "variable assignment",
+      "role": "concept",
+      "definition": "A rule for a variable assignment, the construct the upstream grammar names variable_assignment.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "variable_assignment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.target-or-pattern-assignment",
+      "phrase": "target or pattern assignment",
+      "role": "concept",
+      "definition": "A rule for a target or pattern assignment, the construct the upstream grammar names _target_or_pattern_assignment.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "target_or_pattern_assignment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.shell-assignment",
+      "phrase": "shell assignment",
+      "role": "concept",
+      "definition": "A rule for a shell assignment, the construct the upstream grammar names shell_assignment.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "shell_assignment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.define-directive",
+      "phrase": "define directive",
+      "role": "concept",
+      "definition": "A rule for a define directive, the construct the upstream grammar names define_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "define_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.include-directive",
+      "phrase": "include directive",
+      "role": "concept",
+      "definition": "A rule for an include directive, the construct the upstream grammar names include_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "include_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.search-path-directive",
+      "phrase": "search path directive",
+      "role": "concept",
+      "definition": "A rule for a search path directive, the construct the upstream grammar names vpath_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "search_path_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.export-directive",
+      "phrase": "export directive",
+      "role": "concept",
+      "definition": "A rule for an export directive, the construct the upstream grammar names export_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "export_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.remove-export-directive",
+      "phrase": "remove export directive",
+      "role": "concept",
+      "definition": "A rule for a remove export directive, the construct the upstream grammar names unexport_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "remove_export_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.override-directive",
+      "phrase": "override directive",
+      "role": "concept",
+      "definition": "A rule for an override directive, the construct the upstream grammar names override_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "override_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.remove-definition-directive",
+      "phrase": "remove definition directive",
+      "role": "concept",
+      "definition": "A rule for a remove definition directive, the construct the upstream grammar names undefine_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "remove_definition_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.private-directive",
+      "phrase": "private directive",
+      "role": "concept",
+      "definition": "A rule for a private directive, the construct the upstream grammar names private_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "private_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.else-if-directive",
+      "phrase": "else if directive",
+      "role": "concept",
+      "definition": "A rule for an else if directive, the construct the upstream grammar names elsif_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "else_if_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.conditional-directives",
+      "phrase": "conditional directives",
+      "role": "concept",
+      "definition": "A rule for a conditional directives, the construct the upstream grammar names _conditional_directives.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "conditional_directives"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.conditional-consequence",
+      "phrase": "conditional consequence",
+      "role": "concept",
+      "definition": "A rule for a conditional consequence, the construct the upstream grammar names _conditional_consequence.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "conditional_consequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.if-equal-directive",
+      "phrase": "if equal directive",
+      "role": "concept",
+      "definition": "A rule for an if equal directive, the construct the upstream grammar names ifeq_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "if_equal_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.if-not-equal-directive",
+      "phrase": "if not equal directive",
+      "role": "concept",
+      "definition": "A rule for an if not equal directive, the construct the upstream grammar names ifneq_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "if_not_equal_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.if-defined-directive",
+      "phrase": "if defined directive",
+      "role": "concept",
+      "definition": "A rule for an if defined directive, the construct the upstream grammar names ifdef_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "if_defined_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.if-not-defined-directive",
+      "phrase": "if not defined directive",
+      "role": "concept",
+      "definition": "A rule for an if not defined directive, the construct the upstream grammar names ifndef_directive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "if_not_defined_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.conditional-arguments-comparison",
+      "phrase": "conditional arguments comparison",
+      "role": "concept",
+      "definition": "A rule for a conditional arguments comparison, the construct the upstream grammar names _conditional_args_cmp.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "conditional_arguments_comparison"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-reference",
+      "phrase": "variable reference",
+      "role": "concept",
+      "definition": "A rule for a variable reference, the construct the upstream grammar names variable_reference.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "variable_reference"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.substitution-reference",
+      "phrase": "substitution reference",
+      "role": "concept",
+      "definition": "A rule for a substitution reference, the construct the upstream grammar names substitution_reference.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "substitution_reference"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.automatic-variable",
+      "phrase": "automatic variable",
+      "role": "concept",
+      "definition": "A rule for an automatic variable, the construct the upstream grammar names automatic_variable.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "automatic_variable"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-expansion",
+      "phrase": "function expansion",
+      "role": "concept",
+      "definition": "A rule for a function expansion, the construct the upstream grammar names _function.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "function"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.shell-function",
+      "phrase": "shell function",
+      "role": "concept",
+      "definition": "A rule for a shell function, the construct the upstream grammar names shell_function.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "shell_function"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.path-list",
+      "phrase": "path list",
+      "role": "concept",
+      "definition": "A rule for a path list, the construct the upstream grammar names paths.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "paths"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.primary",
+      "phrase": "primary",
+      "role": "concept",
+      "definition": "A rule for a primary, the construct the upstream grammar names _primary.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "primary"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.concatenation",
+      "phrase": "concatenation",
+      "role": "concept",
+      "definition": "A rule for a concatenation, the construct the upstream grammar names concatenation.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "concatenation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.word",
+      "phrase": "word",
+      "role": "concept",
+      "definition": "A rule for a word, the construct the upstream grammar names word.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "word"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.archive",
+      "phrase": "archive",
+      "role": "concept",
+      "definition": "A rule for an archive, the construct the upstream grammar names archive.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "archive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.recipe-prefix",
+      "phrase": "recipe prefix",
+      "role": "concept",
+      "definition": "A rule for a recipe prefix, the construct the upstream grammar names _recipeprefix.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "recipe_prefix"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.raw-line",
+      "phrase": "raw line",
+      "role": "concept",
+      "definition": "A rule for a raw line, the construct the upstream grammar names _rawline.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "raw_line"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.shell-text-without-split",
+      "phrase": "shell text without split",
+      "role": "concept",
+      "definition": "A rule for a shell text without split, the construct the upstream grammar names _shell_text_without_split.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "shell_text_without_split"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.shell-text-with-split",
+      "phrase": "shell text with split",
+      "role": "concept",
+      "definition": "A rule for a shell text with split, the construct the upstream grammar names shell_text_with_split.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "shell_text_with_split"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.shell-command-alias",
+      "phrase": "shell command alias",
+      "role": "concept",
+      "definition": "A rule for a shell command alias, the construct the upstream grammar names _shell_command.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "shell_command_alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.text",
+      "phrase": "text",
+      "role": "concept",
+      "definition": "A rule for a text, the construct the upstream grammar names text.",
+      "constraints": [
+        "Only the native Make grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:make",
+          "name": "text"
         }
       ],
       "formerNames": []
