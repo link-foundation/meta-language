@@ -448,6 +448,20 @@ function sameRank(a, b) {
   return a.priority === b.priority && a.specificity === b.specificity && a.order === b.order;
 }
 
+// The node a node only wraps, with the precedence it comes from, under
+// every such wrapper (Solidity's visible `expression` around a
+// `binary_expression`): a precedence conflict is between the parts of the
+// node wrapped, as the parser reduces its wrappers after the conflict.
+function wrapped(node) {
+  let current = node;
+  while (current.type === 'node' && current.precedence) {
+    const meaningful = current.children.filter((child) => !isTrivia(child));
+    if (meaningful.length !== 1 || meaningful[0].type !== 'node' || !samePrecedence(meaningful[0].precedence, current.precedence)) break;
+    current = meaningful[0];
+  }
+  return current;
+}
+
 // Whether two precedences are the same, or both none.
 function samePrecedence(a, b) {
   if (!a || !b) return !a && !b;
@@ -1128,6 +1142,13 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
         // the reduce/reduce conflict on the last token (Java's `v = 1` of
         // `@A(v = 1)`, an `element_value_pair` that `_element_value` of
         // precedence 2 closes, against an `assignment_expression` of 1).
+        // Unless the two part inside first, one reducing where the other
+        // shifts (Solidity's `revert(x);`, whose `x` a `call_argument` of
+        // `revert_arguments` reduces on `)` where a `parenthesized_expression`
+        // of level 2 shifts it).
+        const inside = shiftOrder({ children: a.children, dynamic: result.dynamic }, { children: b.children, dynamic: existing.dynamic }, orders, grammar, bytes, owner);
+        if (globalThis.__dbg) console.error('inside', a.kind, b.kind, inside);
+        if (inside !== 0) return inside;
         const [closeA, closeB] = [closingReduction(a), closingReduction(b)];
         const apart = !samePrecedence(closeA, closeB);
         const order = comparePrecedence((apart && closeA) || reduction(a), (apart && closeB) || reduction(b), orders);
@@ -1138,7 +1159,7 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
     if (ending !== 0) return ending;
     const lone = loneReduction(a, b, orders) || -loneReduction(b, a, orders);
     if (lone !== 0) return lone;
-    const reduced = extraReduction(a, b, right, orders, owner) || -extraReduction(b, a, left, orders, owner);
+    const reduced = extraReduction(a, b, right, orders, owner, grammar) || -extraReduction(b, a, left, orders, owner, grammar);
     if (reduced !== 0) return reduced;
     if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
       const parted = chainConflict(a, b, orders, grammar, bytes);
@@ -1246,15 +1267,20 @@ function silentParting(a, b, stack) {
 // an `instantiation_expression` reduces them under `instantiation`, which the
 // order ranks below), else under none. 1 when `a`'s result is kept, -1 when
 // the other is, 0 when neither.
-function extraReduction(a, b, stack, orders, owner = null) {
+function extraReduction(a, b, stack, orders, owner = null, grammar = null) {
   if (a.type !== 'node') return 0;
   let parent = a;
+  const chain = [a];
   for (;;) {
     const first = parent.children.find((child) => !isTrivia(child));
     if (!first) return 0;
-    if (sameTree(first, b)) break;
+    if (sameTree(first, b)) {
+      chain.push(first);
+      break;
+    }
     if (first.type !== 'node') return 0;
     parent = first;
+    chain.push(first);
   }
   const [siblings, index, container] = stack[stack.length - 1];
   const next = siblings.slice(index).filter((child) => !isTrivia(child));
@@ -1278,6 +1304,18 @@ function extraReduction(a, b, stack, orders, owner = null) {
   const mine = reduction(parent);
   const order = comparePrecedence(mine, other, orders);
   if (order !== 0) return order;
+  // With nothing after either, where a silent rule a declared conflict names
+  // reduced an item of the chain alone (Solidity's `a;`, an `identifier` that
+  // `_identifier_path` reduces in a `user_defined_type` where the other
+  // parse reduces it to `_primary_expression`), the two reduce apart on one
+  // lookahead: tree-sitter goes on with both and keeps the tree of the lower
+  // symbol where they merge, a token before any rule and then the rule
+  // defined first.
+  const forked = chain.flatMap((item) => item.forkedTo ?? []).filter((name) => !b.forkedTo?.includes(name));
+  if (!container && own.length === next.length && grammar?.conflicts.some((group) => forked.some((name) => group.has(name)))) {
+    if (b.type !== 'node') return -1;
+    return Math.sign((grammar.ranks.get(b.rule) ?? 0) - (grammar.ranks.get(a.rule) ?? 0));
+  }
   if (!container || container.end > parent.end) {
     if (mine.associativity === 'left') return 1;
     if (mine.associativity === 'right') return -1;
@@ -2410,7 +2448,109 @@ export class Executor {
       const chains = this.separatorTaken.get(leaves[at].start) ?? new Map();
       this.separatorTaken.set(leaves[at].start, chains.set(chain.join('>'), chain));
     }
+    if (this.keywords !== null) {
+      // A separator the token begins with, though it does not match on to
+      // the token's text, is read on with (see `joinedStart`).
+      const call = this.callStack[this.callStack.length - 1] ?? null;
+      for (const leaf of leaves.slice(0, at < 0 ? leaves.length : at)) {
+        if (!isSeparator(leaf)) continue;
+        const reach = this.prefixReach(item, leaf.start, state);
+        if (reach > leaf.start) this.keywords.matchJoin(leaf.start, reach, call);
+      }
+    }
     return at < 0 ? { end: start, leaves } : { end: leaves[at].start, leaves: leaves.slice(0, at) };
+  }
+
+  // The farthest offset to which the text from `position` begins a match of
+  // the lexical `expression`, as far as a lexer reads on with it.
+  prefixReach(expression, position, state) {
+    this.prefixReaches ??= new Map();
+    let reaches = this.prefixReaches.get(expression);
+    if (!reaches) this.prefixReaches.set(expression, reaches = new Map());
+    if (!reaches.has(position)) reaches.set(position, this.prefixReachOf(expression, position, state));
+    return reaches.get(position);
+  }
+
+  prefixReachOf(expression, position, state) {
+    const ends = (item, at) => this.quietly(() => this.evaluate(item, at, state, true)).map((result) => result.end);
+    switch (expression.kind) {
+      case 'literal': case 'literalInsensitive': {
+        const text = Buffer.from(expression.value, 'utf8');
+        const fold = (byte) => (expression.kind === 'literalInsensitive' && byte >= 65 && byte <= 90 ? byte + 32 : byte);
+        let at = 0;
+        while (at < text.length && position + at < this.end && fold(this.bytes[position + at]) === fold(text[at])) at += 1;
+        return position + at;
+      }
+      case 'charRange': case 'charClass': case 'byteClass': case 'any': case 'regex':
+        return Math.max(position, this.matchTerminal(expression, position));
+      case 'seq': {
+        let [best, starts] = [position, [position]];
+        for (const item of expression.items) {
+          const next = new Set();
+          for (const start of starts) {
+            best = Math.max(best, this.prefixReach(item, start, state));
+            for (const end of ends(item, start)) next.add(end);
+          }
+          starts = [...next];
+          if (starts.length === 0) return best;
+        }
+        return Math.max(best, ...starts);
+      }
+      case 'choice': case 'longest':
+        return Math.max(position, ...expression.items.map((item) => this.prefixReach(item, position, state)));
+      case 'optional': case 'repeat0': case 'repeat1': case 'repeat': {
+        const max = expression.kind === 'optional' ? 1 : expression.kind === 'repeat' ? (expression.max ?? Infinity) : Infinity;
+        let [best, frontier, seen] = [position, [position], new Set([position])];
+        for (let count = 0; count < max && frontier.length > 0; count += 1) {
+          const next = [];
+          for (const start of frontier) {
+            best = Math.max(best, this.prefixReach(expression.item, start, state));
+            for (const end of ends(expression.item, start)) if (!seen.has(end)) next.push(seen.add(end) && end);
+          }
+          frontier = next;
+        }
+        return best;
+      }
+      case 'ref': {
+        const rule = this.program.rules.get(expression.name);
+        return rule && !this.program.externalTokens.has(expression.name) ? this.prefixReach(rule.expression, position, state) : position;
+      }
+      case 'token': case 'immediateToken': case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'lexicalPrecedence':
+        return this.prefixReach(expression.item, position, state);
+      default: return position;
+    }
+  }
+
+  // The start of the leaf of a token matched at `start` after the trivia
+  // `leaves`: a lexer resets the start of a token only on a separator no
+  // token valid there reads on with, so a separator some valid token begins
+  // with is the token's own (Solidity's `^` of `pragma solidity ^0.8.0;`
+  // takes the space before it, as a version may begin with one). The
+  // separators so read on with in the tree's parse state are `joined`.
+  joinedStart(start, leaves) {
+    const joined = this.keywords?.joined;
+    if (!joined || joined.size === 0 || leaves.length === 0) return { start, leaves };
+    let [reset, carry] = [leaves.length, -1];
+    for (let index = 0; index < leaves.length; index += 1) {
+      const leaf = leaves[index];
+      const reach = isSeparator(leaf) ? Math.max(carry, joined.get(leaf.start) ?? -1) : -1;
+      if (reach > leaf.start) {
+        if (reset === leaves.length) reset = index;
+        carry = reach;
+        continue;
+      }
+      [reset, carry] = [leaves.length, -1];
+    }
+    return reset === leaves.length ? { start, leaves } : { start: leaves[reset].start, leaves: leaves.slice(0, reset) };
+  }
+
+  // The kind of a leaf from `from` of a token matched over `[start, end)`:
+  // an anonymous token that took a separator before it is still named by
+  // its own text (see `joinedStart`).
+  joinedKind(kind, from, start, end) {
+    if (kind !== null || from === start) return kind;
+    const text = textOf(this.bytes, start, end);
+    return text === null ? null : `'${text}`;
   }
 
   matcher(expression) {
@@ -2479,9 +2619,10 @@ export class Executor {
       if (inToken) return [];
       return this.elementFailed(start, leaves, state, missingOf(expression), expression, (cursor) => this.terminal(expression, cursor, state, false));
     }
-    const leaf = { type: 'token', kind: separatorRunKind(expression, start, end), start, end };
+    const joined = this.joinedStart(start, leaves);
+    const leaf = { type: 'token', kind: this.joinedKind(separatorRunKind(expression, start, end), joined.start, start, end), start: joined.start, end };
     if (plain) leaf.plain = true;
-    const children = inToken ? NO_CHILDREN : [...leaves, leaf];
+    const children = inToken ? NO_CHILDREN : [...joined.leaves, leaf];
     return [makeResult(end, state, children)];
   }
 
@@ -2492,13 +2633,14 @@ export class Executor {
   tokenLeaf(item, start, leaves, state, inToken, kind) {
     const best = longestResult(this.evaluate(item, start, state, true));
     if (!best) return [];
+    const joined = inToken ? { start, leaves } : this.joinedStart(start, leaves);
     const leaf = item.kind === 'lexicalPrecedence'
-      ? { type: 'token', kind, start, end: best.end, priority: item.level }
-      : { type: 'token', kind, start, end: best.end };
+      ? { type: 'token', kind: this.joinedKind(kind, joined.start, start, best.end), start: joined.start, end: best.end, priority: item.level }
+      : { type: 'token', kind: this.joinedKind(kind, joined.start, start, best.end), start: joined.start, end: best.end };
     // A token of an external scanner is marked, whatever an alias names it
     // (see `preferredTokens`).
     if (item.kind === 'ref' && this.program.externalTokens.has(item.name)) leaf.scanned = true;
-    const children = inToken ? NO_CHILDREN : [...leaves, leaf];
+    const children = inToken ? NO_CHILDREN : [...joined.leaves, leaf];
     return [makeResult(best.end, best.state, children, best.dynamic)];
   }
 
@@ -2838,13 +2980,14 @@ export class Executor {
       if (verdict === false) this.fail(result.end, 'precedence');
       return false;
     };
-    const conflicts = (child, side, next = null) => {
+    const conflicts = (wrapper, side, next = null) => {
+      const child = wrapped(wrapper);
       if (child.type !== 'node' || !child.precedence) return false;
       const order = comparePrecedence(child.precedence, tag, orders);
       if (order > 0 || (order === 0 && associativity === side)) return false;
       if (side === 'right' && this.shiftsBelow(expression, child, orders)) return false;
       if (side === 'right' && this.lexedShift(child.rule)) return false;
-      if (!this.reachesOwner(expression, child.rule, side)) return false;
+      if (!this.reachesOwner(expression, wrapper.rule, side)) return false;
       if (side === 'left' && next && declaredFork(grammarFacts(this.program), child, lookaheadOf(next, this.bytes), orders)) return false;
       // A child of one part (Rust's bare range `..` in `a ..= ..`) has no
       // operand of its own the operator could have taken instead; on the
@@ -3164,7 +3307,8 @@ export class Executor {
       return this.elementFailed(start, leaves, state, { kind: null }, expression, (cursor) => this.longest(expression, cursor, state, false));
     }
     const kind = best.item.kind === 'ref' ? (this.program.rules.get(best.item.name)?.nodeKind ?? best.item.name) : null;
-    const children = inToken ? NO_CHILDREN : [...leaves, { type: 'token', kind, start, end: best.result.end }];
+    const joined = inToken ? null : this.joinedStart(start, leaves);
+    const children = inToken ? NO_CHILDREN : [...joined.leaves, { type: 'token', kind: this.joinedKind(kind, joined.start, start, best.result.end), start: joined.start, end: best.result.end }];
     return [makeResult(best.result.end, best.result.state, children, best.result.dynamic)];
   }
 
@@ -3337,8 +3481,12 @@ export class Executor {
     // `elab "a" : term => (`, an application of a repaired `do` block that
     // pushes one more layout indent with every argument).
     if (first.length === 0) return first;
+    // The left operand is the first part of the node grown, under the nodes
+    // that only wrap it (Solidity's visible `expression` around a
+    // `binary_expression`).
     const grownByNoWidth = (result) => {
-      const node = result.children.find((child) => !isTrivia(child));
+      let node = result.children.find((child) => !isTrivia(child));
+      for (let parts; node?.type === 'node' && (parts = node.children.filter((child) => !isTrivia(child))).length === 1 && parts[0].type === 'node';) [node] = parts;
       const left = node?.type === 'node' ? node.children.find((child) => !isTrivia(child)) : null;
       return left !== null && left !== undefined && left.end === result.end && node.end === result.end;
     };
@@ -3412,7 +3560,9 @@ export class Executor {
         }
         const acted = this.runAction(rule, result, leaf, start);
         if (!acted) continue;
-        built.push(copyResult(acted, { children: inToken ? NO_CHILDREN : [...leaves, leaf], precedence: null, ambiguous: false }));
+        const joined = inToken ? null : this.joinedStart(start, leaves);
+        const children = inToken ? NO_CHILDREN : [...joined.leaves, joined.start === start ? leaf : { ...leaf, start: joined.start }];
+        built.push(copyResult(acted, { children, precedence: null, ambiguous: false }));
       }
       if (built.length > 0) return built;
       this.fail(start, rule.nodeKind);
@@ -3816,6 +3966,18 @@ export class KeywordLexing {
     this.matchedImmediate = new Map();
     this.separators = new Set();
     this.matchedSeparators = new Map();
+    this.joined = new Map();
+    this.matchedJoins = new Map();
+  }
+
+  /** Records a separator at `position` a token in the rule call `call` begins with, read on with up to `reach`. */
+  matchJoin(position, reach, call) {
+    const join = this.matchedJoins.get(position);
+    if (!join) this.matchedJoins.set(position, { reach, calls: new Set([call]) });
+    else {
+      join.reach = Math.max(join.reach, reach);
+      join.calls.add(call);
+    }
   }
 
   /** Records an immediate token of separator text alone matched at `position` in the rule call `call`. */
@@ -3874,6 +4036,15 @@ export class KeywordLexing {
         continue;
       }
       if (node.trivia && node.kind == null) {
+        const join = this.matchedJoins.get(node.start);
+        if (join && !this.joined.has(node.start)) {
+          reach ??= treeReach(root, this.leadsOf(), this.tokens.bytes);
+          const seen = new Set();
+          if ([...join.calls].some((call) => builtAround(call, node, reach) && inParseState(call, node, reach, seen, this.leads))) {
+            this.joined.set(node.start, join.reach);
+            found = true;
+          }
+        }
         const calls = this.matchedSeparators.get(node.start);
         if (!calls || this.separators.has(node.start)) continue;
         reach ??= treeReach(root, this.leadsOf(), this.tokens.bytes);
@@ -3898,6 +4069,7 @@ export class KeywordLexing {
     this.matched = new Map();
     this.matchedImmediate = new Map();
     this.matchedSeparators = new Map();
+    this.matchedJoins = new Map();
     return found;
   }
 }

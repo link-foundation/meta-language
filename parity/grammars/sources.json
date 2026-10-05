@@ -361,6 +361,26 @@
         "sha256": "5645df0c9c3b1045e26f74c33d179f7ab8ba692fbe695ea16fadb5150d2eddfc"
       },
       "oracle": "make"
+    },
+    {
+      "id": "tree-sitter-solidity",
+      "language": "solidity",
+      "native": "native-solidity",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-solidity 1.2.13",
+      "repository": "https://github.com/JoranHonig/tree-sitter-solidity",
+      "revision": "4e938a46c7030dd001bc99e1ac0f0c750ac98254",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-solidity-1.2.13.grammar.json.gz",
+      "sha256": "74a3972bdcd8e08047e911e5beb5f2bad06a5329629bebb8b05a6a883683da40",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-solidity-1.2.13.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-solidity-1.2.13.corpus.json.gz",
+        "sha256": "b0ae17f8fa1fd43a11763e81d78381b28cf8815a280edc2582245e40910a3245"
+      },
+      "oracle": "solidity"
     }
   ]
 }

@@ -28,7 +28,6 @@
     "define",
     "dir",
     "else",
-    "endef",
     "endif",
     "error",
     "eval",

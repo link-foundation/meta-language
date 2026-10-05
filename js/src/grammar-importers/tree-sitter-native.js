@@ -41,6 +41,7 @@
 import { compileGrammar } from '../grammar.js';
 import { parseGrammarLinks } from '../grammar-links.js';
 import { parseError } from './common.js';
+import { excludedKeywordTexts } from './tree-sitter-keywords.js';
 
 const FORMAT = 'tree-sitter';
 
@@ -561,6 +562,38 @@ export function importTreeSitterNative(source, options = {}) {
     return expr(node, false, keywords, true);
   };
 
+  // tree-sitter makes a rule a token named after the rule when its whole
+  // body (under precedences only) is one token that occurs nowhere else in
+  // the grammar, unless the rule is the start rule, or a hidden rule of a
+  // single string, even one made a token: a string under a precedence is no
+  // whole token, a token used again stays a child of the rule, and a hidden
+  // rule keeps the anonymous token its string names.
+  const usage = countTokens([Object.values(grammar.rules), grammar.externals ?? []], new Map());
+  const lexicalRule = (name, index) => {
+    if (index === 0) return false;
+    const around = [];
+    let node = grammar.rules[name];
+    while (node.type.startsWith('PREC')) {
+      around.push(node);
+      node = node.content;
+    }
+    if (!['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(node.type)) return false;
+    if ((node.type === 'STRING' || node.type === 'PATTERN') && around.length > 0) return false;
+    const key = tokenKey(node, around);
+    if (usage.get(key) !== 1) return false;
+    const token = JSON.parse(key);
+    const string = token.type === 'STRING' || token.content?.type === 'STRING';
+    return !(string && name.startsWith('_'));
+  };
+
+  // The key of the token of a lexical node, the body of the rule `name` or
+  // of none (see `excludedKeywordTexts`).
+  const unitKey = (node, name = null) => {
+    if (name !== null && lexicalRule(name, ruleNames.indexOf(name))) return `rule ${name}`;
+    const bare = unwrapPrecedence(node);
+    return bare.type === 'STRING' ? `string ${bare.value}` : `token ${tokenKey(bare)}`;
+  };
+
   // Keyword extraction: the strings the word token matches entirely, tested
   // on the word token compiled natively.
   const word = grammar.word ?? null;
@@ -585,20 +618,26 @@ export function importTreeSitterNative(source, options = {}) {
       const units = [];
       for (const [name, node] of Object.entries(grammar.rules)) {
         if (name === word) continue;
-        if (isLexicalBody(node)) units.push(node);
-        else lexicalUnits(node, units);
+        if (isLexicalBody(node)) units.push({ unit: node, name });
+        else lexicalUnits(node, []).forEach((unit) => units.push({ unit, name: null }));
       }
-      for (const extra of grammar.extras ?? []) lexicalUnits(extra, units);
+      for (const extra of grammar.extras ?? []) lexicalUnits(extra, []).forEach((unit) => units.push({ unit, name: null }));
       const found = new Set();
-      for (const unit of units) {
+      const candidates = [];
+      for (const { unit, name } of units) {
         const texts = finiteTexts(unit);
         if (texts === null || texts.length === 0 || texts.includes('')) continue;
         if (!texts.every((text) => /^[\p{L}_]/u.test(text))) continue;
         if (!texts.every((text) => found.has(text) || matches(text))) continue;
         texts.forEach((text) => found.add(text));
         keywordUnits.add(unit);
+        candidates.push({ key: unitKey(unit, name), node: unit, texts });
       }
-      keywords = new Set([...found].sort());
+      // A candidate whose lexing as the word token would change its
+      // conflicts in a state without the word token stays no keyword.
+      const excluded = excludedKeywordTexts(grammar, word, candidates, unitKey);
+      for (const { node, texts } of candidates) if (texts.some((text) => excluded.has(text))) keywordUnits.delete(node);
+      keywords = new Set([...found].filter((text) => !excluded.has(text)).sort());
     } else if (wordBody !== null) {
       report.approximations.push(`word rule ${word} is not a token; no keyword extraction`);
       wordBody = null;
@@ -615,30 +654,6 @@ export function importTreeSitterNative(source, options = {}) {
     }
   }
   const conflicts = (grammar.conflicts ?? []).map((group) => group.map((member) => nameOf(memberName(member))));
-
-  // tree-sitter makes a rule a token named after the rule when its whole
-  // body (under precedences only) is one token that occurs nowhere else in
-  // the grammar, unless the rule is the start rule, or a hidden rule of a
-  // single string, even one made a token: a string under a precedence is no
-  // whole token, a token used again stays a child of the rule, and a hidden
-  // rule keeps the anonymous token its string names.
-  const usage = countTokens([Object.values(grammar.rules), grammar.externals ?? []], new Map());
-  const lexicalRule = (name, index) => {
-    if (index === 0) return false;
-    const around = [];
-    let node = grammar.rules[name];
-    while (node.type.startsWith('PREC')) {
-      around.push(node);
-      node = node.content;
-    }
-    if (!['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(node.type)) return false;
-    if ((node.type === 'STRING' || node.type === 'PATTERN') && around.length > 0) return false;
-    const key = tokenKey(node, around);
-    if (usage.get(key) !== 1) return false;
-    const token = JSON.parse(key);
-    const string = token.type === 'STRING' || token.content?.type === 'STRING';
-    return !(string && name.startsWith('_'));
-  };
 
   const rules = [];
   for (const [index, name] of ruleNames.entries()) {

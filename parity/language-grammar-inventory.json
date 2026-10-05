@@ -117,6 +117,7 @@
     "native-graphql": { "version": "1.0.0", "grammar": "parity/grammars/native/graphql.lino", "hidden": [], "anonymous": ["unnamed_token"], "extras": ["comma", "comment"] },
     "native-proto": { "version": "1.0.0", "grammar": "parity/grammars/native/proto.lino", "hidden": [], "anonymous": ["unnamed_token"], "extras": ["comment"] },
     "native-make": { "version": "1.0.0", "grammar": "parity/grammars/native/make.lino", "hidden": [], "anonymous": ["unnamed_token", "raw_line"], "extras": ["comment"] },
+    "native-solidity": { "version": "1.0.0", "grammar": "parity/grammars/native/solidity.lino", "hidden": [], "anonymous": ["unnamed_token"], "extras": ["comment"] },
     "native-rust": { "version": "1.0.0", "grammar": "parity/grammars/native/rust.lino", "hidden": [], "anonymous": ["unnamed_token"], "extras": ["line_comment", "block_comment"] }
   },
   "languages": [
