@@ -224,6 +224,17 @@ impl<'c> Executor<'c> {
         }
     }
 
+    /// Takes `count` memo cells of the parse's memory budget.
+    pub(super) fn retain(&self, count: usize) -> Run<()> {
+        let cells = self.shared.cells.get() + count;
+        self.shared.cells.set(cells);
+        if cells > self.shared.memory_limit {
+            Err(Abort::MemoryBudget)
+        } else {
+            Ok(())
+        }
+    }
+
     /// Records an expectation at `position`; only the farthest position is kept.
     pub(super) fn fail(&mut self, position: usize, expectation: &Name) {
         if self.suppressed > 0 {

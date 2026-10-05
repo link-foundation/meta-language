@@ -700,13 +700,18 @@ pub(super) fn content_start(children: &[Rc<Tree>], fallback: usize) -> usize {
 }
 
 /// The step budget and the frame count of one parse, shared with every
-/// embedded-language executor, and the record of what the parse expects.
+/// embedded-language executor, the record of what the parse expects, and the
+/// memo cells the whole parse took of its memory budget: one per rule call
+/// recorded and one per result such a call keeps, across its runs and repair
+/// rounds, counted and never released (see `Executor::retain`).
 #[derive(Debug)]
 pub(super) struct Shared {
     pub(super) steps: Cell<usize>,
     pub(super) limit: usize,
     pub(super) frames: Cell<usize>,
     pub(super) memo_limit: usize,
+    pub(super) cells: Rc<Cell<usize>>,
+    pub(super) memory_limit: usize,
     pub(super) expectations: RefCell<Expectations>,
 }
 

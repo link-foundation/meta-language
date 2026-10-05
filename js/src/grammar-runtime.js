@@ -5,7 +5,7 @@
 // (grammar-runtime/executor.js) runs it within explicit resource limits; the
 // tree module (grammar-runtime/syntax-tree.js) copies and renders the result.
 // docs/grammar/feature-union.md is the specification the Rust port follows.
-import { Executor, Expectations, KeywordLexing, NestingTooDeep, StepLimitReached, stepBudget } from './grammar-runtime/executor.js';
+import { Executor, Expectations, KeywordLexing, MemoryBudgetReached, memoryBudget, NestingTooDeep, StepLimitReached, stepBudget } from './grammar-runtime/executor.js';
 import { GrammarRuntimeError, loadProgram } from './grammar-runtime/load.js';
 import { decorateGrammar, decorateSyntaxTree } from './grammar-decorators.js';
 import { collectAmbiguities, firstRecovery, publicTree, renderSyntaxTree } from './grammar-runtime/syntax-tree.js';
@@ -33,6 +33,7 @@ function describeRejection(rejection) {
     case 'syntax': return `syntax error${where}: expected ${rejection.expected.join(', ') || 'nothing more'}`;
     case 'nestingDepth': return `the input nests deeper than ${rejection.limit} rules`;
     case 'stepLimit': return `the parse needed more than ${rejection.limit} steps`;
+    case 'memoryBudget': return `the parse needed more than ${rejection.limit} memo cells`;
     case 'recovered': return `the input needed error recovery${where}`;
     case 'ambiguity': return `the input is ambiguous${where}`;
     default: return `the input is rejected (${rejection.reason})`;
@@ -48,11 +49,11 @@ function positioned(reason, bytes, offset, extra = {}) {
  * a scanner's `expected` was answered before the parse made the request it
  * asks about, the parse runs again with the requests so far (see
  * `Expectations` in grammar-runtime/executor.js). Each run has its own step
- * budget.
+ * budget; all runs share the parse's `memory` budget.
  */
-function runParse(program, bytes, startRule, options, maxDepth, expectations, prepare) {
+function runParse(program, bytes, startRule, options, maxDepth, expectations, memory, prepare) {
   for (;;) {
-    const executor = new Executor(program, bytes, 0, bytes.length, options, stepBudget(options, bytes.length), maxDepth);
+    const executor = new Executor(program, bytes, 0, bytes.length, options, stepBudget(options, bytes.length, memory), maxDepth);
     executor.expectations = expectations.restart();
     prepare(executor);
     const outcome = executor.run(startRule);
@@ -67,7 +68,7 @@ function runParse(program, bytes, startRule, options, maxDepth, expectations, pr
  * or when no new point appears, the last round's partial tree stands, the
  * rest of the input an ERROR leaf. Each round has its own step budget.
  */
-function repairParse(program, bytes, startRule, options, maxDepth, failed, keywords, expectations) {
+function repairParse(program, bytes, startRule, options, maxDepth, failed, keywords, expectations, memory) {
   const points = new Set();
   const maxRepairs = options.maxRepairs ?? 32;
   let outcome = failed;
@@ -75,7 +76,7 @@ function repairParse(program, bytes, startRule, options, maxDepth, failed, keywo
     const point = outcome.elementFarthest >= 0 ? outcome.elementFarthest : outcome.farthest;
     if (points.has(point)) break;
     points.add(point);
-    outcome = runParse(program, bytes, startRule, options, maxDepth, expectations, (executor) => {
+    outcome = runParse(program, bytes, startRule, options, maxDepth, expectations, memory, (executor) => {
       executor.repairPoints = points;
       executor.keywords = keywords;
     });
@@ -93,7 +94,8 @@ function parseProgram(program, source, options) {
   const bytes = inputBytes(source);
   const startRule = options.startRule ?? program.start;
   if (!program.rules.has(startRule)) throw new GrammarRuntimeError(`undefined start rule ${startRule}`, 'reference');
-  const budget = stepBudget(options, bytes.length);
+  const memory = memoryBudget(options);
+  const budget = stepBudget(options, bytes.length, memory);
   const maxDepth = options.maxDepth ?? 1000;
   let outcome;
   // Under `(matching longest)` the input is parsed again while the tree takes
@@ -102,16 +104,19 @@ function parseProgram(program, source, options) {
   const expectations = new Expectations();
   try {
     do {
-      outcome = runParse(program, bytes, startRule, options, maxDepth, expectations, (executor) => {
+      outcome = runParse(program, bytes, startRule, options, maxDepth, expectations, memory, (executor) => {
         executor.keywords = keywords;
         // With no repair point yet, recovery only notes where elements fail.
         if (options.errorRecovery) executor.repairPoints = new Set();
       });
-      if (!outcome.ok && options.errorRecovery) outcome = repairParse(program, bytes, startRule, options, maxDepth, outcome, keywords, expectations);
+      if (!outcome.ok && options.errorRecovery) outcome = repairParse(program, bytes, startRule, options, maxDepth, outcome, keywords, expectations, memory);
     } while (keywords && outcome.ok && keywords.conflicts(outcome.root));
   } catch (error) {
     if (error instanceof StepLimitReached) {
       return { ok: false, tree: null, ambiguities: [], rejection: { reason: 'stepLimit', limit: budget.limit } };
+    }
+    if (error instanceof MemoryBudgetReached) {
+      return { ok: false, tree: null, ambiguities: [], rejection: { reason: 'memoryBudget', limit: memory.limit } };
     }
     if (error instanceof NestingTooDeep || (error instanceof RangeError && /call stack/u.test(error.message))) {
       const tree = publicTree({ type: 'error', start: 0, end: bytes.length, reason: 'nestingDepth' }, bytes);
@@ -134,9 +139,10 @@ function parseProgram(program, source, options) {
 /**
  * Compiles `grammar` (a Grammar or its normalized document) for the native
  * executor. `options.resolveGrammar(name)` returns the grammar an import or
- * an embedded language names; `maxDepth`, `stepLimit` and `memoLimit` bound
- * a parse; `ambiguity: 'reject'` turns a reported ambiguity into a rejection
- * and `recovery: 'accept'` accepts a tree with ERROR or MISSING nodes;
+ * an embedded language names; `maxDepth`, `stepLimit`, `memoLimit` and
+ * `memoryLimit` (the memo cells a parse keeps) bound a parse;
+ * `ambiguity: 'reject'` turns a reported ambiguity into a rejection and
+ * `recovery: 'accept'` accepts a tree with ERROR or MISSING nodes;
  * `errorRecovery: true` repairs a failed parse into such a tree (at most
  * `maxRepairs` repair points) instead of rejecting it without one.
  * Each parse may override the options and choose a `startRule`.

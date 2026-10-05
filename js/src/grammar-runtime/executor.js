@@ -3,8 +3,9 @@
 // matching keeps every result an expression can produce, deduplicated by end
 // offset and parser state; PEG matching keeps at most one. Rule calls are
 // memoized, left recursion grows a seed to a fixpoint, and the nesting depth,
-// the step count and the memo size are bounded, so a hostile input ends in a
-// rejection instead of a stack overflow or a runaway parse. Automatic
+// the step count, the memo size and the memory a parse keeps are bounded, so
+// a hostile or a huge input ends in a rejection instead of a stack overflow,
+// a runaway parse or an exhausted heap. Automatic
 // recovery reruns a failed parse with repair points, where a failing element
 // becomes a MISSING leaf or skips to its next match behind an ERROR leaf.
 // docs/grammar/feature-union.md#executor specifies every case below.
@@ -24,8 +25,12 @@ export class NestingTooDeep extends Error {}
 /** Thrown when a parse runs out of its step budget. */
 export class StepLimitReached extends Error {}
 
+/** Thrown when a parse runs out of its memory budget (see `memoryBudget`). */
+export class MemoryBudgetReached extends Error {}
+
 const DEFAULT_MAX_DEPTH = 1000;
 const DEFAULT_MEMO_LIMIT = 1_000_000;
+const DEFAULT_MEMORY_LIMIT = 2_000_000;
 const NO_CHILDREN = Object.freeze([]);
 // The verdict of the precedence filter on a result whose right operand is a
 // node of one part: valid unless a result ends before the operand (see
@@ -80,8 +85,21 @@ export class Expectations {
  * by default twice as large with error recovery, whose rounds parse each
  * repaired alternative too.
  */
-export function stepBudget(options, length) {
-  return { steps: 0, limit: options.stepLimit ?? (100_000 + 1000 * length) * (options.errorRecovery ? 2 : 1) };
+export function stepBudget(options, length, memory = memoryBudget(options)) {
+  return { steps: 0, limit: options.stepLimit ?? (100_000 + 1000 * length) * (options.errorRecovery ? 2 : 1), memory };
+}
+
+/**
+ * The memory budget of one parse, shared by its runs, its recovery rounds and
+ * its embedded languages: the memo cells it may make, one per rule call it
+ * records and one per result such a call keeps (`memoryLimit`, default
+ * 2000000). The cells are what a parse keeps until it ends (the calls under
+ * keyword lexing outlive their run), so they are counted, never released,
+ * and a parse that needs more is rejected with `memoryBudget` instead of
+ * growing until the process runs out of memory.
+ */
+export function memoryBudget(options) {
+  return { cells: 0, limit: options.memoryLimit ?? DEFAULT_MEMORY_LIMIT };
 }
 
 // The repair cost of a MISSING leaf; an ERROR leaf costs the bytes it skips.
@@ -1690,6 +1708,13 @@ export class Executor {
     if (this.budget.steps > this.budget.limit) throw new StepLimitReached();
   }
 
+  // Takes `count` memo cells of the parse's memory budget.
+  retain(count) {
+    const { memory } = this.budget;
+    memory.cells += count;
+    if (memory.cells > memory.limit) throw new MemoryBudgetReached();
+  }
+
   // Records an expectation at `position`; only the farthest position is kept.
   fail(position, expectation) {
     if (this.suppressed > 0) return;
@@ -2703,6 +2728,7 @@ export class Executor {
     // keyword matched in it (see `KeywordLexing`).
     const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null };
     if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), position, builds: rule.kind === 'normal' });
+    this.retain(1);
     this.memo.set(key, entry);
     this.callStack.push(entry);
     this.depth += 1;
@@ -2710,6 +2736,7 @@ export class Executor {
       if (this.depth > this.maxDepth) throw new NestingTooDeep();
       let results = this.ruleBody(rule, position, state, inToken);
       if (entry.leftRecursive) results = this.grow(entry, rule, position, state, inToken, results);
+      this.retain(results.length);
       entry.results = results;
     } finally {
       this.depth -= 1;

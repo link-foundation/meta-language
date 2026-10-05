@@ -28,6 +28,7 @@ mod tree;
 use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
 use std::fmt;
+use std::rc::Rc;
 
 pub use load::GrammarRuntimeError;
 pub use operations::OperationValue;
@@ -45,6 +46,8 @@ use results::{Expectations, KeywordLexing, Outcome, Shared, TokenOrder};
 const DEFAULT_MAX_DEPTH: usize = 1000;
 /// The default bound on memoized rule calls.
 const DEFAULT_MEMO_LIMIT: usize = 1_000_000;
+/// The default memory budget of a parse, in memo cells.
+const DEFAULT_MEMORY_LIMIT: usize = 2_000_000;
 /// The stack of the thread a parse runs on; the executor's frame bound keeps
 /// a parse well inside it.
 const PARSE_STACK: usize = 256 * 1024 * 1024;
@@ -62,6 +65,12 @@ pub struct FeatureParseOptions {
     pub step_limit: Option<usize>,
     /// The bound on memoized rule calls (default 1000000).
     pub memo_limit: Option<usize>,
+    /// The memory budget of the whole parse, its runs, repair rounds and
+    /// embedded languages included, in memo cells: one per rule call recorded
+    /// and one per result such a call keeps, counted and never released
+    /// (default 2000000). A parse that needs more is rejected with
+    /// `memoryBudget` instead of growing.
+    pub memory_limit: Option<usize>,
     /// Whether a reported ambiguity rejects the input (default false).
     pub reject_ambiguity: Option<bool>,
     /// Whether a tree with ERROR or MISSING nodes is accepted (default false).
@@ -85,6 +94,7 @@ impl FeatureParseOptions {
             max_depth: self.max_depth.or(base.max_depth),
             step_limit: self.step_limit.or(base.step_limit),
             memo_limit: self.memo_limit.or(base.memo_limit),
+            memory_limit: self.memory_limit.or(base.memory_limit),
             reject_ambiguity: self.reject_ambiguity.or(base.reject_ambiguity),
             accept_recovery: self.accept_recovery.or(base.accept_recovery),
             error_recovery: self.error_recovery.or(base.error_recovery),
@@ -101,7 +111,8 @@ impl FeatureParseOptions {
 /// Why a parse rejects its input, and where.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ParseRejection {
-    /// `syntax`, `nestingDepth`, `stepLimit`, `recovered` or `ambiguity`.
+    /// `syntax`, `nestingDepth`, `stepLimit`, `memoryBudget`, `recovered` or
+    /// `ambiguity`.
     pub reason: &'static str,
     /// The byte offset, for a positioned rejection.
     pub offset: Option<usize>,
@@ -159,6 +170,7 @@ impl fmt::Display for ParseRejection {
             }
             "nestingDepth" => write!(formatter, "the input nests deeper than {limit} rules"),
             "stepLimit" => write!(formatter, "the parse needed more than {limit} steps"),
+            "memoryBudget" => write!(formatter, "the parse needed more than {limit} memo cells"),
             "recovered" => write!(formatter, "the input needed error recovery{place}"),
             "ambiguity" => write!(formatter, "the input is ambiguous{place}"),
             reason => write!(formatter, "the input is rejected ({reason})"),
@@ -430,6 +442,9 @@ fn parse_program(
         });
     let keywords = tokens.map(|_| RefCell::new(KeywordLexing::default()));
     let expectations = RefCell::new(Expectations::default());
+    // Every run and repair round takes its memo cells of the one budget.
+    let memory_limit = options.memory_limit.unwrap_or(DEFAULT_MEMORY_LIMIT);
+    let cells = Rc::new(Cell::new(0));
     // Parses the whole input with a fresh executor. While a scanner's
     // `expected` was answered before the parse made the request it asks
     // about, the parse runs again with the requests so far (see
@@ -442,6 +457,8 @@ fn parse_program(
             limit,
             frames: Cell::new(0),
             memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
+            cells: Rc::clone(&cells),
+            memory_limit,
             expectations: RefCell::new(record),
         };
         let outcome = {
@@ -488,6 +505,9 @@ fn parse_program(
     let root = match outcome {
         Err(Abort::StepLimit) => {
             return refused(ParseRejection::limited("stepLimit", limit), None);
+        }
+        Err(Abort::MemoryBudget) => {
+            return refused(ParseRejection::limited("memoryBudget", memory_limit), None);
         }
         Err(Abort::NestingTooDeep) => {
             let tree = tree::error_tree(bytes, 0, bytes.len(), Some("nestingDepth"));

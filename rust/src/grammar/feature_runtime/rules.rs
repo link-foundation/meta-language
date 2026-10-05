@@ -125,6 +125,7 @@ impl Executor<'_> {
             call,
             ..Entry::default()
         }));
+        self.retain(1)?;
         self.memo.insert(key.clone(), entry.clone());
         self.call_stack.push(entry.clone());
         self.depth += 1;
@@ -146,6 +147,7 @@ impl Executor<'_> {
             let mut entry = entry.borrow_mut();
             entry.evaluating = false;
             let results = outcome?;
+            self.retain(results.len())?;
             entry.results.clone_from(&results);
             if entry.involved || self.memo.len() > self.shared.memo_limit {
                 drop(entry);

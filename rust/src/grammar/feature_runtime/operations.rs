@@ -31,6 +31,7 @@ pub enum OperationValue {
 pub(super) enum Abort {
     StepLimit,
     NestingTooDeep,
+    MemoryBudget,
 }
 
 /// Why an operation does not complete.

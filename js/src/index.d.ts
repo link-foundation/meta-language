@@ -1326,6 +1326,8 @@ export interface GrammarParserOptions extends DecoratorOptions {
   maxDepth?: number;
   stepLimit?: number;
   memoLimit?: number;
+  /** The memo cells a parse may keep, across its runs and repair rounds (default 2000000). */
+  memoryLimit?: number;
   ambiguity?: 'report' | 'reject';
   recovery?: 'reject' | 'accept';
   /** Repairs a failed parse into a tree with ERROR and MISSING leaves. */
@@ -1363,7 +1365,7 @@ export type SyntaxTreeNode =
   | { type: 'embed'; language: string; start: number; end: number; root: SyntaxTreeNode };
 
 export interface GrammarRejection {
-  reason: 'syntax' | 'stepLimit' | 'nestingDepth' | 'recovered' | 'ambiguity';
+  reason: 'syntax' | 'stepLimit' | 'memoryBudget' | 'nestingDepth' | 'recovered' | 'ambiguity';
   offset?: number;
   line?: number;
   column?: number;

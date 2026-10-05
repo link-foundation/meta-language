@@ -240,7 +240,7 @@ export function emitPeggy(grammar) {
  * throws a `GrammarParseError` when the source is not in the language; its
  * `parseTree(source, options)` reports instead of throwing. `options` takes
  * `resolveGrammar(name)` for imports and embedded languages and the resource
- * limits `maxDepth`, `stepLimit` and `memoLimit`.
+ * limits `maxDepth`, `stepLimit`, `memoLimit` and `memoryLimit`.
  */
 export function compileGrammar(grammar, options = {}) {
   return createGrammarParser(grammar, options);
