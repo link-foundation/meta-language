@@ -390,7 +390,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "kotlin" => tree_sitter_kotlin_ng::LANGUAGE.into(),
         "lean" => lean_grammar::LANGUAGE.into(),
         "lua" => tree_sitter_lua::LANGUAGE.into(),
-        "make" => tree_sitter_make::LANGUAGE.into(),
         "markdown" => tree_sitter_md_025::LANGUAGE.into(),
         "markdown_inline" => tree_sitter_md_025::INLINE_LANGUAGE.into(),
         "matlab" => tree_sitter_matlab::LANGUAGE.into(),

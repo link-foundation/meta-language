@@ -491,8 +491,8 @@ recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
   tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket,
   tree-sitter-c, tree-sitter-rust, tree-sitter-javascript,
   tree-sitter-typescript (both its TypeScript and its TSX grammar),
-  tree-sitter-java, tree-sitter-go, tree-sitter-regex, tree-sitter-graphql and
-  tree-sitter-proto no longer
+  tree-sitter-java, tree-sitter-go, tree-sitter-regex, tree-sitter-graphql,
+  tree-sitter-proto and tree-sitter-make no longer
   back a default parse, so they are development files only: the Rust crates are
   `[dev-dependencies]` that the `pinned_*_oracle_gives_the_fixture` tests
   load, the vendored and patched CSV and Rust parsers are no longer compiled

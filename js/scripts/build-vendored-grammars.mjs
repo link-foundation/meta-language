@@ -96,7 +96,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
     dir: '.',
   },
   lua: { crate: 'tree-sitter-lua', dir: '.' },
-  make: { crate: 'tree-sitter-make', dir: '.' },
+  make: { crate: 'tree-sitter-make', dir: '.', oracle: true },
   markdown: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown' },
   markdown_inline: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown-inline' },
   matlab: { crate: 'tree-sitter-matlab', dir: '.' },
