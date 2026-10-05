@@ -12,7 +12,9 @@
 //
 // and appends its execution records to `work/stage-<name>.jsonl`. A stage that
 // fails, or never reports, becomes one gate error naming it instead of
-// stopping the run.
+// stopping the run. A stage that runs `after` another (each Rust stage after
+// its JavaScript counterpart) and never reported because that stage failed
+// adds no error of its own: the blocking failure's one error names it.
 
 export const RUNTIMES = Object.freeze(['javascript', 'rust']);
 export const NATIVE_TARGETS = Object.freeze(['JavaScript', 'Rust', 'Lean', 'Rocq']);
@@ -36,6 +38,8 @@ function nativeStage(target) {
   return {
     name: `native-${target.toLowerCase()}`,
     target,
+    // Each Rust job runs after its JavaScript counterpart passes.
+    ...(target === 'Rust' ? { after: 'native-javascript' } : {}),
     groups: RUNTIMES.map((runtime) => `native:${target}:${runtime}`),
     tools: [...new Set(['node', NATIVE_TOOLS[target]])],
   };
@@ -48,7 +52,7 @@ export const CHECKPOINTS = Object.freeze(['pre-merge', 'post-merge', 'release-de
 export const EVIDENCE_STAGES = Object.freeze({
   'pre-merge': Object.freeze([
     { name: 'javascript-suite', groups: ['suite:javascript'], tools: SUITE_TOOLS },
-    { name: 'rust-suite', groups: ['suite:rust'], tools: SUITE_TOOLS },
+    { name: 'rust-suite', groups: ['suite:rust'], tools: SUITE_TOOLS, after: 'javascript-suite' },
     { name: 'runtime-parity', groups: ['runtime-parity'], tools: CARGO_TOOLS },
     // The native stages validate the runtime-parity stage's emitted translations.
     ...NATIVE_TARGETS.map(nativeStage),
@@ -127,15 +131,22 @@ export function bundleRecords(...records) {
  * Merges the stage records of `checkpoint` for `commit`. `records` maps a
  * stage name to its parsed record (or an Error when it could not be read).
  * Returns the groups, each carrying the toolchain versions of the stage that
- * produced it, and one error per stage that failed or did not report.
+ * produced it, and one error per stage that failed or did not report; a stage
+ * skipped because the stage it runs after failed joins that stage's error.
  */
 export function mergeStageRecords({ checkpoint, commit, records }) {
   const groups = new Map();
   const stageErrors = [];
   const fail = (stage, error) => stageErrors.push({ stage, error });
+  const blocked = new Map();
   for (const stage of evidenceStages(checkpoint)) {
     const record = records.get(stage.name);
     if (record === undefined) {
+      const blocking = stage.after && stageErrors.find((stageError) => stageError.stage === stage.after);
+      if (blocking) {
+        blocked.set(blocking, [...(blocked.get(blocking) ?? []), stage.name]);
+        continue;
+      }
       fail(stage.name, 'the stage produced no record; see its job log');
       continue;
     }
@@ -163,6 +174,9 @@ export function mergeStageRecords({ checkpoint, commit, records }) {
     if (!record.error && absent.length > 0) {
       fail(stage.name, `the stage reported no record for ${absent.join(', ')}`);
     }
+  }
+  for (const [blocking, skipped] of blocked) {
+    blocking.error += `; ${skipped.join(', ')} did not run, as ${skipped.length === 1 ? 'it runs' : 'they run'} after ${blocking.stage}`;
   }
   for (const [name] of records) {
     if (!evidenceStages(checkpoint).some((stage) => stage.name === name)) {

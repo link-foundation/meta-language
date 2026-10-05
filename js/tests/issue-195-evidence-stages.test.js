@@ -125,6 +125,34 @@ test('a missing, failed, foreign or mismatched stage becomes one error naming th
     'a missing, failed, foreign or mismatched stage becomes one error naming the stage');
 });
 
+test('a Rust stage skipped because its JavaScript stage failed adds no error of its own', () => {
+  const stages = Object.fromEntries(evidenceStages('pre-merge').map((stage) => [stage.name, stage]));
+  const records = allRecords();
+  records.set('javascript-suite', stageRecord(stages['javascript-suite'], {
+    groups: {}, error: 'JavaScript test group grammar failed; see logs/suite-javascript-grammar.log',
+  }));
+  records.delete('rust-suite');
+  records.set('native-javascript', stageRecord(stages['native-javascript'], { groups: {}, error: 'node rejected a translation' }));
+  records.delete('native-rust');
+  const { stageErrors } = mergeStageRecords({ checkpoint: 'pre-merge', commit, records });
+  assert.deepEqual(stageErrors.map(stageGateError), [
+    'evidence stage javascript-suite failed: JavaScript test group grammar failed; see logs/suite-javascript-grammar.log; '
+      + 'rust-suite did not run, as it runs after javascript-suite',
+    'evidence stage native-javascript failed: node rejected a translation; native-rust did not run, as it runs after native-javascript',
+  ]);
+  // A Rust stage that is missing while its JavaScript stage passed is still its own error.
+  const passed = allRecords();
+  passed.delete('rust-suite');
+  assert.deepEqual(mergeStageRecords({ checkpoint: 'pre-merge', commit, records: passed }).stageErrors.map(stageGateError), [
+    'evidence stage rust-suite failed: the stage produced no record; see its job log',
+  ]);
+  assert.deepEqual(evidenceStages('pre-merge').filter((stage) => stage.after).map(({ name, after }) => [name, after]), [
+    ['rust-suite', 'javascript-suite'], ['native-rust', 'native-javascript'],
+  ]);
+  observe('I195-CI-SKIPPED-STAGE-ONE-GATE-ERROR', ['skippedStageJoinsBlockingError', 'missingStageStillReported'],
+    'a Rust stage skipped because its JavaScript stage failed adds no error of its own');
+});
+
 test('a translation group needs its runtime suite, the parity observation and its native validation', () => {
   const { groups } = mergeStageRecords({ checkpoint: 'pre-merge', commit, records: allRecords() });
   const complete = translationGroups(groups);
@@ -195,7 +223,7 @@ test('a native stage deletes the compiler outputs no cell cites', () => {
 });
 
 test('CI runs each stage as its own job and the aggregate only merges and evaluates', () => {
-  const workflow = read('.github/workflows/issue-195-acceptance.yml');
+  const workflow = read('.github/workflows/ci.yml');
   const job = (id) => {
     const start = workflow.indexOf(`\n  ${id}:\n`);
     assert.ok(start >= 0, `job ${id}`);
@@ -219,7 +247,7 @@ test('CI runs each stage as its own job and the aggregate only merges and evalua
   }
   // The post-merge report runs on main only and never blocks.
   const postMerge = job('post-merge');
-  assert.match(postMerge, /if: \$\{\{ github\.event_name == 'push' \}\}/u);
+  assert.match(postMerge, /if: \$\{\{ github\.event_name == 'push' && needs\.js\.result == 'success' \}\}/u);
   assert.match(postMerge, /continue-on-error: true/u);
   assert.match(postMerge, /--checkpoint post-merge/u);
   assert.doesNotMatch(job('acceptance'), /post-merge/u);
