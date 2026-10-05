@@ -147,7 +147,7 @@
       "features": {"scanner": 1, "conflict": 11, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 251, "rows": 5152, "bytes": 13446, "divergences": 1, "rejections": 42},
       "recovery": {"repaired": 42, "errorNodes": 25, "missingNodes": 51, "categories": {"merged-extension": 1, "native-skips-more": 20, "oracle-skips-more": 52, "same-repair-sites": 15, "same-skipped-bytes": 9}},
-      "reuse": {"shared": 26, "specific": 121}
+      "reuse": {"shared": 37, "specific": 110}
     },
     {
       "grammar": "native-racket",
@@ -168,6 +168,24 @@
       "reuse": {"shared": 23, "specific": 16}
     },
     {
+      "grammar": "native-rocq",
+      "language": "Rocq",
+      "links": "parity/grammars/native/rocq.lino",
+      "fixture": "parity/fixtures/native-grammars/rocq.json",
+      "oracle": "tree-sitter-rocq 300fe33",
+      "sources": [
+        "https://github.com/aruzdh/tree-sitter-rocq/blob/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/grammar.js",
+        "https://github.com/aruzdh/tree-sitter-rocq/tree/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/test/corpus"
+      ],
+      "corpus": "https://github.com/aruzdh/tree-sitter-rocq/tree/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/rocq.json",
+      "coverage": {"rules": {"normal": 203, "atomic": 0, "silent": 46, "token": 16}, "visibleRules": 203, "exercisedRules": 191, "checkedKinds": 203, "checkedFields": 29, "renamed": 84, "expandedWords": 27, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 16, "precedences": 2, "extra": 2, "kind": 0},
+      "correctness": {"matches": 230, "rows": 9440, "bytes": 20820, "divergences": 0, "rejections": 12},
+      "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {}},
+      "reuse": {"shared": 29, "specific": 236}
+    },
+    {
       "grammar": "native-rust",
       "language": "Rust",
       "links": "parity/grammars/native/rust.lino",
@@ -183,7 +201,7 @@
       "features": {"scanner": 6, "conflict": 9, "precedences": 0, "extra": 3, "kind": 3},
       "correctness": {"matches": 182, "rows": 7903, "bytes": 15796, "divergences": 0, "rejections": 38},
       "recovery": {"repaired": 38, "errorNodes": 15, "missingNodes": 58, "categories": {"native-skips-more": 14, "oracle-skips-more": 49, "same-repair-sites": 7, "same-skipped-bytes": 5}},
-      "reuse": {"shared": 46, "specific": 138}
+      "reuse": {"shared": 50, "specific": 134}
     },
     {
       "grammar": "native-scheme",

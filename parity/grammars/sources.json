@@ -211,6 +211,36 @@
         "sha256": "5ccd9107c465322f9ebec794dd125f70fc5b9ac8ad5ce24938ccbd9364638cd0"
       },
       "oracle": "lean"
+    },
+    {
+      "id": "tree-sitter-rocq",
+      "language": "rocq",
+      "native": "native-rocq",
+      "format": "tree-sitter grammar.json",
+      "package": "vendored rust/vendor/tree-sitter-rocq",
+      "repository": "https://github.com/aruzdh/tree-sitter-rocq",
+      "revision": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+      "path": "src/grammar.json",
+      "patch": {
+        "file": "rust/vendor/tree-sitter-rocq/meta-language.patch",
+        "sha256": "5da25fecd33120b7af9084aecdbd75447cef424efeab0bd018c7a02c68034014",
+        "reason": "constructs translated Rocq programs and the pinned Rocq stdlib use that the upstream grammar reports as errors; the patched grammar is the one the oracle parser is generated from"
+      },
+      "generated": {
+        "reason": "the patch changes grammar.js, not the committed src/grammar.json; the bytes are the grammar.json tree-sitter CLI 0.27.0 writes from the patched grammar.js (the same generator reproduces the committed src/grammar.json from the unpatched grammar.js byte for byte), and every named symbol of the vendored parser.c, the one the oracle compiles, is a rule of it",
+        "generator": "js/experiments/generate-tree-sitter-grammar-json.mjs",
+        "dsl": "https://github.com/tree-sitter/tree-sitter/blob/v0.27.0/crates/generate/src/dsl.js"
+      },
+      "file": "parity/grammars/sources/tree-sitter-rocq-300fe33.grammar.json.gz",
+      "sha256": "fb7905055821bc8b966059783535713e631d324c01426e1ab1a8a824eaeea23e",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-rocq-300fe33.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-rocq-300fe33.corpus.json.gz",
+        "sha256": "3cb37651a515ac9b68bfb4ae7c5d72f143602fa8f9231bd9af602d9a162956c3"
+      },
+      "oracle": "rocq"
     }
   ]
 }

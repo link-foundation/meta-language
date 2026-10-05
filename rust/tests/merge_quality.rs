@@ -144,6 +144,9 @@ fn natives() -> Vec<Native> {
             "racket",
             Some(|| tree_sitter_racket::LANGUAGE.into())
         ),
+        // The Rocq oracle, like the Lean one, is a vendored grammar private to
+        // the crate.
+        native!("native-rocq", "rocq", None),
         native!("native-rust", "rust", None),
         native!(
             "native-scheme",
@@ -226,6 +229,8 @@ fn oracle_side(language: &tree_sitter::Language, matches: &[&str], rejections: &
 #[test]
 fn issue_195_merge_quality_time_and_memory_are_measured() {
     let print = std::env::var_os("MERGE_QUALITY_PRINT").is_some();
+    // `--measure --only` measures one grammar.
+    let only = std::env::var("MERGE_QUALITY_ONLY").ok();
     let published: Value = serde_json::from_str(MEASUREMENTS).expect("the measurements are JSON");
     let published = published["grammars"].as_array().expect("measured grammars");
     let natives = natives();
@@ -240,6 +245,9 @@ fn issue_195_merge_quality_time_and_memory_are_measured() {
         "every native grammar is measured"
     );
     for (index, native) in natives.iter().enumerate() {
+        if print && only.as_deref().is_some_and(|only| only != native.id) {
+            continue;
+        }
         // `--measure` measures every grammar; the test measures the smallest
         // corpus again, as the JavaScript test does, and checks the others
         // are published.

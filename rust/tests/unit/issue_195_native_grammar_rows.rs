@@ -6,7 +6,8 @@
 //! `issue_195_grammar_native_rust.rs`,
 //! `issue_195_grammar_native_javascript.rs`,
 //! `issue_195_grammar_native_typescript.rs`,
-//! `issue_195_grammar_native_tsx.rs`, `issue_195_grammar_native_lean.rs`):
+//! `issue_195_grammar_native_tsx.rs`, `issue_195_grammar_native_lean.rs`,
+//! `issue_195_grammar_native_rocq.rs`):
 //! they read a fixture of
 //! parity/fixtures/native-grammars/, parse with the Rust
 //! executor and project its trees to the rows of the tree-sitter oracle the

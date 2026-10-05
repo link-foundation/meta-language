@@ -336,8 +336,24 @@ fn convert_native_node(
     if node.children.is_empty() {
         if !node.is_missing && start < end {
             let span = span_for_range(context.lines, start, end, context.offset);
+            // Rocq's grammar calls every identifier-like leaf `ident`; its text
+            // is also a semantic `identifier` or `primitive_type` leaf.
+            let owner = if is_rocq_language(context.language) && node.term == "ident" {
+                network.insert_link(
+                    [node_id],
+                    LinkMetadata::new()
+                        .with_link_type(LinkType::Syntax)
+                        .with_named(node.named)
+                        .with_term(rocq_identifier_term(&context.text[start..end]))
+                        .with_language(context.language)
+                        .with_span(span)
+                        .with_flags(flags),
+                )
+            } else {
+                node_id
+            };
             let token = network.insert_link(
-                [node_id],
+                [owner],
                 LinkMetadata::new()
                     .with_link_type(LinkType::Token)
                     .with_named(node.named)
@@ -725,9 +741,14 @@ fn contains_node(outer: Node<'_>, inner: Node<'_>) -> bool {
         && (inner_start < inner_end || (outer_start < inner_start && inner_start < outer_end))
 }
 
+fn is_rocq_language(language: &str) -> bool {
+    language.eq_ignore_ascii_case("rocq") || language.eq_ignore_ascii_case("coq")
+}
+
+/// A Rocq `ident` with text, which also exposes it as a semantic leaf; a
+/// repaired, empty `ident` has none.
 fn is_rocq_identifier(node: Node<'_>, language: &str) -> bool {
-    (language.eq_ignore_ascii_case("rocq") || language.eq_ignore_ascii_case("coq"))
-        && node.kind() == "ident"
+    is_rocq_language(language) && node.kind() == "ident" && node.start_byte() < node.end_byte()
 }
 
 fn rocq_identifier_term(text: &str) -> &'static str {

@@ -268,6 +268,48 @@
       "partsOfSpeech": ["noun"],
       "definition": "A type whose values are the values of another type that satisfy a predicate, written {x : α // p x} in Lean.",
       "source": "Theorem Proving in Lean 4, section Structures and Records; the Lean 4 core library, structure Subtype in Init/Prelude.lean"
+    },
+    {
+      "word": "admitted",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Accepted without a proof, as a Rocq proof that Admitted closes is.",
+      "source": "Rocq Reference Manual, section Proof mode, Admitted"
+    },
+    {
+      "word": "associativity",
+      "partsOfSpeech": ["noun"],
+      "definition": "The side, left or right, to which an infix operator groups when it repeats without parentheses.",
+      "source": "Rocq Reference Manual, section Notations, Simple factorization rules and associativity"
+    },
+    {
+      "word": "fixpoint",
+      "partsOfSpeech": ["noun"],
+      "definition": "A recursive definition by structural recursion, as the Rocq command Fixpoint declares.",
+      "source": "Rocq Reference Manual, section Recursive functions, Fixpoint"
+    },
+    {
+      "word": "generalizable",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Allowed to be bound implicitly by generalization, as the Rocq command Generalizable Variables declares.",
+      "source": "Rocq Reference Manual, section Implicit generalization"
+    },
+    {
+      "word": "ltac",
+      "partsOfSpeech": ["noun"],
+      "definition": "The tactic language of the Rocq prover.",
+      "source": "Rocq Reference Manual, section Ltac"
+    },
+    {
+      "word": "tactical",
+      "partsOfSpeech": ["noun"],
+      "definition": "A tactic that takes tactics and combines them, such as repeat, try or progress.",
+      "source": "Rocq Reference Manual, section Ltac, tacticals"
+    },
+    {
+      "word": "unset",
+      "partsOfSpeech": ["verb"],
+      "definition": "To turn off a flag or an option, as the Rocq command Unset does.",
+      "source": "Rocq Reference Manual, section Flags, options and tables, Unset"
     }
   ]
 }

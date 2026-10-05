@@ -106,7 +106,8 @@ function embeddedRoots(network, language, source) {
 /**
  * Applies the documented public projections of the grammar rows: Lean's
  * public root `file` wraps the grammar `module`, and every Rocq `ident`
- * exposes its text as an `identifier` or `primitive_type` token child.
+ * with text exposes it as an `identifier` or `primitive_type` token child; a
+ * repaired, empty `ident` has no text, so no token.
  */
 function publicRows(language, source, rows) {
   const bytes = encoder.encode(source);
@@ -118,7 +119,7 @@ function publicRows(language, source, rows) {
   }
   if (language === 'Rocq') {
     return rows.flatMap((row) => {
-      if (row[2] !== 'ident') return [row];
+      if (row[2] !== 'ident' || row[4] === row[5]) return [row];
       const text = decoder.decode(bytes.subarray(row[4], row[5]));
       const term = ['bool', 'nat', 'Prop', 'Set', 'SProp', 'Type', 'Z'].includes(text)
         ? 'primitive_type'

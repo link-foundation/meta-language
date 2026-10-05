@@ -249,7 +249,8 @@ fn embedded_roots(
 
 /// Applies the documented public projections of the grammar rows: Lean's
 /// public root `file` wraps the grammar `module`, and every Rocq `ident`
-/// exposes its text as an `identifier` or `primitive_type` token child.
+/// with text exposes it as an `identifier` or `primitive_type` token child; a
+/// repaired, empty `ident` has no text, so no token.
 fn public_rows(language: &str, source: &str, rows: &[Value]) -> Vec<Value> {
     match language {
         "Lean" => {
@@ -266,7 +267,7 @@ fn public_rows(language: &str, source: &str, rows: &[Value]) -> Vec<Value> {
             .iter()
             .flat_map(|row| {
                 let mut projected = vec![row.clone()];
-                if row[2] == "ident" {
+                if row[2] == "ident" && row[4] != row[5] {
                     let start = usize::try_from(row[4].as_u64().expect("start")).expect("usize");
                     let end = usize::try_from(row[5].as_u64().expect("end")).expect("usize");
                     let term = match &source[start..end] {

@@ -109,6 +109,10 @@ const upstreamCorpus = (native, keep = () => true) =>
 const leanCorpus = (recovers) => upstreamCorpus('native-lean', (_file, title) => title !== LEAN_EXPLICIT_FUNCTION)
   .filter((source) => oracleRecovers(source, 'Lean') === recovers);
 
+// The cases of the pinned tree-sitter-rocq corpus the oracle recovers from
+// (`recovers`) or reads.
+const rocqCorpus = (recovers) => upstreamCorpus('native-rocq').filter((source) => oracleRecovers(source, 'Rocq') === recovers);
+
 export const NATIVE_GRAMMARS = Object.freeze([
   {
     id: 'json',
@@ -774,6 +778,41 @@ export const NATIVE_GRAMMARS = Object.freeze([
       '/- abc\n', 'def x := [1, 2\n', 'namespace\n', 'inductive\n',
       // The command ends before `!`, which a subscript reduces first.
       '#eval x[i]!\n',
+    ],
+  },
+  {
+    id: 'rocq',
+    language: 'Rocq',
+    grammar: 'parity/grammars/native/rocq.lino',
+    oracle: 'tree-sitter-rocq 300fe33',
+    sources: [
+      `${grammarSourceOf('native-rocq').repository}/blob/${grammarSourceOf('native-rocq').revision}/grammar.js`,
+      `${grammarSourceOf('native-rocq').repository}/tree/${grammarSourceOf('native-rocq').revision}/${grammarSourceOf('native-rocq').corpus.path}`,
+    ],
+    // The grammar is the import of the grammar.json the pinned and patched
+    // tree-sitter-rocq grammar.js generates, the one the oracle parser is
+    // generated from (js/scripts/import-native-grammars.mjs); the matches are
+    // every case of its upstream corpus at the same revision but the one the
+    // oracle recovers from, which the native grammar rejects, and a few
+    // sources more.
+    ...nativeGrammar('native-rocq'),
+    matches: [
+      ...rocqCorpus(false),
+      '', 'Definition x := 1.\n', 'Definition f (x : nat) : nat := x + 1.\n', 'Theorem t : 1 = 1.\nProof. reflexivity. Qed.\n',
+      'Require Import Arith.\n', 'Check nat.\n', 'Compute 1 + 2.\n', '(* c *)\nDefinition x := 1. (* d *)\n', 'Module M.\nDefinition x := 1.\nEnd M.\n',
+      'Inductive t : Type := a | b : nat -> t.\n', 'Fixpoint f (n : nat) : nat := match n with | O => 1 | S m => f m end.\n', 'Definition s := "a".\n',
+      'Section S.\nVariable n : nat.\nEnd S.\n', 'Definition f := fun x => x.\n',
+      'Lemma l : forall n : nat, n = n.\nProof.\n  intros n.\n  destruct n; reflexivity.\nQed.\n', 'Record P := { x : nat; y : nat }.\n',
+      'Notation "x ++ y" := (app x y).\n', 'Ltac t := auto.\n', 'Definition p := (1, 2).\n', 'Definition x := if true then 1 else 2.\n',
+      'Definition x := let y := 1 in y.\n', 'Open Scope nat_scope.\n', 'Set Implicit Arguments.\n', '#[local] Definition x := 1.\n',
+      'Definition l := [1; 2].\n', 'Example e : 1 + 1 = 2.\nProof. simpl. reflexivity. Qed.\n', 'Axiom a : nat.\n', 'Fail Check x.\n',
+      'Goal True.\nProof.\n  - exact I.\nQed.\n', 'Definition x := @id nat 1.\n', 'Definition f {A : Type} (x : A) := x.\n',
+    ],
+    divergences: [],
+    rejections: [
+      ...rocqCorpus(true),
+      'Definition f :=', 'Definition', 'Definition x := 1', 'Definition f (x : nat := x.\n', 'Compute (1 +.\n', 'Definition s := "abc.\n',
+      '(* abc\n', 'Module.\n', 'Inductive.\n', 'Definition x := [1; 2.\n', 'Theorem t : := I.\n',
     ],
   },
 ]);

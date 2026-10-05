@@ -27,6 +27,7 @@
 //
 //   node js/scripts/build-merge-quality-evidence.mjs            # write the report and the document
 //   node js/scripts/build-merge-quality-evidence.mjs --measure  # measure both runtimes, then write
+//   node js/scripts/build-merge-quality-evidence.mjs --measure --only native-rocq  # measure one grammar, keep the others
 //   node js/scripts/build-merge-quality-evidence.mjs --check    # fail on drift
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -420,12 +421,15 @@ export function measureJavaScript(id) {
   return { native: above(probe(id, 'native')), oracle: above(probe(id, 'oracle')) };
 }
 
-/** The Rust measurements of every native grammar, from `rust/tests/merge_quality.rs`. */
-function measureRust() {
+/**
+ * The Rust measurements of every native grammar, or of the grammar `only`,
+ * from `rust/tests/merge_quality.rs`.
+ */
+function measureRust(only) {
   const run = spawnSync('cargo', ['test', '--test', 'merge_quality', '--', '--nocapture', '--test-threads=1'], {
     cwd: join(root, 'rust'),
     encoding: 'utf8',
-    env: { ...process.env, MERGE_QUALITY_PRINT: '1' },
+    env: { ...process.env, MERGE_QUALITY_PRINT: '1', ...(only ? { MERGE_QUALITY_ONLY: only } : {}) },
     maxBuffer: 1 << 26,
   });
   if (run.status !== 0) throw new Error(`the Rust measurement failed:\n${run.stderr}`);
@@ -446,9 +450,18 @@ function rustVersion() {
   return run.status === 0 ? run.stdout.trim().split(' ').slice(0, 2).join(' ') : 'rustc';
 }
 
-export function measure() {
-  const rust = measureRust();
+/**
+ * Measures both runtimes on every native grammar, or on the grammar `only`
+ * alone, keeping the published measurements of the others.
+ */
+export function measure(only) {
+  const rust = measureRust(only);
+  const published = only ? new Map(readJson(MERGE_QUALITY_MEASUREMENTS).grammars.map((entry) => [entry.grammar, entry])) : new Map();
   const grammars = nativeGrammarEntries().map(([id]) => {
+    if (only && id !== only) {
+      if (!published.has(id)) throw new Error(`no measurement of ${id} is published; measure it with --only ${id}`);
+      return published.get(id);
+    }
     if (!rust.has(id)) throw new Error(`the Rust measurement has no ${id}`);
     return { grammar: id, javascript: measureJavaScript(id), rust: rust.get(id) };
   });
@@ -473,7 +486,8 @@ async function main() {
   const report = mergeQualityReport();
   let measurements = null;
   if (process.argv.includes('--measure')) {
-    measurements = measure();
+    const onlyAt = process.argv.indexOf('--only');
+    measurements = measure(onlyAt >= 0 ? process.argv[onlyAt + 1] : undefined);
     writeFileSync(join(root, MERGE_QUALITY_MEASUREMENTS), formatMeasurements(measurements));
   } else {
     try {
