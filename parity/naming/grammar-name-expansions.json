@@ -294,6 +294,14 @@
         "nil": "grammar.null",
         "type_arguments": "grammar.type-argument-list"
       }
+    },
+    "regex": {
+      "names": {},
+      "concepts": {
+        "zero_or_more": "grammar.zero-or-more-repetition",
+        "one_or_more": "grammar.one-or-more-repetition",
+        "optional": "grammar.optional-expression"
+      }
     }
   },
   "concepts": {

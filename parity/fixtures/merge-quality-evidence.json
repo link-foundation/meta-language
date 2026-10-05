@@ -204,6 +204,24 @@
       "reuse": {"shared": 23, "specific": 16}
     },
     {
+      "grammar": "native-regex",
+      "language": "Regex",
+      "links": "parity/grammars/native/regex.lino",
+      "fixture": "parity/fixtures/native-grammars/regex.json",
+      "oracle": "tree-sitter-regex 0.25.0",
+      "sources": [
+        "https://github.com/tree-sitter/tree-sitter-regex/blob/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/grammar.js",
+        "https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus"
+      ],
+      "corpus": "https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/regex.json",
+      "coverage": {"rules": {"normal": 24, "atomic": 0, "silent": 4, "token": 12}, "visibleRules": 24, "exercisedRules": 24, "checkedKinds": 38, "checkedFields": 0, "renamed": 4, "expandedWords": 0, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 1, "precedences": 0, "extra": 1, "kind": 0},
+      "correctness": {"matches": 82, "rows": 1036, "bytes": 1007, "divergences": 2, "rejections": 24},
+      "recovery": {"repaired": 24, "errorNodes": 7, "missingNodes": 32, "categories": {}},
+      "reuse": {"shared": 2, "specific": 38}
+    },
+    {
       "grammar": "native-rocq",
       "language": "Rocq",
       "links": "parity/grammars/native/rocq.lino",
@@ -219,7 +237,7 @@
       "features": {"scanner": 0, "conflict": 16, "precedences": 2, "extra": 2, "kind": 0},
       "correctness": {"matches": 230, "rows": 9440, "bytes": 20820, "divergences": 0, "rejections": 12},
       "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {"native-skips-more": 16, "oracle-skips-more": 45, "same-repair-sites": 4, "same-skipped-bytes": 7}},
-      "reuse": {"shared": 29, "specific": 236}
+      "reuse": {"shared": 30, "specific": 235}
     },
     {
       "grammar": "native-rust",

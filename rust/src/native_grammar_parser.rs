@@ -79,6 +79,10 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
         include_str!("data/native-grammars/racket.lino"),
     ),
     (
+        "native-grammars/regex.lino",
+        include_str!("data/native-grammars/regex.lino"),
+    ),
+    (
         "native-grammars/rocq.lino",
         include_str!("data/native-grammars/rocq.lino"),
     ),

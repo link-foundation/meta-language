@@ -17,7 +17,7 @@ use super::cst_sexpression::{normalize, render_network};
 use super::issue_195_native_grammar_rows::{cases, parser, source};
 use super::issue_195_observations::{Observation, record};
 
-const GRAMMARS: [(&str, &str, &str); 16] = [
+const GRAMMARS: [(&str, &str, &str); 17] = [
     (
         "json",
         include_str!("../../../parity/grammars/native/json.lino"),
@@ -97,6 +97,11 @@ const GRAMMARS: [(&str, &str, &str); 16] = [
         "go",
         include_str!("../../../parity/grammars/native/go.lino"),
         include_str!("../../../parity/fixtures/native-grammars/go.json"),
+    ),
+    (
+        "regex",
+        include_str!("../../../parity/grammars/native/regex.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/regex.json"),
     ),
 ];
 

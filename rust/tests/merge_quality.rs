@@ -150,6 +150,11 @@ fn natives() -> Vec<Native> {
             "racket",
             Some(|| tree_sitter_racket::LANGUAGE.into())
         ),
+        native!(
+            "native-regex",
+            "regex",
+            Some(|| tree_sitter_regex::LANGUAGE.into())
+        ),
         // The Rocq oracle, like the Lean one, is a vendored grammar private to
         // the crate.
         native!("native-rocq", "rocq", None),

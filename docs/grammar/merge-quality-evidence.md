@@ -40,6 +40,7 @@ grammar builds. The sources are the specifications and grammars merged.
 | `native-json5` | tree-sitter-json5-orchard 0.1.0 | curated | [1](https://spec.json5.org/) [2](https://docs.rs/crate/tree-sitter-json5-orchard/0.1.0/source/grammar.js) |
 | `native-lean` | tree-sitter-lean4 0.3.0 | [upstream](https://github.com/wvhulle/tree-sitter-lean/tree/bd942cd2795016239be02b3b3d5ef635645ddd38/test/corpus) | [1](https://github.com/wvhulle/tree-sitter-lean/blob/bd942cd2795016239be02b3b3d5ef635645ddd38/grammar.js) [2](https://github.com/wvhulle/tree-sitter-lean/tree/bd942cd2795016239be02b3b3d5ef635645ddd38/test/corpus) |
 | `native-racket` | tree-sitter-racket 0.25.0 | curated | [1](https://docs.racket-lang.org/reference/reader.html) [2](https://docs.rs/crate/tree-sitter-racket/0.25.0/source/grammar.js) |
+| `native-regex` | tree-sitter-regex 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-regex/blob/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/grammar.js) [2](https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus) |
 | `native-rocq` | tree-sitter-rocq 300fe33 | [upstream](https://github.com/aruzdh/tree-sitter-rocq/tree/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/test/corpus) | [1](https://github.com/aruzdh/tree-sitter-rocq/blob/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/grammar.js) [2](https://github.com/aruzdh/tree-sitter-rocq/tree/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/test/corpus) |
 | `native-rust` | tree-sitter-rust 0.24.2 | [upstream](https://github.com/tree-sitter/tree-sitter-rust/tree/77a3747266f4d621d0757825e6b11edcbf991ca5/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-rust/blob/77a3747266f4d621d0757825e6b11edcbf991ca5/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-rust/tree/77a3747266f4d621d0757825e6b11edcbf991ca5/test/corpus) |
 | `native-scheme` | tree-sitter-scheme 0.24.7 | curated | [1](https://small.r7rs.org/attachment/r7rs.pdf) [2](https://docs.rs/crate/tree-sitter-scheme/0.24.7/source/grammar.js) |
@@ -67,12 +68,13 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-json5` | 120 | 818 | 1503 | 26 | 36 |
 | `native-lean` | 251 | 5152 | 13446 | 1 | 42 |
 | `native-racket` | 306 | 1165 | 1769 | 22 | 60 |
+| `native-regex` | 82 | 1036 | 1007 | 2 | 24 |
 | `native-rocq` | 230 | 9440 | 20820 | 0 | 12 |
 | `native-rust` | 182 | 7903 | 15796 | 0 | 38 |
 | `native-scheme` | 264 | 908 | 1363 | 23 | 50 |
 | `native-tsx` | 157 | 6525 | 13617 | 0 | 16 |
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
-| all | 2490 | 61471 | 133291 | 99 | 404 |
+| all | 2572 | 62507 | 134298 | 101 | 428 |
 
 ## Coverage
 
@@ -97,6 +99,7 @@ language specification and checked against the oracle.
 | `native-json5` | 4 | 0 | 1 | 7 | 4 of 4 (100%) | 11 | 2 | n/a | n/a | n/a | n/a |
 | `native-lean` | 106 | 0 | 28 | 13 | 86 of 106 (81%) | 97 | 50 | 35 | 8 | 0 | 0 |
 | `native-racket` | 22 | 0 | 3 | 14 | 22 of 22 (100%) | 32 | 0 | n/a | n/a | n/a | n/a |
+| `native-regex` | 24 | 0 | 4 | 12 | 24 of 24 (100%) | 38 | 0 | 4 | 0 | 0 | 0 |
 | `native-rocq` | 203 | 0 | 46 | 16 | 191 of 203 (94%) | 203 | 29 | 84 | 27 | 0 | 0 |
 | `native-rust` | 147 | 0 | 26 | 11 | 142 of 147 (97%) | 163 | 31 | 45 | 12 | 0 | 0 |
 | `native-scheme` | 17 | 0 | 3 | 8 | 16 of 17 (94%) | 22 | 0 | n/a | n/a | n/a | n/a |
@@ -124,7 +127,8 @@ rules name a concept another native grammar names
 | `native-json5` | 0 | 0 | 0 | 2 | 0 | 11 | 1 |
 | `native-lean` | 1 | 11 | 0 | 2 | 0 | 38 | 109 |
 | `native-racket` | 0 | 0 | 0 | 0 | 0 | 23 | 16 |
-| `native-rocq` | 0 | 16 | 2 | 2 | 0 | 29 | 236 |
+| `native-regex` | 0 | 1 | 0 | 1 | 0 | 2 | 38 |
+| `native-rocq` | 0 | 16 | 2 | 2 | 0 | 30 | 235 |
 | `native-rust` | 6 | 9 | 0 | 3 | 3 | 59 | 125 |
 | `native-scheme` | 0 | 0 | 0 | 0 | 0 | 23 | 5 |
 | `native-tsx` | 7 | 49 | 44 | 3 | 0 | 230 | 0 |
@@ -150,6 +154,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-json5` | 36 | 36 | 29 | 32 | none |
 | `native-lean` | 42 | 42 | 34 | 41 | merged-extension 1, native-skips-more 34, oracle-skips-more 35, same-repair-sites 19, same-skipped-bytes 8 |
 | `native-racket` | 60 | 60 | 29 | 75 | none |
+| `native-regex` | 24 | 24 | 7 | 32 | none |
 | `native-rocq` | 12 | 12 | 2 | 25 | native-skips-more 16, oracle-skips-more 45, same-repair-sites 4, same-skipped-bytes 7 |
 | `native-rust` | 38 | 38 | 18 | 47 | native-skips-more 25, oracle-skips-more 36, same-repair-sites 7, same-skipped-bytes 7 |
 | `native-scheme` | 50 | 50 | 28 | 28 | none |
@@ -182,6 +187,7 @@ loads the same modules and parses nothing.
 | `native-json5` | 54.7 | 1.8 | 30.4× | 24.6 | 1.0 | 19.7 | 7.8 |
 | `native-lean` | 6972.6 | 25.2 | 276.4× | 12324.1 | 4.5 | 139.9 | 44.7 |
 | `native-racket` | 231.7 | 5.0 | 46.3× | 90.5 | 1.7 | 45.3 | 9.7 |
+| `native-regex` | 196.9 | 5.2 | 38.1× | 258.4 | 0.6 | 32.0 | 12.2 |
 | `native-rocq` | 4542.7 | 28.8 | 158.0× | 572.1 | 2.1 | 127.9 | 119.9 |
 | `native-rust` | 5470.4 | 18.2 | 300.6× | 3495.6 | 4.2 | 127.7 | 14.2 |
 | `native-scheme` | 313.6 | 5.0 | 62.2× | 81.5 | 1.3 | 51.2 | 2.9 |
@@ -209,6 +215,7 @@ without optimization, as the tests run them.
 | `native-json5` | 320.5 | 2.5 | 127.3× | 166.2 | 0.5 | 1.0 |
 | `native-lean` | 25294.6 | n/a | n/a | 37711.2 | n/a | 15.4 |
 | `native-racket` | 1406.2 | 2.1 | 657.1× | 246.0 | 1.3 | 3.0 |
+| `native-regex` | 678.6 | 2.2 | 306.6× | 431.9 | 0.5 | 0.8 |
 | `native-rocq` | 18852.0 | n/a | n/a | 2261.6 | n/a | 10.5 |
 | `native-rust` | 21178.7 | n/a | n/a | 8884.8 | n/a | 6.8 |
 | `native-scheme` | 1906.1 | 1.7 | 1096.7× | 290.4 | 0.8 | 3.3 |

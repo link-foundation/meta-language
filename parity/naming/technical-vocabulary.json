@@ -322,6 +322,42 @@
       "partsOfSpeech": ["adjective"],
       "definition": "Written without annotations, as a Java type with no type annotations before it is.",
       "source": "The Java Language Specification, section 8.3, UnannType"
+    },
+    {
+      "word": "backreference",
+      "partsOfSpeech": ["noun"],
+      "definition": "An escape in a regular expression that matches the text an earlier capturing group matched, as \\1 or \\k<name> does.",
+      "source": "ECMA-262, ECMAScript 2024 Language Specification, section 22.2.2.7.2, BackreferenceMatcher"
+    },
+    {
+      "word": "lookahead",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "An assertion of a regular expression that the text after the current position matches, (?=...), or does not, (?!...), without consuming it.",
+      "source": "ECMA-262, ECMAScript 2024 Language Specification, section 22.2.2.4, Assertion"
+    },
+    {
+      "word": "lookbehind",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "An assertion of a regular expression that the text before the current position matches, (?<=...), or does not, (?<!...), without consuming it.",
+      "source": "ECMA-262, ECMAScript 2024 Language Specification, section 22.2.2.4, Assertion"
+    },
+    {
+      "word": "lookaround",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "A lookahead or a lookbehind: an assertion of a regular expression about the text around the current position that consumes none of it.",
+      "source": "Jeffrey E. F. Friedl, Mastering Regular Expressions, 3rd edition (2006), chapter 2, Lookaround"
+    },
+    {
+      "word": "posix",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "The Portable Operating System Interface, the IEEE standard of the interfaces of Unix-like systems, whose regular expressions name character classes as [:alpha:].",
+      "source": "POSIX.1-2017 (IEEE Std 1003.1-2017), Base Definitions, section 9.3.5, RE Bracket Expression"
+    },
+    {
+      "word": "unicode",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "The character encoding standard that assigns a code point and properties to every character of the world's writing systems.",
+      "source": "The Unicode Standard, Version 15.1 (2023), chapter 1, Introduction"
     }
   ]
 }

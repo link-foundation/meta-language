@@ -121,6 +121,16 @@ const javaCorpus = (recovers) => upstreamCorpus('native-java').filter((source) =
 // (`recovers`) or reads.
 const goCorpus = (recovers) => upstreamCorpus('native-go').filter((source) => oracleRecovers(source, 'Go') === recovers);
 
+// The cases of the pinned tree-sitter-regex corpus the oracle recovers from
+// (`recovers`) or reads.
+const regexCorpus = (recovers) => upstreamCorpus('native-regex').filter((source) => oracleRecovers(source, 'Regex') === recovers);
+
+// ECMAScript reads a brace or a bracket that opens no quantifier or POSIX
+// class as a character (ECMA-262, Annex B.1.2, ExtendedPatternCharacter and
+// ClassAtom), and the native grammar does too; the tree-sitter-regex 0.25.0
+// lexer takes `{` and `[:` as the literals there and recovers.
+const REGEX_LITERAL_BRACKET = 'ECMA-262 Annex B.1.2 reads a { that opens no count quantifier, and a [: that opens no POSIX class, as characters; the tree-sitter-regex 0.25.0 lexer takes them as the literals and recovers.';
+
 export const NATIVE_GRAMMARS = Object.freeze([
   {
     id: 'json',
@@ -905,6 +915,38 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'package', 'package main\nfunc f() {', 'package main\nvar x = \n', 'package main\nfunc f() { g(1, }\n', 'package main\nvar s = "abc\n',
       'package main\n/* abc\n', 'package main\nimport (\n', 'package main\nvar a = []int{1, 2\n', 'package main\nfunc f() { if {} }\n',
       'package main\ntype struct {}\n', 'package main\ntype P struct { X int\n',
+    ],
+  },
+  {
+    id: 'regex',
+    language: 'Regex',
+    grammar: 'parity/grammars/native/regex.lino',
+    oracle: 'tree-sitter-regex 0.25.0',
+    sources: [
+      `${grammarSourceOf('native-regex').repository}/blob/${grammarSourceOf('native-regex').revision}/grammar.js`,
+      `${grammarSourceOf('native-regex').repository}/tree/${grammarSourceOf('native-regex').revision}/${grammarSourceOf('native-regex').corpus.path}`,
+    ],
+    // The grammar is the import of the grammar.json of tree-sitter-regex
+    // 0.25.0, the one the oracle parser is generated from
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision the oracle reads, and a few
+    // sources more; the rejections are sources the oracle recovers from.
+    ...nativeGrammar('native-regex'),
+    matches: [
+      ...regexCorpus(false),
+      'a', 'abc', 'a|b|c', '^a$', '\\bword\\B', 'a*b+c?', 'a*?b+?c??', 'a{2}', 'a{2,}', 'a{2,5}?', 'a{,5}', '[abc]', '[^a-z0-9_]',
+      '[\\d\\s]', '[-a]', '[a-]', '(a)(b)', '(?:a|b)', '(?<year>\\d{4})-\\k<year>', '(?P<n>x)', '(?=a)', '(?!a)', '(?<=a)', '(?<!a)',
+      '\\1', '\\cA', '\\n\\t', '\\u00e9', '\\u{1F600}', '\\p{L}', '\\P{Script=Greek}', '[[:alpha:]]', '(?i)abc', '(?i-m:abc)', '(?-s)x',
+      '.', 'caf[eé]', '^(?<word>[a-zé]+)\\s*(\\d{2,4})?$|caf[eé]', 'a\nb', 'x\\.y', '\\/', '{1}', 'a{2}{3}', '[]', '[^]',
+    ],
+    divergences: [
+      { source: 'a{', reason: REGEX_LITERAL_BRACKET },
+      { source: '[[:alpha:]', reason: REGEX_LITERAL_BRACKET },
+    ],
+    rejections: [
+      ...regexCorpus(true),
+      '', '(ab[c', '(', ')', '[', ']', '(?', '(?<', '(?<a', '(?:', 'a|(', '[a', '\\', '(?P<>a)', '*', '+a', '?', 'a**', '(?<n>a', 'a)',
+      '\\k<', '\\p{', '(?=', '(?i',
     ],
   },
 ]);
