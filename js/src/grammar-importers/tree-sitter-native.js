@@ -579,7 +579,9 @@ export function importTreeSitterNative(source, options = {}) {
       const matcher = compileGrammar(parseGrammarLinks(`(grammar (start word))\n(rule word token ${wordBody})\n`));
       const matches = (text) => { try { matcher.parse(text); return true; } catch { return false; } };
       // tree-sitter takes as a keyword each token every text of which the
-      // word token matches.
+      // word token matches and that starts with a letter or an underscore
+      // (`all_chars_are_alphabetical` of its first transitions): Make's `@`
+      // of a recipe line, which the word token matches, is no keyword.
       const units = [];
       for (const [name, node] of Object.entries(grammar.rules)) {
         if (name === word) continue;
@@ -591,6 +593,7 @@ export function importTreeSitterNative(source, options = {}) {
       for (const unit of units) {
         const texts = finiteTexts(unit);
         if (texts === null || texts.length === 0 || texts.includes('')) continue;
+        if (!texts.every((text) => /^[\p{L}_]/u.test(text))) continue;
         if (!texts.every((text) => found.has(text) || matches(text))) continue;
         texts.forEach((text) => found.add(text));
         keywordUnits.add(unit);

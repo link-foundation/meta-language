@@ -220,7 +220,11 @@ function preferredTokens(result, existing, tokens) {
   const lookahead = (tree) => {
     if (decided === Infinity && !isTrivia(tree) && firstLeafStart(tree) >= pending) decided = firstLeafStart(tree);
   };
-  const covers = (leaf, trivia) => trivia.some((item) => (item.kind === null || item.kind === leaf.kind) && item.start === leaf.start && leaf.end >= item.end);
+  // An extra token of another kind is covered where the leaf wins the
+  // lexical conflict with it (Make's `raw_line` `#comment\n`, longer than the
+  // comment of a lower precedence).
+  const covers = (leaf, trivia) => trivia.some((item) => item.start === leaf.start
+    && ((item.kind === null || item.kind === leaf.kind) ? leaf.end >= item.end : (tokens !== null && item.type === 'token' && tokenConflict(leaf, item, tokens) > 0)));
   const peek = (stack) => {
     while (stack.length > 0) {
       const top = stack[stack.length - 1];
@@ -292,13 +296,15 @@ function preferredTokens(result, existing, tokens) {
       if (a.trivia) skip(left);
       if (b.trivia) skip(right);
     } else if (a.start < b.start && covers(a, skipped[1])) {
-      return 1;
+      return startsAtSeparator(b, a, tokens) ? -1 : 1;
     } else if (b.start < a.start && covers(b, skipped[0])) {
-      return -1;
-    } else if (a.end !== b.end || (a.kind !== b.kind && !(a.start === b.start && a.lexed !== undefined && a.lexed === b.lexed))) {
+      return startsAtSeparator(a, b, tokens) ? 1 : -1;
+    } else if (a.end !== b.end || (a.kind !== b.kind && !(a.start === b.start && a.lexed !== undefined && a.lexed === b.lexed) && !sameLiteral(a, b, tokens)) || otherRanks(a, b)) {
       // Two leaves of one span the same token rule built (JavaScript's
       // `identifier` and its alias `shorthand_property_identifier`) are one
-      // token to the lexer.
+      // token to the lexer, as are two of one literal (Make's `$$`, an
+      // `escape` and the start of a variable reference). Two leaves of one
+      // kind may be two tokens (see `otherRanks`).
       lookahead(a);
       lookahead(b);
       if (Math.min(a.start, b.start) > decided) return 0;
@@ -378,22 +384,63 @@ function nestsFirst(outer, inner) {
 // token defined there (Rust's `//!` marker `!` outranks the comment text).
 function tokenRank(leaf, tokens) {
   if (leaf.type !== 'token') return null;
-  const rank = (leaf.kind !== null ? tokens.kinds.get(leaf.kind) : tokens.literals.get(textOf(tokens.bytes, leaf.start, leaf.end))) ?? null;
+  const rank = leaf.rank ?? (leaf.kind !== null ? tokens.kinds.get(leaf.kind) : tokens.literals.get(textOf(tokens.bytes, leaf.start, leaf.end))) ?? null;
   if (leaf.priority === undefined) return rank;
   return { specificity: 0, order: Infinity, ...rank, priority: leaf.priority };
 }
 
 // Two leaves that differ in end or kind: 1 when a lexer prefers `a`, -1 when
 // it prefers `b`, 0 when it cannot tell. The ranks decide only between two
-// tokens at one offset; otherwise the longer leaf wins.
+// tokens at one offset; otherwise the longer leaf wins, but for a token of
+// separator text alone: a tree-sitter lexer that has lexed it, its separators
+// still going on, takes no transition of another token of no higher
+// precedence (`prefer_transition`), so Make's immediate blank after `=` is
+// a token of its own before the value's text, which could take it.
 function tokenConflict(a, b, tokens) {
   const first = a.start === b.start ? tokenRank(a, tokens) : null;
   const second = a.start === b.start ? tokenRank(b, tokens) : null;
   if (first && second && first.priority !== second.priority) return first.priority > second.priority ? 1 : -1;
+  // Two ends of one token at one offset are two tokens (Make's blank and
+  // text are both `unnamed_token`), as a token lexes its longest match; the
+  // longer, of separators too, may be the same token gone on.
+  if (a.end !== b.end && a.start === b.start && !(a.lexed !== undefined && a.lexed === b.lexed)) {
+    const [shorter, longer, sign] = a.end < b.end ? [a, b, 1] : [b, a, -1];
+    if (tokens.separatorText?.(shorter.start, shorter.end) && !tokens.separatorText(longer.start, longer.end)) return sign;
+  }
   if (a.end !== b.end) return a.end > b.end ? 1 : -1;
   if (!first || !second || sameRank(first, second)) return 0;
   if (first.specificity !== second.specificity) return first.specificity > second.specificity ? 1 : -1;
   return first.order < second.order ? 1 : -1;
+}
+
+// Whether `leaf`, after separators `cover` takes, wins over it: a lexer
+// that goes on with a separator as the first of a valid token skips it no
+// more, so `leaf` starts there too (see `widenTokens`), and wins at a higher
+// precedence (Make's `@` of a recipe line after `; `, over its shell text).
+// A cover of separator text alone the lexer completes first, and takes no
+// separator transition after it (see `tokenConflict`): Make's line breaks
+// after `;` end the recipe's first line, before a `\t@` that could go on.
+function startsAtSeparator(leaf, cover, tokens) {
+  if (tokens === null || leaf.type !== 'token' || cover.type !== 'token') return false;
+  if (tokens.separatorText?.(cover.start, cover.end)) return false;
+  const [mine, theirs] = [tokenRank(leaf, tokens), tokenRank(cover, tokens)];
+  return Boolean(mine && theirs) && mine.priority > theirs.priority;
+}
+
+// Whether two leaves of one span are one literal of one rank, whatever kind
+// each is aliased to.
+function sameLiteral(a, b, tokens) {
+  if (a.start !== b.start || a.end !== b.end || a.type !== 'token' || b.type !== 'token') return false;
+  const [first, second] = [tokenRank(a, tokens), tokenRank(b, tokens)];
+  return Boolean(first && second) && first.specificity >= 2 && first.priority === second.priority && first.specificity === second.specificity;
+}
+
+// Whether two leaves of one alias name are tokens of other precedences or
+// specificities (Make's immediate blank after `=` and the text there, both
+// `unnamed_token`): a lexer tells them apart. Tokens that differ only in
+// order may be one token the grammar repeats.
+function otherRanks(a, b) {
+  return a.rank !== undefined && b.rank !== undefined && (a.rank.priority !== b.rank.priority || a.rank.specificity !== b.rank.specificity);
 }
 
 // Whether two token ranks are the same, as one token's.
@@ -578,15 +625,26 @@ function literalFollowSets(rules, first) {
 }
 
 // What a lexer of merged lex states asks of `program`, computed once per
-// program (see `mergedLonger`): the token rules that are no extra, and the
-// tokens that may follow each literal.
+// program (see `mergedLonger`): the token rules that are no extra, the
+// tokens that may follow each literal, and the tokens an alias of no rule
+// names, by that name (Make's `unnamed_token`, the alias of its inline
+// tokens of text and blanks), any of which follows where the name does.
 function mergedLexing(program) {
   const grammar = grammarFacts(program);
   if (!grammar.merged) {
     grammar.first ??= firstSets(grammar.rules);
     const extras = new Set(program.trivia.map(({ kind }) => kind).filter((kind) => kind !== null));
     const tokens = [...program.rules].filter(([name, rule]) => rule.kind === 'token' && !extras.has(name)).map(([name, rule]) => ({ name, rule }));
-    grammar.merged = { tokens, follow: literalFollowSets(grammar.rules, grammar.first) };
+    const aliased = new Map();
+    const walk = (expression) => {
+      if (expression.kind === 'alias' && !grammar.rules.has(expression.name) && (expression.item.kind === 'token' || expression.item.kind === 'immediateToken')) {
+        if (!aliased.has(expression.name)) aliased.set(expression.name, []);
+        aliased.get(expression.name).push(expression.item.item);
+      }
+      for (const item of expression.items ?? (expression.item ? [expression.item] : [])) walk(item);
+    };
+    for (const rule of grammar.rules.values()) if (rule.kind !== 'token' && rule.kind !== 'atomic') walk(rule.expression);
+    grammar.merged = { tokens, follow: literalFollowSets(grammar.rules, grammar.first), aliased };
   }
   return grammar.merged;
 }
@@ -1970,7 +2028,7 @@ export class Executor {
     this.peg = program.matching === 'peg';
     // `(matching longest)`: the token ranks and the input, by which addResult
     // orders two parses that differ in their tokens.
-    this.longestTokens = program.tokenRanks ? { ...program.tokenRanks, bytes, orders: program.precedenceOrders ?? [], grammar: grammarFacts(program) } : null;
+    this.longestTokens = program.tokenRanks ? { ...program.tokenRanks, bytes, orders: program.precedenceOrders ?? [], grammar: grammarFacts(program), separatorText: (start, end) => this.separatorText(start, end) } : null;
     // The grammar's settling steps (see SETTLING_STEPS); the lexing of a
     // tree-sitter lexer follows its `tokens` step, the LR reductions its
     // `precedence` step.
@@ -1982,6 +2040,10 @@ export class Executor {
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
     this.callStack = [];
     this.triviaMemo = new Map();
+    // The starts of separators a token lexed at them took, going on past
+    // the trivia, each with the node calls the token was lexed in, their
+    // kinds and offsets (see `tokenBeforeExtra` and `widenTokens`).
+    this.separatorTaken = new Map();
     this.operandMemo = new Map();
     this.shiftMemo = new Map();
     this.owners = null;
@@ -2265,6 +2327,23 @@ export class Executor {
     return { start: leaves[at].start, end, leaves: leaves.slice(0, at) };
   }
 
+  // Whether the text of `[start, end)` is separators alone, a run of the
+  // grammar's extras that are no rule (see `isSeparator`).
+  separatorText(start, end) {
+    if (start >= end) return false;
+    const separators = this.program.trivia.filter(({ kind }) => kind === null);
+    for (let at = start; at < end;) {
+      let next = at;
+      for (const { expression } of separators) {
+        const reach = this.quietly(() => longestResult(this.evaluate(expression, at, INITIAL_STATE, true))?.end ?? -1);
+        if (reach > next && reach <= end) next = reach;
+      }
+      if (next === at) return false;
+      at = next;
+    }
+    return true;
+  }
+
   // Whether `leaf` is the token of an extra of a silent rule.
   silentExtra(leaf) {
     return leaf.type === 'token' && leaf.trivia === true && leaf.kind !== null && this.program.rules.get(leaf.kind)?.kind === 'silent';
@@ -2275,9 +2354,26 @@ export class Executor {
   // (see `beforeSeparator`) whose text the token's item also matches, at
   // least as far, and without the trivia from it on (CSV's row ends with a
   // `\n` token where `\s` is trivia); otherwise `start` after them.
+  // An extra that is a token rule is taken over too where the token wins the
+  // lexical conflict with it, lexing longer at no lower precedence or as far
+  // at a higher one: Make's `raw_line` of a define directive, `#comment\n`,
+  // is no comment of a lower precedence.
   tokenBeforeExtra(item, start, leaves, state) {
-    const at = leaves.findIndex((leaf) => (isSeparator(leaf) || this.silentExtra(leaf))
-      && this.quietly(() => longestResult(this.evaluate(item, leaf.start, state, true))?.end ?? -1) >= leaf.end);
+    const level = this.priorityOf(item);
+    const at = leaves.findIndex((leaf) => {
+      const plain = isSeparator(leaf) || this.silentExtra(leaf);
+      const rule = !plain && leaf.type === 'token' && leaf.trivia === true && leaf.kind !== null ? this.program.rules.get(leaf.kind) : null;
+      if (!plain && rule?.kind !== 'token') return false;
+      const reach = this.quietly(() => longestResult(this.evaluate(item, leaf.start, state, true))?.end ?? -1);
+      if (plain) return reach >= leaf.end;
+      const other = rule.lexicalPriority ?? 0;
+      return (reach > leaf.end && level >= other) || (reach === leaf.end && level > other);
+    });
+    if (at >= 0 && isSeparator(leaves[at]) && this.quietly(() => longestResult(this.evaluate(item, leaves[at].start, state, true))?.end ?? -1) > start) {
+      const chain = this.callStack.filter((entry) => entry.rule.kind === 'normal').map((entry) => [entry.rule.nodeKind, entry.position]);
+      const chains = this.separatorTaken.get(leaves[at].start) ?? new Map();
+      this.separatorTaken.set(leaves[at].start, chains.set(chain.join('>'), chain));
+    }
     return at < 0 ? { end: start, leaves } : { end: leaves[at].start, leaves: leaves.slice(0, at) };
   }
 
@@ -2309,7 +2405,7 @@ export class Executor {
   // member access `.` is valid, as no property name begins with `9`; Lean's
   // projection `.1` keeps its `.`, a number following it.
   mergedLonger(text, start, end, state) {
-    const { tokens, follow } = mergedLexing(this.program);
+    const { tokens, follow, aliased } = mergedLexing(this.program);
     const longer = tokens.some(({ rule }) => {
       const ends = this.quietly(() => this.evaluate(rule.expression, start, state, true)).map((result) => result.end);
       return ends.some((reach) => reach > end) && !ends.includes(end);
@@ -2323,6 +2419,7 @@ export class Executor {
         continue;
       }
       if (this.program.externalTokens.has(name)) return false;
+      if ((aliased.get(name) ?? []).some((item) => (this.quietly(() => longestResult(this.evaluate(item, end, state, true))?.end ?? -1)) > end)) return false;
       const rule = this.program.rules.get(name);
       if (rule && (rule.kind === 'token' || rule.kind === 'atomic')
         && (this.quietly(() => longestResult(this.evaluate({ kind: 'ref', name }, end, state, true))?.end ?? -1)) > end) return false;
@@ -2653,7 +2750,11 @@ export class Executor {
       if (inToken) return result;
       const meaningful = result.children.filter((child) => !isTrivia(child));
       if (meaningful.length === 1 && !wraps) {
-        return copyResult(result, { children: result.children.map((child) => (child === meaningful[0] ? renamed(child, expression.name) : child)) });
+        // A token leaf keeps the rank of the token it names (see
+        // `tokenRanks` in load.js).
+        const rank = meaningful[0].type === 'token' ? this.program.tokenRanks?.expressions?.get(expression) : undefined;
+        const rename = (child) => (rank ? { ...renamed(child, expression.name), rank } : renamed(child, expression.name));
+        return copyResult(result, { children: result.children.map((child) => (child === meaningful[0] ? rename(child) : child)) });
       }
       const node = shareChildren({
         type: 'node', kind: expression.name, rule: expression.name, start: position, end: result.end,
@@ -3134,8 +3235,8 @@ export class Executor {
     // Under keyword lexing, the calls it was made from (`null` for none),
     // where it began and whether it builds a node: the parse states of a
     // keyword matched in it (see `KeywordLexing`).
-    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null, position };
-    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), builds: rule.kind === 'normal', rule: rule.nodeKind, name });
+    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null, position, rule };
+    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), builds: rule.kind === 'normal', nodeKind: rule.nodeKind, name });
     this.retain(1);
     this.memo.set(key, entry);
     this.callStack.push(entry);
@@ -3241,6 +3342,10 @@ export class Executor {
       if (this.lexing && !inToken && leaves.length > 0) {
         const at = leaves.findIndex((leaf) => leaf.type === 'token' && leaf.kind !== null && this.program.rules.get(leaf.kind) === rule);
         if (at >= 0) [start, leaves] = [leaves[at].start, leaves.slice(0, at)];
+        // A token rule that matches a separator before it takes it, as a
+        // token does (see `tokenBeforeExtra`): Make's `raw_line` of a define
+        // directive keeps its indentation.
+        else if (rule.kind === 'token') ({ end: start, leaves } = this.tokenBeforeExtra(rule.expression, start, leaves, state));
       }
       let results = this.quietly(() => this.evaluate(rule.expression, start, state, true));
       if (rule.kind === 'token' || this.peg) results = results.length > 0 ? [longestResult(results)] : [];
@@ -3489,6 +3594,9 @@ export class Executor {
         tied = true;
       }
     }
+    if (this.separatorTaken.size > 0) {
+      chosen = { ...chosen, result: copyResult(chosen.result, { children: this.widenTokens(chosen.result.children, []) }), trailing: this.widenTokens(chosen.trailing, []) };
+    }
     const root = this.root(startRule, chosen, tied && this.settling.ambiguity && chosen.result.cost === 0);
     // When the cheapest complete result takes the rest of the input as ERROR
     // at a repair point, a result that reached past that point without
@@ -3501,6 +3609,46 @@ export class Executor {
       return { ok: false, farthest: this.farthest, expected: [...this.expected].sort(), elementFarthest: partial.end, partial: root };
     }
     return { ok: true, root };
+  }
+
+  // A tree-sitter lexer skips a separator only where no valid token goes on
+  // with it: where one does, the token it lexes starts at the separator,
+  // whichever token that is (Make's ` endef` after a `raw_line`, which could
+  // take the blank). So a token after separators that a token lexed there
+  // took (see `separatorTaken`) starts at the first of them, taking them,
+  // and so does each node it begins: where that token was lexed in the nodes
+  // the token is in, `ancestors`, or in nodes below them begun at the
+  // separator (Make's shell text of a recipe line). A token lexed in other
+  // nodes was lexed in another parse state (Make's `text` of a variable
+  // assignment after `VPATH =`, Rocq's comment text after `*)`).
+  widenTokens(children, ancestors) {
+    let out = null;
+    children.forEach((child, index) => {
+      let next = child;
+      if (child.type === 'node') {
+        const inner = this.widenTokens(child.children, [...ancestors, child.rule]);
+        if (inner !== child.children) {
+          const first = inner.find((item) => !isTrivia(item));
+          next = { ...child, children: inner, start: first && first.start < child.start ? first.start : child.start };
+        }
+      } else if (child.type === 'token' && !isTrivia(child)) {
+        let from = index;
+        while (from > 0 && isSeparator(children[from - 1]) && children[from - 1].end === children[from].start) from -= 1;
+        const taken = children.slice(from, index).findIndex((leaf) => [...this.separatorTaken.get(leaf.start)?.values() ?? []].some((chain) =>
+          chain.length >= ancestors.length && ancestors.every((name, at) => chain[at][0] === name) && chain.slice(ancestors.length).every(([, position]) => position >= leaf.start)));
+        if (taken >= 0) {
+          out ??= children.slice(0, index);
+          out.splice(out.length - (index - from - taken), index - from - taken);
+          // An anonymous token keeps its name, an anonymous alias of its text.
+          const kind = child.kind ?? `'${textOf(this.bytes, child.start, child.end)}`;
+          out.push({ ...child, kind, start: children[from + taken].start });
+          return;
+        }
+      }
+      if (out) out.push(next);
+      else if (next !== child) out = [...children.slice(0, index), next];
+    });
+    return out ?? children;
   }
 
   // The rest of the input from `start` as an ERROR leaf. As tree-sitter keeps
@@ -3745,7 +3893,7 @@ function inParseState(call, leaf, reach, seen, leads = null) {
       // scanned of no width before it, which the parser shifted before it
       // lexed `leaf` (TypeScript's automatic semicolon before a line break
       // and an identifier `as`).
-      const own = reach.rules.get(`${current.position}|${current.rule}`);
+      const own = reach.rules.get(`${current.position}|${current.nodeKind}`);
       if (own !== undefined && own < leaf.start && (reach.starts[firstStart(reach.starts, own)] < leaf.start || reach.widthless.has(own))) continue;
       // A call whose rule begins with no keyword the tree took where the
       // call began read that keyword's text otherwise, as a token a lexer

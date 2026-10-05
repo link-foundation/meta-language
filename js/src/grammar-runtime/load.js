@@ -438,6 +438,7 @@ function tokenRanks(rules) {
   const kinds = new Map();
   const literals = new Map();
   const aliased = [];
+  const expressions = new Map();
   let order = 0;
   const assign = (map, key, rank) => {
     if (map.has(key)) return;
@@ -481,6 +482,11 @@ function tokenRanks(rules) {
       aliased.push(expression);
     } else if (expression.kind === 'alias' && lexical(expression.item)) {
       assign(kinds, expression.name, rankOf(expression.item));
+      // Each alias ranks its own token too, as aliases of one name may name
+      // tokens of other ranks (Make's `unnamed_token`, both the immediate
+      // blank and the text after `=`).
+      expressions.set(expression, { ...rankOf(expression.item), order });
+      order += 1;
     } else if (expression.kind === 'alias' && (choices = alternatives(expression.item))) {
       // The alias ranks as its tokens where they rank alike, as the leaf
       // does not tell which one it matched.
@@ -516,7 +522,7 @@ function tokenRanks(rules) {
     const rule = rules.get(alias.item.name);
     if (rule?.kind === 'token' && !kinds.has(alias.name)) kinds.set(alias.name, kinds.get(rule.nodeKind));
   }
-  return { kinds, literals };
+  return { kinds, literals, expressions };
 }
 
 // The texts of the literals a `(matching longest)` grammar takes as an
