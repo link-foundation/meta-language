@@ -33,6 +33,12 @@ pub(super) struct GrammarFacts {
     tails: HashMap<Name, Vec<Name>>,
     /// The items of each rule, by rule name (see `shift_items`).
     items: HashMap<Name, Vec<ShiftItem>>,
+    /// The rules each rule is directly as a whole, by rule name (see
+    /// `unit_closure`).
+    wholes: HashMap<Name, Vec<Name>>,
+    /// The verdicts of `items_order`, by the reduction, the lookahead and the
+    /// parts the items go on after.
+    item_orders: Mutex<HashMap<ItemsKey, Ordering>>,
     /// The verdicts of `declared_fork`, by rule and lookahead.
     forks: Mutex<HashMap<(Name, Lead), bool>>,
     /// The reductions before a following token, found once asked for (see
@@ -49,6 +55,10 @@ pub(super) enum Lead {
     Ref(Name),
 }
 
+/// What `items_order` decides by: the reduction's rule, level and name, the
+/// lookahead and the parts the items go on after.
+type ItemsKey = (Name, i64, Option<Name>, Lead, Vec<Name>);
+
 /// A production of a rule by its first part (see `shift_items`): the part,
 /// the production's precedence and the tokens the parts after it can begin
 /// with.
@@ -60,7 +70,10 @@ struct ShiftItem {
 }
 
 impl GrammarFacts {
-    pub(super) fn new(rules: &[Rule], conflicts: &[Vec<String>]) -> Self {
+    /// `lr` asks for the items of an LR parser even where no conflict is
+    /// declared, as a grammar settled by precedence compares a reduction with
+    /// them (see `items_order`).
+    pub(super) fn new(rules: &[Rule], conflicts: &[Vec<String>], lr: bool) -> Self {
         let mut heads = HashMap::new();
         let mut ranks = HashMap::new();
         for (index, rule) in rules.iter().enumerate() {
@@ -83,8 +96,8 @@ impl GrammarFacts {
             .iter()
             .map(|group| group.iter().map(|name| Name::from(name.as_str())).collect())
             .collect();
-        let (mut tails, mut items) = (HashMap::new(), HashMap::new());
-        if !conflicts.is_empty() {
+        let (mut tails, mut items, mut wholes) = (HashMap::new(), HashMap::new(), HashMap::new());
+        if lr || !conflicts.is_empty() {
             let first = first_sets(rules);
             for rule in rules {
                 let mut found = Vec::new();
@@ -111,6 +124,9 @@ impl GrammarFacts {
                     &mut own,
                 );
                 items.insert(rule.name.clone(), own);
+                let mut whole = Vec::new();
+                whole_refs(&rule.expression, rules, &mut whole);
+                wholes.insert(rule.name.clone(), whole);
             }
         }
         Self {
@@ -119,6 +135,8 @@ impl GrammarFacts {
             conflicts,
             tails,
             items,
+            wholes,
+            item_orders: Mutex::default(),
             forks: Mutex::default(),
             reductions: OnceLock::new(),
         }
@@ -688,6 +706,133 @@ fn rule_items<'e>(
         }
         _ => {}
     }
+}
+
+/// Adds to `found` the rules `expr` is directly as a whole: a rule an
+/// alternative of it is alone (see `unit_closure`).
+fn whole_refs(expr: &Expr, rules: &[Rule], found: &mut Vec<Name>) {
+    match expr {
+        Expr::Ref(target) => found.push(target_name(target, rules).clone()),
+        Expr::Choice { items, .. } => {
+            for item in items {
+                whole_refs(item, rules, found);
+            }
+        }
+        Expr::Seq(items) if items.len() == 1 && !nullable(&items[0]) => {
+            whole_refs(&items[0], rules, found);
+        }
+        Expr::Precedence { item, .. }
+        | Expr::Capture { item, .. }
+        | Expr::DynamicPrecedence { item, .. } => whole_refs(item, rules, found),
+        _ => {}
+    }
+}
+
+/// The rules `slot` may be as a whole, itself included: a rule an alternative
+/// of it is alone, through such rules (Rocq's `ltac_expression`, a
+/// `tactic_invocation` among others). It mirrors unitClosure in
+/// js/src/grammar-runtime/executor.js.
+fn unit_closure<'g>(grammar: &'g GrammarFacts, slot: &'g Name) -> HashSet<&'g Name> {
+    let mut units = HashSet::new();
+    let mut pending = vec![slot];
+    while let Some(name) = pending.pop() {
+        if units.insert(name) {
+            pending.extend(grammar.wholes.get(name).into_iter().flatten());
+        }
+    }
+    units
+}
+
+/// How the items that shift `lookahead` after the part a node of `short`'s
+/// rightmost chain reduced with `reduced` ends with rank against that
+/// reduction, as tree-sitter's `handle_conflict` ranks a shift-reduce
+/// conflict: Greater when some rank above it and none below, Less when some
+/// rank below it and none above, else Equal. A precedence of none and a named
+/// one are incomparable, so such an item ranks neither way. A node that ends
+/// with a token (Rust's range `a + b..`) has no part an item goes on after.
+/// It mirrors itemsOrder in js/src/grammar-runtime/executor.js.
+pub(super) fn items_order(
+    grammar: &GrammarFacts,
+    short: &Rc<Tree>,
+    reduced: &PrecedenceTag,
+    lookahead: Option<&Lead>,
+    orders: &[Vec<PrecedenceEntry>],
+) -> Ordering {
+    let (Some(rule), Some(lookahead)) = (&reduced.rule, lookahead) else {
+        return Ordering::Equal;
+    };
+    let Some(tails) = grammar.tails.get(rule) else {
+        return Ordering::Equal;
+    };
+    let mut node = short.clone();
+    while node.ty == TreeType::Node && node.rule.as_ref() != Some(rule) {
+        let Some(last) = node
+            .children
+            .iter()
+            .rev()
+            .find(|child| !child.trivia)
+            .cloned()
+        else {
+            return Ordering::Equal;
+        };
+        node = last;
+    }
+    let Some(last) = (node.ty == TreeType::Node)
+        .then(|| node.children.iter().rev().find(|child| !child.trivia))
+        .flatten()
+        .filter(|last| last.ty == TreeType::Node)
+    else {
+        return Ordering::Equal;
+    };
+    let slots: Vec<Name> = tails
+        .iter()
+        .filter(|slot| {
+            last.reduced_to.contains(slot)
+                || last
+                    .rule
+                    .as_ref()
+                    .is_some_and(|own| unit_closure(grammar, slot).contains(own))
+        })
+        .cloned()
+        .collect();
+    let key = (
+        rule.clone(),
+        reduced.level,
+        reduced.name.clone(),
+        lookahead.clone(),
+        slots,
+    );
+    if let Some(&order) = grammar
+        .item_orders
+        .lock()
+        .ok()
+        .as_ref()
+        .and_then(|memo| memo.get(&key))
+    {
+        return order;
+    }
+    let (mut more, mut less) = (false, false);
+    for slot in key.4.iter().collect::<HashSet<_>>() {
+        for (_, item) in shift_items(grammar, slot) {
+            if !item.rest.contains(lookahead) {
+                continue;
+            }
+            match compare_precedence(&item.tag, reduced, orders) {
+                Ordering::Greater => more = true,
+                Ordering::Less => less = true,
+                Ordering::Equal => {}
+            }
+        }
+    }
+    let order = match (more, less) {
+        (true, false) => Ordering::Greater,
+        (false, true) => Ordering::Less,
+        _ => Ordering::Equal,
+    };
+    if let Ok(mut memo) = grammar.item_orders.lock() {
+        memo.insert(key, order);
+    }
+    order
 }
 
 /// The items of an LR parser that go on after the part `slot`: each

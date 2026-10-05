@@ -7,7 +7,8 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use super::forking::{
-    GrammarFacts, declared_fork, forked_order, lookahead_of, shift_reduction, token_at,
+    GrammarFacts, Lead, declared_fork, forked_order, items_order, lookahead_of, shift_reduction,
+    token_at,
 };
 use super::parting::{
     chain_conflict, child_parting, has_node, holds_first, one_token, parting_end, reduced_first,
@@ -320,13 +321,8 @@ pub(super) fn shift_order(
                             return inner;
                         }
                         let (long, short) = if x.end > y.end { (&x, &y) } else { (&y, &x) };
-                        let lookahead = token_at(long, short.end);
-                        if declared_fork(
-                            grammar,
-                            short,
-                            lookahead_of(lookahead.as_ref(), bytes),
-                            orders,
-                        ) {
+                        let lookahead = lookahead_of(token_at(long, short.end).as_ref(), bytes);
+                        if declared_fork(grammar, short, lookahead.clone(), orders) {
                             return if x.end > y.end {
                                 Ordering::Less
                             } else {
@@ -334,9 +330,9 @@ pub(super) fn shift_order(
                             };
                         }
                         return if x.end > y.end {
-                            shift_preferred(&x, &y, orders, grammar)
+                            shift_preferred(&x, &y, orders, grammar, lookahead.as_ref())
                         } else {
-                            shift_preferred(&y, &x, orders, grammar).reverse()
+                            shift_preferred(&y, &x, orders, grammar, lookahead.as_ref()).reverse()
                         };
                     }
                 }
@@ -421,7 +417,7 @@ pub(super) fn shift_order(
                     return reduced;
                 }
                 if a_node && b_node && a.start == b.start {
-                    let parted = chain_conflict(&a, &b, orders, grammar);
+                    let parted = chain_conflict(&a, &b, orders, grammar, bytes);
                     if parted != Ordering::Equal {
                         return parted;
                     }
@@ -661,12 +657,19 @@ fn nests_first(outer: &Rc<Tree>, inner: &Rc<Tree>) -> bool {
 /// that node began with `short`, as a binary expression whose left operand
 /// is the expression a statement is of, the long result reduced that operand
 /// to a silent rule where the short one reduced its node: the two reductions
-/// conflict instead, and a silent rule's reduction is of level 0.
+/// conflict instead, and a silent rule's reduction is of level 0. Where the
+/// shift's own precedence cannot tell, every item that shifts `lookahead`
+/// after the reduced part may, as tree-sitter's `handle_conflict` compares
+/// the reduction with each (Rocq's `try x; [a | b]`, where `tactic_branch` of
+/// none cannot rank the `tactical` of `tactic_application` but
+/// `tactic_sequence`, ranked below it, shifts `;` too: the tactical is
+/// reduced).
 pub(super) fn shift_preferred(
     long: &Rc<Tree>,
     short: &Rc<Tree>,
     orders: &[Vec<PrecedenceEntry>],
     grammar: &GrammarFacts,
+    lookahead: Option<&Lead>,
 ) -> Ordering {
     let begin = first_leaf_start(short);
     let mut progress = long.clone();
@@ -691,6 +694,7 @@ pub(super) fn shift_preferred(
         }
     }
     compare_precedence(&shifted, &reduced, orders)
+        .then_with(|| items_order(grammar, short, &reduced, lookahead, orders))
         .then_with(|| by_associativity(reduced.associativity))
 }
 

@@ -10,7 +10,9 @@ use std::sync::Arc;
 
 use super::compile::Compiler;
 use super::forking::GrammarFacts;
-use super::program::{Compiled, Program, Rule, Scanner, Settling, SettlingStep, Target, Trivia};
+use super::program::{
+    Compiled, Expr, Program, Rule, Scanner, Settling, SettlingStep, Target, Trivia,
+};
 use super::token_ranks::token_ranks;
 use crate::grammar::interchange::render_native_expression;
 use crate::grammar::{
@@ -502,6 +504,80 @@ pub(super) fn load(grammar: &Grammar, resolver: Resolver<'_>) -> LoadResult<Comp
     })
 }
 
+/// The extras of a rule that builds a node and reaches no token of an
+/// external scanner, the extras another extra nests in (see `skip_trivia` in
+/// lexing.rs). tree-sitter lexes the extras in every parse state, inside the
+/// rule of an extra too, but runs the external scanner first wherever one of
+/// its tokens is valid: so an extra starts inside an extra whose rule only the
+/// lexer lexes (Rocq's nested `(* a (* b *) c *)`), and none inside one that
+/// lexes scanner tokens (Rust's comments, whose scanner reads their content).
+fn nesting_extras(
+    trivia: &[Trivia],
+    rules: &[Rule],
+    rule_index: &HashMap<String, usize>,
+) -> HashSet<Arc<str>> {
+    fn targets<'e>(expr: &'e Expr, found: &mut Vec<&'e Target>) {
+        match expr {
+            Expr::Ref(target) => found.push(target),
+            Expr::Seq(items) | Expr::Choice { items, .. } | Expr::Longest(items) => {
+                for item in items {
+                    targets(item, found);
+                }
+            }
+            Expr::Repeat { item, .. }
+            | Expr::Capture { item, .. }
+            | Expr::Alias { item, .. }
+            | Expr::Precedence { item, .. }
+            | Expr::DynamicPrecedence { item, .. }
+            | Expr::LexicalPrecedence { item, .. }
+            | Expr::Predicate { item, .. }
+            | Expr::Missing { item, .. }
+            | Expr::Embed { item, .. } => targets(item, found),
+            Expr::And(item) | Expr::Not(item) | Expr::Token(item) | Expr::ImmediateToken(item) => {
+                targets(item, found);
+            }
+            Expr::Recover { item, synchronize } => {
+                targets(item, found);
+                targets(synchronize, found);
+            }
+            Expr::Empty | Expr::Terminal { .. } => {}
+        }
+    }
+    let mut nesting = HashSet::new();
+    for kind in trivia.iter().filter_map(|item| item.kind.as_ref()) {
+        let Some(&index) = rule_index.get(&**kind) else {
+            continue;
+        };
+        if !matches!(rules[index].kind, RuleKind::Normal) {
+            continue;
+        }
+        let mut seen = HashSet::from([index]);
+        let mut pending = vec![index];
+        let mut scanned = false;
+        while let Some(at) = pending.pop() {
+            let mut found = Vec::new();
+            targets(&rules[at].expression, &mut found);
+            for target in found {
+                match target {
+                    Target::External(_) => scanned = true,
+                    Target::Rule(next) => {
+                        if seen.insert(*next) {
+                            pending.push(*next);
+                        }
+                    }
+                }
+            }
+            if scanned {
+                break;
+            }
+        }
+        if !scanned {
+            nesting.insert(kind.clone());
+        }
+    }
+    nesting
+}
+
 fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<usize> {
     let resolved = resolve_imports(grammar, context, &[])?;
     let macros = &resolved.macros;
@@ -808,7 +884,12 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
             _ => None,
         })
         .collect();
-    let grammar = GrammarFacts::new(&rules, &resolved.conflicts);
+    let grammar = GrammarFacts::new(
+        &rules,
+        &resolved.conflicts,
+        settling.has(SettlingStep::Precedence),
+    );
+    let nesting_extras = nesting_extras(&trivia, &rules, &rule_index);
     context.programs.push(Program {
         peg,
         settling,
@@ -822,6 +903,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         precedence_orders: resolved.precedences.clone(),
         ranked_silent,
         trivia,
+        nesting_extras,
         expected_references,
         grammar,
     });

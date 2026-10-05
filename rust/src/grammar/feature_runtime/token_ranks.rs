@@ -132,6 +132,21 @@ impl Ranking {
                 }
             }
             Expr::Alias { name, item } if lexical(item) => self.assign_kind(name, rank_of(item, 0)),
+            Expr::Alias { name, item } if alternatives(item).is_some() => {
+                // The alias ranks as its tokens where they rank alike, as the
+                // leaf does not tell which one it matched.
+                let ranks: Vec<_> = alternatives(item)
+                    .into_iter()
+                    .flatten()
+                    .map(|choice| rank_of(choice, 0))
+                    .collect();
+                if let Some(&first) = ranks.first()
+                    && ranks.iter().all(|rank| *rank == first)
+                {
+                    self.assign_kind(name, first);
+                }
+                self.walk(item, aliased);
+            }
             _ if lexical(expr) => {
                 if let Some(literal) = bare(expr) {
                     self.assign_literal(literal, rank_of(expr, 0));
@@ -161,6 +176,23 @@ impl Ranking {
             | Expr::Embed { item, .. } => self.walk(item, aliased),
             Expr::Empty | Expr::Terminal { .. } | Expr::Ref(_) => {}
         }
+    }
+}
+
+/// The tokens of an alias of a choice of tokens, each perhaps aliased too
+/// (Rocq's `custom_operator` of four patterns), or None for another item.
+fn alternatives(expr: &Expr) -> Option<Vec<&Expr>> {
+    match expr {
+        Expr::Alias { item, .. } => alternatives(item),
+        _ if lexical(expr) => Some(vec![expr]),
+        Expr::Choice { items, .. } => {
+            let mut all = Vec::new();
+            for item in items {
+                all.extend(alternatives(item)?);
+            }
+            Some(all)
+        }
+        _ => None,
     }
 }
 

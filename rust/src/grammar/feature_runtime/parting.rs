@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use super::executor::{Executor, Run};
-use super::forking::GrammarFacts;
+use super::forking::{GrammarFacts, lookahead_of, token_at};
 use super::ordering::{by_associativity, shift_preferred};
 use super::program::{Expr, Name, PrecedenceTag, compare_precedence};
 use super::results::{Children, Res, Tree, TreeType, is_separator};
@@ -371,6 +371,7 @@ pub(super) fn chain_conflict(
     b: &Rc<Tree>,
     orders: &[Vec<PrecedenceEntry>],
     grammar: &GrammarFacts,
+    bytes: &[u8],
 ) -> Ordering {
     let (first, second) = (leftmost_chain(a), leftmost_chain(b));
     let ends = |chain: &[Rc<Tree>]| {
@@ -431,7 +432,8 @@ pub(super) fn chain_conflict(
         }
         (short, long) = (last, other);
     }
-    let order = shift_preferred(&long, &short, orders, grammar);
+    let lookahead = lookahead_of(token_at(&long, short.end).as_ref(), bytes);
+    let order = shift_preferred(&long, &short, orders, grammar, lookahead.as_ref());
     if kept == Ordering::Greater {
         order
     } else {

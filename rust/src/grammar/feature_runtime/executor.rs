@@ -22,8 +22,8 @@ use super::operations::{Abort, OpError, State, ValueMachine, evaluate_condition}
 use super::parting::ends_missing;
 use super::precedence::{Keep, Operands};
 use super::program::{
-    Associativity, Compiled, Expr, Matcher, Name, PrecedenceTag, Program, Settling, SettlingStep,
-    Target,
+    Associativity, Compiled, Expr, InExtra, Matcher, Name, PrecedenceTag, Program, Settling,
+    SettlingStep, Target,
 };
 use super::results::{
     ChildList, Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned,
@@ -38,7 +38,7 @@ pub(super) type Run<T> = Result<T, Abort>;
 /// The scans a repair point keeps, by the failing element, its offset, the
 /// state and whether it is inside an extra: the offset of the first later
 /// match and the results there.
-type RepairMemo = HashMap<(Element, usize, State, bool), Rc<(usize, Vec<Res>)>>;
+type RepairMemo = HashMap<(Element, usize, State, InExtra), Rc<(usize, Vec<Res>)>>;
 
 /// The match of a failing element from a later offset, which a repair point
 /// scans for a skip; none for a scanner token, at which no skip ends.
@@ -99,7 +99,7 @@ pub(super) struct Executor<'c> {
     pub(super) depth: usize,
     pub(super) memo: HashMap<MemoKey, Rc<RefCell<Entry>>>,
     pub(super) call_stack: Vec<Rc<RefCell<Entry>>>,
-    pub(super) trivia_memo: HashMap<(usize, State, bool, i64), Rc<Skipped>>,
+    pub(super) trivia_memo: HashMap<(usize, State, InExtra, bool, i64), Rc<Skipped>>,
     pub(super) operand_memo: HashMap<usize, Rc<Operands>>,
     /// The kinds whose nodes go on only with tokens of raised lexical
     /// precedence (see `lexed_shift`).
@@ -117,8 +117,11 @@ pub(super) struct Executor<'c> {
     /// iteration of a repetition, by the address of its item, may begin
     /// with (see `rest_keys` and `iteration_keys`).
     pub(super) rest_memo: HashMap<(usize, Option<usize>), RestKeys>,
-    /// Whether an extra that builds a node is being parsed (see `extra_node`).
-    pub(super) in_extra: bool,
+    /// Whether an extra that builds a node is being parsed, and which (see
+    /// `extra_node`).
+    pub(super) in_extra: InExtra,
+    /// Where the innermost extra that builds a node starts.
+    pub(super) extra_start: usize,
     /// The scans of each scanner token at an offset, by the context offset
     /// too where the scanner asks what the parse expects.
     pub(super) scanner_memo: HashMap<ScanKey, Option<Rc<Scanned>>>,
@@ -199,7 +202,8 @@ impl<'c> Executor<'c> {
             edge_memo: HashMap::new(),
             below_memo: HashMap::new(),
             rest_memo: HashMap::new(),
-            in_extra: false,
+            in_extra: InExtra::Outside,
+            extra_start: usize::MAX,
             scanner_memo: HashMap::new(),
             scan_context: None,
             embed_memo: HashMap::new(),

@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use super::executor::{Element, Executor, Run};
 use super::operations::State;
-use super::program::{Expr, Matcher, Name, Target};
+use super::program::{Expr, InExtra, Matcher, Name, Target};
 use super::results::{
     Entry, Res, Skipped, Tree, TreeType, children_of, is_separator, longest_result, no_children,
     preferred_tokens, with_leaf,
@@ -49,8 +49,9 @@ fn separator_run_kind(matcher: &Matcher, start: usize, end: usize) -> Option<Nam
 impl Executor<'_> {
     /// Skips trivia: repeatedly the longest match of any trivia expression
     /// allowed in the current mode. Inside an extra that builds a node, only
-    /// the extras that are no rule (white space) are trivia, as no extra nests
-    /// in another.
+    /// the extras that are no rule (white space) are trivia, unless the extras
+    /// nest in it (see `nesting_extras` in load.rs): then all are but at its
+    /// own start, where the extra itself is being parsed.
     pub(super) fn skip_trivia(&mut self, position: usize, state: &State) -> Run<Rc<Skipped>> {
         let program = self.program;
         let trivia = &program.trivia;
@@ -64,7 +65,8 @@ impl Executor<'_> {
             .lex_frame(position)
             .and_then(|frame| frame.borrow().outranks.get(&position).copied())
             .unwrap_or(0);
-        let key = (position, state.clone(), self.in_extra, outrank);
+        let at_extra = self.in_extra == InExtra::Nesting && position == self.extra_start;
+        let key = (position, state.clone(), self.in_extra, at_extra, outrank);
         if let Some(cached) = self.trivia_memo.get(&key) {
             return Ok(cached.clone());
         }
@@ -72,7 +74,7 @@ impl Executor<'_> {
         let mut leaves = Vec::new();
         // A scanner in the trivia answers `expected` for where they start.
         let context = self.scan_context.replace(position);
-        let end = self.skip_from(position, &mut leaves, &mode, state, outrank);
+        let end = self.skip_from(position, &mut leaves, &mode, state, outrank, at_extra);
         self.scan_context = context;
         let skipped = Rc::new(Skipped {
             end: end?,
@@ -91,6 +93,7 @@ impl Executor<'_> {
         mode: &str,
         state: &State,
         outrank: i64,
+        at_extra: bool,
     ) -> Run<usize> {
         let trivia = &self.program.trivia;
         let mut cursor = position;
@@ -102,7 +105,8 @@ impl Executor<'_> {
                     .modes
                     .as_ref()
                     .is_some_and(|modes| !modes.iter().any(|allowed| **allowed == *mode))
-                    || (self.in_extra && item.kind.is_some())
+                    || (item.kind.is_some()
+                        && (self.in_extra == InExtra::Flat || (at_extra && cursor == position)))
                     || (cursor == position
                         && outrank > 0
                         && self.priority_of(&item.expression) < outrank)
@@ -201,10 +205,16 @@ impl Executor<'_> {
         if !matches!(self.program.rules[index].kind, RuleKind::Normal) {
             return Ok(None);
         }
-        self.in_extra = true;
+        let outer = (self.in_extra, self.extra_start);
+        self.in_extra = if kind.is_some_and(|kind| self.program.nesting_extras.contains(kind)) {
+            InExtra::Nesting
+        } else {
+            InExtra::Flat
+        };
+        self.extra_start = start;
         let results =
             self.quietly(|this| this.reference(&Target::Rule(index), start, state, false));
-        self.in_extra = false;
+        (self.in_extra, self.extra_start) = outer;
         let mut best: Option<Res> = None;
         for result in results? {
             if result.cost != 0

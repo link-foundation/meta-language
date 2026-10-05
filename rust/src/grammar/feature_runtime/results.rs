@@ -587,13 +587,22 @@ impl KeywordLexing {
             }
             let call = &self.calls[current];
             if call.builds && call.position < leaf.start {
-                let first = reach.starts
-                    [reach.starts.partition_point(|start| *start < call.position)..]
-                    .first()
-                    .copied();
+                let low = reach.starts.partition_point(|start| *start < call.position);
+                let first = reach.starts.get(low).copied();
                 if let Some(first) = first
                     && first < leaf.start
                     && reach.ends.get(&first).is_none_or(|end| *end < leaf.end)
+                {
+                    continue;
+                }
+                // A call that begins inside a leaf of the tree lexed that
+                // leaf's text otherwise (Rocq's `[` of a list where the tree
+                // has the token `=[`).
+                if let Some(previous) = low.checked_sub(1).map(|at| reach.starts[at])
+                    && reach
+                        .last
+                        .get(&previous)
+                        .is_some_and(|end| *end > call.position)
                 {
                     continue;
                 }
@@ -609,16 +618,19 @@ impl KeywordLexing {
 /// external scanner scanned of no width does not count: the parser scanned it
 /// before its lexer, in the parse state the next leaf is lexed in
 /// (JavaScript's automatic semicolon before a line break and a keyword
-/// `class`). It mirrors treeReach in js/src/grammar-runtime/executor.js.
+/// `class`). `last` holds the end of each leaf, by its start. It mirrors
+/// treeReach in js/src/grammar-runtime/executor.js.
 struct TreeReach {
     starts: Vec<usize>,
     ends: HashMap<usize, usize>,
+    last: HashMap<usize, usize>,
 }
 
 impl TreeReach {
     fn of(root: &Tree) -> Self {
         let mut starts = Vec::new();
         let mut ends = HashMap::new();
+        let mut last = HashMap::new();
         let mut open: Option<usize> = None;
         let mut pending = vec![root];
         while let Some(node) = pending.pop() {
@@ -632,12 +644,14 @@ impl TreeReach {
                 continue;
             }
             starts.push(node.start);
+            let leaf_end = last.entry(node.start).or_insert(node.end);
+            *leaf_end = (*leaf_end).max(node.end);
             if let Some(end) = open.take() {
                 let farthest = ends.entry(node.start).or_insert(end);
                 *farthest = (*farthest).max(end);
             }
         }
-        Self { starts, ends }
+        Self { starts, ends, last }
     }
 }
 

@@ -403,6 +403,18 @@ pub(super) struct Scanner {
     pub(super) consults: bool,
 }
 
+/// Where the parse is with respect to an extra that builds a node (see
+/// `extra_node`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub(super) enum InExtra {
+    /// In no such extra.
+    Outside,
+    /// In an extra no other extra nests in.
+    Flat,
+    /// In an extra the extras nest in (see `nesting_extras` in load.rs).
+    Nesting,
+}
+
 /// One trivia expression: an `extra` or a rule on a channel other than `default`.
 #[derive(Debug)]
 pub(super) struct Trivia {
@@ -432,6 +444,8 @@ pub(super) struct Program {
     /// of one item alone the item records (see `child_parting`).
     pub(super) ranked_silent: HashSet<String>,
     pub(super) trivia: Vec<Trivia>,
+    /// The extras other extras nest in (see `nesting_extras` in load.rs).
+    pub(super) nesting_extras: HashSet<Name>,
     /// The rules and external tokens a scanner's `expected` asks about, each
     /// by the id of its item, which the parse requests where it calls them
     /// (see `Expectations` in executor.rs).
