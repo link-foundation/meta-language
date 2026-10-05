@@ -126,6 +126,19 @@ test('a later error is repaired where it is, not by skipping the input after an 
   assert.deepEqual(repairs({ ...RECOVER, maxRepairs: 1 }), ['MISSING@17', 'ERROR@17..62']);
 });
 
+test('a repaired result preempts no cheaper one where the scanner scans a token of no width', () => {
+  // An object that skips the stray `@9` (cost 2) goes on past `e` to its
+  // closing brace; a statement block repaired after a MISSING `}` (more cost)
+  // scans an automatic semicolon there, which no longer prunes the cheaper
+  // object: as in tree-sitter, the stray token is one ERROR.
+  const typescript = grammars.find(({ entry }) => entry.id === 'typescript').parser;
+  for (const source of ['x = { c : 0 @9 , e } ;', 'f ( { c : 0 @9 , e } ) ;']) {
+    const rendered = renderSyntaxTree(typescript.parseTree(source, RECOVER).tree);
+    assert.deepEqual(rendered.match(/ERROR@\d+\.\.\d+|MISSING@\d+/gu), ['ERROR@12..14'], rendered);
+    assert.ok(rendered.includes('(shorthand_property_identifier "e") ~" " "}")'), rendered);
+  }
+});
+
 test('a missing keyword is named by its literal', () => {
   // A keyword token is its literal and a lookahead that no word character
   // follows; as tree-sitter names its keyword token, its MISSING leaf is the

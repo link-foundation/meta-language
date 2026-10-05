@@ -313,7 +313,10 @@ fn the_name_tier_compares_rule_names_without_a_leading_name_of_their_language() 
         .collect();
     assert_eq!(shared, expected);
     // Another prefix is part of the name, so nothing corresponds.
-    assert!(shared_rule_decisions(&merged("xml").groups[0]).is_empty());
+    assert_eq!(
+        shared_rule_decisions(&merged("xml").groups[0]),
+        [] as [&meta_language::GrammarMergeDecision; 0]
+    );
     observe(
         &["sharedRulesNonZero"],
         "the name tier strips a leading language name",

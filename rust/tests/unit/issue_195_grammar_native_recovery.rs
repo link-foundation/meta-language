@@ -311,6 +311,27 @@ fn a_later_error_is_repaired_where_it_is_not_by_skipping_the_input_after_an_earl
 }
 
 #[test]
+fn a_repaired_result_preempts_no_cheaper_one_where_the_scanner_scans_a_token_of_no_width() {
+    // An object that skips the stray `@9` (cost 2) goes on past `e` to its
+    // closing brace; a statement block repaired after a MISSING `}` (more
+    // cost) scans an automatic semicolon there, which no longer prunes the
+    // cheaper object: as in tree-sitter, the stray token is one ERROR.
+    let typescript = parser(GRAMMARS[10].1);
+    for source in ["x = { c : 0 @9 , e } ;", "f ( { c : 0 @9 , e } ) ;"] {
+        let tree = rendered(&parse(&typescript, source, &recover()));
+        let repairs: Vec<&str> = tree
+            .split(['(', ' '])
+            .filter(|part| part.starts_with("ERROR@") || part.starts_with("MISSING@"))
+            .collect();
+        assert_eq!(repairs, ["ERROR@12..14"], "{tree}");
+        assert!(
+            tree.contains(r#"(shorthand_property_identifier "e") ~" " "}")"#),
+            "{tree}"
+        );
+    }
+}
+
+#[test]
 fn a_missing_keyword_is_named_by_its_literal() {
     // A keyword token is its literal and a lookahead that no word character
     // follows; as tree-sitter names its keyword token, its MISSING leaf is

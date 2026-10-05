@@ -139,6 +139,10 @@ fn lexed_past(children: &Children, last: &Tree) -> bool {
 /// the lexer lexed (`12 partial`, an application across the line break) is no
 /// parse. A result in another state has another scanner state, which may scan
 /// nothing there (a layout end one parse has queued and the other has not).
+/// Nor does a repaired result preempt one of a lower repair cost, another
+/// version of the parse to tree-sitter's recovery, which keeps the cheaper
+/// one (TypeScript's `{ c : 0 @9 , e }`, whose object goes on past `e` where a
+/// statement block, repaired at more cost, scans an automatic semicolon).
 fn preempted(continued: &[(&Res, Vec<Res>)]) -> Vec<bool> {
     let mut pruned = vec![false; continued.len()];
     for (left, rights) in continued {
@@ -153,6 +157,7 @@ fn preempted(continued: &[(&Res, Vec<Res>)]) -> Vec<bool> {
         for (index, (other, _)) in continued.iter().enumerate() {
             if other.end > left.end
                 && other.state == left.state
+                && other.cost >= left.cost
                 && !pruned[index]
                 && lexed_past(&other.children, &last)
             {

@@ -144,7 +144,7 @@ fn native_rocq_grammar_builds_the_oracle_rows() {
     }
     // The renamed `identifier` rule keeps the oracle kind `ident`.
     assert_eq!(fixture["oracleKinds"]["identifier"], "ident");
-    assert!(cases(&fixture, "divergences").is_empty());
+    assert_eq!(cases(&fixture, "divergences"), [] as [Value; 0]);
     observe(
         &["nativeRocqTreesMatchOracle"],
         "native Rocq grammar builds the oracle rows",

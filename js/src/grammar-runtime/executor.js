@@ -1274,6 +1274,10 @@ function lexedPast(result, last) {
 // the lexer lexed (`12 partial`, an application across the line break) is no
 // parse. A result in another state has another scanner state, which may scan
 // nothing there (a layout end one parse has queued and the other has not).
+// Nor does a repaired result preempt one of a lower repair cost, another
+// version of the parse to tree-sitter's recovery, which keeps the cheaper
+// one (TypeScript's `{ c : 0 @9 , e }`, whose object goes on past `e` where a
+// statement block, repaired at more cost, scans an automatic semicolon).
 // Null when none is; `globalThis.__preemptTrace`, when set, is called with
 // each pair.
 function preempted(continued) {
@@ -1289,7 +1293,7 @@ function preempted(continued) {
     }
     if (last === undefined) continue;
     for (const [other] of continued) {
-      if (other.end > left.end && other.state.key === left.state.key && !pruned?.has(other) && lexedPast(other, last)) {
+      if (other.end > left.end && other.state.key === left.state.key && other.cost >= left.cost && !pruned?.has(other) && lexedPast(other, last)) {
         (pruned ??= new Set()).add(other);
         globalThis.__preemptTrace?.(left, other);
       }
