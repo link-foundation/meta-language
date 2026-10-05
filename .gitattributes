@@ -28,3 +28,5 @@ js/src/** text=auto eol=lf
 js/src/vendor/** -text
 parity/self-translation/** text=auto eol=lf
 parity/decorators/** text=auto eol=lf
+# Rust embeds a copy of the foundation register and compares it to this file byte for byte.
+parity/foundation-models.json text eol=lf
