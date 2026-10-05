@@ -152,6 +152,8 @@ pub(super) struct Tree {
     /// The token a node's rule was reduced before, where its optional parts
     /// could begin with it (see `reduced_early`).
     pub(super) before: Option<Lead>,
+    /// The dynamic precedence of a node's subtree (see `leading_dynamic`).
+    pub(super) dynamic: i64,
     pub(super) ambiguous: bool,
     pub(super) literal: bool,
     /// A token of an external scanner, whatever an alias names it (see
@@ -189,6 +191,7 @@ impl Tree {
             forked_to: Vec::new(),
             alone: false,
             before: None,
+            dynamic: 0,
             ambiguous: false,
             literal: false,
             scanned: false,

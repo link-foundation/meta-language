@@ -116,6 +116,7 @@ fn natives() -> Vec<Native> {
             "diff",
             Some(|| tree_sitter_diff::LANGUAGE.into())
         ),
+        native!("native-go", "go", Some(|| tree_sitter_go::LANGUAGE.into())),
         native!(
             "native-ini",
             "ini",

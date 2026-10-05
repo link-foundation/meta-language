@@ -17,10 +17,11 @@ use super::parting::{
 use super::program::{
     Associativity, PrecedenceTag, Settling, SettlingStep, TokenRank, compare_precedence,
 };
+use super::reducing::{ending_reduction, first_reduction, leading_dynamic};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
 use super::walk::{
-    Walk, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful, open_node,
-    open_part, same_tree,
+    Walk, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful, next_item,
+    open_node, open_part, same_tree,
 };
 use crate::grammar::PrecedenceEntry;
 
@@ -75,8 +76,26 @@ pub(super) fn preferred_tokens(
     loop {
         match (left.last(), right.last()) {
             (None, None) => return Ordering::Equal,
-            (None, _) => return scanned_after_end(result, existing, &mut right, decided, true),
-            (_, None) => return scanned_after_end(result, existing, &mut left, decided, false),
+            (None, _) | (_, None) => {
+                // The next token of the other parse covers a separator the
+                // ended one skipped (Go's `\n` that ends the last line, where
+                // `\s` is trivia): the lexer takes that valid token over the
+                // separator.
+                let ended = left.is_empty();
+                let rest = if ended { &mut right } else { &mut left };
+                if next_item(rest).is_some_and(|first| {
+                    first.ty == TreeType::Token
+                        && !first.trivia
+                        && covers(&first, &skipped[usize::from(!ended)])
+                }) {
+                    return if ended {
+                        Ordering::Less
+                    } else {
+                        Ordering::Greater
+                    };
+                }
+                return scanned_after_end(result, existing, rest, decided, ended);
+            }
             (Some(Walk::End(_)), _) => {
                 left.pop();
             }
@@ -315,6 +334,12 @@ pub(super) fn shift_order(
                     continue;
                 }
                 if a_node && b_node && a.start == b.start {
+                    if a.end == b.end {
+                        let reduced = first_reduction(&a, &b, orders);
+                        if reduced != Ordering::Equal {
+                            return reduced;
+                        }
+                    }
                     let split = chain_pair(&a, &b, true);
                     // A node the other builds whole on its leftmost chain
                     // (Lean's `foo 2` in `#check foo 2 3`) is reduced alike in
@@ -421,7 +446,7 @@ pub(super) fn shift_order(
                     // a `generic_type` of dynamic precedence 10 against the
                     // `binary_expression` `A < B`).
                     if let Some(forked) = forked_order(&a, &b, grammar, bytes) {
-                        return dynamic.then(forked);
+                        return dynamic.then_with(|| leading_dynamic(&a, &b)).then(forked);
                     }
                     // Where the reductions that close the two differ, those
                     // decide the reduce/reduce conflict on the last token
@@ -443,6 +468,11 @@ pub(super) fn shift_order(
                     if order != Ordering::Equal {
                         return order;
                     }
+                }
+                let ending = ending_reduction(&a, &b, &left, orders)
+                    .then_with(|| ending_reduction(&b, &a, &right, orders).reverse());
+                if ending != Ordering::Equal {
+                    return ending;
                 }
                 let lone = lone_reduction(&a, &b, orders)
                     .then_with(|| lone_reduction(&b, &a, orders).reverse());
@@ -772,7 +802,7 @@ pub(super) fn shift_preferred(
 /// step (Rust's `let` condition, whose value is `(precedence 3 left (ref
 /// expression))`, reduces before the `&&` of a binary expression of level
 /// 3), else none of level 0, ranked by the node's rule.
-fn reduction(node: &Tree) -> PrecedenceTag {
+pub(super) fn reduction(node: &Tree) -> PrecedenceTag {
     node.tail
         .clone()
         .or_else(|| node.precedence.clone())

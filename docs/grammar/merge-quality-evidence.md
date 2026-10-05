@@ -32,6 +32,7 @@ grammar builds. The sources are the specifications and grammars merged.
 | `native-c` | tree-sitter-c 0.24.2 | [upstream](https://github.com/tree-sitter/tree-sitter-c/tree/b780e47fc780ddc8da13afa35a3f4ed5c157823d/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-c/blob/b780e47fc780ddc8da13afa35a3f4ed5c157823d/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-c/tree/b780e47fc780ddc8da13afa35a3f4ed5c157823d/test/corpus) |
 | `native-csv` | tree-sitter-csv f6bf6e3 | curated | [1](https://www.rfc-editor.org/rfc/rfc4180) [2](https://github.com/tree-sitter-grammars/tree-sitter-csv/blob/f6bf6e35eb0b95fbadea4bb39cb9709507fcb181/common/define-grammar.js) [3](../../rust/vendor/tree-sitter-csv/NOTICE.md) |
 | `native-diff` | tree-sitter-diff 0.1.0 | curated | [1](https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Unified.html) [2](https://git-scm.com/docs/git-diff#_generating_patch_text_with_p) [3](https://git-scm.com/docs/git-config#Documentation/git-config.txt-coreabbrev) [4](https://github.com/tree-sitter-grammars/tree-sitter-diff/blob/v0.1.0/grammar.js) |
+| `native-go` | tree-sitter-go 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-go/tree/1547678a9da59885853f5f5cc8a99cc203fa2e2c/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-go/blob/1547678a9da59885853f5f5cc8a99cc203fa2e2c/grammar.js) [2](https://github.com/tree-sitter/tree-sitter-go/tree/1547678a9da59885853f5f5cc8a99cc203fa2e2c/test/corpus) |
 | `native-ini` | tree-sitter-ini 1.4.0 | curated | [1](https://github.com/justinmk/tree-sitter-ini/blob/v1.4.0/grammar.js) [2](https://docs.python.org/3/library/configparser.html#supported-ini-file-structure) |
 | `native-java` | tree-sitter-java 0.23.5 | [upstream](https://github.com/tree-sitter/tree-sitter-java/tree/94703d5a6bed02b98e438d7cad1136c01a60ba2c/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-java/blob/94703d5a6bed02b98e438d7cad1136c01a60ba2c/grammar.js) [2](https://github.com/tree-sitter/tree-sitter-java/tree/94703d5a6bed02b98e438d7cad1136c01a60ba2c/test/corpus) |
 | `native-javascript` | tree-sitter-javascript 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-javascript/tree/44c892e0be055ac465d5eeddae6d3e194424e7de/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-javascript/blob/44c892e0be055ac465d5eeddae6d3e194424e7de/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-javascript/tree/44c892e0be055ac465d5eeddae6d3e194424e7de/test/corpus) |
@@ -58,6 +59,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-c` | 100 | 5348 | 12987 | 0 | 33 |
 | `native-csv` | 123 | 699 | 553 | 8 | 15 |
 | `native-diff` | 115 | 1175 | 3588 | 8 | 14 |
+| `native-go` | 106 | 4369 | 9101 | 0 | 13 |
 | `native-ini` | 55 | 444 | 710 | 9 | 15 |
 | `native-java` | 146 | 4848 | 11744 | 0 | 11 |
 | `native-javascript` | 146 | 5816 | 12130 | 0 | 24 |
@@ -70,7 +72,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-scheme` | 264 | 908 | 1363 | 23 | 50 |
 | `native-tsx` | 157 | 6525 | 13617 | 0 | 16 |
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
-| all | 2384 | 57102 | 124190 | 99 | 391 |
+| all | 2490 | 61471 | 133291 | 99 | 404 |
 
 ## Coverage
 
@@ -87,6 +89,7 @@ language specification and checked against the oracle.
 | `native-c` | 137 | 0 | 32 | 14 | 103 of 137 (75%) | 121 | 38 | 93 | 24 | 0 | 0 |
 | `native-csv` | 4 | 0 | 4 | 0 | 4 of 4 (100%) | 7 | 0 | n/a | n/a | n/a | n/a |
 | `native-diff` | 17 | 0 | 7 | 0 | 17 of 17 (100%) | 23 | 2 | n/a | n/a | n/a | n/a |
+| `native-go` | 91 | 0 | 14 | 12 | 87 of 91 (96%) | 104 | 35 | 29 | 9 | 0 | 0 |
 | `native-ini` | 5 | 0 | 0 | 0 | 5 of 5 (100%) | 8 | 0 | n/a | n/a | n/a | n/a |
 | `native-java` | 120 | 0 | 30 | 19 | 111 of 120 (93%) | 133 | 36 | 29 | 3 | 0 | 0 |
 | `native-javascript` | 94 | 0 | 34 | 15 | 90 of 94 (96%) | 113 | 36 | 25 | 2 | 0 | 0 |
@@ -110,18 +113,19 @@ rules name a concept another native grammar names
 
 | Grammar | Scanners | Conflicts | Precedences | Extras | Kinds | Shared rules | Language-specific rules |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `native-c` | 0 | 17 | 0 | 2 | 0 | 43 | 140 |
+| `native-c` | 0 | 17 | 0 | 2 | 0 | 45 | 138 |
 | `native-csv` | 0 | 0 | 0 | 0 | 0 | 3 | 5 |
 | `native-diff` | 0 | 0 | 0 | 1 | 0 | 2 | 22 |
+| `native-go` | 0 | 8 | 0 | 2 | 0 | 52 | 65 |
 | `native-ini` | 0 | 0 | 0 | 2 | 0 | 2 | 3 |
-| `native-java` | 0 | 13 | 0 | 3 | 1 | 60 | 109 |
+| `native-java` | 0 | 13 | 0 | 3 | 1 | 64 | 105 |
 | `native-javascript` | 5 | 18 | 9 | 3 | 0 | 142 | 1 |
 | `native-json` | 0 | 0 | 0 | 2 | 0 | 11 | 0 |
 | `native-json5` | 0 | 0 | 0 | 2 | 0 | 11 | 1 |
-| `native-lean` | 1 | 11 | 0 | 2 | 0 | 37 | 110 |
+| `native-lean` | 1 | 11 | 0 | 2 | 0 | 38 | 109 |
 | `native-racket` | 0 | 0 | 0 | 0 | 0 | 23 | 16 |
 | `native-rocq` | 0 | 16 | 2 | 2 | 0 | 29 | 236 |
-| `native-rust` | 6 | 9 | 0 | 3 | 3 | 55 | 129 |
+| `native-rust` | 6 | 9 | 0 | 3 | 3 | 59 | 125 |
 | `native-scheme` | 0 | 0 | 0 | 0 | 0 | 23 | 5 |
 | `native-tsx` | 7 | 49 | 44 | 3 | 0 | 230 | 0 |
 | `native-typescript` | 7 | 48 | 44 | 3 | 0 | 230 | 0 |
@@ -138,6 +142,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-c` | 33 | 33 | 7 | 41 | none |
 | `native-csv` | 15 | 15 | 15 | 0 | none |
 | `native-diff` | 14 | 14 | 6 | 36 | none |
+| `native-go` | 13 | 13 | 4 | 19 | none |
 | `native-ini` | 15 | 15 | 10 | 9 | none |
 | `native-java` | 11 | 11 | 4 | 15 | none |
 | `native-javascript` | 24 | 24 | 6 | 31 | native-skips-more 13, oracle-skips-more 35, same-repair-sites 13, same-skipped-bytes 1 |
@@ -169,6 +174,7 @@ loads the same modules and parses nothing.
 | `native-c` | 3026.7 | 20.4 | 148.3× | 824.6 | 2.8 | 129.1 | 13.7 |
 | `native-csv` | 28.2 | 4.6 | 6.1× | 21.4 | 5.5 | 17.4 | 8.7 |
 | `native-diff` | 160.7 | 6.9 | 23.2× | 15.2 | 0.3 | 26.3 | 7.4 |
+| `native-go` | 2295.7 | 9.9 | 231.2× | 553.3 | 1.6 | 128.2 | 11.1 |
 | `native-ini` | 18.5 | 1.5 | 12.3× | 14.9 | 0.4 | 15.7 | 3.9 |
 | `native-java` | 2078.1 | 10.0 | 207.0× | 397.1 | 0.8 | 124.3 | 12.0 |
 | `native-javascript` | 7646.4 | 14.9 | 513.3× | 2214.6 | 1.1 | 131.9 | 12.6 |
@@ -195,6 +201,7 @@ without optimization, as the tests run them.
 | `native-c` | 8804.5 | 9.2 | 958.2× | 2322.9 | 1.9 | 7.3 |
 | `native-csv` | 287.1 | n/a | n/a | 64.7 | n/a | 0.1 |
 | `native-diff` | 346.1 | 2.2 | 157.9× | 47.6 | 0.3 | 0.4 |
+| `native-go` | 7025.9 | 10.9 | 642.6× | 1412.4 | 1.0 | 5.5 |
 | `native-ini` | 148.8 | 3.5 | 42.7× | 54.6 | 0.5 | 0.1 |
 | `native-java` | 9722.4 | 7.9 | 1226.8× | 1413.3 | 0.6 | 5.6 |
 | `native-javascript` | 24702.9 | 24.3 | 1015.6× | 6176.5 | 1.3 | 5.4 |

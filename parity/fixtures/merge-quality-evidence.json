@@ -17,7 +17,7 @@
       "features": {"scanner": 0, "conflict": 17, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 100, "rows": 5348, "bytes": 12987, "divergences": 0, "rejections": 33},
       "recovery": {"repaired": 33, "errorNodes": 7, "missingNodes": 41, "categories": {}},
-      "reuse": {"shared": 43, "specific": 140}
+      "reuse": {"shared": 45, "specific": 138}
     },
     {
       "grammar": "native-csv",
@@ -59,6 +59,24 @@
       "reuse": {"shared": 2, "specific": 22}
     },
     {
+      "grammar": "native-go",
+      "language": "Go",
+      "links": "parity/grammars/native/go.lino",
+      "fixture": "parity/fixtures/native-grammars/go.json",
+      "oracle": "tree-sitter-go 0.25.0",
+      "sources": [
+        "https://github.com/tree-sitter/tree-sitter-go/blob/1547678a9da59885853f5f5cc8a99cc203fa2e2c/grammar.js",
+        "https://github.com/tree-sitter/tree-sitter-go/tree/1547678a9da59885853f5f5cc8a99cc203fa2e2c/test/corpus"
+      ],
+      "corpus": "https://github.com/tree-sitter/tree-sitter-go/tree/1547678a9da59885853f5f5cc8a99cc203fa2e2c/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/go.json",
+      "coverage": {"rules": {"normal": 91, "atomic": 0, "silent": 14, "token": 12}, "visibleRules": 91, "exercisedRules": 87, "checkedKinds": 104, "checkedFields": 35, "renamed": 29, "expandedWords": 9, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 8, "precedences": 0, "extra": 2, "kind": 0},
+      "correctness": {"matches": 106, "rows": 4369, "bytes": 9101, "divergences": 0, "rejections": 13},
+      "recovery": {"repaired": 13, "errorNodes": 4, "missingNodes": 19, "categories": {}},
+      "reuse": {"shared": 52, "specific": 65}
+    },
+    {
       "grammar": "native-ini",
       "language": "INI",
       "links": "parity/grammars/native/ini.lino",
@@ -92,7 +110,7 @@
       "features": {"scanner": 0, "conflict": 13, "precedences": 0, "extra": 3, "kind": 1},
       "correctness": {"matches": 146, "rows": 4848, "bytes": 11744, "divergences": 0, "rejections": 11},
       "recovery": {"repaired": 11, "errorNodes": 4, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 60, "specific": 109}
+      "reuse": {"shared": 64, "specific": 105}
     },
     {
       "grammar": "native-javascript",
@@ -165,7 +183,7 @@
       "features": {"scanner": 1, "conflict": 11, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 251, "rows": 5152, "bytes": 13446, "divergences": 1, "rejections": 42},
       "recovery": {"repaired": 42, "errorNodes": 34, "missingNodes": 41, "categories": {"merged-extension": 1, "native-skips-more": 34, "oracle-skips-more": 35, "same-repair-sites": 19, "same-skipped-bytes": 8}},
-      "reuse": {"shared": 37, "specific": 110}
+      "reuse": {"shared": 38, "specific": 109}
     },
     {
       "grammar": "native-racket",
@@ -219,7 +237,7 @@
       "features": {"scanner": 6, "conflict": 9, "precedences": 0, "extra": 3, "kind": 3},
       "correctness": {"matches": 182, "rows": 7903, "bytes": 15796, "divergences": 0, "rejections": 38},
       "recovery": {"repaired": 38, "errorNodes": 18, "missingNodes": 47, "categories": {"native-skips-more": 25, "oracle-skips-more": 36, "same-repair-sites": 7, "same-skipped-bytes": 7}},
-      "reuse": {"shared": 55, "specific": 129}
+      "reuse": {"shared": 59, "specific": 125}
     },
     {
       "grammar": "native-scheme",

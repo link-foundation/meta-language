@@ -261,6 +261,26 @@
         "sha256": "60f786514dc14db3163fbb39e75bd266a2fb5e6528f5f09d95f036f20356e980"
       },
       "oracle": "java"
+    },
+    {
+      "id": "tree-sitter-go",
+      "language": "go",
+      "native": "native-go",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-go 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-go",
+      "revision": "1547678a9da59885853f5f5cc8a99cc203fa2e2c",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-go-0.25.0.grammar.json.gz",
+      "sha256": "0dcc665aa521a1b73a200be13b4e376780cca037d764a165f12864babfe28000",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-go-0.25.0.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-go-0.25.0.corpus.json.gz",
+        "sha256": "139387b31c54640e24c786589969426750d91b47e73c1d4763a1ea06b6c76906"
+      },
+      "oracle": "go"
     }
   ]
 }

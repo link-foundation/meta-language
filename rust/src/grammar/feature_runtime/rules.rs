@@ -439,6 +439,7 @@ impl Executor<'_> {
             node.tail.clone_from(&result.tail);
             node.ambiguous = result.ambiguous;
             node.before.clone_from(&result.before);
+            node.dynamic = result.dynamic;
             if let Some(acted) = self.run_action(rule, result, &mut node, position)? {
                 built.push(Res {
                     children: children_of(vec![Rc::new(node)]),

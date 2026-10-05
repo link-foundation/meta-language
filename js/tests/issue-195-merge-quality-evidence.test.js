@@ -42,7 +42,7 @@ test('merge quality evidence: the JavaScript report equals the published report'
   const report = mergeQualityReport();
   assert.equal(formatMergeQuality(report), read(MERGE_QUALITY_FIXTURE));
   assert.deepEqual(report.grammars.map(({ grammar }) => grammar), nativeGrammarEntries().map(([id]) => id));
-  assert.equal(report.grammars.length, 15);
+  assert.equal(report.grammars.length, 16);
   for (const { grammar, sources, corpus, mergeReport, coverage, correctness, recovery } of report.grammars) {
     // Every grammar names the sources it merges: a URL, or a vendored copy.
     assert.ok(sources.length > 0, grammar);

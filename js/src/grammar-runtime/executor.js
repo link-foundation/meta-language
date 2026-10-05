@@ -254,6 +254,11 @@ function preferredTokens(result, existing, tokens) {
       // scans first.
       const rest = a === null ? right : left;
       if (a === null && b === null) return 0;
+      // The next token of the other parse covers a separator the ended one
+      // skipped (Go's `\n` that ends the last line, where `\s` is trivia):
+      // the lexer takes that valid token over the separator.
+      const first = peek(rest);
+      if (first.type === 'token' && !isTrivia(first) && covers(first, skipped[a === null ? 0 : 1])) return a === null ? -1 : 1;
       const ended = (a === null ? result : existing).children.filter((child) => !isTrivia(child)).at(-1);
       if (ended !== undefined && (ended.type !== 'node' || !hasNode((a === null ? existing : result).children, ended))) return 0;
       for (let next = peek(rest); next !== null; next = peek(rest)) {
@@ -973,6 +978,10 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
       continue;
     }
     if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
+      if (a.end === b.end) {
+        const reduced = firstReduction(a, b, orders);
+        if (reduced !== 0) return reduced;
+      }
       const pair = chainPair(a, b);
       const split = chainPair(a, b, true);
       // A node the other builds whole on its leftmost chain (Lean's
@@ -1024,7 +1033,7 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
         // lower symbol (Java's `A<B> c;`, a `generic_type` of dynamic
         // precedence 10 against the `binary_expression` `A < B`).
         const forked = forkedOrder(a, b, grammar, bytes);
-        if (forked !== null) return Math.sign(result.dynamic - existing.dynamic) || forked;
+        if (forked !== null) return Math.sign(result.dynamic - existing.dynamic) || leadingDynamic(a, b) || forked;
         // Where the reductions that close the two differ, those decide
         // the reduce/reduce conflict on the last token (Java's `v = 1` of
         // `@A(v = 1)`, an `element_value_pair` that `_element_value` of
@@ -1035,6 +1044,8 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
         if (order !== 0) return order;
       }
     }
+    const ending = endingReduction(a, b, left, orders) || -endingReduction(b, a, right, orders);
+    if (ending !== 0) return ending;
     const lone = loneReduction(a, b, orders) || -loneReduction(b, a, orders);
     if (lone !== 0) return lone;
     const reduced = extraReduction(a, b, right, orders, owner) || -extraReduction(b, a, left, orders, owner);
@@ -1184,6 +1195,33 @@ function extraReduction(a, b, stack, orders, owner = null) {
   return 0;
 }
 
+// Which of two results an LR parser keeps when both shift the same tokens and
+// part on a reduce/reduce conflict at the last of them: `a` is a token whose
+// parse goes on, past tokens alone, with a sibling node that ends where the
+// node `b` of the other parse, which begins with that token, ends (Go's
+// `chan<- chan int`, a `chan <-` channel type of `chan int` against a `chan`
+// channel type of `<- chan int`). Both reduce the nodes along the rightmost chains of that
+// sibling and of `b` on that token, the shared ones alike; the first pair
+// that differs conflicts, and the higher precedence it closes with wins
+// (`<- chan T`'s 6 over the 0 of `chan T`). `stack` holds `a`'s siblings.
+// 1 when `a`'s result is kept, -1 when `b`'s is, 0 when neither.
+function endingReduction(a, b, stack, orders) {
+  if (a.type !== 'token' || b.type !== 'node' || !sameTree(leftmostChain(b).at(-1).children.find((child) => !isTrivia(child)) ?? b, a)) return 0;
+  const [siblings, index] = stack[stack.length - 1];
+  const sibling = siblings.slice(index + 1).find((child) => child.type === 'node' && !isTrivia(child));
+  if (sibling?.type !== 'node' || sibling.end !== b.end) return 0;
+  const rightmost = (node) => {
+    const chain = [];
+    for (let current = node; current?.type === 'node'; current = current.children.findLast((child) => !isTrivia(child))) chain.push(current);
+    return chain;
+  };
+  const [mine, theirs] = [rightmost(sibling), rightmost(b)];
+  let [i, j] = [mine.length - 1, theirs.length - 1];
+  while (i >= 0 && j >= 0 && sameTree(mine[i], theirs[j])) [i, j] = [i - 1, j - 1];
+  if (i < 0 || j < 0) return 0;
+  return comparePrecedence(reduction(mine[i]), reduction(theirs[j]), orders);
+}
+
 // A result whose one meaningful item records that the silent rule `name`
 // reduced it alone: a token as `alone`, and any item, when the precedence
 // orders name the rule (`ranked`), the rule after the inner ones it was
@@ -1307,6 +1345,80 @@ function forkedOrder(a, b, grammar, bytes = null) {
   const handle = at === first.length - 1 && at === second.length - 1;
   const follows = bytes?.subarray(a.end).some((byte) => !ASCII_WHITE_SPACE.has(byte));
   return handle && follows ? -order : order;
+}
+
+// Which of two nodes of one span an LR parser builds when the first action
+// their parses differ in reduces in both, on the same token: a reduce/reduce
+// conflict, which tree-sitter settles for the higher precedence the two
+// reductions close with (Go's `<-chan int(c)`, whose `int` reduces a
+// `<- chan int` channel type of 6, not a `chan int` one of 0 that a unary
+// `<-` would take). The actions are the leaves the two shift and the nodes
+// they reduce, in post-order; leaves reduced apart by silent rules part the
+// parses before, where this does not decide, and where the two differ only in
+// themselves, the reductions that close them do (see `closingReduction`). 1
+// when `a` is built, -1 when `b` is, 0 when neither.
+function firstReduction(a, b, orders) {
+  const steps = (tree, out) => {
+    if (isTrivia(tree)) return out;
+    if (tree.type === 'node') for (const child of tree.children) steps(child, out);
+    out.push(tree);
+    return out;
+  };
+  const [first, second] = [steps(a, []), steps(b, [])];
+  const silent = (leaf) => [leaf.reducedTo ?? [], leaf.forkedTo ?? [], leaf.alone ?? false].flat().join(' ');
+  let at = 0;
+  for (; at < first.length && at < second.length; at += 1) {
+    const [x, y] = [first[at], second[at]];
+    if (x.type !== y.type || x.kind !== y.kind || x.start !== y.start || x.end !== y.end) break;
+    if (x.type !== 'node' && silent(x) !== silent(y)) break;
+  }
+  const [x, y] = [first[at], second[at]];
+  if (x?.type !== 'node' || y?.type !== 'node' || x.end !== y.end || at === 0 || (x === a && y === b)) return 0;
+  return comparePrecedence(reduction(x), reduction(y), orders);
+}
+
+// Which of two parses that forked at a declared conflict and end with the same
+// dynamic precedence tree-sitter keeps where they merge: the one whose stack
+// held the higher dynamic precedence at the last token where the two
+// differed. After each token it shifts, tree-sitter puts the version of the
+// higher stack sum first, the sum of the nodes reduced by then, and where two
+// versions merge with links of equal dynamic precedence it keeps the first
+// one's (Go's `a[b](c)`: the `generic_type` `a[b]` of 2 is ahead of the
+// `index_expression` of 1 at `(`, and its `type_conversion_expression` of 1
+// then ties with the `call_expression` of 1). A node's own share, the levels
+// in it outside its child nodes, counts from its end. 1 when `a` is kept, -1
+// when `b` is, 0 when the sums never differ.
+function leadingDynamic(a, b) {
+  const shares = (tree) => {
+    const out = [];
+    const walk = (node) => {
+      let inner = 0;
+      for (const child of node.children) if (child.type === 'node') inner += walk(child);
+      const total = node.dynamic ?? 0;
+      if (total !== inner) out.push([node.end, total - inner]);
+      return total;
+    };
+    walk(tree);
+    return out;
+  };
+  const [first, second] = [shares(a), shares(b)];
+  if (first.length === 0 && second.length === 0) return 0;
+  const starts = [];
+  const leaves = (node) => {
+    for (const child of node.children) {
+      if (isTrivia(child)) continue;
+      if (child.type === 'node') leaves(child);
+      else starts.push(child.start);
+    }
+  };
+  leaves(a);
+  const sum = (list, at) => list.reduce((total, [end, share]) => (end <= at ? total + share : total), 0);
+  let order = 0;
+  for (const at of starts) {
+    const difference = Math.sign(sum(first, at) - sum(second, at));
+    if (difference !== 0) order = difference;
+  }
+  return order;
 }
 
 // Whether a node of the kind and span of `inner` is on the leftmost chain of
@@ -3157,6 +3269,9 @@ export class Executor {
         precedence: result.precedence, tail: result.tail, ambiguous: result.ambiguous,
       }, result);
       if (result.before !== undefined) node.before = result.before;
+      // The dynamic precedence of the node's subtree, for the stack sums
+      // `leadingDynamic` reads.
+      if (result.dynamic !== 0) node.dynamic = result.dynamic;
       const acted = this.runAction(rule, result, node, position);
       if (acted) built.push(copyResult(acted, { children: [node], tail: null, ambiguous: false }));
     }

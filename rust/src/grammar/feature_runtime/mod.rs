@@ -19,6 +19,7 @@ mod ordering;
 mod parting;
 mod precedence;
 mod program;
+mod reducing;
 mod repetition;
 mod results;
 mod rules;

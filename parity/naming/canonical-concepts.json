@@ -1143,6 +1143,10 @@
           "name": "expression"
         },
         {
+          "source": "native:go",
+          "name": "expression"
+        },
+        {
           "source": "native:java",
           "name": "expression"
         },
@@ -1345,6 +1349,10 @@
           "name": "identifier"
         },
         {
+          "source": "native:go",
+          "name": "identifier"
+        },
+        {
           "source": "native:java",
           "name": "identifier"
         },
@@ -1396,6 +1404,10 @@
         },
         {
           "source": "native:c",
+          "name": "statement"
+        },
+        {
+          "source": "native:go",
           "name": "statement"
         },
         {
@@ -1750,6 +1762,10 @@
           "name": "null"
         },
         {
+          "source": "native:go",
+          "name": "nil"
+        },
+        {
           "source": "native:javascript",
           "name": "null"
         },
@@ -1871,6 +1887,10 @@
         },
         {
           "source": "native:diff",
+          "name": "comment"
+        },
+        {
+          "source": "native:go",
           "name": "comment"
         },
         {
@@ -2386,6 +2406,10 @@
           "name": "escape_sequence"
         },
         {
+          "source": "native:go",
+          "name": "escape_sequence"
+        },
+        {
           "source": "native:java",
           "name": "escape_sequence"
         },
@@ -2431,6 +2455,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "false"
+        },
+        {
+          "source": "native:go",
           "name": "false"
         },
         {
@@ -3071,6 +3099,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "true"
+        },
+        {
+          "source": "native:go",
           "name": "true"
         },
         {
@@ -5246,6 +5278,10 @@
           "name": "declaration"
         },
         {
+          "source": "native:go",
+          "name": "declaration"
+        },
+        {
           "source": "native:java",
           "name": "declaration"
         },
@@ -6222,6 +6258,10 @@
           "name": "field_declaration_list"
         },
         {
+          "source": "native:go",
+          "name": "field_declaration_list"
+        },
+        {
           "source": "native:rust",
           "name": "field_declaration_list"
         }
@@ -6257,6 +6297,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "field_declaration"
+        },
+        {
+          "source": "native:go",
           "name": "field_declaration"
         },
         {
@@ -6357,6 +6401,10 @@
           "name": "parameter_list"
         },
         {
+          "source": "native:go",
+          "name": "parameter_list"
+        },
+        {
           "source": "native:rust",
           "name": "parameters"
         }
@@ -6386,12 +6434,16 @@
       "role": "concept",
       "definition": "A rule for a parameter declaration, the construct the upstream grammar names parameter_declaration.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "parameter_declaration"
+        },
+        {
+          "source": "native:go",
           "name": "parameter_declaration"
         }
       ],
@@ -6467,6 +6519,10 @@
           "name": "labeled_statement"
         },
         {
+          "source": "native:go",
+          "name": "labeled_statement"
+        },
+        {
           "source": "native:java",
           "name": "labeled_statement"
         },
@@ -6517,6 +6573,10 @@
           "name": "expression_statement"
         },
         {
+          "source": "native:go",
+          "name": "expression_statement"
+        },
+        {
           "source": "native:java",
           "name": "expression_statement"
         },
@@ -6551,6 +6611,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "if_statement"
+        },
+        {
+          "source": "native:go",
           "name": "if_statement"
         },
         {
@@ -6732,6 +6796,10 @@
           "name": "for_statement"
         },
         {
+          "source": "native:go",
+          "name": "for_statement"
+        },
+        {
           "source": "native:java",
           "name": "for_statement"
         },
@@ -6782,6 +6850,10 @@
           "name": "return_statement"
         },
         {
+          "source": "native:go",
+          "name": "return_statement"
+        },
+        {
           "source": "native:java",
           "name": "return_statement"
         },
@@ -6812,6 +6884,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "break_statement"
+        },
+        {
+          "source": "native:go",
           "name": "break_statement"
         },
         {
@@ -6848,6 +6924,10 @@
           "name": "continue_statement"
         },
         {
+          "source": "native:go",
+          "name": "continue_statement"
+        },
+        {
           "source": "native:java",
           "name": "continue_statement"
         },
@@ -6872,12 +6952,16 @@
       "role": "concept",
       "definition": "A rule for a go to statement, the construct the upstream grammar names goto_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "go_to_statement"
+        },
+        {
+          "source": "native:go",
           "name": "go_to_statement"
         }
       ],
@@ -7088,6 +7172,10 @@
           "name": "unary_expression"
         },
         {
+          "source": "native:go",
+          "name": "unary_expression"
+        },
+        {
           "source": "native:java",
           "name": "unary_expression"
         },
@@ -7126,6 +7214,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "binary_expression"
+        },
+        {
+          "source": "native:go",
           "name": "binary_expression"
         },
         {
@@ -7338,6 +7430,10 @@
           "name": "call_expression"
         },
         {
+          "source": "native:go",
+          "name": "call_expression"
+        },
+        {
           "source": "native:javascript",
           "name": "call_expression"
         },
@@ -7524,6 +7620,10 @@
           "name": "argument_list"
         },
         {
+          "source": "native:go",
+          "name": "argument_list"
+        },
+        {
           "source": "native:java",
           "name": "argument_list"
         },
@@ -7602,6 +7702,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "parenthesized_expression"
+        },
+        {
+          "source": "native:go",
           "name": "parenthesized_expression"
         },
         {
@@ -7765,6 +7869,10 @@
           "name": "string_literal"
         },
         {
+          "source": "native:go",
+          "name": "string_literal"
+        },
+        {
           "source": "native:java",
           "name": "string_literal"
         },
@@ -7807,6 +7915,10 @@
           "name": "type_identifier_alias"
         },
         {
+          "source": "native:go",
+          "name": "type_identifier_alias"
+        },
+        {
           "source": "native:rust",
           "name": "type_identifier_alias"
         },
@@ -7833,6 +7945,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "field_identifier_alias"
+        },
+        {
+          "source": "native:go",
           "name": "field_identifier_alias"
         },
         {
@@ -7908,6 +8024,10 @@
           "name": "word_characters"
         },
         {
+          "source": "native:go",
+          "name": "word_characters"
+        },
+        {
           "source": "native:java",
           "name": "word_characters"
         },
@@ -7949,6 +8069,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:go",
+          "name": "source_file"
+        },
+        {
           "source": "native:rocq",
           "name": "source_file"
         },
@@ -7969,6 +8093,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "empty_statement"
+        },
         {
           "source": "native:javascript",
           "name": "empty_statement"
@@ -8640,6 +8768,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:go",
+          "name": "type_parameter_list"
+        },
+        {
           "source": "native:java",
           "name": "type_parameters"
         },
@@ -8902,6 +9034,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:go",
+          "name": "type"
+        },
+        {
           "source": "native:java",
           "name": "type"
         },
@@ -8953,10 +9089,14 @@
       "role": "concept",
       "definition": "A rule for a qualified type, the construct the upstream grammar names qualified_type.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "qualified_type"
+        },
         {
           "source": "native:rust",
           "name": "qualified_type"
@@ -8991,6 +9131,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "array_type"
+        },
         {
           "source": "native:java",
           "name": "array_type"
@@ -9037,6 +9181,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "function_type"
+        },
         {
           "source": "native:rust",
           "name": "function_type"
@@ -9122,6 +9270,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:go",
+          "name": "generic_type"
+        },
+        {
           "source": "native:java",
           "name": "generic_type"
         },
@@ -9202,6 +9354,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:go",
+          "name": "type_arguments"
+        },
+        {
           "source": "native:java",
           "name": "type_arguments"
         },
@@ -9266,10 +9422,14 @@
       "role": "concept",
       "definition": "A rule for a pointer type, the construct the upstream grammar names pointer_type.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "pointer_type"
+        },
         {
           "source": "native:rust",
           "name": "pointer_type"
@@ -10135,10 +10295,14 @@
       "role": "concept",
       "definition": "A rule for an index expression, the construct the upstream grammar names index_expression.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "index_expression"
+        },
         {
           "source": "native:rust",
           "name": "index_expression"
@@ -10253,6 +10417,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "block"
+        },
         {
           "source": "native:java",
           "name": "block"
@@ -10602,6 +10770,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:go",
+          "name": "integer_literal"
+        },
+        {
           "source": "native:rocq",
           "name": "integer"
         },
@@ -10618,10 +10790,14 @@
       "role": "concept",
       "definition": "A rule for a raw string literal, the construct the upstream grammar names raw_string_literal.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "raw_string_literal"
+        },
         {
           "source": "native:rust",
           "name": "raw_string_literal"
@@ -11279,6 +11455,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "variable_declaration"
+        },
         {
           "source": "native:javascript",
           "name": "variable_declaration"
@@ -12478,6 +12658,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "function_declaration"
+        },
         {
           "source": "native:javascript",
           "name": "function_declaration"
@@ -15042,6 +15226,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:go",
+          "name": "parenthesized_type"
+        },
+        {
           "source": "native:tsx",
           "name": "parenthesized_type"
         },
@@ -16050,10 +16238,14 @@
       "role": "concept",
       "definition": "A rule for a type specification, the construct the upstream grammar names _type_spec.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_specification"
+        },
         {
           "source": "native:lean",
           "name": "type_specification"
@@ -22461,10 +22653,14 @@
       "role": "concept",
       "definition": "A rule for an import declaration, the construct the upstream grammar names import_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "import_declaration"
+        },
         {
           "source": "native:java",
           "name": "import_declaration"
@@ -22852,10 +23048,14 @@
       "role": "concept",
       "definition": "A rule for a constant declaration, the construct the upstream grammar names constant_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "constant_declaration"
+        },
         {
           "source": "native:java",
           "name": "constant_declaration"
@@ -22954,10 +23154,14 @@
       "role": "concept",
       "definition": "A rule for a simple type, the construct the upstream grammar names _simple_type.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "simple_type"
+        },
         {
           "source": "native:java",
           "name": "simple_type"
@@ -23158,10 +23362,14 @@
       "role": "concept",
       "definition": "A rule for a method declaration, the construct the upstream grammar names method_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "method_declaration"
+        },
         {
           "source": "native:java",
           "name": "method_declaration"
@@ -23182,6 +23390,1135 @@
         {
           "source": "native:java",
           "name": "compact_constructor_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.top-level-declaration",
+      "phrase": "top level declaration",
+      "role": "concept",
+      "definition": "A rule for a top level declaration, the construct the upstream grammar names _top_level_declaration.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "top_level_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.package-clause",
+      "phrase": "package clause",
+      "role": "concept",
+      "definition": "A rule for a package clause, the construct the upstream grammar names package_clause.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "package_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-specification",
+      "phrase": "import specification",
+      "role": "concept",
+      "definition": "A rule for an import specification, the construct the upstream grammar names import_spec.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "import_specification"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dot",
+      "phrase": "dot",
+      "role": "concept",
+      "definition": "A rule for a dot, the construct the upstream grammar names dot.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "dot"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.blank-identifier",
+      "phrase": "blank identifier",
+      "role": "concept",
+      "definition": "A rule for a blank identifier, the construct the upstream grammar names blank_identifier.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "blank_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-specification-list",
+      "phrase": "import specification list",
+      "role": "concept",
+      "definition": "A rule for an import specification list, the construct the upstream grammar names import_spec_list.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "import_specification_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constant-specification",
+      "phrase": "constant specification",
+      "role": "concept",
+      "definition": "A rule for a constant specification, the construct the upstream grammar names const_spec.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "constant_specification"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-specification",
+      "phrase": "variable specification",
+      "role": "concept",
+      "definition": "A rule for a variable specification, the construct the upstream grammar names var_spec.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "variable_specification"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-specification-list",
+      "phrase": "variable specification list",
+      "role": "concept",
+      "definition": "A rule for a variable specification list, the construct the upstream grammar names var_spec_list.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "variable_specification_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-parameter-declaration",
+      "phrase": "type parameter declaration",
+      "role": "concept",
+      "definition": "A rule for a type parameter declaration, the construct the upstream grammar names type_parameter_declaration.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_parameter_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variadic-parameter-declaration",
+      "phrase": "variadic parameter declaration",
+      "role": "concept",
+      "definition": "A rule for a variadic parameter declaration, the construct the upstream grammar names variadic_parameter_declaration.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "variadic_parameter_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-alias",
+      "phrase": "type alias",
+      "role": "concept",
+      "definition": "A rule for a type alias, the construct the upstream grammar names type_alias.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-declaration",
+      "phrase": "type declaration",
+      "role": "concept",
+      "definition": "A rule for a type declaration, the construct the upstream grammar names type_declaration.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-name-list",
+      "phrase": "field name list",
+      "role": "concept",
+      "definition": "A rule for a field name list, the construct the upstream grammar names field_name_list.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "field_name_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-list",
+      "phrase": "expression list",
+      "role": "concept",
+      "definition": "A rule for an expression list, the construct the upstream grammar names expression_list.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "expression_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.implicit-length-array-type",
+      "phrase": "implicit length array type",
+      "role": "concept",
+      "definition": "A rule for an implicit length array type, the construct the upstream grammar names implicit_length_array_type.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "implicit_length_array_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.slice-type",
+      "phrase": "slice type",
+      "role": "concept",
+      "definition": "A rule for a slice type, the construct the upstream grammar names slice_type.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "slice_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structure-type",
+      "phrase": "structure type",
+      "role": "concept",
+      "definition": "A rule for a structure type, the construct the upstream grammar names struct_type.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "structure_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.negated-type",
+      "phrase": "negated type",
+      "role": "concept",
+      "definition": "A rule for a negated type, the construct the upstream grammar names negated_type.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "negated_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interface-type",
+      "phrase": "interface type",
+      "role": "concept",
+      "definition": "A rule for an interface type, the construct the upstream grammar names interface_type.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "interface_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interface-element",
+      "phrase": "interface element",
+      "role": "concept",
+      "definition": "A rule for an interface element, the construct the upstream grammar names _interface_elem.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "interface_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.method-element",
+      "phrase": "method element",
+      "role": "concept",
+      "definition": "A rule for a method element, the construct the upstream grammar names method_elem.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "method_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-element",
+      "phrase": "type element",
+      "role": "concept",
+      "definition": "A rule for a type element, the construct the upstream grammar names type_elem.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.map-type",
+      "phrase": "map type",
+      "role": "concept",
+      "definition": "A rule for a map type, the construct the upstream grammar names map_type.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "map_type"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.function-type",
+          "reason": "A Go map type map[K]V is the type of the hash tables from keys of K to values of V, while a function type is the type of the functions with given parameters and results."
+        }
+      ]
+    },
+    {
+      "id": "grammar.channel-type",
+      "phrase": "channel type",
+      "role": "concept",
+      "definition": "A rule for a channel type, the construct the upstream grammar names channel_type.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "channel_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.statement-list",
+      "phrase": "statement list",
+      "role": "concept",
+      "definition": "A rule for a statement list, the construct the upstream grammar names statement_list.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "statement_list"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.argument-list",
+          "reason": "A Go statement list is the statements of a block or a case clause in order, while an argument list gives the values a call passes."
+        }
+      ]
+    },
+    {
+      "id": "grammar.simple-statement",
+      "phrase": "simple statement",
+      "role": "concept",
+      "definition": "A rule for a simple statement, the construct the upstream grammar names _simple_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "simple_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.send-statement",
+      "phrase": "send statement",
+      "role": "concept",
+      "definition": "A rule for a send statement, the construct the upstream grammar names send_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "send_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.receive-statement",
+      "phrase": "receive statement",
+      "role": "concept",
+      "definition": "A rule for a receive statement, the construct the upstream grammar names receive_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "receive_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.inc-statement",
+      "phrase": "inc statement",
+      "role": "concept",
+      "definition": "A rule for an inc statement, the construct the upstream grammar names inc_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "inc_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dec-statement",
+      "phrase": "dec statement",
+      "role": "concept",
+      "definition": "A rule for a dec statement, the construct the upstream grammar names dec_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "dec_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.assignment-statement",
+      "phrase": "assignment statement",
+      "role": "concept",
+      "definition": "A rule for an assignment statement, the construct the upstream grammar names assignment_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "assignment_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.short-variable-declaration",
+      "phrase": "short variable declaration",
+      "role": "concept",
+      "definition": "A rule for a short variable declaration, the construct the upstream grammar names short_var_declaration.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "short_variable_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.empty-labeled-statement",
+      "phrase": "empty labeled statement",
+      "role": "concept",
+      "definition": "A rule for an empty labeled statement, the construct the upstream grammar names empty_labeled_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "empty_labeled_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.fall-through-statement",
+      "phrase": "fall through statement",
+      "role": "concept",
+      "definition": "A rule for a fall through statement, the construct the upstream grammar names fallthrough_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "fall_through_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.go-statement",
+      "phrase": "go statement",
+      "role": "concept",
+      "definition": "A rule for a go statement, the construct the upstream grammar names go_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "go_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.defer-statement",
+      "phrase": "defer statement",
+      "role": "concept",
+      "definition": "A rule for a defer statement, the construct the upstream grammar names defer_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "defer_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-clause",
+      "phrase": "for clause",
+      "role": "concept",
+      "definition": "A rule for a for clause, the construct the upstream grammar names for_clause.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "for_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.range-clause",
+      "phrase": "range clause",
+      "role": "concept",
+      "definition": "A rule for a range clause, the construct the upstream grammar names range_clause.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "range_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-switch-statement",
+      "phrase": "expression switch statement",
+      "role": "concept",
+      "definition": "A rule for an expression switch statement, the construct the upstream grammar names expression_switch_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "expression_switch_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-case",
+      "phrase": "expression case",
+      "role": "concept",
+      "definition": "A rule for an expression case, the construct the upstream grammar names expression_case.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "expression_case"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.default-case",
+      "phrase": "default case",
+      "role": "concept",
+      "definition": "A rule for a default case, the construct the upstream grammar names default_case.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "default_case"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.default-type",
+          "reason": "A Go default case is the branch of a switch or select statement taken when no other case matches, while a default type is the type a TypeScript type parameter takes when none is given."
+        }
+      ]
+    },
+    {
+      "id": "grammar.type-switch-statement",
+      "phrase": "type switch statement",
+      "role": "concept",
+      "definition": "A rule for a type switch statement, the construct the upstream grammar names type_switch_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_switch_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-switch-header",
+      "phrase": "type switch header",
+      "role": "concept",
+      "definition": "A rule for a type switch header, the construct the upstream grammar names _type_switch_header.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_switch_header"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-case",
+      "phrase": "type case",
+      "role": "concept",
+      "definition": "A rule for a type case, the construct the upstream grammar names type_case.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_case"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.select-statement",
+      "phrase": "select statement",
+      "role": "concept",
+      "definition": "A rule for a select statement, the construct the upstream grammar names select_statement.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "select_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.communication-case",
+      "phrase": "communication case",
+      "role": "concept",
+      "definition": "A rule for a communication case, the construct the upstream grammar names communication_case.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "communication_case"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variadic-argument",
+      "phrase": "variadic argument",
+      "role": "concept",
+      "definition": "A rule for a variadic argument, the construct the upstream grammar names variadic_argument.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "variadic_argument"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.variadic-parameter",
+          "reason": "A Go variadic argument xs... passes the elements of a slice as the final arguments of a call, while a variadic parameter declares the final parameter that takes any number of them."
+        }
+      ]
+    },
+    {
+      "id": "grammar.special-argument-list",
+      "phrase": "special argument list",
+      "role": "concept",
+      "definition": "A rule for a special argument list, the construct the upstream grammar names special_argument_list.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "special_argument_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.selector-expression",
+      "phrase": "selector expression",
+      "role": "concept",
+      "definition": "A rule for a selector expression, the construct the upstream grammar names selector_expression.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "selector_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.slice-expression",
+      "phrase": "slice expression",
+      "role": "concept",
+      "definition": "A rule for a slice expression, the construct the upstream grammar names slice_expression.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "slice_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-assertion-expression",
+      "phrase": "type assertion expression",
+      "role": "concept",
+      "definition": "A rule for a type assertion expression, the construct the upstream grammar names type_assertion_expression.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_assertion_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-conversion-expression",
+      "phrase": "type conversion expression",
+      "role": "concept",
+      "definition": "A rule for a type conversion expression, the construct the upstream grammar names type_conversion_expression.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_conversion_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-instantiation-expression",
+      "phrase": "type instantiation expression",
+      "role": "concept",
+      "definition": "A rule for a type instantiation expression, the construct the upstream grammar names type_instantiation_expression.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "type_instantiation_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.composite-literal",
+      "phrase": "composite literal",
+      "role": "concept",
+      "definition": "A rule for a composite literal, the construct the upstream grammar names composite_literal.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "composite_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.literal-value",
+      "phrase": "literal value",
+      "role": "concept",
+      "definition": "A rule for a literal value, the construct the upstream grammar names literal_value.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "literal_value"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.literal-element",
+      "phrase": "literal element",
+      "role": "concept",
+      "definition": "A rule for a literal element, the construct the upstream grammar names literal_element.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "literal_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.keyed-element",
+      "phrase": "keyed element",
+      "role": "concept",
+      "definition": "A rule for a keyed element, the construct the upstream grammar names keyed_element.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "keyed_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-literal",
+      "phrase": "function literal",
+      "role": "concept",
+      "definition": "A rule for a function literal, the construct the upstream grammar names func_literal.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "function_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.package-identifier-alias",
+      "phrase": "package identifier alias",
+      "role": "concept",
+      "definition": "A rule for a package identifier alias, the construct the upstream grammar names _package_identifier.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "package_identifier_alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interpreted-string-literal",
+      "phrase": "interpreted string literal",
+      "role": "concept",
+      "definition": "A rule for an interpreted string literal, the construct the upstream grammar names interpreted_string_literal.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "interpreted_string_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.float-literal",
+      "phrase": "float literal",
+      "role": "concept",
+      "definition": "A rule for a float literal, the construct the upstream grammar names float_literal.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "float_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.imaginary-literal",
+      "phrase": "imaginary literal",
+      "role": "concept",
+      "definition": "A rule for an imaginary literal, the construct the upstream grammar names imaginary_literal.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "imaginary_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.rune-literal",
+      "phrase": "rune literal",
+      "role": "concept",
+      "definition": "A rule for a rune literal, the construct the upstream grammar names rune_literal.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "rune_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.iota",
+      "phrase": "iota",
+      "role": "concept",
+      "definition": "A rule for an iota, the construct the upstream grammar names iota.",
+      "constraints": [
+        "Only the native Go grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:go",
+          "name": "iota"
         }
       ],
       "formerNames": []

@@ -29,6 +29,20 @@ pub(super) fn open_part(walk: &mut Vec<Walk>) {
     }
 }
 
+/// The item on top of a walk once the parts above it are opened and the
+/// ends of nodes passed, without descending into a node.
+pub(super) fn next_item(walk: &mut Vec<Walk>) -> Option<Rc<Tree>> {
+    loop {
+        match walk.last()? {
+            Walk::End(_) => {
+                walk.pop();
+            }
+            Walk::Part(_) => open_part(walk),
+            Walk::Item(item) => return Some(item.clone()),
+        }
+    }
+}
+
 /// Replaces the node on top of a walk with its children, marking their end
 /// when `mark` is set.
 pub(super) fn open_node(walk: &mut Vec<Walk>, mark: bool) {

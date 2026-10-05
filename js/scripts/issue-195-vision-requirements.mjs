@@ -500,6 +500,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-GO',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/go.json',
+    construct: 'native merged Go grammar imported from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/go.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned src/grammar.json of tree-sitter-go 0.25.0, with every rule renamed to its English name and its concept merged into the shared concepts, and every hand decision recorded in parity/grammars/merge-reports/go.json. Both executors build, for every source of the upstream test/corpus the oracle accepts and for hand-written sources, exactly the concrete syntax tree rows of the tree-sitter-go oracle with no ambiguity: packages and imports, functions, methods and generic type parameters, constants with iota, variables, type declarations and aliases, struct, interface, map, slice, array, pointer, function and channel types, short variable declarations, assignments, increments, if, for, range, switch, type switch and select statements, go, defer, labels, goto and break, channel sends and receives, composite literals, function literals, calls, generic calls, type conversions, index, slice and selector expressions, type assertions, raw and interpreted string literals, rune, integer, float and imaginary literals and comments included. Both executors reject invalid input the oracle recovers from and keep every source byte, comments and white space included, in the tree.',
+    assertions: [
+      'nativeGoGrammarIsCanonicalLinks',
+      'nativeGoTreesMatchOracle',
+      'nativeGoRejectsInvalidInput',
+      'nativeGoTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/src/programming-language-parser.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

@@ -1248,6 +1248,88 @@
         [3,null,"}",0,25,26,""]
       ],
       "embedded": []
+    },
+    "Go": {
+      "grammars": {
+        "native-go": {
+          "version": "1.0.0",
+          "parserSha256": "f4aac3f302af5129c9b3d4dc399d8b2cc1d01a5941f5a43ccbda2923d6abd17c"
+        }
+      },
+      "oracleGrammars": {
+        "go": {
+          "version": "0.25.0",
+          "parserSha256": "3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85"
+        }
+      },
+      "sourceSha256": "439a1db9bac27fed483b965e6236ffb461ab55b2655353b0b7deed27e0c3229e",
+      "recoverySourceSha256": "350bc3f167c59a557396fc49942354950f34bd04a169d2bfd30339776f521b02",
+      "positive": [
+        [0,null,"source_file",1,0,113,""],
+        [1,null,"comment",1,0,25,"X"],
+        [1,null,"package_clause",1,26,38,""],
+        [2,null,"package",0,26,33,""],
+        [2,null,"package_identifier",1,34,38,""],
+        [1,null,"import_declaration",1,40,52,""],
+        [2,null,"import",0,40,46,""],
+        [2,null,"import_spec",1,47,52,""],
+        [3,"path","interpreted_string_literal",1,47,52,""],
+        [4,null,"\"",0,47,48,""],
+        [4,null,"interpreted_string_literal_content",1,48,51,""],
+        [4,null,"\"",0,51,52,""],
+        [1,null,"comment",1,54,65,"X"],
+        [1,null,"function_declaration",1,66,112,""],
+        [2,null,"func",0,66,70,""],
+        [2,"name","identifier",1,71,75,""],
+        [2,"parameters","parameter_list",1,75,77,""],
+        [3,null,"(",0,75,76,""],
+        [3,null,")",0,76,77,""],
+        [2,"body","block",1,78,112,""],
+        [3,null,"{",0,78,79,""],
+        [3,null,"statement_list",1,80,110,""],
+        [4,null,"short_var_declaration",1,80,89,""],
+        [5,"left","expression_list",1,80,81,""],
+        [6,null,"identifier",1,80,81,""],
+        [5,null,":=",0,82,84,""],
+        [5,"right","expression_list",1,85,89,""],
+        [6,null,"interpreted_string_literal",1,85,89,""],
+        [7,null,"\"",0,85,86,""],
+        [7,null,"interpreted_string_literal_content",1,86,88,""],
+        [7,null,"\"",0,88,89,""],
+        [4,null,";",0,89,90,""],
+        [4,null,"expression_statement",1,91,110,""],
+        [5,null,"call_expression",1,91,110,""],
+        [6,"function","selector_expression",1,91,102,""],
+        [7,"operand","identifier",1,91,94,""],
+        [7,null,".",0,94,95,""],
+        [7,"field","field_identifier",1,95,102,""],
+        [6,"arguments","argument_list",1,102,110,""],
+        [7,null,"(",0,102,103,""],
+        [7,null,"identifier",1,103,104,""],
+        [7,null,",",0,104,105,""],
+        [7,null,"binary_expression",1,106,109,""],
+        [8,"left","int_literal",1,106,107,""],
+        [8,"operator","+",0,107,108,""],
+        [8,"right","int_literal",1,108,109,""],
+        [7,null,")",0,109,110,""],
+        [3,null,"}",0,111,112,""]
+      ],
+      "recovery": [
+        [0,null,"source_file",1,0,27,""],
+        [1,null,"package_clause",1,0,12,""],
+        [2,null,"package",0,0,7,""],
+        [2,null,"package_identifier",1,8,12,""],
+        [1,null,"function_declaration",1,13,26,""],
+        [2,null,"func",0,13,17,""],
+        [2,"name","identifier",1,18,22,""],
+        [2,"parameters","parameter_list",1,22,23,""],
+        [3,null,"(",0,22,23,""],
+        [3,null,")",0,23,23,"M"],
+        [2,"body","block",1,24,26,""],
+        [3,null,"{",0,24,25,""],
+        [3,null,"}",0,25,26,""]
+      ],
+      "embedded": []
     }
   },
   "embeddedFixtures": {

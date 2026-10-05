@@ -27,12 +27,15 @@
     { "word": "def", "replacement": "definition", "reason": "An abbreviation of definition." },
     { "word": "delim", "replacement": "delimited", "reason": "An abbreviation of delimited; a delimited token tree is enclosed in parentheses, brackets or braces (The Rust Reference, Macros, DelimTokenTree)." },
     { "word": "doc", "replacement": "documentation", "reason": "An abbreviation of documentation; a doc comment is a documentation comment (The Rust Reference, Doc comments)." },
+    { "word": "elem", "replacement": "element", "reason": "An abbreviation of element, as in the interface elements, method elements and type elements of a Go interface type (The Go Programming Language Specification, Interface types)." },
     { "word": "elif", "replacement": "else_if", "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if." },
     { "word": "elifdef", "replacement": "else_if_defined", "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined." },
     { "word": "enum", "replacement": "enumeration", "reason": "An abbreviation of enumeration." },
     { "word": "eqn", "replacement": "equation", "reason": "An abbreviation of equation, as in the Rocq clause eqn:ident that names the equation of a case analysis (Rocq Reference Manual, section Tactics, destruct)." },
     { "word": "eval", "replacement": "evaluation", "reason": "An abbreviation of evaluation." },
     { "word": "expr", "replacement": "expression", "reason": "An abbreviation of expression." },
+    { "word": "fallthrough", "replacement": "fall_through", "reason": "The Go keyword fallthrough (The Go Programming Language Specification, Fallthrough statements) run together." },
+    { "word": "func", "replacement": "function", "reason": "The Go keyword func declares a function; a func literal is a function literal (The Go Programming Language Specification, Function literals)." },
     { "word": "gen", "replacement": "generator", "reason": "The Rust 2024 keyword gen opens a generator block that yields the items of an iterator (RFC 3513, gen blocks)." },
     { "word": "goto", "replacement": "go_to", "reason": "The goto keyword run together." },
     { "word": "hexdigit", "replacement": "hexadecimal_digit", "reason": "A hexadecimal digit run together." },
@@ -45,6 +48,7 @@
     { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
     { "word": "inst", "replacement": "instance", "reason": "An abbreviation of instance." },
     { "word": "instanceof", "replacement": "instance_of", "reason": "The Java operator instanceof (The Java Language Specification, section 15.20.2) run together." },
+    { "word": "int", "replacement": "integer", "reason": "An abbreviation of integer; a Go int literal is an integer literal (The Go Programming Language Specification, Integer literals)." },
     { "word": "interp", "replacement": "interpretation", "reason": "An abbreviation of interpretation." },
     { "word": "lhs", "replacement": "left_hand_side", "reason": "An abbreviation of left-hand side, the target of a JavaScript assignment or for-in head." },
     { "word": "lib", "replacement": "library", "reason": "An abbreviation of library." },
@@ -277,6 +281,19 @@
         "dimensions": "grammar.array-dimensions",
         "wildcard": "grammar.wildcard-type-argument"
       }
+    },
+    "go": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_package_identifier": "package_identifier_alias"
+      },
+      "concepts": {
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "nil": "grammar.null",
+        "type_arguments": "grammar.type-argument-list"
+      }
     }
   },
   "concepts": {
@@ -298,7 +315,11 @@
       "grammar.syntax-quotation": [{ "id": "grammar.syntax-quote", "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form." }],
       "grammar.yield-statement": [{ "id": "grammar.return-statement", "reason": "A Java yield statement gives the value of the switch expression it ends, while a return statement ends a function and gives its result." }],
       "grammar.annotation": [{ "id": "grammar.notation", "reason": "A Java annotation attaches metadata to a declaration or a type (The Java Language Specification, section 9.7), while a notation declares new syntax for terms." }],
-      "grammar.catch-type": [{ "id": "grammar.match-case", "reason": "A Java catch type names the exception types a catch clause handles, while a match case is one branch of a match expression." }]
+      "grammar.catch-type": [{ "id": "grammar.match-case", "reason": "A Java catch type names the exception types a catch clause handles, while a match case is one branch of a match expression." }],
+      "grammar.variadic-argument": [{ "id": "grammar.variadic-parameter", "reason": "A Go variadic argument xs... passes the elements of a slice as the final arguments of a call, while a variadic parameter declares the final parameter that takes any number of them." }],
+      "grammar.statement-list": [{ "id": "grammar.argument-list", "reason": "A Go statement list is the statements of a block or a case clause in order, while an argument list gives the values a call passes." }],
+      "grammar.map-type": [{ "id": "grammar.function-type", "reason": "A Go map type map[K]V is the type of the hash tables from keys of K to values of V, while a function type is the type of the functions with given parameters and results." }],
+      "grammar.default-case": [{ "id": "grammar.default-type", "reason": "A Go default case is the branch of a switch or select statement taken when no other case matches, while a default type is the type a TypeScript type parameter takes when none is given." }]
     }
   }
 }

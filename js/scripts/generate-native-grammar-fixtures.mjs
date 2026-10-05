@@ -117,6 +117,10 @@ const rocqCorpus = (recovers) => upstreamCorpus('native-rocq').filter((source) =
 // (`recovers`) or reads.
 const javaCorpus = (recovers) => upstreamCorpus('native-java').filter((source) => oracleRecovers(source, 'Java') === recovers);
 
+// The cases of the pinned tree-sitter-go corpus the oracle recovers from
+// (`recovers`) or reads.
+const goCorpus = (recovers) => upstreamCorpus('native-go').filter((source) => oracleRecovers(source, 'Go') === recovers);
+
 export const NATIVE_GRAMMARS = Object.freeze([
   {
     id: 'json',
@@ -857,6 +861,50 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'class', 'class A {', 'class A { int x = ; }\n', 'class A { void f() { f(1, ); } }\n', 'class A { String s = "abc; }\n',
       '/* abc\nclass A {}\n', 'class { }\n', 'class A { void f( }\n', 'class A { int[] a = {1, 2; }\n', 'class A { void f() { if x {} } }\n',
       'import ;\n',
+    ],
+  },
+  {
+    id: 'go',
+    language: 'Go',
+    grammar: 'parity/grammars/native/go.lino',
+    oracle: 'tree-sitter-go 0.25.0',
+    sources: [
+      `${grammarSourceOf('native-go').repository}/blob/${grammarSourceOf('native-go').revision}/grammar.js`,
+      `${grammarSourceOf('native-go').repository}/tree/${grammarSourceOf('native-go').revision}/${grammarSourceOf('native-go').corpus.path}`,
+    ],
+    // The grammar is the import of the grammar.json of tree-sitter-go
+    // 0.25.0, the one the oracle parser is generated from
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision the oracle reads, and a few
+    // sources more; the rejections are the cases the oracle recovers from,
+    // and a few sources more.
+    ...nativeGrammar('native-go'),
+    matches: [
+      ...goCorpus(false),
+      '', 'package main\n', 'package main\n\nimport "fmt"\n', 'package main\n\nimport (\n\t"fmt"\n\tos "os"\n)\n',
+      'package main\n\nfunc main() {}\n', 'package main\n\nfunc f(x int, y string) (int, error) { return x, nil }\n',
+      'package main\n\nvar x = 1\n', 'package main\n\nconst (\n\tA = iota\n\tB\n)\n', 'package main\n\ntype P struct {\n\tX, Y int\n}\n',
+      'package main\n\ntype I interface {\n\tM() int\n}\n', 'package main\n\ntype T[K comparable, V any] map[K]V\n',
+      'package main\n\nfunc f() {\n\tx := []int{1, 2}\n\t_ = x[0:1]\n}\n', 'package main\n\nfunc f() {\n\tfor i := 0; i < n; i++ {\n\t}\n}\n',
+      'package main\n\nfunc f() {\n\tfor k, v := range m {\n\t\t_, _ = k, v\n\t}\n}\n', 'package main\n\nfunc f() {\n\tif x > 0 {\n\t} else if y {\n\t} else {\n\t}\n}\n',
+      'package main\n\nfunc f() {\n\tswitch x {\n\tcase 1, 2:\n\tdefault:\n\t}\n}\n', 'package main\n\nfunc f() {\n\tswitch v := x.(type) {\n\tcase int:\n\t\t_ = v\n\t}\n}\n',
+      'package main\n\nfunc f() {\n\tselect {\n\tcase v := <-c:\n\t\t_ = v\n\tdefault:\n\t}\n}\n', 'package main\n\nfunc f() {\n\tgo g()\n\tdefer h()\n}\n',
+      'package main\n\nfunc f() {\n\tc <- 1\n\tx := <-c\n\t_ = x\n}\n', 'package main\n\nfunc (p *P) M() int { return p.X }\n',
+      'package main\n\nvar f = func(x int) int { return x * 2 }\n', 'package main\n\nvar s = `raw\nstring`\n', 'package main\n\nvar r = \'é\'\n',
+      'package main\n\nvar n = 0x1F + 1.5e3 + 2i\n', 'package main\n\nvar m = map[string]int{"a": 1}\n', 'package main\n\nvar p = &P{X: 1}\n',
+      'package main\n\n// c\nfunc f() {} /* d */\n', 'package main\n\nfunc f[T any](x T) T { return x }\n', 'package main\n\nvar x = f[int](1)\n',
+      'package main\n\nfunc f() {\nL:\n\tfor {\n\t\tbreak L\n\t}\n}\n', 'package main\n\nfunc f() {\n\tgoto L\nL:\n}\n',
+      'package main\n\nfunc f(xs ...int) { f(xs...) }\n', 'package main\n\nvar c = make(chan<- int)\n', 'package main\n\ntype A = B\n',
+      'package main\n\nfunc f() {\n\tx++\n\ty -= 2\n}\n', 'package main\n\nvar b = !a && c || d\n',
+      'package main\n\nvar c chan<- chan int\n', 'package main\n\nvar x = <-chan int(c)\n', 'package main\n\nvar x = a[b](c)\n',
+      'package main\n\nfunc main() {\n\tx := a\n\ty := b\n}\n',
+    ],
+    divergences: [],
+    rejections: [
+      ...goCorpus(true),
+      'package', 'package main\nfunc f() {', 'package main\nvar x = \n', 'package main\nfunc f() { g(1, }\n', 'package main\nvar s = "abc\n',
+      'package main\n/* abc\n', 'package main\nimport (\n', 'package main\nvar a = []int{1, 2\n', 'package main\nfunc f() { if {} }\n',
+      'package main\ntype struct {}\n', 'package main\ntype P struct { X int\n',
     ],
   },
 ]);

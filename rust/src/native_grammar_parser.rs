@@ -47,6 +47,10 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
         include_str!("data/native-grammars/diff.lino"),
     ),
     (
+        "native-grammars/go.lino",
+        include_str!("data/native-grammars/go.lino"),
+    ),
+    (
         "native-grammars/ini.lino",
         include_str!("data/native-grammars/ini.lino"),
     ),
