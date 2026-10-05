@@ -74,7 +74,7 @@
       "features": {"scanner": 0, "conflict": 8, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 106, "rows": 4369, "bytes": 9101, "divergences": 0, "rejections": 13},
       "recovery": {"repaired": 13, "errorNodes": 4, "missingNodes": 19, "categories": {}},
-      "reuse": {"shared": 53, "specific": 64}
+      "reuse": {"shared": 54, "specific": 63}
     },
     {
       "grammar": "native-graphql",
@@ -128,7 +128,7 @@
       "features": {"scanner": 0, "conflict": 13, "precedences": 0, "extra": 3, "kind": 1},
       "correctness": {"matches": 146, "rows": 4848, "bytes": 11744, "divergences": 0, "rejections": 11},
       "recovery": {"repaired": 11, "errorNodes": 4, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 65, "specific": 104}
+      "reuse": {"shared": 68, "specific": 101}
     },
     {
       "grammar": "native-javascript",
@@ -204,6 +204,24 @@
       "reuse": {"shared": 40, "specific": 107}
     },
     {
+      "grammar": "native-proto",
+      "language": "Protocol Buffers",
+      "links": "parity/grammars/native/proto.lino",
+      "fixture": "parity/fixtures/native-grammars/proto.json",
+      "oracle": "tree-sitter-proto 0.6.0",
+      "sources": [
+        "https://github.com/coder3101/tree-sitter-proto/blob/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/grammar.js",
+        "https://github.com/coder3101/tree-sitter-proto/tree/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/test/corpus"
+      ],
+      "corpus": "https://github.com/coder3101/tree-sitter-proto/tree/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/proto.json",
+      "coverage": {"rules": {"normal": 43, "atomic": 0, "silent": 3, "token": 9}, "visibleRules": 43, "exercisedRules": 43, "checkedKinds": 52, "checkedFields": 5, "renamed": 20, "expandedWords": 7, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 2, "kind": 0},
+      "correctness": {"matches": 79, "rows": 6291, "bytes": 26218, "divergences": 0, "rejections": 20},
+      "recovery": {"repaired": 20, "errorNodes": 12, "missingNodes": 19, "categories": {}},
+      "reuse": {"shared": 21, "specific": 34}
+    },
+    {
       "grammar": "native-racket",
       "language": "Racket",
       "links": "parity/grammars/native/racket.lino",
@@ -255,7 +273,7 @@
       "features": {"scanner": 0, "conflict": 16, "precedences": 2, "extra": 2, "kind": 0},
       "correctness": {"matches": 230, "rows": 9440, "bytes": 20820, "divergences": 0, "rejections": 12},
       "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {"native-skips-more": 16, "oracle-skips-more": 45, "same-repair-sites": 4, "same-skipped-bytes": 7}},
-      "reuse": {"shared": 31, "specific": 234}
+      "reuse": {"shared": 32, "specific": 233}
     },
     {
       "grammar": "native-rust",

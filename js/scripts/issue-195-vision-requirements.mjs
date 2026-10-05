@@ -551,6 +551,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/lexing.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-PROTO',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/proto.json',
+    construct: 'native merged Protocol Buffers grammar imported from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/proto.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned src/grammar.json of tree-sitter-proto 0.6.0, with every rule renamed to its English name and its concept merged into the shared concepts, and every hand decision recorded in parity/grammars/merge-reports/proto.json. Both executors build, for every source of the upstream test/corpus and for hand-written sources, exactly the concrete syntax tree rows of the tree-sitter-proto oracle with no ambiguity: syntax and edition statements, package, import, weak and public imports, options with plain, parenthesized and extension names and text-format message values, messages with nested messages and enumerations, singular, optional, required and repeated fields with field options, proto2 groups, oneofs, map fields, reserved ranges and names, extension ranges, extend blocks, enumerations with negative and aliased values, services with unary and streaming remote procedure calls, decimal, octal, hexadecimal and floating-point literals, inf and nan, booleans and adjacent strings with escape sequences; comments are extras. Both executors reject invalid input the oracle recovers from and keep every source byte, line breaks included, in the tree.',
+    assertions: [
+      'nativeProtoGrammarIsCanonicalLinks',
+      'nativeProtoTreesMatchOracle',
+      'nativeProtoRejectsInvalidInput',
+      'nativeProtoTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/src/programming-language-parser.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/lexing.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

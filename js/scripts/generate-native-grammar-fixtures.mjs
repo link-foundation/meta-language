@@ -129,6 +129,10 @@ const regexCorpus = (recovers) => upstreamCorpus('native-regex').filter((source)
 // from (`recovers`) or reads.
 const graphqlCorpus = (recovers) => upstreamCorpus('native-graphql').filter((source) => oracleRecovers(source, 'GraphQL') === recovers);
 
+// The cases of the pinned tree-sitter-proto corpus the oracle recovers from
+// (`recovers`) or reads.
+const protoCorpus = (recovers) => upstreamCorpus('native-proto').filter((source) => oracleRecovers(source, 'Protocol Buffers') === recovers);
+
 // ECMAScript reads a brace or a bracket that opens no quantifier or POSIX
 // class as a character (ECMA-262, Annex B.1.2, ExtendedPatternCharacter and
 // ClassAtom), and the native grammar does too; the tree-sitter-regex 0.25.0
@@ -991,6 +995,44 @@ export const NATIVE_GRAMMARS = Object.freeze([
       '', '{', '}', '{ a', 'query', 'query Q', 'type', 'type T {', 'type T { a: }', '{ a(: 1) }', '{ a(b: ) }', 'union U =', 'enum E { A',
       'fragment F { a }', 'fragment on T { a }', 'directive @d', 'directive d on FIELD', 'schema { query }', '{ a(b: [1, 2) }', '{ a(b: {c: 1) }',
       'query Q($a) { a }', 'query Q($a: ) { a }', 'scalar', 'extend', '{ a } }', '"desc"', '{ a(s: "unterminated) }', '$a', '@d',
+    ],
+  },
+  {
+    id: 'proto',
+    language: 'Protocol Buffers',
+    grammar: 'parity/grammars/native/proto.lino',
+    oracle: 'tree-sitter-proto 0.6.0',
+    sources: [
+      `${grammarSourceOf('native-proto').repository}/blob/${grammarSourceOf('native-proto').revision}/grammar.js`,
+      `${grammarSourceOf('native-proto').repository}/tree/${grammarSourceOf('native-proto').revision}/${grammarSourceOf('native-proto').corpus.path}`,
+    ],
+    // The grammar is the import of the grammar.json of tree-sitter-proto
+    // 0.6.0, the one the oracle parser is generated from
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision the oracle reads, and a few
+    // sources more, proto2 groups, editions, text-format option values and
+    // streaming services included; the rejections are sources the oracle
+    // recovers from.
+    ...nativeGrammar('native-proto'),
+    matches: [
+      ...protoCorpus(false),
+      '', 'syntax = "proto3";', "syntax = 'proto2';", 'edition = "2023";', 'package a.b.c;', 'import "x.proto";', 'import public "x.proto";',
+      'import weak "x.proto";', 'option java_package = "com.x";', 'option (my.opt).sub = 1;', 'option (a) = { b: 1 c: "s" };', 'option a = 1.5e3;',
+      'option a = -inf;', 'option a = nan;', 'option a = true;', 'option a = "x" "y";', 'option a = "\\x41\\101\\n";', 'message M {}', 'message M { int32 a = 1; }',
+      'message M { optional string a = 1 [deprecated = true]; }', 'message M { repeated M.N a = 1; }', 'message M { map<string, int32> m = 1; }',
+      'message M { message N { bool b = 1; } }', 'message M { enum E { A = 0; B = 1 [(x) = 2]; } }', 'message M { oneof o { string a = 1; int32 b = 2; } }',
+      'message M { reserved 1, 2 to 5, 9 to max; reserved "a", "b"; }', 'message M { extensions 100 to 199; }', 'message M { ; }', 'message M { .a.B f = 1; }',
+      'enum E { A = 0; B = -1; option allow_alias = true; }', 'enum E { A = 0x1F; B = 017; }', 'service S { rpc F (Req) returns (Res); }',
+      'service S { rpc F (stream Req) returns (stream Res) { option (x) = 1; } }', 'extend google.protobuf.MessageOptions { string my = 50000; }',
+      '// c\nmessage M {}', '/* c */ message M {}', 'message M { int32 a = 1; // trailing\n }',
+      'syntax = "proto3";\npackage p;\nimport "a.proto";\nmessage M {\n  string name = 1; // é\n}\n', 'message M { required group G = 1 { optional int32 a = 2; } }',
+    ],
+    divergences: [],
+    rejections: [
+      ...protoCorpus(true),
+      'message', 'message M', 'message M {', 'message M { int32 a; }', 'message M { int32 a = ; }', 'syntax = ;', 'syntax "proto3";', 'import;', 'package;',
+      'enum E { A }', 'service S { rpc F (A) (B); }', 'option = 1;', 'message M { map<string> m = 1; }', '}', 'message M { int32 a = 1 }', '"unterminated',
+      'message M { int32 a = 1; } }', 'service S { rpc F (A) returns B; }', 'enum E { A = ; }', 'message M { reserved; }',
     ],
   },
 ]);

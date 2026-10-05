@@ -1394,6 +1394,10 @@
           "name": "identifier"
         },
         {
+          "source": "native:proto",
+          "name": "identifier"
+        },
+        {
           "source": "native:rocq",
           "name": "identifier"
         },
@@ -1729,6 +1733,10 @@
           "name": "string"
         },
         {
+          "source": "native:proto",
+          "name": "string"
+        },
+        {
           "source": "native:racket",
           "name": "string"
         },
@@ -1780,6 +1788,10 @@
         },
         {
           "source": "native:lean",
+          "name": "boolean"
+        },
+        {
+          "source": "native:proto",
           "name": "boolean"
         },
         {
@@ -1976,6 +1988,10 @@
         },
         {
           "source": "native:lean",
+          "name": "comment"
+        },
+        {
+          "source": "native:proto",
           "name": "comment"
         },
         {
@@ -2491,6 +2507,10 @@
           "name": "escape_sequence"
         },
         {
+          "source": "native:proto",
+          "name": "escape_sequence"
+        },
+        {
           "source": "native:racket",
           "name": "escape_sequence"
         },
@@ -2544,6 +2564,10 @@
         },
         {
           "source": "native:json5",
+          "name": "false"
+        },
+        {
+          "source": "native:proto",
           "name": "false"
         },
         {
@@ -3188,6 +3212,10 @@
         },
         {
           "source": "native:json5",
+          "name": "true"
+        },
+        {
+          "source": "native:proto",
           "name": "true"
         },
         {
@@ -6385,6 +6413,10 @@
           "name": "field_declaration"
         },
         {
+          "source": "native:proto",
+          "name": "field"
+        },
+        {
           "source": "native:rust",
           "name": "field_declaration"
         }
@@ -8158,6 +8190,10 @@
           "name": "source_file"
         },
         {
+          "source": "native:proto",
+          "name": "source_file"
+        },
+        {
           "source": "native:rocq",
           "name": "source_file"
         },
@@ -8184,6 +8220,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "empty_statement"
+        },
+        {
+          "source": "native:proto",
           "name": "empty_statement"
         },
         {
@@ -9128,6 +9168,10 @@
         },
         {
           "source": "native:java",
+          "name": "type"
+        },
+        {
+          "source": "native:proto",
           "name": "type"
         },
         {
@@ -10869,6 +10913,10 @@
         {
           "source": "native:graphql",
           "name": "integer_value"
+        },
+        {
+          "source": "native:proto",
+          "name": "integer_literal"
         },
         {
           "source": "native:rocq",
@@ -14441,6 +14489,10 @@
           "name": "enumeration_declaration"
         },
         {
+          "source": "native:proto",
+          "name": "enumeration"
+        },
+        {
           "source": "native:tsx",
           "name": "enumeration_declaration"
         },
@@ -14463,6 +14515,10 @@
       "sourceAliases": [
         {
           "source": "native:java",
+          "name": "enumeration_body"
+        },
+        {
+          "source": "native:proto",
           "name": "enumeration_body"
         },
         {
@@ -21333,10 +21389,14 @@
       "role": "concept",
       "definition": "A rule for a qualified identifier, the construct the upstream grammar names _qualid.",
       "constraints": [
-        "Only the native Rocq grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "full_identifier"
+        },
         {
           "source": "native:rocq",
           "name": "qualified_identifier"
@@ -21622,13 +21682,17 @@
       "role": "concept",
       "definition": "A rule for a decimal integer literal, the construct the upstream grammar names decimal_integer_literal.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:java",
           "name": "decimal_integer_literal"
+        },
+        {
+          "source": "native:proto",
+          "name": "decimal_literal"
         }
       ],
       "formerNames": []
@@ -21639,13 +21703,17 @@
       "role": "concept",
       "definition": "A rule for a hex integer literal, the construct the upstream grammar names hex_integer_literal.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:java",
           "name": "hex_integer_literal"
+        },
+        {
+          "source": "native:proto",
+          "name": "hex_literal"
         }
       ],
       "formerNames": []
@@ -21656,13 +21724,17 @@
       "role": "concept",
       "definition": "A rule for an octal integer literal, the construct the upstream grammar names octal_integer_literal.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:java",
           "name": "octal_integer_literal"
+        },
+        {
+          "source": "native:proto",
+          "name": "octal_literal"
         }
       ],
       "formerNames": []
@@ -22773,6 +22845,10 @@
         {
           "source": "native:java",
           "name": "import_declaration"
+        },
+        {
+          "source": "native:proto",
+          "name": "import"
         }
       ],
       "formerNames": []
@@ -23530,13 +23606,17 @@
       "role": "concept",
       "definition": "A rule for a package clause, the construct the upstream grammar names package_clause.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
           "name": "package_clause"
+        },
+        {
+          "source": "native:proto",
+          "name": "package"
         }
       ],
       "formerNames": []
@@ -24585,6 +24665,10 @@
         {
           "source": "native:graphql",
           "name": "float_value"
+        },
+        {
+          "source": "native:proto",
+          "name": "float_literal"
         }
       ],
       "formerNames": []
@@ -26098,6 +26182,584 @@
         {
           "source": "native:graphql",
           "name": "description"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.edition",
+      "phrase": "edition",
+      "role": "concept",
+      "definition": "A rule for an edition, the construct the upstream grammar names edition.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "edition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.syntax-statement",
+      "phrase": "syntax statement",
+      "role": "concept",
+      "definition": "A rule for a syntax statement, the construct the upstream grammar names syntax.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "syntax"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.option-statement",
+      "phrase": "option statement",
+      "role": "concept",
+      "definition": "A rule for an option statement, the construct the upstream grammar names option.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "option"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.option-name",
+      "phrase": "option name",
+      "role": "concept",
+      "definition": "A rule for an option name, the construct the upstream grammar names _option_name.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "option_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-name",
+      "phrase": "enumeration name",
+      "role": "concept",
+      "definition": "A rule for an enumeration name, the construct the upstream grammar names enum_name.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "enumeration_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-field",
+      "phrase": "enumeration field",
+      "role": "concept",
+      "definition": "A rule for an enumeration field, the construct the upstream grammar names enum_field.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "enumeration_field"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-value-option",
+      "phrase": "enumeration value option",
+      "role": "concept",
+      "definition": "A rule for an enumeration value option, the construct the upstream grammar names enum_value_option.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "enumeration_value_option"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.message",
+      "phrase": "message",
+      "role": "concept",
+      "definition": "A rule for a message, the construct the upstream grammar names message.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "message"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.message-body",
+      "phrase": "message body",
+      "role": "concept",
+      "definition": "A rule for a message body, the construct the upstream grammar names message_body.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "message_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.message-name",
+      "phrase": "message name",
+      "role": "concept",
+      "definition": "A rule for a message name, the construct the upstream grammar names message_name.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "message_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.message-extension",
+      "phrase": "message extension",
+      "role": "concept",
+      "definition": "A rule for a message extension, the construct the upstream grammar names extend.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "extend"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.group",
+      "phrase": "group",
+      "role": "concept",
+      "definition": "A rule for a group, the construct the upstream grammar names group.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "group"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-option-list",
+      "phrase": "field option list",
+      "role": "concept",
+      "definition": "A rule for a field option list, the construct the upstream grammar names field_options.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "field_options"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-option",
+      "phrase": "field option",
+      "role": "concept",
+      "definition": "A rule for a field option, the construct the upstream grammar names field_option.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "field_option"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.one-of-declaration",
+      "phrase": "one of declaration",
+      "role": "concept",
+      "definition": "A rule for an one of declaration, the construct the upstream grammar names oneof.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "one_of"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.one-of-field",
+      "phrase": "one of field",
+      "role": "concept",
+      "definition": "A rule for an one of field, the construct the upstream grammar names oneof_field.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "one_of_field"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.map-field",
+      "phrase": "map field",
+      "role": "concept",
+      "definition": "A rule for a map field, the construct the upstream grammar names map_field.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "map_field"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.key-type",
+      "phrase": "key type",
+      "role": "concept",
+      "definition": "A rule for a key type, the construct the upstream grammar names key_type.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "key_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reserved-statement",
+      "phrase": "reserved statement",
+      "role": "concept",
+      "definition": "A rule for a reserved statement, the construct the upstream grammar names reserved.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "reserved"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.extensions",
+      "phrase": "extensions",
+      "role": "concept",
+      "definition": "A rule for an extensions, the construct the upstream grammar names extensions.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "extensions"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-number-range-list",
+      "phrase": "field number range list",
+      "role": "concept",
+      "definition": "A rule for a field number range list, the construct the upstream grammar names ranges.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "ranges"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-number-range",
+      "phrase": "field number range",
+      "role": "concept",
+      "definition": "A rule for a field number range, the construct the upstream grammar names range.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "range"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reserved-field-names",
+      "phrase": "reserved field names",
+      "role": "concept",
+      "definition": "A rule for a reserved field names, the construct the upstream grammar names reserved_field_names.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "reserved_field_names"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.message-or-enumeration-type",
+      "phrase": "message or enumeration type",
+      "role": "concept",
+      "definition": "A rule for a message or enumeration type, the construct the upstream grammar names message_or_enum_type.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "message_or_enumeration_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-number",
+      "phrase": "field number",
+      "role": "concept",
+      "definition": "A rule for a field number, the construct the upstream grammar names field_number.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "field_number"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.service",
+      "phrase": "service",
+      "role": "concept",
+      "definition": "A rule for a service, the construct the upstream grammar names service.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "service"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.service-name",
+      "phrase": "service name",
+      "role": "concept",
+      "definition": "A rule for a service name, the construct the upstream grammar names service_name.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "service_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.remote-procedure-call",
+      "phrase": "remote procedure call",
+      "role": "concept",
+      "definition": "A rule for a remote procedure call, the construct the upstream grammar names rpc.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "remote_procedure_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.remote-procedure-call-name",
+      "phrase": "remote procedure call name",
+      "role": "concept",
+      "definition": "A rule for a remote procedure call name, the construct the upstream grammar names rpc_name.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "remote_procedure_call_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.option-value",
+      "phrase": "option value",
+      "role": "concept",
+      "definition": "A rule for an option value, the construct the upstream grammar names constant.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "constant"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.block-literal",
+      "phrase": "block literal",
+      "role": "concept",
+      "definition": "A rule for a block literal, the construct the upstream grammar names block_lit.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "block_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.block-field",
+      "phrase": "block field",
+      "role": "concept",
+      "definition": "A rule for a block field, the construct the upstream grammar names _block_field.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "block_field"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.extension-name",
+      "phrase": "extension name",
+      "role": "concept",
+      "definition": "A rule for an extension name, the construct the upstream grammar names extension_name.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "extension_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.quoted-field-name",
+      "phrase": "quoted field name",
+      "role": "concept",
+      "definition": "A rule for a quoted field name, the construct the upstream grammar names reserved_identifier.",
+      "constraints": [
+        "Only the native Protocol Buffers grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:proto",
+          "name": "reserved_identifier"
         }
       ],
       "formerNames": []

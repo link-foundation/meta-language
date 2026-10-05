@@ -321,6 +321,26 @@
         "sha256": "4030992d2b40170b172b38a1bafbe235ffe5a71bb97a3367a47c00da614d2c62"
       },
       "oracle": "graphql"
+    },
+    {
+      "id": "tree-sitter-proto",
+      "language": "proto",
+      "native": "native-proto",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-proto 0.6.0",
+      "repository": "https://github.com/coder3101/tree-sitter-proto",
+      "revision": "6c878d18628ebbff3474479d2fdd6d8ba1954c3e",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-proto-0.6.0.grammar.json.gz",
+      "sha256": "0bd74a6fc9e16f89f31c38acdd6c343139b0fd5888fac7d44cfd7d7910f6de29",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-proto-0.6.0.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-proto-0.6.0.corpus.json.gz",
+        "sha256": "f9ee8ef95cc46e1f6e4c8e781c4cadbfb250264e752fa396a8c3b058f1ab810a"
+      },
+      "oracle": "proto"
     }
   ]
 }
