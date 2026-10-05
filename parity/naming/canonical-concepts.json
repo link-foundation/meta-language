@@ -1503,6 +1503,10 @@
           "name": "список"
         },
         {
+          "source": "native:graphql",
+          "name": "list_value"
+        },
+        {
           "source": "native:json",
           "name": "array"
         },
@@ -1531,9 +1535,9 @@
       "role": "concept",
       "definition": "A rule for any value of a data grammar.",
       "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept.",
-        "Native grammars share this concept only where the construct means the same in each language."
+        "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
       "sourceAliases": [
         {
@@ -1543,6 +1547,10 @@
         {
           "source": "Russian grammar surface",
           "name": "значение"
+        },
+        {
+          "source": "native:graphql",
+          "name": "value"
         },
         {
           "source": "native:json",
@@ -1573,6 +1581,10 @@
         {
           "source": "Russian grammar surface",
           "name": "имя"
+        },
+        {
+          "source": "native:graphql",
+          "name": "name"
         },
         {
           "source": "native:java",
@@ -1609,6 +1621,10 @@
           "name": "объект"
         },
         {
+          "source": "native:graphql",
+          "name": "object_value"
+        },
+        {
           "source": "native:javascript",
           "name": "object"
         },
@@ -1637,9 +1653,9 @@
       "role": "concept",
       "definition": "A rule for one name and value pair of an object.",
       "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept.",
-        "Native grammars share this concept only where the construct means the same in each language."
+        "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
       "sourceAliases": [
         {
@@ -1649,6 +1665,10 @@
         {
           "source": "Russian grammar surface",
           "name": "член"
+        },
+        {
+          "source": "native:graphql",
+          "name": "object_field"
         },
         {
           "source": "native:json",
@@ -1687,6 +1707,10 @@
         {
           "source": "native:csv",
           "name": "quoted"
+        },
+        {
+          "source": "native:graphql",
+          "name": "string_value"
         },
         {
           "source": "native:javascript",
@@ -1751,6 +1775,10 @@
           "name": "boolean"
         },
         {
+          "source": "native:graphql",
+          "name": "boolean_value"
+        },
+        {
           "source": "native:lean",
           "name": "boolean"
         },
@@ -1793,6 +1821,10 @@
         {
           "source": "native:go",
           "name": "nil"
+        },
+        {
+          "source": "native:graphql",
+          "name": "null_value"
         },
         {
           "source": "native:javascript",
@@ -1920,6 +1952,10 @@
         },
         {
           "source": "native:go",
+          "name": "comment"
+        },
+        {
+          "source": "native:graphql",
           "name": "comment"
         },
         {
@@ -2405,6 +2441,10 @@
         {
           "source": "native:diff",
           "name": "source"
+        },
+        {
+          "source": "native:graphql",
+          "name": "document"
         },
         {
           "source": "native:ini",
@@ -3659,7 +3699,7 @@
       "role": "concept",
       "definition": "Concrete input supplied to a function application.",
       "constraints": [
-        "Only the native Rocq grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "The structural concept is independent of any one programming language.",
         "Every language syntax that expresses it is a syntax alias of the concept."
       ],
@@ -3706,6 +3746,10 @@
         },
         {
           "source": "Delphi/Object Pascal",
+          "name": "argument"
+        },
+        {
+          "source": "native:graphql",
           "name": "argument"
         },
         {
@@ -5339,12 +5383,16 @@
       "role": "concept",
       "definition": "A rule for a type definition, the construct the upstream grammar names type_definition.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "type_definition"
+        },
+        {
+          "source": "native:graphql",
           "name": "type_definition"
         }
       ],
@@ -7653,6 +7701,10 @@
           "name": "argument_list"
         },
         {
+          "source": "native:graphql",
+          "name": "arguments"
+        },
+        {
           "source": "native:java",
           "name": "argument_list"
         },
@@ -8099,6 +8151,10 @@
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "source_file"
+        },
+        {
+          "source": "native:graphql",
           "name": "source_file"
         },
         {
@@ -9064,6 +9120,10 @@
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "type"
+        },
+        {
+          "source": "native:graphql",
           "name": "type"
         },
         {
@@ -10805,6 +10865,10 @@
         {
           "source": "native:go",
           "name": "integer_literal"
+        },
+        {
+          "source": "native:graphql",
+          "name": "integer_value"
         },
         {
           "source": "native:rocq",
@@ -13555,6 +13619,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:graphql",
+          "name": "field_definition"
+        },
+        {
           "source": "native:javascript",
           "name": "field_definition"
         },
@@ -15758,10 +15826,14 @@
       "role": "concept",
       "definition": "A rule for a variable, the construct the upstream grammar names variable.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "variable"
+        },
         {
           "source": "native:lean",
           "name": "variable"
@@ -15953,10 +16025,14 @@
       "role": "concept",
       "definition": "A rule for a definition, the construct the upstream grammar names definition.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "definition"
+        },
         {
           "source": "native:lean",
           "name": "definition"
@@ -23030,10 +23106,14 @@
       "role": "concept",
       "definition": "A rule for a default value, the construct the upstream grammar names _default_value.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "default_value"
+        },
         {
           "source": "native:java",
           "name": "default_value"
@@ -24494,13 +24574,17 @@
       "role": "concept",
       "definition": "A rule for a float literal, the construct the upstream grammar names float_literal.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
           "name": "float_literal"
+        },
+        {
+          "source": "native:graphql",
+          "name": "float_value"
         }
       ],
       "formerNames": []
@@ -25113,6 +25197,907 @@
         {
           "source": "native:regex",
           "name": "decimal_digits"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.executable-definition",
+      "phrase": "executable definition",
+      "role": "concept",
+      "definition": "A rule for an executable definition, the construct the upstream grammar names executable_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "executable_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-system-definition",
+      "phrase": "type system definition",
+      "role": "concept",
+      "definition": "A rule for a type system definition, the construct the upstream grammar names type_system_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "type_system_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-system-extension",
+      "phrase": "type system extension",
+      "role": "concept",
+      "definition": "A rule for a type system extension, the construct the upstream grammar names type_system_extension.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "type_system_extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.schema-definition",
+      "phrase": "schema definition",
+      "role": "concept",
+      "definition": "A rule for a schema definition, the construct the upstream grammar names schema_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "schema_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.schema-extension",
+      "phrase": "schema extension",
+      "role": "concept",
+      "definition": "A rule for a schema extension, the construct the upstream grammar names schema_extension.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "schema_extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-extension",
+      "phrase": "type extension",
+      "role": "concept",
+      "definition": "A rule for a type extension, the construct the upstream grammar names type_extension.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "type_extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scalar-type-extension",
+      "phrase": "scalar type extension",
+      "role": "concept",
+      "definition": "A rule for a scalar type extension, the construct the upstream grammar names scalar_type_extension.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "scalar_type_extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object-type-extension",
+      "phrase": "object type extension",
+      "role": "concept",
+      "definition": "A rule for an object type extension, the construct the upstream grammar names object_type_extension.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "object_type_extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interface-type-extension",
+      "phrase": "interface type extension",
+      "role": "concept",
+      "definition": "A rule for an interface type extension, the construct the upstream grammar names interface_type_extension.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "interface_type_extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.union-type-extension",
+      "phrase": "union type extension",
+      "role": "concept",
+      "definition": "A rule for an union type extension, the construct the upstream grammar names union_type_extension.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "union_type_extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-type-extension",
+      "phrase": "enumeration type extension",
+      "role": "concept",
+      "definition": "A rule for an enumeration type extension, the construct the upstream grammar names enum_type_extension.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "enumeration_type_extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.input-object-type-extension",
+      "phrase": "input object type extension",
+      "role": "concept",
+      "definition": "A rule for an input object type extension, the construct the upstream grammar names input_object_type_extension.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "input_object_type_extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.input-fields-definition",
+      "phrase": "input fields definition",
+      "role": "concept",
+      "definition": "A rule for an input fields definition, the construct the upstream grammar names input_fields_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "input_fields_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-value-definition-list",
+      "phrase": "enumeration value definition list",
+      "role": "concept",
+      "definition": "A rule for an enumeration value definition list, the construct the upstream grammar names enum_values_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "enumeration_values_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-value-definition",
+      "phrase": "enumeration value definition",
+      "role": "concept",
+      "definition": "A rule for an enumeration value definition, the construct the upstream grammar names enum_value_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "enumeration_value_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.implements-interfaces",
+      "phrase": "implements interfaces",
+      "role": "concept",
+      "definition": "A rule for an implements interfaces, the construct the upstream grammar names implements_interfaces.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "implements_interfaces"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-definition-list",
+      "phrase": "field definition list",
+      "role": "concept",
+      "definition": "A rule for a field definition list, the construct the upstream grammar names fields_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "fields_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.arguments-definition",
+      "phrase": "arguments definition",
+      "role": "concept",
+      "definition": "A rule for an arguments definition, the construct the upstream grammar names arguments_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "arguments_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.input-value-definition",
+      "phrase": "input value definition",
+      "role": "concept",
+      "definition": "A rule for an input value definition, the construct the upstream grammar names input_value_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "input_value_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.union-member-types",
+      "phrase": "union member types",
+      "role": "concept",
+      "definition": "A rule for an union member types, the construct the upstream grammar names union_member_types.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "union_member_types"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.root-operation-type-definition",
+      "phrase": "root operation type definition",
+      "role": "concept",
+      "definition": "A rule for a root operation type definition, the construct the upstream grammar names root_operation_type_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "root_operation_type_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.operation-definition",
+      "phrase": "operation definition",
+      "role": "concept",
+      "definition": "A rule for an operation definition, the construct the upstream grammar names operation_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "operation_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.operation-type",
+      "phrase": "operation type",
+      "role": "concept",
+      "definition": "A rule for an operation type, the construct the upstream grammar names operation_type.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "operation_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scalar-type-definition",
+      "phrase": "scalar type definition",
+      "role": "concept",
+      "definition": "A rule for a scalar type definition, the construct the upstream grammar names scalar_type_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "scalar_type_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object-type-definition",
+      "phrase": "object type definition",
+      "role": "concept",
+      "definition": "A rule for an object type definition, the construct the upstream grammar names object_type_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "object_type_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interface-type-definition",
+      "phrase": "interface type definition",
+      "role": "concept",
+      "definition": "A rule for an interface type definition, the construct the upstream grammar names interface_type_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "interface_type_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.union-type-definition",
+      "phrase": "union type definition",
+      "role": "concept",
+      "definition": "A rule for an union type definition, the construct the upstream grammar names union_type_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "union_type_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-type-definition",
+      "phrase": "enumeration type definition",
+      "role": "concept",
+      "definition": "A rule for an enumeration type definition, the construct the upstream grammar names enum_type_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "enumeration_type_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.input-object-type-definition",
+      "phrase": "input object type definition",
+      "role": "concept",
+      "definition": "A rule for an input object type definition, the construct the upstream grammar names input_object_type_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "input_object_type_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-definition-list",
+      "phrase": "variable definition list",
+      "role": "concept",
+      "definition": "A rule for a variable definition list, the construct the upstream grammar names variable_definitions.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "variable_definitions"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-definition",
+      "phrase": "variable definition",
+      "role": "concept",
+      "definition": "A rule for a variable definition, the construct the upstream grammar names variable_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "variable_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.selection-set",
+      "phrase": "selection set",
+      "role": "concept",
+      "definition": "A rule for a selection set, the construct the upstream grammar names selection_set.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "selection_set"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.selection-set-member",
+      "phrase": "selection set member",
+      "role": "concept",
+      "definition": "A rule for a selection set member, the construct the upstream grammar names selection.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "selection"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field",
+      "phrase": "field",
+      "role": "concept",
+      "definition": "A rule for a field, the construct the upstream grammar names field.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "field"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.alias",
+      "phrase": "alias",
+      "role": "concept",
+      "definition": "A rule for an alias, the construct the upstream grammar names alias.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-value",
+      "phrase": "enumeration value",
+      "role": "concept",
+      "definition": "A rule for an enumeration value, the construct the upstream grammar names enum_value.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "enumeration_value"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.fragment-spread",
+      "phrase": "fragment spread",
+      "role": "concept",
+      "definition": "A rule for a fragment spread, the construct the upstream grammar names fragment_spread.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "fragment_spread"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.fragment-definition",
+      "phrase": "fragment definition",
+      "role": "concept",
+      "definition": "A rule for a fragment definition, the construct the upstream grammar names fragment_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "fragment_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.fragment-name",
+      "phrase": "fragment name",
+      "role": "concept",
+      "definition": "A rule for a fragment name, the construct the upstream grammar names fragment_name.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "fragment_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.inline-fragment",
+      "phrase": "inline fragment",
+      "role": "concept",
+      "definition": "A rule for an inline fragment, the construct the upstream grammar names inline_fragment.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "inline_fragment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-condition",
+      "phrase": "type condition",
+      "role": "concept",
+      "definition": "A rule for a type condition, the construct the upstream grammar names type_condition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "type_condition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.directive-list",
+      "phrase": "directive list",
+      "role": "concept",
+      "definition": "A rule for a directive list, the construct the upstream grammar names directives.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "directives"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.directive",
+      "phrase": "directive",
+      "role": "concept",
+      "definition": "A rule for a directive, the construct the upstream grammar names directive.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.directive-definition",
+      "phrase": "directive definition",
+      "role": "concept",
+      "definition": "A rule for a directive definition, the construct the upstream grammar names directive_definition.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "directive_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.directive-location-list",
+      "phrase": "directive location list",
+      "role": "concept",
+      "definition": "A rule for a directive location list, the construct the upstream grammar names directive_locations.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "directive_locations"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.directive-location",
+      "phrase": "directive location",
+      "role": "concept",
+      "definition": "A rule for a directive location, the construct the upstream grammar names directive_location.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "directive_location"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.executable-directive-location",
+      "phrase": "executable directive location",
+      "role": "concept",
+      "definition": "A rule for an executable directive location, the construct the upstream grammar names executable_directive_location.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "executable_directive_location"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-system-directive-location",
+      "phrase": "type system directive location",
+      "role": "concept",
+      "definition": "A rule for a type system directive location, the construct the upstream grammar names type_system_directive_location.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "type_system_directive_location"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.named-type",
+      "phrase": "named type",
+      "role": "concept",
+      "definition": "A rule for a named type, the construct the upstream grammar names named_type.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "named_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.list-type",
+      "phrase": "list type",
+      "role": "concept",
+      "definition": "A rule for a list type, the construct the upstream grammar names list_type.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "list_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.non-null-type",
+      "phrase": "non null type",
+      "role": "concept",
+      "definition": "A rule for a non null type, the construct the upstream grammar names non_null_type.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "non_null_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.comma",
+      "phrase": "comma",
+      "role": "concept",
+      "definition": "A rule for a comma, the construct the upstream grammar names comma.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "comma"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.description",
+      "phrase": "description",
+      "role": "concept",
+      "definition": "A rule for a description, the construct the upstream grammar names description.",
+      "constraints": [
+        "Only the native GraphQL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:graphql",
+          "name": "description"
         }
       ],
       "formerNames": []

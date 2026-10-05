@@ -8,7 +8,7 @@ use std::rc::Rc;
 use super::executor::{Element, Executor, Run};
 use super::forking::Lead;
 use super::operations::State;
-use super::program::{Expr, InExtra, Matcher, Name, Target};
+use super::program::{Expr, InExtra, Matcher, Name, Rule, Target};
 use super::results::{
     Entry, Res, Skipped, Tree, TreeType, children_of, is_separator, longest_result, no_children,
     preferred_tokens, with_leaf,
@@ -305,6 +305,37 @@ impl Executor<'_> {
             }))
         } else {
             self.skip_trivia(position, state)
+        }
+    }
+
+    /// The start of a token rule's own token where the trivia before it
+    /// holds an extra token of that rule: a tree-sitter parser takes a token
+    /// as an extra only in a parse state with no action on it, so a rule that
+    /// names the extra takes it as its token (GraphQL's `comma`, an extra
+    /// that ends a `variable_definition` and an `object_field`).
+    pub(super) fn own_extra(
+        &self,
+        rule: &Rule,
+        skipped: Rc<Skipped>,
+        in_token: bool,
+    ) -> Rc<Skipped> {
+        if self.lexing.is_none() || in_token {
+            return skipped;
+        }
+        let own = |leaf: &Rc<Tree>| {
+            leaf.ty == TreeType::Token
+                && leaf
+                    .kind
+                    .as_deref()
+                    .and_then(|kind| self.program.rule_index.get(kind))
+                    .is_some_and(|&index| std::ptr::eq(&raw const self.program.rules[index], rule))
+        };
+        match skipped.leaves.iter().position(own) {
+            Some(at) => Rc::new(Skipped {
+                end: skipped.leaves[at].start,
+                leaves: children_of(skipped.leaves[..at].to_vec()),
+            }),
+            None => skipped,
         }
     }
 

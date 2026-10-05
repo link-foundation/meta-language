@@ -302,6 +302,26 @@
         "one_or_more": "grammar.one-or-more-repetition",
         "optional": "grammar.optional-expression"
       }
+    },
+    "graphql": {
+      "names": {},
+      "concepts": {
+        "string_value": "grammar.string",
+        "int_value": "grammar.integer-literal",
+        "float_value": "grammar.float-literal",
+        "null_value": "grammar.null",
+        "list_value": "grammar.list",
+        "object_value": "grammar.object",
+        "object_field": "grammar.member",
+        "arguments": "grammar.argument-list",
+        "argument": "argument",
+        "selection": "grammar.selection-set-member",
+        "fields_definition": "grammar.field-definition-list",
+        "enum_values_definition": "grammar.enumeration-value-definition-list",
+        "variable_definitions": "grammar.variable-definition-list",
+        "directives": "grammar.directive-list",
+        "directive_locations": "grammar.directive-location-list"
+      }
     }
   },
   "concepts": {

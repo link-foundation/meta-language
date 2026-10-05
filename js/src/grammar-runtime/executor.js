@@ -220,7 +220,7 @@ function preferredTokens(result, existing, tokens) {
   const lookahead = (tree) => {
     if (decided === Infinity && !isTrivia(tree) && firstLeafStart(tree) >= pending) decided = firstLeafStart(tree);
   };
-  const covers = (leaf, trivia) => trivia.some((item) => item.kind === null && item.start === leaf.start && leaf.end >= item.end);
+  const covers = (leaf, trivia) => trivia.some((item) => (item.kind === null || item.kind === leaf.kind) && item.start === leaf.start && leaf.end >= item.end);
   const peek = (stack) => {
     while (stack.length > 0) {
       const top = stack[stack.length - 1];
@@ -3233,7 +3233,15 @@ export class Executor {
 
   ruleBody(rule, position, state, inToken) {
     if (rule.kind === 'token' || rule.kind === 'atomic') {
-      const { end: start, leaves } = this.terminalStart(position, state, inToken);
+      let { end: start, leaves } = this.terminalStart(position, state, inToken);
+      // An extra token is the token of a rule that names it where the rule
+      // asks for it: a tree-sitter parser takes a token as an extra only in
+      // a parse state with no action on it (GraphQL's `comma`, an extra that
+      // ends a `variable_definition` and an `object_field`).
+      if (this.lexing && !inToken && leaves.length > 0) {
+        const at = leaves.findIndex((leaf) => leaf.type === 'token' && leaf.kind !== null && this.program.rules.get(leaf.kind) === rule);
+        if (at >= 0) [start, leaves] = [leaves[at].start, leaves.slice(0, at)];
+      }
       let results = this.quietly(() => this.evaluate(rule.expression, start, state, true));
       if (rule.kind === 'token' || this.peg) results = results.length > 0 ? [longestResult(results)] : [];
       const built = [];

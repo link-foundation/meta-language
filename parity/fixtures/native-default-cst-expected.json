@@ -1414,6 +1414,83 @@
         [3,null,")",0,5,5,"M"]
       ],
       "embedded": []
+    },
+    "GraphQL": {
+      "grammars": {
+        "native-graphql": {
+          "version": "1.0.0",
+          "parserSha256": "0bd7ad56a4ae7353382ef35f579a6d10fedaa26abbd5e89e273d7f0e828f9751"
+        }
+      },
+      "oracleGrammars": {
+        "graphql": {
+          "version": "0.3.0",
+          "parserSha256": "8b7ebff40dc5b802df9ec03b1570fd53d234300ac4705899643ae61dda77dc57"
+        }
+      },
+      "sourceSha256": "ac3a070814f12d52a3907812fbfede5bd74f5589c45dea1f7f47772245ea4745",
+      "recoverySourceSha256": "1c12b7559fe8c88eefa6c3d16cbc7668ea524e51d467ebd4faa8c625dd42d507",
+      "positive": [
+        [0,null,"source_file",1,0,66,""],
+        [1,null,"comment",1,0,7,"X"],
+        [1,null,"document",1,8,65,""],
+        [2,null,"definition",1,8,65,""],
+        [3,null,"type_system_definition",1,8,65,""],
+        [4,null,"type_definition",1,8,65,""],
+        [5,null,"object_type_definition",1,8,65,""],
+        [6,null,"type",0,8,12,""],
+        [6,null,"name",1,13,17,""],
+        [6,null,"fields_definition",1,18,65,""],
+        [7,null,"{",0,18,19,""],
+        [7,null,"field_definition",1,20,27,""],
+        [8,null,"name",1,20,22,""],
+        [8,null,":",0,22,23,""],
+        [8,null,"type",1,24,27,""],
+        [9,null,"non_null_type",1,24,27,""],
+        [10,null,"named_type",1,24,26,""],
+        [11,null,"name",1,24,26,""],
+        [10,null,"!",0,26,27,""],
+        [7,null,"field_definition",1,30,63,""],
+        [8,null,"name",1,30,34,""],
+        [8,null,"arguments_definition",1,34,55,""],
+        [9,null,"(",0,34,35,""],
+        [9,null,"input_value_definition",1,35,54,""],
+        [10,null,"name",1,35,39,""],
+        [10,null,":",0,39,40,""],
+        [10,null,"type",1,41,47,""],
+        [11,null,"named_type",1,41,47,""],
+        [12,null,"name",1,41,47,""],
+        [10,null,"default_value",1,48,54,""],
+        [11,null,"=",0,48,49,""],
+        [11,null,"value",1,50,54,""],
+        [12,null,"string_value",1,50,54,""],
+        [9,null,")",0,54,55,""],
+        [8,null,":",0,55,56,""],
+        [8,null,"type",1,57,63,""],
+        [9,null,"named_type",1,57,63,""],
+        [10,null,"name",1,57,63,""],
+        [7,null,"}",0,64,65,""]
+      ],
+      "recovery": [
+        [0,null,"source_file",1,0,18,""],
+        [1,null,"document",1,0,17,""],
+        [2,null,"definition",1,0,17,""],
+        [3,null,"type_system_definition",1,0,17,""],
+        [4,null,"type_definition",1,0,17,""],
+        [5,null,"object_type_definition",1,0,17,""],
+        [6,null,"type",0,0,4,""],
+        [6,null,"name",1,5,9,""],
+        [6,null,"fields_definition",1,10,17,""],
+        [7,null,"{",0,10,11,""],
+        [7,null,"field_definition",1,12,15,""],
+        [8,null,"name",1,12,14,""],
+        [8,null,":",0,14,15,""],
+        [8,null,"type",1,15,15,""],
+        [9,null,"named_type",1,15,15,""],
+        [10,null,"name",1,15,15,"M"],
+        [7,null,"}",0,16,17,""]
+      ],
+      "embedded": []
     }
   },
   "embeddedFixtures": {

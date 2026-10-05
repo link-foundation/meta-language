@@ -17,7 +17,7 @@
       "features": {"scanner": 0, "conflict": 17, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 100, "rows": 5348, "bytes": 12987, "divergences": 0, "rejections": 33},
       "recovery": {"repaired": 33, "errorNodes": 7, "missingNodes": 41, "categories": {}},
-      "reuse": {"shared": 45, "specific": 138}
+      "reuse": {"shared": 46, "specific": 137}
     },
     {
       "grammar": "native-csv",
@@ -74,7 +74,25 @@
       "features": {"scanner": 0, "conflict": 8, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 106, "rows": 4369, "bytes": 9101, "divergences": 0, "rejections": 13},
       "recovery": {"repaired": 13, "errorNodes": 4, "missingNodes": 19, "categories": {}},
-      "reuse": {"shared": 52, "specific": 65}
+      "reuse": {"shared": 53, "specific": 64}
+    },
+    {
+      "grammar": "native-graphql",
+      "language": "GraphQL",
+      "links": "parity/grammars/native/graphql.lino",
+      "fixture": "parity/fixtures/native-grammars/graphql.json",
+      "oracle": "tree-sitter-graphql 0.3.0",
+      "sources": [
+        "https://github.com/joowani/tree-sitter-graphql/blob/b1d368c339806d971818a4ca2099763a6c561f56/grammar.js",
+        "https://github.com/joowani/tree-sitter-graphql/tree/b1d368c339806d971818a4ca2099763a6c561f56/test/corpus"
+      ],
+      "corpus": "https://github.com/joowani/tree-sitter-graphql/tree/b1d368c339806d971818a4ca2099763a6c561f56/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/graphql.json",
+      "coverage": {"rules": {"normal": 67, "atomic": 0, "silent": 0, "token": 7}, "visibleRules": 67, "exercisedRules": 67, "checkedKinds": 74, "checkedFields": 0, "renamed": 6, "expandedWords": 2, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 3, "kind": 0},
+      "correctness": {"matches": 53, "rows": 1809, "bytes": 3211, "divergences": 0, "rejections": 29},
+      "recovery": {"repaired": 29, "errorNodes": 8, "missingNodes": 40, "categories": {}},
+      "reuse": {"shared": 21, "specific": 53}
     },
     {
       "grammar": "native-ini",
@@ -110,7 +128,7 @@
       "features": {"scanner": 0, "conflict": 13, "precedences": 0, "extra": 3, "kind": 1},
       "correctness": {"matches": 146, "rows": 4848, "bytes": 11744, "divergences": 0, "rejections": 11},
       "recovery": {"repaired": 11, "errorNodes": 4, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 64, "specific": 105}
+      "reuse": {"shared": 65, "specific": 104}
     },
     {
       "grammar": "native-javascript",
@@ -183,7 +201,7 @@
       "features": {"scanner": 1, "conflict": 11, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 251, "rows": 5152, "bytes": 13446, "divergences": 1, "rejections": 42},
       "recovery": {"repaired": 42, "errorNodes": 34, "missingNodes": 41, "categories": {"merged-extension": 1, "native-skips-more": 34, "oracle-skips-more": 35, "same-repair-sites": 19, "same-skipped-bytes": 8}},
-      "reuse": {"shared": 38, "specific": 109}
+      "reuse": {"shared": 40, "specific": 107}
     },
     {
       "grammar": "native-racket",
@@ -237,7 +255,7 @@
       "features": {"scanner": 0, "conflict": 16, "precedences": 2, "extra": 2, "kind": 0},
       "correctness": {"matches": 230, "rows": 9440, "bytes": 20820, "divergences": 0, "rejections": 12},
       "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {"native-skips-more": 16, "oracle-skips-more": 45, "same-repair-sites": 4, "same-skipped-bytes": 7}},
-      "reuse": {"shared": 30, "specific": 235}
+      "reuse": {"shared": 31, "specific": 234}
     },
     {
       "grammar": "native-rust",

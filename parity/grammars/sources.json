@@ -301,6 +301,26 @@
         "sha256": "5998b28758e4580c81674a7b371cbdaa086563ceda7d24832b8d4291ed7fbe24"
       },
       "oracle": "regex"
+    },
+    {
+      "id": "tree-sitter-graphql",
+      "language": "graphql",
+      "native": "native-graphql",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-graphql 0.3.0",
+      "repository": "https://github.com/joowani/tree-sitter-graphql",
+      "revision": "b1d368c339806d971818a4ca2099763a6c561f56",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-graphql-0.3.0.grammar.json.gz",
+      "sha256": "5d7c2999c5d4bb0f050f94d978ee8e8bb1b3a3de5c0f0e22221dd6573147adfd",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-graphql-0.3.0.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-graphql-0.3.0.corpus.json.gz",
+        "sha256": "4030992d2b40170b172b38a1bafbe235ffe5a71bb97a3367a47c00da614d2c62"
+      },
+      "oracle": "graphql"
     }
   ]
 }

@@ -125,6 +125,10 @@ const goCorpus = (recovers) => upstreamCorpus('native-go').filter((source) => or
 // (`recovers`) or reads.
 const regexCorpus = (recovers) => upstreamCorpus('native-regex').filter((source) => oracleRecovers(source, 'Regex') === recovers);
 
+// The cases of the pinned tree-sitter-graphql corpus the oracle recovers
+// from (`recovers`) or reads.
+const graphqlCorpus = (recovers) => upstreamCorpus('native-graphql').filter((source) => oracleRecovers(source, 'GraphQL') === recovers);
+
 // ECMAScript reads a brace or a bracket that opens no quantifier or POSIX
 // class as a character (ECMA-262, Annex B.1.2, ExtendedPatternCharacter and
 // ClassAtom), and the native grammar does too; the tree-sitter-regex 0.25.0
@@ -947,6 +951,46 @@ export const NATIVE_GRAMMARS = Object.freeze([
       ...regexCorpus(true),
       '', '(ab[c', '(', ')', '[', ']', '(?', '(?<', '(?<a', '(?:', 'a|(', '[a', '\\', '(?P<>a)', '*', '+a', '?', 'a**', '(?<n>a', 'a)',
       '\\k<', '\\p{', '(?=', '(?i',
+    ],
+  },
+  {
+    id: 'graphql',
+    language: 'GraphQL',
+    grammar: 'parity/grammars/native/graphql.lino',
+    oracle: 'tree-sitter-graphql 0.3.0',
+    sources: [
+      `${grammarSourceOf('native-graphql').repository}/blob/${grammarSourceOf('native-graphql').revision}/grammar.js`,
+      `${grammarSourceOf('native-graphql').repository}/tree/${grammarSourceOf('native-graphql').revision}/${grammarSourceOf('native-graphql').corpus.path}`,
+    ],
+    // The grammar is the import of the grammar.json of tree-sitter-graphql
+    // 0.3.0, the one the oracle parser is generated from
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision the oracle reads, and a few
+    // sources more, commas, the extra a variable definition and an object
+    // field take as their own, included; the rejections are sources the
+    // oracle recovers from.
+    ...nativeGrammar('native-graphql'),
+    matches: [
+      ...graphqlCorpus(false),
+      '{ a }', 'query { a }', 'query Q { a b c }', 'mutation M($id: ID!) { like(id: $id) { count } }', 'subscription S { events { id } }',
+      'query Q($a: Int = 1, $b: [String!]! = ["x"]) @d { a }', 'query Q($a: Int, $b: Int) { a }', '{ alias: field(arg: 1) }', '{ f(o: {a: 1, b: 2}, x: [1, 2]) }',
+      '{ f(a: 1.5e3, b: -2, c: true, d: false, e: null, f: ENUM, g: "s", h: """block""") }', '{ ...F ... on T { a } ... @include(if: $x) { b } }',
+      'fragment F on User { id name }', 'fragment F on User @d { id }', '# comment\n{ a }', '{ a # trailing\n b }', '{ a, b, c }', ',,{ a },,',
+      'schema { query: Query mutation: Mutation }', 'schema @d { query: Q }', 'extend schema { subscription: S }', 'scalar Date',
+      'scalar Date @specifiedBy(url: "https://x")', 'type T { a: Int }', 'type T implements A & B { f(a: Int = 1, b: [String!]!): T @d(x: 1) }',
+      'type T implements & A { a: Int }', '"desc" type T { "field" a: Int }', '"""block\ndesc""" type T', 'interface I { a: Int }', 'interface I implements J { a: Int }',
+      'union U = A | B', 'union U = | A | B', 'union U @d', 'enum E { A B }', 'enum E { A, B }', 'enum E @d { A @deprecated }', 'input I { a: Int = 1, b: String }',
+      'directive @d(a: Int) on FIELD | QUERY', 'directive @d repeatable on | FIELD_DEFINITION', 'extend type T { b: Int }', 'extend type T implements I',
+      'extend interface I @d', 'extend union U = C', 'extend enum E { C }', 'extend input I { c: Int }', 'extend scalar S @d',
+      'type Query {\n  user(id: ID!): User\n  users(first: Int = 10, after: String): [User!]!\n}\n\nquery Q {\n  user(id: "é") { name }\n}\n',
+      '{ a(f: 0.5, g: 1E10, h: -0) }', '{ a(l: [], o: {}) }', 'query ($v: Int) { a(v: $v) }',
+    ],
+    divergences: [],
+    rejections: [
+      ...graphqlCorpus(true),
+      '', '{', '}', '{ a', 'query', 'query Q', 'type', 'type T {', 'type T { a: }', '{ a(: 1) }', '{ a(b: ) }', 'union U =', 'enum E { A',
+      'fragment F { a }', 'fragment on T { a }', 'directive @d', 'directive d on FIELD', 'schema { query }', '{ a(b: [1, 2) }', '{ a(b: {c: 1) }',
+      'query Q($a) { a }', 'query Q($a: ) { a }', 'scalar', 'extend', '{ a } }', '"desc"', '{ a(s: "unterminated) }', '$a', '@d',
     ],
   },
 ]);

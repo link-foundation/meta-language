@@ -118,6 +118,11 @@ fn natives() -> Vec<Native> {
         ),
         native!("native-go", "go", Some(|| tree_sitter_go::LANGUAGE.into())),
         native!(
+            "native-graphql",
+            "graphql",
+            Some(|| tree_sitter_graphql::LANGUAGE.into())
+        ),
+        native!(
             "native-ini",
             "ini",
             Some(|| tree_sitter_ini::LANGUAGE.into())

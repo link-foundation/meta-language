@@ -73,6 +73,7 @@ mod issue_195_grammar_native_c;
 mod issue_195_grammar_native_csv;
 mod issue_195_grammar_native_diff;
 mod issue_195_grammar_native_go;
+mod issue_195_grammar_native_graphql;
 mod issue_195_grammar_native_ini;
 mod issue_195_grammar_native_java;
 mod issue_195_grammar_native_javascript;

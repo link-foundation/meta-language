@@ -534,6 +534,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-GRAPHQL',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/graphql.json',
+    construct: 'native merged GraphQL grammar imported from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/graphql.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned src/grammar.json of tree-sitter-graphql 0.3.0, with every rule renamed to its English name and its concept merged into the shared concepts, and every hand decision recorded in parity/grammars/merge-reports/graphql.json. Both executors build, for every source of the upstream test/corpus and for hand-written sources, exactly the concrete syntax tree rows of the tree-sitter-graphql oracle with no ambiguity: queries, mutations and subscriptions, anonymous operations, variable definitions with types and default values, selection sets of fields with aliases, arguments and directives, fragment spreads, inline fragments and fragment definitions, every value (integers, floats, strings, block strings, booleans, null, enumeration values, variables, lists and objects), schema definitions and extensions, scalar, object, interface, union, enumeration and input object type definitions and extensions with descriptions and implemented interfaces, and directive definitions with locations; commas and comments are extras, and a comma that ends a variable definition or an object field is a token of that node, as tree-sitter takes an extra token where the parse state has an action on it. Both executors reject invalid input the oracle recovers from and keep every source byte, line breaks included, in the tree.',
+    assertions: [
+      'nativeGraphqlGrammarIsCanonicalLinks',
+      'nativeGraphqlTreesMatchOracle',
+      'nativeGraphqlRejectsInvalidInput',
+      'nativeGraphqlTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/src/programming-language-parser.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/lexing.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

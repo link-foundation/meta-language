@@ -69,9 +69,11 @@ pub(super) fn preferred_tokens(
         }
     };
     let covers = |leaf: &Tree, trivia: &[Rc<Tree>]| {
-        trivia
-            .iter()
-            .any(|item| item.kind.is_none() && item.start == leaf.start && leaf.end >= item.end)
+        trivia.iter().any(|item| {
+            (item.kind.is_none() || item.kind == leaf.kind)
+                && item.start == leaf.start
+                && leaf.end >= item.end
+        })
     };
     loop {
         match (left.last(), right.last()) {
