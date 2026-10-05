@@ -93,6 +93,8 @@ const RUST_BUILD_DEFAULTS = Object.freeze({
   CARGO_PROFILE_TEST_DEBUG: '0',
   RUST_TEST_THREADS: '2',
 });
+// The optimization level of the patched meta-language crate; see where `configuration` is built.
+const PATCHED_CRATE_OPT_LEVEL = 3;
 // While a command runs, a progress line every HEARTBEAT_MS shows its last output and the free
 // memory; below MEMORY_FLOOR_BYTES free the command's process group is killed, so the job ends
 // with a report and a reason instead of the runner being shut down.
@@ -350,7 +352,13 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
       (line, requirement, rest) => `meta-language = { version = "${effectiveRequirement}"${rest}}`));
   }
   const unpackedDirectory = crateSource.split(path.sep).join('/');
-  const configuration = ['--config', `patch.crates-io.meta-language.path=${JSON.stringify(unpackedDirectory)}`];
+  // The workloads parse formal-ai's whole corpus through the patched crate; unoptimized, its
+  // grammar_projection_corpus_ratchet ran past 23 minutes in the dev profile, so meta-language
+  // alone is optimized (the test profile inherits the dev profile's package overrides).
+  const configuration = [
+    '--config', `patch.crates-io.meta-language.path=${JSON.stringify(unpackedDirectory)}`,
+    '--config', `profile.dev.package.meta-language.opt-level=${PATCHED_CRATE_OPT_LEVEL}`,
+  ];
   await writeFile(path.join(directory, 'tests', `${RUST_PROBE_TARGET}.rs`), RUST_PROBE);
   await mkdir(probeDirectory, { recursive: true });
   const environment = {

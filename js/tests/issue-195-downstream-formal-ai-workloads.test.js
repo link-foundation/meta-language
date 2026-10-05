@@ -301,6 +301,9 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
     assert.match(defaults, new RegExp(`${name}: '${value}'`, 'u'), `RUST_BUILD_DEFAULTS sets ${name}=${value}`);
   }
   assert.match(runner, /\.\.\.RUST_BUILD_DEFAULTS,\s*\.\.\.childEnvironment\(\),\s*CARGO_TARGET_DIR/u);
+  // Unoptimized, the corpus ratchet parsed for more than 23 minutes: the patched crate is optimized.
+  assert.match(runner, /const PATCHED_CRATE_OPT_LEVEL = 3;/u);
+  assert.match(runner, /'--config', `profile\.dev\.package\.meta-language\.opt-level=\$\{PATCHED_CRATE_OPT_LEVEL\}`/u);
   assert.match(runner, /\] start: .*resources\(\)/u);
   assert.match(runner, /\] exit .*resources\(\)/u);
   // It was still shut down, silently, inside the patched `cargo test`: a running command
