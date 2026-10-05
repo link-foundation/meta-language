@@ -17,7 +17,8 @@
     "resourceAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
     "greenPathAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606",
     "nextPhaseAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
-    "remainingWorkAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773"
+    "remainingWorkAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773",
+    "recoveryAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141"
   },
   "checkpoints": {
     "pre-merge": "All implementation and candidate-artifact requirements must pass on the exact merge candidate. Every PR check must pass. A red check is a defect to fix now; unfinished requirements are work to implement, not a reason for red CI.",
@@ -1558,7 +1559,7 @@
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
       "selector": "docs/vision.md#sources-of-truth: register of every requirement source with its revision and content hash",
-      "sha256": "5b99bf1e5c5f176d7dd3d0c15edf006db01a369f02fd45110a5e6f181f35405f"
+      "sha256": "a16666d542b562d3f5a86b388cdac6dbe6af35355d48fbfde7e80fdaff473be3"
     },
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
@@ -1578,7 +1579,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "ed1f06a3a3c1571994d0b046b594f66a2690a08603460bba653f281faed4b2b5"
+      "sha256": "e1957aadd32b5222f782070d0c27633c68f57376ba1c433b0ba0894473bfe42f"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1588,7 +1589,7 @@
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "ed1f06a3a3c1571994d0b046b594f66a2690a08603460bba653f281faed4b2b5"
+      "sha256": "e1957aadd32b5222f782070d0c27633c68f57376ba1c433b0ba0894473bfe42f"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",
@@ -1785,6 +1786,11 @@
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
       "sha256": "ca6cc207d57e672a95747b42d09c2681bf0672c86febe626923d8dffea80479e"
     },
+    "planned:repository-directive:i195-merge-real-reconciliation": {
+      "path": "parity/fixtures/grammar-merge.json",
+      "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: merging reconciles corresponding rules instead of concatenating sources",
+      "sha256": "7d184beb6b2500a4b220f7f0f793ac66233e497b4a135879909e54164aa11620"
+    },
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
@@ -1823,7 +1829,7 @@
     "planned:repository-directive:i195-downstream-consumer-matrix": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: consumer matrix for relative-meta-logic and formal-ai",
-      "sha256": "08aee26b4991fe7d506a8bc576351fac3b58090b3de42e5d621b660e51a0f7f7"
+      "sha256": "a405275fc1b3eef7ad54402447806135bcca6554436a5199e346314649583c73"
     },
     "planned:repository-directive:i195-downstream-rml-workloads": {
       "path": "parity/fixtures/rml-pr184-workloads.json",
@@ -1833,7 +1839,7 @@
     "planned:repository-directive:i195-downstream-rml-pr184-audit": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: current relative-meta-logic pull request 184 workload inventory",
-      "sha256": "08aee26b4991fe7d506a8bc576351fac3b58090b3de42e5d621b660e51a0f7f7"
+      "sha256": "a405275fc1b3eef7ad54402447806135bcca6554436a5199e346314649583c73"
     },
     "planned:repository-directive:i195-downstream-formal-ai-workloads": {
       "path": "parity/fixtures/formal-ai-workloads.json",
@@ -1843,7 +1849,7 @@
     "planned:repository-directive:i195-downstream-typescript-translations": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: Rust, JavaScript and TypeScript semantic projection for formal-ai",
-      "sha256": "08aee26b4991fe7d506a8bc576351fac3b58090b3de42e5d621b660e51a0f7f7"
+      "sha256": "a405275fc1b3eef7ad54402447806135bcca6554436a5199e346314649583c73"
     },
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
@@ -1955,6 +1961,21 @@
       "selector": "#continuous-integration: every failure of a job reported in one run",
       "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
     },
+    "planned:repository-directive:i195-ci-acceptance-after-javascript": {
+      "path": "docs/vision.md",
+      "selector": "#continuous-integration: acceptance stages started only after every JavaScript job passed",
+      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+    },
+    "planned:repository-directive:i195-ci-skipped-stage-one-gate-error": {
+      "path": "docs/vision.md",
+      "selector": "#continuous-integration: a stage skipped because JavaScript failed is one gate error",
+      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+    },
+    "planned:repository-directive:i195-resource-parse-memory-budget": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: a hard memory budget for every parse",
+      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+    },
     "planned:repository-directive:i195-development-rules-documented": {
       "path": "docs/vision.md",
       "selector": "#javascript-first-and-self-translation: JavaScript-first development rules",
@@ -1973,6 +1994,11 @@
     "planned:repository-directive:i195-self-translation-shared-corpus": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: shared Links Notation corpus checked in both runtimes",
+      "sha256": "455ad1719cfa4727794a52ea0fb8941428265dc288d8c3fcd33b23d1b5fce37c"
+    },
+    "planned:repository-directive:i195-self-translation-carried-zero": {
+      "path": "parity/self-translation/cases.lino",
+      "selector": "docs/vision.md#javascript-first-and-self-translation: every self-translated item translated, none carried",
       "sha256": "455ad1719cfa4727794a52ea0fb8941428265dc288d8c3fcd33b23d1b5fce37c"
     },
     "planned:repository-directive:i195-decorators-every-level": {
@@ -2060,7 +2086,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2136,7 +2162,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2216,7 +2242,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -2248,7 +2274,7 @@
         "tooling": [
           "js/scripts/issue-195-acceptance-lib.mjs",
           "js/scripts/issue-195-evidence-stages.mjs",
-          ".github/workflows/issue-195-acceptance.yml",
+          ".github/workflows/ci.yml",
           ".github/workflows/js.yml",
           ".github/workflows/dependency-refresh.yml"
         ]
@@ -2287,7 +2313,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2352,7 +2378,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "merge-enforcement"
         ],
@@ -2424,7 +2450,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2497,7 +2523,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2571,7 +2597,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2638,7 +2664,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2710,7 +2736,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2782,7 +2808,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "cache-cleanup:measured"
         ],
@@ -2856,7 +2882,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2935,7 +2961,70 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-CI-ACCEPTANCE-AFTER-JAVASCRIPT",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141",
+      "area": "continuous-integration",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "acceptance stages started only after every JavaScript job passed",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The issue 195 acceptance stages are jobs of the CI workflow that need its JavaScript jobs, so no acceptance stage starts before every JavaScript job passed, and a job that runs despite a failure tests the JavaScript result itself; there is no separate acceptance workflow running beside them.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          ".github/workflows/ci.yml"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-ci-acceptance-after-javascript-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-ci-acceptance-after-javascript"
+          ],
+          "assertions": [
+            "acceptanceJobsNeedJavaScript",
+            "noSeparateAcceptanceWorkflow"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-ci-acceptance-after-javascript-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#continuous-integration",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "remainingWorkAudit",
+          "recoveryAudit"
+        ],
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -2957,13 +3046,13 @@
         "aliases": [],
         "extensions": []
       },
-      "expectedBehavior": "In the acceptance workflow the Rust suite stage and the Rust native translations are separate jobs that need the matching JavaScript jobs and run only when those succeeded; no matrix runs a JavaScript and a Rust stage side by side.",
+      "expectedBehavior": "In the CI workflow the Rust acceptance suite stage and the Rust native translations are separate jobs that need the matching JavaScript jobs and run only when those succeeded; no matrix runs a JavaScript and a Rust stage side by side.",
       "requiredRuntimes": [
         "tooling"
       ],
       "implementationEntryPoints": {
         "tooling": [
-          ".github/workflows/issue-195-acceptance.yml"
+          ".github/workflows/ci.yml"
         ]
       },
       "verifications": [
@@ -2996,7 +3085,7 @@
           "greenPathAudit",
           "remainingWorkAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -3026,7 +3115,7 @@
         "tooling": [
           ".github/workflows/js.yml",
           ".github/workflows/rust.yml",
-          ".github/workflows/issue-195-acceptance.yml"
+          ".github/workflows/ci.yml"
         ]
       },
       "verifications": [
@@ -3061,7 +3150,7 @@
           "greenPathAudit",
           "remainingWorkAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -3126,7 +3215,72 @@
           "greenPathAudit",
           "remainingWorkAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-CI-SKIPPED-STAGE-ONE-GATE-ERROR",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141",
+      "area": "continuous-integration",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "a stage skipped because JavaScript failed is one gate error",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "A stage skipped because its JavaScript stage failed is folded into the one gate error that names the blocking JavaScript failure instead of being reported as a second missing stage, a stage missing for another reason is still reported, and the Full Requirements Aggregate reports a failed JavaScript job as one error naming the failed jobs.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/scripts/issue-195-evidence-stages.mjs",
+          ".github/workflows/ci.yml"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-ci-skipped-stage-one-gate-error-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-ci-skipped-stage-one-gate-error"
+          ],
+          "assertions": [
+            "skippedStageJoinsBlockingError",
+            "missingStageStillReported",
+            "failedJavaScriptIsOneGateError"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-ci-skipped-stage-one-gate-error-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#continuous-integration",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "remainingWorkAudit",
+          "recoveryAudit"
+        ],
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -3223,7 +3377,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -3320,7 +3474,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -3417,7 +3571,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -3514,7 +3668,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -3663,7 +3817,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -3815,7 +3969,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -3963,7 +4117,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -4113,7 +4267,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -4268,7 +4422,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -4420,7 +4574,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -4572,7 +4726,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -4721,7 +4875,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -4872,7 +5026,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -5021,7 +5175,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -5174,7 +5328,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -5325,7 +5479,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -5474,7 +5628,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -5625,7 +5779,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -5777,7 +5931,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -5926,7 +6080,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -6074,7 +6228,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -6225,7 +6379,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -6373,7 +6527,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -6523,7 +6677,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -6676,7 +6830,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -6829,7 +6983,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -6979,7 +7133,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -7131,7 +7285,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -7279,7 +7433,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -7429,7 +7583,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -7580,7 +7734,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -7731,7 +7885,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -7886,7 +8040,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -8038,7 +8192,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -8189,7 +8343,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -8340,7 +8494,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -8490,7 +8644,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -8641,7 +8795,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -8793,7 +8947,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -8944,7 +9098,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -9093,7 +9247,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -9244,7 +9398,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -9395,7 +9549,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -9544,7 +9698,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -9693,7 +9847,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -9843,7 +9997,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -9994,7 +10148,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -10143,7 +10297,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -10292,7 +10446,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -10445,7 +10599,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -10594,7 +10748,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -10744,7 +10898,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -10897,7 +11051,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -11048,7 +11202,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -11198,7 +11352,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -11349,7 +11503,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -11499,7 +11653,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -11647,7 +11801,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -11797,7 +11951,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -11949,7 +12103,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -12099,7 +12253,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -12249,7 +12403,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -12401,7 +12555,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -12552,7 +12706,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -12702,7 +12856,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -12850,7 +13004,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -13000,7 +13154,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -13153,7 +13307,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -13304,7 +13458,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -13457,7 +13611,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -13609,7 +13763,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -13761,7 +13915,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -13912,7 +14066,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -14063,7 +14217,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -14212,7 +14366,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -14361,7 +14515,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -14512,7 +14666,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -14664,7 +14818,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -14816,7 +14970,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -14966,7 +15120,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -15118,7 +15272,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -15267,7 +15421,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -15420,7 +15574,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -15571,7 +15725,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -15659,7 +15813,7 @@
           "greenPathAudit",
           "nextPhaseAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -15754,7 +15908,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "delivery:crate"
         ],
@@ -15851,7 +16005,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "delivery:crate"
         ],
@@ -15948,7 +16102,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "delivery:npm"
         ],
@@ -16044,7 +16198,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "delivery:npm"
         ],
@@ -16140,7 +16294,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "delivery:rml"
         ],
@@ -16236,7 +16390,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "delivery:rml"
         ],
@@ -16305,7 +16459,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -16370,7 +16524,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -16431,7 +16585,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -16499,7 +16653,7 @@
           "greenPathAudit",
           "nextPhaseAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -16564,7 +16718,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -16629,7 +16783,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -16705,7 +16859,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "delivery:formal-ai"
         ],
@@ -16796,7 +16950,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -16865,7 +17019,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -16956,7 +17110,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -17040,7 +17194,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -17154,7 +17308,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -17266,7 +17420,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -17378,7 +17532,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -17490,7 +17644,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -17602,7 +17756,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -17671,7 +17825,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -17736,7 +17890,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -17801,7 +17955,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -17866,7 +18020,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -17931,7 +18085,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -17996,7 +18150,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -18061,7 +18215,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -18126,7 +18280,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -18191,7 +18345,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -18256,7 +18410,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -18321,7 +18475,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "gate-faults"
         ],
@@ -18419,7 +18573,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -18517,7 +18671,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -18615,7 +18769,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -18713,7 +18867,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -18781,7 +18935,7 @@
           "greenPathAudit",
           "nextPhaseAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -18867,7 +19021,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -18956,7 +19110,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19042,7 +19196,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19131,7 +19285,7 @@
           "greenPathAudit",
           "remainingWorkAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19213,7 +19367,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19307,7 +19461,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19391,7 +19545,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19477,7 +19631,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19570,7 +19724,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19662,7 +19816,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19754,7 +19908,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19846,7 +20000,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -19936,7 +20090,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20028,7 +20182,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20120,7 +20274,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20212,7 +20366,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20294,7 +20448,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20386,7 +20540,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20475,7 +20629,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20565,7 +20719,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20657,7 +20811,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20747,7 +20901,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20837,7 +20991,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -20929,7 +21083,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21020,7 +21174,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21111,7 +21265,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21202,7 +21356,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21293,7 +21447,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21384,7 +21538,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21478,7 +21632,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21560,7 +21714,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21646,7 +21800,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21728,7 +21882,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21812,7 +21966,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21900,7 +22054,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -21990,7 +22144,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22080,7 +22234,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22168,7 +22322,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22254,7 +22408,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22344,7 +22498,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22434,7 +22588,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22520,7 +22674,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22610,7 +22764,92 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-MERGE-REAL-RECONCILIATION",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141",
+      "area": "automatic-merge",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "merging reconciles corresponding rules instead of concatenating sources",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Merging two or more source grammars of one language reconciles their corresponding rules into shared rules, so every merged catalog grammar reports a non-zero sharedRules count, and a test fails when the merge only concatenates the sources side by side, in both runtimes.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/grammar-merge.js"
+        ],
+        "rust": [
+          "rust/src/grammar/merge/mod.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-merge-real-reconciliation-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-merge-real-reconciliation"
+          ],
+          "assertions": [
+            "correspondingRulesReconciled",
+            "sharedRulesNonZero",
+            "concatenationRejected"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-merge-real-reconciliation-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-merge-real-reconciliation-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-merge-real-reconciliation"
+          ],
+          "assertions": [
+            "correspondingRulesReconciled",
+            "sharedRulesNonZero",
+            "concatenationRejected"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-merge-real-reconciliation-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming",
+        "inventories": [
+          "parity/fixtures/grammar-merge.json"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "repositoryDirective",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "recoveryAudit"
+        ],
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22692,7 +22931,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22776,7 +23015,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -22851,7 +23090,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -22941,7 +23180,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -23029,7 +23268,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -23118,7 +23357,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -23211,7 +23450,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "native:JavaScript:javascript",
           "native:JavaScript:rust"
@@ -23302,7 +23541,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "native:Lean:javascript",
           "native:Lean:rust"
@@ -23393,7 +23632,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "native:Rocq:javascript",
           "native:Rocq:rust"
@@ -23484,7 +23723,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "native:Rust:javascript",
           "native:Rust:rust"
@@ -23582,7 +23821,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "runtime-parity"
         ],
@@ -23681,7 +23920,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "runtime-parity"
         ],
@@ -23769,7 +24008,7 @@
           "greenPathAudit",
           "nextPhaseAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -23867,7 +24106,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "runtime-parity"
         ],
@@ -23966,7 +24205,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "runtime-parity"
         ],
@@ -24065,7 +24304,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "runtime-parity"
         ],
@@ -24167,7 +24406,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -24268,7 +24507,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -24366,7 +24605,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -24464,7 +24703,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -24533,7 +24772,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -24597,7 +24836,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -24661,7 +24900,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -24722,7 +24961,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -24783,7 +25022,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -24811,7 +25050,7 @@
       ],
       "implementationEntryPoints": {
         "tooling": [
-          ".github/workflows/issue-195-acceptance.yml",
+          ".github/workflows/ci.yml",
           "js/scripts/issue-195-evidence-stages.mjs",
           "js/scripts/run-issue-195-evidence.mjs"
         ]
@@ -24849,7 +25088,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -24914,7 +25153,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -24974,7 +25213,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -25035,7 +25274,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -25096,7 +25335,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -25158,7 +25397,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -25223,12 +25462,100 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
         "packages": [
           "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-PARSE-MEMORY-BUDGET",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141",
+      "area": "resource-limits",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "a hard memory budget for every parse",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Every parse counts the memo cells it keeps, across its runs, repair rounds and embedded grammars, against one budget (2,000,000 cells by default, `memoryLimit` / `memory_limit` to change it); a parse that needs more ends with a `memoryBudget` rejection naming the limit instead of growing until the process runs out of memory, and under a capped heap or address space a large parse ends with that diagnostic, in both runtimes.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/grammar-runtime/executor.js",
+          "js/tests/issue-195-parse-memory-budget.test.js"
+        ],
+        "rust": [
+          "rust/src/grammar/feature_runtime/executor.rs",
+          "rust/tests/unit/issue_195_parse_memory_budget.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-parse-memory-budget-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-parse-memory-budget"
+          ],
+          "assertions": [
+            "budgetExceededIsRejection",
+            "budgetSharedAcrossRepairRounds",
+            "rejectionNamesLimit",
+            "cappedHeapParseEndsWithDiagnostic"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-parse-memory-budget-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-resource-parse-memory-budget-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-parse-memory-budget"
+          ],
+          "assertions": [
+            "budgetExceededIsRejection",
+            "budgetSharedAcrossRepairRounds",
+            "rejectionNamesLimit",
+            "cappedHeapParseEndsWithDiagnostic"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-parse-memory-budget-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "recoveryAudit"
+        ],
+        "workflow": ".github/workflows/ci.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
         ],
         "downstream": []
       }
@@ -25284,12 +25611,103 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
         "packages": [
           "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-SELF-TRANSLATION-CARRIED-ZERO",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141",
+      "area": "javascript-first",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "every self-translated item translated, none carried",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The self-translation report carries no item over unchanged: every function, type and full program of the translated modules is translated, the generated Rust replaces the hand-written Rust it was measured against, the decorators make it match that style, and the round-trip tests run on the translated items.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/self-translation.js",
+          "js/scripts/generate-self-translation-report.mjs"
+        ],
+        "rust": [
+          "rust/src/self_translation.rs",
+          "rust/tests/unit/self_translation.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-self-translation-carried-zero-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-self-translation-carried-zero"
+          ],
+          "assertions": [
+            "carriedItemsZero",
+            "generatedRustReplacesHandWritten",
+            "decoratorsMatchStyle",
+            "roundTripsUseTranslatedItems",
+            "fullProgramsTranslate"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-self-translation-carried-zero-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-self-translation-carried-zero-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-self-translation-carried-zero"
+          ],
+          "assertions": [
+            "carriedItemsZero",
+            "generatedRustReplacesHandWritten",
+            "decoratorsMatchStyle",
+            "roundTripsUseTranslatedItems",
+            "fullProgramsTranslate"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-self-translation-carried-zero-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#javascript-first-and-self-translation",
+        "inventories": [
+          "parity/self-translation/cases.lino"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "nextPhaseAudit",
+          "recoveryAudit"
+        ],
+        "workflow": ".github/workflows/ci.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
         ],
         "downstream": []
       }
@@ -25368,7 +25786,7 @@
           "greenPathAudit",
           "nextPhaseAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -25457,7 +25875,7 @@
           "greenPathAudit",
           "nextPhaseAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -25549,7 +25967,7 @@
           "greenPathAudit",
           "nextPhaseAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -25646,7 +26064,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -25743,7 +26161,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -25840,7 +26258,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -25937,7 +26355,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26034,7 +26452,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26131,7 +26549,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26228,7 +26646,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26325,7 +26743,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26422,7 +26840,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26519,7 +26937,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26614,7 +27032,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26709,7 +27127,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26804,7 +27222,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26899,7 +27317,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -26994,7 +27412,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27089,7 +27507,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27184,7 +27602,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27279,7 +27697,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27374,7 +27792,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27469,7 +27887,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27564,7 +27982,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27659,7 +28077,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27754,7 +28172,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27849,7 +28267,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -27944,7 +28362,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28039,7 +28457,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28134,7 +28552,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28229,7 +28647,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28324,7 +28742,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28419,7 +28837,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28514,7 +28932,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28609,7 +29027,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28704,7 +29122,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28799,7 +29217,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28894,7 +29312,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -28989,7 +29407,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -29084,7 +29502,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -29179,7 +29597,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -29274,7 +29692,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -29369,7 +29787,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -29453,7 +29871,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -29557,7 +29975,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -29655,7 +30073,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -29755,7 +30173,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "runtime-parity"
         ],
@@ -29852,7 +30270,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "runtime-parity"
         ],
@@ -29949,7 +30367,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "runtime-parity"
         ],
@@ -30063,7 +30481,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:Lean:javascript",
           "translation:Lean:rust"
@@ -30180,7 +30598,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:Rocq:javascript",
           "translation:Rocq:rust"
@@ -30297,7 +30715,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:Rust:javascript",
           "translation:Rust:rust"
@@ -30416,7 +30834,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:JavaScript:javascript",
           "translation:JavaScript:rust"
@@ -30531,7 +30949,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:Rocq:javascript",
           "translation:Rocq:rust"
@@ -30646,7 +31064,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:Rust:javascript",
           "translation:Rust:rust"
@@ -30763,7 +31181,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:JavaScript:javascript",
           "translation:JavaScript:rust"
@@ -30878,7 +31296,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:Lean:javascript",
           "translation:Lean:rust"
@@ -30993,7 +31411,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:Rust:javascript",
           "translation:Rust:rust"
@@ -31110,7 +31528,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:JavaScript:javascript",
           "translation:JavaScript:rust"
@@ -31227,7 +31645,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:Lean:javascript",
           "translation:Lean:rust"
@@ -31342,7 +31760,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "translation:Rocq:javascript",
           "translation:Rocq:rust"
@@ -31409,7 +31827,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -31494,7 +31912,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -31564,7 +31982,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -31633,7 +32051,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -31702,7 +32120,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript"
         ],
@@ -31809,7 +32227,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -31918,7 +32336,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -32027,7 +32445,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -32136,7 +32554,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -32245,7 +32663,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -32356,7 +32774,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -32465,7 +32883,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -32576,7 +32994,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -32686,7 +33104,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -32793,7 +33211,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -32900,7 +33318,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33007,7 +33425,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33114,7 +33532,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33221,7 +33639,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33328,7 +33746,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33435,7 +33853,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33542,7 +33960,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33649,7 +34067,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33756,7 +34174,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33863,7 +34281,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -33970,7 +34388,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -34077,7 +34495,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -34184,7 +34602,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -34291,7 +34709,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -34398,7 +34816,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -34505,7 +34923,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -34612,7 +35030,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -34719,7 +35137,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -34826,7 +35244,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -34935,7 +35353,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -35042,7 +35460,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"
@@ -35149,7 +35567,7 @@
           "resourceAudit",
           "greenPathAudit"
         ],
-        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
           "suite:javascript",
           "suite:rust"

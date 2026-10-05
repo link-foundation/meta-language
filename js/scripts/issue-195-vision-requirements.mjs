@@ -791,6 +791,18 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/tests/merge_quality.rs', 'rust/src/grammar_concepts.rs'],
   },
   {
+    id: 'I195-MERGE-REAL-RECONCILIATION',
+    area: 'automatic-merge',
+    specification: 'automatic-merging-concept-recognition-deduplication-and-renaming',
+    fixture: 'parity/fixtures/grammar-merge.json',
+    construct: 'merging reconciles corresponding rules instead of concatenating sources',
+    expectedBehavior:
+      'Merging two or more source grammars of one language reconciles their corresponding rules into shared rules, so every merged catalog grammar reports a non-zero sharedRules count, and a test fails when the merge only concatenates the sources side by side, in both runtimes.',
+    assertions: ['correspondingRulesReconciled', 'sharedRulesNonZero', 'concatenationRejected'],
+    javascript: ['js/src/grammar-merge.js'],
+    rust: ['rust/src/grammar/merge/mod.rs'],
+  },
+  {
     id: 'I195-NAMING-CONVENTION',
     area: 'readable-naming',
     specification: 'readable-english-names',
@@ -1081,7 +1093,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     tooling: [
       'js/scripts/issue-195-acceptance-lib.mjs',
       'js/scripts/issue-195-evidence-stages.mjs',
-      '.github/workflows/issue-195-acceptance.yml',
+      '.github/workflows/ci.yml',
       '.github/workflows/js.yml',
       '.github/workflows/dependency-refresh.yml',
     ],
@@ -1131,7 +1143,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'failedStageIsOneGateError',
     ],
     tooling: [
-      '.github/workflows/issue-195-acceptance.yml',
+      '.github/workflows/ci.yml',
       'js/scripts/issue-195-evidence-stages.mjs',
       'js/scripts/run-issue-195-evidence.mjs',
     ],
@@ -1262,9 +1274,9 @@ export const VISION_REQUIREMENTS = Object.freeze([
     specification: 'continuous-integration',
     construct: 'Rust acceptance stages after the JavaScript stages',
     expectedBehavior:
-      'In the acceptance workflow the Rust suite stage and the Rust native translations are separate jobs that need the matching JavaScript jobs and run only when those succeeded; no matrix runs a JavaScript and a Rust stage side by side.',
+      'In the CI workflow the Rust acceptance suite stage and the Rust native translations are separate jobs that need the matching JavaScript jobs and run only when those succeeded; no matrix runs a JavaScript and a Rust stage side by side.',
     assertions: ['rustStagesNeedJavaScriptStages'],
-    tooling: ['.github/workflows/issue-195-acceptance.yml'],
+    tooling: ['.github/workflows/ci.yml'],
   },
   {
     id: 'I195-CI-REPORT-EVERY-FAILURE',
@@ -1274,7 +1286,38 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'Every cargo test run uses --no-fail-fast, every check step after the first of a job runs unless the run was cancelled, and cargo fmt, clippy and doc are independent steps, so one failure does not hide the others.',
     assertions: ['cargoTestNoFailFast', 'checkStepsRunUnlessCancelled', 'lintStepsIndependent'],
-    tooling: ['.github/workflows/js.yml', '.github/workflows/rust.yml', '.github/workflows/issue-195-acceptance.yml'],
+    tooling: ['.github/workflows/js.yml', '.github/workflows/rust.yml', '.github/workflows/ci.yml'],
+  },
+  {
+    id: 'I195-CI-ACCEPTANCE-AFTER-JAVASCRIPT',
+    area: 'continuous-integration',
+    specification: 'continuous-integration',
+    construct: 'acceptance stages started only after every JavaScript job passed',
+    expectedBehavior:
+      'The issue 195 acceptance stages are jobs of the CI workflow that need its JavaScript jobs, so no acceptance stage starts before every JavaScript job passed, and a job that runs despite a failure tests the JavaScript result itself; there is no separate acceptance workflow running beside them.',
+    assertions: ['acceptanceJobsNeedJavaScript', 'noSeparateAcceptanceWorkflow'],
+    tooling: ['.github/workflows/ci.yml'],
+  },
+  {
+    id: 'I195-CI-SKIPPED-STAGE-ONE-GATE-ERROR',
+    area: 'continuous-integration',
+    specification: 'continuous-integration',
+    construct: 'a stage skipped because JavaScript failed is one gate error',
+    expectedBehavior:
+      'A stage skipped because its JavaScript stage failed is folded into the one gate error that names the blocking JavaScript failure instead of being reported as a second missing stage, a stage missing for another reason is still reported, and the Full Requirements Aggregate reports a failed JavaScript job as one error naming the failed jobs.',
+    assertions: ['skippedStageJoinsBlockingError', 'missingStageStillReported', 'failedJavaScriptIsOneGateError'],
+    tooling: ['js/scripts/issue-195-evidence-stages.mjs', '.github/workflows/ci.yml'],
+  },
+  {
+    id: 'I195-RESOURCE-PARSE-MEMORY-BUDGET',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'a hard memory budget for every parse',
+    expectedBehavior:
+      'Every parse counts the memo cells it keeps, across its runs, repair rounds and embedded grammars, against one budget (2,000,000 cells by default, `memoryLimit` / `memory_limit` to change it); a parse that needs more ends with a `memoryBudget` rejection naming the limit instead of growing until the process runs out of memory, and under a capped heap or address space a large parse ends with that diagnostic, in both runtimes.',
+    assertions: ['budgetExceededIsRejection', 'budgetSharedAcrossRepairRounds', 'rejectionNamesLimit', 'cappedHeapParseEndsWithDiagnostic'],
+    javascript: ['js/src/grammar-runtime/executor.js', 'js/tests/issue-195-parse-memory-budget.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_parse_memory_budget.rs'],
   },
   {
     id: 'I195-DEVELOPMENT-RULES-DOCUMENTED',
@@ -1321,6 +1364,18 @@ export const VISION_REQUIREMENTS = Object.freeze([
     assertions: ['expectedOutputsInLinksNotation', 'checkedInBothRuntimes', 'differencePerModulePublished', 'decoratorsMatchHandWritten'],
     javascript: ['js/scripts/generate-self-translation-cases.mjs', 'js/scripts/generate-self-translation-report.mjs', 'js/tests/self-translation.test.js', 'parity/self-translation/decorators.lino'],
     rust: ['rust/tests/unit/self_translation.rs'],
+  },
+  {
+    id: 'I195-SELF-TRANSLATION-CARRIED-ZERO',
+    area: 'javascript-first',
+    specification: 'javascript-first-and-self-translation',
+    fixture: 'parity/self-translation/cases.lino',
+    construct: 'every self-translated item translated, none carried',
+    expectedBehavior:
+      'The self-translation report carries no item over unchanged: every function, type and full program of the translated modules is translated, the generated Rust replaces the hand-written Rust it was measured against, the decorators make it match that style, and the round-trip tests run on the translated items.',
+    assertions: ['carriedItemsZero', 'generatedRustReplacesHandWritten', 'decoratorsMatchStyle', 'roundTripsUseTranslatedItems', 'fullProgramsTranslate'],
+    javascript: ['js/src/self-translation.js', 'js/scripts/generate-self-translation-report.mjs'],
+    rust: ['rust/src/self_translation.rs', 'rust/tests/unit/self_translation.rs'],
   },
   {
     id: 'I195-DECORATORS-EVERY-LEVEL',
@@ -1503,7 +1558,7 @@ export function traceabilityFor(entry, { fixtureCatalog, register, evidenceGroup
     specification: anchor ? `${VISION_SPECIFICATION}#${anchor}` : null,
     inventories,
     sources,
-    workflow: '.github/workflows/issue-195-acceptance.yml',
+    workflow: '.github/workflows/ci.yml',
     evidenceGroups: [...new Set(entry.verifications.map((cell) => evidenceGroupFor(entry, cell)))].sort(),
     packages: entry.requiredRuntimes.map((runtime) => PACKAGES[runtime] ?? runtime),
     downstream: consumersByRow === null

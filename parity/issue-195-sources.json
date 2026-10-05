@@ -4,7 +4,7 @@
   "issue": 195,
   "pullRequest": 196,
   "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
-  "reconciledAt": "2026-10-04",
+  "reconciledAt": "2026-10-05",
   "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
   "requirementSources": [
     {
@@ -291,6 +291,26 @@
       "updatedAt": "2026-10-04T11:30:39Z",
       "bytes": 11394,
       "sha256": "48cac3e8e9e3f95cd5d00f3ec5ed15dbe35274e91f37f25a2982abb786e146aa"
+    },
+    {
+      "key": "recoveryAudit",
+      "id": 5985077141,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141",
+      "title": "Recovery and what is left to fully deliver — audit of 6676c132 (2026-10-05)",
+      "role": "Binding recovery of the out-of-memory session (a hard memory budget for every parse with a regression test in both runtimes), the acceptance stages started only after every JavaScript job passed, one gate error for a stage skipped because JavaScript failed, real merge reconciliation and carried = 0 self-translation; keeps 5979473773, 5971613170 and 5965533606 in force",
+      "ledgerCoverage": [
+        "I195-RESOURCE-PARSE-MEMORY-BUDGET",
+        "I195-CI-ACCEPTANCE-AFTER-JAVASCRIPT",
+        "I195-CI-SKIPPED-STAGE-ONE-GATE-ERROR",
+        "I195-MERGE-REAL-RECONCILIATION",
+        "I195-SELF-TRANSLATION-CARRIED-ZERO"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-04T22:19:42Z",
+      "updatedAt": "2026-10-04T22:19:42Z",
+      "bytes": 10286,
+      "sha256": "00b67c6e06e8943e72c9b5a928418ec052adc0b76d13cd08b945f1edf45f8ce8"
     }
   ],
   "statusReports": [

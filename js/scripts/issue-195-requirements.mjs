@@ -39,6 +39,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170',
   remainingWorkAudit:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773',
+  recoveryAudit:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141',
 });
 
 const FOUR_LANGUAGE_DETAILS = Object.freeze({
@@ -925,6 +927,11 @@ export async function buildIssue195Manifest(root) {
           .map(({ id }) => [id, ISSUE_195_SOURCES.remainingWorkAudit])),
         'I195-GRAMMAR-BULK-PIPELINE': ISSUE_195_SOURCES.nextPhaseAudit,
         'I195-GRAMMAR-DECLARED-SETTLING': ISSUE_195_SOURCES.remainingWorkAudit,
+        // The audit of 6676c132 asks for the parse memory budget, the acceptance stages after
+        // JavaScript, one gate error per skipped stage, real merging and carried = 0.
+        ...Object.fromEntries(['I195-RESOURCE-PARSE-MEMORY-BUDGET', 'I195-CI-ACCEPTANCE-AFTER-JAVASCRIPT',
+          'I195-CI-SKIPPED-STAGE-ONE-GATE-ERROR', 'I195-MERGE-REAL-RECONCILIATION', 'I195-SELF-TRANSLATION-CARRIED-ZERO']
+          .map((id) => [id, ISSUE_195_SOURCES.recoveryAudit])),
       },
     }),
   ];

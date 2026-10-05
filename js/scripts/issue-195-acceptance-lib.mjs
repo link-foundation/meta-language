@@ -33,6 +33,7 @@ const SOURCE_LABELS = Object.freeze({
   greenPathAudit: 'Path to a green PR and a release: post-merge checks, native grammars and shared concepts',
   nextPhaseAudit: 'Next phase: JavaScript first, automated grammars, self-translation to Rust',
   remainingWorkAudit: 'Audit of fe9b6ff1: the JavaScript → Rust CI order, fail-late CI and declared settling',
+  recoveryAudit: 'Audit of 6676c132: a memory budget per parse, acceptance after JavaScript, real merging and carried = 0',
 });
 
 function allKeys(value, prefix = '') {
