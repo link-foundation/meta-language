@@ -794,13 +794,13 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-MERGE-REAL-RECONCILIATION',
     area: 'automatic-merge',
     specification: 'automatic-merging-concept-recognition-deduplication-and-renaming',
-    fixture: 'parity/fixtures/grammar-merge.json',
+    fixture: 'parity/grammars/reconcile/pairs.json',
     construct: 'merging reconciles corresponding rules instead of concatenating sources',
     expectedBehavior:
       'Merging two or more source grammars of one language reconciles their corresponding rules into shared rules, so every merged catalog grammar reports a non-zero sharedRules count, and a test fails when the merge only concatenates the sources side by side, in both runtimes.',
     assertions: ['correspondingRulesReconciled', 'sharedRulesNonZero', 'concatenationRejected'],
-    javascript: ['js/src/grammar-merge.js'],
-    rust: ['rust/src/grammar/merge/mod.rs'],
+    javascript: ['js/src/grammar-merge.js', 'js/src/grammar-reconcile.js'],
+    rust: ['rust/src/grammar/merge/mod.rs', 'rust/src/grammar/merge/reconcile.rs'],
   },
   {
     id: 'I195-NAMING-CONVENTION',

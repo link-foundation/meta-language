@@ -1787,9 +1787,9 @@
       "sha256": "ca6cc207d57e672a95747b42d09c2681bf0672c86febe626923d8dffea80479e"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
-      "path": "parity/fixtures/grammar-merge.json",
+      "path": "parity/grammars/reconcile/pairs.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: merging reconciles corresponding rules instead of concatenating sources",
-      "sha256": "7d184beb6b2500a4b220f7f0f793ac66233e497b4a135879909e54164aa11620"
+      "sha256": "012222257766f18f1168d9df67a91ae6ecb55f26d518c2974c700ff18920b214"
     },
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
@@ -22795,10 +22795,12 @@
       ],
       "implementationEntryPoints": {
         "javascript": [
-          "js/src/grammar-merge.js"
+          "js/src/grammar-merge.js",
+          "js/src/grammar-reconcile.js"
         ],
         "rust": [
-          "rust/src/grammar/merge/mod.rs"
+          "rust/src/grammar/merge/mod.rs",
+          "rust/src/grammar/merge/reconcile.rs"
         ]
       },
       "verifications": [
@@ -22836,7 +22838,7 @@
       "traceability": {
         "specification": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming",
         "inventories": [
-          "parity/fixtures/grammar-merge.json"
+          "parity/grammars/reconcile/pairs.json"
         ],
         "sources": [
           "acceptanceGate",

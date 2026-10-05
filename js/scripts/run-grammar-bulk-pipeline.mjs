@@ -135,7 +135,7 @@ async function importPinned(pinned) {
 
 /** Runs every stage of one language, calling `report(row)` after each. */
 export async function bulkLanguageRow(entry, report = () => {}) {
-  const { compileGrammar, importAntlr, mergeGrammars, parseGrammarLinks } = await import('../src/index.js');
+  const { compileGrammar, importAntlr, mergeGrammars, parseGrammarLinks, sharedRuleDecisions } = await import('../src/index.js');
   const { importTreeSitterNative, renderTreeSitterNative } = await import('../src/grammar-importers/tree-sitter-native.js');
   const { nativeRows } = await import('./native-grammar-rows.mjs');
   const oracle = readJson('parity/fixtures/default-cst-expected.json').languages[entry.name]?.positive ?? null;
@@ -195,14 +195,21 @@ export async function bulkLanguageRow(entry, report = () => {}) {
       row.merge = { sources: grammars.map(({ id }) => id), stage: 'merge' };
       report(row);
       const start = performance.now();
-      const merged = mergeGrammars(grammars.map(({ id, grammar }, precedence) => ({ id, language: entry.name, precedence, grammar })));
-      const decisions = merged.groups.flatMap((group) => group.decisions);
+      const merged = mergeGrammars(
+        grammars.map(({ id, grammar }, precedence) => ({ id, language: entry.name, precedence, grammar })),
+        { reconcile: true },
+      );
+      const shared = merged.groups.flatMap(sharedRuleDecisions);
       row.merge = {
         ...row.merge,
         stage: 'done',
         status: merged.status,
         rules: merged.groups.reduce((sum, group) => sum + group.grammar.rules.size, 0),
-        sharedRules: decisions.filter(({ kind, members }) => kind === 'merged' && new Set(members.map((alias) => alias.split(':')[0])).size > 1).length,
+        sharedRules: shared.length,
+        // The shared rules by how they were matched: proven equivalent,
+        // corresponding up to lexical roles, or corresponding by name.
+        sharedBy: Object.fromEntries(['merged', 'structural', 'name'].map((basis) => [basis, shared.filter(({ kind, basis: how }) =>
+          (basis === 'merged' ? kind === 'merged' : kind === 'reconciled' && how.startsWith(basis === 'name' ? 'name' : 'structural'))).length])),
         mergeMs: elapsed(start),
       };
     } catch (error) {

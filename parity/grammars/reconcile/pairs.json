@@ -1,0 +1,35 @@
+{
+  "description": "Real grammar pairs of one language that the merge must reconcile: a shipped native grammar (merged from tree-sitter and the official specifications) and the grammars-v4 ANTLR grammar of the language at revision 7df52be94698550d219d299d04105c6bafadd9c3. `corresponding` lists the rule pairs the merge must unite and how; js/tests/issue-195-merge-real-reconciliation.test.js and rust/tests/unit/issue_195_merge_real_reconciliation.rs check them.",
+  "grammarsV4Revision": "7df52be94698550d219d299d04105c6bafadd9c3",
+  "pairs": [
+    {
+      "language": "JSON",
+      "native": "parity/grammars/native/json.lino",
+      "grammarsV4": "parity/grammars/reconcile/grammars-v4-7df52be-JSON.g4",
+      "grammarsV4Origin": "https://github.com/antlr/grammars-v4/blob/7df52be94698550d219d299d04105c6bafadd9c3/json/JSON.g4",
+      "entryPoint": "json",
+      "corresponding": [
+        ["value", "value", "structural-correspondence-up-to-lexical-roles"],
+        ["object", "obj", "structural-correspondence-up-to-lexical-roles"],
+        ["pair", "pair", "structural-correspondence-up-to-lexical-roles"],
+        ["array", "arr", "structural-correspondence-up-to-lexical-roles"],
+        ["string", "STRING", "structural-correspondence-up-to-lexical-roles"],
+        ["number", "NUMBER", "structural-correspondence-up-to-lexical-roles"]
+      ],
+      "concepts": { "obj": "grammar.object", "arr": "grammar.list", "STRING": "grammar.string" }
+    },
+    {
+      "language": "CSV",
+      "native": "parity/grammars/native/csv.lino",
+      "grammarsV4": "parity/grammars/reconcile/grammars-v4-7df52be-CSV.g4",
+      "grammarsV4Origin": "https://github.com/antlr/grammars-v4/blob/7df52be94698550d219d299d04105c6bafadd9c3/csv/CSV.g4",
+      "entryPoint": "csvFile",
+      "corresponding": [
+        ["row", "row", "name-correspondence"],
+        ["field", "field", "name-correspondence"],
+        ["text", "TEXT", "name-correspondence"]
+      ],
+      "concepts": { "row": "table-row", "field": "table-cell" }
+    }
+  ]
+}
