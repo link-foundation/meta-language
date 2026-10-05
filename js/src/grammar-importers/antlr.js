@@ -693,7 +693,8 @@ function commandType(command) {
 
 // A rule whose `-> type(X)` command retypes its tokens matches where X does:
 // X gains a reference to it. An X that only `tokens {...}` declares becomes a
-// token rule of the rules that retype to it.
+// token rule of the rules that retype to it. An X that already has that
+// alternative, as an exported grammar re-imports, keeps it once.
 function applyRetypes(rules) {
   for (const rule of [...rules]) {
     if (rule.retype === null || rule.retype === undefined || rule.retype === rule.name) continue;
@@ -703,10 +704,20 @@ function applyRetypes(rules) {
       rules.push(target);
     }
     const reference = GrammarBuilder.ref(rule.name);
-    target.expression = target.expression === null ? reference : GrammarBuilder.choice(target.expression, reference);
+    if (!hasAlternative(target.expression, reference)) {
+      target.expression = target.expression === null ? reference : GrammarBuilder.choice(target.expression, reference);
+    }
     const note = `also ${rule.name}, which -> type(${target.name}) retypes`;
-    target.doc = target.doc === null ? note : `${target.doc}; ${note}`;
+    if (target.doc === null) target.doc = note;
+    else if (!target.doc.split('; ').includes(note)) target.doc = `${target.doc}; ${note}`;
   }
+}
+
+// Whether `expression` is `reference` or an unordered choice with it as an alternative.
+function hasAlternative(expression, reference) {
+  if (expression === null) return false;
+  const alternatives = expression.kind === 'choice' && !expression.ordered ? expression.items : [expression];
+  return alternatives.some((item) => item.kind === 'ref' && item.name === reference.name);
 }
 
 const UNICODE_SCRIPTS = new Set([

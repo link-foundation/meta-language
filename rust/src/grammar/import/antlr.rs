@@ -872,7 +872,8 @@ fn command_type(command: &str) -> Option<String> {
 
 /// A rule whose `-> type(X)` command retypes its tokens matches where X does:
 /// X gains a reference to it. An X that only `tokens {...}` declares becomes
-/// a token rule of the rules that retype to it.
+/// a token rule of the rules that retype to it. An X that already has that
+/// alternative, as an exported grammar re-imports, keeps it once.
 fn apply_retypes(parsed: Vec<(GrammarRule, Option<String>)>) -> Vec<GrammarRule> {
     let mut retypes = Vec::new();
     let mut rules = Vec::with_capacity(parsed.len());
@@ -893,14 +894,24 @@ fn apply_retypes(parsed: Vec<(GrammarRule, Option<String>)>) -> Vec<GrammarRule>
             );
             continue;
         };
-        let mut alternatives = Vec::new();
-        push_choice_alternative(
-            &mut alternatives,
-            std::mem::replace(&mut rule.expr, GrammarExpr::Empty),
-        );
-        push_choice_alternative(&mut alternatives, reference);
-        rule.expr = finish_choice(alternatives);
+        let has_alternative = match &rule.expr {
+            GrammarExpr::Choice {
+                ordered: false,
+                alternatives,
+            } => alternatives.contains(&reference),
+            expr => *expr == reference,
+        };
+        if !has_alternative {
+            let mut alternatives = Vec::new();
+            push_choice_alternative(
+                &mut alternatives,
+                std::mem::replace(&mut rule.expr, GrammarExpr::Empty),
+            );
+            push_choice_alternative(&mut alternatives, reference);
+            rule.expr = finish_choice(alternatives);
+        }
         rule.doc = Some(match rule.doc.take() {
+            Some(doc) if doc.split("; ").any(|part| part == note) => doc,
             Some(doc) => format!("{doc}; {note}"),
             None => note,
         });
