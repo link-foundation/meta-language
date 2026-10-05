@@ -502,15 +502,6 @@ fn check_language(language: &str) {
         "carriage returns"
     );
 
-    let seed = runtime_seed(text(&manifest, "seed"));
-    let total = runtime_cases();
-    let (failures, clean_cases) = runtime_problems(language, &seed, total);
-    assert!(failures.is_empty(), "{}", failures.join("\n"));
-    assert!(
-        clean_cases > 0 && clean_cases < total,
-        "{clean_cases} of {total} run-time cases are clean"
-    );
-
     record(&Observation {
         requirement_id: &format!("I195-GENERATIVE-{}", language.to_uppercase()),
         suffix: "positive-and-negative",
@@ -521,9 +512,30 @@ fn check_language(language: &str) {
     });
 }
 
+/// The run-time pass of a language: inputs generated from the manifest seed
+/// (or `ISSUE_195_GENERATIVE_SEED`), a test of its own so that it runs beside
+/// the fixture cases, not after them (native Lean's malformed inputs repair
+/// over many rounds, and one test of both outran the job's timeout).
+fn check_runtime(language: &str) {
+    let manifest = read_json("manifest.json");
+    let seed = runtime_seed(text(&manifest, "seed"));
+    let total = runtime_cases();
+    let (failures, clean_cases) = runtime_problems(language, &seed, total);
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert!(
+        clean_cases > 0 && clean_cases < total,
+        "{clean_cases} of {total} run-time cases are clean"
+    );
+}
+
 #[test]
 fn issue_195_generative_javascript() {
     check_language("JavaScript");
+}
+
+#[test]
+fn issue_195_generative_javascript_runtime() {
+    check_runtime("JavaScript");
 }
 
 #[test]
@@ -532,13 +544,28 @@ fn issue_195_generative_lean() {
 }
 
 #[test]
+fn issue_195_generative_lean_runtime() {
+    check_runtime("Lean");
+}
+
+#[test]
 fn issue_195_generative_rocq() {
     check_language("Rocq");
 }
 
 #[test]
+fn issue_195_generative_rocq_runtime() {
+    check_runtime("Rocq");
+}
+
+#[test]
 fn issue_195_generative_rust() {
     check_language("Rust");
+}
+
+#[test]
+fn issue_195_generative_rust_runtime() {
+    check_runtime("Rust");
 }
 
 /// Edit sequences the run-time pass found, kept as reproducers: after each

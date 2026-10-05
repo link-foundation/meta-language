@@ -456,7 +456,8 @@ jobs:
   # test runs in exactly one suite. Doc tests and the example check run with
   # `remaining`. The generative suite runs alone: native Lean's malformed
   # inputs repair over many rounds, and with the translation tests they
-  # outran the job's timeout on Windows.
+  # outran the job's timeout on Windows. Each language's fixture cases and
+  # run-time cases are two tests, so the two run side by side.
   test:
     name: Test (${{ matrix.os }}, ${{ matrix.suite }})
     runs-on: ${{ matrix.os }}
