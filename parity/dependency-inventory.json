@@ -8340,7 +8340,8 @@
       "category": "action",
       "name": "actions/download-artifact",
       "declaredIn": [
-        ".github/workflows/ci.yml"
+        ".github/workflows/ci.yml",
+        ".github/workflows/rust.yml"
       ],
       "pinned": "v8",
       "compare": "major",
@@ -8375,7 +8376,8 @@
       "category": "action",
       "name": "actions/upload-artifact",
       "declaredIn": [
-        ".github/workflows/ci.yml"
+        ".github/workflows/ci.yml",
+        ".github/workflows/rust.yml"
       ],
       "pinned": "v7",
       "compare": "major",
