@@ -139,6 +139,7 @@
     },
     "go": {
       "id": "go",
+      "oracle": true,
       "crate": "tree-sitter-go",
       "directory": ".",
       "version": "0.25.0",
@@ -148,6 +149,7 @@
     },
     "graphql": {
       "id": "graphql",
+      "oracle": true,
       "crate": "tree-sitter-graphql",
       "directory": ".",
       "version": "0.3.0",
@@ -203,6 +205,7 @@
     },
     "java": {
       "id": "java",
+      "oracle": true,
       "crate": "tree-sitter-java",
       "directory": ".",
       "version": "0.23.5",
@@ -377,6 +380,7 @@
     },
     "proto": {
       "id": "proto",
+      "oracle": true,
       "crate": "tree-sitter-proto",
       "directory": ".",
       "version": "0.6.0",
@@ -414,6 +418,7 @@
     },
     "regex": {
       "id": "regex",
+      "oracle": true,
       "crate": "tree-sitter-regex",
       "directory": ".",
       "version": "0.25.0",
