@@ -19,11 +19,13 @@ mod ordering;
 mod parting;
 mod precedence;
 mod program;
+mod repetition;
 mod results;
 mod rules;
 mod text;
 mod token_ranks;
 mod tree;
+mod walk;
 
 use std::cell::{Cell, RefCell};
 use std::collections::HashSet;

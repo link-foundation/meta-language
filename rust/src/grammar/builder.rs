@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::{CharClassItem, GrammarExpr};
+use super::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
 
 /// Largest integer a JavaScript number holds exactly (`Number.MAX_SAFE_INTEGER`).
 const MAX_SAFE_INTEGER: u64 = (1 << 53) - 1;
@@ -253,4 +253,68 @@ pub fn canonical_repeat(
         (0, Some(1)) => GrammarExpr::optional(expr),
         (min, max) => GrammarExpr::repeat(expr, bound(min)?, max.map(bound).transpose()?),
     })
+}
+
+/// Fluent builder for order-preserving grammars.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct GrammarBuilder {
+    grammar: Grammar,
+}
+
+impl GrammarBuilder {
+    /// Builds an empty grammar builder.
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            grammar: Grammar::new(),
+        }
+    }
+
+    /// Returns this builder with a source format.
+    #[must_use]
+    pub const fn source_format(mut self, source_format: GrammarFormat) -> Self {
+        self.grammar.source_format = Some(source_format);
+        self
+    }
+
+    /// Returns this builder with a start rule name.
+    #[must_use]
+    pub fn start(mut self, start: impl Into<String>) -> Self {
+        self.grammar.start = Some(start.into());
+        self
+    }
+
+    /// Adds a normal rule from a name and expression.
+    #[must_use]
+    pub fn rule(mut self, name: impl Into<String>, expr: GrammarExpr) -> Self {
+        self.grammar.rules.push(GrammarRule::new(name, expr));
+        self
+    }
+
+    /// Adds a complete rule.
+    #[must_use]
+    pub fn grammar_rule(mut self, rule: GrammarRule) -> Self {
+        self.grammar.rules.push(rule);
+        self
+    }
+
+    /// Adds a rule with an explicit kind.
+    #[must_use]
+    pub fn rule_with_kind(
+        mut self,
+        name: impl Into<String>,
+        expr: GrammarExpr,
+        kind: RuleKind,
+    ) -> Self {
+        self.grammar
+            .rules
+            .push(GrammarRule::new(name, expr).with_kind(kind));
+        self
+    }
+
+    /// Finishes the builder.
+    #[must_use]
+    pub fn build(self) -> Grammar {
+        self.grammar
+    }
 }

@@ -8,9 +8,9 @@ use std::rc::Rc;
 use super::executor::{Executor, Run};
 use super::forking::{declared_fork, direct_edge, edge_names, lookahead_of};
 use super::operations::State;
-use super::ordering::first_meaningful;
 use super::program::{Associativity, Expr, Name, PrecedenceTag, Target, compare_precedence};
 use super::results::{Res, ResultSet, Tree, TreeType, children_of};
+use super::walk::first_meaningful;
 use crate::grammar::RuleKind;
 
 /// The node kinds the leftmost and rightmost operand of a precedence

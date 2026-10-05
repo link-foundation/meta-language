@@ -17,6 +17,7 @@ use super::issue_195_observations::{Observation, record};
 const JSON_GRAMMAR: &str = include_str!("../../src/data/native-grammars/json.lino");
 const TYPESCRIPT_GRAMMAR: &str = include_str!("../../src/data/native-grammars/typescript.lino");
 /// The child test that parses under the capped address space.
+#[cfg(target_os = "linux")]
 const CAPPED_CHILD: &str = "issue_195_parse_memory_budget::capped_typescript_parse";
 
 fn observe(assertions: &[&str], test_name: &str) {

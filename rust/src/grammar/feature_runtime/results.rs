@@ -11,9 +11,11 @@ use std::rc::Rc;
 
 use super::forking::{GrammarFacts, Lead};
 use super::operations::{OperationValue, State};
-pub(super) use super::ordering::{complete_order, preferred_tokens, same_children};
-use super::ordering::{same_output, settled_order, token_conflict};
+pub(super) use super::ordering::{complete_order, preferred_tokens};
+use super::ordering::{settled_order, token_conflict};
 use super::program::{Name, PrecedenceTag, Settling, TokenRanks};
+pub(super) use super::walk::same_children;
+use super::walk::same_output;
 use crate::grammar::PrecedenceEntry;
 
 /// The type of a syntax tree node.

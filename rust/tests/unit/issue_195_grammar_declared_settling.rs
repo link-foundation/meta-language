@@ -229,8 +229,25 @@ fn the_executor_settles_by_the_declared_steps_not_by_source_format() {
         r#"GrammarFormat::(?:TreeSitter|Antlr|Lark)|"tree-sitter"|"antlr"|"lark""#,
     )
     .expect("the format pattern compiles");
-    for entry in fs::read_dir(&runtime).expect("the runtime is listed") {
-        let path = entry.expect("a runtime file").path();
+    // The runtime files and the files of their submodules.
+    let mut directories = vec![runtime.clone()];
+    let mut paths = Vec::new();
+    while let Some(directory) = directories.pop() {
+        for entry in fs::read_dir(&directory).expect("the runtime is listed") {
+            let path = entry.expect("a runtime file").path();
+            if path.is_dir() {
+                directories.push(path);
+            } else {
+                paths.push(path);
+            }
+        }
+    }
+    assert!(
+        paths
+            .iter()
+            .any(|path| path.ends_with("forking/lead_sets.rs"))
+    );
+    for path in paths {
         let source = fs::read_to_string(&path).expect("the runtime file reads");
         // No settling decided by the format a grammar was imported from.
         let found: Vec<_> = format

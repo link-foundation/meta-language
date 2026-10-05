@@ -8,12 +8,12 @@ use std::rc::Rc;
 
 use super::executor::{Executor, Run};
 use super::forking::GrammarFacts;
-use super::ordering::{
-    Walk, by_associativity, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful,
-    same_tree, shift_preferred,
-};
+use super::ordering::{by_associativity, shift_preferred};
 use super::program::{Expr, Name, PrecedenceTag, compare_precedence};
 use super::results::{Children, Res, Tree, TreeType, is_separator};
+use super::walk::{
+    Walk, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful, same_tree,
+};
 use crate::grammar::PrecedenceEntry;
 
 /// Whether a parse that has `leaf` alone and one that has `node`, which

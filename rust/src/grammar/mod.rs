@@ -43,7 +43,9 @@ pub mod surface;
 pub mod translate;
 pub mod validate;
 
-pub use builder::{ExprBuilder, RepetitionBoundsError, canonical_repeat, choice, sequence};
+pub use builder::{
+    ExprBuilder, GrammarBuilder, RepetitionBoundsError, canonical_repeat, choice, sequence,
+};
 pub use concepts::{
     GRAMMAR_CONCEPTS, GrammarConcept, annotate_grammar_concepts, grammar_expr_concept_id,
     rule_concept_id,
@@ -131,7 +133,7 @@ pub use merge::{
     MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, merge_grammars,
     normalized_rule_definition, rename_grammar_rule, restore_source_names,
 };
-pub use metadata::{GrammarKind, GrammarSourceName};
+pub use metadata::{GrammarFormat, GrammarKind, GrammarSourceName};
 pub use reverse::{
     GrammarReverseConversion, GrammarReverseFailure, GrammarReverseFailureKind,
     GrammarReverseReport, GrammarReverseStage, GrammarReverseStatus,
@@ -656,72 +658,6 @@ impl GrammarRule {
     }
 }
 
-/// Origin grammar format.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum GrammarFormat {
-    /// The meta-language's own grammar notation.
-    MetaLanguage,
-    /// Backus-Naur Form.
-    Bnf,
-    /// Extended Backus-Naur Form.
-    Ebnf,
-    /// Augmented Backus-Naur Form.
-    Abnf,
-    /// Parsing Expression Grammar.
-    Peg,
-    /// ANTLR grammar.
-    Antlr,
-    /// Lark grammar.
-    Lark,
-    /// GBNF grammar.
-    Gbnf,
-    /// Tree-sitter grammar.
-    TreeSitter,
-    /// Grammar inferred from examples or observations.
-    Inferred,
-}
-
-impl GrammarFormat {
-    /// Stable tag used in links encoding and display output.
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::MetaLanguage => "meta-language",
-            Self::Bnf => "bnf",
-            Self::Ebnf => "ebnf",
-            Self::Abnf => "abnf",
-            Self::Peg => "peg",
-            Self::Antlr => "antlr",
-            Self::Lark => "lark",
-            Self::Gbnf => "gbnf",
-            Self::TreeSitter => "tree-sitter",
-            Self::Inferred => "inferred",
-        }
-    }
-
-    pub(crate) fn from_tag(value: &str) -> Option<Self> {
-        match value {
-            "meta-language" => Some(Self::MetaLanguage),
-            "bnf" => Some(Self::Bnf),
-            "ebnf" => Some(Self::Ebnf),
-            "abnf" => Some(Self::Abnf),
-            "peg" => Some(Self::Peg),
-            "antlr" => Some(Self::Antlr),
-            "lark" => Some(Self::Lark),
-            "gbnf" => Some(Self::Gbnf),
-            "tree-sitter" => Some(Self::TreeSitter),
-            "inferred" => Some(Self::Inferred),
-            _ => None,
-        }
-    }
-}
-
-impl fmt::Display for GrammarFormat {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(self.as_str())
-    }
-}
-
 /// Order-preserving grammar.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Grammar {
@@ -937,70 +873,6 @@ pub fn carry_rule_docs(
         }
     }
     target
-}
-
-/// Fluent builder for order-preserving grammars.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct GrammarBuilder {
-    grammar: Grammar,
-}
-
-impl GrammarBuilder {
-    /// Builds an empty grammar builder.
-    #[must_use]
-    pub const fn new() -> Self {
-        Self {
-            grammar: Grammar::new(),
-        }
-    }
-
-    /// Returns this builder with a source format.
-    #[must_use]
-    pub const fn source_format(mut self, source_format: GrammarFormat) -> Self {
-        self.grammar.source_format = Some(source_format);
-        self
-    }
-
-    /// Returns this builder with a start rule name.
-    #[must_use]
-    pub fn start(mut self, start: impl Into<String>) -> Self {
-        self.grammar.start = Some(start.into());
-        self
-    }
-
-    /// Adds a normal rule from a name and expression.
-    #[must_use]
-    pub fn rule(mut self, name: impl Into<String>, expr: GrammarExpr) -> Self {
-        self.grammar.rules.push(GrammarRule::new(name, expr));
-        self
-    }
-
-    /// Adds a complete rule.
-    #[must_use]
-    pub fn grammar_rule(mut self, rule: GrammarRule) -> Self {
-        self.grammar.rules.push(rule);
-        self
-    }
-
-    /// Adds a rule with an explicit kind.
-    #[must_use]
-    pub fn rule_with_kind(
-        mut self,
-        name: impl Into<String>,
-        expr: GrammarExpr,
-        kind: RuleKind,
-    ) -> Self {
-        self.grammar
-            .rules
-            .push(GrammarRule::new(name, expr).with_kind(kind));
-        self
-    }
-
-    /// Finishes the builder.
-    #[must_use]
-    pub fn build(self) -> Grammar {
-        self.grammar
-    }
 }
 
 fn write_joined(
