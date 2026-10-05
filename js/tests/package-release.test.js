@@ -193,7 +193,7 @@ test('Rust release pipeline delegates npm publishing to the canonical JavaScript
 
 test('issue 195 acceptance workflow produces exact-checkpoint evidence with pinned toolchains', async () => {
   const workflow = await readFile(
-    new URL('../../.github/workflows/issue-195-acceptance.yml', import.meta.url),
+    new URL('../../.github/workflows/ci.yml', import.meta.url),
     'utf8',
   );
 

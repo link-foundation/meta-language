@@ -86,7 +86,7 @@ test('AGENTS.md and CONTRIBUTING.md keep local runs targeted, bounded and cleane
   }
   assert.match(section, /Work in batches: commit each step, re-read the diff and push once per batch/u);
   assert.match(section, /node scripts\/clean-caches\.mjs/u);
-  assert.match(section, /`Issue 195 Full Acceptance` workflows in `\.github\/workflows\/` run them on\s+every push/u);
+  assert.match(section, /`CI` workflow\s+\(`\.github\/workflows\/ci\.yml`\)[^;]*\s+runs them on every push/u);
   observe('I195-RESOURCE-AGENT-RULES', [
     'targetedChecksDocumented',
     'boundedParallelismDocumented',

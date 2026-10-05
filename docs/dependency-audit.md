@@ -548,16 +548,16 @@ they are.
 |---|---|---|---|---|---|---|
 | `@secretlint/secretlint-rule-preset-recommend` | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `cargo-llvm-cov` | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `elan` | `.github/workflows/issue-195-acceptance.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
-| `lean` | `.github/workflows/issue-195-acceptance.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
+| `elan` | `.github/workflows/ci.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
+| `lean` | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
 | `node` | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
-| `node` | `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
+| `node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
 | `npm` | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
-| `ocaml` | `.github/workflows/issue-195-acceptance.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
+| `ocaml` | `.github/workflows/ci.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
 | `pre-commit/pre-commit-hooks` | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
-| `rocq-core` | `.github/workflows/issue-195-acceptance.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
-| `rocq-prover` | `.github/workflows/issue-195-acceptance.yml` | `meta.1` |  | unversioned | not applicable |  |
-| `rocq-stdlib` | `.github/workflows/issue-195-acceptance.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
+| `rocq-core` | `.github/workflows/ci.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
+| `rocq-prover` | `.github/workflows/ci.yml` | `meta.1` |  | unversioned | not applicable |  |
+| `rocq-stdlib` | `.github/workflows/ci.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
 | `rust-script` | `rust/scripts/install-rust-script.sh` | `latest` |  | floating | current |  |
 | `secretlint` | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `tree-sitter-cli` | `js/src/vendor/grammars/grammar-lock.json`, `rust/src/data/grammar-lock.json` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
@@ -567,23 +567,23 @@ they are.
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `actions/cache` | `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/rust.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
-| `actions/checkout` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/checkout) | major | current |  |
+| `actions/cache` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
+| `actions/checkout` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/checkout) | major | current |  |
 | `actions/configure-pages` | `.github/workflows/rust.yml` | `v6` | v6.0.0 (GitHub release, actions/configure-pages) | major | current |  |
 | `actions/deploy-pages` | `.github/workflows/rust.yml` | `v5` | v5.0.1 (GitHub release, actions/deploy-pages) | major | current |  |
-| `actions/download-artifact` | `.github/workflows/issue-195-acceptance.yml` | `v8` | v8.0.1 (GitHub release, actions/download-artifact) | major | current |  |
-| `actions/setup-node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.0 (GitHub release, actions/setup-node) | major | current |  |
-| `actions/upload-artifact` | `.github/workflows/ci.yml`, `.github/workflows/issue-195-acceptance.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
+| `actions/download-artifact` | `.github/workflows/ci.yml` | `v8` | v8.0.1 (GitHub release, actions/download-artifact) | major | current |  |
+| `actions/setup-node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.0 (GitHub release, actions/setup-node) | major | current |  |
+| `actions/upload-artifact` | `.github/workflows/ci.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
 | `actions/upload-pages-artifact` | `.github/workflows/rust.yml` | `v5` | v5.0.0 (GitHub release, actions/upload-pages-artifact) | major | current |  |
 | `codecov/codecov-action` | `.github/workflows/rust.yml` | `v7` | v7.1.1 (GitHub release, codecov/codecov-action) | major | current |  |
 | `docker/build-push-action` | `.github/workflows/rust.yml` | `v7` | v7.4.0 (GitHub release, docker/build-push-action) | major | current |  |
 | `docker/login-action` | `.github/workflows/rust.yml` | `v4` | v4.6.0 (GitHub release, docker/login-action) | major | current |  |
 | `docker/metadata-action` | `.github/workflows/rust.yml` | `v6` | v6.2.0 (GitHub release, docker/metadata-action) | major | current |  |
 | `docker/setup-buildx-action` | `.github/workflows/rust.yml` | `v4` | v4.4.1 (GitHub release, docker/setup-buildx-action) | major | current |  |
-| `dtolnay/rust-toolchain` | `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml` | `1.99.0` | 1.99.0 (GitHub release, rust-lang/rust) | version | current |  |
+| `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml` | `1.99.0` | 1.99.0 (GitHub release, rust-lang/rust) | version | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/rust.yml` | `master` |  | floating | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/rust.yml` | `stable` |  | floating | current |  |
-| `ocaml/setup-ocaml` | `.github/workflows/issue-195-acceptance.yml` | `v3` | v3.9.0 (GitHub release, ocaml/setup-ocaml) | major | current |  |
+| `ocaml/setup-ocaml` | `.github/workflows/ci.yml` | `v3` | v3.9.0 (GitHub release, ocaml/setup-ocaml) | major | current |  |
 | `peter-evans/create-pull-request` | `.github/workflows/rust.yml` | `v8` | v8.1.1 (GitHub release, peter-evans/create-pull-request) | major | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `cargo-llvm-cov` |  | floating | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.87.24 (GitHub release, taiki-e/install-action) | major | current |  |
@@ -598,9 +598,9 @@ they are.
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `macos-latest` | `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `ubuntu-latest` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `windows-latest` | `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `macos-latest` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `ubuntu-latest` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `windows-latest` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 
 ## Published artifact contents
 
@@ -655,5 +655,5 @@ they are.
 - `windows-link` `0.2.1` → `0.100.0` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.2.0`), `windows-sys` 0.61.2 (`^0.2.1`), which does not admit 0.100.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.1`, held by `crate rust/Cargo.lock parking_lot_core@0.9.12` (`^0.2.0`), `crate rust/Cargo.lock windows-sys@0.61.2` (`^0.2.1`).
 - `windows-sys` `0.52.0` → `0.61.2` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does. Delivered at its newest compatible release `0.52.0`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.52`).
 - `windows-targets` `0.52.6` → `0.53.5` (`rust/Cargo.lock`): Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-sys@0.52.0` (`^0.52.0`).
-- `ocaml` `5.4` → `5.5.1` (`.github/workflows/issue-195-acceptance.yml`): Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. Delivered at its newest compatible release `5.4.1`, held by `opam ocamlfind 1.9.8` (`<5.5.0`).
+- `ocaml` `5.4` → `5.5.1` (`.github/workflows/ci.yml`): Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. Delivered at its newest compatible release `5.4.1`, held by `opam ocamlfind 1.9.8` (`<5.5.0`).
 - `emscripten/emsdk` `4.0.15` → `6.0.11` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json`): Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Delivered at its newest compatible release `4.0.15`, held by `npm js/package-lock.json web-tree-sitter@0.27.0` (`=4.0.15`).

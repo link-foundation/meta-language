@@ -26,7 +26,7 @@ let report;
 try {
   verifyEvaluatedCheckout(root, commit);
   const snapshot = await inspectMergeEnforcement({ repository: 'link-foundation/meta-language' });
-  const acceptanceWorkflow = await readFile(path.join(root, '.github/workflows/issue-195-acceptance.yml'), 'utf8');
+  const acceptanceWorkflow = await readFile(path.join(root, '.github/workflows/ci.yml'), 'utf8');
   verifyEvaluatedCheckout(root, commit);
   report = {
     commit, snapshot,

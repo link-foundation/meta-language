@@ -196,7 +196,7 @@ test('toolchains, workflow actions, runners and build images are current, and th
   const rust = item(tools, ({ category, name, compare }) => category === 'action' && name === 'dtolnay/rust-toolchain' && compare === 'version', 'the pinned Rust toolchain');
   assert.equal(rust.pinned, rust.current);
   assert.equal(verdicts.get(rust.id).status, 'current');
-  for (const workflow of ['.github/workflows/issue-195-acceptance.yml']) {
+  for (const workflow of ['.github/workflows/ci.yml']) {
     for (const [, version] of read(workflow).matchAll(/dtolnay\/rust-toolchain@(\d[^\s]*)/gu)) assert.equal(version, rust.pinned, workflow);
   }
   // OCaml is held by the newest ocamlfind, which Rocq requires.

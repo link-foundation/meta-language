@@ -12,7 +12,7 @@ const manifest = JSON.parse(await readFile(
   new URL('../../parity/issue-195-requirements.json', import.meta.url), 'utf8',
 ));
 const acceptanceWorkflow = await readFile(
-  new URL('../../.github/workflows/issue-195-acceptance.yml', import.meta.url), 'utf8',
+  new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8',
 );
 const head = 'a'.repeat(40);
 const merged = 'c'.repeat(40);
@@ -220,7 +220,7 @@ test('live inspection reads the default branch, its rules and the open pull requ
 test('the merge-enforcement tooling and workflows need no ruleset credential', async () => {
   for (const file of [
     '../scripts/issue-195-merge-enforcement.mjs', '../scripts/check-issue-195-merge-enforcement.mjs',
-    '../../.github/workflows/issue-195-acceptance.yml',
+    '../../.github/workflows/ci.yml',
   ]) {
     assert.doesNotMatch(await readFile(new URL(file, import.meta.url), 'utf8'), /ISSUE_195_RULESET_TOKEN/, file);
   }

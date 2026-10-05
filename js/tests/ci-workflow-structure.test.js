@@ -1,11 +1,11 @@
-// The CI workflow structure: the Rust workflow runs only after the JavaScript
-// workflow passes, the acceptance workflow's Rust stages run only after the
-// matching JavaScript stages, and every job reports every failure in one run
+// The CI workflow structure: the Rust workflow and the acceptance stages run
+// only after the JavaScript workflow passes, the Rust acceptance stages run
+// only after the matching JavaScript stages, and every job reports every failure in one run
 // (cargo test --no-fail-fast, check steps that run unless the run was
 // cancelled, and cargo fmt, clippy and doc in separate steps).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
@@ -33,7 +33,7 @@ function triggers(text) {
 
 test('ci.yml calls the JavaScript workflow and then the Rust workflow, which needs it', () => {
   const text = workflow('ci.yml');
-  assert.deepEqual(triggers(text).sort(), ['pull_request', 'push']);
+  assert.deepEqual(triggers(text).sort(), ['pull_request', 'push', 'release']);
   const ci = jobs('ci.yml');
   assert.match(ci.get('js').header, /^ {4}uses: \.\/\.github\/workflows\/js\.yml$/mu);
   assert.match(ci.get('rust').header, /^ {4}uses: \.\/\.github\/workflows\/rust\.yml$/mu);
@@ -62,7 +62,6 @@ test('every cargo test command in the workflows and the scripts they call uses -
     '.github/workflows/ci.yml',
     '.github/workflows/js.yml',
     '.github/workflows/rust.yml',
-    '.github/workflows/issue-195-acceptance.yml',
     'rust/scripts/simulate-fresh-merge.sh',
   ];
   let seen = 0;
@@ -123,7 +122,7 @@ test('cargo fmt, cargo clippy and cargo doc are separate steps of the lint job',
 });
 
 test('the acceptance workflow runs each Rust stage only after the matching JavaScript stage passes', () => {
-  const acceptance = jobs('issue-195-acceptance.yml');
+  const acceptance = jobs('ci.yml');
   for (const [rust, javascript] of [['native-rust', 'native-javascript'], ['rust-suite', 'javascript-suite']]) {
     assert.ok(acceptance.has(javascript), `the acceptance workflow has a ${javascript} job`);
     assert.ok(acceptance.has(rust), `the acceptance workflow has a ${rust} job`);
@@ -139,4 +138,61 @@ test('the acceptance workflow runs each Rust stage only after the matching JavaS
     assert.ok(aggregate.includes(stage), `the aggregate needs ${stage}`);
   }
   observe('I195-CI-ACCEPTANCE-STAGE-ORDER', ['rustStagesNeedJavaScriptStages'], 'the Rust acceptance stages need the JavaScript stages');
+});
+
+/** The jobs `id` needs, directly or through the jobs it needs. */
+function ancestors(parsed, id, seen = new Set()) {
+  for (const parent of needs(parsed.get(id))) {
+    if (!seen.has(parent)) {
+      seen.add(parent);
+      ancestors(parsed, parent, seen);
+    }
+  }
+  return seen;
+}
+
+const ACCEPTANCE_JOBS = [
+  'candidates', 'consumers', 'rml-workloads', 'formal-ai-workloads', 'runtime-parity', 'native-javascript', 'native-rust',
+  'native-translations', 'javascript-suite', 'rust-suite', 'delivery', 'post-merge', 'acceptance',
+];
+
+test('the acceptance stages are ci.yml jobs that start only after every JavaScript job passed', () => {
+  const ci = jobs('ci.yml');
+  for (const id of ACCEPTANCE_JOBS) {
+    assert.ok(ci.has(id), `ci.yml has the acceptance job ${id}`);
+    assert.ok(ancestors(ci, id).has('js'), `${id} needs the js job`);
+    // always() or !cancelled() would run the job after a failed js job; such a job must test the js result itself.
+    const own = condition(ci.get(id));
+    if (/always\(\)|cancelled\(\)/u.test(own) && id !== 'acceptance') {
+      const gated = /needs\.js\.result == 'success'/u.test(own) ||
+        needs(ci.get(id)).some((parent) => new RegExp(`needs\\.${parent}\\.result == 'success'`, 'u').test(own) && parent !== 'js');
+      assert.ok(gated, `${id} runs after a failed js job: ${own}`);
+    }
+  }
+  // Only a release, whose js.yml runs by its own trigger, starts the candidates without the js job.
+  assert.match(condition(ci.get('candidates')),
+    /needs\.js\.result == 'success' \|\| \(github\.event_name == 'release' && needs\.js\.result == 'skipped'\)/u);
+  assert.match(condition(ci.get('js')), /github\.event_name != 'release'/u);
+  assert.ok(!triggers(workflow('ci.yml')).includes('workflow_run'));
+  const workflows = readdirSync(path.join(root, '.github/workflows'));
+  assert.ok(!workflows.includes('issue-195-acceptance.yml'), 'no separate acceptance workflow starts beside the JavaScript jobs');
+  observe('I195-CI-ACCEPTANCE-AFTER-JAVASCRIPT', ['acceptanceJobsNeedJavaScript', 'noSeparateAcceptanceWorkflow'],
+    'the acceptance stages are ci.yml jobs that start only after every JavaScript job passed');
+});
+
+test('a failed JavaScript job is one aggregate gate error naming the failed jobs', () => {
+  const aggregate = jobs('ci.yml').get('acceptance');
+  assert.match(aggregate.header, /^ {4}if: \$\{\{ always\(\) \}\}$/mu);
+  const [guard] = aggregate.steps;
+  assert.equal(guard.name, 'Require delivery candidates');
+  assert.match(guard.run, /JAVASCRIPT_RESULT" = failure/u);
+  assert.match(guard.run, /actions\/runs\/\$GITHUB_RUN_ID\/attempts\/\$GITHUB_RUN_ATTEMPT\/jobs/u);
+  assert.match(guard.run, /startswith\("JavaScript \/ "\)/u);
+  // One ::error:: per branch and one exit: the skipped stages add no error of their own.
+  assert.equal(guard.run.match(/::error::/gu).length, 2);
+  assert.match(guard.run, /^\s+else$/mu);
+  assert.equal(guard.run.match(/exit 1/gu).length, 1);
+  assert.match(aggregate.header, /actions: read/u);
+  observe('I195-CI-SKIPPED-STAGE-ONE-GATE-ERROR', ['failedJavaScriptIsOneGateError'],
+    'a failed JavaScript job is one aggregate gate error naming the failed jobs');
 });

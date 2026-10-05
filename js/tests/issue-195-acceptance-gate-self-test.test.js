@@ -133,9 +133,9 @@ test('pull request checks use no post-merge state, and post-merge reports never 
       assert.ok(nonBlocking, `${name} ${job.id}: a post-merge step can fail its workflow:\n${step}`);
     }
   }
-  const acceptance = read('.github/workflows/issue-195-acceptance.yml');
+  const acceptance = read('.github/workflows/ci.yml');
   assert.match(acceptance, /check-dependencies\.mjs --delivery --offline/u);
-  assert.match(acceptance, /\n {2}post-merge:\n {4}name: Post-merge Report\n {4}if: \$\{\{ github\.event_name == 'push' \}\}\n {4}continue-on-error: true\n/u);
+  assert.match(acceptance, /\n {2}post-merge:\n {4}name: Post-merge Report\n {4}needs: js\n {4}if: \$\{\{ github\.event_name == 'push' && needs\.js\.result == 'success' \}\}\n {4}continue-on-error: true\n/u);
   observe('I195-ACCEPTANCE-PR-CHECKS-PASSABLE', ['pullRequestChecksUseNoPostMergeState', 'postMergeReportsAreNonBlocking'],
     'pull request checks use no post-merge state, and post-merge reports never block');
 });

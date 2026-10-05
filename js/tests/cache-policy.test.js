@@ -13,7 +13,7 @@ import { CACHE_CLASSES } from '../../scripts/lib/cache-classes.mjs';
 import { REPOSITORY_ROOT, observeCacheCleanup } from './support/cache-fixtures.js';
 
 const read = (relative) => readFileSync(path.join(REPOSITORY_ROOT, relative), 'utf8');
-const WORKFLOWS = ['.github/workflows/rust.yml', '.github/workflows/js.yml', '.github/workflows/issue-195-acceptance.yml'];
+const WORKFLOWS = ['.github/workflows/rust.yml', '.github/workflows/js.yml', '.github/workflows/ci.yml'];
 
 /** The policy problems of this checkout with `files` replaced. */
 const problemsWith = (files, overrides = {}) => checkCachePolicy({ overrides: { files, ...overrides } });

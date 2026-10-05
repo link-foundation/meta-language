@@ -101,9 +101,10 @@ suites:
   `js/scripts/run-issue-195-evidence.mjs`, the native Lean, Rocq and Rust
   translation matrix, clean-consumer installs, the Relative Meta Logic and
   formal-ai workload clones, `cargo llvm-cov`, or experiments over upstream
-  corpora or the whole grammar registry. The `Rust`, `JavaScript` and
-  `Issue 195 Full Acceptance` workflows in `.github/workflows/` run them on
-  every push; read their logs and artifacts instead.
+  corpora or the whole grammar registry. The `CI` workflow
+  (`.github/workflows/ci.yml`), which runs the JavaScript jobs, then the Rust
+  jobs and the issue 195 acceptance stages, runs them on every push; read its
+  logs and artifacts instead.
 - Work in batches: commit each step, re-read the diff and push once per batch.
   After a batch, run `node scripts/clean-caches.mjs`, remove
   `.issue-195-work/`, `issue-195-results/`, `issue-195-artifacts/` and any

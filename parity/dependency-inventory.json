@@ -8041,7 +8041,7 @@
       "category": "toolchain",
       "name": "elan",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/ci.yml"
       ],
       "pinned": "v4.2.4",
       "compare": "version",
@@ -8057,7 +8057,7 @@
       "category": "toolchain",
       "name": "lean",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml",
+        ".github/workflows/ci.yml",
         "experiments/issue-195-projects/lean/lean-toolchain",
         "lean-toolchain"
       ],
@@ -8091,8 +8091,8 @@
       "category": "toolchain",
       "name": "node",
       "declaredIn": [
+        ".github/workflows/ci.yml",
         ".github/workflows/dependency-refresh.yml",
-        ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
       ],
@@ -8125,7 +8125,7 @@
       "category": "toolchain",
       "name": "ocaml",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/ci.yml"
       ],
       "pinned": "5.4",
       "compare": "minor",
@@ -8170,7 +8170,7 @@
       "category": "toolchain",
       "name": "rocq-core",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/ci.yml"
       ],
       "pinned": "9.3.0",
       "compare": "version",
@@ -8186,7 +8186,7 @@
       "category": "toolchain",
       "name": "rocq-prover",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/ci.yml"
       ],
       "pinned": "meta.1",
       "compare": "unversioned",
@@ -8199,7 +8199,7 @@
       "category": "toolchain",
       "name": "rocq-stdlib",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/ci.yml"
       ],
       "pinned": "9.2.0",
       "compare": "version",
@@ -8272,7 +8272,7 @@
       "category": "action",
       "name": "actions/cache",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml",
+        ".github/workflows/ci.yml",
         ".github/workflows/rust.yml"
       ],
       "pinned": "v6",
@@ -8291,7 +8291,6 @@
       "declaredIn": [
         ".github/workflows/ci.yml",
         ".github/workflows/dependency-refresh.yml",
-        ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
       ],
@@ -8341,7 +8340,7 @@
       "category": "action",
       "name": "actions/download-artifact",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/ci.yml"
       ],
       "pinned": "v8",
       "compare": "major",
@@ -8359,7 +8358,6 @@
       "declaredIn": [
         ".github/workflows/ci.yml",
         ".github/workflows/dependency-refresh.yml",
-        ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
       ],
@@ -8377,8 +8375,7 @@
       "category": "action",
       "name": "actions/upload-artifact",
       "declaredIn": [
-        ".github/workflows/ci.yml",
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/ci.yml"
       ],
       "pinned": "v7",
       "compare": "major",
@@ -8490,8 +8487,8 @@
       "category": "action",
       "name": "dtolnay/rust-toolchain",
       "declaredIn": [
-        ".github/workflows/dependency-refresh.yml",
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/ci.yml",
+        ".github/workflows/dependency-refresh.yml"
       ],
       "pinned": "1.99.0",
       "compare": "version",
@@ -8533,7 +8530,7 @@
       "category": "action",
       "name": "ocaml/setup-ocaml",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/ci.yml"
       ],
       "pinned": "v3",
       "compare": "major",
@@ -8621,7 +8618,7 @@
       "category": "runner",
       "name": "macos-latest",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml",
+        ".github/workflows/ci.yml",
         ".github/workflows/rust.yml"
       ],
       "pinned": "latest",
@@ -8637,7 +8634,6 @@
       "declaredIn": [
         ".github/workflows/ci.yml",
         ".github/workflows/dependency-refresh.yml",
-        ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
       ],
@@ -8652,7 +8648,7 @@
       "category": "runner",
       "name": "windows-latest",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml",
+        ".github/workflows/ci.yml",
         ".github/workflows/rust.yml"
       ],
       "pinned": "latest",
