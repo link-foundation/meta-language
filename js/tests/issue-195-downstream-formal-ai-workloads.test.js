@@ -309,3 +309,29 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
   assert.match(runner, /os\.freemem\(\) >= MEMORY_FLOOR_BYTES/u);
   assert.match(runner, /process\.kill\(-child\.pid, 'SIGKILL'\)/u);
 });
+
+// The memory guard killed the Rust workloads in grammar_projection_corpus_ratchet
+// with two tests running at once: the tests now run one at a time and each one's
+// line gives its result, seconds and the lowest free memory while it ran.
+test('the workload runner logs each Rust test with the lowest free memory while it ran', () => {
+  const runner = readFileSync(new URL('../scripts/run-formal-ai-workloads.mjs', import.meta.url), 'utf8');
+  assert.match(runner, /'--', '--test-threads=1', \.\.\.filters,\s*\], \{[^}]*RUST_TEST_THREADS: '1'[^}]*\}, allowFailure: true, traceTests: true \}\)/u);
+  const source = /\nfunction testTrace\(label\) \{[\s\S]*?\n\}\n/u.exec(runner)?.[0];
+  assert.ok(source, 'testTrace is defined');
+  let free = 8 * 2 ** 30;
+  const lines = [];
+  const testTrace = new Function('os', 'console', `${source}\nreturn testTrace;`)(
+    { freemem: () => free },
+    { log: (line) => lines.push(line) },
+  );
+  const trace = testTrace('rust-workloads');
+  trace.take(Buffer.from('running 2 tests\ntest a::first ... '));
+  free = 3 * 2 ** 30;
+  trace.sample();
+  free = 6 * 2 ** 30;
+  trace.take(Buffer.from('ok\ntest a::second has been running for over 60 seconds\ntest a::sec'));
+  trace.take(Buffer.from('ond ... FAILED\n'));
+  assert.equal(lines.length, 2);
+  assert.match(lines[0], /^\[rust-workloads\] test a::first: ok after \d+ s, lowest free memory 3\.0 GiB$/u);
+  assert.match(lines[1], /^\[rust-workloads\] test a::second: FAILED after \d+ s, lowest free memory 6\.0 GiB$/u);
+});

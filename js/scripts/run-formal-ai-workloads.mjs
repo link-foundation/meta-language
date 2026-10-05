@@ -387,8 +387,9 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
   const testRun = await run('rust-workloads', 'cargo', [
     ...configuration, 'test', '--no-fail-fast',
     ...[...new Set(workloads.map((entry) => entry.target)), RUST_PROBE_TARGET].flatMap((name) => ['--test', name]),
-    '--', ...filters,
-  ], { cwd: directory, env: environment, allowFailure: true });
+    // One test at a time, so each test's line names its peak (see `testTrace`).
+    '--', '--test-threads=1', ...filters,
+  ], { cwd: directory, env: { ...environment, RUST_TEST_THREADS: '1' }, allowFailure: true, traceTests: true });
   const executed = libtestOutcomes(testRun.combined).map((entry) => {
     const targetName = RUST_TARGETS[entry.file];
     const workload = workloads.find((candidate) => candidate.target === targetName && entry.name.startsWith(candidate.filter));
@@ -610,9 +611,42 @@ function childEnvironment() {
   return environment;
 }
 
+// Follows the libtest transcript of a run with one test thread: each test's
+// `test NAME ... ` opens it and `test NAME ... RESULT` ends it, and a line
+// then gives its result, seconds and the lowest free memory while it ran, so
+// a test whose memory grows is named in the job log.
+function testTrace(label) {
+  let partial = '';
+  let current = null;
+  const open = (name) => {
+    if (current?.name !== name) current = { name, started: Date.now(), lowest: os.freemem() };
+  };
+  return {
+    sample() {
+      if (current) current.lowest = Math.min(current.lowest, os.freemem());
+    },
+    take(chunk) {
+      const lines = (partial + chunk.toString('utf8')).split('\n');
+      partial = lines.pop();
+      for (const line of lines) {
+        const match = /^test (\S+) \.\.\. (\S.*)$/u.exec(line.trim());
+        if (!match) continue;
+        open(match[1]);
+        this.sample();
+        const seconds = Math.round((Date.now() - current.started) / 1000);
+        console.log(`[${label}] test ${current.name}: ${match[2]} after ${seconds} s, lowest free memory ${(current.lowest / 2 ** 30).toFixed(1)} GiB`);
+        current = null;
+      }
+      const running = /^test (\S+) \.\.\. $/u.exec(partial.trimStart());
+      if (running) open(running[1]);
+    },
+  };
+}
+
 // Runs a command, logs it to <work-dir>/<label>.log and returns its output; the output of both
 // streams is also kept in arrival order, since cargo announces test binaries on stderr.
-async function run(label, command, args, { cwd = workDirectory, env = childEnvironment(), allowFailure = false } = {}) {
+// With `traceTests`, each libtest test's result is logged as it ends (see `testTrace`).
+async function run(label, command, args, { cwd = workDirectory, env = childEnvironment(), allowFailure = false, traceTests = false } = {}) {
   const log = path.join(workDirectory, `${label}.log`);
   const rendered = [command, ...args].join(' ');
   const started = Date.now();
@@ -631,16 +665,18 @@ async function run(label, command, args, { cwd = workDirectory, env = childEnvir
     const both = [];
     let lastLine = '';
     let killedForMemory = null;
+    const trace = traceTests ? testTrace(label) : null;
     const remember = (chunk) => {
       const lines = chunk.toString('utf8').split('\n').map((line) => line.trim()).filter(Boolean);
       if (lines.length > 0) lastLine = lines.at(-1).slice(0, 200);
     };
-    child.stdout.on('data', (chunk) => { out.push(chunk); both.push(chunk); remember(chunk); });
+    child.stdout.on('data', (chunk) => { out.push(chunk); both.push(chunk); remember(chunk); trace?.take(chunk); });
     child.stderr.on('data', (chunk) => { err.push(chunk); both.push(chunk); remember(chunk); });
     const heartbeat = setInterval(async () => {
       console.log(`[${label}] running for ${Math.round((Date.now() - started) / 1000)} s (${await resources()}); last output: ${lastLine || '(none)'}`);
     }, HEARTBEAT_MS);
     const guard = setInterval(() => {
+      trace?.sample();
       if (killedForMemory || os.freemem() >= MEMORY_FLOOR_BYTES) return;
       killedForMemory = `free memory ${(os.freemem() / 2 ** 30).toFixed(1)} GiB fell below ${(MEMORY_FLOOR_BYTES / 2 ** 30).toFixed(1)} GiB; last output: ${lastLine || '(none)'}`;
       console.log(`[${label}] killed: ${killedForMemory}`);
