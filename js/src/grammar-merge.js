@@ -329,7 +329,7 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities, decorators,
       members: group.map(({ alias }) => alias),
       basis: group.length === 1 ? 'no-equivalent-rule' : proven ? GRAMMAR_MERGE_METHOD : reconciled.bases.get(id),
       definition: definitions.get(id),
-      ...(reconcile ? { concept: concepts.get(id) ?? null } : {}),
+      ...(concepts.has(id) ? { concept: concepts.get(id) } : {}),
     });
     if (renamed.has(id)) {
       decisions.push({

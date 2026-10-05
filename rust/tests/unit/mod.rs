@@ -89,6 +89,7 @@ mod issue_195_interchange_faithful_lowering;
 mod issue_195_interchange_mutation_guards;
 mod issue_195_interchange_reverse_conversion;
 mod issue_195_merge_quality_evidence;
+mod issue_195_merge_real_reconciliation;
 mod issue_195_native_grammar_rows;
 mod issue_195_observations;
 mod issue_195_parse_memory_budget;

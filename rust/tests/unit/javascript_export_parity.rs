@@ -146,6 +146,7 @@ mod items {
     use meta_language::accepts_text as _;
     use meta_language::analyze_program as _;
     use meta_language::assert_merge_complete as _;
+    use meta_language::assert_merge_shares as _;
     use meta_language::canonical_language_name as _;
     use meta_language::canonical_repeat as _;
     use meta_language::canonical_rule_definition as _;
@@ -245,6 +246,7 @@ mod items {
     use meta_language::self_translation_language as _;
     use meta_language::sequence as _;
     use meta_language::serialize_grammar as _;
+    use meta_language::shared_rule_decisions as _;
     use meta_language::sniff_language as _;
     use meta_language::source_meanings_in as _;
     use meta_language::split_grammar_source as _;
@@ -460,6 +462,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("asReadOnly", "LinkNetwork::as_read_only", "method"),
     ("as_read_only", "LinkNetwork::as_read_only", "method"),
     ("assertMergeComplete", "assert_merge_complete", "function"),
+    ("assertMergeShares", "assert_merge_shares", "function"),
     (
         "canonicalLanguageName",
         "canonical_language_name",
@@ -747,6 +750,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ),
     ("sequence", "sequence", "function"),
     ("serializeGrammar", "serialize_grammar", "function"),
+    ("sharedRuleDecisions", "shared_rule_decisions", "function"),
     ("sniffLanguage", "sniff_language", "function"),
     ("sourceMeanings", "source_meanings_in", "function"),
     ("sourceTextPredicateHost", "SourceTextPredicateHost", "type"),

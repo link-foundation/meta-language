@@ -375,7 +375,7 @@ function delimiters(expression) {
     const open = whole ?? literalValue(items[0]);
     if (open === null || !isAsciiPunctuation(open.codePointAt(0))) return null;
     const close = whole ?? literalValue(items.at(-1));
-    pairs.add(`${q(String.fromCodePoint(open.codePointAt(0)))}:${close === null ? '_' : q([...close].at(-1))}`);
+    pairs.add(`${q(String.fromCodePoint(open.codePointAt(0)))}:${close === null || close.length === 0 ? '_' : q([...close].at(-1))}`);
   }
   return `delimited(${[...pairs].sort(compareText).join(',')})`;
 }

@@ -169,8 +169,9 @@ pub use grammar::{
     GrammarMergeFailureKind, GrammarMergeFailureReason, GrammarMergeNomination,
     GrammarMergeNominationBasis, GrammarMergeNominationOutcome, GrammarMergeOptions,
     GrammarMergeResult, GrammarMergeSource, GrammarRenameError, GrammarRenameErrorKind,
-    MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, merge_grammars,
-    normalized_rule_definition, rename_grammar_rule, restore_source_names,
+    MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, assert_merge_shares,
+    merge_grammars, normalized_rule_definition, rename_grammar_rule, restore_source_names,
+    shared_rule_decisions,
 };
 pub use grammar::{
     GRAMMAR_ROUND_TRIP_MARKER, GrammarEmitFn, GrammarImportFn, GrammarRoundTrip,

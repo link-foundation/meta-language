@@ -9,6 +9,7 @@
 mod declarations;
 mod group;
 mod normalize;
+mod reconcile;
 mod rename;
 
 use group::{
@@ -89,6 +90,13 @@ pub struct GrammarMergeOptions<'a> {
     /// may change the kind or the basis, and `drop` removes the decision.
     /// They change the reported decisions only, never the merged grammar.
     pub decorators: DecoratorSet,
+    /// Also unite corresponding rules of different sources that are
+    /// equivalent up to their lexical roles, or that share a name when no
+    /// correspondence matched them (see `reconcile.rs`). Each such class is a
+    /// [`GrammarMergeDecisionKind::Reconciled`] decision, kept by the
+    /// definition of its first source and the concept of its first rule that
+    /// has one.
+    pub reconcile: bool,
 }
 
 /// What the merge decided about one class of rules.
@@ -97,6 +105,8 @@ pub struct GrammarMergeOptions<'a> {
 pub enum GrammarMergeDecisionKind {
     /// Several rules were proven equivalent and merged.
     Merged,
+    /// Corresponding rules of different sources were reconciled and merged.
+    Reconciled,
     /// The rule has no equivalent in the group.
     KeptUnique,
     /// The rule was renamed because a higher-precedence rule holds its name.
@@ -116,6 +126,7 @@ impl GrammarMergeDecisionKind {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Merged => "merged",
+            Self::Reconciled => "reconciled",
             Self::KeptUnique => "kept-unique",
             Self::RenamedForCollision => "renamed-for-collision",
             Self::HomonymKeptDistinct => "homonym-kept-distinct",
@@ -129,6 +140,7 @@ impl GrammarMergeDecisionKind {
     pub fn parse(text: &str) -> Option<Self> {
         [
             Self::Merged,
+            Self::Reconciled,
             Self::KeptUnique,
             Self::RenamedForCollision,
             Self::HomonymKeptDistinct,
@@ -153,6 +165,9 @@ pub struct GrammarMergeDecision {
     pub basis: String,
     /// Canonical normalized definition of a merged or unique rule.
     pub definition: Option<String>,
+    /// The concept record a reconciling merge gave the merged rule.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub concept: Option<String>,
 }
 
 /// Why two rules were nominated as a possible match.
@@ -182,6 +197,8 @@ impl GrammarMergeNominationBasis {
 pub enum GrammarMergeNominationOutcome {
     /// The nominated rules were proven equivalent.
     Proven,
+    /// The nominated rules were reconciled as corresponding rules.
+    Reconciled,
     /// The nominated rules were not proven equivalent and stay separate.
     Unproven,
 }
@@ -344,6 +361,7 @@ impl GrammarMergeResult {
 pub struct GrammarMergeError {
     message: String,
     failures: Vec<GrammarMergeFailure>,
+    concatenated: Vec<String>,
 }
 
 impl GrammarMergeError {
@@ -351,6 +369,7 @@ impl GrammarMergeError {
         Self {
             message: message.into(),
             failures: Vec::new(),
+            concatenated: Vec::new(),
         }
     }
 
@@ -358,6 +377,12 @@ impl GrammarMergeError {
     #[must_use]
     pub fn failures(&self) -> &[GrammarMergeFailure] {
         &self.failures
+    }
+
+    /// The keys of the groups [`assert_merge_shares`] rejected, if any.
+    #[must_use]
+    pub fn concatenated(&self) -> &[String] {
+        &self.concatenated
     }
 }
 
@@ -501,6 +526,7 @@ pub fn merge_grammars(
             &group_required,
             &samples,
             &options.decorators,
+            options.reconcile,
         )?;
         let previous = previous_groups.get(key.as_str()).copied();
         if let Some(previous) = previous.filter(|previous| previous.fingerprint == fingerprint) {
@@ -517,6 +543,7 @@ pub fn merge_grammars(
             fingerprint,
             &samples,
             previous_identities,
+            options.reconcile,
         )?;
         group.decisions = decorate_decisions(group.decisions, &options.decorators)?;
         groups.push(group);
@@ -591,6 +618,61 @@ pub fn assert_merge_complete(
     Err(GrammarMergeError {
         message: format!("unresolved required equivalence: {detail}"),
         failures: result.failures.clone(),
+        concatenated: Vec::new(),
+    })
+}
+
+/// The decisions of a merge group that share a rule between its sources: the
+/// merged and reconciled classes with members of more than one source.
+#[must_use]
+pub fn shared_rule_decisions(group: &MergedGrammarGroup) -> Vec<&GrammarMergeDecision> {
+    group
+        .decisions
+        .iter()
+        .filter(|decision| {
+            matches!(
+                decision.kind,
+                GrammarMergeDecisionKind::Merged | GrammarMergeDecisionKind::Reconciled
+            ) && decision
+                .members
+                .iter()
+                .map(|member| source_of(member))
+                .collect::<BTreeSet<_>>()
+                .len()
+                > 1
+        })
+        .collect()
+}
+
+/// Fails when a group of two or more sources shares no rule between them:
+/// such a merge only concatenates its sources side by side.
+pub fn assert_merge_shares(
+    result: &GrammarMergeResult,
+) -> Result<&GrammarMergeResult, GrammarMergeError> {
+    let concatenated: Vec<&MergedGrammarGroup> = result
+        .groups
+        .iter()
+        .filter(|group| group.sources.len() > 1 && shared_rule_decisions(group).is_empty())
+        .collect();
+    if concatenated.is_empty() {
+        return Ok(result);
+    }
+    let detail = concatenated
+        .iter()
+        .map(|group| {
+            format!(
+                "{} ({}: {} rules)",
+                group.key,
+                group.sources.join(", "),
+                group.grammar.rules().len()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("; ");
+    Err(GrammarMergeError {
+        message: format!("the merge only concatenates its sources, sharing no rule: {detail}"),
+        failures: Vec::new(),
+        concatenated: concatenated.iter().map(|group| group.key.clone()).collect(),
     })
 }
 

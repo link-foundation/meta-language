@@ -6,6 +6,7 @@ use sha2::{Digest, Sha256};
 
 use super::declarations::{declarations_text, merge_declarations, rule_fields};
 use super::normalize::{normalize, quote};
+use super::reconcile::reconcile_classes;
 use super::rename::renamed_rule;
 use super::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
@@ -119,11 +120,15 @@ pub(super) fn group_fingerprint(
     required: &[&(String, String)],
     samples: &BTreeMap<String, Vec<String>>,
     decorators: &DecoratorSet,
+    reconcile: bool,
 ) -> Result<String, GrammarMergeError> {
     let mut lines = vec![
         "grammar-merge v1".to_owned(),
         format!("group {} {}", quote(language), quote(edition)),
     ];
+    if reconcile {
+        lines.push("reconcile".to_owned());
+    }
     let mut ids = BTreeSet::new();
     for source in entry {
         ids.insert(source.id);
@@ -190,7 +195,7 @@ pub(super) fn group_fingerprint(
         }))
 }
 
-fn source_label<'a>(
+pub(super) fn source_label<'a>(
     source: &'a Prepared<'_>,
     internal: &'a dyn Fn(&str) -> String,
 ) -> impl Fn(&str) -> String + 'a {
@@ -207,14 +212,14 @@ pub(super) fn name_label(name: &str) -> String {
     format!("ref({})", quote(name))
 }
 
-fn alias_of(source: &str, name: &str) -> String {
+pub(super) fn alias_of(source: &str, name: &str) -> String {
     format!("{source}:{name}")
 }
 
-struct Node<'a> {
-    alias: String,
-    source: &'a Prepared<'a>,
-    rule: &'a GrammarRule,
+pub(super) struct Node<'a> {
+    pub(super) alias: String,
+    pub(super) source: &'a Prepared<'a>,
+    pub(super) rule: &'a GrammarRule,
 }
 
 pub(super) fn merge_group(
@@ -224,6 +229,7 @@ pub(super) fn merge_group(
     fingerprint: String,
     samples: &BTreeMap<String, Vec<String>>,
     previous_identities: &BTreeMap<String, String>,
+    reconcile: bool,
 ) -> Result<MergedGrammarGroup, GrammarMergeError> {
     let mut nodes = Vec::new();
     let mut index = BTreeMap::new();
@@ -245,7 +251,12 @@ pub(super) fn merge_group(
         }
     }
 
-    let classes = refine(&nodes, &index)?;
+    let strict = refine(&nodes, &index)?;
+    let (classes, reconciled_bases) = if reconcile {
+        reconcile_classes(&nodes, &index, &strict)?
+    } else {
+        (strict.clone(), BTreeMap::new())
+    };
     let mut members: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
     let mut class_order = Vec::new();
     for (position, class) in classes.iter().enumerate() {
@@ -306,6 +317,7 @@ pub(super) fn merge_group(
         |source: &str, name: &str| -> &String { &names[&classes[index[&alias_of(source, name)]]] };
     let mut grammar = Grammar::new();
     let mut definitions = BTreeMap::new();
+    let mut concepts = BTreeMap::new();
     for class in &class_order {
         let representative = &nodes[members[class][0]];
         let source = representative.source;
@@ -327,9 +339,22 @@ pub(super) fn merge_group(
                 rule_fields(&renamed, &name_label)
             ),
         );
+        // A reconciled rule takes the concept record of the first of its rules
+        // that has one, so corresponding rules of every source share it.
+        let concept = if reconcile {
+            members[class]
+                .iter()
+                .find_map(|&position| nodes[position].rule.concept.clone())
+        } else {
+            renamed.concept.clone()
+        };
+        if reconcile && let Some(concept) = &concept {
+            concepts.insert(*class, concept.clone());
+        }
         grammar.add_rule(GrammarRule {
             name: names[class].clone(),
             expr: form.expr(),
+            concept,
             ..renamed
         });
     }
@@ -374,25 +399,29 @@ pub(super) fn merge_group(
     let mut decisions = Vec::new();
     for class in &class_order {
         let group = &members[class];
-        let merged = group.len() > 1;
+        let proven = group
+            .iter()
+            .all(|&position| strict[position] == strict[group[0]]);
+        let (kind, basis) = if group.len() == 1 {
+            (GrammarMergeDecisionKind::KeptUnique, "no-equivalent-rule")
+        } else if proven {
+            (GrammarMergeDecisionKind::Merged, GRAMMAR_MERGE_METHOD)
+        } else {
+            (
+                GrammarMergeDecisionKind::Reconciled,
+                reconciled_bases[class],
+            )
+        };
         decisions.push(GrammarMergeDecision {
-            kind: if merged {
-                GrammarMergeDecisionKind::Merged
-            } else {
-                GrammarMergeDecisionKind::KeptUnique
-            },
+            kind,
             name: names[class].clone(),
             members: group
                 .iter()
                 .map(|&position| nodes[position].alias.clone())
                 .collect(),
-            basis: if merged {
-                GRAMMAR_MERGE_METHOD
-            } else {
-                "no-equivalent-rule"
-            }
-            .to_owned(),
+            basis: basis.to_owned(),
             definition: definitions.remove(class),
+            concept: concepts.get(class).cloned(),
         });
         if renamed.contains(class) {
             decisions.push(GrammarMergeDecision {
@@ -401,6 +430,7 @@ pub(super) fn merge_group(
                 members: vec![nodes[group[0]].alias.clone()],
                 basis: "precedence".to_owned(),
                 definition: None,
+                concept: None,
             });
         }
     }
@@ -437,6 +467,7 @@ pub(super) fn merge_group(
             members: options.clone(),
             basis: "different-definitions".to_owned(),
             definition: None,
+            concept: None,
         });
         alternatives.push(GrammarMergeAlternative {
             reason: GrammarMergeAlternativeReason::DistinctMeaning,
@@ -445,7 +476,7 @@ pub(super) fn merge_group(
         });
     }
 
-    let nominations = nominate(&nodes, &classes, samples);
+    let nominations = nominate(&nodes, &classes, &strict, samples);
     for nomination in &nominations {
         if nomination.outcome != GrammarMergeNominationOutcome::Unproven {
             continue;
@@ -458,6 +489,7 @@ pub(super) fn merge_group(
             members: nomination.members.to_vec(),
             basis: nomination.basis.as_str().to_owned(),
             definition: None,
+            concept: None,
         });
         alternatives.push(GrammarMergeAlternative {
             reason: GrammarMergeAlternativeReason::UncertainMatch,
@@ -472,6 +504,7 @@ pub(super) fn merge_group(
             members: conflict.members.clone(),
             basis: conflict.basis.to_owned(),
             definition: None,
+            concept: None,
         });
         alternatives.push(GrammarMergeAlternative {
             reason: GrammarMergeAlternativeReason::DeclarationConflict,
@@ -542,6 +575,7 @@ fn refine(
 fn nominate(
     nodes: &[Node<'_>],
     classes: &[usize],
+    strict: &[usize],
     samples: &BTreeMap<String, Vec<String>>,
 ) -> Vec<GrammarMergeNomination> {
     let mut nominations = Vec::new();
@@ -553,8 +587,10 @@ fn nominate(
         nominations.push(GrammarMergeNomination {
             basis,
             members: [nodes[first].alias.clone(), nodes[second].alias.clone()],
-            outcome: if classes[first] == classes[second] {
+            outcome: if strict[first] == strict[second] {
                 GrammarMergeNominationOutcome::Proven
+            } else if classes[first] == classes[second] {
+                GrammarMergeNominationOutcome::Reconciled
             } else {
                 GrammarMergeNominationOutcome::Unproven
             },
