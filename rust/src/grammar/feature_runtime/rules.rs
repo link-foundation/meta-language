@@ -116,14 +116,12 @@ impl Executor<'_> {
         // states of a keyword matched in it (see `KeywordLexing`).
         let call = self.keywords.map(|keywords| {
             let parent = self.call_stack.last().and_then(|frame| frame.borrow().call);
-            keywords
-                .borrow_mut()
-                .call(
-                    position,
-                    matches!(rule.kind, RuleKind::Normal),
-                    rule.node_kind.clone(),
-                    parent,
-                )
+            keywords.borrow_mut().call(
+                position,
+                matches!(rule.kind, RuleKind::Normal),
+                rule.node_kind.clone(),
+                parent,
+            )
         });
         let entry = Rc::new(RefCell::new(Entry {
             evaluating: true,

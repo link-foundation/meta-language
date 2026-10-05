@@ -290,7 +290,10 @@ fn native_rocq_trees_follow_the_oracle_on_a_byte_order_mark_and_an_end_after_a_m
         .expect("the parse runs");
     assert!(!outcome.ok);
     observe(
-        &["nativeRocqTreesMatchOracle", "nativeRocqRejectsInvalidInput"],
+        &[
+            "nativeRocqTreesMatchOracle",
+            "nativeRocqRejectsInvalidInput",
+        ],
         "native Rocq trees follow the oracle on a byte order mark and an end after a match",
     );
 }
