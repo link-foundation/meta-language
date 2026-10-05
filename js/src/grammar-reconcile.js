@@ -139,8 +139,9 @@ function strictClassesBySource(nodes, strict, positions) {
 }
 
 // The rules no correspondence matched are reconciled by name: the strict
-// classes of different sources whose rules have one name up to case, `_` and
-// `-`, when each source has one such class, none of them is shared with
+// classes of different sources whose rules have one name up to case, `_`, `-`
+// and a leading language name (grammars-v4's `htmlElement` is HTML's
+// `element`), when each source has one such class, none of them is shared with
 // another source yet, and they are all tokens or all not. Their keys become
 // `n<strict>` of the first of them.
 function reconcileByName(nodes, strict, tokens, keys, bases) {
@@ -154,7 +155,7 @@ function reconcileByName(nodes, strict, tokens, keys, bases) {
   const byName = new Map();
   for (const [position, node] of nodes.entries()) {
     if (!keys[position].startsWith('s') || shared.has(strict[position])) continue;
-    const name = node.name.toLowerCase().replace(/[-_]/gu, '');
+    const name = comparedName(node.name, node.source.language);
     if (name.length === 0) continue;
     if (!byName.has(name)) byName.set(name, []);
     byName.get(name).push(position);
@@ -172,6 +173,20 @@ function reconcileByName(nodes, strict, tokens, keys, bases) {
     for (const [position, current] of keys.entries()) if (ids.includes(strict[position]) && current.startsWith('s')) keys[position] = key;
     bases.set(key, GRAMMAR_NAME_RECONCILE_METHOD);
   }
+}
+
+// A rule name up to case, `_` and `-`, without a leading name of its language
+// that a case change or `_` ends: `htmlElement` and `HTML_ELEMENT` of HTML
+// compare as `element`, `comment` of C stays `comment`.
+export function comparedName(name, language) {
+  const prefix = language.toLowerCase().replace(/[^a-z0-9]/gu, '');
+  const bare = (text) => text.toLowerCase().replace(/[-_]/gu, '');
+  if (prefix.length > 0 && name.length > prefix.length && name.slice(0, prefix.length).toLowerCase() === prefix) {
+    const rest = name.slice(prefix.length);
+    const boundary = /^[-_]/u.test(rest) || (/^[A-Z]/u.test(rest) && name[prefix.length - 1] !== name[prefix.length - 1].toUpperCase());
+    if (boundary && bare(rest).length > 0) return bare(rest);
+  }
+  return bare(name);
 }
 
 // Whether each node is lexical: it reaches only lexical kinds and defined

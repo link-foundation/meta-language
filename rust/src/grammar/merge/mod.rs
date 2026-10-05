@@ -8,6 +8,7 @@
 
 mod declarations;
 mod group;
+mod names;
 mod normalize;
 mod reconcile;
 mod rename;

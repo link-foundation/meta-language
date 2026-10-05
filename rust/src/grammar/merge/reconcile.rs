@@ -30,6 +30,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::GrammarMergeError;
 use super::group::{Node, alias_of, source_label};
+use super::names::compared_name;
 use super::normalize::{normalize, quote};
 use super::rename::map_references;
 use crate::grammar::feature::{FeatureExpr, FeatureForm, FieldValue, UnicodeClassItem};
@@ -215,8 +216,9 @@ fn strict_classes_by_source<'a>(
 }
 
 // The rules no correspondence matched are reconciled by name: the strict
-// classes of different sources whose rules have one name up to case, `_` and
-// `-`, when each source has one such class, none of them is shared with
+// classes of different sources whose rules have one name up to case, `_`, `-`
+// and a leading language name (grammars-v4's `htmlElement` is HTML's
+// `element`), when each source has one such class, none of them is shared with
 // another source yet, and they are all tokens or all not. Their keys become
 // the name key of the first of them.
 fn reconcile_by_name(
@@ -243,13 +245,7 @@ fn reconcile_by_name(
         if !matches!(keys[position], Key::Strict(_)) || shared.contains(&strict[position]) {
             continue;
         }
-        let name: String = node
-            .rule
-            .name
-            .to_lowercase()
-            .chars()
-            .filter(|character| *character != '-' && *character != '_')
-            .collect();
+        let name = compared_name(&node.rule.name, node.source.language);
         if !name.is_empty() {
             by_name.entry(name).or_default().push(position);
         }

@@ -14,7 +14,8 @@ use std::path::PathBuf;
 
 use meta_language::{
     GrammarMergeDecisionKind, GrammarMergeOptions, GrammarMergeResult, GrammarMergeSource,
-    assert_merge_shares, import_antlr, merge_grammars, parse_grammar_links, shared_rule_decisions,
+    assert_merge_shares, import_antlr, import_pest, merge_grammars, parse_grammar_links,
+    shared_rule_decisions,
 };
 use serde_json::Value;
 
@@ -252,5 +253,69 @@ fn reconciliation_is_deterministic_and_keeps_a_reconciled_group_reusable() {
     observe(
         &["correspondingRulesReconciled"],
         "reconciliation is deterministic",
+    );
+}
+
+#[test]
+fn the_name_tier_compares_rule_names_without_a_leading_name_of_their_language() {
+    let native = import_pest(
+        "document = { element* }\n\
+         element = { \"<\" ~ name ~ attribute* ~ \">\" ~ document ~ \"</\" ~ name ~ \">\" }\n\
+         attribute = { name ~ \"=\" ~ name }\n\
+         name = @{ ASCII_ALPHA+ }\n",
+    )
+    .expect("the native grammar imports");
+    // grammars-v4's HTML grammar names its rules `htmlDocument`, `htmlElement`
+    // and `htmlAttribute`; they decompose the constructs differently, so only
+    // their names correspond.
+    let prefixed = |prefix: &str| {
+        import_pest(&format!(
+            "{prefix}Document = {{ {prefix}Element+ ~ EOI }}\n\
+             {prefix}Element = {{ \"<\" ~ tag ~ {prefix}Attribute* ~ \"/>\" | \"<\" ~ tag ~ \">\" ~ {prefix}Element* ~ \"</\" ~ tag ~ \">\" }}\n\
+             {prefix}Attribute = {{ tag ~ (\"=\" ~ tag)? }}\n\
+             tag = @{{ ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }}\n"
+        ))
+        .expect("the prefixed grammar imports")
+    };
+    let merged = |prefix: &str| {
+        merge(
+            &[
+                GrammarMergeSource::new("native", "HTML", native.clone()),
+                GrammarMergeSource::new("grammars-v4", "HTML", prefixed(prefix)).with_precedence(1),
+            ],
+            true,
+        )
+    };
+    let html = merged("html");
+    let shared: Vec<(String, Vec<String>, String)> = shared_rule_decisions(&html.groups[0])
+        .into_iter()
+        .map(|decision| {
+            (
+                decision.name.clone(),
+                decision.members.clone(),
+                decision.basis.clone(),
+            )
+        })
+        .collect();
+    let expected: Vec<(String, Vec<String>, String)> = ["document", "element", "attribute"]
+        .into_iter()
+        .map(|name| {
+            let capitalized = format!("{}{}", name[..1].to_uppercase(), &name[1..]);
+            (
+                name.to_owned(),
+                vec![
+                    format!("native:{name}"),
+                    format!("grammars-v4:html{capitalized}"),
+                ],
+                "name-correspondence".to_owned(),
+            )
+        })
+        .collect();
+    assert_eq!(shared, expected);
+    // Another prefix is part of the name, so nothing corresponds.
+    assert!(shared_rule_decisions(&merged("xml").groups[0]).is_empty());
+    observe(
+        &["sharedRulesNonZero"],
+        "the name tier strips a leading language name",
     );
 }

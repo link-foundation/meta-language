@@ -15,6 +15,7 @@ import {
   GrammarMergeError,
   assertMergeShares,
   importAntlr,
+  importPest,
   mergeGrammars,
   parseGrammarLinks,
   sharedRuleDecisions,
@@ -114,4 +115,33 @@ test('reconciliation is deterministic and keeps a reconciled group reusable', ()
   const strict = mergeGrammars(sources(pair), { previous: first });
   assert.deepEqual(strict.reused, []);
   observe(['correspondingRulesReconciled'], 'reconciliation is deterministic');
+});
+
+test('the name tier compares rule names without a leading name of their language', () => {
+  const native = importPest(`document = { element* }
+element = { "<" ~ name ~ attribute* ~ ">" ~ document ~ "</" ~ name ~ ">" }
+attribute = { name ~ "=" ~ name }
+name = @{ ASCII_ALPHA+ }`);
+  // grammars-v4's HTML grammar names its rules `htmlDocument`, `htmlElement`
+  // and `htmlAttribute`; they decompose the constructs differently, so only
+  // their names correspond.
+  const prefixed = (prefix) => importPest(`${prefix}Document = { ${prefix}Element+ ~ EOI }
+${prefix}Element = { "<" ~ tag ~ ${prefix}Attribute* ~ "/>" | "<" ~ tag ~ ">" ~ ${prefix}Element* ~ "</" ~ tag ~ ">" }
+${prefix}Attribute = { tag ~ ("=" ~ tag)? }
+tag = @{ ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }`);
+  const merge = (prefix) => mergeGrammars([
+    { id: 'native', language: 'HTML', precedence: 0, grammar: native },
+    { id: 'grammars-v4', language: 'HTML', precedence: 1, grammar: prefixed(prefix) },
+  ], { reconcile: true });
+  assert.deepEqual(
+    sharedRuleDecisions(merge('html').groups[0]).map(({ name, members, basis }) => [name, members, basis]),
+    ['document', 'element', 'attribute'].map((name) => [
+      name,
+      [`native:${name}`, `grammars-v4:html${name[0].toUpperCase()}${name.slice(1)}`],
+      'name-correspondence',
+    ]),
+  );
+  // Another prefix is part of the name, so nothing corresponds.
+  assert.deepEqual(sharedRuleDecisions(merge('xml').groups[0]), []);
+  observe(['sharedRulesNonZero'], 'the name tier strips a leading language name');
 });
