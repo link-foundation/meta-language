@@ -20,6 +20,7 @@ use super::results::{
     with_leaf,
 };
 use super::text::{column_of, decode_at};
+use super::walk::first_meaningful;
 use crate::grammar::RuleKind;
 
 impl Executor<'_> {
@@ -196,10 +197,22 @@ impl Executor<'_> {
         // changed: the trees grown from the others are already merged, so a
         // chain of n operators takes n passes of one seed each, not n of n.
         // A first pass without results was made with the empty seed a pass
-        // would grow from: there is nothing to grow.
+        // would grow from: there is nothing to grow. A result grown by no
+        // width, whose left operand already ends where it ends, is kept but
+        // not grown again: the zero-width operands a repair inserts would
+        // otherwise grow it once per pass while each changes the scanner state
+        // (Lean's `elab "a" : term => (`, an application of a repaired `do`
+        // block that pushes one more layout indent with every argument). It
+        // mirrors grow in js/src/grammar-runtime/executor.js.
         if first.is_empty() {
             return Ok(first);
         }
+        let grown_by_no_width = |result: &Res| {
+            first_meaningful(&result.children)
+                .filter(|node| node.ty == TreeType::Node && node.end == result.end)
+                .and_then(|node| first_meaningful(&node.children))
+                .is_some_and(|left| left.end == result.end)
+        };
         let mut current = ResultSet::new(self.longest_tokens, self.settling);
         for result in first {
             current.set(result);
@@ -223,7 +236,9 @@ impl Executor<'_> {
                     Some((_, ambiguous)) => {
                         if merged.add(result) {
                             changed = true;
-                            renewed.push(key);
+                            if !merged.get_key(&key).is_some_and(grown_by_no_width) {
+                                renewed.push(key);
+                            }
                         } else if let Some(tied) = merged
                             .get_key(&key)
                             .filter(|kept| kept.ambiguous && !ambiguous)
@@ -232,13 +247,17 @@ impl Executor<'_> {
                             // ambiguity the rule body marks when both trees
                             // meet in one pass.
                             let marked = self.ambiguous_result(rule, tied.clone(), in_token);
+                            if !grown_by_no_width(&marked) {
+                                renewed.push(key);
+                            }
                             merged.set(marked);
-                            renewed.push(key);
                         }
                     }
                     None => {
                         merged.add(result);
-                        renewed.push(key);
+                        if !merged.get_key(&key).is_some_and(grown_by_no_width) {
+                            renewed.push(key);
+                        }
                     }
                 }
             }

@@ -20,8 +20,8 @@ use super::program::{
 use super::reducing::{ending_reduction, first_reduction, leading_dynamic};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
 use super::walk::{
-    Walk, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful, next_item,
-    open_node, open_part, same_tree,
+    TreeMemo, Walk, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful,
+    next_item, open_node, open_part, same_tree, same_tree_in,
 };
 use crate::grammar::PrecedenceEntry;
 
@@ -692,11 +692,12 @@ fn extra_reduction(
 /// part above it. It mirrors chainPair in js/src/grammar-runtime/executor.js.
 fn chain_pair(a: &Rc<Tree>, b: &Rc<Tree>, distinct: bool) -> Option<(Rc<Tree>, Rc<Tree>)> {
     let (mine, other) = (leftmost_chain(a), leftmost_chain(b));
+    let memo = TreeMemo::default();
     let shared = |node: &Rc<Tree>, chain: &[Rc<Tree>]| {
         distinct
             && chain
                 .iter()
-                .any(|peer| peer.end == node.end && same_tree(peer, node))
+                .any(|peer| peer.end == node.end && same_tree_in(peer, node, &memo))
     };
     mine.iter()
         .filter(|node| !shared(node, &other))

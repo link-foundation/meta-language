@@ -1540,14 +1540,24 @@ function sameTokens(a, b) {
 }
 
 // Whether two subtrees are the same tree over the same text, whichever of
-// them holds the white space around it.
-function sameTree(a, b) {
+// them holds the white space around it. `memo`, a map of maps the caller
+// keeps while no tree changes, holds the pairs of nodes already compared:
+// two leftmost chains compared node by node share their subtrees, which
+// would otherwise be compared again for every pair above them.
+function sameTree(a, b, memo) {
   if (a === b) return true;
   if (a.type !== b.type || a.kind !== b.kind) return false;
   if (a.type !== 'node') return a.start === b.start && a.end === b.end;
+  const known = memo?.get(a)?.get(b);
+  if (known !== undefined) return known;
   const first = a.children.filter((child) => !isTrivia(child));
   const second = b.children.filter((child) => !isTrivia(child));
-  return first.length === second.length && first.every((child, index) => sameTree(child, second[index]));
+  const same = first.length === second.length && first.every((child, index) => sameTree(child, second[index], memo));
+  if (memo) {
+    if (!memo.has(a)) memo.set(a, new Map());
+    memo.get(a).set(b, same);
+  }
+  return same;
 }
 
 // Whether two child lists are the same trees over the same text.
@@ -1575,7 +1585,8 @@ function leftmostChain(node) {
 function chainPair(a, b, distinct = false) {
   const mine = leftmostChain(a);
   const other = leftmostChain(b);
-  const shared = (node, chain) => distinct && chain.some((peer) => peer.end === node.end && sameTree(peer, node));
+  const memo = new Map();
+  const shared = (node, chain) => distinct && chain.some((peer) => peer.end === node.end && sameTree(peer, node, memo));
   for (const node of mine) {
     if (shared(node, other)) continue;
     const match = other.find((candidate) => candidate.kind === node.kind && candidate.start === node.start && !shared(candidate, mine));
@@ -3164,8 +3175,18 @@ export class Executor {
     // changed: the trees grown from the others are already merged, so a
     // chain of n operators takes n passes of one seed each, not n of n.
     // A first pass without results was made with the empty seed a pass
-    // would grow from: there is nothing to grow.
+    // would grow from: there is nothing to grow. A result grown by no width,
+    // whose left operand already ends where it ends, is kept but not grown
+    // again: the zero-width operands a repair inserts would otherwise grow
+    // it once per pass while each changes the scanner state (Lean's
+    // `elab "a" : term => (`, an application of a repaired `do` block that
+    // pushes one more layout indent with every argument).
     if (first.length === 0) return first;
+    const grownByNoWidth = (result) => {
+      const node = result.children.find((child) => !isTrivia(child));
+      const left = node?.type === 'node' ? node.children.find((child) => !isTrivia(child)) : null;
+      return left !== null && left !== undefined && left.end === result.end && node.end === result.end;
+    };
     let current = new Map(first.map((result) => [resultKey(result), result]));
     let seed = [...current.values()];
     for (let settled = 0; ;) {
@@ -3186,7 +3207,7 @@ export class Executor {
         // A tie with a tree of an earlier pass is the ambiguity the rule body
         // marks when both trees meet in one pass.
         if (kept !== result) merged.set(key, this.ambiguousResult(rule, existing, inToken));
-        renewed.add(key);
+        if (!grownByNoWidth(merged.get(key))) renewed.add(key);
         if (existing && merged.get(key) === result) changed = true;
       }
       const grew = merged.size > current.size;

@@ -2,6 +2,8 @@
 //! trees they build, which the order of results and the parting of conflicts
 //! read (see `ordering` and `parting`).
 
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use super::results::{Children, Tree, TreeType};
@@ -88,9 +90,25 @@ pub(super) fn meaningful(children: &Children) -> Vec<Rc<Tree>> {
     items(children).filter(|child| !child.trivia).collect()
 }
 
+/// The pairs of nodes already compared by `same_tree_in`, which a caller
+/// keeps while the trees it compares live and none of them changes.
+pub(super) type TreeMemo = RefCell<HashMap<(*const Tree, *const Tree), bool>>;
+
 /// Whether two subtrees are the same tree over the same text, whichever of
 /// them holds the white space around it.
 pub(super) fn same_tree(a: &Rc<Tree>, b: &Rc<Tree>) -> bool {
+    same_tree_with(a, b, None)
+}
+
+/// `same_tree`, remembering the pairs of nodes it compares in `memo`: two
+/// leftmost chains compared node by node share their subtrees, which would
+/// otherwise be compared again for every pair above them. It mirrors
+/// sameTree in js/src/grammar-runtime/executor.js.
+pub(super) fn same_tree_in(a: &Rc<Tree>, b: &Rc<Tree>, memo: &TreeMemo) -> bool {
+    same_tree_with(a, b, Some(memo))
+}
+
+fn same_tree_with(a: &Rc<Tree>, b: &Rc<Tree>, memo: Option<&TreeMemo>) -> bool {
     if Rc::ptr_eq(a, b) {
         return true;
     }
@@ -100,16 +118,32 @@ pub(super) fn same_tree(a: &Rc<Tree>, b: &Rc<Tree>) -> bool {
     if a.ty != TreeType::Node {
         return a.start == b.start && a.end == b.end;
     }
-    same_children(&a.children, &b.children)
+    let key = (Rc::as_ptr(a), Rc::as_ptr(b));
+    if let Some(known) = memo.and_then(|memo| memo.borrow().get(&key).copied()) {
+        return known;
+    }
+    let same = same_children_with(&a.children, &b.children, memo);
+    if let Some(memo) = memo {
+        memo.borrow_mut().insert(key, same);
+    }
+    same
 }
 
 /// Whether two child lists are the same trees over the same text.
 pub(super) fn same_children(a: &Children, b: &Children) -> bool {
+    same_children_with(a, b, None)
+}
+
+fn same_children_with(a: &Children, b: &Children, memo: Option<&TreeMemo>) -> bool {
     if Rc::ptr_eq(a, b) {
         return true;
     }
     let (first, second) = (meaningful(a), meaningful(b));
-    first.len() == second.len() && first.iter().zip(&second).all(|(x, y)| same_tree(x, y))
+    first.len() == second.len()
+        && first
+            .iter()
+            .zip(&second)
+            .all(|(x, y)| same_tree_with(x, y, memo))
 }
 
 /// Whether two child lists build the same trees, trivia, fields and
