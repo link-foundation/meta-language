@@ -120,7 +120,7 @@ test('missing features name the stage and feature of every failure and the matri
     merge: { stage: 'done', rules: 9, sharedRules: 0 },
     missing: [],
   };
-  const summary = { treeSitterImported: 2, treeSitterCompiled: 1, treeSitterAccepted: 1, rowsMatch: 1, grammarsV4Imported: 0, grammarsV4Mapped: 1, grammarsV4Compiled: 0, grammarsV4Accepted: 0, merged: 1 };
+  const summary = { treeSitterImported: 2, treeSitterCompiled: 1, treeSitterAccepted: 1, rowsMatch: 1, grammarsV4Imported: 0, grammarsV4Mapped: 1, grammarsV4Compiled: 0, grammarsV4Accepted: 0, merged: 1, mergedFromSeveral: 0, sharingRules: 0, sharedRules: 0 };
   const markdown = renderMatrix({ grammarsV4Revision: v4.revision, summary, grammarsV4Notes: { Fine: 'no grammar' }, languages: [failing, passing] });
   assert.match(markdown, /^# Bulk grammar pipeline matrix\n/u);
   assert.match(markdown, /\| Example \| 3 \| 1 \| fails in compile \|/u);
@@ -129,5 +129,25 @@ test('missing features name the stage and feature of every failure and the matri
   assert.match(markdown, /- merge: conflicting \\\| rules\n/u);
   assert.doesNotMatch(markdown, /### Fine/u);
   assert.match(markdown, /## grammars-v4 notes\n\n- Fine: no grammar\n/u);
+  assert.match(markdown, /1 languages merge, and 0 of the 0 merged from two or more sources share rules \(0 shared rules in all\)\./u);
   observe(['matrixPublished', 'missingFeaturesListed'], 'bulk matrix rendering');
+});
+
+// I195-MERGE-REAL-RECONCILIATION: a merge of two sources that shares no rule
+// only concatenates them, and the matrix lists that as a missing feature; one
+// source alone has nothing to share.
+test('a merge of several sources that shares no rule is listed as a concatenation', () => {
+  const row = (merge) => ({
+    language: 'Example',
+    grammars: ['example'],
+    treeSitter: { stage: 'done', rules: 4, unsupported: [], compiled: true, sample: 'accepted', rowsMatch: true },
+    grammarsV4: { files: ['example/Example.g4'], stage: 'done', rules: 5, compiled: true, sample: 'accepted' },
+    merge: { stage: 'done', sources: ['tree-sitter', 'grammars-v4'], ...merge },
+  });
+  assert.deepEqual(missingFeatures(row({ rules: 9, sharedRules: 0 })), [
+    { stage: 'merge', feature: 'the merge only concatenates its sources, sharing no rule (tree-sitter, grammars-v4: 9 rules)' },
+  ]);
+  assert.deepEqual(missingFeatures(row({ rules: 7, sharedRules: 2 })), []);
+  assert.deepEqual(missingFeatures(row({ sources: ['tree-sitter'], rules: 4, sharedRules: 0 })), []);
+  observe(['missingFeaturesListed'], 'bulk matrix lists a concatenating merge');
 });
