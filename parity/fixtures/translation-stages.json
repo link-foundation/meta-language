@@ -15006,9 +15006,23 @@
       "extension": "mjs",
       "source": "/**\n * @returns {string}\n */\nfunction f() {\n  return '\\u00e9';\n}\n",
       "parse": {
-        "error": {
-          "kind": "syntax",
-          "message": "unsupported string escape \\u at 54..56"
+        "sha256": "e57534307385b71ab17807e3a514cde161d2efd7045efb90d41d511a5f80409d"
+      },
+      "check": {
+        "sha256": "d5b71067aa643d47885ad66900744f53e227b6279c99d9aa4d5fc1fe77c55d0a"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "2c17062ba321ddd5bbe0af3c77d94993a8b3a1f1f8d46c481d902a6494f5b4cf"
+        },
+        "rust": {
+          "sha256": "88aa1dc9a2c2ef5f4899dc4fd558d9e9e1f78b91cdfea4519cc190318dbec3c2"
+        },
+        "lean": {
+          "sha256": "0958aa4ceae78b85c168c25ebe6cb3616bab8f865b4c927a64f5738db714ef23"
+        },
+        "rocq": {
+          "sha256": "212ebeef29b8bc685ec60af14ece1266e0953b193d7cdeeb23b357be898d8c8e"
         }
       }
     },
@@ -30024,9 +30038,23 @@
       "extension": "rs",
       "source": "fn main() {\n  println!(\"tab\\t newline\\n quote\\\" backslash\\\\ nul\\0 apostrophe\\' braces {{}} {}\", \"r\\u{e9}sum\\u{00e9}\");\n}\n",
       "parse": {
-        "error": {
-          "kind": "syntax",
-          "message": "unsupported string escape \\u at 98..100"
+        "sha256": "ff10878533119ff0777cf42b3b841ed0ac58c4a1b1ebfd65fed8b7064b720df2"
+      },
+      "check": {
+        "sha256": "eddb9ceb4a11764ecb8f815879efa7711f76cb113b706b061db72e4e015f07d6"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "686db4c841d813507bafe8294df1b3506aa2a3e3fdaa94338f14767c25635f6c"
+        },
+        "rust": {
+          "sha256": "163e4d897f91b1fd702e8d52033a42897fe09c3651a1411d0c7c3876269b567b"
+        },
+        "lean": {
+          "sha256": "9b6eea0c33b1923a62d2977ae099d0f8ab4a959c35bfa26ca8d6c839fed29b1e"
+        },
+        "rocq": {
+          "sha256": "d8e63eb0bfa69d80fa29ead758e678c0a511f9abbcc407f0cc01051ae787793e"
         }
       }
     },

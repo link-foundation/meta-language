@@ -167,6 +167,29 @@ function blockCommentEnd(source, index, comments) {
   throw new TranslationError('syntax', 'unterminated block comment', { start: index, end: source.length });
 }
 
+// A \u escape at `at`: \u{X..} in JavaScript and Rust, and \uXXXX in
+// JavaScript, where a surrogate pair of two such escapes is one code point.
+// A lone surrogate is refused, because Rust strings cannot hold it.
+function unicodeEscape(source, at, language) {
+  const braced = /^\\u\{([0-9a-fA-F]{1,6})\}/u.exec(source.slice(at, at + 10));
+  const fixed = language === 'JavaScript' ? /^\\u([0-9a-fA-F]{4})/u.exec(source.slice(at, at + 6)) : null;
+  const match = braced ?? fixed;
+  if (!match) throw new TranslationError('syntax', 'malformed unicode escape', { start: at, end: at + 2 });
+  let code = Number.parseInt(match[1], 16);
+  let end = at + match[0].length;
+  if (fixed && !braced && code >= 0xd800 && code <= 0xdbff) {
+    const low = /^\\u([dD][c-fC-F][0-9a-fA-F]{2})/u.exec(source.slice(end, end + 6));
+    if (low) {
+      code = 0x10000 + ((code - 0xd800) << 10) + (Number.parseInt(low[1], 16) - 0xdc00);
+      end += 6;
+    }
+  }
+  if (code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)) {
+    throw new TranslationError('unsupported', `unicode escape ${match[0]} is not a scalar value; Rust strings hold scalar values only`, { start: at, end });
+  }
+  return { text: String.fromCodePoint(code), end };
+}
+
 function stringToken(source, index, language) {
   const quote = source[index];
   let cursor = index + 1;
@@ -184,6 +207,12 @@ function stringToken(source, index, language) {
     if (char === '\\' && language !== 'Rocq') {
       const escaped = source[cursor + 1];
       const simple = { n: '\n', t: '\t', r: '\r', '\\': '\\', '"': '"', "'": "'", 0: '\0', '{': '\\{' };
+      if (escaped === 'u') {
+        const escape = unicodeEscape(source, cursor, language);
+        value += escape.text;
+        cursor = escape.end;
+        continue;
+      }
       if (!(escaped in simple)) {
         throw new TranslationError('syntax', `unsupported string escape \\${escaped}`, { start: cursor, end: cursor + 2 });
       }

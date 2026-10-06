@@ -611,7 +611,7 @@ class RustParser {
       case 'to_lowercase':
       case 'to_uppercase':
         expect(0);
-        return { k: 'stringCase', op: method.value === 'to_lowercase' ? 'toLowerCase' : 'toUpperCase', object: receiver, span: range };
+        return { k: 'stringMap', op: method.value === 'to_lowercase' ? 'toLowerCase' : 'toUpperCase', object: receiver, span: range };
       case 'clone':
       case 'to_owned':
       case 'as_str':

@@ -62,3 +62,31 @@ test('case mappings are refused for Lean and Rocq, whose library maps ASCII lett
   }
   assert.match(refusal("console.log('%s', 'a'.toLowerCase(1));\n"), /no arguments/u);
 });
+
+const TRIMS = `/**
+ * @param {string} text
+ * @returns {string}
+ */
+function framed(text) {
+  return '[' + text.trim() + '|' + text.trimStart() + '|' + text.trimEnd() + ']';
+}
+console.log('%s', framed('\\u0085\\ufeff a b\\u3000\\n'));
+`;
+
+test('trim, trimStart and trimEnd translate into Rust with the JavaScript whitespace set', () => {
+  const rust = translateProgram(TRIMS, 'JavaScript', 'Rust');
+  assert.equal(rust.diagnostic, null);
+  assert.ok(rust.code.includes(".trim_matches(|c: char| (c.is_whitespace() && c != '\\u{85}') || c == '\\u{feff}')"), rust.code);
+  assert.ok(rust.code.includes('.trim_start_matches('), rust.code);
+  assert.ok(rust.code.includes('.trim_end_matches('), rust.code);
+  for (const target of ['Lean', 'Rocq']) {
+    assert.match(translateProgram(TRIMS, 'JavaScript', target).diagnostic?.message ?? '', /ASCII whitespace only/u, target);
+  }
+});
+
+test('unicode escapes are read as scalar values, and a lone surrogate is refused', () => {
+  const pair = translateProgram("console.log('%s', '\\ud83d\\ude00\\u{e9}\\u00e9');\n", 'JavaScript', 'Rust');
+  assert.equal(pair.diagnostic, null);
+  assert.ok(pair.code.includes('😀éé'), pair.code);
+  assert.match(refusal("console.log('%s', '\\ud83d');\n"), /scalar values only/u);
+});

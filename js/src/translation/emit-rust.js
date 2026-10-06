@@ -909,8 +909,12 @@ class RustEmitter {
           return `crate::ml_number::${e.console ? 'js_console' : 'js_number'}(${this.expr(e.arg)})`;
         }
         return `${this.receiver(e.arg)}.to_string()`;
-      case 'stringCase':
-        return `${this.receiver(e.string)}.${e.op === 'toLowerCase' ? 'to_lowercase' : 'to_uppercase'}()`;
+      case 'stringMap':
+        if (e.op === 'toLowerCase' || e.op === 'toUpperCase') {
+          return `${this.receiver(e.string)}.${e.op === 'toLowerCase' ? 'to_lowercase' : 'to_uppercase'}()`;
+        }
+        // JavaScript whitespace is Unicode White_Space without U+0085, plus U+FEFF.
+        return `${this.receiver(e.string)}.${{ trim: 'trim_matches', trimStart: 'trim_start_matches', trimEnd: 'trim_end_matches' }[e.op]}(|c: char| (c.is_whitespace() && c != '\\u{85}') || c == '\\u{feff}').to_string()`;
       case 'stringTest': {
         const method = { startsWith: 'starts_with', endsWith: 'ends_with', includes: 'contains' }[e.op];
         const search = e.search.k === 'lit' ? rustString(String(e.search.value)) : `${this.receiver(e.search)}.as_str()`;

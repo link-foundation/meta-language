@@ -276,7 +276,7 @@ class Inference {
       }
       case 'match':
         return this.match(node, env);
-      case 'stringCase':
+      case 'stringMap':
         this.unify(this.expr(node.object, env), STRING, node.span);
         return STRING;
       case 'stringTest':
