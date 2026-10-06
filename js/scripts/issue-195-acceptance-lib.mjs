@@ -35,6 +35,7 @@ const SOURCE_LABELS = Object.freeze({
   remainingWorkAudit: 'Audit of fe9b6ff1: the JavaScript → Rust CI order, fail-late CI and declared settling',
   recoveryAudit: 'Audit of 6676c132: a memory budget per parse, acceptance after JavaScript, real merging and carried = 0',
   finishTheWorkAudit: 'Audit of c39470d0: every open row is work this PR delivers',
+  bulkDeliveryAudit: 'Re-posted audit of c39470d0: deliver the open rows in bulk',
 });
 
 function allKeys(value, prefix = '') {

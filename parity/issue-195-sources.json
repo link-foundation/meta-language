@@ -338,6 +338,33 @@
       "updatedAt": "2026-10-06T19:30:08Z",
       "bytes": 10047,
       "sha256": "15b1378e9564736258ee137a3559a64f9ece8d5b810f312aa76d1d689a4c5291"
+    },
+    {
+      "key": "bulkDeliveryAudit",
+      "id": 6024489303,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6024489303",
+      "title": "Re-posted for the next session: deliver the open rows in bulk",
+      "role": "Binding: re-posts the audit of c39470d0 and requires bulk delivery: the most frequent carried constructs (export class, classes, closures, destructuring, Map/Set, iterators, template literals, try/throw, modules) in one batch, and in the same session the start of automatic scanner porting and multi-source merging for the single-source languages",
+      "ledgerCoverage": [
+        "I195-SELF-TRANSLATION-",
+        "I195-GRAMMAR-NATIVE-MERGED",
+        "I195-GRAMMAR-LANGUAGE-CATALOG",
+        "I195-GRAMMAR-LOSSLESS-TREES",
+        "I195-GRAMMAR-DEPENDENCY-BOUNDARY",
+        "I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED",
+        "I195-MERGE-AUTOMATIC-PIPELINE",
+        "I195-MERGE-SHIPPED-GRAMMARS-ARE-MERGED",
+        "I195-ACCEPTANCE-INDEPENDENT-ORACLES",
+        "I195-INTERCHANGE-",
+        "I195-SEMANTICS-CONSTRUCT-INVENTORY",
+        "I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-06T20:06:41Z",
+      "updatedAt": "2026-10-06T20:06:41Z",
+      "bytes": 10703,
+      "sha256": "faf1c6dd2ef1b1655a1f441f7189a16610e2cfc0ee2dffa7a6a090e19c78136c"
     }
   ],
   "statusReports": [

@@ -43,6 +43,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141',
   finishTheWorkAudit:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6023909737',
+  bulkDeliveryAudit:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6024489303',
 });
 
 // The rows the audit of c39470d0 lists as open work.
@@ -953,8 +955,8 @@ export async function buildIssue195Manifest(root) {
         ...Object.fromEntries(['I195-RESOURCE-PARSE-MEMORY-BUDGET', 'I195-CI-ACCEPTANCE-AFTER-JAVASCRIPT',
           'I195-CI-SKIPPED-STAGE-ONE-GATE-ERROR', 'I195-MERGE-REAL-RECONCILIATION', 'I195-SELF-TRANSLATION-CARRIED-ZERO']
           .map((id) => [id, ISSUE_195_SOURCES.recoveryAudit])),
-        // The audit of c39470d0 makes every row that is still open work this PR delivers.
-        ...Object.fromEntries(FINISH_THE_WORK_ROWS.map((id) => [id, ISSUE_195_SOURCES.finishTheWorkAudit])),
+        // The audit of c39470d0, re-posted to deliver it in bulk, makes every row that is still open work this PR delivers.
+        ...Object.fromEntries(FINISH_THE_WORK_ROWS.map((id) => [id, ISSUE_195_SOURCES.bulkDeliveryAudit])),
       },
     }),
   ];
