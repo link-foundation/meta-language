@@ -88,6 +88,7 @@ mod issue_195_grammar_native_regex;
 mod issue_195_grammar_native_rocq;
 mod issue_195_grammar_native_rust;
 mod issue_195_grammar_native_scheme;
+mod issue_195_grammar_native_solidity;
 mod issue_195_grammar_native_tsx;
 mod issue_195_grammar_native_typescript;
 mod issue_195_grammar_shared_concepts;

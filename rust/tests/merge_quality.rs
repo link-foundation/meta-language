@@ -180,6 +180,11 @@ fn natives() -> Vec<Native> {
             Some(|| tree_sitter_scheme::LANGUAGE.into())
         ),
         native!(
+            "native-solidity",
+            "solidity",
+            Some(|| tree_sitter_solidity::LANGUAGE.into())
+        ),
+        native!(
             "native-tsx",
             "tsx",
             Some(|| tree_sitter_typescript::LANGUAGE_TSX.into())

@@ -137,6 +137,10 @@ const protoCorpus = (recovers) => upstreamCorpus('native-proto').filter((source)
 // (`recovers`) or reads.
 const makeCorpus = (recovers) => upstreamCorpus('native-make').filter((source) => oracleRecovers(source, 'Make') === recovers);
 
+// The cases of the pinned tree-sitter-solidity corpus the oracle recovers
+// from (`recovers`) or reads.
+const solidityCorpus = (recovers) => upstreamCorpus('native-solidity').filter((source) => oracleRecovers(source, 'Solidity') === recovers);
+
 // ECMAScript reads a brace or a bracket that opens no quantifier or POSIX
 // class as a character (ECMA-262, Annex B.1.2, ExtendedPatternCharacter and
 // ClassAtom), and the native grammar does too; the tree-sitter-regex 0.25.0
@@ -1076,6 +1080,51 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'ifeq (a,b\n', 'ifeq (a,b)\n', 'define a\nb\n', 'a = $(b\n', 'a: $(\n', 'endif\n', 'else\n', 'endef\n', 'a = ${b\n', 'ifdef\n', '\techo\n', 'export a = $(\n',
       'a: b\n\techo $(\n', 'vpath %.c $(\n', 'include $(\n', ':\n', '$(a\n', 'override\n',
       'a: private b = c\n', 'a: export b = c\n', '# café\nall: é\n', 'a:\nb\n', 'all:\necho\n', 'a: ;\n>b\n',
+    ],
+  },  {
+    id: 'solidity',
+    language: 'Solidity',
+    grammar: 'parity/grammars/native/solidity.lino',
+    oracle: 'tree-sitter-solidity 1.2.13',
+    sources: [
+      `${grammarSourceOf('native-solidity').repository}/blob/${grammarSourceOf('native-solidity').revision}/grammar.js`,
+      `${grammarSourceOf('native-solidity').repository}/tree/${grammarSourceOf('native-solidity').revision}/${grammarSourceOf('native-solidity').corpus.path}`,
+    ],
+    // The grammar is the import of the grammar.json of tree-sitter-solidity
+    // 1.2.13, the one the oracle parser is generated from
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision the oracle reads, and a few
+    // sources more, contracts, interfaces, libraries, statements, assembly
+    // and literals included; the rejections are sources the oracle recovers
+    // from.
+    ...nativeGrammar('native-solidity'),
+    matches: [
+      ...solidityCorpus(false),
+
+  '', 'pragma solidity ^0.8.0;\n', 'contract C {}\n', 'contract C { uint x; }\n', 'contract C { uint256 public x = 1; }\n',
+  'contract C { function f() public {} }\n', 'contract C { function f(uint a) external pure returns (uint) { return a + 1; } }\n',
+  'interface I { function f() external; }\n', 'library L { function f() internal {} }\n', 'abstract contract A is B, C {}\n',
+  'contract C { event E(uint indexed a); }\n', 'contract C { error E(uint a); }\n', 'contract C { modifier m() { _; } }\n',
+  'contract C { struct S { uint a; } }\n', 'contract C { enum E { A, B } }\n', 'contract C { mapping(address => uint) m; }\n',
+  'contract C { constructor() {} }\n', 'contract C { receive() external payable {} fallback() external {} }\n',
+  'import "a.sol";\n', 'import {A as B} from "a.sol";\n', 'import * as A from "a.sol";\n', 'using L for uint;\n',
+  'type T is uint;\n', 'uint constant X = 1;\n', 'function f() pure returns (uint) { return 1; }\n',
+  'contract C { function f() public { if (a) { b(); } else { c(); } } }\n', 'contract C { function f() public { for (uint i = 0; i < 1; i++) {} } }\n',
+  'contract C { function f() public { while (a) { break; } do { continue; } while (b); } }\n',
+  'contract C { function f() public { emit E(1); revert E(); require(a, "é"); } }\n',
+  'contract C { function f() public { try g() returns (uint a) {} catch Error(string memory s) {} catch {} } }\n',
+  'contract C { function f() public { assembly { let x := add(1, 2) } } }\n', 'contract C { function f() public { unchecked { a++; } } }\n',
+  'contract C { function f() public { (uint a, , uint b) = g(); } }\n', 'contract C { function f() public { a = b ? c : d; } }\n',
+  'contract C { function f() public { x = new D{value: 1}(2); } }\n', 'contract C { function f() public { x = a[1:2]; delete a; } }\n',
+  'contract C { string s = unicode"é"; bytes b = hex"00ff"; }\n', 'contract C { uint x = 1 ether + 2 gwei; }\n', '// é\n/* é */\n',
+  '/// @notice é\ncontract C {}\n', 'contract C { function f() public virtual override(A, B) {} }\n',
+    ],
+    divergences: [],
+    rejections: [
+      ...solidityCorpus(true),
+  'contract C {', 'contract C { function f( }\n', 'contract C { uint x = ; }\n', 'pragma solidity\n', 'contract { }\n', 'import ;\n',
+  'contract C { function f() public { if (a { } } }\n', 'contract C { function f() public { x = (1; } }\n', 'contract C { struct S { } \n',
+  'contract C { function f() public { return } }\n',
     ],
   },
 ]);

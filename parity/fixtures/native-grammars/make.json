@@ -2905,7 +2905,7 @@
     },
     {
       "source": "define a\nb\n",
-      "recovered": "(makefile (define_directive \"define\" ~\" \" name:(word \"a\") (unnamed_token \"\\n\") value:(raw_text \"b\\n\") (MISSING@11) (MISSING@11 unnamed_token)))"
+      "recovered": "(makefile (define_directive \"define\" ~\" \" name:(word \"a\") (unnamed_token \"\\n\") value:(raw_text \"b\\n\") (MISSING@11 \"endef\") (MISSING@11 unnamed_token)))"
     },
     {
       "source": "a = $(b\n",

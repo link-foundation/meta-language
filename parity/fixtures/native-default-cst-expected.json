@@ -1576,7 +1576,7 @@
       "grammars": {
         "native-make": {
           "version": "1.0.0",
-          "parserSha256": "9cfcded3b65f7a6e166f26bd17d1a144daac083bc32f0c0588e25f1f50a046d1"
+          "parserSha256": "96234322e161c508060123cb96ce93c79686eeb189f497868ae9c025554d3c95"
         }
       },
       "oracleGrammars": {
@@ -1650,6 +1650,119 @@
         [5,"arg1","word",1,18,19,""],
         [5,null,")",0,19,19,"M"],
         [4,null,"endif",0,20,20,"M"]
+      ],
+      "embedded": []
+    },
+    "Solidity": {
+      "grammars": {
+        "native-solidity": {
+          "version": "1.0.0",
+          "parserSha256": "09d71b44186e4be571e5105e03fde8f589b32dd4f09dad54b18c9901065656bd"
+        }
+      },
+      "oracleGrammars": {
+        "solidity": {
+          "version": "1.2.13",
+          "parserSha256": "e71971f6ddc0704e81f4af3f43ecc79793742bb5f1d256a5fdd718aa06d74acb"
+        }
+      },
+      "sourceSha256": "86b43abbde1fec53be76eecff7ad5ef719b5b2261528703674942abddf3e5442",
+      "recoverySourceSha256": "15bfd6e50d2369e6d85ecb0beddf99bae91a0ed61082dc2566a46421964c312d",
+      "positive": [
+        [0,null,"source_file",1,0,207,""],
+        [1,null,"comment",1,0,31,"X"],
+        [1,null,"pragma_directive",1,32,55,""],
+        [2,null,"pragma",0,32,38,""],
+        [2,null,"solidity_pragma_token",1,39,54,""],
+        [3,null,"solidity",0,39,47,""],
+        [3,"version_constraint","solidity_version_comparison_operator",1,47,49,""],
+        [4,null,"^",0,47,49,""],
+        [3,"version_constraint","solidity_version",1,49,54,""],
+        [2,null,";",0,54,55,""],
+        [1,null,"comment",1,56,64,"X"],
+        [1,null,"contract_declaration",1,65,206,""],
+        [2,null,"contract",0,65,73,""],
+        [2,"name","identifier",1,74,78,""],
+        [2,"body","contract_body",1,79,206,""],
+        [3,null,"{",0,79,80,""],
+        [3,null,"state_variable_declaration",1,85,102,""],
+        [4,"type","type_name",1,85,92,""],
+        [5,null,"primitive_type",1,85,92,""],
+        [6,null,"uint256",0,85,92,""],
+        [4,"visibility","visibility",1,93,99,""],
+        [5,null,"public",0,93,99,""],
+        [4,"name","identifier",1,100,101,""],
+        [4,null,";",0,101,102,""],
+        [3,null,"function_definition",1,107,176,""],
+        [4,null,"function",0,107,115,""],
+        [4,"name","identifier",1,116,117,""],
+        [4,null,"(",0,117,118,""],
+        [4,null,"parameter",1,118,127,""],
+        [5,"type","type_name",1,118,125,""],
+        [6,null,"primitive_type",1,118,125,""],
+        [7,null,"uint256",0,118,125,""],
+        [5,"name","identifier",1,126,127,""],
+        [4,null,")",0,127,128,""],
+        [4,null,"visibility",1,129,135,""],
+        [5,null,"public",0,129,135,""],
+        [4,null,"state_mutability",1,136,140,""],
+        [5,null,"pure",0,136,140,""],
+        [4,"return_type","return_type_definition",1,141,158,""],
+        [5,null,"returns",0,141,148,""],
+        [5,null,"(",0,149,150,""],
+        [5,null,"parameter",1,150,157,""],
+        [6,"type","type_name",1,150,157,""],
+        [7,null,"primitive_type",1,150,157,""],
+        [8,null,"uint256",0,150,157,""],
+        [5,null,")",0,157,158,""],
+        [4,"body","function_body",1,159,176,""],
+        [5,null,"{",0,159,160,""],
+        [5,null,"statement",1,161,174,""],
+        [6,null,"return_statement",1,161,174,""],
+        [7,null,"return",0,161,167,""],
+        [7,null,"expression",1,168,173,""],
+        [8,null,"binary_expression",1,168,173,""],
+        [9,"left","expression",1,168,169,""],
+        [10,null,"identifier",1,168,169,""],
+        [9,"operator","+",0,170,171,""],
+        [9,"right","expression",1,172,173,""],
+        [10,null,"number_literal",1,172,173,""],
+        [7,null,";",0,173,174,""],
+        [5,null,"}",0,175,176,""],
+        [3,null,"state_variable_declaration",1,181,204,""],
+        [4,"type","type_name",1,181,187,""],
+        [5,null,"primitive_type",1,181,187,""],
+        [6,null,"string",0,181,187,""],
+        [4,"name","identifier",1,188,189,""],
+        [4,null,"=",0,190,191,""],
+        [4,"value","expression",1,192,203,""],
+        [5,null,"unicode_string_literal",1,192,203,""],
+        [6,null,"unicode",0,192,199,""],
+        [6,null,"\"",0,199,200,""],
+        [6,null,"\"",0,202,203,""],
+        [4,null,";",0,203,204,""],
+        [3,null,"}",0,205,206,""]
+      ],
+      "recovery": [
+        [0,null,"source_file",1,0,51,""],
+        [1,null,"contract_declaration",1,0,50,""],
+        [2,null,"contract",0,0,8,""],
+        [2,"name","identifier",1,9,13,""],
+        [2,"body","contract_body",1,14,50,""],
+        [3,null,"{",0,14,15,""],
+        [3,null,"function_definition",1,20,41,""],
+        [4,null,"function",0,20,28,""],
+        [4,"name","identifier",1,29,30,""],
+        [4,null,"(",0,30,31,""],
+        [4,null,"parameter",1,31,40,""],
+        [5,"type","type_name",1,31,38,""],
+        [6,null,"primitive_type",1,31,38,""],
+        [7,null,"uint256",0,31,38,""],
+        [5,"name","identifier",1,39,40,""],
+        [4,null,")",0,40,40,"M"],
+        [4,null,";",0,41,41,"M"],
+        [3,null,"ERROR",1,41,49,"E"],
+        [3,null,"}",0,49,50,""]
       ],
       "embedded": []
     }

@@ -585,6 +585,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/lexing.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-SOLIDITY',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/solidity.json',
+    construct: 'native merged Solidity grammar imported from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/solidity.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned src/grammar.json of tree-sitter-solidity 1.2.13, with every rule renamed to its English name and its concept merged into the shared concepts, and every hand decision recorded in parity/grammars/merge-reports/solidity.json. Both executors build, for every source of the upstream test/corpus the oracle reads and for hand-written sources, exactly the concrete syntax tree rows of the tree-sitter-solidity oracle with no ambiguity: pragma directives with version constraints, imports, contracts, interfaces, libraries, user-defined value types, errors, events, structures, enumerations, modifiers, constructors, fallback and receive functions, state variables, mappings, using directives, every statement (revert with custom errors, try and catch, emit, unchecked blocks), Yul assembly blocks, expressions with their precedences, and string, unicode, hex and number literals with units; the contextual keywords are read as the oracle lexer reads them. Both executors reject invalid input the oracle recovers from, and keep every source byte in the tree.',
+    assertions: [
+      'nativeSolidityGrammarIsCanonicalLinks',
+      'nativeSolidityTreesMatchOracle',
+      'nativeSolidityRejectsInvalidInput',
+      'nativeSolidityTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/src/programming-language-parser.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/lexing.rs', 'rust/src/grammar/feature_runtime/forking.rs', 'rust/src/native_grammar_parser.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

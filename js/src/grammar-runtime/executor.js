@@ -1147,7 +1147,6 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
         // `revert_arguments` reduces on `)` where a `parenthesized_expression`
         // of level 2 shifts it).
         const inside = shiftOrder({ children: a.children, dynamic: result.dynamic }, { children: b.children, dynamic: existing.dynamic }, orders, grammar, bytes, owner);
-        if (globalThis.__dbg) console.error('inside', a.kind, b.kind, inside);
         if (inside !== 0) return inside;
         const [closeA, closeB] = [closingReduction(a), closingReduction(b)];
         const apart = !samePrecedence(closeA, closeB);
@@ -1295,6 +1294,21 @@ function extraReduction(a, b, stack, orders, owner = null, grammar = null) {
     // `shiftPreferred`.
     const [mine, theirs] = [own[1], next[1]];
     if (!mine || !theirs || theirs.type !== 'node' || sameTree(mine, theirs) || firstLeafStart(mine) !== firstLeafStart(theirs) || theirs.end !== parent.end) return 0;
+    // Unless the other builds the rest of `parent` as one node, the same
+    // tokens by another name (Solidity's `revert Error();`, whose `()` the
+    // silent `call_arguments` of a call takes where the other parse aliases
+    // it to `revert_arguments`): both shift its
+    // tokens, and the conflict is at its end, where `a`'s result reduces
+    // `parent` and the other shifts on: the reduced node's associativity
+    // decides on equal levels.
+    if (next.length === 2 && sameOutput(own.slice(1), theirs.children.filter((child) => !isTrivia(child)))) {
+      const reduced = reduction(parent);
+      const order = comparePrecedence(reduced, other, orders);
+      if (order !== 0) return order;
+      if (reduced.associativity === 'right') return -1;
+      if (reduced.associativity === 'left') return 1;
+      return 0;
+    }
     const order = comparePrecedence(parent.precedence ?? unranked(parent.rule), other, orders);
     if (order !== 0) return order;
     if (other.associativity === 'right') return 1;
@@ -2450,12 +2464,15 @@ export class Executor {
     }
     if (this.keywords !== null) {
       // A separator the token begins with, though it does not match on to
-      // the token's text, is read on with (see `joinedStart`).
+      // the token's text, is read on with (see `joinedStart`), unless the
+      // token stops inside it: a lexer then resets the token's start where
+      // only the separator goes on (Make's `\\` before a newline); one alive
+      // at the separator's end reads on from the lexer's start state.
       const call = this.callStack[this.callStack.length - 1] ?? null;
       for (const leaf of leaves.slice(0, at < 0 ? leaves.length : at)) {
         if (!isSeparator(leaf)) continue;
         const reach = this.prefixReach(item, leaf.start, state);
-        if (reach > leaf.start) this.keywords.matchJoin(leaf.start, reach, call);
+        if (reach >= leaf.end) this.keywords.matchJoin(leaf.start, reach, call);
       }
     }
     return at < 0 ? { end: start, leaves } : { end: leaves[at].start, leaves: leaves.slice(0, at) };

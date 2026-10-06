@@ -18,7 +18,7 @@ const language = 'Solidity';
 // LINO names another grammar file, as a variant of the scanner to try.
 const text = readFileSync(process.env.LINO ?? new URL(`../../parity/grammars/native/${grammar}.lino`, import.meta.url), 'utf8');
 const compiled = compileGrammar(parseGrammarLinks(text));
-const options = { hidden: [], anonymous: ['unnamed_token'], extras: ['comment'], oracleKinds: nativeOracleKinds(text) };
+const options = { hidden: [], anonymous: ['unnamed_token', 'hex_digit'], extras: ['comment'], oracleKinds: nativeOracleKinds(text) };
 const show = new Set(process.env.SHOW ? process.env.SHOW.split(',') : []);
 const totals = {};
 for (const { file, title, source } of corpusCases(grammarSourceOf(`native-${grammar}`))) {
