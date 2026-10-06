@@ -19,6 +19,8 @@ import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
 const STRING_TESTS = new Set(['startsWith', 'endsWith', 'includes']);
+// Unicode case mappings, which Rust's to_lowercase/to_uppercase also follow.
+const STRING_CASES = new Set(['toLowerCase', 'toUpperCase']);
 const ROOT = 'crate';
 const EQUALITY = { '===': 'eq', '!==': 'ne' };
 const RELATIONAL = { '<': 'lt', '<=': 'le', '>': 'gt', '>=': 'ge' };
@@ -1473,6 +1475,12 @@ class JavaScriptParser {
           const args = this.arguments(field.value);
           if (args.length !== 1) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'search the whole string, with one argument', span(token, c.peek()));
           expr = { k: 'stringTest', op: field.value, object: expr, search: args[0], span: joined(expr, { span: span(token, c.peek()) }, token) };
+          continue;
+        }
+        if (c.is('(') && STRING_CASES.has(field.value)) {
+          const args = this.arguments(field.value);
+          if (args.length !== 0) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'case mappings take no arguments', span(token, c.peek()));
+          expr = { k: 'stringCase', op: field.value, object: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
         if (c.is('(')) {

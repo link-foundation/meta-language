@@ -418,6 +418,8 @@ class LeanEmitter {
         return this.match(e, depth);
       case 'toString':
         return e.arg.type.kind === 'string' ? this.expr(e.arg, depth) : this.toText(e.arg, depth, e.console);
+      case 'stringCase':
+        throw unsupported(`.${e.op}()`, 'Unicode case mapping has no Lean library counterpart; Lean maps ASCII letters only', e.span);
       case 'stringTest': {
         const string = this.expr(e.string, depth);
         const search = this.expr(e.search, depth);

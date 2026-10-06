@@ -446,6 +446,13 @@ class Checker {
         if (search.type.kind !== 'string') throw typeError(`.${node.op}() of ${typeKey(search.type)}`, node.search.span);
         return { k: 'stringTest', op: node.op, string, search, type: BOOL, span: node.span };
       }
+      case 'stringCase': {
+        const string = this.expr(node.object, env, path, undefined);
+        if (string.type.kind !== 'string') {
+          throw unsupported(`method call .${node.op}()`, `.${node.op}() is portable on strings, not on ${typeKey(string.type)}`, node.span);
+        }
+        return { k: 'stringCase', op: node.op, string, type: STRING, span: node.span };
+      }
       case 'toString': {
         const arg = this.expr(node.arg, env, path, undefined);
         if (arg.type.kind === 'string') return arg;

@@ -35,3 +35,30 @@ test('string tests that are not portable are refused with a reason', () => {
   assert.match(refusal("console.log('abc'.startsWith('a', 1));\n"), /one argument/u);
   assert.match(refusal("const xs = [1];\nconsole.log(xs.includes(1));\n"), /portable on strings/u);
 });
+
+const CASES = `/**
+ * @param {string} name
+ * @returns {string}
+ */
+function shout(name) {
+  return name.toUpperCase() + '!' + name.toLowerCase();
+}
+console.log('%s', shout('Grüße ΣΑΣ'));
+`;
+
+test('toLowerCase and toUpperCase are a semantic translation into Rust, which maps Unicode case the same way', () => {
+  const rust = translateProgram(CASES, 'JavaScript', 'Rust');
+  assert.equal(rust.diagnostic, null);
+  assert.ok(rust.code.includes('.to_uppercase()'), rust.code);
+  assert.ok(rust.code.includes('.to_lowercase()'), rust.code);
+  const back = translateProgram('pub fn shout(name: String) -> String {\n    name.to_lowercase().to_uppercase()\n}\n\nfn main() {\n    println!(\"{}\", shout(String::from(\"Ab\")));\n}\n', 'Rust', 'JavaScript');
+  assert.equal(back.diagnostic, null);
+  assert.ok(back.code.includes('.toUpperCase()'), back.code);
+});
+
+test('case mappings are refused for Lean and Rocq, whose library maps ASCII letters only', () => {
+  for (const target of ['Lean', 'Rocq']) {
+    assert.match(translateProgram(CASES, 'JavaScript', target).diagnostic?.message ?? '', /ASCII letters only/u, target);
+  }
+  assert.match(refusal("console.log('%s', 'a'.toLowerCase(1));\n"), /no arguments/u);
+});

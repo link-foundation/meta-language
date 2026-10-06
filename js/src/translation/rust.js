@@ -608,6 +608,10 @@ class RustParser {
       case 'contains':
         expect(1);
         return { k: 'stringTest', op: { starts_with: 'startsWith', ends_with: 'endsWith', contains: 'includes' }[method.value], object: receiver, search: args[0], span: range };
+      case 'to_lowercase':
+      case 'to_uppercase':
+        expect(0);
+        return { k: 'stringCase', op: method.value === 'to_lowercase' ? 'toLowerCase' : 'toUpperCase', object: receiver, span: range };
       case 'clone':
       case 'to_owned':
       case 'as_str':

@@ -660,6 +660,8 @@ class RocqEmitter {
         return this.match(e);
       case 'toString':
         return this.toText(e.arg, e.console);
+      case 'stringCase':
+        throw unsupported(`.${e.op}()`, 'Unicode case mapping has no Rocq library counterpart; Rocq maps ASCII letters only', e.span);
       case 'stringTest': {
         const helper = { startsWith: 'stringStartsWith', endsWith: 'stringEndsWith', includes: 'stringIncludes' }[e.op];
         this.helpers.add(helper);
