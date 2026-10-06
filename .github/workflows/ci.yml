@@ -926,6 +926,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
+        with:
+          # The self-translation tests check translated Rust with clippy-driver.
+          components: clippy
 
       - name: Setup Lean
         env:
