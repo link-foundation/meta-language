@@ -17,7 +17,7 @@
       "features": {"scanner": 0, "conflict": 17, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 100, "rows": 5348, "bytes": 12987, "divergences": 0, "rejections": 33},
       "recovery": {"repaired": 33, "errorNodes": 7, "missingNodes": 41, "categories": {}},
-      "reuse": {"shared": 46, "specific": 137}
+      "reuse": {"shared": 49, "specific": 134}
     },
     {
       "grammar": "native-csv",
@@ -74,7 +74,7 @@
       "features": {"scanner": 0, "conflict": 8, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 106, "rows": 4369, "bytes": 9101, "divergences": 0, "rejections": 13},
       "recovery": {"repaired": 13, "errorNodes": 4, "missingNodes": 19, "categories": {}},
-      "reuse": {"shared": 54, "specific": 63}
+      "reuse": {"shared": 55, "specific": 62}
     },
     {
       "grammar": "native-graphql",
@@ -128,7 +128,7 @@
       "features": {"scanner": 0, "conflict": 13, "precedences": 0, "extra": 3, "kind": 1},
       "correctness": {"matches": 146, "rows": 4848, "bytes": 11744, "divergences": 0, "rejections": 11},
       "recovery": {"repaired": 11, "errorNodes": 4, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 68, "specific": 101}
+      "reuse": {"shared": 69, "specific": 100}
     },
     {
       "grammar": "native-javascript",
@@ -201,7 +201,7 @@
       "features": {"scanner": 1, "conflict": 11, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 251, "rows": 5152, "bytes": 13446, "divergences": 1, "rejections": 42},
       "recovery": {"repaired": 42, "errorNodes": 34, "missingNodes": 41, "categories": {"merged-extension": 1, "native-skips-more": 34, "oracle-skips-more": 35, "same-repair-sites": 19, "same-skipped-bytes": 8}},
-      "reuse": {"shared": 40, "specific": 107}
+      "reuse": {"shared": 42, "specific": 105}
     },
     {
       "grammar": "native-make",
@@ -291,7 +291,7 @@
       "features": {"scanner": 0, "conflict": 16, "precedences": 2, "extra": 2, "kind": 0},
       "correctness": {"matches": 230, "rows": 9440, "bytes": 20820, "divergences": 0, "rejections": 12},
       "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {"native-skips-more": 16, "oracle-skips-more": 45, "same-repair-sites": 4, "same-skipped-bytes": 7}},
-      "reuse": {"shared": 32, "specific": 233}
+      "reuse": {"shared": 33, "specific": 232}
     },
     {
       "grammar": "native-rust",
@@ -309,7 +309,7 @@
       "features": {"scanner": 6, "conflict": 9, "precedences": 0, "extra": 3, "kind": 3},
       "correctness": {"matches": 182, "rows": 7903, "bytes": 15796, "divergences": 0, "rejections": 38},
       "recovery": {"repaired": 38, "errorNodes": 18, "missingNodes": 47, "categories": {"native-skips-more": 25, "oracle-skips-more": 36, "same-repair-sites": 7, "same-skipped-bytes": 7}},
-      "reuse": {"shared": 59, "specific": 125}
+      "reuse": {"shared": 63, "specific": 121}
     },
     {
       "grammar": "native-scheme",
@@ -328,6 +328,24 @@
       "correctness": {"matches": 264, "rows": 908, "bytes": 1363, "divergences": 23, "rejections": 50},
       "recovery": {"repaired": 50, "errorNodes": 28, "missingNodes": 28, "categories": {}},
       "reuse": {"shared": 23, "specific": 5}
+    },
+    {
+      "grammar": "native-solidity",
+      "language": "Solidity",
+      "links": "parity/grammars/native/solidity.lino",
+      "fixture": "parity/fixtures/native-grammars/solidity.json",
+      "oracle": "tree-sitter-solidity 1.2.13",
+      "sources": [
+        "https://github.com/JoranHonig/tree-sitter-solidity/blob/4e938a46c7030dd001bc99e1ac0f0c750ac98254/grammar.js",
+        "https://github.com/JoranHonig/tree-sitter-solidity/tree/4e938a46c7030dd001bc99e1ac0f0c750ac98254/test/corpus"
+      ],
+      "corpus": "https://github.com/JoranHonig/tree-sitter-solidity/tree/4e938a46c7030dd001bc99e1ac0f0c750ac98254/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/solidity.json",
+      "coverage": {"rules": {"normal": 111, "atomic": 0, "silent": 44, "token": 12}, "visibleRules": 111, "exercisedRules": 101, "checkedKinds": 112, "checkedFields": 35, "renamed": 54, "expandedWords": 5, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 11, "precedences": 0, "extra": 2, "kind": 1},
+      "correctness": {"matches": 166, "rows": 4312, "bytes": 10859, "divergences": 0, "rejections": 10},
+      "recovery": {"repaired": 10, "errorNodes": 2, "missingNodes": 15, "categories": {}},
+      "reuse": {"shared": 60, "specific": 107}
     },
     {
       "grammar": "native-tsx",

@@ -176,7 +176,8 @@ impl GrammarFacts {
         }
     }
 
-    fn rank(&self, rule: Option<&Name>) -> usize {
+    /// The order a rule is defined in, 0 for none (see `extra_reduction`).
+    pub(super) fn rank(&self, rule: Option<&Name>) -> usize {
         rule.and_then(|rule| self.ranks.get(rule))
             .copied()
             .unwrap_or(0)
@@ -224,6 +225,13 @@ impl GrammarFacts {
                 keywords,
             }
         })
+    }
+
+    /// Whether a declared conflict names any of `names`.
+    pub(super) fn declares_any(&self, names: &[Name]) -> bool {
+        self.conflicts
+            .iter()
+            .any(|group| names.iter().any(|name| group.contains(name)))
     }
 
     /// Whether a declared conflict names both rules.

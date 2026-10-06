@@ -11,8 +11,8 @@ use super::forking::{
     shift_reduction, token_at,
 };
 use super::parting::{
-    chain_conflict, child_parting, has_node, holds_first, one_token, parting_end, reduced_first,
-    same_tokens, shifted_past, silent_parting,
+    chain_conflict, child_parting, extra_reduction, has_node, holds_first, one_token, parting_end,
+    reduced_first, same_tokens, silent_parting,
 };
 use super::program::{Associativity, PrecedenceTag, Settling, SettlingStep, compare_precedence};
 use super::reducing::{ending_reduction, first_reduction, leading_dynamic};
@@ -474,7 +474,22 @@ pub(super) fn shift_order(
                     // decide the reduce/reduce conflict on the last token
                     // (Java's `v = 1` of `@A(v = 1)`, an `element_value_pair`
                     // that `_element_value` of precedence 2 closes, against
-                    // an `assignment_expression` of 1).
+                    // an `assignment_expression` of 1). Unless the two part
+                    // inside first, one reducing where the other shifts
+                    // (Solidity's `revert(x);`, whose `x` a `call_argument`
+                    // of `revert_arguments` reduces on `)` where a
+                    // `parenthesized_expression` of level 2 shifts it).
+                    let inside = shift_order(
+                        (&a.children, &b.children),
+                        dynamic,
+                        orders,
+                        grammar,
+                        bytes,
+                        owner,
+                    );
+                    if inside != Ordering::Equal {
+                        return inside;
+                    }
                     let (close_a, close_b) = (closing_reduction(&a), closing_reduction(&b));
                     let (own_a, own_b) = if PrecedenceTag::same(close_a.as_ref(), close_b.as_ref())
                     {
@@ -501,8 +516,8 @@ pub(super) fn shift_order(
                 if lone != Ordering::Equal {
                     return lone;
                 }
-                let reduced = extra_reduction(&a, &b, &right, orders, owner)
-                    .then_with(|| extra_reduction(&b, &a, &left, orders, owner).reverse());
+                let reduced = extra_reduction(&a, &b, &right, orders, owner, grammar)
+                    .then_with(|| extra_reduction(&b, &a, &left, orders, owner, grammar).reverse());
                 if reduced != Ordering::Equal {
                     return reduced;
                 }
@@ -609,101 +624,6 @@ fn lone_reduction(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -
     .unwrap_or(PrecedenceTag::unranked(None));
     compare_precedence(&shifted, &reduced, orders)
         .then_with(|| by_associativity(reduced.associativity))
-}
-
-/// Which of two results an LR parser keeps when one of them reduces a node
-/// the other does not build: `a` is that node when `b`, at the same offset in
-/// the other result, is a subtree on its leftmost chain and the children of
-/// the innermost such node are, subtree for subtree, the next children of the
-/// other result's node in progress (`walk` holds its place). The two
-/// reductions of the same text then conflict at the end of that node, which
-/// one result reduces where the other reduces or shifts in its own node: the
-/// higher precedence level wins and, on equal levels where the other node
-/// goes on, the associativity of the reduced node. The results themselves
-/// are in progress under `owner`, the precedence a precedence expression
-/// holds them with (TypeScript's `extends A<X>`, whose
-/// `_extends_clause_single` takes `A` and `<X>` under the name `extends`
-/// where an `instantiation_expression` reduces them under `instantiation`,
-/// which the order ranks below), else under none. Greater when `a`'s result
-/// is kept, Less when the other is, Equal when neither. It mirrors
-/// extraReduction in js/src/grammar-runtime/executor.js.
-fn extra_reduction(
-    a: &Rc<Tree>,
-    b: &Rc<Tree>,
-    walk: &[Walk],
-    orders: &[Vec<PrecedenceEntry>],
-    owner: Option<&PrecedenceTag>,
-) -> Ordering {
-    if a.ty != TreeType::Node {
-        return Ordering::Equal;
-    }
-    let mut parent = a.clone();
-    loop {
-        let Some(first) = first_meaningful(&parent.children) else {
-            return Ordering::Equal;
-        };
-        if same_tree(&first, b) {
-            break;
-        }
-        if first.ty != TreeType::Node {
-            return Ordering::Equal;
-        }
-        parent = first;
-    }
-    let own = meaningful(&parent.children);
-    // The next children of the node in progress, from `b` on, and that node.
-    let mut next = Vec::new();
-    let mut container = None;
-    for step in walk.iter().rev() {
-        if next.len() >= own.len() {
-            break;
-        }
-        match step {
-            Walk::Item(item) => {
-                if !item.trivia {
-                    next.push(item.clone());
-                }
-            }
-            Walk::Part(part) => {
-                let wanted = own.len() - next.len();
-                next.extend(items(part).filter(|item| !item.trivia).take(wanted));
-            }
-            Walk::End(node) => {
-                container = Some(node.clone());
-                break;
-            }
-        }
-    }
-    if container.is_none()
-        && let Some(Walk::End(node)) = walk.iter().rev().find(|step| matches!(step, Walk::End(_)))
-    {
-        container = Some(node.clone());
-    }
-    let other = container.as_ref().map_or_else(
-        || owner.cloned().unwrap_or(PrecedenceTag::unranked(None)),
-        |node| {
-            node.precedence
-                .clone()
-                .unwrap_or_else(|| PrecedenceTag::unranked(node.rule.clone()))
-        },
-    );
-    if own.len() > next.len()
-        || own
-            .iter()
-            .zip(&next)
-            .any(|(mine, theirs)| !same_tree(mine, theirs))
-    {
-        return shifted_past(&parent, &own, &next, &other, orders);
-    }
-    let mine = reduction(&parent);
-    let order = compare_precedence(&mine, &other, orders);
-    if order != Ordering::Equal {
-        return order;
-    }
-    if container.is_none_or(|node| node.end > parent.end) {
-        return by_associativity(mine.associativity).reverse();
-    }
-    Ordering::Equal
 }
 
 /// The outermost node kind on the leftmost chains of two nodes that start at

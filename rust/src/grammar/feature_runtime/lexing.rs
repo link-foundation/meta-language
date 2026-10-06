@@ -530,10 +530,11 @@ impl Executor<'_> {
         let children = if in_token {
             no_children()
         } else {
-            let kind = separator_run_kind(matcher, start, end);
-            let mut leaf = Tree::new(TreeType::Token, kind, start, end);
+            let (from, count) = self.joined_start(start, leaves);
+            let kind = self.joined_kind(separator_run_kind(matcher, start, end), from, start, end);
+            let mut leaf = Tree::new(TreeType::Token, kind, from, end);
             leaf.plain = plain;
-            with_leaf(leaves, leaf)
+            with_leaf(&leaves[..count], leaf)
         };
         Ok(vec![Res::new(end, state.clone(), children, 0)])
     }
@@ -645,11 +646,13 @@ impl Executor<'_> {
                     .or_default()
                     .insert(chain);
             }
+            self.record_joins(item, &skipped.leaves[..at], state)?;
             return Ok(Rc::new(Skipped {
                 end: leaf.start,
                 leaves: children_of(skipped.leaves[..at].to_vec()),
             }));
         }
+        self.record_joins(item, &skipped.leaves, state)?;
         Ok(skipped)
     }
 
@@ -671,14 +674,16 @@ impl Executor<'_> {
         let children = if in_token {
             no_children()
         } else {
-            let mut leaf = Tree::new(TreeType::Token, None, start, best.end);
+            let (from, count) = self.joined_start(start, &skipped.leaves);
+            let kind = self.joined_kind(None, from, start, best.end);
+            let mut leaf = Tree::new(TreeType::Token, kind, from, best.end);
             if let Expr::LexicalPrecedence { level, .. } = item {
                 leaf.priority = Some(*level);
             }
             // A token of an external scanner is marked, whatever an alias
             // names it (see `preferred_tokens`).
             leaf.scanned = matches!(item, Expr::Ref(Target::External(_)));
-            with_leaf(&skipped.leaves, leaf)
+            with_leaf(&skipped.leaves[..count], leaf)
         };
         Ok(vec![Res::new(best.end, best.state, children, best.dynamic)])
     }

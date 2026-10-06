@@ -12,6 +12,7 @@
 mod compile;
 mod executor;
 mod forking;
+mod joins;
 mod keyword_lexing;
 mod lexing;
 mod load;

@@ -75,6 +75,31 @@ fn union(sets: impl Iterator<Item = Option<HashSet<Name>>>) -> Option<HashSet<Na
     Some(all)
 }
 
+/// The node a node only wraps, with the precedence it comes from, under
+/// every such wrapper (Solidity's visible `expression` around a
+/// `binary_expression`): a precedence conflict is between the parts of the
+/// node wrapped, as the parser reduces its wrappers after the conflict. It
+/// mirrors wrapped in js/src/grammar-runtime/executor.js.
+fn wrapped(node: &Rc<Tree>) -> Rc<Tree> {
+    let mut current = node.clone();
+    while current.ty == TreeType::Node && current.precedence.is_some() {
+        let parts: Vec<Rc<Tree>> = current
+            .children
+            .iter()
+            .filter(|child| !child.trivia)
+            .cloned()
+            .collect();
+        if parts.len() != 1
+            || parts[0].ty != TreeType::Node
+            || !PrecedenceTag::same(parts[0].precedence.as_ref(), current.precedence.as_ref())
+        {
+            break;
+        }
+        current = parts[0].clone();
+    }
+    current
+}
+
 impl Executor<'_> {
     // Precedence and associativity filter the binary-shaped results: a
     // leftmost or rightmost child node of lower precedence, or of equal
@@ -142,15 +167,17 @@ impl Executor<'_> {
         found.items
     }
 
-    // Whether the operand `child` on `side` conflicts with the precedence of
-    // `keep` (see `precedence_valid`).
+    // Whether the operand `wrapper` on `side` conflicts with the precedence
+    // of `keep` (see `precedence_valid`), as the node it wraps (see
+    // `wrapped`).
     pub(super) fn conflicts(
         &mut self,
         keep: &Keep,
-        child: &Tree,
+        wrapper: &Rc<Tree>,
         side: Associativity,
         next: Option<&Rc<Tree>>,
     ) -> Conflict {
+        let child = &*wrapped(wrapper);
         let Some(inner) = &child.precedence else {
             return Conflict::No;
         };
@@ -170,7 +197,7 @@ impl Executor<'_> {
             if side == Associativity::Right && self.lexed_shift(kind) {
                 return Conflict::No;
             }
-            if !self.reaches_owner(keep.item, kind, side) {
+            if !self.reaches_owner(keep.item, wrapper.rule.as_ref().unwrap_or(kind), side) {
                 return Conflict::No;
             }
             if next.is_some()

@@ -207,9 +207,23 @@ impl Executor<'_> {
         if first.is_empty() {
             return Ok(first);
         }
+        // The left operand is the first part of the node grown, under the
+        // nodes that only wrap it (Solidity's visible `expression` around a
+        // `binary_expression`).
         let grown_by_no_width = |result: &Res| {
-            first_meaningful(&result.children)
-                .filter(|node| node.ty == TreeType::Node && node.end == result.end)
+            let mut node = first_meaningful(&result.children);
+            while let Some(only) = node.as_ref().and_then(|current| {
+                let mut parts = current.children.iter().filter(|child| !child.trivia);
+                match (current.ty, parts.next(), parts.next()) {
+                    (TreeType::Node, Some(only), None) if only.ty == TreeType::Node => {
+                        Some(only.clone())
+                    }
+                    _ => None,
+                }
+            }) {
+                node = Some(only);
+            }
+            node.filter(|node| node.ty == TreeType::Node && node.end == result.end)
                 .and_then(|node| first_meaningful(&node.children))
                 .is_some_and(|left| left.end == result.end)
         };
@@ -353,7 +367,9 @@ impl Executor<'_> {
                     children: if in_token {
                         no_children()
                     } else {
-                        with_leaf(&skipped.leaves, leaf)
+                        let (from, count) = self.joined_start(start, &skipped.leaves);
+                        leaf.start = from;
+                        with_leaf(&skipped.leaves[..count], leaf)
                     },
                     precedence: None,
                     ambiguous: false,

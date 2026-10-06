@@ -46,6 +46,11 @@ use super::token_conflicts::token_conflict;
 /// that completed it takes no separator transition after it, so the offset
 /// skips no separator (`separators`) when the input is parsed again (Make's
 /// `a:\nb\n`, whose rule ends at the line break, with no `b` prerequisite).
+///
+/// A separator a token begins with, though it does not match on to the
+/// token's text (`matched_joins`, with how far the token reads on), is read
+/// on with where some call that matched it was in the tree's parse state
+/// (`joined`, see `joined_start`).
 /// It mirrors `KeywordLexing` in js/src/grammar-runtime/executor.js.
 #[derive(Debug, Default)]
 pub(super) struct KeywordLexing {
@@ -55,6 +60,8 @@ pub(super) struct KeywordLexing {
     matched_immediate: HashMap<(usize, usize), HashSet<Option<usize>>>,
     separators: HashSet<usize>,
     matched_separators: HashMap<usize, HashSet<Option<usize>>>,
+    joined: HashMap<usize, usize>,
+    matched_joins: HashMap<usize, (usize, HashSet<Option<usize>>)>,
     calls: Vec<Call>,
 }
 
@@ -115,6 +122,27 @@ impl KeywordLexing {
             .insert(call);
     }
 
+    /// Records a separator at `position` a token in the rule call `call`
+    /// begins with, read on with up to `reach`.
+    pub(super) fn match_join(&mut self, position: usize, reach: usize, call: Option<usize>) {
+        let join = self
+            .matched_joins
+            .entry(position)
+            .or_insert_with(|| (reach, HashSet::new()));
+        join.0 = join.0.max(reach);
+        join.1.insert(call);
+    }
+
+    /// Whether any separator is read on with (see `joined`).
+    pub(super) fn has_joins(&self) -> bool {
+        !self.joined.is_empty()
+    }
+
+    /// How far a token reads on with the separator at `position`, if it does.
+    pub(super) fn joined(&self, position: usize) -> Option<usize> {
+        self.joined.get(&position).copied()
+    }
+
     /// Whether an immediate token takes the separator at `position` in, so
     /// the offset skips no separator.
     pub(super) fn lexes_separator(&self, position: usize) -> bool {
@@ -148,6 +176,21 @@ impl KeywordLexing {
                 continue;
             }
             if node.trivia && node.kind.is_none() {
+                if let Some((join, calls)) = self.matched_joins.get(&node.start)
+                    && !self.joined.contains_key(&node.start)
+                {
+                    let leads = tokens.grammar.keyword_leads(rules);
+                    let reach =
+                        reach.get_or_insert_with(|| TreeReach::of(root, leads, tokens.bytes));
+                    let mut seen = HashSet::new();
+                    if calls.iter().any(|call| {
+                        self.built_around(*call, node, reach)
+                            && self.in_parse_state(*call, node, reach, &mut seen, leads)
+                    }) {
+                        self.joined.insert(node.start, *join);
+                        found = true;
+                    }
+                }
                 let Some(calls) = self.matched_separators.get(&node.start) else {
                     continue;
                 };
@@ -206,6 +249,7 @@ impl KeywordLexing {
         self.matched.clear();
         self.matched_immediate.clear();
         self.matched_separators.clear();
+        self.matched_joins.clear();
         self.calls.clear();
         found
     }

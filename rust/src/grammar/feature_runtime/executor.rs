@@ -156,6 +156,9 @@ pub(super) struct Executor<'c> {
     /// The immediate literals of each unordered choice, by the address of
     /// its items (see `immediate_literals`).
     pub(super) immediate_memo: HashMap<usize, Option<Rc<ImmediateLiterals>>>,
+    /// The reach of each lexical expression's match from an offset, by the
+    /// expression's address and the offset (see `prefix_reach`).
+    pub(super) prefix_reaches: HashMap<(usize, usize), usize>,
 }
 
 /// An element whose scan a repair point keeps (see `element_failed`): an
@@ -231,6 +234,7 @@ impl<'c> Executor<'c> {
             separator_taken: HashMap::new(),
             aliased: None,
             immediate_memo: HashMap::new(),
+            prefix_reaches: HashMap::new(),
         }
     }
 

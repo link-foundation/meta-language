@@ -235,9 +235,11 @@ impl Executor<'_> {
         let children = if in_token {
             no_children()
         } else {
+            let (from, count) = self.joined_start(start, &skipped.leaves);
+            let kind = self.joined_kind(kind, from, start, result.end);
             with_leaf(
-                &skipped.leaves,
-                Tree::new(TreeType::Token, kind, start, result.end),
+                &skipped.leaves[..count],
+                Tree::new(TreeType::Token, kind, from, result.end),
             )
         };
         Ok(vec![Res::new(

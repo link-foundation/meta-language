@@ -8,11 +8,12 @@ use std::rc::Rc;
 
 use super::executor::{Executor, Run};
 use super::forking::{GrammarFacts, lookahead_of, token_at};
-use super::ordering::{by_associativity, shift_preferred};
+use super::ordering::{by_associativity, reduction, shift_preferred};
 use super::program::{Expr, Name, PrecedenceTag, compare_precedence};
-use super::results::{Children, Res, Tree, TreeType, is_separator};
+use super::results::{Children, Res, Tree, TreeType, children_of, is_separator};
 use super::walk::{
-    Walk, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful, same_tree,
+    Walk, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful, same_output,
+    same_tree,
 };
 use crate::grammar::PrecedenceEntry;
 
@@ -488,6 +489,22 @@ pub(super) fn shifted_past(
     {
         return Ordering::Equal;
     }
+    // Unless the other builds the rest of `parent` as one node, the same
+    // tokens by another name (Solidity's `revert Error();`, whose `()` the
+    // silent `call_arguments` of a call takes where the other parse aliases
+    // it to `revert_arguments`): both shift its tokens, and the conflict is
+    // at its end, where `a`'s result reduces `parent` and the other shifts
+    // on: the reduced node's associativity decides on equal levels.
+    if next.len() == 2
+        && same_output(
+            &children_of(own[1..].to_vec()),
+            &children_of(meaningful(&theirs.children)),
+        )
+    {
+        let reduced = reduction(parent);
+        return compare_precedence(&reduced, other, orders)
+            .then_with(|| by_associativity(reduced.associativity).reverse());
+    }
     let shifted = parent
         .precedence
         .clone()
@@ -538,4 +555,140 @@ pub(super) fn silent_parting(a: &Tree, b: &Tree, walk: &[Walk]) -> Ordering {
         }
     }
     Ordering::Equal
+}
+
+/// Which of two results an LR parser keeps when one of them reduces a node
+/// the other does not build: `a` is that node when `b`, at the same offset in
+/// the other result, is a subtree on its leftmost chain and the children of
+/// the innermost such node are, subtree for subtree, the next children of the
+/// other result's node in progress (`walk` holds its place). The two
+/// reductions of the same text then conflict at the end of that node, which
+/// one result reduces where the other reduces or shifts in its own node: the
+/// higher precedence level wins and, on equal levels where the other node
+/// goes on, the associativity of the reduced node. The results themselves
+/// are in progress under `owner`, the precedence a precedence expression
+/// holds them with (TypeScript's `extends A<X>`, whose
+/// `_extends_clause_single` takes `A` and `<X>` under the name `extends`
+/// where an `instantiation_expression` reduces them under `instantiation`,
+/// which the order ranks below), else under none. Greater when `a`'s result
+/// is kept, Less when the other is, Equal when neither. It mirrors
+/// extraReduction in js/src/grammar-runtime/executor.js.
+pub(super) fn extra_reduction(
+    a: &Rc<Tree>,
+    b: &Rc<Tree>,
+    walk: &[Walk],
+    orders: &[Vec<PrecedenceEntry>],
+    owner: Option<&PrecedenceTag>,
+    grammar: &GrammarFacts,
+) -> Ordering {
+    if a.ty != TreeType::Node {
+        return Ordering::Equal;
+    }
+    let mut parent = a.clone();
+    let mut chain = vec![a.clone()];
+    loop {
+        let Some(first) = first_meaningful(&parent.children) else {
+            return Ordering::Equal;
+        };
+        if same_tree(&first, b) {
+            chain.push(first);
+            break;
+        }
+        if first.ty != TreeType::Node {
+            return Ordering::Equal;
+        }
+        parent = first.clone();
+        chain.push(first);
+    }
+    let own = meaningful(&parent.children);
+    // The next children of the node in progress, from `b` on, and that node.
+    let mut next = Vec::new();
+    let mut container = None;
+    for step in walk.iter().rev() {
+        if next.len() >= own.len() {
+            break;
+        }
+        match step {
+            Walk::Item(item) => {
+                if !item.trivia {
+                    next.push(item.clone());
+                }
+            }
+            Walk::Part(part) => {
+                let wanted = own.len() - next.len();
+                next.extend(items(part).filter(|item| !item.trivia).take(wanted));
+            }
+            Walk::End(node) => {
+                container = Some(node.clone());
+                break;
+            }
+        }
+    }
+    if container.is_none()
+        && let Some(Walk::End(node)) = walk.iter().rev().find(|step| matches!(step, Walk::End(_)))
+    {
+        container = Some(node.clone());
+    }
+    let other = container.as_ref().map_or_else(
+        || owner.cloned().unwrap_or(PrecedenceTag::unranked(None)),
+        |node| {
+            node.precedence
+                .clone()
+                .unwrap_or_else(|| PrecedenceTag::unranked(node.rule.clone()))
+        },
+    );
+    if own.len() > next.len()
+        || own
+            .iter()
+            .zip(&next)
+            .any(|(mine, theirs)| !same_tree(mine, theirs))
+    {
+        return shifted_past(&parent, &own, &next, &other, orders);
+    }
+    let mine = reduction(&parent);
+    let order = compare_precedence(&mine, &other, orders);
+    if order != Ordering::Equal {
+        return order;
+    }
+    // With nothing after either, where a silent rule a declared conflict
+    // names reduced an item of the chain alone (Solidity's `a;`, an
+    // `identifier` that `_identifier_path` reduces in a `user_defined_type`
+    // where the other parse reduces it to `_primary_expression`), the two
+    // reduce apart on one lookahead: tree-sitter goes on with both and keeps
+    // the tree of the lower symbol where they merge, a token before any rule
+    // and then the rule defined first.
+    if container.is_none() {
+        let forked: Vec<Name> = chain
+            .iter()
+            .flat_map(|item| item.forked_to.iter())
+            .filter(|name| !b.forked_to.contains(name))
+            .cloned()
+            .collect();
+        if grammar.declares_any(&forked) && rest_count(walk) == own.len() {
+            if b.ty != TreeType::Node {
+                return Ordering::Less;
+            }
+            return grammar
+                .rank(b.rule.as_ref())
+                .cmp(&grammar.rank(a.rule.as_ref()));
+        }
+    }
+    if container.is_none_or(|node| node.end > parent.end) {
+        return by_associativity(mine.associativity).reverse();
+    }
+    Ordering::Equal
+}
+
+/// The count of the meaningful items left in the walk of the node in
+/// progress (see `extra_reduction`).
+fn rest_count(walk: &[Walk]) -> usize {
+    let mut count = 0;
+    for step in walk.iter().rev() {
+        match step {
+            Walk::Item(item) => count += usize::from(!item.trivia),
+            Walk::Part(part) => count += items(part).filter(|item| !item.trivia).count(),
+            Walk::End(_) => break,
+        }
+    }
+    count
 }

@@ -47,6 +47,7 @@ grammar builds. The sources are the specifications and grammars merged.
 | `native-rocq` | tree-sitter-rocq 300fe33 | [upstream](https://github.com/aruzdh/tree-sitter-rocq/tree/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/test/corpus) | [1](https://github.com/aruzdh/tree-sitter-rocq/blob/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/grammar.js) [2](https://github.com/aruzdh/tree-sitter-rocq/tree/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/test/corpus) |
 | `native-rust` | tree-sitter-rust 0.24.2 | [upstream](https://github.com/tree-sitter/tree-sitter-rust/tree/77a3747266f4d621d0757825e6b11edcbf991ca5/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-rust/blob/77a3747266f4d621d0757825e6b11edcbf991ca5/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-rust/tree/77a3747266f4d621d0757825e6b11edcbf991ca5/test/corpus) |
 | `native-scheme` | tree-sitter-scheme 0.24.7 | curated | [1](https://small.r7rs.org/attachment/r7rs.pdf) [2](https://docs.rs/crate/tree-sitter-scheme/0.24.7/source/grammar.js) |
+| `native-solidity` | tree-sitter-solidity 1.2.13 | [upstream](https://github.com/JoranHonig/tree-sitter-solidity/tree/4e938a46c7030dd001bc99e1ac0f0c750ac98254/test/corpus) | [1](https://github.com/JoranHonig/tree-sitter-solidity/blob/4e938a46c7030dd001bc99e1ac0f0c750ac98254/grammar.js) [2](https://github.com/JoranHonig/tree-sitter-solidity/tree/4e938a46c7030dd001bc99e1ac0f0c750ac98254/test/corpus) |
 | `native-tsx` | tree-sitter-typescript 0.23.2 (tsx) | [upstream](https://github.com/tree-sitter/tree-sitter-typescript/tree/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-typescript/blob/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/tsx/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-typescript/tree/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/test/corpus) |
 | `native-typescript` | tree-sitter-typescript 0.23.2 | [upstream](https://github.com/tree-sitter/tree-sitter-typescript/tree/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-typescript/blob/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/typescript/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-typescript/tree/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/test/corpus) |
 
@@ -78,9 +79,10 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-rocq` | 230 | 9440 | 20820 | 0 | 12 |
 | `native-rust` | 182 | 7903 | 15796 | 0 | 38 |
 | `native-scheme` | 264 | 908 | 1363 | 23 | 50 |
+| `native-solidity` | 166 | 4312 | 10859 | 0 | 10 |
 | `native-tsx` | 157 | 6525 | 13617 | 0 | 16 |
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
-| all | 2872 | 72592 | 167811 | 101 | 504 |
+| all | 3038 | 76904 | 178670 | 101 | 514 |
 
 ## Coverage
 
@@ -112,6 +114,7 @@ language specification and checked against the oracle.
 | `native-rocq` | 203 | 0 | 46 | 16 | 191 of 203 (94%) | 203 | 29 | 84 | 27 | 0 | 0 |
 | `native-rust` | 147 | 0 | 26 | 11 | 142 of 147 (97%) | 163 | 31 | 45 | 12 | 0 | 0 |
 | `native-scheme` | 17 | 0 | 3 | 8 | 16 of 17 (94%) | 22 | 0 | n/a | n/a | n/a | n/a |
+| `native-solidity` | 111 | 0 | 44 | 12 | 101 of 111 (91%) | 112 | 35 | 54 | 5 | 0 | 0 |
 | `native-tsx` | 166 | 0 | 50 | 14 | 142 of 166 (86%) | 159 | 40 | 44 | 3 | 0 | 0 |
 | `native-typescript` | 166 | 0 | 50 | 14 | 136 of 166 (82%) | 152 | 37 | 44 | 3 | 0 | 0 |
 
@@ -125,24 +128,25 @@ rules name a concept another native grammar names
 
 | Grammar | Scanners | Conflicts | Precedences | Extras | Kinds | Shared rules | Language-specific rules |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `native-c` | 0 | 17 | 0 | 2 | 0 | 46 | 137 |
+| `native-c` | 0 | 17 | 0 | 2 | 0 | 49 | 134 |
 | `native-csv` | 0 | 0 | 0 | 0 | 0 | 3 | 5 |
 | `native-diff` | 0 | 0 | 0 | 1 | 0 | 2 | 22 |
-| `native-go` | 0 | 8 | 0 | 2 | 0 | 54 | 63 |
+| `native-go` | 0 | 8 | 0 | 2 | 0 | 55 | 62 |
 | `native-graphql` | 0 | 0 | 0 | 3 | 0 | 23 | 51 |
 | `native-ini` | 0 | 0 | 0 | 2 | 0 | 2 | 3 |
-| `native-java` | 0 | 13 | 0 | 3 | 1 | 68 | 101 |
+| `native-java` | 0 | 13 | 0 | 3 | 1 | 69 | 100 |
 | `native-javascript` | 5 | 18 | 9 | 3 | 0 | 142 | 1 |
 | `native-json` | 0 | 0 | 0 | 2 | 0 | 11 | 0 |
 | `native-json5` | 0 | 0 | 0 | 2 | 0 | 11 | 1 |
-| `native-lean` | 1 | 11 | 0 | 2 | 0 | 40 | 107 |
+| `native-lean` | 1 | 11 | 0 | 2 | 0 | 42 | 105 |
 | `native-make` | 0 | 0 | 0 | 3 | 0 | 13 | 52 |
 | `native-proto` | 0 | 0 | 0 | 2 | 0 | 21 | 34 |
 | `native-racket` | 0 | 0 | 0 | 0 | 0 | 23 | 16 |
 | `native-regex` | 0 | 1 | 0 | 1 | 0 | 2 | 38 |
-| `native-rocq` | 0 | 16 | 2 | 2 | 0 | 32 | 233 |
-| `native-rust` | 6 | 9 | 0 | 3 | 3 | 59 | 125 |
+| `native-rocq` | 0 | 16 | 2 | 2 | 0 | 33 | 232 |
+| `native-rust` | 6 | 9 | 0 | 3 | 3 | 63 | 121 |
 | `native-scheme` | 0 | 0 | 0 | 0 | 0 | 23 | 5 |
+| `native-solidity` | 0 | 11 | 0 | 2 | 1 | 60 | 107 |
 | `native-tsx` | 7 | 49 | 44 | 3 | 0 | 230 | 0 |
 | `native-typescript` | 7 | 48 | 44 | 3 | 0 | 230 | 0 |
 
@@ -173,6 +177,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-rocq` | 12 | 12 | 2 | 25 | native-skips-more 16, oracle-skips-more 45, same-repair-sites 4, same-skipped-bytes 7 |
 | `native-rust` | 38 | 38 | 18 | 47 | native-skips-more 25, oracle-skips-more 36, same-repair-sites 7, same-skipped-bytes 7 |
 | `native-scheme` | 50 | 50 | 28 | 28 | none |
+| `native-solidity` | 10 | 10 | 2 | 15 | none |
 | `native-tsx` | 16 | 16 | 5 | 15 | none |
 | `native-typescript` | 15 | 15 | 5 | 15 | none |
 
@@ -209,6 +214,7 @@ loads the same modules and parses nothing.
 | `native-rocq` | 4542.7 | 28.8 | 158.0× | 572.1 | 2.1 | 127.9 | 119.9 |
 | `native-rust` | 5470.4 | 18.2 | 300.6× | 3495.6 | 4.2 | 127.7 | 14.2 |
 | `native-scheme` | 313.6 | 5.0 | 62.2× | 81.5 | 1.3 | 51.2 | 2.9 |
+| `native-solidity` | 2655.1 | 8.7 | 306.7× | 414.1 | 1.9 | 126.2 | 12.8 |
 | `native-tsx` | 11815.5 | 15.5 | 762.7× | 2168.5 | 2.1 | 140.9 | 15.7 |
 | `native-typescript` | 11832.2 | 15.4 | 770.1× | 1875.8 | 1.1 | 138.0 | 19.0 |
 
@@ -240,5 +246,6 @@ without optimization, as the tests run them.
 | `native-rocq` | 18852.0 | n/a | n/a | 2261.6 | n/a | 10.5 |
 | `native-rust` | 21178.7 | n/a | n/a | 8884.8 | n/a | 6.8 |
 | `native-scheme` | 1906.1 | 1.7 | 1096.7× | 290.4 | 0.8 | 3.3 |
+| `native-solidity` | 9240.2 | 6.6 | 1404.9× | 1253.5 | 1.7 | 5.2 |
 | `native-tsx` | 37609.0 | 15.7 | 2390.9× | 7208.4 | 1.1 | 6.9 |
 | `native-typescript` | 36380.3 | 15.3 | 2373.9× | 7301.3 | 0.9 | 6.9 |
