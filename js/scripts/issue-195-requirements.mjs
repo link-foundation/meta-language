@@ -41,7 +41,20 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773',
   recoveryAudit:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141',
+  finishTheWorkAudit:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6023909737',
 });
+
+// The rows the audit of c39470d0 lists as open work.
+const FINISH_THE_WORK_ROWS = Object.freeze([
+  'I195-SELF-TRANSLATION-TOOL', 'I195-SELF-TRANSLATION-CARRIED-ZERO', 'I195-SELF-TRANSLATION-SHARED-CORPUS',
+  'I195-GRAMMAR-NATIVE-MERGED', 'I195-GRAMMAR-LANGUAGE-CATALOG', 'I195-GRAMMAR-LOSSLESS-TREES',
+  'I195-GRAMMAR-DEPENDENCY-BOUNDARY', 'I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED',
+  'I195-MERGE-AUTOMATIC-PIPELINE', 'I195-MERGE-SHIPPED-GRAMMARS-ARE-MERGED',
+  'I195-ACCEPTANCE-INDEPENDENT-ORACLES', 'I195-INTERCHANGE-FORMAT-FEATURES',
+  'I195-INTERCHANGE-CROSS-FORMAT-TOOLS', 'I195-SEMANTICS-CONSTRUCT-INVENTORY',
+  'I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS',
+]);
 
 const FOUR_LANGUAGE_DETAILS = Object.freeze({
   JavaScript: { version: 'ECMAScript 2026', edition: 'ECMA-262, 17th edition' },
@@ -940,6 +953,8 @@ export async function buildIssue195Manifest(root) {
         ...Object.fromEntries(['I195-RESOURCE-PARSE-MEMORY-BUDGET', 'I195-CI-ACCEPTANCE-AFTER-JAVASCRIPT',
           'I195-CI-SKIPPED-STAGE-ONE-GATE-ERROR', 'I195-MERGE-REAL-RECONCILIATION', 'I195-SELF-TRANSLATION-CARRIED-ZERO']
           .map((id) => [id, ISSUE_195_SOURCES.recoveryAudit])),
+        // The audit of c39470d0 makes every row that is still open work this PR delivers.
+        ...Object.fromEntries(FINISH_THE_WORK_ROWS.map((id) => [id, ISSUE_195_SOURCES.finishTheWorkAudit])),
       },
     }),
   ];

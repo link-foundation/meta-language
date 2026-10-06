@@ -4,7 +4,7 @@
   "issue": 195,
   "pullRequest": 196,
   "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
-  "reconciledAt": "2026-10-05",
+  "reconciledAt": "2026-10-06",
   "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
   "requirementSources": [
     {
@@ -311,6 +311,33 @@
       "updatedAt": "2026-10-04T22:19:42Z",
       "bytes": 10286,
       "sha256": "00b67c6e06e8943e72c9b5a928418ec052adc0b76d13cd08b945f1edf45f8ce8"
+    },
+    {
+      "key": "finishTheWorkAudit",
+      "id": 6023909737,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6023909737",
+      "title": "CI does not fail “on purpose” — finish the work. Audit of c39470d0 (2026-10-07)",
+      "role": "Binding: every failing aggregate row is open work this PR delivers (self-translation to carried = 0, native merged grammars for every catalog language with automatic scanner porting, zero production parser dependencies, multi-source merging, independent oracles, interchange, construct inventory and downstream TypeScript); no red CI is described as intended; keeps 5985077141, 5979473773, 5971613170 and 5965533606 in force",
+      "ledgerCoverage": [
+        "I195-SELF-TRANSLATION-",
+        "I195-GRAMMAR-NATIVE-MERGED",
+        "I195-GRAMMAR-LANGUAGE-CATALOG",
+        "I195-GRAMMAR-LOSSLESS-TREES",
+        "I195-GRAMMAR-DEPENDENCY-BOUNDARY",
+        "I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED",
+        "I195-MERGE-AUTOMATIC-PIPELINE",
+        "I195-MERGE-SHIPPED-GRAMMARS-ARE-MERGED",
+        "I195-ACCEPTANCE-INDEPENDENT-ORACLES",
+        "I195-INTERCHANGE-",
+        "I195-SEMANTICS-CONSTRUCT-INVENTORY",
+        "I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-06T19:30:08Z",
+      "updatedAt": "2026-10-06T19:30:08Z",
+      "bytes": 10047,
+      "sha256": "15b1378e9564736258ee137a3559a64f9ece8d5b810f312aa76d1d689a4c5291"
     }
   ],
   "statusReports": [

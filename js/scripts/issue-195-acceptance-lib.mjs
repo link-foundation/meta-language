@@ -34,6 +34,7 @@ const SOURCE_LABELS = Object.freeze({
   nextPhaseAudit: 'Next phase: JavaScript first, automated grammars, self-translation to Rust',
   remainingWorkAudit: 'Audit of fe9b6ff1: the JavaScript → Rust CI order, fail-late CI and declared settling',
   recoveryAudit: 'Audit of 6676c132: a memory budget per parse, acceptance after JavaScript, real merging and carried = 0',
+  finishTheWorkAudit: 'Audit of c39470d0: every open row is work this PR delivers',
 });
 
 function allKeys(value, prefix = '') {

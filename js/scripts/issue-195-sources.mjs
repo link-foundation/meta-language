@@ -24,6 +24,7 @@ export const AUTOMATION_MARKERS = Object.freeze([
   '## 🤖',
   '🤖 **AI Work Session',
   '## 🔄 Auto-restart',
+  '## 🔄 Solution Draft Log',
   '## ❌ Auto-restart',
   '## ⏳ Usage Limit Reached',
   '⏰ **Auto Resume',
