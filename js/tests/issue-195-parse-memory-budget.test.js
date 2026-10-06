@@ -55,7 +55,11 @@ test('a parse that needs more memo cells than its budget is a memoryBudget rejec
 test('under a capped heap a large TypeScript parse ends with a diagnostic instead of exhausting the heap', () => {
   // About 33 kB of TypeScript keeps some 360000 memo cells, more than a
   // 128 MiB heap holds; the budget of 100000 cells stops the parse first.
+  // `--max-old-space-size` caps the old space, so that is the heap measured:
+  // the young generation's uncollected garbage, which the cap leaves out,
+  // varies with when V8 last collected.
   const child = `
+    import { getHeapSpaceStatistics } from 'node:v8';
     import { compileGrammar } from ${JSON.stringify(new URL('../src/grammar.js', import.meta.url).href)};
     import { parseGrammarLinks } from ${JSON.stringify(new URL('../src/grammar-links.js', import.meta.url).href)};
     import { nativeGrammarText } from ${JSON.stringify(new URL('../src/native-grammar-parser.js', import.meta.url).href)};
@@ -63,7 +67,7 @@ test('under a capped heap a large TypeScript parse ends with a diagnostic instea
     const source = Array.from({ length: 400 }, (_, i) => unit(i)).join('');
     const parser = compileGrammar(parseGrammarLinks(nativeGrammarText('native-typescript')));
     const outcome = parser.parseTree(source, { errorRecovery: true, recovery: 'accept', memoryLimit: 100000 });
-    console.log(JSON.stringify({ rejection: outcome.rejection, heapMiB: process.memoryUsage().heapUsed / 2 ** 20 }));
+    console.log(JSON.stringify({ rejection: outcome.rejection, heapMiB: getHeapSpaceStatistics().find(({ space_name: name }) => name === 'old_space').space_used_size / 2 ** 20 }));
   `;
   const run = spawnSync(process.execPath, ['--max-old-space-size=128', '--input-type=module', '-e', child], {
     cwd: here, encoding: 'utf8', timeout: 120_000,
