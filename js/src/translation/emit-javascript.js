@@ -401,6 +401,10 @@ class JavaScriptEmitter {
           return `ml_showNumber(${this.expr(e.arg)})`;
         }
         return e.arg.type.kind === 'string' ? this.expr(e.arg) : this.toText(e.arg);
+      case 'stringTest': {
+        const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;
+        return `${string}.${e.op}(${this.expr(e.search)})`;
+      }
       case 'cast':
         return this.cast(e);
       case 'abort':

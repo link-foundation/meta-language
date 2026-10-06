@@ -16,6 +16,9 @@ import { imperative, lowerImperative, lowerTopLevel, statementUses } from './jav
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 
+// The string predicates of the portable core: each reads the whole string,
+// so it means the same over UTF-16, UTF-8 and code points.
+const STRING_TESTS = new Set(['startsWith', 'endsWith', 'includes']);
 const ROOT = 'crate';
 const EQUALITY = { '===': 'eq', '!==': 'ne' };
 const RELATIONAL = { '<': 'lt', '<=': 'le', '>': 'gt', '>=': 'ge' };
@@ -1449,6 +1452,12 @@ class JavaScriptParser {
       if (c.is('.') && c.peek(1).kind === 'identifier') {
         c.next();
         const field = c.next();
+        if (c.is('(') && STRING_TESTS.has(field.value)) {
+          const args = this.arguments(field.value);
+          if (args.length !== 1) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'search the whole string, with one argument', span(token, c.peek()));
+          expr = { k: 'stringTest', op: field.value, object: expr, search: args[0], span: joined(expr, { span: span(token, c.peek()) }, token) };
+          continue;
+        }
         if (c.is('(')) {
           if (field.value !== 'toString') throw unsupported(`method call .${field.value}()`, 'methods of values are outside the portable core', span(token, c.peek()));
           const args = this.arguments('toString');

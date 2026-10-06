@@ -268,6 +268,10 @@ class Inference {
       }
       case 'match':
         return this.match(node, env);
+      case 'stringTest':
+        this.unify(this.expr(node.object, env), STRING, node.span);
+        this.unify(this.expr(node.search, env), STRING, node.span);
+        return BOOL;
       case 'toString':
       case 'show':
         this.expr(node.arg, env);

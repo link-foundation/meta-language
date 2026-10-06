@@ -436,6 +436,15 @@ class Checker {
         return this.expr(this.compileMatch(node, env, path), env, path, expected, allowLiteral);
       case 'match1':
         return this.match(node, env, path, expected, allowLiteral);
+      case 'stringTest': {
+        const string = this.expr(node.object, env, path, undefined);
+        if (string.type.kind !== 'string') {
+          throw unsupported(`method call .${node.op}()`, `.${node.op}() is portable on strings, not on ${typeKey(string.type)}`, node.span);
+        }
+        const search = coerce(this.expr(node.search, env, path, STRING), STRING, this.language, node.search.span);
+        if (search.type.kind !== 'string') throw typeError(`.${node.op}() of ${typeKey(search.type)}`, node.search.span);
+        return { k: 'stringTest', op: node.op, string, search, type: BOOL, span: node.span };
+      }
       case 'toString': {
         const arg = this.expr(node.arg, env, path, undefined);
         if (arg.type.kind === 'string') return arg;

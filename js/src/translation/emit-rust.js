@@ -878,6 +878,11 @@ class RustEmitter {
           return `crate::ml_number::${e.console ? 'js_console' : 'js_number'}(${this.expr(e.arg)})`;
         }
         return `${this.receiver(e.arg)}.to_string()`;
+      case 'stringTest': {
+        const method = { startsWith: 'starts_with', endsWith: 'ends_with', includes: 'contains' }[e.op];
+        const search = e.search.k === 'lit' ? rustString(String(e.search.value)) : `${this.receiver(e.search)}.as_str()`;
+        return `${this.receiver(e.string)}.${method}(${search})`;
+      }
       case 'cast':
         return this.cast(e);
       case 'abort':

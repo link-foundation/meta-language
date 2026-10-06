@@ -603,8 +603,14 @@ class RustParser {
       if (args.length !== count) throw new TranslationError('type', `${method.value} expects ${count} arguments but got ${args.length}`, range);
     };
     switch (method.value) {
+      case 'starts_with':
+      case 'ends_with':
+      case 'contains':
+        expect(1);
+        return { k: 'stringTest', op: { starts_with: 'startsWith', ends_with: 'endsWith', contains: 'includes' }[method.value], object: receiver, search: args[0], span: range };
       case 'clone':
       case 'to_owned':
+      case 'as_str':
         expect(0);
         return receiver;
       case 'to_string':
