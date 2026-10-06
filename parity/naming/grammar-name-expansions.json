@@ -33,6 +33,7 @@
     { "word": "elif", "replacement": "else_if", "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if." },
     { "word": "elifdef", "replacement": "else_if_defined", "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined." },
     { "word": "elsif", "replacement": "else_if", "reason": "The else branch of a GNU make conditional that holds another conditional, `else ifeq ...` (GNU make manual, section 7.2 Syntax of Conditionals)." },
+    { "word": "elt", "replacement": "element", "reason": "An abbreviation of element; tree-sitter-solidity scans the characters between the quotes of a Solidity string literal with _string_immediate_elt_inside_quote." },
     { "word": "enum", "replacement": "enumeration", "reason": "An abbreviation of enumeration." },
     { "word": "eqn", "replacement": "equation", "reason": "An abbreviation of equation, as in the Rocq clause eqn:ident that names the equation of a case analysis (Rocq Reference Manual, section Tactics, destruct)." },
     { "word": "eval", "replacement": "evaluation", "reason": "An abbreviation of evaluation." },
@@ -382,6 +383,30 @@
         "_function": "grammar.function-expansion",
         "paths": "grammar.path-list",
         "_target_pattern": "grammar.static-target-pattern"
+      }
+    },
+    "solidity": {
+      "names": {
+        "_int": "signed_integer_type",
+        "_uint": "unsigned_integer_type",
+        "_fixed": "fixed_point_type",
+        "_ufixed": "unsigned_fixed_point_type",
+        "yul_evm_builtin": "yul_built_in_function"
+      },
+      "concepts": {
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "parameter": "parameter",
+        "contract_body": "grammar.declaration-body",
+        "_hex_digit": "grammar.hexadecimal-digit",
+        "call_argument": "grammar.call-argument-value",
+        "_mapping": "grammar.map-type",
+        "_directive": "grammar.source-file-directive",
+        "unchecked": "grammar.unchecked-keyword",
+        "immutable": "grammar.immutable-keyword",
+        "virtual": "grammar.virtual-keyword",
+        "yul_boolean": "grammar.yul-boolean-literal",
+        "yul_continue": "grammar.yul-continue-statement"
       }
     }
   },

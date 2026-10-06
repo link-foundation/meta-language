@@ -1657,7 +1657,7 @@
       "grammars": {
         "native-solidity": {
           "version": "1.0.0",
-          "parserSha256": "09d71b44186e4be571e5105e03fde8f589b32dd4f09dad54b18c9901065656bd"
+          "parserSha256": "2d1a2a9605657614df6fe1efa75ed3beac6e3e5adf4b9194cd1d7e5dc4c025ab"
         }
       },
       "oracleGrammars": {

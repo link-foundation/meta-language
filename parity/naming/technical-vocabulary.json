@@ -6,6 +6,18 @@
   },
   "terms": [
     {
+      "word": "pragma",
+      "partsOfSpeech": ["noun"],
+      "definition": "A directive of a source file that enables compiler features or checks, such as the compiler version a Solidity file accepts.",
+      "source": "Solidity documentation, Layout of a Solidity Source File, section Pragmas"
+    },
+    {
+      "word": "yul",
+      "partsOfSpeech": ["noun"],
+      "definition": "The intermediate language of the Solidity compiler that inline assembly blocks are written in.",
+      "source": "Solidity documentation, section Yul"
+    },
+    {
       "word": "makefile",
       "partsOfSpeech": ["noun"],
       "definition": "A file of rules and variables that tells make how to build the targets of a program.",

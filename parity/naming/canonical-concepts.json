@@ -2616,6 +2616,10 @@
           "name": "false"
         },
         {
+          "source": "native:solidity",
+          "name": "false"
+        },
+        {
           "source": "native:tsx",
           "name": "false"
         },
@@ -3264,6 +3268,10 @@
           "name": "true"
         },
         {
+          "source": "native:solidity",
+          "name": "true"
+        },
+        {
           "source": "native:tsx",
           "name": "true"
         },
@@ -3704,7 +3712,7 @@
       "role": "concept",
       "definition": "Named input accepted by a function abstraction.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "The structural concept is independent of any one programming language.",
         "Every language syntax that expresses it is a syntax alias of the concept."
       ],
@@ -3755,6 +3763,10 @@
         },
         {
           "source": "native:rust",
+          "name": "parameter"
+        },
+        {
+          "source": "native:solidity",
           "name": "parameter"
         }
       ],
@@ -16339,13 +16351,17 @@
       "role": "concept",
       "definition": "A rule for a declaration body, the construct the upstream grammar names _declaration_body.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:lean",
           "name": "declaration_body"
+        },
+        {
+          "source": "native:solidity",
+          "name": "contract_body"
         }
       ],
       "formerNames": []
@@ -21757,13 +21773,17 @@
       "role": "concept",
       "definition": "A rule for a hexadecimal digit, the construct the upstream grammar names hexdigit.",
       "constraints": [
-        "Only the native Rocq grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:rocq",
           "name": "hexadecimal_digit"
+        },
+        {
+          "source": "native:solidity",
+          "name": "hex_digit"
         }
       ],
       "formerNames": []
@@ -24237,13 +24257,17 @@
       "role": "concept",
       "definition": "A rule for a map type, the construct the upstream grammar names map_type.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
           "name": "map_type"
+        },
+        {
+          "source": "native:solidity",
+          "name": "mapping"
         }
       ],
       "formerNames": [],
@@ -26294,10 +26318,6 @@
         {
           "source": "native:make",
           "name": "directive"
-        },
-        {
-          "source": "native:solidity",
-          "name": "directive"
         }
       ],
       "formerNames": []
@@ -27952,6 +27972,23 @@
       "formerNames": []
     },
     {
+      "id": "grammar.source-file-directive",
+      "phrase": "source file directive",
+      "role": "concept",
+      "definition": "A rule for a source file directive, the construct the upstream grammar names _directive.",
+      "constraints": [
+        "Only the native Solidity grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:solidity",
+          "name": "directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.pragma-directive",
       "phrase": "pragma directive",
       "role": "concept",
@@ -28292,23 +28329,6 @@
       "formerNames": []
     },
     {
-      "id": "grammar.contract-body",
-      "phrase": "contract body",
-      "role": "concept",
-      "definition": "A rule for a contract body, the construct the upstream grammar names contract_body.",
-      "constraints": [
-        "Only the native Solidity grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:solidity",
-          "name": "contract_body"
-        }
-      ],
-      "formerNames": []
-    },
-    {
       "id": "grammar.contract-member",
       "phrase": "contract member",
       "role": "concept",
@@ -28581,10 +28601,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.yul-continue",
-      "phrase": "yul continue",
+      "id": "grammar.yul-continue-statement",
+      "phrase": "yul continue statement",
       "role": "concept",
-      "definition": "A rule for a yul continue, the construct the upstream grammar names yul_continue.",
+      "definition": "A rule for a yul continue statement, the construct the upstream grammar names yul_continue.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -28717,10 +28737,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.yul-boolean",
-      "phrase": "yul boolean",
+      "id": "grammar.yul-boolean-literal",
+      "phrase": "yul boolean literal",
       "role": "concept",
-      "definition": "A rule for a yul boolean, the construct the upstream grammar names yul_boolean.",
+      "definition": "A rule for a yul boolean literal, the construct the upstream grammar names yul_boolean.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -28904,10 +28924,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.yul-evm-builtin",
-      "phrase": "yul evm builtin",
+      "id": "grammar.yul-built-in-function",
+      "phrase": "yul built in function",
       "role": "concept",
-      "definition": "A rule for a yul evm builtin, the construct the upstream grammar names yul_evm_builtin.",
+      "definition": "A rule for a yul built in function, the construct the upstream grammar names yul_evm_builtin.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -28915,16 +28935,16 @@
       "sourceAliases": [
         {
           "source": "native:solidity",
-          "name": "yul_evm_builtin"
+          "name": "yul_built_in_function"
         }
       ],
       "formerNames": []
     },
     {
-      "id": "grammar.unchecked",
-      "phrase": "unchecked",
+      "id": "grammar.unchecked-keyword",
+      "phrase": "unchecked keyword",
       "role": "concept",
-      "definition": "A rule for an unchecked, the construct the upstream grammar names unchecked.",
+      "definition": "A rule for an unchecked keyword, the construct the upstream grammar names unchecked.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29108,10 +29128,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.immutable",
-      "phrase": "immutable",
+      "id": "grammar.immutable-keyword",
+      "phrase": "immutable keyword",
       "role": "concept",
-      "definition": "A rule for an immutable, the construct the upstream grammar names immutable.",
+      "definition": "A rule for an immutable keyword, the construct the upstream grammar names immutable.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29210,10 +29230,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.virtual",
-      "phrase": "virtual",
+      "id": "grammar.virtual-keyword",
+      "phrase": "virtual keyword",
       "role": "concept",
-      "definition": "A rule for a virtual, the construct the upstream grammar names virtual.",
+      "definition": "A rule for a virtual keyword, the construct the upstream grammar names virtual.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29261,10 +29281,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.call-argument",
-      "phrase": "call argument",
+      "id": "grammar.call-argument-value",
+      "phrase": "call argument value",
       "role": "concept",
-      "definition": "A rule for a call argument, the construct the upstream grammar names call_argument.",
+      "definition": "A rule for a call argument value, the construct the upstream grammar names call_argument.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29448,23 +29468,6 @@
       "formerNames": []
     },
     {
-      "id": "grammar.parameter",
-      "phrase": "parameter",
-      "role": "concept",
-      "definition": "A rule for a parameter, the construct the upstream grammar names parameter.",
-      "constraints": [
-        "Only the native Solidity grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:solidity",
-          "name": "parameter"
-        }
-      ],
-      "formerNames": []
-    },
-    {
       "id": "grammar.storage-location",
       "phrase": "storage location",
       "role": "concept",
@@ -29516,23 +29519,6 @@
       "formerNames": []
     },
     {
-      "id": "grammar.mapping",
-      "phrase": "mapping",
-      "role": "concept",
-      "definition": "A rule for a mapping, the construct the upstream grammar names _mapping.",
-      "constraints": [
-        "Only the native Solidity grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:solidity",
-          "name": "mapping"
-        }
-      ],
-      "formerNames": []
-    },
-    {
       "id": "grammar.mapping-key",
       "phrase": "mapping key",
       "role": "concept",
@@ -29550,10 +29536,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.integer",
-      "phrase": "integer",
+      "id": "grammar.signed-integer-type",
+      "phrase": "signed integer type",
       "role": "concept",
-      "definition": "A rule for an integer, the construct the upstream grammar names _int.",
+      "definition": "A rule for a signed integer type, the construct the upstream grammar names _int.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29561,16 +29547,16 @@
       "sourceAliases": [
         {
           "source": "native:solidity",
-          "name": "integer"
+          "name": "signed_integer_type"
         }
       ],
       "formerNames": []
     },
     {
-      "id": "grammar.uint",
-      "phrase": "uint",
+      "id": "grammar.unsigned-integer-type",
+      "phrase": "unsigned integer type",
       "role": "concept",
-      "definition": "A rule for an uint, the construct the upstream grammar names _uint.",
+      "definition": "A rule for an unsigned integer type, the construct the upstream grammar names _uint.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29578,7 +29564,7 @@
       "sourceAliases": [
         {
           "source": "native:solidity",
-          "name": "uint"
+          "name": "unsigned_integer_type"
         }
       ],
       "formerNames": []
@@ -29601,10 +29587,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.fixed",
-      "phrase": "fixed",
+      "id": "grammar.fixed-point-type",
+      "phrase": "fixed point type",
       "role": "concept",
-      "definition": "A rule for a fixed, the construct the upstream grammar names _fixed.",
+      "definition": "A rule for a fixed point type, the construct the upstream grammar names _fixed.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29612,16 +29598,16 @@
       "sourceAliases": [
         {
           "source": "native:solidity",
-          "name": "fixed"
+          "name": "fixed_point_type"
         }
       ],
       "formerNames": []
     },
     {
-      "id": "grammar.ufixed",
-      "phrase": "ufixed",
+      "id": "grammar.unsigned-fixed-point-type",
+      "phrase": "unsigned fixed point type",
       "role": "concept",
-      "definition": "A rule for an ufixed, the construct the upstream grammar names _ufixed.",
+      "definition": "A rule for an unsigned fixed point type, the construct the upstream grammar names _ufixed.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29629,7 +29615,7 @@
       "sourceAliases": [
         {
           "source": "native:solidity",
-          "name": "ufixed"
+          "name": "unsigned_fixed_point_type"
         }
       ],
       "formerNames": []
@@ -29669,23 +29655,6 @@
       "formerNames": []
     },
     {
-      "id": "grammar.hex-digit",
-      "phrase": "hex digit",
-      "role": "concept",
-      "definition": "A rule for a hex digit, the construct the upstream grammar names _hex_digit.",
-      "constraints": [
-        "Only the native Solidity grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:solidity",
-          "name": "hex_digit"
-        }
-      ],
-      "formerNames": []
-    },
-    {
       "id": "grammar.number-unit",
       "phrase": "number unit",
       "role": "concept",
@@ -29698,40 +29667,6 @@
         {
           "source": "native:solidity",
           "name": "number_unit"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.true",
-      "phrase": "true",
-      "role": "concept",
-      "definition": "A rule for a true, the construct the upstream grammar names true.",
-      "constraints": [
-        "Only the native Solidity grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:solidity",
-          "name": "true"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.false",
-      "phrase": "false",
-      "role": "concept",
-      "definition": "A rule for a false, the construct the upstream grammar names false.",
-      "constraints": [
-        "Only the native Solidity grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:solidity",
-          "name": "false"
         }
       ],
       "formerNames": []
@@ -29805,10 +29740,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.string-immediate-elt-inside-double-quote",
-      "phrase": "string immediate elt inside double quote",
+      "id": "grammar.string-immediate-element-inside-double-quote",
+      "phrase": "string immediate element inside double quote",
       "role": "concept",
-      "definition": "A rule for a string immediate elt inside double quote, the construct the upstream grammar names _string_immediate_elt_inside_double_quote.",
+      "definition": "A rule for a string immediate element inside double quote, the construct the upstream grammar names _string_immediate_elt_inside_double_quote.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29816,16 +29751,16 @@
       "sourceAliases": [
         {
           "source": "native:solidity",
-          "name": "string_immediate_elt_inside_double_quote"
+          "name": "string_immediate_element_inside_double_quote"
         }
       ],
       "formerNames": []
     },
     {
-      "id": "grammar.string-immediate-elt-inside-quote",
-      "phrase": "string immediate elt inside quote",
+      "id": "grammar.string-immediate-element-inside-quote",
+      "phrase": "string immediate element inside quote",
       "role": "concept",
-      "definition": "A rule for a string immediate elt inside quote, the construct the upstream grammar names _string_immediate_elt_inside_quote.",
+      "definition": "A rule for a string immediate element inside quote, the construct the upstream grammar names _string_immediate_elt_inside_quote.",
       "constraints": [
         "Only the native Solidity grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -29833,7 +29768,7 @@
       "sourceAliases": [
         {
           "source": "native:solidity",
-          "name": "string_immediate_elt_inside_quote"
+          "name": "string_immediate_element_inside_quote"
         }
       ],
       "formerNames": []

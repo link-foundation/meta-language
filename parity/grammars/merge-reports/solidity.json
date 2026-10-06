@@ -376,6 +376,10 @@
       "native": "yul_assignment_operator"
     },
     {
+      "source": "yul_evm_builtin",
+      "native": "yul_built_in_function"
+    },
+    {
       "source": "_call_arguments",
       "native": "call_arguments"
     },
@@ -433,11 +437,11 @@
     },
     {
       "source": "_int",
-      "native": "integer"
+      "native": "signed_integer_type"
     },
     {
       "source": "_uint",
-      "native": "uint"
+      "native": "unsigned_integer_type"
     },
     {
       "source": "_bytes",
@@ -445,11 +449,11 @@
     },
     {
       "source": "_fixed",
-      "native": "fixed"
+      "native": "fixed_point_type"
     },
     {
       "source": "_ufixed",
-      "native": "ufixed"
+      "native": "unsigned_fixed_point_type"
     },
     {
       "source": "_semicolon",
@@ -485,15 +489,16 @@
     },
     {
       "source": "_string_immediate_elt_inside_double_quote",
-      "native": "string_immediate_elt_inside_double_quote"
+      "native": "string_immediate_element_inside_double_quote"
     },
     {
       "source": "_string_immediate_elt_inside_quote",
-      "native": "string_immediate_elt_inside_quote"
+      "native": "string_immediate_element_inside_quote"
     }
   ],
   "expandedWords": [
     "char",
+    "elt",
     "enum",
     "int",
     "struct"
@@ -509,12 +514,24 @@
         "concept": "grammar.expression"
       },
       {
+        "rule": "parameter",
+        "concept": "parameter"
+      },
+      {
         "rule": "identifier",
         "concept": "grammar.identifier"
       },
       {
         "rule": "number",
         "concept": "grammar.number"
+      },
+      {
+        "rule": "true",
+        "concept": "grammar.true-value"
+      },
+      {
+        "rule": "false",
+        "concept": "grammar.false-value"
       },
       {
         "rule": "escape_sequence",
@@ -529,7 +546,7 @@
         "concept": "grammar.comment"
       }
     ],
-    "generated": 160
+    "generated": 157
   },
   "approximations": [],
   "unsupported": []
