@@ -406,7 +406,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "rocq" => rocq_grammar::LANGUAGE.into(),
         "ruby" => tree_sitter_ruby::LANGUAGE.into(),
         "scala" => tree_sitter_scala::LANGUAGE.into(),
-        "solidity" => tree_sitter_solidity::LANGUAGE.into(),
         "sql" => tree_sitter_sequel::LANGUAGE.into(),
         "swift" => tree_sitter_swift::LANGUAGE.into(),
         "toml" => tree_sitter_toml_ng::LANGUAGE.into(),

@@ -1,5 +1,5 @@
 {
-  "auditDate": "2026-10-04",
+  "auditDate": "2026-10-06",
   "items": [
     {
       "id": "engine node@>=22",
@@ -4863,7 +4863,7 @@
       },
       "role": "direct",
       "requirement": "=1.2.13",
-      "kind": "runtime",
+      "kind": "development",
       "current": "1.2.13",
       "evidence": "crates.io, tree-sitter-solidity"
     },
@@ -6911,6 +6911,23 @@
       ]
     },
     {
+      "id": "vendored-grammar js/oracles/grammars/solidity.wasm.gz@1.2.13",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/solidity.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "1.2.13",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-solidity@1.2.13",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
       "id": "vendored-grammar js/oracles/grammars/tsx.wasm.gz@0.23.2",
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/tsx.wasm.gz",
@@ -7519,23 +7536,6 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-scala@0.26.2",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/solidity.wasm.gz@1.2.13",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/solidity.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "1.2.13",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-solidity@1.2.13",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -8585,7 +8585,7 @@
         "type": "github-release",
         "repository": "taiki-e/install-action"
       },
-      "current": "v2.87.24",
+      "current": "v2.87.25",
       "evidence": "GitHub release, taiki-e/install-action"
     },
     {

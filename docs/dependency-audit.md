@@ -6,7 +6,7 @@
 
 # Dependency audit
 
-Audit date: 2026-10-04
+Audit date: 2026-10-06
 
 This inventory lists every runtime, development, build and optional dependency
 of the two published packages and the website crate, every lockfile
@@ -343,7 +343,7 @@ they are.
 | `tree-sitter-scala` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.2` | direct, runtime | `=0.26.2` | 0.26.2 (crates.io, tree-sitter-scala) | version | current |  |
 | `tree-sitter-scheme` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.7` | direct, development | `=0.24.7` | 0.24.7 (crates.io, tree-sitter-scheme) | version | current |  |
 | `tree-sitter-sequel` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.11` | direct, runtime | `=0.3.11` | 0.3.11 (crates.io, tree-sitter-sequel) | version | current |  |
-| `tree-sitter-solidity` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.2.13` | direct, runtime | `=1.2.13` | 1.2.13 (crates.io, tree-sitter-solidity) | version | current |  |
+| `tree-sitter-solidity` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.2.13` | direct, development | `=1.2.13` | 1.2.13 (crates.io, tree-sitter-solidity) | version | current |  |
 | `tree-sitter-swift` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.4` | direct, runtime | `=0.7.4` | 0.7.4 (crates.io, tree-sitter-swift) | version | current |  |
 | `tree-sitter-toml-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, runtime | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-toml-ng) | version | current |  |
 | `tree-sitter-typescript` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.2` | direct, development | `=0.23.2` | 0.23.2 (crates.io, tree-sitter-typescript) | version | current |  |
@@ -469,6 +469,7 @@ they are.
 | `js/oracles/grammars/regex.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
 | `js/oracles/grammars/rust.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `v0.24.2` |  | derived | current |  |
 | `js/oracles/grammars/scheme.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.7` |  | derived | current |  |
+| `js/oracles/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.2.13` |  | derived | current |  |
 | `js/oracles/grammars/tsx.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
 | `js/oracles/grammars/typescript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
 | `js/src/vendor/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.3` |  | derived | current |  |
@@ -505,7 +506,6 @@ they are.
 | `js/src/vendor/grammars/rocq.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` |  | derived | current |  |
 | `js/src/vendor/grammars/ruby.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.1` |  | derived | current |  |
 | `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.2` |  | derived | current |  |
-| `js/src/vendor/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.2.13` |  | derived | current |  |
 | `js/src/vendor/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.11` |  | derived | current |  |
 | `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.4` |  | derived | current |  |
 | `js/src/vendor/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
@@ -586,7 +586,7 @@ they are.
 | `ocaml/setup-ocaml` | `.github/workflows/ci.yml` | `v3` | v3.9.0 (GitHub release, ocaml/setup-ocaml) | major | current |  |
 | `peter-evans/create-pull-request` | `.github/workflows/rust.yml` | `v8` | v8.1.1 (GitHub release, peter-evans/create-pull-request) | major | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `cargo-llvm-cov` |  | floating | current |  |
-| `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.87.24 (GitHub release, taiki-e/install-action) | major | current |  |
+| `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.87.25 (GitHub release, taiki-e/install-action) | major | current |  |
 
 ## Build images
 
@@ -627,7 +627,7 @@ they are.
 
 ## Behind the current stable release
 
-26 retained items are behind their current stable release on 2026-10-04, each for the recorded reason.
+26 retained items are behind their current stable release on 2026-10-06, each for the recorded reason.
 26 of them are at their newest compatible release, verified against the requirements that hold them;
 0 are stale and fail the delivery check.
 

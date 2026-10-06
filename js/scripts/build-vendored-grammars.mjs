@@ -142,7 +142,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   },
   scala: { crate: 'tree-sitter-scala', dir: '.' },
   scheme: { crate: 'tree-sitter-scheme', dir: '.', oracle: true },
-  solidity: { crate: 'tree-sitter-solidity', dir: '.' },
+  solidity: { crate: 'tree-sitter-solidity', dir: '.', oracle: true },
   sql: { crate: 'tree-sitter-sequel', dir: '.' },
   // The 0.7.4 scanner exits through stderr when allocation fails, which a
   // Wasm parser cannot import; the Wasm build traps instead.

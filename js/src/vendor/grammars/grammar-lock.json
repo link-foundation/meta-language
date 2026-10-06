@@ -478,6 +478,7 @@
     },
     "solidity": {
       "id": "solidity",
+      "oracle": true,
       "crate": "tree-sitter-solidity",
       "directory": ".",
       "version": "1.2.13",
