@@ -65,7 +65,7 @@ impl VerificationReport {
 
     /// Whether the verified region has no error or missing links.
     #[must_use]
-    pub fn is_clean(&self) -> bool {
+    pub const fn is_clean(&self) -> bool {
         self.issues.is_empty()
     }
 

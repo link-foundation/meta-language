@@ -1,5 +1,10 @@
 # Issue 185 CI/CD Audit Case Study
 
+> **Historical case study.** This records the investigation of issue #185 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Scope
 
 Issue: https://github.com/link-foundation/meta-language/issues/185

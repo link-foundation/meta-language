@@ -1,0 +1,714 @@
+{
+  "description": "Multi-source grammar merge and rename cases both runtimes must decide identically (requirements I195-MERGE-DETERMINISM, I195-MERGE-MEANING-AWARE-DEDUPLICATION, I195-MERGE-BINDING-AWARE-RENAME and I195-MERGE-UNCERTAINTY-PRESERVED). Two upstreams of the 2024 edition spell the same expression grammar under different names, define a homonym `identifier` with different meanings, and offer lookalike rules that only names or samples relate; a 2025 edition must stay separate. The rename case covers mutual and self recursion, qualified references, a capture label that shadows the renamed rule, collisions and a reload.",
+  "sources": [
+    {
+      "id": "upstream-a",
+      "language": "arithmetic",
+      "edition": "2024",
+      "precedence": 0,
+      "format": "pest",
+      "text": "expression = { term ~ (\"+\" ~ term)* }\nterm = { number | \"(\" ~ expression ~ \")\" }\nnumber = @{ ASCII_DIGIT+ }\nidentifier = @{ ASCII_ALPHA+ }\nstring_literal = @{ \"\\\"\" ~ (!\"\\\"\" ~ ANY)* ~ \"\\\"\" }\nsign = { \"+\" | \"-\" }\n"
+    },
+    {
+      "id": "upstream-b",
+      "language": "arithmetic",
+      "edition": "2024",
+      "precedence": 1,
+      "format": "pest",
+      "text": "statement = { sum ~ \";\" }\nsum = { operand ~ (\"+\" ~ operand)* }\noperand = { integer | \"(\" ~ sum ~ \")\" }\ninteger = @{ ASCII_DIGIT ~ ASCII_DIGIT* }\nidentifier = @{ ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }\nstringLiteral = @{ \"'\" ~ (!\"'\" ~ ANY)* ~ \"'\" }\noperator = { \"+\" | \"-\" | \"*\" }\n"
+    },
+    {
+      "id": "upstream-c",
+      "language": "arithmetic",
+      "edition": "2025",
+      "precedence": 0,
+      "format": "pest",
+      "text": "expression = { term ~ ((\"+\" | \"-\") ~ term)* }\nterm = { number | \"(\" ~ expression ~ \")\" }\nnumber = @{ ASCII_DIGIT+ ~ (\"_\" ~ ASCII_DIGIT+)* }\n"
+    }
+  ],
+  "samples": {
+    "upstream-a:number": [
+      "1",
+      "42"
+    ],
+    "upstream-b:integer": [
+      "42",
+      "1"
+    ],
+    "upstream-a:sign": [
+      "+",
+      "-"
+    ],
+    "upstream-b:operator": [
+      "-",
+      "+"
+    ]
+  },
+  "requiredEquivalences": [
+    [
+      "upstream-a:sign",
+      "upstream-b:operator"
+    ],
+    [
+      "upstream-a:number",
+      "upstream-c:number"
+    ]
+  ],
+  "upstreamChange": {
+    "source": "upstream-a",
+    "text": "expression = { term ~ (\"+\" ~ term)* }\nterm = { numeral | \"(\" ~ expression ~ \")\" }\nnumeral = @{ ASCII_DIGIT+ }\nidentifier = @{ ASCII_ALPHA+ }\nstring_literal = @{ \"\\\"\" ~ (!\"\\\"\" ~ ANY)* ~ \"\\\"\" }\nsign = { \"+\" | \"-\" }\nproduct = { term ~ (\"*\" ~ term)* }\n"
+  },
+  "rename": {
+    "namespace": "arithmetic",
+    "grammar": {
+      "schemaVersion": 1,
+      "start": "expression",
+      "sourceFormat": "peg",
+      "rules": [
+        {
+          "name": "expression",
+          "kind": "normal",
+          "expression": {
+            "kind": "seq",
+            "items": [
+              {
+                "kind": "capture",
+                "label": "value",
+                "item": {
+                  "kind": "ref",
+                  "name": "value"
+                }
+              },
+              {
+                "kind": "optional",
+                "item": {
+                  "kind": "seq",
+                  "items": [
+                    {
+                      "kind": "literal",
+                      "value": "+"
+                    },
+                    {
+                      "kind": "ref",
+                      "name": "expression"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "value",
+          "kind": "normal",
+          "expression": {
+            "kind": "choice",
+            "items": [
+              {
+                "kind": "ref",
+                "name": "number"
+              },
+              {
+                "kind": "seq",
+                "items": [
+                  {
+                    "kind": "literal",
+                    "value": "("
+                  },
+                  {
+                    "kind": "ref",
+                    "name": "expression"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": ")"
+                  }
+                ]
+              }
+            ],
+            "ordered": true
+          }
+        },
+        {
+          "name": "qualified",
+          "kind": "normal",
+          "expression": {
+            "kind": "choice",
+            "items": [
+              {
+                "kind": "ref",
+                "name": "arithmetic.value"
+              },
+              {
+                "kind": "ref",
+                "name": "arithmetic::value"
+              },
+              {
+                "kind": "ref",
+                "name": "library.value"
+              }
+            ],
+            "ordered": true
+          }
+        },
+        {
+          "name": "number",
+          "kind": "atomic",
+          "expression": {
+            "kind": "repeat1",
+            "item": {
+              "kind": "charRange",
+              "start": "0",
+              "end": "9"
+            }
+          }
+        },
+        {
+          "name": "spaced",
+          "kind": "normal",
+          "expression": {
+            "kind": "seq",
+            "items": [
+              {
+                "kind": "ref",
+                "name": "digit"
+              },
+              {
+                "kind": "ref",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "steps": [
+      {
+        "from": "value",
+        "to": "operand"
+      },
+      {
+        "from": "expression",
+        "to": "sum"
+      }
+    ],
+    "afterReload": {
+      "from": "operand",
+      "to": "term"
+    },
+    "collisions": [
+      {
+        "from": "value",
+        "to": "number"
+      },
+      {
+        "from": "value",
+        "to": "digit"
+      },
+      {
+        "from": "missing",
+        "to": "other"
+      }
+    ],
+    "expected": {
+      "grammar": {
+        "schemaVersion": 1,
+        "start": "sum",
+        "sourceFormat": "peg",
+        "rules": [
+          {
+            "name": "sum",
+            "kind": "normal",
+            "expression": {
+              "kind": "seq",
+              "items": [
+                {
+                  "kind": "capture",
+                  "label": "value",
+                  "item": {
+                    "kind": "ref",
+                    "name": "term"
+                  }
+                },
+                {
+                  "kind": "optional",
+                  "item": {
+                    "kind": "seq",
+                    "items": [
+                      {
+                        "kind": "literal",
+                        "value": "+"
+                      },
+                      {
+                        "kind": "ref",
+                        "name": "sum"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "term",
+            "kind": "normal",
+            "expression": {
+              "kind": "choice",
+              "items": [
+                {
+                  "kind": "ref",
+                  "name": "number"
+                },
+                {
+                  "kind": "seq",
+                  "items": [
+                    {
+                      "kind": "literal",
+                      "value": "("
+                    },
+                    {
+                      "kind": "ref",
+                      "name": "sum"
+                    },
+                    {
+                      "kind": "literal",
+                      "value": ")"
+                    }
+                  ]
+                }
+              ],
+              "ordered": true
+            }
+          },
+          {
+            "name": "qualified",
+            "kind": "normal",
+            "expression": {
+              "kind": "choice",
+              "items": [
+                {
+                  "kind": "ref",
+                  "name": "arithmetic.term"
+                },
+                {
+                  "kind": "ref",
+                  "name": "arithmetic::term"
+                },
+                {
+                  "kind": "ref",
+                  "name": "library.value"
+                }
+              ],
+              "ordered": true
+            }
+          },
+          {
+            "name": "number",
+            "kind": "atomic",
+            "expression": {
+              "kind": "repeat1",
+              "item": {
+                "kind": "charRange",
+                "start": "0",
+                "end": "9"
+              }
+            }
+          },
+          {
+            "name": "spaced",
+            "kind": "normal",
+            "expression": {
+              "kind": "seq",
+              "items": [
+                {
+                  "kind": "ref",
+                  "name": "digit"
+                },
+                {
+                  "kind": "ref",
+                  "name": "term"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "aliases": [
+        {
+          "canonical": "term",
+          "original": "value"
+        },
+        {
+          "canonical": "sum",
+          "original": "expression"
+        }
+      ],
+      "collisionKinds": [
+        "collision",
+        "collision",
+        "unknown-rule"
+      ]
+    }
+  },
+  "expected": {
+    "groups": [
+      {
+        "key": "arithmetic@2024",
+        "sources": [
+          "upstream-a",
+          "upstream-b"
+        ],
+        "start": "expression",
+        "rules": [
+          "expression",
+          "term",
+          "number",
+          "identifier",
+          "string_literal",
+          "sign",
+          "statement",
+          "identifier_from_upstream_b",
+          "stringLiteral",
+          "operator"
+        ],
+        "identities": {
+          "upstream-a:expression": "expression",
+          "upstream-a:term": "term",
+          "upstream-a:number": "number",
+          "upstream-a:identifier": "identifier",
+          "upstream-a:string_literal": "string_literal",
+          "upstream-a:sign": "sign",
+          "upstream-b:statement": "statement",
+          "upstream-b:sum": "expression",
+          "upstream-b:operand": "term",
+          "upstream-b:integer": "number",
+          "upstream-b:identifier": "identifier_from_upstream_b",
+          "upstream-b:stringLiteral": "stringLiteral",
+          "upstream-b:operator": "operator"
+        },
+        "decisions": [
+          {
+            "kind": "merged",
+            "name": "expression",
+            "members": [
+              "upstream-a:expression",
+              "upstream-b:sum"
+            ],
+            "basis": "recursive-structural-bisimulation",
+            "definition": "normal:seq(ref(\"term\"),many(seq(lit(\"+\"),ref(\"term\"))))"
+          },
+          {
+            "kind": "merged",
+            "name": "term",
+            "members": [
+              "upstream-a:term",
+              "upstream-b:operand"
+            ],
+            "basis": "recursive-structural-bisimulation",
+            "definition": "normal:first(ref(\"number\"),seq(lit(\"(\"),ref(\"expression\"),lit(\")\")))"
+          },
+          {
+            "kind": "merged",
+            "name": "number",
+            "members": [
+              "upstream-a:number",
+              "upstream-b:integer"
+            ],
+            "basis": "recursive-structural-bisimulation",
+            "definition": "atomic:some(ref(\"ASCII_DIGIT\"))"
+          },
+          {
+            "kind": "kept-unique",
+            "name": "identifier",
+            "members": [
+              "upstream-a:identifier"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "atomic:some(ref(\"ASCII_ALPHA\"))"
+          },
+          {
+            "kind": "kept-unique",
+            "name": "string_literal",
+            "members": [
+              "upstream-a:string_literal"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "atomic:seq(lit(\"\\\"\"),many(seq(not(lit(\"\\\"\")),any)),lit(\"\\\"\"))"
+          },
+          {
+            "kind": "kept-unique",
+            "name": "sign",
+            "members": [
+              "upstream-a:sign"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "normal:first(lit(\"+\"),lit(\"-\"))"
+          },
+          {
+            "kind": "kept-unique",
+            "name": "statement",
+            "members": [
+              "upstream-b:statement"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "normal:seq(ref(\"expression\"),lit(\";\"))"
+          },
+          {
+            "kind": "kept-unique",
+            "name": "identifier_from_upstream_b",
+            "members": [
+              "upstream-b:identifier"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "atomic:seq(ref(\"ASCII_ALPHA\"),many(ref(\"ASCII_ALPHANUMERIC\")))"
+          },
+          {
+            "kind": "renamed-for-collision",
+            "name": "identifier_from_upstream_b",
+            "members": [
+              "upstream-b:identifier"
+            ],
+            "basis": "precedence",
+            "definition": null
+          },
+          {
+            "kind": "kept-unique",
+            "name": "stringLiteral",
+            "members": [
+              "upstream-b:stringLiteral"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "atomic:seq(lit(\"'\"),many(seq(not(lit(\"'\")),any)),lit(\"'\"))"
+          },
+          {
+            "kind": "kept-unique",
+            "name": "operator",
+            "members": [
+              "upstream-b:operator"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "normal:first(lit(\"+\"),lit(\"-\"),lit(\"*\"))"
+          },
+          {
+            "kind": "homonym-kept-distinct",
+            "name": "identifier",
+            "members": [
+              "identifier",
+              "identifier_from_upstream_b"
+            ],
+            "basis": "different-definitions",
+            "definition": null
+          },
+          {
+            "kind": "uncertain",
+            "name": "string_literal",
+            "members": [
+              "upstream-a:string_literal",
+              "upstream-b:stringLiteral"
+            ],
+            "basis": "name-similarity",
+            "definition": null
+          },
+          {
+            "kind": "uncertain",
+            "name": "sign",
+            "members": [
+              "upstream-a:sign",
+              "upstream-b:operator"
+            ],
+            "basis": "identical-samples",
+            "definition": null
+          }
+        ],
+        "nominations": [
+          {
+            "basis": "name-similarity",
+            "members": [
+              "upstream-a:string_literal",
+              "upstream-b:stringLiteral"
+            ],
+            "outcome": "unproven"
+          },
+          {
+            "basis": "identical-samples",
+            "members": [
+              "upstream-a:number",
+              "upstream-b:integer"
+            ],
+            "outcome": "proven"
+          },
+          {
+            "basis": "identical-samples",
+            "members": [
+              "upstream-a:sign",
+              "upstream-b:operator"
+            ],
+            "outcome": "unproven"
+          }
+        ],
+        "alternatives": [
+          {
+            "reason": "start-rule",
+            "name": "expression",
+            "options": [
+              "statement"
+            ]
+          },
+          {
+            "reason": "distinct-meaning",
+            "name": "identifier",
+            "options": [
+              "identifier",
+              "identifier_from_upstream_b"
+            ]
+          },
+          {
+            "reason": "uncertain-match",
+            "name": "name-similarity",
+            "options": [
+              "string_literal",
+              "stringLiteral"
+            ]
+          },
+          {
+            "reason": "uncertain-match",
+            "name": "identical-samples",
+            "options": [
+              "sign",
+              "operator"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "arithmetic@2025",
+        "sources": [
+          "upstream-c"
+        ],
+        "start": "expression",
+        "rules": [
+          "expression",
+          "term",
+          "number"
+        ],
+        "identities": {
+          "upstream-c:expression": "expression",
+          "upstream-c:term": "term",
+          "upstream-c:number": "number"
+        },
+        "decisions": [
+          {
+            "kind": "kept-unique",
+            "name": "expression",
+            "members": [
+              "upstream-c:expression"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "normal:seq(ref(\"term\"),many(seq(first(lit(\"+\"),lit(\"-\")),ref(\"term\"))))"
+          },
+          {
+            "kind": "kept-unique",
+            "name": "term",
+            "members": [
+              "upstream-c:term"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "normal:first(ref(\"number\"),seq(lit(\"(\"),ref(\"expression\"),lit(\")\")))"
+          },
+          {
+            "kind": "kept-unique",
+            "name": "number",
+            "members": [
+              "upstream-c:number"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "atomic:seq(some(ref(\"ASCII_DIGIT\")),many(seq(lit(\"_\"),some(ref(\"ASCII_DIGIT\")))))"
+          }
+        ],
+        "nominations": [],
+        "alternatives": []
+      }
+    ],
+    "alternatives": [
+      {
+        "reason": "edition",
+        "name": "arithmetic",
+        "options": [
+          "2024",
+          "2025"
+        ]
+      }
+    ],
+    "failures": [
+      {
+        "kind": "unresolved-required-equivalence",
+        "members": [
+          "upstream-a:number",
+          "upstream-c:number"
+        ],
+        "reason": "different-language-or-edition"
+      },
+      {
+        "kind": "unresolved-required-equivalence",
+        "members": [
+          "upstream-a:sign",
+          "upstream-b:operator"
+        ],
+        "reason": "not-proven"
+      }
+    ],
+    "remerge": {
+      "reused": [
+        "arithmetic@2025"
+      ],
+      "recomputed": [
+        "arithmetic@2024"
+      ],
+      "identities": {
+        "upstream-a:expression": "expression",
+        "upstream-a:term": "term",
+        "upstream-a:numeral": "number",
+        "upstream-a:identifier": "identifier",
+        "upstream-a:string_literal": "string_literal",
+        "upstream-a:sign": "sign",
+        "upstream-a:product": "product",
+        "upstream-b:statement": "statement",
+        "upstream-b:sum": "expression",
+        "upstream-b:operand": "term",
+        "upstream-b:integer": "number",
+        "upstream-b:identifier": "identifier_from_upstream_b",
+        "upstream-b:stringLiteral": "stringLiteral",
+        "upstream-b:operator": "operator"
+      },
+      "rules": [
+        "expression",
+        "term",
+        "number",
+        "identifier",
+        "string_literal",
+        "sign",
+        "product",
+        "statement",
+        "identifier_from_upstream_b",
+        "stringLiteral",
+        "operator"
+      ],
+      "identitiesWithoutPrevious": {
+        "upstream-a:expression": "expression",
+        "upstream-a:term": "term",
+        "upstream-a:numeral": "numeral",
+        "upstream-a:identifier": "identifier",
+        "upstream-a:string_literal": "string_literal",
+        "upstream-a:sign": "sign",
+        "upstream-a:product": "product",
+        "upstream-b:statement": "statement",
+        "upstream-b:sum": "expression",
+        "upstream-b:operand": "term",
+        "upstream-b:integer": "numeral",
+        "upstream-b:identifier": "identifier_from_upstream_b",
+        "upstream-b:stringLiteral": "stringLiteral",
+        "upstream-b:operator": "operator"
+      }
+    }
+  }
+}

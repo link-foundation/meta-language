@@ -70,6 +70,9 @@ fn expand_expr(
 ) -> Result<String, EvalError> {
     match expr {
         GrammarExpr::Empty | GrammarExpr::And(_) | GrammarExpr::Not(_) => Ok(String::new()),
+        GrammarExpr::Feature(feature) => Err(EvalError::UnsupportedExpression {
+            construct: feature.head().to_owned(),
+        }),
         GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => Ok(value.clone()),
         GrammarExpr::CharRange(start, end) => pick_char_range(*start, *end, rng).map(String::from),
         GrammarExpr::CharClass { negated, items } => {
@@ -314,6 +317,7 @@ fn shortest_expr(
             Some(output)
         }
         GrammarExpr::Capture { expr, .. } => shortest_expr(grammar, expr, plan, visiting),
+        GrammarExpr::Feature(_) => None,
     }
 }
 
@@ -350,7 +354,7 @@ fn compute_min_lengths(grammar: &Grammar) -> HashMap<String, Option<usize>> {
                 continue;
             };
             let current = lengths.get(rule.name()).copied().flatten();
-            if current.map_or(true, |current| next < current) {
+            if current.is_none_or(|current| next < current) {
                 lengths.insert(rule.name().to_string(), Some(next));
                 changed = true;
             }
@@ -397,6 +401,7 @@ fn expr_min_length(expr: &GrammarExpr, lengths: &HashMap<String, usize>) -> Opti
             first_char_in_class(*negated, items).map(|_| 1)
         }
         GrammarExpr::AnyChar => Some(1),
+        GrammarExpr::Feature(_) => None,
     }
 }
 
@@ -441,6 +446,7 @@ fn expr_min_length_with_options(
             first_char_in_class(*negated, items).map(|_| 1)
         }
         GrammarExpr::AnyChar => Some(1),
+        GrammarExpr::Feature(_) => None,
     }
 }
 
@@ -495,6 +501,7 @@ fn collect_nonterminals(expr: &GrammarExpr, names: &mut BTreeSet<String>) {
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar => {}
     }
 }
@@ -509,7 +516,7 @@ impl SplitMix64 {
         Self { state: seed }
     }
 
-    fn next_u64(&mut self) -> u64 {
+    const fn next_u64(&mut self) -> u64 {
         self.state = self.state.wrapping_add(0x9E37_79B9_7F4A_7C15);
         let mut value = self.state;
         value = (value ^ (value >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
@@ -526,7 +533,7 @@ impl SplitMix64 {
         usize::try_from(value).unwrap_or(0)
     }
 
-    fn next_bool(&mut self) -> bool {
+    const fn next_bool(&mut self) -> bool {
         self.next_u64() & 1 == 1
     }
 }

@@ -1,0 +1,41 @@
+{
+  "description": "Under (matching longest) a token the parse asks for is lexed over the separator or the token of a silent rule's extra its text also matches, as tree-sitter shifts a valid token before it reduces the same text to an extra: each line ends with its own \"\\n\" token, where \"\\n\" is also an extra. js/tests/grammar-token-over-extra.test.js and rust/tests/unit/grammar_token_over_extra.rs parse every input to its tree.",
+  "cases": [
+    {
+      "name": "silent extra",
+      "grammar": "start doc\nmatching longest\nextra ref(blank)\nextra class(char(\" \"))\nrule doc = normal repeat0(ref(line))\nrule line = normal seq(token(repeat1(class(range(\"a\", \"z\")))), token(literal(\"\\n\")))\nrule blank = silent token(literal(\"\\n\"))\n",
+      "parses": [
+        {
+          "input": "ab\n",
+          "tree": "(doc (line \"ab\" \"\\n\"))"
+        },
+        {
+          "input": "ab\n\ncd \n",
+          "tree": "(doc (line \"ab\" \"\\n\") (line ~(blank \"\\n\") \"cd\" ~\" \" \"\\n\"))"
+        },
+        {
+          "input": "\nab\n",
+          "tree": "(doc (line ~(blank \"\\n\") \"ab\" \"\\n\"))"
+        }
+      ]
+    },
+    {
+      "name": "separator",
+      "grammar": "start doc\nmatching longest\nextra class(char(\" \"), char(\"\\n\"))\nrule doc = normal repeat0(ref(line))\nrule line = normal seq(token(repeat1(class(range(\"a\", \"z\")))), token(literal(\"\\n\")))\n",
+      "parses": [
+        {
+          "input": "ab\n",
+          "tree": "(doc (line \"ab\" \"\\n\"))"
+        },
+        {
+          "input": "ab\n\ncd \n",
+          "tree": "(doc (line \"ab\" \"\\n\") (line ~\"\\n\" \"cd\" ~\" \" \"\\n\"))"
+        },
+        {
+          "input": "\nab\n",
+          "tree": "(doc (line ~\"\\n\" \"ab\" \"\\n\"))"
+        }
+      ]
+    }
+  ]
+}

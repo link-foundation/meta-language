@@ -3,6 +3,7 @@ use std::error::Error;
 use std::fmt;
 use std::sync::OnceLock;
 
+use crate::decorators::{DecoratorLevel, DecoratorSet, decorator_record, record_field};
 use crate::{
     FormalizationLevel, Link, LinkId, LinkMetadata, LinkNetwork, LinkQuery, LinkType,
     LinoSerializationError, NaturalizationDirection, ParseConfiguration, QueryParseError,
@@ -62,6 +63,39 @@ impl TranslationRuleSet {
     pub fn with_rule(mut self, rule: TranslationRule) -> Self {
         self.add_rule(rule);
         self
+    }
+
+    /// The rule set the `translation-rule` decorators of `decorators` make of
+    /// this one, which is not changed. They see each template as
+    /// `{ rule, language, text }` (`language` is the template's target, a
+    /// formal target included): setting `text` rewrites the template and
+    /// `drop` removes it, so the language falls back as if the rule had no
+    /// template.
+    #[must_use]
+    pub fn decorated(&self, decorators: &DecoratorSet) -> Self {
+        if !decorators.has(DecoratorLevel::TranslationRule) {
+            return self.clone();
+        }
+        let mut result = self.clone();
+        for rule in &mut result.rules {
+            rule.templates = std::mem::take(&mut rule.templates)
+                .into_iter()
+                .filter_map(|(language, template)| {
+                    let record = decorator_record([
+                        ("rule", rule.name.as_str()),
+                        ("language", language.as_str()),
+                        ("text", template.source()),
+                    ]);
+                    let decorated =
+                        decorators.decorate(DecoratorLevel::TranslationRule, &record)?;
+                    Some((
+                        language,
+                        TranslationTemplate::new(record_field(&decorated, "text")),
+                    ))
+                })
+                .collect();
+        }
+        result
     }
 
     /// Appends a rule to the end of the ordered rule set.
@@ -625,7 +659,7 @@ fn parse_query_link_type(token: &str) -> Result<LinkType, QueryParseError> {
         other => {
             return Err(QueryParseError::new(format!(
                 "unknown query link type `{other}`"
-            )))
+            )));
         }
     })
 }

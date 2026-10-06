@@ -133,13 +133,33 @@ fn workflows_default_to_read_only_permissions() {
 
 #[test]
 fn workflows_separate_cancellable_checks_from_serialized_writes() {
+    // A newer pull request run cancels the older one; every other run is
+    // grouped by its own run id, so a push, release or dispatch run (and its
+    // write jobs) is never cancelled by another run. Inside a called workflow
+    // `github.workflow` is the caller's name, so a workflow that ci.yml calls
+    // names its group by its file stem instead: equal groups would deadlock.
     for path in workflow_files() {
         let workflow = read_workflow(&path);
-        assert!(!workflow
-            .split("\njobs:\n")
-            .next()
-            .unwrap()
-            .contains("\nconcurrency:\n"));
+        let header = workflow.split("\njobs:\n").next().unwrap();
+        let prefix = if header.contains("\n  workflow_call:") {
+            format!("{}-", path.file_stem().unwrap().to_string_lossy())
+        } else {
+            "${{ github.workflow }}-".to_owned()
+        };
+        let pull_request_only = format!(
+            "\nconcurrency:\n  group: {prefix}${{{{ github.event_name == 'pull_request' && github.ref || github.run_id }}}}\n  cancel-in-progress: true\n"
+        );
+        assert_eq!(
+            header.matches("\nconcurrency:\n").count(),
+            1,
+            "{} declares one workflow-level concurrency group",
+            path.display()
+        );
+        assert!(
+            header.contains(&pull_request_only),
+            "{} cancels only superseded pull request runs",
+            path.display()
+        );
     }
 
     let rust = read_workflow(&repository_root().join(".github/workflows/rust.yml"));
@@ -150,8 +170,11 @@ fn workflows_separate_cancellable_checks_from_serialized_writes() {
         "secrets-scan",
         "fresh-merge",
         "cargo-lock",
+        "check",
+        "msrv",
         "lint",
         "coverage",
+        "coverage-report",
         "build",
     ] {
         let job = job_block(&rust, job_name);

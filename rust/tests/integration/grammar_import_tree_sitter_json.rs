@@ -1,5 +1,5 @@
 use meta_language::{
-    import_tree_sitter_json, FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks,
+    FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks, import_tree_sitter_json,
 };
 
 #[test]

@@ -1,10 +1,10 @@
 mod grammar_pipeline_support;
 
 use grammar_pipeline_support::{
-    assert_runtime_accepts_all, assert_runtime_rejects, compile_and_run_rust_parser,
-    infer_valid_grammar, ARITH_EXAMPLES,
+    ARITH_EXAMPLES, assert_runtime_accepts_all, assert_runtime_rejects,
+    compile_and_run_rust_parser, infer_valid_grammar,
 };
-use meta_language::{emit_rust_parser, import_pest, write_grammar_surface, GrammarRule};
+use meta_language::{GrammarRule, emit_rust_parser, import_pest, write_grammar_surface};
 
 fn main() -> Result<(), String> {
     let grammar = infer_valid_grammar(ARITH_EXAMPLES);

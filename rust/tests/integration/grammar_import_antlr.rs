@@ -1,4 +1,4 @@
-use meta_language::{import_antlr, FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks};
+use meta_language::{FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks, import_antlr};
 
 #[test]
 fn imported_antlr_grammar_survives_links_round_trip() {

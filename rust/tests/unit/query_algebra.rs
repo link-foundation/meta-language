@@ -37,12 +37,16 @@ fn ast_grep_style_rule_algebra_supports_relations_booleans_and_named_refs() {
         matches[0].captures().first("target"),
         Some(first_identifier)
     );
-    assert!(matches
-        .iter()
-        .all(|rule_match| rule_match.link_id() != second_identifier));
-    assert!(matches
-        .iter()
-        .all(|rule_match| rule_match.link_id() != number));
+    assert!(
+        matches
+            .iter()
+            .all(|rule_match| rule_match.link_id() != second_identifier)
+    );
+    assert!(
+        matches
+            .iter()
+            .all(|rule_match| rule_match.link_id() != number)
+    );
 }
 
 #[test]
@@ -110,7 +114,7 @@ fn babel_recast_style_quasiquote_replacement_checks_placeholders_and_parentheses
     let report = network.replace(&matches, &ReplacementRule::quasiquote("target", template));
 
     assert_eq!(report.text_replacements().len(), 1);
-    assert!(report.template_errors().is_empty());
+    assert_eq!(report.template_errors(), []);
     assert_eq!(
         network.reconstruct_text(),
         "const result = (oldValue + 1);\n"

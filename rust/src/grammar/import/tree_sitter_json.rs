@@ -1,6 +1,6 @@
 use serde_json::{Map, Value};
 
-use super::{parse_error, unsupported_error, GrammarImportError};
+use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
 
 const FORMAT: GrammarFormat = GrammarFormat::TreeSitter;
@@ -34,10 +34,10 @@ pub fn import_tree_sitter_json(text: &str) -> Result<Grammar, GrammarImportError
     if let Some(start) = grammar.rules().first().map(|rule| rule.name.clone()) {
         grammar.set_start(start);
     }
-    if let Some(extras) = root.get("extras") {
-        if let Some(expr) = lower_extras(extras)? {
-            grammar.add_rule(GrammarRule::new("_extras", expr).with_kind(RuleKind::Silent));
-        }
+    if let Some(extras) = root.get("extras")
+        && let Some(expr) = lower_extras(extras)?
+    {
+        grammar.add_rule(GrammarRule::new("_extras", expr).with_kind(RuleKind::Silent));
     }
 
     Ok(grammar)

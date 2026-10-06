@@ -1,0 +1,439 @@
+{
+  "description": "How the import pipeline (js/scripts/import-native-grammars.mjs) turns the rule names of an upstream grammar into readable English native rule names and concept records: the abbreviations and run-together keywords upstream names use with the words that replace them, and per grammar the names and concepts a reviewer decided by hand. Every entry is a reviewed merge decision; the merge report of each language lists where it applied.",
+  "words": [
+    { "word": "alignas", "replacement": "align_as", "reason": "The C keyword _Alignas (ISO/IEC 9899:2018 section 6.7.5) run together." },
+    { "word": "alignof", "replacement": "alignment_of", "reason": "The C operator _Alignof (ISO/IEC 9899:2018 section 6.5.3.4) gives the alignment of a type." },
+    { "word": "apos", "replacement": "apostrophe", "reason": "An abbreviation of apostrophe, the quote that opens a Rocq destructuring let (`let 'pattern := term in term`, Rocq Reference Manual, section Extended pattern matching)." },
+    { "word": "arg", "replacement": "argument", "reason": "An abbreviation of argument." },
+    { "word": "args", "replacement": "arguments", "reason": "An abbreviation of arguments." },
+    { "word": "asm", "replacement": "assembly", "reason": "The asm keyword introduces inline assembly." },
+    { "word": "assumpt", "replacement": "assumption", "reason": "An abbreviation of assumption, a Rocq Parameter, Axiom or Variable declaration (Rocq Reference Manual, section Assumptions)." },
+    { "word": "async", "replacement": "asynchronous", "reason": "The Rust keyword async marks an asynchronous function or block (The Rust Reference, Async blocks)." },
+    { "word": "attr", "replacement": "attribute", "reason": "An abbreviation of attribute." },
+    { "word": "bigint", "replacement": "big_integer", "reason": "The Rocq notation entry bigint, an integer of any size (Rocq Reference Manual, section Notations, syntax of notation entries)." },
+    { "word": "bignat", "replacement": "big_natural_number", "reason": "Rocq's natural number of any size (Rocq Reference Manual, section Lexical conventions, numbers)." },
+    { "word": "bitfield", "replacement": "bit_field", "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)." },
+    { "word": "bool", "replacement": "boolean", "reason": "An abbreviation of boolean; the Protocol Buffers bool type holds true or false (Protocol Buffers Language Specification, Boolean)." },
+    { "word": "calc", "replacement": "calculation", "reason": "The Lean calc keyword opens a calculation, a chain of relations proved step by step (Theorem Proving in Lean 4, section Calculational Proofs)." },
+    { "word": "char", "replacement": "character", "reason": "An abbreviation of character; the C type char holds a character." },
+    { "word": "chars", "replacement": "characters", "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string." },
+    { "word": "cmp", "replacement": "comparison", "reason": "An abbreviation of comparison: the parenthesized or quoted pair of arguments an ifeq or ifneq conditional of GNU make compares (GNU make manual, section 7.2 Syntax of Conditionals)." },
+    { "word": "config", "replacement": "configuration", "reason": "An abbreviation of configuration." },
+    { "word": "const", "replacement": "constant", "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)." },
+    { "word": "db", "replacement": "database", "reason": "An abbreviation of database, as in a Rocq hint database (Rocq Reference Manual, section Hint databases)." },
+    { "word": "dbg", "replacement": "debug", "reason": "The Lean dbg_trace keyword prints a debugging message." },
+    { "word": "decl", "replacement": "declaration", "reason": "An abbreviation of declaration." },
+    { "word": "declarators", "replacement": "declarator_list", "reason": "A comma-separated list of declarators." },
+    { "word": "declspec", "replacement": "declaration_specifier", "reason": "The Microsoft __declspec keyword run together." },
+    { "word": "decnat", "replacement": "decimal_natural_number", "reason": "Rocq's natural number written in decimal digits (Rocq Reference Manual, section Lexical conventions, numbers)." },
+    { "word": "def", "replacement": "definition", "reason": "An abbreviation of definition." },
+    { "word": "delim", "replacement": "delimited", "reason": "An abbreviation of delimited; a delimited token tree is enclosed in parentheses, brackets or braces (The Rust Reference, Macros, DelimTokenTree)." },
+    { "word": "doc", "replacement": "documentation", "reason": "An abbreviation of documentation; a doc comment is a documentation comment (The Rust Reference, Doc comments)." },
+    { "word": "elem", "replacement": "element", "reason": "An abbreviation of element, as in the interface elements, method elements and type elements of a Go interface type (The Go Programming Language Specification, Interface types)." },
+    { "word": "elif", "replacement": "else_if", "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if." },
+    { "word": "elifdef", "replacement": "else_if_defined", "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined." },
+    { "word": "elsif", "replacement": "else_if", "reason": "The else branch of a GNU make conditional that holds another conditional, `else ifeq ...` (GNU make manual, section 7.2 Syntax of Conditionals)." },
+    { "word": "elt", "replacement": "element", "reason": "An abbreviation of element; tree-sitter-solidity scans the characters between the quotes of a Solidity string literal with _string_immediate_elt_inside_quote." },
+    { "word": "enum", "replacement": "enumeration", "reason": "An abbreviation of enumeration." },
+    { "word": "eqn", "replacement": "equation", "reason": "An abbreviation of equation, as in the Rocq clause eqn:ident that names the equation of a case analysis (Rocq Reference Manual, section Tactics, destruct)." },
+    { "word": "eval", "replacement": "evaluation", "reason": "An abbreviation of evaluation." },
+    { "word": "expr", "replacement": "expression", "reason": "An abbreviation of expression." },
+    { "word": "fallthrough", "replacement": "fall_through", "reason": "The Go keyword fallthrough (The Go Programming Language Specification, Fallthrough statements) run together." },
+    { "word": "func", "replacement": "function", "reason": "The Go keyword func declares a function; a func literal is a function literal (The Go Programming Language Specification, Function literals)." },
+    { "word": "gen", "replacement": "generator", "reason": "The Rust 2024 keyword gen opens a generator block that yields the items of an iterator (RFC 3513, gen blocks)." },
+    { "word": "goto", "replacement": "go_to", "reason": "The goto keyword run together." },
+    { "word": "hexdigit", "replacement": "hexadecimal_digit", "reason": "A hexadecimal digit run together." },
+    { "word": "hexnat", "replacement": "hexadecimal_natural_number", "reason": "Rocq's natural number written in hexadecimal digits after 0x (Rocq Reference Manual, section Lexical conventions, numbers)." },
+    { "word": "hintdb", "replacement": "hint_database", "reason": "A Rocq hint database run together (Rocq Reference Manual, section Hint databases, Create HintDb)." },
+    { "word": "hyp", "replacement": "hypothesis", "reason": "An abbreviation of hypothesis, a local assumption of a Rocq proof goal." },
+    { "word": "ident", "replacement": "identifier", "reason": "An abbreviation of identifier." },
+    { "word": "ifdef", "replacement": "if_defined", "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined." },
+    { "word": "ifeq", "replacement": "if_equal", "reason": "The GNU make conditional directive ifeq expands two arguments and tests that they are equal (GNU make manual, section 7.2 Syntax of Conditionals)." },
+    { "word": "ifndef", "replacement": "if_not_defined", "reason": "The GNU make conditional directive ifndef tests that a variable has an empty value (GNU make manual, section 7.2 Syntax of Conditionals); the preprocessing directive #ifndef (ISO/IEC 9899:2018 section 6.10.1) is if not defined." },
+    { "word": "ifneq", "replacement": "if_not_equal", "reason": "The GNU make conditional directive ifneq expands two arguments and tests that they differ (GNU make manual, section 7.2 Syntax of Conditionals)." },
+    { "word": "impl", "replacement": "implementation", "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)." },
+    { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
+    { "word": "inst", "replacement": "instance", "reason": "An abbreviation of instance." },
+    { "word": "instanceof", "replacement": "instance_of", "reason": "The Java operator instanceof (The Java Language Specification, section 15.20.2) run together." },
+    { "word": "int", "replacement": "integer", "reason": "An abbreviation of integer; a Go int literal is an integer literal (The Go Programming Language Specification, Integer literals)." },
+    { "word": "interp", "replacement": "interpretation", "reason": "An abbreviation of interpretation." },
+    { "word": "lhs", "replacement": "left_hand_side", "reason": "An abbreviation of left-hand side, the target of a JavaScript assignment or for-in head." },
+    { "word": "lib", "replacement": "library", "reason": "An abbreviation of library." },
+    { "word": "lit", "replacement": "literal", "reason": "An abbreviation of literal, as in the Protocol Buffers intLit, floatLit and boolLit (Protocol Buffers Language Specification, Integer literals)." },
+    { "word": "mod", "replacement": "module", "reason": "The Rust keyword mod declares a module (The Rust Reference, Modules)." },
+    { "word": "ms", "replacement": "microsoft", "reason": "Microsoft-specific syntax." },
+    { "word": "mut", "replacement": "mutable", "reason": "The Rust keyword mut makes a binding mutable (The Rust Reference, Identifier patterns)." },
+    { "word": "num", "replacement": "number", "reason": "An abbreviation of number." },
+    { "word": "offsetof", "replacement": "offset_of", "reason": "The offsetof macro (ISO/IEC 9899:2018 section 7.19) run together." },
+    { "word": "oneof", "replacement": "one_of", "reason": "The Protocol Buffers keyword oneof run together: at most one field of a oneof is set at a time (Protocol Buffers Language Guide, Oneof)." },
+    { "word": "params", "replacement": "parameters", "reason": "An abbreviation of parameters." },
+    { "word": "preproc", "replacement": "preprocessor", "reason": "An abbreviation of preprocessor." },
+    { "word": "ptr", "replacement": "pointer", "reason": "An abbreviation of pointer." },
+    { "word": "qmark", "replacement": "question_mark", "reason": "An abbreviation of question mark; JavaScript's _ternary_qmark scans the ? of a conditional expression." },
+    { "word": "qualid", "replacement": "qualified_identifier", "reason": "Rocq's qualified identifier, a dotted path to a global name (Rocq Reference Manual, section Qualified identifiers)." },
+    { "word": "rawline", "replacement": "raw_line", "reason": "A line of a GNU make define directive taken verbatim, as the value of the variable it defines (GNU make manual, section 6.8 Defining Multi-Line Variables)." },
+    { "word": "recipeprefix", "replacement": "recipe_prefix", "reason": "The GNU make variable .RECIPEPREFIX names the character that starts a recipe line instead of a tab (GNU make manual, section 6.14 Other Special Variables)." },
+    { "word": "regex", "replacement": "regular_expression", "reason": "An abbreviation of regular expression, JavaScript's regex literal and its pattern and flags." },
+    { "word": "rew", "replacement": "rewrite", "reason": "An abbreviation of rewrite, as in Rocq's rewriting notation rew [P] H in t." },
+    { "word": "rpc", "replacement": "remote_procedure_call", "reason": "The Protocol Buffers keyword rpc declares a remote procedure call of a service (Protocol Buffers Language Specification, Service definition)." },
+    { "word": "seh", "replacement": "structured_exception_handling", "reason": "Microsoft structured exception handling." },
+    { "word": "seq", "replacement": "sequence", "reason": "An abbreviation of sequence." },
+    { "word": "sizeof", "replacement": "size_of", "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together." },
+    { "word": "spec", "replacement": "specification", "reason": "An abbreviation of specification." },
+    { "word": "struct", "replacement": "structure", "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)." },
+    { "word": "tryif", "replacement": "try_if", "reason": "The Rocq tactical tryif run together (Rocq Reference Manual, section Ltac, tryif)." },
+    { "word": "typeclasses", "replacement": "type_classes", "reason": "Rocq's type classes run together, as in Typeclasses Transparent (Rocq Reference Manual, section Typeclasses)." },
+    { "word": "undefine", "replacement": "remove_definition", "reason": "The GNU make undefine directive removes the definition of a variable (GNU make manual, section 6.9 Undefining Variables)." },
+    { "word": "unexport", "replacement": "remove_export", "reason": "The GNU make unexport directive stops passing a variable to the environment of sub-make and recipe commands (GNU make manual, section 5.7.2 Communicating Variables to a Sub-make)." },
+    { "word": "var", "replacement": "variable", "reason": "An abbreviation of variable." },
+    { "word": "vpath", "replacement": "search_path", "reason": "The GNU make VPATH variable and vpath directive name the directories to search for prerequisites (GNU make manual, sections 4.5.1 VPATH: Search Path for All Prerequisites and 4.5.2 The vpath Directive)." }
+  ],
+  "grammars": {
+    "c": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_statement_identifier": "statement_identifier_alias"
+      },
+      "concepts": {
+        "preproc_include": "grammar.preprocessor-include-directive",
+        "preproc_if": "grammar.preprocessor-if-directive",
+        "preproc_ifdef": "grammar.preprocessor-if-defined-directive",
+        "preproc_else": "grammar.preprocessor-else-branch",
+        "preproc_elif": "grammar.preprocessor-else-if-branch",
+        "preproc_elifdef": "grammar.preprocessor-else-if-defined-branch",
+        "preproc_defined": "grammar.preprocessor-defined-operator",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "attribute": "program.attributes"
+      }
+    },
+    "rust": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_let_chain": "let_chain_alias",
+        "ref_pattern": "by_reference_pattern"
+      },
+      "concepts": {
+        "arguments": "grammar.argument-list",
+        "parameters": "grammar.parameter-list",
+        "parameter": "parameter",
+        "type_arguments": "grammar.type-argument-list",
+        "type_parameters": "grammar.type-parameter-list",
+        "attribute": "program.attributes"
+      }
+    },
+    "javascript": {
+      "names": {
+        "_identifier": "identifier_choice",
+        "_jsx_attribute": "jsx_attribute_choice",
+        "_jsx_element": "jsx_element_choice",
+        "_jsx_identifier": "jsx_identifier_choice"
+      },
+      "concepts": {
+        "_expressions": "grammar.expression-or-sequence",
+        "arguments": "grammar.argument-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "undefined": "grammar.undefined-value"
+      }
+    },
+    "typescript": {
+      "names": {
+        "_identifier": "identifier_choice",
+        "_jsx_attribute": "jsx_attribute_choice",
+        "_jsx_element": "jsx_element_choice",
+        "_jsx_identifier": "jsx_identifier_choice",
+        "_call_signature": "call_signature_parts",
+        "_number": "signed_number",
+        "_module": "module_name_and_body",
+        "_type_identifier": "type_identifier_alias",
+        "omitting_type_annotation": "required_type_annotation",
+        "asserts": "assertion_signature"
+      },
+      "concepts": {
+        "_expressions": "grammar.expression-or-sequence",
+        "arguments": "grammar.argument-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "undefined": "grammar.undefined-value",
+        "type_arguments": "grammar.type-argument-list",
+        "type_parameters": "grammar.type-parameter-list"
+      }
+    },
+    "tsx": {
+      "names": {
+        "_identifier": "identifier_choice",
+        "_jsx_attribute": "jsx_attribute_choice",
+        "_jsx_element": "jsx_element_choice",
+        "_jsx_identifier": "jsx_identifier_choice",
+        "_call_signature": "call_signature_parts",
+        "_number": "signed_number",
+        "_module": "module_name_and_body",
+        "_type_identifier": "type_identifier_alias",
+        "omitting_type_annotation": "required_type_annotation",
+        "asserts": "assertion_signature"
+      },
+      "concepts": {
+        "_expressions": "grammar.expression-or-sequence",
+        "arguments": "grammar.argument-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "undefined": "grammar.undefined-value",
+        "type_arguments": "grammar.type-argument-list",
+        "type_parameters": "grammar.type-parameter-list"
+      }
+    },
+    "lean": {
+      "names": {
+        "_declaration": "declaration_choice",
+        "cdot": "centered_dot"
+      },
+      "concepts": {
+        "module": "grammar.program",
+        "_boolean": "grammar.boolean-value",
+        "char": "grammar.character-literal",
+        "parenthesized": "grammar.parenthesized-expression",
+        "tuple": "grammar.tuple-expression",
+        "if": "grammar.if-expression",
+        "match": "grammar.match-expression",
+        "return": "grammar.return-expression",
+        "interpolated_string": "grammar.template-string",
+        "interpolation": "grammar.template-substitution",
+        "initialize": "grammar.initialization-command",
+        "variable": "grammar.variable-command",
+        "include": "grammar.include-command",
+        "omit": "grammar.omit-command",
+        "opaque": "grammar.opaque-declaration",
+        "inductive": "grammar.inductive-declaration",
+        "class_inductive": "grammar.class-inductive-declaration",
+        "explicit": "grammar.explicit-term",
+        "by": "grammar.tactic-proof",
+        "tactic_apply": "grammar.apply-tactic",
+        "_then_else": "grammar.then-else-branches",
+        "_do_then_else": "grammar.do-then-else-branches",
+        "let_mut": "grammar.mutable-let-binding",
+        "reassign": "grammar.reassignment",
+        "for_in": "grammar.for-in-loop",
+        "do_if": "grammar.do-if-statement",
+        "do_unless": "grammar.do-unless-statement",
+        "do_continue": "grammar.do-continue-statement",
+        "do_catch": "grammar.do-catch-clause",
+        "sorry": "grammar.sorry-placeholder",
+        "true": "grammar.true-constant",
+        "false": "grammar.false-constant",
+        "section": "grammar.section-command",
+        "end": "grammar.end-command",
+        "attribute": "grammar.attribute-command",
+        "attributes": "grammar.attribute-list",
+        "application": "grammar.function-application",
+        "parameters": "grammar.parameter-binders",
+        "range": "grammar.index-range"
+      },
+      "conflicts": [
+        {
+          "rules": ["hash_command", "explicit"],
+          "reason": "Theorem Proving in Lean 4 section 2.9 (Implicit Arguments) checks `@foo`, the function with all its arguments made explicit (`#check @ident`, `#check @List.cons`); tree-sitter-lean4 0.3.0 reduces the command before an `@`, which may open the attributes of a next declaration (`@[simp] def`), and recovers from it. The merged grammar keeps both parses there: the attributes need the `[` that follows, the explicit term does not."
+        }
+      ]
+    },
+    "rocq": {
+      "names": {
+        "fail": "fail_prefix",
+        "neg_selection": "negated_selection",
+        "fixannot": "fixpoint_annotation",
+        "explicit_subentry": "explicit_notation_entry",
+        "expr_atomic": "atomic_expression",
+        "_term100": "hundred_level_term",
+        "_term99": "ninety_nine_level_term",
+        "_term10": "ten_level_term",
+        "_term1": "one_level_term",
+        "_term0": "zero_level_term",
+        "_pattern10": "ten_level_pattern",
+        "_pattern1": "one_level_pattern",
+        "_pattern0": "zero_level_pattern",
+        "app_operation": "append_operation",
+        "tactic_or": "tactic_alternative",
+        "case_item": "match_item",
+        "bindings": "tactic_bindings",
+        "reference": "global_reference",
+        "_qualid_annotated": "annotated_qualified_identifier"
+      },
+      "concepts": {
+        "attributes": "grammar.attribute-list",
+        "attribute": "program.attributes",
+        "application": "grammar.function-application",
+        "_arg": "argument",
+        "implicit_binders": "grammar.implicit-binder",
+        "binder": "grammar.single-binder",
+        "integer": "grammar.integer-literal",
+        "import_command": "grammar.import-statement",
+        "export_command": "grammar.export-statement",
+        "instance_command": "grammar.instance-declaration"
+      }
+    },
+    "java": {
+      "names": {
+        "_toplevel_statement": "top_level_statement",
+        "_string_literal": "single_line_string_literal",
+        "_multiline_string_literal": "text_block",
+        "_multiline_string_fragment": "text_block_fragment_choice",
+        "multiline_string_fragment": "text_block_fragment",
+        "_escape_sequence": "escape_sequence_choice",
+        "_annotation": "annotation_choice",
+        "_variable_declarator_id": "variable_declarator_identifier"
+      },
+      "concepts": {
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "modifiers": "grammar.modifier-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "type_parameters": "grammar.type-parameter-list",
+        "type_arguments": "grammar.type-argument-list",
+        "dimensions": "grammar.array-dimensions",
+        "wildcard": "grammar.wildcard-type-argument"
+      }
+    },
+    "go": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_package_identifier": "package_identifier_alias"
+      },
+      "concepts": {
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "nil": "grammar.null",
+        "type_arguments": "grammar.type-argument-list"
+      }
+    },
+    "regex": {
+      "names": {},
+      "concepts": {
+        "zero_or_more": "grammar.zero-or-more-repetition",
+        "one_or_more": "grammar.one-or-more-repetition",
+        "optional": "grammar.optional-expression"
+      }
+    },
+    "graphql": {
+      "names": {},
+      "concepts": {
+        "string_value": "grammar.string",
+        "int_value": "grammar.integer-literal",
+        "float_value": "grammar.float-literal",
+        "null_value": "grammar.null",
+        "list_value": "grammar.list",
+        "object_value": "grammar.object",
+        "object_field": "grammar.member",
+        "arguments": "grammar.argument-list",
+        "argument": "argument",
+        "selection": "grammar.selection-set-member",
+        "fields_definition": "grammar.field-definition-list",
+        "enum_values_definition": "grammar.enumeration-value-definition-list",
+        "variable_definitions": "grammar.variable-definition-list",
+        "directives": "grammar.directive-list",
+        "directive_locations": "grammar.directive-location-list"
+      }
+    },
+    "proto": {
+      "names": {},
+      "concepts": {
+        "import": "grammar.import-declaration",
+        "package": "grammar.package-clause",
+        "enum": "grammar.enumeration-declaration",
+        "full_ident": "grammar.qualified-identifier",
+        "bool": "grammar.boolean-value",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "int_lit": "grammar.integer-literal",
+        "float_lit": "grammar.float-literal",
+        "decimal_lit": "grammar.decimal-integer-literal",
+        "octal_lit": "grammar.octal-integer-literal",
+        "hex_lit": "grammar.hex-integer-literal",
+        "option": "grammar.option-statement",
+        "extend": "grammar.message-extension",
+        "oneof": "grammar.one-of-declaration",
+        "reserved": "grammar.reserved-statement",
+        "field_options": "grammar.field-option-list",
+        "ranges": "grammar.field-number-range-list",
+        "range": "grammar.field-number-range",
+        "constant": "grammar.option-value",
+        "syntax": "grammar.syntax-statement",
+        "field": "grammar.field-declaration",
+        "reserved_identifier": "grammar.quoted-field-name"
+      }
+    },
+    "make": {
+      "names": {
+        "_targets": "targets_alias",
+        "_prerequisites": "prerequisites_choice",
+        "_string": "string_content",
+        "_shell_command": "shell_command_alias"
+      },
+      "concepts": {
+        "rule": "grammar.build-rule",
+        "conditional": "grammar.if-statement",
+        "else_directive": "grammar.else-clause",
+        "function_call": "grammar.call-expression",
+        "arguments": "grammar.argument-list",
+        "_function": "grammar.function-expansion",
+        "paths": "grammar.path-list",
+        "_target_pattern": "grammar.static-target-pattern"
+      }
+    },
+    "solidity": {
+      "names": {
+        "_int": "signed_integer_type",
+        "_uint": "unsigned_integer_type",
+        "_fixed": "fixed_point_type",
+        "_ufixed": "unsigned_fixed_point_type",
+        "yul_evm_builtin": "yul_built_in_function"
+      },
+      "concepts": {
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "parameter": "parameter",
+        "contract_body": "grammar.declaration-body",
+        "_hex_digit": "grammar.hexadecimal-digit",
+        "call_argument": "grammar.call-argument-value",
+        "_mapping": "grammar.map-type",
+        "_directive": "grammar.source-file-directive",
+        "unchecked": "grammar.unchecked-keyword",
+        "immutable": "grammar.immutable-keyword",
+        "virtual": "grammar.virtual-keyword",
+        "yul_boolean": "grammar.yul-boolean-literal",
+        "yul_continue": "grammar.yul-continue-statement"
+      }
+    }
+  },
+  "concepts": {
+    "definitions": {},
+    "distinctFrom": {
+      "grammar.type-assertion": [{ "id": "grammar.case-statement", "reason": "A type assertion <T>x tells the type checker to treat an expression as a type, while a case statement is one branch of a switch statement." }],
+      "grammar.function-declaration": [{ "id": "grammar.use-declaration", "reason": "A function declaration binds a name to a function, while a use declaration brings the paths of another module into scope." }],
+      "grammar.preprocessor-argument": [{ "id": "grammar.preprocessor-parameters", "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares." }],
+      "grammar.argument-list": [{ "id": "grammar.parameter-list", "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes." }],
+      "grammar.condition": [{ "id": "grammar.term", "reason": "A condition is the expression an if or while expression tests, while a term is an operand of addition or subtraction." }],
+      "grammar.pattern": [{ "id": "grammar.rule", "reason": "A pattern matches and destructures a value in a program, while a grammar rule binds a non-terminal to an expression." }],
+      "grammar.reference-expression": [{ "id": "grammar.extension-expression", "reason": "A reference expression borrows a place with & or &mut, while an extension expression marks a GNU C extension with __extension__." }],
+      "grammar.token-pattern": [{ "id": "grammar.token-rule", "reason": "A token pattern is the matcher of a macro rule, while a token rule is a grammar rule matched as one lexical token." }],
+      "grammar.tokens": [{ "id": "grammar.item", "reason": "Tokens are the token trees a macro rule expands to, while an item is one element of a list." }],
+      "grammar.type": [{ "id": "grammar.value.character", "reason": "A type classifies the values of an expression, while a character is one Unicode scalar value." }],
+      "grammar.yield-expression": [{ "id": "grammar.return-expression", "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function." }],
+      "grammar.type-argument-list": [{ "id": "grammar.type-parameter-list", "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes." }],
+      "grammar.command": [{ "id": "grammar.statement", "reason": "A Lean command is one top-level declaration or directive of a module, which the elaborator reads in order, while a statement is one step of a block that runs in order." }],
+      "grammar.syntax-quotation": [{ "id": "grammar.syntax-quote", "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form." }],
+      "grammar.yield-statement": [{ "id": "grammar.return-statement", "reason": "A Java yield statement gives the value of the switch expression it ends, while a return statement ends a function and gives its result." }],
+      "grammar.annotation": [{ "id": "grammar.notation", "reason": "A Java annotation attaches metadata to a declaration or a type (The Java Language Specification, section 9.7), while a notation declares new syntax for terms." }],
+      "grammar.catch-type": [{ "id": "grammar.match-case", "reason": "A Java catch type names the exception types a catch clause handles, while a match case is one branch of a match expression." }],
+      "grammar.variadic-argument": [{ "id": "grammar.variadic-parameter", "reason": "A Go variadic argument xs... passes the elements of a slice as the final arguments of a call, while a variadic parameter declares the final parameter that takes any number of them." }],
+      "grammar.statement-list": [{ "id": "grammar.argument-list", "reason": "A Go statement list is the statements of a block or a case clause in order, while an argument list gives the values a call passes." }],
+      "grammar.map-type": [{ "id": "grammar.function-type", "reason": "A Go map type map[K]V is the type of the hash tables from keys of K to values of V, while a function type is the type of the functions with given parameters and results." }],
+      "grammar.default-case": [{ "id": "grammar.default-type", "reason": "A Go default case is the branch of a switch or select statement taken when no other case matches, while a default type is the type a TypeScript type parameter takes when none is given." }]
+    }
+  }
+}

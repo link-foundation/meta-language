@@ -1,5 +1,10 @@
 # Grammar architecture
 
+> This document is subordinate to the authoritative
+> [vision and architecture specification](../vision.md). It describes one
+> subsystem as it exists today; where the two disagree, the vision is the
+> contract and this document is a defect to fix.
+
 Owned by [F1](../case-studies/issue-93/proposed-issues/F1-grammar-subsystem-docs.md);
 architecture anchor for [A1](../case-studies/issue-93/proposed-issues/A1-grammar-ir.md),
 [A3](../case-studies/issue-93/proposed-issues/A3-grammar-concept-ontology.md),
@@ -36,7 +41,7 @@ A grammar is data in the network. The links codec in
 `FromLinks` for `Grammar`. Each encoded grammar node is inserted with
 `LinkType::Grammar` from [`src/link_network.rs`](../../rust/src/link_network.rs) and a
 stable term such as `grammar::grammar`, `grammar::rule`, or
-`grammar::expr::sequence`.
+`grammar::expression::sequence`.
 
 The self-description root in
 [`src/self_description.rs`](../../rust/src/self_description.rs) declares the
@@ -92,8 +97,9 @@ spell a construct differently.
 
 This mirrors the document-format path described in
 [`docs/cross-format-fidelity.md`](../cross-format-fidelity.md): parse into a
-shared concept layer, then render in the target format with documented fallbacks
-where exact fidelity is impossible.
+shared concept layer, then render in the target format with a faithful lowering
+or runtime encoding where direct spelling is impossible. A lossy fallback is an
+identified gap against the [vision](../vision.md), not complete conversion.
 
 ## See also
 

@@ -1,7 +1,7 @@
 mod grammar_pipeline_support;
 
 use grammar_pipeline_support::{
-    infer_valid_grammar, run_javascript_parser, ExternalRun, CSV_ROW_EXAMPLES,
+    CSV_ROW_EXAMPLES, ExternalRun, infer_valid_grammar, run_javascript_parser,
 };
 use meta_language::{emit_javascript_parser, write_grammar_surface};
 

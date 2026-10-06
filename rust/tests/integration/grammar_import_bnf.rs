@@ -1,4 +1,4 @@
-use meta_language::{import_bnf, FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks};
+use meta_language::{FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks, import_bnf};
 
 const ARITHMETIC: &str = include_str!("../fixtures/grammar/bnf/arithmetic.bnf");
 

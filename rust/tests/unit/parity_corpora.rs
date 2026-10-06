@@ -1,6 +1,6 @@
 use meta_language::{
-    LinkNetwork, LinkQuery, ParityCapability, ParityVerificationExpectation, ParseConfiguration,
-    ReplacementRule, VerificationIssueKind, PARITY_FIXTURES, PARITY_TARGETS,
+    LinkNetwork, LinkQuery, PARITY_FIXTURES, PARITY_TARGETS, ParityCapability,
+    ParityVerificationExpectation, ParseConfiguration, ReplacementRule, VerificationIssueKind,
 };
 
 #[test]
@@ -51,15 +51,21 @@ fn parity_targets_track_competitor_and_ecosystem_test_sources() {
         );
     }
 
-    assert!(PARITY_TARGETS
-        .iter()
-        .all(|target| !target.capabilities().is_empty()));
-    assert!(PARITY_TARGETS
-        .iter()
-        .all(|target| target.test_plan().contains("Executable fixture")));
-    assert!(PARITY_TARGETS.iter().any(|target| target
-        .capabilities()
-        .contains(&ParityCapability::SnapshotVersioning)));
+    assert!(
+        PARITY_TARGETS
+            .iter()
+            .all(|target| !target.capabilities().is_empty())
+    );
+    assert!(
+        PARITY_TARGETS
+            .iter()
+            .all(|target| target.test_plan().contains("Executable fixture"))
+    );
+    assert!(PARITY_TARGETS.iter().any(|target| {
+        target
+            .capabilities()
+            .contains(&ParityCapability::SnapshotVersioning)
+    }));
 }
 
 #[test]
@@ -275,9 +281,11 @@ fn ecosystem_corpora_contribute_required_internal_fixtures() {
     for expected_name in ["create", "update", "delete", "swap"] {
         assert_fixture_named(&link_cli_fixtures, expected_name);
     }
-    assert!(link_cli_fixtures.iter().all(|fixture| fixture
-        .provenance()
-        .contains("Foundation.Data.Doublets.Cli.Tests")));
+    assert!(link_cli_fixtures.iter().all(|fixture| {
+        fixture
+            .provenance()
+            .contains("Foundation.Data.Doublets.Cli.Tests")
+    }));
 
     let codec_fixtures = fixtures_for("lino-objects-codec");
     for expected_name in ["roundtrip", "shared", "circular"] {
@@ -290,15 +298,21 @@ fn ecosystem_corpora_contribute_required_internal_fixtures() {
     }
 
     let formal_ai_fixtures = fixtures_for("formal-ai");
-    assert!(formal_ai_fixtures
-        .iter()
-        .any(|fixture| fixture.provenance().contains("data/seed/")));
-    assert!(formal_ai_fixtures
-        .iter()
-        .any(|fixture| fixture.provenance().contains("data/benchmarks/")));
-    assert!(formal_ai_fixtures
-        .iter()
-        .all(|fixture| !fixture.provenance().contains("706")));
+    assert!(
+        formal_ai_fixtures
+            .iter()
+            .any(|fixture| fixture.provenance().contains("data/seed/"))
+    );
+    assert!(
+        formal_ai_fixtures
+            .iter()
+            .any(|fixture| fixture.provenance().contains("data/benchmarks/"))
+    );
+    assert!(
+        formal_ai_fixtures
+            .iter()
+            .all(|fixture| !fixture.provenance().contains("706"))
+    );
 
     let meta_expression_fixtures = fixtures_for("meta-expression");
     for expected_name in ["Hawaii", "1 + 1", "this statement is false"] {
@@ -371,22 +385,32 @@ fn wave_two_competitor_corpora_are_sampled_with_expected_fixture_shapes() {
         );
     }
 
-    assert!(fixtures_for("srcML")
-        .iter()
-        .any(|fixture| fixture.provenance().contains("test/parser/testsuite")));
-    assert!(fixtures_for("difftastic")
-        .iter()
-        .any(|fixture| fixture.provenance().contains("sample_files")));
-    assert!(fixtures_for("Coccinelle")
-        .iter()
-        .any(|fixture| fixture.provenance().contains(".cocci")));
-    assert!(fixtures_for("Universal Dependencies")
-        .iter()
-        .any(|fixture| fixture.provenance().contains("Universal Dependencies")));
-    assert!(fixtures_for("LanguageTool")
-        .iter()
-        .any(|fixture| fixture.verification_expectation()
-            == ParityVerificationExpectation::Recoverable));
+    assert!(
+        fixtures_for("srcML")
+            .iter()
+            .any(|fixture| fixture.provenance().contains("test/parser/testsuite"))
+    );
+    assert!(
+        fixtures_for("difftastic")
+            .iter()
+            .any(|fixture| fixture.provenance().contains("sample_files"))
+    );
+    assert!(
+        fixtures_for("Coccinelle")
+            .iter()
+            .any(|fixture| fixture.provenance().contains(".cocci"))
+    );
+    assert!(
+        fixtures_for("Universal Dependencies")
+            .iter()
+            .any(|fixture| fixture.provenance().contains("Universal Dependencies"))
+    );
+    assert!(
+        fixtures_for("LanguageTool")
+            .iter()
+            .any(|fixture| fixture.verification_expectation()
+                == ParityVerificationExpectation::Recoverable)
+    );
 }
 
 fn fixtures_for(target_name: &str) -> Vec<&meta_language::ParityFixture> {

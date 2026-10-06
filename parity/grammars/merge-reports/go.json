@@ -1,0 +1,220 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "go",
+  "native": "native-go",
+  "sources": [
+    {
+      "id": "tree-sitter-go",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-go 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-go",
+      "revision": "1547678a9da59885853f5f5cc8a99cc203fa2e2c",
+      "path": "src/grammar.json",
+      "sha256": "0dcc665aa521a1b73a200be13b4e376780cca037d764a165f12864babfe28000",
+      "license": "MIT"
+    }
+  ],
+  "rules": 117,
+  "keywords": [
+    "_",
+    "break",
+    "case",
+    "chan",
+    "const",
+    "continue",
+    "default",
+    "defer",
+    "else",
+    "fallthrough",
+    "false",
+    "for",
+    "func",
+    "go",
+    "goto",
+    "if",
+    "import",
+    "interface",
+    "iota",
+    "make",
+    "map",
+    "new",
+    "nil",
+    "package",
+    "range",
+    "return",
+    "select",
+    "struct",
+    "switch",
+    "true",
+    "type",
+    "var"
+  ],
+  "renamed": [
+    {
+      "source": "_top_level_declaration",
+      "native": "top_level_declaration"
+    },
+    {
+      "source": "import_spec",
+      "native": "import_specification"
+    },
+    {
+      "source": "import_spec_list",
+      "native": "import_specification_list"
+    },
+    {
+      "source": "_declaration",
+      "native": "declaration"
+    },
+    {
+      "source": "const_declaration",
+      "native": "constant_declaration"
+    },
+    {
+      "source": "const_spec",
+      "native": "constant_specification"
+    },
+    {
+      "source": "var_declaration",
+      "native": "variable_declaration"
+    },
+    {
+      "source": "var_spec",
+      "native": "variable_specification"
+    },
+    {
+      "source": "var_spec_list",
+      "native": "variable_specification_list"
+    },
+    {
+      "source": "type_spec",
+      "native": "type_specification"
+    },
+    {
+      "source": "_type",
+      "native": "type"
+    },
+    {
+      "source": "_simple_type",
+      "native": "simple_type"
+    },
+    {
+      "source": "struct_type",
+      "native": "structure_type"
+    },
+    {
+      "source": "_interface_elem",
+      "native": "interface_element"
+    },
+    {
+      "source": "method_elem",
+      "native": "method_element"
+    },
+    {
+      "source": "type_elem",
+      "native": "type_element"
+    },
+    {
+      "source": "_statement",
+      "native": "statement"
+    },
+    {
+      "source": "_simple_statement",
+      "native": "simple_statement"
+    },
+    {
+      "source": "short_var_declaration",
+      "native": "short_variable_declaration"
+    },
+    {
+      "source": "fallthrough_statement",
+      "native": "fall_through_statement"
+    },
+    {
+      "source": "goto_statement",
+      "native": "go_to_statement"
+    },
+    {
+      "source": "_type_switch_header",
+      "native": "type_switch_header"
+    },
+    {
+      "source": "_expression",
+      "native": "expression"
+    },
+    {
+      "source": "func_literal",
+      "native": "function_literal"
+    },
+    {
+      "source": "_type_identifier",
+      "native": "type_identifier_alias"
+    },
+    {
+      "source": "_field_identifier",
+      "native": "field_identifier_alias"
+    },
+    {
+      "source": "_package_identifier",
+      "native": "package_identifier_alias"
+    },
+    {
+      "source": "_string_literal",
+      "native": "string_literal"
+    },
+    {
+      "source": "int_literal",
+      "native": "integer_literal"
+    }
+  ],
+  "expandedWords": [
+    "const",
+    "elem",
+    "fallthrough",
+    "func",
+    "goto",
+    "int",
+    "spec",
+    "struct",
+    "var"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "nil",
+        "concept": "grammar.null"
+      },
+      {
+        "rule": "true",
+        "concept": "grammar.true-value"
+      },
+      {
+        "rule": "false",
+        "concept": "grammar.false-value"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 109
+  },
+  "approximations": [],
+  "unsupported": []
+}

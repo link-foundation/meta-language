@@ -1,0 +1,553 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "solidity",
+  "native": "native-solidity",
+  "sources": [
+    {
+      "id": "tree-sitter-solidity",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-solidity 1.2.13",
+      "repository": "https://github.com/JoranHonig/tree-sitter-solidity",
+      "revision": "4e938a46c7030dd001bc99e1ac0f0c750ac98254",
+      "path": "src/grammar.json",
+      "sha256": "74a3972bdcd8e08047e911e5beb5f2bad06a5329629bebb8b05a6a883683da40",
+      "license": "MIT"
+    }
+  ],
+  "rules": 167,
+  "keywords": [
+    "abstract",
+    "add",
+    "addmod",
+    "address",
+    "and",
+    "anonymous",
+    "as",
+    "assembly",
+    "at",
+    "balance",
+    "basefee",
+    "blobbasefee",
+    "blobfee",
+    "blobhash",
+    "blockhash",
+    "bool",
+    "break",
+    "byte",
+    "bytes",
+    "bytes1",
+    "bytes10",
+    "bytes11",
+    "bytes12",
+    "bytes13",
+    "bytes14",
+    "bytes15",
+    "bytes16",
+    "bytes17",
+    "bytes18",
+    "bytes19",
+    "bytes2",
+    "bytes20",
+    "bytes21",
+    "bytes22",
+    "bytes23",
+    "bytes24",
+    "bytes25",
+    "bytes26",
+    "bytes27",
+    "bytes28",
+    "bytes29",
+    "bytes3",
+    "bytes30",
+    "bytes31",
+    "bytes32",
+    "bytes4",
+    "bytes5",
+    "bytes6",
+    "bytes7",
+    "bytes8",
+    "bytes9",
+    "call",
+    "callcode",
+    "calldata",
+    "calldatacopy",
+    "calldataload",
+    "calldatasize",
+    "caller",
+    "callvalue",
+    "case",
+    "catch",
+    "chainid",
+    "coinbase",
+    "constant",
+    "constructor",
+    "continue",
+    "contract",
+    "create",
+    "create2",
+    "days",
+    "default",
+    "delegatecall",
+    "delete",
+    "difficulty",
+    "div",
+    "do",
+    "else",
+    "emit",
+    "enum",
+    "eq",
+    "error",
+    "ether",
+    "event",
+    "exp",
+    "extcodecopy",
+    "extcodehash",
+    "extcodesize",
+    "external",
+    "fallback",
+    "false",
+    "finney",
+    "fixed",
+    "for",
+    "from",
+    "function",
+    "gas",
+    "gaslimit",
+    "gasprice",
+    "global",
+    "gt",
+    "gwei",
+    "hex",
+    "hours",
+    "if",
+    "immutable",
+    "import",
+    "indexed",
+    "int",
+    "int104",
+    "int112",
+    "int120",
+    "int128",
+    "int136",
+    "int144",
+    "int152",
+    "int16",
+    "int160",
+    "int168",
+    "int176",
+    "int184",
+    "int192",
+    "int200",
+    "int208",
+    "int216",
+    "int224",
+    "int232",
+    "int24",
+    "int240",
+    "int248",
+    "int256",
+    "int32",
+    "int40",
+    "int48",
+    "int56",
+    "int64",
+    "int72",
+    "int8",
+    "int80",
+    "int88",
+    "int96",
+    "interface",
+    "internal",
+    "invalid",
+    "is",
+    "iszero",
+    "keccak256",
+    "layout",
+    "leave",
+    "let",
+    "library",
+    "log0",
+    "log1",
+    "log2",
+    "log3",
+    "log4",
+    "lt",
+    "mapping",
+    "mcopy",
+    "memory",
+    "minutes",
+    "mload",
+    "mod",
+    "modifier",
+    "msize",
+    "mstore",
+    "mstore8",
+    "mul",
+    "mulmod",
+    "new",
+    "not",
+    "number",
+    "or",
+    "origin",
+    "override",
+    "payable",
+    "pop",
+    "pragma",
+    "prevrandao",
+    "private",
+    "public",
+    "pure",
+    "receive",
+    "return",
+    "returndatacopy",
+    "returndatasize",
+    "returns",
+    "revert",
+    "sar",
+    "sdiv",
+    "seconds",
+    "selfbalance",
+    "selfdestruct",
+    "sgt",
+    "shl",
+    "shr",
+    "signextend",
+    "sload",
+    "slt",
+    "smod",
+    "solidity",
+    "sstore",
+    "staticcall",
+    "stop",
+    "storage",
+    "string",
+    "struct",
+    "sub",
+    "switch",
+    "szabo",
+    "timestamp",
+    "tload",
+    "transient",
+    "true",
+    "try",
+    "tstore",
+    "type",
+    "ufixed",
+    "uint",
+    "uint104",
+    "uint112",
+    "uint120",
+    "uint128",
+    "uint136",
+    "uint144",
+    "uint152",
+    "uint16",
+    "uint160",
+    "uint168",
+    "uint176",
+    "uint184",
+    "uint192",
+    "uint200",
+    "uint208",
+    "uint216",
+    "uint224",
+    "uint232",
+    "uint24",
+    "uint240",
+    "uint248",
+    "uint256",
+    "uint32",
+    "uint40",
+    "uint48",
+    "uint56",
+    "uint64",
+    "uint72",
+    "uint8",
+    "uint80",
+    "uint88",
+    "uint96",
+    "unchecked",
+    "unicode",
+    "using",
+    "var",
+    "view",
+    "virtual",
+    "weeks",
+    "wei",
+    "while",
+    "xor",
+    "years"
+  ],
+  "renamed": [
+    {
+      "source": "_source_unit",
+      "native": "source_unit"
+    },
+    {
+      "source": "_directive",
+      "native": "directive"
+    },
+    {
+      "source": "_solidity",
+      "native": "solidity"
+    },
+    {
+      "source": "_pragma_version_constraint",
+      "native": "pragma_version_constraint"
+    },
+    {
+      "source": "_source_import",
+      "native": "source_import"
+    },
+    {
+      "source": "_import_clause",
+      "native": "import_clause"
+    },
+    {
+      "source": "_from_clause",
+      "native": "from_clause"
+    },
+    {
+      "source": "_single_import",
+      "native": "single_import"
+    },
+    {
+      "source": "_multiple_import",
+      "native": "multiple_import"
+    },
+    {
+      "source": "_import_declaration",
+      "native": "import_declaration"
+    },
+    {
+      "source": "_import_alias",
+      "native": "import_alias"
+    },
+    {
+      "source": "_declaration",
+      "native": "declaration"
+    },
+    {
+      "source": "_class_heritage",
+      "native": "class_heritage"
+    },
+    {
+      "source": "_contract_member",
+      "native": "contract_member"
+    },
+    {
+      "source": "struct_declaration",
+      "native": "structure_declaration"
+    },
+    {
+      "source": "struct_member",
+      "native": "structure_member"
+    },
+    {
+      "source": "struct_body",
+      "native": "structure_body"
+    },
+    {
+      "source": "enum_declaration",
+      "native": "enumeration_declaration"
+    },
+    {
+      "source": "enum_body",
+      "native": "enumeration_body"
+    },
+    {
+      "source": "_event_parameter_list",
+      "native": "event_parameter_list"
+    },
+    {
+      "source": "_yul_statement",
+      "native": "yul_statement"
+    },
+    {
+      "source": "_yul_expression",
+      "native": "yul_expression"
+    },
+    {
+      "source": "_yul_literal",
+      "native": "yul_literal"
+    },
+    {
+      "source": "_yul_assignment_operator",
+      "native": "yul_assignment_operator"
+    },
+    {
+      "source": "yul_evm_builtin",
+      "native": "yul_built_in_function"
+    },
+    {
+      "source": "_call_arguments",
+      "native": "call_arguments"
+    },
+    {
+      "source": "call_struct_argument",
+      "native": "call_structure_argument"
+    },
+    {
+      "source": "_primary_expression",
+      "native": "primary_expression"
+    },
+    {
+      "source": "struct_expression",
+      "native": "structure_expression"
+    },
+    {
+      "source": "struct_field_assignment",
+      "native": "structure_field_assignment"
+    },
+    {
+      "source": "_array_type",
+      "native": "array_type"
+    },
+    {
+      "source": "_function_type",
+      "native": "function_type"
+    },
+    {
+      "source": "_parameter_list",
+      "native": "parameter_list"
+    },
+    {
+      "source": "_return_parameters",
+      "native": "return_parameters"
+    },
+    {
+      "source": "_nameless_parameter",
+      "native": "nameless_parameter"
+    },
+    {
+      "source": "_storage_location",
+      "native": "storage_location"
+    },
+    {
+      "source": "_identifier_path",
+      "native": "identifier_path"
+    },
+    {
+      "source": "_mapping",
+      "native": "mapping"
+    },
+    {
+      "source": "_mapping_key",
+      "native": "mapping_key"
+    },
+    {
+      "source": "_int",
+      "native": "signed_integer_type"
+    },
+    {
+      "source": "_uint",
+      "native": "unsigned_integer_type"
+    },
+    {
+      "source": "_bytes",
+      "native": "bytes"
+    },
+    {
+      "source": "_fixed",
+      "native": "fixed_point_type"
+    },
+    {
+      "source": "_ufixed",
+      "native": "unsigned_fixed_point_type"
+    },
+    {
+      "source": "_semicolon",
+      "native": "semicolon"
+    },
+    {
+      "source": "_literal",
+      "native": "literal"
+    },
+    {
+      "source": "_decimal_number",
+      "native": "decimal_number"
+    },
+    {
+      "source": "_hex_number",
+      "native": "hex_number"
+    },
+    {
+      "source": "_hex_digit",
+      "native": "hex_digit"
+    },
+    {
+      "source": "_escape_sequence",
+      "native": "escape_sequence"
+    },
+    {
+      "source": "_single_quoted_unicode_char",
+      "native": "single_quoted_unicode_character"
+    },
+    {
+      "source": "_double_quoted_unicode_char",
+      "native": "double_quoted_unicode_character"
+    },
+    {
+      "source": "_string_immediate_elt_inside_double_quote",
+      "native": "string_immediate_element_inside_double_quote"
+    },
+    {
+      "source": "_string_immediate_elt_inside_quote",
+      "native": "string_immediate_element_inside_quote"
+    }
+  ],
+  "expandedWords": [
+    "char",
+    "elt",
+    "enum",
+    "int",
+    "struct"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "parameter",
+        "concept": "parameter"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "number",
+        "concept": "grammar.number"
+      },
+      {
+        "rule": "true",
+        "concept": "grammar.true-value"
+      },
+      {
+        "rule": "false",
+        "concept": "grammar.false-value"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 157
+  },
+  "approximations": [],
+  "unsupported": []
+}

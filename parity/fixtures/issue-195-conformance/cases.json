@@ -1,0 +1,73 @@
+{
+  "description": "Hand-authored conformance inputs for issue 195: well-formed sources for grammar constructs the upstream corpora and real projects never reach, Unicode sources (astral characters, combining marks, CJK, emoji, CRLF line ends), malformed sources (unclosed delimiters, missing tokens, stray tokens, truncation) and mixed-language host documents. Their expected trees are not written here: js/scripts/generate-issue-195-conformance.mjs takes them from the native tree-sitter CLI with the pinned grammars into <language>/oracle.json.",
+  "unicode": [
+    { "id": "javascript-unicode-identifiers-and-strings", "language": "JavaScript", "source": "const π = \"héllo 𝒳 👩‍👩‍👧\";\n// 注释 ✓ e\u0301\nlet 変数 = `${π} 🎉`;\r\nconsole.log(π, 変数, '\\u{1F600}');\n" },
+    { "id": "javascript-unicode-regex-and-template", "language": "JavaScript", "source": "const re = /[𝒜-𝒵]+/u;\nfunction ƒ(ẋ = '𐍈') {\n  return `${ẋ}:${re.test('𝒳')}`; /* ∑ */\n}\n" },
+    { "id": "rust-unicode-identifiers-and-literals", "language": "Rust", "source": "// Ünïcödé 🦀\nfn größe(ß: &str) -> usize { \"𝄞 ✓\".len() + ß.chars().count() }\nconst Π: char = '𝒳';\r\n/* 日本語 */ static S: &str = r\"é\";\n" },
+    { "id": "rust-unicode-doc-and-byte-strings", "language": "Rust", "source": "/// Ωmega — doc 📚\npub struct Δ { pub λ: u8 }\nimpl Δ { fn new() -> Self { Δ { λ: b'a' } } }\nconst B: &[u8] = b\"caf\\xc3\\xa9\";\n" },
+    { "id": "lean-unicode-binders-and-strings", "language": "Lean", "source": "-- ∀ 𝔽 ünïcode\ndef f (α : Nat) : Nat := α + 1\ndef greeting : String := \"héllo 👋 𝒳\"\ntheorem t (n : Nat) : n = n := rfl\n" },
+    { "id": "lean-unicode-lambda-and-arrows", "language": "Lean", "source": "def g : Nat → Nat := fun x ↦ x * 2\ndef h (xs : List Nat) : List Nat := xs.map (λ y => y + 1) -- λ ⟨⟩ 𝔽\n" },
+    { "id": "rocq-unicode-comments-and-notations", "language": "Rocq", "source": "(* 𝒳 ünïcode 日本 *)\nDefinition α (n : nat) : nat := n.\nNotation \"x ⊕ y\" := (plus x y) (at level 50).\r\nLemma β_refl : forall x : nat, x = x.\nProof. intros. reflexivity. Qed.\n" },
+    { "id": "rocq-unicode-strings", "language": "Rocq", "source": "Require Import Coq.Strings.String.\nDefinition s := \"𝄞 ✓ é\"%string.\n(* emoji 🐓 *) Definition γ := 1.\n" }
+  ],
+  "malformed": [
+    { "id": "javascript-unclosed-call", "language": "JavaScript", "source": "console.log(1, 2;\nlet x = 3;\n" },
+    { "id": "javascript-missing-initializer", "language": "JavaScript", "source": "if ({a: \"b\"} c\nlet x = ;\n" },
+    { "id": "javascript-stray-closing-brace", "language": "JavaScript", "source": "function f() { return 1; } }\nf();\n" },
+    { "id": "javascript-truncated-arrow", "language": "JavaScript", "source": "const add = (a, b) =>" },
+    { "id": "javascript-unterminated-template-with-unicode", "language": "JavaScript", "source": "const s = `𝒳 ${π\n" },
+    { "id": "rust-missing-semicolon-and-brace", "language": "Rust", "source": "fn main() {\n    let x = 1\n    println!(\"{}\", x);\n" },
+    { "id": "rust-stray-tokens", "language": "Rust", "source": "struct S { a: u8,, }\nimpl S { fn f(&self) -> u8 { self.a } } ]\n" },
+    { "id": "rust-truncated-generic", "language": "Rust", "source": "fn f<T: Clone>(x: T) -> Vec<T" },
+    { "id": "rust-bad-match-arm-with-unicode", "language": "Rust", "source": "fn f(v: u8) -> &'static str { match v { 0 => \"零\", => \"π\" } }\n" },
+    { "id": "lean-missing-body", "language": "Lean", "source": "def f (x : Nat) : Nat :=\ndef g := 2\n" },
+    { "id": "lean-unclosed-paren", "language": "Lean", "source": "theorem t (n : Nat : n = n := rfl\n" },
+    { "id": "lean-stray-token-with-unicode", "language": "Lean", "source": "def α := 1 ⟩\ndef β := 2\n" },
+    { "id": "lean-truncated-match", "language": "Lean", "source": "def f : Nat → Nat\n  | 0 =>" },
+    { "id": "rocq-missing-period", "language": "Rocq", "source": "Definition x := 1\nDefinition y := 2.\n" },
+    { "id": "rocq-unclosed-paren", "language": "Rocq", "source": "Definition f (n : nat := n.\n" },
+    { "id": "rocq-stray-proof-end", "language": "Rocq", "source": "Qed. Lemma l : True.\nProof. exact I. Qed. )\n" },
+    { "id": "rocq-truncated-with-unicode", "language": "Rocq", "source": "(* π *) Definition π_val : nat :=" }
+  ],
+  "constructs": [
+    {"id": "lean-sections-opaque-syntax-groups-and-patterns", "language": "Lean", "source": "section\nvariable (n : Nat)\ninclude n\nomit n\nend\nopaque secret : Nat\nsyntax \"twice\" (term)* : term\ndef firstOr (xs : List Nat) : Nat := match xs with\n  | ys@(y :: _) => y\n  | [] => 0\ndef pick (o : Option Nat) : Nat :=\n  if let some v ← o then v else 0\n"},
+    {"id": "lean-do-loops-and-control", "language": "Lean", "source": "def loop (p : Nat × Nat) : IO Unit := do\n  let mut i := 0\n  while cond do\n    i := i + 1\n  for x in xs do\n    if x then continue\n    if y then break\n  if let some v ← p then\n    pure ()\n  dbg_trace i\n  pure ()\n"},
+    {"id": "lean-tactic-show-let-calc-focus-and-case", "language": "Lean", "source": "theorem steps (a b : Nat) (h : a = b) : a = b := by\n  show a = b\n  let c := a\n  calc a = b := h\ntheorem both (p q : Prop) (hp : p) (hq : q) : p ∧ q := by\n  constructor\n  · exact hp\n  case right =>\n    exact hq\n"},
+    {"id": "rocq-proof-endings-notations-and-destructuring-lets", "language": "Rocq", "source": "Lemma a : True. Proof. exact I. Admitted.\nGoal True. exact I. Save g.\nNotation \"'myid' x\" := x (at level 10, only printing).\nNotation \"'lam' x , y\" := (fun x => y) (at level 200, x at level 0 as pattern).\nLemma p : True. Proof using Type* - (A + B). exact I. Qed.\nLemma q : True. Proof using A B. exact I. Qed.\nDefinition h := 0x1F.\nSet Printing Width 80.\nSet Printing Depth 0x1F.\nDefinition m (p : nat * nat) := let (a, b) as q return nat := p in a.\nDefinition n (p : nat * nat) := let '(a, b) in (_ * _) := p return nat in a.\nGoal True. set (x := 1). exact I. Qed.\n"},
+    {"id": "rust-struct-expression-with-turbofish", "language": "Rust", "source": "fn f() -> S<u8> { S::<u8> { a: 1 } }\n"}
+  ],
+  "mixed": [
+    {
+      "id": "markdown-fences-for-every-language",
+      "host": "Markdown",
+      "source": "# Mixed 🌐\n\n```js\nconst π = 1;\nconsole.log(π);\n```\n\n```rust\nfn main() { println!(\"é\"); }\n```\n\n```lean\ndef x : Nat := 1\n```\n\n```rocq\nDefinition x := 1.\n```\n\n```coq\nLemma l : True. Proof. exact I. Qed.\n```\n",
+      "regions": [
+        { "language": "JavaScript", "text": "const π = 1;\nconsole.log(π);\n" },
+        { "language": "Rust", "text": "fn main() { println!(\"é\"); }\n" },
+        { "language": "Lean", "text": "def x : Nat := 1\n" },
+        { "language": "Rocq", "text": "Definition x := 1.\n" },
+        { "language": "Rocq", "text": "Lemma l : True. Proof. exact I. Qed.\n" }
+      ]
+    },
+    {
+      "id": "markdown-fences-with-malformed-code",
+      "host": "Markdown",
+      "source": "Broken 𝒳 examples:\n\n```javascript\nlet x = ;\n```\n\n```rust\nfn f( {\n```\n\n```lean\ndef f :=\n```\n\n```rocq\nDefinition d :=\n```\n",
+      "regions": [
+        { "language": "JavaScript", "text": "let x = ;\n" },
+        { "language": "Rust", "text": "fn f( {\n" },
+        { "language": "Lean", "text": "def f :=\n" },
+        { "language": "Rocq", "text": "Definition d :=\n" }
+      ]
+    },
+    {
+      "id": "html-script-elements",
+      "host": "HTML",
+      "source": "<!doctype html>\n<p>héllo</p>\n<script>\nconst 名前 = \"🌍\";\ndocument.title = 名前;\n</script>\n<script type=\"module\">import x from './x.js'; x(</script>\n",
+      "regions": [
+        { "language": "JavaScript", "text": "\nconst 名前 = \"🌍\";\ndocument.title = 名前;\n" },
+        { "language": "JavaScript", "text": "import x from './x.js'; x(" }
+      ]
+    }
+  ]
+}

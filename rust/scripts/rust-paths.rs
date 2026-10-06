@@ -48,23 +48,24 @@ pub fn get_rust_root(explicit_root: Option<&str>, verbose: bool) -> Result<Strin
 
     // Check CLI arguments
     let args: Vec<String> = env::args().collect();
-    if let Some(idx) = args.iter().position(|a| a == "--rust-root") {
-        if let Some(root) = args.get(idx + 1) {
-            if verbose {
-                eprintln!("Using CLI configured Rust root: {root}");
-            }
-            return Ok(root.clone());
+    if let Some(root) = args
+        .iter()
+        .position(|a| a == "--rust-root")
+        .and_then(|idx| args.get(idx + 1))
+    {
+        if verbose {
+            eprintln!("Using CLI configured Rust root: {root}");
         }
+        return Ok(root.clone());
     }
 
     // Check environment variable
-    if let Ok(root) = env::var("RUST_ROOT") {
-        if !root.is_empty() {
-            if verbose {
-                eprintln!("Using environment configured Rust root: {root}");
-            }
-            return Ok(root);
+    // rust-script builds these scripts with the 2021 edition, so no let chains.
+    if let Some(root) = env::var("RUST_ROOT").ok().filter(|root| !root.is_empty()) {
+        if verbose {
+            eprintln!("Using environment configured Rust root: {root}");
         }
+        return Ok(root);
     }
 
     // Check for single-language repo (Cargo.toml in root)
@@ -139,10 +140,15 @@ pub fn needs_cd(rust_root: &str) -> bool {
 /// Parse Rust root from CLI arguments
 pub fn parse_rust_root_from_args() -> Option<String> {
     let args: Vec<String> = env::args().collect();
+    parse_rust_root(&args, env::var("RUST_ROOT").ok())
+}
+
+/// The `--rust-root` argument, else a non-empty `RUST_ROOT` value.
+pub fn parse_rust_root(args: &[String], rust_root_env: Option<String>) -> Option<String> {
     if let Some(idx) = args.iter().position(|a| a == "--rust-root") {
         return args.get(idx + 1).cloned();
     }
-    env::var("RUST_ROOT").ok().filter(|s| !s.is_empty())
+    rust_root_env.filter(|s| !s.is_empty())
 }
 
 pub fn get_package_manifest_path(root_manifest: &Path) -> Result<PathBuf, String> {

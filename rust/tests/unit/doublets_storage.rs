@@ -3,12 +3,17 @@
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use meta_language::{
-    AccessMode, DoubletsLinkStore, EngineLinkStore, Link, LinkMetadata, LinkNetwork, LinkStore,
-    LinkStoreQuery, LinkType, ParseConfiguration, StorageError, LANGUAGE_FIXTURES,
+    AccessMode, DoubletsLinkStore, EngineLinkStore, LANGUAGE_FIXTURES, Link, LinkMetadata,
+    LinkNetwork, LinkStore, LinkStoreQuery, LinkType, ParseConfiguration, StorageError,
 };
+
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMP_PATHS: AtomicU64 = AtomicU64::new(0);
 
 fn temp_store_path(name: &str) -> PathBuf {
     let sanitized = name
@@ -26,8 +31,9 @@ fn temp_store_path(name: &str) -> PathBuf {
         .expect("system time is after unix epoch")
         .as_nanos();
     std::env::temp_dir().join(format!(
-        "meta-language-{sanitized}-{}-{nonce}.doublets",
-        std::process::id()
+        "meta-language-{sanitized}-{}-{nonce}-{}.doublets",
+        std::process::id(),
+        TEMP_PATHS.fetch_add(1, Ordering::Relaxed)
     ))
 }
 
@@ -135,15 +141,17 @@ fn doublets_link_store_supports_crud_search_and_read_only_access() {
     assert_eq!(matches.len(), 1);
     assert_eq!(matches[0].id(), relation);
 
-    assert!(LinkStore::update(
-        &mut store,
-        relation,
-        &[],
-        LinkMetadata::new()
-            .with_link_type(LinkType::Concept)
-            .with_term("updated"),
-    )
-    .expect("update relation"));
+    assert!(
+        LinkStore::update(
+            &mut store,
+            relation,
+            &[],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Concept)
+                .with_term("updated"),
+        )
+        .expect("update relation")
+    );
     assert_eq!(
         LinkStore::read(&store, relation)
             .expect("read relation")

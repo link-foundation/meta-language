@@ -1,0 +1,947 @@
+{
+  "description": "The foundations meta-language knows as data: integer, overflow, universe, effect, proof and logic models, the models each language uses, and the explicit correspondences between distinct models. No model is built in as the universal logic; a consumer brings its own foundations and proof authority and relates them to these models. js/scripts/build-foundation-models.mjs copies this file into both runtimes and checks it.",
+  "families": [
+    {
+      "id": "integer-model",
+      "definition": "What an integer value is: the set of values a numeric type ranges over and how its arithmetic is defined."
+    },
+    {
+      "id": "overflow-model",
+      "definition": "What happens when an arithmetic result leaves the range of its type."
+    },
+    {
+      "id": "universe-model",
+      "definition": "How types are themselves classified: whether types are terms, which sorts exist and how they nest."
+    },
+    {
+      "id": "effect-model",
+      "definition": "Which observable effects an evaluation may have besides returning a value, and how they are expressed."
+    },
+    {
+      "id": "proof-system",
+      "definition": "What checks a proof, if anything, and which axioms that checker accepts."
+    },
+    {
+      "id": "logic-model",
+      "definition": "The truth values propositions or conditions take and how the connectives combine them."
+    }
+  ],
+  "models": [
+    {
+      "id": "integer-model.unbounded-integer",
+      "family": "integer-model",
+      "definition": "The mathematical integers, with exact arithmetic of arbitrary magnitude.",
+      "properties": {
+        "bounded": false,
+        "signed": true,
+        "subtraction": "exact",
+        "division": "rounding set by the language"
+      },
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "Int"
+        },
+        {
+          "source": "Rocq",
+          "name": "Z"
+        },
+        {
+          "source": "JavaScript",
+          "name": "BigInt"
+        }
+      ]
+    },
+    {
+      "id": "integer-model.natural-number",
+      "family": "integer-model",
+      "definition": "The natural numbers from zero, with exact addition and multiplication and subtraction truncated at zero.",
+      "properties": {
+        "bounded": false,
+        "signed": false,
+        "subtraction": "truncated at zero",
+        "division": "truncating, by zero yields zero"
+      },
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "Nat"
+        },
+        {
+          "source": "Rocq",
+          "name": "nat"
+        },
+        {
+          "source": "Rocq",
+          "name": "N"
+        }
+      ]
+    },
+    {
+      "id": "integer-model.fixed-width-integer",
+      "family": "integer-model",
+      "definition": "A two's complement or unsigned integer of a fixed bit width, whose out-of-range results follow the language's overflow model.",
+      "properties": {
+        "bounded": true,
+        "signed": "per type",
+        "subtraction": "exact within the width",
+        "division": "truncating toward zero"
+      },
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize"
+        },
+        {
+          "source": "Lean",
+          "name": "UInt8, UInt16, UInt32, UInt64, USize, Int8, Int16, Int32, Int64"
+        },
+        {
+          "source": "Rocq",
+          "name": "Uint63.int"
+        }
+      ]
+    },
+    {
+      "id": "integer-model.binary64-number",
+      "family": "integer-model",
+      "definition": "An IEEE 754 binary64 floating-point number; integers are exact up to magnitude 2^53.",
+      "properties": {
+        "bounded": true,
+        "signed": true,
+        "subtraction": "rounded to nearest",
+        "division": "rounded to nearest, by zero yields an infinity or NaN"
+      },
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "Number"
+        },
+        {
+          "source": "Rust",
+          "name": "f64"
+        },
+        {
+          "source": "Lean",
+          "name": "Float"
+        },
+        {
+          "source": "Rocq",
+          "name": "PrimFloat.float"
+        }
+      ]
+    },
+    {
+      "id": "overflow-model.abort",
+      "family": "overflow-model",
+      "definition": "An out-of-range result stops the evaluation with an error instead of producing a value.",
+      "properties": {
+        "produces-value": false,
+        "stops-evaluation": true
+      },
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "arithmetic with overflow checks, checked conversions unwrapped with expect"
+        }
+      ]
+    },
+    {
+      "id": "overflow-model.wrapping",
+      "family": "overflow-model",
+      "definition": "An out-of-range result is reduced modulo 2 to the bit width.",
+      "properties": {
+        "produces-value": true,
+        "stops-evaluation": false,
+        "result": "modulo 2^width"
+      },
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "wrapping_add and arithmetic without overflow checks"
+        },
+        {
+          "source": "Lean",
+          "name": "UInt64 arithmetic"
+        },
+        {
+          "source": "Rocq",
+          "name": "Uint63 arithmetic"
+        },
+        {
+          "source": "JavaScript",
+          "name": "BigInt.asIntN, Math.imul"
+        }
+      ]
+    },
+    {
+      "id": "overflow-model.saturating",
+      "family": "overflow-model",
+      "definition": "An out-of-range result is clamped to the nearest bound of the type.",
+      "properties": {
+        "produces-value": true,
+        "stops-evaluation": false,
+        "result": "nearest bound"
+      },
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "saturating_add"
+        }
+      ]
+    },
+    {
+      "id": "overflow-model.checked-option",
+      "family": "overflow-model",
+      "definition": "An arithmetic operation returns an absent value instead of an out-of-range result, and the caller decides.",
+      "properties": {
+        "produces-value": "optional",
+        "stops-evaluation": false,
+        "result": "absent"
+      },
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "checked_add"
+        }
+      ]
+    },
+    {
+      "id": "overflow-model.no-overflow",
+      "family": "overflow-model",
+      "definition": "The type is unbounded, so no result is out of range.",
+      "properties": {
+        "produces-value": true,
+        "stops-evaluation": false,
+        "result": "exact"
+      },
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "Int and Nat arithmetic"
+        },
+        {
+          "source": "Rocq",
+          "name": "Z and nat arithmetic"
+        },
+        {
+          "source": "JavaScript",
+          "name": "BigInt arithmetic"
+        }
+      ]
+    },
+    {
+      "id": "overflow-model.rounding-to-infinity",
+      "family": "overflow-model",
+      "definition": "A result beyond the largest finite floating-point number becomes an infinity, and inexact results are rounded.",
+      "properties": {
+        "produces-value": true,
+        "stops-evaluation": false,
+        "result": "rounded, or an infinity"
+      },
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "Number arithmetic"
+        },
+        {
+          "source": "Rust",
+          "name": "f64 arithmetic"
+        }
+      ]
+    },
+    {
+      "id": "universe-model.no-universes",
+      "family": "universe-model",
+      "definition": "Types are not terms, so no sort classifies them and no universe levels exist.",
+      "properties": {
+        "types-are-terms": false,
+        "impredicative-propositions": false,
+        "cumulative": false
+      },
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "types"
+        },
+        {
+          "source": "JavaScript",
+          "name": "dynamic types"
+        }
+      ]
+    },
+    {
+      "id": "universe-model.non-cumulative-sort-hierarchy",
+      "family": "universe-model",
+      "definition": "Types are terms classified by Sort u; Prop is Sort 0 and impredicative, Type u is Sort (u+1), a type lives in exactly one universe and definitions may be universe polymorphic.",
+      "properties": {
+        "types-are-terms": true,
+        "impredicative-propositions": true,
+        "cumulative": false
+      },
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "Sort u, Prop, Type u"
+        }
+      ]
+    },
+    {
+      "id": "universe-model.cumulative-type-hierarchy",
+      "family": "universe-model",
+      "definition": "Types are terms classified by SProp, Prop, Set and Type@{i}; Prop is impredicative and a type in Type@{i} is also in every larger Type@{j}.",
+      "properties": {
+        "types-are-terms": true,
+        "impredicative-propositions": true,
+        "cumulative": true
+      },
+      "sourceAliases": [
+        {
+          "source": "Rocq",
+          "name": "SProp, Prop, Set, Type@{i}"
+        }
+      ]
+    },
+    {
+      "id": "effect-model.unrestricted-side-effects",
+      "family": "effect-model",
+      "definition": "Any expression may mutate state and perform input and output without the type recording it.",
+      "properties": {
+        "effects-in-types": false,
+        "mutation": true,
+        "input-output": true
+      },
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "statements and calls"
+        },
+        {
+          "source": "Rust",
+          "name": "statements and calls"
+        }
+      ]
+    },
+    {
+      "id": "effect-model.thrown-exceptions",
+      "family": "effect-model",
+      "definition": "An evaluation may throw a value that unwinds to the nearest handler.",
+      "properties": {
+        "effects-in-types": false,
+        "recoverable": true,
+        "unwinds": true
+      },
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "throw, try, catch"
+        }
+      ]
+    },
+    {
+      "id": "effect-model.abort",
+      "family": "effect-model",
+      "definition": "An evaluation may stop the program with an error message and no result.",
+      "properties": {
+        "effects-in-types": false,
+        "recoverable": false,
+        "unwinds": "optional"
+      },
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "panic!, process::abort"
+        }
+      ]
+    },
+    {
+      "id": "effect-model.panic-with-default-value",
+      "family": "effect-model",
+      "definition": "A panic reports its message and the evaluation continues with the default value of the result type.",
+      "properties": {
+        "effects-in-types": false,
+        "recoverable": true,
+        "unwinds": false
+      },
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "panic!"
+        }
+      ]
+    },
+    {
+      "id": "effect-model.error-values",
+      "family": "effect-model",
+      "definition": "A failure is an ordinary returned value of a sum type that the caller must inspect.",
+      "properties": {
+        "effects-in-types": true,
+        "recoverable": true,
+        "unwinds": false
+      },
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "Result, Option"
+        },
+        {
+          "source": "Lean",
+          "name": "Except, Option"
+        },
+        {
+          "source": "Rocq",
+          "name": "option, sum"
+        }
+      ]
+    },
+    {
+      "id": "effect-model.monadic-input-output",
+      "family": "effect-model",
+      "definition": "Input, output and mutation happen only inside a monad that the type records.",
+      "properties": {
+        "effects-in-types": true,
+        "mutation": true,
+        "input-output": true
+      },
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "IO, ST"
+        }
+      ]
+    },
+    {
+      "id": "effect-model.asynchronous-computation",
+      "family": "effect-model",
+      "definition": "A computation may suspend and resume later, producing its value through a promise or future.",
+      "properties": {
+        "effects-in-types": "per language",
+        "suspends": true
+      },
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "async, await, Promise"
+        },
+        {
+          "source": "Rust",
+          "name": "async, await, Future"
+        },
+        {
+          "source": "Lean",
+          "name": "Task"
+        }
+      ]
+    },
+    {
+      "id": "effect-model.pure-total-functions",
+      "family": "effect-model",
+      "definition": "Every function terminates and has no effect besides its result.",
+      "properties": {
+        "effects-in-types": true,
+        "terminates": true,
+        "mutation": false
+      },
+      "sourceAliases": [
+        {
+          "source": "Rocq",
+          "name": "Gallina definitions"
+        },
+        {
+          "source": "Lean",
+          "name": "def without partial"
+        }
+      ]
+    },
+    {
+      "id": "effect-model.possible-nontermination",
+      "family": "effect-model",
+      "definition": "An evaluation may run forever.",
+      "properties": {
+        "effects-in-types": false,
+        "terminates": false
+      },
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "while loops and recursion"
+        },
+        {
+          "source": "Rust",
+          "name": "loop and recursion"
+        },
+        {
+          "source": "Lean",
+          "name": "partial def"
+        }
+      ]
+    },
+    {
+      "id": "proof-system.no-proof-checker",
+      "family": "proof-system",
+      "definition": "The language has no checker for proofs; a property can only be tested or checked by an external tool.",
+      "properties": {
+        "checks-proofs": false,
+        "axioms": "none"
+      },
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "no proof checker"
+        },
+        {
+          "source": "Rust",
+          "name": "no proof checker"
+        }
+      ]
+    },
+    {
+      "id": "proof-system.lean-kernel",
+      "family": "proof-system",
+      "definition": "The Lean 4 kernel checks proofs in a dependent type theory with inductive types, quotients, definitional proof irrelevance and eta; propext, Quot.sound and Classical.choice are its standard axioms.",
+      "properties": {
+        "checks-proofs": true,
+        "axioms": "propext, Quot.sound, Classical.choice",
+        "proof-irrelevance": "definitional"
+      },
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "theorem, by"
+        }
+      ]
+    },
+    {
+      "id": "proof-system.rocq-kernel",
+      "family": "proof-system",
+      "definition": "The Rocq kernel checks proofs in the Calculus of Inductive Constructions; it assumes no axioms unless a development declares them.",
+      "properties": {
+        "checks-proofs": true,
+        "axioms": "none unless declared",
+        "proof-irrelevance": "for SProp only"
+      },
+      "sourceAliases": [
+        {
+          "source": "Rocq",
+          "name": "Theorem, Proof, Qed"
+        }
+      ]
+    },
+    {
+      "id": "proof-system.bounded-property-check",
+      "family": "proof-system",
+      "definition": "A property is evaluated on a finite set of inputs; passing is evidence for those inputs only, not a proof.",
+      "properties": {
+        "checks-proofs": false,
+        "axioms": "none",
+        "coverage": "finite inputs"
+      },
+      "sourceAliases": [
+        {
+          "source": "meta-language",
+          "name": "bounded property check"
+        }
+      ]
+    },
+    {
+      "id": "logic-model.two-valued-boolean",
+      "family": "logic-model",
+      "definition": "Conditions are true or false, and the connectives are the classical truth functions.",
+      "properties": {
+        "values": [
+          "true",
+          "false"
+        ],
+        "excluded-middle": true,
+        "constructive": false
+      },
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "boolean"
+        },
+        {
+          "source": "Rust",
+          "name": "bool"
+        },
+        {
+          "source": "Lean",
+          "name": "Bool"
+        },
+        {
+          "source": "Rocq",
+          "name": "bool"
+        }
+      ]
+    },
+    {
+      "id": "logic-model.constructive-propositions",
+      "family": "logic-model",
+      "definition": "Propositions are types whose inhabitants are proofs; excluded middle is not provable without an axiom.",
+      "properties": {
+        "values": "proof relevance of Prop",
+        "excluded-middle": false,
+        "constructive": true
+      },
+      "sourceAliases": [
+        {
+          "source": "Rocq",
+          "name": "Prop"
+        }
+      ]
+    },
+    {
+      "id": "logic-model.classical-propositions",
+      "family": "logic-model",
+      "definition": "Propositions are types whose inhabitants are proofs, and the choice axiom makes excluded middle a theorem.",
+      "properties": {
+        "values": "proof relevance of Prop",
+        "excluded-middle": true,
+        "constructive": false
+      },
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "Prop with Classical.em"
+        }
+      ]
+    },
+    {
+      "id": "logic-model.strong-kleene-three-valued",
+      "family": "logic-model",
+      "definition": "Conditions are true, false or unknown; a connective is unknown when the known operands do not decide it.",
+      "properties": {
+        "values": [
+          "true",
+          "false",
+          "unknown"
+        ],
+        "excluded-middle": false,
+        "constructive": false
+      },
+      "sourceAliases": [
+        {
+          "source": "meta-language",
+          "name": "three-valued truth value"
+        }
+      ]
+    },
+    {
+      "id": "logic-model.belnap-four-valued",
+      "family": "logic-model",
+      "definition": "Conditions are true, false, unknown (neither) or both, ordered by truth and by information.",
+      "properties": {
+        "values": [
+          "true",
+          "false",
+          "unknown",
+          "both"
+        ],
+        "excluded-middle": false,
+        "constructive": false
+      },
+      "sourceAliases": [
+        {
+          "source": "meta-language",
+          "name": "TruthValue"
+        }
+      ]
+    },
+    {
+      "id": "logic-model.probabilistic-truth",
+      "family": "logic-model",
+      "definition": "A proposition carries the probability that it is true; negation is the complement.",
+      "properties": {
+        "values": "probabilities from 0 to 1",
+        "excluded-middle": "in expectation",
+        "constructive": false
+      },
+      "sourceAliases": [
+        {
+          "source": "meta-language",
+          "name": "ProbabilisticTruthValue"
+        }
+      ]
+    }
+  ],
+  "correspondences": [
+    {
+      "from": "integer-model.fixed-width-integer",
+      "to": "integer-model.unbounded-integer",
+      "kind": "conditional",
+      "condition": "The values agree while every intermediate result stays within the bounds of the width; a translation guards each operation and follows the source's overflow model outside them.",
+      "translationEncodings": [
+        "machine-integer",
+        "numbers"
+      ]
+    },
+    {
+      "from": "integer-model.natural-number",
+      "to": "integer-model.unbounded-integer",
+      "kind": "embedding",
+      "condition": "Every natural number is an integer, and addition and multiplication agree; subtraction agrees only when the result is not negative, since natural subtraction truncates at zero.",
+      "translationEncodings": [
+        "numbers"
+      ]
+    },
+    {
+      "from": "integer-model.binary64-number",
+      "to": "integer-model.unbounded-integer",
+      "kind": "conditional",
+      "condition": "An integral binary64 value of magnitude at most 2^53 denotes the same integer, and an operation agrees while its exact result is such a value."
+    },
+    {
+      "from": "overflow-model.abort",
+      "to": "overflow-model.wrapping",
+      "kind": "conditional",
+      "condition": "The two agree on executions that do not overflow; where the source overflows, one stops and the other produces a value."
+    },
+    {
+      "from": "overflow-model.abort",
+      "to": "effect-model.abort",
+      "kind": "encoding",
+      "condition": "An overflow that aborts is the abort effect raised by the arithmetic operation, so a target without overflow checks encodes it as an explicit bounds check followed by that target's abort.",
+      "translationEncodings": [
+        "numbers"
+      ]
+    },
+    {
+      "from": "overflow-model.abort",
+      "to": "overflow-model.no-overflow",
+      "kind": "encoding",
+      "condition": "An unbounded target computes the exact result, so the translation tests it against the source's bounds and aborts where the source aborts, with the source's message, and otherwise keeps the result, which is the source's.",
+      "translationEncodings": [
+        "machine-integer"
+      ]
+    },
+    {
+      "from": "effect-model.thrown-exceptions",
+      "to": "effect-model.error-values",
+      "kind": "encoding",
+      "condition": "A thrown value becomes an error value that every caller propagates explicitly, and a handler becomes a match on it."
+    },
+    {
+      "from": "effect-model.abort",
+      "to": "effect-model.panic-with-default-value",
+      "kind": "conditional",
+      "condition": "The two agree on executions that do not abort; where the source aborts, Lean's panic reports the message and continues with a default value, so a translation threads the abort as a value instead."
+    },
+    {
+      "from": "effect-model.abort",
+      "to": "effect-model.thrown-exceptions",
+      "kind": "encoding",
+      "condition": "An abort becomes a thrown error that no handler of the translated program catches, so the program stops where the source stops.",
+      "translationEncodings": [
+        "numbers"
+      ]
+    },
+    {
+      "from": "effect-model.abort",
+      "to": "effect-model.pure-total-functions",
+      "kind": "encoding",
+      "condition": "A total target has no abort, so an operation that can abort returns the source's abort message as a value that every caller passes on unchanged, and main stops there, after the lines printed before it, reporting the message.",
+      "translationEncodings": [
+        "abort-threading"
+      ]
+    },
+    {
+      "from": "effect-model.unrestricted-side-effects",
+      "to": "effect-model.monadic-input-output",
+      "kind": "encoding",
+      "condition": "Each effectful statement runs inside the monad, and the effects the source performs implicitly become explicit binds in source order."
+    },
+    {
+      "from": "effect-model.possible-nontermination",
+      "to": "effect-model.pure-total-functions",
+      "kind": "conditional",
+      "condition": "A definition corresponds only when its termination is shown, by structural recursion or a decreasing measure; otherwise it has no total counterpart."
+    },
+    {
+      "from": "universe-model.no-universes",
+      "to": "universe-model.non-cumulative-sort-hierarchy",
+      "kind": "embedding",
+      "condition": "Every source type becomes a type in Type, the lowest universe of data, and no source type quantifies over types of a higher universe."
+    },
+    {
+      "from": "universe-model.no-universes",
+      "to": "universe-model.cumulative-type-hierarchy",
+      "kind": "embedding",
+      "condition": "Every source type becomes a type in Set or Type, and no source type quantifies over types of a higher universe."
+    },
+    {
+      "from": "universe-model.non-cumulative-sort-hierarchy",
+      "to": "universe-model.cumulative-type-hierarchy",
+      "kind": "conditional",
+      "condition": "Type u corresponds to Type@{u} and Prop to Prop for universe-monomorphic definitions; Rocq's cumulativity has no Lean counterpart and becomes an explicit lift such as ULift."
+    },
+    {
+      "from": "proof-system.lean-kernel",
+      "to": "proof-system.rocq-kernel",
+      "kind": "restatement",
+      "condition": "A theorem is restated as a proof obligation and checked by the target's own kernel; a proof that relies on Lean's classical or quotient axioms needs those axioms declared in the Rocq development, and no proof term is trusted across kernels."
+    },
+    {
+      "from": "logic-model.two-valued-boolean",
+      "to": "logic-model.strong-kleene-three-valued",
+      "kind": "embedding",
+      "condition": "True and false embed as true and false, and the connectives agree on them; unknown has no two-valued counterpart."
+    },
+    {
+      "from": "logic-model.strong-kleene-three-valued",
+      "to": "logic-model.belnap-four-valued",
+      "kind": "embedding",
+      "condition": "True, false and unknown embed as true, false and unknown, and the connectives agree on them; both has no three-valued counterpart."
+    },
+    {
+      "from": "logic-model.two-valued-boolean",
+      "to": "logic-model.probabilistic-truth",
+      "kind": "embedding",
+      "condition": "True and false embed as probabilities 1 and 0, and negation agrees; conjunction and disjunction agree only under the independence the probabilistic model assumes."
+    },
+    {
+      "from": "logic-model.two-valued-boolean",
+      "to": "logic-model.classical-propositions",
+      "kind": "embedding",
+      "condition": "A boolean b corresponds to the decidable proposition b = true, and the connectives agree through the Decidable instances."
+    },
+    {
+      "from": "logic-model.constructive-propositions",
+      "to": "logic-model.classical-propositions",
+      "kind": "embedding",
+      "condition": "Every constructive proof remains a classical proof; the converse holds only for proofs that do not use excluded middle or choice."
+    }
+  ],
+  "distinctions": [
+    {
+      "models": [
+        "proof-system.bounded-property-check",
+        "proof-system.lean-kernel"
+      ],
+      "reason": "A passing bounded check covers finitely many inputs and is never counted as a proof the kernel checked.",
+      "translationEncodings": [
+        "theorem-properties"
+      ]
+    },
+    {
+      "models": [
+        "proof-system.bounded-property-check",
+        "proof-system.rocq-kernel"
+      ],
+      "reason": "A passing bounded check covers finitely many inputs and is never counted as a proof the kernel checked.",
+      "translationEncodings": [
+        "theorem-properties"
+      ]
+    },
+    {
+      "models": [
+        "overflow-model.abort",
+        "overflow-model.wrapping"
+      ],
+      "reason": "The same Rust expression aborts with overflow checks and wraps without them, so the build mode is part of the program's meaning."
+    },
+    {
+      "models": [
+        "effect-model.abort",
+        "effect-model.panic-with-default-value"
+      ],
+      "reason": "Both are spelled panic!, but Rust stops the program and Lean continues with a default value."
+    },
+    {
+      "models": [
+        "logic-model.constructive-propositions",
+        "logic-model.classical-propositions"
+      ],
+      "reason": "Both are spelled Prop, but Lean's standard axioms prove excluded middle and Rocq's kernel does not."
+    },
+    {
+      "models": [
+        "integer-model.natural-number",
+        "integer-model.unbounded-integer"
+      ],
+      "reason": "Both are unbounded, but natural subtraction truncates at zero where integer subtraction is exact."
+    },
+    {
+      "models": [
+        "universe-model.non-cumulative-sort-hierarchy",
+        "universe-model.cumulative-type-hierarchy"
+      ],
+      "reason": "Lean and Rocq both spell Prop and Type, but only the Rocq hierarchy is cumulative, so a Rocq type used in a larger universe needs an explicit lift in Lean."
+    }
+  ],
+  "languages": [
+    {
+      "language": "JavaScript",
+      "models": [
+        "integer-model.binary64-number",
+        "integer-model.unbounded-integer",
+        "overflow-model.rounding-to-infinity",
+        "overflow-model.no-overflow",
+        "universe-model.no-universes",
+        "effect-model.unrestricted-side-effects",
+        "effect-model.thrown-exceptions",
+        "effect-model.asynchronous-computation",
+        "effect-model.possible-nontermination",
+        "proof-system.no-proof-checker",
+        "logic-model.two-valued-boolean"
+      ]
+    },
+    {
+      "language": "Rust",
+      "models": [
+        "integer-model.fixed-width-integer",
+        "integer-model.binary64-number",
+        "overflow-model.abort",
+        "overflow-model.wrapping",
+        "overflow-model.saturating",
+        "overflow-model.checked-option",
+        "overflow-model.rounding-to-infinity",
+        "universe-model.no-universes",
+        "effect-model.unrestricted-side-effects",
+        "effect-model.abort",
+        "effect-model.error-values",
+        "effect-model.asynchronous-computation",
+        "effect-model.possible-nontermination",
+        "proof-system.no-proof-checker",
+        "logic-model.two-valued-boolean"
+      ]
+    },
+    {
+      "language": "Lean",
+      "models": [
+        "integer-model.natural-number",
+        "integer-model.unbounded-integer",
+        "integer-model.fixed-width-integer",
+        "integer-model.binary64-number",
+        "overflow-model.no-overflow",
+        "overflow-model.wrapping",
+        "universe-model.non-cumulative-sort-hierarchy",
+        "effect-model.pure-total-functions",
+        "effect-model.monadic-input-output",
+        "effect-model.error-values",
+        "effect-model.panic-with-default-value",
+        "effect-model.asynchronous-computation",
+        "effect-model.possible-nontermination",
+        "proof-system.lean-kernel",
+        "logic-model.two-valued-boolean",
+        "logic-model.classical-propositions"
+      ]
+    },
+    {
+      "language": "Rocq",
+      "models": [
+        "integer-model.natural-number",
+        "integer-model.unbounded-integer",
+        "integer-model.fixed-width-integer",
+        "integer-model.binary64-number",
+        "overflow-model.no-overflow",
+        "overflow-model.wrapping",
+        "universe-model.cumulative-type-hierarchy",
+        "effect-model.pure-total-functions",
+        "effect-model.error-values",
+        "proof-system.rocq-kernel",
+        "logic-model.two-valued-boolean",
+        "logic-model.constructive-propositions"
+      ]
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-use meta_language::{import_pest, FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks};
+use meta_language::{FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks, import_pest};
 
 #[test]
 fn imported_pest_grammar_survives_links_round_trip() {

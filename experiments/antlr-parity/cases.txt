@@ -1,0 +1,246 @@
+### unit: unresolved reference
+grammar Missing; start : missing ;
+### unit: inline comments before sequence boundaries
+grammar Comments;
+         start : 'a' // first branch
+             | ('b' /* group end */) // second branch
+             ;
+### unit: malformed parse error
+grammar Bad; start : ( missing ;
+### unit: rule prelude locals joins the doc
+grammar Bad; rule locals [int value] : 'x' ;
+### rule prelude returns joins the doc
+grammar Bad; rule returns [int value] : 'x' ;
+### rule prelude throws joins the doc
+grammar Bad; rule throws Foo : 'x' ;
+### rule prelude options join the doc
+grammar Bad; rule options { k = 1; } : 'x' ;
+### rule arguments
+grammar Bad; rule [int x] : 'x' ;
+### missing colon
+grammar Bad; rule 'x' ;
+### empty grammar
+grammar Empty;
+### empty source
+
+### only comments
+// just a comment
+/* and a block */
+### parser grammar header and comment docs
+parser grammar P;
+// leading comment
+/* block
+   comment */
+start : a b? c* d+ ;
+// second
+a : 'a' ;
+### lexer only grammar start falls back to first rule
+lexer grammar L;
+A : 'a' ;
+fragment b : 'b' ;
+### fragment parser rule and start skips it
+grammar F;
+fragment x : 'x' ;
+Y : 'y' ;
+z : x Y ;
+### directives
+grammar D;
+options { tokenVocab = Base; superClass = X; }
+options superClass = X ;
+tokens { A, B };
+channels { WHITESPACE, COMMENTS }
+import A, B;
+mode INSIDE;
+// dropped by directive
+channels X ;
+r : 'r' ;
+### directive without semicolon
+grammar D;
+r : 'r' ;
+mode INSIDE
+### options without semicolon at end
+grammar D;
+r : 'r' ;
+options X
+### suffix combinations
+grammar S;
+r : a?* b?? c*? d+? e+* (f g)+ (h | i)? ;
+### empty alternatives
+grammar E;
+r : | 'x' ;
+s : ;
+t : ( | ) ;
+u : 'a' | ;
+v : {act();} | {pred()}? ;
+### nested choices flatten
+grammar N;
+r : ('a' | 'b') | ('c' | ('d' | 'e')) | 'f' ('g' | 'h') ;
+s : ('a' 'b') ('c' ('d' 'e')) ;
+### negations
+grammar Neg;
+r : ~'x' ~[abc] ~[^abc] ~X ~('a' | 'b') ~. ~{act();} ;
+### labels
+grammar Lab;
+r : a=ID b+=ID* c=~'x' d=('p' | 'q') e=[a-z]+ ;
+### double tilde
+grammar Neg;
+r : ~~'x' ;
+### actions with nested braces quotes and comments
+grammar Act;
+r : {if (x) { y = "}"; z = '}'; } // }
+      /* } */ } 'a' {x/y;} 'b' ;
+s : 'a' {p()}? ;
+### lexer commands
+lexer grammar C;
+A : 'a' -> skip ;
+B : 'b' -> pushMode(INSIDE), more ;
+C : 'c' -> type(X), channel(HIDDEN) ;
+D : 'd' -> popMode // trailing comment
+  ;
+E : 'e' -> mode ( M ) , skip ;
+F : 'f' -> type('x\n\'"\\é') ;
+G : 'g' -> action {x();} [abc] . .. ;
+### empty lexer command
+lexer grammar C;
+A : 'a' -> ;
+### string escapes
+lexer grammar Esc;
+A : '\n\r\t\b\f\\\'\"\[\]\-\q' ;
+B : 'Aé中' ;
+C : 'é日本🎉' ;
+### unicode escape with non-hex
+lexer grammar Esc;
+A : '\u12G4' ;
+### unicode escape surrogate
+lexer grammar Esc;
+A : '\uD800' ;
+### unterminated unicode escape
+lexer grammar Esc;
+A : '\u12
+### unterminated escape
+lexer grammar Esc;
+A : '\
+### unterminated string
+grammar U;
+r : 'abc ;
+### unterminated charset
+grammar U;
+r : [abc ;
+### unterminated action
+grammar U;
+r : { x ;
+### unterminated quoted action text
+grammar U;
+r : { "x } ;
+### unterminated block comment in action
+grammar U;
+r : { /* x } ;
+### unterminated block comment
+grammar U;
+r : 'x' ; /* never closed
+### character classes
+lexer grammar Cls;
+A : [a-zA-Z_0-9] ;
+B : [\n\r\t\b\f\\\]\-\^] ;
+C : [a-] ;
+D : [-a] ;
+E : [A] ;
+F : [é-ü日] ;
+H : [\p{L}] ;
+I : [a\-z] ;
+### negated empty character class
+lexer grammar Cls;
+G : [^] ;
+### empty character class
+lexer grammar Cls;
+A : [] ;
+### reversed class range
+lexer grammar Cls;
+A : [z-a] ;
+### class escape at end
+lexer grammar Cls;
+A : [a\\] ;
+### ranges
+grammar R;
+r : 'a'..'z' 'A'..'Z' 'é'..'ü' ;
+### reversed literal range
+grammar R;
+r : 'z'..'a' ;
+### multi-char range start
+grammar Bad; start : 'ab'..'z' ;
+### multi-char range end with escapes
+grammar Bad; start : 'a'..'z\t"' ;
+### empty range start
+grammar Bad; start : ''..'z' ;
+### range end not a string
+grammar Bad; start : 'a'..Z ;
+### unexpected character
+grammar Bad; start : # ;
+### unexpected non-ascii character after multibyte
+grammar Bad; start : 'é日' § ;
+### unexpected quote character
+grammar Bad; start : "x" ;
+### unexpected lone slash
+grammar Bad; start : 'a' / 'b' ;
+### unexpected dash
+grammar Bad; start : 'a' - 'b' ;
+### missing semicolon at end
+grammar Bad; start : 'a'
+### unbalanced rparen
+grammar Bad; start : 'a' ) ;
+### expression element missing after tilde at end
+grammar Bad; start : ~
+### missing grammar name
+grammar ;
+### comment between name and colon
+grammar Bad; start /* c */ : 'a' ;
+### duplicate-free keywords as rule names
+grammar K;
+lexer : parser ;
+parser : 'p' ;
+fragment : 'f' ;
+### whitespace variants
+grammar W;
+r : 'a' 'b' ;
+### plus equal label without ident
+grammar Bad; start : += 'a' ;
+### whitespace unicode
+grammar W; r :　  'a';
+### control char in range start
+grammar Bad; start : 'x'..'z' ;
+### nbsp in range start debug
+grammar Bad; start : ' x'..'z' ;
+### combining mark range start debug
+grammar Bad; start : '́x'..'z' ;
+### combining mark after first char in range start debug
+grammar Bad; start : 'x́'..'z' ;
+### private use and unassigned in range start debug
+grammar Bad; start : '͸​🎉'..'z' ;
+### bom is not whitespace
+﻿grammar W; r : 'a' ;
+### unexpected control character
+grammar Bad; start :  ;
+### unexpected combining character
+grammar Bad; start : ́ ;
+### unexpected astral character
+grammar Bad; start : 🎉 ;
+### unexpected single quote in command string
+lexer grammar C;
+A : 'a' -> type('\'') ;
+### command string with control and astral
+lexer grammar C;
+A : 'a' -> type('🎉~ ') ;
+### duplicate-looking crlf line endings
+grammar CR;
+// crlf comment
+r : 'a'
+  | 'b' ;
+### caseInsensitive grammar option with rule override
+lexer grammar K;
+options { caseInsensitive = true; }
+ECHO : 'echo' | 'é' | '1' ;
+R : 'a'..'f' | 'X'..'Z' | 'a'..'a' ;
+S : [a-cK_é] ;
+fragment N options { caseInsensitive = false; } : 'x' [a-z] ;
+### throws list
+grammar T; r throws A, B : 'x' ;

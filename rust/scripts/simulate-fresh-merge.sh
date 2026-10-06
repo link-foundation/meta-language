@@ -59,8 +59,8 @@ echo "::group::cargo clippy --all-targets --all-features"
 cargo clippy --all-targets --all-features || status=1
 echo "::endgroup::"
 
-echo "::group::cargo test --all-features"
-cargo test --all-features || status=1
+echo "::group::cargo test --no-fail-fast --all-features"
+cargo test --no-fail-fast --all-features || status=1
 echo "::endgroup::"
 
 if [ "${status}" -ne 0 ]; then

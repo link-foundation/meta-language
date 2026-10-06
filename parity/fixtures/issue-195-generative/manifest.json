@@ -1,0 +1,111 @@
+{
+  "description": "The issue 195 generative fixtures: property compositions, fuzz mutations, metamorphic pairs and edit sequences generated from the conformance inputs by a seeded PRNG, and kept reproducers, each with the tree the native tree-sitter CLI prints for it (the independent oracle).",
+  "generator": "js/scripts/generate-issue-195-generative.mjs",
+  "prng": "mulberry32 seeded with FNV-1a of `<seed>:<language>` (js/tests/support/generative.js, rust/tests/unit/generative_support.rs)",
+  "seed": "issue-195-generative-v1",
+  "seedNumber": 2799587913,
+  "prngVectors": {
+    "issue-195-generative-v1:JavaScript": [
+      2061972447,
+      1655874257,
+      3323723313,
+      1839305380
+    ],
+    "issue-195-generative-v1:Lean": [
+      2111087544,
+      271658259,
+      627841084,
+      2785688201
+    ],
+    "issue-195-generative-v1:Rocq": [
+      744212829,
+      1410874071,
+      1669346571,
+      4272103808
+    ],
+    "issue-195-generative-v1:Rust": [
+      1714311992,
+      3250219978,
+      4137388492,
+      2852150409
+    ]
+  },
+  "counts": {
+    "property": 16,
+    "fuzz": 32,
+    "metamorphic": 8,
+    "edit": 8,
+    "editSteps": 4
+  },
+  "inputs": {
+    "reproducers.json": "0789c7978e4e6616eec6ebfec6d39c44009788f9c660740fa2e06e94400dbe0d",
+    "issue-195-conformance/manifest.json": "37ccf2057006aa9f2a703f67565bfe8e00536bba78e0b7a95a4a2d0fe47230fd"
+  },
+  "oracle": {
+    "tool": "tree-sitter 0.27.0",
+    "command": "tree-sitter parse --cst <file> (cwd: the pinned grammar)",
+    "format": "Canonical CST lines, as in parity/fixtures/issue-195-conformance/manifest.json."
+  },
+  "relations": {
+    "prepend-blank-lines": "Two leading newlines move every node down two rows and keep kinds, fields, nesting, columns and flags, for clean trees that do not start with U+FEFF; the fixtures record whether the oracle keeps it (relationHolds).",
+    "crlf": "LF to CRLF keeps kinds, fields, nesting, flags and start points."
+  },
+  "languages": {
+    "JavaScript": {
+      "file": "javascript.json",
+      "sha256": "107c7b44a94c150c64d88ea5a1d9d09c838de0aa0f4ee688f0908bc2921b9ce0",
+      "seedSources": 122,
+      "cases": {
+        "property": 16,
+        "fuzz": 32,
+        "metamorphic": 16,
+        "edit": 8,
+        "reproducer": 2
+      },
+      "malformed": 35,
+      "relationsHolding": 16
+    },
+    "Lean": {
+      "file": "lean.json",
+      "sha256": "40a2056a869f32cbb8d2f810ccc699206c90aed82fa72b08fc4b05fa269421c7",
+      "seedSources": 260,
+      "cases": {
+        "property": 16,
+        "fuzz": 32,
+        "metamorphic": 16,
+        "edit": 8,
+        "reproducer": 1
+      },
+      "malformed": 37,
+      "relationsHolding": 16
+    },
+    "Rocq": {
+      "file": "rocq.json",
+      "sha256": "aa90fc8e2f064e914f1ab0f77a7ec36b3dee4ddc3a9890ca6228184df70e7ab3",
+      "seedSources": 206,
+      "cases": {
+        "property": 16,
+        "fuzz": 32,
+        "metamorphic": 16,
+        "edit": 8,
+        "reproducer": 3
+      },
+      "malformed": 38,
+      "relationsHolding": 16
+    },
+    "Rust": {
+      "file": "rust.json",
+      "sha256": "c3769959a8754c9758a02975d7c0ce53e066291106d6c5f0eb05c2d09a56b36c",
+      "seedSources": 170,
+      "cases": {
+        "property": 16,
+        "fuzz": 32,
+        "metamorphic": 16,
+        "edit": 8,
+        "reproducer": 1
+      },
+      "malformed": 37,
+      "relationsHolding": 16
+    }
+  }
+}

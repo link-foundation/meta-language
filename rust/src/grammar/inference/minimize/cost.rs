@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use super::Mdl;
-use crate::grammar::inference::eval::{size_symbols, GrammarOracle};
+use crate::grammar::inference::eval::{GrammarOracle, size_symbols};
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr};
 
 const OPERATOR_SYMBOLS: usize = 16;
@@ -95,6 +95,10 @@ fn collect_expr_symbols(expr: &GrammarExpr, symbols: &mut BTreeSet<String>) {
         | GrammarExpr::Not(expr)
         | GrammarExpr::Capture { expr, .. }
         | GrammarExpr::Repeat { expr, .. } => collect_expr_symbols(expr, symbols),
+        GrammarExpr::Feature(feature) => {
+            symbols.insert(format!("feature:{}", feature.head()));
+            feature.for_each_expression(&mut |inner| collect_expr_symbols(inner, symbols));
+        }
     }
 }
 

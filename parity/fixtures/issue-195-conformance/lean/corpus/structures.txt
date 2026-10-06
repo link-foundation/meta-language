@@ -1,0 +1,203 @@
+=================
+Structure Literal
+=================
+
+#check {x := 12}
+#check {x := 12, y := (fun z => z)}
+
+---
+
+(module
+  (hash_command
+    (structure_instance
+      (field_assignment
+        name: (identifier)
+        value: (number))))
+  (hash_command
+    (structure_instance
+      (field_assignment
+        name: (identifier)
+        value: (number))
+      (field_assignment
+        name: (identifier)
+        value: (parenthesized
+          (fun
+            binders: (identifier)
+            body: (identifier)))))))
+
+=======================
+Typed Structure Literal
+=======================
+
+#check {x := 12 : Foo}
+#check {x := 12, y := (fun z => z) : Foo Bar}
+#check {: Foo}
+
+---
+
+(module
+  (hash_command
+    (structure_instance
+      (field_assignment
+        name: (identifier)
+        value: (number))
+      type: (identifier)))
+  (hash_command
+    (structure_instance
+      (field_assignment
+        name: (identifier)
+        value: (number))
+      (field_assignment
+        name: (identifier)
+        value: (parenthesized
+          (fun
+            binders: (identifier)
+            body: (identifier))))
+      type: (application
+        name: (identifier)
+        arguments: (identifier))))
+  (hash_command
+    (structure_instance
+      type: (identifier))))
+
+====================
+Structure Overriding
+====================
+
+#check {foo with x := 12}
+#check {foo with x := 12, y := (fun z => z)}
+#check {foo with}
+#check {bar 37 with x := 12}
+
+---
+
+(module
+  (hash_command
+    (structure_instance
+      extends: (identifier)
+      (field_assignment
+        name: (identifier)
+        value: (number))))
+  (hash_command
+    (structure_instance
+      extends: (identifier)
+      (field_assignment
+        name: (identifier)
+        value: (number))
+      (field_assignment
+        name: (identifier)
+        value: (parenthesized
+          (fun
+            binders: (identifier)
+            body: (identifier))))))
+  (hash_command
+    (structure_instance
+      extends: (identifier)))
+  (hash_command
+    (structure_instance
+      extends: (application
+        name: (identifier)
+        arguments: (number))
+      (field_assignment
+        name: (identifier)
+        value: (number)))))
+
+===================
+Trailing Commas Yay
+===================
+
+example : Foo := {x := 12, y := 13,}
+
+---
+
+(module
+  (example
+    (identifier)
+    (structure_instance
+      (identifier)
+      (number)
+      (identifier)
+      (number))))
+
+=====================
+No Trailing Commas Aw
+=====================
+
+#check (1, 2, 3,)
+#check [1, 2, 3,]
+#check #[1, 2, 3,]
+example : Foo := ⟨1, 2,⟩
+@[foo, bar,] def foo := 12
+def foo | 0, => 2 | _, => 3
+
+---
+
+(module
+  (hash_command
+    (parenthesized
+      (number)
+      (tuple_tail
+        (number)
+        (number))
+      (ERROR)))
+  (hash_command
+    (list
+      (number)
+      (number)
+      (number)
+      (identifier
+        (MISSING _identifier))))
+  (hash_command
+    (array
+      (number)
+      (number)
+      (number)
+      (identifier
+        (MISSING _identifier))))
+  (example
+    (identifier)
+    (anonymous_constructor
+      (number)
+      (number)
+      (identifier
+        (MISSING _identifier))))
+  (declaration
+    (attributes
+      (identifier)
+      (identifier)
+      (identifier
+        (MISSING _identifier)))
+    (definition
+      (identifier)
+      (number)))
+  (definition
+    (identifier)
+    (match_arm
+      (number)
+      (ERROR)
+      (number))
+    (match_arm
+      (hole)
+      (ERROR)
+      (number))))
+
+==============================
+Structure Instance With Extends
+==============================
+
+def ellipsisStruct (f : Foo) := { f with a := 1 }
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    body: (structure_instance
+      extends: (identifier)
+      (field_assignment
+        name: (identifier)
+        value: (number)))))

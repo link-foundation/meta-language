@@ -17,8 +17,8 @@ use std::time::Instant;
 use serde_json::Value;
 
 use crate::{
-    emit_gbnf, evaluate, infer_cfg, Grammar, GrammarExpr, GrammarFormat, GrammarOracle,
-    GrammarRule, InferenceOptions, MetricScores, PositiveOnlyOracle, SampleConfig, ScoringMode,
+    Grammar, GrammarExpr, GrammarFormat, GrammarOracle, GrammarRule, InferenceOptions,
+    MetricScores, PositiveOnlyOracle, SampleConfig, ScoringMode, emit_gbnf, evaluate, infer_cfg,
 };
 
 /// Default manifest path used by the bench and integration gate.

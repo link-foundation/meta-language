@@ -4,11 +4,12 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use meta_language::{
-    infer_cfg, validate, Grammar, GrammarFormat, GrammarParser, InferenceOptions,
-    PositiveOnlyOracle, RustParserArtifacts,
+    Grammar, GrammarFormat, GrammarParser, InferenceOptions, PositiveOnlyOracle,
+    RustParserArtifacts, infer_cfg, validate,
 };
 
 #[allow(dead_code)]
@@ -97,16 +98,49 @@ pub fn compile_and_run_rust_parser(
     negative: Option<&str>,
 ) -> Result<(), String> {
     let parser_name = parser_struct_name(&artifacts.parser_struct)?;
+    compile_and_run_rust_driver(&rust_driver_source(
+        artifacts,
+        &parser_name,
+        start_rule,
+        examples,
+        negative,
+    ))
+}
+
+/// Compiles the generated parser and requires every `accepts` sample to be
+/// consumed completely by `start_rule` and every `rejects` sample not to be,
+/// matching the whole-input semantics of the generated JavaScript parser.
+pub fn compile_and_run_rust_parser_on_corpus(
+    artifacts: &RustParserArtifacts,
+    start_rule: &str,
+    accepts: &[String],
+    rejects: &[String],
+) -> Result<(), String> {
+    let parser_name = parser_struct_name(&artifacts.parser_struct)?;
+    let list = |samples: &[String]| {
+        samples
+            .iter()
+            .map(|sample| format!("{sample:?}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    compile_and_run_rust_driver(&format!(
+        "use pest::Parser as _;\n\n{}\n{}\nfn whole(sample: &str) -> bool {{\n    {parser_name}::parse(Rule::{start_rule}, sample).is_ok_and(|pairs| {{\n        pairs.map(|pair| pair.as_span().end()).max().unwrap_or(0) == sample.len()\n    }})\n}}\n\nfn main() {{\n    let accepts: &[&str] = &[{}];\n    let rejects: &[&str] = &[{}];\n    for sample in accepts {{\n        assert!(whole(sample), \"failed to parse {{sample:?}}\");\n    }}\n    for sample in rejects {{\n        assert!(!whole(sample), \"unexpectedly parsed {{sample:?}}\");\n    }}\n}}\n",
+        artifacts.parser_struct,
+        artifacts.ast_types,
+        list(accepts),
+        list(rejects),
+    ))
+}
+
+fn compile_and_run_rust_driver(driver: &str) -> Result<(), String> {
     let temp_dir = unique_temp_path("generated-rust-parser");
     fs::create_dir_all(&temp_dir)
         .map_err(|error| format!("failed to create {}: {error}", temp_dir.display()))?;
     let source_path = temp_dir.join("main.rs");
     let binary_path = temp_dir.join(format!("generated-parser{}", std::env::consts::EXE_SUFFIX));
-    fs::write(
-        &source_path,
-        rust_driver_source(artifacts, &parser_name, start_rule, examples, negative),
-    )
-    .map_err(|error| format!("failed to write {}: {error}", source_path.display()))?;
+    fs::write(&source_path, driver)
+        .map_err(|error| format!("failed to write {}: {error}", source_path.display()))?;
 
     let deps_dir = target_deps_dir()?;
     let pest = find_dependency_artifact(&deps_dir, &["libpest-", "pest-"], &["rlib"])?;
@@ -207,13 +241,18 @@ pub fn write_example_directory(stem: &str, examples: &[String]) -> PathBuf {
     dir
 }
 
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMP_PATHS: AtomicU64 = AtomicU64::new(0);
+
 pub fn unique_temp_path(stem: &str) -> PathBuf {
+    let sequence = TEMP_PATHS.fetch_add(1, Ordering::Relaxed);
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("system clock should be after Unix epoch")
         .as_nanos();
     std::env::temp_dir().join(format!(
-        "meta-language-{stem}-{}-{nanos}",
+        "meta-language-{stem}-{}-{nanos}-{sequence}",
         std::process::id()
     ))
 }
@@ -324,7 +363,14 @@ fn find_dependency_artifact(
         })
         .collect::<Vec<_>>();
     candidates.sort();
-    candidates.into_iter().next().ok_or_else(|| {
+    // A restored target cache can keep artifacts built by an older rustc next to
+    // the current build; only the most recently built one matches the compiler.
+    let newest = candidates.into_iter().max_by_key(|path| {
+        fs::metadata(path)
+            .and_then(|metadata| metadata.modified())
+            .ok()
+    });
+    newest.ok_or_else(|| {
         format!(
             "no dependency artifact with prefixes {prefixes:?} and extensions {extensions:?} in {}",
             deps_dir.display()
@@ -342,4 +388,39 @@ fn ensure_success(label: &str, output: &std::process::Output) -> Result<(), Stri
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::{self, File};
+    use std::time::{Duration, SystemTime};
+
+    use super::{find_dependency_artifact, unique_temp_path};
+
+    #[test]
+    fn dependency_lookup_prefers_the_most_recently_built_artifact() {
+        let deps_dir = unique_temp_path("dependency-artifacts");
+        fs::create_dir_all(&deps_dir).expect("dependency directory is created");
+        let stale = deps_dir.join("libpest-0000.rlib");
+        let current = deps_dir.join("libpest-ffff.rlib");
+        for (path, age) in [(&stale, 3600), (&current, 0)] {
+            File::create(path)
+                .and_then(|file| file.set_modified(SystemTime::now() - Duration::from_secs(age)))
+                .expect("artifact is created with its build time");
+        }
+
+        let found = find_dependency_artifact(&deps_dir, &["libpest-"], &["rlib"]);
+        fs::remove_dir_all(&deps_dir).ok();
+        assert_eq!(found, Ok(current));
+    }
+
+    // Two generated-parser builds that got one directory deleted each other's
+    // object files on macOS, whose clock has microsecond resolution.
+    #[test]
+    fn temporary_paths_differ_within_one_clock_tick() {
+        let paths: std::collections::HashSet<_> = (0..1000)
+            .map(|_| unique_temp_path("generated-rust-parser"))
+            .collect();
+        assert_eq!(paths.len(), 1000);
+    }
 }

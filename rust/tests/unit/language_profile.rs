@@ -86,7 +86,7 @@ fn profiled_javascript_to_javascript_transform_allows_in_profile_rewrite() {
     );
 
     assert_eq!(report.text_replacements().len(), 2);
-    assert!(report.profile_diagnostics().is_empty());
+    assert_eq!(report.profile_diagnostics(), []);
     assert_eq!(
         network.reconstruct_text(),
         "const renamedValue = call(renamedValue);\n// oldName in comments stays\n"
@@ -116,7 +116,7 @@ fn profiled_javascript_to_javascript_transform_rejects_unsupported_syntax() {
         &LanguageProfile::javascript(),
     );
 
-    assert!(report.text_replacements().is_empty());
+    assert_eq!(report.text_replacements(), []);
     assert_eq!(network.reconstruct_text(), source);
     assert_eq!(report.profile_diagnostics().len(), 1);
 
@@ -128,11 +128,13 @@ fn profiled_javascript_to_javascript_transform_rejects_unsupported_syntax() {
         Some("language-profile:unsupported-feature")
     );
     assert_eq!(diagnostic.metadata().language(), Some("JavaScript"));
-    assert!(diagnostic
-        .metadata()
-        .definition()
-        .expect("diagnostic describes unsupported syntax")
-        .contains("JavaScript"));
+    assert!(
+        diagnostic
+            .metadata()
+            .definition()
+            .expect("diagnostic describes unsupported syntax")
+            .contains("JavaScript")
+    );
     assert_eq!(
         network
             .query_links(

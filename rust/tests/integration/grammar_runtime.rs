@@ -1,5 +1,5 @@
 use meta_language::{
-    import_bnf, register_grammar, LinkNetwork, LinkType, ParseConfiguration, ParserRegistry,
+    LinkNetwork, LinkType, ParseConfiguration, ParserRegistry, import_bnf, register_grammar,
 };
 
 const ARITHMETIC: &str = include_str!("../fixtures/grammar/bnf/arithmetic.bnf");

@@ -1,5 +1,5 @@
 use meta_language::{
-    import_gbnf, CharClassItem, GrammarExpr, GrammarFormat, GrammarImportError, RuleKind,
+    CharClassItem, GrammarExpr, GrammarFormat, GrammarImportError, RuleKind, import_gbnf,
 };
 
 #[test]

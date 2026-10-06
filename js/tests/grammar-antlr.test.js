@@ -1,0 +1,276 @@
+// Ports rust/tests/unit/grammar_import_antlr.rs and
+// rust/tests/integration/grammar_import_antlr.rs with the same expectations.
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+
+import { GrammarBuilder as G, deserializeGrammar, serializeGrammar } from '../src/grammar.js';
+import { importAntlr } from '../src/grammar-importers/antlr.js';
+import { GrammarImportError } from '../src/grammar-importers/common.js';
+import { renderGrammarRule } from './support/render-grammar-expression.js';
+
+const fixture = (file) => readFileSync(
+  new URL(`../../rust/tests/fixtures/grammar/antlr/${file}`, import.meta.url),
+  'utf8',
+);
+const range = (start, end) => ({ kind: 'range', start, end });
+const character = (value) => ({ kind: 'char', value });
+
+test('imports arithmetic ANTLR fixture', () => {
+  const grammar = importAntlr(fixture('arithmetic.g4'));
+
+  assert.equal(grammar.sourceFormat, 'antlr');
+  assert.equal(grammar.startRule()?.name, 'expr');
+  assert.deepEqual(grammar.ruleNames(), ['expr', 'term', 'factor', 'INT', 'ID', 'WS']);
+  assert.equal(grammar.rule('expr').kind, 'normal');
+  assert.equal(grammar.rule('INT').kind, 'token');
+  assert.equal(grammar.rule('ID').kind, 'token');
+  assert.equal(grammar.rule('WS').kind, 'token');
+  assert.equal(grammar.rule('WS').doc, '-> skip');
+
+  assert.deepEqual(grammar.rule('expr').expression, {
+    kind: 'seq',
+    items: [
+      G.ref('term'),
+      G.repeat0({
+        kind: 'seq',
+        items: [
+          { kind: 'choice', items: [G.literal('+'), G.literal('-')], ordered: false },
+          G.ref('term'),
+        ],
+      }),
+    ],
+  });
+  assert.deepEqual(grammar.rule('ID').expression, {
+    kind: 'seq',
+    items: [
+      G.charClass([range('a', 'z'), range('A', 'Z'), character('_')]),
+      G.repeat0(G.charClass([range('a', 'z'), range('A', 'Z'), character('_'), range('0', '9')])),
+    ],
+  });
+});
+
+test('lowers covering ANTLR constructs', () => {
+  const grammar = importAntlr(fixture('covering.g4'));
+
+  assert.equal(grammar.sourceFormat, 'antlr');
+  assert.equal(grammar.startRule()?.name, 'entry');
+  assert.deepEqual(
+    grammar.ruleNames(),
+    ['entry', 'item', 'literalRange', 'TOKEN', 'DIGIT', 'COMMENT', 'ACTIONED', 'ID'],
+  );
+  assert.equal(grammar.rule('DIGIT').kind, 'silent');
+  assert.deepEqual(
+    grammar.rule('TOKEN').expression,
+    G.charClass([range('a', 'z'), range('0', '9'), character('_')]),
+  );
+  assert.deepEqual(grammar.rule('literalRange').expression, G.charRange('a', 'z'));
+  assert.equal(grammar.rule('COMMENT').doc, '-> channel(HIDDEN)');
+  assert.equal(grammar.rule('ACTIONED').doc, 'dropped predicate; dropped action; -> type(ID)');
+
+  assert.deepEqual(grammar.rule('entry').expression, {
+    kind: 'seq',
+    items: [
+      G.capture('name', G.ref('ID')),
+      G.capture('values', G.capture('non_greedy', G.repeat0(G.ref('item')))),
+      G.ref('literalRange'),
+      G.ref('item'),
+    ],
+  });
+  assert.deepEqual(grammar.rule('item').expression, {
+    kind: 'choice',
+    items: [G.any(), G.charClass([character(';')], true), G.charClass([character('x')], true)],
+    ordered: false,
+  });
+});
+
+test('skips lexer mode declarations', () => {
+  const grammar = importAntlr(fixture('lexer-mode.g4'));
+
+  assert.equal(grammar.startRule()?.name, 'STRING_TEXT');
+  assert.deepEqual(grammar.ruleNames(), ['STRING_TEXT']);
+  assert.deepEqual(
+    grammar.rule('STRING_TEXT').expression,
+    G.repeat1(G.charClass([character('"')], true)),
+  );
+});
+
+test('unresolved references remain visible on imported grammar', () => {
+  const grammar = importAntlr('grammar Missing; start : missing ;');
+
+  assert.deepEqual(grammar.rule('start').expression, G.ref('missing'));
+  assert.ok(grammar.undefinedNonterminals().includes('missing'));
+});
+
+test('skips inline comments before sequence boundaries', () => {
+  const grammar = importAntlr(`grammar Comments;
+         start : 'a' // first branch
+             | ('b' /* group end */) // second branch
+             ;`);
+
+  assert.deepEqual(grammar.rule('start').expression, {
+    kind: 'choice',
+    items: [G.literal('a'), G.literal('b')],
+    ordered: false,
+  });
+});
+
+test('malformed ANTLR reports parse error', () => {
+  assert.throws(
+    () => importAntlr('grammar Bad; start : ( missing ;'),
+    (error) => error instanceof GrammarImportError && error.kind === 'parse' &&
+      error.format === 'antlr',
+  );
+});
+
+test('unsupported rule prelude reports unsupported error', () => {
+  assert.throws(
+    () => importAntlr('grammar Bad; rule [int value] : \'x\' ;'),
+    (error) => error instanceof GrammarImportError && error.kind === 'unsupported' &&
+      error.format === 'antlr' && error.construct === 'rule arguments',
+  );
+});
+
+test('imported ANTLR grammar survives a serialization round trip', () => {
+  // The Rust integration test round-trips the grammar through links; the
+  // JavaScript grammar round-trips through its serialized form.
+  const grammar = importAntlr(fixture('covering.g4'));
+  const restored = deserializeGrammar(serializeGrammar(grammar));
+
+  assert.deepEqual(restored.normalized(), grammar.normalized());
+});
+
+// Rendered rules and error messages recorded from the Rust importer by
+// experiments/antlr-parity.
+test('renders and rejects ANTLR sources exactly like the Rust importer', () => {
+  const grammar = importAntlr(fixture('covering.g4'));
+  assert.deepEqual(grammar.ruleNames().map((name) => renderGrammarRule(grammar.rule(name))), [
+    'normal seq(capture("name", ref(ID)), capture("values", capture("non_greedy", repeat0(ref(item)))), ref(literalRange), ref(item))',
+    'normal choice(any, notClass(char(";")), notClass(char("x")))',
+    'normal range("a", "z")',
+    'token class(range("a", "z"), range("0", "9"), char("_"))',
+    'silent class(range("0", "9"))',
+    'token seq(literal("//"), repeat0(notClass(char("\\r"), char("\\n"))))',
+    'token literal("a")',
+    'token ref(ACTIONED)',
+  ]);
+
+  const errors = [
+    ['grammar Bad; start : ( missing ;', 'antlr import parse error: expected \')\' at byte 31'],
+    ['grammar Bad; start : \'ab\'..\'z\' ;', 'antlr import parse error: range start "ab" must contain one character at byte 21'],
+    ['grammar Bad; start : \'x\' # ;', 'antlr import parse error: expected alternative label at byte 27'],
+    ['grammar Empty;', 'antlr import parse error: ANTLR grammar does not contain rules'],
+    ['grammar Bad; rule [int x] : \'x\' ;', 'antlr import unsupported construct: rule arguments'],
+    ['grammar Bad; start : \'é日\' § ;', 'antlr import parse error: unexpected character \'§\' at byte 29'],
+    ['grammar Bad; start : \'x\u0301\'..\'z\' ;', 'antlr import parse error: range start "x\\u{301}" must contain one character at byte 21'],
+    ['lexer grammar Esc;\nA : \'\\uD800\' ;', 'antlr import parse error: invalid unicode escape at byte 23'],
+    ['grammar D;\nr : \'r\' ;\nmode INSIDE', 'antlr import parse error: expected \';\' after directive at byte 0'],
+  ];
+  for (const [source, message] of errors) {
+    assert.throws(() => importAntlr(source), (error) => error.message === message, source);
+  }
+});
+
+test('~ complements a set of characters and matches one character outside it', async () => {
+  const grammar = importAntlr(fixture('set-complement.g4'));
+  assert.deepEqual(
+    grammar.rule('STRING').expression.items[1],
+    G.repeat0({ kind: 'choice', items: [G.literal('""'), G.charClass([character('"')], true)], ordered: false }),
+  );
+  assert.deepEqual(grammar.rule('SET').expression, G.seq(
+    G.charClass([character('a'), range('b', 'c'), character('d'), { kind: 'category', value: 'Nd' }], true),
+    G.not(G.literal('xy')),
+  ));
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('"café, é""x"""').ok, true);
+  assert.equal(parser.parseTree('"open').ok, false);
+});
+
+test('imports the lexer features the grammars-v4 grammars use', async () => {
+  const grammar = importAntlr(fixture('lexer-features.g4'));
+  assert.equal(grammar.rule('doc').doc, '// read up to the end; alternative Items');
+  assert.deepEqual(grammar.rule('doc').expression, G.seq(G.repeat1(G.ref('ITEM')), G.not(G.any())));
+  assert.deepEqual(grammar.rule('ITEM').expression.items, [
+    range('A', 'Z'),
+    { kind: 'category', value: 'Nd' },
+    { kind: 'script', value: 'Greek' },
+  ]);
+  assert.deepEqual([...grammar.rules.values()].map((rule) => rule.channel ?? null), [null, null, 'skip', 'HIDDEN']);
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('AB 1 α # a comment').ok, true);
+  assert.equal(parser.parseTree('AB a').ok, false);
+
+  for (const [source, message] of [
+    ['grammar P; a : [\\p{Emoji}] ;', 'antlr import unsupported construct: Unicode property Emoji'],
+    ['grammar P; a : [\\P{L}] ;', 'antlr import unsupported construct: negated Unicode property in character set'],
+  ]) {
+    assert.throws(() => importAntlr(source), (error) => error.message === message, source);
+  }
+});
+
+test('left-recursive alternatives climb by precedence, with surrogate sets and numeric channels', async () => {
+  const grammar = importAntlr(fixture('precedence.g4'));
+  const binary = (operator) => G.seq(G.ref('expr'), G.literal(operator), G.ref('expr'));
+  assert.deepEqual(grammar.rule('expr').expression.items, [
+    { kind: 'precedence', level: 4, associativity: 'right', item: binary('^') },
+    { kind: 'precedence', level: 3, associativity: 'left', item: binary('*') },
+    { kind: 'precedence', level: 2, associativity: 'left', item: binary('+') },
+    G.ref('ID'),
+  ]);
+  assert.deepEqual(grammar.rule('ID').expression, G.repeat1(G.charClass([range('\u0000', '@')], true)));
+  assert.deepEqual(grammar.rule('LONE').expression, G.charClass([]));
+  assert.equal(grammar.rule('NL').channel, '2');
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('a^b^c*d+é').ok, true);
+  assert.equal(parser.parseTree('a+').ok, false);
+
+  for (const [source, message] of [
+    ['grammar P; e : <assoc=up> e \'x\' e | \'y\' ;', 'antlr import unsupported construct: associativity up'],
+    ['grammar P; e : [] ;', 'antlr import parse error: character class must not be empty at byte 15'],
+  ]) {
+    assert.throws(() => importAntlr(source), (error) => error.message === message, source);
+  }
+});
+
+test('caseInsensitive options match either case, and rule preludes join the doc', async () => {
+  const grammar = importAntlr(fixture('case-insensitive.g4'));
+  assert.deepEqual(grammar.rule('ECHO').expression, G.literalInsensitive('echo'));
+  assert.deepEqual(grammar.rule('WORD').expression, G.seq(
+    G.charClass([range('a', 'c'), range('A', 'C')]),
+    G.repeat1(G.charClass([range('x', 'z'), character('_'), range('X', 'Z')])),
+  ));
+  assert.deepEqual(grammar.rule('NAME').expression, G.repeat1(G.charClass([range('a', 'z')])));
+  assert.equal(grammar.rule('TAGGED').doc, 'dropped returns [int count]; dropped locals [int indexBefore = -1]');
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('EcHo Bx_Z <abc>').ok, true);
+  assert.equal(parser.parseTree('<ABC>').ok, false);
+
+  for (const [source, message] of [
+    ['grammar P; r throws : \'x\' ;', 'antlr import parse error: expected exception name at byte 20'],
+    ['grammar P; r locals : \'x\' ;', 'antlr import parse error: expected \':\' before rule body at byte 13'],
+  ]) {
+    assert.throws(() => importAntlr(source), (error) => error.message === message, source);
+  }
+});
+
+test('a -> type(NAME) command lets a rule match where NAME does, in both runtimes', async () => {
+  const grammar = importAntlr(fixture('retype.g4'));
+  assert.deepEqual(grammar.rule('NL').expression, G.choice(
+    G.seq(G.optional(G.literal('\r')), G.literal('\n')),
+    G.ref('COMMENT'),
+  ));
+  assert.equal(grammar.rule('NL').doc, 'also COMMENT, which -> type(NL) retypes');
+  assert.equal(grammar.rule('COMMENT').doc, '-> type(NL)');
+  assert.deepEqual(grammar.rule('WORD').expression, G.choice(G.ref('NAME'), G.ref('NUMBER')));
+  assert.equal(grammar.rule('WORD').kind, 'token');
+  assert.equal(grammar.ruleNames().at(-1), 'WORD');
+  assert.equal(grammar.rule('HIDDEN_NOTE').channel, 'HIDDEN');
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('ab 12 # note\ncd\n').ok, true);
+  assert.equal(parser.parseTree('ab ; cd\n').ok, false);
+});

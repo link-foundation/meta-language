@@ -293,7 +293,6 @@ const fn uses_owned_child_links(link: &Link) -> bool {
 }
 
 fn language_matches(source_language: Option<&str>, target_language: &str) -> bool {
-    source_language.map_or(true, |source_language| {
-        source_language.eq_ignore_ascii_case(target_language)
-    })
+    source_language
+        .is_none_or(|source_language| source_language.eq_ignore_ascii_case(target_language))
 }

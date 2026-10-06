@@ -1,27 +1,142 @@
+export * from './query-algebra.js';
+
+export type DecoratorLevel =
+  | 'importer'
+  | 'grammar-rule'
+  | 'merge-decision'
+  | 'concept-mapping'
+  | 'executor'
+  | 'recovery'
+  | 'cst-to-ast'
+  | 'transformation'
+  | 'emitter'
+  | 'translation-rule';
+
+export const DECORATOR_LEVELS: readonly DecoratorLevel[];
+
+export type DecoratorRecord = Record<string, string>;
+
+export type DecoratorAction =
+  | { op: 'set'; field: string; value: string }
+  | { op: 'replace'; field: string; from: string; to: string }
+  | { op: 'drop' };
+
+export interface Decorator {
+  readonly id: string;
+  readonly level: DecoratorLevel;
+  readonly order: number;
+  readonly when: ReadonlyArray<readonly [string, string]>;
+  readonly actions: readonly DecoratorAction[];
+}
+
+export interface DecoratorSpec {
+  id: string;
+  level: DecoratorLevel;
+  order?: number;
+  when?: Array<[string, string]>;
+  actions: DecoratorAction[];
+}
+
+export class DecoratorError extends Error {}
+
+export function decorator(spec: DecoratorSpec): Decorator;
+
+export class DecoratorSet {
+  constructor(decorators?: Array<Decorator | DecoratorSpec>);
+  readonly decorators: readonly Decorator[];
+  readonly size: number;
+  static empty(): DecoratorSet;
+  static fromLino(text: string): DecoratorSet;
+  ids(): string[];
+  add(...decorators: Array<Decorator | DecoratorSpec>): DecoratorSet;
+  remove(id: string): DecoratorSet;
+  forLevel(level: DecoratorLevel): Decorator[];
+  has(level: DecoratorLevel): boolean;
+  decorate(level: DecoratorLevel, record: DecoratorRecord): DecoratorRecord | null;
+  decorateAll(level: DecoratorLevel, records: DecoratorRecord[]): DecoratorRecord[];
+  toLino(): string;
+}
+
+export type DecoratorInput = DecoratorSet | Array<Decorator | DecoratorSpec> | null | undefined;
+
+/** The options every decorated hook takes. */
+export interface DecoratorOptions {
+  decorators?: DecoratorInput;
+}
+
+export function decoratorSet(decorators: DecoratorInput): DecoratorSet;
+export function decorateGrammar(grammar: Grammar, decorators: DecoratorInput, level?: 'importer' | 'grammar-rule'): Grammar;
+export function decorateSyntaxTree(tree: SyntaxTreeNode | null, decorators: DecoratorInput): SyntaxTreeNode | null;
+
+export type SelfTranslationLanguage = 'JavaScript' | 'TypeScript' | 'Rust';
+
+/** The languages self-translation reads and writes. */
+export const SELF_TRANSLATION_LANGUAGES: readonly SelfTranslationLanguage[];
+
+export class SelfTranslationError extends Error {}
+
+/** The self-translation language `language` (a name or file extension) names, or `null`. */
+export function selfTranslationLanguage(language: string): SelfTranslationLanguage | null;
+
+export type SelfTranslationStatus = 'kept' | 'translated' | 'restored' | 'comment' | 'provenance' | 'carried';
+
+/** One top-level source item and what self-translation did with it. */
+export interface SelfTranslationItem {
+  readonly term: string;
+  readonly start: number;
+  readonly end: number;
+  readonly status: SelfTranslationStatus;
+  readonly reason: string | null;
+}
+
+export interface SelfTranslation {
+  readonly sourceLanguage: SelfTranslationLanguage;
+  readonly targetLanguage: SelfTranslationLanguage;
+  readonly code: string;
+  readonly items: readonly SelfTranslationItem[];
+}
+
+/**
+ * Translates one of meta-language's own modules between JavaScript,
+ * TypeScript and Rust through links: same-language translation is byte for
+ * byte, and translating an unedited translation back restores the source.
+ */
+export function selfTranslate(source: string, from: string, to: string): SelfTranslation;
+
 export type LinkTypeValue =
   | 'Concept'
+  | 'Document'
   | 'Dynamic'
   | 'Field'
+  | 'Grammar'
   | 'Language'
   | 'Object'
+  | 'Reference'
+  | 'Region'
   | 'Relation'
   | 'Semantic'
   | 'SourceToken'
   | 'Syntax'
-  | 'Trivia';
+  | 'Trivia'
+  | 'Type';
 
 export const LinkType: Record<string, LinkTypeValue> & {
   Concept: 'Concept';
+  Document: 'Document';
   Dynamic: 'Dynamic';
   Field: 'Field';
+  Grammar: 'Grammar';
   Language: 'Language';
   Object: 'Object';
+  Reference: 'Reference';
+  Region: 'Region';
   Relation: 'Relation';
   Semantic: 'Semantic';
   SourceToken: 'SourceToken';
   Token: 'SourceToken';
   Syntax: 'Syntax';
   Trivia: 'Trivia';
+  Type: 'Type';
 };
 export const ApiOperation: Record<string, string>;
 export const ApiStyle: Record<string, string | string[]>;
@@ -251,6 +366,210 @@ export function lowerSql(
 export const lowerSQL: typeof lowerSql;
 export const lower_sql: typeof lowerSql;
 
+export interface GrammarProvenance {
+  id: string;
+  version: string;
+  parserSha256: string;
+}
+
+export interface LanguageCatalogEntry {
+  name: string;
+  family: string;
+  aliases: string[];
+  extensions: string[];
+  grammars: GrammarProvenance[];
+}
+
+export interface ParseGrammar extends GrammarProvenance {
+  language: string;
+}
+
+export const LANGUAGE_CATALOG: { readonly languages: readonly LanguageCatalogEntry[] };
+export function languageEntry(language: string): LanguageCatalogEntry | undefined;
+export function canonicalLanguageName(language: string): string | undefined;
+export function languageCandidatesForPath(path: string): string[];
+export function languageForPath(path: string): string | undefined;
+export function grammarProvenance(language: string): readonly GrammarProvenance[];
+
+/** Whether a canonical name is a concept (a noun phrase) or an operation (a verb phrase). */
+export type ConceptRole = 'concept' | 'operation';
+
+/** The name a source (a grammar format, a programming language, a surface) gives a concept. */
+export interface SourceAlias {
+  readonly source: string;
+  readonly name: string;
+}
+
+/** A concept whose phrase is a synonym of another's, with what distinguishes them. */
+export interface ConceptDistinction {
+  readonly id: string;
+  readonly reason: string;
+}
+
+/** The record of one canonical concept or operation (parity/naming/canonical-concepts.json). */
+export interface ConceptRecord {
+  readonly id: string;
+  readonly phrase: string;
+  readonly role: ConceptRole;
+  readonly definition: string;
+  readonly constraints: readonly string[];
+  readonly sourceAliases: readonly SourceAlias[];
+  readonly formerNames: readonly string[];
+  readonly represents?: string;
+  readonly distinctFrom?: readonly ConceptDistinction[];
+}
+
+export interface ConceptRecordSeedReport {
+  concepts: number;
+  links: number;
+}
+
+export interface ConceptOntologyImportReport {
+  concepts: number;
+  assigned: number;
+  renamed: number;
+  aliasLinks: number;
+  syntaxMappings: number;
+}
+
+export const CONCEPT_RECORDS: readonly ConceptRecord[];
+export const FORMER_CONCEPT_ID_VOCABULARY: 'meta-language';
+export const FORMER_CONCEPT_IDS: readonly (readonly [former: string, current: string])[];
+export function currentConceptId(id: string): string;
+export function conceptRecords(): readonly ConceptRecord[];
+export function conceptRecord(name: string): ConceptRecord | undefined;
+export function conceptRecordsForSourceName(source: string, name: string): ConceptRecord[];
+export function insertConceptRecord(
+  network: LinkNetwork,
+  nameOrRecord: string | ConceptRecord,
+): { concept: LinkId; links: number };
+
+/** Two concepts that must never be merged, with the reason. */
+export interface RequiredDistinction {
+  readonly concepts: readonly [string, string];
+  readonly reason: string;
+}
+
+export type CorrespondenceRelation = 'shared' | 'distinct' | 'ambiguous' | 'unknown';
+
+/** The relation between two source spellings and what justifies it. */
+export interface ConceptCorrespondence {
+  relation: CorrespondenceRelation;
+  first: string[];
+  second: string[];
+  shared: string | null;
+  justification: string | null;
+  correspondence: string | null;
+}
+
+export interface ConceptDistinctionProblem {
+  kind: string;
+  subject: string;
+  message: string;
+}
+
+export interface ConceptCorrespondenceOptions {
+  within?: string;
+  records?: readonly ConceptRecord[];
+  register?: unknown;
+}
+
+/** One use of precedence in a grammar and the concept it expresses. */
+export interface PrecedenceUse {
+  rule: string;
+  label: string;
+  concept: 'grammar.lexical-precedence' | 'grammar.syntactic-precedence';
+}
+
+export const REQUIRED_CONCEPT_DISTINCTIONS: readonly RequiredDistinction[];
+export const REQUIRED_FOUNDATION_DISTINCTIONS: readonly (readonly [string, string])[];
+export function sourceMeanings(alias: SourceAlias, options?: ConceptCorrespondenceOptions): string[];
+export function conceptCorrespondence(first: SourceAlias, second: SourceAlias, options?: ConceptCorrespondenceOptions): ConceptCorrespondence;
+export function checkConceptDistinctions(records?: readonly ConceptRecord[], register?: unknown): ConceptDistinctionProblem[];
+/** The concept a grammar expression denotes; a choice is ordered or unordered choice. */
+export function grammarExprConceptId(expression: { kind: string; ordered?: boolean }): string;
+export function grammarPrecedenceConcepts(grammar: Grammar): PrecedenceUse[];
+
+/** A rule of a native grammar and the concept it names. */
+export interface NativeRuleConcept {
+  rule: string;
+  concept: string | null;
+}
+
+export type NativeConceptProblemKind =
+  | 'rule-without-concept'
+  | 'concept-without-record'
+  | 'rule-without-alias'
+  | 'alias-without-rule'
+  | 'namespace-mismatch';
+
+export interface NativeConceptProblem {
+  kind: NativeConceptProblemKind;
+  grammar: string;
+  rule: string;
+  concept: string | null;
+}
+
+export interface NativeConceptCheckOptions {
+  records?: readonly ConceptRecord[];
+  grammars?: readonly string[];
+  ruleConcepts?: (grammar: string) => NativeRuleConcept[];
+}
+
+/** The per-language reuse report of the native grammars. */
+export interface NativeConceptReuse {
+  grammars: {
+    grammar: string;
+    language: string;
+    rules: number;
+    shared: { rule: string; concept: string; languages: string[] }[];
+    specific: { rule: string; concept: string }[];
+  }[];
+  concepts: { concept: string; languages: string[]; shared: boolean }[];
+}
+
+export type ConstructTranslationRelation = 'translated' | 'untranslatable' | 'ambiguous' | 'unknown';
+
+export interface ConstructTranslation {
+  relation: ConstructTranslationRelation;
+  concept: string | null;
+  rules: string[];
+}
+
+/** A node of a native parse tree whose kind is a rule of the grammar. */
+export interface ConstructTree {
+  kind: string;
+  concept: string;
+  children: ConstructTree[];
+}
+
+export function nativeGrammarIds(): string[];
+export function nativeGrammarLanguage(id: string): string;
+export function nativeGrammarSource(id: string): string;
+export function nativeGrammarRuleConcepts(id: string): NativeRuleConcept[];
+export function checkNativeGrammarConcepts(options?: NativeConceptCheckOptions): NativeConceptProblem[];
+export function nativeGrammarConceptReuse(options?: { records?: readonly ConceptRecord[]; grammars?: readonly string[] }): NativeConceptReuse;
+export function translateNativeConstruct(
+  from: string,
+  rule: string,
+  to: string,
+  options?: { records?: readonly ConceptRecord[] } & DecoratorOptions,
+): ConstructTranslation;
+export function nativeConstructTree(id: string, source: string): ConstructTree;
+export function translateNativeConstructTree(
+  tree: ConstructTree,
+  from: string,
+  to: string,
+  options?: { records?: readonly ConceptRecord[] },
+): { tree: ConstructTree | null; problems: { kind: string; concept: string | null; relation: ConstructTranslationRelation }[] };
+
+/** Node kind and field names of a default grammar; `fields` starts at field id 1. */
+export interface GrammarNames {
+  nodeKinds: string[];
+  fields: string[];
+}
+export function grammarNames(grammarId: string): GrammarNames | undefined;
+
 export class LinkId {
   constructor(value: number | string | LinkId);
   static from(value: number | string | LinkId): LinkId;
@@ -258,6 +577,7 @@ export class LinkId {
   asU64(): number;
   equals(other: number | string | LinkId): boolean;
 }
+export type LinkIdValue = LinkId | number | string;
 
 export class ByteRange {
   constructor(start?: number, end?: number);
@@ -279,22 +599,407 @@ export class SourceSpan {
   end: Point;
 }
 
+export class LinkFlags {
+  constructor(options?: {
+    isError?: boolean;
+    hasError?: boolean;
+    isMissing?: boolean;
+    isExtra?: boolean;
+  });
+  isError: boolean;
+  hasError: boolean;
+  isMissing: boolean;
+  isExtra: boolean;
+  static clean(): LinkFlags;
+  withError(value?: boolean): LinkFlags;
+  withMissing(value?: boolean): LinkFlags;
+  withExtra(value?: boolean): LinkFlags;
+  hasRecoveryIssue(): boolean;
+}
+
 export class LinkMetadata {
   static new(): LinkMetadata;
   definition?: string;
   span?: SourceSpan;
+  flags: LinkFlags;
   withLinkType(linkType: LinkTypeValue): LinkMetadata;
   withTerm(term: string): LinkMetadata;
   withLanguage(language: string): LinkMetadata;
   withNamed(named?: boolean): LinkMetadata;
   withDefinition(definition?: string): LinkMetadata;
-  withSpan(span: SourceSpan): LinkMetadata;
+  withSpan(span: SourceSpan | undefined): LinkMetadata;
+  withFlags(flags: LinkFlags): LinkMetadata;
 }
+
+export type LanguageParserFunction = (
+  text: string,
+  language: string,
+  configuration: ParseConfiguration,
+) => LinkNetwork;
+
+export interface LanguageParserObject {
+  parseSource(
+    text: string,
+    language: string,
+    configuration: ParseConfiguration,
+  ): LinkNetwork;
+}
+
+export type LanguageParser = LanguageParserFunction | LanguageParserObject;
+
+export class ParserRegistry {
+  constructor(fallback?: LanguageParserFunction);
+  register(language: string, parser: LanguageParser): ParserRegistry;
+  withParser(language: string, parser: LanguageParser): ParserRegistry;
+  with_parser(language: string, parser: LanguageParser): ParserRegistry;
+  parserFor(language: string): LanguageParser | undefined;
+  parser_for(language: string): LanguageParser | undefined;
+  isRegistered(language: string): boolean;
+  is_registered(language: string): boolean;
+  size(): number;
+  len(): number;
+  isEmpty(): boolean;
+  is_empty(): boolean;
+  parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
+}
+
+export const LANGUAGE_REPRESENTATION_SCHEMA_VERSION: 2;
+export const RepresentationLevel: {
+  readonly Preserved: 'preserved';
+  readonly ConcreteSyntax: 'concrete-syntax';
+  readonly Parsed: 'parsed';
+  readonly Resolved: 'resolved';
+  readonly Elaborated: 'elaborated';
+  readonly Opaque: 'opaque';
+  readonly NotApplicable: 'not-applicable';
+  readonly Unavailable: 'unavailable';
+};
+export type RepresentationLevelValue =
+  typeof RepresentationLevel[keyof typeof RepresentationLevel];
+
+export interface LanguageSupport {
+  readonly schemaVersion: 2;
+  readonly name: 'JavaScript' | 'Rust' | 'Lean' | 'Rocq';
+  readonly aliases: readonly string[];
+  readonly version: string;
+  readonly edition: string;
+  readonly extensions: readonly string[];
+  readonly sourceBytes: RepresentationLevelValue;
+  readonly concreteSyntax: RepresentationLevelValue;
+  readonly bindingResolution: RepresentationLevelValue;
+  readonly typeElaboration: RepresentationLevelValue;
+  readonly dynamicExtensions: RepresentationLevelValue;
+  readonly proofSyntax: RepresentationLevelValue;
+  readonly emitter: 'ordered source-token emitter';
+}
+
+export const TranslationSupport: {
+  readonly PortableEncoding: 'portable-encoding';
+  readonly SemanticSubset: 'semantic-subset';
+  readonly SemanticTranslation: 'semantic-translation';
+};
+export type TranslationSupportValue =
+  typeof TranslationSupport[keyof typeof TranslationSupport];
+
+export interface TranslationContract {
+  readonly schemaVersion: 2;
+  readonly source: LanguageSupport['name'];
+  readonly target: LanguageSupport['name'];
+  readonly support: TranslationSupportValue;
+  readonly observation: string;
+  readonly requiredRuntime: string;
+  readonly encoding: string;
+  readonly assumptions: readonly string[];
+  readonly obligation: string | null;
+}
+
+export function languageSupport(languageName: string): LanguageSupport | undefined;
+export function fourLanguageSupport(): readonly LanguageSupport[];
+export function translationContracts(): readonly TranslationContract[];
+export function translationContract(
+  sourceLanguage: string,
+  targetLanguage: string,
+): TranslationContract | undefined;
+
+export const SEMANTIC_OBSERVATION: string;
+export const SEMANTIC_ENCODING: string;
+
+export interface TranslationSpan {
+  readonly start: number;
+  readonly end: number;
+}
+
+export interface TranslationMapping {
+  readonly kind: string;
+  readonly source: string;
+  readonly target: string;
+  readonly sourceSpan: TranslationSpan | null;
+}
+
+export interface TranslationEncoding {
+  readonly id: string;
+  readonly statement: string;
+}
+
+export interface TranslationAssumption {
+  readonly id: string;
+  readonly statement: string;
+  readonly details: readonly string[];
+}
+
+export interface TranslationObligation {
+  readonly source: string;
+  readonly target: string;
+  readonly kind: 'theorem' | 'assertion';
+  readonly closedGoal: boolean;
+  readonly discharge: 'target-kernel' | 'source-kernel' | 'runtime-assertion';
+  readonly check: 'bounded' | null;
+}
+
+export interface TranslationProvenance {
+  readonly translator: string;
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly sourceSha256: string;
+  readonly sourceBytes: number;
+  readonly header: string;
+}
+
+export interface SemanticTranslation {
+  readonly entry: string | null;
+  readonly observationProcedure: string;
+  readonly encodings: readonly TranslationEncoding[];
+  readonly assumptions: readonly TranslationAssumption[];
+  readonly obligations: readonly TranslationObligation[];
+  readonly mappings: readonly TranslationMapping[];
+  readonly runtimeDependencies: readonly string[];
+  readonly provenance: TranslationProvenance;
+}
+
+export interface TranslationDiagnostic {
+  readonly kind: 'syntax' | 'type' | 'unsupported';
+  readonly message: string;
+  readonly span: TranslationSpan | null;
+}
+
+export interface ProgramTranslation {
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly targetLanguage: LanguageSupport['name'];
+  readonly code: string;
+  readonly contract: TranslationContract;
+  /** Present when the program is in the portable core and was translated. */
+  readonly semantics: SemanticTranslation | null;
+  /** Why the program stayed outside the portable core, when it did. */
+  readonly diagnostic: TranslationDiagnostic | null;
+}
+
+export interface ReadTranslationProvenance {
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly sourceSha256: string;
+  readonly sourceBytes: number;
+}
+
+export interface DecodedProgramTranslation {
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly source: string;
+}
+
+export function translateProgram(
+  source: string,
+  sourceLanguage: string,
+  targetLanguage: string,
+): ProgramTranslation;
+export function decodeProgramTranslation(
+  code: string,
+  targetLanguage: string,
+): DecodedProgramTranslation;
+export function readTranslationProvenance(
+  code: string,
+  targetLanguage: string,
+): ReadTranslationProvenance;
+
+export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
+export const PROGRAM_SNAPSHOT_SCHEMA_VERSION: 1;
+export const SEMANTIC_CONSTRUCTS: readonly string[];
+
+export interface ProgramProjectSource {
+  path: string;
+  source: string;
+}
+
+export interface ProgramProjectContext {
+  root?: string;
+  files?: readonly string[];
+  dependencies?: readonly string[];
+  extensions?: readonly string[];
+  /** The analyzed program's path within the project; enables project-aware semantics. */
+  entry?: string;
+  /** The project's files (manifests and modules) by project-relative path. */
+  sources?: readonly ProgramProjectSource[];
+}
+
+export interface NormalizedProgramProjectContext {
+  readonly root: string;
+  readonly files: readonly string[];
+  readonly dependencies: readonly string[];
+  readonly extensions: readonly string[];
+  readonly entry?: string;
+  readonly sources?: readonly ProgramProjectSource[];
+}
+
+/** An entry module request resolved to a project file. */
+export interface ProgramProjectModule extends ProgramSourceRange {
+  readonly request: string;
+  readonly module: string;
+  readonly file: string;
+}
+
+/** A fact read from a project file: manifests, packages, dependencies, load paths. */
+export interface ProgramProjectFact extends ProgramSourceRange {
+  readonly kind: string;
+  readonly name: string;
+  readonly file: string;
+}
+
+/** An entry range linked to the declaration it names, identified as `<file>#<qualified name>`. */
+export interface ProgramProjectReference extends ProgramSourceRange {
+  readonly role: 'import' | 'reference' | 'attribute' | 'macro' | 'notation' | 'template-tag' | 'tactic' |
+    'assertion' | 'const-assertion';
+  readonly name: string;
+  readonly symbol: string;
+  readonly targetKind: string;
+  readonly traits: readonly string[];
+  readonly file: string;
+  readonly declaration: ProgramSourceRange;
+}
+
+/** A macro, notation or tagged template use with the source it expands to. */
+export interface ProgramExpansion extends ProgramSourceRange {
+  readonly name: string;
+  readonly kind: 'macro-rules' | 'notation' | 'tagged-template';
+  readonly expansion: string;
+  readonly target: string;
+}
+
+export interface ProgramSourceRange {
+  readonly start: number;
+  readonly end: number;
+}
+
+export interface ProgramSnapshotFragment {
+  readonly byteStart: number;
+  readonly byteEnd: number;
+  readonly text: string;
+}
+
+export interface ProgramSnapshot {
+  readonly schemaVersion: 1;
+  readonly language: LanguageSupport['name'];
+  readonly project: NormalizedProgramProjectContext;
+  readonly fragments: readonly ProgramSnapshotFragment[];
+}
+
+export interface ProgramScope extends ProgramSourceRange {
+  readonly id: string;
+  readonly parent: string | null;
+  readonly depth: number;
+}
+
+export interface ProgramBinding {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: string;
+  readonly scope: string;
+  readonly declaration: ProgramSourceRange;
+  readonly references: readonly ProgramSourceRange[];
+}
+
+export interface ProgramConstruct {
+  readonly kind: string;
+  readonly status: 'represented' | 'not-present' | 'not-applicable' | 'unavailable';
+  readonly evidence: readonly ({ term?: string; kind?: string; name?: string; file?: string } & ProgramSourceRange)[];
+  readonly rationale?: string;
+}
+
+export class BindingRenameError extends Error {}
+export class ProgramTransformationError extends Error {}
+
+export class ProgramRepresentation {
+  static fromSnapshot(snapshot: ProgramSnapshot | string): ProgramRepresentation;
+  readonly schemaVersion: 1;
+  readonly language: LanguageSupport['name'];
+  readonly source: string;
+  readonly project: NormalizedProgramProjectContext;
+  readonly network: LinkNetwork;
+  readonly scopes: readonly ProgramScope[];
+  readonly bindings: readonly ProgramBinding[];
+  readonly unresolvedReferences: readonly ({ name: string } & ProgramSourceRange)[];
+  readonly sourceMappings: readonly ({ linkId: number; term: string } & ProgramSourceRange)[];
+  readonly modules: readonly object[];
+  readonly types: readonly object[];
+  readonly extensions: readonly object[];
+  readonly proofs: readonly object[];
+  readonly diagnostics: readonly object[];
+  readonly constructs: readonly ProgramConstruct[];
+  readonly projectModules: readonly ProgramProjectModule[];
+  readonly projectFacts: readonly ProgramProjectFact[];
+  readonly projectReferences: readonly ProgramProjectReference[];
+  readonly expansions: readonly ProgramExpansion[];
+  emit(): string;
+  snapshot(): ProgramSnapshot;
+  serializeSnapshot(): string;
+  querySyntax(term: string): readonly ProgramSourceRange[];
+  query_syntax(term: string): readonly ProgramSourceRange[];
+  replace(range: ProgramSourceRange, replacement: string): ProgramRepresentation;
+  insert(offset: number, inserted: string): ProgramRepresentation;
+  delete(range: ProgramSourceRange): ProgramRepresentation;
+  clone(range: ProgramSourceRange, destination: number): ProgramRepresentation;
+  move(range: ProgramSourceRange, destination: number): ProgramRepresentation;
+  renameBinding(bindingId: string, replacement: string): ProgramRepresentation;
+  rename_binding(bindingId: string, replacement: string): ProgramRepresentation;
+  normalized(): object;
+}
+
+export function analyzeProgram(
+  source: string,
+  language: string,
+  project?: ProgramProjectContext,
+  options?: DecoratorOptions,
+): ProgramRepresentation;
+export const analyze_program: typeof analyzeProgram;
+export function constructProgram(
+  source: string,
+  language: string,
+  project?: ProgramProjectContext,
+): ProgramRepresentation;
+export function constructProgramFromFragments(
+  fragments: Iterable<unknown>,
+  language: string,
+  project?: ProgramProjectContext,
+): ProgramRepresentation;
+
+/** A reference is its name; a link is its name or null followed by its values. */
+export type LinksNotationReading = string | [string | null, ...LinksNotationReading[]];
 
 export class LinkNetwork {
   constructor();
   static parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
+  static parseLinksNotation(
+    text: string,
+    configuration?: ParseConfiguration,
+  ): { network: LinkNetwork; links: LinkId[] };
   static parseLosslessText(
+    text: string,
+    language: string,
+    configuration?: ParseConfiguration,
+  ): LinkNetwork;
+  static parseWithRegistry(
+    registry: ParserRegistry,
+    text: string,
+    language: string,
+    configuration?: ParseConfiguration,
+  ): LinkNetwork;
+  static parse_with_registry(
+    registry: ParserRegistry,
     text: string,
     language: string,
     configuration?: ParseConfiguration,
@@ -313,21 +1018,42 @@ export class LinkNetwork {
     references?: Array<LinkId | number>,
     metadata?: LinkMetadata,
   ): LinkId;
-  insertSourceToken(language: string, text: string): LinkId;
-  insertSyntaxNode(language: string, term: string, children?: Array<LinkId | number>): LinkId;
+  insertSourceToken(
+    language: string,
+    text: string,
+    span?: SourceSpan,
+    flags?: LinkFlags,
+  ): LinkId;
+  insertSyntaxNode(
+    language: string,
+    term: string,
+    children?: Array<LinkId | number>,
+    metadata?: { named?: boolean; span?: SourceSpan; flags?: LinkFlags },
+  ): LinkId;
   insertConceptExpression(concept: string, language: string, text: string): LinkId;
+  /** Assigns a concept record (by record, identity or former name) and returns its concept link. */
+  insertConceptRecord(nameOrRecord: string | ConceptRecord): LinkId;
+  /** Assigns every concept record. */
+  seedConceptRecords(): ConceptRecordSeedReport;
+  /** Merges the concepts of `source`, renaming former identities and assigning concept records. */
+  importConceptOntology(source: LinkNetwork): ConceptOntologyImportReport;
+  linksNotationReading(id: LinkId): LinksNotationReading;
+  linksNotationText(ids: LinkId[]): string;
   link(id: LinkId | number): Link | undefined;
   links(): Link[];
   len(): number;
   queryLinks(query: LinkQuery): Link[];
   find(query: LinkQuery): QueryMatch[];
-  replace(matches: QueryMatch[], rule: ReplacementRule): ReplacementReport;
+  replace(matches: QueryMatch[], rule: ReplacementRule, options?: DecoratorOptions): ReplacementReport;
   applySubstitution(rule: SubstitutionRule): SubstitutionReport;
   applyLinkCliSubstitutionText(source: string): SubstitutionReport;
   toLino(): string;
   snapshot(version: number, provenance: string): NetworkSnapshot;
   verifyFullMatch(): VerificationReport;
   reconstructText(): string;
+  embeddedRegions(): EmbeddedRegion[];
+  parseGrammars(): ParseGrammar[];
+  embedded_regions(): EmbeddedRegion[];
   reconstructBytes(): Uint8Array;
   renderSource(language: string): string;
   reconstructTextAsWithRules(
@@ -336,6 +1062,7 @@ export class LinkNetwork {
     rules: TranslationRuleSet,
   ): string;
   intoFluent(): FluentPipeline;
+  capturedText(id: LinkId | number): string;
 }
 
 export class Link {
@@ -345,7 +1072,14 @@ export class Link {
 }
 
 export class ParseConfiguration {
+  readonly triviaAttachmentPolicy: string;
+  readonly regionDetectionPolicy: RegionDetectionPolicyValue;
+  readonly accessMode: string;
   static default(): ParseConfiguration;
+  withTriviaAttachmentPolicy(policy: string): ParseConfiguration;
+  withRegionDetectionPolicy(policy: RegionDetectionPolicyValue): ParseConfiguration;
+  with_region_detection_policy(policy: RegionDetectionPolicyValue): ParseConfiguration;
+  withAccessMode(mode: string): ParseConfiguration;
 }
 
 export class LinkQuery {
@@ -435,33 +1169,512 @@ export class TranslationRuleSet {
   withRule(rule: TranslationRule): TranslationRuleSet;
   withLanguageFallback(language: string, fallback: string): TranslationRuleSet;
   with_language_fallback(language: string, fallback: string): TranslationRuleSet;
-  render(targetLanguage: string, network: LinkNetwork, rootLinkId?: LinkIdValue): string;
+  render(targetLanguage: string, network: LinkNetwork, rootLinkId?: LinkIdValue, options?: DecoratorOptions): string;
+  decorated(decorators: DecoratorInput): TranslationRuleSet;
   toLino(): string;
   toJson(): string;
   static fromLino(source: string): TranslationRuleSet;
   static fromJson(source: string | unknown): TranslationRuleSet;
 }
 
+export type GrammarRuleKind = 'normal' | 'atomic' | 'silent' | 'token' | 'terminal' | 'nonterminal';
+export type GrammarExpression =
+  | { kind: 'empty' | 'any' }
+  | { kind: 'literal' | 'literalInsensitive' | 'regex'; value: string }
+  | { kind: 'ref'; name: string; arguments?: GrammarExpression[] }
+  | { kind: 'seq'; items: GrammarExpression[] }
+  | { kind: 'choice'; items: GrammarExpression[]; ordered: boolean }
+  | { kind: 'repeat0' | 'repeat1' | 'optional' | 'and' | 'not'; item: GrammarExpression }
+  | { kind: 'repeat'; item: GrammarExpression; min: number; max: number | null }
+  | { kind: 'capture'; label: string | null; item: GrammarExpression }
+  | { kind: 'charRange'; start: string; end: string }
+  | {
+      kind: 'charClass';
+      value?: string;
+      items?: Array<
+        | { kind: 'char'; value: string }
+        | { kind: 'range'; start: string; end: string }
+        | { kind: 'category' | 'script'; value: string }
+      >;
+      negated?: boolean;
+    }
+  | {
+      kind: 'byteClass';
+      negated: boolean;
+      items: Array<{ kind: 'byte'; value: number } | { kind: 'byteRange'; start: number; end: number }>;
+    }
+  | { kind: 'precedence'; level: number; associativity: 'left' | 'right' | 'none'; item: GrammarExpression }
+  | { kind: 'namedPrecedence'; name: string; associativity: 'left' | 'right' | 'none'; item: GrammarExpression }
+  | { kind: 'dynamicPrecedence' | 'lexicalPrecedence'; level: number; item: GrammarExpression }
+  | { kind: 'longest'; items: GrammarExpression[] }
+  | { kind: 'token' | 'immediateToken' | 'missing'; item: GrammarExpression }
+  | { kind: 'alias'; name: string; item: GrammarExpression }
+  | { kind: 'parameter'; name: string }
+  | { kind: 'predicate'; item: GrammarExpression; condition: GrammarOperation }
+  | { kind: 'recover'; item: GrammarExpression; synchronize: GrammarExpression }
+  | { kind: 'embed'; language: string; item: GrammarExpression }
+  | { kind: 'expand'; name: string; arguments: GrammarExpression[] };
+
+/**
+ * One operation of the scanner, action and predicate language of
+ * docs/grammar/feature-union.md#operation-language: `operation` names the form
+ * and the remaining fields are its operands.
+ */
+export interface GrammarOperation {
+  operation: string;
+  [field: string]: unknown;
+}
+
+export interface GrammarDeclarations {
+  matching?: 'generalized' | 'peg';
+  imports?: string[];
+  modes?: string[];
+  extras?: GrammarExpression[];
+  conflicts?: string[][];
+  precedences?: Array<Array<{ kind: 'name' | 'rule'; value: string }>>;
+  macros?: Array<{ name: string; parameters: string[]; expression: GrammarExpression }>;
+  scanners?: Array<{ name: string; tokens: string[]; operations: GrammarOperation[] }>;
+}
+export interface GrammarRuleValue {
+  name: string;
+  kind: GrammarRuleKind;
+  expression: GrammarExpression;
+  parameters?: string[];
+  channel?: string;
+  modes?: string[];
+  action?: GrammarOperation[];
+  /** The id of the concept record the rule means. */
+  concept?: string;
+  /** The names the rule has in the grammars it was merged from. */
+  sourceNames?: GrammarSourceName[];
+  doc?: string;
+}
+export interface GrammarSourceName {
+  source: string;
+  name: string;
+}
+export interface NormalizedGrammar {
+  schemaVersion: 1;
+  start: string | null;
+  sourceFormat: string | null;
+  rules: GrammarRuleValue[];
+  declarations?: GrammarDeclarations;
+}
+
+export class Grammar {
+  constructor(
+    start: string | null,
+    rules: Map<string, Omit<GrammarRuleValue, 'name'> | GrammarRuleValue>,
+    sourceFormat?: string | null,
+    declarations?: GrammarDeclarations | null,
+  );
+  start: string | null;
+  sourceFormat: string | null;
+  declarations: GrammarDeclarations;
+  rules: Map<string, GrammarRuleValue>;
+  rule(name: string): GrammarRuleValue | undefined;
+  ruleNames(): string[];
+  rule_names(): string[];
+  startRule(): GrammarRuleValue | undefined;
+  start_rule(): GrammarRuleValue | undefined;
+  source_format(): string | null;
+  referencedNonterminals(): string[];
+  referenced_nonterminals(): string[];
+  undefinedNonterminals(allowed?: string[]): string[];
+  undefined_nonterminals(allowed?: string[]): string[];
+  normalized(): NormalizedGrammar;
+}
+
 export class GrammarBuilder {
   constructor(start: string);
-  terminal(name: string, expression: unknown): GrammarBuilder;
-  nonterminal(name: string, expression: unknown): GrammarBuilder;
-  build(): unknown;
-  static literal(value: string): unknown;
-  static ref(name: string): unknown;
-  static seq(...items: unknown[]): unknown;
-  static choice(...items: unknown[]): unknown;
-  static repeat0(item: unknown): unknown;
-  static repeat1(item: unknown): unknown;
-  static optional(item: unknown): unknown;
-  static charRange(start: string, end: string): unknown;
-  static charClass(value: string): unknown;
-  static any(): unknown;
+  source(format: string): GrammarBuilder;
+  rule(name: string, expression: GrammarExpression, kind?: GrammarRuleKind): GrammarBuilder;
+  terminal(name: string, expression: GrammarExpression): GrammarBuilder;
+  nonterminal(name: string, expression: GrammarExpression): GrammarBuilder;
+  build(): Grammar;
+  static empty(): GrammarExpression;
+  static literal(value: string): GrammarExpression;
+  static literalInsensitive(value: string): GrammarExpression;
+  static ref(name: string): GrammarExpression;
+  static seq(...items: GrammarExpression[]): GrammarExpression;
+  static choice(...items: GrammarExpression[]): GrammarExpression;
+  static orderedChoice(...items: GrammarExpression[]): GrammarExpression;
+  static repeat0(item: GrammarExpression): GrammarExpression;
+  static repeat1(item: GrammarExpression): GrammarExpression;
+  static repeat(item: GrammarExpression, min: number, max?: number | null): GrammarExpression;
+  static optional(item: GrammarExpression): GrammarExpression;
+  static and(item: GrammarExpression): GrammarExpression;
+  static not(item: GrammarExpression): GrammarExpression;
+  static capture(label: string | null, item: GrammarExpression): GrammarExpression;
+  static charRange(start: string, end: string): GrammarExpression;
+  static charClass(
+    value: string | Array<
+      { kind: 'char'; value: string } | { kind: 'range'; start: string; end: string }
+    >,
+    negated?: boolean,
+  ): GrammarExpression;
+  static regex(value: string): GrammarExpression;
+  static any(): GrammarExpression;
 }
 
 export const ExprBuilder: typeof GrammarBuilder;
-export function emitPeggy(grammar: unknown): string;
-export function emitJavascriptParser(grammar: unknown): string;
+export function emitPeggy(grammar: Grammar): string;
+export interface GrammarParserOptions extends DecoratorOptions {
+  /** Returns the grammar an import or an embedded language names. */
+  resolveGrammar?: (name: string) => Grammar | NormalizedGrammar | null | undefined;
+  startRule?: string;
+  maxDepth?: number;
+  stepLimit?: number;
+  memoLimit?: number;
+  /** The memo cells a parse may keep, across its runs and repair rounds (default 2000000). */
+  memoryLimit?: number;
+  ambiguity?: 'report' | 'reject';
+  recovery?: 'reject' | 'accept';
+  /** Repairs a failed parse into a tree with ERROR and MISSING leaves. */
+  errorRecovery?: boolean;
+  /** The repair points automatic recovery may add (default 32). */
+  maxRepairs?: number;
+  [option: string]: unknown;
+}
+
+export type SyntaxTreeNode =
+  | {
+      type: 'node';
+      kind: string;
+      field?: string;
+      /** An extra of a rule that builds a node. */
+      trivia?: true;
+      start: number;
+      end: number;
+      children: SyntaxTreeNode[];
+      attributes?: Record<string, string | number>;
+    }
+  | {
+      type: 'token';
+      kind: string | null;
+      field?: string;
+      trivia?: true;
+      start: number;
+      end: number;
+      attributes?: Record<string, string | number>;
+      text: string | null;
+      hex?: string;
+    }
+  | { type: 'error'; start: number; end: number; text: string | null; hex?: string; reason?: string }
+  | { type: 'missing'; kind: string | null; start: number; end: number; literal?: true }
+  | { type: 'embed'; language: string; start: number; end: number; root: SyntaxTreeNode };
+
+export interface GrammarRejection {
+  reason: 'syntax' | 'stepLimit' | 'memoryBudget' | 'nestingDepth' | 'recovered' | 'ambiguity';
+  offset?: number;
+  line?: number;
+  column?: number;
+  expected?: string[];
+  limit?: number;
+}
+
+export interface GrammarParseOutcome {
+  ok: boolean;
+  tree: SyntaxTreeNode | null;
+  ambiguities: Array<{ rule: string; start: number; end: number }>;
+  rejection: GrammarRejection | null;
+}
+
+export interface GrammarParser {
+  parse(source: string | Uint8Array, options?: GrammarParserOptions): SyntaxTreeNode;
+  parseTree(source: string | Uint8Array, options?: GrammarParserOptions): GrammarParseOutcome;
+}
+
+export class GrammarParseError extends Error {
+  constructor(rejection: GrammarRejection);
+  rejection: GrammarRejection;
+  reason: GrammarRejection['reason'];
+  offset: number | null;
+  line: number | null;
+  column: number | null;
+  expected: string[];
+}
+
+export class GrammarRuntimeError extends Error {
+  reason: 'import' | 'embed' | 'macro' | 'parameter' | 'reference' | 'declaration' | 'operation' | 'pattern';
+}
+
+export function createGrammarParser(
+  grammar: Grammar | NormalizedGrammar,
+  options?: GrammarParserOptions,
+): GrammarParser;
+export function renderSyntaxTree(node: SyntaxTreeNode): string;
+export function compileGrammar(
+  grammar: Grammar | NormalizedGrammar,
+  options?: GrammarParserOptions,
+): GrammarParser;
+export function parseWithGrammar(
+  grammar: Grammar | NormalizedGrammar,
+  source: string | Uint8Array,
+  options?: GrammarParserOptions,
+): SyntaxTreeNode;
+export function emitJavascriptParser(grammar: Grammar): string;
+export function serializeGrammar(grammar: Grammar): string;
+export function deserializeGrammar(source: string | NormalizedGrammar): Grammar;
+
+export class GrammarImportError extends Error {
+  format: string;
+  kind: 'parse' | 'unsupported';
+  construct?: string;
+}
+export function importAbnf(source: string, options?: DecoratorOptions): Grammar;
+export const import_abnf: typeof importAbnf;
+export function importAntlr(source: string, options?: DecoratorOptions): Grammar;
+export const import_antlr: typeof importAntlr;
+export function importBnf(source: string, options?: DecoratorOptions): Grammar;
+export const import_bnf: typeof importBnf;
+export function importEbnf(source: string, options?: DecoratorOptions): Grammar;
+export const import_ebnf: typeof importEbnf;
+export function importGbnf(source: string, options?: DecoratorOptions): Grammar;
+export const import_gbnf: typeof importGbnf;
+export function importLark(source: string, options?: DecoratorOptions): Grammar;
+export const import_lark: typeof importLark;
+export function importPest(source: string, options?: DecoratorOptions): Grammar;
+export const import_pest: typeof importPest;
+export function importTreeSitterJson(source: string | unknown, options?: DecoratorOptions): Grammar;
+export const import_tree_sitter_json: typeof importTreeSitterJson;
+
+export class GrammarEmitError extends Error {
+  format: string;
+  kind: 'unsupported';
+  construct: string;
+}
+export interface GrammarEmitReport {
+  lossy: string[];
+}
+export interface GrammarEmitResult {
+  source: string;
+  report: GrammarEmitReport;
+}
+export function emitAbnf(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
+export const emit_abnf: typeof emitAbnf;
+export function emitAntlr(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
+export const emit_antlr: typeof emitAntlr;
+export function emitBnf(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
+export const emit_bnf: typeof emitBnf;
+export function emitEbnf(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
+export const emit_ebnf: typeof emitEbnf;
+export function emitGbnf(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
+export const emit_gbnf: typeof emitGbnf;
+export function emitLark(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
+export const emit_lark: typeof emitLark;
+export function emitPest(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
+export const emit_pest: typeof emitPest;
+export function emitTreeSitterJson(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
+export const emit_tree_sitter_json: typeof emitTreeSitterJson;
+
+export const GRAMMAR_MERGE_METHOD: 'recursive-structural-bisimulation';
+export interface GrammarMergeSource {
+  id: string;
+  language: string;
+  edition?: string;
+  precedence?: number;
+  grammar: Grammar;
+}
+export interface GrammarMergeDecision {
+  kind: 'merged' | 'kept-unique' | 'renamed-for-collision' | 'homonym-kept-distinct' | 'uncertain' | 'declaration-conflict';
+  name: string;
+  members: string[];
+  basis: string;
+  definition: string | null;
+}
+export interface GrammarMergeNomination {
+  basis: 'name-similarity' | 'identical-samples';
+  members: [string, string];
+  outcome: 'proven' | 'unproven';
+}
+export interface GrammarMergeAlternative {
+  reason: 'start-rule' | 'distinct-meaning' | 'uncertain-match' | 'edition' | 'declaration-conflict';
+  name: string;
+  options: string[];
+}
+export interface GrammarMergeFailure {
+  kind: 'unresolved-required-equivalence';
+  members: [string, string];
+  reason: 'unknown-rule' | 'different-language-or-edition' | 'not-proven';
+}
+export interface MergedGrammarGroup {
+  key: string;
+  language: string;
+  edition: string;
+  fingerprint: string;
+  sources: string[];
+  grammar: Grammar;
+  identities: Record<string, string>;
+  decisions: GrammarMergeDecision[];
+  nominations: GrammarMergeNomination[];
+  alternatives: GrammarMergeAlternative[];
+}
+export interface GrammarMergeResult {
+  status: 'complete' | 'incomplete';
+  groups: MergedGrammarGroup[];
+  alternatives: GrammarMergeAlternative[];
+  failures: GrammarMergeFailure[];
+  reused: string[];
+  recomputed: string[];
+}
+export interface GrammarMergeOptions extends DecoratorOptions {
+  samples?: Record<string, string[]>;
+  requiredEquivalences?: Array<[string, string]>;
+  previous?: GrammarMergeResult | null;
+}
+export class GrammarMergeError extends Error {
+  failures: GrammarMergeFailure[];
+}
+export function mergeGrammars(sources: readonly GrammarMergeSource[], options?: GrammarMergeOptions): GrammarMergeResult;
+export function assertMergeComplete(result: GrammarMergeResult): GrammarMergeResult;
+export function normalizedRuleDefinition(rule: GrammarRuleValue): string;
+export const GRAMMAR_ROUND_TRIP_MARKER: string;
+export interface GrammarRoundTripFailure {
+  kind:
+    | 'sample-rejected'
+    | 'sample-accepted'
+    | 'marker-already-accepted'
+    | 'lossy-export'
+    | 'mutation-not-exported'
+    | 'rules-changed'
+    | 'mutation-not-visible'
+    | 'export-not-stable';
+  stage: 'imported' | 'exported' | 'reimported';
+  detail: string;
+}
+export interface GrammarRoundTripReport {
+  status: 'preserved' | 'broken';
+  failures: GrammarRoundTripFailure[];
+  mutated: Grammar;
+  exported: string;
+  reimported: Grammar;
+}
+export interface GrammarRoundTripOptions {
+  importGrammar: (source: string) => Grammar;
+  emitGrammar: (grammar: Grammar) => GrammarEmitResult;
+  marker?: string;
+  accepts?: readonly string[];
+  rejects?: readonly string[];
+}
+export function mutateGrammarStartRule(grammar: Grammar, marker?: string): Grammar;
+export function checkGrammarRoundTrip(source: string, options: GrammarRoundTripOptions): GrammarRoundTripReport;
+export function canonicalRuleDefinition(rule: GrammarRuleValue): string;
+export function acceptsText(grammar: Grammar, text: string): boolean;
+export function carryRuleDocs(target: Grammar, source: Grammar, rename?: (name: string) => string): Grammar;
+export function percentEncodeLinksText(value: string): string;
+export function percentDecodeLinksText(value: string): string;
+export function renderGrammarLinks(grammar: Grammar): string;
+export function renderRuleLink(grammar: Grammar, rule: GrammarRuleValue): string;
+export function renderRuleFieldLinks(rule: GrammarRuleValue): string[];
+export function renderDeclarationLinks(declarations: Required<Omit<GrammarDeclarations, 'matching'>>): string[];
+export function renderLinksExpression(expression: GrammarExpression): string;
+export function parseLinksExpression(value: unknown): GrammarExpression;
+export function parseGrammarLinks(source: string): Grammar;
+export interface GrammarReverseFailure {
+  kind: 'links-not-faithful' | 'lossy-export' | 'rules-changed' | 'doc-changed' | 'sample-rejected' | 'sample-accepted';
+  stage: 'imported' | 'links' | 'exported' | 'reimported';
+  detail: string;
+}
+export interface GrammarReverseReport {
+  status: 'equivalent' | 'different';
+  failures: GrammarReverseFailure[];
+  links: string;
+  exported: string;
+  reimportedLinks: string;
+}
+export function checkGrammarReverseConversion(
+  source: string,
+  options: Omit<GrammarRoundTripOptions, 'marker'>,
+): GrammarReverseReport;
+export type GrammarLosslessFormat = 'abnf' | 'antlr' | 'bnf' | 'ebnf' | 'gbnf' | 'lark' | 'pest' | 'tree-sitter-json';
+export const GRAMMAR_LOSSLESS_FORMATS: readonly GrammarLosslessFormat[];
+export interface GrammarSourceDefinition {
+  name: string;
+  text: string;
+  gap: string;
+}
+export interface GrammarLayoutDefinition extends GrammarSourceDefinition {
+  fingerprint: string;
+}
+export interface GrammarLayout {
+  format: GrammarLosslessFormat;
+  prefix: string;
+  members: GrammarLayoutDefinition[];
+  implicit: Array<{ name: string; fingerprint: string }>;
+}
+export function splitGrammarSource(
+  source: string,
+  format: GrammarLosslessFormat,
+  names: readonly string[],
+): { prefix: string; members: GrammarSourceDefinition[] };
+export function captureGrammarLayout(source: string, format: GrammarLosslessFormat, grammar: Grammar): GrammarLayout;
+export function importGrammarLossless(source: string, format: GrammarLosslessFormat): { grammar: Grammar; layout: GrammarLayout };
+export function emitGrammarLossless(grammar: Grammar, layout: GrammarLayout): GrammarEmitResult;
+export function renderGrammarLayoutLinks(layout: GrammarLayout): string;
+export function parseGrammarLayoutLinks(source: string): GrammarLayout;
+export type GrammarDiagnosticKind =
+  | 'duplicate-rule'
+  | 'undefined-non-terminal'
+  | 'left-recursion'
+  | 'unreachable-rule'
+  | 'nullable-repetition'
+  | 'unused-capture';
+export const GRAMMAR_DIAGNOSTIC_KINDS: readonly GrammarDiagnosticKind[];
+export interface GrammarDiagnostic {
+  kind: GrammarDiagnosticKind;
+  severity: 'error' | 'warning';
+  rule: string;
+  message: string;
+  [detail: string]: unknown;
+}
+export function validateGrammar(grammar: Grammar): GrammarDiagnostic[];
+export function displayGrammarExpression(expression: GrammarExpression): string;
+export type GrammarInterchangeFormat =
+  | 'abnf'
+  | 'antlr'
+  | 'bnf'
+  | 'ebnf'
+  | 'gbnf'
+  | 'lark'
+  | 'native'
+  | 'pest'
+  | 'tree-sitter-json';
+export const GRAMMAR_IMPORT_FORMATS: readonly GrammarInterchangeFormat[];
+export const GRAMMAR_EXPORT_FORMATS: readonly GrammarInterchangeFormat[];
+export function grammarImporter(format: string): ((source: string) => Grammar) | null;
+export function grammarEmitter(format: string): ((grammar: Grammar) => GrammarEmitResult) | null;
+export function renderNativeGrammar(grammar: Grammar): string;
+export function renderNativeExpression(expression: GrammarExpression): string;
+export function parseNativeGrammar(source: string): Grammar;
+export const GRAMMAR_COMMAND_USAGE: string;
+export interface GrammarCommandOutput {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+}
+export function runGrammarCommand(
+  args: readonly string[],
+  options: { readFile: (path: string) => string },
+): GrammarCommandOutput;
+export interface RuleAlias {
+  canonical: string;
+  original: string;
+}
+export class GrammarRenameError extends Error {
+  kind: 'invalid-name' | 'unknown-rule' | 'collision';
+}
+export function renameGrammarRule(
+  grammar: Grammar,
+  from: string,
+  to: string,
+  options?: { namespace?: string | null; aliases?: readonly RuleAlias[] },
+): { grammar: Grammar; aliases: RuleAlias[] };
+export function restoreSourceNames(
+  grammar: Grammar,
+  aliases: readonly RuleAlias[],
+  options?: { namespace?: string | null },
+): Grammar;
 
 export class ApiOperationEntry {
   operation: string;
@@ -559,11 +1772,21 @@ export class EmbeddedRegion {
   span(): unknown;
 }
 
+/** Embedded regions an HTML or Markdown host grammar CST delimits, in source order. */
 export function detectEmbeddedRegions(
   text: string,
   language: string,
-  policy: RegionDetectionPolicyValue,
+  policy?: RegionDetectionPolicyValue,
 ): EmbeddedRegion[];
+/** Embedded regions of an already parsed host tree (nodes with term, span and children). */
+export function detectEmbeddedRegionsInTree(
+  tree: unknown,
+  text: string,
+  host: 'HTML' | 'Markdown',
+  policy?: RegionDetectionPolicyValue,
+): EmbeddedRegion[];
+/** The language of an HTML script element's content from its `type` attribute. */
+export function scriptLanguage(type: string | undefined): string | null;
 export function sniffLanguage(content: string): string | null;
 
 // --- language profiles ---
@@ -617,157 +1840,3 @@ export class LanguageProfileViolation extends Error {
 }
 
 // --- query algebra (link rules) ---
-
-export class LinkRuleParseError extends Error {
-  constructor(message: string);
-}
-
-export class LinkRuleCapture {
-  constructor(name: string, linkIds?: Array<LinkId | number>, text?: string);
-  name(): string;
-  linkIds(): LinkId[];
-  text(): string | undefined;
-}
-
-export class LinkRuleCaptures {
-  constructor(values?: LinkRuleCapture[]);
-  values: LinkRuleCapture[];
-  withLink(name: string, linkId: LinkId | number): LinkRuleCaptures;
-  withText(name: string, text: string, linkIds: Array<LinkId | number>): LinkRuleCaptures;
-  merged(other: LinkRuleCaptures): LinkRuleCaptures;
-  first(name: string): LinkId | undefined;
-  text(name: string): string | undefined;
-  iter(): LinkRuleCapture[];
-  [Symbol.iterator](): Iterator<LinkRuleCapture>;
-}
-
-export class LinkRuleMatch {
-  constructor(linkId: LinkId | number, captures?: LinkRuleCaptures);
-  static fromQueryMatch(queryMatch: QueryMatch): LinkRuleMatch;
-  withLinkCapture(name: string, linkId: LinkId | number): LinkRuleMatch;
-  merge(other: LinkRuleMatch): LinkRuleMatch | undefined;
-  mergeAs(linkId: LinkId | number, other: LinkRuleMatch): LinkRuleMatch;
-  linkId(): LinkId;
-  captures(): LinkRuleCaptures;
-}
-
-export class LinkRule {
-  static query(query: LinkQuery): LinkRule;
-  static kind(kind: string): LinkRule;
-  static linkType(linkType: LinkTypeValue): LinkRule;
-  static link_type(linkType: LinkTypeValue): LinkRule;
-  static language(language: string): LinkRule;
-  static namedFlag(named: boolean): LinkRule;
-  static named_flag(named: boolean): LinkRule;
-  static capture(name: string, rule: LinkRule): LinkRule;
-  static typedMetavariable(name: string, kind: string): LinkRule;
-  static typed_metavariable(name: string, kind: string): LinkRule;
-  static inside(rule: LinkRule, ancestor: LinkRule): LinkRule;
-  static has(rule: LinkRule, descendant: LinkRule): LinkRule;
-  static precedes(rule: LinkRule, following: LinkRule): LinkRule;
-  static follows(rule: LinkRule, preceding: LinkRule): LinkRule;
-  static all(rules: LinkRule[]): LinkRule;
-  static any(rules: LinkRule[]): LinkRule;
-  static negate(rule: LinkRule): LinkRule;
-  static named(name: string): LinkRule;
-  static ellipsisGap(before: LinkRule, after: LinkRule): LinkRule;
-  static ellipsis_gap(before: LinkRule, after: LinkRule): LinkRule;
-  static text(pattern: string): LinkRule;
-  static fromSexpression(source: string): LinkRule;
-  static from_sexpression(source: string): LinkRule;
-  matches(network: LinkNetwork, registry: LinkRuleRegistry): LinkRuleMatch[];
-}
-
-export class LinkRuleRegistry {
-  constructor();
-  static new(): LinkRuleRegistry;
-  rules: Map<string, LinkRule>;
-  withRule(name: string, rule: LinkRule): LinkRuleRegistry;
-  with_rule(name: string, rule: LinkRule): LinkRuleRegistry;
-  insert(name: string, rule: LinkRule): void;
-  get(name: string): LinkRule | undefined;
-}
-
-export class TraversalReport {
-  constructor(iterations?: number, visited?: number, changed?: number);
-  iterations(): number;
-  visited(): number;
-  changed(): number;
-}
-
-export class TraversalStrategy {
-  static TopDown: TraversalStrategy;
-  static BottomUp: TraversalStrategy;
-  static Innermost: TraversalStrategy;
-  static Fixpoint: (options: number | { maxIterations: number }) => TraversalStrategy;
-  matches(network: LinkNetwork, rule: LinkRule, registry: LinkRuleRegistry): LinkRuleMatch[];
-  applyMut(
-    network: LinkNetwork,
-    rule: LinkRule,
-    registry: LinkRuleRegistry,
-    visitor: (network: LinkNetwork, match: LinkRuleMatch) => boolean,
-  ): TraversalReport;
-  apply_mut(
-    network: LinkNetwork,
-    rule: LinkRule,
-    registry: LinkRuleRegistry,
-    visitor: (network: LinkNetwork, match: LinkRuleMatch) => boolean,
-  ): TraversalReport;
-}
-
-export type LinkRuleSnapshotExpectationValue = 'Valid' | 'Invalid';
-export const LinkRuleSnapshotExpectation: { Valid: 'Valid'; Invalid: 'Invalid' };
-
-export class LinkRuleSnapshotCase {
-  constructor(
-    name: string,
-    source: string,
-    language: string,
-    expectation: LinkRuleSnapshotExpectationValue,
-  );
-  static new(
-    name: string,
-    source: string,
-    language: string,
-    expectation: LinkRuleSnapshotExpectationValue,
-  ): LinkRuleSnapshotCase;
-  name(): string;
-  source(): string;
-  language(): string;
-  expectation(): LinkRuleSnapshotExpectationValue;
-}
-
-export class LinkRuleSnapshotSuite {
-  constructor(rule: LinkRule);
-  static new(rule: LinkRule): LinkRuleSnapshotSuite;
-  withCase(snapshotCase: LinkRuleSnapshotCase): LinkRuleSnapshotSuite;
-  with_case(snapshotCase: LinkRuleSnapshotCase): LinkRuleSnapshotSuite;
-  run(
-    registry: LinkRuleRegistry,
-    configuration?: ParseConfiguration,
-    networkFactory?: (source: string, language: string, configuration?: ParseConfiguration) => LinkNetwork,
-  ): LinkRuleSnapshotReport;
-}
-
-export class LinkRuleSnapshotReport {
-  constructor(cases?: LinkRuleSnapshotResult[]);
-  isSuccess(): boolean;
-  is_success(): boolean;
-  cases(): LinkRuleSnapshotResult[];
-}
-
-export class LinkRuleSnapshotResult {
-  constructor(
-    name: string,
-    expectation: LinkRuleSnapshotExpectationValue,
-    matched: boolean,
-    matchCount: number,
-    passed: boolean,
-  );
-  name(): string;
-  expectation(): LinkRuleSnapshotExpectationValue;
-  matched(): boolean;
-  matchCount(): number;
-  match_count(): number;
-  passed(): boolean;
-}

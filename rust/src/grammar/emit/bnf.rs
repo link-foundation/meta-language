@@ -1,8 +1,8 @@
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat};
 
 use super::{
-    expanded_chars, finish_lines, ordered_rules, render_rule_line, unsupported_error, EmitReport,
-    GrammarEmitError, HelperRules, BNF_RULE_TEMPLATE,
+    BNF_RULE_TEMPLATE, EmitReport, GrammarEmitError, HelperRules, expanded_chars, finish_lines,
+    ordered_rules, render_rule_line, unsupported_error,
 };
 
 const MAX_BNF_EXPANSION: u32 = 256;
@@ -64,12 +64,12 @@ impl BnfEmitter {
     ) -> Result<String, GrammarEmitError> {
         match expr {
             GrammarExpr::Empty => Ok(String::new()),
-            GrammarExpr::Terminal(value) => Ok(quote_terminal(value)),
+            GrammarExpr::Terminal(value) => Ok(self.emit_terminal(value)),
             GrammarExpr::TerminalInsensitive(value) => {
                 self.report.add_lossy(format!(
                     "BNF cannot preserve case-insensitive terminal {value:?}"
                 ));
-                Ok(quote_terminal(value))
+                Ok(self.emit_terminal(value))
             }
             GrammarExpr::CharRange(start, end) => self.emit_range_helper(*start, *end),
             GrammarExpr::CharClass { negated, items } => {
@@ -88,11 +88,29 @@ impl BnfEmitter {
             GrammarExpr::Repeat { expr, min, max } => self.emit_repeat(expr, *min, *max),
             GrammarExpr::And(_) => Err(unsupported_error(GrammarFormat::Bnf, "And")),
             GrammarExpr::Not(_) => Err(unsupported_error(GrammarFormat::Bnf, "Not")),
+            GrammarExpr::Feature(feature) => {
+                Err(unsupported_error(GrammarFormat::Bnf, feature.head()))
+            }
             GrammarExpr::Capture { label, expr } => {
                 report_capture_loss(&mut self.report, GrammarFormat::Bnf, label.as_ref());
                 self.emit_expr(expr, context)
             }
         }
+    }
+
+    /// Classic BNF terminals have no escapes, so a terminal containing both
+    /// quote characters is emitted as a sequence of separately quoted runs.
+    fn emit_terminal(&mut self, value: &str) -> String {
+        let runs = quote_runs(value);
+        if runs.len() > 1 {
+            self.report.add_lossy(format!(
+                "BNF splits terminal {value:?} containing both quote characters"
+            ));
+        }
+        runs.iter()
+            .map(|run| quote_terminal(run))
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 
     fn emit_choice(
@@ -302,16 +320,22 @@ fn nonterminal(name: &str) -> String {
     format!("<{name}>")
 }
 
-fn quote_terminal(value: &str) -> String {
-    let mut output = String::with_capacity(value.len() + 2);
-    output.push('"');
+fn quote_runs(value: &str) -> Vec<String> {
+    let mut runs = Vec::new();
+    let mut run = String::new();
     for character in value.chars() {
-        match character {
-            '"' => output.push_str("\\\""),
-            '\\' => output.push_str("\\\\"),
-            other => output.push(other),
+        let conflicts =
+            (character == '"' && run.contains('\'')) || (character == '\'' && run.contains('"'));
+        if conflicts {
+            runs.push(std::mem::take(&mut run));
         }
+        run.push(character);
     }
-    output.push('"');
-    output
+    runs.push(run);
+    runs
+}
+
+fn quote_terminal(value: &str) -> String {
+    let quote = if value.contains('"') { '\'' } else { '"' };
+    format!("{quote}{value}{quote}")
 }

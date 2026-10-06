@@ -1,0 +1,145 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "proto",
+  "native": "native-proto",
+  "sources": [
+    {
+      "id": "tree-sitter-proto",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-proto 0.6.0",
+      "repository": "https://github.com/coder3101/tree-sitter-proto",
+      "revision": "6c878d18628ebbff3474479d2fdd6d8ba1954c3e",
+      "path": "src/grammar.json",
+      "sha256": "0bd74a6fc9e16f89f31c38acdd6c343139b0fd5888fac7d44cfd7d7910f6de29",
+      "license": "MIT"
+    }
+  ],
+  "rules": 55,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "_option_name",
+      "native": "option_name"
+    },
+    {
+      "source": "enum",
+      "native": "enumeration"
+    },
+    {
+      "source": "enum_name",
+      "native": "enumeration_name"
+    },
+    {
+      "source": "enum_body",
+      "native": "enumeration_body"
+    },
+    {
+      "source": "enum_field",
+      "native": "enumeration_field"
+    },
+    {
+      "source": "enum_value_option",
+      "native": "enumeration_value_option"
+    },
+    {
+      "source": "oneof",
+      "native": "one_of"
+    },
+    {
+      "source": "oneof_field",
+      "native": "one_of_field"
+    },
+    {
+      "source": "message_or_enum_type",
+      "native": "message_or_enumeration_type"
+    },
+    {
+      "source": "rpc",
+      "native": "remote_procedure_call"
+    },
+    {
+      "source": "rpc_name",
+      "native": "remote_procedure_call_name"
+    },
+    {
+      "source": "block_lit",
+      "native": "block_literal"
+    },
+    {
+      "source": "_block_field",
+      "native": "block_field"
+    },
+    {
+      "source": "full_ident",
+      "native": "full_identifier"
+    },
+    {
+      "source": "bool",
+      "native": "boolean"
+    },
+    {
+      "source": "int_lit",
+      "native": "integer_literal"
+    },
+    {
+      "source": "decimal_lit",
+      "native": "decimal_literal"
+    },
+    {
+      "source": "octal_lit",
+      "native": "octal_literal"
+    },
+    {
+      "source": "hex_lit",
+      "native": "hex_literal"
+    },
+    {
+      "source": "float_lit",
+      "native": "float_literal"
+    }
+  ],
+  "expandedWords": [
+    "bool",
+    "enum",
+    "ident",
+    "int",
+    "lit",
+    "oneof",
+    "rpc"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "boolean",
+        "concept": "grammar.boolean-value"
+      },
+      {
+        "rule": "true",
+        "concept": "grammar.true-value"
+      },
+      {
+        "rule": "false",
+        "concept": "grammar.false-value"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 48
+  },
+  "approximations": [],
+  "unsupported": []
+}

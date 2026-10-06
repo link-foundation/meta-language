@@ -1,7 +1,7 @@
 use meta_language::{
-    infer_cfg, infer_cfg_with_advisors, AdviceDecisionKind, AdviceSource, InferenceOptions,
-    MergeAdvisor, MergeRequest, MergeScore, NameCandidate, NamingAdvisor, NamingRequest,
-    PositiveOnlyOracle,
+    AdviceDecisionKind, AdviceSource, InferenceOptions, MergeAdvisor, MergeRequest, MergeScore,
+    NameCandidate, NamingAdvisor, NamingRequest, PositiveOnlyOracle, infer_cfg,
+    infer_cfg_with_advisors,
 };
 
 #[test]
@@ -16,11 +16,13 @@ fn cfg_inference_records_deterministic_advice_sources() {
         !first.report.advice.is_empty(),
         "expected inference report to record advisor provenance"
     );
-    assert!(first
-        .report
-        .advice
-        .iter()
-        .all(|decision| decision.source == AdviceSource::Deterministic));
+    assert!(
+        first
+            .report
+            .advice
+            .iter()
+            .all(|decision| decision.source == AdviceSource::Deterministic)
+    );
 }
 
 #[test]

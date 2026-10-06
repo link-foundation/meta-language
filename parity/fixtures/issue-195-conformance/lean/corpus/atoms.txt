@@ -1,0 +1,323 @@
+======
+Number
+======
+
+#eval 2
+
+---
+
+(module
+  (hash_command
+    (number)))
+
+=====
+Float
+=====
+
+#eval 23.279
+#eval 2.
+
+---
+
+(module
+  (hash_command
+    (float))
+  (hash_command
+    (float)))
+
+=====
+Range
+=====
+
+#check [0:foo 3:1]
+
+---
+
+(module
+  (hash_command
+    (range
+      start: (number)
+      end: (application
+        name: (identifier)
+        arguments: (number))
+      step: (number))))
+
+=============
+Range No Step
+=============
+
+#check [0:10]
+
+---
+
+(module
+  (hash_command
+    (range
+      start: (number)
+      end: (number))))
+
+=============
+Range No Start
+=============
+
+#check [:3]
+
+---
+
+(module
+  (hash_command
+    (range
+      end: (number))))
+
+====
+List
+====
+
+#check [1, 2, 3]
+#check []
+
+---
+
+(module
+  (hash_command
+    (list
+      (number)
+      (number)
+      (number)))
+  (hash_command
+    (list)))
+
+=====
+Array
+=====
+
+#check #[1, 2, 3]
+#check #[]
+
+---
+
+(module
+  (hash_command
+    (array
+      (number)
+      (number)
+      (number)))
+  (hash_command
+    (array)))
+
+=======
+Product
+=======
+
+#check (10, "foo", 30, 40)
+
+---
+
+(module
+  (hash_command
+    (tuple
+      (number)
+      (string)
+      (number)
+      (number))))
+
+=====================
+Inductive Constructor
+=====================
+
+example : Foo := ⟨1, 2, 3⟩
+example : Foo := ⟨1⟩
+example : Foo := ⟨⟩
+
+---
+
+(module
+  (example
+    (identifier)
+    (anonymous_constructor
+      (number)
+      (number)
+      (number)))
+  (example
+    (identifier)
+    (anonymous_constructor
+      (number)))
+  (example
+    (identifier)
+    (anonymous_constructor)))
+
+=============================
+Invalid Inductive Constructor
+=============================
+
+example : Foo := ⟨,⟩
+example : Foo := ⟨, 1⟩
+example : Foo := ⟨, 2,⟩
+
+---
+
+(module
+  (example
+    (identifier)
+    (anonymous_constructor
+      (ERROR)))
+  (example
+    (identifier)
+    (anonymous_constructor
+      (ERROR)
+      (number)))
+  (example
+    (identifier)
+    (anonymous_constructor
+      (ERROR)
+      (number)
+      (ERROR))))
+
+===========
+Identifiers
+===========
+
+#eval foo₁
+#eval x'
+#eval foo!
+#eval foo?
+#eval 𝒞
+
+---
+
+(module
+  (hash_command
+    (identifier))
+  (hash_command
+    (identifier))
+  (hash_command
+    (identifier))
+  (hash_command
+    (identifier))
+  (hash_command
+    (identifier)))
+
+===============
+Non-Identifiers
+===============
+
+#eval ₁foo
+#eval 'x
+#eval !foo
+#eval foo.
+
+---
+
+(module
+  (hash_command
+    (ERROR
+      (UNEXPECTED 8321))
+    (identifier))
+  (hash_command
+    (char
+      (MISSING "'")))
+  (hash_command
+    (unary_expression
+      (identifier)))
+  (hash_command
+    (identifier))
+  (ERROR))
+
+=====
+Sorry
+=====
+
+#check sorry
+
+---
+
+(module
+  (hash_command
+    (sorry)))
+
+==================
+Escaped Identifier
+==================
+
+def «foo
+
+bar
+
+
+theorem baz : (afweio)» := 12
+
+---
+
+(module
+  (definition
+    name: (escaped_identifier)
+    body: (number)))
+
+===========
+Quoted Name
+===========
+
+#check `String
+
+---
+
+(module
+  (hash_command
+    (quoted_name
+      (identifier))))
+
+==================
+Double Quoted Name
+==================
+
+#check ``String
+
+---
+
+(module
+  (hash_command
+    (double_quoted_name
+      (identifier))))
+
+===========
+Lift Method
+===========
+
+#check ← Nat
+
+---
+
+(module
+  (hash_command
+    (unary_expression
+      operand: (identifier))))
+
+=======
+Subtype
+=======
+
+#check {x // x > 2}
+
+---
+
+(module
+  (hash_command
+    (subtype
+      (identifier)
+      (binary_expression
+        (identifier)
+        (number)))))
+
+=================
+Ellipsis Argument
+=================
+
+#check f ..
+
+---
+
+(module
+  (hash_command
+    (application
+      (identifier)
+      (ellipsis))))

@@ -1,0 +1,676 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "rocq",
+  "native": "native-rocq",
+  "sources": [
+    {
+      "id": "tree-sitter-rocq",
+      "format": "tree-sitter grammar.json",
+      "package": "vendored rust/vendor/tree-sitter-rocq",
+      "repository": "https://github.com/aruzdh/tree-sitter-rocq",
+      "revision": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+      "path": "src/grammar.json",
+      "sha256": "fb7905055821bc8b966059783535713e631d324c01426e1ab1a8a824eaeea23e",
+      "license": "MIT",
+      "patch": {
+        "file": "rust/vendor/tree-sitter-rocq/meta-language.patch",
+        "sha256": "5da25fecd33120b7af9084aecdbd75447cef424efeab0bd018c7a02c68034014",
+        "reason": "constructs translated Rocq programs and the pinned Rocq stdlib use that the upstream grammar reports as errors; the patched grammar is the one the oracle parser is generated from"
+      }
+    }
+  ],
+  "rules": 265,
+  "keywords": [
+    "Abbreviation",
+    "Abort",
+    "About",
+    "AccessOpaque",
+    "Add",
+    "Admit",
+    "Admitted",
+    "All",
+    "Arguments",
+    "AutoInline",
+    "Axiom",
+    "Axioms",
+    "Bind",
+    "Blacklist",
+    "Boolean",
+    "Callback",
+    "Case",
+    "Check",
+    "Class",
+    "Close",
+    "CoInductive",
+    "Coercion",
+    "Combined",
+    "Comment",
+    "Compute",
+    "Conjecture",
+    "Conjectures",
+    "Conservative",
+    "Constant",
+    "Constants",
+    "Constructor",
+    "Constructors",
+    "Context",
+    "Corollary",
+    "Create",
+    "Cumulative",
+    "Custom",
+    "Cut",
+    "Declare",
+    "Defined",
+    "Definition",
+    "Delimit",
+    "Diffs",
+    "Directory",
+    "Elimination",
+    "End",
+    "Entry",
+    "Equality",
+    "Eval",
+    "Example",
+    "Existing",
+    "Export",
+    "Extern",
+    "Extract",
+    "Extraction",
+    "Fact",
+    "Fail",
+    "File",
+    "Fixpoint",
+    "Flag",
+    "Foreign",
+    "From",
+    "Funclass",
+    "Function",
+    "Generalizable",
+    "Global",
+    "Haskell",
+    "Hint",
+    "HintDb",
+    "Hints",
+    "Hypotheses",
+    "Hypothesis",
+    "If",
+    "Immediate",
+    "Implicit",
+    "Import",
+    "Include",
+    "Induction",
+    "Inductive",
+    "Infix",
+    "Inline",
+    "Inlined",
+    "Instance",
+    "Instances",
+    "JSON",
+    "KeepSingleton",
+    "Language",
+    "Left",
+    "Lemma",
+    "Let",
+    "Library",
+    "Local",
+    "Locate",
+    "Ltac",
+    "Minimality",
+    "Mode",
+    "Module",
+    "Monomorphic",
+    "Next",
+    "No",
+    "NoInline",
+    "NonCumulative",
+    "Notation",
+    "OCaml",
+    "Obligation",
+    "Obligations",
+    "Opaque",
+    "Open",
+    "Optimize",
+    "Output",
+    "Parameter",
+    "Parameters",
+    "Polymorphic",
+    "Print",
+    "Printing",
+    "Private",
+    "Program",
+    "Projections",
+    "Proof",
+    "Property",
+    "Proposition",
+    "Qed",
+    "Record",
+    "Recursive",
+    "Reduction",
+    "Register",
+    "Remark",
+    "Remove",
+    "Require",
+    "Reserved",
+    "Resolve",
+    "Rewrite",
+    "Rewriting",
+    "Right",
+    "SafeImplicits",
+    "Save",
+    "Scheme",
+    "Scope",
+    "Search",
+    "Section",
+    "Separete",
+    "Set",
+    "Show",
+    "Solve",
+    "Sort",
+    "Sortclass",
+    "Step",
+    "Structure",
+    "Tactic",
+    "Test",
+    "TestCompile",
+    "Theorem",
+    "Transparent",
+    "Type",
+    "TypeExpand",
+    "Typeclasses",
+    "Types",
+    "Unfold",
+    "Unset",
+    "Variable",
+    "Variables",
+    "Variant",
+    "_",
+    "abstract",
+    "all",
+    "and",
+    "as",
+    "assert",
+    "associativity",
+    "at",
+    "bigint",
+    "binder",
+    "by",
+    "closed",
+    "constr",
+    "context",
+    "custom",
+    "dependent",
+    "discriminated",
+    "do",
+    "else",
+    "end",
+    "eqn",
+    "eval",
+    "exactly_once",
+    "exists",
+    "exists2",
+    "first",
+    "fix",
+    "for",
+    "forall",
+    "format",
+    "from",
+    "fun",
+    "global",
+    "goal",
+    "ident",
+    "if",
+    "in",
+    "intro",
+    "intros",
+    "lazymatch",
+    "left",
+    "let",
+    "level",
+    "match",
+    "measure",
+    "multimatch",
+    "name",
+    "next",
+    "no",
+    "now",
+    "of",
+    "once",
+    "only",
+    "par",
+    "parsing",
+    "pattern",
+    "printing",
+    "progress",
+    "rec",
+    "removed",
+    "repeat",
+    "return",
+    "reverse",
+    "rew",
+    "rewrite",
+    "right",
+    "scope",
+    "solve",
+    "strict",
+    "struct",
+    "then",
+    "time",
+    "timeout",
+    "try",
+    "tryif",
+    "using",
+    "wf",
+    "where",
+    "with"
+  ],
+  "renamed": [
+    {
+      "source": "fail",
+      "native": "fail_prefix"
+    },
+    {
+      "source": "_modern_attribute_block",
+      "native": "modern_attribute_block"
+    },
+    {
+      "source": "attr_value",
+      "native": "attribute_value"
+    },
+    {
+      "source": "legacy_attr",
+      "native": "legacy_attribute"
+    },
+    {
+      "source": "_vernacular_command",
+      "native": "vernacular_command"
+    },
+    {
+      "source": "neg_selection",
+      "native": "negated_selection"
+    },
+    {
+      "source": "create_hintdb_command",
+      "native": "create_hint_database_command"
+    },
+    {
+      "source": "create_rewrite_hintdb_command",
+      "native": "create_rewrite_hint_database_command"
+    },
+    {
+      "source": "discriminated_db",
+      "native": "discriminated_database"
+    },
+    {
+      "source": "_one_pattern",
+      "native": "one_pattern"
+    },
+    {
+      "source": "reduction_expr",
+      "native": "reduction_expression"
+    },
+    {
+      "source": "_declare_scope_command",
+      "native": "declare_scope_command"
+    },
+    {
+      "source": "_declare_custom_entry_command",
+      "native": "declare_custom_entry_command"
+    },
+    {
+      "source": "_def_body",
+      "native": "definition_body"
+    },
+    {
+      "source": "_fix_definition",
+      "native": "fix_definition"
+    },
+    {
+      "source": "fixannot",
+      "native": "fixpoint_annotation"
+    },
+    {
+      "source": "decl_notations",
+      "native": "declaration_notations"
+    },
+    {
+      "source": "of_type_inst",
+      "native": "of_type_instance"
+    },
+    {
+      "source": "_constructor_attr",
+      "native": "constructor_attribute"
+    },
+    {
+      "source": "assumpt",
+      "native": "assumption"
+    },
+    {
+      "source": "_argument_spec_item",
+      "native": "argument_specification_item"
+    },
+    {
+      "source": "_argument_spec",
+      "native": "argument_specification"
+    },
+    {
+      "source": "module_type_expr",
+      "native": "module_type_expression"
+    },
+    {
+      "source": "_scheme_kind",
+      "native": "scheme_kind"
+    },
+    {
+      "source": "typeclasses_command",
+      "native": "type_classes_command"
+    },
+    {
+      "source": "explicit_subentry",
+      "native": "explicit_notation_entry"
+    },
+    {
+      "source": "binder_interp",
+      "native": "binder_interpretation"
+    },
+    {
+      "source": "at_level_num",
+      "native": "at_level_number"
+    },
+    {
+      "source": "section_var_expr",
+      "native": "section_variable_expression"
+    },
+    {
+      "source": "expr_ops",
+      "native": "expression_ops"
+    },
+    {
+      "source": "expr_atomic",
+      "native": "atomic_expression"
+    },
+    {
+      "source": "expr_leaf",
+      "native": "expression_leaf"
+    },
+    {
+      "source": "_term",
+      "native": "term"
+    },
+    {
+      "source": "_term100",
+      "native": "hundred_level_term"
+    },
+    {
+      "source": "_term99",
+      "native": "ninety_nine_level_term"
+    },
+    {
+      "source": "_term10",
+      "native": "ten_level_term"
+    },
+    {
+      "source": "rew_term",
+      "native": "rewrite_term"
+    },
+    {
+      "source": "_one_term",
+      "native": "one_term"
+    },
+    {
+      "source": "_term1",
+      "native": "one_level_term"
+    },
+    {
+      "source": "_term0",
+      "native": "zero_level_term"
+    },
+    {
+      "source": "_arg",
+      "native": "argument"
+    },
+    {
+      "source": "_let_expression_term",
+      "native": "let_expression_term"
+    },
+    {
+      "source": "_destructuring_let_name_list",
+      "native": "destructuring_let_name_list"
+    },
+    {
+      "source": "_destructuring_let_apos",
+      "native": "destructuring_let_apostrophe"
+    },
+    {
+      "source": "case_item",
+      "native": "match_item"
+    },
+    {
+      "source": "fix_decl",
+      "native": "fix_declaration"
+    },
+    {
+      "source": "_infix_operation",
+      "native": "infix_operation"
+    },
+    {
+      "source": "app_operation",
+      "native": "append_operation"
+    },
+    {
+      "source": "_pattern",
+      "native": "pattern"
+    },
+    {
+      "source": "_pattern10",
+      "native": "ten_level_pattern"
+    },
+    {
+      "source": "_pattern1",
+      "native": "one_level_pattern"
+    },
+    {
+      "source": "_pattern0",
+      "native": "zero_level_pattern"
+    },
+    {
+      "source": "_name",
+      "native": "name"
+    },
+    {
+      "source": "_ltac_definition_body",
+      "native": "ltac_definition_body"
+    },
+    {
+      "source": "_ltac_expr",
+      "native": "ltac_expression"
+    },
+    {
+      "source": "ltac_eval",
+      "native": "ltac_evaluation"
+    },
+    {
+      "source": "tryif_tactic",
+      "native": "try_if_tactic"
+    },
+    {
+      "source": "_for_each_goal",
+      "native": "for_each_goal"
+    },
+    {
+      "source": "_goal_tactics",
+      "native": "goal_tactics"
+    },
+    {
+      "source": "_one_type",
+      "native": "one_type"
+    },
+    {
+      "source": "_tactic_clause",
+      "native": "tactic_clause"
+    },
+    {
+      "source": "_tactic_arg",
+      "native": "tactic_argument"
+    },
+    {
+      "source": "tactic_or",
+      "native": "tactic_alternative"
+    },
+    {
+      "source": "_goal_pattern_body",
+      "native": "goal_pattern_body"
+    },
+    {
+      "source": "match_hyp",
+      "native": "match_hypothesis"
+    },
+    {
+      "source": "_intro_pattern_item",
+      "native": "intro_pattern_item"
+    },
+    {
+      "source": "_hyp_occurrence",
+      "native": "hypothesis_occurrence"
+    },
+    {
+      "source": "_goal_occurrence",
+      "native": "goal_occurrence"
+    },
+    {
+      "source": "bindings",
+      "native": "tactic_bindings"
+    },
+    {
+      "source": "eqn_clause",
+      "native": "equation_clause"
+    },
+    {
+      "source": "_qualid",
+      "native": "qualified_identifier"
+    },
+    {
+      "source": "ident",
+      "native": "identifier"
+    },
+    {
+      "source": "ident_decl",
+      "native": "identifier_declaration"
+    },
+    {
+      "source": "_bigint",
+      "native": "big_integer"
+    },
+    {
+      "source": "_natural",
+      "native": "natural"
+    },
+    {
+      "source": "_bignat",
+      "native": "big_natural_number"
+    },
+    {
+      "source": "decnat",
+      "native": "decimal_natural_number"
+    },
+    {
+      "source": "hexnat",
+      "native": "hexadecimal_natural_number"
+    },
+    {
+      "source": "hexdigit",
+      "native": "hexadecimal_digit"
+    },
+    {
+      "source": "dotted_qualid",
+      "native": "dotted_qualified_identifier"
+    },
+    {
+      "source": "_qualid_annotated",
+      "native": "annotated_qualified_identifier"
+    },
+    {
+      "source": "reference",
+      "native": "global_reference"
+    },
+    {
+      "source": "_dsl_token",
+      "native": "dsl_token"
+    },
+    {
+      "source": "_imp_token",
+      "native": "imp_token"
+    }
+  ],
+  "expandedWords": [
+    "apos",
+    "arg",
+    "assumpt",
+    "attr",
+    "bigint",
+    "bignat",
+    "db",
+    "decl",
+    "decnat",
+    "def",
+    "eqn",
+    "eval",
+    "expr",
+    "hexdigit",
+    "hexnat",
+    "hintdb",
+    "hyp",
+    "ident",
+    "inst",
+    "interp",
+    "num",
+    "qualid",
+    "rew",
+    "spec",
+    "tryif",
+    "typeclasses",
+    "var"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "attribute",
+        "concept": "program.attributes"
+      },
+      {
+        "rule": "term",
+        "concept": "grammar.term"
+      },
+      {
+        "rule": "argument",
+        "concept": "argument"
+      },
+      {
+        "rule": "name",
+        "concept": "grammar.name"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "number",
+        "concept": "grammar.number"
+      },
+      {
+        "rule": "digit",
+        "concept": "grammar.digit"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      }
+    ],
+    "generated": 256
+  },
+  "approximations": [],
+  "unsupported": []
+}

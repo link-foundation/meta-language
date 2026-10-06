@@ -13,6 +13,17 @@ in **both Rust and JavaScript** with guaranteed feature parity between the two.
 description, an interactive WebAssembly demo, and the full
 [Rust API documentation](https://link-foundation.github.io/meta-language/api/).
 
+## Vision
+
+[`docs/vision.md`](docs/vision.md) is the authoritative specification of the
+target meta-language is built toward: one common language of links for
+grammars, syntax trees, semantics and transformations, native merged grammars
+for every language, and full JavaScript, Rust, Lean and Rocq translation. It
+describes that target, not the current state; the generated
+[requirement ledger](docs/issue-195-requirement-ledger.md) reports what is
+verified today. Where another document disagrees with the vision, the vision is
+the contract.
+
 ## Repository layout
 
 No language implementation lives at the repository root. Each language has its own
@@ -31,6 +42,14 @@ Declarative, recursive network translation and its template syntax are
 documented in [`docs/translation-rules.md`](docs/translation-rules.md).
 The shared executable query-plan IR plus registry-driven GraphQL and SQL
 lowering APIs are documented in [`docs/query-plans.md`](docs/query-plans.md).
+The versioned JavaScript, Rust, Lean, and Rocq parser/emitter capability and
+translation boundaries are documented in
+[`docs/four-language-contracts.md`](docs/four-language-contracts.md).
+The full issue #195 delivery target is defined by the executable
+[`parity/issue-195-requirements.json`](parity/issue-195-requirements.json)
+manifest. Its generated evidence report and remaining per-runtime gaps are
+tracked in
+[`docs/issue-195-requirement-ledger.md`](docs/issue-195-requirement-ledger.md).
 
 ## Quick start
 

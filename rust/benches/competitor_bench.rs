@@ -1,5 +1,5 @@
-use meta_language::benchmark::{render_competitor_report, run_competitor_suite};
 use meta_language::SampleConfig;
+use meta_language::benchmark::{render_competitor_report, run_competitor_suite};
 
 fn main() {
     let config = SampleConfig {

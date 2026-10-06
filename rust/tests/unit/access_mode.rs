@@ -33,7 +33,7 @@ fn frozen_view_supports_non_mutating_operations() {
         view.projected_links(NetworkProjection::Lossless).count(),
         expected_len
     );
-    assert!(view.verify_full_match(None).issues().is_empty());
+    assert_eq!(view.verify_full_match(None).issues(), []);
     assert!(view.find_term("plain-text").is_some());
 }
 

@@ -1,4 +1,4 @@
-use meta_language::{import_pest, GrammarExpr, GrammarFormat, GrammarImportError, RuleKind};
+use meta_language::{GrammarExpr, GrammarFormat, GrammarImportError, RuleKind, import_pest};
 
 #[test]
 fn imports_arithmetic_pest_fixture() {
@@ -177,7 +177,7 @@ non_atomic = !{ "x" }
     );
     assert_eq!(
         grammar.rule("compound").expect("compound").kind(),
-        RuleKind::Atomic
+        RuleKind::Token
     );
     assert_eq!(
         grammar.rule("non_atomic").expect("non_atomic").kind(),

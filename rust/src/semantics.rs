@@ -1,4 +1,6 @@
-/// Many-valued semantic truth value.
+/// Many-valued semantic truth value: the `logic-model.belnap-four-valued` model of
+/// `src/data/foundation-models.json`, one logic among the recorded models rather than a
+/// built-in universal logic.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TruthValue {
     True,
@@ -101,7 +103,8 @@ impl Probability {
     }
 }
 
-/// Probabilistic truth value for relative-meta-logic-style confidence links.
+/// Probabilistic truth value for confidence links: the `logic-model.probabilistic-truth`
+/// model of `src/data/foundation-models.json`, one logic among the recorded models.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ProbabilisticTruthValue {
     true_probability: Probability,

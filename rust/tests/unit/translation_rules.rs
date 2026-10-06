@@ -137,11 +137,13 @@ fn missing_translation_rules_record_diagnostic_links() {
         .expect("missing translation produces a diagnostic link");
     assert_eq!(diagnostic.references(), &[semantic]);
     assert_eq!(diagnostic.metadata().language(), Some("Spanish"));
-    assert!(diagnostic
-        .metadata()
-        .definition()
-        .expect("diagnostic names the unmatched structure")
-        .contains("proposition:unmatched"));
+    assert!(
+        diagnostic
+            .metadata()
+            .definition()
+            .expect("diagnostic names the unmatched structure")
+            .contains("proposition:unmatched")
+    );
 }
 
 #[test]

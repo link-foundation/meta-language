@@ -3,8 +3,8 @@ use std::fmt::Write as _;
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, RuleKind};
 
 use super::{
-    finish_lines, ordered_rules, peg_choice_alternatives, render_rule_line_with_modifier,
-    unsupported_error, EmitReport, GrammarEmitError, PEST_RULE_TEMPLATE,
+    EmitReport, GrammarEmitError, PEST_RULE_TEMPLATE, finish_lines, ordered_rules,
+    peg_choice_alternatives, render_rule_line_with_modifier, unsupported_error,
 };
 
 /// Emits pest PEG grammar text from the grammar IR.
@@ -111,6 +111,9 @@ impl PestEmitter {
             GrammarExpr::Not(inner) => {
                 let inner = self.emit_expr(inner, Precedence::Prefix)?;
                 (format!("!{inner}"), Precedence::Prefix)
+            }
+            GrammarExpr::Feature(feature) => {
+                return Err(unsupported_error(GrammarFormat::Peg, feature.head()));
             }
             GrammarExpr::Capture { label, expr } => {
                 if let Some(label) = label {
@@ -267,7 +270,8 @@ fn contains_unordered_choice(expr: &GrammarExpr) -> bool {
         | GrammarExpr::Not(expr)
         | GrammarExpr::Capture { expr, .. }
         | GrammarExpr::Repeat { expr, .. } => contains_unordered_choice(expr),
-        GrammarExpr::Empty
+        GrammarExpr::Feature(_)
+        | GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)

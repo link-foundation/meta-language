@@ -1,5 +1,5 @@
 use meta_language::{
-    import_lark, CharClassItem, GrammarExpr, GrammarFormat, GrammarImportError, RuleKind,
+    CharClassItem, GrammarExpr, GrammarFormat, GrammarImportError, RuleKind, import_lark,
 };
 
 #[test]
@@ -14,7 +14,9 @@ fn imports_covering_lark_fixture() {
     );
     assert_eq!(
         grammar.rule_names(),
-        vec!["start", "item", "trailer", "WORD", "NUMBER", "WS", "_ignore"]
+        vec![
+            "start", "item", "trailer", "WORD", "NUMBER", "WS", "_ignore"
+        ]
     );
     assert_eq!(
         grammar.rule("start").expect("start").kind(),

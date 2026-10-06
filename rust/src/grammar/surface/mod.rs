@@ -9,10 +9,10 @@
 use std::error::Error;
 use std::fmt;
 
+use crate::ParseConfiguration;
 use crate::grammar::Grammar;
 use crate::link_network::{Link, LinkId, LinkNetwork, LinkType};
 use crate::rust_codec::{FromLinks, LinksDecoder, LinksEncoder, ToLinks};
-use crate::ParseConfiguration;
 
 mod lower;
 mod token;

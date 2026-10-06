@@ -1,0 +1,100 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "graphql",
+  "native": "native-graphql",
+  "sources": [
+    {
+      "id": "tree-sitter-graphql",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-graphql 0.3.0",
+      "repository": "https://github.com/joowani/tree-sitter-graphql",
+      "revision": "b1d368c339806d971818a4ca2099763a6c561f56",
+      "path": "src/grammar.json",
+      "sha256": "5d7c2999c5d4bb0f050f94d978ee8e8bb1b3a3de5c0f0e22221dd6573147adfd",
+      "license": "MIT"
+    }
+  ],
+  "rules": 74,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "enum_type_extension",
+      "native": "enumeration_type_extension"
+    },
+    {
+      "source": "enum_values_definition",
+      "native": "enumeration_values_definition"
+    },
+    {
+      "source": "enum_value_definition",
+      "native": "enumeration_value_definition"
+    },
+    {
+      "source": "enum_type_definition",
+      "native": "enumeration_type_definition"
+    },
+    {
+      "source": "int_value",
+      "native": "integer_value"
+    },
+    {
+      "source": "enum_value",
+      "native": "enumeration_value"
+    }
+  ],
+  "expandedWords": [
+    "enum",
+    "int"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "document",
+        "concept": "grammar.document"
+      },
+      {
+        "rule": "argument",
+        "concept": "argument"
+      },
+      {
+        "rule": "value",
+        "concept": "grammar.value"
+      },
+      {
+        "rule": "string_value",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "boolean_value",
+        "concept": "grammar.boolean-value"
+      },
+      {
+        "rule": "null_value",
+        "concept": "grammar.null"
+      },
+      {
+        "rule": "list_value",
+        "concept": "grammar.list"
+      },
+      {
+        "rule": "object_value",
+        "concept": "grammar.object"
+      },
+      {
+        "rule": "object_field",
+        "concept": "grammar.member"
+      },
+      {
+        "rule": "name",
+        "concept": "grammar.name"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 63
+  },
+  "approximations": [],
+  "unsupported": []
+}

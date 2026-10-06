@@ -1,0 +1,912 @@
+//! The JavaScript emitter: writes a checked program as a strict ES module
+//! with its translation contract.
+//!
+//! Every portable integer is a `BigInt`, so naturals and integers stay unbounded
+//! and machine integers are range-checked exactly as Rust checks them; a Number
+//! stays a Number. Data values are plain objects whose `$` property names the
+//! constructor. Modules become object literals referenced by qualified names.
+//! Theorems cannot be proved in JavaScript: each becomes an executable
+//! property, checked over a bounded domain by `--ml-check-theorems`, while the
+//! proof obligation stays discharged by the source language's kernel.
+//!
+//! Mirrors `js/src/translation/emit-javascript.js`.
+
+use std::collections::BTreeSet;
+
+use super::Language;
+use super::aborts::{cast_message, overflow_message, zero_divisor_message};
+use super::diagnostics::{Result, TranslationError, type_error, unsupported};
+use super::emit_common::{EmitOptions, EmitState, Emitted};
+use super::ir::{
+    Binder, ByZero, Case, Ctor, Decl, Effect, Expr, FnDecl, LitValue, Main, Node, Param, Pattern,
+    Program, Prop, Semantics, TheoremDecl, rename_function, rename_main, rename_theorem, tail_loop,
+};
+use super::lexer::json_string;
+use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
+use super::types::{Type, fixed_bounds};
+
+mod arrays;
+mod helpers;
+mod math;
+mod names;
+use self::helpers::Helper;
+use self::names::{KEYWORDS, field_key, ident};
+
+fn indent(text: &str, depth: usize) -> String {
+    let pad = "  ".repeat(depth);
+    text.split('\n')
+        .map(|line| {
+            if line.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}{line}")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Top-level members are method-shaped (`name(…) {`); at the root they become function declarations.
+fn declare_function(text: &str) -> String {
+    let name = text
+        .find(|character: char| {
+            !(character.is_ascii_alphanumeric() || character == '_' || character == '$')
+        })
+        .unwrap_or(text.len());
+    if name > 0 && text[name..].starts_with('(') {
+        format!("function {text}")
+    } else {
+        text.to_owned()
+    }
+}
+
+/// The error JavaScript throws on a node the checker never produces.
+fn malformed(message: String) -> TranslationError {
+    type_error(message, None)
+}
+
+fn ctor_object(ctor: &Ctor, args: &[String]) -> String {
+    let fields: Vec<String> = ctor
+        .fields
+        .iter()
+        .enumerate()
+        .map(|(index, field)| {
+            let arg = args.get(index).map_or("undefined", String::as_str);
+            format!("{}: {arg}", field_key(&field.name))
+        })
+        .collect();
+    let fields = if fields.is_empty() {
+        String::new()
+    } else {
+        format!(", {}", fields.join(", "))
+    };
+    format!(
+        "Object.freeze({{ $: '{}'{fields} }})",
+        ctor.name.replace('\'', "\\'")
+    )
+}
+
+/// Emits a checked program as JavaScript.
+///
+/// # Errors
+/// On constructs the target cannot express faithfully.
+pub fn emit_javascript(program: &Program) -> Result<Emitted> {
+    let state = EmitState::new(
+        program,
+        Language::JavaScript,
+        ident,
+        KEYWORDS,
+        EmitOptions {
+            modules_share_term_space: true,
+            type_space: true,
+            ..EmitOptions::default()
+        },
+    );
+    JavaScriptEmitter {
+        program,
+        state,
+        helpers: BTreeSet::new(),
+        temporaries: 0,
+        theorem_checks: Vec::new(),
+        uses_float: false,
+        loop_params: None,
+    }
+    .file()
+}
+
+/// Declarations grouped by module, in source order.
+#[derive(Default)]
+struct ModuleTree<'p> {
+    items: Vec<&'p Decl>,
+    modules: Vec<(String, Self)>,
+}
+
+#[derive(Clone)]
+struct TheoremCheck {
+    reference: String,
+    binders: Vec<Binder>,
+    source: String,
+}
+
+struct JavaScriptEmitter<'p> {
+    program: &'p Program,
+    state: EmitState<'p>,
+    helpers: BTreeSet<Helper>,
+    temporaries: usize,
+    theorem_checks: Vec<TheoremCheck>,
+    uses_float: bool,
+    /// The lifted loop being emitted as a loop, and its parameters, which
+    /// each call to it assigns before the next iteration.
+    loop_params: Option<(String, Vec<String>)>,
+}
+
+impl<'p> JavaScriptEmitter<'p> {
+    fn file(mut self) -> Result<Emitted> {
+        let program = self.program;
+        let mut tree = ModuleTree::default();
+        for entry in &program.declarations {
+            let mut node = &mut tree;
+            for segment in entry.module_path() {
+                let index = if let Some(index) =
+                    node.modules.iter().position(|(name, _)| name == segment)
+                {
+                    index
+                } else {
+                    node.modules.push((segment.clone(), ModuleTree::default()));
+                    node.modules.len() - 1
+                };
+                node = &mut node.modules[index].1;
+            }
+            node.items.push(entry);
+        }
+        let mut blocks = Vec::new();
+        for entry in &tree.items {
+            if let Some(text) = self.declaration(entry)? {
+                blocks.push(declare_function(&text));
+            }
+        }
+        for (segment, node) in &tree.modules {
+            let path = [segment.clone()];
+            let name = self.module_name(&path);
+            let object = self.module_object(node, &path)?;
+            blocks.push(format!("const {name} = {object};"));
+        }
+        let main = match &program.main {
+            Some(main) => Some(self.main(main)?),
+            None => None,
+        };
+        let theorems = !self.theorem_checks.is_empty();
+        if theorems {
+            self.helpers.insert(Helper::Domains);
+            self.helpers.insert(Helper::Forall);
+        }
+        let mut entry = Vec::new();
+        if theorems {
+            entry.push(self.theorem_runner()?);
+        }
+        entry.extend(main.clone());
+        if theorems {
+            entry.push(
+                "if (process.argv.includes('--ml-check-theorems')) ml_checkTheorems();\nelse main();"
+                    .to_owned(),
+            );
+        } else if main.is_some() {
+            entry.push("main();".to_owned());
+        }
+        let mut lines = vec![
+            format!(
+                "// Translated from {} by meta-language: portable core, JavaScript target.",
+                program.source_language.as_str()
+            ),
+            "'use strict';".to_owned(),
+            String::new(),
+        ];
+        let preludes: Vec<String> = self
+            .helpers
+            .iter()
+            .map(|helper| helper.text().to_owned())
+            .collect();
+        for prelude in &preludes {
+            lines.push(prelude.clone());
+            lines.push(String::new());
+        }
+        let definitions = blocks.clone();
+        for block in blocks.into_iter().chain(entry) {
+            lines.push(block);
+            lines.push(String::new());
+        }
+        self.state.encode("numbers", "every natural, integer and machine integer is a BigInt; machine-integer results are range-checked and throw RangeError where Rust would panic");
+        if self.uses_float {
+            self.state.encode("floats", "a Number is a JavaScript Number, an IEEE-754 double, with its own arithmetic, comparisons and String conversion");
+        }
+        let mut emitted = self
+            .state
+            .finish(lines.join("\n"), main.map(|_| "main".to_owned()));
+        emitted.preludes = preludes;
+        emitted.definitions = definitions;
+        Ok(emitted)
+    }
+
+    fn module_name(&self, path: &[String]) -> String {
+        self.state
+            .module_name(path)
+            .unwrap_or("undefined")
+            .to_owned()
+    }
+
+    fn module_object(&mut self, node: &ModuleTree<'p>, path: &[String]) -> Result<String> {
+        let mut members = Vec::new();
+        for entry in &node.items {
+            if let Some(text) = self.declaration(entry)? {
+                members.push(indent(&format!("{text},"), 1));
+            }
+        }
+        for (segment, child) in &node.modules {
+            let mut child_path = path.to_vec();
+            child_path.push(segment.clone());
+            let name = self.module_name(&child_path);
+            let object = self.module_object(child, &child_path)?;
+            members.push(indent(&format!("{name}: {object},"), 1));
+        }
+        Ok(format!("{{\n{}\n}}", members.join("\n")))
+    }
+
+    fn declaration(&mut self, entry: &Decl) -> Result<Option<String>> {
+        match entry {
+            Decl::Data(data) => {
+                let name = self.state.local_name(&data.full_name).to_owned();
+                self.state.map(entry, &name);
+                self.state.encode("data", "a data value is a frozen object whose $ property names its constructor and whose other properties are its fields");
+                Ok(None)
+            }
+            Decl::Fn(function) => self.function(entry, function).map(Some),
+            Decl::Theorem(theorem) => self.theorem(entry, theorem).map(Some),
+        }
+    }
+
+    fn function(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
+        let (params, body) = rename_function(function, &ident, &self.state.local_reserved());
+        if params.iter().any(|param| param.ty.is_float()) || function.ret.is_float() {
+            self.uses_float = true;
+        }
+        let name = self.state.local_name(&function.full_name).to_owned();
+        self.state.map(entry, &name);
+        let mut lines: Vec<String> = params
+            .iter()
+            .filter_map(|param| self.parameter_guard(param))
+            .collect();
+        if tail_loop(function) {
+            // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
+            let names = params.iter().map(|param| param.name.clone()).collect();
+            self.loop_params = Some((function.full_name.clone(), names));
+            let statements = self.statements(&body);
+            self.loop_params = None;
+            lines.push("for (;;) {".to_owned());
+            lines.push(indent(&statements?.join("\n"), 1));
+            lines.push("}".to_owned());
+        } else {
+            lines.extend(self.statements(&body)?);
+        }
+        let names: Vec<&str> = params.iter().map(|param| param.name.as_str()).collect();
+        Ok(format!(
+            "{name}({}) {{\n{}\n}}",
+            names.join(", "),
+            indent(&lines.join("\n"), 1)
+        ))
+    }
+
+    /// Machine-integer parameters are range-checked, as the Rust type guarantees.
+    fn parameter_guard(&mut self, param: &Param) -> Option<String> {
+        let Type::Fixed { bits, signed } = param.ty else {
+            return None;
+        };
+        self.helpers.insert(Helper::Fixed);
+        let (min, max) = fixed_bounds(bits, signed);
+        Some(format!(
+            "ml_fixed({name}, {min}n, {max}n, {message});",
+            name = param.name,
+            message = json_string(&format!(
+                "{} argument {} out of range",
+                param.ty.key(),
+                param.name
+            ))
+        ))
+    }
+
+    fn theorem(&mut self, entry: &Decl, theorem: &TheoremDecl) -> Result<String> {
+        let (binders, prop, _) = rename_theorem(theorem, &ident, &self.state.local_reserved());
+        let name = self.state.local_name(&theorem.full_name).to_owned();
+        self.state.map(entry, &name);
+        self.state
+            .theorem(&theorem.full_name, &name, binders.is_empty(), true);
+        self.theorem_checks.push(TheoremCheck {
+            reference: self.state.reference(&theorem.full_name, "."),
+            binders: binders.clone(),
+            source: theorem.full_name.clone(),
+        });
+        let names: Vec<&str> = binders.iter().map(|binder| binder.name.as_str()).collect();
+        Ok(format!(
+            "{name}({}) {{\n  return {};\n}}",
+            names.join(", "),
+            self.prop(&prop)?
+        ))
+    }
+
+    fn theorem_runner(&mut self) -> Result<String> {
+        self.state.encode("theorem-properties", "each theorem is an executable property; --ml-check-theorems evaluates it on every input of a bounded domain, and its proof remains checked by the source kernel");
+        let mut checks = Vec::new();
+        for check in self.theorem_checks.clone() {
+            let mut domains = Vec::new();
+            for binder in &check.binders {
+                domains.push(self.domain(&binder.ty, 3)?);
+            }
+            let TheoremCheck {
+                reference, source, ..
+            } = check;
+            let call = if domains.is_empty() {
+                format!("{reference}()")
+            } else {
+                format!(
+                    "ml_product([{}]).every((args) => {reference}(...args))",
+                    domains.join(", ")
+                )
+            };
+            checks.push(format!("  if (!({call})) throw new Error('theorem {source} fails on a bounded input');\n  console.log('theorem {source}: holds on the bounded domain');"));
+        }
+        Ok(format!(
+            "function ml_checkTheorems() {{\n{}\n}}",
+            checks.join("\n")
+        ))
+    }
+
+    /// Values of a type up to a constructor depth, as JavaScript source.
+    fn domain(&mut self, ty: &Type, depth: i64) -> Result<String> {
+        self.helpers.insert(Helper::Domains);
+        let values = match ty {
+            Type::Nat => if depth >= 3 { "ml_nat" } else { "ml_small_nat" }.to_owned(),
+            Type::Int => if depth >= 3 { "ml_int" } else { "ml_small_int" }.to_owned(),
+            Type::Fixed { signed, .. } => if *signed {
+                "ml_small_int"
+            } else {
+                "ml_small_nat"
+            }
+            .to_owned(),
+            Type::Bool => "[false, true]".to_owned(),
+            Type::String => "['', 'a', 'ab']".to_owned(),
+            Type::Unit => "[null]".to_owned(),
+            Type::Data { name } => self.data_domain(name, depth)?,
+            other => {
+                return Err(malformed(format!(
+                    "no JavaScript domain for {}",
+                    other.kind()
+                )));
+            }
+        };
+        Ok(values)
+    }
+
+    fn data_domain(&mut self, name: &str, depth: i64) -> Result<String> {
+        let entry = self.program.data(name);
+        let mut values = Vec::new();
+        for ctor in &entry.ctors {
+            let recursive = ctor
+                .fields
+                .iter()
+                .any(|field| matches!(field.ty, Type::Data { .. }));
+            if recursive && depth <= 1 {
+                continue;
+            }
+            let mut fields = Vec::new();
+            for field in &ctor.fields {
+                let field_depth = if matches!(field.ty, Type::Data { .. }) {
+                    depth - 1
+                } else {
+                    1
+                };
+                fields.push(self.domain(&field.ty, field_depth)?);
+            }
+            if fields.is_empty() {
+                values.push(format!("[{}]", ctor_object(ctor, &[])));
+            } else {
+                let args: Vec<String> = (0..ctor.fields.len())
+                    .map(|index| format!("args[{index}]"))
+                    .collect();
+                values.push(format!(
+                    "ml_product([{}]).map((args) => {})",
+                    fields.join(", "),
+                    ctor_object(ctor, &args)
+                ));
+            }
+        }
+        if values.is_empty() {
+            return Ok("[]".to_owned());
+        }
+        let spread: Vec<String> = values.iter().map(|value| format!("...{value}")).collect();
+        Ok(format!("[{}]", spread.join(", ")))
+    }
+
+    fn prop(&mut self, prop: &Prop) -> Result<String> {
+        Ok(match prop {
+            Prop::Forall { binders, body } => {
+                let mut inner = self.prop(body)?;
+                for binder in binders.iter().rev() {
+                    let domain = self.domain(&binder.ty, 3)?;
+                    inner = format!("ml_forall({domain}, ({}) => {inner})", binder.name);
+                }
+                inner
+            }
+            Prop::And { left, right } => {
+                format!("({} && {})", self.prop(left)?, self.prop(right)?)
+            }
+            Prop::Or { left, right } => {
+                format!("({} || {})", self.prop(left)?, self.prop(right)?)
+            }
+            Prop::Implies { left, right } => {
+                format!("(!{} || {})", self.prop(left)?, self.prop(right)?)
+            }
+            Prop::Not { arg } => format!("!{}", self.prop(arg)?),
+            Prop::Bool { expr } => self.expr(expr)?,
+            Prop::Eq(comparison) | Prop::Ne(comparison) => {
+                let left = self.expr(&comparison.left)?;
+                let right = self.expr(&comparison.right)?;
+                let structured = matches!(comparison.left.ty, Type::Data { .. } | Type::Unit);
+                let equal = if structured {
+                    self.helpers.insert(Helper::Equal);
+                    format!("ml_equal({left}, {right})")
+                } else if comparison.same_value {
+                    format!("Object.is({left}, {right})")
+                } else {
+                    format!("({left} === {right})")
+                };
+                if matches!(prop, Prop::Eq(_)) {
+                    equal
+                } else {
+                    format!("!{equal}")
+                }
+            }
+            Prop::Lt(comparison)
+            | Prop::Le(comparison)
+            | Prop::Gt(comparison)
+            | Prop::Ge(comparison) => {
+                let operator = match prop {
+                    Prop::Lt(_) => "<",
+                    Prop::Le(_) => "<=",
+                    Prop::Gt(_) => ">",
+                    _ => ">=",
+                };
+                format!(
+                    "({} {operator} {})",
+                    self.expr(&comparison.left)?,
+                    self.expr(&comparison.right)?
+                )
+            }
+        })
+    }
+
+    /// A function body as statements that return its value.
+    fn statements(&mut self, e: &Expr) -> Result<Vec<String>> {
+        match &e.node {
+            Node::Let { name, value, body } => {
+                let mut lines = vec![format!("const {name} = {};", self.expr(value)?)];
+                lines.extend(self.statements(body)?);
+                Ok(lines)
+            }
+            Node::Print { text, body } => {
+                let mut lines = vec![format!("console.log({});", self.expr(text)?)];
+                lines.extend(self.statements(body)?);
+                Ok(lines)
+            }
+            Node::If {
+                cond,
+                then,
+                otherwise,
+            } => {
+                let cond = self.expr(cond)?;
+                let then = self.statements(then)?.join("\n");
+                let otherwise = self.statements(otherwise)?.join("\n");
+                Ok(vec![
+                    format!("if ({cond}) {{"),
+                    indent(&then, 1),
+                    "} else {".to_owned(),
+                    indent(&otherwise, 1),
+                    "}".to_owned(),
+                ])
+            }
+            Node::Match { scrutinee, cases } => self.match_statements(scrutinee, cases),
+            Node::Abort { message } => {
+                self.helpers.insert(Helper::Abort);
+                Ok(vec![format!("return ml_abort({});", json_string(message))])
+            }
+            Node::Call { func, args }
+                if self
+                    .loop_params
+                    .as_ref()
+                    .is_some_and(|(name, _)| name == func) =>
+            {
+                let mut texts = Vec::with_capacity(args.len());
+                for arg in args {
+                    texts.push(self.expr(arg)?);
+                }
+                let names = self
+                    .loop_params
+                    .as_ref()
+                    .map(|(_, names)| names.as_slice())
+                    .unwrap_or_default();
+                let mut lines = match names {
+                    [] => Vec::new(),
+                    [name] => vec![format!("{name} = {};", texts[0])],
+                    _ => vec![format!("[{}] = [{}];", names.join(", "), texts.join(", "))],
+                };
+                lines.push("continue;".to_owned());
+                Ok(lines)
+            }
+            _ => Ok(vec![format!("return {};", self.expr(e)?)]),
+        }
+    }
+
+    /// The body of the first wildcard or binding case, with the binding declared.
+    fn fallback_body(&mut self, fallback: Option<&Case>, subject: &str) -> Result<Vec<String>> {
+        // A checked match is exhaustive, so a missing case always has a fallback.
+        let kase = fallback.ok_or_else(|| {
+            malformed("Cannot read properties of undefined (reading 'pattern')".to_owned())
+        })?;
+        let mut lines = Vec::new();
+        if let Pattern::Bind { name } = &kase.pattern {
+            lines.push(format!("const {name} = {subject};"));
+        }
+        lines.extend(self.statements(&kase.body)?);
+        Ok(lines)
+    }
+
+    fn match_statements(&mut self, scrutinee: &Expr, cases: &[Case]) -> Result<Vec<String>> {
+        let mut lines = Vec::new();
+        let subject = if let Some(name) = scrutinee.var_name() {
+            name.to_owned()
+        } else {
+            self.temporaries += 1;
+            let subject = format!("ml_subject{}", self.temporaries);
+            lines.push(format!("const {subject} = {};", self.expr(scrutinee)?));
+            subject
+        };
+        let fallback = cases
+            .iter()
+            .find(|kase| matches!(kase.pattern, Pattern::Wild | Pattern::Bind { .. }));
+        let Type::Data { name: data } = &scrutinee.ty else {
+            let zero = cases
+                .iter()
+                .find(|kase| matches!(kase.pattern, Pattern::NatZero));
+            let succ = cases
+                .iter()
+                .find(|kase| matches!(kase.pattern, Pattern::NatSucc { .. }));
+            let zero_lines = match zero {
+                Some(kase) => self.statements(&kase.body)?,
+                None => self.fallback_body(fallback, &subject)?,
+            };
+            let succ_lines = match succ {
+                Some(Case {
+                    pattern: Pattern::NatSucc { name },
+                    body,
+                }) => {
+                    let mut lines = vec![format!("const {name} = {subject} - 1n;")];
+                    lines.extend(self.statements(body)?);
+                    lines
+                }
+                _ => self.fallback_body(fallback, &subject)?,
+            };
+            lines.extend([
+                format!("if ({subject} === 0n) {{"),
+                indent(&zero_lines.join("\n"), 1),
+                "} else {".to_owned(),
+                indent(&succ_lines.join("\n"), 1),
+                "}".to_owned(),
+            ]);
+            return Ok(lines);
+        };
+        let entry = self.program.data(data);
+        lines.push(format!("switch ({subject}.$) {{"));
+        for kase in cases {
+            let Pattern::Ctor { ctor, binds, .. } = &kase.pattern else {
+                continue;
+            };
+            let ctor = entry
+                .ctors
+                .iter()
+                .find(|candidate| candidate.name == *ctor)
+                .unwrap_or_else(|| panic!("{data} has no constructor {ctor}"));
+            let mut body: Vec<String> = binds
+                .iter()
+                .enumerate()
+                .filter_map(|(index, bind)| {
+                    bind.as_ref().map(|bind| {
+                        format!(
+                            "const {bind} = {subject}.{};",
+                            field_key(&ctor.fields[index].name)
+                        )
+                    })
+                })
+                .collect();
+            lines.push(format!("  case '{}': {{", ctor.name.replace('\'', "\\'")));
+            body.extend(self.statements(&kase.body)?);
+            lines.push(indent(&body.join("\n"), 2));
+            lines.push("  }".to_owned());
+        }
+        lines.push("  default: {".to_owned());
+        if fallback.is_some() {
+            let body = self.fallback_body(fallback, &subject)?;
+            lines.push(indent(&body.join("\n"), 2));
+        } else {
+            lines.push(format!(
+                "    throw new TypeError(`unexpected constructor ${{{subject}.$}}`);"
+            ));
+        }
+        lines.push("  }".to_owned());
+        lines.push("}".to_owned());
+        Ok(lines)
+    }
+
+    fn expr(&mut self, e: &Expr) -> Result<String> {
+        if e.ty.is_float() {
+            self.uses_float = true;
+        }
+        match &e.node {
+            Node::Lit { value } => literal(&e.ty, value),
+            Node::Unit => Ok("null".to_owned()),
+            Node::Var { name } => Ok(name.clone()),
+            Node::Print { text, body } => Ok(format!(
+                "(console.log({}), {})",
+                self.expr(text)?,
+                self.expr(body)?
+            )),
+            Node::OutNil | Node::OutCons { .. } => {
+                unreachable!("only the Lean and Rocq emitters thread output")
+            }
+            Node::Call { func, args } => {
+                let target = self.state.reference(func, ".");
+                let args = self.exprs(args)?;
+                Ok(format!("{target}({})", args.join(", ")))
+            }
+            Node::Ctor { data, ctor, args } => {
+                let entry = self.program.data(data);
+                let ctor = entry
+                    .ctors
+                    .iter()
+                    .find(|candidate| candidate.name == *ctor)
+                    .unwrap_or_else(|| panic!("{data} has no constructor {ctor}"));
+                let args = self.exprs(args)?;
+                Ok(ctor_object(ctor, &args))
+            }
+            Node::Unary { op, arg, .. } => {
+                let arg = self.expr(arg)?;
+                Ok(match op {
+                    UnaryOp::Not => format!("!{arg}"),
+                    UnaryOp::Neg => self.checked(negate(&arg), &e.ty, "neg"),
+                })
+            }
+            Node::Binary { .. } => self.binary(e),
+            Node::If {
+                cond,
+                then,
+                otherwise,
+            } => Ok(format!(
+                "({} ? {} : {})",
+                self.expr(cond)?,
+                self.expr(then)?,
+                self.expr(otherwise)?
+            )),
+            Node::Let { .. } | Node::Match { .. } => Ok(format!(
+                "(() => {{\n{}\n}})()",
+                indent(&self.statements(e)?.join("\n"), 1)
+            )),
+            Node::ToString { arg, console } => {
+                if *console && arg.ty.is_float() {
+                    self.helpers.insert(Helper::ShowNumber);
+                    Ok(format!("ml_showNumber({})", self.expr(arg)?))
+                } else if matches!(arg.ty, Type::String) {
+                    self.expr(arg)
+                } else {
+                    self.text_of(arg)
+                }
+            }
+            Node::Cast {
+                arg,
+                flavor,
+                message,
+                ..
+            } => self.cast(arg, *flavor, message.as_deref()),
+            Node::Abort { message } => {
+                self.helpers.insert(Helper::Abort);
+                Ok(format!("ml_abort({})", json_string(message)))
+            }
+            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
+                self.array_expr(e)
+            }
+            Node::Math { .. } => self.math(e),
+        }
+    }
+
+    pub(super) fn exprs(&mut self, list: &[Expr]) -> Result<Vec<String>> {
+        list.iter().map(|arg| self.expr(arg)).collect()
+    }
+
+    fn text_of(&mut self, arg: &Expr) -> Result<String> {
+        if matches!(arg.ty, Type::Data { .. } | Type::Unit) {
+            return Err(unsupported(
+                "output of structured values",
+                &format!("a {} value has no portable textual form", arg.ty.kind()),
+                arg.span,
+            ));
+        }
+        Ok(format!("String({})", self.expr(arg)?))
+    }
+
+    /// A machine-integer result out of range panics as Rust does.
+    fn checked(&mut self, text: String, ty: &Type, op: &str) -> String {
+        let Type::Fixed { bits, signed } = *ty else {
+            return text;
+        };
+        self.helpers.insert(Helper::Fixed);
+        let (min, max) = fixed_bounds(bits, signed);
+        format!(
+            "ml_fixed({text}, {min}n, {max}n, {})",
+            json_string(overflow_message(op))
+        )
+    }
+
+    fn binary(&mut self, e: &Expr) -> Result<String> {
+        let Node::Binary {
+            op,
+            left,
+            right,
+            semantics,
+            rounding,
+            by_zero,
+            ..
+        } = &e.node
+        else {
+            unreachable!("binary called on a {} node", e.kind());
+        };
+        let left = self.expr(left)?;
+        let right = self.expr(right)?;
+        let comparison = |operator: &str| format!("({left} {operator} {right})");
+        Ok(match op {
+            BinaryOp::And => comparison("&&"),
+            BinaryOp::Or => comparison("||"),
+            BinaryOp::Concat => comparison("+"),
+            BinaryOp::Eq => comparison("==="),
+            BinaryOp::Ne => comparison("!=="),
+            BinaryOp::Lt => comparison("<"),
+            BinaryOp::Le => comparison("<="),
+            BinaryOp::Gt => comparison(">"),
+            BinaryOp::Ge => comparison(">="),
+            BinaryOp::Add => self.checked(comparison("+"), &e.ty, "add"),
+            BinaryOp::Mul => self.checked(comparison("*"), &e.ty, "mul"),
+            BinaryOp::Sub => {
+                if *semantics == Some(Semantics::Truncated) {
+                    self.helpers.insert(Helper::NatSub);
+                    format!("ml_natSub({left}, {right})")
+                } else {
+                    self.checked(comparison("-"), &e.ty, "sub")
+                }
+            }
+            BinaryOp::Div | BinaryOp::Rem if *semantics == Some(Semantics::Ieee) => {
+                comparison(if *op == BinaryOp::Div { "/" } else { "%" })
+            }
+            BinaryOp::Div | BinaryOp::Rem => {
+                self.helpers.insert(Helper::Divide);
+                let rounding = match rounding {
+                    Some(Rounding::Trunc) => "trunc",
+                    Some(Rounding::Euclid) => "euclid",
+                    Some(Rounding::Floor) => "floor",
+                    None => "undefined",
+                };
+                let zero = if *by_zero == Some(ByZero::Abort) {
+                    json_string(zero_divisor_message(op.name(), &e.ty))
+                } else {
+                    "null".to_owned()
+                };
+                let remainder = *op == BinaryOp::Rem;
+                let Type::Fixed { bits, signed } = e.ty else {
+                    return Ok(format!(
+                        "ml_divide({left}, {right}, '{rounding}', {zero}, {remainder})"
+                    ));
+                };
+                let (min, max) = fixed_bounds(bits, signed);
+                format!(
+                    "ml_divide({left}, {right}, '{rounding}', {zero}, {remainder}, [{min}n, {max}n, {}])",
+                    json_string(overflow_message(op.name()))
+                )
+            }
+            BinaryOp::Plus => return Err(malformed("no JavaScript operator plus".to_owned())),
+        })
+    }
+
+    fn cast(&mut self, arg: &Expr, flavor: Flavor, message: Option<&str>) -> Result<String> {
+        let arg = self.expr(arg)?;
+        Ok(match flavor {
+            Flavor::Exact => arg,
+            Flavor::Clamp => format!("((value) => (value < 0n ? 0n : value))({arg})"),
+            Flavor::Checked => {
+                self.helpers.insert(Helper::ToNatChecked);
+                format!(
+                    "ml_toNatChecked({arg}, {})",
+                    json_string(cast_message(message))
+                )
+            }
+        })
+    }
+
+    fn main(&mut self, main: &Main) -> Result<String> {
+        let effects = rename_main(main, &ident, &self.state.local_reserved());
+        let mut lines = Vec::new();
+        let mut assertion = 0;
+        for effect in &effects {
+            match effect {
+                Effect::Print { expr, .. } => {
+                    lines.push(format!("console.log({});", self.expr(expr)?));
+                }
+                Effect::Let { name, value, .. } => {
+                    lines.push(format!("const {name} = {};", self.expr(value)?));
+                }
+                Effect::Assert { prop, .. } => {
+                    assertion += 1;
+                    self.helpers.insert(Helper::Assert);
+                    let label = format!("assertion {assertion}");
+                    lines.push(format!(
+                        "ml_assert({}, {});",
+                        self.prop(prop)?,
+                        json_string(&label)
+                    ));
+                    self.state.assertion_theorem(&label, effect);
+                }
+                Effect::Output { .. } | Effect::Unwrap { .. } => {
+                    unreachable!("only the Lean and Rocq emitters thread output")
+                }
+            }
+        }
+        if main.sequential_async {
+            self.state.encode(
+                "sequential-async",
+                "an async function is the function its body computes and await is its call: every call of one is awaited where it is made, so nothing runs concurrently and the output is the same, in the same order",
+            );
+        }
+        self.state.encode(
+            "program-output",
+            "main prints the lines the source program prints, in order, with console.log",
+        );
+        Ok(format!(
+            "function main() {{\n{}\n}}",
+            indent(&lines.join("\n"), 1)
+        ))
+    }
+}
+
+/// `-x`, parenthesised so that `-(-x)` does not read as a decrement.
+fn negate(text: &str) -> String {
+    if text.starts_with('-') {
+        format!("-({text})")
+    } else {
+        format!("-{text}")
+    }
+}
+
+fn literal(ty: &Type, value: &LitValue) -> Result<String> {
+    let text = value.text();
+    match ty {
+        Type::Nat | Type::Int | Type::Fixed { .. } => Ok(if text.starts_with('-') {
+            format!("({text}n)")
+        } else {
+            format!("{text}n")
+        }),
+        Type::Float => Ok(if text.starts_with('-') {
+            format!("({text})")
+        } else {
+            text
+        }),
+        Type::Bool => Ok(text),
+        Type::String => Ok(json_string(&text)),
+        other => Err(malformed(format!(
+            "no JavaScript literal for {}",
+            other.kind()
+        ))),
+    }
+}

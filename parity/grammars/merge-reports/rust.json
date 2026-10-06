@@ -1,0 +1,401 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "rust",
+  "native": "native-rust",
+  "sources": [
+    {
+      "id": "tree-sitter-rust",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-rust 0.24.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-rust",
+      "revision": "77a3747266f4d621d0757825e6b11edcbf991ca5",
+      "path": "src/grammar.json",
+      "sha256": "d1720d75ac598d37d64c55f32316fe5b7261d0e7b3f6d10f6bebeef6b372bcbb",
+      "license": "MIT",
+      "patch": {
+        "file": "rust/vendor/tree-sitter-rust/meta-language.patch",
+        "sha256": "035a9fc27ea56abe2b514b61ad338f2b404363b2ce531e25566c614812cb6887",
+        "reason": "syntax real published crates use that the release reports as errors; the patched grammar is the one the oracle parser is generated from"
+      }
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/rust.lino",
+    "sha256": "933d8dc709509e7a4613a836d928df83392b81833ce4e81a7945b696f400f8e9",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "9609a2f92dbb7c32bc056fd8fb94e5478428f04496696aa08b048a9b66caf283"
+    },
+    "scanners": [
+      {
+        "name": "strings",
+        "tokens": [
+          "string_content",
+          "string_close"
+        ]
+      },
+      {
+        "name": "raw_strings",
+        "tokens": [
+          "raw_string_literal_start",
+          "raw_string_literal_content",
+          "raw_string_literal_end"
+        ]
+      },
+      {
+        "name": "floats",
+        "tokens": [
+          "float_literal"
+        ]
+      },
+      {
+        "name": "block_comments",
+        "tokens": [
+          "outer_block_documentation_comment_marker",
+          "inner_block_documentation_comment_marker",
+          "block_comment_content"
+        ]
+      },
+      {
+        "name": "line_documentation",
+        "tokens": [
+          "line_documentation_content"
+        ]
+      },
+      {
+        "name": "error_sentinel",
+        "tokens": [
+          "error_sentinel"
+        ]
+      }
+    ],
+    "immediate": [
+      "string_content",
+      "string_close",
+      "raw_string_literal_content",
+      "_raw_string_literal_end",
+      "_outer_block_doc_comment_marker",
+      "_inner_block_doc_comment_marker",
+      "_block_comment_content",
+      "_line_doc_content"
+    ]
+  },
+  "rules": 184,
+  "keywords": [
+    "_",
+    "as",
+    "async",
+    "await",
+    "block",
+    "bool",
+    "break",
+    "char",
+    "const",
+    "continue",
+    "crate",
+    "default",
+    "dyn",
+    "else",
+    "enum",
+    "expr",
+    "expr_2021",
+    "extern",
+    "f32",
+    "f64",
+    "false",
+    "fn",
+    "for",
+    "gen",
+    "i128",
+    "i16",
+    "i32",
+    "i64",
+    "i8",
+    "ident",
+    "if",
+    "impl",
+    "in",
+    "isize",
+    "item",
+    "let",
+    "lifetime",
+    "literal",
+    "loop",
+    "match",
+    "meta",
+    "mod",
+    "move",
+    "mut",
+    "pat",
+    "pat_param",
+    "path",
+    "pub",
+    "raw",
+    "ref",
+    "return",
+    "self",
+    "static",
+    "stmt",
+    "str",
+    "struct",
+    "super",
+    "trait",
+    "true",
+    "try",
+    "tt",
+    "ty",
+    "type",
+    "u128",
+    "u16",
+    "u32",
+    "u64",
+    "u8",
+    "union",
+    "unsafe",
+    "use",
+    "usize",
+    "vis",
+    "where",
+    "while",
+    "yield"
+  ],
+  "renamed": [
+    {
+      "source": "_statement",
+      "native": "statement"
+    },
+    {
+      "source": "_declaration_statement",
+      "native": "declaration_statement"
+    },
+    {
+      "source": "_token_pattern",
+      "native": "token_pattern"
+    },
+    {
+      "source": "_tokens",
+      "native": "tokens"
+    },
+    {
+      "source": "_non_special_token",
+      "native": "non_special_token"
+    },
+    {
+      "source": "mod_item",
+      "native": "module_item"
+    },
+    {
+      "source": "foreign_mod_item",
+      "native": "foreign_module_item"
+    },
+    {
+      "source": "struct_item",
+      "native": "structure_item"
+    },
+    {
+      "source": "enum_item",
+      "native": "enumeration_item"
+    },
+    {
+      "source": "enum_variant_list",
+      "native": "enumeration_variant_list"
+    },
+    {
+      "source": "enum_variant",
+      "native": "enumeration_variant"
+    },
+    {
+      "source": "const_item",
+      "native": "constant_item"
+    },
+    {
+      "source": "impl_item",
+      "native": "implementation_item"
+    },
+    {
+      "source": "const_parameter",
+      "native": "constant_parameter"
+    },
+    {
+      "source": "_use_clause",
+      "native": "use_clause"
+    },
+    {
+      "source": "_type",
+      "native": "type"
+    },
+    {
+      "source": "_expression_except_range",
+      "native": "expression_except_range"
+    },
+    {
+      "source": "_expression",
+      "native": "expression"
+    },
+    {
+      "source": "_expression_ending_with_block",
+      "native": "expression_ending_with_block"
+    },
+    {
+      "source": "delim_token_tree",
+      "native": "delimited_token_tree"
+    },
+    {
+      "source": "_delim_tokens",
+      "native": "delimited_tokens"
+    },
+    {
+      "source": "_non_delim_token",
+      "native": "non_delimited_token"
+    },
+    {
+      "source": "compound_assignment_expr",
+      "native": "compound_assignment_expression"
+    },
+    {
+      "source": "struct_expression",
+      "native": "structure_expression"
+    },
+    {
+      "source": "_let_chain",
+      "native": "let_chain_alias"
+    },
+    {
+      "source": "_condition",
+      "native": "condition"
+    },
+    {
+      "source": "const_block",
+      "native": "constant_block"
+    },
+    {
+      "source": "async_block",
+      "native": "asynchronous_block"
+    },
+    {
+      "source": "gen_block",
+      "native": "generator_block"
+    },
+    {
+      "source": "_pattern",
+      "native": "pattern"
+    },
+    {
+      "source": "tuple_struct_pattern",
+      "native": "tuple_structure_pattern"
+    },
+    {
+      "source": "struct_pattern",
+      "native": "structure_pattern"
+    },
+    {
+      "source": "mut_pattern",
+      "native": "mutable_pattern"
+    },
+    {
+      "source": "ref_pattern",
+      "native": "by_reference_pattern"
+    },
+    {
+      "source": "_literal",
+      "native": "literal"
+    },
+    {
+      "source": "_literal_pattern",
+      "native": "literal_pattern"
+    },
+    {
+      "source": "char_literal",
+      "native": "character_literal"
+    },
+    {
+      "source": "_line_doc_comment_marker",
+      "native": "line_documentation_comment_marker"
+    },
+    {
+      "source": "_inner_line_doc_comment_marker",
+      "native": "inner_line_documentation_comment_marker"
+    },
+    {
+      "source": "_outer_line_doc_comment_marker",
+      "native": "outer_line_documentation_comment_marker"
+    },
+    {
+      "source": "_block_doc_comment_marker",
+      "native": "block_documentation_comment_marker"
+    },
+    {
+      "source": "_path",
+      "native": "path"
+    },
+    {
+      "source": "_reserved_identifier",
+      "native": "reserved_identifier"
+    },
+    {
+      "source": "_type_identifier",
+      "native": "type_identifier_alias"
+    },
+    {
+      "source": "_field_identifier",
+      "native": "field_identifier_alias"
+    }
+  ],
+  "expandedWords": [
+    "async",
+    "char",
+    "const",
+    "delim",
+    "doc",
+    "enum",
+    "expr",
+    "gen",
+    "impl",
+    "mod",
+    "mut",
+    "struct"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "attribute",
+        "concept": "program.attributes"
+      },
+      {
+        "rule": "parameter",
+        "concept": "parameter"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "character_literal",
+        "concept": "grammar.character-literal"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      },
+      {
+        "rule": "block_comment",
+        "concept": "grammar.block-comment"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      }
+    ],
+    "generated": 175
+  },
+  "approximations": [],
+  "unsupported": []
+}

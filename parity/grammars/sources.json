@@ -1,0 +1,386 @@
+{
+  "description": "The pinned grammar sources the native grammars import. Each entry is one upstream grammar at one release: the vendored bytes (gzipped, hashed before compression), the repository and revision they come from, the license, the native scanner file that ports the upstream external scanner, if any, the native grammar the import pipeline (js/scripts/import-native-grammars.mjs) produces from it, and the upstream test corpus at the same revision (gzipped JSON of each corpus file, hashed before compression) the native grammar is checked on against the oracle.",
+  "sources": [
+    {
+      "id": "tree-sitter-c",
+      "language": "c",
+      "native": "native-c",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-c 0.24.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-c",
+      "revision": "b780e47fc780ddc8da13afa35a3f4ed5c157823d",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-c-0.24.2.grammar.json.gz",
+      "sha256": "d0bc53bfd8e9eff4d5e0c3ca2c8049bec2caa8a15f119807de68fd527f172368",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-c-0.24.2.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-c-0.24.2.corpus.json.gz",
+        "sha256": "38ca24af15ccc0f1c586b82b64917e977109cdedb28276e8f0cb78822f6a66e0"
+      },
+      "oracle": "c"
+    },
+    {
+      "id": "tree-sitter-rust",
+      "language": "rust",
+      "native": "native-rust",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-rust 0.24.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-rust",
+      "revision": "77a3747266f4d621d0757825e6b11edcbf991ca5",
+      "path": "src/grammar.json",
+      "patch": {
+        "file": "rust/vendor/tree-sitter-rust/meta-language.patch",
+        "sha256": "035a9fc27ea56abe2b514b61ad338f2b404363b2ce531e25566c614812cb6887",
+        "reason": "syntax real published crates use that the release reports as errors; the patched grammar is the one the oracle parser is generated from"
+      },
+      "file": "parity/grammars/sources/tree-sitter-rust-0.24.2.grammar.json.gz",
+      "sha256": "d1720d75ac598d37d64c55f32316fe5b7261d0e7b3f6d10f6bebeef6b372bcbb",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-rust-0.24.2.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/rust.lino",
+        "sha256": "933d8dc709509e7a4613a836d928df83392b81833ce4e81a7945b696f400f8e9",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "9609a2f92dbb7c32bc056fd8fb94e5478428f04496696aa08b048a9b66caf283"
+        },
+        "generator": "js/experiments/build-rust-scanner.mjs",
+        "immediate": [
+          "string_content",
+          "string_close",
+          "raw_string_literal_content",
+          "_raw_string_literal_end",
+          "_outer_block_doc_comment_marker",
+          "_inner_block_doc_comment_marker",
+          "_block_comment_content",
+          "_line_doc_content"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-rust-0.24.2.corpus.json.gz",
+        "sha256": "3941df3e0ad700b8158d0e8268cc3a436cb68a7564b2fb908ea80d37b2ba08a8"
+      },
+      "oracle": "rust"
+    },
+    {
+      "id": "tree-sitter-javascript",
+      "language": "javascript",
+      "native": "native-javascript",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-javascript 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-javascript",
+      "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-javascript-0.25.0.grammar.json.gz",
+      "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-javascript-0.25.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/javascript.lino",
+        "sha256": "6b382526289adf9b6f17690081931db3e0fc81ad4f5f3e8187935cb105de1c1e",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "b3d3f64284d97bf80749c026862427782cf7ecc0b7dc094e6698ab311c9a42c7"
+        },
+        "generator": "js/experiments/build-javascript-scanner.mjs",
+        "immediate": [
+          "_automatic_semicolon",
+          "_template_chars",
+          "jsx_text"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-javascript-0.25.0.corpus.json.gz",
+        "sha256": "bf7e222954a924c52f276f4e8f6766e860f95ebb67f28c24e7e3e752efa169ef"
+      },
+      "oracle": "javascript"
+    },
+    {
+      "id": "tree-sitter-typescript",
+      "language": "typescript",
+      "native": "native-typescript",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-typescript 0.23.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-typescript",
+      "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+      "path": "typescript/src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-typescript-0.23.2.typescript.grammar.json.gz",
+      "sha256": "99dc4b95424dff47c89acb50d5d3f25b081b07eaff43994b7881dccd4186b214",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-typescript-0.23.2.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/typescript.lino",
+        "sha256": "135563d1372a0bd1f942298a79e4f43e3feedf9c95af936b885894d3073b2992",
+        "ports": {
+          "path": "common/scanner.h",
+          "sha256": "da66ef2bd14a3f7ea743e25ba068c6c9aae2c3509db200ff80c4a0e6116e564c"
+        },
+        "generator": "js/experiments/build-typescript-scanner.mjs",
+        "immediate": [
+          "_automatic_semicolon",
+          "_template_chars",
+          "jsx_text",
+          "_function_signature_automatic_semicolon"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-typescript-0.23.2.corpus.json.gz",
+        "sha256": "1ee270ee5d53ac66f9e841438906f1c7061460b2881f8684a506139f0fa36f4d",
+        "language": "typescript"
+      },
+      "oracle": "typescript"
+    },
+    {
+      "id": "tree-sitter-tsx",
+      "language": "tsx",
+      "native": "native-tsx",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-typescript 0.23.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-typescript",
+      "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+      "path": "tsx/src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-typescript-0.23.2.tsx.grammar.json.gz",
+      "sha256": "f98a7830b67be266c9e9effb673a5fc154ad6aa26f87f7c6d4a9191e09d8b357",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-typescript-0.23.2.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/typescript.lino",
+        "sha256": "135563d1372a0bd1f942298a79e4f43e3feedf9c95af936b885894d3073b2992",
+        "ports": {
+          "path": "common/scanner.h",
+          "sha256": "da66ef2bd14a3f7ea743e25ba068c6c9aae2c3509db200ff80c4a0e6116e564c"
+        },
+        "generator": "js/experiments/build-typescript-scanner.mjs",
+        "immediate": [
+          "_automatic_semicolon",
+          "_template_chars",
+          "jsx_text",
+          "_function_signature_automatic_semicolon"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-typescript-0.23.2.corpus.json.gz",
+        "sha256": "1ee270ee5d53ac66f9e841438906f1c7061460b2881f8684a506139f0fa36f4d",
+        "language": "tsx"
+      },
+      "oracle": "tsx"
+    },
+    {
+      "id": "tree-sitter-lean",
+      "language": "lean",
+      "native": "native-lean",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-lean4 0.3.0",
+      "repository": "https://github.com/wvhulle/tree-sitter-lean",
+      "revision": "bd942cd2795016239be02b3b3d5ef635645ddd38",
+      "path": "grammar.js",
+      "generated": {
+        "reason": "the repository commits grammar.js and the generated parser.c, not src/grammar.json; the bytes are the grammar.json tree-sitter CLI 0.27.0 writes from grammar.js, every symbol of the committed parser.c, the one the oracle compiles, is a rule of it, and of its rules only do_try and do_catch, which no rule reaches, are not in parser.c",
+        "generator": "js/experiments/generate-tree-sitter-grammar-json.mjs",
+        "dsl": "https://github.com/tree-sitter/tree-sitter/blob/v0.27.0/crates/generate/src/dsl.js"
+      },
+      "file": "parity/grammars/sources/tree-sitter-lean4-0.3.0.grammar.json.gz",
+      "sha256": "b9ba543fe131d18f1c69b9026b06963b7efa408136c3932709a32b88628d0886",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-lean4-0.3.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/lean.lino",
+        "sha256": "1e9147fd8b9ff6b038319683d2a40834006ce18ba63c978b435066a2cee211a7",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "6927b5de4e9818befd7f040b20ec14c0b87f7f7524cf2bb3fb4a5ad75d63e2c5"
+        },
+        "generator": "js/experiments/build-lean-scanner.mjs",
+        "immediate": [
+          "_layout_start",
+          "_layout_semicolon",
+          "_layout_end",
+          "_match_body_start",
+          "_syntax_quotation_body"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-lean4-0.3.0.corpus.json.gz",
+        "sha256": "5ccd9107c465322f9ebec794dd125f70fc5b9ac8ad5ce24938ccbd9364638cd0"
+      },
+      "oracle": "lean"
+    },
+    {
+      "id": "tree-sitter-rocq",
+      "language": "rocq",
+      "native": "native-rocq",
+      "format": "tree-sitter grammar.json",
+      "package": "vendored rust/vendor/tree-sitter-rocq",
+      "repository": "https://github.com/aruzdh/tree-sitter-rocq",
+      "revision": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+      "path": "src/grammar.json",
+      "patch": {
+        "file": "rust/vendor/tree-sitter-rocq/meta-language.patch",
+        "sha256": "5da25fecd33120b7af9084aecdbd75447cef424efeab0bd018c7a02c68034014",
+        "reason": "constructs translated Rocq programs and the pinned Rocq stdlib use that the upstream grammar reports as errors; the patched grammar is the one the oracle parser is generated from"
+      },
+      "generated": {
+        "reason": "the patch changes grammar.js, not the committed src/grammar.json; the bytes are the grammar.json tree-sitter CLI 0.27.0 writes from the patched grammar.js (the same generator reproduces the committed src/grammar.json from the unpatched grammar.js byte for byte), and every named symbol of the vendored parser.c, the one the oracle compiles, is a rule of it",
+        "generator": "js/experiments/generate-tree-sitter-grammar-json.mjs",
+        "dsl": "https://github.com/tree-sitter/tree-sitter/blob/v0.27.0/crates/generate/src/dsl.js"
+      },
+      "file": "parity/grammars/sources/tree-sitter-rocq-300fe33.grammar.json.gz",
+      "sha256": "fb7905055821bc8b966059783535713e631d324c01426e1ab1a8a824eaeea23e",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-rocq-300fe33.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-rocq-300fe33.corpus.json.gz",
+        "sha256": "3cb37651a515ac9b68bfb4ae7c5d72f143602fa8f9231bd9af602d9a162956c3"
+      },
+      "oracle": "rocq"
+    },
+    {
+      "id": "tree-sitter-java",
+      "language": "java",
+      "native": "native-java",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-java 0.23.5",
+      "repository": "https://github.com/tree-sitter/tree-sitter-java",
+      "revision": "94703d5a6bed02b98e438d7cad1136c01a60ba2c",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-java-0.23.5.grammar.json.gz",
+      "sha256": "47ca521cd7a888d671d9f26301e8697fa686e04912032e959d242b5f25877eb6",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-java-0.23.5.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-java-0.23.5.corpus.json.gz",
+        "sha256": "60f786514dc14db3163fbb39e75bd266a2fb5e6528f5f09d95f036f20356e980"
+      },
+      "oracle": "java"
+    },
+    {
+      "id": "tree-sitter-go",
+      "language": "go",
+      "native": "native-go",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-go 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-go",
+      "revision": "1547678a9da59885853f5f5cc8a99cc203fa2e2c",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-go-0.25.0.grammar.json.gz",
+      "sha256": "0dcc665aa521a1b73a200be13b4e376780cca037d764a165f12864babfe28000",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-go-0.25.0.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-go-0.25.0.corpus.json.gz",
+        "sha256": "139387b31c54640e24c786589969426750d91b47e73c1d4763a1ea06b6c76906"
+      },
+      "oracle": "go"
+    },
+    {
+      "id": "tree-sitter-regex",
+      "language": "regex",
+      "native": "native-regex",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-regex 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-regex",
+      "revision": "b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-regex-0.25.0.grammar.json.gz",
+      "sha256": "a2e6cef007b68b11ea646d866e58747686b167c24789c1092958e9c77b27c6f6",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-regex-0.25.0.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-regex-0.25.0.corpus.json.gz",
+        "sha256": "5998b28758e4580c81674a7b371cbdaa086563ceda7d24832b8d4291ed7fbe24"
+      },
+      "oracle": "regex"
+    },
+    {
+      "id": "tree-sitter-graphql",
+      "language": "graphql",
+      "native": "native-graphql",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-graphql 0.3.0",
+      "repository": "https://github.com/joowani/tree-sitter-graphql",
+      "revision": "b1d368c339806d971818a4ca2099763a6c561f56",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-graphql-0.3.0.grammar.json.gz",
+      "sha256": "5d7c2999c5d4bb0f050f94d978ee8e8bb1b3a3de5c0f0e22221dd6573147adfd",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-graphql-0.3.0.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-graphql-0.3.0.corpus.json.gz",
+        "sha256": "4030992d2b40170b172b38a1bafbe235ffe5a71bb97a3367a47c00da614d2c62"
+      },
+      "oracle": "graphql"
+    },
+    {
+      "id": "tree-sitter-proto",
+      "language": "proto",
+      "native": "native-proto",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-proto 0.6.0",
+      "repository": "https://github.com/coder3101/tree-sitter-proto",
+      "revision": "6c878d18628ebbff3474479d2fdd6d8ba1954c3e",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-proto-0.6.0.grammar.json.gz",
+      "sha256": "0bd74a6fc9e16f89f31c38acdd6c343139b0fd5888fac7d44cfd7d7910f6de29",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-proto-0.6.0.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-proto-0.6.0.corpus.json.gz",
+        "sha256": "f9ee8ef95cc46e1f6e4c8e781c4cadbfb250264e752fa396a8c3b058f1ab810a"
+      },
+      "oracle": "proto"
+    },
+    {
+      "id": "tree-sitter-make",
+      "language": "make",
+      "native": "native-make",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-make 1.1.1",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-make",
+      "revision": "5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-make-1.1.1.grammar.json.gz",
+      "sha256": "48643ddba43c8aff5860b194587fefa1e9da79b10e4b1653885fda9a44c76483",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-make-1.1.1.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-make-1.1.1.corpus.json.gz",
+        "sha256": "5645df0c9c3b1045e26f74c33d179f7ab8ba692fbe695ea16fadb5150d2eddfc"
+      },
+      "oracle": "make"
+    },
+    {
+      "id": "tree-sitter-solidity",
+      "language": "solidity",
+      "native": "native-solidity",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-solidity 1.2.13",
+      "repository": "https://github.com/JoranHonig/tree-sitter-solidity",
+      "revision": "4e938a46c7030dd001bc99e1ac0f0c750ac98254",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-solidity-1.2.13.grammar.json.gz",
+      "sha256": "74a3972bdcd8e08047e911e5beb5f2bad06a5329629bebb8b05a6a883683da40",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-solidity-1.2.13.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-solidity-1.2.13.corpus.json.gz",
+        "sha256": "b0ae17f8fa1fd43a11763e81d78381b28cf8815a280edc2582245e40910a3245"
+      },
+      "oracle": "solidity"
+    }
+  ]
+}

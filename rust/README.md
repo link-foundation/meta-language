@@ -3,7 +3,7 @@
 [![Rust](https://github.com/link-foundation/meta-language/actions/workflows/rust.yml/badge.svg)](https://github.com/link-foundation/meta-language/actions/workflows/rust.yml)
 [![Crates.io](https://img.shields.io/crates/v/meta-language?label=crates.io&style=flat)](https://crates.io/crates/meta-language)
 [![Docs.rs](https://docs.rs/meta-language/badge.svg)](https://docs.rs/meta-language)
-[![Rust Version](https://img.shields.io/badge/rust-1.77%2B-blue.svg)](https://www.rust-lang.org/)
+[![Rust Version](https://img.shields.io/badge/rust-1.90%2B-blue.svg)](https://www.rust-lang.org/)
 [![Codecov](https://codecov.io/gh/link-foundation/meta-language/branch/main/graph/badge.svg)](https://codecov.io/gh/link-foundation/meta-language)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://unlicense.org/)
 
@@ -82,6 +82,10 @@ description, an interactive WebAssembly demo, and the full
   queryable external-id aliases, LiNo concept-set import, and
   `seed_common_concept_ontology()` for the default 351-concept semantic
   lexicon plus structural programming-language concepts.
+- Concept records for every canonical concept and operation, shared with the
+  JavaScript runtime (`concept_records()`, `seed_concept_records()`,
+  `import_concept_ontology()`). Each record has a readable English phrase, a
+  definition, constraints, source aliases and former names.
 - Object-identity links, many-valued `TruthValue` semantics, and fixed-point
   `ProbabilisticTruthValue` confidence semantics.
 - A testable parity registry and upstream-provenanced `PARITY_FIXTURES` for
@@ -132,6 +136,13 @@ description, an interactive WebAssembly demo, and the full
   and `object`.
 - A lossless text parser boundary that preserves tokens, trivia, recovery
   markers, and mixed-region metadata behind the same representation.
+- Versioned JavaScript, Rust, Lean, and Rocq/Coq parser/emitter capability
+  reports, a shared conformance corpus with the JavaScript package, and all 12
+  directed translation contracts failing closed until semantic preservation
+  exists. See
+  [`docs/four-language-contracts.md`](../docs/four-language-contracts.md) and
+  the full delivery checklist in
+  [`docs/issue-195-requirement-ledger.md`](../docs/issue-195-requirement-ledger.md).
 
 ## Usage
 
@@ -347,6 +358,66 @@ surface input and emits `bnf|ebnf|abnf|peg|gbnf|tree-sitter`. Unsupported target
 formats report a clear non-zero CLI error. `translate-grammar` rewrites
 concept-aligned rule names and documentation to the requested target language
 while preserving grammar structure.
+
+The `grammar` subcommand is the grammar interchange tool shared with the
+JavaScript package (`npx meta-language grammar ...`). It prints the same output
+and exits with the same status in both runtimes:
+
+```bash
+cargo run -- grammar formats
+cargo run -- grammar import --from abnf message.abnf
+cargo run -- grammar validate --from native grammar.grammar
+cargo run -- grammar convert --from pest --to ebnf message.pest
+cargo run -- grammar export --to abnf grammar.grammar
+cargo run -- grammar merge --source bnf:message.bnf --source ebnf:message.ebnf
+cargo run -- grammar rename --from ebnf --rule word --name name message.ebnf
+cargo run -- grammar round-trip --from abnf --accept "1+2" --reject "1+x" sum.abnf
+```
+
+It reads and writes `abnf`, `antlr`, `bnf`, `ebnf`, `gbnf`, `lark`, `pest`,
+`tree-sitter-json` and `native`, a line-per-rule listing of the grammar model
+that `import` prints and `export` reads. Lossy conversion steps, merge decisions
+and rename aliases go to standard error. The exit status is 0 on success, 1 when
+a problem was found (a validation error, an unresolved required merge
+equivalence or a broken round trip) and 2 on a usage or input error.
+`grammar help` lists every option.
+
+`check_grammar_reverse_conversion` checks the cycle source grammar -> native
+links -> exported grammar -> native links. The emitter only sees the grammar
+read back from `render_grammar_links`, and the re-imported export must keep
+every rule, kind, definition and documentation comment and give the same answers
+on the accept and reject samples. For an exact copy of the source,
+`import_grammar_lossless` also returns a `GrammarLayout` (definition texts,
+comments and spacing) that `render_grammar_layout_links` writes as links.
+`emit_grammar_lossless` then rebuilds the source byte for byte and writes only
+changed or new rules fresh.
+
+`lower_grammar` writes a grammar in a notation that cannot express all of it
+(abnf, antlr, bnf, ebnf, gbnf, lark, pest or tree-sitter-json). Each construct
+the target cannot write moves into a helper rule encoded in constructs it can
+write. For example, an optional item becomes a choice with the empty expression
+and a repetition becomes a recursive rule. The result has two parts: the
+executable text, which the target's own importer reads back, and reconstruction
+metadata as links. The metadata names every helper, its construct, whether its
+encoding is exact or approximate and the original expression, plus every
+rename, kind and documentation the target does not keep. `reconstruct_grammar`
+rebuilds the original from both parts. `check_grammar_lowering` reports every
+emission note, every executable that does not read back, every feature the
+reconstruction lost and every sample an exact lowering disagrees on.
+
+`translate_program(source, from, to)` carries every Lean and Rocq theorem as a
+`TranslationObligation` in `semantics().obligations`. The obligation names the
+source theorem and the target declaration that states it, so a false restatement
+is rejected by the source kernel and by every target. Into Lean and Rocq the
+obligation is discharged by the target kernel itself (`discharge` is
+`target-kernel`). The emitted proof has no `sorry`, `admit` or axiom, and
+`#print axioms` or `Print Assumptions` shows it closed without an axiom of the
+translation or of another kernel. Into JavaScript and Rust a theorem is a
+bounded check (`discharge` is `source-kernel` and `check` is `bounded`), not a
+proof. Run with `--ml-check-theorems`, the program prints `theorem <name>: holds
+on the bounded domain` or fails, and the proof stays with the source kernel. A
+statement that holds on the bounded domain but not in general therefore passes
+the check while every kernel rejects it.
 
 ## Grammar subsystem
 

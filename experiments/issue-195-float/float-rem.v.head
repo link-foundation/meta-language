@@ -1,0 +1,22 @@
+From Stdlib Require Import ZArith Floats List.
+Import ListNotations.
+
+(* SameValue: NaN equals NaN, and 0 and -0 differ. *)
+Definition ml_float_same (a b : float) : bool :=
+  if PrimFloat.is_nan a then PrimFloat.is_nan b
+  else andb (PrimFloat.eqb a b) (Bool.eqb (PrimFloat.get_sign a) (PrimFloat.get_sign b)).
+
+(* ECMAScript % on binary64 (C fmod): the exact truncated remainder with the
+   sign of the dividend, computed on the mantissas, so it is exact. *)
+Definition ml_float_rem (x y : float) : float :=
+  if orb (orb (PrimFloat.is_nan x) (PrimFloat.is_nan y)) (orb (PrimFloat.is_infinity x) (PrimFloat.is_zero y))
+  then PrimFloat.div 0 0
+  else if orb (PrimFloat.is_infinity y) (PrimFloat.is_zero x) then x
+  else match Prim2SF x, Prim2SF y with
+  | S754_finite sx mx ex, S754_finite _ my ey =>
+      let e := Z.min ex ey in
+      let r := Z.modulo (Z.pos mx * 2 ^ (ex - e)) (Z.pos my * 2 ^ (ey - e)) in
+      let magnitude := Z.ldexp (PrimFloat.of_uint63 (Uint63.of_Z r)) e in
+      if sx then PrimFloat.opp magnitude else magnitude
+  | _, _ => x
+  end.

@@ -1,0 +1,13 @@
+import { LinkNetwork } from '../js/src/index.js';
+const ok = (t) => LinkNetwork.parse(t, 'lean').verifyFullMatch().isClean();
+const unwrap = '  let v ← (match r with | io.mk _ x => pure x | io.abort _ m => throw (IO.userError m))\n';
+const nested = '  let r2 := (match (match f with\n    | a.mk o v => (b.mk o v)\n    | a.ab o m => (b.ab o m)) with\n    | b.mk o v => o\n    | b.ab o m => o)\n';
+const simple = '  let r2 := (match f with\n    | b.mk o v => o\n    | b.ab o m => o)\n';
+const head = 'def main : IO Unit := do\n';
+console.log('unwrap+nested', ok(head + unwrap + nested));
+console.log('unwrap+simple', ok(head + unwrap + simple));
+console.log('nested', ok(head + nested));
+console.log('let+nested', ok(head + '  let x := 1\n' + nested));
+console.log('unwrap+let', ok(head + unwrap + '  let x := 1\n'));
+console.log('unwrap+print', ok(head + unwrap + '  IO.println x\n'));
+console.log('purenoparen', ok(head + '  let v ← (match r with | io.mk _ x => pure x | io.abort _ m => pure m)\n  let x := 1\n'));

@@ -1,0 +1,1599 @@
+{
+  "schemaVersion": 1,
+  "id": "regex",
+  "language": "Regex",
+  "grammar": "parity/grammars/native/regex.lino",
+  "oracle": "tree-sitter-regex 0.25.0",
+  "sources": [
+    "https://github.com/tree-sitter/tree-sitter-regex/blob/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/grammar.js",
+    "https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus"
+  ],
+  "hidden": [],
+  "anonymous": [
+    "unnamed_token"
+  ],
+  "extras": [],
+  "oracleKinds": {
+    "lookahead_assertion": "_lookahead_assertion",
+    "lookbehind_assertion": "_lookbehind_assertion",
+    "class_atom": "_class_atom",
+    "character_escape": "_character_escape"
+  },
+  "matches": [
+    {
+      "source": "hello",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"pattern_character",1,3,4,""],
+        [2,null,"pattern_character",1,4,5,""]
+      ]
+    },
+    {
+      "source": "he..o",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"any_character",1,2,3,""],
+        [2,null,"any_character",1,3,4,""],
+        [2,null,"pattern_character",1,4,5,""]
+      ]
+    },
+    {
+      "source": "h*?e*l+.?",
+      "rows": [
+        [0,null,"pattern",1,0,9,""],
+        [1,null,"term",1,0,9,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"zero_or_more",1,1,3,""],
+        [3,null,"*",0,1,2,""],
+        [3,null,"lazy",1,2,3,""],
+        [2,null,"pattern_character",1,3,4,""],
+        [2,null,"zero_or_more",1,4,5,""],
+        [3,null,"*",0,4,5,""],
+        [2,null,"pattern_character",1,5,6,""],
+        [2,null,"one_or_more",1,6,7,""],
+        [3,null,"+",0,6,7,""],
+        [2,null,"any_character",1,7,8,""],
+        [2,null,"optional",1,8,9,""],
+        [3,null,"?",0,8,9,""]
+      ]
+    },
+    {
+      "source": "h{1,2}?el{1,2}.{3}t{4,}",
+      "rows": [
+        [0,null,"pattern",1,0,23,""],
+        [1,null,"term",1,0,23,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"count_quantifier",1,1,7,""],
+        [3,null,"{",0,1,2,""],
+        [3,null,"decimal_digits",1,2,3,""],
+        [3,null,",",0,3,4,""],
+        [3,null,"decimal_digits",1,4,5,""],
+        [3,null,"}",0,5,6,""],
+        [3,null,"lazy",1,6,7,""],
+        [2,null,"pattern_character",1,7,8,""],
+        [2,null,"pattern_character",1,8,9,""],
+        [2,null,"count_quantifier",1,9,14,""],
+        [3,null,"{",0,9,10,""],
+        [3,null,"decimal_digits",1,10,11,""],
+        [3,null,",",0,11,12,""],
+        [3,null,"decimal_digits",1,12,13,""],
+        [3,null,"}",0,13,14,""],
+        [2,null,"any_character",1,14,15,""],
+        [2,null,"count_quantifier",1,15,18,""],
+        [3,null,"{",0,15,16,""],
+        [3,null,"decimal_digits",1,16,17,""],
+        [3,null,"}",0,17,18,""],
+        [2,null,"pattern_character",1,18,19,""],
+        [2,null,"count_quantifier",1,19,23,""],
+        [3,null,"{",0,19,20,""],
+        [3,null,"decimal_digits",1,20,21,""],
+        [3,null,",",0,21,22,""],
+        [3,null,"}",0,22,23,""]
+      ]
+    },
+    {
+      "source": "{a",
+      "rows": [
+        [0,null,"pattern",1,0,2,""],
+        [1,null,"term",1,0,2,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""]
+      ]
+    },
+    {
+      "source": "he..o|wo.ld",
+      "rows": [
+        [0,null,"pattern",1,0,11,""],
+        [1,null,"alternation",1,0,11,""],
+        [2,null,"term",1,0,5,""],
+        [3,null,"pattern_character",1,0,1,""],
+        [3,null,"pattern_character",1,1,2,""],
+        [3,null,"any_character",1,2,3,""],
+        [3,null,"any_character",1,3,4,""],
+        [3,null,"pattern_character",1,4,5,""],
+        [2,null,"|",0,5,6,""],
+        [2,null,"term",1,6,11,""],
+        [3,null,"pattern_character",1,6,7,""],
+        [3,null,"pattern_character",1,7,8,""],
+        [3,null,"any_character",1,8,9,""],
+        [3,null,"pattern_character",1,9,10,""],
+        [3,null,"pattern_character",1,10,11,""]
+      ]
+    },
+    {
+      "source": "||he..o||wo.ld|||",
+      "rows": [
+        [0,null,"pattern",1,0,17,""],
+        [1,null,"alternation",1,0,17,""],
+        [2,null,"|",0,0,1,""],
+        [2,null,"|",0,1,2,""],
+        [2,null,"term",1,2,7,""],
+        [3,null,"pattern_character",1,2,3,""],
+        [3,null,"pattern_character",1,3,4,""],
+        [3,null,"any_character",1,4,5,""],
+        [3,null,"any_character",1,5,6,""],
+        [3,null,"pattern_character",1,6,7,""],
+        [2,null,"|",0,7,8,""],
+        [2,null,"|",0,8,9,""],
+        [2,null,"term",1,9,14,""],
+        [3,null,"pattern_character",1,9,10,""],
+        [3,null,"pattern_character",1,10,11,""],
+        [3,null,"any_character",1,11,12,""],
+        [3,null,"pattern_character",1,12,13,""],
+        [3,null,"pattern_character",1,13,14,""],
+        [2,null,"|",0,14,15,""],
+        [2,null,"|",0,15,16,""],
+        [2,null,"|",0,16,17,""]
+      ]
+    },
+    {
+      "source": "^he..o$",
+      "rows": [
+        [0,null,"pattern",1,0,7,""],
+        [1,null,"term",1,0,7,""],
+        [2,null,"start_assertion",1,0,1,""],
+        [3,null,"^",0,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"any_character",1,3,4,""],
+        [2,null,"any_character",1,4,5,""],
+        [2,null,"pattern_character",1,5,6,""],
+        [2,null,"end_assertion",1,6,7,""]
+      ]
+    },
+    {
+      "source": "\\Bhe..o\\b",
+      "rows": [
+        [0,null,"pattern",1,0,9,""],
+        [1,null,"term",1,0,9,""],
+        [2,null,"non_boundary_assertion",1,0,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"pattern_character",1,3,4,""],
+        [2,null,"any_character",1,4,5,""],
+        [2,null,"any_character",1,5,6,""],
+        [2,null,"pattern_character",1,6,7,""],
+        [2,null,"boundary_assertion",1,7,9,""]
+      ]
+    },
+    {
+      "source": "^he..o$||w..ld$",
+      "rows": [
+        [0,null,"pattern",1,0,15,""],
+        [1,null,"alternation",1,0,15,""],
+        [2,null,"term",1,0,7,""],
+        [3,null,"start_assertion",1,0,1,""],
+        [4,null,"^",0,0,1,""],
+        [3,null,"pattern_character",1,1,2,""],
+        [3,null,"pattern_character",1,2,3,""],
+        [3,null,"any_character",1,3,4,""],
+        [3,null,"any_character",1,4,5,""],
+        [3,null,"pattern_character",1,5,6,""],
+        [3,null,"end_assertion",1,6,7,""],
+        [2,null,"|",0,7,8,""],
+        [2,null,"|",0,8,9,""],
+        [2,null,"term",1,9,15,""],
+        [3,null,"pattern_character",1,9,10,""],
+        [3,null,"any_character",1,10,11,""],
+        [3,null,"any_character",1,11,12,""],
+        [3,null,"pattern_character",1,12,13,""],
+        [3,null,"pattern_character",1,13,14,""],
+        [3,null,"end_assertion",1,14,15,""]
+      ]
+    },
+    {
+      "source": "Jack(?=Sprat)",
+      "rows": [
+        [0,null,"pattern",1,0,13,""],
+        [1,null,"term",1,0,13,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"pattern_character",1,3,4,""],
+        [2,null,"lookaround_assertion",1,4,13,""],
+        [3,null,"(?",0,4,6,""],
+        [3,null,"=",0,6,7,""],
+        [3,null,"pattern",1,7,12,""],
+        [4,null,"term",1,7,12,""],
+        [5,null,"pattern_character",1,7,8,""],
+        [5,null,"pattern_character",1,8,9,""],
+        [5,null,"pattern_character",1,9,10,""],
+        [5,null,"pattern_character",1,10,11,""],
+        [5,null,"pattern_character",1,11,12,""],
+        [3,null,")",0,12,13,""]
+      ]
+    },
+    {
+      "source": "Jack(?!Sprat)",
+      "rows": [
+        [0,null,"pattern",1,0,13,""],
+        [1,null,"term",1,0,13,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"pattern_character",1,3,4,""],
+        [2,null,"lookaround_assertion",1,4,13,""],
+        [3,null,"(?",0,4,6,""],
+        [3,null,"!",0,6,7,""],
+        [3,null,"pattern",1,7,12,""],
+        [4,null,"term",1,7,12,""],
+        [5,null,"pattern_character",1,7,8,""],
+        [5,null,"pattern_character",1,8,9,""],
+        [5,null,"pattern_character",1,9,10,""],
+        [5,null,"pattern_character",1,10,11,""],
+        [5,null,"pattern_character",1,11,12,""],
+        [3,null,")",0,12,13,""]
+      ]
+    },
+    {
+      "source": "(?<=Jack)Sprat",
+      "rows": [
+        [0,null,"pattern",1,0,14,""],
+        [1,null,"term",1,0,14,""],
+        [2,null,"lookaround_assertion",1,0,9,""],
+        [3,null,"(?<",0,0,3,""],
+        [3,null,"=",0,3,4,""],
+        [3,null,"pattern",1,4,8,""],
+        [4,null,"term",1,4,8,""],
+        [5,null,"pattern_character",1,4,5,""],
+        [5,null,"pattern_character",1,5,6,""],
+        [5,null,"pattern_character",1,6,7,""],
+        [5,null,"pattern_character",1,7,8,""],
+        [3,null,")",0,8,9,""],
+        [2,null,"pattern_character",1,9,10,""],
+        [2,null,"pattern_character",1,10,11,""],
+        [2,null,"pattern_character",1,11,12,""],
+        [2,null,"pattern_character",1,12,13,""],
+        [2,null,"pattern_character",1,13,14,""]
+      ]
+    },
+    {
+      "source": "(?<!Jack)Sprat",
+      "rows": [
+        [0,null,"pattern",1,0,14,""],
+        [1,null,"term",1,0,14,""],
+        [2,null,"lookaround_assertion",1,0,9,""],
+        [3,null,"(?<",0,0,3,""],
+        [3,null,"!",0,3,4,""],
+        [3,null,"pattern",1,4,8,""],
+        [4,null,"term",1,4,8,""],
+        [5,null,"pattern_character",1,4,5,""],
+        [5,null,"pattern_character",1,5,6,""],
+        [5,null,"pattern_character",1,6,7,""],
+        [5,null,"pattern_character",1,7,8,""],
+        [3,null,")",0,8,9,""],
+        [2,null,"pattern_character",1,9,10,""],
+        [2,null,"pattern_character",1,10,11,""],
+        [2,null,"pattern_character",1,11,12,""],
+        [2,null,"pattern_character",1,12,13,""],
+        [2,null,"pattern_character",1,13,14,""]
+      ]
+    },
+    {
+      "source": "[A-Za-z][^Xx]",
+      "rows": [
+        [0,null,"pattern",1,0,13,""],
+        [1,null,"term",1,0,13,""],
+        [2,null,"character_class",1,0,8,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"class_range",1,1,4,""],
+        [4,null,"class_character",1,1,2,""],
+        [4,null,"-",0,2,3,""],
+        [4,null,"class_character",1,3,4,""],
+        [3,null,"class_range",1,4,7,""],
+        [4,null,"class_character",1,4,5,""],
+        [4,null,"-",0,5,6,""],
+        [4,null,"class_character",1,6,7,""],
+        [3,null,"]",0,7,8,""],
+        [2,null,"character_class",1,8,13,""],
+        [3,null,"[",0,8,9,""],
+        [3,null,"^",0,9,10,""],
+        [3,null,"class_character",1,10,11,""],
+        [3,null,"class_character",1,11,12,""],
+        [3,null,"]",0,12,13,""]
+      ]
+    },
+    {
+      "source": "[-]",
+      "rows": [
+        [0,null,"pattern",1,0,3,""],
+        [1,null,"term",1,0,3,""],
+        [2,null,"character_class",1,0,3,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"class_character",1,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "[a-]",
+      "rows": [
+        [0,null,"pattern",1,0,4,""],
+        [1,null,"term",1,0,4,""],
+        [2,null,"character_class",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"class_character",1,1,2,""],
+        [3,null,"class_character",1,2,3,""],
+        [3,null,"]",0,3,4,""]
+      ]
+    },
+    {
+      "source": "[---]",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"character_class",1,0,5,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"class_range",1,1,4,""],
+        [4,null,"class_character",1,1,2,""],
+        [4,null,"-",0,2,3,""],
+        [4,null,"class_character",1,3,4,""],
+        [3,null,"]",0,4,5,""]
+      ]
+    },
+    {
+      "source": "[\\-\\.]",
+      "rows": [
+        [0,null,"pattern",1,0,6,""],
+        [1,null,"term",1,0,6,""],
+        [2,null,"character_class",1,0,6,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"identity_escape",1,1,3,""],
+        [3,null,"identity_escape",1,3,5,""],
+        [3,null,"]",0,5,6,""]
+      ]
+    },
+    {
+      "source": "\\a\\b\\c\\d\\\\\\{\\(\\[\\]\\)\\}",
+      "rows": [
+        [0,null,"pattern",1,0,22,""],
+        [1,null,"term",1,0,22,""],
+        [2,null,"identity_escape",1,0,2,""],
+        [2,null,"boundary_assertion",1,2,4,""],
+        [2,null,"identity_escape",1,4,6,""],
+        [2,null,"character_class_escape",1,6,8,""],
+        [2,null,"identity_escape",1,8,10,""],
+        [2,null,"identity_escape",1,10,12,""],
+        [2,null,"identity_escape",1,12,14,""],
+        [2,null,"identity_escape",1,14,16,""],
+        [2,null,"identity_escape",1,16,18,""],
+        [2,null,"identity_escape",1,18,20,""],
+        [2,null,"identity_escape",1,20,22,""]
+      ]
+    },
+    {
+      "source": "Jack(?:Sprat)",
+      "rows": [
+        [0,null,"pattern",1,0,13,""],
+        [1,null,"term",1,0,13,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"pattern_character",1,3,4,""],
+        [2,null,"non_capturing_group",1,4,13,""],
+        [3,null,"(?:",0,4,7,""],
+        [3,null,"pattern",1,7,12,""],
+        [4,null,"term",1,7,12,""],
+        [5,null,"pattern_character",1,7,8,""],
+        [5,null,"pattern_character",1,8,9,""],
+        [5,null,"pattern_character",1,9,10,""],
+        [5,null,"pattern_character",1,10,11,""],
+        [5,null,"pattern_character",1,11,12,""],
+        [3,null,")",0,12,13,""]
+      ]
+    },
+    {
+      "source": "\\S\\w\\cZ",
+      "rows": [
+        [0,null,"pattern",1,0,7,""],
+        [1,null,"term",1,0,7,""],
+        [2,null,"character_class_escape",1,0,2,""],
+        [2,null,"character_class_escape",1,2,4,""],
+        [2,null,"control_letter_escape",1,4,7,""]
+      ]
+    },
+    {
+      "source": "\\f\\n\\r\\t\\v\\0",
+      "rows": [
+        [0,null,"pattern",1,0,12,""],
+        [1,null,"term",1,0,12,""],
+        [2,null,"control_escape",1,0,2,""],
+        [2,null,"control_escape",1,2,4,""],
+        [2,null,"control_escape",1,4,6,""],
+        [2,null,"control_escape",1,6,8,""],
+        [2,null,"control_escape",1,8,10,""],
+        [2,null,"control_escape",1,10,12,""]
+      ]
+    },
+    {
+      "source": "\\8230",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"decimal_escape",1,0,5,""]
+      ]
+    },
+    {
+      "source": "\\p{General_Category=Decimal_Number}",
+      "rows": [
+        [0,null,"pattern",1,0,35,""],
+        [1,null,"term",1,0,35,""],
+        [2,null,"character_class_escape",1,0,35,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"unicode_property_value_expression",1,3,34,""],
+        [4,null,"unicode_property_name",1,3,19,""],
+        [4,null,"=",0,19,20,""],
+        [4,null,"unicode_property_value",1,20,34,""],
+        [3,null,"}",0,34,35,""]
+      ]
+    },
+    {
+      "source": "\\p{Decimal_Number}",
+      "rows": [
+        [0,null,"pattern",1,0,18,""],
+        [1,null,"term",1,0,18,""],
+        [2,null,"character_class_escape",1,0,18,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"unicode_property_value_expression",1,3,17,""],
+        [4,null,"unicode_property_value",1,3,17,""],
+        [3,null,"}",0,17,18,""]
+      ]
+    },
+    {
+      "source": "hello (.*)",
+      "rows": [
+        [0,null,"pattern",1,0,10,""],
+        [1,null,"term",1,0,10,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"pattern_character",1,3,4,""],
+        [2,null,"pattern_character",1,4,5,""],
+        [2,null,"pattern_character",1,5,6,""],
+        [2,null,"anonymous_capturing_group",1,6,10,""],
+        [3,null,"(",0,6,7,""],
+        [3,null,"pattern",1,7,9,""],
+        [4,null,"term",1,7,9,""],
+        [5,null,"any_character",1,7,8,""],
+        [5,null,"zero_or_more",1,8,9,""],
+        [6,null,"*",0,8,9,""],
+        [3,null,")",0,9,10,""]
+      ]
+    },
+    {
+      "source": "(?<the_world>.*)\n(?P<python>.*)",
+      "rows": [
+        [0,null,"pattern",1,0,31,""],
+        [1,null,"term",1,0,31,""],
+        [2,null,"named_capturing_group",1,0,16,""],
+        [3,null,"(?<",0,0,3,""],
+        [3,null,"group_name",1,3,12,""],
+        [3,null,">",0,12,13,""],
+        [3,null,"pattern",1,13,15,""],
+        [4,null,"term",1,13,15,""],
+        [5,null,"any_character",1,13,14,""],
+        [5,null,"zero_or_more",1,14,15,""],
+        [6,null,"*",0,14,15,""],
+        [3,null,")",0,15,16,""],
+        [2,null,"named_capturing_group",1,17,31,""],
+        [3,null,"(?P<",0,17,21,""],
+        [3,null,"group_name",1,21,27,""],
+        [3,null,">",0,27,28,""],
+        [3,null,"pattern",1,28,30,""],
+        [4,null,"term",1,28,30,""],
+        [5,null,"any_character",1,28,29,""],
+        [5,null,"zero_or_more",1,29,30,""],
+        [6,null,"*",0,29,30,""],
+        [3,null,")",0,30,31,""]
+      ]
+    },
+    {
+      "source": "(?<the_world>.*)\\k<the_world>\n(?P<python>.*)(?P=python)",
+      "rows": [
+        [0,null,"pattern",1,0,55,""],
+        [1,null,"term",1,0,55,""],
+        [2,null,"named_capturing_group",1,0,16,""],
+        [3,null,"(?<",0,0,3,""],
+        [3,null,"group_name",1,3,12,""],
+        [3,null,">",0,12,13,""],
+        [3,null,"pattern",1,13,15,""],
+        [4,null,"term",1,13,15,""],
+        [5,null,"any_character",1,13,14,""],
+        [5,null,"zero_or_more",1,14,15,""],
+        [6,null,"*",0,14,15,""],
+        [3,null,")",0,15,16,""],
+        [2,null,"backreference_escape",1,16,29,""],
+        [3,null,"\\k",0,16,18,""],
+        [3,null,"<",0,18,19,""],
+        [3,null,"group_name",1,19,28,""],
+        [3,null,">",0,28,29,""],
+        [2,null,"named_capturing_group",1,30,44,""],
+        [3,null,"(?P<",0,30,34,""],
+        [3,null,"group_name",1,34,40,""],
+        [3,null,">",0,40,41,""],
+        [3,null,"pattern",1,41,43,""],
+        [4,null,"term",1,41,43,""],
+        [5,null,"any_character",1,41,42,""],
+        [5,null,"zero_or_more",1,42,43,""],
+        [6,null,"*",0,42,43,""],
+        [3,null,")",0,43,44,""],
+        [2,null,"named_group_backreference",1,44,55,""],
+        [3,null,"(?P=",0,44,48,""],
+        [3,null,"group_name",1,48,54,""],
+        [3,null,")",0,54,55,""]
+      ]
+    },
+    {
+      "source": "(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})",
+      "rows": [
+        [0,null,"pattern",1,0,53,""],
+        [1,null,"term",1,0,53,""],
+        [2,null,"named_capturing_group",1,0,17,""],
+        [3,null,"(?<",0,0,3,""],
+        [3,null,"group_name",1,3,7,""],
+        [3,null,">",0,7,8,""],
+        [3,null,"pattern",1,8,16,""],
+        [4,null,"term",1,8,16,""],
+        [5,null,"character_class",1,8,13,""],
+        [6,null,"[",0,8,9,""],
+        [6,null,"class_range",1,9,12,""],
+        [7,null,"class_character",1,9,10,""],
+        [7,null,"-",0,10,11,""],
+        [7,null,"class_character",1,11,12,""],
+        [6,null,"]",0,12,13,""],
+        [5,null,"count_quantifier",1,13,16,""],
+        [6,null,"{",0,13,14,""],
+        [6,null,"decimal_digits",1,14,15,""],
+        [6,null,"}",0,15,16,""],
+        [3,null,")",0,16,17,""],
+        [2,null,"pattern_character",1,17,18,""],
+        [2,null,"named_capturing_group",1,18,36,""],
+        [3,null,"(?<",0,18,21,""],
+        [3,null,"group_name",1,21,26,""],
+        [3,null,">",0,26,27,""],
+        [3,null,"pattern",1,27,35,""],
+        [4,null,"term",1,27,35,""],
+        [5,null,"character_class",1,27,32,""],
+        [6,null,"[",0,27,28,""],
+        [6,null,"class_range",1,28,31,""],
+        [7,null,"class_character",1,28,29,""],
+        [7,null,"-",0,29,30,""],
+        [7,null,"class_character",1,30,31,""],
+        [6,null,"]",0,31,32,""],
+        [5,null,"count_quantifier",1,32,35,""],
+        [6,null,"{",0,32,33,""],
+        [6,null,"decimal_digits",1,33,34,""],
+        [6,null,"}",0,34,35,""],
+        [3,null,")",0,35,36,""],
+        [2,null,"pattern_character",1,36,37,""],
+        [2,null,"named_capturing_group",1,37,53,""],
+        [3,null,"(?<",0,37,40,""],
+        [3,null,"group_name",1,40,43,""],
+        [3,null,">",0,43,44,""],
+        [3,null,"pattern",1,44,52,""],
+        [4,null,"term",1,44,52,""],
+        [5,null,"character_class",1,44,49,""],
+        [6,null,"[",0,44,45,""],
+        [6,null,"class_range",1,45,48,""],
+        [7,null,"class_character",1,45,46,""],
+        [7,null,"-",0,46,47,""],
+        [7,null,"class_character",1,47,48,""],
+        [6,null,"]",0,48,49,""],
+        [5,null,"count_quantifier",1,49,52,""],
+        [6,null,"{",0,49,50,""],
+        [6,null,"decimal_digits",1,50,51,""],
+        [6,null,"}",0,51,52,""],
+        [3,null,")",0,52,53,""]
+      ]
+    },
+    {
+      "source": "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\n\\.[a-z]{2,6}\\b(\n[-a-zA-Z0-9@:%_\\+.~#?&//=]*\n)",
+      "rows": [
+        [0,null,"pattern",1,0,75,""],
+        [1,null,"term",1,0,75,""],
+        [2,null,"character_class",1,0,22,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"class_character",1,1,2,""],
+        [3,null,"class_range",1,2,5,""],
+        [4,null,"class_character",1,2,3,""],
+        [4,null,"-",0,3,4,""],
+        [4,null,"class_character",1,4,5,""],
+        [3,null,"class_range",1,5,8,""],
+        [4,null,"class_character",1,5,6,""],
+        [4,null,"-",0,6,7,""],
+        [4,null,"class_character",1,7,8,""],
+        [3,null,"class_range",1,8,11,""],
+        [4,null,"class_character",1,8,9,""],
+        [4,null,"-",0,9,10,""],
+        [4,null,"class_character",1,10,11,""],
+        [3,null,"class_character",1,11,12,""],
+        [3,null,"class_character",1,12,13,""],
+        [3,null,"class_character",1,13,14,""],
+        [3,null,"class_character",1,14,15,""],
+        [3,null,"class_character",1,15,16,""],
+        [3,null,"identity_escape",1,16,18,""],
+        [3,null,"class_character",1,18,19,""],
+        [3,null,"class_character",1,19,20,""],
+        [3,null,"class_character",1,20,21,""],
+        [3,null,"]",0,21,22,""],
+        [2,null,"count_quantifier",1,22,29,""],
+        [3,null,"{",0,22,23,""],
+        [3,null,"decimal_digits",1,23,24,""],
+        [3,null,",",0,24,25,""],
+        [3,null,"decimal_digits",1,25,28,""],
+        [3,null,"}",0,28,29,""],
+        [2,null,"identity_escape",1,30,32,""],
+        [2,null,"character_class",1,32,37,""],
+        [3,null,"[",0,32,33,""],
+        [3,null,"class_range",1,33,36,""],
+        [4,null,"class_character",1,33,34,""],
+        [4,null,"-",0,34,35,""],
+        [4,null,"class_character",1,35,36,""],
+        [3,null,"]",0,36,37,""],
+        [2,null,"count_quantifier",1,37,42,""],
+        [3,null,"{",0,37,38,""],
+        [3,null,"decimal_digits",1,38,39,""],
+        [3,null,",",0,39,40,""],
+        [3,null,"decimal_digits",1,40,41,""],
+        [3,null,"}",0,41,42,""],
+        [2,null,"boundary_assertion",1,42,44,""],
+        [2,null,"anonymous_capturing_group",1,44,75,""],
+        [3,null,"(",0,44,45,""],
+        [3,null,"pattern",1,46,73,""],
+        [4,null,"term",1,46,73,""],
+        [5,null,"character_class",1,46,72,""],
+        [6,null,"[",0,46,47,""],
+        [6,null,"class_character",1,47,48,""],
+        [6,null,"class_range",1,48,51,""],
+        [7,null,"class_character",1,48,49,""],
+        [7,null,"-",0,49,50,""],
+        [7,null,"class_character",1,50,51,""],
+        [6,null,"class_range",1,51,54,""],
+        [7,null,"class_character",1,51,52,""],
+        [7,null,"-",0,52,53,""],
+        [7,null,"class_character",1,53,54,""],
+        [6,null,"class_range",1,54,57,""],
+        [7,null,"class_character",1,54,55,""],
+        [7,null,"-",0,55,56,""],
+        [7,null,"class_character",1,56,57,""],
+        [6,null,"class_character",1,57,58,""],
+        [6,null,"class_character",1,58,59,""],
+        [6,null,"class_character",1,59,60,""],
+        [6,null,"class_character",1,60,61,""],
+        [6,null,"identity_escape",1,61,63,""],
+        [6,null,"class_character",1,63,64,""],
+        [6,null,"class_character",1,64,65,""],
+        [6,null,"class_character",1,65,66,""],
+        [6,null,"class_character",1,66,67,""],
+        [6,null,"class_character",1,67,68,""],
+        [6,null,"class_character",1,68,69,""],
+        [6,null,"class_character",1,69,70,""],
+        [6,null,"class_character",1,70,71,""],
+        [6,null,"]",0,71,72,""],
+        [5,null,"zero_or_more",1,72,73,""],
+        [6,null,"*",0,72,73,""],
+        [3,null,")",0,74,75,""]
+      ]
+    },
+    {
+      "source": "\n[[:alnum:]]+\n",
+      "rows": [
+        [0,null,"pattern",1,1,14,""],
+        [1,null,"term",1,1,13,""],
+        [2,null,"character_class",1,1,12,""],
+        [3,null,"[",0,1,2,""],
+        [3,null,"posix_character_class",1,2,11,""],
+        [4,null,"[:",0,2,4,""],
+        [4,null,"posix_class_name",1,4,9,""],
+        [4,null,":]",0,9,11,""],
+        [3,null,"]",0,11,12,""],
+        [2,null,"one_or_more",1,12,13,""],
+        [3,null,"+",0,12,13,""]
+      ]
+    },
+    {
+      "source": "\nH\\u0065e\\u006C\\u{006F}\n",
+      "rows": [
+        [0,null,"pattern",1,1,24,""],
+        [1,null,"term",1,1,23,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"character_class_escape",1,2,8,""],
+        [3,null,"unicode_character_escape",1,2,8,""],
+        [2,null,"pattern_character",1,8,9,""],
+        [2,null,"character_class_escape",1,9,15,""],
+        [3,null,"unicode_character_escape",1,9,15,""],
+        [2,null,"character_class_escape",1,15,23,""],
+        [3,null,"unicode_character_escape",1,15,23,""]
+      ]
+    },
+    {
+      "source": "\n\\u0048ow r \\u\\?\n",
+      "rows": [
+        [0,null,"pattern",1,1,17,""],
+        [1,null,"term",1,1,16,""],
+        [2,null,"character_class_escape",1,1,7,""],
+        [3,null,"unicode_character_escape",1,1,7,""],
+        [2,null,"pattern_character",1,7,8,""],
+        [2,null,"pattern_character",1,8,9,""],
+        [2,null,"pattern_character",1,9,10,""],
+        [2,null,"pattern_character",1,10,11,""],
+        [2,null,"pattern_character",1,11,12,""],
+        [2,null,"identity_escape",1,12,14,""],
+        [2,null,"identity_escape",1,14,16,""]
+      ]
+    },
+    {
+      "source": "\n[\\u005D-\\uFFFF][A-\\uFFFF]\n",
+      "rows": [
+        [0,null,"pattern",1,1,27,""],
+        [1,null,"term",1,1,26,""],
+        [2,null,"character_class",1,1,16,""],
+        [3,null,"[",0,1,2,""],
+        [3,null,"class_range",1,2,15,""],
+        [4,null,"character_class_escape",1,2,8,""],
+        [5,null,"unicode_character_escape",1,2,8,""],
+        [4,null,"-",0,8,9,""],
+        [4,null,"character_class_escape",1,9,15,""],
+        [5,null,"unicode_character_escape",1,9,15,""],
+        [3,null,"]",0,15,16,""],
+        [2,null,"character_class",1,16,26,""],
+        [3,null,"[",0,16,17,""],
+        [3,null,"class_range",1,17,25,""],
+        [4,null,"class_character",1,17,18,""],
+        [4,null,"-",0,18,19,""],
+        [4,null,"character_class_escape",1,19,25,""],
+        [5,null,"unicode_character_escape",1,19,25,""],
+        [3,null,"]",0,25,26,""]
+      ]
+    },
+    {
+      "source": "\n\\x0F\\xa8[\\x20-\\x5A\\x5c]\n",
+      "rows": [
+        [0,null,"pattern",1,1,25,""],
+        [1,null,"term",1,1,24,""],
+        [2,null,"control_escape",1,1,5,""],
+        [2,null,"control_escape",1,5,9,""],
+        [2,null,"character_class",1,9,24,""],
+        [3,null,"[",0,9,10,""],
+        [3,null,"class_range",1,10,19,""],
+        [4,null,"control_escape",1,10,14,""],
+        [4,null,"-",0,14,15,""],
+        [4,null,"control_escape",1,15,19,""],
+        [3,null,"control_escape",1,19,23,""],
+        [3,null,"]",0,23,24,""]
+      ]
+    },
+    {
+      "source": "\n(?aiLmsux)\n(?aiLmsux:test)\n(?aiLmsux-imsx:test)\n(?-imsx:test)\n(?-imsx)\n",
+      "rows": [
+        [0,null,"pattern",1,1,72,""],
+        [1,null,"term",1,1,71,""],
+        [2,null,"inline_flags_group",1,1,11,""],
+        [3,null,"(?",0,1,3,""],
+        [3,null,"flags",1,3,10,""],
+        [3,null,")",0,10,11,""],
+        [2,null,"inline_flags_group",1,12,27,""],
+        [3,null,"(?",0,12,14,""],
+        [3,null,"flags",1,14,21,""],
+        [3,null,":",0,21,22,""],
+        [3,null,"pattern",1,22,26,""],
+        [4,null,"term",1,22,26,""],
+        [5,null,"pattern_character",1,22,23,""],
+        [5,null,"pattern_character",1,23,24,""],
+        [5,null,"pattern_character",1,24,25,""],
+        [5,null,"pattern_character",1,25,26,""],
+        [3,null,")",0,26,27,""],
+        [2,null,"inline_flags_group",1,28,48,""],
+        [3,null,"(?",0,28,30,""],
+        [3,null,"flags",1,30,37,""],
+        [3,null,"-",0,37,38,""],
+        [3,null,"flags",1,38,42,""],
+        [3,null,":",0,42,43,""],
+        [3,null,"pattern",1,43,47,""],
+        [4,null,"term",1,43,47,""],
+        [5,null,"pattern_character",1,43,44,""],
+        [5,null,"pattern_character",1,44,45,""],
+        [5,null,"pattern_character",1,45,46,""],
+        [5,null,"pattern_character",1,46,47,""],
+        [3,null,")",0,47,48,""],
+        [2,null,"inline_flags_group",1,49,62,""],
+        [3,null,"(?",0,49,51,""],
+        [3,null,"-",0,51,52,""],
+        [3,null,"flags",1,52,56,""],
+        [3,null,":",0,56,57,""],
+        [3,null,"pattern",1,57,61,""],
+        [4,null,"term",1,57,61,""],
+        [5,null,"pattern_character",1,57,58,""],
+        [5,null,"pattern_character",1,58,59,""],
+        [5,null,"pattern_character",1,59,60,""],
+        [5,null,"pattern_character",1,60,61,""],
+        [3,null,")",0,61,62,""],
+        [2,null,"inline_flags_group",1,63,71,""],
+        [3,null,"(?",0,63,65,""],
+        [3,null,"-",0,65,66,""],
+        [3,null,"flags",1,66,70,""],
+        [3,null,")",0,70,71,""]
+      ]
+    },
+    {
+      "source": "a",
+      "rows": [
+        [0,null,"pattern",1,0,1,""],
+        [1,null,"term",1,0,1,""],
+        [2,null,"pattern_character",1,0,1,""]
+      ]
+    },
+    {
+      "source": "abc",
+      "rows": [
+        [0,null,"pattern",1,0,3,""],
+        [1,null,"term",1,0,3,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"pattern_character",1,2,3,""]
+      ]
+    },
+    {
+      "source": "a|b|c",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"alternation",1,0,5,""],
+        [2,null,"term",1,0,1,""],
+        [3,null,"pattern_character",1,0,1,""],
+        [2,null,"|",0,1,2,""],
+        [2,null,"term",1,2,3,""],
+        [3,null,"pattern_character",1,2,3,""],
+        [2,null,"|",0,3,4,""],
+        [2,null,"term",1,4,5,""],
+        [3,null,"pattern_character",1,4,5,""]
+      ]
+    },
+    {
+      "source": "^a$",
+      "rows": [
+        [0,null,"pattern",1,0,3,""],
+        [1,null,"term",1,0,3,""],
+        [2,null,"start_assertion",1,0,1,""],
+        [3,null,"^",0,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"end_assertion",1,2,3,""]
+      ]
+    },
+    {
+      "source": "\\bword\\B",
+      "rows": [
+        [0,null,"pattern",1,0,8,""],
+        [1,null,"term",1,0,8,""],
+        [2,null,"boundary_assertion",1,0,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"pattern_character",1,3,4,""],
+        [2,null,"pattern_character",1,4,5,""],
+        [2,null,"pattern_character",1,5,6,""],
+        [2,null,"non_boundary_assertion",1,6,8,""]
+      ]
+    },
+    {
+      "source": "a*b+c?",
+      "rows": [
+        [0,null,"pattern",1,0,6,""],
+        [1,null,"term",1,0,6,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"zero_or_more",1,1,2,""],
+        [3,null,"*",0,1,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"one_or_more",1,3,4,""],
+        [3,null,"+",0,3,4,""],
+        [2,null,"pattern_character",1,4,5,""],
+        [2,null,"optional",1,5,6,""],
+        [3,null,"?",0,5,6,""]
+      ]
+    },
+    {
+      "source": "a*?b+?c??",
+      "rows": [
+        [0,null,"pattern",1,0,9,""],
+        [1,null,"term",1,0,9,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"zero_or_more",1,1,3,""],
+        [3,null,"*",0,1,2,""],
+        [3,null,"lazy",1,2,3,""],
+        [2,null,"pattern_character",1,3,4,""],
+        [2,null,"one_or_more",1,4,6,""],
+        [3,null,"+",0,4,5,""],
+        [3,null,"lazy",1,5,6,""],
+        [2,null,"pattern_character",1,6,7,""],
+        [2,null,"optional",1,7,9,""],
+        [3,null,"?",0,7,8,""],
+        [3,null,"lazy",1,8,9,""]
+      ]
+    },
+    {
+      "source": "a{2}",
+      "rows": [
+        [0,null,"pattern",1,0,4,""],
+        [1,null,"term",1,0,4,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"count_quantifier",1,1,4,""],
+        [3,null,"{",0,1,2,""],
+        [3,null,"decimal_digits",1,2,3,""],
+        [3,null,"}",0,3,4,""]
+      ]
+    },
+    {
+      "source": "a{2,}",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"count_quantifier",1,1,5,""],
+        [3,null,"{",0,1,2,""],
+        [3,null,"decimal_digits",1,2,3,""],
+        [3,null,",",0,3,4,""],
+        [3,null,"}",0,4,5,""]
+      ]
+    },
+    {
+      "source": "a{2,5}?",
+      "rows": [
+        [0,null,"pattern",1,0,7,""],
+        [1,null,"term",1,0,7,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"count_quantifier",1,1,7,""],
+        [3,null,"{",0,1,2,""],
+        [3,null,"decimal_digits",1,2,3,""],
+        [3,null,",",0,3,4,""],
+        [3,null,"decimal_digits",1,4,5,""],
+        [3,null,"}",0,5,6,""],
+        [3,null,"lazy",1,6,7,""]
+      ]
+    },
+    {
+      "source": "a{,5}",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"count_quantifier",1,1,5,""],
+        [3,null,"{",0,1,2,""],
+        [3,null,",",0,2,3,""],
+        [3,null,"decimal_digits",1,3,4,""],
+        [3,null,"}",0,4,5,""]
+      ]
+    },
+    {
+      "source": "[abc]",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"character_class",1,0,5,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"class_character",1,1,2,""],
+        [3,null,"class_character",1,2,3,""],
+        [3,null,"class_character",1,3,4,""],
+        [3,null,"]",0,4,5,""]
+      ]
+    },
+    {
+      "source": "[^a-z0-9_]",
+      "rows": [
+        [0,null,"pattern",1,0,10,""],
+        [1,null,"term",1,0,10,""],
+        [2,null,"character_class",1,0,10,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"^",0,1,2,""],
+        [3,null,"class_range",1,2,5,""],
+        [4,null,"class_character",1,2,3,""],
+        [4,null,"-",0,3,4,""],
+        [4,null,"class_character",1,4,5,""],
+        [3,null,"class_range",1,5,8,""],
+        [4,null,"class_character",1,5,6,""],
+        [4,null,"-",0,6,7,""],
+        [4,null,"class_character",1,7,8,""],
+        [3,null,"class_character",1,8,9,""],
+        [3,null,"]",0,9,10,""]
+      ]
+    },
+    {
+      "source": "[\\d\\s]",
+      "rows": [
+        [0,null,"pattern",1,0,6,""],
+        [1,null,"term",1,0,6,""],
+        [2,null,"character_class",1,0,6,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"character_class_escape",1,1,3,""],
+        [3,null,"character_class_escape",1,3,5,""],
+        [3,null,"]",0,5,6,""]
+      ]
+    },
+    {
+      "source": "[-a]",
+      "rows": [
+        [0,null,"pattern",1,0,4,""],
+        [1,null,"term",1,0,4,""],
+        [2,null,"character_class",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"class_character",1,1,2,""],
+        [3,null,"class_character",1,2,3,""],
+        [3,null,"]",0,3,4,""]
+      ]
+    },
+    {
+      "source": "[a-]",
+      "rows": [
+        [0,null,"pattern",1,0,4,""],
+        [1,null,"term",1,0,4,""],
+        [2,null,"character_class",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"class_character",1,1,2,""],
+        [3,null,"class_character",1,2,3,""],
+        [3,null,"]",0,3,4,""]
+      ]
+    },
+    {
+      "source": "(a)(b)",
+      "rows": [
+        [0,null,"pattern",1,0,6,""],
+        [1,null,"term",1,0,6,""],
+        [2,null,"anonymous_capturing_group",1,0,3,""],
+        [3,null,"(",0,0,1,""],
+        [3,null,"pattern",1,1,2,""],
+        [4,null,"term",1,1,2,""],
+        [5,null,"pattern_character",1,1,2,""],
+        [3,null,")",0,2,3,""],
+        [2,null,"anonymous_capturing_group",1,3,6,""],
+        [3,null,"(",0,3,4,""],
+        [3,null,"pattern",1,4,5,""],
+        [4,null,"term",1,4,5,""],
+        [5,null,"pattern_character",1,4,5,""],
+        [3,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "(?:a|b)",
+      "rows": [
+        [0,null,"pattern",1,0,7,""],
+        [1,null,"term",1,0,7,""],
+        [2,null,"non_capturing_group",1,0,7,""],
+        [3,null,"(?:",0,0,3,""],
+        [3,null,"pattern",1,3,6,""],
+        [4,null,"alternation",1,3,6,""],
+        [5,null,"term",1,3,4,""],
+        [6,null,"pattern_character",1,3,4,""],
+        [5,null,"|",0,4,5,""],
+        [5,null,"term",1,5,6,""],
+        [6,null,"pattern_character",1,5,6,""],
+        [3,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "(?<year>\\d{4})-\\k<year>",
+      "rows": [
+        [0,null,"pattern",1,0,23,""],
+        [1,null,"term",1,0,23,""],
+        [2,null,"named_capturing_group",1,0,14,""],
+        [3,null,"(?<",0,0,3,""],
+        [3,null,"group_name",1,3,7,""],
+        [3,null,">",0,7,8,""],
+        [3,null,"pattern",1,8,13,""],
+        [4,null,"term",1,8,13,""],
+        [5,null,"character_class_escape",1,8,10,""],
+        [5,null,"count_quantifier",1,10,13,""],
+        [6,null,"{",0,10,11,""],
+        [6,null,"decimal_digits",1,11,12,""],
+        [6,null,"}",0,12,13,""],
+        [3,null,")",0,13,14,""],
+        [2,null,"pattern_character",1,14,15,""],
+        [2,null,"backreference_escape",1,15,23,""],
+        [3,null,"\\k",0,15,17,""],
+        [3,null,"<",0,17,18,""],
+        [3,null,"group_name",1,18,22,""],
+        [3,null,">",0,22,23,""]
+      ]
+    },
+    {
+      "source": "(?P<n>x)",
+      "rows": [
+        [0,null,"pattern",1,0,8,""],
+        [1,null,"term",1,0,8,""],
+        [2,null,"named_capturing_group",1,0,8,""],
+        [3,null,"(?P<",0,0,4,""],
+        [3,null,"group_name",1,4,5,""],
+        [3,null,">",0,5,6,""],
+        [3,null,"pattern",1,6,7,""],
+        [4,null,"term",1,6,7,""],
+        [5,null,"pattern_character",1,6,7,""],
+        [3,null,")",0,7,8,""]
+      ]
+    },
+    {
+      "source": "(?=a)",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"lookaround_assertion",1,0,5,""],
+        [3,null,"(?",0,0,2,""],
+        [3,null,"=",0,2,3,""],
+        [3,null,"pattern",1,3,4,""],
+        [4,null,"term",1,3,4,""],
+        [5,null,"pattern_character",1,3,4,""],
+        [3,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "(?!a)",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"lookaround_assertion",1,0,5,""],
+        [3,null,"(?",0,0,2,""],
+        [3,null,"!",0,2,3,""],
+        [3,null,"pattern",1,3,4,""],
+        [4,null,"term",1,3,4,""],
+        [5,null,"pattern_character",1,3,4,""],
+        [3,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "(?<=a)",
+      "rows": [
+        [0,null,"pattern",1,0,6,""],
+        [1,null,"term",1,0,6,""],
+        [2,null,"lookaround_assertion",1,0,6,""],
+        [3,null,"(?<",0,0,3,""],
+        [3,null,"=",0,3,4,""],
+        [3,null,"pattern",1,4,5,""],
+        [4,null,"term",1,4,5,""],
+        [5,null,"pattern_character",1,4,5,""],
+        [3,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "(?<!a)",
+      "rows": [
+        [0,null,"pattern",1,0,6,""],
+        [1,null,"term",1,0,6,""],
+        [2,null,"lookaround_assertion",1,0,6,""],
+        [3,null,"(?<",0,0,3,""],
+        [3,null,"!",0,3,4,""],
+        [3,null,"pattern",1,4,5,""],
+        [4,null,"term",1,4,5,""],
+        [5,null,"pattern_character",1,4,5,""],
+        [3,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "\\1",
+      "rows": [
+        [0,null,"pattern",1,0,2,""],
+        [1,null,"term",1,0,2,""],
+        [2,null,"decimal_escape",1,0,2,""]
+      ]
+    },
+    {
+      "source": "\\cA",
+      "rows": [
+        [0,null,"pattern",1,0,3,""],
+        [1,null,"term",1,0,3,""],
+        [2,null,"control_letter_escape",1,0,3,""]
+      ]
+    },
+    {
+      "source": "\\n\\t",
+      "rows": [
+        [0,null,"pattern",1,0,4,""],
+        [1,null,"term",1,0,4,""],
+        [2,null,"control_escape",1,0,2,""],
+        [2,null,"control_escape",1,2,4,""]
+      ]
+    },
+    {
+      "source": "\\u00e9",
+      "rows": [
+        [0,null,"pattern",1,0,6,""],
+        [1,null,"term",1,0,6,""],
+        [2,null,"character_class_escape",1,0,6,""],
+        [3,null,"unicode_character_escape",1,0,6,""]
+      ]
+    },
+    {
+      "source": "\\u{1F600}",
+      "rows": [
+        [0,null,"pattern",1,0,9,""],
+        [1,null,"term",1,0,9,""],
+        [2,null,"character_class_escape",1,0,9,""],
+        [3,null,"unicode_character_escape",1,0,9,""]
+      ]
+    },
+    {
+      "source": "\\p{L}",
+      "rows": [
+        [0,null,"pattern",1,0,5,""],
+        [1,null,"term",1,0,5,""],
+        [2,null,"character_class_escape",1,0,5,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"unicode_property_value_expression",1,3,4,""],
+        [4,null,"unicode_property_value",1,3,4,""],
+        [3,null,"}",0,4,5,""]
+      ]
+    },
+    {
+      "source": "\\P{Script=Greek}",
+      "rows": [
+        [0,null,"pattern",1,0,16,""],
+        [1,null,"term",1,0,16,""],
+        [2,null,"character_class_escape",1,0,16,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"unicode_property_value_expression",1,3,15,""],
+        [4,null,"unicode_property_name",1,3,9,""],
+        [4,null,"=",0,9,10,""],
+        [4,null,"unicode_property_value",1,10,15,""],
+        [3,null,"}",0,15,16,""]
+      ]
+    },
+    {
+      "source": "[[:alpha:]]",
+      "rows": [
+        [0,null,"pattern",1,0,11,""],
+        [1,null,"term",1,0,11,""],
+        [2,null,"character_class",1,0,11,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"posix_character_class",1,1,10,""],
+        [4,null,"[:",0,1,3,""],
+        [4,null,"posix_class_name",1,3,8,""],
+        [4,null,":]",0,8,10,""],
+        [3,null,"]",0,10,11,""]
+      ]
+    },
+    {
+      "source": "(?i)abc",
+      "rows": [
+        [0,null,"pattern",1,0,7,""],
+        [1,null,"term",1,0,7,""],
+        [2,null,"inline_flags_group",1,0,4,""],
+        [3,null,"(?",0,0,2,""],
+        [3,null,"flags",1,2,3,""],
+        [3,null,")",0,3,4,""],
+        [2,null,"pattern_character",1,4,5,""],
+        [2,null,"pattern_character",1,5,6,""],
+        [2,null,"pattern_character",1,6,7,""]
+      ]
+    },
+    {
+      "source": "(?i-m:abc)",
+      "rows": [
+        [0,null,"pattern",1,0,10,""],
+        [1,null,"term",1,0,10,""],
+        [2,null,"inline_flags_group",1,0,10,""],
+        [3,null,"(?",0,0,2,""],
+        [3,null,"flags",1,2,3,""],
+        [3,null,"-",0,3,4,""],
+        [3,null,"flags",1,4,5,""],
+        [3,null,":",0,5,6,""],
+        [3,null,"pattern",1,6,9,""],
+        [4,null,"term",1,6,9,""],
+        [5,null,"pattern_character",1,6,7,""],
+        [5,null,"pattern_character",1,7,8,""],
+        [5,null,"pattern_character",1,8,9,""],
+        [3,null,")",0,9,10,""]
+      ]
+    },
+    {
+      "source": "(?-s)x",
+      "rows": [
+        [0,null,"pattern",1,0,6,""],
+        [1,null,"term",1,0,6,""],
+        [2,null,"inline_flags_group",1,0,5,""],
+        [3,null,"(?",0,0,2,""],
+        [3,null,"-",0,2,3,""],
+        [3,null,"flags",1,3,4,""],
+        [3,null,")",0,4,5,""],
+        [2,null,"pattern_character",1,5,6,""]
+      ]
+    },
+    {
+      "source": ".",
+      "rows": [
+        [0,null,"pattern",1,0,1,""],
+        [1,null,"term",1,0,1,""],
+        [2,null,"any_character",1,0,1,""]
+      ]
+    },
+    {
+      "source": "caf[eé]",
+      "rows": [
+        [0,null,"pattern",1,0,8,""],
+        [1,null,"term",1,0,8,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"pattern_character",1,2,3,""],
+        [2,null,"character_class",1,3,8,""],
+        [3,null,"[",0,3,4,""],
+        [3,null,"class_character",1,4,5,""],
+        [3,null,"class_character",1,5,7,""],
+        [3,null,"]",0,7,8,""]
+      ]
+    },
+    {
+      "source": "^(?<word>[a-zé]+)\\s*(\\d{2,4})?$|caf[eé]",
+      "rows": [
+        [0,null,"pattern",1,0,41,""],
+        [1,null,"alternation",1,0,41,""],
+        [2,null,"term",1,0,32,""],
+        [3,null,"start_assertion",1,0,1,""],
+        [4,null,"^",0,0,1,""],
+        [3,null,"named_capturing_group",1,1,18,""],
+        [4,null,"(?<",0,1,4,""],
+        [4,null,"group_name",1,4,8,""],
+        [4,null,">",0,8,9,""],
+        [4,null,"pattern",1,9,17,""],
+        [5,null,"term",1,9,17,""],
+        [6,null,"character_class",1,9,16,""],
+        [7,null,"[",0,9,10,""],
+        [7,null,"class_range",1,10,13,""],
+        [8,null,"class_character",1,10,11,""],
+        [8,null,"-",0,11,12,""],
+        [8,null,"class_character",1,12,13,""],
+        [7,null,"class_character",1,13,15,""],
+        [7,null,"]",0,15,16,""],
+        [6,null,"one_or_more",1,16,17,""],
+        [7,null,"+",0,16,17,""],
+        [4,null,")",0,17,18,""],
+        [3,null,"character_class_escape",1,18,20,""],
+        [3,null,"zero_or_more",1,20,21,""],
+        [4,null,"*",0,20,21,""],
+        [3,null,"anonymous_capturing_group",1,21,30,""],
+        [4,null,"(",0,21,22,""],
+        [4,null,"pattern",1,22,29,""],
+        [5,null,"term",1,22,29,""],
+        [6,null,"character_class_escape",1,22,24,""],
+        [6,null,"count_quantifier",1,24,29,""],
+        [7,null,"{",0,24,25,""],
+        [7,null,"decimal_digits",1,25,26,""],
+        [7,null,",",0,26,27,""],
+        [7,null,"decimal_digits",1,27,28,""],
+        [7,null,"}",0,28,29,""],
+        [4,null,")",0,29,30,""],
+        [3,null,"optional",1,30,31,""],
+        [4,null,"?",0,30,31,""],
+        [3,null,"end_assertion",1,31,32,""],
+        [2,null,"|",0,32,33,""],
+        [2,null,"term",1,33,41,""],
+        [3,null,"pattern_character",1,33,34,""],
+        [3,null,"pattern_character",1,34,35,""],
+        [3,null,"pattern_character",1,35,36,""],
+        [3,null,"character_class",1,36,41,""],
+        [4,null,"[",0,36,37,""],
+        [4,null,"class_character",1,37,38,""],
+        [4,null,"class_character",1,38,40,""],
+        [4,null,"]",0,40,41,""]
+      ]
+    },
+    {
+      "source": "a\nb",
+      "rows": [
+        [0,null,"pattern",1,0,3,""],
+        [1,null,"term",1,0,3,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,2,3,""]
+      ]
+    },
+    {
+      "source": "x\\.y",
+      "rows": [
+        [0,null,"pattern",1,0,4,""],
+        [1,null,"term",1,0,4,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"identity_escape",1,1,3,""],
+        [2,null,"pattern_character",1,3,4,""]
+      ]
+    },
+    {
+      "source": "\\/",
+      "rows": [
+        [0,null,"pattern",1,0,2,""],
+        [1,null,"term",1,0,2,""],
+        [2,null,"identity_escape",1,0,2,""]
+      ]
+    },
+    {
+      "source": "{1}",
+      "rows": [
+        [0,null,"pattern",1,0,3,""],
+        [1,null,"term",1,0,3,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""],
+        [2,null,"pattern_character",1,2,3,""]
+      ]
+    },
+    {
+      "source": "a{2}{3}",
+      "rows": [
+        [0,null,"pattern",1,0,7,""],
+        [1,null,"term",1,0,7,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"count_quantifier",1,1,4,""],
+        [3,null,"{",0,1,2,""],
+        [3,null,"decimal_digits",1,2,3,""],
+        [3,null,"}",0,3,4,""],
+        [2,null,"pattern_character",1,4,5,""],
+        [2,null,"pattern_character",1,5,6,""],
+        [2,null,"pattern_character",1,6,7,""]
+      ]
+    },
+    {
+      "source": "[]",
+      "rows": [
+        [0,null,"pattern",1,0,2,""],
+        [1,null,"term",1,0,2,""],
+        [2,null,"character_class",1,0,2,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"]",0,1,2,""]
+      ]
+    },
+    {
+      "source": "[^]",
+      "rows": [
+        [0,null,"pattern",1,0,3,""],
+        [1,null,"term",1,0,3,""],
+        [2,null,"character_class",1,0,3,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"^",0,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    }
+  ],
+  "divergences": [
+    {
+      "source": "a{",
+      "reason": "ECMA-262 Annex B.1.2 reads a { that opens no count quantifier, and a [: that opens no POSIX class, as characters; the tree-sitter-regex 0.25.0 lexer takes them as the literals and recovers.",
+      "rows": [
+        [0,null,"pattern",1,0,2,""],
+        [1,null,"term",1,0,2,""],
+        [2,null,"pattern_character",1,0,1,""],
+        [2,null,"pattern_character",1,1,2,""]
+      ]
+    },
+    {
+      "source": "[[:alpha:]",
+      "reason": "ECMA-262 Annex B.1.2 reads a { that opens no count quantifier, and a [: that opens no POSIX class, as characters; the tree-sitter-regex 0.25.0 lexer takes them as the literals and recovers.",
+      "rows": [
+        [0,null,"pattern",1,0,10,""],
+        [1,null,"term",1,0,10,""],
+        [2,null,"character_class",1,0,10,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"class_character",1,1,2,""],
+        [3,null,"class_character",1,2,3,""],
+        [3,null,"class_character",1,3,4,""],
+        [3,null,"class_character",1,4,5,""],
+        [3,null,"class_character",1,5,6,""],
+        [3,null,"class_character",1,6,7,""],
+        [3,null,"class_character",1,7,8,""],
+        [3,null,"class_character",1,8,9,""],
+        [3,null,"]",0,9,10,""]
+      ]
+    }
+  ],
+  "rejections": [
+    {
+      "source": "",
+      "recovered": "(pattern (alternation (MISSING@0 \"|\")))"
+    },
+    {
+      "source": "(ab[c",
+      "recovered": "(pattern (term (anonymous_capturing_group \"(\" (pattern (term (pattern_character \"a\") (pattern_character \"b\") (character_class \"[\" (class_character \"c\") (MISSING@5 \"]\")))) (MISSING@5 \")\"))))"
+    },
+    {
+      "source": "(",
+      "recovered": "(pattern (term (anonymous_capturing_group \"(\" (pattern (alternation (MISSING@1 \"|\"))) (MISSING@1 \")\"))))"
+    },
+    {
+      "source": ")",
+      "recovered": "(pattern (alternation (MISSING@0 \"|\")) (ERROR@0..1 \")\"))"
+    },
+    {
+      "source": "[",
+      "recovered": "(pattern (term (character_class \"[\" (MISSING@1 \"]\"))))"
+    },
+    {
+      "source": "]",
+      "recovered": "(pattern (alternation (MISSING@0 \"|\")) (ERROR@0..1 \"]\"))"
+    },
+    {
+      "source": "(?",
+      "recovered": "(pattern (term (inline_flags_group \"(?\" (flags (MISSING@2 unnamed_token)) (MISSING@2 \")\"))))"
+    },
+    {
+      "source": "(?<",
+      "recovered": "(pattern (term (lookaround_assertion \"(?<\" (MISSING@3 \"=\") (pattern (alternation (MISSING@3 \"|\"))) (MISSING@3 \")\"))))"
+    },
+    {
+      "source": "(?<a",
+      "recovered": "(pattern (term (named_capturing_group \"(?<\" (group_name \"a\") (MISSING@4 \">\") (pattern (alternation (MISSING@4 \"|\"))) (MISSING@4 \")\"))))"
+    },
+    {
+      "source": "(?:",
+      "recovered": "(pattern (term (non_capturing_group \"(?:\" (pattern (alternation (MISSING@3 \"|\"))) (MISSING@3 \")\"))))"
+    },
+    {
+      "source": "a|(",
+      "recovered": "(pattern (alternation (term (pattern_character \"a\")) \"|\" (term (anonymous_capturing_group \"(\" (pattern (alternation (MISSING@3 \"|\"))) (MISSING@3 \")\")))))"
+    },
+    {
+      "source": "[a",
+      "recovered": "(pattern (term (character_class \"[\" (class_character \"a\") (MISSING@2 \"]\"))))"
+    },
+    {
+      "source": "\\",
+      "recovered": "(pattern (alternation (MISSING@0 \"|\")) (ERROR@0..1 \"\\\\\"))"
+    },
+    {
+      "source": "(?P<>a)",
+      "recovered": "(pattern (term (inline_flags_group \"(?\" (flags (unnamed_token \"P\")) (ERROR@3..6 \"<>a\") \")\")))"
+    },
+    {
+      "source": "*",
+      "recovered": "(pattern (term (start_assertion (MISSING@0 \"^\")) (zero_or_more \"*\")))"
+    },
+    {
+      "source": "+a",
+      "recovered": "(pattern (term (ERROR@0..1 \"+\") (pattern_character \"a\")))"
+    },
+    {
+      "source": "?",
+      "recovered": "(pattern (term (start_assertion (MISSING@0 \"^\")) (optional \"?\")))"
+    },
+    {
+      "source": "a**",
+      "recovered": "(pattern (term (pattern_character \"a\") (zero_or_more \"*\")) (ERROR@2..3 \"*\"))"
+    },
+    {
+      "source": "(?<n>a",
+      "recovered": "(pattern (term (named_capturing_group \"(?<\" (group_name \"n\") \">\" (pattern (term (pattern_character \"a\"))) (MISSING@6 \")\"))))"
+    },
+    {
+      "source": "a)",
+      "recovered": "(pattern (term (pattern_character \"a\")) (ERROR@1..2 \")\"))"
+    },
+    {
+      "source": "\\k<",
+      "recovered": "(pattern (term (backreference_escape \"\\\\k\" \"<\" (MISSING@3 group_name) (MISSING@3 \">\"))))"
+    },
+    {
+      "source": "\\p{",
+      "recovered": "(pattern (term (character_class_escape (unnamed_token \"\\\\p\") \"{\" (unicode_property_value_expression (MISSING@3 unicode_property_value)) (MISSING@3 \"}\"))))"
+    },
+    {
+      "source": "(?=",
+      "recovered": "(pattern (term (lookaround_assertion \"(?\" \"=\" (pattern (alternation (MISSING@3 \"|\"))) (MISSING@3 \")\"))))"
+    },
+    {
+      "source": "(?i",
+      "recovered": "(pattern (term (inline_flags_group \"(?\" (flags (unnamed_token \"i\")) (MISSING@3 \")\"))))"
+    }
+  ]
+}

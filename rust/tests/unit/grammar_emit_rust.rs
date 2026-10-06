@@ -1,5 +1,5 @@
 use meta_language::{
-    emit_rust_parser, CharClassItem, Grammar, RuleKind, RustFieldShape, RustTypeShape,
+    CharClassItem, Grammar, RuleKind, RustFieldShape, RustTypeShape, emit_rust_parser,
 };
 
 #[test]
@@ -8,7 +8,7 @@ fn emits_rust_parser_bundle_for_sum_grammar() {
 
     let (artifacts, report) = emit_rust_parser(&grammar).expect("Rust parser codegen emits");
 
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
     assert_eq!(
         artifacts.pest_grammar,
         "sum = { num ~ (\"+\" ~ num)* }\nnum = @{ '0'..'9'+ }\n"
@@ -70,20 +70,24 @@ fn emits_enum_shapes_for_top_level_choices_and_records_unordered_loss() {
 
     let (artifacts, report) = emit_rust_parser(&grammar).expect("Rust parser codegen emits");
 
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("unordered choice")));
-    assert!(artifacts
-        .pest_grammar
-        .contains("// NOTE: unordered choice in source is emitted as ordered pest choice."));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("unordered choice"))
+    );
+    assert!(
+        artifacts
+            .pest_grammar
+            .contains("// NOTE: unordered choice in source is emitted as ordered pest choice.")
+    );
     assert_eq!(
         artifacts.ast_shapes[0],
         RustTypeShape::enumeration(
             "Value",
             [
                 RustFieldShape::new("Number", "Number"),
-                RustFieldShape::new("String", "String"),
+                RustFieldShape::new("String", "StringNode"),
                 RustFieldShape::new("True", "String"),
                 RustFieldShape::new("False", "String"),
             ],
@@ -111,4 +115,40 @@ fn sum_grammar() -> Grammar {
             RuleKind::Atomic,
         )
         .build()
+}
+
+#[test]
+fn renames_rule_types_that_would_shadow_types_the_generated_module_uses() {
+    let expr = Grammar::expr();
+    let grammar = Grammar::builder()
+        .start("value")
+        .rule(
+            "value",
+            expr.choice(true, [expr.nt("string"), expr.nt("rule")]),
+        )
+        .rule(
+            "string",
+            expr.seq([expr.term("\""), expr.nt("vec"), expr.term("\"")]),
+        )
+        .rule("vec", expr.rep0(expr.char_range('a', 'z')))
+        .rule("rule", expr.term("rule"))
+        .build();
+
+    let (artifacts, _) = emit_rust_parser(&grammar).expect("Rust parser codegen emits");
+
+    assert_eq!(
+        artifacts.ast_shapes,
+        vec![
+            RustTypeShape::enumeration(
+                "Value",
+                [
+                    RustFieldShape::new("String", "StringNode"),
+                    RustFieldShape::new("Rule", "RuleNode"),
+                ],
+            ),
+            RustTypeShape::structure("StringNode", [RustFieldShape::new("vec", "VecNode")]),
+            RustTypeShape::structure("VecNode", [RustFieldShape::new("0", "String")]),
+            RustTypeShape::structure("RuleNode", [RustFieldShape::new("0", "String")]),
+        ]
+    );
 }

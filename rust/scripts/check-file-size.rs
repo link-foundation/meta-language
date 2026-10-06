@@ -178,7 +178,7 @@ fn changed_files(raw: Option<&str>) -> Option<BTreeSet<String>> {
 /// files stop repeating warnings in annotations and job logs. The hard limit
 /// stays repository-wide.
 fn should_report(finding: &Finding, changed: Option<&BTreeSet<String>>) -> bool {
-    changed.map_or(true, |changed| changed.contains(&finding.file))
+    changed.is_none_or(|changed| changed.contains(&finding.file))
 }
 
 #[cfg(not(test))]

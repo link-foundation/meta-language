@@ -1,5 +1,10 @@
 # Case Study: Issue #17 - Apply Fixes from lino-objects-codec
 
+> **Historical case study.** This records the investigation of issue #17 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 This case study documents the fixes applied from the [lino-objects-codec](https://github.com/link-foundation/lino-objects-codec) repository to improve the CI/CD pipeline in `rust-ai-driven-development-pipeline-template`.

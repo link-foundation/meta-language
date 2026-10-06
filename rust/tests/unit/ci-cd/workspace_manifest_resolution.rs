@@ -4,8 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::rust_paths::{
     get_cargo_lock_path, get_cargo_toml_path, get_changelog_dir, get_changelog_path,
-    get_package_manifest_path, get_rust_root, needs_cd, parse_rust_root_from_args,
-    read_package_info,
+    get_package_manifest_path, get_rust_root, needs_cd, parse_rust_root, read_package_info,
 };
 
 fn temp_dir(name: &str) -> PathBuf {
@@ -141,6 +140,20 @@ fn rust_root_prefers_explicit_parameter() {
 
 #[test]
 fn rust_root_cli_parser_returns_none_without_configuration() {
-    std::env::remove_var("RUST_ROOT");
-    assert_eq!(parse_rust_root_from_args(), None);
+    let args = vec!["rust-paths".to_owned()];
+    assert_eq!(parse_rust_root(&args, None), None);
+    assert_eq!(parse_rust_root(&args, Some(String::new())), None);
+    assert_eq!(
+        parse_rust_root(&args, Some("rust".to_owned())).as_deref(),
+        Some("rust")
+    );
+    let explicit = vec![
+        "rust-paths".to_owned(),
+        "--rust-root".to_owned(),
+        "crate".to_owned(),
+    ];
+    assert_eq!(
+        parse_rust_root(&explicit, Some("rust".to_owned())).as_deref(),
+        Some("crate")
+    );
 }

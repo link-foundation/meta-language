@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use links_notation::parse_lino_to_links;
 use meta_language::{
-    Link, LinkNetwork, LinoSerializationError, ParseConfiguration, LANGUAGE_FIXTURES,
+    LANGUAGE_FIXTURES, Link, LinkNetwork, LinoSerializationError, ParseConfiguration,
 };
 
 /// Asserts that two networks carry the same links and term registrations.

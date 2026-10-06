@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use meta_language::{import_gbnf, GrammarFormat};
+use meta_language::{GrammarFormat, import_gbnf};
 
 use super::grammar_pipeline_support::{
     assert_runtime_accepts_all_strings, load_fixture_corpus, unique_temp_path,
@@ -30,7 +30,7 @@ fn cli_infer_then_emit_grammar() {
     assert_success(&emit);
 
     let stdout = String::from_utf8_lossy(&emit.stdout);
-    assert!(!stdout.trim().is_empty());
+    assert_ne!(stdout.trim(), "");
     let grammar = import_gbnf(&stdout).expect("CLI-emitted GBNF imports");
     assert_eq!(grammar.source_format(), Some(GrammarFormat::Gbnf));
     assert_runtime_accepts_all_strings(&grammar, &examples);

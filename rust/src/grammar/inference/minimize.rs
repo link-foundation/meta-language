@@ -8,9 +8,9 @@
 mod cost;
 mod transform;
 
-use super::eval::{sample, GrammarOracle, SampleConfig};
+use super::eval::{GrammarOracle, SampleConfig, sample};
 use crate::grammar::Grammar;
-use transform::{apply_candidate, enumerate_candidates, Candidate, CandidateKind};
+use transform::{Candidate, CandidateKind, apply_candidate, enumerate_candidates};
 
 const DEFAULT_PRECISION_BUDGET: f64 = 0.0;
 const DEFAULT_SAMPLE_BUDGET: usize = 256;
@@ -145,10 +145,7 @@ pub fn minimize(grammar: &Grammar, examples: &[String], opts: MinimizeOptions) -
                 cost: trial_cost,
                 delta,
             };
-            if best
-                .as_ref()
-                .map_or(true, |best| scored.is_better_than(best))
-            {
+            if best.as_ref().is_none_or(|best| scored.is_better_than(best)) {
                 best = Some(scored);
             }
         }
@@ -186,7 +183,7 @@ impl ScoredCandidate {
     }
 }
 
-fn record_acceptance(report: &mut MinimizeReport, kind: CandidateKind) {
+const fn record_acceptance(report: &mut MinimizeReport, kind: CandidateKind) {
     match kind {
         CandidateKind::Merge => {
             report.merges_applied = report.merges_applied.saturating_add(1);

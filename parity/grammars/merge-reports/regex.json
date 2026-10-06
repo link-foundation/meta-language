@@ -1,0 +1,69 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "regex",
+  "native": "native-regex",
+  "sources": [
+    {
+      "id": "tree-sitter-regex",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-regex 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-regex",
+      "revision": "b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b",
+      "path": "src/grammar.json",
+      "sha256": "a2e6cef007b68b11ea646d866e58747686b167c24789c1092958e9c77b27c6f6",
+      "license": "MIT"
+    }
+  ],
+  "rules": 40,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "_lookahead_assertion",
+      "native": "lookahead_assertion"
+    },
+    {
+      "source": "_lookbehind_assertion",
+      "native": "lookbehind_assertion"
+    },
+    {
+      "source": "_class_atom",
+      "native": "class_atom"
+    },
+    {
+      "source": "_character_escape",
+      "native": "character_escape"
+    }
+  ],
+  "expandedWords": [],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "term",
+        "concept": "grammar.term"
+      },
+      {
+        "rule": "any_character",
+        "concept": "grammar.any-character"
+      },
+      {
+        "rule": "character_class",
+        "concept": "grammar.character-class"
+      },
+      {
+        "rule": "zero_or_more",
+        "concept": "grammar.zero-or-more-repetition"
+      },
+      {
+        "rule": "one_or_more",
+        "concept": "grammar.one-or-more-repetition"
+      },
+      {
+        "rule": "optional",
+        "concept": "grammar.optional-expression"
+      }
+    ],
+    "generated": 34
+  },
+  "approximations": [],
+  "unsupported": []
+}

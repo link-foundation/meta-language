@@ -47,15 +47,17 @@ handle for constructs such as:
 - capture
 
 When a target notation cannot represent a source concept directly, the
-translation should use a documented fallback instead of silently dropping the
-construct. [F2](../case-studies/issue-93/proposed-issues/F2-grammar-format-fidelity-matrix.md)
-owns the public matrix for those tradeoffs.
+translation needs a faithful lowering or runtime encoding with explicit
+reconstruction metadata. A documented lossy fallback remains incomplete under
+the [vision](../vision.md#grammar-import-conversion-and-reverse-conversion).
+The historical [F2](../case-studies/issue-93/proposed-issues/F2-grammar-format-fidelity-matrix.md)
+matrix records the earlier tradeoffs.
 
 ## Relationship to document translation
 
 The document-format translation path is described in
 [`docs/cross-format-fidelity.md`](../cross-format-fidelity.md): parse into a
-shared concept tree, then render the target format with known fallbacks. Grammar
+shared concept tree, then render the target format. Grammar
 translation follows the same shape, but its concept set is grammar-specific and
 its renderers are grammar emitters instead of document renderers.
 

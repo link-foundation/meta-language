@@ -1,8 +1,7 @@
 use meta_language::{
-    default_pattern_catalog, evaluate_atom, evaluate_constraint, evaluate_probabilistic,
-    mine_semantic_constraints, ConstraintAtom, ConstraintClause, ConstraintPattern, Grammar,
-    LengthUnit, NonTerminalRef, Probability, SemanticConstraint, SemanticInferenceConfig,
-    TruthValue,
+    ConstraintAtom, ConstraintClause, ConstraintPattern, Grammar, LengthUnit, NonTerminalRef,
+    Probability, SemanticConstraint, SemanticInferenceConfig, TruthValue, default_pattern_catalog,
+    evaluate_atom, evaluate_constraint, evaluate_probabilistic, mine_semantic_constraints,
 };
 
 #[test]

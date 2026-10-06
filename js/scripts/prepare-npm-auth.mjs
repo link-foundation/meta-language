@@ -86,7 +86,8 @@ export function buildMissingCredentialGuidance(packageName, repository, workflow
     'Configure exactly one of:',
     `  1. OIDC trusted publishing (preferred): on npmjs.com open the ${packageName} package`,
     `     settings, add a trusted publisher for repository ${repository} with workflow`,
-    `     file ${workflow}, and keep "permissions: id-token: write" on the publish job.`,
+    `     filename ${path.basename(workflow)} (the file ${workflow}; npm expects the bare`,
+    '     filename), and keep "permissions: id-token: write" on the publish job.',
     '  2. A classic automation token: add an NPM_TOKEN repository secret. This is the',
     '     bootstrap path for a package that has no trusted publisher yet; it can be removed',
     '     once trusted publishing is configured.',
@@ -160,6 +161,102 @@ export function prepareNpmAuth({
   return { mode, path: userConfigPath, changed: true, skipped: false };
 }
 
+export const NPM_REGISTRY = 'https://registry.npmjs.org/';
+
+// The OIDC claims that npm matches against a trusted publisher. They name the
+// repository, workflow and ref of this run and contain no credential.
+const MATCHED_CLAIMS = Object.freeze(['repository', 'workflow_ref', 'ref', 'event_name', 'environment']);
+
+function decodeClaims(idToken) {
+  try {
+    const payload = JSON.parse(Buffer.from(String(idToken).split('.')[1], 'base64url').toString('utf8'));
+    return Object.fromEntries(MATCHED_CLAIMS.filter((name) => payload[name] !== undefined)
+      .map((name) => [name, payload[name]]));
+  } catch {
+    return {};
+  }
+}
+
+async function responseMessage(response) {
+  const body = await response.text().catch(() => '');
+  try {
+    const parsed = JSON.parse(body);
+    return String(parsed.message ?? parsed.error ?? body);
+  } catch {
+    return body.trim();
+  }
+}
+
+/**
+ * Performs the trusted-publishing token exchange that `npm publish` performs.
+ * npm treats a failed exchange as "no credential" and later reports only
+ * ENEEDAUTH; this probe reports the registry's own answer and the claims the
+ * registry compared with the trusted publisher. The exchanged token is
+ * discarded: `npm publish` repeats the exchange itself.
+ * @param {object} options
+ * @param {Record<string, string|undefined>} [options.env]
+ * @param {string} options.packageName
+ * @param {string} [options.registry]
+ * @param {typeof fetch} [options.fetchImpl]
+ * @returns {Promise<{ok: boolean, stage: string, status: number|null, message: string, claims: object}>}
+ */
+export async function verifyTrustedPublishing({
+  env = process.env,
+  packageName,
+  registry = NPM_REGISTRY,
+  fetchImpl = fetch,
+}) {
+  if (!env.ACTIONS_ID_TOKEN_REQUEST_URL || !env.ACTIONS_ID_TOKEN_REQUEST_TOKEN) {
+    return {
+      ok: false, stage: 'id-token', status: null, claims: {},
+      message: 'no GitHub OIDC token is available; the publish job needs "permissions: id-token: write"',
+    };
+  }
+  const tokenUrl = new URL(env.ACTIONS_ID_TOKEN_REQUEST_URL);
+  tokenUrl.searchParams.append('audience', `npm:${new URL(registry).hostname}`);
+  const idResponse = await fetchImpl(tokenUrl, {
+    headers: { Accept: 'application/json', Authorization: `Bearer ${env.ACTIONS_ID_TOKEN_REQUEST_TOKEN}` },
+  });
+  if (!idResponse.ok) {
+    return {
+      ok: false, stage: 'id-token', status: idResponse.status, claims: {},
+      message: `GitHub refused the OIDC token request: ${await responseMessage(idResponse)}`,
+    };
+  }
+  const idToken = (await idResponse.json()).value;
+  const claims = decodeClaims(idToken);
+  const escapedName = packageName.startsWith('@') ? `@${encodeURIComponent(packageName.slice(1))}` : encodeURIComponent(packageName);
+  const exchange = await fetchImpl(new URL(`/-/npm/v1/oidc/token/exchange/package/${escapedName}`, registry), {
+    method: 'POST',
+    headers: { Accept: 'application/json', Authorization: `Bearer ${idToken}` },
+  });
+  if (!exchange.ok) {
+    return {
+      ok: false, stage: 'exchange', status: exchange.status, claims,
+      message: `the registry refused the trusted-publisher exchange for ${packageName}: ${await responseMessage(exchange)}`,
+    };
+  }
+  const { token } = await exchange.json();
+  return typeof token === 'string' && token !== ''
+    ? { ok: true, stage: 'exchange', status: exchange.status, claims, message: `the registry accepted the trusted-publisher exchange for ${packageName}` }
+    : { ok: false, stage: 'exchange', status: exchange.status, claims, message: 'the registry answered the exchange without a token' };
+}
+
+/**
+ * The trusted-publisher settings this repository needs on npmjs.com; see
+ * docs/ci-cd/npm-trusted-publishing.md.
+ */
+export function buildTrustedPublisherSettings(packageName, repository, workflow) {
+  const [owner, name] = repository.split('/');
+  return [
+    `npmjs.com > ${packageName} > Settings > Trusted Publisher > GitHub Actions:`,
+    `  Organization or user: ${owner}`,
+    `  Repository: ${name}`,
+    `  Workflow filename: ${path.basename(workflow)}`,
+    '  Environment name: (empty; the publish job declares no environment)',
+  ].join('\n');
+}
+
 function isMainModule() {
   return process.argv[1]
     ? path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
@@ -171,6 +268,21 @@ if (isMainModule()) {
   // NPM_AUTH_DEBUG=1 when a publish failure needs to be traced.
   const verbose =
     process.argv.includes('--verbose') || process.env.NPM_AUTH_DEBUG === '1';
+  const packageName = process.env.PACKAGE_NAME || 'meta-language';
+  const repository = process.env.GITHUB_REPOSITORY || 'link-foundation/meta-language';
+  const workflow = process.env.PUBLISH_WORKFLOW_FILE || '.github/workflows/js.yml';
+  if (process.argv.includes('--verify-exchange')) {
+    const result = await verifyTrustedPublishing({ packageName });
+    for (const [claim, value] of Object.entries(result.claims)) console.log(`OIDC claim ${claim}: ${value}`);
+    if (result.ok) {
+      console.log(result.message);
+    } else {
+      console.error(`::error::${result.message}${result.status === null ? '' : ` (HTTP ${result.status})`}`);
+      console.error(buildTrustedPublisherSettings(packageName, repository, workflow));
+      process.exit(1);
+    }
+    process.exit(0);
+  }
   const { mode } = prepareNpmAuth({ verbose });
 
   if (process.env.GITHUB_OUTPUT) {
@@ -178,11 +290,7 @@ if (isMainModule()) {
   }
 
   if (mode === 'none') {
-    const guidance = buildMissingCredentialGuidance(
-      process.env.PACKAGE_NAME || 'meta-language',
-      process.env.GITHUB_REPOSITORY || 'link-foundation/meta-language',
-      process.env.PUBLISH_WORKFLOW_FILE || '.github/workflows/js.yml',
-    );
+    const guidance = buildMissingCredentialGuidance(packageName, repository, workflow);
     console.error(`::error::${guidance.split('\n')[0]}`);
     console.error(guidance);
     process.exit(1);

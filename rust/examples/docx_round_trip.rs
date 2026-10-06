@@ -5,8 +5,8 @@
 //! complete `.docx` OPC package is assembled and read back.
 
 use meta_language::{
-    docx_package_is_recognized, parse_docx_document, parse_docx_package, parse_markup_document,
-    render_docx_package, LinkNetwork, ParseConfiguration,
+    LinkNetwork, ParseConfiguration, docx_package_is_recognized, parse_docx_document,
+    parse_docx_package, parse_markup_document, render_docx_package,
 };
 
 fn main() {
@@ -17,8 +17,7 @@ fn main() {
         report.formatting_concepts()
     );
 
-    let markdown =
-        "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
+    let markdown = "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
 
     // Markdown ⇄ DOCX travels through the shared formatting concept layer.
     let docx = network

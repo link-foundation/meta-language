@@ -1,0 +1,13 @@
+diff --git a/common/define-grammar.js b/common/define-grammar.js
+index a2e158e..c9aee7f 100644
+--- a/common/define-grammar.js
++++ b/common/define-grammar.js
+@@ -36,7 +36,7 @@ module.exports = function defineGrammar(dialect, separator) {
+       float: _ => choice(/\d*\.\d+/, /\d+\.\d*/),
+       boolean: _ => choice('true', 'false'),
+       text: _ => token(choice(
+-        new RegExp(`[^${separator}\\r\\n]*`),
++        new RegExp(`[^${separator}"\\r\\n]*`),
+         seq('"', repeat(choice(/[^"]/, '""')), '"'),
+       )),
+     },

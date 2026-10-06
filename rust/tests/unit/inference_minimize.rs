@@ -1,4 +1,4 @@
-use meta_language::{mdl, mdl_cost, minimize, Grammar, GrammarOracle, Mdl, MinimizeOptions};
+use meta_language::{Grammar, GrammarOracle, Mdl, MinimizeOptions, mdl, mdl_cost, minimize};
 
 #[test]
 fn mdl_cost_splits_d1_total_and_prefers_compact_equivalent_grammar() {
@@ -33,9 +33,11 @@ fn minimize_merges_identical_rules_and_then_reduces_redundant_indirection() {
     assert!(result.report.merges_applied >= 1, "{:#?}", result.report);
     assert!(result.after.total() < result.before.total(), "{result:#?}");
     assert!(result.grammar.rules().len() < grammar.rules().len());
-    assert!(examples
-        .iter()
-        .all(|example| GrammarOracle::new(&result.grammar).accepts(example)));
+    assert!(
+        examples
+            .iter()
+            .all(|example| GrammarOracle::new(&result.grammar).accepts(example))
+    );
 }
 
 #[test]

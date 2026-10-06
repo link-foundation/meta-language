@@ -1,0 +1,3 @@
+(decorator borrowed-name (level emitter) (order 0) (when (format Rust) (line pub%20fn%20is_rust%28name%3A%20String%29%20-%3E%20bool%20%7B)) (set line pub%20fn%20is_rust%28name%3A%20%26str%29%20-%3E%20bool%20%7B))
+(decorator bare-sum (level emitter) (order 1) (when (format Rust) (line %20%20%20%20%28a%20%2B%20b%29)) (set line %20%20%20%20a%20%2B%20b))
+(decorator bare-comparison (level emitter) (order 2) (when (format Rust) (line %20%20%20%20%28name%20%3D%3D%20%22Rust%22%29)) (set line %20%20%20%20name%20%3D%3D%20%22Rust%22))

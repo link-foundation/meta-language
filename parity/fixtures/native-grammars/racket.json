@@ -1,0 +1,3188 @@
+{
+  "schemaVersion": 1,
+  "id": "racket",
+  "language": "Racket",
+  "grammar": "parity/grammars/native/racket.lino",
+  "oracle": "tree-sitter-racket 0.25.0",
+  "sources": [
+    "https://docs.racket-lang.org/reference/reader.html",
+    "https://docs.rs/crate/tree-sitter-racket/0.25.0/source/grammar.js"
+  ],
+  "hidden": [
+    "byte_order_mark"
+  ],
+  "anonymous": [
+    "whitespace",
+    "comment_text",
+    "string_text",
+    "regular_expression_prefix",
+    "hash_prefix",
+    "graph_mark",
+    "here_terminator",
+    "here_newline",
+    "here_line",
+    "here_end"
+  ],
+  "extras": [],
+  "oracleKinds": {
+    "program_element": "_token",
+    "atmosphere": "_skip",
+    "datum_comment": "sexp_comment",
+    "datum": "_datum",
+    "regular_expression": "regex",
+    "language_name": "lang_name"
+  },
+  "matches": [
+    {
+      "source": "",
+      "rows": [
+        [0,null,"program",1,0,0,""]
+      ]
+    },
+    {
+      "source": "a",
+      "rows": [
+        [0,null,"program",1,0,1,""],
+        [1,null,"symbol",1,0,1,""]
+      ]
+    },
+    {
+      "source": " a",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,1,2,""]
+      ]
+    },
+    {
+      "source": "a ",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,1,""]
+      ]
+    },
+    {
+      "source": "(a b c)",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"list",1,0,7,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,"symbol",1,3,4,""],
+        [2,null,"symbol",1,5,6,""],
+        [2,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "(define (f x) (+ x 1))",
+      "rows": [
+        [0,null,"program",1,0,22,""],
+        [1,null,"list",1,0,22,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,7,""],
+        [2,null,"list",1,8,13,""],
+        [3,null,"(",0,8,9,""],
+        [3,null,"symbol",1,9,10,""],
+        [3,null,"symbol",1,11,12,""],
+        [3,null,")",0,12,13,""],
+        [2,null,"list",1,14,21,""],
+        [3,null,"(",0,14,15,""],
+        [3,null,"symbol",1,15,16,""],
+        [3,null,"symbol",1,17,18,""],
+        [3,null,"number",1,19,20,""],
+        [3,null,")",0,20,21,""],
+        [2,null,")",0,21,22,""]
+      ]
+    },
+    {
+      "source": "[a]",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"list",1,0,3,""],
+        [2,null,"[",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "{a}",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"list",1,0,3,""],
+        [2,null,"{",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,"}",0,2,3,""]
+      ]
+    },
+    {
+      "source": "()",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"list",1,0,2,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,")",0,1,2,""]
+      ]
+    },
+    {
+      "source": "(a . b)",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"list",1,0,7,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,"dot",1,3,4,""],
+        [2,null,"symbol",1,5,6,""],
+        [2,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "(.)",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"list",1,0,3,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"dot",1,1,2,""],
+        [2,null,")",0,2,3,""]
+      ]
+    },
+    {
+      "source": "(. a)",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"list",1,0,5,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"dot",1,1,2,""],
+        [2,null,"symbol",1,3,4,""],
+        [2,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "(.a)",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"list",1,0,4,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,3,""],
+        [2,null,")",0,3,4,""]
+      ]
+    },
+    {
+      "source": ".",
+      "rows": [
+        [0,null,"program",1,0,1,""],
+        [1,null,"symbol",1,0,1,""]
+      ]
+    },
+    {
+      "source": "...",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "(a ... b)",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"list",1,0,9,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,"symbol",1,3,6,""],
+        [2,null,"symbol",1,7,8,""],
+        [2,null,")",0,8,9,""]
+      ]
+    },
+    {
+      "source": "(1 . 2)",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"list",1,0,7,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"number",1,1,2,""],
+        [2,null,"dot",1,3,4,""],
+        [2,null,"number",1,5,6,""],
+        [2,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "(a .b)",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"list",1,0,6,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,"symbol",1,3,5,""],
+        [2,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "(a. b)",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"list",1,0,6,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,3,""],
+        [2,null,"symbol",1,4,5,""],
+        [2,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "( . )",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"list",1,0,5,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"dot",1,2,3,""],
+        [2,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "#t",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"boolean",1,0,2,""]
+      ]
+    },
+    {
+      "source": "#f",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"boolean",1,0,2,""]
+      ]
+    },
+    {
+      "source": "#true",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"boolean",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#false",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"boolean",1,0,6,""]
+      ]
+    },
+    {
+      "source": "#T",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"boolean",1,0,2,""]
+      ]
+    },
+    {
+      "source": "#F",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"boolean",1,0,2,""]
+      ]
+    },
+    {
+      "source": "#TRUE",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"boolean",1,0,2,""],
+        [1,null,"symbol",1,2,5,""]
+      ]
+    },
+    {
+      "source": "#fals",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"boolean",1,0,2,""],
+        [1,null,"symbol",1,2,5,""]
+      ]
+    },
+    {
+      "source": "#tx",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"boolean",1,0,2,""],
+        [1,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "#f(1)",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"boolean",1,0,2,""],
+        [1,null,"list",1,2,5,""],
+        [2,null,"(",0,2,3,""],
+        [2,null,"number",1,3,4,""],
+        [2,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "#t(1)",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"boolean",1,0,2,""],
+        [1,null,"list",1,2,5,""],
+        [2,null,"(",0,2,3,""],
+        [2,null,"number",1,3,4,""],
+        [2,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "#fl(1)",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"vector",1,0,6,""],
+        [2,null,"#fl",0,0,3,""],
+        [2,null,"list",1,3,6,""],
+        [3,null,"(",0,3,4,""],
+        [3,null,"number",1,4,5,""],
+        [3,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "#fx(1)",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"vector",1,0,6,""],
+        [2,null,"#fx",0,0,3,""],
+        [2,null,"list",1,3,6,""],
+        [3,null,"(",0,3,4,""],
+        [3,null,"number",1,4,5,""],
+        [3,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "#fl3(1)",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"vector",1,0,7,""],
+        [2,null,"#fl",0,0,3,""],
+        [2,null,"decimal",1,3,4,""],
+        [2,null,"list",1,4,7,""],
+        [3,null,"(",0,4,5,""],
+        [3,null,"number",1,5,6,""],
+        [3,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "#fx2[1 2]",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"vector",1,0,9,""],
+        [2,null,"#fx",0,0,3,""],
+        [2,null,"decimal",1,3,4,""],
+        [2,null,"list",1,4,9,""],
+        [3,null,"[",0,4,5,""],
+        [3,null,"number",1,5,6,""],
+        [3,null,"number",1,7,8,""],
+        [3,null,"]",0,8,9,""]
+      ]
+    },
+    {
+      "source": "#(1 2)",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"vector",1,0,6,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"list",1,1,6,""],
+        [3,null,"(",0,1,2,""],
+        [3,null,"number",1,2,3,""],
+        [3,null,"number",1,4,5,""],
+        [3,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "#3(1)",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"vector",1,0,5,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"decimal",1,1,2,""],
+        [2,null,"list",1,2,5,""],
+        [3,null,"(",0,2,3,""],
+        [3,null,"number",1,3,4,""],
+        [3,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "#[a]",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"vector",1,0,4,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"list",1,1,4,""],
+        [3,null,"[",0,1,2,""],
+        [3,null,"symbol",1,2,3,""],
+        [3,null,"]",0,3,4,""]
+      ]
+    },
+    {
+      "source": "#{a}",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"vector",1,0,4,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"list",1,1,4,""],
+        [3,null,"{",0,1,2,""],
+        [3,null,"symbol",1,2,3,""],
+        [3,null,"}",0,3,4,""]
+      ]
+    },
+    {
+      "source": "#12(1)",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"vector",1,0,6,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"decimal",1,1,3,""],
+        [2,null,"list",1,3,6,""],
+        [3,null,"(",0,3,4,""],
+        [3,null,"number",1,4,5,""],
+        [3,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "#123456789(1)",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"vector",1,0,13,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"decimal",1,1,10,""],
+        [2,null,"list",1,10,13,""],
+        [3,null,"(",0,10,11,""],
+        [3,null,"number",1,11,12,""],
+        [3,null,")",0,12,13,""]
+      ]
+    },
+    {
+      "source": "\"abc\"",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"string",1,0,5,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"\"",0,4,5,""]
+      ]
+    },
+    {
+      "source": "\"\"",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"string",1,0,2,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"\"",0,1,2,""]
+      ]
+    },
+    {
+      "source": "\"a\\nb\"",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"string",1,0,6,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,2,4,""],
+        [2,null,"\"",0,5,6,""]
+      ]
+    },
+    {
+      "source": "\"\\a\\b\\t\\n\\v\\f\\r\\e\"",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"string",1,0,18,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,3,""],
+        [2,null,"escape_sequence",1,3,5,""],
+        [2,null,"escape_sequence",1,5,7,""],
+        [2,null,"escape_sequence",1,7,9,""],
+        [2,null,"escape_sequence",1,9,11,""],
+        [2,null,"escape_sequence",1,11,13,""],
+        [2,null,"escape_sequence",1,13,15,""],
+        [2,null,"escape_sequence",1,15,17,""],
+        [2,null,"\"",0,17,18,""]
+      ]
+    },
+    {
+      "source": "\"\\\"\\'\\\\\"",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"string",1,0,8,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,3,""],
+        [2,null,"escape_sequence",1,3,5,""],
+        [2,null,"escape_sequence",1,5,7,""],
+        [2,null,"\"",0,7,8,""]
+      ]
+    },
+    {
+      "source": "\"\\1\"",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"string",1,0,4,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,3,""],
+        [2,null,"\"",0,3,4,""]
+      ]
+    },
+    {
+      "source": "\"\\12\"",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"string",1,0,5,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,4,""],
+        [2,null,"\"",0,4,5,""]
+      ]
+    },
+    {
+      "source": "\"\\123\"",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"string",1,0,6,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,5,""],
+        [2,null,"\"",0,5,6,""]
+      ]
+    },
+    {
+      "source": "\"\\1234\"",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"string",1,0,7,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,5,""],
+        [2,null,"\"",0,6,7,""]
+      ]
+    },
+    {
+      "source": "\"\\x4\"",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"string",1,0,5,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,4,""],
+        [2,null,"\"",0,4,5,""]
+      ]
+    },
+    {
+      "source": "\"\\x41\"",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"string",1,0,6,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,5,""],
+        [2,null,"\"",0,5,6,""]
+      ]
+    },
+    {
+      "source": "\"\\x414\"",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"string",1,0,7,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,5,""],
+        [2,null,"\"",0,6,7,""]
+      ]
+    },
+    {
+      "source": "\"\\u41\"",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"string",1,0,6,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,5,""],
+        [2,null,"\"",0,5,6,""]
+      ]
+    },
+    {
+      "source": "\"\\u0041\"",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"string",1,0,8,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,7,""],
+        [2,null,"\"",0,7,8,""]
+      ]
+    },
+    {
+      "source": "\"\\u00411\"",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"string",1,0,9,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,7,""],
+        [2,null,"\"",0,8,9,""]
+      ]
+    },
+    {
+      "source": "\"\\U41\"",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"string",1,0,6,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,5,""],
+        [2,null,"\"",0,5,6,""]
+      ]
+    },
+    {
+      "source": "\"\\U0001F600\"",
+      "rows": [
+        [0,null,"program",1,0,12,""],
+        [1,null,"string",1,0,12,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,11,""],
+        [2,null,"\"",0,11,12,""]
+      ]
+    },
+    {
+      "source": "\"\\U000000410\"",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"string",1,0,13,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,1,11,""],
+        [2,null,"\"",0,12,13,""]
+      ]
+    },
+    {
+      "source": "\"a\\\nb\"",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"string",1,0,6,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,2,4,""],
+        [2,null,"\"",0,5,6,""]
+      ]
+    },
+    {
+      "source": "\"a\\\r\nb\"",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"string",1,0,7,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,2,5,""],
+        [2,null,"\"",0,6,7,""]
+      ]
+    },
+    {
+      "source": "\"a\\\rb\"",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"string",1,0,6,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"escape_sequence",1,2,4,""],
+        [2,null,"\"",0,5,6,""]
+      ]
+    },
+    {
+      "source": "\"a\nb\"",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"string",1,0,5,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"\"",0,4,5,""]
+      ]
+    },
+    {
+      "source": "\"λ\"",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"string",1,0,4,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"\"",0,3,4,""]
+      ]
+    },
+    {
+      "source": "#\"abc\"",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"byte_string",1,0,6,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"\"",0,1,2,""],
+        [2,null,"\"",0,5,6,""]
+      ]
+    },
+    {
+      "source": "#\"\"",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"byte_string",1,0,3,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"\"",0,1,2,""],
+        [2,null,"\"",0,2,3,""]
+      ]
+    },
+    {
+      "source": "#\"\\n\"",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"byte_string",1,0,5,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"\"",0,1,2,""],
+        [2,null,"escape_sequence",1,2,4,""],
+        [2,null,"\"",0,4,5,""]
+      ]
+    },
+    {
+      "source": "#rx\"a\"",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"regex",1,0,6,""],
+        [2,null,"\"",0,3,4,""],
+        [2,null,"\"",0,5,6,""]
+      ]
+    },
+    {
+      "source": "#px\"a+\"",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"regex",1,0,7,""],
+        [2,null,"\"",0,3,4,""],
+        [2,null,"\"",0,6,7,""]
+      ]
+    },
+    {
+      "source": "#rx#\"a\"",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"regex",1,0,7,""],
+        [2,null,"\"",0,4,5,""],
+        [2,null,"\"",0,6,7,""]
+      ]
+    },
+    {
+      "source": "#px#\"a\"",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"regex",1,0,7,""],
+        [2,null,"\"",0,4,5,""],
+        [2,null,"\"",0,6,7,""]
+      ]
+    },
+    {
+      "source": "#rx\"\\\\d\"",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"regex",1,0,8,""],
+        [2,null,"\"",0,3,4,""],
+        [2,null,"escape_sequence",1,4,6,""],
+        [2,null,"\"",0,7,8,""]
+      ]
+    },
+    {
+      "source": "#<<EOF\nabc\nEOF",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"here_string",1,0,14,""],
+        [2,null,"#<<",0,0,3,""]
+      ]
+    },
+    {
+      "source": "#<<EOF\nabc\nEOF\n",
+      "rows": [
+        [0,null,"program",1,0,15,""],
+        [1,null,"here_string",1,0,14,""],
+        [2,null,"#<<",0,0,3,""]
+      ]
+    },
+    {
+      "source": "#<<EOF\nEOF",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"here_string",1,0,10,""],
+        [2,null,"#<<",0,0,3,""]
+      ]
+    },
+    {
+      "source": "#<<\n\n",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"here_string",1,0,4,""],
+        [2,null,"#<<",0,0,3,""]
+      ]
+    },
+    {
+      "source": "#<<\nabc\n",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"here_string",1,0,8,""],
+        [2,null,"#<<",0,0,3,""]
+      ]
+    },
+    {
+      "source": "#<< EOF\nx\n EOF",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"here_string",1,0,14,""],
+        [2,null,"#<<",0,0,3,""]
+      ]
+    },
+    {
+      "source": "#<<EOF\r\nEOF\r",
+      "rows": [
+        [0,null,"program",1,0,12,""],
+        [1,null,"here_string",1,0,12,""],
+        [2,null,"#<<",0,0,3,""]
+      ]
+    },
+    {
+      "source": "(#<<A\nx\nA\n)",
+      "rows": [
+        [0,null,"program",1,0,11,""],
+        [1,null,"list",1,0,11,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"here_string",1,1,9,""],
+        [3,null,"#<<",0,1,4,""],
+        [2,null,")",0,10,11,""]
+      ]
+    },
+    {
+      "source": "#<<A\n\nx\ny z\nA",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"here_string",1,0,13,""],
+        [2,null,"#<<",0,0,3,""]
+      ]
+    },
+    {
+      "source": "#<<EOF\nab\ncd\nEOF\n(a)",
+      "rows": [
+        [0,null,"program",1,0,20,""],
+        [1,null,"here_string",1,0,16,""],
+        [2,null,"#<<",0,0,3,""],
+        [1,null,"list",1,17,20,""],
+        [2,null,"(",0,17,18,""],
+        [2,null,"symbol",1,18,19,""],
+        [2,null,")",0,19,20,""]
+      ]
+    },
+    {
+      "source": "#<<A\nB\nA\n#<<B\nA\nB",
+      "rows": [
+        [0,null,"program",1,0,17,""],
+        [1,null,"here_string",1,0,8,""],
+        [2,null,"#<<",0,0,3,""],
+        [1,null,"here_string",1,9,17,""],
+        [2,null,"#<<",0,9,12,""]
+      ]
+    },
+    {
+      "source": "#\\a",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"character",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#\\space",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"character",1,0,7,""]
+      ]
+    },
+    {
+      "source": "#\\nul",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"character",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#\\null",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"character",1,0,6,""]
+      ]
+    },
+    {
+      "source": "#\\nulx",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"character",1,0,5,""],
+        [1,null,"symbol",1,5,6,""]
+      ]
+    },
+    {
+      "source": "#\\backspace",
+      "rows": [
+        [0,null,"program",1,0,11,""],
+        [1,null,"character",1,0,11,""]
+      ]
+    },
+    {
+      "source": "#\\tab",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"character",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#\\newline",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"character",1,0,9,""]
+      ]
+    },
+    {
+      "source": "#\\linefeed",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"character",1,0,10,""]
+      ]
+    },
+    {
+      "source": "#\\vtab",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"character",1,0,6,""]
+      ]
+    },
+    {
+      "source": "#\\page",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"character",1,0,6,""]
+      ]
+    },
+    {
+      "source": "#\\return",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"character",1,0,8,""]
+      ]
+    },
+    {
+      "source": "#\\rubout",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"character",1,0,8,""]
+      ]
+    },
+    {
+      "source": "#\\101",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"character",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#\\10",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"character",1,0,3,""],
+        [1,null,"number",1,3,4,""]
+      ]
+    },
+    {
+      "source": "#\\1011",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"character",1,0,5,""],
+        [1,null,"number",1,5,6,""]
+      ]
+    },
+    {
+      "source": "#\\u41",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"character",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#\\u0041",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"character",1,0,7,""]
+      ]
+    },
+    {
+      "source": "#\\u00411",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"character",1,0,7,""],
+        [1,null,"number",1,7,8,""]
+      ]
+    },
+    {
+      "source": "#\\U41",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"character",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#\\U0001F600",
+      "rows": [
+        [0,null,"program",1,0,11,""],
+        [1,null,"character",1,0,11,""]
+      ]
+    },
+    {
+      "source": "#\\λ",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"character",1,0,4,""]
+      ]
+    },
+    {
+      "source": "#\\(",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"character",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#\\ ",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"character",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#\\\r",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"character",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#\\\t",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"character",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#\\nx",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"character",1,0,3,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "#\\uz",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"character",1,0,3,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "#\\Space",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"character",1,0,3,""],
+        [1,null,"symbol",1,3,7,""]
+      ]
+    },
+    {
+      "source": "#\\x41",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"character",1,0,3,""],
+        [1,null,"number",1,3,5,""]
+      ]
+    },
+    {
+      "source": "1",
+      "rows": [
+        [0,null,"program",1,0,1,""],
+        [1,null,"number",1,0,1,""]
+      ]
+    },
+    {
+      "source": "-1",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"number",1,0,2,""]
+      ]
+    },
+    {
+      "source": "+1",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"number",1,0,2,""]
+      ]
+    },
+    {
+      "source": "1.5",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": ".5",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"number",1,0,2,""]
+      ]
+    },
+    {
+      "source": "1.",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"number",1,0,2,""]
+      ]
+    },
+    {
+      "source": "1e5",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "1/2",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "1+2i",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"number",1,0,4,""]
+      ]
+    },
+    {
+      "source": "+i",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"number",1,0,2,""]
+      ]
+    },
+    {
+      "source": "-i",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"number",1,0,2,""]
+      ]
+    },
+    {
+      "source": "+inf.0",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "-nan.0",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "+inf.f",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "+inf.t",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "1.5t3",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"number",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#e1.5",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"number",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#i1",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#x1F",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"number",1,0,4,""]
+      ]
+    },
+    {
+      "source": "#b101",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"number",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#o17",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"number",1,0,4,""]
+      ]
+    },
+    {
+      "source": "#d10",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"number",1,0,4,""]
+      ]
+    },
+    {
+      "source": "#x#i1F",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "#e#x10",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "1#",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"number",1,0,2,""]
+      ]
+    },
+    {
+      "source": "1#.#",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"number",1,0,4,""]
+      ]
+    },
+    {
+      "source": "1@2",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "1abc",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"symbol",1,0,4,""]
+      ]
+    },
+    {
+      "source": "1#a",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#e1x",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"number",1,0,3,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "#x1.5",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"number",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#xff/a",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "1/2/3",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,5,""]
+      ]
+    },
+    {
+      "source": "+inf.0i",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"number",1,0,7,""]
+      ]
+    },
+    {
+      "source": "1+inf.0i",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"number",1,0,8,""]
+      ]
+    },
+    {
+      "source": "1-2.5i",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "1e-3",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"number",1,0,4,""]
+      ]
+    },
+    {
+      "source": "1s5",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "1l5",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "1d5",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "1f5",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#x1s2",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"number",1,0,5,""]
+      ]
+    },
+    {
+      "source": "1+i",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "+1/2i",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"number",1,0,5,""]
+      ]
+    },
+    {
+      "source": "1#/2#",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"number",1,0,5,""]
+      ]
+    },
+    {
+      "source": "1.5e+3",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "+-1",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "1..",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "1e",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "e5",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "-",
+      "rows": [
+        [0,null,"program",1,0,1,""],
+        [1,null,"symbol",1,0,1,""]
+      ]
+    },
+    {
+      "source": "+",
+      "rows": [
+        [0,null,"program",1,0,1,""],
+        [1,null,"symbol",1,0,1,""]
+      ]
+    },
+    {
+      "source": "->x",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "1+",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "inf.0",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,5,""]
+      ]
+    },
+    {
+      "source": "+INF.0",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "+nan.F",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"number",1,0,6,""]
+      ]
+    },
+    {
+      "source": "#i+inf.0",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"number",1,0,8,""]
+      ]
+    },
+    {
+      "source": "#x+inf.t",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"number",1,0,8,""]
+      ]
+    },
+    {
+      "source": "#d#e1",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"number",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#E1",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#I1",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#B1",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#O1",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#X1",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#D1",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"number",1,0,3,""]
+      ]
+    },
+    {
+      "source": "abc",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "a-b",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "λ",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "日本",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"symbol",1,0,6,""]
+      ]
+    },
+    {
+      "source": "|a b|",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,5,""]
+      ]
+    },
+    {
+      "source": "a|b c|d",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"symbol",1,0,7,""]
+      ]
+    },
+    {
+      "source": "|a\nb|",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,5,""]
+      ]
+    },
+    {
+      "source": "a\\ b",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"symbol",1,0,4,""]
+      ]
+    },
+    {
+      "source": "\\a",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "#%app",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#%",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "#ci",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#cs",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#CI",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#cix",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "a#b",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "a.b",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "+a",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "1a",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "a1",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "\ufeffa",
+      "rows": [
+        [0,null,"program",1,3,4,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "ab",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "a\u00a0b",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "a\u2028b",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"symbol",1,4,5,""]
+      ]
+    },
+    {
+      "source": "a　b",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"symbol",1,4,5,""]
+      ]
+    },
+    {
+      "source": "#:key",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"keyword",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#:",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"keyword",1,0,2,""]
+      ]
+    },
+    {
+      "source": "#:a#b",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"keyword",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#:|a b|",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"keyword",1,0,7,""]
+      ]
+    },
+    {
+      "source": "#&a",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"box",1,0,3,""],
+        [2,null,"#&",0,0,2,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "#& a",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"box",1,0,4,""],
+        [2,null,"#&",0,0,2,""],
+        [2,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "#&#&a",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"box",1,0,5,""],
+        [2,null,"#&",0,0,2,""],
+        [2,null,"box",1,2,5,""],
+        [3,null,"#&",0,2,4,""],
+        [3,null,"symbol",1,4,5,""]
+      ]
+    },
+    {
+      "source": "#0=a",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"graph",1,0,4,""],
+        [2,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "#0#",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"graph",1,0,3,""]
+      ]
+    },
+    {
+      "source": "#12=(a . #12#)",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"graph",1,0,14,""],
+        [2,null,"list",1,4,14,""],
+        [3,null,"(",0,4,5,""],
+        [3,null,"symbol",1,5,6,""],
+        [3,null,"dot",1,7,8,""],
+        [3,null,"graph",1,9,13,""],
+        [3,null,")",0,13,14,""]
+      ]
+    },
+    {
+      "source": "#0= a",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"graph",1,0,5,""],
+        [2,null,"symbol",1,4,5,""]
+      ]
+    },
+    {
+      "source": "#12345678#",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"graph",1,0,10,""]
+      ]
+    },
+    {
+      "source": "#s(a 1)",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"structure",1,0,7,""],
+        [2,null,"#s",0,0,2,""],
+        [2,null,"list",1,2,7,""],
+        [3,null,"(",0,2,3,""],
+        [3,null,"symbol",1,3,4,""],
+        [3,null,"number",1,5,6,""],
+        [3,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "#s[a]",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"structure",1,0,5,""],
+        [2,null,"#s",0,0,2,""],
+        [2,null,"list",1,2,5,""],
+        [3,null,"[",0,2,3,""],
+        [3,null,"symbol",1,3,4,""],
+        [3,null,"]",0,4,5,""]
+      ]
+    },
+    {
+      "source": "#hash()",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"hash",1,0,7,""],
+        [2,null,"list",1,5,7,""],
+        [3,null,"(",0,5,6,""],
+        [3,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "#hash((a . 1))",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"hash",1,0,14,""],
+        [2,null,"list",1,5,14,""],
+        [3,null,"(",0,5,6,""],
+        [3,null,"list",1,6,13,""],
+        [4,null,"(",0,6,7,""],
+        [4,null,"symbol",1,7,8,""],
+        [4,null,"dot",1,9,10,""],
+        [4,null,"number",1,11,12,""],
+        [4,null,")",0,12,13,""],
+        [3,null,")",0,13,14,""]
+      ]
+    },
+    {
+      "source": "#hasheq()",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"hash",1,0,9,""],
+        [2,null,"list",1,7,9,""],
+        [3,null,"(",0,7,8,""],
+        [3,null,")",0,8,9,""]
+      ]
+    },
+    {
+      "source": "#hasheqv()",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"hash",1,0,10,""],
+        [2,null,"list",1,8,10,""],
+        [3,null,"(",0,8,9,""],
+        [3,null,")",0,9,10,""]
+      ]
+    },
+    {
+      "source": "#hashalw()",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"hash",1,0,10,""],
+        [2,null,"list",1,8,10,""],
+        [3,null,"(",0,8,9,""],
+        [3,null,")",0,9,10,""]
+      ]
+    },
+    {
+      "source": "#HASH()",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"hash",1,0,7,""],
+        [2,null,"list",1,5,7,""],
+        [3,null,"(",0,5,6,""],
+        [3,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "#HashEq()",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"hash",1,0,9,""],
+        [2,null,"list",1,7,9,""],
+        [3,null,"(",0,7,8,""],
+        [3,null,")",0,8,9,""]
+      ]
+    },
+    {
+      "source": "'a",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"quote",1,0,2,""],
+        [2,null,"'",0,0,1,""],
+        [2,null,"symbol",1,1,2,""]
+      ]
+    },
+    {
+      "source": "' a",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"quote",1,0,3,""],
+        [2,null,"'",0,0,1,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "`a",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"quasiquote",1,0,2,""],
+        [2,null,"`",0,0,1,""],
+        [2,null,"symbol",1,1,2,""]
+      ]
+    },
+    {
+      "source": ",a",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"unquote",1,0,2,""],
+        [2,null,",",0,0,1,""],
+        [2,null,"symbol",1,1,2,""]
+      ]
+    },
+    {
+      "source": ",@a",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"unquote_splicing",1,0,3,""],
+        [2,null,",@",0,0,2,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": ", @a",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"unquote",1,0,4,""],
+        [2,null,",",0,0,1,""],
+        [2,null,"symbol",1,2,4,""]
+      ]
+    },
+    {
+      "source": "#'a",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"syntax",1,0,3,""],
+        [2,null,"#'",0,0,2,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "#`a",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"quasisyntax",1,0,3,""],
+        [2,null,"#`",0,0,2,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "#,a",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"unsyntax",1,0,3,""],
+        [2,null,"#,",0,0,2,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "#,@a",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"unsyntax_splicing",1,0,4,""],
+        [2,null,"#,@",0,0,3,""],
+        [2,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "#, @a",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"unsyntax",1,0,5,""],
+        [2,null,"#,",0,0,2,""],
+        [2,null,"symbol",1,3,5,""]
+      ]
+    },
+    {
+      "source": "'()",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"quote",1,0,3,""],
+        [2,null,"'",0,0,1,""],
+        [2,null,"list",1,1,3,""],
+        [3,null,"(",0,1,2,""],
+        [3,null,")",0,2,3,""]
+      ]
+    },
+    {
+      "source": "`(a ,b ,@c)",
+      "rows": [
+        [0,null,"program",1,0,11,""],
+        [1,null,"quasiquote",1,0,11,""],
+        [2,null,"`",0,0,1,""],
+        [2,null,"list",1,1,11,""],
+        [3,null,"(",0,1,2,""],
+        [3,null,"symbol",1,2,3,""],
+        [3,null,"unquote",1,4,6,""],
+        [4,null,",",0,4,5,""],
+        [4,null,"symbol",1,5,6,""],
+        [3,null,"unquote_splicing",1,7,10,""],
+        [4,null,",@",0,7,9,""],
+        [4,null,"symbol",1,9,10,""],
+        [3,null,")",0,10,11,""]
+      ]
+    },
+    {
+      "source": "'#;b a",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"quote",1,0,6,""],
+        [2,null,"'",0,0,1,""],
+        [2,null,"sexp_comment",1,1,4,""],
+        [3,null,"#;",0,1,3,""],
+        [3,null,"symbol",1,3,4,""],
+        [2,null,"symbol",1,5,6,""]
+      ]
+    },
+    {
+      "source": "' ; c\n a",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"quote",1,0,8,""],
+        [2,null,"'",0,0,1,""],
+        [2,null,"comment",1,2,5,""],
+        [2,null,"symbol",1,7,8,""]
+      ]
+    },
+    {
+      "source": "'#|c|#a",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"quote",1,0,7,""],
+        [2,null,"'",0,0,1,""],
+        [2,null,"block_comment",1,1,6,""],
+        [3,null,"#|",0,1,3,""],
+        [3,null,"|#",0,4,6,""],
+        [2,null,"symbol",1,6,7,""]
+      ]
+    },
+    {
+      "source": "; c",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"comment",1,0,3,""]
+      ]
+    },
+    {
+      "source": "; c\n",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"comment",1,0,3,""]
+      ]
+    },
+    {
+      "source": "a ; c\nb",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"comment",1,2,5,""],
+        [1,null,"symbol",1,6,7,""]
+      ]
+    },
+    {
+      "source": ";",
+      "rows": [
+        [0,null,"program",1,0,1,""],
+        [1,null,"comment",1,0,1,""]
+      ]
+    },
+    {
+      "source": "; c\r\n",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"comment",1,0,3,""]
+      ]
+    },
+    {
+      "source": "; c\u2028x",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"comment",1,0,3,""],
+        [1,null,"symbol",1,6,7,""]
+      ]
+    },
+    {
+      "source": "#| a |#",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"block_comment",1,0,7,""],
+        [2,null,"#|",0,0,2,""],
+        [2,null,"|#",0,5,7,""]
+      ]
+    },
+    {
+      "source": "#| a #| b |# c |#",
+      "rows": [
+        [0,null,"program",1,0,17,""],
+        [1,null,"block_comment",1,0,17,""],
+        [2,null,"#|",0,0,2,""],
+        [2,null,"block_comment",1,5,12,""],
+        [3,null,"#|",0,5,7,""],
+        [3,null,"|#",0,10,12,""],
+        [2,null,"|#",0,15,17,""]
+      ]
+    },
+    {
+      "source": "#||#",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"block_comment",1,0,4,""],
+        [2,null,"#|",0,0,2,""],
+        [2,null,"|#",0,2,4,""]
+      ]
+    },
+    {
+      "source": "#|||#",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"block_comment",1,0,5,""],
+        [2,null,"#|",0,0,2,""],
+        [2,null,"|#",0,3,5,""]
+      ]
+    },
+    {
+      "source": "#| | # |#",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"block_comment",1,0,9,""],
+        [2,null,"#|",0,0,2,""],
+        [2,null,"|#",0,7,9,""]
+      ]
+    },
+    {
+      "source": "#|\n|#",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"block_comment",1,0,5,""],
+        [2,null,"#|",0,0,2,""],
+        [2,null,"|#",0,3,5,""]
+      ]
+    },
+    {
+      "source": "#;a",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"sexp_comment",1,0,3,""],
+        [2,null,"#;",0,0,2,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "#; a b",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"sexp_comment",1,0,4,""],
+        [2,null,"#;",0,0,2,""],
+        [2,null,"symbol",1,3,4,""],
+        [1,null,"symbol",1,5,6,""]
+      ]
+    },
+    {
+      "source": "#;#;a b c",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"sexp_comment",1,0,7,""],
+        [2,null,"#;",0,0,2,""],
+        [2,null,"sexp_comment",1,2,5,""],
+        [3,null,"#;",0,2,4,""],
+        [3,null,"symbol",1,4,5,""],
+        [2,null,"symbol",1,6,7,""],
+        [1,null,"symbol",1,8,9,""]
+      ]
+    },
+    {
+      "source": "#;(a b) c",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"sexp_comment",1,0,7,""],
+        [2,null,"#;",0,0,2,""],
+        [2,null,"list",1,2,7,""],
+        [3,null,"(",0,2,3,""],
+        [3,null,"symbol",1,3,4,""],
+        [3,null,"symbol",1,5,6,""],
+        [3,null,")",0,6,7,""],
+        [1,null,"symbol",1,8,9,""]
+      ]
+    },
+    {
+      "source": "#!racket",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"extension",1,0,8,""],
+        [2,null,"#!",0,0,2,""],
+        [2,null,"lang_name",1,2,8,""]
+      ]
+    },
+    {
+      "source": "#lang racket",
+      "rows": [
+        [0,null,"program",1,0,12,""],
+        [1,null,"extension",1,0,12,""],
+        [2,null,"#lang ",0,0,6,""],
+        [2,null,"lang_name",1,6,12,""]
+      ]
+    },
+    {
+      "source": "#lang racket/base",
+      "rows": [
+        [0,null,"program",1,0,17,""],
+        [1,null,"extension",1,0,17,""],
+        [2,null,"#lang ",0,0,6,""],
+        [2,null,"lang_name",1,6,17,""]
+      ]
+    },
+    {
+      "source": "#lang racket/",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"extension",1,0,12,""],
+        [2,null,"#lang ",0,0,6,""],
+        [2,null,"lang_name",1,6,12,""],
+        [1,null,"symbol",1,12,13,""]
+      ]
+    },
+    {
+      "source": "#lang a",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"extension",1,0,7,""],
+        [2,null,"#lang ",0,0,6,""],
+        [2,null,"lang_name",1,6,7,""]
+      ]
+    },
+    {
+      "source": "#!/usr/bin/env racket",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"comment",1,0,21,""]
+      ]
+    },
+    {
+      "source": "#! x",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"comment",1,0,4,""]
+      ]
+    },
+    {
+      "source": "#!/x\\\ny",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"comment",1,0,7,""]
+      ]
+    },
+    {
+      "source": "#!/x\\\n",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"comment",1,0,6,""]
+      ]
+    },
+    {
+      "source": "#reader x",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"extension",1,0,9,""],
+        [2,null,"#reader",0,0,7,""],
+        [2,null,"symbol",1,8,9,""]
+      ]
+    },
+    {
+      "source": "#reader(a)",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"extension",1,0,10,""],
+        [2,null,"#reader",0,0,7,""],
+        [2,null,"list",1,7,10,""],
+        [3,null,"(",0,7,8,""],
+        [3,null,"symbol",1,8,9,""],
+        [3,null,")",0,9,10,""]
+      ]
+    },
+    {
+      "source": "#readerx",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"extension",1,0,8,""],
+        [2,null,"#reader",0,0,7,""],
+        [2,null,"symbol",1,7,8,""]
+      ]
+    },
+    {
+      "source": "#lang racket\n(define x 1)",
+      "rows": [
+        [0,null,"program",1,0,25,""],
+        [1,null,"extension",1,0,12,""],
+        [2,null,"#lang ",0,0,6,""],
+        [2,null,"lang_name",1,6,12,""],
+        [1,null,"list",1,13,25,""],
+        [2,null,"(",0,13,14,""],
+        [2,null,"symbol",1,14,20,""],
+        [2,null,"symbol",1,21,22,""],
+        [2,null,"number",1,23,24,""],
+        [2,null,")",0,24,25,""]
+      ]
+    },
+    {
+      "source": "a\"b\"",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"string",1,1,4,""],
+        [2,null,"\"",0,1,2,""],
+        [2,null,"\"",0,3,4,""]
+      ]
+    },
+    {
+      "source": "\"a\"b",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"string",1,0,3,""],
+        [2,null,"\"",0,0,1,""],
+        [2,null,"\"",0,2,3,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "1\"a\"",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"number",1,0,1,""],
+        [1,null,"string",1,1,4,""],
+        [2,null,"\"",0,1,2,""],
+        [2,null,"\"",0,3,4,""]
+      ]
+    },
+    {
+      "source": "a(b)c",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"list",1,1,4,""],
+        [2,null,"(",0,1,2,""],
+        [2,null,"symbol",1,2,3,""],
+        [2,null,")",0,3,4,""],
+        [1,null,"symbol",1,4,5,""]
+      ]
+    },
+    {
+      "source": "a'b",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"quote",1,1,3,""],
+        [2,null,"'",0,1,2,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "a`b",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"quasiquote",1,1,3,""],
+        [2,null,"`",0,1,2,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "a,b",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"unquote",1,1,3,""],
+        [2,null,",",0,1,2,""],
+        [2,null,"symbol",1,2,3,""]
+      ]
+    },
+    {
+      "source": "#t#f",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"boolean",1,0,2,""],
+        [1,null,"boolean",1,2,4,""]
+      ]
+    },
+    {
+      "source": "a;b",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,1,""],
+        [1,null,"comment",1,1,3,""]
+      ]
+    },
+    {
+      "source": "a#|b|#",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"symbol",1,0,6,""]
+      ]
+    },
+    {
+      "source": "(a)(b)",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"list",1,0,3,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,")",0,2,3,""],
+        [1,null,"list",1,3,6,""],
+        [2,null,"(",0,3,4,""],
+        [2,null,"symbol",1,4,5,""],
+        [2,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "((a))",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"list",1,0,5,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"list",1,1,4,""],
+        [3,null,"(",0,1,2,""],
+        [3,null,"symbol",1,2,3,""],
+        [3,null,")",0,3,4,""],
+        [2,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "[(a)]",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"list",1,0,5,""],
+        [2,null,"[",0,0,1,""],
+        [2,null,"list",1,1,4,""],
+        [3,null,"(",0,1,2,""],
+        [3,null,"symbol",1,2,3,""],
+        [3,null,")",0,3,4,""],
+        [2,null,"]",0,4,5,""]
+      ]
+    },
+    {
+      "source": "{[()]}",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"list",1,0,6,""],
+        [2,null,"{",0,0,1,""],
+        [2,null,"list",1,1,5,""],
+        [3,null,"[",0,1,2,""],
+        [3,null,"list",1,2,4,""],
+        [4,null,"(",0,2,3,""],
+        [4,null,")",0,3,4,""],
+        [3,null,"]",0,4,5,""],
+        [2,null,"}",0,5,6,""]
+      ]
+    },
+    {
+      "source": "(a\tb)",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"list",1,0,5,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,"symbol",1,3,4,""],
+        [2,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "(\n)",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"list",1,0,3,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,")",0,2,3,""]
+      ]
+    },
+    {
+      "source": "( a )",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"list",1,0,5,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,2,3,""],
+        [2,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "(a . )",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"list",1,0,6,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,"dot",1,3,4,""],
+        [2,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "#ci Apple",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"symbol",1,4,9,""]
+      ]
+    },
+    {
+      "source": "#CI a",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"symbol",1,4,5,""]
+      ]
+    },
+    {
+      "source": "#cs a",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"symbol",1,4,5,""]
+      ]
+    },
+    {
+      "source": "#ci#cs Apple",
+      "rows": [
+        [0,null,"program",1,0,12,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"symbol",1,3,6,""],
+        [1,null,"symbol",1,7,12,""]
+      ]
+    },
+    {
+      "source": "#ci(a B)",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"list",1,3,8,""],
+        [2,null,"(",0,3,4,""],
+        [2,null,"symbol",1,4,5,""],
+        [2,null,"symbol",1,6,7,""],
+        [2,null,")",0,7,8,""]
+      ]
+    },
+    {
+      "source": "#cI a",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"symbol",1,4,5,""]
+      ]
+    },
+    {
+      "source": "#Cs (a)",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"list",1,4,7,""],
+        [2,null,"(",0,4,5,""],
+        [2,null,"symbol",1,5,6,""],
+        [2,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "#[1 2]",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"vector",1,0,6,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"list",1,1,6,""],
+        [3,null,"[",0,1,2,""],
+        [3,null,"number",1,2,3,""],
+        [3,null,"number",1,4,5,""],
+        [3,null,"]",0,5,6,""]
+      ]
+    },
+    {
+      "source": "#{1}",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"vector",1,0,4,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"list",1,1,4,""],
+        [3,null,"{",0,1,2,""],
+        [3,null,"number",1,2,3,""],
+        [3,null,"}",0,3,4,""]
+      ]
+    },
+    {
+      "source": "#fl[1.0]",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"vector",1,0,8,""],
+        [2,null,"#fl",0,0,3,""],
+        [2,null,"list",1,3,8,""],
+        [3,null,"[",0,3,4,""],
+        [3,null,"number",1,4,7,""],
+        [3,null,"]",0,7,8,""]
+      ]
+    },
+    {
+      "source": "#s[a 1]",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"structure",1,0,7,""],
+        [2,null,"#s",0,0,2,""],
+        [2,null,"list",1,2,7,""],
+        [3,null,"[",0,2,3,""],
+        [3,null,"symbol",1,3,4,""],
+        [3,null,"number",1,5,6,""],
+        [3,null,"]",0,6,7,""]
+      ]
+    },
+    {
+      "source": "#! comment\n1",
+      "rows": [
+        [0,null,"program",1,0,12,""],
+        [1,null,"comment",1,0,10,""],
+        [1,null,"number",1,11,12,""]
+      ]
+    },
+    {
+      "source": "#!/bin/racket\n1",
+      "rows": [
+        [0,null,"program",1,0,15,""],
+        [1,null,"comment",1,0,13,""],
+        [1,null,"number",1,14,15,""]
+      ]
+    },
+    {
+      "source": "#hash[(a . 1)]",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"hash",1,0,14,""],
+        [2,null,"list",1,5,14,""],
+        [3,null,"[",0,5,6,""],
+        [3,null,"list",1,6,13,""],
+        [4,null,"(",0,6,7,""],
+        [4,null,"symbol",1,7,8,""],
+        [4,null,"dot",1,9,10,""],
+        [4,null,"number",1,11,12,""],
+        [4,null,")",0,12,13,""],
+        [3,null,"]",0,13,14,""]
+      ]
+    },
+    {
+      "source": "#fl3(1.0)",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"vector",1,0,9,""],
+        [2,null,"#fl",0,0,3,""],
+        [2,null,"decimal",1,3,4,""],
+        [2,null,"list",1,4,9,""],
+        [3,null,"(",0,4,5,""],
+        [3,null,"number",1,5,8,""],
+        [3,null,")",0,8,9,""]
+      ]
+    },
+    {
+      "source": "#Fl(1.0)",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"boolean",1,0,2,""],
+        [1,null,"symbol",1,2,3,""],
+        [1,null,"list",1,3,8,""],
+        [2,null,"(",0,3,4,""],
+        [2,null,"number",1,4,7,""],
+        [2,null,")",0,7,8,""]
+      ]
+    },
+    {
+      "source": "#cia",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    },
+    {
+      "source": "#csx",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"symbol",1,0,3,""],
+        [1,null,"symbol",1,3,4,""]
+      ]
+    }
+  ],
+  "divergences": [
+    {
+      "source": "#\\\n",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"character",1,0,3,""]
+      ]
+    },
+    {
+      "source": "(#\\\n)",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"list",1,0,5,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"character",1,1,4,""],
+        [2,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "#\\\n a",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"character",1,0,3,""],
+        [1,null,"symbol",1,4,5,""]
+      ]
+    },
+    {
+      "source": "'#\\\n",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"quote",1,0,4,""],
+        [2,null,"'",0,0,1,""],
+        [2,null,"character",1,1,4,""]
+      ]
+    },
+    {
+      "source": "[#\\\n]",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"list",1,0,5,""],
+        [2,null,"[",0,0,1,""],
+        [2,null,"character",1,1,4,""],
+        [2,null,"]",0,4,5,""]
+      ]
+    },
+    {
+      "source": "#(#\\\n)",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"vector",1,0,6,""],
+        [2,null,"#",0,0,1,""],
+        [2,null,"list",1,1,6,""],
+        [3,null,"(",0,1,2,""],
+        [3,null,"character",1,2,5,""],
+        [3,null,")",0,5,6,""]
+      ]
+    },
+    {
+      "source": "(a #\\\n b)",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"list",1,0,9,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,2,""],
+        [2,null,"character",1,3,6,""],
+        [2,null,"symbol",1,7,8,""],
+        [2,null,")",0,8,9,""]
+      ]
+    },
+    {
+      "source": "#\\\n;c",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"character",1,0,3,""],
+        [1,null,"comment",1,3,5,""]
+      ]
+    },
+    {
+      "source": "#&#\\\n",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"box",1,0,5,""],
+        [2,null,"#&",0,0,2,""],
+        [2,null,"character",1,2,5,""]
+      ]
+    },
+    {
+      "source": "#;#\\\n a",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"sexp_comment",1,0,5,""],
+        [2,null,"#;",0,0,2,""],
+        [2,null,"character",1,2,5,""],
+        [1,null,"symbol",1,6,7,""]
+      ]
+    },
+    {
+      "source": "#\\\n#\\\n",
+      "reason": "Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"character",1,0,3,""],
+        [1,null,"character",1,3,6,""]
+      ]
+    },
+    {
+      "source": "a\\\nb",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"symbol",1,0,4,""]
+      ]
+    },
+    {
+      "source": "\\\n",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,2,""],
+        [1,null,"symbol",1,0,2,""]
+      ]
+    },
+    {
+      "source": "(a\\\n)",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"list",1,0,5,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,4,""],
+        [2,null,")",0,4,5,""]
+      ]
+    },
+    {
+      "source": "\\\na",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"symbol",1,0,3,""]
+      ]
+    },
+    {
+      "source": "a\\\n\\\nb",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"symbol",1,0,6,""]
+      ]
+    },
+    {
+      "source": "|a|\\\n",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,5,""]
+      ]
+    },
+    {
+      "source": "#:a\\\nb",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"keyword",1,0,6,""]
+      ]
+    },
+    {
+      "source": "#%a\\\n",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"symbol",1,0,5,""]
+      ]
+    },
+    {
+      "source": "'a\\\n",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,4,""],
+        [1,null,"quote",1,0,4,""],
+        [2,null,"'",0,0,1,""],
+        [2,null,"symbol",1,1,4,""]
+      ]
+    },
+    {
+      "source": "`(a\\\nb)",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"quasiquote",1,0,7,""],
+        [2,null,"`",0,0,1,""],
+        [2,null,"list",1,1,7,""],
+        [3,null,"(",0,1,2,""],
+        [3,null,"symbol",1,2,6,""],
+        [3,null,")",0,6,7,""]
+      ]
+    },
+    {
+      "source": "a\\\n|b|",
+      "reason": "Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"symbol",1,0,6,""]
+      ]
+    }
+  ],
+  "rejections": [
+    {
+      "source": "#b2",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..3 \"b2\"))"
+    },
+    {
+      "source": "#o8",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..3 \"o8\"))"
+    },
+    {
+      "source": ")",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..1 \")\"))"
+    },
+    {
+      "source": "(",
+      "recovered": "(program (list \"(\" (MISSING@1 \")\")))"
+    },
+    {
+      "source": "]",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..1 \"]\"))"
+    },
+    {
+      "source": "}",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..1 \"}\"))"
+    },
+    {
+      "source": "(]",
+      "recovered": "(program (list \"(\" (MISSING@1 \")\")) (ERROR@1..2 \"]\"))"
+    },
+    {
+      "source": "[)",
+      "recovered": "(program (list \"[\" (MISSING@1 \"]\")) (ERROR@1..2 \")\"))"
+    },
+    {
+      "source": "(a",
+      "recovered": "(program (list \"(\" (symbol \"a\") (MISSING@2 \")\")))"
+    },
+    {
+      "source": "a)",
+      "recovered": "(program (symbol \"a\") (ERROR@1..2 \")\"))"
+    },
+    {
+      "source": "\"a",
+      "recovered": "(program (string \"\\\"\" (string_text \"a\") (MISSING@2 \"\\\"\")))"
+    },
+    {
+      "source": "\"",
+      "recovered": "(program (string \"\\\"\" (MISSING@1 \"\\\"\")))"
+    },
+    {
+      "source": "\"\\",
+      "recovered": "(program (string \"\\\"\" (MISSING@1 \"\\\"\")) (ERROR@1..2 \"\\\\\"))"
+    },
+    {
+      "source": "\"\\q\"",
+      "recovered": "(program (string \"\\\"\" (ERROR@1..3 \"\\\\q\") \"\\\"\"))"
+    },
+    {
+      "source": "#|",
+      "recovered": "(program (block_comment \"#|\" (MISSING@2 \"|#\")))"
+    },
+    {
+      "source": "#| a",
+      "recovered": "(program (block_comment \"#|\" (comment_text \" a\") (MISSING@4 \"|#\")))"
+    },
+    {
+      "source": "|#",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..2 \"|#\"))"
+    },
+    {
+      "source": "#",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")))"
+    },
+    {
+      "source": "#\\",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"\\\\\"))"
+    },
+    {
+      "source": "#e",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"e\"))"
+    },
+    {
+      "source": "#q",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"q\"))"
+    },
+    {
+      "source": "#;",
+      "recovered": "(program (datum_comment \"#;\" (MISSING@2 boolean)))"
+    },
+    {
+      "source": "'",
+      "recovered": "(program (quote \"'\" (MISSING@1 boolean)))"
+    },
+    {
+      "source": "`",
+      "recovered": "(program (quasiquote \"`\" (MISSING@1 boolean)))"
+    },
+    {
+      "source": ",",
+      "recovered": "(program (unquote \",\" (MISSING@1 boolean)))"
+    },
+    {
+      "source": ",@",
+      "recovered": "(program (unquote_splicing \",@\" (MISSING@2 boolean)))"
+    },
+    {
+      "source": "#'",
+      "recovered": "(program (syntax \"#'\" (MISSING@2 boolean)))"
+    },
+    {
+      "source": "#`",
+      "recovered": "(program (quasisyntax \"#`\" (MISSING@2 boolean)))"
+    },
+    {
+      "source": "#,",
+      "recovered": "(program (unsyntax \"#,\" (MISSING@2 boolean)))"
+    },
+    {
+      "source": "#,@",
+      "recovered": "(program (unsyntax_splicing \"#,@\" (MISSING@3 boolean)))"
+    },
+    {
+      "source": "#(",
+      "recovered": "(program (vector \"#\" (list \"(\" (MISSING@2 \")\"))))"
+    },
+    {
+      "source": "#fl",
+      "recovered": "(program (vector \"#fl\" (list (MISSING@3 \"(\") (MISSING@3 \")\"))))"
+    },
+    {
+      "source": "#flz",
+      "recovered": "(program (vector \"#fl\" (list (MISSING@3 \"(\") (MISSING@3 \")\"))) (ERROR@3..4 \"z\"))"
+    },
+    {
+      "source": "#fx",
+      "recovered": "(program (vector \"#fx\" (list (MISSING@3 \"(\") (MISSING@3 \")\"))))"
+    },
+    {
+      "source": "#s",
+      "recovered": "(program (structure \"#s\" (list (MISSING@2 \"(\") (MISSING@2 \")\"))))"
+    },
+    {
+      "source": "#sa",
+      "recovered": "(program (structure \"#s\" (list (MISSING@2 \"(\") (MISSING@2 \")\"))) (ERROR@2..3 \"a\"))"
+    },
+    {
+      "source": "#hash",
+      "recovered": "(program (hash (hash_prefix \"#hash\") (list (MISSING@5 \"(\") (MISSING@5 \")\"))))"
+    },
+    {
+      "source": "#hashe()",
+      "recovered": "(program (hash (hash_prefix \"#hash\") (list (ERROR@5..6 \"e\") \"(\" \")\")))"
+    },
+    {
+      "source": "#0=",
+      "recovered": "(program (graph (graph_mark \"#0=\") (MISSING@3 boolean)))"
+    },
+    {
+      "source": "#<<",
+      "recovered": "(program (here_string \"#<<\" (here_terminator \"\") (MISSING@3 here_newline) (here_end \"\")))"
+    },
+    {
+      "source": "#<<EOF",
+      "recovered": "(program (here_string \"#<<\" (here_terminator \"EOF\") (MISSING@6 here_newline) (MISSING@6 here_end)))"
+    },
+    {
+      "source": "#<<EOF\n",
+      "recovered": "(program (here_string \"#<<\" (here_terminator \"EOF\") (here_newline \"\\n\") (MISSING@7 here_end)))"
+    },
+    {
+      "source": "#<<EOF\nabc",
+      "recovered": "(program (here_string \"#<<\" (here_terminator \"EOF\") (here_newline \"\\n\") (here_line \"abc\") (MISSING@10 here_newline) (MISSING@10 here_end)))"
+    },
+    {
+      "source": "|a",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..2 \"|a\"))"
+    },
+    {
+      "source": "a\\",
+      "recovered": "(program (symbol \"a\") (ERROR@1..2 \"\\\\\"))"
+    },
+    {
+      "source": "#lang",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..5 \"lang\"))"
+    },
+    {
+      "source": "#lang  racket",
+      "recovered": "(program (extension \"#lang \" (ERROR@6..7 \" \") (language_name \"racket\")))"
+    },
+    {
+      "source": "#lang /a",
+      "recovered": "(program (extension \"#lang \" (ERROR@6..7 \"/\") (language_name \"a\")))"
+    },
+    {
+      "source": "#!",
+      "recovered": "(program (extension \"#!\" (MISSING@2 language_name)))"
+    },
+    {
+      "source": "#!(a)",
+      "recovered": "(program (extension \"#!\" (ERROR@2..3 \"(\") (language_name \"a\")) (ERROR@4..5 \")\"))"
+    },
+    {
+      "source": "#reader",
+      "recovered": "(program (extension \"#reader\" (MISSING@7 boolean)))"
+    },
+    {
+      "source": "#&",
+      "recovered": "(program (box \"#&\" (MISSING@2 boolean)))"
+    },
+    {
+      "source": "#rx",
+      "recovered": "(program (regular_expression (regular_expression_prefix \"#rx\") (MISSING@3 \"\\\"\") (MISSING@3 \"\\\"\")))"
+    },
+    {
+      "source": "#rx a",
+      "recovered": "(program (regular_expression (regular_expression_prefix \"#rx\") (MISSING@3 \"\\\"\") (MISSING@3 \"\\\"\")) (whitespace \" \") (symbol \"a\"))"
+    },
+    {
+      "source": "#123456789#",
+      "recovered": "(program (vector \"#\" (decimal \"123456789\") (list (MISSING@10 \"(\") (MISSING@10 \")\"))) (ERROR@10..11 \"#\"))"
+    },
+    {
+      "source": "#u8(1)",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..6 \"u8(1)\"))"
+    },
+    {
+      "source": "#x",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"x\"))"
+    },
+    {
+      "source": "#b",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"b\"))"
+    },
+    {
+      "source": "#<a",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..3 \"<a\"))"
+    },
+    {
+      "source": "#%(",
+      "recovered": "(program (symbol \"#%\") (list \"(\" (MISSING@3 \")\")))"
+    }
+  ]
+}

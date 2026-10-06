@@ -1,0 +1,67 @@
+{
+  "description": "The files of the current relative-meta-logic pull request 184 head that reach meta-language: sources that import the package or a source that does, and the tests that import them. Regenerate with node js/scripts/issue-195-rml-pr184.mjs --write <checkout of the head>.",
+  "repository": "link-foundation/relative-meta-logic",
+  "pullRequest": 184,
+  "headRevision": "f24d0f1f183fc92b39563d2f6fd5d3795d3235c5",
+  "dependencies": {
+    "javascript": "^0.46.0",
+    "rust": "0.58.2"
+  },
+  "workloads": [
+    {
+      "file": "js/src/rml-formal-corpus.mjs",
+      "kind": "source",
+      "blob": "d63ed9a2101d1d830c26d6c1bececabf7ff0f32b"
+    },
+    {
+      "file": "js/src/rml-meta-language.mjs",
+      "kind": "source",
+      "blob": "55b13dcf0540280c118b3a8446a6c17f925424ea"
+    },
+    {
+      "file": "js/src/rml-theory-network.mjs",
+      "kind": "source",
+      "blob": "23ba4b239e66325ac1993c73e784246fa27913a1"
+    },
+    {
+      "file": "js/tests/meta-language-support.test.mjs",
+      "kind": "test",
+      "blob": "4fa73005ec500ccf2a3360ef29fa6c8f1b7306ce"
+    },
+    {
+      "file": "js/tests/theory-network-linked.test.mjs",
+      "kind": "test",
+      "blob": "1e35897cd26b9b8b697614c06f9585b967b31689"
+    },
+    {
+      "file": "js/tests/theory-network.test.mjs",
+      "kind": "test",
+      "blob": "0ec29bd4a17549ee35b5e0fe033dd7fe2eb9c1d5"
+    },
+    {
+      "file": "rust/src/formal_corpus.rs",
+      "kind": "source",
+      "blob": "ecf7b5ae767afe2fe524fe688ddd00f29ac14ef6"
+    },
+    {
+      "file": "rust/src/meta_language_support.rs",
+      "kind": "source",
+      "blob": "617678009b03f140f9786810d7b77b4d508105ca"
+    },
+    {
+      "file": "rust/src/theory_network.rs",
+      "kind": "source",
+      "blob": "5d1ed14e196ff41e8f29943a0deb323900848ad2"
+    },
+    {
+      "file": "rust/tests/meta_language_support_tests.rs",
+      "kind": "test",
+      "blob": "5559fea0f892c6e35df7aeeff320d49dba987ef7"
+    },
+    {
+      "file": "rust/tests/theory_network_tests.rs",
+      "kind": "test",
+      "blob": "b95fc230cf91e81e0307fa0c13a9fbc462901542"
+    }
+  ]
+}

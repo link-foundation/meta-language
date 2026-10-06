@@ -1,0 +1,396 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "typescript",
+  "native": "native-typescript",
+  "sources": [
+    {
+      "id": "tree-sitter-typescript",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-typescript 0.23.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-typescript",
+      "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+      "path": "typescript/src/grammar.json",
+      "sha256": "99dc4b95424dff47c89acb50d5d3f25b081b07eaff43994b7881dccd4186b214",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/typescript.lino",
+    "sha256": "135563d1372a0bd1f942298a79e4f43e3feedf9c95af936b885894d3073b2992",
+    "ports": {
+      "path": "common/scanner.h",
+      "sha256": "da66ef2bd14a3f7ea743e25ba068c6c9aae2c3509db200ff80c4a0e6116e564c"
+    },
+    "scanners": [
+      {
+        "name": "automatic_semicolon",
+        "tokens": [
+          "automatic_semicolon"
+        ]
+      },
+      {
+        "name": "template_characters",
+        "tokens": [
+          "template_characters"
+        ]
+      },
+      {
+        "name": "ternary_question_mark",
+        "tokens": [
+          "ternary_question_mark"
+        ]
+      },
+      {
+        "name": "html_comment",
+        "tokens": [
+          "html_comment"
+        ]
+      },
+      {
+        "name": "jsx_text",
+        "tokens": [
+          "jsx_text"
+        ]
+      },
+      {
+        "name": "function_signature_automatic_semicolon",
+        "tokens": [
+          "function_signature_automatic_semicolon"
+        ]
+      },
+      {
+        "name": "error_recovery",
+        "tokens": [
+          "error_recovery"
+        ]
+      }
+    ],
+    "immediate": [
+      "_automatic_semicolon",
+      "_template_chars",
+      "jsx_text",
+      "_function_signature_automatic_semicolon"
+    ]
+  },
+  "rules": 230,
+  "keywords": [
+    "abstract",
+    "accessor",
+    "any",
+    "as",
+    "assert",
+    "asserts",
+    "async",
+    "await",
+    "boolean",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "declare",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "enum",
+    "export",
+    "extends",
+    "false",
+    "finally",
+    "for",
+    "from",
+    "function",
+    "get",
+    "global",
+    "if",
+    "implements",
+    "import",
+    "in",
+    "infer",
+    "instanceof",
+    "interface",
+    "is",
+    "keyof",
+    "let",
+    "meta",
+    "module",
+    "namespace",
+    "never",
+    "new",
+    "null",
+    "number",
+    "object",
+    "of",
+    "override",
+    "private",
+    "protected",
+    "public",
+    "readonly",
+    "require",
+    "return",
+    "satisfies",
+    "set",
+    "static",
+    "string",
+    "super",
+    "switch",
+    "symbol",
+    "target",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "type",
+    "typeof",
+    "undefined",
+    "unique",
+    "unknown",
+    "using",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield"
+  ],
+  "renamed": [
+    {
+      "source": "_module_export_name",
+      "native": "module_export_name"
+    },
+    {
+      "source": "_from_clause",
+      "native": "from_clause"
+    },
+    {
+      "source": "_for_header",
+      "native": "for_header"
+    },
+    {
+      "source": "_expressions",
+      "native": "expressions"
+    },
+    {
+      "source": "_jsx_element",
+      "native": "jsx_element_choice"
+    },
+    {
+      "source": "_jsx_child",
+      "native": "jsx_child"
+    },
+    {
+      "source": "_jsx_identifier",
+      "native": "jsx_identifier_choice"
+    },
+    {
+      "source": "_jsx_element_name",
+      "native": "jsx_element_name"
+    },
+    {
+      "source": "_jsx_attribute",
+      "native": "jsx_attribute_choice"
+    },
+    {
+      "source": "_jsx_attribute_name",
+      "native": "jsx_attribute_name"
+    },
+    {
+      "source": "_jsx_string",
+      "native": "jsx_string"
+    },
+    {
+      "source": "_jsx_attribute_value",
+      "native": "jsx_attribute_value"
+    },
+    {
+      "source": "_call_signature",
+      "native": "call_signature_parts"
+    },
+    {
+      "source": "_formal_parameter",
+      "native": "formal_parameter"
+    },
+    {
+      "source": "_lhs_expression",
+      "native": "left_hand_side_expression"
+    },
+    {
+      "source": "_augmented_assignment_lhs",
+      "native": "augmented_assignment_left_hand_side"
+    },
+    {
+      "source": "_initializer",
+      "native": "initializer"
+    },
+    {
+      "source": "_destructuring_pattern",
+      "native": "destructuring_pattern"
+    },
+    {
+      "source": "regex",
+      "native": "regular_expression"
+    },
+    {
+      "source": "regex_pattern",
+      "native": "regular_expression_pattern"
+    },
+    {
+      "source": "regex_flags",
+      "native": "regular_expression_flags"
+    },
+    {
+      "source": "_identifier",
+      "native": "identifier_choice"
+    },
+    {
+      "source": "_property_name",
+      "native": "property_name"
+    },
+    {
+      "source": "_reserved_identifier",
+      "native": "reserved_identifier"
+    },
+    {
+      "source": "_semicolon",
+      "native": "semicolon"
+    },
+    {
+      "source": "_jsx_start_opening_element",
+      "native": "jsx_start_opening_element"
+    },
+    {
+      "source": "_import_identifier",
+      "native": "import_identifier"
+    },
+    {
+      "source": "_extends_clause_single",
+      "native": "extends_clause_single"
+    },
+    {
+      "source": "_module",
+      "native": "module_name_and_body"
+    },
+    {
+      "source": "enum_declaration",
+      "native": "enumeration_declaration"
+    },
+    {
+      "source": "enum_body",
+      "native": "enumeration_body"
+    },
+    {
+      "source": "enum_assignment",
+      "native": "enumeration_assignment"
+    },
+    {
+      "source": "_parameter_name",
+      "native": "parameter_name"
+    },
+    {
+      "source": "omitting_type_annotation",
+      "native": "required_type_annotation"
+    },
+    {
+      "source": "_type_query_member_expression_in_type_annotation",
+      "native": "type_query_member_expression_in_type_annotation"
+    },
+    {
+      "source": "_type_query_call_expression_in_type_annotation",
+      "native": "type_query_call_expression_in_type_annotation"
+    },
+    {
+      "source": "asserts",
+      "native": "assertion_signature"
+    },
+    {
+      "source": "_tuple_type_member",
+      "native": "tuple_type_member"
+    },
+    {
+      "source": "_type_query_member_expression",
+      "native": "type_query_member_expression"
+    },
+    {
+      "source": "_type_query_subscript_expression",
+      "native": "type_query_subscript_expression"
+    },
+    {
+      "source": "_type_query_call_expression",
+      "native": "type_query_call_expression"
+    },
+    {
+      "source": "_type_query_instantiation_expression",
+      "native": "type_query_instantiation_expression"
+    },
+    {
+      "source": "_number",
+      "native": "signed_number"
+    },
+    {
+      "source": "_type_identifier",
+      "native": "type_identifier_alias"
+    }
+  ],
+  "expandedWords": [
+    "enum",
+    "lhs",
+    "regex"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "program",
+        "concept": "grammar.program"
+      },
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "object",
+        "concept": "grammar.object"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      },
+      {
+        "rule": "number",
+        "concept": "grammar.number"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "true",
+        "concept": "grammar.true-value"
+      },
+      {
+        "rule": "false",
+        "concept": "grammar.false-value"
+      },
+      {
+        "rule": "null",
+        "concept": "grammar.null"
+      }
+    ],
+    "generated": 218
+  },
+  "approximations": [],
+  "unsupported": []
+}

@@ -5,8 +5,8 @@
 //! accelerators can suggest names or merge ordering behind the same traits.
 
 use crate::grammar::{
-    grammar_expr_concept_id, CharClassItem, Grammar, GrammarExpr, GrammarRule, RuleKind,
-    GRAMMAR_CONCEPTS,
+    CharClassItem, GRAMMAR_CONCEPTS, Grammar, GrammarExpr, GrammarRule, RuleKind,
+    grammar_expr_concept_id,
 };
 
 use super::minimize::mdl_cost;
@@ -35,7 +35,7 @@ const INFERENCE_NAMING_CONCEPTS: &[InferenceNamingConcept] = &[
         name: "string",
     },
     InferenceNamingConcept {
-        id: "grammar.boolean",
+        id: "grammar.boolean-value",
         name: "boolean",
     },
     InferenceNamingConcept {
@@ -361,30 +361,37 @@ fn inference_concept(id: &str) -> Option<InferenceNamingConcept> {
 
 fn structural_name(expr: &GrammarExpr) -> String {
     match expr {
-        GrammarExpr::Empty => "empty".to_string(),
+        GrammarExpr::Empty => "empty_expression".to_string(),
         GrammarExpr::Terminal(_) | GrammarExpr::TerminalInsensitive(_) => "literal".to_string(),
-        GrammarExpr::CharRange(_, _) => "char_range".to_string(),
-        GrammarExpr::CharClass { .. } => "char_class".to_string(),
-        GrammarExpr::AnyChar => "any_char".to_string(),
+        GrammarExpr::CharRange(_, _) => "character_range".to_string(),
+        GrammarExpr::CharClass { .. } => "character_class".to_string(),
+        GrammarExpr::AnyChar => "any_character".to_string(),
         GrammarExpr::NonTerminal(name) => sanitize_identifier(name),
         GrammarExpr::Choice {
             ordered,
             alternatives,
         } => {
-            let prefix = if *ordered { "ordered_choice" } else { "choice" };
+            let prefix = if *ordered {
+                "ordered_choice"
+            } else {
+                "unordered_choice"
+            };
             format!("{prefix}_{}", alternatives.len())
         }
-        GrammarExpr::Sequence(items) => format!("seq_{}", items.len()),
-        GrammarExpr::Optional(inner) => format!("{}_opt", structural_stem(inner)),
-        GrammarExpr::ZeroOrMore(inner) => format!("{}_star", structural_stem(inner)),
-        GrammarExpr::OneOrMore(inner) => format!("{}_plus", structural_stem(inner)),
-        GrammarExpr::Repeat { expr, .. } => format!("{}_repeat", structural_stem(expr)),
-        GrammarExpr::And(inner) => format!("{}_and", structural_stem(inner)),
-        GrammarExpr::Not(inner) => format!("{}_not", structural_stem(inner)),
+        GrammarExpr::Sequence(items) => format!("sequence_{}", items.len()),
+        GrammarExpr::Optional(inner) => format!("optional_{}", structural_stem(inner)),
+        GrammarExpr::ZeroOrMore(inner) => {
+            format!("zero_or_more_{}", structural_stem(inner))
+        }
+        GrammarExpr::OneOrMore(inner) => format!("one_or_more_{}", structural_stem(inner)),
+        GrammarExpr::Repeat { expr, .. } => format!("repeated_{}", structural_stem(expr)),
+        GrammarExpr::And(inner) => format!("{}_positive_predicate", structural_stem(inner)),
+        GrammarExpr::Not(inner) => format!("{}_negative_predicate", structural_stem(inner)),
         GrammarExpr::Capture { label, expr } => label.as_deref().map_or_else(
             || format!("{}_capture", structural_stem(expr)),
             sanitize_identifier,
         ),
+        GrammarExpr::Feature(feature) => sanitize_identifier(feature.head()),
     }
 }
 
@@ -568,7 +575,7 @@ fn unique_rule_name(base: &str, grammar: &Grammar) -> String {
 fn validate_name_candidate(request: &NamingRequest<'_>, candidate: &NameCandidate) -> bool {
     is_valid_identifier(&candidate.name)
         && request.grammar.rule(&candidate.name).is_none()
-        && candidate.concept.as_deref().map_or(true, known_concept_id)
+        && candidate.concept.as_deref().is_none_or(known_concept_id)
 }
 
 fn is_valid_identifier(value: &str) -> bool {
@@ -741,6 +748,9 @@ fn rewrite_nonterminal_refs(
                 )
             },
         ),
+        GrammarExpr::Feature(feature) => GrammarExpr::rewrite_feature(feature, |inner| {
+            rewrite_nonterminal_refs(inner, loser_name, replacement)
+        }),
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
@@ -758,9 +768,9 @@ fn score_from_delta(delta: f64) -> f64 {
 
     let magnitude = delta.abs() / (1.0 + delta.abs());
     if delta < -COST_EPSILON {
-        0.5 + magnitude * 0.5
+        f64::midpoint(1.0, magnitude)
     } else if delta > COST_EPSILON {
-        0.5 - magnitude * 0.5
+        f64::midpoint(1.0, -magnitude)
     } else {
         0.5
     }

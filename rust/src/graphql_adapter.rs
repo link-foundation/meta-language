@@ -9,9 +9,9 @@ use crate::configuration::ParseConfiguration;
 use crate::line_index::LineIndex;
 use crate::link_network::LinkNetwork;
 use crate::query_plan::{
-    attach_plan_links, LoweredQueryPlan, QueryAggregate, QueryAggregateFunction,
-    QueryComparisonOperator, QueryFilter, QueryOperation, QueryOrder, QueryPlan,
-    QuerySortDirection, QuerySourceEvidence, QueryValue,
+    LoweredQueryPlan, QueryAggregate, QueryAggregateFunction, QueryComparisonOperator, QueryFilter,
+    QueryOperation, QueryOrder, QueryPlan, QuerySortDirection, QuerySourceEvidence, QueryValue,
+    attach_plan_links,
 };
 use crate::source::{ByteRange, SourceSpan};
 

@@ -1,0 +1,79 @@
+name: Dependency Refresh
+
+# Dependency freshness is live registry state that changes outside any pull
+# request, so no pull request check depends on it. This scheduled job on main
+# updates the lockfiles within the declared ranges, refreshes the committed
+# dependency audit from the registries and opens its own pull request, whose
+# checks then compare offline against the refreshed audit.
+on:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    name: Refresh Dependencies
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    # Only this job pushes the refresh branch and opens its pull request, and
+    # refreshes queue instead of cancelling one another mid-push.
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: dependency-refresh-${{ github.repository }}-write
+      cancel-in-progress: false
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - name: Update the lockfiles within the declared ranges
+        run: |
+          (cd js && npm update --ignore-scripts)
+          (cd rust && cargo update)
+
+      - name: Refresh the dependency audit from the registries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: npm run dependencies:refresh
+        working-directory: js
+
+      - name: Open or update the refresh pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: automation/dependency-refresh
+        run: |
+          if git diff --quiet; then
+            echo "dependencies and the audit are current"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch --create "$BRANCH"
+          git commit --all --message "chore(deps): scheduled dependency refresh ($(date -u +%F))"
+          git push --force origin "$BRANCH"
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore(deps): scheduled dependency refresh" \
+              --body "Lockfile updates within the declared ranges and the refreshed dependency audit (docs/dependency-audit.md), opened by the scheduled Dependency Refresh workflow on main. Items behind their current stable release are listed in the audit with their recorded reason."
+          fi
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown

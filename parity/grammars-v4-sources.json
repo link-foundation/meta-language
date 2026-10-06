@@ -1,0 +1,172 @@
+{
+  "description": "The pinned antlr/grammars-v4 grammars js/scripts/run-grammar-bulk-pipeline.mjs imports beside the tree-sitter grammar of each inventory language. Files are concatenated in order, parser grammars first. The start rule is the entry point named in the desc.xml beside the first file; without one, it is the first parser rule. A language absent from languages has no grammars-v4 grammar at the revision; notes say why a near match is not used.",
+  "repository": "https://github.com/antlr/grammars-v4",
+  "revision": "7df52be94698550d219d299d04105c6bafadd9c3",
+  "license": "Each grammar carries its own license header (most BSD or MIT).",
+  "languages": {
+    "JavaScript": [
+      "javascript/javascript/JavaScriptParser.g4",
+      "javascript/javascript/JavaScriptLexer.g4"
+    ],
+    "Rust": [
+      "rust/RustParser.g4",
+      "rust/RustLexer.g4"
+    ],
+    "Python": [
+      "python/python3_14/PythonParser.g4",
+      "python/python3_14/PythonLexer.g4"
+    ],
+    "C": [
+      "c/CParser.g4",
+      "c/CLexer.g4"
+    ],
+    "C++": [
+      "cpp/CPP14Parser.g4",
+      "cpp/CPP14Lexer.g4"
+    ],
+    "C#": [
+      "csharp/v8-spec/CSharpParser.g4",
+      "csharp/v8-spec/CSharpLexer.g4"
+    ],
+    "Java": [
+      "java/java/JavaParser.g4",
+      "java/java/JavaLexer.g4"
+    ],
+    "TypeScript": [
+      "javascript/typescript/TypeScriptParser.g4",
+      "javascript/typescript/TypeScriptLexer.g4"
+    ],
+    "Delphi/Object Pascal": [
+      "pascal/pascal.g4"
+    ],
+    "Go": [
+      "golang/GoParser.g4",
+      "golang/GoLexer.g4"
+    ],
+    "R": [
+      "r/R.g4"
+    ],
+    "PHP": [
+      "php/PhpParser.g4",
+      "php/PhpLexer.g4"
+    ],
+    "Swift": [
+      "swift/swift5/Swift5Parser.g4",
+      "swift/swift5/Swift5Lexer.g4"
+    ],
+    "Kotlin": [
+      "kotlin/kotlin/KotlinParser.g4",
+      "kotlin/kotlin/KotlinLexer.g4",
+      "kotlin/kotlin/UnicodeClasses.g4"
+    ],
+    "Scala": [
+      "scala/scala3/Scala3Parser.g4",
+      "scala/scala3/Scala3Lexer.g4"
+    ],
+    "Lua": [
+      "lua/LuaParser.g4",
+      "lua/LuaLexer.g4"
+    ],
+    "Haskell": [
+      "haskell/HaskellParser.g4",
+      "haskell/HaskellLexer.g4"
+    ],
+    "Zig": [
+      "zig/ZigParser.g4",
+      "zig/ZigLexer.g4"
+    ],
+    "Dart": [
+      "dart2/Dart2Parser.g4",
+      "dart2/Dart2Lexer.g4"
+    ],
+    "CMake": [
+      "cmake/CMake.g4"
+    ],
+    "Elixir": [
+      "elixir/ElixirParser.g4",
+      "elixir/ElixirLexer.g4"
+    ],
+    "Erlang": [
+      "erlang/Erlang.g4"
+    ],
+    "HCL": [
+      "terraform/terraform.g4"
+    ],
+    "MATLAB": [
+      "matlab/matlab.g4"
+    ],
+    "Odin": [
+      "odin/odin.g4"
+    ],
+    "Regex": [
+      "pcre/PCRE.g4"
+    ],
+    "Solidity": [
+      "solidity/SolidityParser.g4",
+      "solidity/SolidityLexer.g4"
+    ],
+    "sql-postgres": [
+      "sql/postgresql/PostgreSQLParser.g4",
+      "sql/postgresql/PostgreSQLLexer.g4"
+    ],
+    "sql-mysql": [
+      "sql/mysql/Oracle/MySQLParser.g4",
+      "sql/mysql/Oracle/MySQLLexer.g4"
+    ],
+    "sql-sqlite": [
+      "sql/sqlite/SQLiteParser.g4",
+      "sql/sqlite/SQLiteLexer.g4"
+    ],
+    "sql-server": [
+      "sql/tsql/TSqlParser.g4",
+      "sql/tsql/TSqlLexer.g4"
+    ],
+    "sql-oracle": [
+      "sql/plsql/PlSqlParser.g4",
+      "sql/plsql/PlSqlLexer.g4"
+    ],
+    "sql-snowflake": [
+      "sql/snowflake/SnowflakeParser.g4",
+      "sql/snowflake/SnowflakeLexer.g4"
+    ],
+    "HTML": [
+      "html/HTMLParser.g4",
+      "html/HTMLLexer.g4"
+    ],
+    "CSS": [
+      "css3/css3Parser.g4",
+      "css3/css3Lexer.g4"
+    ],
+    "JSON": [
+      "json/JSON.g4"
+    ],
+    "TOML": [
+      "toml/TomlParser.g4",
+      "toml/TomlLexer.g4"
+    ],
+    "XML": [
+      "xml/XMLParser.g4",
+      "xml/XMLLexer.g4"
+    ],
+    "DOCX": [
+      "xml/XMLParser.g4",
+      "xml/XMLLexer.g4"
+    ],
+    "Protocol Buffers": [
+      "protobuf/protobuf3/Protobuf3.g4"
+    ],
+    "GraphQL": [
+      "graphql/GraphQL.g4"
+    ],
+    "CSV": [
+      "csv/CSV.g4"
+    ],
+    "JSON5": [
+      "json5/JSON5.g4"
+    ]
+  },
+  "notes": {
+    "Visual Basic": "grammars-v4 has only Visual Basic 6 (vb6/) and VBA (vba/), not the Visual Basic .NET the inventory parses.",
+    "Racket": "grammars-v4 has only the teaching languages Beginning and Intermediate Student (racket-bsl/, racket-isl/), not the Racket reader."
+  }
+}

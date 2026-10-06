@@ -1,0 +1,266 @@
+================================================================================
+Tilde tokens inside macro token trees
+================================================================================
+
+ensure!(~~ ~);
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (macro_invocation
+      (identifier)
+      (token_tree))))
+
+================================================================================
+Bare dollar tokens in macro matchers and transcribers
+================================================================================
+
+macro_rules! punct {
+    ($mode:ident, $) => { 1 };
+    [$] => { $crate::token::Dollar };
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (macro_definition
+    (identifier)
+    (macro_rule
+      (token_tree_pattern
+        (token_binding_pattern
+          (metavariable)
+          (fragment_specifier)))
+      (token_tree
+        (integer_literal)))
+    (macro_rule
+      (token_tree_pattern)
+      (token_tree
+        (metavariable)
+        (identifier)
+        (identifier)))))
+
+================================================================================
+Unit struct with a where clause
+================================================================================
+
+struct _Test
+where
+    Error: Send + Sync;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (struct_item
+    (type_identifier)
+    (where_clause
+      (where_predicate
+        (type_identifier)
+        (trait_bounds
+          (type_identifier)
+          (type_identifier))))))
+
+================================================================================
+Attributes on struct pattern fields
+================================================================================
+
+fn f(t: T) {
+    match t {
+        S { #[cfg(a)] inner: x, .. } => {}
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_item
+    (identifier)
+    (parameters
+      (parameter
+        (identifier)
+        (type_identifier)))
+    (block
+      (expression_statement
+        (match_expression
+          (identifier)
+          (match_block
+            (match_arm
+              (match_pattern
+                (struct_pattern
+                  (type_identifier)
+                  (field_pattern
+                    (attribute_item
+                      (attribute
+                        (identifier)
+                        (token_tree
+                          (identifier))))
+                    (field_identifier)
+                    (identifier))
+                  (remaining_field_pattern)))
+              (block))))))))
+
+================================================================================
+Less-or-equal after a cast type
+================================================================================
+
+while a.offset_from(b) as libc::c_long <= c as size_t {}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (while_expression
+      (binary_expression
+        (type_cast_expression
+          (call_expression
+            (field_expression
+              (identifier)
+              (field_identifier))
+            (arguments
+              (identifier)))
+          (scoped_type_identifier
+            (identifier)
+            (type_identifier)))
+        (type_cast_expression
+          (identifier)
+          (type_identifier)))
+      (block))))
+
+================================================================================
+Unit type on the left of a where predicate
+================================================================================
+
+impl<T> Div<T> for U
+where
+    (): PrivateDiv<T>,
+{
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (impl_item
+    (type_parameters
+      (type_parameter
+        (type_identifier)))
+    (generic_type
+      (type_identifier)
+      (type_arguments
+        (type_identifier)))
+    (type_identifier)
+    (where_clause
+      (where_predicate
+        (unit_type)
+        (trait_bounds
+          (generic_type
+            (type_identifier)
+            (type_arguments
+              (type_identifier))))))
+    (declaration_list)))
+
+================================================================================
+Turbofish on a function named like a primitive type
+================================================================================
+
+let be_f32 = |s| f32::<_, (_, ErrorKind)>(Endianness::Big)(s);
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (let_declaration
+    (identifier)
+    (closure_expression
+      (closure_parameters
+        (identifier))
+      (call_expression
+        (call_expression
+          (generic_function
+            (identifier)
+            (type_arguments
+              (type_identifier)
+              (tuple_type
+                (type_identifier)
+                (type_identifier))))
+          (arguments
+            (scoped_identifier
+              (identifier)
+              (identifier))))
+        (arguments
+          (identifier))))))
+
+================================================================================
+The 2015 try macro
+================================================================================
+
+let version = try!(rustc.version());
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (let_declaration
+    (identifier)
+    (macro_invocation
+      (identifier)
+      (token_tree
+        (identifier)
+        (identifier)
+        (token_tree)))))
+
+================================================================================
+Attributes on later tuple elements
+================================================================================
+
+return Some((
+    first,
+    #[expect(clippy::unwrap_used)]
+    self.get(1).unwrap(),
+));
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (return_expression
+      (call_expression
+        (identifier)
+        (arguments
+          (tuple_expression
+            (identifier)
+            (attribute_item
+              (attribute
+                (identifier)
+                (token_tree
+                  (identifier)
+                  (identifier))))
+            (call_expression
+              (field_expression
+                (call_expression
+                  (field_expression
+                    (self)
+                    (field_identifier))
+                  (arguments
+                    (integer_literal)))
+                (field_identifier))
+              (arguments))))))))
+
+================================================================================
+Cargo script frontmatter
+================================================================================
+
+#!/usr/bin/env -S cargo +nightly -Zscript
+---cargo
+[dependencies]
+clap = { version = "4.0.29", features = ["derive"] }
+---
+
+fn main() {}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (shebang)
+  (frontmatter)
+  (function_item
+    (identifier)
+    (parameters)
+    (block)))

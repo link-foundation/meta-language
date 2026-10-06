@@ -1,6 +1,6 @@
 use meta_language::grammar::inference::state_merging::Apta;
 use meta_language::{
-    evaluate, infer_dfa, GrammarFormat, GrammarOracle, MergeStrategy, Sample, SampleConfig,
+    GrammarFormat, GrammarOracle, MergeStrategy, Sample, SampleConfig, evaluate, infer_dfa,
 };
 
 #[test]
@@ -89,20 +89,26 @@ fn alergia_adds_probabilities_and_lower_alpha_is_stricter() {
     let strict = infer_dfa(&sample, MergeStrategy::Alergia { alpha: 0.2 });
 
     assert!(loose.states.len() < strict.states.len());
-    assert!(loose
-        .transition_probabilities
-        .iter()
-        .any(|weights| !weights.is_empty()));
-    assert!(loose
-        .transition_probabilities
-        .iter()
-        .flat_map(std::collections::BTreeMap::values)
-        .all(|weight| weight.true_probability().basis_points() <= 10_000));
-    assert!(loose
-        .final_probabilities
-        .iter()
-        .flatten()
-        .all(|weight| weight.true_probability().basis_points() <= 10_000));
+    assert!(
+        loose
+            .transition_probabilities
+            .iter()
+            .any(|weights| !weights.is_empty())
+    );
+    assert!(
+        loose
+            .transition_probabilities
+            .iter()
+            .flat_map(std::collections::BTreeMap::values)
+            .all(|weight| weight.true_probability().basis_points() <= 10_000)
+    );
+    assert!(
+        loose
+            .final_probabilities
+            .iter()
+            .flatten()
+            .all(|weight| weight.true_probability().basis_points() <= 10_000)
+    );
 }
 
 #[test]

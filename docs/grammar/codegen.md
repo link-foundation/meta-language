@@ -20,7 +20,7 @@ Grammar
 
 Grammar
   -> generate JavaScript parser
-  -> run generated Peggy parser
+  -> run it on the native grammar executor
 ```
 
 Generators should accept `Grammar` values rather than source-format text. If a
@@ -56,10 +56,15 @@ That snippet is shown as text here because this Markdown file is not compiled by
 rustdoc. The equivalent IR-builder round trip is doctested in the module docs for
 [`src/grammar/mod.rs`](../../rust/src/grammar/mod.rs).
 
-Use `emit_rust_parser` for a `.pest` grammar, `pest_derive` parser stub, and AST
-type declarations. Use `emit_javascript_parser` for Peggy grammar text plus an
-ESM wrapper that imports `peggy`, calls `peggy.generate(GRAMMAR)`, and exports
-`parser`.
+The existing `emit_rust_parser` produces a `.pest` grammar, `pest_derive` parser
+stub and AST declarations; that external engine does not satisfy the
+[native grammar execution requirement](../vision.md#native-merged-grammars), and
+replacing it in Rust remains open work. In JavaScript, `emitJavascriptParser`
+produces an ESM module that carries the serialized grammar and calls
+`compileGrammar(deserializeGrammar(GRAMMAR))` from the `meta-language` package,
+so the generated parser runs on the native executor described in
+[the grammar feature union](feature-union.md); `emitPeggy` still emits Peggy
+grammar text as an export format, and nothing in the package runs Peggy.
 
 ## See also
 

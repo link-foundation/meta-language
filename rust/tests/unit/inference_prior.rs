@@ -1,5 +1,5 @@
 use meta_language::{
-    build_structural_prior, ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, WhitespacePolicy,
+    ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, WhitespacePolicy, build_structural_prior,
 };
 
 #[test]
@@ -84,9 +84,11 @@ fn unbalanced_delimiters_fall_back_to_flat_text_leaves() {
     let prior = build_structural_prior(std::slice::from_ref(&example), PriorOptions::default());
     let children = prior.trees[0].root_children();
 
-    assert!(children
-        .iter()
-        .all(|node| matches!(node, SeedNode::Leaf { .. })));
+    assert!(
+        children
+            .iter()
+            .all(|node| matches!(node, SeedNode::Leaf { .. }))
+    );
     assert_eq!(
         children
             .iter()

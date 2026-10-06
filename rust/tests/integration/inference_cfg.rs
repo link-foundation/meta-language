@@ -1,5 +1,5 @@
 use meta_language::{
-    evaluate, infer_cfg, Grammar, GrammarOracle, InferenceOptions, PositiveOnlyOracle, SampleConfig,
+    Grammar, GrammarOracle, InferenceOptions, PositiveOnlyOracle, SampleConfig, evaluate, infer_cfg,
 };
 
 #[test]

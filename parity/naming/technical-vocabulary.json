@@ -1,0 +1,381 @@
+{
+  "description": "Words a canonical name may use besides the WordNet 3.1 lemmas: the function words that join the words of a phrase, and technical terms WordNet does not list, each with the reference that defines it and its parts of speech.",
+  "functionWords": {
+    "description": "Conjunctions, prepositions and articles; a phrase may use them between its words but never as the head of a concept.",
+    "words": ["a", "an", "and", "as", "at", "by", "for", "from", "if", "in", "into", "of", "on", "or", "the", "to", "unless", "with", "without"]
+  },
+  "terms": [
+    {
+      "word": "pragma",
+      "partsOfSpeech": ["noun"],
+      "definition": "A directive of a source file that enables compiler features or checks, such as the compiler version a Solidity file accepts.",
+      "source": "Solidity documentation, Layout of a Solidity Source File, section Pragmas"
+    },
+    {
+      "word": "yul",
+      "partsOfSpeech": ["noun"],
+      "definition": "The intermediate language of the Solidity compiler that inline assembly blocks are written in.",
+      "source": "Solidity documentation, section Yul"
+    },
+    {
+      "word": "makefile",
+      "partsOfSpeech": ["noun"],
+      "definition": "A file of rules and variables that tells make how to build the targets of a program.",
+      "source": "GNU make manual, section 3 Writing Makefiles"
+    },
+    {
+      "word": "nonterminal",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "A grammar symbol that a rule rewrites into other symbols.",
+      "source": "Aho, Lam, Sethi and Ullman, Compilers: Principles, Techniques, and Tools, 2nd edition (2006), section 2.2.1"
+    },
+    {
+      "word": "strikethrough",
+      "partsOfSpeech": ["noun"],
+      "definition": "Text marked as deleted by a horizontal line through it.",
+      "source": "GitHub Flavored Markdown Spec 0.29, section 6.5 Strikethrough (extension)"
+    },
+    {
+      "word": "inline",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Placed within a line of text rather than as a separate block.",
+      "source": "CommonMark Spec 0.31.2, section 6 Inlines"
+    },
+    {
+      "word": "statehood",
+      "partsOfSpeech": ["noun"],
+      "definition": "The status of being a state.",
+      "source": "Merriam-Webster Dictionary, statehood (noun)"
+    },
+    {
+      "word": "runtime",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "The period during which a program or parser executes.",
+      "source": "Merriam-Webster Dictionary, run-time (noun)"
+    },
+    {
+      "word": "snapshot",
+      "partsOfSpeech": ["noun", "verb"],
+      "definition": "To record the state of something at one moment.",
+      "source": "Merriam-Webster Dictionary, snapshot (verb)"
+    },
+    {
+      "word": "csv",
+      "partsOfSpeech": ["noun"],
+      "definition": "A plain text table format whose records are lines of fields separated by commas.",
+      "source": "RFC 4180, Common Format and MIME Type for Comma-Separated Values (CSV) Files (2005), section 2"
+    },
+    {
+      "word": "diff",
+      "partsOfSpeech": ["noun"],
+      "definition": "A text that lists the line differences between two files, as the diff utility writes it.",
+      "source": "POSIX.1-2017 (IEEE Std 1003.1-2017), diff utility"
+    },
+    {
+      "word": "ini",
+      "partsOfSpeech": ["noun"],
+      "definition": "A configuration file format of bracketed sections that hold key and value settings.",
+      "source": "Microsoft Win32 API documentation, GetPrivateProfileString function (initialization files)"
+    },
+    {
+      "word": "unquoted",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Not enclosed in quotation marks.",
+      "source": "RFC 4180, Common Format and MIME Type for Comma-Separated Values (CSV) Files (2005), section 2"
+    },
+    {
+      "word": "keyword",
+      "partsOfSpeech": ["noun"],
+      "definition": "A datum written with a hash-colon prefix that evaluates to itself and is never a variable.",
+      "source": "The Racket Reference, Reading Keywords"
+    },
+    {
+      "word": "quasiquote",
+      "partsOfSpeech": ["noun"],
+      "definition": "A template, written with a backquote, whose unquoted parts are evaluated.",
+      "source": "R7RS small (2013), section 4.2.8 Quasiquotation"
+    },
+    {
+      "word": "unquote",
+      "partsOfSpeech": ["noun"],
+      "definition": "A part of a quasiquote template, written with a comma, that is evaluated.",
+      "source": "R7RS small (2013), section 4.2.8 Quasiquotation"
+    },
+    {
+      "word": "quasisyntax",
+      "partsOfSpeech": ["noun"],
+      "definition": "A syntax template, written with a hash-backquote, whose unsyntax parts are evaluated.",
+      "source": "The Racket Reference, Reading Quotes"
+    },
+    {
+      "word": "unsyntax",
+      "partsOfSpeech": ["noun"],
+      "definition": "A part of a quasisyntax template, written with a hash-comma, that is evaluated.",
+      "source": "The Racket Reference, Reading Quotes"
+    },
+    {
+      "word": "anything",
+      "partsOfSpeech": ["noun"],
+      "definition": "A thing of any kind.",
+      "source": "Merriam-Webster Dictionary, anything (noun)"
+    },
+    {
+      "word": "newline",
+      "partsOfSpeech": ["noun"],
+      "definition": "The character or character pair that ends a line of text.",
+      "source": "The Unicode Standard, version 15.0, section 5.8 Newline Guidelines"
+    },
+    {
+      "word": "whitespace",
+      "partsOfSpeech": ["noun"],
+      "definition": "Characters such as spaces, tabs and line breaks that separate tokens and print as blank space.",
+      "source": "R7RS small (2013), section 2.1 Identifiers and section 7.1.1 Lexical structure"
+    },
+    {
+      "word": "declarator",
+      "partsOfSpeech": ["noun"],
+      "definition": "The part of a declaration that names what it declares and gives its pointer, array and function structure.",
+      "source": "ISO/IEC 9899:2018 (C17), section 6.7.6 Declarators"
+    },
+    {
+      "word": "designator",
+      "partsOfSpeech": ["noun"],
+      "definition": "The part of an initializer that names the member or element it initializes.",
+      "source": "ISO/IEC 9899:2018 (C17), section 6.7.9 Initialization"
+    },
+    {
+      "word": "initializer",
+      "partsOfSpeech": ["noun"],
+      "definition": "The expression or brace-enclosed list that gives an object its initial value.",
+      "source": "ISO/IEC 9899:2018 (C17), section 6.7.9 Initialization"
+    },
+    {
+      "word": "preprocessor",
+      "partsOfSpeech": ["noun"],
+      "definition": "The translation phase that runs directives and expands macros before a program is parsed.",
+      "source": "ISO/IEC 9899:2018 (C17), section 5.1.1.2 Translation phases and section 6.10 Preprocessing directives"
+    },
+    {
+      "word": "parenthesized",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Enclosed in parentheses.",
+      "source": "Merriam-Webster Dictionary, parenthesize (verb)"
+    },
+    {
+      "word": "variadic",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Taking a variable number of arguments.",
+      "source": "ISO/IEC 14882:2020 (C++20), section 13.7.4 Variadic templates [temp.variadic]"
+    },
+    {
+      "word": "unaligned",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Not guaranteed to sit at the alignment its type requires.",
+      "source": "Microsoft C/C++ language reference, __unaligned"
+    },
+    {
+      "word": "microsoft",
+      "partsOfSpeech": ["noun"],
+      "definition": "The company whose compilers define the Microsoft-specific C and C++ syntax.",
+      "source": "Microsoft C/C++ language reference, Microsoft-specific modifiers"
+    },
+    {
+      "word": "else",
+      "partsOfSpeech": ["adverb"],
+      "definition": "Otherwise; the branch taken when a condition fails.",
+      "source": "Merriam-Webster Dictionary, else (adverb); ISO/IEC 9899:2018 (C17), section 6.8.4.1 The if statement"
+    },
+    {
+      "word": "frontmatter",
+      "partsOfSpeech": ["noun"],
+      "definition": "Metadata at the start of a source file, set off by lines of three or more dashes.",
+      "source": "RFC 3503, frontmatter; The Rust Reference, Frontmatter"
+    },
+    {
+      "word": "metavariable",
+      "partsOfSpeech": ["noun"],
+      "definition": "A name in a macro matcher that binds a fragment of the input for the transcriber.",
+      "source": "The Rust Reference, Macros By Example, Metavariables"
+    },
+    {
+      "word": "turbofish",
+      "partsOfSpeech": ["noun"],
+      "definition": "The ::<> syntax that gives generic arguments in an expression path.",
+      "source": "The Rust Reference, Paths, Paths in expressions"
+    },
+    {
+      "word": "wildcard",
+      "partsOfSpeech": ["noun"],
+      "definition": "A placeholder that matches anything, such as the _ pattern or the * of a glob import.",
+      "source": "The Rust Reference, Patterns, Wildcard pattern"
+    },
+    {
+      "word": "scoped",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Qualified by the path of the module, type or trait that contains it.",
+      "source": "The Rust Reference, Paths, Qualified paths"
+    },
+    {
+      "word": "tuple",
+      "partsOfSpeech": ["noun"],
+      "definition": "A fixed-length ordered sequence of values of possibly different types.",
+      "source": "The Rust Reference, Tuple types"
+    },
+    {
+      "word": "where",
+      "partsOfSpeech": ["adverb"],
+      "definition": "Under which conditions; a where clause states the bounds a generic item requires.",
+      "source": "Merriam-Webster Dictionary, where (adverb); The Rust Reference, Generic parameters, Where clauses"
+    },
+    {
+      "word": "destructuring",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "Binding the parts of an array or object value to the names of a pattern.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 13.15.5 Destructuring Assignment"
+    },
+    {
+      "word": "jsx",
+      "partsOfSpeech": ["noun"],
+      "definition": "An XML-like syntax extension of ECMAScript whose elements and attributes describe a tree of components.",
+      "source": "JSX specification (facebook.github.io/jsx), Draft: JSX Specification"
+    },
+    {
+      "word": "meta",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Describing the running program itself rather than a value it computes, as new.target and import.meta do.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 13.3.12 Meta Properties"
+    },
+    {
+      "word": "namespace",
+      "partsOfSpeech": ["noun"],
+      "definition": "The object a module namespace import or export binds, whose properties are the exports of a module.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 16.2.2 Imports (NameSpaceImport) and section 10.4.6 Module Namespace Exotic Objects"
+    },
+    {
+      "word": "this",
+      "partsOfSpeech": ["noun"],
+      "definition": "The keyword that evaluates to the receiver of the current function call.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 13.2.1 The this Keyword"
+    },
+    {
+      "word": "unescaped",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Written without an escape sequence, as the plain characters of a string literal are.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 12.9.4 String Literals"
+    },
+    {
+      "word": "mapped",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Built from another type by applying one transformation to each of its property keys, as a TypeScript mapped type is.",
+      "source": "TypeScript Handbook, Type Manipulation, Mapped Types"
+    },
+    {
+      "word": "predefined",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Built into the language rather than declared by a program, as the TypeScript primitive types number, string and boolean are.",
+      "source": "TypeScript Language Specification 1.8, section 3.8.1 Predefined Types"
+    },
+    {
+      "word": "readonly",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Able to be read but not assigned after initialization, as a TypeScript readonly property or array is.",
+      "source": "TypeScript Handbook, Object Types, readonly Properties"
+    },
+    {
+      "word": "subtype",
+      "partsOfSpeech": ["noun"],
+      "definition": "A type whose values are the values of another type that satisfy a predicate, written {x : α // p x} in Lean.",
+      "source": "Theorem Proving in Lean 4, section Structures and Records; the Lean 4 core library, structure Subtype in Init/Prelude.lean"
+    },
+    {
+      "word": "admitted",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Accepted without a proof, as a Rocq proof that Admitted closes is.",
+      "source": "Rocq Reference Manual, section Proof mode, Admitted"
+    },
+    {
+      "word": "associativity",
+      "partsOfSpeech": ["noun"],
+      "definition": "The side, left or right, to which an infix operator groups when it repeats without parentheses.",
+      "source": "Rocq Reference Manual, section Notations, Simple factorization rules and associativity"
+    },
+    {
+      "word": "fixpoint",
+      "partsOfSpeech": ["noun"],
+      "definition": "A recursive definition by structural recursion, as the Rocq command Fixpoint declares.",
+      "source": "Rocq Reference Manual, section Recursive functions, Fixpoint"
+    },
+    {
+      "word": "generalizable",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Allowed to be bound implicitly by generalization, as the Rocq command Generalizable Variables declares.",
+      "source": "Rocq Reference Manual, section Implicit generalization"
+    },
+    {
+      "word": "ltac",
+      "partsOfSpeech": ["noun"],
+      "definition": "The tactic language of the Rocq prover.",
+      "source": "Rocq Reference Manual, section Ltac"
+    },
+    {
+      "word": "tactical",
+      "partsOfSpeech": ["noun"],
+      "definition": "A tactic that takes tactics and combines them, such as repeat, try or progress.",
+      "source": "Rocq Reference Manual, section Ltac, tacticals"
+    },
+    {
+      "word": "unset",
+      "partsOfSpeech": ["verb"],
+      "definition": "To turn off a flag or an option, as the Rocq command Unset does.",
+      "source": "Rocq Reference Manual, section Flags, options and tables, Unset"
+    },
+    {
+      "word": "inferred",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Worked out by the compiler instead of written in the source, as the types of the parameters of the Java lambda expression (x, y) -> x + y are.",
+      "source": "The Java Language Specification, section 15.27.1, Lambda Parameters"
+    },
+    {
+      "word": "unannotated",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Written without annotations, as a Java type with no type annotations before it is.",
+      "source": "The Java Language Specification, section 8.3, UnannType"
+    },
+    {
+      "word": "backreference",
+      "partsOfSpeech": ["noun"],
+      "definition": "An escape in a regular expression that matches the text an earlier capturing group matched, as \\1 or \\k<name> does.",
+      "source": "ECMA-262, ECMAScript 2024 Language Specification, section 22.2.2.7.2, BackreferenceMatcher"
+    },
+    {
+      "word": "lookahead",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "An assertion of a regular expression that the text after the current position matches, (?=...), or does not, (?!...), without consuming it.",
+      "source": "ECMA-262, ECMAScript 2024 Language Specification, section 22.2.2.4, Assertion"
+    },
+    {
+      "word": "lookbehind",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "An assertion of a regular expression that the text before the current position matches, (?<=...), or does not, (?<!...), without consuming it.",
+      "source": "ECMA-262, ECMAScript 2024 Language Specification, section 22.2.2.4, Assertion"
+    },
+    {
+      "word": "lookaround",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "A lookahead or a lookbehind: an assertion of a regular expression about the text around the current position that consumes none of it.",
+      "source": "Jeffrey E. F. Friedl, Mastering Regular Expressions, 3rd edition (2006), chapter 2, Lookaround"
+    },
+    {
+      "word": "posix",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "The Portable Operating System Interface, the IEEE standard of the interfaces of Unix-like systems, whose regular expressions name character classes as [:alpha:].",
+      "source": "POSIX.1-2017 (IEEE Std 1003.1-2017), Base Definitions, section 9.3.5, RE Bracket Expression"
+    },
+    {
+      "word": "unicode",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "The character encoding standard that assigns a code point and properties to every character of the world's writing systems.",
+      "source": "The Unicode Standard, Version 15.1 (2023), chapter 1, Introduction"
+    }
+  ]
+}
