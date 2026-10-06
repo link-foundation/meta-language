@@ -119,6 +119,7 @@ class Checker {
         name: param.name,
         type: this.resolveType(param.type, itemPath, item.span),
         guard: param.guard ?? null,
+        default: param.default ?? null,
       }));
       entry.ret = this.resolveType(item.ret, itemPath, item.span);
     });
@@ -224,7 +225,7 @@ class Checker {
         let value = this.expr(effect.value, env, [], expected);
         if (expected) value = coerce(value, expected, this.language, effect.span);
         bindLocal(env, effect.name, value.type);
-        effects.push({ k: 'let', name: effect.name, value, span: effect.span });
+        effects.push({ k: 'let', name: effect.name, value, ...(effect.constant ? { constant: true } : {}), span: effect.span });
         continue;
       }
       if (effect.k === 'assert') {
@@ -640,6 +641,10 @@ class Checker {
     }
     if (entry.k !== 'fn') throw typeError(`${head.path.join('.')} is not a function`, span);
     if (!entry.params) throw typeError(`${entry.fullName} is used before its signature is known`, span);
+    // A call that leaves out trailing parameters with defaults passes the defaults.
+    if (args.length < entry.params.length && entry.params.slice(args.length).every((param) => param.default)) {
+      args = [...args, ...entry.params.slice(args.length).map((param) => ({ ...param.default, closedDefault: true }))];
+    }
     if (args.length !== entry.params.length) {
       if (args.length < entry.params.length) {
         throw unsupported('partial application', `${entry.fullName} expects ${entry.params.length} arguments`, span);
@@ -649,7 +654,7 @@ class Checker {
     const checkedArgs = args.map((arg, index) => {
       const param = entry.params[index];
       // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
-      const value = this.expr(arg, env, path, param.guard && arg.k !== 'num' ? INT : param.type);
+      const value = this.expr(arg, arg.closedDefault ? new Map() : env, arg.closedDefault ? entry.modulePath : path, param.guard && arg.k !== 'num' ? INT : param.type);
       const checked = coerce(value, param.type, this.language, arg.span ?? span, param.guard ? 'checked' : undefined);
       return checked.k === 'cast' && checked.flavor === 'checked' ? { ...checked, message: param.guard.message, order: param.guard.order } : checked;
     });

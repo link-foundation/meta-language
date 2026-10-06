@@ -551,6 +551,37 @@ export function emitRust(program) {
   return new RustEmitter(program, state).file();
 }
 
+/**
+ * A program whose only effect binds one top-level constant, as Rust items: a
+ * Number, boolean or machine integer literal is a `const` of its type, a
+ * string literal a `&str` const, and any other value a `static` computed once,
+ * when it is first read, as a JavaScript module computes it once. Returns null
+ * for a program with declarations or other effects.
+ */
+export function emitRustConstants(program) {
+  const effects = program.main?.effects ?? [];
+  if (program.declarations.size > 0 || effects.length !== 1 || !effects[0].constant || effects[0].name.startsWith('ml_')) return null;
+  const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
+    ctorStyle: 'data', typeName: camel, valueName: snake, ctorName: camel, moduleSegment: snake, typeSpace: true, modulesShareTypeSpace: true,
+  });
+  const emitter = new RustEmitter(program, state);
+  const [{ name, value }] = effects;
+  if (KEYWORDS.has(name) || !/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name)) return null;
+  const scalar = value.k === 'lit' && ['float', 'bool', 'fixed'].includes(value.type.kind);
+  const definition = scalar
+    ? `pub const ${name}: ${emitter.type(value.type)} = ${emitter.expr(value)};`
+    : value.k === 'lit' && value.type.kind === 'string'
+      ? `pub const ${name}: &str = ${rustString(String(value.value))};`
+      : `pub static ${name}: std::sync::LazyLock<${emitter.type(value.type)}> = std::sync::LazyLock::new(|| ${emitter.expr(value)});`;
+  const preludes = [
+    ...(emitter.usesBig ? [PRELUDE] : []),
+    ...(emitter.usesNumber ? [NUMBER_PRELUDE] : []),
+    ...(emitter.usesMath ? [MATH_PRELUDE] : []),
+    ...(emitter.usesArray ? [ARRAY_PRELUDE] : []),
+  ];
+  return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
+}
+
 class RustEmitter {
   constructor(program, state) {
     this.program = program;

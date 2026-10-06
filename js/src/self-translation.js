@@ -15,7 +15,7 @@ import { parseProgrammingLanguage } from './programming-language-parser.js';
 import { checkProgram } from './translation/check.js';
 import { TranslationError } from './translation/diagnostics.js';
 import { emitJavaScript } from './translation/emit-javascript.js';
-import { emitRust } from './translation/emit-rust.js';
+import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
 import { parseRust } from './translation/rust.js';
 
@@ -237,8 +237,10 @@ function translateGroup(group, from, to, decorators) {
     const program = checkProgram(family(from) === 'Rust'
       ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`)
       : parseJavaScript(text));
-    if (program.main.effects.length > 0) return carry(text, term, from, 'top-level statement');
-    emitted = (family(to) === 'Rust' ? emitRust : emitJavaScript)(program);
+    // A top-level constant is a Rust constant; other top-level statements run once, as a program.
+    const constants = family(to) === 'Rust' ? emitRustConstants(program) : null;
+    if (!constants && program.main.effects.length > 0) return carry(text, term, from, 'top-level statement');
+    emitted = constants ?? (family(to) === 'Rust' ? emitRust : emitJavaScript)(program);
   } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
     return carry(text, term, from, error.kind);

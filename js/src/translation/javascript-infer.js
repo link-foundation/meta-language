@@ -116,7 +116,15 @@ class Inference {
     for (const { path, fn } of functions) {
       this.signatures.set(path.join('.'), {
         params: fn.params.map((param) => this.declared(param.type)),
+        defaults: fn.params.filter((param) => param.default).length,
         ret: this.declared(fn.ret),
+      });
+    }
+    for (const { path, fn } of functions) {
+      const signature = this.signatures.get(path.join('.'));
+      this.context = path.slice(0, -1);
+      fn.params.forEach((param, index) => {
+        if (param.default) this.unify(this.expr(param.default, new Map()), signature.params[index], param.span);
       });
     }
     for (const { path, fn } of functions) {
@@ -317,7 +325,7 @@ class Inference {
   call(path, args, env, where) {
     const argTypes = args.map((arg) => this.expr(arg, env));
     const signature = this.signature(path);
-    if (!signature || signature.params.length !== args.length) return this.fresh();
+    if (!signature || args.length > signature.params.length || args.length < signature.params.length - (signature.defaults ?? 0)) return this.fresh();
     argTypes.forEach((type, index) => this.unify(type, signature.params[index], args[index].span ?? where));
     return signature.ret;
   }

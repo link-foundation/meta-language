@@ -399,8 +399,20 @@ class JavaScriptParser {
       if (c.is('...')) throw unsupported('rest parameter', 'functions take a fixed number of arguments', span(token, token));
       if (c.is('{') || c.is('[')) throw unsupported('destructured parameter', 'name each parameter', span(token, token));
       const param = c.identifier('parameter');
-      if (c.is('=')) throw unsupported('default parameter', 'every argument must be passed', span(param, c.peek()));
-      tokens.push(param);
+      // A default is filled in where a call leaves the argument out; it reads no parameter.
+      if (c.eat('=')) {
+        for (let at = 0, depth = 0; !c.isKind('eof', at) && (depth > 0 || !(c.is(',', at) || c.is(')', at))); at += 1) {
+          const token = c.peek(at);
+          if (['(', '[', '{'].includes(token.value)) depth += 1;
+          if ([')', ']', '}'].includes(token.value)) depth -= 1;
+          if (token.kind === 'identifier' && !(at > 0 && c.is('.', at - 1)) && tokens.some((earlier) => earlier.value === token.value)) {
+            throw unsupported(`default reading parameter ${token.value}`, 'a call fills in a default where it leaves the argument out, so a default reads no parameter', span(token, token));
+          }
+        }
+        tokens.push({ ...param, defaultValue: this.expr() });
+      }
+      else if (tokens.at(-1)?.defaultValue) throw unsupported(`parameter ${param.value} after a default`, 'a call fills in trailing defaults only; give it a default too', span(param, param));
+      else tokens.push(param);
       if (!c.eat(',')) break;
     }
     c.expect(')', name);
@@ -420,7 +432,12 @@ class JavaScriptParser {
     const params = tokens.map((token) => {
       reserved(token);
       const text = doc?.params.get(token.value);
-      return { name: token.value, type: text ? this.type(text, doc.range) : null, span: span(token, token) };
+      return {
+        name: token.value,
+        type: text ? this.type(text, doc.range) : null,
+        ...(token.defaultValue ? { default: token.defaultValue } : {}),
+        span: span(token, token),
+      };
     });
     for (const documented of doc?.params.keys() ?? []) {
       if (!params.some((param) => param.name === documented)) throw typeError(`@param ${documented} is not a parameter of ${name}`, doc.range);
@@ -1009,7 +1026,7 @@ class JavaScriptParser {
     if (c.is('const')) {
       if (c.is('{', 1)) throw unsupported('top-level destructuring', 'bind each value with const', span(token, c.peek(1)));
       const binding = this.constStatement();
-      return { k: 'let', name: binding.name, value: binding.value, span: binding.span };
+      return { k: 'let', name: binding.name, value: binding.value, constant: true, span: binding.span };
     }
     if (c.is('console') && c.is('.', 1)) return this.consoleStatement();
     if (this.assertion && c.is(this.assertion.name)) return this.assertStatement();

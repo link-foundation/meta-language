@@ -10,9 +10,15 @@ for (const file of process.argv.slice(2)) {
   const source = readFileSync(file, 'utf8');
   const bytes = Buffer.from(source, 'utf8');
   const { items } = selfTranslate(source, 'JavaScript', 'Rust');
+  // A carried item is checked with the comments directly before it, as
+  // self-translation groups them.
+  let groupStart = null;
   for (const item of items) {
+    if (item.status === 'comment' || item.term === 'comment') { groupStart ??= item.start; continue; }
+    const start = groupStart ?? item.start;
+    groupStart = null;
     if (item.status !== 'carried') continue;
-    const text = bytes.subarray(item.start, item.end).toString('utf8');
+    const text = bytes.subarray(start, item.end).toString('utf8');
     let message = item.reason;
     try { checkProgram(parseJavaScript(text)); } catch (error) { message = `${error.kind}: ${String(error.message).split('\n')[0].replace(/at \d+:\d+.*/, '').slice(0, 110)}`; }
     tally.set(message, (tally.get(message) ?? 0) + 1);
