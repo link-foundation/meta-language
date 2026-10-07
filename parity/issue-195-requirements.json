@@ -21,7 +21,8 @@
     "recoveryAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141",
     "finishTheWorkAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6023909737",
     "bulkDeliveryAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6024489303",
-    "bulkDeliveryRepost": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025209380"
+    "bulkDeliveryRepost": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025209380",
+    "bulkDeliverySecondRepost": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025369792"
   },
   "checkpoints": {
     "pre-merge": "All implementation and candidate-artifact requirements must pass on the exact merge candidate. Every PR check must pass. A red check is a defect to fix now; unfinished requirements are work to implement, not a reason for red CI.",
@@ -1562,7 +1563,7 @@
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
       "selector": "docs/vision.md#sources-of-truth: register of every requirement source with its revision and content hash",
-      "sha256": "3f6a6952ea1d557e9b8ade9b3374ddfd2698c94567665572de8ef52607e92b97"
+      "sha256": "2f575f1c6dc823f94f546ab53e6db9d832cb939c8801e412332db465d568324d"
     },
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
@@ -2286,7 +2287,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16632,7 +16634,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -17244,7 +17247,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19420,7 +19424,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19601,7 +19606,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19690,7 +19696,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20876,7 +20883,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22428,7 +22436,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22513,7 +22522,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22602,7 +22612,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22687,7 +22698,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22774,7 +22786,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22865,7 +22878,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23222,7 +23236,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23750,7 +23765,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -26522,7 +26538,8 @@
           "recoveryAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -26611,7 +26628,8 @@
           "nextPhaseAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -26703,7 +26721,8 @@
           "nextPhaseAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -26798,7 +26817,8 @@
           "nextPhaseAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30705,7 +30725,8 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliverySecondRepost"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [

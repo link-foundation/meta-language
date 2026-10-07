@@ -4,7 +4,7 @@
   "issue": 195,
   "pullRequest": 196,
   "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
-  "reconciledAt": "2026-10-06",
+  "reconciledAt": "2026-10-07",
   "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
   "requirementSources": [
     {
@@ -29,7 +29,7 @@
       ],
       "author": "konard",
       "createdAt": "2026-09-23T07:57:12Z",
-      "updatedAt": "2026-09-23T13:36:11Z",
+      "updatedAt": "2026-10-06T21:17:21Z",
       "bytes": 10229,
       "sha256": "c7b096ac5ce0f86174f6c585c29fb804ceec960fb8d8d23d30591a465e3fdba7"
     },
@@ -390,6 +390,33 @@
       "author": "konard",
       "createdAt": "2026-10-06T20:50:58Z",
       "updatedAt": "2026-10-06T20:50:58Z",
+      "bytes": 10703,
+      "sha256": "faf1c6dd2ef1b1655a1f441f7189a16610e2cfc0ee2dffa7a6a090e19c78136c"
+    },
+    {
+      "key": "bulkDeliverySecondRepost",
+      "id": 6025369792,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025369792",
+      "title": "CI does not fail “on purpose” — finish the work. Audit of `c39470d0` (2026-10-07)",
+      "role": "Binding: re-posts the audit of c39470d0 and requires bulk delivery: the most frequent carried constructs (export class, classes, closures, destructuring, Map/Set, iterators, template literals, try/throw, modules) in one batch, and in the same session the start of automatic scanner porting and multi-source merging for the single-source languages",
+      "ledgerCoverage": [
+        "I195-SELF-TRANSLATION-",
+        "I195-GRAMMAR-NATIVE-MERGED",
+        "I195-GRAMMAR-LANGUAGE-CATALOG",
+        "I195-GRAMMAR-LOSSLESS-TREES",
+        "I195-GRAMMAR-DEPENDENCY-BOUNDARY",
+        "I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED",
+        "I195-MERGE-AUTOMATIC-PIPELINE",
+        "I195-MERGE-SHIPPED-GRAMMARS-ARE-MERGED",
+        "I195-ACCEPTANCE-INDEPENDENT-ORACLES",
+        "I195-INTERCHANGE-",
+        "I195-SEMANTICS-CONSTRUCT-INVENTORY",
+        "I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-06T21:01:15Z",
+      "updatedAt": "2026-10-06T21:01:15Z",
       "bytes": 10703,
       "sha256": "faf1c6dd2ef1b1655a1f441f7189a16610e2cfc0ee2dffa7a6a090e19c78136c"
     }
