@@ -166,3 +166,11 @@ mod ci_cd;
 
 #[path = "../../examples/grammar_pipeline_support/mod.rs"]
 mod grammar_pipeline_support;
+
+mod issue_195_grammar_native_toml;
+
+mod issue_195_grammar_native_zig;
+
+mod issue_195_grammar_native_pascal;
+
+mod issue_195_grammar_native_vb;

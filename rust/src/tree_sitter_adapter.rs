@@ -396,7 +396,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "ocaml" => tree_sitter_ocaml::LANGUAGE_OCAML.into(),
         "ocaml_interface" => tree_sitter_ocaml::LANGUAGE_OCAML_INTERFACE.into(),
         "odin" => tree_sitter_odin::LANGUAGE.into(),
-        "pascal" => tree_sitter_pascal::LANGUAGE.into(),
         "perl" => ts_parser_perl::LANGUAGE.into(),
         "php" => tree_sitter_php::LANGUAGE_PHP.into(),
         "powershell" => tree_sitter_powershell::LANGUAGE.into(),
@@ -407,11 +406,8 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "scala" => tree_sitter_scala::LANGUAGE.into(),
         "sql" => tree_sitter_sequel::LANGUAGE.into(),
         "swift" => tree_sitter_swift::LANGUAGE.into(),
-        "toml" => tree_sitter_toml_ng::LANGUAGE.into(),
-        "vb" => tree_sitter_vb_dotnet::LANGUAGE.into(),
         "xml" => tree_sitter_xml::LANGUAGE_XML.into(),
         "yaml" => tree_sitter_yaml::LANGUAGE.into(),
-        "zig" => tree_sitter_zig::LANGUAGE.into(),
         _ => return None,
     })
 }

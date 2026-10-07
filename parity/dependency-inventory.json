@@ -4611,7 +4611,7 @@
       },
       "role": "direct",
       "requirement": "=0.10.2",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.10.2",
       "evidence": "crates.io, tree-sitter-pascal"
     },
@@ -4905,7 +4905,7 @@
       },
       "role": "direct",
       "requirement": "=0.7.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.7.0",
       "evidence": "crates.io, tree-sitter-toml-ng"
     },
@@ -4947,7 +4947,7 @@
       },
       "role": "direct",
       "requirement": "=0.1.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.1.0",
       "evidence": "crates.io, tree-sitter-vb-dotnet"
     },
@@ -5010,7 +5010,7 @@
       },
       "role": "direct",
       "requirement": "=1.1.2",
-      "kind": "runtime",
+      "kind": "development",
       "current": "1.1.2",
       "evidence": "crates.io, tree-sitter-zig"
     },
@@ -7387,9 +7387,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/pascal.wasm.gz@0.10.2",
+      "id": "vendored-grammar js/oracles/grammars/pascal.wasm.gz@0.10.2",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/pascal.wasm.gz",
+      "name": "js/oracles/grammars/pascal.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -7574,9 +7574,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/toml.wasm.gz@0.7.0",
+      "id": "vendored-grammar js/oracles/grammars/toml.wasm.gz@0.7.0",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/toml.wasm.gz",
+      "name": "js/oracles/grammars/toml.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -7591,9 +7591,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/vb.wasm.gz@0.1.0",
+      "id": "vendored-grammar js/oracles/grammars/vb.wasm.gz@0.1.0",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/vb.wasm.gz",
+      "name": "js/oracles/grammars/vb.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -7642,9 +7642,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/zig.wasm.gz@1.1.2",
+      "id": "vendored-grammar js/oracles/grammars/zig.wasm.gz@1.1.2",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/zig.wasm.gz",
+      "name": "js/oracles/grammars/zig.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],

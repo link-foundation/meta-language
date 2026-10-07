@@ -151,6 +151,26 @@ fn natives() -> Vec<Native> {
         // development dependency, so its Rust row measures the native side.
         native!("native-lean", "lean", None),
         native!(
+            "native-toml",
+            "toml",
+            Some(|| tree_sitter_toml_ng::LANGUAGE.into())
+        ),
+        native!(
+            "native-zig",
+            "zig",
+            Some(|| tree_sitter_zig::LANGUAGE.into())
+        ),
+        native!(
+            "native-pascal",
+            "pascal",
+            Some(|| tree_sitter_pascal::LANGUAGE.into())
+        ),
+        native!(
+            "native-vb",
+            "vb",
+            Some(|| tree_sitter_vb_dotnet::LANGUAGE.into())
+        ),
+        native!(
             "native-lua",
             "lua",
             Some(|| tree_sitter_lua::LANGUAGE.into())

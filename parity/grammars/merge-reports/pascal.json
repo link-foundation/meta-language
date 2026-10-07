@@ -1,0 +1,1251 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "pascal",
+  "native": "native-pascal",
+  "sources": [
+    {
+      "id": "tree-sitter-pascal",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-pascal 0.10.2",
+      "repository": "https://github.com/Isopod/tree-sitter-pascal",
+      "revision": "042119eca2e18a60e56317fb06ee3ba5c32cb447",
+      "path": "src/grammar.json",
+      "sha256": "8ffb11445fa8f6be49560b6e074b2a1484523c00e49015a6c8fa382e259a2d1a",
+      "license": "MIT"
+    }
+  ],
+  "rules": 316,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "moduleName",
+      "native": "module_name"
+    },
+    {
+      "source": "if",
+      "native": "if_statement"
+    },
+    {
+      "source": "nestedIf",
+      "native": "nested_if_statement"
+    },
+    {
+      "source": "ifElse",
+      "native": "if_else_statement"
+    },
+    {
+      "source": "for",
+      "native": "for_statement"
+    },
+    {
+      "source": "foreach",
+      "native": "for_each_statement"
+    },
+    {
+      "source": "exceptionHandler",
+      "native": "exception_handler"
+    },
+    {
+      "source": "exceptionElse",
+      "native": "exception_else_clause"
+    },
+    {
+      "source": "_exceptionHandlers",
+      "native": "exception_handler_list"
+    },
+    {
+      "source": "caseCase",
+      "native": "case_arm"
+    },
+    {
+      "source": "case",
+      "native": "case_statement"
+    },
+    {
+      "source": "asm",
+      "native": "assembly"
+    },
+    {
+      "source": "with",
+      "native": "with_statement"
+    },
+    {
+      "source": "goto",
+      "native": "go_to_statement"
+    },
+    {
+      "source": "_statement",
+      "native": "statement_body"
+    },
+    {
+      "source": "ifTr",
+      "native": "trailing_if_statement"
+    },
+    {
+      "source": "nestedIfTr",
+      "native": "trailing_nested_if_statement"
+    },
+    {
+      "source": "ifElseTr",
+      "native": "trailing_if_else_statement"
+    },
+    {
+      "source": "whileTr",
+      "native": "trailing_while"
+    },
+    {
+      "source": "repeatTr",
+      "native": "trailing_repeat"
+    },
+    {
+      "source": "forTr",
+      "native": "trailing_for_statement"
+    },
+    {
+      "source": "foreachTr",
+      "native": "trailing_for_each_statement"
+    },
+    {
+      "source": "exceptionHandlerTr",
+      "native": "trailing_exception_handler"
+    },
+    {
+      "source": "exceptionElseTr",
+      "native": "trailing_exception_else_clause"
+    },
+    {
+      "source": "_exceptionHandlersTr",
+      "native": "trailing_exception_handler_list"
+    },
+    {
+      "source": "tryTr",
+      "native": "trailing_try"
+    },
+    {
+      "source": "caseCaseTr",
+      "native": "trailing_case_case"
+    },
+    {
+      "source": "caseTr",
+      "native": "trailing_case"
+    },
+    {
+      "source": "blockTr",
+      "native": "trailing_block"
+    },
+    {
+      "source": "asmTr",
+      "native": "trailing_assembly"
+    },
+    {
+      "source": "withTr",
+      "native": "trailing_with_statement"
+    },
+    {
+      "source": "raiseTr",
+      "native": "trailing_raise"
+    },
+    {
+      "source": "statementTr",
+      "native": "trailing_statement"
+    },
+    {
+      "source": "gotoTr",
+      "native": "trailing_go_to_statement"
+    },
+    {
+      "source": "_statementTr",
+      "native": "trailing_statement_body"
+    },
+    {
+      "source": "assignment",
+      "native": "assignment_expression"
+    },
+    {
+      "source": "varAssignDef",
+      "native": "variable_assign_definition"
+    },
+    {
+      "source": "varDef",
+      "native": "variable_definition"
+    },
+    {
+      "source": "caseLabel",
+      "native": "case_label"
+    },
+    {
+      "source": "_statements",
+      "native": "statement_list_body"
+    },
+    {
+      "source": "_statementsTr",
+      "native": "trailing_statement_list_body"
+    },
+    {
+      "source": "statements",
+      "native": "statement_list"
+    },
+    {
+      "source": "statementsTr",
+      "native": "trailing_statement_list"
+    },
+    {
+      "source": "asmBody",
+      "native": "assembly_body"
+    },
+    {
+      "source": "_expr",
+      "native": "expression"
+    },
+    {
+      "source": "_ref",
+      "native": "expression_reference"
+    },
+    {
+      "source": "inherited",
+      "native": "inherited_expression"
+    },
+    {
+      "source": "exprDot",
+      "native": "expression_dot"
+    },
+    {
+      "source": "exprDeref",
+      "native": "referent_expression"
+    },
+    {
+      "source": "exprAs",
+      "native": "conversion_expression"
+    },
+    {
+      "source": "exprTpl",
+      "native": "template_expression"
+    },
+    {
+      "source": "exprSubscript",
+      "native": "expression_subscript"
+    },
+    {
+      "source": "exprCall",
+      "native": "expression_call"
+    },
+    {
+      "source": "legacyFormat",
+      "native": "legacy_format"
+    },
+    {
+      "source": "exprArgs",
+      "native": "call_argument_list"
+    },
+    {
+      "source": "exprBinary",
+      "native": "expression_binary"
+    },
+    {
+      "source": "exprUnary",
+      "native": "unary_expression"
+    },
+    {
+      "source": "exprParens",
+      "native": "parenthesized_expression"
+    },
+    {
+      "source": "exprBrackets",
+      "native": "expression_brackets"
+    },
+    {
+      "source": "typeref",
+      "native": "type_name_reference"
+    },
+    {
+      "source": "_typeref",
+      "native": "type_reference_body"
+    },
+    {
+      "source": "typerefDot",
+      "native": "type_reference_dot"
+    },
+    {
+      "source": "typerefTpl",
+      "native": "template_type_reference"
+    },
+    {
+      "source": "typerefPtr",
+      "native": "type_reference_pointer"
+    },
+    {
+      "source": "typerefArgs",
+      "native": "type_reference_arguments"
+    },
+    {
+      "source": "genericDot",
+      "native": "generic_dot"
+    },
+    {
+      "source": "genericTpl",
+      "native": "generic_template"
+    },
+    {
+      "source": "_genericName",
+      "native": "generic_name"
+    },
+    {
+      "source": "genericArgs",
+      "native": "generic_argument_list"
+    },
+    {
+      "source": "genericArg",
+      "native": "generic_argument"
+    },
+    {
+      "source": "_literal",
+      "native": "literal"
+    },
+    {
+      "source": "literalString",
+      "native": "literal_string"
+    },
+    {
+      "source": "_literalString",
+      "native": "literal_string_body"
+    },
+    {
+      "source": "literalChar",
+      "native": "character_literal"
+    },
+    {
+      "source": "literalNumber",
+      "native": "literal_number"
+    },
+    {
+      "source": "_literalInt",
+      "native": "literal_integer"
+    },
+    {
+      "source": "_literalFloat",
+      "native": "literal_float"
+    },
+    {
+      "source": "range",
+      "native": "ordinal_range"
+    },
+    {
+      "source": "_definitions",
+      "native": "definition_list"
+    },
+    {
+      "source": "_definition",
+      "native": "definition"
+    },
+    {
+      "source": "defProc",
+      "native": "definition_procedure"
+    },
+    {
+      "source": "declProcFwd",
+      "native": "declaration_procedure_forward"
+    },
+    {
+      "source": "_visibility",
+      "native": "visibility"
+    },
+    {
+      "source": "_declarations",
+      "native": "declaration_list"
+    },
+    {
+      "source": "_classDeclarations",
+      "native": "class_declaration_list"
+    },
+    {
+      "source": "defaultValue",
+      "native": "default_value"
+    },
+    {
+      "source": "declUses",
+      "native": "declaration_uses"
+    },
+    {
+      "source": "declExports",
+      "native": "export_declaration_list"
+    },
+    {
+      "source": "declTypes",
+      "native": "type_declaration_list"
+    },
+    {
+      "source": "declVars",
+      "native": "declaration_vars"
+    },
+    {
+      "source": "declConsts",
+      "native": "constant_declaration_list"
+    },
+    {
+      "source": "declType",
+      "native": "declaration_type"
+    },
+    {
+      "source": "declProc",
+      "native": "declaration_procedure"
+    },
+    {
+      "source": "declVar",
+      "native": "declaration_variable"
+    },
+    {
+      "source": "declConst",
+      "native": "declaration_constant"
+    },
+    {
+      "source": "declLabels",
+      "native": "label_declaration_list"
+    },
+    {
+      "source": "declLabel",
+      "native": "declaration_label"
+    },
+    {
+      "source": "declExport",
+      "native": "declaration_export"
+    },
+    {
+      "source": "declEnum",
+      "native": "declaration_enumeration"
+    },
+    {
+      "source": "declEnumValue",
+      "native": "declaration_enumeration_value"
+    },
+    {
+      "source": "declSet",
+      "native": "declaration_set"
+    },
+    {
+      "source": "declArray",
+      "native": "declaration_array"
+    },
+    {
+      "source": "declFile",
+      "native": "declaration_file"
+    },
+    {
+      "source": "declString",
+      "native": "declaration_string"
+    },
+    {
+      "source": "declProcRef",
+      "native": "procedure_reference_declaration"
+    },
+    {
+      "source": "declMetaClass",
+      "native": "declaration_meta_class"
+    },
+    {
+      "source": "declClass",
+      "native": "declaration_class"
+    },
+    {
+      "source": "declIntf",
+      "native": "declaration_interface"
+    },
+    {
+      "source": "declHelper",
+      "native": "declaration_helper"
+    },
+    {
+      "source": "guid",
+      "native": "globally_unique_identifier"
+    },
+    {
+      "source": "_declClass",
+      "native": "declaration_class_body"
+    },
+    {
+      "source": "declSection",
+      "native": "declaration_section"
+    },
+    {
+      "source": "_declFields",
+      "native": "field_declaration_list"
+    },
+    {
+      "source": "declField",
+      "native": "declaration_field"
+    },
+    {
+      "source": "declProp",
+      "native": "declaration_prop"
+    },
+    {
+      "source": "declPropArgs",
+      "native": "declaration_prop_arguments"
+    },
+    {
+      "source": "declVariant",
+      "native": "declaration_variant"
+    },
+    {
+      "source": "declVariantClause",
+      "native": "declaration_variant_clause"
+    },
+    {
+      "source": "declVariantField",
+      "native": "declaration_variant_field"
+    },
+    {
+      "source": "_declProc",
+      "native": "declaration_procedure_body"
+    },
+    {
+      "source": "_declOperator",
+      "native": "declaration_operator"
+    },
+    {
+      "source": "operatorDot",
+      "native": "operator_dot"
+    },
+    {
+      "source": "_operatorName",
+      "native": "operator_name_body"
+    },
+    {
+      "source": "operatorName",
+      "native": "operator_name"
+    },
+    {
+      "source": "declArgs",
+      "native": "formal_parameter_list"
+    },
+    {
+      "source": "declArg",
+      "native": "formal_parameter_declaration"
+    },
+    {
+      "source": "_procAttribute",
+      "native": "procedure_attribute_body"
+    },
+    {
+      "source": "_procAttributeNoExt",
+      "native": "procedure_attribute_no_external"
+    },
+    {
+      "source": "procAttribute",
+      "native": "procedure_attribute"
+    },
+    {
+      "source": "rttiAttributes",
+      "native": "runtime_type_information_attributes"
+    },
+    {
+      "source": "procExternal",
+      "native": "procedure_external"
+    },
+    {
+      "source": "_initializer",
+      "native": "initializer"
+    },
+    {
+      "source": "recInitializer",
+      "native": "record_initializer"
+    },
+    {
+      "source": "recInitializerField",
+      "native": "record_initializer_field"
+    },
+    {
+      "source": "arrInitializer",
+      "native": "array_initializer"
+    },
+    {
+      "source": "kProgram",
+      "native": "program_header_keyword"
+    },
+    {
+      "source": "kLibrary",
+      "native": "library_keyword"
+    },
+    {
+      "source": "kUnit",
+      "native": "unit_keyword"
+    },
+    {
+      "source": "kUses",
+      "native": "module_import_keyword"
+    },
+    {
+      "source": "kInterface",
+      "native": "interface_keyword"
+    },
+    {
+      "source": "kDispInterface",
+      "native": "dispatch_interface_keyword"
+    },
+    {
+      "source": "kImplementation",
+      "native": "implementation_keyword"
+    },
+    {
+      "source": "kInitialization",
+      "native": "initialization_keyword"
+    },
+    {
+      "source": "kFinalization",
+      "native": "finalization_keyword"
+    },
+    {
+      "source": "kEndDot",
+      "native": "end_dot_keyword"
+    },
+    {
+      "source": "kBegin",
+      "native": "begin_keyword"
+    },
+    {
+      "source": "kEnd",
+      "native": "end_keyword"
+    },
+    {
+      "source": "kAsm",
+      "native": "assembly_keyword"
+    },
+    {
+      "source": "kVar",
+      "native": "variable_keyword"
+    },
+    {
+      "source": "kThreadvar",
+      "native": "thread_variable_keyword"
+    },
+    {
+      "source": "kConst",
+      "native": "constant_keyword"
+    },
+    {
+      "source": "kConstref",
+      "native": "constant_reference_keyword"
+    },
+    {
+      "source": "kResourcestring",
+      "native": "resource_string_keyword"
+    },
+    {
+      "source": "kOut",
+      "native": "out_keyword"
+    },
+    {
+      "source": "kType",
+      "native": "type_declaration_keyword"
+    },
+    {
+      "source": "kLabel",
+      "native": "label_keyword"
+    },
+    {
+      "source": "kExports",
+      "native": "exports_list_keyword"
+    },
+    {
+      "source": "kAbsolute",
+      "native": "absolute_keyword"
+    },
+    {
+      "source": "kProperty",
+      "native": "property_keyword"
+    },
+    {
+      "source": "kRead",
+      "native": "read_keyword"
+    },
+    {
+      "source": "kWrite",
+      "native": "write_keyword"
+    },
+    {
+      "source": "kImplements",
+      "native": "implements_keyword"
+    },
+    {
+      "source": "kDefault",
+      "native": "default_keyword"
+    },
+    {
+      "source": "kNodefault",
+      "native": "no_default_keyword"
+    },
+    {
+      "source": "kStored",
+      "native": "stored_keyword"
+    },
+    {
+      "source": "kIndex",
+      "native": "index_keyword"
+    },
+    {
+      "source": "kDispId",
+      "native": "dispatch_identifier_keyword"
+    },
+    {
+      "source": "kClass",
+      "native": "class_keyword"
+    },
+    {
+      "source": "kObject",
+      "native": "object_keyword"
+    },
+    {
+      "source": "kRecord",
+      "native": "record_keyword"
+    },
+    {
+      "source": "kObjcclass",
+      "native": "objective_c_class_keyword"
+    },
+    {
+      "source": "kObjccategory",
+      "native": "objective_c_extension_keyword"
+    },
+    {
+      "source": "kObjcprotocol",
+      "native": "objective_c_protocol_keyword"
+    },
+    {
+      "source": "kArray",
+      "native": "array_keyword"
+    },
+    {
+      "source": "kFile",
+      "native": "file_keyword"
+    },
+    {
+      "source": "kString",
+      "native": "string_keyword"
+    },
+    {
+      "source": "kSet",
+      "native": "set_keyword"
+    },
+    {
+      "source": "kOf",
+      "native": "of_keyword"
+    },
+    {
+      "source": "kHelper",
+      "native": "helper_keyword"
+    },
+    {
+      "source": "kPacked",
+      "native": "packed_keyword"
+    },
+    {
+      "source": "kGeneric",
+      "native": "generic_keyword"
+    },
+    {
+      "source": "kSpecialize",
+      "native": "specialize_keyword"
+    },
+    {
+      "source": "kDot",
+      "native": "dot_keyword"
+    },
+    {
+      "source": "kLt",
+      "native": "less_comparison_keyword"
+    },
+    {
+      "source": "kEq",
+      "native": "equal_keyword"
+    },
+    {
+      "source": "kNeq",
+      "native": "not_equal_keyword"
+    },
+    {
+      "source": "kGt",
+      "native": "greater_comparison_keyword"
+    },
+    {
+      "source": "kLte",
+      "native": "less_or_equal_comparison_keyword"
+    },
+    {
+      "source": "kGte",
+      "native": "greater_or_equal_comparison_keyword"
+    },
+    {
+      "source": "kAdd",
+      "native": "add_keyword"
+    },
+    {
+      "source": "kSub",
+      "native": "subtraction_keyword"
+    },
+    {
+      "source": "kMul",
+      "native": "multiplication_keyword"
+    },
+    {
+      "source": "kFdiv",
+      "native": "floating_division_keyword"
+    },
+    {
+      "source": "kAt",
+      "native": "at_keyword"
+    },
+    {
+      "source": "kHat",
+      "native": "hat_keyword"
+    },
+    {
+      "source": "kAssign",
+      "native": "assign_keyword"
+    },
+    {
+      "source": "kAssignAdd",
+      "native": "assign_add_keyword"
+    },
+    {
+      "source": "kAssignSub",
+      "native": "subtraction_assignment_keyword"
+    },
+    {
+      "source": "kAssignMul",
+      "native": "assign_multiplication_keyword"
+    },
+    {
+      "source": "kAssignDiv",
+      "native": "assign_division_keyword"
+    },
+    {
+      "source": "kOr",
+      "native": "or_keyword"
+    },
+    {
+      "source": "kXor",
+      "native": "exclusive_or_keyword"
+    },
+    {
+      "source": "kDiv",
+      "native": "division_operator_keyword"
+    },
+    {
+      "source": "kMod",
+      "native": "module_keyword"
+    },
+    {
+      "source": "kAnd",
+      "native": "and_keyword"
+    },
+    {
+      "source": "kShl",
+      "native": "shift_left_keyword"
+    },
+    {
+      "source": "kShr",
+      "native": "shift_right_keyword"
+    },
+    {
+      "source": "kNot",
+      "native": "not_keyword"
+    },
+    {
+      "source": "kIs",
+      "native": "is_keyword"
+    },
+    {
+      "source": "kAs",
+      "native": "as_keyword"
+    },
+    {
+      "source": "kIn",
+      "native": "in_keyword"
+    },
+    {
+      "source": "kFor",
+      "native": "for_keyword"
+    },
+    {
+      "source": "kTo",
+      "native": "to_keyword"
+    },
+    {
+      "source": "kDownto",
+      "native": "down_to_keyword"
+    },
+    {
+      "source": "kIf",
+      "native": "if_keyword"
+    },
+    {
+      "source": "kThen",
+      "native": "then_keyword"
+    },
+    {
+      "source": "kElse",
+      "native": "else_keyword"
+    },
+    {
+      "source": "kDo",
+      "native": "do_keyword"
+    },
+    {
+      "source": "kWhile",
+      "native": "while_keyword"
+    },
+    {
+      "source": "kRepeat",
+      "native": "repeat_keyword"
+    },
+    {
+      "source": "kUntil",
+      "native": "termination_condition_keyword"
+    },
+    {
+      "source": "kTry",
+      "native": "try_keyword"
+    },
+    {
+      "source": "kExcept",
+      "native": "except_keyword"
+    },
+    {
+      "source": "kFinally",
+      "native": "finally_keyword"
+    },
+    {
+      "source": "kRaise",
+      "native": "raise_keyword"
+    },
+    {
+      "source": "kOn",
+      "native": "on_keyword"
+    },
+    {
+      "source": "kCase",
+      "native": "case_selection_keyword"
+    },
+    {
+      "source": "kWith",
+      "native": "with_keyword"
+    },
+    {
+      "source": "kGoto",
+      "native": "go_to_keyword"
+    },
+    {
+      "source": "kFunction",
+      "native": "value_routine_keyword"
+    },
+    {
+      "source": "kProcedure",
+      "native": "void_routine_keyword"
+    },
+    {
+      "source": "kConstructor",
+      "native": "constructor_keyword"
+    },
+    {
+      "source": "kDestructor",
+      "native": "destruction_method_keyword"
+    },
+    {
+      "source": "kOperator",
+      "native": "operator_keyword"
+    },
+    {
+      "source": "kReference",
+      "native": "reference_keyword"
+    },
+    {
+      "source": "kPublished",
+      "native": "published_keyword"
+    },
+    {
+      "source": "kPublic",
+      "native": "public_keyword"
+    },
+    {
+      "source": "kProtected",
+      "native": "protected_keyword"
+    },
+    {
+      "source": "kPrivate",
+      "native": "private_keyword"
+    },
+    {
+      "source": "kStrict",
+      "native": "strict_keyword"
+    },
+    {
+      "source": "kRequired",
+      "native": "required_keyword"
+    },
+    {
+      "source": "kOptional",
+      "native": "optional_keyword"
+    },
+    {
+      "source": "kForward",
+      "native": "forward_keyword"
+    },
+    {
+      "source": "kStatic",
+      "native": "static_keyword"
+    },
+    {
+      "source": "kVirtual",
+      "native": "virtual_keyword"
+    },
+    {
+      "source": "kAbstract",
+      "native": "abstract_keyword"
+    },
+    {
+      "source": "kSealed",
+      "native": "sealed_keyword"
+    },
+    {
+      "source": "kDynamic",
+      "native": "dynamic_keyword"
+    },
+    {
+      "source": "kOverride",
+      "native": "override_keyword"
+    },
+    {
+      "source": "kOverload",
+      "native": "overload_keyword"
+    },
+    {
+      "source": "kReintroduce",
+      "native": "reintroduce_keyword"
+    },
+    {
+      "source": "kInherited",
+      "native": "inherited_keyword"
+    },
+    {
+      "source": "kInline",
+      "native": "inline_keyword"
+    },
+    {
+      "source": "kStdcall",
+      "native": "standard_call_keyword"
+    },
+    {
+      "source": "kCdecl",
+      "native": "c_declaration_keyword"
+    },
+    {
+      "source": "kCppdecl",
+      "native": "c_plus_plus_declaration_keyword"
+    },
+    {
+      "source": "kPascal",
+      "native": "pascal_keyword"
+    },
+    {
+      "source": "kRegister",
+      "native": "register_keyword"
+    },
+    {
+      "source": "kMwpascal",
+      "native": "metrowerks_pascal_keyword"
+    },
+    {
+      "source": "kExternal",
+      "native": "external_keyword"
+    },
+    {
+      "source": "kName",
+      "native": "name_keyword"
+    },
+    {
+      "source": "kMessage",
+      "native": "message_keyword"
+    },
+    {
+      "source": "kDeprecated",
+      "native": "deprecated_keyword"
+    },
+    {
+      "source": "kExperimental",
+      "native": "experimental_keyword"
+    },
+    {
+      "source": "kPlatform",
+      "native": "compiler_platform_keyword"
+    },
+    {
+      "source": "kUnimplemented",
+      "native": "missing_implementation_keyword"
+    },
+    {
+      "source": "kCvar",
+      "native": "c_variable_keyword"
+    },
+    {
+      "source": "kExport",
+      "native": "export_keyword"
+    },
+    {
+      "source": "kFar",
+      "native": "far_keyword"
+    },
+    {
+      "source": "kNear",
+      "native": "near_keyword"
+    },
+    {
+      "source": "kSafecall",
+      "native": "safe_call_keyword"
+    },
+    {
+      "source": "kAssembler",
+      "native": "assembler_keyword"
+    },
+    {
+      "source": "kNostackframe",
+      "native": "no_stack_frame_keyword"
+    },
+    {
+      "source": "kInterrupt",
+      "native": "interrupt_keyword"
+    },
+    {
+      "source": "kNoreturn",
+      "native": "no_return_keyword"
+    },
+    {
+      "source": "kIocheck",
+      "native": "input_output_check_keyword"
+    },
+    {
+      "source": "kLocal",
+      "native": "local_keyword"
+    },
+    {
+      "source": "kHardfloat",
+      "native": "hardware_float_keyword"
+    },
+    {
+      "source": "kSoftfloat",
+      "native": "software_float_keyword"
+    },
+    {
+      "source": "kMs_abi_default",
+      "native": "microsoft_application_binary_interface_default_keyword"
+    },
+    {
+      "source": "kMs_abi_cdecl",
+      "native": "microsoft_application_binary_interface_c_declaration_keyword"
+    },
+    {
+      "source": "kSaveregisters",
+      "native": "save_registers_keyword"
+    },
+    {
+      "source": "kSysv_abi_default",
+      "native": "system_five_application_binary_interface_default_keyword"
+    },
+    {
+      "source": "kSysv_abi_cdecl",
+      "native": "system_five_application_binary_interface_c_declaration_keyword"
+    },
+    {
+      "source": "kVectorcall",
+      "native": "vector_call_keyword"
+    },
+    {
+      "source": "kVarargs",
+      "native": "variable_arguments_keyword"
+    },
+    {
+      "source": "kWinapi",
+      "native": "windows_application_programming_interface_keyword"
+    },
+    {
+      "source": "kAlias",
+      "native": "alias_keyword"
+    },
+    {
+      "source": "kDelayed",
+      "native": "delayed_keyword"
+    },
+    {
+      "source": "kNil",
+      "native": "nil_keyword"
+    },
+    {
+      "source": "kTrue",
+      "native": "true_keyword"
+    },
+    {
+      "source": "kFalse",
+      "native": "false_keyword"
+    },
+    {
+      "source": "kIfdef",
+      "native": "if_defined_keyword"
+    },
+    {
+      "source": "kIfndef",
+      "native": "if_not_defined_keyword"
+    },
+    {
+      "source": "kEndif",
+      "native": "end_if_keyword"
+    },
+    {
+      "source": "_space",
+      "native": "space"
+    },
+    {
+      "source": "pp",
+      "native": "preprocessor"
+    }
+  ],
+  "expandedWords": [
+    "abi",
+    "asm",
+    "cdecl",
+    "expr",
+    "foreach",
+    "goto",
+    "guid",
+    "pp",
+    "typeref"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "program",
+        "concept": "grammar.program"
+      },
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "character_literal",
+        "concept": "grammar.character-literal"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 310
+  },
+  "approximations": [],
+  "unsupported": []
+}

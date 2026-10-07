@@ -192,3 +192,50 @@ test('nullable pattern extras preserve the content field and leave the pinned so
     { extraAlternative: 3 }, { pattern: 'absent' },
   ]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
 });
+
+test('reviewed precedence replaces an outer level without changing the production or pinned source', () => {
+  const body = { type: 'STRING', value: 'x' };
+  const source = { rules: { source: { type: 'PREC_LEFT', value: 2, content: body } } };
+  const original = structuredClone(source);
+  const decision = { family: 'rule-precedence', rule: 'source', associativity: 'right', value: -1 };
+  const result = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(result.rules.source, { type: 'PREC_RIGHT', value: -1, content: body });
+  for (const change of [{ rule: 'absent' }, { associativity: 'invalid' }, { value: 1.5 }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('ordered variants choose the reviewed tree and retain fallback language alternatives', () => {
+  const sym = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'variants', rules: {
+    source: { type: 'CHOICE', members: [sym('first'), sym('second'), sym('other')] },
+    first: { type: 'STRING', value: 'x' }, second: { type: 'PATTERN', value: '[xy]' }, other: { type: 'STRING', value: 'z' },
+  } };
+  const original = structuredClone(source);
+  const decision = { family: 'ordered-variants', rule: 'source', variants: ['first', 'second'] };
+  const result = transformNativeSource(source, [decision]);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(result))));
+  for (const text of ['x', 'y', 'z']) {
+    const outcome = parser.parseTree(text);
+    assert.equal(outcome.ok, true, text);
+    assert.deepEqual(outcome.ambiguities, []);
+    assert.equal(outcome.tree.children[0].kind, text === 'x' ? 'first' : text === 'y' ? 'second' : 'other');
+  }
+  assert.deepEqual(source, original);
+  for (const variants of [['first'], ['first', 'absent'], ['first', 'first']]) assert.throws(() => transformNativeSource(source, [{ ...decision, variants }]), TypeError);
+});
+
+test('a reviewed field variant preserves fields and aliases while keeping the original alternative', () => {
+  const sym = (name) => ({ type: 'SYMBOL', name });
+  const source = { rules: {
+    invocation: { type: 'SEQ', members: [{ type: 'FIELD', name: 'target', content: { type: 'CHOICE', members: [sym('identifier'), sym('member')] } }, { type: 'STRING', value: '()' }] },
+    expression: { type: 'CHOICE', members: [sym('invocation'), sym('identifier')] },
+  } };
+  const original = structuredClone(source);
+  const decision = { family: 'field-choice-variant', rule: 'invocation', helper: '_member_invocation', field: 'target', symbol: 'member', alias: 'invocation', insertInto: 'expression' };
+  const result = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(result.rules.invocation, original.rules.invocation);
+  assert.deepEqual(result.rules._member_invocation.members[0], { type: 'FIELD', name: 'target', content: sym('member') });
+  assert.deepEqual(result.rules.expression.members.at(-1), { type: 'ALIAS', named: true, value: 'invocation', content: sym('_member_invocation') });
+  for (const change of [{ helper: 'visible' }, { field: 'absent' }, { symbol: 'absent' }, { insertInto: 'invocation' }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});

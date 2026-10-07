@@ -25,6 +25,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { compileGrammar, languageEntry, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
+import { NATIVE_BATCH_FIXTURES } from './native-grammar-batch-fixtures.mjs';
 import { nativeOracleKinds } from './build-language-catalog.mjs';
 import { corpusCases, grammarSourceOf } from './import-native-grammars.mjs';
 import { hasRecovery, nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
@@ -148,6 +149,15 @@ const solidityCorpus = (recovers) => upstreamCorpus('native-solidity').filter((s
 const REGEX_LITERAL_BRACKET = 'ECMA-262 Annex B.1.2 reads a { that opens no count quantifier, and a [: that opens no POSIX class, as characters; the tree-sitter-regex 0.25.0 lexer takes them as the literals and recovers.';
 
 export const NATIVE_GRAMMARS = Object.freeze([
+  ...NATIVE_BATCH_FIXTURES.map((entry) => {
+    const source = grammarSourceOf(`native-${entry.id}`);
+    return { divergences: [], ...entry, grammar: `parity/grammars/native/${entry.id}.lino`, oracle: source.package,
+      sources: [`${source.repository}/tree/${source.revision}`,
+        ...(source.corpus ? [`${source.corpus.repository ?? source.repository}/tree/${source.corpus.revision ?? source.revision}/${source.corpus.path}`] : [])],
+      ...(source.corpus ? { corpus: { ...source.corpus, url: `${source.corpus.repository ?? source.repository}/tree/${source.corpus.revision ?? source.revision}/${source.corpus.path}` } } : {}),
+      ...nativeGrammar(`native-${entry.id}`),
+    };
+  }),
   {
     id: 'lua', language: 'Lua', grammar: 'parity/grammars/native/lua.lino',
     oracle: 'tree-sitter-lua 0.5.0',
@@ -160,7 +170,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
       '--[[block]]\nlocal x = 1', '--[==[a]=]b]==]\nlocal x=2',
       'local x = [=[a]==]b]=]', 'local x=[=[a]=]; local y=[==[b]==]',
       'local function f(...) return ... end',
-      '--\n-- next\n', '-- \n-- next\n', '--\n--[[block]]',
+      '--\n-- next\n', '-- \n-- next\n', '--\n--[[block]]', 'f()\n("hi")\n"last"', 'f()(x)(y)', 'f(); (g)()',
       'a,b=1,2', 'local f=function(x) return x end; f(2)',
       'function t:f(x) return self.x+x end; t:f(2)',
       'local x=-1+2*3^4; local y=not x and true or false',
@@ -1195,9 +1205,9 @@ export function buildNativeGrammarFixture(entry) {
     if (repaired.rejection?.reason !== 'recovered') throw new Error(`${entry.grammar} does not recover from ${JSON.stringify(source)}`);
     return { source, recovered: renderSyntaxTree(repaired.tree) };
   });
-  const { id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds } = entry;
+  const { id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds, corpus } = entry;
   return {
-    schemaVersion: 1, id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds, matches, divergences, rejections,
+    schemaVersion: 1, id, language, grammar, oracle, sources, ...(corpus ? { corpus } : {}), hidden, anonymous, extras, oracleKinds, matches, divergences, rejections,
   };
 }
 
@@ -1326,7 +1336,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   let stale = 0;
   const outputs = [
     ...NATIVE_GRAMMARS.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
-    ['parity/fixtures/native-grammars/lua-corpus.json', () => buildNativeGrammarCorpusSources('lua')],
+    ...['lua', 'toml', 'zig', 'pascal', 'vb'].map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
     [DEFAULT_CST_PATH, buildNativeDefaultCstExpected],
   ];
   for (const [relative, build] of outputs) {

@@ -1,0 +1,136 @@
+[
+  {
+    "name": "delimiter runs of 2",
+    "assertion": "delimiterRuns",
+    "scanners": [
+      {
+        "family": "delimiter-run",
+        "name": "runs",
+        "contentToken": "quote_content",
+        "endToken": "quote_end",
+        "delimiter": "\"",
+        "count": 2
+      }
+    ],
+    "generated": "(scanner runs (tokens quote_content quote_end) (operations (consume (literal %22)) mark (if (next (literal %22)) (then (consume (literal %22)) (if (next (literal %22)) (then (emit quote_content)) (else mark (emit quote_end)))) (else mark (emit quote_content)))))\n",
+    "listing": "(grammar (start source))\n(scanner runs (tokens quote_content quote_end) (operations (consume (literal %22)) mark (if (next (literal %22)) (then (consume (literal %22)) (if (next (literal %22)) (then (emit quote_content)) (else mark (emit quote_end)))) (else mark (emit quote_content)))))\n(rule source normal (seq (literal %22%22) (repeat0 (choice unordered (ref quote_content) (ref body))) (ref quote_end)))\n(rule body token (class negated (char %22)))\n",
+    "accept": [
+      "\"\"\"\"",
+      "\"\"é😀\"\"",
+      "\"\"a\"b\"\"",
+      "\"\"a\"\"\"",
+      "\"\"a\"\"\"\""
+    ],
+    "reject": [
+      "\"\"",
+      "\"\"a\""
+    ],
+    "trees": {
+      "\"\"\"\"": "(source \"\\\"\\\"\" (quote_end \"\\\"\\\"\"))",
+      "\"\"é😀\"\"": "(source \"\\\"\\\"\" (body \"é\") (body \"😀\") (quote_end \"\\\"\\\"\"))",
+      "\"\"a\"b\"\"": "(source \"\\\"\\\"\" (body \"a\") (quote_content \"\\\"\") (body \"b\") (quote_end \"\\\"\\\"\"))",
+      "\"\"a\"\"\"": "(source \"\\\"\\\"\" (body \"a\") (quote_content \"\\\"\") (quote_end \"\\\"\\\"\"))",
+      "\"\"a\"\"\"\"": "(source \"\\\"\\\"\" (body \"a\") (quote_content \"\\\"\") (quote_content \"\\\"\") (quote_end \"\\\"\\\"\"))"
+    }
+  },
+  {
+    "name": "delimiter runs of 3",
+    "assertion": "delimiterRuns",
+    "scanners": [
+      {
+        "family": "delimiter-run",
+        "name": "runs",
+        "contentToken": "quote_content",
+        "endToken": "quote_end",
+        "delimiter": "'",
+        "count": 3
+      }
+    ],
+    "generated": "(scanner runs (tokens quote_content quote_end) (operations (consume (literal %27)) mark (if (next (literal %27)) (then (consume (literal %27)) (if (next (literal %27)) (then (consume (literal %27)) (if (next (literal %27)) (then (emit quote_content)) (else mark (emit quote_end)))) (else mark (emit quote_content)))) (else mark (emit quote_content)))))\n",
+    "listing": "(grammar (start source))\n(scanner runs (tokens quote_content quote_end) (operations (consume (literal %27)) mark (if (next (literal %27)) (then (consume (literal %27)) (if (next (literal %27)) (then (consume (literal %27)) (if (next (literal %27)) (then (emit quote_content)) (else mark (emit quote_end)))) (else mark (emit quote_content)))) (else mark (emit quote_content)))))\n(rule source normal (seq (literal %27%27%27) (repeat0 (choice unordered (ref quote_content) (ref body))) (ref quote_end)))\n(rule body token (class negated (char %27)))\n",
+    "accept": [
+      "''''''",
+      "'''é😀'''",
+      "'''a''b'''",
+      "'''a''''",
+      "'''a'''''"
+    ],
+    "reject": [
+      "'''",
+      "'''a''"
+    ],
+    "trees": {
+      "''''''": "(source \"'''\" (quote_end \"'''\"))",
+      "'''é😀'''": "(source \"'''\" (body \"é\") (body \"😀\") (quote_end \"'''\"))",
+      "'''a''b'''": "(source \"'''\" (body \"a\") (quote_content \"''\") (body \"b\") (quote_end \"'''\"))",
+      "'''a''''": "(source \"'''\" (body \"a\") (quote_content \"'\") (quote_end \"'''\"))",
+      "'''a'''''": "(source \"'''\" (body \"a\") (quote_content \"'\") (quote_content \"'\") (quote_end \"'''\"))"
+    }
+  },
+  {
+    "name": "delimiter runs of 4",
+    "assertion": "delimiterRuns",
+    "scanners": [
+      {
+        "family": "delimiter-run",
+        "name": "runs",
+        "contentToken": "quote_content",
+        "endToken": "quote_end",
+        "delimiter": "\"",
+        "count": 4
+      }
+    ],
+    "generated": "(scanner runs (tokens quote_content quote_end) (operations (consume (literal %22)) mark (if (next (literal %22)) (then (consume (literal %22)) (if (next (literal %22)) (then (consume (literal %22)) (if (next (literal %22)) (then (consume (literal %22)) (if (next (literal %22)) (then (emit quote_content)) (else mark (emit quote_end)))) (else mark (emit quote_content)))) (else mark (emit quote_content)))) (else mark (emit quote_content)))))\n",
+    "listing": "(grammar (start source))\n(scanner runs (tokens quote_content quote_end) (operations (consume (literal %22)) mark (if (next (literal %22)) (then (consume (literal %22)) (if (next (literal %22)) (then (consume (literal %22)) (if (next (literal %22)) (then (consume (literal %22)) (if (next (literal %22)) (then (emit quote_content)) (else mark (emit quote_end)))) (else mark (emit quote_content)))) (else mark (emit quote_content)))) (else mark (emit quote_content)))))\n(rule source normal (seq (literal %22%22%22%22) (repeat0 (choice unordered (ref quote_content) (ref body))) (ref quote_end)))\n(rule body token (class negated (char %22)))\n",
+    "accept": [
+      "\"\"\"\"\"\"\"\"",
+      "\"\"\"\"é😀\"\"\"\"",
+      "\"\"\"\"a\"\"\"b\"\"\"\"",
+      "\"\"\"\"a\"\"\"\"\"",
+      "\"\"\"\"a\"\"\"\"\"\""
+    ],
+    "reject": [
+      "\"\"\"\"",
+      "\"\"\"\"a\"\"\""
+    ],
+    "trees": {
+      "\"\"\"\"\"\"\"\"": "(source \"\\\"\\\"\\\"\\\"\" (quote_end \"\\\"\\\"\\\"\\\"\"))",
+      "\"\"\"\"é😀\"\"\"\"": "(source \"\\\"\\\"\\\"\\\"\" (body \"é\") (body \"😀\") (quote_end \"\\\"\\\"\\\"\\\"\"))",
+      "\"\"\"\"a\"\"\"b\"\"\"\"": "(source \"\\\"\\\"\\\"\\\"\" (body \"a\") (quote_content \"\\\"\\\"\\\"\") (body \"b\") (quote_end \"\\\"\\\"\\\"\\\"\"))",
+      "\"\"\"\"a\"\"\"\"\"": "(source \"\\\"\\\"\\\"\\\"\" (body \"a\") (quote_content \"\\\"\") (quote_end \"\\\"\\\"\\\"\\\"\"))",
+      "\"\"\"\"a\"\"\"\"\"\"": "(source \"\\\"\\\"\\\"\\\"\" (body \"a\") (quote_content \"\\\"\") (quote_content \"\\\"\") (quote_end \"\\\"\\\"\\\"\\\"\"))"
+    }
+  },
+  {
+    "name": "line boundary before newline or end",
+    "assertion": "lineBoundaries",
+    "scanners": [
+      {
+        "family": "line-boundary",
+        "name": "lines",
+        "token": "line_boundary"
+      }
+    ],
+    "generated": "(scanner lines (tokens line_boundary) (operations (if (not (valid line_boundary)) (then fail)) (while (next (class plain (char %20) (char %09))) (do (skip (class plain (char %20) (char %09))))) (if (next (literal %0D)) (then (skip (literal %0D)))) (if (some atEnd (next (literal %0A))) (then (emit line_boundary))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner lines (tokens line_boundary) (operations (if (not (valid line_boundary)) (then fail)) (while (next (class plain (char %20) (char %09))) (do (skip (class plain (char %20) (char %09))))) (if (next (literal %0D)) (then (skip (literal %0D)))) (if (some atEnd (next (literal %0A))) (then (emit line_boundary))) fail))\n(rule source normal (seq (literal x) (ref line_boundary) (optional (literal %0A))))\n",
+    "accept": [
+      "x",
+      "x\n",
+      "x \t\n",
+      "x\r\n",
+      "x \t"
+    ],
+    "reject": [
+      "xy",
+      "x y",
+      "x\rY"
+    ],
+    "trees": {
+      "x": "(source \"x\" (line_boundary \"\"))",
+      "x\n": "(source \"x\" (line_boundary \"\") \"\\n\")",
+      "x \t\n": "(source \"x\" ~\" \" ~\"\\t\" (line_boundary \"\") \"\\n\")",
+      "x\r\n": "(source \"x\" ~\"\\r\" (line_boundary \"\") \"\\n\")",
+      "x \t": "(source \"x\" ~\" \" ~\"\\t\" (line_boundary \"\"))"
+    }
+  }
+]

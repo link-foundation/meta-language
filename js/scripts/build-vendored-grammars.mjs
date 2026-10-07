@@ -104,7 +104,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   ocaml: { crate: 'tree-sitter-ocaml', dir: 'grammars/ocaml' },
   ocaml_interface: { crate: 'tree-sitter-ocaml', dir: 'grammars/interface' },
   odin: { crate: 'tree-sitter-odin', dir: '.' },
-  pascal: { crate: 'tree-sitter-pascal', dir: '.' },
+  pascal: { crate: 'tree-sitter-pascal', dir: '.', oracle: true },
   perl: { crate: 'ts-parser-perl', dir: '.' },
   php: { crate: 'tree-sitter-php', dir: 'php' },
   powershell: { crate: 'tree-sitter-powershell', dir: '.' },
@@ -147,13 +147,13 @@ export const GRAMMAR_SOURCES = Object.freeze({
   // The 0.7.4 scanner exits through stderr when allocation fails, which a
   // Wasm parser cannot import; the Wasm build traps instead.
   swift: { crate: 'tree-sitter-swift', dir: '.', wasmPatch: 'js/scripts/grammar-patches/tree-sitter-swift-wasm.patch' },
-  toml: { crate: 'tree-sitter-toml-ng', dir: '.' },
+  toml: { crate: 'tree-sitter-toml-ng', dir: '.', oracle: true },
   tsx: { crate: 'tree-sitter-typescript', dir: 'tsx', oracle: true },
   typescript: { crate: 'tree-sitter-typescript', dir: 'typescript', oracle: true },
-  vb: { crate: 'tree-sitter-vb-dotnet', dir: '.' },
+  vb: { crate: 'tree-sitter-vb-dotnet', dir: '.', oracle: true },
   xml: { crate: 'tree-sitter-xml', dir: 'xml' },
   yaml: { crate: 'tree-sitter-yaml', dir: '.' },
-  zig: { crate: 'tree-sitter-zig', dir: '.' },
+  zig: { crate: 'tree-sitter-zig', dir: '.', oracle: true },
 });
 
 // zlib writes a zero mtime, so identical wasm always yields identical archives.

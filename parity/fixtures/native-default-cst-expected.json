@@ -1770,7 +1770,7 @@
       "grammars": {
         "native-lua": {
           "version": "1.0.0",
-          "parserSha256": "8e2f97b72c8853e992ac8ecf984dbc37f34bfa1c73e85aa0dc3117a81fa9e7d4"
+          "parserSha256": "b696546c16aa3498807820516c8fd80138e2781c7b0c0080cc59e82083b5b2e4"
         }
       },
       "oracleGrammars": {
@@ -1851,6 +1851,288 @@
         [4,null,"expression_list",1,26,27,""],
         [5,null,"identifier",1,26,27,""],
         [2,null,"end",0,28,31,""]
+      ],
+      "embedded": []
+    },
+    "TOML": {
+      "grammars": {
+        "native-toml": {
+          "version": "1.0.0",
+          "parserSha256": "767a422febba57f792215b64b3274a30449c2378bf3bcbf914aa2434a9f3656b"
+        }
+      },
+      "oracleGrammars": {
+        "toml": {
+          "version": "0.7.0",
+          "parserSha256": "1991a2608e6f0214e563fe5f762e8df72954dc69a3dd9a1e22ea8a870e4052c3"
+        }
+      },
+      "sourceSha256": "dcd1e74705c8f8a5a381dbab7213559082e39ee8acb6046ddf87c2bbd604f9c9",
+      "recoverySourceSha256": "c88501bc9ea3604c053604e85711de64bd03ec8d01450872e16b914742f8a61f",
+      "positive": [
+        [0,null,"document",1,0,70,""],
+        [1,null,"comment",1,0,7,"X"],
+        [1,null,"pair",1,8,20,""],
+        [2,null,"bare_key",1,8,13,""],
+        [2,null,"=",0,14,15,""],
+        [2,null,"string",1,16,20,""],
+        [3,null,"\"",0,16,17,""],
+        [3,null,"\"",0,19,20,""],
+        [1,null,"table",1,21,70,""],
+        [2,null,"[",0,21,22,""],
+        [2,null,"bare_key",1,22,27,""],
+        [2,null,"]",0,27,28,""],
+        [2,null,"pair",1,29,55,""],
+        [3,null,"bare_key",1,29,32,""],
+        [3,null,"=",0,33,34,""],
+        [3,null,"offset_date_time",1,35,55,""],
+        [2,null,"pair",1,56,69,""],
+        [3,null,"bare_key",1,56,60,""],
+        [3,null,"=",0,61,62,""],
+        [3,null,"array",1,63,69,""],
+        [4,null,"[",0,63,64,""],
+        [4,null,"integer",1,64,65,""],
+        [4,null,",",0,65,66,""],
+        [4,null,"integer",1,67,68,""],
+        [4,null,"]",0,68,69,""]
+      ],
+      "recovery": [
+        [0,null,"document",1,0,16,""],
+        [1,null,"pair",1,0,8,""],
+        [2,null,"bare_key",1,0,5,""],
+        [2,null,"=",0,6,7,""],
+        [2,null,"integer",1,7,7,""],
+        [1,null,"unnamed_token",1,9,16,""],
+        [2,null,"ERROR",1,9,15,"E"],
+        [2,null,"\n",0,15,16,""]
+      ],
+      "embedded": []
+    },
+    "Zig": {
+      "grammars": {
+        "native-zig": {
+          "version": "1.0.0",
+          "parserSha256": "ab50e690a3938a5785ff142d279b1fc3c044cd7e757d8b9cfea0f7e5455658e4"
+        }
+      },
+      "oracleGrammars": {
+        "zig": {
+          "version": "1.1.2",
+          "parserSha256": "5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63"
+        }
+      },
+      "sourceSha256": "40f6b2f1a71e5579b77813d844fd1fef4cdb7850227297d8cda9c10ee6298379",
+      "recoverySourceSha256": "54bdaf53c6485489f87540cad0d30569bd07852a0ba2269d74102caf29e3853f",
+      "positive": [
+        [0,null,"source_file",1,0,102,""],
+        [1,null,"comment",1,0,8,"X"],
+        [1,null,"variable_declaration",1,9,36,""],
+        [2,null,"const",0,9,14,""],
+        [2,null,"identifier",1,15,18,""],
+        [2,null,"=",0,19,20,""],
+        [2,null,"builtin_function",1,21,35,""],
+        [3,null,"builtin_identifier",1,21,28,""],
+        [3,null,"arguments",1,28,35,""],
+        [4,null,"(",0,28,29,""],
+        [4,null,"string",1,29,34,""],
+        [5,null,"\"",0,29,30,""],
+        [5,null,"string_content",1,30,33,""],
+        [5,null,"\"",0,33,34,""],
+        [4,null,")",0,34,35,""],
+        [2,null,";",0,35,36,""],
+        [1,null,"function_declaration",1,37,85,""],
+        [2,null,"pub",0,37,40,""],
+        [2,null,"fn",0,41,43,""],
+        [2,"name","identifier",1,44,45,""],
+        [2,null,"parameters",1,45,53,""],
+        [3,null,"(",0,45,46,""],
+        [3,null,"parameter",1,46,52,""],
+        [4,"name","identifier",1,46,47,""],
+        [4,null,":",0,47,48,""],
+        [4,"type","builtin_type",1,49,52,""],
+        [3,null,")",0,52,53,""],
+        [2,"type","builtin_type",1,54,57,""],
+        [2,"body","block",1,58,85,""],
+        [3,null,"{",0,58,59,""],
+        [3,null,"expression_statement",1,64,77,""],
+        [4,null,"return_expression",1,64,76,""],
+        [5,null,"return",0,64,70,""],
+        [5,null,"binary_expression",1,71,76,""],
+        [6,"left","identifier",1,71,72,""],
+        [6,"operator","+",0,73,74,""],
+        [6,"right","integer",1,75,76,""],
+        [4,null,";",0,76,77,""],
+        [3,null,"comment",1,78,83,"X"],
+        [3,null,"}",0,84,85,""],
+        [1,null,"variable_declaration",1,86,101,""],
+        [2,null,"const",0,86,91,""],
+        [2,null,"identifier",1,92,93,""],
+        [2,null,"=",0,94,95,""],
+        [2,null,"string",1,96,100,""],
+        [3,null,"\"",0,96,97,""],
+        [3,null,"string_content",1,97,99,""],
+        [3,null,"\"",0,99,100,""],
+        [2,null,";",0,100,101,""]
+      ],
+      "recovery": [
+        [0,null,"source_file",1,0,36,""],
+        [1,null,"function_declaration",1,0,35,""],
+        [2,null,"pub",0,0,3,""],
+        [2,null,"fn",0,4,6,""],
+        [2,"name","identifier",1,7,8,""],
+        [2,null,"parameters",1,8,15,""],
+        [3,null,"(",0,8,9,""],
+        [3,null,"parameter",1,9,15,""],
+        [4,"name","identifier",1,9,10,""],
+        [4,null,":",0,10,11,""],
+        [4,"type","builtin_type",1,12,15,""],
+        [3,null,")",0,15,15,"M"],
+        [2,null,"float",1,16,16,"M"],
+        [2,null,"ERROR",1,16,34,"E"],
+        [2,null,";",0,34,35,""]
+      ],
+      "embedded": []
+    },
+    "Delphi/Object Pascal": {
+      "grammars": {
+        "native-pascal": {
+          "version": "1.0.0",
+          "parserSha256": "c2b5dbfc5a6b5fdf44b66767cc06c3b662edb9fa75b4ce44d42a5d51d4aca61e"
+        }
+      },
+      "oracleGrammars": {
+        "pascal": {
+          "version": "0.10.2",
+          "parserSha256": "d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329"
+        }
+      },
+      "sourceSha256": "365558dfd9978b73d9f04e7e82c7a5521ed220e22cf7474554f05636eefaa7f5",
+      "recoverySourceSha256": "a4500470721f7bf5353b6a8e79de2d175024e2ac697a490f0aed76482caf71ed",
+      "positive": [
+        [0,null,"root",1,0,96,""],
+        [1,null,"comment",1,0,9,"X"],
+        [1,null,"program",1,10,95,""],
+        [2,null,"kProgram",1,10,17,""],
+        [2,null,"moduleName",1,18,22,""],
+        [3,null,"identifier",1,18,22,""],
+        [2,null,";",0,22,23,""],
+        [2,null,"comment",1,24,34,"X"],
+        [2,null,"declVars",1,35,50,""],
+        [3,null,"kVar",1,35,38,""],
+        [3,null,"declVar",1,39,50,""],
+        [4,"name","identifier",1,39,40,""],
+        [4,null,":",0,40,41,""],
+        [4,"type","type",1,42,49,""],
+        [5,null,"typeref",1,42,49,""],
+        [6,null,"identifier",1,42,49,""],
+        [4,null,";",0,49,50,""],
+        [2,null,"block",1,51,94,""],
+        [3,null,"kBegin",1,51,56,""],
+        [3,null,"assignment",1,59,69,""],
+        [4,"lhs","identifier",1,59,60,""],
+        [4,"operator","kAssign",1,61,63,""],
+        [4,"rhs","exprBinary",1,64,69,""],
+        [5,"lhs","literalNumber",1,64,65,""],
+        [5,"operator","kAdd",1,66,67,""],
+        [5,"rhs","literalNumber",1,68,69,""],
+        [3,null,";",0,69,70,""],
+        [3,null,"statement",1,73,90,""],
+        [4,null,"exprCall",1,73,89,""],
+        [5,"entity","identifier",1,73,80,""],
+        [5,null,"(",0,80,81,""],
+        [5,"args","exprArgs",1,81,88,""],
+        [6,null,"literalString",1,81,85,""],
+        [6,null,",",0,85,86,""],
+        [6,null,"identifier",1,87,88,""],
+        [5,null,")",0,88,89,""],
+        [4,null,";",0,89,90,""],
+        [3,null,"kEnd",1,91,94,""],
+        [2,null,"kEndDot",1,94,95,""],
+        [3,null,".",0,94,95,""]
+      ],
+      "recovery": [
+        [0,null,"root",1,0,32,""],
+        [1,null,"program",1,0,31,""],
+        [2,null,"kProgram",1,0,7,""],
+        [2,null,"moduleName",1,8,12,""],
+        [3,null,"identifier",1,8,12,""],
+        [2,null,";",0,12,13,""],
+        [2,null,"block",1,14,30,""],
+        [3,null,"kBegin",1,14,19,""],
+        [3,null,"assignment",1,20,25,""],
+        [4,"lhs","identifier",1,20,21,""],
+        [4,"operator","kAssign",1,22,24,""],
+        [4,null,"identifier",1,25,25,"M"],
+        [3,null,";",0,25,26,""],
+        [3,null,"kEnd",1,27,30,""],
+        [2,null,"kEndDot",1,30,31,""],
+        [3,null,".",0,30,31,""]
+      ],
+      "embedded": []
+    },
+    "Visual Basic": {
+      "grammars": {
+        "native-vb": {
+          "version": "1.0.0",
+          "parserSha256": "d9c5512c45b7676bb61ef74e2a22c9e4854a881ba544b796fea9949f3942c00b"
+        }
+      },
+      "oracleGrammars": {
+        "vb": {
+          "version": "0.1.0",
+          "parserSha256": "7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8"
+        }
+      },
+      "sourceSha256": "754add4e1e2bb354ca4ccd93b4aabe76cb9a872f1bc3fc6195777f0fea1112d3",
+      "recoverySourceSha256": "d70acd73023ec236fdf89171bd47f39c4b64eafb722454fd2458a77cba84bc2b",
+      "positive": [
+        [0,null,"source_file",1,0,121,""],
+        [1,null,"comment",1,0,7,"X"],
+        [1,null,"blank_line",1,7,8,""],
+        [1,null,"type_declaration",1,8,121,""],
+        [2,null,"module_block",1,8,121,""],
+        [3,"name","identifier",1,15,22,""],
+        [3,null,"method_declaration",1,27,110,""],
+        [4,"name","identifier",1,31,35,""],
+        [4,"parameters","parameter_list",1,35,37,""],
+        [5,null,"(",0,35,36,""],
+        [5,null,")",0,36,37,""],
+        [4,null,"statement",1,46,69,""],
+        [5,null,"dim_statement",1,46,69,""],
+        [6,"name","identifier",1,50,51,""],
+        [6,null,"as_clause",1,52,61,""],
+        [7,"type","type",1,55,61,""],
+        [8,null,"primitive_type",1,55,61,""],
+        [6,null,"=",0,62,63,""],
+        [6,"initializer","expression",1,64,68,""],
+        [7,null,"literal",1,64,68,""],
+        [8,null,"string_literal",1,64,68,""],
+        [4,null,"statement",1,77,98,""],
+        [5,null,"call_statement",1,77,98,""],
+        [6,null,"expression",1,77,97,""],
+        [7,null,"invocation",1,77,97,""],
+        [8,"target","member_access",1,77,94,""],
+        [9,"object","expression",1,77,84,""],
+        [10,null,"identifier",1,77,84,""],
+        [9,null,".",0,84,85,""],
+        [9,"member","identifier",1,85,94,""],
+        [8,"arguments","argument_list",1,94,97,""],
+        [9,null,"(",0,94,95,""],
+        [9,null,"argument",1,95,96,""],
+        [10,null,"expression",1,95,96,""],
+        [11,null,"identifier",1,95,96,""],
+        [9,null,")",0,96,97,""]
+      ],
+      "recovery": [
+        [0,null,"source_file",1,0,40,""],
+        [1,null,"type_declaration",1,0,40,""],
+        [2,null,"module_block",1,0,40,""],
+        [3,"name","identifier",1,7,14,""],
+        [3,null,"method_declaration",1,19,29,""],
+        [4,"name","identifier",1,23,27,""],
+        [4,"parameters","parameter_list",1,27,28,""],
+        [5,null,"(",0,27,28,""],
+        [5,null,")",0,28,28,"M"]
       ],
       "embedded": []
     }

@@ -110,6 +110,7 @@ export function corpusFileCases(corpus) {
  */
 export function corpusCases(entry) {
   const { files } = JSON.parse(sourceText(entry.corpus));
+  if (entry.corpus.format === 'source-files') return Object.entries(files).map(([file, source]) => ({ file, title: file, source }));
   const wanted = entry.corpus.language;
   return Object.entries(files).flatMap(([file, corpus]) => corpusFileCases(corpus)
     .filter((item) => item.language === undefined || item.language === wanted)
@@ -228,7 +229,7 @@ export function mergeConcepts(register, imports, decisions = {}) {
       record.sourceAliases = sortAliases([...record.sourceAliases, alias]);
     }
   }
-  const names = new Map(imports.map(({ entry }) => [nativeSource(entry), languageName(entry)]));
+  const names = new Map(imports.map(({ entry }) => [nativeSource(entry), entry.language.toLowerCase() === languageName(entry).toLowerCase() ? languageName(entry) : `${entry.language} (${languageName(entry)})`]));
   for (const record of concepts) {
     const native = new Set(record.sourceAliases.map(({ source }) => source).filter((source) => source.startsWith('native:')));
     if (![...native].some((source) => sources.has(source))) continue;

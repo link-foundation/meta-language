@@ -176,11 +176,11 @@ fn record_of(
         "fixture": fixture_file,
         "oracle": fixture["oracle"],
         "sources": fixture["sources"],
-        "corpus": fixture["sources"]
+        "corpus": fixture["corpus"]["url"].as_str().map(Value::from).or_else(|| fixture["sources"]
             .as_array()
             .expect("sources")
             .iter()
-            .find(|source| source.as_str().is_some_and(is_upstream_corpus)),
+            .find(|source| source.as_str().is_some_and(is_upstream_corpus)).cloned()),
         "mergeReport": report.as_ref().map(|_| report_file.clone()),
         "coverage": {
             "rules": rules,
@@ -248,7 +248,7 @@ fn issue_195_merge_quality_evidence_rust_report_equals_the_published_report() {
     let report = report();
     let published = read_json(FIXTURE);
     assert_eq!(published["grammars"].as_array().expect("grammars"), &report);
-    assert_eq!(report.len(), 22);
+    assert_eq!(report.len(), 26);
     for record in &report {
         let grammar = &record["grammar"];
         let coverage = &record["coverage"];

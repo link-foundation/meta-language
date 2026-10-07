@@ -126,7 +126,7 @@ export function mergeQualityRecord(id, entry, { recovery = readJson(RECOVERY), r
     fixture: fixtureFile,
     oracle: fixture.oracle,
     sources: fixture.sources,
-    corpus: fixture.sources.find(isUpstreamCorpus) ?? null,
+    corpus: fixture.corpus?.url ?? fixture.sources.find(isUpstreamCorpus) ?? null,
     mergeReport: reportFile,
     coverage: {
       rules,

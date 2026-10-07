@@ -496,6 +496,7 @@ export function importTreeSitterNative(source, options = {}) {
         return inToken ? text : unnamed(`(token ${text})`, aliased);
       }
       case 'BLANK': return 'empty';
+      case 'NATIVE_ORDERED_CHOICE': return `(choice ordered ${node.members.map((member) => expr(member, inToken, keywords)).join(' ')})`;
       case 'SEQ': {
         const items = node.members.map((member) => expr(member, inToken, keywords)).filter((item) => item !== 'empty');
         if (items.length === 0) return 'empty';

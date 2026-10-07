@@ -351,7 +351,8 @@
       "version": "0.10.2",
       "parserSha256": "d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329",
       "wasmSha256": "e1ae02b62ce27ba86d202e77fa42f5e59d8e945b00ff64803cc275741ecca628",
-      "license": "pascal.LICENSE"
+      "license": "pascal.LICENSE",
+      "oracle": true
     },
     "perl": {
       "id": "perl",
@@ -513,7 +514,8 @@
       "version": "0.7.0",
       "parserSha256": "1991a2608e6f0214e563fe5f762e8df72954dc69a3dd9a1e22ea8a870e4052c3",
       "wasmSha256": "057f48e81072cb0eb5969632a7cf032fc6d33cd4ba3198c3f58227346c012d97",
-      "license": "toml.LICENSE"
+      "license": "toml.LICENSE",
+      "oracle": true
     },
     "tsx": {
       "id": "tsx",
@@ -542,7 +544,8 @@
       "version": "0.1.0",
       "parserSha256": "7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8",
       "wasmSha256": "4bc68c0fb1cbc42a44eb3199affe54173b6519f52ffdd173e31c9dc87b9099f8",
-      "license": "vb.LICENSE"
+      "license": "vb.LICENSE",
+      "oracle": true
     },
     "xml": {
       "id": "xml",
@@ -569,7 +572,8 @@
       "version": "1.1.2",
       "parserSha256": "5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63",
       "wasmSha256": "cc95fa4d69178617b19fe50b070dc871e315aea55107fcd1bcd238ae77811edd",
-      "license": "zig.LICENSE"
+      "license": "zig.LICENSE",
+      "oracle": true
     }
   }
 }

@@ -17,7 +17,7 @@
       "features": {"scanner": 0, "conflict": 17, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 100, "rows": 5348, "bytes": 12987, "divergences": 0, "rejections": 33},
       "recovery": {"repaired": 33, "errorNodes": 7, "missingNodes": 41, "categories": {}},
-      "reuse": {"shared": 49, "specific": 134}
+      "reuse": {"shared": 52, "specific": 131}
     },
     {
       "grammar": "native-csv",
@@ -74,7 +74,7 @@
       "features": {"scanner": 0, "conflict": 8, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 106, "rows": 4369, "bytes": 9101, "divergences": 0, "rejections": 13},
       "recovery": {"repaired": 13, "errorNodes": 4, "missingNodes": 19, "categories": {}},
-      "reuse": {"shared": 56, "specific": 61}
+      "reuse": {"shared": 61, "specific": 56}
     },
     {
       "grammar": "native-graphql",
@@ -124,11 +124,11 @@
       ],
       "corpus": "https://github.com/tree-sitter/tree-sitter-java/tree/94703d5a6bed02b98e438d7cad1136c01a60ba2c/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/java.json",
-      "coverage": {"rules": {"normal": 120, "atomic": 0, "silent": 30, "token": 19}, "visibleRules": 120, "exercisedRules": 111, "checkedKinds": 133, "checkedFields": 36, "renamed": 29, "expandedWords": 3, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 120, "atomic": 0, "silent": 30, "token": 19}, "visibleRules": 120, "exercisedRules": 111, "checkedKinds": 133, "checkedFields": 36, "renamed": 29, "expandedWords": 4, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 0, "conflict": 13, "precedences": 0, "extra": 3, "kind": 1},
       "correctness": {"matches": 146, "rows": 4848, "bytes": 11744, "divergences": 0, "rejections": 11},
       "recovery": {"repaired": 11, "errorNodes": 4, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 69, "specific": 100}
+      "reuse": {"shared": 75, "specific": 94}
     },
     {
       "grammar": "native-javascript",
@@ -201,7 +201,7 @@
       "features": {"scanner": 1, "conflict": 11, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 251, "rows": 5152, "bytes": 13446, "divergences": 1, "rejections": 42},
       "recovery": {"repaired": 42, "errorNodes": 34, "missingNodes": 41, "categories": {"merged-extension": 1, "native-skips-more": 34, "oracle-skips-more": 35, "same-repair-sites": 19, "same-skipped-bytes": 8}},
-      "reuse": {"shared": 42, "specific": 105}
+      "reuse": {"shared": 46, "specific": 101}
     },
     {
       "grammar": "native-lua",
@@ -215,11 +215,11 @@
       ],
       "corpus": "https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/lua.json",
-      "coverage": {"rules": {"normal": 31, "atomic": 0, "silent": 33, "token": 9}, "visibleRules": 31, "exercisedRules": 29, "checkedKinds": 42, "checkedFields": 21, "renamed": 36, "expandedWords": 1, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 31, "atomic": 0, "silent": 33, "token": 9}, "visibleRules": 31, "exercisedRules": 30, "checkedKinds": 43, "checkedFields": 21, "renamed": 36, "expandedWords": 2, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 2, "conflict": 0, "precedences": 0, "extra": 2, "kind": 0},
-      "correctness": {"matches": 32, "rows": 562, "bytes": 1625, "divergences": 0, "rejections": 9},
+      "correctness": {"matches": 35, "rows": 614, "bytes": 1661, "divergences": 0, "rejections": 9},
       "recovery": {"repaired": 9, "errorNodes": 5, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 35, "specific": 38}
+      "reuse": {"shared": 36, "specific": 37}
     },
     {
       "grammar": "native-make",
@@ -238,6 +238,24 @@
       "correctness": {"matches": 168, "rows": 1985, "bytes": 4084, "divergences": 0, "rejections": 27},
       "recovery": {"repaired": 27, "errorNodes": 4, "missingNodes": 54, "categories": {}},
       "reuse": {"shared": 14, "specific": 51}
+    },
+    {
+      "grammar": "native-pascal",
+      "language": "Delphi/Object Pascal",
+      "links": "parity/grammars/native/pascal.lino",
+      "fixture": "parity/fixtures/native-grammars/pascal.json",
+      "oracle": "crates.io tree-sitter-pascal 0.10.2",
+      "sources": [
+        "https://github.com/Isopod/tree-sitter-pascal/tree/042119eca2e18a60e56317fb06ee3ba5c32cb447",
+        "https://github.com/Isopod/tree-sitter-pascal/tree/042119eca2e18a60e56317fb06ee3ba5c32cb447/test/corpus"
+      ],
+      "corpus": "https://github.com/Isopod/tree-sitter-pascal/tree/042119eca2e18a60e56317fb06ee3ba5c32cb447/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/pascal.json",
+      "coverage": {"rules": {"normal": 127, "atomic": 0, "silent": 27, "token": 162}, "visibleRules": 127, "exercisedRules": 50, "checkedKinds": 92, "checkedFields": 19, "renamed": 297, "expandedWords": 9, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 10, "precedences": 0, "extra": 3, "kind": 0},
+      "correctness": {"matches": 32, "rows": 681, "bytes": 1301, "divergences": 0, "rejections": 4},
+      "recovery": {"repaired": 4, "errorNodes": 2, "missingNodes": 6, "categories": {}},
+      "reuse": {"shared": 34, "specific": 282}
     },
     {
       "grammar": "native-proto",
@@ -309,7 +327,7 @@
       "features": {"scanner": 0, "conflict": 16, "precedences": 2, "extra": 2, "kind": 0},
       "correctness": {"matches": 230, "rows": 9440, "bytes": 20820, "divergences": 0, "rejections": 12},
       "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {"native-skips-more": 16, "oracle-skips-more": 45, "same-repair-sites": 4, "same-skipped-bytes": 7}},
-      "reuse": {"shared": 33, "specific": 232}
+      "reuse": {"shared": 34, "specific": 231}
     },
     {
       "grammar": "native-rust",
@@ -327,7 +345,7 @@
       "features": {"scanner": 6, "conflict": 9, "precedences": 0, "extra": 3, "kind": 3},
       "correctness": {"matches": 182, "rows": 7903, "bytes": 15796, "divergences": 0, "rejections": 38},
       "recovery": {"repaired": 38, "errorNodes": 18, "missingNodes": 47, "categories": {"native-skips-more": 25, "oracle-skips-more": 36, "same-repair-sites": 7, "same-skipped-bytes": 7}},
-      "reuse": {"shared": 63, "specific": 121}
+      "reuse": {"shared": 71, "specific": 113}
     },
     {
       "grammar": "native-scheme",
@@ -359,11 +377,29 @@
       ],
       "corpus": "https://github.com/JoranHonig/tree-sitter-solidity/tree/4e938a46c7030dd001bc99e1ac0f0c750ac98254/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/solidity.json",
-      "coverage": {"rules": {"normal": 111, "atomic": 0, "silent": 44, "token": 12}, "visibleRules": 111, "exercisedRules": 101, "checkedKinds": 112, "checkedFields": 35, "renamed": 54, "expandedWords": 5, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 111, "atomic": 0, "silent": 44, "token": 12}, "visibleRules": 111, "exercisedRules": 101, "checkedKinds": 112, "checkedFields": 35, "renamed": 54, "expandedWords": 6, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 0, "conflict": 11, "precedences": 0, "extra": 2, "kind": 1},
       "correctness": {"matches": 166, "rows": 4312, "bytes": 10859, "divergences": 0, "rejections": 10},
       "recovery": {"repaired": 10, "errorNodes": 2, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 61, "specific": 106}
+      "reuse": {"shared": 64, "specific": 103}
+    },
+    {
+      "grammar": "native-toml",
+      "language": "TOML",
+      "links": "parity/grammars/native/toml.lino",
+      "fixture": "parity/fixtures/native-grammars/toml.json",
+      "oracle": "crates.io tree-sitter-toml-ng 0.7.0",
+      "sources": [
+        "https://github.com/tree-sitter-grammars/tree-sitter-toml/tree/64b56832c2cffe41758f28e05c756a3a98d16f41",
+        "https://github.com/tree-sitter-grammars/tree-sitter-toml/tree/64b56832c2cffe41758f28e05c756a3a98d16f41/test/corpus"
+      ],
+      "corpus": "https://github.com/tree-sitter-grammars/tree-sitter-toml/tree/64b56832c2cffe41758f28e05c756a3a98d16f41/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/toml.json",
+      "coverage": {"rules": {"normal": 11, "atomic": 0, "silent": 9, "token": 7}, "visibleRules": 11, "exercisedRules": 11, "checkedKinds": 18, "checkedFields": 0, "renamed": 10, "expandedWords": 1, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 3, "conflict": 0, "precedences": 0, "extra": 2, "kind": 0},
+      "correctness": {"matches": 33, "rows": 224, "bytes": 447, "divergences": 0, "rejections": 6},
+      "recovery": {"repaired": 6, "errorNodes": 2, "missingNodes": 5, "categories": {}},
+      "reuse": {"shared": 10, "specific": 17}
     },
     {
       "grammar": "native-tsx",
@@ -400,6 +436,42 @@
       "correctness": {"matches": 155, "rows": 6447, "bytes": 13513, "divergences": 0, "rejections": 15},
       "recovery": {"repaired": 15, "errorNodes": 5, "missingNodes": 15, "categories": {}},
       "reuse": {"shared": 230, "specific": 0}
+    },
+    {
+      "grammar": "native-vb",
+      "language": "Visual Basic",
+      "links": "parity/grammars/native/vb.lino",
+      "fixture": "parity/fixtures/native-grammars/vb.json",
+      "oracle": "crates.io tree-sitter-vb-dotnet 0.1.0",
+      "sources": [
+        "https://github.com/jamie8johnson/tree-sitter-vb-dotnet/tree/687025b7c41b8c5ac8b2134edbb9d575430347f7",
+        "https://github.com/jamie8johnson/tree-sitter-vb-dotnet/tree/687025b7c41b8c5ac8b2134edbb9d575430347f7/test"
+      ],
+      "corpus": "https://github.com/jamie8johnson/tree-sitter-vb-dotnet/tree/687025b7c41b8c5ac8b2134edbb9d575430347f7/test",
+      "mergeReport": "parity/grammars/merge-reports/vb.json",
+      "coverage": {"rules": {"normal": 95, "atomic": 0, "silent": 3, "token": 13}, "visibleRules": 95, "exercisedRules": 42, "checkedKinds": 48, "checkedFields": 21, "renamed": 25, "expandedWords": 7, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 16, "precedences": 0, "extra": 3, "kind": 0},
+      "correctness": {"matches": 34, "rows": 577, "bytes": 1599, "divergences": 0, "rejections": 3},
+      "recovery": {"repaired": 3, "errorNodes": 1, "missingNodes": 2, "categories": {}},
+      "reuse": {"shared": 53, "specific": 58}
+    },
+    {
+      "grammar": "native-zig",
+      "language": "Zig",
+      "links": "parity/grammars/native/zig.lino",
+      "fixture": "parity/fixtures/native-grammars/zig.json",
+      "oracle": "crates.io tree-sitter-zig 1.1.2",
+      "sources": [
+        "https://github.com/tree-sitter-grammars/tree-sitter-zig/tree/b670c8df85a1568f498aa5c8cae42f51a90473c0",
+        "https://github.com/ziglang/zig/tree/e4cbd752c8c05f131051f8c873cff7823177d7d3/test/cases"
+      ],
+      "corpus": "https://github.com/ziglang/zig/tree/e4cbd752c8c05f131051f8c873cff7823177d7d3/test/cases",
+      "mergeReport": "parity/grammars/merge-reports/zig.json",
+      "coverage": {"rules": {"normal": 87, "atomic": 0, "silent": 15, "token": 7}, "visibleRules": 87, "exercisedRules": 46, "checkedKinds": 52, "checkedFields": 14, "renamed": 45, "expandedWords": 14, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 6, "precedences": 1, "extra": 2, "kind": 0},
+      "correctness": {"matches": 33, "rows": 511, "bytes": 792, "divergences": 0, "rejections": 5},
+      "recovery": {"repaired": 5, "errorNodes": 0, "missingNodes": 8, "categories": {}},
+      "reuse": {"shared": 53, "specific": 56}
     }
   ]
 }

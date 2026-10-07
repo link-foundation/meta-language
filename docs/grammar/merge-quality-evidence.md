@@ -42,6 +42,7 @@ grammar builds. The sources are the specifications and grammars merged.
 | `native-lean` | tree-sitter-lean4 0.3.0 | [upstream](https://github.com/wvhulle/tree-sitter-lean/tree/bd942cd2795016239be02b3b3d5ef635645ddd38/test/corpus) | [1](https://github.com/wvhulle/tree-sitter-lean/blob/bd942cd2795016239be02b3b3d5ef635645ddd38/grammar.js) [2](https://github.com/wvhulle/tree-sitter-lean/tree/bd942cd2795016239be02b3b3d5ef635645ddd38/test/corpus) |
 | `native-lua` | tree-sitter-lua 0.5.0 | [upstream](https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9/test/corpus) | [1](https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9) [2](https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9/test/corpus) |
 | `native-make` | tree-sitter-make 1.1.1 | [upstream](https://github.com/tree-sitter-grammars/tree-sitter-make/tree/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/test/corpus) | [1](https://github.com/tree-sitter-grammars/tree-sitter-make/blob/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/grammar.js) [2](https://github.com/tree-sitter-grammars/tree-sitter-make/tree/5e9e8f8ff3387b0edcaa90f46ddf3629f4cfeb1d/test/corpus) |
+| `native-pascal` | crates.io tree-sitter-pascal 0.10.2 | [upstream](https://github.com/Isopod/tree-sitter-pascal/tree/042119eca2e18a60e56317fb06ee3ba5c32cb447/test/corpus) | [1](https://github.com/Isopod/tree-sitter-pascal/tree/042119eca2e18a60e56317fb06ee3ba5c32cb447) [2](https://github.com/Isopod/tree-sitter-pascal/tree/042119eca2e18a60e56317fb06ee3ba5c32cb447/test/corpus) |
 | `native-proto` | tree-sitter-proto 0.6.0 | [upstream](https://github.com/coder3101/tree-sitter-proto/tree/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/test/corpus) | [1](https://github.com/coder3101/tree-sitter-proto/blob/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/grammar.js) [2](https://github.com/coder3101/tree-sitter-proto/tree/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/test/corpus) |
 | `native-racket` | tree-sitter-racket 0.25.0 | curated | [1](https://docs.racket-lang.org/reference/reader.html) [2](https://docs.rs/crate/tree-sitter-racket/0.25.0/source/grammar.js) |
 | `native-regex` | tree-sitter-regex 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-regex/blob/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/grammar.js) [2](https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus) |
@@ -49,8 +50,11 @@ grammar builds. The sources are the specifications and grammars merged.
 | `native-rust` | tree-sitter-rust 0.24.2 | [upstream](https://github.com/tree-sitter/tree-sitter-rust/tree/77a3747266f4d621d0757825e6b11edcbf991ca5/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-rust/blob/77a3747266f4d621d0757825e6b11edcbf991ca5/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-rust/tree/77a3747266f4d621d0757825e6b11edcbf991ca5/test/corpus) |
 | `native-scheme` | tree-sitter-scheme 0.24.7 | curated | [1](https://small.r7rs.org/attachment/r7rs.pdf) [2](https://docs.rs/crate/tree-sitter-scheme/0.24.7/source/grammar.js) |
 | `native-solidity` | tree-sitter-solidity 1.2.13 | [upstream](https://github.com/JoranHonig/tree-sitter-solidity/tree/4e938a46c7030dd001bc99e1ac0f0c750ac98254/test/corpus) | [1](https://github.com/JoranHonig/tree-sitter-solidity/blob/4e938a46c7030dd001bc99e1ac0f0c750ac98254/grammar.js) [2](https://github.com/JoranHonig/tree-sitter-solidity/tree/4e938a46c7030dd001bc99e1ac0f0c750ac98254/test/corpus) |
+| `native-toml` | crates.io tree-sitter-toml-ng 0.7.0 | [upstream](https://github.com/tree-sitter-grammars/tree-sitter-toml/tree/64b56832c2cffe41758f28e05c756a3a98d16f41/test/corpus) | [1](https://github.com/tree-sitter-grammars/tree-sitter-toml/tree/64b56832c2cffe41758f28e05c756a3a98d16f41) [2](https://github.com/tree-sitter-grammars/tree-sitter-toml/tree/64b56832c2cffe41758f28e05c756a3a98d16f41/test/corpus) |
 | `native-tsx` | tree-sitter-typescript 0.23.2 (tsx) | [upstream](https://github.com/tree-sitter/tree-sitter-typescript/tree/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-typescript/blob/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/tsx/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-typescript/tree/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/test/corpus) |
 | `native-typescript` | tree-sitter-typescript 0.23.2 | [upstream](https://github.com/tree-sitter/tree-sitter-typescript/tree/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-typescript/blob/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/typescript/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-typescript/tree/f975a621f4e7f532fe322e13c4f79495e0a7b2e7/test/corpus) |
+| `native-vb` | crates.io tree-sitter-vb-dotnet 0.1.0 | [upstream](https://github.com/jamie8johnson/tree-sitter-vb-dotnet/tree/687025b7c41b8c5ac8b2134edbb9d575430347f7/test) | [1](https://github.com/jamie8johnson/tree-sitter-vb-dotnet/tree/687025b7c41b8c5ac8b2134edbb9d575430347f7) [2](https://github.com/jamie8johnson/tree-sitter-vb-dotnet/tree/687025b7c41b8c5ac8b2134edbb9d575430347f7/test) |
+| `native-zig` | crates.io tree-sitter-zig 1.1.2 | [upstream](https://github.com/ziglang/zig/tree/e4cbd752c8c05f131051f8c873cff7823177d7d3/test/cases) | [1](https://github.com/tree-sitter-grammars/tree-sitter-zig/tree/b670c8df85a1568f498aa5c8cae42f51a90473c0) [2](https://github.com/ziglang/zig/tree/e4cbd752c8c05f131051f8c873cff7823177d7d3/test/cases) |
 
 ## Correctness
 
@@ -73,8 +77,9 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-json` | 34 | 414 | 651 | 2 | 10 |
 | `native-json5` | 120 | 818 | 1503 | 26 | 36 |
 | `native-lean` | 251 | 5152 | 13446 | 1 | 42 |
-| `native-lua` | 32 | 562 | 1625 | 0 | 9 |
+| `native-lua` | 35 | 614 | 1661 | 0 | 9 |
 | `native-make` | 168 | 1985 | 4084 | 0 | 27 |
+| `native-pascal` | 32 | 681 | 1301 | 0 | 4 |
 | `native-proto` | 79 | 6291 | 26218 | 0 | 20 |
 | `native-racket` | 306 | 1165 | 1769 | 22 | 60 |
 | `native-regex` | 82 | 1036 | 1007 | 2 | 24 |
@@ -82,9 +87,12 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-rust` | 182 | 7903 | 15796 | 0 | 38 |
 | `native-scheme` | 264 | 908 | 1363 | 23 | 50 |
 | `native-solidity` | 166 | 4312 | 10859 | 0 | 10 |
+| `native-toml` | 33 | 224 | 447 | 0 | 6 |
 | `native-tsx` | 157 | 6525 | 13617 | 0 | 16 |
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
-| all | 3070 | 77466 | 180295 | 101 | 523 |
+| `native-vb` | 34 | 577 | 1599 | 0 | 3 |
+| `native-zig` | 33 | 511 | 792 | 0 | 5 |
+| all | 3205 | 79511 | 184470 | 101 | 541 |
 
 ## Coverage
 
@@ -104,22 +112,26 @@ language specification and checked against the oracle.
 | `native-go` | 91 | 0 | 14 | 12 | 87 of 91 (96%) | 104 | 35 | 29 | 9 | 0 | 0 |
 | `native-graphql` | 67 | 0 | 0 | 7 | 67 of 67 (100%) | 74 | 0 | 6 | 2 | 0 | 0 |
 | `native-ini` | 5 | 0 | 0 | 0 | 5 of 5 (100%) | 8 | 0 | n/a | n/a | n/a | n/a |
-| `native-java` | 120 | 0 | 30 | 19 | 111 of 120 (93%) | 133 | 36 | 29 | 3 | 0 | 0 |
+| `native-java` | 120 | 0 | 30 | 19 | 111 of 120 (93%) | 133 | 36 | 29 | 4 | 0 | 0 |
 | `native-javascript` | 94 | 0 | 34 | 15 | 90 of 94 (96%) | 113 | 36 | 25 | 2 | 0 | 0 |
 | `native-json` | 5 | 0 | 1 | 5 | 5 of 5 (100%) | 12 | 2 | n/a | n/a | n/a | n/a |
 | `native-json5` | 4 | 0 | 1 | 7 | 4 of 4 (100%) | 11 | 2 | n/a | n/a | n/a | n/a |
 | `native-lean` | 106 | 0 | 28 | 13 | 86 of 106 (81%) | 97 | 50 | 35 | 8 | 0 | 0 |
-| `native-lua` | 31 | 0 | 33 | 9 | 29 of 31 (94%) | 42 | 21 | 36 | 1 | 0 | 0 |
+| `native-lua` | 31 | 0 | 33 | 9 | 30 of 31 (97%) | 43 | 21 | 36 | 2 | 0 | 0 |
 | `native-make` | 36 | 0 | 25 | 4 | 35 of 36 (97%) | 44 | 24 | 36 | 12 | 0 | 0 |
+| `native-pascal` | 127 | 0 | 27 | 162 | 50 of 127 (39%) | 92 | 19 | 297 | 9 | 0 | 0 |
 | `native-proto` | 43 | 0 | 3 | 9 | 43 of 43 (100%) | 52 | 5 | 20 | 7 | 0 | 0 |
 | `native-racket` | 22 | 0 | 3 | 14 | 22 of 22 (100%) | 32 | 0 | n/a | n/a | n/a | n/a |
 | `native-regex` | 24 | 0 | 4 | 12 | 24 of 24 (100%) | 38 | 0 | 4 | 0 | 0 | 0 |
 | `native-rocq` | 203 | 0 | 46 | 16 | 191 of 203 (94%) | 203 | 29 | 84 | 27 | 0 | 0 |
 | `native-rust` | 147 | 0 | 26 | 11 | 142 of 147 (97%) | 163 | 31 | 45 | 12 | 0 | 0 |
 | `native-scheme` | 17 | 0 | 3 | 8 | 16 of 17 (94%) | 22 | 0 | n/a | n/a | n/a | n/a |
-| `native-solidity` | 111 | 0 | 44 | 12 | 101 of 111 (91%) | 112 | 35 | 54 | 5 | 0 | 0 |
+| `native-solidity` | 111 | 0 | 44 | 12 | 101 of 111 (91%) | 112 | 35 | 54 | 6 | 0 | 0 |
+| `native-toml` | 11 | 0 | 9 | 7 | 11 of 11 (100%) | 18 | 0 | 10 | 1 | 0 | 0 |
 | `native-tsx` | 166 | 0 | 50 | 14 | 142 of 166 (86%) | 159 | 40 | 44 | 3 | 0 | 0 |
 | `native-typescript` | 166 | 0 | 50 | 14 | 136 of 166 (82%) | 152 | 37 | 44 | 3 | 0 | 0 |
+| `native-vb` | 95 | 0 | 3 | 13 | 42 of 95 (44%) | 48 | 21 | 25 | 7 | 0 | 0 |
+| `native-zig` | 87 | 0 | 15 | 7 | 46 of 87 (53%) | 52 | 14 | 45 | 14 | 0 | 0 |
 
 ## Preserved features and shared reuse
 
@@ -131,28 +143,32 @@ rules name a concept another native grammar names
 
 | Grammar | Scanners | Conflicts | Precedences | Extras | Kinds | Shared rules | Language-specific rules |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `native-c` | 0 | 17 | 0 | 2 | 0 | 49 | 134 |
+| `native-c` | 0 | 17 | 0 | 2 | 0 | 52 | 131 |
 | `native-csv` | 0 | 0 | 0 | 0 | 0 | 3 | 5 |
 | `native-diff` | 0 | 0 | 0 | 1 | 0 | 2 | 22 |
-| `native-go` | 0 | 8 | 0 | 2 | 0 | 56 | 61 |
+| `native-go` | 0 | 8 | 0 | 2 | 0 | 61 | 56 |
 | `native-graphql` | 0 | 0 | 0 | 3 | 0 | 24 | 50 |
 | `native-ini` | 0 | 0 | 0 | 2 | 0 | 2 | 3 |
-| `native-java` | 0 | 13 | 0 | 3 | 1 | 69 | 100 |
+| `native-java` | 0 | 13 | 0 | 3 | 1 | 75 | 94 |
 | `native-javascript` | 5 | 18 | 9 | 3 | 0 | 142 | 1 |
 | `native-json` | 0 | 0 | 0 | 2 | 0 | 11 | 0 |
 | `native-json5` | 0 | 0 | 0 | 2 | 0 | 11 | 1 |
-| `native-lean` | 1 | 11 | 0 | 2 | 0 | 42 | 105 |
-| `native-lua` | 2 | 0 | 0 | 2 | 0 | 35 | 38 |
+| `native-lean` | 1 | 11 | 0 | 2 | 0 | 46 | 101 |
+| `native-lua` | 2 | 0 | 0 | 2 | 0 | 36 | 37 |
 | `native-make` | 0 | 0 | 0 | 3 | 0 | 14 | 51 |
+| `native-pascal` | 0 | 10 | 0 | 3 | 0 | 34 | 282 |
 | `native-proto` | 0 | 0 | 0 | 2 | 0 | 21 | 34 |
 | `native-racket` | 0 | 0 | 0 | 0 | 0 | 23 | 16 |
 | `native-regex` | 0 | 1 | 0 | 1 | 0 | 2 | 38 |
-| `native-rocq` | 0 | 16 | 2 | 2 | 0 | 33 | 232 |
-| `native-rust` | 6 | 9 | 0 | 3 | 3 | 63 | 121 |
+| `native-rocq` | 0 | 16 | 2 | 2 | 0 | 34 | 231 |
+| `native-rust` | 6 | 9 | 0 | 3 | 3 | 71 | 113 |
 | `native-scheme` | 0 | 0 | 0 | 0 | 0 | 23 | 5 |
-| `native-solidity` | 0 | 11 | 0 | 2 | 1 | 61 | 106 |
+| `native-solidity` | 0 | 11 | 0 | 2 | 1 | 64 | 103 |
+| `native-toml` | 3 | 0 | 0 | 2 | 0 | 10 | 17 |
 | `native-tsx` | 7 | 49 | 44 | 3 | 0 | 230 | 0 |
 | `native-typescript` | 7 | 48 | 44 | 3 | 0 | 230 | 0 |
+| `native-vb` | 0 | 16 | 0 | 3 | 0 | 53 | 58 |
+| `native-zig` | 0 | 6 | 1 | 2 | 0 | 53 | 56 |
 
 ## Recovery
 
@@ -176,6 +192,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-lean` | 42 | 42 | 34 | 41 | merged-extension 1, native-skips-more 34, oracle-skips-more 35, same-repair-sites 19, same-skipped-bytes 8 |
 | `native-lua` | 9 | 9 | 5 | 15 | none |
 | `native-make` | 27 | 27 | 4 | 54 | none |
+| `native-pascal` | 4 | 4 | 2 | 6 | none |
 | `native-proto` | 20 | 20 | 12 | 19 | none |
 | `native-racket` | 60 | 60 | 29 | 75 | none |
 | `native-regex` | 24 | 24 | 7 | 32 | none |
@@ -183,12 +200,23 @@ generative cases with the oracle and gives each difference a category.
 | `native-rust` | 38 | 38 | 18 | 47 | native-skips-more 25, oracle-skips-more 36, same-repair-sites 7, same-skipped-bytes 7 |
 | `native-scheme` | 50 | 50 | 28 | 28 | none |
 | `native-solidity` | 10 | 10 | 2 | 15 | none |
+| `native-toml` | 6 | 6 | 2 | 5 | none |
 | `native-tsx` | 16 | 16 | 5 | 15 | none |
 | `native-typescript` | 15 | 15 | 5 | 15 | none |
+| `native-vb` | 3 | 3 | 1 | 2 | none |
+| `native-zig` | 5 | 5 | 0 | 8 | none |
 
 ## Time and memory
 
 The `native-lua` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
+
+The `native-pascal` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
+
+The `native-toml` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
+
+The `native-vb` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
+
+The `native-zig` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
 
 Measured on linux x64, AMD EPYC Processor (with IBPB), with Node.js 26.10.0
 and the unoptimized test profile of rustc 1.98.1. Times are milliseconds of one warm pass over
@@ -214,8 +242,9 @@ loads the same modules and parses nothing.
 | `native-json` | 29.1 | 0.9 | 33.3× | 70.8 | 0.3 | 17.3 | 3.5 |
 | `native-json5` | 54.7 | 1.8 | 30.4× | 24.6 | 1.0 | 19.7 | 7.8 |
 | `native-lean` | 6972.6 | 25.2 | 276.4× | 12324.1 | 4.5 | 139.9 | 44.7 |
-| `native-lua` | 86.9 | 0.7 | 130.5× | 103.0 | 0.2 | 75.3 | 3.7 |
+| `native-lua` | 100.5 | 1.0 | 96.3× | 53.7 | 0.4 | 48.3 | 5.9 |
 | `native-make` | 966.8 | 4.4 | 220.4× | 432.3 | 1.5 | 119.7 | 4.8 |
+| `native-pascal` | 162.9 | 0.7 | 249.1× | 67.7 | 0.2 | 169.2 | 5.0 |
 | `native-proto` | 644.6 | 10.2 | 63.2× | 98.9 | 1.7 | 104.6 | 8.7 |
 | `native-racket` | 231.7 | 5.0 | 46.3× | 90.5 | 1.7 | 45.3 | 9.7 |
 | `native-regex` | 196.9 | 5.2 | 38.1× | 258.4 | 0.6 | 32.0 | 12.2 |
@@ -223,8 +252,11 @@ loads the same modules and parses nothing.
 | `native-rust` | 5470.4 | 18.2 | 300.6× | 3495.6 | 4.2 | 127.7 | 14.2 |
 | `native-scheme` | 313.6 | 5.0 | 62.2× | 81.5 | 1.3 | 51.2 | 2.9 |
 | `native-solidity` | 2655.1 | 8.7 | 306.7× | 414.1 | 1.9 | 126.2 | 12.8 |
+| `native-toml` | 27.1 | 0.7 | 39.3× | 11.1 | 0.1 | 35.3 | 2.3 |
 | `native-tsx` | 11815.5 | 15.5 | 762.7× | 2168.5 | 2.1 | 140.9 | 15.7 |
 | `native-typescript` | 11832.2 | 15.4 | 770.1× | 1875.8 | 1.1 | 138.0 | 19.0 |
+| `native-vb` | 130.9 | 1.3 | 103.3× | 58.0 | 0.2 | 81.1 | 11.2 |
+| `native-zig` | 370.4 | 2.7 | 135.8× | 190.8 | 0.3 | 185.4 | 9.0 |
 
 Rust measures the native executor of `rust/src/` and, where the pinned
 grammar crate is a development dependency, the oracle through the
@@ -247,8 +279,9 @@ without optimization, as the tests run them.
 | `native-json` | 147.2 | 6.2 | 23.7× | 58.5 | 0.2 | 0.2 |
 | `native-json5` | 320.5 | 2.5 | 127.3× | 166.2 | 0.5 | 1.0 |
 | `native-lean` | 25294.6 | n/a | n/a | 37711.2 | n/a | 15.4 |
-| `native-lua` | 180.5 | 0.6 | 298.8× | 110.4 | 0.2 | 1.4 |
+| `native-lua` | 178.9 | 0.6 | 280.8× | 124.4 | 0.2 | 1.4 |
 | `native-make` | 3320.8 | 3.2 | 1039.7× | 1308.5 | 1.1 | 1.6 |
+| `native-pascal` | 443.6 | 0.9 | 507.0× | 136.9 | 0.2 | 5.1 |
 | `native-proto` | 2063.4 | 10.2 | 203.2× | 325.5 | 0.6 | 15.5 |
 | `native-racket` | 1406.2 | 2.1 | 657.1× | 246.0 | 1.3 | 3.0 |
 | `native-regex` | 678.6 | 2.2 | 306.6× | 431.9 | 0.5 | 0.8 |
@@ -256,5 +289,8 @@ without optimization, as the tests run them.
 | `native-rust` | 21178.7 | n/a | n/a | 8884.8 | n/a | 6.8 |
 | `native-scheme` | 1906.1 | 1.7 | 1096.7× | 290.4 | 0.8 | 3.3 |
 | `native-solidity` | 9240.2 | 6.6 | 1404.9× | 1253.5 | 1.7 | 5.2 |
+| `native-toml` | 41.9 | 0.4 | 105.6× | 14.9 | 0.1 | 0.6 |
 | `native-tsx` | 37609.0 | 15.7 | 2390.9× | 7208.4 | 1.1 | 6.9 |
 | `native-typescript` | 36380.3 | 15.3 | 2373.9× | 7301.3 | 0.9 | 6.9 |
+| `native-vb` | 282.5 | 0.9 | 308.1× | 89.9 | 0.1 | 4.9 |
+| `native-zig` | 1035.1 | 0.5 | 2037.6× | 444.1 | 0.4 | 2.2 |

@@ -1,0 +1,128 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "toml",
+  "native": "native-toml",
+  "sources": [
+    {
+      "id": "tree-sitter-toml",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-toml-ng 0.7.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-toml",
+      "revision": "64b56832c2cffe41758f28e05c756a3a98d16f41",
+      "path": "src/grammar.json",
+      "sha256": "fe710cf103c58a843cadba4bc64f6bef1306c90421616ebce56c9120871e28db",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/toml.lino",
+    "sha256": "4cbf757a31819059ba07585c15e5262c7b3b947d963e7b8a61666a9ce3e2c50f",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "b25ff3b5034f40046e9a041d1e9110aa46d081706bbd1b748b480701aa6f5bde"
+    },
+    "scanners": [
+      {
+        "name": "line_boundary",
+        "tokens": [
+          "line_ending_or_end_of_file"
+        ]
+      },
+      {
+        "name": "multiple_line_basic_string",
+        "tokens": [
+          "multiple_line_basic_string_content",
+          "multiple_line_basic_string_end"
+        ]
+      },
+      {
+        "name": "multiple_line_literal_string",
+        "tokens": [
+          "multiple_line_literal_string_content",
+          "multiple_line_literal_string_end"
+        ]
+      }
+    ],
+    "immediate": [
+      "_line_ending_or_eof",
+      "_multiline_basic_string_content",
+      "_multiline_basic_string_end",
+      "_multiline_literal_string_content",
+      "_multiline_literal_string_end"
+    ]
+  },
+  "rules": 27,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "table",
+      "native": "table_declaration"
+    },
+    {
+      "source": "_inline_pair",
+      "native": "inline_pair"
+    },
+    {
+      "source": "_key",
+      "native": "key"
+    },
+    {
+      "source": "_inline_value",
+      "native": "inline_value"
+    },
+    {
+      "source": "_basic_string",
+      "native": "basic_string"
+    },
+    {
+      "source": "_multiline_basic_string",
+      "native": "multiple_line_basic_string"
+    },
+    {
+      "source": "_escape_line_ending",
+      "native": "escape_line_ending"
+    },
+    {
+      "source": "_literal_string",
+      "native": "literal_string"
+    },
+    {
+      "source": "_multiline_literal_string",
+      "native": "multiple_line_literal_string"
+    },
+    {
+      "source": "integer",
+      "native": "integer_literal"
+    }
+  ],
+  "expandedWords": [
+    "multiline"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "document",
+        "concept": "grammar.document"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "boolean",
+        "concept": "grammar.boolean-value"
+      }
+    ],
+    "generated": 22
+  },
+  "approximations": [],
+  "unsupported": []
+}

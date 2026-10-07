@@ -219,6 +219,7 @@
     }
   ],
   "expandedWords": [
+    "elseif",
     "goto"
   ],
   "concepts": {
@@ -275,6 +276,20 @@
       "helper": "_block_comment_extra",
       "whitespace": "[ \\t\\r\\n\\f\\v]*",
       "reason": "The upstream external scanner recognizes block-comment extras before an empty line-comment content token. An ordinary following line comment instead ends that token at the line break."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "function_call",
+      "associativity": "left",
+      "value": 1,
+      "reason": "Successive Lua argument lists bind to the preceding call across line breaks; the native executor must prefer that call chain to separate call statements beginning with parenthesized expressions."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "statement",
+      "associativity": "none",
+      "value": -1,
+      "reason": "A completed call statement has lower reduction precedence than a following argument list, so call chaining wins over splitting the chain into statements."
     }
   ],
   "approximations": [],

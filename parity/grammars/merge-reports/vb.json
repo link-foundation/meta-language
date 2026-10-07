@@ -1,0 +1,197 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "vb",
+  "native": "native-vb",
+  "sources": [
+    {
+      "id": "tree-sitter-vb",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-vb-dotnet 0.1.0",
+      "repository": "https://github.com/jamie8johnson/tree-sitter-vb-dotnet",
+      "revision": "687025b7c41b8c5ac8b2134edbb9d575430347f7",
+      "path": "src/grammar.json",
+      "sha256": "ba9402559f9fef78c7e6076aaaae7cd242257420ce7922b1137e91488e20e73c",
+      "license": "MIT"
+    }
+  ],
+  "rules": 111,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "option_statements",
+      "native": "option_statement_list"
+    },
+    {
+      "source": "imports_statement",
+      "native": "import_statement"
+    },
+    {
+      "source": "enum_block",
+      "native": "enumeration_block"
+    },
+    {
+      "source": "enum_member",
+      "native": "enumeration_member"
+    },
+    {
+      "source": "type_parameters",
+      "native": "type_parameter_list"
+    },
+    {
+      "source": "type_parameter",
+      "native": "type_parameter_declaration"
+    },
+    {
+      "source": "attribute",
+      "native": "annotation_attribute"
+    },
+    {
+      "source": "modifiers",
+      "native": "modifier_list"
+    },
+    {
+      "source": "_member_declaration",
+      "native": "member_declaration"
+    },
+    {
+      "source": "const_declaration",
+      "native": "constant_declaration"
+    },
+    {
+      "source": "property_declaration",
+      "native": "member_property_declaration"
+    },
+    {
+      "source": "get_accessor",
+      "native": "get_access_method"
+    },
+    {
+      "source": "set_accessor",
+      "native": "set_access_method"
+    },
+    {
+      "source": "parameter",
+      "native": "parameter_declaration"
+    },
+    {
+      "source": "call_statement",
+      "native": "expression_call_statement"
+    },
+    {
+      "source": "elseif_clause",
+      "native": "else_if_clause"
+    },
+    {
+      "source": "catch_block",
+      "native": "exception_catch_block"
+    },
+    {
+      "source": "goto_statement",
+      "native": "go_to_statement"
+    },
+    {
+      "source": "redim_statement",
+      "native": "dimension_change_statement"
+    },
+    {
+      "source": "argument",
+      "native": "argument_expression"
+    },
+    {
+      "source": "object_initializers",
+      "native": "object_initializer_list"
+    },
+    {
+      "source": "_newline",
+      "native": "newline"
+    },
+    {
+      "source": "_line_continuation",
+      "native": "line_continuation"
+    },
+    {
+      "source": "_terminator",
+      "native": "terminator"
+    },
+    {
+      "source": "_member_invocation",
+      "native": "member_invocation"
+    }
+  ],
+  "expandedWords": [
+    "accessor",
+    "const",
+    "elseif",
+    "enum",
+    "goto",
+    "initializers",
+    "redim"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "character_literal",
+        "concept": "grammar.character-literal"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 106
+  },
+  "sourceTransforms": [
+    {
+      "family": "field-choice-variant",
+      "rule": "invocation",
+      "helper": "_member_invocation",
+      "field": "target",
+      "symbol": "member_access",
+      "alias": "invocation",
+      "insertInto": "expression",
+      "reason": "The pinned parser chooses invocation for member targets while retaining element access for bare identifier targets."
+    },
+    {
+      "family": "ordered-variants",
+      "rule": "expression",
+      "variants": [
+        "alias:invocation",
+        "element_access",
+        "invocation"
+      ],
+      "reason": "Resolve only the overlapping invocation and element-access alternatives after retaining all other expression alternatives."
+    },
+    {
+      "family": "ordered-variants",
+      "rule": "statement",
+      "variants": [
+        "call_statement",
+        "assignment_statement"
+      ],
+      "reason": "The pinned parser chooses the binary-equality call statement on overlapping complete statements; retain assignment as the fallback."
+    },
+    {
+      "family": "ordered-variants",
+      "rule": "type",
+      "variants": [
+        "array_type",
+        "primitive_type"
+      ],
+      "reason": "Shift the rank specifier into an array type before reducing a primitive type in object construction."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

@@ -27,14 +27,18 @@ listed patch, if any).
 | `json5.wasm.gz` | crate `tree-sitter-json5-orchard` 0.1.0 | `0024a5353393c7186a9a4f531f451279d301c7c3925ba292348176a83d3765b4` | `b726ecea6c05ff5b62b9a32563762d297e019c5eaaa7371d20b2245ca17421f4` | [`json5.LICENSE`](json5.LICENSE) |
 | `lua.wasm.gz` | crate `tree-sitter-lua` 0.5.0 | `933206d96a78f7785c13b2600182f1527dcd755c200b1271bb5bc4d8da4b17b3` | `43db0f3e64ffd4ed1ada7a77e4489e54afa5afd7b5aa013679d8284d4ea0f074` | [`lua.LICENSE`](lua.LICENSE) |
 | `make.wasm.gz` | crate `tree-sitter-make` 1.1.1 | `659bb2a3712bc6ecf77a96c82de2bc3062141f405c96d52582b2e01bd8722152` | `3cd0a9967c477e0cf3330d96ae79e2bbc8580119daf7e02266649fa6cd136e76` | [`make.LICENSE`](make.LICENSE) |
+| `pascal.wasm.gz` | crate `tree-sitter-pascal` 0.10.2 | `d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329` | `e1ae02b62ce27ba86d202e77fa42f5e59d8e945b00ff64803cc275741ecca628` | [`pascal.LICENSE`](pascal.LICENSE) |
 | `proto.wasm.gz` | crate `tree-sitter-proto` 0.6.0 | `ac481450c32e8fa52976075581701ecc63790fbab4c9c4f10d0901c9a39b61eb` | `2179ef77376c7c1a1c08c145915c8902436d6f08724cb055ce597879f107bf61` | [`proto.LICENSE`](proto.LICENSE) |
 | `racket.wasm.gz` | crate `tree-sitter-racket` 0.25.0 | `3cbab79ab9bd99684a7de4cb93a0aafd6773bb3ecf6720c59f1b7cdb0ceddd9c` | `5affec93f88d8b9e66aee6ad9a385d04f6af07dfc55bc6944993b02af1fa21b2` | [`racket.LICENSE`](racket.LICENSE) |
 | `regex.wasm.gz` | crate `tree-sitter-regex` 0.25.0 | `ddf28eb5ad0dd0898b9ed0f2593852edac639a339a410d9e93350e472859700f` | `0b64ac3dc55cfb73a95da3ea3eb1ac89e0f8fafd6050aa32139988b8413c14f1` | [`regex.LICENSE`](regex.LICENSE) |
 | `rust.wasm.gz` | `tree-sitter/tree-sitter-rust` v0.24.2 with [`meta-language.patch`](../../../rust/vendor/tree-sitter-rust/meta-language.patch) (vendored in `rust/vendor/tree-sitter-rust`) | `555eee81e8d1ab541d5c76ab5a17bc37abb3c37a43ae02a11d60aaef0cb765a3` | `9e42546db0d259b49f09ce1170528b57d97453f19824ca27197016c330dcae03` | [`rust.LICENSE`](rust.LICENSE) |
 | `scheme.wasm.gz` | crate `tree-sitter-scheme` 0.24.7 | `5d4c1786eb70c3be05f395e5a26edbb7cca12e7547f7a1d8cdb94e092ee74d0d` | `f138334dfc4d3df3c85c3e0d675e154f2bd6b1a8d4325f04c53512eef099241e` | [`scheme.LICENSE`](scheme.LICENSE) |
 | `solidity.wasm.gz` | crate `tree-sitter-solidity` 1.2.13 | `e71971f6ddc0704e81f4af3f43ecc79793742bb5f1d256a5fdd718aa06d74acb` | `7ae2d8aff2ec119ff8706667f45f5ff0d4edea901acef86e227664de83c6df51` | [`solidity.LICENSE`](solidity.LICENSE) |
+| `toml.wasm.gz` | crate `tree-sitter-toml-ng` 0.7.0 | `1991a2608e6f0214e563fe5f762e8df72954dc69a3dd9a1e22ea8a870e4052c3` | `057f48e81072cb0eb5969632a7cf032fc6d33cd4ba3198c3f58227346c012d97` | [`toml.LICENSE`](toml.LICENSE) |
 | `tsx.wasm.gz` | crate `tree-sitter-typescript` 0.23.2 (`tsx`) | `1902cb53fa7ff5179df89b2eea863165e84c8cc866226419dc26921d8c055885` | `3c6cb1c86cecc6d8c99b3a7dfc0aba8b838e2adf036bb23f384d6d8be395ae30` | [`tsx.LICENSE`](tsx.LICENSE) |
 | `typescript.wasm.gz` | crate `tree-sitter-typescript` 0.23.2 (`typescript`) | `74fe453edd70f4eae9af0a1050cbd7943d8971d59165b6aaebbaa0a0b716d1aa` | `d24392183c75c103feafb827c9c086de00c30198e27f362cc971fbca6e91a87f` | [`typescript.LICENSE`](typescript.LICENSE) |
+| `vb.wasm.gz` | crate `tree-sitter-vb-dotnet` 0.1.0 | `7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8` | `4bc68c0fb1cbc42a44eb3199affe54173b6519f52ffdd173e31c9dc87b9099f8` | [`vb.LICENSE`](vb.LICENSE) |
+| `zig.wasm.gz` | crate `tree-sitter-zig` 1.1.2 | `5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63` | `cc95fa4d69178617b19fe50b070dc871e315aea55107fcd1bcd238ae77811edd` | [`zig.LICENSE`](zig.LICENSE) |
 
 Every grammar is distributed under its upstream license (MIT unless the
 linked license file states otherwise).

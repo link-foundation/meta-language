@@ -39,7 +39,6 @@ repository).
 | `ocaml.wasm.gz` | crate `tree-sitter-ocaml` 0.26.0 (`grammars/ocaml`) | `f76cc46f96f9ed152354743539cc642dcb6a67343795dd9d548fc4d0b0ebce74` | `bfa3eef92b9d3cc1117aa486d46ecb06c98a3a28c1747660aaa5851df5e4530c` | [`ocaml.LICENSE`](ocaml.LICENSE) |
 | `ocaml_interface.wasm.gz` | crate `tree-sitter-ocaml` 0.26.0 (`grammars/interface`) | `62634bd351247bd2152eb15438f5bea3f0a1ccce4291f318aa86a79d29bf111e` | `3ce03850c36618e3530292372aae9156a45b5a923210a87c285539d7f13b0354` | [`ocaml_interface.LICENSE`](ocaml_interface.LICENSE) |
 | `odin.wasm.gz` | crate `tree-sitter-odin` 1.3.0 | `8f672d8d022d70eeae822796924f2e45e692d6b2acd2ddc79bfeb5f696fa24f0` | `8ce37ea03c3d565d1c4e922d357a82fd9aa5184c36f712509803a63fec8d3194` | [`odin.LICENSE`](odin.LICENSE) |
-| `pascal.wasm.gz` | crate `tree-sitter-pascal` 0.10.2 | `d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329` | `e1ae02b62ce27ba86d202e77fa42f5e59d8e945b00ff64803cc275741ecca628` | [`pascal.LICENSE`](pascal.LICENSE) |
 | `perl.wasm.gz` | crate `ts-parser-perl` 2.0.0 | `1317bdaae2f50f5f82b6dbc7176425e9cee64a0dbfbb82aa17959aaefc54f199` | `af4e99e2379e9ae0228357a15f0d3b6037846b8a328deafb70dfa7a13b58b140` | [`perl.LICENSE`](perl.LICENSE) |
 | `php.wasm.gz` | crate `tree-sitter-php` 0.24.2 (`php`) | `59ad8e5e4fde3fe60687a488ab8420612840cc966b83739af1b3a4317ed27ec6` | `a100e693f0133e5f559a5d90daf4ba9c12607162108c80368f2dfcbac0ec8bff` | [`php.LICENSE`](php.LICENSE) |
 | `powershell.wasm.gz` | crate `tree-sitter-powershell` 0.26.4 | `f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720` | `84555e38f85a391095b349a906b9790d319e3946ce12d9bc21dbec5cded5dad9` | [`powershell.LICENSE`](powershell.LICENSE) |
@@ -50,11 +49,8 @@ repository).
 | `scala.wasm.gz` | crate `tree-sitter-scala` 0.26.2 | `9f6d03fa6c63d2d855b6f9e0368046a58568587eefc38b5e38bdb001e8ec68db` | `c2d92c43913a24efa76528c6aff75c97c0964798c4d360c7dc1951b04058fe52` | [`scala.LICENSE`](scala.LICENSE) |
 | `sql.wasm.gz` | crate `tree-sitter-sequel` 0.3.11 | `852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580` | `e03fb5079e88cfe0807056c284fd2b0589cee35df9bbb3d07e72f2f4178de8de` | [`sql.LICENSE`](sql.LICENSE) |
 | `swift.wasm.gz` | crate `tree-sitter-swift` 0.7.4 with [`tree-sitter-swift-wasm.patch`](../../../../js/scripts/grammar-patches/tree-sitter-swift-wasm.patch) | `1d332e60ec28e6b398db36e06bf05414061dfbbd3e981b33ff1edfd5159e3e08` | `5b54286c25842ea5c60a659f4f3276af7419d877f8946ef4b8d26b86849f1708` | [`swift.LICENSE`](swift.LICENSE) |
-| `toml.wasm.gz` | crate `tree-sitter-toml-ng` 0.7.0 | `1991a2608e6f0214e563fe5f762e8df72954dc69a3dd9a1e22ea8a870e4052c3` | `057f48e81072cb0eb5969632a7cf032fc6d33cd4ba3198c3f58227346c012d97` | [`toml.LICENSE`](toml.LICENSE) |
-| `vb.wasm.gz` | crate `tree-sitter-vb-dotnet` 0.1.0 | `7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8` | `4bc68c0fb1cbc42a44eb3199affe54173b6519f52ffdd173e31c9dc87b9099f8` | [`vb.LICENSE`](vb.LICENSE) |
 | `xml.wasm.gz` | crate `tree-sitter-xml` 0.7.0 (`xml`) | `e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844` | `2edd39d0ef194dc70878fe99b277180547fabf252f85b58e537db5a11e3027fa` | [`xml.LICENSE`](xml.LICENSE) |
 | `yaml.wasm.gz` | crate `tree-sitter-yaml` 0.7.2 | `8a3baaab33fb63cf9a89f97ec61dbb3ab0d4ef69be9f0f229092c79d129617c9` | `f89cf2a8ccd4f29292e502f1c37efb4f1dead281246605e0a890c697d4db88c7` | [`yaml.LICENSE`](yaml.LICENSE) |
-| `zig.wasm.gz` | crate `tree-sitter-zig` 1.1.2 | `5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63` | `cc95fa4d69178617b19fe50b070dc871e315aea55107fcd1bcd238ae77811edd` | [`zig.LICENSE`](zig.LICENSE) |
 
 Every grammar is distributed under its upstream license (MIT unless the
 linked license file states otherwise).

@@ -205,7 +205,8 @@
   "expandedWords": [
     "enum",
     "expr",
-    "instanceof"
+    "instanceof",
+    "multiline"
   ],
   "concepts": {
     "shared": [

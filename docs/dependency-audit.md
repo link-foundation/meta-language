@@ -331,7 +331,7 @@ they are.
 | `tree-sitter-nix` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.0` | direct, runtime | `=0.3.0` | 0.3.0 (crates.io, tree-sitter-nix) | version | current |  |
 | `tree-sitter-ocaml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.0` | direct, runtime | `=0.26.0` | 0.26.0 (crates.io, tree-sitter-ocaml) | version | current |  |
 | `tree-sitter-odin` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.0` | direct, runtime | `=1.3.0` | 1.3.0 (crates.io, tree-sitter-odin) | version | current |  |
-| `tree-sitter-pascal` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.10.2` | direct, runtime | `=0.10.2` | 0.10.2 (crates.io, tree-sitter-pascal) | version | current |  |
+| `tree-sitter-pascal` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.10.2` | direct, development | `=0.10.2` | 0.10.2 (crates.io, tree-sitter-pascal) | version | current |  |
 | `tree-sitter-php` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.2` | direct, runtime | `=0.24.2` | 0.24.2 (crates.io, tree-sitter-php) | version | current |  |
 | `tree-sitter-powershell` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.4` | direct, runtime | `=0.26.4` | 0.26.4 (crates.io, tree-sitter-powershell) | version | current |  |
 | `tree-sitter-proto` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.6.0` | direct, development | `=0.6.0` | 0.6.0 (crates.io, tree-sitter-proto) | version | current |  |
@@ -345,12 +345,12 @@ they are.
 | `tree-sitter-sequel` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.11` | direct, runtime | `=0.3.11` | 0.3.11 (crates.io, tree-sitter-sequel) | version | current |  |
 | `tree-sitter-solidity` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.2.13` | direct, development | `=1.2.13` | 1.2.13 (crates.io, tree-sitter-solidity) | version | current |  |
 | `tree-sitter-swift` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.4` | direct, runtime | `=0.7.4` | 0.7.4 (crates.io, tree-sitter-swift) | version | current |  |
-| `tree-sitter-toml-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, runtime | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-toml-ng) | version | current |  |
+| `tree-sitter-toml-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, development | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-toml-ng) | version | current |  |
 | `tree-sitter-typescript` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.2` | direct, development | `=0.23.2` | 0.23.2 (crates.io, tree-sitter-typescript) | version | current |  |
-| `tree-sitter-vb-dotnet` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, runtime | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-vb-dotnet) | version | current |  |
+| `tree-sitter-vb-dotnet` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, development | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-vb-dotnet) | version | current |  |
 | `tree-sitter-xml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, runtime | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-xml) | version | current |  |
 | `tree-sitter-yaml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.2` | direct, runtime | `=0.7.2` | 0.7.2 (crates.io, tree-sitter-yaml) | version | current |  |
-| `tree-sitter-zig` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.2` | direct, runtime | `=1.1.2` | 1.1.2 (crates.io, tree-sitter-zig) | version | current |  |
+| `tree-sitter-zig` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.2` | direct, development | `=1.1.2` | 1.1.2 (crates.io, tree-sitter-zig) | version | current |  |
 | `tree-sitter` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.27.0` | direct, runtime | `=0.27.0` | 0.27.0 (crates.io, tree-sitter) | version | current |  |
 | `ts-parser-perl` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.0.0` | direct, runtime | `=2.0.0` | 2.0.0 (crates.io, ts-parser-perl) | version | current |  |
 | `typenum` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.20.1` | transitive |  | 1.20.1 (crates.io, typenum) | version | current |  |
@@ -497,7 +497,7 @@ they are.
 | `js/src/vendor/grammars/ocaml_interface.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.0` |  | derived | current |  |
 | `js/src/vendor/grammars/ocaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.0` |  | derived | current |  |
 | `js/src/vendor/grammars/odin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.0` |  | derived | current |  |
-| `js/src/vendor/grammars/pascal.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.10.2` |  | derived | current |  |
+| `js/oracles/grammars/pascal.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.10.2` |  | derived | current |  |
 | `js/src/vendor/grammars/perl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `2.0.0` |  | derived | current |  |
 | `js/src/vendor/grammars/php.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.2` |  | derived | current |  |
 | `js/src/vendor/grammars/powershell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.4` |  | derived | current |  |
@@ -508,11 +508,11 @@ they are.
 | `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.2` |  | derived | current |  |
 | `js/src/vendor/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.11` |  | derived | current |  |
 | `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.4` |  | derived | current |  |
-| `js/src/vendor/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
-| `js/src/vendor/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
+| `js/oracles/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
+| `js/oracles/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
 | `js/src/vendor/grammars/xml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
 | `js/src/vendor/grammars/yaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.2` |  | derived | current |  |
-| `js/src/vendor/grammars/zig.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.2` |  | derived | current |  |
+| `js/oracles/grammars/zig.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.2` |  | derived | current |  |
 
 ## Generators
 

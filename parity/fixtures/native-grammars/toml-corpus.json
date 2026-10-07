@@ -1,0 +1,91 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "dfafc21d672b82b4736f9c00727585d23797a49c6bcc87e3a71493d0bb5e6836",
+  "cases": [
+    {
+      "file": "tour.txt",
+      "title": "Comments",
+      "source": "\n# This is a TOML comment\n\n# This is a multiline\n# TOML comment\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Strings: basic",
+      "source": "\nstr1 = \"I'm a string.\"\nstr2 = \"You can \\\"quote\\\" me.\"\nstr3 = \"Name\\tJos\\u00E9\\nLoc\\tSF.\"\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Strings: multi-line basic",
+      "source": "\nstr1 = \"\"\"\nRoses are red\nViolets are blue\"\"\"\n\nstr2 = \"\"\"\\\n  The quick brown \\\n  fox jumps over \\\n  the lazy dog.\\\n  \"\"\"\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Strings: literal",
+      "source": "\npath = 'C:\\Users\\nodejs\\templates'\npath2 = '\\\\User\\admin$\\system32'\nquoted = 'Tom \"Dubs\" Preston-Werner'\nregex = '<\\i\\c*\\s*>'\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Strings: multi-line literal",
+      "source": "\nre = '''I [dw]on't need \\d{2} apples'''\nlines = '''\nThe first newline is\ntrimmed in raw strings.\nAll other whitespace\nis preserved.\n'''\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Numbers: integers",
+      "source": "\nint1 = +99\nint2 = 42\nint3 = 0\nint4 = -17\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Numbers: hexadecimal",
+      "source": "\nhex1 = 0xDEADBEEF\nhex2 = 0xdeadbeef\nhex3 = 0xdead_beef\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Numbers: octal",
+      "source": "\noct1 = 0o01234567\noct2 = 0o755\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Numbers: binary",
+      "source": "\nbin1 = 0b11010110\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Numbers: fractional",
+      "source": "\nfloat1 = +1.0\nfloat2 = 3.1415\nfloat3 = -0.01\n\nfloat8 = 224_617.445_991_228\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Numbers: exponent",
+      "source": "\nfloat4 = 5e+22\nfloat5 = 1e06\nfloat6 = -2E-2\n\nfloat7 = 6.626e-34\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Numbers: infinity",
+      "source": "\ninfinite1 = inf\ninfinite2 = +inf\ninfinite3 = -inf\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Numbers: not a number",
+      "source": "\nnot1 = nan\nnot2 = +nan\nnot3 = -nan\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Dates and Times: offset datetime",
+      "source": "\nodt1 = 1979-05-27T07:32:00Z\nodt2 = 1979-05-27T00:32:00-07:00\nodt3 = 1979-05-27T00:32:00.999999-07:00\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Dates and Times: local datetime",
+      "source": "\nldt1 = 1979-05-27T07:32:00\nldt2 = 1979-05-27T00:32:00.999999\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Dates and Times: local date",
+      "source": "\nld1 = 1979-05-27\n"
+    },
+    {
+      "file": "tour.txt",
+      "title": "Dates and Times: local time",
+      "source": "\nlt1 = 07:32:00\nlt2 = 00:32:00.999999\n"
+    }
+  ]
+}

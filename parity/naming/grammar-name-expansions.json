@@ -1,92 +1,781 @@
 {
   "description": "How the import pipeline (js/scripts/import-native-grammars.mjs) turns the rule names of an upstream grammar into readable English native rule names and concept records: the abbreviations and run-together keywords upstream names use with the words that replace them, and per grammar the names and concepts a reviewer decided by hand. Every entry is a reviewed merge decision; the merge report of each language lists where it applied.",
   "words": [
-    { "word": "alignas", "replacement": "align_as", "reason": "The C keyword _Alignas (ISO/IEC 9899:2018 section 6.7.5) run together." },
-    { "word": "alignof", "replacement": "alignment_of", "reason": "The C operator _Alignof (ISO/IEC 9899:2018 section 6.5.3.4) gives the alignment of a type." },
-    { "word": "apos", "replacement": "apostrophe", "reason": "An abbreviation of apostrophe, the quote that opens a Rocq destructuring let (`let 'pattern := term in term`, Rocq Reference Manual, section Extended pattern matching)." },
-    { "word": "arg", "replacement": "argument", "reason": "An abbreviation of argument." },
-    { "word": "args", "replacement": "arguments", "reason": "An abbreviation of arguments." },
-    { "word": "asm", "replacement": "assembly", "reason": "The asm keyword introduces inline assembly." },
-    { "word": "assumpt", "replacement": "assumption", "reason": "An abbreviation of assumption, a Rocq Parameter, Axiom or Variable declaration (Rocq Reference Manual, section Assumptions)." },
-    { "word": "async", "replacement": "asynchronous", "reason": "The Rust keyword async marks an asynchronous function or block (The Rust Reference, Async blocks)." },
-    { "word": "attr", "replacement": "attribute", "reason": "An abbreviation of attribute." },
-    { "word": "bigint", "replacement": "big_integer", "reason": "The Rocq notation entry bigint, an integer of any size (Rocq Reference Manual, section Notations, syntax of notation entries)." },
-    { "word": "bignat", "replacement": "big_natural_number", "reason": "Rocq's natural number of any size (Rocq Reference Manual, section Lexical conventions, numbers)." },
-    { "word": "bitfield", "replacement": "bit_field", "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)." },
-    { "word": "bool", "replacement": "boolean", "reason": "An abbreviation of boolean; the Protocol Buffers bool type holds true or false (Protocol Buffers Language Specification, Boolean)." },
-    { "word": "calc", "replacement": "calculation", "reason": "The Lean calc keyword opens a calculation, a chain of relations proved step by step (Theorem Proving in Lean 4, section Calculational Proofs)." },
-    { "word": "char", "replacement": "character", "reason": "An abbreviation of character; the C type char holds a character." },
-    { "word": "chars", "replacement": "characters", "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string." },
-    { "word": "cmp", "replacement": "comparison", "reason": "An abbreviation of comparison: the parenthesized or quoted pair of arguments an ifeq or ifneq conditional of GNU make compares (GNU make manual, section 7.2 Syntax of Conditionals)." },
-    { "word": "config", "replacement": "configuration", "reason": "An abbreviation of configuration." },
-    { "word": "const", "replacement": "constant", "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)." },
-    { "word": "db", "replacement": "database", "reason": "An abbreviation of database, as in a Rocq hint database (Rocq Reference Manual, section Hint databases)." },
-    { "word": "dbg", "replacement": "debug", "reason": "The Lean dbg_trace keyword prints a debugging message." },
-    { "word": "decl", "replacement": "declaration", "reason": "An abbreviation of declaration." },
-    { "word": "declarators", "replacement": "declarator_list", "reason": "A comma-separated list of declarators." },
-    { "word": "declspec", "replacement": "declaration_specifier", "reason": "The Microsoft __declspec keyword run together." },
-    { "word": "decnat", "replacement": "decimal_natural_number", "reason": "Rocq's natural number written in decimal digits (Rocq Reference Manual, section Lexical conventions, numbers)." },
-    { "word": "def", "replacement": "definition", "reason": "An abbreviation of definition." },
-    { "word": "delim", "replacement": "delimited", "reason": "An abbreviation of delimited; a delimited token tree is enclosed in parentheses, brackets or braces (The Rust Reference, Macros, DelimTokenTree)." },
-    { "word": "doc", "replacement": "documentation", "reason": "An abbreviation of documentation; a doc comment is a documentation comment (The Rust Reference, Doc comments)." },
-    { "word": "elem", "replacement": "element", "reason": "An abbreviation of element, as in the interface elements, method elements and type elements of a Go interface type (The Go Programming Language Specification, Interface types)." },
-    { "word": "elif", "replacement": "else_if", "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if." },
-    { "word": "elifdef", "replacement": "else_if_defined", "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined." },
-    { "word": "elsif", "replacement": "else_if", "reason": "The else branch of a GNU make conditional that holds another conditional, `else ifeq ...` (GNU make manual, section 7.2 Syntax of Conditionals)." },
-    { "word": "elt", "replacement": "element", "reason": "An abbreviation of element; tree-sitter-solidity scans the characters between the quotes of a Solidity string literal with _string_immediate_elt_inside_quote." },
-    { "word": "enum", "replacement": "enumeration", "reason": "An abbreviation of enumeration." },
-    { "word": "eqn", "replacement": "equation", "reason": "An abbreviation of equation, as in the Rocq clause eqn:ident that names the equation of a case analysis (Rocq Reference Manual, section Tactics, destruct)." },
-    { "word": "eval", "replacement": "evaluation", "reason": "An abbreviation of evaluation." },
-    { "word": "expr", "replacement": "expression", "reason": "An abbreviation of expression." },
-    { "word": "fallthrough", "replacement": "fall_through", "reason": "The Go keyword fallthrough (The Go Programming Language Specification, Fallthrough statements) run together." },
-    { "word": "func", "replacement": "function", "reason": "The Go keyword func declares a function; a func literal is a function literal (The Go Programming Language Specification, Function literals)." },
-    { "word": "gen", "replacement": "generator", "reason": "The Rust 2024 keyword gen opens a generator block that yields the items of an iterator (RFC 3513, gen blocks)." },
-    { "word": "goto", "replacement": "go_to", "reason": "The goto keyword run together." },
-    { "word": "hexdigit", "replacement": "hexadecimal_digit", "reason": "A hexadecimal digit run together." },
-    { "word": "hexnat", "replacement": "hexadecimal_natural_number", "reason": "Rocq's natural number written in hexadecimal digits after 0x (Rocq Reference Manual, section Lexical conventions, numbers)." },
-    { "word": "hintdb", "replacement": "hint_database", "reason": "A Rocq hint database run together (Rocq Reference Manual, section Hint databases, Create HintDb)." },
-    { "word": "hyp", "replacement": "hypothesis", "reason": "An abbreviation of hypothesis, a local assumption of a Rocq proof goal." },
-    { "word": "ident", "replacement": "identifier", "reason": "An abbreviation of identifier." },
-    { "word": "ifdef", "replacement": "if_defined", "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined." },
-    { "word": "ifeq", "replacement": "if_equal", "reason": "The GNU make conditional directive ifeq expands two arguments and tests that they are equal (GNU make manual, section 7.2 Syntax of Conditionals)." },
-    { "word": "ifndef", "replacement": "if_not_defined", "reason": "The GNU make conditional directive ifndef tests that a variable has an empty value (GNU make manual, section 7.2 Syntax of Conditionals); the preprocessing directive #ifndef (ISO/IEC 9899:2018 section 6.10.1) is if not defined." },
-    { "word": "ifneq", "replacement": "if_not_equal", "reason": "The GNU make conditional directive ifneq expands two arguments and tests that they differ (GNU make manual, section 7.2 Syntax of Conditionals)." },
-    { "word": "impl", "replacement": "implementation", "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)." },
-    { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
-    { "word": "inst", "replacement": "instance", "reason": "An abbreviation of instance." },
-    { "word": "instanceof", "replacement": "instance_of", "reason": "The Java operator instanceof (The Java Language Specification, section 15.20.2) run together." },
-    { "word": "int", "replacement": "integer", "reason": "An abbreviation of integer; a Go int literal is an integer literal (The Go Programming Language Specification, Integer literals)." },
-    { "word": "interp", "replacement": "interpretation", "reason": "An abbreviation of interpretation." },
-    { "word": "lhs", "replacement": "left_hand_side", "reason": "An abbreviation of left-hand side, the target of a JavaScript assignment or for-in head." },
-    { "word": "lib", "replacement": "library", "reason": "An abbreviation of library." },
-    { "word": "lit", "replacement": "literal", "reason": "An abbreviation of literal, as in the Protocol Buffers intLit, floatLit and boolLit (Protocol Buffers Language Specification, Integer literals)." },
-    { "word": "mod", "replacement": "module", "reason": "The Rust keyword mod declares a module (The Rust Reference, Modules)." },
-    { "word": "ms", "replacement": "microsoft", "reason": "Microsoft-specific syntax." },
-    { "word": "mut", "replacement": "mutable", "reason": "The Rust keyword mut makes a binding mutable (The Rust Reference, Identifier patterns)." },
-    { "word": "num", "replacement": "number", "reason": "An abbreviation of number." },
-    { "word": "offsetof", "replacement": "offset_of", "reason": "The offsetof macro (ISO/IEC 9899:2018 section 7.19) run together." },
-    { "word": "oneof", "replacement": "one_of", "reason": "The Protocol Buffers keyword oneof run together: at most one field of a oneof is set at a time (Protocol Buffers Language Guide, Oneof)." },
-    { "word": "params", "replacement": "parameters", "reason": "An abbreviation of parameters." },
-    { "word": "preproc", "replacement": "preprocessor", "reason": "An abbreviation of preprocessor." },
-    { "word": "ptr", "replacement": "pointer", "reason": "An abbreviation of pointer." },
-    { "word": "qmark", "replacement": "question_mark", "reason": "An abbreviation of question mark; JavaScript's _ternary_qmark scans the ? of a conditional expression." },
-    { "word": "qualid", "replacement": "qualified_identifier", "reason": "Rocq's qualified identifier, a dotted path to a global name (Rocq Reference Manual, section Qualified identifiers)." },
-    { "word": "rawline", "replacement": "raw_line", "reason": "A line of a GNU make define directive taken verbatim, as the value of the variable it defines (GNU make manual, section 6.8 Defining Multi-Line Variables)." },
-    { "word": "recipeprefix", "replacement": "recipe_prefix", "reason": "The GNU make variable .RECIPEPREFIX names the character that starts a recipe line instead of a tab (GNU make manual, section 6.14 Other Special Variables)." },
-    { "word": "regex", "replacement": "regular_expression", "reason": "An abbreviation of regular expression, JavaScript's regex literal and its pattern and flags." },
-    { "word": "rew", "replacement": "rewrite", "reason": "An abbreviation of rewrite, as in Rocq's rewriting notation rew [P] H in t." },
-    { "word": "rpc", "replacement": "remote_procedure_call", "reason": "The Protocol Buffers keyword rpc declares a remote procedure call of a service (Protocol Buffers Language Specification, Service definition)." },
-    { "word": "seh", "replacement": "structured_exception_handling", "reason": "Microsoft structured exception handling." },
-    { "word": "seq", "replacement": "sequence", "reason": "An abbreviation of sequence." },
-    { "word": "sizeof", "replacement": "size_of", "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together." },
-    { "word": "spec", "replacement": "specification", "reason": "An abbreviation of specification." },
-    { "word": "struct", "replacement": "structure", "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)." },
-    { "word": "tryif", "replacement": "try_if", "reason": "The Rocq tactical tryif run together (Rocq Reference Manual, section Ltac, tryif)." },
-    { "word": "typeclasses", "replacement": "type_classes", "reason": "Rocq's type classes run together, as in Typeclasses Transparent (Rocq Reference Manual, section Typeclasses)." },
-    { "word": "undefine", "replacement": "remove_definition", "reason": "The GNU make undefine directive removes the definition of a variable (GNU make manual, section 6.9 Undefining Variables)." },
-    { "word": "unexport", "replacement": "remove_export", "reason": "The GNU make unexport directive stops passing a variable to the environment of sub-make and recipe commands (GNU make manual, section 5.7.2 Communicating Variables to a Sub-make)." },
-    { "word": "var", "replacement": "variable", "reason": "An abbreviation of variable." },
-    { "word": "vpath", "replacement": "search_path", "reason": "The GNU make VPATH variable and vpath directive name the directories to search for prerequisites (GNU make manual, sections 4.5.1 VPATH: Search Path for All Prerequisites and 4.5.2 The vpath Directive)." }
+    {
+      "word": "abi",
+      "replacement": "application_binary_interface",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses abi for application binary interface."
+    },
+    {
+      "word": "accessor",
+      "replacement": "access_method",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses accessor for access method."
+    },
+    {
+      "word": "alignas",
+      "replacement": "align_as",
+      "reason": "The C keyword _Alignas (ISO/IEC 9899:2018 section 6.7.5) run together."
+    },
+    {
+      "word": "alignof",
+      "replacement": "alignment_of",
+      "reason": "The C operator _Alignof (ISO/IEC 9899:2018 section 6.5.3.4) gives the alignment of a type."
+    },
+    {
+      "word": "anyframe",
+      "replacement": "any_frame",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses anyframe for any frame."
+    },
+    {
+      "word": "apos",
+      "replacement": "apostrophe",
+      "reason": "An abbreviation of apostrophe, the quote that opens a Rocq destructuring let (`let 'pattern := term in term`, Rocq Reference Manual, section Extended pattern matching)."
+    },
+    {
+      "word": "arg",
+      "replacement": "argument",
+      "reason": "An abbreviation of argument."
+    },
+    {
+      "word": "args",
+      "replacement": "arguments",
+      "reason": "An abbreviation of arguments."
+    },
+    {
+      "word": "arr",
+      "replacement": "array",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses arr for array."
+    },
+    {
+      "word": "asm",
+      "replacement": "assembly",
+      "reason": "The asm keyword introduces inline assembly."
+    },
+    {
+      "word": "assumpt",
+      "replacement": "assumption",
+      "reason": "An abbreviation of assumption, a Rocq Parameter, Axiom or Variable declaration (Rocq Reference Manual, section Assumptions)."
+    },
+    {
+      "word": "async",
+      "replacement": "asynchronous",
+      "reason": "The Rust keyword async marks an asynchronous function or block (The Rust Reference, Async blocks)."
+    },
+    {
+      "word": "attr",
+      "replacement": "attribute",
+      "reason": "An abbreviation of attribute."
+    },
+    {
+      "word": "bigint",
+      "replacement": "big_integer",
+      "reason": "The Rocq notation entry bigint, an integer of any size (Rocq Reference Manual, section Notations, syntax of notation entries)."
+    },
+    {
+      "word": "bignat",
+      "replacement": "big_natural_number",
+      "reason": "Rocq's natural number of any size (Rocq Reference Manual, section Lexical conventions, numbers)."
+    },
+    {
+      "word": "bitfield",
+      "replacement": "bit_field",
+      "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)."
+    },
+    {
+      "word": "bool",
+      "replacement": "boolean",
+      "reason": "An abbreviation of boolean; the Protocol Buffers bool type holds true or false (Protocol Buffers Language Specification, Boolean)."
+    },
+    {
+      "word": "builtin",
+      "replacement": "built_in",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses builtin for built in."
+    },
+    {
+      "word": "calc",
+      "replacement": "calculation",
+      "reason": "The Lean calc keyword opens a calculation, a chain of relations proved step by step (Theorem Proving in Lean 4, section Calculational Proofs)."
+    },
+    {
+      "word": "cdecl",
+      "replacement": "c_declaration",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses cdecl for c declaration."
+    },
+    {
+      "word": "char",
+      "replacement": "character",
+      "reason": "An abbreviation of character; the C type char holds a character."
+    },
+    {
+      "word": "chars",
+      "replacement": "characters",
+      "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string."
+    },
+    {
+      "word": "cmp",
+      "replacement": "comparison",
+      "reason": "An abbreviation of comparison: the parenthesized or quoted pair of arguments an ifeq or ifneq conditional of GNU make compares (GNU make manual, section 7.2 Syntax of Conditionals)."
+    },
+    {
+      "word": "comptime",
+      "replacement": "compile_time",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses comptime for compile time."
+    },
+    {
+      "word": "config",
+      "replacement": "configuration",
+      "reason": "An abbreviation of configuration."
+    },
+    {
+      "word": "const",
+      "replacement": "constant",
+      "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)."
+    },
+    {
+      "word": "constref",
+      "replacement": "constant_reference",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses constref for constant reference."
+    },
+    {
+      "word": "consts",
+      "replacement": "constants",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses consts for constants."
+    },
+    {
+      "word": "cppdecl",
+      "replacement": "c_plus_plus_declaration",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses cppdecl for c plus plus declaration."
+    },
+    {
+      "word": "cvar",
+      "replacement": "c_variable",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses cvar for c variable."
+    },
+    {
+      "word": "db",
+      "replacement": "database",
+      "reason": "An abbreviation of database, as in a Rocq hint database (Rocq Reference Manual, section Hint databases)."
+    },
+    {
+      "word": "dbg",
+      "replacement": "debug",
+      "reason": "The Lean dbg_trace keyword prints a debugging message."
+    },
+    {
+      "word": "decl",
+      "replacement": "declaration",
+      "reason": "An abbreviation of declaration."
+    },
+    {
+      "word": "declarators",
+      "replacement": "declarator_list",
+      "reason": "A comma-separated list of declarators."
+    },
+    {
+      "word": "declspec",
+      "replacement": "declaration_specifier",
+      "reason": "The Microsoft __declspec keyword run together."
+    },
+    {
+      "word": "decnat",
+      "replacement": "decimal_natural_number",
+      "reason": "Rocq's natural number written in decimal digits (Rocq Reference Manual, section Lexical conventions, numbers)."
+    },
+    {
+      "word": "def",
+      "replacement": "definition",
+      "reason": "An abbreviation of definition."
+    },
+    {
+      "word": "delim",
+      "replacement": "delimited",
+      "reason": "An abbreviation of delimited; a delimited token tree is enclosed in parentheses, brackets or braces (The Rust Reference, Macros, DelimTokenTree)."
+    },
+    {
+      "word": "deref",
+      "replacement": "dereferencing",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses deref for dereferencing."
+    },
+    {
+      "word": "dereference",
+      "replacement": "dereferencing",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses dereference for dereferencing."
+    },
+    {
+      "word": "destructor",
+      "replacement": "destruction_method",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses destructor for destruction method."
+    },
+    {
+      "word": "disp",
+      "replacement": "dispatch",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses disp for dispatch."
+    },
+    {
+      "word": "div",
+      "replacement": "division",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses div for division."
+    },
+    {
+      "word": "doc",
+      "replacement": "documentation",
+      "reason": "An abbreviation of documentation; a doc comment is a documentation comment (The Rust Reference, Doc comments)."
+    },
+    {
+      "word": "downto",
+      "replacement": "down_to",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses downto for down to."
+    },
+    {
+      "word": "elem",
+      "replacement": "element",
+      "reason": "An abbreviation of element, as in the interface elements, method elements and type elements of a Go interface type (The Go Programming Language Specification, Interface types)."
+    },
+    {
+      "word": "elif",
+      "replacement": "else_if",
+      "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if."
+    },
+    {
+      "word": "elifdef",
+      "replacement": "else_if_defined",
+      "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined."
+    },
+    {
+      "word": "elseif",
+      "replacement": "else_if",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses elseif for else if."
+    },
+    {
+      "word": "elsif",
+      "replacement": "else_if",
+      "reason": "The else branch of a GNU make conditional that holds another conditional, `else ifeq ...` (GNU make manual, section 7.2 Syntax of Conditionals)."
+    },
+    {
+      "word": "elt",
+      "replacement": "element",
+      "reason": "An abbreviation of element; tree-sitter-solidity scans the characters between the quotes of a Solidity string literal with _string_immediate_elt_inside_quote."
+    },
+    {
+      "word": "endif",
+      "replacement": "end_if",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses endif for end if."
+    },
+    {
+      "word": "enum",
+      "replacement": "enumeration",
+      "reason": "An abbreviation of enumeration."
+    },
+    {
+      "word": "eqn",
+      "replacement": "equation",
+      "reason": "An abbreviation of equation, as in the Rocq clause eqn:ident that names the equation of a case analysis (Rocq Reference Manual, section Tactics, destruct)."
+    },
+    {
+      "word": "errdefer",
+      "replacement": "error_defer",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses errdefer for error defer."
+    },
+    {
+      "word": "eval",
+      "replacement": "evaluation",
+      "reason": "An abbreviation of evaluation."
+    },
+    {
+      "word": "exp",
+      "replacement": "expression",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses exp for expression."
+    },
+    {
+      "word": "expr",
+      "replacement": "expression",
+      "reason": "An abbreviation of expression."
+    },
+    {
+      "word": "ext",
+      "replacement": "external",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses ext for external."
+    },
+    {
+      "word": "fallthrough",
+      "replacement": "fall_through",
+      "reason": "The Go keyword fallthrough (The Go Programming Language Specification, Fallthrough statements) run together."
+    },
+    {
+      "word": "fdiv",
+      "replacement": "floating_division",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses fdiv for floating division."
+    },
+    {
+      "word": "foreach",
+      "replacement": "for_each",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses foreach for for each."
+    },
+    {
+      "word": "func",
+      "replacement": "function",
+      "reason": "The Go keyword func declares a function; a func literal is a function literal (The Go Programming Language Specification, Function literals)."
+    },
+    {
+      "word": "fwd",
+      "replacement": "forward",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses fwd for forward."
+    },
+    {
+      "word": "gen",
+      "replacement": "generator",
+      "reason": "The Rust 2024 keyword gen opens a generator block that yields the items of an iterator (RFC 3513, gen blocks)."
+    },
+    {
+      "word": "goto",
+      "replacement": "go_to",
+      "reason": "The goto keyword run together."
+    },
+    {
+      "word": "gt",
+      "replacement": "greater_than",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses gt for greater than."
+    },
+    {
+      "word": "gte",
+      "replacement": "greater_than_or_equal",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses gte for greater than or equal."
+    },
+    {
+      "word": "guid",
+      "replacement": "globally_unique_identifier",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses guid for globally unique identifier."
+    },
+    {
+      "word": "hardfloat",
+      "replacement": "hardware_float",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses hardfloat for hardware float."
+    },
+    {
+      "word": "hexdigit",
+      "replacement": "hexadecimal_digit",
+      "reason": "A hexadecimal digit run together."
+    },
+    {
+      "word": "hexnat",
+      "replacement": "hexadecimal_natural_number",
+      "reason": "Rocq's natural number written in hexadecimal digits after 0x (Rocq Reference Manual, section Lexical conventions, numbers)."
+    },
+    {
+      "word": "hintdb",
+      "replacement": "hint_database",
+      "reason": "A Rocq hint database run together (Rocq Reference Manual, section Hint databases, Create HintDb)."
+    },
+    {
+      "word": "hyp",
+      "replacement": "hypothesis",
+      "reason": "An abbreviation of hypothesis, a local assumption of a Rocq proof goal."
+    },
+    {
+      "word": "ident",
+      "replacement": "identifier",
+      "reason": "An abbreviation of identifier."
+    },
+    {
+      "word": "ifdef",
+      "replacement": "if_defined",
+      "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined."
+    },
+    {
+      "word": "ifeq",
+      "replacement": "if_equal",
+      "reason": "The GNU make conditional directive ifeq expands two arguments and tests that they are equal (GNU make manual, section 7.2 Syntax of Conditionals)."
+    },
+    {
+      "word": "ifndef",
+      "replacement": "if_not_defined",
+      "reason": "The GNU make conditional directive ifndef tests that a variable has an empty value (GNU make manual, section 7.2 Syntax of Conditionals); the preprocessing directive #ifndef (ISO/IEC 9899:2018 section 6.10.1) is if not defined."
+    },
+    {
+      "word": "ifneq",
+      "replacement": "if_not_equal",
+      "reason": "The GNU make conditional directive ifneq expands two arguments and tests that they differ (GNU make manual, section 7.2 Syntax of Conditionals)."
+    },
+    {
+      "word": "impl",
+      "replacement": "implementation",
+      "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)."
+    },
+    {
+      "word": "init",
+      "replacement": "initialized",
+      "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer."
+    },
+    {
+      "word": "initializers",
+      "replacement": "initializer_list",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses initializers for initializer list."
+    },
+    {
+      "word": "inst",
+      "replacement": "instance",
+      "reason": "An abbreviation of instance."
+    },
+    {
+      "word": "instanceof",
+      "replacement": "instance_of",
+      "reason": "The Java operator instanceof (The Java Language Specification, section 15.20.2) run together."
+    },
+    {
+      "word": "int",
+      "replacement": "integer",
+      "reason": "An abbreviation of integer; a Go int literal is an integer literal (The Go Programming Language Specification, Integer literals)."
+    },
+    {
+      "word": "interp",
+      "replacement": "interpretation",
+      "reason": "An abbreviation of interpretation."
+    },
+    {
+      "word": "intf",
+      "replacement": "interface",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses intf for interface."
+    },
+    {
+      "word": "iocheck",
+      "replacement": "input_output_check",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses iocheck for input output check."
+    },
+    {
+      "word": "lhs",
+      "replacement": "left_hand_side",
+      "reason": "An abbreviation of left-hand side, the target of a JavaScript assignment or for-in head."
+    },
+    {
+      "word": "lib",
+      "replacement": "library",
+      "reason": "An abbreviation of library."
+    },
+    {
+      "word": "lit",
+      "replacement": "literal",
+      "reason": "An abbreviation of literal, as in the Protocol Buffers intLit, floatLit and boolLit (Protocol Buffers Language Specification, Integer literals)."
+    },
+    {
+      "word": "lt",
+      "replacement": "less_than",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses lt for less than."
+    },
+    {
+      "word": "lte",
+      "replacement": "less_than_or_equal",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses lte for less than or equal."
+    },
+    {
+      "word": "mod",
+      "replacement": "module",
+      "reason": "The Rust keyword mod declares a module (The Rust Reference, Modules)."
+    },
+    {
+      "word": "ms",
+      "replacement": "microsoft",
+      "reason": "Microsoft-specific syntax."
+    },
+    {
+      "word": "mul",
+      "replacement": "multiplication",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses mul for multiplication."
+    },
+    {
+      "word": "multiline",
+      "replacement": "multiple_line",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses multiline for multiple line."
+    },
+    {
+      "word": "mut",
+      "replacement": "mutable",
+      "reason": "The Rust keyword mut makes a binding mutable (The Rust Reference, Identifier patterns)."
+    },
+    {
+      "word": "mwpascal",
+      "replacement": "metrowerks_pascal",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses mwpascal for metrowerks pascal."
+    },
+    {
+      "word": "neq",
+      "replacement": "not_equal",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses neq for not equal."
+    },
+    {
+      "word": "nodefault",
+      "replacement": "no_default",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses nodefault for no default."
+    },
+    {
+      "word": "noreturn",
+      "replacement": "no_return",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses noreturn for no return."
+    },
+    {
+      "word": "nostackframe",
+      "replacement": "no_stack_frame",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses nostackframe for no stack frame."
+    },
+    {
+      "word": "nosuspend",
+      "replacement": "no_suspension",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses nosuspend for no suspension."
+    },
+    {
+      "word": "nullable",
+      "replacement": "null_admitting",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses nullable for null admitting."
+    },
+    {
+      "word": "num",
+      "replacement": "number",
+      "reason": "An abbreviation of number."
+    },
+    {
+      "word": "objccategory",
+      "replacement": "objective_c_category",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses objccategory for objective c category."
+    },
+    {
+      "word": "objcclass",
+      "replacement": "objective_c_class",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses objcclass for objective c class."
+    },
+    {
+      "word": "objcprotocol",
+      "replacement": "objective_c_protocol",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses objcprotocol for objective c protocol."
+    },
+    {
+      "word": "offsetof",
+      "replacement": "offset_of",
+      "reason": "The offsetof macro (ISO/IEC 9899:2018 section 7.19) run together."
+    },
+    {
+      "word": "oneof",
+      "replacement": "one_of",
+      "reason": "The Protocol Buffers keyword oneof run together: at most one field of a oneof is set at a time (Protocol Buffers Language Guide, Oneof)."
+    },
+    {
+      "word": "params",
+      "replacement": "parameters",
+      "reason": "An abbreviation of parameters."
+    },
+    {
+      "word": "parens",
+      "replacement": "parentheses",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses parens for parentheses."
+    },
+    {
+      "word": "pp",
+      "replacement": "preprocessor",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses pp for preprocessor."
+    },
+    {
+      "word": "preproc",
+      "replacement": "preprocessor",
+      "reason": "An abbreviation of preprocessor."
+    },
+    {
+      "word": "proc",
+      "replacement": "procedure",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses proc for procedure."
+    },
+    {
+      "word": "ptr",
+      "replacement": "pointer",
+      "reason": "An abbreviation of pointer."
+    },
+    {
+      "word": "qmark",
+      "replacement": "question_mark",
+      "reason": "An abbreviation of question mark; JavaScript's _ternary_qmark scans the ? of a conditional expression."
+    },
+    {
+      "word": "qualid",
+      "replacement": "qualified_identifier",
+      "reason": "Rocq's qualified identifier, a dotted path to a global name (Rocq Reference Manual, section Qualified identifiers)."
+    },
+    {
+      "word": "rawline",
+      "replacement": "raw_line",
+      "reason": "A line of a GNU make define directive taken verbatim, as the value of the variable it defines (GNU make manual, section 6.8 Defining Multi-Line Variables)."
+    },
+    {
+      "word": "rec",
+      "replacement": "record",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses rec for record."
+    },
+    {
+      "word": "recipeprefix",
+      "replacement": "recipe_prefix",
+      "reason": "The GNU make variable .RECIPEPREFIX names the character that starts a recipe line instead of a tab (GNU make manual, section 6.14 Other Special Variables)."
+    },
+    {
+      "word": "redim",
+      "replacement": "dimension_change",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses redim for dimension change."
+    },
+    {
+      "word": "regex",
+      "replacement": "regular_expression",
+      "reason": "An abbreviation of regular expression, JavaScript's regex literal and its pattern and flags."
+    },
+    {
+      "word": "resourcestring",
+      "replacement": "resource_string",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses resourcestring for resource string."
+    },
+    {
+      "word": "rew",
+      "replacement": "rewrite",
+      "reason": "An abbreviation of rewrite, as in Rocq's rewriting notation rew [P] H in t."
+    },
+    {
+      "word": "rpc",
+      "replacement": "remote_procedure_call",
+      "reason": "The Protocol Buffers keyword rpc declares a remote procedure call of a service (Protocol Buffers Language Specification, Service definition)."
+    },
+    {
+      "word": "rtti",
+      "replacement": "runtime_type_information",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses rtti for runtime type information."
+    },
+    {
+      "word": "safecall",
+      "replacement": "safe_call",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses safecall for safe call."
+    },
+    {
+      "word": "saveregisters",
+      "replacement": "save_registers",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses saveregisters for save registers."
+    },
+    {
+      "word": "seh",
+      "replacement": "structured_exception_handling",
+      "reason": "Microsoft structured exception handling."
+    },
+    {
+      "word": "seq",
+      "replacement": "sequence",
+      "reason": "An abbreviation of sequence."
+    },
+    {
+      "word": "shl",
+      "replacement": "shift_left",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses shl for shift left."
+    },
+    {
+      "word": "shr",
+      "replacement": "shift_right",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses shr for shift right."
+    },
+    {
+      "word": "sizeof",
+      "replacement": "size_of",
+      "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together."
+    },
+    {
+      "word": "softfloat",
+      "replacement": "software_float",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses softfloat for software float."
+    },
+    {
+      "word": "spec",
+      "replacement": "specification",
+      "reason": "An abbreviation of specification."
+    },
+    {
+      "word": "stdcall",
+      "replacement": "standard_call",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses stdcall for standard call."
+    },
+    {
+      "word": "struct",
+      "replacement": "structure",
+      "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)."
+    },
+    {
+      "word": "sysv",
+      "replacement": "system_five",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses sysv for system five."
+    },
+    {
+      "word": "threadvar",
+      "replacement": "thread_variable",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses threadvar for thread variable."
+    },
+    {
+      "word": "tpl",
+      "replacement": "template",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses tpl for template."
+    },
+    {
+      "word": "tr",
+      "replacement": "trailing",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses tr for trailing."
+    },
+    {
+      "word": "tryif",
+      "replacement": "try_if",
+      "reason": "The Rocq tactical tryif run together (Rocq Reference Manual, section Ltac, tryif)."
+    },
+    {
+      "word": "typeclasses",
+      "replacement": "type_classes",
+      "reason": "Rocq's type classes run together, as in Typeclasses Transparent (Rocq Reference Manual, section Typeclasses)."
+    },
+    {
+      "word": "typeref",
+      "replacement": "type_reference",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses typeref for type reference."
+    },
+    {
+      "word": "undefine",
+      "replacement": "remove_definition",
+      "reason": "The GNU make undefine directive removes the definition of a variable (GNU make manual, section 6.9 Undefining Variables)."
+    },
+    {
+      "word": "unexport",
+      "replacement": "remove_export",
+      "reason": "The GNU make unexport directive stops passing a variable to the environment of sub-make and recipe commands (GNU make manual, section 5.7.2 Communicating Variables to a Sub-make)."
+    },
+    {
+      "word": "unimplemented",
+      "replacement": "missing_implementation",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses unimplemented for missing implementation."
+    },
+    {
+      "word": "var",
+      "replacement": "variable",
+      "reason": "An abbreviation of variable."
+    },
+    {
+      "word": "varargs",
+      "replacement": "variable_arguments",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses varargs for variable arguments."
+    },
+    {
+      "word": "vectorcall",
+      "replacement": "vector_call",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses vectorcall for vector call."
+    },
+    {
+      "word": "vpath",
+      "replacement": "search_path",
+      "reason": "The GNU make VPATH variable and vpath directive name the directories to search for prerequisites (GNU make manual, sections 4.5.1 VPATH: Search Path for All Prerequisites and 4.5.2 The vpath Directive)."
+    },
+    {
+      "word": "winapi",
+      "replacement": "windows_application_programming_interface",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses winapi for windows application programming interface."
+    },
+    {
+      "word": "xor",
+      "replacement": "exclusive_or",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses xor for exclusive or."
+    }
   ],
   "grammars": {
     "c": {
@@ -236,7 +925,10 @@
       },
       "conflicts": [
         {
-          "rules": ["hash_command", "explicit"],
+          "rules": [
+            "hash_command",
+            "explicit"
+          ],
           "reason": "Theorem Proving in Lean 4 section 2.9 (Implicit Arguments) checks `@foo`, the function with all its arguments made explicit (`#check @ident`, `#check @List.cons`); tree-sitter-lean4 0.3.0 reduces the command before an `@`, which may open the attributes of a next declaration (`@[simp] def`), and recovers from it. The merged grammar keeps both parses there: the attributes need the `[` that follows, the explicit term does not."
         }
       ]
@@ -445,6 +1137,353 @@
           "helper": "_block_comment_extra",
           "whitespace": "[ \\t\\r\\n\\f\\v]*",
           "reason": "The upstream external scanner recognizes block-comment extras before an empty line-comment content token. An ordinary following line comment instead ends that token at the line break."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "function_call",
+          "associativity": "left",
+          "value": 1,
+          "reason": "Successive Lua argument lists bind to the preceding call across line breaks; the native executor must prefer that call chain to separate call statements beginning with parenthesized expressions."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "statement",
+          "associativity": "none",
+          "value": -1,
+          "reason": "A completed call statement has lower reduction precedence than a following argument list, so call chaining wins over splitting the chain into statements."
+        }
+      ]
+    },
+    "toml": {
+      "names": {
+        "_line_ending_or_eof": "line_ending_or_end_of_file",
+        "table": "table_declaration",
+        "integer": "integer_literal"
+      },
+      "concepts": {
+        "boolean": "grammar.boolean-value"
+      }
+    },
+    "zig": {
+      "names": {
+        "_identifier": "identifier_body",
+        "integer": "integer_literal",
+        "parameters": "parameter_list",
+        "parameter": "parameter_declaration",
+        "arguments": "argument_list",
+        "character": "character_literal",
+        "nullable_type": "optional_type",
+        "dereference_expression": "referent_expression",
+        "catch_expression": "exception_catch_expression",
+        "block": "scope_block",
+        "block_expr_statement": "scope_block_expression_statement",
+        "block_expression": "scope_block_expression"
+      },
+      "concepts": {
+        "boolean": "grammar.boolean-value"
+      },
+      "sourceTransforms": [
+        {
+          "family": "ordered-variants",
+          "rule": "statement",
+          "variants": [
+            "alias:variable_declaration",
+            "expression_statement"
+          ],
+          "reason": "On complete assignment statements the pinned parser chooses the variable-declaration alias before the equivalent expression-statement form; both alternatives remain operational."
+        }
+      ]
+    },
+    "pascal": {
+      "names": {
+        "_statement": "statement_body",
+        "_statementTr": "trailing_statement_body",
+        "_statements": "statement_list_body",
+        "_statementsTr": "trailing_statement_list_body",
+        "_typeref": "type_reference_body",
+        "_literalString": "literal_string_body",
+        "_declProc": "declaration_procedure_body",
+        "_declClass": "declaration_class_body",
+        "_operatorName": "operator_name_body",
+        "_procAttribute": "procedure_attribute_body",
+        "ifTr": "trailing_if_statement",
+        "nestedIfTr": "trailing_nested_if_statement",
+        "ifElseTr": "trailing_if_else_statement",
+        "whileTr": "trailing_while",
+        "repeatTr": "trailing_repeat",
+        "forTr": "trailing_for_statement",
+        "foreachTr": "trailing_for_each_statement",
+        "exceptionHandlerTr": "trailing_exception_handler",
+        "exceptionElseTr": "trailing_exception_else_clause",
+        "_exceptionHandlersTr": "trailing_exception_handler_list",
+        "tryTr": "trailing_try",
+        "caseCaseTr": "trailing_case_case",
+        "caseTr": "trailing_case",
+        "blockTr": "trailing_block",
+        "asmTr": "trailing_assembly",
+        "withTr": "trailing_with_statement",
+        "raiseTr": "trailing_raise",
+        "statementTr": "trailing_statement",
+        "gotoTr": "trailing_go_to_statement",
+        "statementsTr": "trailing_statement_list",
+        "kProgram": "program_header_keyword",
+        "kLibrary": "library_keyword",
+        "kUnit": "unit_keyword",
+        "kUses": "module_import_keyword",
+        "kInterface": "interface_keyword",
+        "kDispInterface": "dispatch_interface_keyword",
+        "kImplementation": "implementation_keyword",
+        "kInitialization": "initialization_keyword",
+        "kFinalization": "finalization_keyword",
+        "kEndDot": "end_dot_keyword",
+        "kBegin": "begin_keyword",
+        "kEnd": "end_keyword",
+        "kAsm": "assembly_keyword",
+        "kVar": "variable_keyword",
+        "kThreadvar": "thread_variable_keyword",
+        "kConst": "constant_keyword",
+        "kConstref": "constant_reference_keyword",
+        "kResourcestring": "resource_string_keyword",
+        "kOut": "out_keyword",
+        "kType": "type_declaration_keyword",
+        "kLabel": "label_keyword",
+        "kExports": "exports_list_keyword",
+        "kAbsolute": "absolute_keyword",
+        "kProperty": "property_keyword",
+        "kRead": "read_keyword",
+        "kWrite": "write_keyword",
+        "kImplements": "implements_keyword",
+        "kDefault": "default_keyword",
+        "kNodefault": "no_default_keyword",
+        "kStored": "stored_keyword",
+        "kIndex": "index_keyword",
+        "kDispId": "dispatch_identifier_keyword",
+        "kClass": "class_keyword",
+        "kObject": "object_keyword",
+        "kRecord": "record_keyword",
+        "kObjcclass": "objective_c_class_keyword",
+        "kObjccategory": "objective_c_extension_keyword",
+        "kObjcprotocol": "objective_c_protocol_keyword",
+        "kArray": "array_keyword",
+        "kFile": "file_keyword",
+        "kString": "string_keyword",
+        "kSet": "set_keyword",
+        "kOf": "of_keyword",
+        "kHelper": "helper_keyword",
+        "kPacked": "packed_keyword",
+        "kGeneric": "generic_keyword",
+        "kSpecialize": "specialize_keyword",
+        "kDot": "dot_keyword",
+        "kLt": "less_comparison_keyword",
+        "kEq": "equal_keyword",
+        "kNeq": "not_equal_keyword",
+        "kGt": "greater_comparison_keyword",
+        "kLte": "less_or_equal_comparison_keyword",
+        "kGte": "greater_or_equal_comparison_keyword",
+        "kAdd": "add_keyword",
+        "kSub": "subtraction_keyword",
+        "kMul": "multiplication_keyword",
+        "kFdiv": "floating_division_keyword",
+        "kAt": "at_keyword",
+        "kHat": "hat_keyword",
+        "kAssign": "assign_keyword",
+        "kAssignAdd": "assign_add_keyword",
+        "kAssignSub": "subtraction_assignment_keyword",
+        "kAssignMul": "assign_multiplication_keyword",
+        "kAssignDiv": "assign_division_keyword",
+        "kOr": "or_keyword",
+        "kXor": "exclusive_or_keyword",
+        "kDiv": "division_operator_keyword",
+        "kMod": "module_keyword",
+        "kAnd": "and_keyword",
+        "kShl": "shift_left_keyword",
+        "kShr": "shift_right_keyword",
+        "kNot": "not_keyword",
+        "kIs": "is_keyword",
+        "kAs": "as_keyword",
+        "kIn": "in_keyword",
+        "kFor": "for_keyword",
+        "kTo": "to_keyword",
+        "kDownto": "down_to_keyword",
+        "kIf": "if_keyword",
+        "kThen": "then_keyword",
+        "kElse": "else_keyword",
+        "kDo": "do_keyword",
+        "kWhile": "while_keyword",
+        "kRepeat": "repeat_keyword",
+        "kUntil": "termination_condition_keyword",
+        "kTry": "try_keyword",
+        "kExcept": "except_keyword",
+        "kFinally": "finally_keyword",
+        "kRaise": "raise_keyword",
+        "kOn": "on_keyword",
+        "kCase": "case_selection_keyword",
+        "kWith": "with_keyword",
+        "kGoto": "go_to_keyword",
+        "kFunction": "value_routine_keyword",
+        "kProcedure": "void_routine_keyword",
+        "kConstructor": "constructor_keyword",
+        "kDestructor": "destruction_method_keyword",
+        "kOperator": "operator_keyword",
+        "kReference": "reference_keyword",
+        "kPublished": "published_keyword",
+        "kPublic": "public_keyword",
+        "kProtected": "protected_keyword",
+        "kPrivate": "private_keyword",
+        "kStrict": "strict_keyword",
+        "kRequired": "required_keyword",
+        "kOptional": "optional_keyword",
+        "kForward": "forward_keyword",
+        "kStatic": "static_keyword",
+        "kVirtual": "virtual_keyword",
+        "kAbstract": "abstract_keyword",
+        "kSealed": "sealed_keyword",
+        "kDynamic": "dynamic_keyword",
+        "kOverride": "override_keyword",
+        "kOverload": "overload_keyword",
+        "kReintroduce": "reintroduce_keyword",
+        "kInherited": "inherited_keyword",
+        "kInline": "inline_keyword",
+        "kStdcall": "standard_call_keyword",
+        "kCdecl": "c_declaration_keyword",
+        "kCppdecl": "c_plus_plus_declaration_keyword",
+        "kPascal": "pascal_keyword",
+        "kRegister": "register_keyword",
+        "kMwpascal": "metrowerks_pascal_keyword",
+        "kExternal": "external_keyword",
+        "kName": "name_keyword",
+        "kMessage": "message_keyword",
+        "kDeprecated": "deprecated_keyword",
+        "kExperimental": "experimental_keyword",
+        "kPlatform": "compiler_platform_keyword",
+        "kUnimplemented": "missing_implementation_keyword",
+        "kCvar": "c_variable_keyword",
+        "kExport": "export_keyword",
+        "kFar": "far_keyword",
+        "kNear": "near_keyword",
+        "kSafecall": "safe_call_keyword",
+        "kAssembler": "assembler_keyword",
+        "kNostackframe": "no_stack_frame_keyword",
+        "kInterrupt": "interrupt_keyword",
+        "kNoreturn": "no_return_keyword",
+        "kIocheck": "input_output_check_keyword",
+        "kLocal": "local_keyword",
+        "kHardfloat": "hardware_float_keyword",
+        "kSoftfloat": "software_float_keyword",
+        "kMs_abi_default": "microsoft_application_binary_interface_default_keyword",
+        "kMs_abi_cdecl": "microsoft_application_binary_interface_c_declaration_keyword",
+        "kSaveregisters": "save_registers_keyword",
+        "kSysv_abi_default": "system_five_application_binary_interface_default_keyword",
+        "kSysv_abi_cdecl": "system_five_application_binary_interface_c_declaration_keyword",
+        "kVectorcall": "vector_call_keyword",
+        "kVarargs": "variable_arguments_keyword",
+        "kWinapi": "windows_application_programming_interface_keyword",
+        "kAlias": "alias_keyword",
+        "kDelayed": "delayed_keyword",
+        "kNil": "nil_keyword",
+        "kTrue": "true_keyword",
+        "kFalse": "false_keyword",
+        "kIfdef": "if_defined_keyword",
+        "kIfndef": "if_not_defined_keyword",
+        "kEndif": "end_if_keyword",
+        "if": "if_statement",
+        "nestedIf": "nested_if_statement",
+        "ifElse": "if_else_statement",
+        "for": "for_statement",
+        "foreach": "for_each_statement",
+        "exceptionElse": "exception_else_clause",
+        "with": "with_statement",
+        "goto": "go_to_statement",
+        "inherited": "inherited_expression",
+        "exprAs": "conversion_expression",
+        "exprTpl": "template_expression",
+        "exprUnary": "unary_expression",
+        "exprParens": "parenthesized_expression",
+        "typerefTpl": "template_type_reference",
+        "genericTpl": "generic_template",
+        "procAttributeNoExt": "procedure_attribute_without_external_specification",
+        "_ref": "expression_reference",
+        "exprDeref": "referent_expression",
+        "declProcRef": "procedure_reference_declaration",
+        "kDispid": "dispatch_identifier_keyword",
+        "_exceptionHandlers": "exception_handler_list",
+        "assignment": "assignment_expression",
+        "statements": "statement_list",
+        "_definitions": "definition_list",
+        "_declarations": "declaration_list",
+        "_classDeclarations": "class_declaration_list",
+        "case": "case_statement",
+        "caseCase": "case_arm",
+        "typeref": "type_name_reference",
+        "exprArgs": "call_argument_list",
+        "declArgs": "formal_parameter_list",
+        "declArg": "formal_parameter_declaration",
+        "genericArgs": "generic_argument_list",
+        "kObjcCategory": "objective_c_extension_keyword",
+        "literalChar": "character_literal",
+        "literalCharacter": "character_literal",
+        "range": "ordinal_range",
+        "declExports": "export_declaration_list",
+        "declTypes": "type_declaration_list",
+        "declConsts": "constant_declaration_list",
+        "declLabels": "label_declaration_list",
+        "_declFields": "field_declaration_list"
+      },
+      "concepts": {}
+    },
+    "vb": {
+      "names": {
+        "option_statements": "option_statement_list",
+        "imports_statement": "import_statement",
+        "type_parameters": "type_parameter_list",
+        "type_parameter": "type_parameter_declaration",
+        "parameter": "parameter_declaration",
+        "attribute": "annotation_attribute",
+        "modifiers": "modifier_list",
+        "argument": "argument_expression",
+        "catch_block": "exception_catch_block",
+        "call_statement": "expression_call_statement",
+        "property_declaration": "member_property_declaration"
+      },
+      "concepts": {},
+      "sourceTransforms": [
+        {
+          "family": "field-choice-variant",
+          "rule": "invocation",
+          "helper": "_member_invocation",
+          "field": "target",
+          "symbol": "member_access",
+          "alias": "invocation",
+          "insertInto": "expression",
+          "reason": "The pinned parser chooses invocation for member targets while retaining element access for bare identifier targets."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "expression",
+          "variants": [
+            "alias:invocation",
+            "element_access",
+            "invocation"
+          ],
+          "reason": "Resolve only the overlapping invocation and element-access alternatives after retaining all other expression alternatives."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "statement",
+          "variants": [
+            "call_statement",
+            "assignment_statement"
+          ],
+          "reason": "The pinned parser chooses the binary-equality call statement on overlapping complete statements; retain assignment as the fallback."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "type",
+          "variants": [
+            "array_type",
+            "primitive_type"
+          ],
+          "reason": "Shift the rank specifier into an array type before reducing a primitive type in object construction."
         }
       ]
     }
@@ -452,27 +1491,132 @@
   "concepts": {
     "definitions": {},
     "distinctFrom": {
-      "grammar.type-assertion": [{ "id": "grammar.case-statement", "reason": "A type assertion <T>x tells the type checker to treat an expression as a type, while a case statement is one branch of a switch statement." }],
-      "grammar.function-declaration": [{ "id": "grammar.use-declaration", "reason": "A function declaration binds a name to a function, while a use declaration brings the paths of another module into scope." }],
-      "grammar.preprocessor-argument": [{ "id": "grammar.preprocessor-parameters", "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares." }],
-      "grammar.argument-list": [{ "id": "grammar.parameter-list", "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes." }],
-      "grammar.condition": [{ "id": "grammar.term", "reason": "A condition is the expression an if or while expression tests, while a term is an operand of addition or subtraction." }],
-      "grammar.pattern": [{ "id": "grammar.rule", "reason": "A pattern matches and destructures a value in a program, while a grammar rule binds a non-terminal to an expression." }],
-      "grammar.reference-expression": [{ "id": "grammar.extension-expression", "reason": "A reference expression borrows a place with & or &mut, while an extension expression marks a GNU C extension with __extension__." }],
-      "grammar.token-pattern": [{ "id": "grammar.token-rule", "reason": "A token pattern is the matcher of a macro rule, while a token rule is a grammar rule matched as one lexical token." }],
-      "grammar.tokens": [{ "id": "grammar.item", "reason": "Tokens are the token trees a macro rule expands to, while an item is one element of a list." }],
-      "grammar.type": [{ "id": "grammar.value.character", "reason": "A type classifies the values of an expression, while a character is one Unicode scalar value." }],
-      "grammar.yield-expression": [{ "id": "grammar.return-expression", "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function." }],
-      "grammar.type-argument-list": [{ "id": "grammar.type-parameter-list", "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes." }],
-      "grammar.command": [{ "id": "grammar.statement", "reason": "A Lean command is one top-level declaration or directive of a module, which the elaborator reads in order, while a statement is one step of a block that runs in order." }],
-      "grammar.syntax-quotation": [{ "id": "grammar.syntax-quote", "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form." }],
-      "grammar.yield-statement": [{ "id": "grammar.return-statement", "reason": "A Java yield statement gives the value of the switch expression it ends, while a return statement ends a function and gives its result." }],
-      "grammar.annotation": [{ "id": "grammar.notation", "reason": "A Java annotation attaches metadata to a declaration or a type (The Java Language Specification, section 9.7), while a notation declares new syntax for terms." }],
-      "grammar.catch-type": [{ "id": "grammar.match-case", "reason": "A Java catch type names the exception types a catch clause handles, while a match case is one branch of a match expression." }],
-      "grammar.variadic-argument": [{ "id": "grammar.variadic-parameter", "reason": "A Go variadic argument xs... passes the elements of a slice as the final arguments of a call, while a variadic parameter declares the final parameter that takes any number of them." }],
-      "grammar.statement-list": [{ "id": "grammar.argument-list", "reason": "A Go statement list is the statements of a block or a case clause in order, while an argument list gives the values a call passes." }],
-      "grammar.map-type": [{ "id": "grammar.function-type", "reason": "A Go map type map[K]V is the type of the hash tables from keys of K to values of V, while a function type is the type of the functions with given parameters and results." }],
-      "grammar.default-case": [{ "id": "grammar.default-type", "reason": "A Go default case is the branch of a switch or select statement taken when no other case matches, while a default type is the type a TypeScript type parameter takes when none is given." }]
+      "grammar.type-assertion": [
+        {
+          "id": "grammar.case-statement",
+          "reason": "A type assertion <T>x tells the type checker to treat an expression as a type, while a case statement is one branch of a switch statement."
+        }
+      ],
+      "grammar.function-declaration": [
+        {
+          "id": "grammar.use-declaration",
+          "reason": "A function declaration binds a name to a function, while a use declaration brings the paths of another module into scope."
+        }
+      ],
+      "grammar.preprocessor-argument": [
+        {
+          "id": "grammar.preprocessor-parameters",
+          "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares."
+        }
+      ],
+      "grammar.argument-list": [
+        {
+          "id": "grammar.parameter-list",
+          "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes."
+        }
+      ],
+      "grammar.condition": [
+        {
+          "id": "grammar.term",
+          "reason": "A condition is the expression an if or while expression tests, while a term is an operand of addition or subtraction."
+        }
+      ],
+      "grammar.pattern": [
+        {
+          "id": "grammar.rule",
+          "reason": "A pattern matches and destructures a value in a program, while a grammar rule binds a non-terminal to an expression."
+        }
+      ],
+      "grammar.reference-expression": [
+        {
+          "id": "grammar.extension-expression",
+          "reason": "A reference expression borrows a place with & or &mut, while an extension expression marks a GNU C extension with __extension__."
+        }
+      ],
+      "grammar.token-pattern": [
+        {
+          "id": "grammar.token-rule",
+          "reason": "A token pattern is the matcher of a macro rule, while a token rule is a grammar rule matched as one lexical token."
+        }
+      ],
+      "grammar.tokens": [
+        {
+          "id": "grammar.item",
+          "reason": "Tokens are the token trees a macro rule expands to, while an item is one element of a list."
+        }
+      ],
+      "grammar.type": [
+        {
+          "id": "grammar.value.character",
+          "reason": "A type classifies the values of an expression, while a character is one Unicode scalar value."
+        }
+      ],
+      "grammar.yield-expression": [
+        {
+          "id": "grammar.return-expression",
+          "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function."
+        }
+      ],
+      "grammar.type-argument-list": [
+        {
+          "id": "grammar.type-parameter-list",
+          "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes."
+        }
+      ],
+      "grammar.command": [
+        {
+          "id": "grammar.statement",
+          "reason": "A Lean command is one top-level declaration or directive of a module, which the elaborator reads in order, while a statement is one step of a block that runs in order."
+        }
+      ],
+      "grammar.syntax-quotation": [
+        {
+          "id": "grammar.syntax-quote",
+          "reason": "A Lean syntax quotation `(\u2026) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
+        }
+      ],
+      "grammar.yield-statement": [
+        {
+          "id": "grammar.return-statement",
+          "reason": "A Java yield statement gives the value of the switch expression it ends, while a return statement ends a function and gives its result."
+        }
+      ],
+      "grammar.annotation": [
+        {
+          "id": "grammar.notation",
+          "reason": "A Java annotation attaches metadata to a declaration or a type (The Java Language Specification, section 9.7), while a notation declares new syntax for terms."
+        }
+      ],
+      "grammar.catch-type": [
+        {
+          "id": "grammar.match-case",
+          "reason": "A Java catch type names the exception types a catch clause handles, while a match case is one branch of a match expression."
+        }
+      ],
+      "grammar.variadic-argument": [
+        {
+          "id": "grammar.variadic-parameter",
+          "reason": "A Go variadic argument xs... passes the elements of a slice as the final arguments of a call, while a variadic parameter declares the final parameter that takes any number of them."
+        }
+      ],
+      "grammar.statement-list": [
+        {
+          "id": "grammar.argument-list",
+          "reason": "A Go statement list is the statements of a block or a case clause in order, while an argument list gives the values a call passes."
+        }
+      ],
+      "grammar.map-type": [
+        {
+          "id": "grammar.function-type",
+          "reason": "A Go map type map[K]V is the type of the hash tables from keys of K to values of V, while a function type is the type of the functions with given parameters and results."
+        }
+      ],
+      "grammar.default-case": [
+        {
+          "id": "grammar.default-type",
+          "reason": "A Go default case is the branch of a switch or select statement taken when no other case matches, while a default type is the type a TypeScript type parameter takes when none is given."
+        }
+      ]
     }
   }
 }

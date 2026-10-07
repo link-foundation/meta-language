@@ -81,12 +81,32 @@ export function splitCountedDelimiterScanner({ name, startToken, contentToken, e
   return `(scanner ${name} (tokens ${startToken} ${contentToken} ${endToken}) (operations ${start} ${content} ${end} fail))\n`;
 }
 
+/** Delimiter runs shorter or longer than a terminator remain content. */
+export function delimiterRunScanner({ name, contentToken, endToken, delimiter: character, count = 3 }) {
+  for (const value of [name, contentToken, endToken]) identifier(value);
+  if (!Number.isSafeInteger(count) || count < 2) throw new TypeError('a delimiter run needs a terminator count of at least two');
+  const item = delimiter(character);
+  let tail = `(if (next ${item}) (then (emit ${contentToken})) (else mark (emit ${endToken})))`;
+  for (let index = 1; index < count; index += 1) tail = `(if (next ${item}) (then (consume ${item}) ${tail}) (else mark (emit ${contentToken})))`;
+  return `(scanner ${name} (tokens ${contentToken} ${endToken}) (operations (consume ${item}) mark ${tail}))\n`;
+}
+
+/** A zero-width line boundary, after optional horizontal space and CR. */
+export function lineBoundaryScanner({ name, token }) {
+  identifier(name);
+  identifier(token);
+  const space = '(class plain (char %20) (char %09))';
+  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) (while (next ${space}) (do (skip ${space}))) (if (next (literal %0D)) (then (skip (literal %0D)))) (if (some atEnd (next (literal %0A))) (then (emit ${token}))) fail))\n`;
+}
+
 /** Generate each scanner from a JSON family descriptor, rejecting unknown families. */
 export function scannerFamilies(descriptors) {
   const names = new Set();
   const tokens = new Set();
   return descriptors.map(({ family, ...options }) => {
-    const declared = family === 'split-counted-delimiter' ? [options.startToken, options.contentToken, options.endToken] : [options.token, ...(options.closeToken ? [options.closeToken] : [])];
+    const declared = family === 'split-counted-delimiter' ? [options.startToken, options.contentToken, options.endToken]
+      : family === 'delimiter-run' ? [options.contentToken, options.endToken]
+        : [options.token, ...(options.closeToken ? [options.closeToken] : [])];
     if (names.has(options.name) || new Set(declared).size !== declared.length || declared.some((token) => tokens.has(token))) throw new TypeError('duplicate scanner name or token');
     names.add(options.name);
     for (const token of declared) tokens.add(token);
@@ -94,6 +114,8 @@ export function scannerFamilies(descriptors) {
     if (family === 'content') return contentScanner(options);
     if (family === 'counted-delimiter') return countedDelimiterScanner(options);
     if (family === 'split-counted-delimiter') return splitCountedDelimiterScanner(options);
+    if (family === 'delimiter-run') return delimiterRunScanner(options);
+    if (family === 'line-boundary') return lineBoundaryScanner(options);
     throw new TypeError(`unknown scanner family ${JSON.stringify(family)}`);
   }).join('');
 }

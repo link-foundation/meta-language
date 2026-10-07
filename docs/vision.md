@@ -164,6 +164,16 @@ long strings and block comments, with empty content and NUL rejection, and
 reproduces the pinned upstream scanner's eight-bit counts. The native Lua
 grammar and its corpus inputs are pinned alongside the other source grammars;
 CI compares both executors with their independent Lua oracles.
+The delimiter-run family shares configurable quote-run content and closing
+operations; the line-boundary family emits a zero-width boundary before a
+newline or the end of input. TOML uses both families, and
+`parity/fixtures/scanner-delimiter-runs.json` checks several delimiter lengths
+and line endings with both executors.
+The generated TOML, Zig, Pascal and Visual Basic grammars record reviewed
+precedence, overlapping-choice and field-variant reconciliations in the import
+pipeline. CI reads immutable pinned corpus inputs, including Zig compiler
+source cases and Visual Basic project sources, and compares every input with
+its independent oracle in both runtimes.
 
 The grammar representation and its executor cover the complete union of the
 grammar features that the inventoried sources use:
