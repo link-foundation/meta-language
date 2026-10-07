@@ -26,14 +26,15 @@ fn character_class_sets_match_fixtures_and_independent_regex_oracle() {
             .unwrap_or_else(|error| panic!("{id}: oracle pattern compiles: {error}"));
         for scalar in 0..128_u8 {
             let input = char::from(scalar).to_string();
-            let expected = if let Some(excluded) = entry["asciiExcludes"].as_str() {
-                !excluded.contains(&input)
-            } else {
-                entry["asciiAccepts"]
-                    .as_str()
-                    .expect("ASCII set")
-                    .contains(&input)
-            };
+            let expected = entry["asciiExcludes"].as_str().map_or_else(
+                || {
+                    entry["asciiAccepts"]
+                        .as_str()
+                        .expect("ASCII set")
+                        .contains(&input)
+                },
+                |excluded| !excluded.contains(&input),
+            );
             assert_eq!(
                 oracle.is_match(&input),
                 expected,
