@@ -904,6 +904,8 @@
           "rust/src/grammar/merge/declarations.rs",
           "rust/tests/unit/issue_195_grammar_feature_union.rs",
           "rust/tests/unit/issue_195_grammar_feature_union_interchange.rs",
+          "rust/tests/unit/issue_195_grammar_character_classes.rs",
+          "parity/fixtures/native-character-class-grammars.json",
           "parity/fixtures/grammar-feature-union.json"
         ]
       },
@@ -913,6 +915,8 @@
           "js/src/grammar-feature-forms.js",
           "js/src/grammar-runtime.js",
           "js/tests/issue-195-grammar-feature-union.test.js",
+          "js/tests/grammar-character-classes.test.js",
+          "parity/fixtures/native-character-class-grammars.json",
           "parity/fixtures/grammar-feature-union.json"
         ]
       }

@@ -1558,7 +1558,7 @@
     "planned:repository-directive:i195-vision-specification": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: one authoritative vision and architecture specification",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
@@ -1568,7 +1568,7 @@
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: traceability from each atomic requirement to its evidence chain",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-vision-contradiction-audit": {
       "path": "parity/documentation/claim-fixtures.json",
@@ -1588,7 +1588,7 @@
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
       "selector": "#dependencies: external parser engines removed from the production packages",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
@@ -1735,6 +1735,16 @@
       "selector": "docs/vision.md#grammar-feature-union: grammar representation covering the union of all source grammar features",
       "sha256": "3b578f1f295d8ab1b28431e4d10368d5179c93e29ea811c7e820c4734a6f15e6"
     },
+    "planned:repository-directive:i195-grammar-character-class-sets": {
+      "path": "parity/fixtures/native-character-class-grammars.json",
+      "selector": "docs/vision.md#grammar-feature-union: native Unicode character-class intersection, difference and symmetric difference",
+      "sha256": "a11a984ad6b12bc5e75372bdc1fdab0e06da88c5dfe0b41b7fd019ea6787c447"
+    },
+    "planned:repository-directive:i195-grammar-hexadecimal-scalars": {
+      "path": "parity/fixtures/native-character-class-grammars.json",
+      "selector": "docs/vision.md#grammar-feature-union: native hexadecimal Unicode scalar escapes in imported patterns",
+      "sha256": "a11a984ad6b12bc5e75372bdc1fdab0e06da88c5dfe0b41b7fd019ea6787c447"
+    },
     "planned:repository-directive:i195-grammar-concept-distinctions": {
       "path": "parity/fixtures/concept-distinctions.json",
       "selector": "docs/vision.md#grammar-feature-union: preserved semantic distinctions between grammar concepts",
@@ -1763,7 +1773,7 @@
     "planned:repository-directive:i195-grammar-dependency-boundary": {
       "path": "docs/vision.md",
       "selector": "#native-merged-grammars: native dependency boundary of the installed packages",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-interchange-api-cli": {
       "path": "parity/fixtures/grammar-importers.json",
@@ -1898,7 +1908,7 @@
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
       "selector": "#packages-and-publication: formal-ai consuming the published packages",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-acceptance-independent-oracles": {
       "path": "parity/language-grammar-inventory.json",
@@ -1908,122 +1918,122 @@
     "planned:repository-directive:i195-acceptance-gate-mutations": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: gate-mutation tests for the directive obligations",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-acceptance-required-merge-check": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: enforced full requirements merge check on the default branch",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-acceptance-pr-checks-passable": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: pull request checks that can all pass before merge",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-acceptance-finite-claims-documented": {
       "path": "docs/vision.md",
       "selector": "#what-finite-tests-establish: documented limits of finite test evidence",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-ci-compile-gate": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: fast compile gate ahead of every compiling CI job",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-ci-test-matrix": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: test execution split into bounded matrix jobs",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-ci-evidence-stages": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: checkpoint evidence produced by separate stage jobs",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-ci-concurrency": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: superseded workflow runs cancelled",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-agent-rules": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: targeted local checks and resource rules for agents and contributors",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-bounded-sequential-evidence": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: evidence suites run one at a time with bounded build parallelism",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-lazy-grammars": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: WebAssembly grammars loaded on first use",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-grammar-tiering-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: grammar code kept off the optimizing compiler",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-inline-parser-reuse": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: one Markdown inline parser for every inline region",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-source-boundaries": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: source offset index with interval checkpoints",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-parity-digests": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: runtime parity evidence as entry digests",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-cache-cleanup-wrapper": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: cache cleanup wrapper as the documented way to run long local commands",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-native-output-cleanup": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: native compiler outputs deleted once each cell is recorded",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-ci-rust-after-javascript": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: Rust jobs gated on every JavaScript job",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-ci-acceptance-stage-order": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: Rust acceptance stages after the JavaScript stages",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-ci-report-every-failure": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: every failure of a job reported in one run",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-ci-acceptance-after-javascript": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: acceptance stages started only after every JavaScript job passed",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-ci-skipped-stage-one-gate-error": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: a stage skipped because JavaScript failed is one gate error",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-resource-parse-memory-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: a hard memory budget for every parse",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-development-rules-documented": {
       "path": "docs/vision.md",
       "selector": "#javascript-first-and-self-translation: JavaScript-first development rules",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-self-translation-tool": {
       "path": "parity/self-translation/cases.lino",
@@ -2053,7 +2063,7 @@
     "planned:repository-directive:i195-parity-feature-completeness": {
       "path": "docs/vision.md",
       "selector": "#javascript-first-and-self-translation: every public JavaScript feature listed and present in Rust",
-      "sha256": "ef0addad69a6d6dc3f35f5f0083d4c4cb7827499cfd586db55d4678c42e41e11"
+      "sha256": "7b5f268b482341d0ec1b8eba7c777cb6180280513e08d02a9ce35455bdc628a7"
     },
     "planned:repository-directive:i195-grammar-bulk-pipeline": {
       "path": "docs/grammar/bulk-pipeline.md",
@@ -19002,6 +19012,93 @@
       }
     },
     {
+      "id": "I195-GRAMMAR-CHARACTER-CLASS-SETS",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090",
+      "area": "native-grammar",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "native Unicode character-class intersection, difference and symmetric difference",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The automatic native importer compiles character-class intersection, difference and symmetric difference into executable Links data shared by both packages. Ranges and implicit union bind before set operations, set operations associate to the left, and outer negation binds last. Every compiled fixture matches its declared membership over all 128 ASCII scalars and its positive and negative Unicode corpus, including nesting, astral ranges, empty sets and repetition. Accepted inputs consume every source byte and no class consumes an extra scalar or accepts end of input.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/grammar-importers/tree-sitter-native.js",
+          "js/src/grammar-runtime/executor.js",
+          "js/scripts/import-native-grammars.mjs"
+        ],
+        "rust": [
+          "rust/src/grammar/interchange/links.rs",
+          "rust/src/grammar/feature_runtime/executor.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-grammar-character-class-sets-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-grammar-character-class-sets"
+          ],
+          "assertions": [
+            "compiledClassSetsUseLinks",
+            "nativeClassSetsMatchFixtures",
+            "nativeClassSetsConsumeCompleteInputs"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-grammar-character-class-sets-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-grammar-character-class-sets-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-grammar-character-class-sets"
+          ],
+          "assertions": [
+            "compiledClassSetsUseLinks",
+            "nativeClassSetsMatchFixtures",
+            "nativeClassSetsConsumeCompleteInputs"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-grammar-character-class-sets-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#grammar-feature-union",
+        "inventories": [
+          "parity/fixtures/native-character-class-grammars.json"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "repositoryDirective",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit"
+        ],
+        "workflow": ".github/workflows/ci.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
+        ],
+        "downstream": []
+      }
+    },
+    {
       "id": "I195-GRAMMAR-CONCEPT-DISTINCTIONS",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090",
       "area": "native-grammar",
@@ -19510,6 +19607,91 @@
         "specification": "docs/vision.md#grammar-feature-union",
         "inventories": [
           "parity/fixtures/grammar-feature-union.json"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "repositoryDirective",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit"
+        ],
+        "workflow": ".github/workflows/ci.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-GRAMMAR-HEXADECIMAL-SCALARS",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090",
+      "area": "native-grammar",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "native hexadecimal Unicode scalar escapes in imported patterns",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The automatic native importer lowers two-digit x, four-digit u and eight-digit U hexadecimal escapes, and their braced scalar forms, to literal characters and ranges in shared executable Links data. Both packages match every ASCII and Unicode outcome of the compiled fixture corpus, including braced astral ranges and the complete Swift identifier pattern, and accepted inputs consume every source byte.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/grammar-importers/tree-sitter-native.js",
+          "js/src/grammar-runtime/executor.js",
+          "js/scripts/import-native-grammars.mjs"
+        ],
+        "rust": [
+          "rust/src/grammar/interchange/links.rs",
+          "rust/src/grammar/feature_runtime/executor.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-grammar-hexadecimal-scalars-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-grammar-hexadecimal-scalars"
+          ],
+          "assertions": [
+            "nativeHexadecimalScalarsMatchFixtures",
+            "nativeScalarEscapesConsumeCompleteInputs"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-grammar-hexadecimal-scalars-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-grammar-hexadecimal-scalars-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-grammar-hexadecimal-scalars"
+          ],
+          "assertions": [
+            "nativeHexadecimalScalarsMatchFixtures",
+            "nativeScalarEscapesConsumeCompleteInputs"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-grammar-hexadecimal-scalars-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#grammar-feature-union",
+        "inventories": [
+          "parity/fixtures/native-character-class-grammars.json"
         ],
         "sources": [
           "acceptanceGate",

@@ -648,6 +648,30 @@ export const VISION_REQUIREMENTS = Object.freeze([
     ],
   },
   {
+    id: 'I195-GRAMMAR-CHARACTER-CLASS-SETS',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/native-character-class-grammars.json',
+    construct: 'native Unicode character-class intersection, difference and symmetric difference',
+    expectedBehavior:
+      'The automatic native importer compiles character-class intersection, difference and symmetric difference into executable Links data shared by both packages. Ranges and implicit union bind before set operations, set operations associate to the left, and outer negation binds last. Every compiled fixture matches its declared membership over all 128 ASCII scalars and its positive and negative Unicode corpus, including nesting, astral ranges, empty sets and repetition. Accepted inputs consume every source byte and no class consumes an extra scalar or accepts end of input.',
+    assertions: ['compiledClassSetsUseLinks', 'nativeClassSetsMatchFixtures', 'nativeClassSetsConsumeCompleteInputs'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/scripts/import-native-grammars.mjs'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/executor.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-HEXADECIMAL-SCALARS',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/native-character-class-grammars.json',
+    construct: 'native hexadecimal Unicode scalar escapes in imported patterns',
+    expectedBehavior:
+      'The automatic native importer lowers two-digit x, four-digit u and eight-digit U hexadecimal escapes, and their braced scalar forms, to literal characters and ranges in shared executable Links data. Both packages match every ASCII and Unicode outcome of the compiled fixture corpus, including braced astral ranges and the complete Swift identifier pattern, and accepted inputs consume every source byte.',
+    assertions: ['nativeHexadecimalScalarsMatchFixtures', 'nativeScalarEscapesConsumeCompleteInputs'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/scripts/import-native-grammars.mjs'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/executor.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-CONCEPT-DISTINCTIONS',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

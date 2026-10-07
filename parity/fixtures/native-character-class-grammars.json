@@ -1,0 +1,466 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs --character-class-fixtures",
+  "cases": [
+    {
+      "id": "intersection",
+      "pattern": "[a-z&&[def]]",
+      "asciiAccepts": "def",
+      "accepts": [
+        "d",
+        "f"
+      ],
+      "rejects": [
+        "a",
+        "1",
+        "",
+        "dd"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (and (class plain (range a z))) (class plain (char d) (char e) (char f))))))\n"
+    },
+    {
+      "id": "difference",
+      "pattern": "[a-z--aeiou]",
+      "asciiAccepts": "bcdfghjklmnpqrstvwxyz",
+      "accepts": [
+        "b",
+        "z"
+      ],
+      "rejects": [
+        "a",
+        "e",
+        "1",
+        "",
+        "bb"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (not (class plain (char a) (char e) (char i) (char o) (char u))) (class plain (range a z))))))\n"
+    },
+    {
+      "id": "symmetric-difference",
+      "pattern": "[a-g~~b-h]",
+      "asciiAccepts": "ah",
+      "accepts": [
+        "a",
+        "h"
+      ],
+      "rejects": [
+        "b",
+        "g",
+        "",
+        "ah"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (choice unordered (seq (not (class plain (range b h))) (class plain (range a g))) (seq (not (class plain (range a g))) (class plain (range b h)))))))\n"
+    },
+    {
+      "id": "union-precedence",
+      "pattern": "[ab&&bc]",
+      "asciiAccepts": "b",
+      "accepts": [
+        "b"
+      ],
+      "rejects": [
+        "a",
+        "c",
+        "",
+        "bb"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (and (class plain (char a) (char b))) (class plain (char b) (char c))))))\n"
+    },
+    {
+      "id": "left-associative-intersection",
+      "pattern": "[a-c~~b-d&&c-e]",
+      "asciiAccepts": "d",
+      "accepts": [
+        "d"
+      ],
+      "rejects": [
+        "a",
+        "b",
+        "c",
+        "e",
+        ""
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (and (choice unordered (seq (not (class plain (range b d))) (class plain (range a c))) (seq (not (class plain (range a c))) (class plain (range b d))))) (class plain (range c e))))))\n"
+    },
+    {
+      "id": "left-associative-difference",
+      "pattern": "[a-c--b-d~~c-e]",
+      "asciiAccepts": "acde",
+      "accepts": [
+        "a",
+        "c",
+        "d",
+        "e"
+      ],
+      "rejects": [
+        "b",
+        "f",
+        ""
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (choice unordered (seq (not (class plain (range c e))) (seq (not (class plain (range b d))) (class plain (range a c)))) (seq (not (seq (not (class plain (range b d))) (class plain (range a c)))) (class plain (range c e)))))))\n"
+    },
+    {
+      "id": "outer-negation",
+      "pattern": "[^a-z&&b]",
+      "asciiExcludes": "b",
+      "accepts": [
+        "a",
+        "c",
+        "1",
+        "\n",
+        "😀"
+      ],
+      "rejects": [
+        "b",
+        "",
+        "aa"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (not (seq (and (class plain (range a z))) (class plain (char b)))) any))))\n"
+    },
+    {
+      "id": "nested-union",
+      "pattern": "[x[a-c&&b-d]y]",
+      "asciiAccepts": "bcxy",
+      "accepts": [
+        "b",
+        "c",
+        "x",
+        "y"
+      ],
+      "rejects": [
+        "a",
+        "d",
+        "",
+        "xy"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (choice unordered (class plain (char x) (char y)) (seq (and (class plain (range a c))) (class plain (range b d)))))))\n"
+    },
+    {
+      "id": "nested-negation",
+      "pattern": "[a-z&&[^aeiou]]",
+      "asciiAccepts": "bcdfghjklmnpqrstvwxyz",
+      "accepts": [
+        "b",
+        "z"
+      ],
+      "rejects": [
+        "a",
+        "1",
+        "",
+        "bb"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (and (class plain (range a z))) (class negated (char a) (char e) (char i) (char o) (char u))))))\n"
+    },
+    {
+      "id": "negative-difference-operand",
+      "pattern": "[a-z--[^aeiou]]",
+      "asciiAccepts": "aeiou",
+      "accepts": [
+        "a",
+        "u"
+      ],
+      "rejects": [
+        "b",
+        "z",
+        "",
+        "aa"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (not (class negated (char a) (char e) (char i) (char o) (char u))) (class plain (range a z))))))\n"
+    },
+    {
+      "id": "negative-intersection-complement",
+      "pattern": "[^a-c&&[^b-d]]",
+      "asciiExcludes": "a",
+      "accepts": [
+        "b",
+        "d",
+        "1",
+        "😀"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "bb"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (not (seq (and (class plain (range a c))) (class negated (range b d)))) any))))\n"
+    },
+    {
+      "id": "mixed-operators",
+      "pattern": "[a-z&&[a-m]--[d-f]]",
+      "asciiAccepts": "abcghijklm",
+      "accepts": [
+        "a",
+        "g",
+        "m"
+      ],
+      "rejects": [
+        "d",
+        "n",
+        "",
+        "am"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (not (class plain (range d f))) (seq (and (class plain (range a z))) (class plain (range a m)))))))\n"
+    },
+    {
+      "id": "literal-operator-characters",
+      "pattern": "[&~-]",
+      "asciiAccepts": "&~-",
+      "accepts": [
+        "&",
+        "~",
+        "-"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "&&"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (class plain (char %26) (char %7E) (char -)))))\n"
+    },
+    {
+      "id": "escaped-operators",
+      "pattern": "[a\\&\\&b\\-\\-c\\~\\~]",
+      "asciiAccepts": "abc&-~",
+      "accepts": [
+        "a",
+        "&",
+        "-",
+        "~"
+      ],
+      "rejects": [
+        "d",
+        "",
+        "--"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (class plain (char a) (char %26) (char %26) (char b) (char -) (char -) (char c) (char %7E) (char %7E)))))\n"
+    },
+    {
+      "id": "unicode-intersection",
+      "pattern": "[\\p{L}&&\\p{Greek}]",
+      "asciiAccepts": "",
+      "accepts": [
+        "Α",
+        "β",
+        "ω"
+      ],
+      "rejects": [
+        "a",
+        "1",
+        "😀",
+        "",
+        "ββ"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (and (class plain (category L))) (class plain (script Greek))))))\n"
+    },
+    {
+      "id": "unicode-difference",
+      "pattern": "[\\p{L}--\\p{Greek}]",
+      "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "a",
+        "é",
+        "漢",
+        "𐐀"
+      ],
+      "rejects": [
+        "β",
+        "1",
+        "😀",
+        "",
+        "éé"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (not (class plain (script Greek))) (class plain (category L))))))\n"
+    },
+    {
+      "id": "unicode-symmetric-difference",
+      "pattern": "[\\p{Greek}~~\\p{L}]",
+      "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "a",
+        "é",
+        "漢",
+        "𐐀"
+      ],
+      "rejects": [
+        "β",
+        "ω",
+        "1",
+        "😀",
+        ""
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (choice unordered (seq (not (class plain (category L))) (class plain (script Greek))) (seq (not (class plain (script Greek))) (class plain (category L)))))))\n"
+    },
+    {
+      "id": "astral-range-intersection",
+      "pattern": "[\\u{10000}-\\u{10FFFF}&&[^\\u{1F600}-\\u{1F64F}]]",
+      "asciiAccepts": "",
+      "accepts": [
+        "𐐀",
+        "𝔘"
+      ],
+      "rejects": [
+        "😀",
+        "a",
+        "",
+        "𐐀𐐀"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (and (class plain (range %F0%90%80%80 %F4%8F%BF%BF))) (class negated (range %F0%9F%98%80 %F0%9F%99%8F))))))\n"
+    },
+    {
+      "id": "repeated-intersection",
+      "pattern": "[a-z&&[^aeiou]]+",
+      "asciiAccepts": "bcdfghjklmnpqrstvwxyz",
+      "accepts": [
+        "b",
+        "bcxyz"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "bcax",
+        "bc1"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (repeat1 (seq (and (class plain (range a z))) (class negated (char a) (char e) (char i) (char o) (char u)))))))\n"
+    },
+    {
+      "id": "bounded-symmetric-difference",
+      "pattern": "[a-g~~b-h]{2,3}",
+      "asciiAccepts": "",
+      "accepts": [
+        "ah",
+        "haa",
+        "aaa"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "aaaa",
+        "hab"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (repeat 2 3 (choice unordered (seq (not (class plain (range b h))) (class plain (range a g))) (seq (not (class plain (range a g))) (class plain (range b h))))))))\n"
+    },
+    {
+      "id": "empty-intersection",
+      "pattern": "[a&&b]",
+      "asciiAccepts": "",
+      "accepts": [],
+      "rejects": [
+        "",
+        "a",
+        "b",
+        "😀",
+        "ab"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (and (class plain (char a))) (class plain (char b))))))\n"
+    },
+    {
+      "id": "complement-of-empty-intersection",
+      "pattern": "[^a&&b]",
+      "asciiExcludes": "",
+      "accepts": [
+        "a",
+        "b",
+        "\n",
+        "😀"
+      ],
+      "rejects": [
+        "",
+        "aa",
+        "😀😀"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (not (seq (and (class plain (char a))) (class plain (char b)))) any))))\n"
+    },
+    {
+      "id": "identifier-intersection",
+      "pattern": "[_\\p{L}&&[^0-9#*]]+",
+      "asciiAccepts": "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "_",
+        "漢_",
+        "𐐀é"
+      ],
+      "rejects": [
+        "",
+        "9",
+        "#",
+        "*",
+        "a9"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (repeat1 (seq (and (class plain (char _) (category L))) (class negated (range 0 9) (char %23) (char %2A)))))))\n"
+    },
+    {
+      "id": "hexadecimal-escape-forms",
+      "pattern": "(\\x{1F600}|\\u{1F600}|\\U{1F600}|\\U0001F600|\\x41|\\u0041|\\U00000041|\\x{41}|\\u{41}|\\U{41})",
+      "asciiAccepts": "A",
+      "accepts": [
+        "A",
+        "😀"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "AA",
+        "😀😀"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (choice unordered (literal %F0%9F%98%80) (literal %F0%9F%98%80) (literal %F0%9F%98%80) (literal %F0%9F%98%80) (literal A) (literal A) (literal A) (literal A) (literal A) (literal A)))))\n"
+    },
+    {
+      "id": "braced-hexadecimal-class",
+      "pattern": "[\\x{10000}-\\x{10FFFF}--[\\x{1F600}-\\x{1F64F}]]",
+      "asciiAccepts": "",
+      "accepts": [
+        "𐐀",
+        "𝔘"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "😀",
+        "𐐀𐐀"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (not (class plain (range %F0%9F%98%80 %F0%9F%99%8F))) (class plain (range %F0%90%80%80 %F4%8F%BF%BF))))))\n"
+    },
+    {
+      "id": "swift-identifier-pattern",
+      "pattern": "[_\\p{XID_Start}\\p{Emoji}&&[^0-9#*]](\\p{EMod}|\\x{FE0F}\\x{20E3}?)?([_\\p{XID_Continue}\\p{Emoji}\\x{200D}](\\p{EMod}|\\x{FE0F}\\x{20E3}?)?)*",
+      "asciiAccepts": "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "_",
+        "alpha",
+        "漢字",
+        "😀",
+        "a9",
+        "a*",
+        "a#",
+        "😀️",
+        "😀️⃣",
+        "😀‍😀"
+      ],
+      "rejects": [
+        "",
+        "9",
+        "#",
+        "*",
+        "a!"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (seq (and (class plain (char _) (category Lu) (category Ll) (category Lt) (category Lm) (category Lo) (category Nl) (category So) (char 0) (char 1) (char 2) (char 3) (char 4) (char 5) (char 6) (char 7) (char 8) (char 9) (char %23) (char %2A))) (class negated (range 0 9) (char %23) (char %2A))) (optional (choice unordered (class plain (category Sk)) (seq (literal %EF%B8%8F) (optional (literal %E2%83%A3))))) (repeat0 (seq (class plain (char _) (category Lu) (category Ll) (category Lt) (category Lm) (category Lo) (category Nl) (category Mn) (category Mc) (category Nd) (category Pc) (category So) (char 0) (char 1) (char 2) (char 3) (char 4) (char 5) (char 6) (char 7) (char 8) (char 9) (char %23) (char %2A) (char %E2%80%8D)) (optional (choice unordered (class plain (category Sk)) (seq (literal %EF%B8%8F) (optional (literal %E2%83%A3)))))))))))\n"
+    },
+    {
+      "id": "ascii-emoji-intersection",
+      "pattern": "[\\p{Emoji}&&[\\x{00}-\\x{7F}]]",
+      "asciiAccepts": "0123456789#*",
+      "accepts": [
+        "0",
+        "9",
+        "#",
+        "*"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "😀",
+        "00"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (seq (and (class plain (category So) (char 0) (char 1) (char 2) (char 3) (char 4) (char 5) (char 6) (char 7) (char 8) (char 9) (char %23) (char %2A))) (class plain (range %00 %7F))))))\n"
+    }
+  ]
+}
