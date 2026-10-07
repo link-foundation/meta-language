@@ -57,7 +57,7 @@ export function excludedKeywordTexts(grammar, word, candidates, tokenKey) {
         return { keys: new Set(owns.flatMap((own) => [...own.keys])), nullable: owns.some((own) => own.nullable) };
       }
       case 'REPEAT': return { keys: firstOf(node.content).keys, nullable: true };
-      case 'NATIVE_PREFIX_EXCLUSION': case 'NATIVE_KEYWORD_REQUIREMENT': case 'NATIVE_KEYWORD_EXCLUSION': case 'NATIVE_PATTERN_LOOKAHEAD': case 'NATIVE_KEYWORD_CONTEXT_VARIANT': case 'NATIVE_COMPLETE_CONTEXT_VARIANT': case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': case 'NATIVE_END_BOUNDARY':
+      case 'NATIVE_LITERAL_BOUNDARY': case 'NATIVE_WORD_BOUNDARY': case 'NATIVE_PREFIX_EXCLUSION': case 'NATIVE_KEYWORD_REQUIREMENT': case 'NATIVE_KEYWORD_EXCLUSION': case 'NATIVE_PATTERN_LOOKAHEAD': case 'NATIVE_KEYWORD_CONTEXT_VARIANT': case 'NATIVE_COMPLETE_CONTEXT_VARIANT': case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': case 'NATIVE_END_BOUNDARY':
       case 'REPEAT1': case 'PREC': case 'PREC_LEFT': case 'PREC_RIGHT': case 'PREC_DYNAMIC': case 'FIELD': case 'ALIAS': case 'RESERVED':
         return firstOf(node.content);
       default: return { keys: new Set(), nullable: true };
@@ -122,7 +122,7 @@ export function excludedKeywordTexts(grammar, word, candidates, tokenKey) {
       }
       case 'NATIVE_ORDERED_CHOICE': case 'CHOICE': return node.members.map((member) => walk(member, follow, visit)).some(Boolean);
       case 'REPEAT': case 'REPEAT1': return walk(node.content, new Set([...firstOf(node.content).keys, ...follow]), visit);
-      case 'NATIVE_PREFIX_EXCLUSION': case 'NATIVE_KEYWORD_REQUIREMENT': case 'NATIVE_KEYWORD_EXCLUSION': case 'NATIVE_PATTERN_LOOKAHEAD': case 'NATIVE_KEYWORD_CONTEXT_VARIANT': case 'NATIVE_COMPLETE_CONTEXT_VARIANT': case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': case 'NATIVE_END_BOUNDARY':
+      case 'NATIVE_LITERAL_BOUNDARY': case 'NATIVE_WORD_BOUNDARY': case 'NATIVE_PREFIX_EXCLUSION': case 'NATIVE_KEYWORD_REQUIREMENT': case 'NATIVE_KEYWORD_EXCLUSION': case 'NATIVE_PATTERN_LOOKAHEAD': case 'NATIVE_KEYWORD_CONTEXT_VARIANT': case 'NATIVE_COMPLETE_CONTEXT_VARIANT': case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': case 'NATIVE_END_BOUNDARY':
       case 'PREC': case 'PREC_LEFT': case 'PREC_RIGHT': case 'PREC_DYNAMIC': case 'FIELD': case 'ALIAS': case 'RESERVED':
         return walk(node.content, follow, visit);
       default: return false;

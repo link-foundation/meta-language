@@ -1390,10 +1390,139 @@
         [4,null,"identifier",1,71,78,""],
         [1,null,";",0,78,79,""]
       ]
+    },
+    {
+      "source": "SELECT id FROM users WHERE id IS NOT NULL;",
+      "rows": [
+        [0,null,"program",1,0,42,""],
+        [1,null,"statement",1,0,41,""],
+        [2,null,"select",1,0,9,""],
+        [3,null,"keyword_select",1,0,6,""],
+        [3,null,"select_expression",1,7,9,""],
+        [4,null,"term",1,7,9,""],
+        [5,"value","field",1,7,9,""],
+        [6,"name","identifier",1,7,9,""],
+        [2,null,"from",1,10,41,""],
+        [3,null,"keyword_from",1,10,14,""],
+        [3,null,"relation",1,15,20,""],
+        [4,null,"object_reference",1,15,20,""],
+        [5,"name","identifier",1,15,20,""],
+        [3,null,"where",1,21,41,""],
+        [4,null,"keyword_where",1,21,26,""],
+        [4,"predicate","binary_expression",1,27,41,""],
+        [5,"left","field",1,27,29,""],
+        [6,"name","identifier",1,27,29,""],
+        [5,"operator","is_not",1,30,36,""],
+        [6,null,"keyword_is",1,30,32,""],
+        [6,null,"keyword_not",1,33,36,""],
+        [5,"right","literal",1,37,41,""],
+        [6,null,"keyword_null",1,37,41,""],
+        [1,null,";",0,41,42,""]
+      ]
+    },
+    {
+      "source": "SELECT id FROM users WHERE id IS NULL;",
+      "rows": [
+        [0,null,"program",1,0,38,""],
+        [1,null,"statement",1,0,37,""],
+        [2,null,"select",1,0,9,""],
+        [3,null,"keyword_select",1,0,6,""],
+        [3,null,"select_expression",1,7,9,""],
+        [4,null,"term",1,7,9,""],
+        [5,"value","field",1,7,9,""],
+        [6,"name","identifier",1,7,9,""],
+        [2,null,"from",1,10,37,""],
+        [3,null,"keyword_from",1,10,14,""],
+        [3,null,"relation",1,15,20,""],
+        [4,null,"object_reference",1,15,20,""],
+        [5,"name","identifier",1,15,20,""],
+        [3,null,"where",1,21,37,""],
+        [4,null,"keyword_where",1,21,26,""],
+        [4,"predicate","binary_expression",1,27,37,""],
+        [5,"left","field",1,27,29,""],
+        [6,"name","identifier",1,27,29,""],
+        [5,"operator","keyword_is",1,30,32,""],
+        [5,"right","literal",1,33,37,""],
+        [6,null,"keyword_null",1,33,37,""],
+        [1,null,";",0,37,38,""]
+      ]
+    },
+    {
+      "source": "SELECT selections;",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"statement",1,0,17,""],
+        [2,null,"select",1,0,17,""],
+        [3,null,"keyword_select",1,0,6,""],
+        [3,null,"select_expression",1,7,17,""],
+        [4,null,"term",1,7,17,""],
+        [5,"value","field",1,7,17,""],
+        [6,"name","identifier",1,7,17,""],
+        [1,null,";",0,17,18,""]
+      ]
+    },
+    {
+      "source": "SELECT select1;",
+      "rows": [
+        [0,null,"program",1,0,15,""],
+        [1,null,"statement",1,0,14,""],
+        [2,null,"select",1,0,14,""],
+        [3,null,"keyword_select",1,0,6,""],
+        [3,null,"select_expression",1,7,14,""],
+        [4,null,"term",1,7,14,""],
+        [5,"value","field",1,7,14,""],
+        [6,"name","identifier",1,7,14,""],
+        [1,null,";",0,14,15,""]
+      ]
+    },
+    {
+      "source": "SELECT id FROM users WHERE id is not null;",
+      "rows": [
+        [0,null,"program",1,0,42,""],
+        [1,null,"statement",1,0,41,""],
+        [2,null,"select",1,0,9,""],
+        [3,null,"keyword_select",1,0,6,""],
+        [3,null,"select_expression",1,7,9,""],
+        [4,null,"term",1,7,9,""],
+        [5,"value","field",1,7,9,""],
+        [6,"name","identifier",1,7,9,""],
+        [2,null,"from",1,10,41,""],
+        [3,null,"keyword_from",1,10,14,""],
+        [3,null,"relation",1,15,20,""],
+        [4,null,"object_reference",1,15,20,""],
+        [5,"name","identifier",1,15,20,""],
+        [3,null,"where",1,21,41,""],
+        [4,null,"keyword_where",1,21,26,""],
+        [4,"predicate","binary_expression",1,27,41,""],
+        [5,"left","field",1,27,29,""],
+        [6,"name","identifier",1,27,29,""],
+        [5,"operator","is_not",1,30,36,""],
+        [6,null,"keyword_is",1,30,32,""],
+        [6,null,"keyword_not",1,33,36,""],
+        [5,"right","literal",1,37,41,""],
+        [6,null,"keyword_null",1,37,41,""],
+        [1,null,";",0,41,42,""]
+      ]
     }
   ],
   "divergences": [],
   "rejections": [
+    {
+      "source": "selections",
+      "recovered": "(program (ERROR@0..10 \"selections\"))"
+    },
+    {
+      "source": "SELECT1",
+      "recovered": "(program (ERROR@0..7 \"SELECT1\"))"
+    },
+    {
+      "source": "SELECT_",
+      "recovered": "(program (ERROR@0..7 \"SELECT_\"))"
+    },
+    {
+      "source": "SELECTé",
+      "recovered": "(program (ERROR@0..8 \"SELECTé\"))"
+    },
     {
       "source": "SELECT (1;",
       "recovered": "(program (statement (selection_clause (select_keyword \"SELECT\") (select_expression (term value:(parenthesized_expression ~\" \" \"(\" (literal (unnamed_token \"1\")) (MISSING@9 \")\")))))) \";\")"

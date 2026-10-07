@@ -73,7 +73,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | Grammar | Matches | Rows | Bytes | Divergences | Rejections |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `native-c` | 100 | 5348 | 12987 | 0 | 33 |
-| `native-cpp` | 40 | 597 | 897 | 0 | 9 |
+| `native-cpp` | 70 | 1517 | 2008 | 0 | 9 |
 | `native-css` | 40 | 556 | 817 | 0 | 5 |
 | `native-csv` | 123 | 699 | 553 | 8 | 15 |
 | `native-diff` | 115 | 1175 | 3588 | 8 | 14 |
@@ -98,13 +98,13 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-rust` | 182 | 7903 | 15796 | 0 | 38 |
 | `native-scheme` | 264 | 908 | 1363 | 23 | 50 |
 | `native-solidity` | 166 | 4312 | 10859 | 0 | 10 |
-| `native-sql` | 40 | 655 | 1150 | 0 | 9 |
+| `native-sql` | 45 | 743 | 1305 | 0 | 13 |
 | `native-toml` | 33 | 224 | 447 | 0 | 6 |
 | `native-tsx` | 157 | 6525 | 13617 | 0 | 16 |
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 3570 | 85985 | 192388 | 101 | 586 |
+| all | 3605 | 86993 | 193654 | 101 | 590 |
 
 ## Coverage
 
@@ -119,7 +119,7 @@ language specification and checked against the oracle.
 | Grammar | Normal | Atomic | Silent | Token | Exercised visible rules | Checked kinds | Checked fields | Renamed | Expanded words | Approximations | Unsupported |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `native-c` | 137 | 0 | 32 | 14 | 103 of 137 (75%) | 121 | 38 | 93 | 24 | 0 | 0 |
-| `native-cpp` | 231 | 0 | 57 | 17 | 58 of 231 (25%) | 72 | 20 | 131 | 27 | 0 | 0 |
+| `native-cpp` | 231 | 0 | 57 | 17 | 80 of 231 (35%) | 96 | 26 | 131 | 27 | 0 | 0 |
 | `native-css` | 48 | 0 | 7 | 11 | 34 of 48 (71%) | 51 | 0 | 20 | 5 | 0 | 0 |
 | `native-csv` | 4 | 0 | 4 | 0 | 4 of 4 (100%) | 7 | 0 | n/a | n/a | n/a | n/a |
 | `native-diff` | 17 | 0 | 7 | 0 | 17 of 17 (100%) | 23 | 2 | n/a | n/a | n/a | n/a |
@@ -144,7 +144,7 @@ language specification and checked against the oracle.
 | `native-rust` | 147 | 0 | 26 | 11 | 142 of 147 (97%) | 163 | 31 | 45 | 12 | 0 | 0 |
 | `native-scheme` | 17 | 0 | 3 | 8 | 16 of 17 (94%) | 22 | 0 | n/a | n/a | n/a | n/a |
 | `native-solidity` | 111 | 0 | 44 | 12 | 101 of 111 (91%) | 112 | 35 | 54 | 6 | 0 | 0 |
-| `native-sql` | 175 | 0 | 88 | 359 | 49 of 175 (28%) | 102 | 13 | 504 | 10 | 0 | 0 |
+| `native-sql` | 175 | 0 | 88 | 359 | 50 of 175 (29%) | 104 | 13 | 504 | 10 | 0 | 0 |
 | `native-toml` | 11 | 0 | 9 | 7 | 11 of 11 (100%) | 18 | 0 | 10 | 1 | 0 | 0 |
 | `native-tsx` | 166 | 0 | 50 | 14 | 142 of 166 (86%) | 159 | 40 | 44 | 3 | 0 | 0 |
 | `native-typescript` | 166 | 0 | 50 | 14 | 136 of 166 (82%) | 152 | 37 | 44 | 3 | 0 | 0 |
@@ -229,7 +229,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-rust` | 38 | 38 | 18 | 47 | native-skips-more 25, oracle-skips-more 36, same-repair-sites 7, same-skipped-bytes 7 |
 | `native-scheme` | 50 | 50 | 28 | 28 | none |
 | `native-solidity` | 10 | 10 | 2 | 15 | none |
-| `native-sql` | 9 | 9 | 4 | 12 | none |
+| `native-sql` | 13 | 13 | 8 | 12 | none |
 | `native-toml` | 6 | 6 | 2 | 5 | none |
 | `native-tsx` | 16 | 16 | 5 | 15 | none |
 | `native-typescript` | 15 | 15 | 5 | 15 | none |
@@ -238,7 +238,7 @@ generative cases with the oracle and gives each difference a category.
 
 ## Time and memory
 
-The `native-cpp` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, without optional dictionary features.
+The `native-cpp` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0; --no-default-features, profile.dev.package.meta-language.codegen-units=1.
 
 The `native-css` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, without optional dictionary features.
 
@@ -252,7 +252,7 @@ The `native-pascal` measurements use linux x64, AMD EPYC 9V74 80-Core Processor,
 
 The `native-powershell` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, without optional dictionary features.
 
-The `native-sql` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, without optional dictionary features.
+The `native-sql` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0; --no-default-features, profile.dev.package.meta-language.codegen-units=1.
 
 The `native-toml` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
 
@@ -274,7 +274,7 @@ loads the same modules and parses nothing.
 | Grammar | Native parse | Oracle parse | Ratio | Native recover | Oracle recover | Native peak MiB | Oracle peak MiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `native-c` | 3026.7 | 20.4 | 148.3× | 824.6 | 2.8 | 129.1 | 13.7 |
-| `native-cpp` | 314.4 | 0.8 | 371.6× | 299.5 | 0.3 | 151.2 | 18.3 |
+| `native-cpp` | 713.0 | 3.1 | 233.5× | 275.3 | 0.5 | 160.7 | 21.3 |
 | `native-css` | 64.1 | 0.6 | 114.4× | 22.1 | 0.2 | 37.8 | 3.8 |
 | `native-csv` | 28.2 | 4.6 | 6.1× | 21.4 | 5.5 | 17.4 | 8.7 |
 | `native-diff` | 160.7 | 6.9 | 23.2× | 15.2 | 0.3 | 26.3 | 7.4 |
@@ -299,7 +299,7 @@ loads the same modules and parses nothing.
 | `native-rust` | 5470.4 | 18.2 | 300.6× | 3495.6 | 4.2 | 127.7 | 14.2 |
 | `native-scheme` | 313.6 | 5.0 | 62.2× | 81.5 | 1.3 | 51.2 | 2.9 |
 | `native-solidity` | 2655.1 | 8.7 | 306.7× | 414.1 | 1.9 | 126.2 | 12.8 |
-| `native-sql` | 148.0 | 0.8 | 189.7× | 114.7 | 1.2 | 88.7 | 18.7 |
+| `native-sql` | 169.4 | 0.9 | 187.4× | 209.0 | 1.3 | 160.5 | 17.4 |
 | `native-toml` | 27.1 | 0.7 | 39.3× | 11.1 | 0.1 | 35.3 | 2.3 |
 | `native-tsx` | 11815.5 | 15.5 | 762.7× | 2168.5 | 2.1 | 140.9 | 15.7 |
 | `native-typescript` | 11832.2 | 15.4 | 770.1× | 1875.8 | 1.1 | 138.0 | 19.0 |
@@ -317,7 +317,7 @@ without optimization, as the tests run them.
 | Grammar | Native parse | Oracle parse | Ratio | Native recover | Oracle recover | Native peak heap MiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `native-c` | 8804.5 | 9.2 | 958.2× | 2322.9 | 1.9 | 7.3 |
-| `native-cpp` | 1077.6 | 0.6 | 1920.9× | 948.3 | 0.4 | 6.6 |
+| `native-cpp` | 2112.8 | 1.7 | 1237.7× | 811.6 | 0.3 | 7.5 |
 | `native-css` | 158.3 | 0.5 | 291.5× | 46.5 | 0.1 | 0.9 |
 | `native-csv` | 287.1 | n/a | n/a | 64.7 | n/a | 0.1 |
 | `native-diff` | 346.1 | 2.2 | 157.9× | 47.6 | 0.3 | 0.4 |
@@ -342,7 +342,7 @@ without optimization, as the tests run them.
 | `native-rust` | 21178.7 | n/a | n/a | 8884.8 | n/a | 6.8 |
 | `native-scheme` | 1906.1 | 1.7 | 1096.7× | 290.4 | 0.8 | 3.3 |
 | `native-solidity` | 9240.2 | 6.6 | 1404.9× | 1253.5 | 1.7 | 5.2 |
-| `native-sql` | 430.2 | 0.9 | 503.1× | 265.3 | 1.6 | 12.1 |
+| `native-sql` | 464.5 | 0.8 | 563.7× | 475.3 | 1.5 | 13.4 |
 | `native-toml` | 41.9 | 0.4 | 105.6× | 14.9 | 0.1 | 0.6 |
 | `native-tsx` | 37609.0 | 15.7 | 2390.9× | 7208.4 | 1.1 | 6.9 |
 | `native-typescript` | 36380.3 | 15.3 | 2373.9× | 7301.3 | 0.9 | 6.9 |

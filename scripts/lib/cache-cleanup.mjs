@@ -14,6 +14,7 @@
 //   logs) and holds no other worktree;
 // - no build is active on it: no live lease, and no Cargo lock held.
 import { execFileSync, spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import {
   appendFileSync,
   existsSync,
@@ -31,6 +32,7 @@ import {
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { processIdentity, processIdentityAlive, sameProcess } from './process-identity.mjs';
 
 import {
   BUILDKIT_BUILDER,
@@ -71,13 +73,7 @@ const toPosix = (relative) => relative.split(path.sep).join('/');
 
 /** Whether a process id belongs to a live process. */
 export function processAlive(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    return error.code === 'EPERM';
-  }
+  return processIdentityAlive({ pid });
 }
 
 /** The worktree root and its git directories, or null outside a git worktree. */
@@ -111,7 +107,7 @@ export function acquireLease({ cwd = process.cwd(), label = 'build', pid = proce
   const directory = leaseDirectory(repository.stateDir);
   mkdirSync(directory, { recursive: true });
   const file = path.join(directory, `${pid}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.json`);
-  writeFileSync(file, `${JSON.stringify({ pid, label, root: repository.root, createdAt: new Date().toISOString() })}\n`);
+  writeFileSync(file, `${JSON.stringify({ ...processIdentity(pid), label, root: repository.root, createdAt: new Date().toISOString() })}\n`);
   return {
     file,
     release() {
@@ -138,8 +134,8 @@ export function liveLeases(stateDir) {
     } catch {
       continue;
     }
-    if (lease.pid === process.pid) continue;
-    if (processAlive(lease.pid)) leases.push(lease);
+    if (sameProcess(lease, processIdentity())) continue;
+    if (processIdentityAlive(lease)) leases.push(lease);
     else rmSync(file, { force: true });
   }
   return leases;
@@ -154,8 +150,10 @@ const STALE_GUARD_MS = 60_000;
 
 /** Creates `file` holding this pid, or returns false when it already exists. */
 function createLockFile(file) {
-  const temporary = `${file}.${process.pid}.tmp`;
-  writeFileSync(temporary, `${process.pid}\n`);
+  const owner = processIdentity();
+  const temporary = `${file}.${owner.pid}-${randomUUID()}.tmp`;
+  const identity = `${JSON.stringify(owner)}\n`;
+  writeFileSync(temporary, identity);
   try {
     linkSync(temporary, file);
     return true;
@@ -164,7 +162,7 @@ function createLockFile(file) {
     if (!['EPERM', 'ENOTSUP', 'EOPNOTSUPP', 'ENOSYS'].includes(error.code)) throw error;
     // File systems without hard links fall back to an exclusive create.
     try {
-      writeFileSync(file, `${process.pid}\n`, { flag: 'wx' });
+      writeFileSync(file, identity, { flag: 'wx' });
       return true;
     } catch (fallbackError) {
       if (fallbackError.code === 'EEXIST') return false;
@@ -184,8 +182,13 @@ function lockHolder(file) {
     if (error.code === 'ENOENT') return undefined;
     throw error;
   }
-  const pid = Number.parseInt(text, 10);
-  return Number.isInteger(pid) ? pid : null;
+  try {
+    const identity = JSON.parse(text);
+    if (Number.isInteger(identity)) return { pid: identity };
+    return Number.isInteger(identity?.pid) ? identity : null;
+  } catch {
+    return null;
+  }
 }
 
 const olderThan = (file, milliseconds) => {
@@ -208,7 +211,8 @@ function breakStaleLock(file, holder) {
     return false;
   }
   try {
-    if (lockHolder(file) === holder) rmSync(file, { force: true });
+    const current = lockHolder(file);
+    if (current === holder || (current && holder && sameProcess(current, holder))) rmSync(file, { force: true });
     return true;
   } finally {
     rmSync(guard, { recursive: true, force: true });
@@ -224,8 +228,8 @@ function acquireCleanupLock(stateDir) {
     if (holder === undefined) continue;
     // Only the exclusive-create fallback can leave a lock without a pid; it is stale once old.
     if (holder === null && !olderThan(file, STALE_GUARD_MS)) return { busy: -1 };
-    if (holder !== null && holder !== process.pid && processAlive(holder)) return { busy: holder };
-    if (!breakStaleLock(file, holder)) return { busy: holder ?? -1 };
+    if (holder !== null && !sameProcess(holder, processIdentity()) && processIdentityAlive(holder)) return { busy: holder.pid };
+    if (!breakStaleLock(file, holder)) return { busy: holder?.pid ?? -1 };
   }
   return { busy: -1 };
 }
@@ -327,6 +331,7 @@ function workingDirectory(entry) {
 /** Processes read from `procRoot` (`/proc`); the parameter lets tests supply a fake one. */
 export function linuxProcesses(procRoot = '/proc') {
   const processes = [];
+  const ownNamespace = attempt(() => readlinkSync(path.join(procRoot, 'self/ns/pid')));
   for (const name of readdirSync(procRoot)) {
     if (!/^\d+$/u.test(name)) continue;
     const entry = path.join(procRoot, name);
@@ -337,8 +342,11 @@ export function linuxProcesses(procRoot = '/proc') {
     const targetDir = environment.split('\0').find((variable) => variable.startsWith('CARGO_TARGET_DIR='));
     const cwd = workingDirectory(entry);
     if (cwd === EXITING) continue;
+    const namespace = attempt(() => readlinkSync(path.join(entry, 'ns/pid')));
+    const status = namespace && namespace === ownNamespace ? attempt(() => readFileSync(path.join(entry, 'status'), 'utf8')) : null;
+    const namespacePids = status?.match(/^NSpid:\s+([\d\s]+)$/mu)?.[1].trim().split(/\s+/u);
     processes.push({
-      pid: Number(name),
+      pid: namespacePids ? Number(namespacePids.at(-1)) : Number(name),
       ppid: Number(processState(stat).split(' ')[1]),
       executable: attempt(() => readlinkSync(path.join(entry, 'exe')).replace(/ \(deleted\)$/u, '')),
       cwd,
@@ -577,7 +585,7 @@ function refusal(candidate, context, ignored) {
   if (inside(context.root, target)) return 'contains the repository';
   if (candidate.scratchMarker) {
     if (path.dirname(target) !== context.tmpRoot) return 'scratch marker outside the temporary directory';
-    if (candidate.scratchMarker.pid !== process.pid && processAlive(candidate.scratchMarker.pid)) {
+    if (processIdentityAlive(candidate.scratchMarker)) {
       return `scratch still in use by pid ${candidate.scratchMarker.pid}`;
     }
     return null;

@@ -31,9 +31,9 @@
       ],
       "corpus": "https://github.com/tree-sitter/tree-sitter-cpp/tree/f41e1a044c8a84ea9fa8577fdd2eab92ec96de02/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/cpp.json",
-      "coverage": {"rules": {"normal": 231, "atomic": 0, "silent": 57, "token": 17}, "visibleRules": 231, "exercisedRules": 58, "checkedKinds": 72, "checkedFields": 20, "renamed": 131, "expandedWords": 27, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 231, "atomic": 0, "silent": 57, "token": 17}, "visibleRules": 231, "exercisedRules": 80, "checkedKinds": 96, "checkedFields": 26, "renamed": 131, "expandedWords": 27, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 1, "conflict": 33, "precedences": 2, "extra": 2, "kind": 0},
-      "correctness": {"matches": 40, "rows": 597, "bytes": 897, "divergences": 0, "rejections": 9},
+      "correctness": {"matches": 70, "rows": 1517, "bytes": 2008, "divergences": 0, "rejections": 9},
       "recovery": {"repaired": 9, "errorNodes": 2, "missingNodes": 17, "categories": {}},
       "reuse": {"shared": 201, "specific": 104}
     },
@@ -485,10 +485,10 @@
       ],
       "corpus": "https://github.com/derekstride/tree-sitter-sql/tree/7b51ecda191d36b92f5a90a8d1bc3faef1c7b8b8/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/sql.json",
-      "coverage": {"rules": {"normal": 175, "atomic": 0, "silent": 88, "token": 359}, "visibleRules": 175, "exercisedRules": 49, "checkedKinds": 102, "checkedFields": 13, "renamed": 504, "expandedWords": 10, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 175, "atomic": 0, "silent": 88, "token": 359}, "visibleRules": 175, "exercisedRules": 50, "checkedKinds": 104, "checkedFields": 13, "renamed": 504, "expandedWords": 10, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 2, "conflict": 5, "precedences": 1, "extra": 4, "kind": 0},
-      "correctness": {"matches": 40, "rows": 655, "bytes": 1150, "divergences": 0, "rejections": 9},
-      "recovery": {"repaired": 9, "errorNodes": 4, "missingNodes": 12, "categories": {}},
+      "correctness": {"matches": 45, "rows": 743, "bytes": 1305, "divergences": 0, "rejections": 13},
+      "recovery": {"repaired": 13, "errorNodes": 8, "missingNodes": 12, "categories": {}},
       "reuse": {"shared": 70, "specific": 552}
     },
     {

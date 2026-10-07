@@ -3,6 +3,54 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'literal-continuation-exclusion') {
+      const { rules, literal, continuationPattern } = decision;
+      if (!Array.isArray(rules) || !rules.length || rules.some((name) => !Object.hasOwn(grammar.rules, name)) || ![literal, continuationPattern].every((value) => typeof value === 'string' && value)) throw new TypeError('literal boundaries need existing rules and nonempty literal and continuation pattern');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'STRING' && node.value === literal) { changes += 1; return { type: 'NATIVE_LITERAL_BOUNDARY', content: node, continuationPattern }; }
+        return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, rewrite(value)]));
+      };
+      for (const rule of rules) grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (!changes) throw new TypeError('literal boundaries found no selected literal');
+      continue;
+    }
+    if (['field-dynamic-precedence', 'field-present-precedence', 'field-absent-boundary'].includes(decision.family)) {
+      const { rule, field, value, boundary, symbol = null } = decision;
+      const absent = decision.family === 'field-absent-boundary';
+      const present = decision.family === 'field-present-precedence';
+      if (!Object.hasOwn(grammar.rules, rule) || typeof field !== 'string' || !field || (absent ? typeof boundary !== 'string' || !boundary : !Number.isSafeInteger(value) || value <= 0)) throw new TypeError('field preferences need an existing rule, nonempty field and boundary or positive preference');
+      if (symbol !== null && !Object.hasOwn(grammar.rules, symbol)) throw new TypeError('field symbol preferences need an existing symbol');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'FIELD' && node.name === field && (symbol === null || node.content.type === 'SYMBOL' && node.content.name === symbol)) {
+          changes += 1;
+          if ((absent || present) && (node.content.type !== 'CHOICE' || !node.content.members.some((member) => member.type === 'BLANK'))) throw new TypeError('optional field preferences need an optional field');
+          const content = absent ? { type: 'NATIVE_COMPLETE_CONTEXT_VARIANT', preferred: { type: 'PREC_DYNAMIC', value: 1, content: { type: 'BLANK' } }, boundary, content: node.content }
+            : present ? { ...node.content, members: node.content.members.map((member) => member.type === 'BLANK' ? member : { type: 'PREC_DYNAMIC', value, content: member }) }
+              : { type: 'PREC_DYNAMIC', value, content: node.content };
+          return { ...node, content };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, rewrite(value)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('field preferences must select exactly one field');
+      continue;
+    }
+    if (decision.family === 'rule-word-boundary') {
+      const { rules, wordRule, continuationPattern = null } = decision;
+      if (!Array.isArray(rules) || !rules.length || new Set(rules).size !== rules.length || rules.some((name) => !Object.hasOwn(grammar.rules, name)) || grammar.rules[wordRule]?.type !== 'PATTERN') throw new TypeError('word boundaries need distinct existing rules and a word pattern');
+      if (continuationPattern !== null && (typeof continuationPattern !== 'string' || !continuationPattern)) throw new TypeError('word continuations need a nonempty pattern');
+      for (const rule of rules) {
+        if (grammar.rules[rule].type !== 'PATTERN') throw new TypeError('word boundaries apply to pattern tokens');
+        grammar.rules[rule] = { type: 'NATIVE_WORD_BOUNDARY', content: grammar.rules[rule], word: continuationPattern === null ? grammar.rules[wordRule] : { type: 'PATTERN', value: continuationPattern } };
+      }
+      continue;
+    }
     if (decision.family === 'symbol-prefix-exclusion') {
       const { rule, symbol, prefixRule } = decision;
       if (![rule, symbol, prefixRule].every((name) => Object.hasOwn(grammar.rules, name))) throw new TypeError('prefix exclusions need existing target, symbol and prefix rules');
@@ -77,10 +125,12 @@ export function transformNativeSource(source, transformations = []) {
       if (changes !== 1) throw new TypeError('pattern runs must select exactly one pattern');
       continue;
     }
-    if (['complete-context-variant', 'keyword-context-variant'].includes(decision.family)) {
+    if (['complete-context-variant', 'keyword-context-variant', 'pattern-context-variant'].includes(decision.family)) {
       const { rule, symbol = null, field = null, boundary, excludedKeywords = [], includedKeywords = [], wordRule = null } = decision;
-      const keywordOnly = decision.family === 'keyword-context-variant';
-      if (keywordOnly && !includedKeywords.length && !excludedKeywords.length) throw new TypeError('a keyword context variant needs a keyword guard');
+      const patternOnly = decision.family === 'pattern-context-variant';
+      const keywordOnly = decision.family === 'keyword-context-variant' || patternOnly;
+      if (patternOnly && (typeof decision.pattern !== 'string' || !decision.pattern || includedKeywords.length || excludedKeywords.length)) throw new TypeError('a pattern context variant needs a nonempty pattern and no keyword guard');
+      if (keywordOnly && !patternOnly && !includedKeywords.length && !excludedKeywords.length) throw new TypeError('a keyword context variant needs a keyword guard');
       if (!Object.hasOwn(grammar.rules, rule) || (symbol === null) === (field === null) || (symbol !== null && !Object.hasOwn(grammar.rules, symbol)) || (field !== null && (typeof field !== 'string' || !field)) || (!keywordOnly && boundary !== null && (typeof boundary !== 'string' || !boundary))) throw new TypeError('a complete context variant needs an existing rule, a symbol or field selector and a literal or input boundary');
       let choice = grammar.rules[rule];
       while (['PREC', 'PREC_LEFT', 'PREC_RIGHT', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT'].includes(choice.type)) choice = choice.content;
@@ -92,6 +142,7 @@ export function transformNativeSource(source, transformations = []) {
       });
       if (selected.length !== 1) throw new TypeError('a complete context variant must select exactly one existing alternative');
       let preferred = selected[0];
+      if (patternOnly) preferred = { type: 'NATIVE_PATTERN_LOOKAHEAD', content: preferred, pattern: decision.pattern };
       if (excludedKeywords.length) {
         if (!Array.isArray(excludedKeywords) || excludedKeywords.some((word) => typeof word !== 'string' || !word) || !Object.hasOwn(grammar.rules, wordRule)) throw new TypeError('context keyword exclusions need words and an existing word rule');
         preferred = { type: 'NATIVE_KEYWORD_EXCLUSION', content: preferred, keywords: { type: 'CHOICE', members: excludedKeywords.map((value) => ({ type: 'STRING', value })) }, word: grammar.rules[wordRule] };

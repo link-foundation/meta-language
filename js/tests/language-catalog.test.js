@@ -121,7 +121,10 @@ test('grammar provenance names the locked grammar versions and parser digests', 
 test('the catalog ships each native grammar as the text the inventory declares', async () => {
   const ids = inventory.languages.filter(({ nativeGrammar }) => nativeGrammar).map(({ nativeGrammar }) => nativeGrammar);
   assert.deepEqual(Object.keys(LANGUAGE_CATALOG.nativeGrammars), Object.keys(inventory.nativeGrammars));
-  assert.deepEqual([...ids].sort(), Object.keys(inventory.nativeGrammars).sort());
+  const expectedIds = Object.keys(inventory.nativeGrammars).flatMap((id) => id === 'native-sql' ? Array(8).fill(id) : [id]);
+  assert.deepEqual([...ids].sort(), expectedIds.sort());
+  assert.deepEqual(inventory.languages.filter(({ nativeGrammar }) => nativeGrammar === 'native-sql').map(({ name }) => name).sort(),
+    ['sql-ansi', 'sql-postgres', 'sql-mysql', 'sql-sqlite', 'sql-server', 'sql-oracle', 'sql-bigquery', 'sql-snowflake'].sort());
   for (const [id, declared] of Object.entries(inventory.nativeGrammars)) {
     const shipped = LANGUAGE_CATALOG.nativeGrammars[id];
     const text = await readFile(new URL(`../../${declared.grammar}`, import.meta.url), 'utf8');

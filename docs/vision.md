@@ -701,6 +701,11 @@ catalog SQL dialect has its own default-source expectation for the shared
 grammar. Named choice aliases retain a complete boundary and the selected
 production beneath it. Contextual clause exclusions preserve quoted identifiers
 and longer words. A named NULL marker keeps absent-literal recovery visible.
+Pattern-guarded context preferences retain their original fallback choices.
+C++ scoped calls and assignments, dependent type segments and array allocation
+dimensions are reconciled through these grammar rules and field preferences.
+SQL pattern keywords keep named token identities while excluding identifier
+continuations; a complete IS NOT operator retains its own concrete kind.
 Required concept distinctions are shared data in
 `parity/required-concept-distinctions.json`; the record generator emits the
 JavaScript JSON and Rust constant data from the same pairs and reasons. SQL

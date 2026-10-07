@@ -791,6 +791,125 @@
   },
   "sourceTransforms": [
     {
+      "family": "rule-precedence",
+      "rule": "dependent_type_identifier",
+      "associativity": "right",
+      "value": 23,
+      "reason": "A dependent type segment retains its complete nested template arguments before following scope segments are considered as a relational or shift operand."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "new_declarator",
+      "associativity": "right",
+      "value": 18,
+      "reason": "Array dimensions inside a new expression bind to its declarator before a competing subscript expression consumes the same bracket suffix."
+    },
+    {
+      "family": "field-present-precedence",
+      "rule": "new_expression",
+      "field": "arguments",
+      "value": 1,
+      "reason": "Prefer arguments attached to the complete new expression over a call whose function is a shorter new expression, retaining the absent argument branch."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "case_statement"
+      ],
+      "symbol": "_non_case_statement",
+      "value": 1,
+      "reason": "A case owns following non-case statements rather than competing with a shorter case and sibling statement, preserving all repeated statement alternatives."
+    },
+    {
+      "family": "literal-continuation-exclusion",
+      "rules": [
+        "template_argument_list",
+        "binary_expression"
+      ],
+      "literal": ">",
+      "continuationPattern": "=",
+      "reason": "The source lexer reads adjacent greater-than and equals signs as a single comparison operator. A template closing marker cannot split that operator into a template delimiter and an assignment."
+    },
+    {
+      "family": "field-dynamic-precedence",
+      "rule": "sizeof_expression",
+      "field": "value",
+      "symbol": "expression",
+      "value": 1,
+      "reason": "Prefer the parenthesized expression operand of sizeof to an indistinguishable type operand, retaining both complete productions."
+    },
+    {
+      "family": "field-absent-boundary",
+      "rule": "optional_parameter_declaration",
+      "field": "declarator",
+      "boundary": "=",
+      "reason": "When the complete type is immediately followed by a default assignment, prefer the absent declarator over competing splits of a qualified dependent type."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "template_declaration"
+      ],
+      "symbol": "_empty_declaration",
+      "value": 1,
+      "reason": "Prefer the complete standalone type declaration in a template specialization to a duplicate declaration path; retain every alternative and its original concrete kinds."
+    },
+    {
+      "family": "keyword-context-variant",
+      "rule": "_block_item",
+      "symbol": "declaration",
+      "includedKeywords": [
+        "void"
+      ],
+      "wordRule": "identifier",
+      "reason": "Prefer the complete declaration introduced by this type keyword before an overlapping expression or constructor path; retain the original choice as fallback."
+    },
+    {
+      "family": "keyword-context-variant",
+      "rule": "_top_level_item",
+      "symbol": "_empty_declaration",
+      "includedKeywords": [
+        "enum"
+      ],
+      "wordRule": "identifier",
+      "reason": "Prefer the complete declaration introduced by this type keyword before an overlapping expression or constructor path; retain the original choice as fallback."
+    },
+    {
+      "family": "pattern-context-variant",
+      "rule": "_block_item",
+      "symbol": "statement",
+      "pattern": "(::)?([A-Za-z_][A-Za-z0-9_]*::)+([A-Za-z_][A-Za-z0-9_]*[ \\t]*=|template[ \\t]+[A-Za-z_][A-Za-z0-9_]*<[^;{}]+>[ \\t]*\\()",
+      "reason": "Prefer complete scoped assignments and dependent template calls over a declaration that splits the scope prefix into a type and declarator, retaining the original choice as fallback."
+    },
+    {
+      "family": "pattern-context-variant",
+      "rule": "_top_level_item",
+      "symbol": "_top_level_statement",
+      "pattern": "(::)?([A-Za-z_][A-Za-z0-9_]*::)+([A-Za-z_][A-Za-z0-9_]*[ \\t]*=|template[ \\t]+[A-Za-z_][A-Za-z0-9_]*<[^;{}]+>[ \\t]*\\()",
+      "reason": "Prefer complete scoped assignments and dependent template calls over a declaration that splits the scope prefix into a type and declarator, retaining the original choice as fallback."
+    },
+    {
+      "family": "pattern-context-variant",
+      "rule": "_block_item",
+      "symbol": "statement",
+      "pattern": "[A-Za-z_][A-Za-z0-9_]*[ \\t]*\\*[ \\t]*[A-Za-z_][A-Za-z0-9_]*[ \\t]*\\([ \\t]*[0-9]",
+      "reason": "A multiplied call with an initial numeric argument is an expression statement; retain pointer declarations with typed parameter lists and the original choice as fallback."
+    },
+    {
+      "family": "pattern-context-variant",
+      "rule": "_block_item",
+      "symbol": "statement",
+      "pattern": "(::)?([A-Za-z_][A-Za-z0-9_]*::)+[A-Za-z_][A-Za-z0-9_]*[ \t]*\\(",
+      "reason": "Prefer a complete scoped expression statement before a declaration that splits its namespace into a type and a globally scoped declarator. Retain the original choice as fallback, including qualified type declarations and unqualified declarations."
+    },
+    {
+      "family": "pattern-context-variant",
+      "rule": "_top_level_item",
+      "symbol": "_top_level_statement",
+      "pattern": "(::)?([A-Za-z_][A-Za-z0-9_]*::)+[A-Za-z_][A-Za-z0-9_]*[ \t]*\\(",
+      "reason": "Prefer a complete scoped expression statement before a declaration that splits its namespace into a type and a globally scoped declarator. Retain the original choice as fallback, including qualified type declarations and unqualified declarations."
+    },
+    {
       "family": "symbol-prefix-exclusion",
       "rule": "concatenated_string",
       "symbol": "identifier",

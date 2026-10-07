@@ -2506,7 +2506,7 @@
       "grammars": {
         "native-cpp": {
           "version": "1.0.0",
-          "parserSha256": "bb9db1efbd6b7c78a0686db45ec0361a2d2d5d385119cb4780c63cd6390accef"
+          "parserSha256": "5de15d0e5da40252c3cbb181fe75d401311465249890b771989b2af9b11373cb"
         }
       },
       "oracleGrammars": {
@@ -2621,7 +2621,7 @@
       "grammars": {
         "native-sql": {
           "version": "1.0.0",
-          "parserSha256": "da2b45a85ea1f9e4ed72f276eeca42eb36665c272db727660a636f51fb6ae664"
+          "parserSha256": "576a89f9c3aee092494cf16eb60dfef0a18dbec260f9965a40ab2969f497292a"
         }
       },
       "oracleGrammars": {
@@ -2711,7 +2711,7 @@
       "grammars": {
         "native-sql": {
           "version": "1.0.0",
-          "parserSha256": "da2b45a85ea1f9e4ed72f276eeca42eb36665c272db727660a636f51fb6ae664"
+          "parserSha256": "576a89f9c3aee092494cf16eb60dfef0a18dbec260f9965a40ab2969f497292a"
         }
       },
       "oracleGrammars": {
@@ -2802,7 +2802,7 @@
       "grammars": {
         "native-sql": {
           "version": "1.0.0",
-          "parserSha256": "da2b45a85ea1f9e4ed72f276eeca42eb36665c272db727660a636f51fb6ae664"
+          "parserSha256": "576a89f9c3aee092494cf16eb60dfef0a18dbec260f9965a40ab2969f497292a"
         }
       },
       "oracleGrammars": {
@@ -2899,7 +2899,7 @@
       "grammars": {
         "native-sql": {
           "version": "1.0.0",
-          "parserSha256": "da2b45a85ea1f9e4ed72f276eeca42eb36665c272db727660a636f51fb6ae664"
+          "parserSha256": "576a89f9c3aee092494cf16eb60dfef0a18dbec260f9965a40ab2969f497292a"
         }
       },
       "oracleGrammars": {
@@ -2988,7 +2988,7 @@
       "grammars": {
         "native-sql": {
           "version": "1.0.0",
-          "parserSha256": "da2b45a85ea1f9e4ed72f276eeca42eb36665c272db727660a636f51fb6ae664"
+          "parserSha256": "576a89f9c3aee092494cf16eb60dfef0a18dbec260f9965a40ab2969f497292a"
         }
       },
       "oracleGrammars": {
@@ -3087,7 +3087,7 @@
       "grammars": {
         "native-sql": {
           "version": "1.0.0",
-          "parserSha256": "da2b45a85ea1f9e4ed72f276eeca42eb36665c272db727660a636f51fb6ae664"
+          "parserSha256": "576a89f9c3aee092494cf16eb60dfef0a18dbec260f9965a40ab2969f497292a"
         }
       },
       "oracleGrammars": {
@@ -3161,7 +3161,7 @@
       "grammars": {
         "native-sql": {
           "version": "1.0.0",
-          "parserSha256": "da2b45a85ea1f9e4ed72f276eeca42eb36665c272db727660a636f51fb6ae664"
+          "parserSha256": "576a89f9c3aee092494cf16eb60dfef0a18dbec260f9965a40ab2969f497292a"
         }
       },
       "oracleGrammars": {
@@ -3243,7 +3243,7 @@
       "grammars": {
         "native-sql": {
           "version": "1.0.0",
-          "parserSha256": "da2b45a85ea1f9e4ed72f276eeca42eb36665c272db727660a636f51fb6ae664"
+          "parserSha256": "576a89f9c3aee092494cf16eb60dfef0a18dbec260f9965a40ab2969f497292a"
         }
       },
       "oracleGrammars": {
@@ -3795,6 +3795,150 @@
         }
       ]
     },
+    "HTML -> CSS": {
+      "positive": {
+        "sourceSha256": "a5c4e0055546af01eb90207c552e511758078d6ce0c213e7d0e0a6b4e2f862c0",
+        "embedded": [
+          {
+            "path": "HTML style element",
+            "language": "CSS",
+            "startByte": 7,
+            "endByte": 32,
+            "rows": [
+              [0,null,"stylesheet",1,0,25,""],
+              [1,null,"rule_set",1,0,25,""],
+              [2,null,"selectors",1,0,7,""],
+              [3,null,"class_selector",1,0,7,""],
+              [4,null,".",0,0,1,""],
+              [4,null,"class_name",1,1,7,""],
+              [5,null,"identifier",1,1,7,""],
+              [2,null,"block",1,8,25,""],
+              [3,null,"{",0,8,9,""],
+              [3,null,"declaration",1,10,23,""],
+              [4,null,"property_name",1,10,15,""],
+              [4,null,":",0,15,16,""],
+              [4,null,"plain_value",1,17,22,""],
+              [4,null,";",0,22,23,""],
+              [3,null,"}",0,24,25,""]
+            ]
+          }
+        ]
+      },
+      "recovery": {
+        "sourceSha256": "22e2926a22278c91600d14dbdc69b77ebbec2a11a513fd2622894d3f97f89e24",
+        "embedded": [
+          {
+            "path": "HTML style element",
+            "language": "CSS",
+            "startByte": 7,
+            "endByte": 31,
+            "rows": [
+              [0,null,"stylesheet",1,0,24,""],
+              [1,null,"rule_set",1,0,23,""],
+              [2,null,"selectors",1,0,7,""],
+              [3,null,"class_selector",1,0,7,""],
+              [4,null,".",0,0,1,""],
+              [4,null,"class_name",1,1,7,""],
+              [5,null,"identifier",1,1,7,""],
+              [2,null,"block",1,8,23,""],
+              [3,null,"{",0,8,9,""],
+              [3,null,"declaration",1,10,23,""],
+              [4,null,"property_name",1,10,15,""],
+              [4,null,":",0,15,16,""],
+              [4,null,"plain_value",1,17,22,""],
+              [4,null,";",0,22,23,""],
+              [3,null,"}",0,23,23,"M"]
+            ]
+          }
+        ]
+      },
+      "spellings": [
+        {
+          "sourceSha256": "310dbd9e2f6eef4fafed91cfbcdffe7bebe896ff9b919d164a7de2a622dd2d59",
+          "embedded": [
+            {
+              "path": "HTML style element",
+              "language": "CSS",
+              "startByte": 23,
+              "endByte": 48,
+              "rows": [
+                [0,null,"stylesheet",1,0,25,""],
+                [1,null,"rule_set",1,0,25,""],
+                [2,null,"selectors",1,0,7,""],
+                [3,null,"class_selector",1,0,7,""],
+                [4,null,".",0,0,1,""],
+                [4,null,"class_name",1,1,7,""],
+                [5,null,"identifier",1,1,7,""],
+                [2,null,"block",1,8,25,""],
+                [3,null,"{",0,8,9,""],
+                [3,null,"declaration",1,10,23,""],
+                [4,null,"property_name",1,10,15,""],
+                [4,null,":",0,15,16,""],
+                [4,null,"plain_value",1,17,22,""],
+                [4,null,";",0,22,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "809e795b5c105385ddf059cb435a1c408b65dd0c90106c0ff05db075c43802a3",
+          "embedded": [
+            {
+              "path": "HTML style element",
+              "language": "CSS",
+              "startByte": 38,
+              "endByte": 63,
+              "rows": [
+                [0,null,"stylesheet",1,0,25,""],
+                [1,null,"rule_set",1,0,25,""],
+                [2,null,"selectors",1,0,7,""],
+                [3,null,"class_selector",1,0,7,""],
+                [4,null,".",0,0,1,""],
+                [4,null,"class_name",1,1,7,""],
+                [5,null,"identifier",1,1,7,""],
+                [2,null,"block",1,8,25,""],
+                [3,null,"{",0,8,9,""],
+                [3,null,"declaration",1,10,23,""],
+                [4,null,"property_name",1,10,15,""],
+                [4,null,":",0,15,16,""],
+                [4,null,"plain_value",1,17,22,""],
+                [4,null,";",0,22,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "76a354b2bafc36c4542947f5aa188a6ffb000061eac6b0b97ad0618ee0448325",
+          "embedded": [
+            {
+              "path": "HTML style element",
+              "language": "CSS",
+              "startByte": 7,
+              "endByte": 32,
+              "rows": [
+                [0,null,"stylesheet",1,0,25,""],
+                [1,null,"rule_set",1,0,25,""],
+                [2,null,"selectors",1,0,7,""],
+                [3,null,"class_selector",1,0,7,""],
+                [4,null,".",0,0,1,""],
+                [4,null,"class_name",1,1,7,""],
+                [5,null,"identifier",1,1,7,""],
+                [2,null,"block",1,8,25,""],
+                [3,null,"{",0,8,9,""],
+                [3,null,"declaration",1,10,23,""],
+                [4,null,"property_name",1,10,15,""],
+                [4,null,":",0,15,16,""],
+                [4,null,"plain_value",1,17,22,""],
+                [4,null,";",0,22,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        }
+      ]
+    },
     "Markdown -> language-selected fenced code": {
       "positive": {
         "sourceSha256": "2cff7e24e8865307acf3a0197053b5e60212285242394b87703973e94031fdf8",
@@ -3948,150 +4092,6 @@
                 [2,"body","block",1,19,25,""],
                 [3,null,"{",0,19,20,""],
                 [3,null,"integer_literal",1,21,23,""],
-                [3,null,"}",0,24,25,""]
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "HTML -> CSS": {
-      "positive": {
-        "sourceSha256": "a5c4e0055546af01eb90207c552e511758078d6ce0c213e7d0e0a6b4e2f862c0",
-        "embedded": [
-          {
-            "path": "HTML style element",
-            "language": "CSS",
-            "startByte": 7,
-            "endByte": 32,
-            "rows": [
-              [0,null,"stylesheet",1,0,25,""],
-              [1,null,"rule_set",1,0,25,""],
-              [2,null,"selectors",1,0,7,""],
-              [3,null,"class_selector",1,0,7,""],
-              [4,null,".",0,0,1,""],
-              [4,null,"class_name",1,1,7,""],
-              [5,null,"identifier",1,1,7,""],
-              [2,null,"block",1,8,25,""],
-              [3,null,"{",0,8,9,""],
-              [3,null,"declaration",1,10,23,""],
-              [4,null,"property_name",1,10,15,""],
-              [4,null,":",0,15,16,""],
-              [4,null,"plain_value",1,17,22,""],
-              [4,null,";",0,22,23,""],
-              [3,null,"}",0,24,25,""]
-            ]
-          }
-        ]
-      },
-      "recovery": {
-        "sourceSha256": "22e2926a22278c91600d14dbdc69b77ebbec2a11a513fd2622894d3f97f89e24",
-        "embedded": [
-          {
-            "path": "HTML style element",
-            "language": "CSS",
-            "startByte": 7,
-            "endByte": 31,
-            "rows": [
-              [0,null,"stylesheet",1,0,24,""],
-              [1,null,"rule_set",1,0,23,""],
-              [2,null,"selectors",1,0,7,""],
-              [3,null,"class_selector",1,0,7,""],
-              [4,null,".",0,0,1,""],
-              [4,null,"class_name",1,1,7,""],
-              [5,null,"identifier",1,1,7,""],
-              [2,null,"block",1,8,23,""],
-              [3,null,"{",0,8,9,""],
-              [3,null,"declaration",1,10,23,""],
-              [4,null,"property_name",1,10,15,""],
-              [4,null,":",0,15,16,""],
-              [4,null,"plain_value",1,17,22,""],
-              [4,null,";",0,22,23,""],
-              [3,null,"}",0,23,23,"M"]
-            ]
-          }
-        ]
-      },
-      "spellings": [
-        {
-          "sourceSha256": "310dbd9e2f6eef4fafed91cfbcdffe7bebe896ff9b919d164a7de2a622dd2d59",
-          "embedded": [
-            {
-              "path": "HTML style element",
-              "language": "CSS",
-              "startByte": 23,
-              "endByte": 48,
-              "rows": [
-                [0,null,"stylesheet",1,0,25,""],
-                [1,null,"rule_set",1,0,25,""],
-                [2,null,"selectors",1,0,7,""],
-                [3,null,"class_selector",1,0,7,""],
-                [4,null,".",0,0,1,""],
-                [4,null,"class_name",1,1,7,""],
-                [5,null,"identifier",1,1,7,""],
-                [2,null,"block",1,8,25,""],
-                [3,null,"{",0,8,9,""],
-                [3,null,"declaration",1,10,23,""],
-                [4,null,"property_name",1,10,15,""],
-                [4,null,":",0,15,16,""],
-                [4,null,"plain_value",1,17,22,""],
-                [4,null,";",0,22,23,""],
-                [3,null,"}",0,24,25,""]
-              ]
-            }
-          ]
-        },
-        {
-          "sourceSha256": "809e795b5c105385ddf059cb435a1c408b65dd0c90106c0ff05db075c43802a3",
-          "embedded": [
-            {
-              "path": "HTML style element",
-              "language": "CSS",
-              "startByte": 38,
-              "endByte": 63,
-              "rows": [
-                [0,null,"stylesheet",1,0,25,""],
-                [1,null,"rule_set",1,0,25,""],
-                [2,null,"selectors",1,0,7,""],
-                [3,null,"class_selector",1,0,7,""],
-                [4,null,".",0,0,1,""],
-                [4,null,"class_name",1,1,7,""],
-                [5,null,"identifier",1,1,7,""],
-                [2,null,"block",1,8,25,""],
-                [3,null,"{",0,8,9,""],
-                [3,null,"declaration",1,10,23,""],
-                [4,null,"property_name",1,10,15,""],
-                [4,null,":",0,15,16,""],
-                [4,null,"plain_value",1,17,22,""],
-                [4,null,";",0,22,23,""],
-                [3,null,"}",0,24,25,""]
-              ]
-            }
-          ]
-        },
-        {
-          "sourceSha256": "76a354b2bafc36c4542947f5aa188a6ffb000061eac6b0b97ad0618ee0448325",
-          "embedded": [
-            {
-              "path": "HTML style element",
-              "language": "CSS",
-              "startByte": 7,
-              "endByte": 32,
-              "rows": [
-                [0,null,"stylesheet",1,0,25,""],
-                [1,null,"rule_set",1,0,25,""],
-                [2,null,"selectors",1,0,7,""],
-                [3,null,"class_selector",1,0,7,""],
-                [4,null,".",0,0,1,""],
-                [4,null,"class_name",1,1,7,""],
-                [5,null,"identifier",1,1,7,""],
-                [2,null,"block",1,8,25,""],
-                [3,null,"{",0,8,9,""],
-                [3,null,"declaration",1,10,23,""],
-                [4,null,"property_name",1,10,15,""],
-                [4,null,":",0,15,16,""],
-                [4,null,"plain_value",1,17,22,""],
-                [4,null,";",0,22,23,""],
                 [3,null,"}",0,24,25,""]
               ]
             }

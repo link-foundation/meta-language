@@ -326,7 +326,7 @@ export function renderTreeSitterPattern(node) {
 // ---------------------------------------------------------------- grammar
 
 const unwrapPrecedence = (node) => (node.type.startsWith('PREC') ? unwrapPrecedence(node.content) : node);
-const isLexicalBody = (node) => ['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(unwrapPrecedence(node).type);
+const isLexicalBody = (node) => ['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN', 'NATIVE_WORD_BOUNDARY'].includes(unwrapPrecedence(node).type);
 const memberName = (member) => member.name ?? member.value ?? member;
 
 // The finite set of texts a lexical expression matches, or null when it is
@@ -366,7 +366,7 @@ function finiteTexts(node, limit = 64) {
 function lexicalUnits(node, out) {
   if (!node || typeof node !== 'object') return out;
   // Context guards and preferred copies introduce no source lexer tokens.
-  if (['NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return lexicalUnits(node.content, out);
+  if (['NATIVE_LITERAL_BOUNDARY', 'NATIVE_WORD_BOUNDARY', 'NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return lexicalUnits(node.content, out);
   if (node.type === 'STRING' || node.type === 'TOKEN' || node.type === 'IMMEDIATE_TOKEN') {
     out.push(node);
     return out;
@@ -385,6 +385,7 @@ const isMetadata = (node) => node.type.startsWith('PREC') || node.type === 'FIEL
 // (precedences, fields, aliases) merged into it around or inside, so that a
 // token of nothing but a string is that string.
 function tokenKey(node, around = []) {
+  if (['NATIVE_WORD_BOUNDARY', 'NATIVE_LITERAL_BOUNDARY'].includes(node.type)) return tokenKey(node.content, around);
   if (node.type === 'STRING' || node.type === 'PATTERN') return JSON.stringify(node);
   const merged = around.map(({ content, ...metadata }) => metadata);
   let content = node.content;
@@ -406,7 +407,7 @@ function countTokens(node, counts, around = []) {
     node.forEach((item) => countTokens(item, counts));
     return counts;
   }
-  if (['NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return countTokens(node.content, counts, around);
+  if (['NATIVE_LITERAL_BOUNDARY', 'NATIVE_WORD_BOUNDARY', 'NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return countTokens(node.content, counts, around);
   const add = (key) => counts.set(key, (counts.get(key) ?? 0) + 1);
   if (node.type === 'STRING' || node.type === 'PATTERN') add(tokenKey(node));
   else if (node.type === 'TOKEN' || node.type === 'IMMEDIATE_TOKEN') add(tokenKey(node, around));
@@ -502,6 +503,14 @@ export function importTreeSitterNative(source, options = {}) {
         if (!inToken && keywords.has(node.value)) return `(token (seq (literal ${enc(node.value)}) (not (ref ${wordRule}))))`;
         return `(literal ${enc(node.value)})`;
       case 'NATIVE_END_BOUNDARY': return `(choice unordered ${expr(node.content, inToken, keywords, aliased)} (token (not any)))`;
+      case 'NATIVE_WORD_BOUNDARY': {
+        const body = `(seq ${expr(node.content, true, keywords, aliased)} (not ${expr(node.word, true, keywords, aliased)}))`;
+        return inToken ? body : unnamed(`(token ${body})`, aliased);
+      }
+      case 'NATIVE_LITERAL_BOUNDARY': {
+        const body = `(seq ${expr(node.content, true, keywords, aliased)} (not ${renderTreeSitterPattern(parseTreeSitterPattern(node.continuationPattern))}))`;
+        return inToken ? body : `(token ${body})`;
+      }
       case 'NATIVE_PREFIX_EXCLUSION': return `(seq (not (token ${expr(node.prefixes, true, keywords)})) ${expr(node.content, inToken, keywords, aliased)})`;
       case 'NATIVE_KEYWORD_CONTEXT_VARIANT': return `(choice ordered ${expr(node.preferred, inToken, keywords, aliased)} ${expr(node.content, inToken, keywords, aliased)})`;
       case 'NATIVE_PATTERN_LOOKAHEAD': return `(seq (and (token ${renderTreeSitterPattern(parseTreeSitterPattern(node.pattern))})) ${expr(node.content, inToken, keywords, aliased)})`;
@@ -615,7 +624,7 @@ export function importTreeSitterNative(source, options = {}) {
       around.push(node);
       node = node.content;
     }
-    if (!['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(node.type)) return false;
+    if (!['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN', 'NATIVE_WORD_BOUNDARY'].includes(node.type)) return false;
     if ((node.type === 'STRING' || node.type === 'PATTERN') && around.length > 0) return false;
     const key = tokenKey(node, around);
     if (usage.get(key) !== 1) return false;

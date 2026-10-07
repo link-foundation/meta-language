@@ -465,6 +465,58 @@ test('context keyword guards do not duplicate the source word token or its lexer
   }
 });
 
+test('pattern context preferences retain the complete original fallback choice', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'context_patterns', rules: {
+    document: { type: 'CHOICE', members: [symbol('first'), symbol('second')] },
+    first: { type: 'CHOICE', members: [{ type: 'STRING', value: 'ab' }, { type: 'STRING', value: 'xy' }, { type: 'STRING', value: 'z' }] },
+    second: { type: 'CHOICE', members: [{ type: 'STRING', value: 'ab' }, { type: 'STRING', value: 'xy' }, { type: 'STRING', value: 'q' }] },
+  } };
+  const decision = { family: 'pattern-context-variant', rule: 'document', symbol: 'second', pattern: 'a' };
+  const transformed = transformNativeSource(source, [decision]);
+  assert.deepEqual(transformed.rules.document.content, source.rules.document);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  assert.equal(parser.parseTree('ab').tree.children[0].kind, 'second');
+  assert.equal(parser.parseTree('xy').tree.children[0].kind, 'first');
+  for (const text of ['z', 'q']) assert.equal(parser.parseTree(text).ok, true);
+  assert.equal(parser.parseTree('!').ok, false);
+  for (const change of [{ pattern: '' }, { pattern: null }, { symbol: 'absent' }, { includedKeywords: ['a'] }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('pattern word boundaries retain named tokens and reject longer identifier prefixes', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'keyword_boundaries', word: 'identifier', extras: [{ type: 'PATTERN', value: '\\s+' }], rules: {
+    document: { type: 'SEQ', members: [symbol('select_keyword'), symbol('identifier')] },
+    select_keyword: { type: 'PATTERN', value: '[sS][eE][lL][eE][cC][tT]' },
+    identifier: { type: 'PATTERN', value: '[a-zA-Z_é][a-zA-Z0-9_é]*' },
+  } };
+  const decision = { family: 'rule-word-boundary', rules: ['select_keyword'], wordRule: 'identifier', continuationPattern: '[a-zA-Z0-9_é]' };
+  const transformed = transformNativeSource(source, [decision]);
+  const imported = importTreeSitterNative(transformed);
+  assert.equal(imported.rules.find(({ name }) => name === 'select_keyword').kind, 'token');
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported)));
+  for (const text of ['SELECT name', 'select é']) {
+    const outcome = parser.parseTree(text);
+    assert.equal(outcome.ok, true);
+    assert.equal(outcome.tree.children[0].kind, 'select_keyword');
+    assert.equal(outcome.tree.children[0].type, 'token');
+  }
+  for (const text of ['SELECTname', 'SELECT1', 'SELECT_', 'SELECTé']) assert.equal(parser.parseTree(text).ok, false);
+  for (const change of [{ rules: ['absent'] }, { rules: ['select_keyword', 'select_keyword'] }, { continuationPattern: '' }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('literal continuations preserve operator rows and avoid splitting a longer token', () => {
+  const source = { name: 'operator_boundaries', extras: [{ type: 'PATTERN', value: '\\s+' }], rules: {
+    document: { type: 'SEQ', members: [{ type: 'STRING', value: '<' }, { type: 'STRING', value: 'x' }, { type: 'STRING', value: '>' }, { type: 'STRING', value: '=' }, { type: 'STRING', value: 'y' }] },
+  } };
+  const transformed = transformNativeSource(source, [{ family: 'literal-continuation-exclusion', rules: ['document'], literal: '>', continuationPattern: '=' }]);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  assert.equal(parser.parseTree('<x>=y').ok, false);
+  const outcome = parser.parseTree('<x> =y');
+  assert.equal(outcome.ok, true);
+  assert.equal(outcome.tree.children.find(({ text }) => text === '>').text, '>');
+});
+
 test('field ordering and contextual literals preserve every original field production', () => {
   const symbol = (name) => ({ type: 'SYMBOL', name });
   const source = { name: 'fields', rules: {
