@@ -817,6 +817,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
+        with:
+          # JavaScript self-translation acceptance checks the emitted Rust.
+          components: clippy
 
       - name: Setup Lean
         env:

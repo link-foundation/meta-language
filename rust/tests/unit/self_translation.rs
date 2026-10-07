@@ -549,7 +549,10 @@ fn the_rust_suite_checks_the_published_per_module_difference_report() {
     let markdown = fs::read_to_string(directory.join("self-translation-report.md"))
         .expect("the Markdown report is published");
     for name in names {
-        assert!(markdown.contains(&format!("| {name} |")), "{name} has a report row");
+        assert!(
+            markdown.contains(&format!("| {name} |")),
+            "{name} has a report row"
+        );
     }
     fs::remove_dir_all(&directory).ok();
     observe(

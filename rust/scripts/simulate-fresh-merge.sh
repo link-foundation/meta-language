@@ -48,6 +48,10 @@ echo "Merge succeeded. Running checks on the merged tree..."
 # This repository is a Rust/JavaScript monorepo. Cargo commands must run from
 # the Rust package rather than the repository root.
 REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "${REPO_ROOT}/js"
+# Rust's shared self-translation report executes the JavaScript runtime.
+# Install from the simulated merge's lockfile before running its checks.
+npm ci --ignore-scripts
 cd "${REPO_ROOT}/rust"
 
 status=0

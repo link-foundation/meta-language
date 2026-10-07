@@ -188,6 +188,11 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Setup Node.js for shared JavaScript reports
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
       - name: Cache cargo registry
         uses: actions/cache@v6
         with:
@@ -507,6 +512,12 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install shared JavaScript test dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
 
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
@@ -660,6 +671,17 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools-preview
+
+      - name: Setup Node.js for shared JavaScript reports
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install shared JavaScript test dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
 
       - name: Cache cargo registry
         uses: actions/cache@v6

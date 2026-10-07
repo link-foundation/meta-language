@@ -122,6 +122,35 @@ test('cargo fmt, cargo clippy and cargo doc are separate steps of the lint job',
   observe('I195-CI-REPORT-EVERY-FAILURE', ['lintStepsIndependent'], 'cargo fmt, clippy and doc run in separate steps');
 });
 
+test('Rust test jobs install the JavaScript dependencies used by the shared reports', () => {
+  const rust = jobs('rust.yml');
+  for (const id of ['test', 'coverage', 'fresh-merge']) {
+    const job = rust.get(id);
+    const setup = job.steps.findIndex((step) => /actions\/setup-node@/u.test(step.text));
+    assert.ok(setup >= 0, `${id} sets up Node.js`);
+    const install = job.steps.findIndex((step) => /\bnpm ci\b/u.test(step.run));
+    if (id === 'fresh-merge') {
+      const script = read('rust/scripts/simulate-fresh-merge.sh');
+      assert.match(script, /npm ci --ignore-scripts/u);
+      assert.ok(script.indexOf('npm ci --ignore-scripts') < script.indexOf('cargo fmt --all'), 'the merged tree installs before checks');
+    } else {
+      assert.ok(install > setup, `${id} installs JavaScript dependencies after Node.js setup`);
+      assert.match(job.steps[install].text, /working-directory: js/u);
+      const run = job.steps.findIndex((step) => /cargo (?:test|llvm-cov)/u.test(step.run));
+      assert.ok(run > install, `${id} installs before executing Rust tests`);
+    }
+  }
+});
+
+test('both self-translation acceptance suites install Clippy for the generated Rust', () => {
+  const acceptance = jobs('ci.yml');
+  for (const id of ['javascript-suite', 'rust-suite']) {
+    const setup = acceptance.get(id).steps.find((step) => /dtolnay\/rust-toolchain@/u.test(step.text));
+    assert.ok(setup, `${id} sets up Rust`);
+    assert.match(setup.text, /components:.*\bclippy\b/u, `${id} installs clippy-driver`);
+  }
+});
+
 test('the acceptance workflow runs each Rust stage only after the matching JavaScript stage passes', () => {
   const acceptance = jobs('ci.yml');
   for (const [rust, javascript] of [['native-rust', 'native-javascript'], ['rust-suite', 'javascript-suite']]) {
