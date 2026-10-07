@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -136,6 +136,31 @@ test('the JavaScript side of every case computes the shared results', async () =
     assert.equal(String(loaded[call.javascript](...call.arguments.map(value))), call.result, `${call.case} ${call.javascript}`);
   }
   observe('I195-SELF-TRANSLATION-ROUND-TRIP', ['crossLanguageBehaviorPreserved'], 'the JavaScript side of every case computes the shared results');
+});
+
+test('the JavaScript acceptance stage compiles every generated Rust case with clippy', () => {
+  // The ordinary JavaScript test job intentionally needs only Node. The issue-195
+  // evidence stage installs the pinned Rust toolchain and sets this path; only
+  // that executed acceptance stage is allowed to record generatedRustCompiles.
+  if (!process.env.ISSUE_195_OBSERVATION_FILE) return;
+  const directory = mkdtempSync(path.join(tmpdir(), 'self-translation-rust-'));
+  try {
+    const rustCases = cases.filter(({ to }) => to === 'Rust');
+    assert.ok(rustCases.length > 0, 'the shared corpus includes JavaScript/TypeScript -> Rust cases');
+    for (const entry of rustCases) {
+      const translation = selfTranslate(read(entry.source), entry.from, entry.to, { decorators: decoratorsOf.get(entry.id) });
+      const source = path.join(directory, `${entry.id}.rs`);
+      const metadata = path.join(directory, `${entry.id}.rmeta`);
+      writeFileSync(source, translation.code);
+      execFileSync('clippy-driver', [
+        '--edition', '2024', '--crate-type', 'lib', '--emit', 'metadata', '-D', 'warnings', '-o', metadata, source,
+      ], { stdio: 'pipe' });
+      assert.ok(readFileSync(metadata).length > 0, `${entry.id} emitted Rust metadata`);
+    }
+    observe('I195-SELF-TRANSLATION-TOOL', ['generatedRustCompiles'], 'the JavaScript acceptance stage compiles every generated Rust case with clippy');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test('the translate command prints the translation and its items', () => {

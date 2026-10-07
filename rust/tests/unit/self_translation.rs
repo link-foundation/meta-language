@@ -506,6 +506,60 @@ fn the_rust_side_of_every_case_computes_the_shared_results() {
 }
 
 #[test]
+fn the_rust_suite_checks_the_published_per_module_difference_report() {
+    let directory = std::env::temp_dir().join(format!(
+        "meta-language-self-translation-report-{}",
+        std::process::id()
+    ));
+    fs::create_dir_all(&directory).expect("report scratch directory");
+    let script = root().join("js/scripts/generate-self-translation-report.mjs");
+    let output = Command::new("node")
+        .arg(script)
+        .args(["--out-dir"])
+        .arg(&directory)
+        .args(["--modules", "language-support.js"])
+        .output()
+        .expect("the report generator runs");
+    assert!(
+        output.status.success(),
+        "the report generator succeeds:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let report: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(directory.join("self-translation-report.json"))
+            .expect("the JSON report is published"),
+    )
+    .expect("the JSON report parses");
+    assert_eq!(report["failures"], serde_json::json!([]));
+    let modules = report["modules"]
+        .as_array()
+        .expect("the report contains per-module rows");
+    assert_eq!(modules.len(), 1);
+    let names: Vec<&str> = modules
+        .iter()
+        .map(|row| row["module"].as_str().expect("module name"))
+        .collect();
+    assert_eq!(names, ["js/src/language-support.js"]);
+    for row in modules {
+        assert!(row["items"]["translated"].as_u64().unwrap_or(0) > 0);
+        assert!(row["handWrittenLines"].as_u64().unwrap_or(0) > 0);
+        assert!(row["sharedLines"].as_u64().is_some());
+        assert!(row["decorated"]["sharedLines"].as_u64().is_some());
+    }
+    let markdown = fs::read_to_string(directory.join("self-translation-report.md"))
+        .expect("the Markdown report is published");
+    for name in names {
+        assert!(markdown.contains(&format!("| {name} |")), "{name} has a report row");
+    }
+    fs::remove_dir_all(&directory).ok();
+    observe(
+        "I195-SELF-TRANSLATION-SHARED-CORPUS",
+        &["differencePerModulePublished"],
+        "the_rust_suite_checks_the_published_per_module_difference_report",
+    );
+}
+
+#[test]
 fn the_translate_command_prints_the_translation_and_its_items() {
     let (cases, _) = corpus();
     let case = cases
