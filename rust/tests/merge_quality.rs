@@ -111,6 +111,21 @@ macro_rules! native {
 fn natives() -> Vec<Native> {
     vec![
         native!(
+            "native-dart",
+            "dart",
+            Some(|| tree_sitter_dart::LANGUAGE.into())
+        ),
+        native!(
+            "native-nix",
+            "nix",
+            Some(|| tree_sitter_nix::LANGUAGE.into())
+        ),
+        native!(
+            "native-cmake",
+            "cmake",
+            Some(|| cmake_source_oracle::LANGUAGE.into())
+        ),
+        native!(
             "native-cpp",
             "cpp",
             Some(|| tree_sitter_cpp::LANGUAGE.into())

@@ -183,3 +183,9 @@ mod issue_195_grammar_native_sql;
 mod issue_195_grammar_native_powershell;
 
 mod issue_195_grammar_native_erlang;
+
+mod issue_195_grammar_native_dart;
+
+mod issue_195_grammar_native_nix;
+
+mod issue_195_grammar_native_cmake;

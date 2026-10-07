@@ -32,6 +32,15 @@ const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/
 
 export const VISION_REQUIREMENTS = Object.freeze([
   {
+    id: 'I195-GRAMMAR-SCANNER-FRAGMENTS', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-fragments.json',
+    construct: 'fragment prefix pairing, marker and lexical context policies',
+    expectedBehavior: 'Shared grammar data consumes paired fragment prefixes with exact parity, requires a marker when configured, classifies nested delimiters through non-consuming opening context and rejects invalid content. Lexical external rules preserve following context without consuming it. Counted content supports explicit whitespace and end policies. Both executors match the shared concrete trees and preserve every input byte.',
+    assertions: ['pairedFragmentPrefixes', 'requiredFragmentMarker', 'delimiterOpeningLookahead', 'lexicalTokenContext', 'countedContentPolicies'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-SCANNER-REMEMBERED-CONTENT', area: 'native-grammar', specification: 'grammar-feature-union',
     fixture: 'parity/fixtures/scanner-remembered-content.json',
     construct: 'whole tagged literals and grammar surrounded remembered content',
@@ -57,6 +66,33 @@ export const VISION_REQUIREMENTS = Object.freeze([
     assertions: ['lookaheadBoundaries', 'contextTokens', 'lineCountedDelimiters'],
     javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
     rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-DART', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/dart.json',
+    construct: 'generated native Dart grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Dart grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Dart parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeDartGrammarIsCanonicalLinks', 'nativeDartTreesMatchOracle', 'nativeDartTreesLossless', 'nativeDartRejectsInvalidInput', 'nativeDartUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-dart.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_dart.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-NIX', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/nix.json',
+    construct: 'generated native Nix grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Nix grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Nix parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeNixGrammarIsCanonicalLinks', 'nativeNixTreesMatchOracle', 'nativeNixTreesLossless', 'nativeNixRejectsInvalidInput', 'nativeNixUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-nix.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_nix.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-CMAKE', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/cmake.json',
+    construct: 'generated native CMake grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native CMake grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary CMake parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeCmakeGrammarIsCanonicalLinks', 'nativeCmakeTreesMatchOracle', 'nativeCmakeTreesLossless', 'nativeCmakeRejectsInvalidInput', 'nativeCmakeUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-cmake.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_cmake.rs'],
   },
   {
     id: 'I195-GRAMMAR-NATIVE-CPP', area: 'native-grammar', specification: 'native-merged-grammars',

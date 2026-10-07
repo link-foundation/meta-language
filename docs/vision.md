@@ -706,6 +706,19 @@ C++ scoped calls and assignments, dependent type segments and array allocation
 dimensions are reconciled through these grammar rules and field preferences.
 SQL pattern keywords keep named token identities while excluding identifier
 continuations; a complete IS NOT operator retains its own concrete kind.
+Dart, Nix and CMake scanner policies are generated through the shared fragment,
+lexical token, nested delimiter and counted delimiter families. Fragments retain
+paired-prefix parity, reject configured invalid boundaries and can require a
+marker. Delimiter opening lookahead distinguishes documentation comments without
+consuming a closing star. Lexical external rules retain following context, and
+counted content records explicit whitespace and end policies. Scanner-only token
+renames retain their original concrete kinds. A source variable or bracket opening
+commits to its complete production before overlapping literal text can fall back;
+case-insensitive command keywords retain word continuation boundaries. Adjacent
+Nix path fragments continue one path, while whitespace separates applications.
+These policies are grammar data executed identically by both runtimes. Dart and
+Nix parser crates and the separate vendored CMake oracle crate are development
+dependencies. The published runtime uses the generated native grammar text.
 Required concept distinctions are shared data in
 `parity/required-concept-distinctions.json`; the record generator emits the
 JavaScript JSON and Rust constant data from the same pairs and reasons. SQL

@@ -78,7 +78,8 @@
     "metadata_attribute_name": "attribute_name",
     "metadata_attribute_argument_list": "attribute_arguments",
     "metadata_attribute_argument": "attribute_argument",
-    "argument_attachment_command_argument": "_argument_attachment_command_argument"
+    "argument_attachment_command_argument": "_argument_attachment_command_argument",
+    "statement_terminator": "_statement_terminator"
   },
   "matches": [
     {

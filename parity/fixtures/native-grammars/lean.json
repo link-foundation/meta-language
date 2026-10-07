@@ -50,7 +50,12 @@
     "string_content": "_string_content",
     "character": "char",
     "centered_dot": "cdot",
-    "boolean": "_boolean"
+    "boolean": "_boolean",
+    "layout_start": "_layout_start",
+    "layout_semicolon": "_layout_semicolon",
+    "layout_end": "_layout_end",
+    "match_body_start": "_match_body_start",
+    "syntax_quotation_body": "_syntax_quotation_body"
   },
   "matches": [
     {

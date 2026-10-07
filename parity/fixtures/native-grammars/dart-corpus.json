@@ -1,0 +1,436 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "d3a63bd8f220ff7bde454e6ad0829c7b74479372bd3ae71ab727ee868405150d",
+  "cases": [
+    {
+      "file": "comments.txt",
+      "title": "Single-line comment",
+      "source": "\n// this is a comment\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Single-line doc comment",
+      "source": "\n/// this is a doc comment\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Block comment",
+      "source": "\n/* block comment */\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Documentation block comment",
+      "source": "\n/** doc block comment */\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Nested block comment",
+      "source": "\n/* outer /* inner */ outer */\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Empty source file",
+      "source": "\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Simple class",
+      "source": "\nclass Foo {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Class with extends and implements",
+      "source": "\nclass Dog extends Animal implements Barker {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Class with mixins",
+      "source": "\nclass Cat extends Animal with Walker, Purrer {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Sealed class",
+      "source": "\nsealed class Shape {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Abstract base class",
+      "source": "\nabstract base class Vehicle {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Interface class",
+      "source": "\ninterface class Drawable {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Mixin declaration",
+      "source": "\nmixin Flyable on Animal {\n  void fly() {}\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Extension declaration",
+      "source": "\nextension StringExt on String {\n  bool get isBlank => isEmpty;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Extension type",
+      "source": "\nextension type Meters(double value) implements double {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Enum declaration",
+      "source": "\nenum Color { red, green, blue }\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Enhanced enum",
+      "source": "\nenum Planet {\n  mercury(3.7),\n  earth(9.8);\n\n  final double gravity;\n  const Planet(this.gravity);\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Typedef",
+      "source": "\ntypedef IntList = List<int>;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Top-level variable declarations",
+      "source": "\nfinal x = 42;\nvar y = 'hello';\nconst pi = 3.14;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Import declarations",
+      "source": "\nimport 'dart:core';\nimport 'package:foo/foo.dart' as foo;\nimport 'bar.dart' show Baz, Qux;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Export declaration",
+      "source": "\nexport 'src/foo.dart';\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Part directive",
+      "source": "\npart 'src/detail.dart';\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Library name",
+      "source": "\nlibrary my.app;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Built-in identifiers as field names",
+      "source": "\nclass Foo {\n  int type = 0;\n  String get = '';\n  bool set = true;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Chained assignment in constructor initializer",
+      "source": "\nclass Foo {\n  Foo() : a = b.c = d();\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Record return type with annotation",
+      "source": "\nclass Foo {\n  @override\n  (int, int?)? get range { return null; }\n\n  @override\n  (String, int) get pair => ('text', 42);\n\n  @JsonKey(name: 'foo')\n  (String, int) get annotatedPair => ('text', 42);\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Extension type with primary constructor",
+      "source": "\nextension type JSArray<T extends JSAny?>._(JSArrayRepType _jsArray) implements JSObject {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Annotations with generic type arguments and .new",
+      "source": "\n@GenericClass<int, String>.new()\nclass Foo {}\n\n@GenericClass<int>.named()\nclass Bar {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Extension type with annotated representation",
+      "source": "\nextension type ExtensionType(@annotation int id) implements int {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Type variance modifiers",
+      "source": "\nclass Covariant<out T> {}\nclass Contravariant<in T> {}\nclass Invariant<inout K, inout V> {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Augmentation library and augment declarations",
+      "source": "\nlibrary augment 'main.dart';\n\naugment class A with M {\n  augment String get name => '$augmented!';\n}\n\naugment mixin M {\n  augment String get mixinX => '${augmented}b';\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Native method body",
+      "source": "\nclass Foo {\n  int get length native;\n  String bar() native;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "External final declaration",
+      "source": "\nexternal final int x;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Non-null assertion",
+      "source": "\nvoid f() {\n  var x = y!;\n  w!.foo();\n  x.._parent!.foo();\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "External static field declarations",
+      "source": "\nclass JsInterop {\n  external static dynamic TYPES;\n  external static final int DEBUG;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "External covariant field declarations",
+      "source": "\nclass C {\n  external covariant num field;\n  external covariant var field2;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Mixin class declaration",
+      "source": "\nmixin class M {}\n\nbase mixin class BM {}\n\nabstract mixin class AM {}\n\nabstract base mixin class ABM {}\n\nmixin class MC = Object with M1;\n\nabstract base mixin class AMC = Object with M1 implements I;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Binary expressions",
+      "source": "\nvoid main() {\n  a + b;\n  a - b;\n  a * b;\n  a / b;\n  a % b;\n  a ~/ b;\n  a << b;\n  a >> b;\n  a >>> b;\n  a & b;\n  a ^ b;\n  a | b;\n  a && b;\n  a || b;\n  a ?? b;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Relational and equality expressions",
+      "source": "\nvoid main() {\n  a > b;\n  a < b;\n  a >= b;\n  a <= b;\n  a == b;\n  a != b;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Ternary expression",
+      "source": "\nvoid main() {\n  a ? b : c;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Assignment expression",
+      "source": "\nvoid main() {\n  x = 1;\n  x += 1;\n  x ??= 2;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Type test and cast expressions",
+      "source": "\nvoid main() {\n  x is int;\n  x is! String;\n  x as double;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Unary expressions",
+      "source": "\nvoid main() {\n  -x;\n  !x;\n  ~x;\n  ++x;\n  --x;\n  x++;\n  x--;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Await expression",
+      "source": "\nvoid main() async {\n  await foo();\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Throw expression",
+      "source": "\nvoid main() {\n  throw Exception();\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Cascade expression",
+      "source": "\nvoid main() {\n  list..add(1)..add(2);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Built-in identifiers as assignable expressions",
+      "source": "\nvoid f() {\n  type = 1;\n  get = 2;\n  show = 3;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Built-in identifiers as named arguments",
+      "source": "\nvoid f() {\n  foo(type: 42);\n  bar(show: true);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Built-in identifiers as member access",
+      "source": "\nvoid f() {\n  obj.type = 1;\n  this.get = 2;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Function as identifier (static method access)",
+      "source": "\nvoid f() {\n  Function.apply(callback, [value]);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Dot shorthand in assignment and arguments",
+      "source": "\nColor f(Color c) {\n  Color x = .red;\n  paint(.blue);\n  return .green;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Dot shorthand in list literal",
+      "source": "\nvoid f() {\n  var x = [.red, .green, .blue];\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Dot shorthand in map literal value",
+      "source": "\nvoid f() {\n  var x = {'key': .red};\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Dot shorthand const constructor",
+      "source": "\nvoid f() {\n  var x = const .new(1);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Super with argument part",
+      "source": "\nclass A extends B {\n  int call(int x) => super(x);\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Decimal integer literals",
+      "source": "\nvoid main() {\n  0;\n  42;\n  1000;\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Hexadecimal integer literals",
+      "source": "\nvoid main() {\n  0x0;\n  0xFF;\n  0XDEAD;\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Floating point literals",
+      "source": "\nvoid main() {\n  3.14;\n  .5;\n  1e10;\n  1.5e-3;\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Boolean literals",
+      "source": "\nvoid main() {\n  true;\n  false;\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Null literal",
+      "source": "\nvoid main() {\n  null;\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "String literals",
+      "source": "\nvoid main() {\n  'hello';\n  \"world\";\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Symbol literals",
+      "source": "\nvoid main() {\n  #foo;\n  #foo.bar;\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "List literal",
+      "source": "\nvoid main() {\n  [1, 2, 3];\n  <int>[1];\n  const [1];\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Set or map literal",
+      "source": "\nvoid main() {\n  {1, 2};\n  {'a': 1};\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Null-aware elements",
+      "source": "\nvoid main() {\n  [?a];\n  {?key: value};\n  {key: ?value};\n  {?key: ?value};\n}\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "Switch with pattern matching",
+      "source": "\nvoid main() {\n  switch (obj) {\n    case int x when x > 0:\n      print(x);\n    default:\n      break;\n  }\n}\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "Empty record pattern assignment",
+      "source": "\nvoid main() {\n  () = x;\n}\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "Pattern variable declaration",
+      "source": "\nvoid main() {\n  var (a, b) = (1, 2);\n}\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "If-case statement",
+      "source": "\nvoid main() {\n  if (obj case [int first, ...]) {\n    print(first);\n  }\n}\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "Switch expression",
+      "source": "\nvoid main() {\n  var x = switch (obj) {\n    int n => n.toString(),\n    _ => 'other',\n  };\n}\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "Const record pattern",
+      "source": "\nvoid f(x) {\n  if (x case const (1, 2, 3)) {}\n}\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "Empty switch expression",
+      "source": "\nf(x) => switch(x) {};\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "Object pattern with labeled fields",
+      "source": "\nclass Point { final int x; final int y; Point(this.x, this.y); }\nvoid main() {\n  var p = Point(1, 2);\n  switch (p) {\n    case Point(x: var px, y: var py) when px > py:\n      print(px);\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "If statement",
+      "source": "\nvoid main() {\n  if (x) a();\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "If-else statement",
+      "source": "\nvoid main() {\n  if (x) {\n    a();\n  } else {\n    b();\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "For loop",
+      "source": "\nvoid main() {\n  for (var i = 0; i < 10; i++) {\n    print(i);\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "For-in loop",
+      "source": "\nvoid main() {\n  for (var x in list) {\n    print(x);\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "While loop",
+      "source": "\nvoid main() {\n  while (true) {\n    break;\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Do-while loop",
+      "source": "\nvoid main() {\n  do {\n    x++;\n  } while (x < 10);\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Try-catch-finally",
+      "source": "\nvoid main() {\n  try {\n    foo();\n  } on FormatException catch (e) {\n    print(e);\n  } catch (e, s) {\n    print(s);\n  } finally {\n    cleanup();\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Rethrow statement",
+      "source": "\nvoid main() {\n  try {\n    foo();\n  } catch (e) {\n    rethrow;\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "For-in loop with metadata",
+      "source": "\nvoid main() {\n  for (@deprecated var x in list) {\n    print(x);\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Pattern for-in with metadata",
+      "source": "\nvoid f(x) {\n  for (@annotation var (a, b) in x) {}\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Return statement",
+      "source": "\nint foo() {\n  return 42;\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Assert statement",
+      "source": "\nvoid main() {\n  assert(x > 0, 'must be positive');\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Empty statement",
+      "source": "\nvoid main() {\n  foo();\n  ;\n}\n"
+    }
+  ]
+}

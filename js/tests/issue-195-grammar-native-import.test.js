@@ -605,3 +605,38 @@ test('contextual keyword exclusions preserve quoted and longer identifier altern
   for (const input of ['* FROM', '* fRoM']) assert.equal(parser.parseTree(input).ok, false, input);
   for (const input of ['* FROMage', '* "FROM"', '* named']) assert.equal(parser.parseTree(input).ok, true, input);
 });
+
+test('renamed scanner-only tokens retain their original concrete kinds', () => {
+  const source = { name: 'comments', externals: [{ type: 'SYMBOL', name: 'comment_open' }], rules: { document: { type: 'SYMBOL', name: 'comment_open' } } };
+  const imported = importTreeSitterNative(source, { nameOf: (name) => name === 'comment_open' ? 'comment_opening' : name,
+    scanners: '(scanner comments (tokens comment_opening) (operations (consume (literal %23)) (emit comment_opening)))\n' });
+  assert.deepEqual(imported.kinds, [{ name: 'comment_opening', sourceName: 'comment_open' }]);
+  const grammar = parseGrammarLinks(renderTreeSitterNative(imported));
+  assert.deepEqual(grammar.kinds[0].sourceNames, [{ source: 'tree-sitter', name: 'comment_open' }]);
+  assert.equal(compileGrammar(grammar).parseTree('#').ok, true);
+});
+
+test('source prefix exclusions retain fallback productions and word continuations', () => {
+  const source = { name: 'commands', rules: { document: { type: 'SEQ', members: [{ type: 'SYMBOL', name: 'command' }, { type: 'STRING', value: '(' }, { type: 'STRING', value: ')' }] }, command: { type: 'SYMBOL', name: 'identifier' }, identifier: { type: 'PATTERN', value: '[A-Za-z_][A-Za-z0-9_]*' } } };
+  const before = structuredClone(source);
+  const decision = { family: 'rule-prefix-exclusion', rule: 'command', pattern: '[iI][fF]', continuationPattern: '[A-Za-z0-9_]' };
+  const transformed = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, before);
+  assert.deepEqual(transformed.rules.command.content, source.rules.command);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  for (const input of ['other()', 'ifx()', 'IF1()']) assert.equal(parser.parseTree(input).ok, true, input);
+  for (const input of ['if()', 'IF()']) assert.equal(parser.parseTree(input).ok, false, input);
+  for (const change of [{ rule: 'absent' }, { pattern: '' }, { continuationPattern: '' }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('literal and pattern prefix exclusions preserve character token identities', () => {
+  const source = { name: 'references', rules: { document: { type: 'REPEAT1', content: { type: 'CHOICE', members: [{ type: 'STRING', value: '$' }, { type: 'PATTERN', value: '[^()]' }] } } } };
+  const transformed = transformNativeSource(source, [
+    { family: 'literal-prefix-exclusion', rule: 'document', pattern: '$', excludedPattern: '\\$\\{' },
+    { family: 'pattern-prefix-exclusion', rule: 'document', pattern: '[^()]', excludedPattern: '\\$\\{' },
+  ]);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  for (const input of ['$plain', 'a$b', 'é😀']) assert.equal(parser.parseTree(input).ok, true, input);
+  for (const input of ['${broken', 'a${broken']) assert.equal(parser.parseTree(input).ok, false, input);
+  for (const family of ['literal-prefix-exclusion', 'pattern-prefix-exclusion']) assert.throws(() => transformNativeSource(source, [{ family, rule: 'document', pattern: 'absent', excludedPattern: 'x' }]), TypeError);
+});

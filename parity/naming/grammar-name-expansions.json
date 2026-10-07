@@ -2193,6 +2193,16 @@
       },
       "sourceTransforms": [
         {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "qualified_field_identifier",
+            "field_expression"
+          ],
+          "symbol": "_field_identifier",
+          "value": 1,
+          "reason": "A plain field name retains its reduction before relational expressions compete with a template method containing a logical argument. Preserve template methods and their typed and numeric arguments as complete alternatives."
+        },
+        {
           "family": "rule-precedence",
           "rule": "dependent_type_identifier",
           "associativity": "right",
@@ -3202,6 +3212,217 @@
         "keyword_object_id": "grammar.object-identifier-keyword",
         "keyword_temp": "grammar.temporary-keyword",
         "keyword_temporary": "grammar.temporary-keyword"
+      }
+    },
+    "dart": {
+      "names": {
+        "template_chars_single": "template_single_quote_characters",
+        "template_chars_double": "template_double_quote_characters",
+        "template_chars_single_single": "template_single_quote_line_characters",
+        "template_chars_double_single": "template_double_quote_line_characters",
+        "template_chars_raw_slash": "raw_template_characters",
+        "annotation_open_paren": "annotation_opening_parenthesis",
+        "_annotation": "annotation_body",
+        "_unary_expression": "unary_expression_body",
+        "_postfix_expression": "postfix_expression_body",
+        "_declaration": "declaration_body",
+        "_name": "identifier_characters",
+        "uri": "uniform_resource_identifier",
+        "configurable_uri": "conditional_resource_identifier",
+        "configuration_uri": "configuration_resource_identifier",
+        "uri_test": "resource_identifier_test",
+        "combinator": "import_name_filter",
+        "qualified": "qualified_name",
+        "false": "false_literal",
+        "identifier_dollar_escaped": "dollar_escaped_identifier",
+        "constructor_tearoff": "constructor_function_reference",
+        "rethrow_statement": "exception_propagation_statement",
+        "getter_signature": "property_reader_signature",
+        "redirection": "constructor_target_clause",
+        "mixins": "trait_list",
+        "mixin_application_class": "trait_application_class",
+        "mixin_application": "trait_application",
+        "mixin_declaration": "trait_declaration",
+        "getter_declaration": "property_reader_declaration",
+        "external_getter_declaration": "external_property_reader_declaration",
+        "_identifier_or_new": "identifier_or_creation_keyword",
+        "_function_type_tail": "function_type_suffix",
+        "named_parameter_types": "named_parameter_type_list",
+        "type_parameters": "type_parameter_list",
+        "arguments": "argument_list",
+        "interfaces": "interface_list",
+        "_element": "collection_element",
+        "assertion": "assertion_expression",
+        "type_arguments": "type_argument_list",
+        "shift_expression": "bit_shift_expression",
+        "function_expression_body": "anonymous_function_body",
+        "_argument_list": "call_argument_sequence",
+        "_sub_string_test": "substring_test",
+        "_mixin_class_modifiers": "trait_class_modifier_list",
+        "_normal_formal_parameters": "normal_formal_parameter_list"
+      },
+      "sourceTransforms": [
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "declaration",
+            "method_signature"
+          ],
+          "symbol": "constructor_signature",
+          "value": 1,
+          "reason": "Preserve the source constructor signature reduction before an identical function signature without a return type, retaining the complete function production."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "declaration",
+            "method_signature"
+          ],
+          "symbol": "setter_signature",
+          "value": 1,
+          "reason": "The source setter keyword retains its complete setter signature before an overlapping function whose return type and name split the same input."
+        },
+        {
+          "family": "alias-choice-rule",
+          "rule": "_type_not_function",
+          "alias": "type",
+          "helper": "_ordinary_type_body",
+          "reason": "A named alias of the ordinary type choice preserves its nested type identifier rather than replacing that child with the outer alias."
+        }
+      ]
+    },
+    "nix": {
+      "names": {
+        "_hpath_start": "home_path_initial_fragment",
+        "hpath_expression": "home_path_expression",
+        "spath_expression": "search_path_expression",
+        "uri_expression": "resource_identifier_expression",
+        "attrset_expression": "attribute_set_expression",
+        "let_attrset_expression": "local_attribute_set_expression",
+        "rec_attrset_expression": "recursive_attribute_set_expression",
+        "inherit": "attribute_inheritance_clause",
+        "inherit_from": "attribute_inheritance_source_clause",
+        "attrpath": "attribute_path",
+        "inherited_attrs": "inherited_attribute_list",
+        "formals": "formal_parameter_list",
+        "formal": "formal_parameter",
+        "binding": "attribute_binding",
+        "function_expression": "anonymous_function_expression",
+        "integer_expression": "integer_literal_expression",
+        "_path_start": "path_initial_fragment",
+        "_expr_if": "conditional_expression_body"
+      },
+      "sourceTransforms": [
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "path_expression",
+            "hpath_expression"
+          ],
+          "symbol": "path_fragment",
+          "value": 1,
+          "reason": "An immediately adjacent path fragment continues the source path before a competing path-start token can form a function application; whitespace still separates paths through the immediate external token boundary."
+        }
+      ]
+    },
+    "cmake": {
+      "names": {
+        "bracket_argument_open": "bracket_argument_opening",
+        "bracket_argument_close": "bracket_argument_closing",
+        "bracket_comment_open": "bracket_comment_opening",
+        "bracket_comment_close": "bracket_comment_closing",
+        "_escape_encoded": "encoded_escape_sequence",
+        "variable_ref": "variable_reference",
+        "env_var": "environment_variable",
+        "_paren_argument": "parenthesized_argument",
+        "endforeach_command": "iteration_closing_command",
+        "endwhile_command": "repetition_closing_command",
+        "endfunction_command": "function_closing_command",
+        "endmacro_command": "macro_closing_command",
+        "endblock_command": "scope_closing_command",
+        "if": "conditional_keyword",
+        "elseif": "alternative_condition_keyword",
+        "else": "else_branch_keyword",
+        "endif": "conditional_closing_keyword",
+        "foreach": "iteration_keyword",
+        "endforeach": "iteration_closing_keyword",
+        "while": "while_loop_keyword",
+        "endwhile": "repetition_closing_keyword",
+        "function": "function_keyword",
+        "endfunction": "function_closing_keyword",
+        "macro": "macro_keyword",
+        "endmacro": "macro_closing_keyword",
+        "block": "block_scope_keyword",
+        "endblock": "scope_closing_keyword",
+        "argument": "command_argument_value",
+        "_unquoted_text": "unquoted_argument_text",
+        "integer": "integer_literal",
+        "if_command": "conditional_opening_command",
+        "elseif_command": "alternative_condition_opening_command",
+        "else_command": "alternative_opening_command",
+        "while_command": "repetition_opening_command",
+        "block_command": "scope_opening_command",
+        "foreach_command": "iteration_opening_command"
+      },
+      "sourceTransforms": [
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_unquoted_text",
+          "pattern": "[^()#\"\\\\]",
+          "excludedPattern": "\\s",
+          "reason": "The source lexer selects whitespace as the argument separator before a competing unquoted text character. Preserve the complete character production with that lexical priority boundary."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "unquoted_argument",
+          "pattern": "\\[=*\\[",
+          "reason": "A complete bracket opening commits the source lexer to bracket arguments. Unterminated bracket input cannot fall back to unquoted text."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "unquoted_argument",
+          "associativity": "right",
+          "value": 1,
+          "reason": "Adjacent unquoted characters remain a single argument before argument_list repeats; whitespace remains its separate source token."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "normal_command",
+          "pattern": "([iI][fF]|[eE][lL][sS][eE][iI][fF]|[eE][lL][sS][eE]|[eE][nN][dD][iI][fF]|[fF][oO][rR][eE][aA][cC][hH]|[eE][nN][dD][fF][oO][rR][eE][aA][cC][hH]|[wW][hH][iI][lL][eE]|[eE][nN][dD][wW][hH][iI][lL][eE]|[fF][uU][nN][cC][tT][iI][oO][nN]|[eE][nN][dD][fF][uU][nN][cC][tT][iI][oO][nN]|[mM][aA][cC][rR][oO]|[eE][nN][dD][mM][aA][cC][rR][oO]|[bB][lL][oO][cC][kK]|[eE][nN][dD][bB][lL][oO][cC][kK])",
+          "continuationPattern": "[0-9A-Za-z_]",
+          "reason": "Case-insensitive control command tokens take source lexer priority over identifier commands, with a word continuation boundary. Preserve identifiers with longer keyword prefixes and every control construct."
+        },
+        {
+          "family": "literal-prefix-exclusion",
+          "rule": "_quoted_text",
+          "pattern": "$",
+          "excludedPattern": "\\$(ENV|CACHE)?\\{",
+          "reason": "A source variable opening commits to its complete closing brace rather than falling back to literal dollar text after a malformed reference."
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_quoted_text",
+          "pattern": "[^\\\\\"]",
+          "excludedPattern": "\\$(ENV|CACHE)?\\{",
+          "reason": "The source variable token takes lexical priority over the overlapping character token at a variable opening, retaining other literal dollar characters."
+        },
+        {
+          "family": "literal-prefix-exclusion",
+          "rule": "_unquoted_text",
+          "pattern": "$",
+          "excludedPattern": "\\$(ENV|CACHE)?\\{",
+          "reason": "A source variable opening commits to its complete closing brace rather than falling back to literal dollar text after a malformed reference."
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_unquoted_text",
+          "pattern": "[^()#\"\\\\]",
+          "excludedPattern": "\\$(ENV|CACHE)?\\{",
+          "reason": "The source variable token takes lexical priority over the overlapping character token at a variable opening, retaining other literal dollar characters."
+        }
+      ],
+      "concepts": {
+        "integer": "grammar.integer-literal"
       }
     }
   },

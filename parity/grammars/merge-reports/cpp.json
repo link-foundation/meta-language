@@ -791,6 +791,16 @@
   },
   "sourceTransforms": [
     {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "qualified_field_identifier",
+        "field_expression"
+      ],
+      "symbol": "_field_identifier",
+      "value": 1,
+      "reason": "A plain field name retains its reduction before relational expressions compete with a template method containing a logical argument. Preserve template methods and their typed and numeric arguments as complete alternatives."
+    },
+    {
       "family": "rule-precedence",
       "rule": "dependent_type_identifier",
       "associativity": "right",

@@ -42,7 +42,8 @@
       "version": "v0.7.5",
       "parserSha256": "ece92c2e3fbf15634fb90fab91d0af749348c069d27208eeb10dcdd4e77fe5a2",
       "wasmSha256": "5925d5f08a726ebb9024ccae1e12165a56c35630c53d9dd7fc3eeb87434849c2",
-      "license": "cmake.LICENSE"
+      "license": "cmake.LICENSE",
+      "oracle": true
     },
     "cpp": {
       "id": "cpp",
@@ -91,7 +92,8 @@
       "version": "0.2.0",
       "parserSha256": "1894ef57f8e0ceb483ccf6d548429517dc42b0d983293ebdb5ff9ff9c612c4a9",
       "wasmSha256": "e700b38561a3f1e641340fac8232dfca493dbc024d142d338a5075feca3e9efc",
-      "license": "dart.LICENSE"
+      "license": "dart.LICENSE",
+      "oracle": true
     },
     "diff": {
       "id": "diff",
@@ -319,7 +321,8 @@
       "version": "0.3.0",
       "parserSha256": "2b1d7945441b83e324cd225663481d35e51cd9ae84189cc7e69f58a11ecb85ad",
       "wasmSha256": "98faa2e223fc3fe88c20c02c51fd739da8ebe1f1591b131d0964ede6cf320b08",
-      "license": "nix.LICENSE"
+      "license": "nix.LICENSE",
+      "oracle": true
     },
     "ocaml": {
       "id": "ocaml",

@@ -248,7 +248,7 @@ fn issue_195_merge_quality_evidence_rust_report_equals_the_published_report() {
     let report = report();
     let published = read_json(FIXTURE);
     assert_eq!(published["grammars"].as_array().expect("grammars"), &report);
-    assert_eq!(report.len(), 32);
+    assert_eq!(report.len(), 35);
     for record in &report {
         let grammar = &record["grammar"];
         let coverage = &record["coverage"];

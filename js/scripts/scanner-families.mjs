@@ -62,16 +62,48 @@ export function rememberedContentScanner({ name, delimiterToken, contentToken, d
 }
 
 /** A complete delimiter token, optionally nesting and escaping its delimiters. */
-export function delimitedScanner({ name, token, opening, closing, nested = false, escape = null }) {
+export function delimitedScanner({ name, token, opening, closing, nested = false, escape = null, openingLookahead = null, rejectOpeningLookahead = false, rejected = [] }) {
   identifier(name);
   identifier(token);
   const open = delimiter(opening);
   const close = delimiter(closing);
+  if (typeof rejectOpeningLookahead !== 'boolean' || !Array.isArray(rejected)) throw new TypeError('delimiter lookahead and rejection policies must be valid');
+  const guard = openingLookahead === null ? '' : `(if ${rejectOpeningLookahead ? `(next ${delimiter(openingLookahead)})` : `(not (next ${delimiter(openingLookahead)}))`} (then fail)) `;
+  const reject = rejected.length ? `(if (some ${rejected.map((text) => `(next ${delimiter(text)})`).join(' ')}) (then fail)) ` : '';
   if (nested && opening === closing) throw new TypeError('nested delimiters must differ');
   const escaped = escape === null ? '' : `(if (next ${delimiter(escape)}) (then (consume ${literal(escape)}) advance) (else `;
   const nesting = nested ? `(if (next ${open}) (then (consume ${open}) (push levels (integer 1))) (else advance))` : 'advance';
   const body = `(if (next ${close}) (then (consume ${close}) (pop levels)) (else ${nesting}))`;
-  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) (consume ${open}) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) ${escaped}${body}${escaped ? '))' : ''})) (emit ${token})))\n`;
+  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) (consume ${open}) ${guard}(push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) ${reject}${escaped}${body}${escaped ? '))' : ''})) (emit ${token})))\n`;
+}
+
+/** A nonempty fragment with paired prefix characters and explicit invalid boundaries. */
+export function fragmentScanner({ name, token, stops, rejected = ['\0'], pairedPrefixes = [], requiredMarker = null, allowEnd = false }) {
+  identifier(name);
+  identifier(token);
+  if (!Array.isArray(stops) || !stops.length || !Array.isArray(rejected) || !Array.isArray(pairedPrefixes) || typeof allowEnd !== 'boolean') throw new TypeError('fragment boundaries and policies must be valid');
+  const stop = `(some atEnd ${stops.map((text) => `(next ${delimiter(text)})`).join(' ')})`;
+  const reject = rejected.length ? `(if (some ${rejected.map((text) => `(next ${delimiter(text)})`).join(' ')}) (then fail)) ` : '';
+  let advance = 'advance';
+  for (const { prefix, except } of pairedPrefixes.toReversed()) {
+    if (!Array.isArray(except) || !except.length) throw new TypeError('paired prefixes need following delimiters');
+    const exceptions = `(some atEnd ${except.map((text) => `(next ${delimiter(text)})`).join(' ')})`;
+    advance = `(if (next ${delimiter(prefix)}) (then (consume ${delimiter(prefix)}) (if (not ${exceptions}) (then advance))) (else ${advance}))`;
+  }
+  const marker = requiredMarker === null ? '' : `(if (next ${delimiter(requiredMarker)}) (then (push encountered (integer 1)))) `;
+  const require = requiredMarker === null ? '' : '(if (equal (depth encountered) (integer 0)) (then fail)) (while (greater (depth encountered) (integer 0)) (do (pop encountered))) ';
+  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) (if ${stop} (then fail)) (while (not ${stop}) (do ${reject}${marker}${advance})) ${allowEnd ? '' : '(if atEnd (then fail)) '}${require}(emit ${token})))\n`;
+}
+
+/** An external lexical rule with optional following context, expressed entirely in grammar data. */
+export function patternTokenScanner({ name, token, pattern, before = null, excludedBefore = null, excludedAtStart = null }) {
+  identifier(name);
+  identifier(token);
+  if (typeof pattern !== 'string' || !pattern || new RegExp(`^(?:${pattern})$`, 'u').test('')) throw new TypeError('lexical tokens need a consuming pattern');
+  const body = renderTreeSitterPattern(parseTreeSitterPattern(pattern));
+  const context = [before === null ? '' : `(and ${renderTreeSitterPattern(parseTreeSitterPattern(before))})`, excludedBefore === null ? '' : `(not ${renderTreeSitterPattern(parseTreeSitterPattern(excludedBefore))})`].filter(Boolean);
+  const prefix = excludedAtStart === null ? '' : `(not ${renderTreeSitterPattern(parseTreeSitterPattern(excludedAtStart))}) `;
+  return `(rule ${token} token ${context.length || prefix ? `(seq ${prefix}${body}${context.length ? ` ${context.join(' ')}` : ''})` : body})\n`;
 }
 
 /** Content between grammar-owned delimiters, including escaped code points. */
@@ -103,9 +135,10 @@ export function countedDelimiterScanner({ name, token, prefix = '', marker, open
 }
 
 /** Separate opening, content and closing tokens with shared delimiter state. */
-export function splitCountedDelimiterScanner({ name, startToken, contentToken, endToken, prefix = '', marker, opening, closing, suffix = '', skipWhitespace = false, contentStops = [], countModulo = null }) {
+export function splitCountedDelimiterScanner({ name, startToken, contentToken, endToken, prefix = '', marker, opening, closing, suffix = '', skipWhitespace = false, contentStops = [], countModulo = null, allowEnd = false, skipContentWhitespace = false }) {
   for (const value of [name, startToken, contentToken, endToken]) identifier(value);
   if (countModulo !== null && (!Number.isSafeInteger(countModulo) || countModulo < 2)) throw new TypeError('a scanner count modulus must be an integer of at least two');
+  if (typeof allowEnd !== 'boolean' || typeof skipContentWhitespace !== 'boolean') throw new TypeError('counted content policies must be boolean');
   const repeated = delimiter(marker);
   const open = delimiter(opening);
   const close = delimiter(closing);
@@ -120,7 +153,7 @@ export function splitCountedDelimiterScanner({ name, startToken, contentToken, e
   const skip = skipWhitespace ? '(while (next (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))))) ' : '';
   const collect = `(while (next ${repeated}) (do (consume ${repeated}) ${push('candidate')}))`;
   const start = `(if (valid ${startToken}) (then ${skip}${beginning}(while (next ${repeated}) (do (consume ${repeated}) ${push('delimiters')})) (consume ${open}) (emit ${startToken})))`;
-  const content = `(if (valid ${contentToken}) (then (while (not atEnd) (do ${stop}(if (next ${close}) (then mark (consume ${close}) ${collect} (if (all (equal ${seen} ${markers})${suffixCondition}) (then ${clear('candidate')} (emit ${contentToken}))) ${clear('candidate')}) (else advance)))) fail))`;
+  const content = `(if (valid ${contentToken}) (then ${skipContentWhitespace ? skip : ''}(while (not atEnd) (do ${stop}(if (next ${close}) (then mark (consume ${close}) ${collect} (if (all (equal ${seen} ${markers})${suffixCondition}) (then ${clear('candidate')} (emit ${contentToken}))) ${clear('candidate')}) (else advance)))) ${allowEnd ? `mark (emit ${contentToken})` : 'fail'}))`;
   const end = `(if (valid ${endToken}) (then (consume ${close}) ${collect} (if (not (equal ${seen} ${markers})) (then fail)) ${ending}${clear('candidate')} ${clear('delimiters')} (emit ${endToken})))`;
   return `(scanner ${name} (tokens ${startToken} ${contentToken} ${endToken}) (operations ${start} ${content} ${end} fail))\n`;
 }
@@ -223,6 +256,8 @@ export function scannerFamilies(descriptors) {
     if (family === 'remembered-literal') return rememberedLiteralScanner(options);
     if (family === 'remembered-content') return rememberedContentScanner(options);
     if (family === 'delimited') return delimitedScanner(options);
+    if (family === 'fragment') return fragmentScanner(options);
+    if (family === 'pattern-token') return patternTokenScanner(options);
     if (family === 'content') return contentScanner(options);
     if (family === 'counted-delimiter') return countedDelimiterScanner(options);
     if (family === 'split-counted-delimiter') return splitCountedDelimiterScanner(options);

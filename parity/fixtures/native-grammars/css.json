@@ -44,7 +44,10 @@
     "value": "_value",
     "argument_list": "arguments",
     "key_frames_name": "keyframes_name",
-    "identifier_name": "id_name"
+    "identifier_name": "id_name",
+    "descendant_operator": "_descendant_operator",
+    "pseudo_class_selector_colon": "_pseudo_class_selector_colon",
+    "error_recovery": "__error_recovery"
   },
   "matches": [
     {

@@ -35,6 +35,18 @@ use crate::{
 /// catalog's native grammars are exactly the shipped files.
 const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
     (
+        "native-grammars/dart.lino",
+        include_str!("data/native-grammars/dart.lino"),
+    ),
+    (
+        "native-grammars/nix.lino",
+        include_str!("data/native-grammars/nix.lino"),
+    ),
+    (
+        "native-grammars/cmake.lino",
+        include_str!("data/native-grammars/cmake.lino"),
+    ),
+    (
         "native-grammars/cpp.lino",
         include_str!("data/native-grammars/cpp.lino"),
     ),

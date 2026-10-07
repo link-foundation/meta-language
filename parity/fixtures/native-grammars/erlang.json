@@ -151,7 +151,9 @@
     "quoted_string_token": "_sq_string",
     "prefixed_verbatim_string_literal_body": "_sigil_verbatim_string",
     "prefixed_string_literal_body": "_sigil_string",
-    "character_literal": "char"
+    "character_literal": "char",
+    "multiple_quote_string": "_tq_string",
+    "multiple_quote_sigil_string": "_tq_sigil_string"
   },
   "matches": [
     {

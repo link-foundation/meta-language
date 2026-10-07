@@ -433,6 +433,22 @@
       "evidence": "cargo metadata, the highest rust-version of the resolved crates (meta-language 0.58.2, tree-sitter 0.27.0, tree-sitter-graphql 0.3.0)"
     },
     {
+      "current": "2024",
+      "evidence": "Rust editions, the newest stable edition",
+      "category": "setting",
+      "scope": "rust/oracles/cmake-source-oracle/Cargo.toml",
+      "name": "edition",
+      "declaredIn": [
+        "rust/oracles/cmake-source-oracle/Cargo.toml"
+      ],
+      "pinned": "2024",
+      "compare": "version",
+      "source": {
+        "type": "rust-edition"
+      },
+      "id": "setting rust/oracles/cmake-source-oracle/Cargo.toml edition@2024"
+    },
+    {
       "id": "setting rust/web/Cargo.toml edition@2024",
       "category": "setting",
       "scope": "rust/web/Cargo.toml",
@@ -824,7 +840,8 @@
       "name": "cc",
       "declaredIn": [
         "rust/Cargo.lock",
-        "rust/Cargo.toml"
+        "rust/Cargo.toml",
+        "rust/oracles/cmake-source-oracle/Cargo.toml"
       ],
       "pinned": "1.2.67",
       "compare": "version",
@@ -833,7 +850,7 @@
         "crate": "cc"
       },
       "role": "direct",
-      "requirement": "1.2",
+      "requirement": "1; 1.2",
       "kind": "build",
       "current": "1.6.0",
       "evidence": "crates.io, cc",
@@ -1418,7 +1435,8 @@
       "name": "flate2",
       "declaredIn": [
         "rust/Cargo.lock",
-        "rust/Cargo.toml"
+        "rust/Cargo.toml",
+        "rust/oracles/cmake-source-oracle/Cargo.toml"
       ],
       "pinned": "1.1.10",
       "compare": "version",
@@ -4086,7 +4104,7 @@
       },
       "role": "direct",
       "requirement": "=0.2.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.2.0",
       "evidence": "crates.io, tree-sitter-dart"
     },
@@ -4433,7 +4451,8 @@
       "name": "tree-sitter-language",
       "declaredIn": [
         "rust/Cargo.lock",
-        "rust/Cargo.toml"
+        "rust/Cargo.toml",
+        "rust/oracles/cmake-source-oracle/Cargo.toml"
       ],
       "pinned": "0.1.8",
       "compare": "version",
@@ -4548,7 +4567,7 @@
       },
       "role": "direct",
       "requirement": "=0.3.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.3.0",
       "evidence": "crates.io, tree-sitter-nix"
     },
@@ -6030,6 +6049,23 @@
       "evidence": "crates.io, zmij"
     },
     {
+      "id": "crate rust/Cargo.toml cmake-source-oracle@oracles/cmake-source-oracle",
+      "category": "crate",
+      "scope": "rust/Cargo.toml",
+      "name": "cmake-source-oracle",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "oracles/cmake-source-oracle",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "role": "direct",
+      "kind": "development",
+      "evidence": "Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json."
+    },
+    {
       "id": "crate rust/web/Cargo.lock bumpalo@3.20.3",
       "category": "crate",
       "scope": "rust/web/Cargo.lock",
@@ -6656,6 +6692,24 @@
       ]
     },
     {
+      "id": "vendored-grammar js/oracles/grammars/cmake.wasm.gz@v0.7.5",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/cmake.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "v0.7.5",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "vendored-parser rust/vendor/tree-sitter-cmake@v0.7.5",
+        "toolchain tree-sitter-cli@0.27.0"
+      ],
+      "evidence": "Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json."
+    },
+    {
       "id": "vendored-grammar js/oracles/grammars/cpp.wasm.gz@0.23.4",
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/cpp.wasm.gz",
@@ -6705,6 +6759,24 @@
         "vendored-parser rust/vendor/tree-sitter-csv@f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
         "toolchain tree-sitter-cli@0.27.0"
       ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/dart.wasm.gz@0.2.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/dart.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.2.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-dart@0.2.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ],
+      "evidence": "Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json."
     },
     {
       "id": "vendored-grammar js/oracles/grammars/diff.wasm.gz@0.1.0",
@@ -6909,6 +6981,24 @@
         "crate rust/Cargo.lock tree-sitter-make@1.1.1",
         "toolchain tree-sitter-cli@0.27.0"
       ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/nix.wasm.gz@0.3.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/nix.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.3.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-nix@0.3.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ],
+      "evidence": "Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json."
     },
     {
       "id": "vendored-grammar js/oracles/grammars/pascal.wasm.gz@0.10.2",
@@ -7183,23 +7273,6 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/cmake.wasm.gz@v0.7.5",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/cmake.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "v0.7.5",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "vendored-parser rust/vendor/tree-sitter-cmake@v0.7.5",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
       "id": "vendored-grammar js/src/vendor/grammars/csharp.wasm.gz@0.23.5",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/csharp.wasm.gz",
@@ -7213,23 +7286,6 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-c-sharp@0.23.5",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/dart.wasm.gz@0.2.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/dart.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.2.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-dart@0.2.0",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -7417,23 +7473,6 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-matlab@1.3.1",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/nix.wasm.gz@0.3.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/nix.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.3.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-nix@0.3.0",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -8832,20 +8871,6 @@
       "category": "published",
       "scope": "crate",
       "name": "src/data/semantic-lexicon.json",
-      "declaredIn": [
-        "rust/Cargo.toml"
-      ],
-      "pinned": "include",
-      "compare": "unversioned",
-      "source": {
-        "type": "none"
-      }
-    },
-    {
-      "id": "published crate vendor/tree-sitter-cmake/**@include",
-      "category": "published",
-      "scope": "crate",
-      "name": "vendor/tree-sitter-cmake/**",
       "declaredIn": [
         "rust/Cargo.toml"
       ],

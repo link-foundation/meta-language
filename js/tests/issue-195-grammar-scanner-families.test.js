@@ -7,6 +7,7 @@ import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-i
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtureGroups = [
+  ['parity/fixtures/scanner-fragments.json', 'I195-GRAMMAR-SCANNER-FRAGMENTS'],
   ['parity/fixtures/scanner-remembered-content.json', 'I195-GRAMMAR-SCANNER-REMEMBERED-CONTENT'],
   ['parity/fixtures/scanner-remembered-delimiters.json', 'I195-GRAMMAR-SCANNER-REMEMBERED-DELIMITERS'],
   ['parity/fixtures/scanner-context-tokens.json', 'I195-GRAMMAR-SCANNER-CONTEXT-TOKENS'],

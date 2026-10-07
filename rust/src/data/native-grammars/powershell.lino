@@ -10,6 +10,7 @@
 (conflict expandable_string_literal)
 (conflict path_command_name value)
 (scanner statement_boundary (tokens statement_terminator) (operations (if (not (valid statement_terminator)) (then fail)) mark (while (next (class plain (char %20) (char %09) (char %0D) (char %0B) (char %0C))) (do advance)) (if (some atEnd (next (literal %7D)) (next (literal %3B)) (next (literal %29)) (next (literal %0A)) (next (literal %00))) (then (emit statement_terminator))) fail))
+(kind statement_terminator (source-names (tree-sitter _statement_terminator)))
 (rule program normal (seq (optional (ref parameter_block)) (ref statement_list)) (concept grammar.program))
 (rule comment token (choice unordered (seq (literal %23) (repeat0 (class negated (char %0D) (char %0A)))) (seq (literal %3C%23) (repeat0 (choice unordered (repeat1 (class negated (char %23) (char %60))) (seq (repeat1 (literal %23)) (class negated (char %3E) (char %23))) (choice unordered (seq (literal %60) (repeat 1 1 (class negated (char %0A)))) (seq (literal %60) (optional (literal %0D)) (literal %0A))))) (seq (repeat1 (literal %23)) (literal %3E)))) (concept grammar.comment))
 (rule literal silent (choice unordered (ref integer_literal) (ref string_literal) (ref real_literal)) (concept grammar.literal) (source-names (tree-sitter _literal)))

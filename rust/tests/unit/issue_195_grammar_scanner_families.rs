@@ -140,3 +140,24 @@ fn remembered_content_matches_shared_trees_and_clears_state() {
         test_name: "remembered_content_matches_shared_trees_and_clears_state",
     });
 }
+
+#[test]
+fn fragment_contexts_and_counted_content_match_shared_trees() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-fragments.json"
+    ));
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-SCANNER-FRAGMENTS",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-grammar-scanner-fragments",
+        fixture_file: "parity/fixtures/scanner-fragments.json",
+        assertions: &[
+            "pairedFragmentPrefixes",
+            "requiredFragmentMarker",
+            "delimiterOpeningLookahead",
+            "lexicalTokenContext",
+            "countedContentPolicies",
+        ],
+        test_name: "fragment_contexts_and_counted_content_match_shared_trees",
+    });
+}

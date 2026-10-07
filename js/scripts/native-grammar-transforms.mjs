@@ -3,6 +3,31 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'rule-prefix-exclusion') {
+      const { rule, pattern, continuationPattern = null } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || typeof pattern !== 'string' || !pattern) throw new TypeError('rule prefix exclusions need an existing rule and nonempty pattern');
+      if (continuationPattern !== null && (typeof continuationPattern !== 'string' || !continuationPattern)) throw new TypeError('prefix continuations need a nonempty pattern');
+      const prefix = { type: 'PATTERN', value: pattern };
+      grammar.rules[rule] = { type: 'NATIVE_PREFIX_EXCLUSION', content: grammar.rules[rule], prefixes: continuationPattern === null ? prefix : { type: 'NATIVE_WORD_BOUNDARY', content: prefix, word: { type: 'PATTERN', value: continuationPattern } } };
+      continue;
+    }
+    if (['pattern-prefix-exclusion', 'literal-prefix-exclusion'].includes(decision.family)) {
+      const { rule, pattern, excludedPattern } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || ![pattern, excludedPattern].every((value) => typeof value === 'string' && value)) throw new TypeError('pattern exclusions need a rule and nonempty patterns');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === (decision.family === 'pattern-prefix-exclusion' ? 'PATTERN' : 'STRING') && node.value === pattern) {
+          changes += 1;
+          return { type: 'NATIVE_PREFIX_EXCLUSION', content: node, prefixes: { type: 'PATTERN', value: excludedPattern } };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('pattern exclusions must select exactly one source pattern');
+      continue;
+    }
     if (decision.family === 'literal-continuation-exclusion') {
       const { rules, literal, continuationPattern } = decision;
       if (!Array.isArray(rules) || !rules.length || rules.some((name) => !Object.hasOwn(grammar.rules, name)) || ![literal, continuationPattern].every((value) => typeof value === 'string' && value)) throw new TypeError('literal boundaries need existing rules and nonempty literal and continuation pattern');
@@ -185,7 +210,8 @@ export function transformNativeSource(source, transformations = []) {
     }
     if (decision.family === 'symbol-dynamic-precedence') {
       const { rules, symbol, value } = decision;
-      if (!Array.isArray(rules) || !rules.length || rules.some((name) => !Object.hasOwn(grammar.rules, name)) || !Object.hasOwn(grammar.rules, symbol) || !Number.isSafeInteger(value) || value <= 0) throw new TypeError('a symbol preference needs existing rules, symbol and positive integer weight');
+      const declaredSymbol = Object.hasOwn(grammar.rules, symbol) || (grammar.externals ?? []).some((external) => external.type === 'SYMBOL' && external.name === symbol);
+      if (!Array.isArray(rules) || !rules.length || rules.some((name) => !Object.hasOwn(grammar.rules, name)) || !declaredSymbol || !Number.isSafeInteger(value) || value <= 0) throw new TypeError('a symbol preference needs existing rules, symbol and positive integer weight');
       let changes = 0;
       const rewrite = (node) => {
         if (Array.isArray(node)) return node.map(rewrite);

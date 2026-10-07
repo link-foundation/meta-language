@@ -51,7 +51,13 @@
     "field_list": "_field_list",
     "field_sep": "_field_sep",
     "contextual_keyword": "_contextual_keyword",
-    "block_comment_extra": "_block_comment_extra"
+    "block_comment_extra": "_block_comment_extra",
+    "block_comment_start": "_block_comment_start",
+    "block_comment_content": "_block_comment_content",
+    "block_comment_end": "_block_comment_end",
+    "block_string_start": "_block_string_start",
+    "block_string_content": "_block_string_content",
+    "block_string_end": "_block_string_end"
   },
   "matches": [
     {

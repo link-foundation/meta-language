@@ -760,6 +760,10 @@ export function importTreeSitterNative(source, options = {}) {
     else if (sources.size > 1) clashes.push(`${name} (${[...sources].join(', ')})`);
     else if (!sources.has(name)) kinds.push({ name, sourceName: [...sources][0] });
   }
+  for (const sourceName of externals.filter(scanned)) {
+    const name = nameOf(sourceName);
+    if (!scannerRules.has(name) && name !== sourceName && !kinds.some((kind) => kind.name === name)) kinds.push({ name, sourceName });
+  }
   for (const [name, sources] of sourcesOf) if (sources.length > 1) clashes.push(`${name} (${sources.join(', ')})`);
   if (clashes.length > 0) throw parseError(FORMAT, `upstream names read the same natively: ${clashes.join('; ')}`);
   return {

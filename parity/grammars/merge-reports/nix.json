@@ -1,0 +1,220 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "nix",
+  "native": "native-nix",
+  "sources": [
+    {
+      "id": "tree-sitter-nix",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-nix 0.3.0",
+      "repository": "https://github.com/nix-community/tree-sitter-nix",
+      "revision": "ea1d87f7996be1329ef6555dcacfa63a69bd55c6",
+      "path": "src/grammar.json",
+      "sha256": "68a6a80898ef0adb5ab655e05b991ce5d8a3718f6837bc773f0ea306c3a414f6",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/nix.lino",
+    "sha256": "c0adec5921330eff8a8f6ea668a3c0c862b12df5aef59a795ba7465f4214b797",
+    "ports": {
+      "path": "src/scanner.c",
+      "file": "parity/grammars/sources/tree-sitter-nix-0.3.0.scanner.c.gz",
+      "sha256": "45e12521e8be62ea47525417c64d9372fa34e9e12bff643c430b8b3607be9d56",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-nix-0.3.0.LICENSE"
+    },
+    "scanners": [
+      {
+        "name": "string_fragment",
+        "tokens": [
+          "string_fragment"
+        ]
+      },
+      {
+        "name": "indented_string_fragment",
+        "tokens": [
+          "indented_string_fragment"
+        ]
+      }
+    ],
+    "immediate": [
+      "string_fragment",
+      "_indented_string_fragment",
+      "path_fragment",
+      "dollar_escape",
+      "_indented_dollar_escape"
+    ]
+  },
+  "rules": 56,
+  "keywords": [
+    "assert",
+    "else",
+    "if",
+    "in",
+    "inherit",
+    "let",
+    "rec",
+    "then",
+    "with"
+  ],
+  "renamed": [
+    {
+      "source": "_expression",
+      "native": "expression"
+    },
+    {
+      "source": "integer_expression",
+      "native": "integer_literal_expression"
+    },
+    {
+      "source": "_hpath_start",
+      "native": "home_path_initial_fragment"
+    },
+    {
+      "source": "hpath_expression",
+      "native": "home_path_expression"
+    },
+    {
+      "source": "spath_expression",
+      "native": "search_path_expression"
+    },
+    {
+      "source": "uri_expression",
+      "native": "resource_identifier_expression"
+    },
+    {
+      "source": "_expr_function_expression",
+      "native": "expression_function_expression"
+    },
+    {
+      "source": "function_expression",
+      "native": "anonymous_function_expression"
+    },
+    {
+      "source": "formals",
+      "native": "formal_parameter_list"
+    },
+    {
+      "source": "formal",
+      "native": "formal_parameter"
+    },
+    {
+      "source": "_expr_if",
+      "native": "conditional_expression_body"
+    },
+    {
+      "source": "_expr_op",
+      "native": "expression_operator"
+    },
+    {
+      "source": "has_attr_expression",
+      "native": "has_attribute_expression"
+    },
+    {
+      "source": "_expr_apply_expression",
+      "native": "expression_apply_expression"
+    },
+    {
+      "source": "_expr_select_expression",
+      "native": "expression_select_expression"
+    },
+    {
+      "source": "_expr_simple",
+      "native": "expression_simple"
+    },
+    {
+      "source": "attrset_expression",
+      "native": "attribute_set_expression"
+    },
+    {
+      "source": "let_attrset_expression",
+      "native": "local_attribute_set_expression"
+    },
+    {
+      "source": "rec_attrset_expression",
+      "native": "recursive_attribute_set_expression"
+    },
+    {
+      "source": "_indented_escape_sequence",
+      "native": "indented_escape_sequence"
+    },
+    {
+      "source": "binding",
+      "native": "attribute_binding"
+    },
+    {
+      "source": "inherit",
+      "native": "attribute_inheritance_clause"
+    },
+    {
+      "source": "inherit_from",
+      "native": "attribute_inheritance_source_clause"
+    },
+    {
+      "source": "attrpath",
+      "native": "attribute_path"
+    },
+    {
+      "source": "inherited_attrs",
+      "native": "inherited_attribute_list"
+    },
+    {
+      "source": "_immediate_interpolation",
+      "native": "immediate_interpolation"
+    },
+    {
+      "source": "_indented_dollar_escape",
+      "native": "indented_dollar_escape"
+    },
+    {
+      "source": "_path_start",
+      "native": "path_initial_fragment"
+    }
+  ],
+  "expandedWords": [
+    "attr",
+    "expr",
+    "op",
+    "rec"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "keyword",
+        "concept": "grammar.keyword"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 51
+  },
+  "sourceTransforms": [
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "path_expression",
+        "hpath_expression"
+      ],
+      "symbol": "path_fragment",
+      "value": 1,
+      "reason": "An immediately adjacent path fragment continues the source path before a competing path-start token can form a function application; whitespace still separates paths through the immediate external token boundary."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}
