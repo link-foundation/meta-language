@@ -1765,6 +1765,94 @@
         [3,null,"}",0,49,50,""]
       ],
       "embedded": []
+    },
+    "Lua": {
+      "grammars": {
+        "native-lua": {
+          "version": "1.0.0",
+          "parserSha256": "6859d2aaf58389ce7297ad3ad2262fc9ba8463d7c26d436addcbed13f236ecba"
+        }
+      },
+      "oracleGrammars": {
+        "lua": {
+          "version": "0.5.0",
+          "parserSha256": "933206d96a78f7785c13b2600182f1527dcd755c200b1271bb5bc4d8da4b17b3"
+        }
+      },
+      "sourceSha256": "af9a70ad44eea6b728dacdb249e271130a036b158ab3bde87923eebe1cb357b0",
+      "recoverySourceSha256": "cf807c14503bdd064a78ed40d79cedf301bf90879b425274254cb7fcc5bedfc8",
+      "positive": [
+        [0,null,"chunk",1,0,95,""],
+        [1,null,"comment",1,0,8,"X"],
+        [2,"start","--",0,0,2,""],
+        [2,"content","comment_content",1,2,8,""],
+        [1,"local_declaration","function_declaration",1,9,49,""],
+        [2,null,"local",0,9,14,""],
+        [2,null,"function",0,15,23,""],
+        [2,"name","identifier",1,24,25,""],
+        [2,"parameters","parameters",1,25,28,""],
+        [3,null,"(",0,25,26,""],
+        [3,"name","identifier",1,26,27,""],
+        [3,null,")",0,27,28,""],
+        [2,"body","block",1,29,45,""],
+        [3,null,"return_statement",1,29,45,""],
+        [4,null,"return",0,29,35,""],
+        [4,null,"expression_list",1,36,45,""],
+        [5,null,"binary_expression",1,36,45,""],
+        [6,"left","identifier",1,36,37,""],
+        [6,"operator","..",0,38,40,""],
+        [6,"right","string",1,41,45,""],
+        [7,"start","\"",0,41,42,""],
+        [7,"content","string_content",1,42,44,""],
+        [7,"end","\"",0,44,45,""],
+        [2,null,"end",0,46,49,""],
+        [1,null,"comment",1,50,63,"X"],
+        [2,"start","[[",0,50,54,""],
+        [2,"content","comment_content",1,54,61,""],
+        [2,"end","]]",0,61,63,""],
+        [1,"local_declaration","variable_declaration",1,64,94,""],
+        [2,null,"local",0,64,69,""],
+        [2,null,"assignment_statement",1,70,94,""],
+        [3,null,"variable_list",1,70,71,""],
+        [4,"name","identifier",1,70,71,""],
+        [3,"operator","=",0,72,73,""],
+        [3,null,"expression_list",1,74,94,""],
+        [4,"value","table_constructor",1,74,94,""],
+        [5,null,"{",0,74,75,""],
+        [5,null,"field",1,76,81,""],
+        [6,"name","identifier",1,76,77,""],
+        [6,null,"=",0,78,79,""],
+        [6,"value","number",1,80,81,""],
+        [5,null,",",0,81,82,""],
+        [5,null,"field",1,83,92,""],
+        [6,null,"[",0,83,84,""],
+        [6,"name","number",1,84,85,""],
+        [6,null,"]",0,85,86,""],
+        [6,"operator","=",0,87,88,""],
+        [6,"value","string",1,89,92,""],
+        [7,"start","\"",0,89,90,""],
+        [7,"content","string_content",1,90,91,""],
+        [7,"end","\"",0,91,92,""],
+        [5,null,"}",0,93,94,""]
+      ],
+      "recovery": [
+        [0,null,"chunk",1,0,32,""],
+        [1,"local_declaration","function_declaration",1,0,31,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"function",0,6,14,""],
+        [2,"name","identifier",1,15,16,""],
+        [2,"parameters","parameters",1,16,18,""],
+        [3,null,"(",0,16,17,""],
+        [3,"name","identifier",1,17,18,""],
+        [3,null,")",0,18,18,"M"],
+        [2,"body","block",1,19,27,""],
+        [3,null,"return_statement",1,19,27,""],
+        [4,null,"return",0,19,25,""],
+        [4,null,"expression_list",1,26,27,""],
+        [5,null,"identifier",1,26,27,""],
+        [2,null,"end",0,28,31,""]
+      ],
+      "embedded": []
     }
   },
   "embeddedFixtures": {

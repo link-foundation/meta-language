@@ -32,6 +32,17 @@ const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/
 
 export const VISION_REQUIREMENTS = Object.freeze([
   {
+    id: 'I195-GRAMMAR-NATIVE-LUA',
+    area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/lua.json',
+    construct: 'generated native Lua grammar with shared long-bracket scanner data',
+    expectedBehavior:
+      'The automatic import pipeline generates the canonical native Lua grammar from pinned tree-sitter-lua 0.5.0 sources and records its naming decisions and scanner provenance. Both executors match the independent oracle on the focused fixture and every input in the pinned upstream corpus, preserve every accepted source byte, and reject the invalid sources. The ordinary Lua parse uses the shipped native grammar in both packages; the Rust oracle crate is a development dependency. Long strings and block comments share generated scanner operations for opening, content and closing tokens, including empty content, repeated delimiter counts, Unicode, embedded candidate closers, state reset, NUL rejection and the pinned scanner\'s eight-bit count behavior.',
+    assertions: ['nativeLuaGrammarIsCanonicalLinks', 'nativeLuaTreesMatchOracle', 'nativeLuaTreesLossless', 'nativeLuaRejectsInvalidInput', 'nativeLuaUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-native-lua.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_lua.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

@@ -149,6 +149,30 @@ const REGEX_LITERAL_BRACKET = 'ECMA-262 Annex B.1.2 reads a { that opens no coun
 
 export const NATIVE_GRAMMARS = Object.freeze([
   {
+    id: 'lua', language: 'Lua', grammar: 'parity/grammars/native/lua.lino',
+    oracle: 'tree-sitter-lua 0.5.0',
+    sources: ['https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9'],
+    ...nativeGrammar('native-lua'),
+    matches: [
+      inventory.languages.find(({ name }) => name === 'Lua').source,
+      '', 'function f() end', 'function f() return 1 end',
+      'local x = [[]]', 'local x = [=[é😀]=]',
+      '--[[block]]\nlocal x = 1', '--[==[a]=]b]==]\nlocal x=2',
+      'local x = [=[a]==]b]=]', 'local x=[=[a]=]; local y=[==[b]==]',
+      'local function f(...) return ... end',
+      'for i=1,3 do print(i) end', 'for k,v in pairs(t) do print(k,v) end',
+      'if a then return 1 elseif b then return 2 else return 3 end',
+      'repeat x=x+1 until x>2', 'while ready do ready=false end',
+      'local t={a=1,[2]="b"}; t.a=t[2]', '::again:: goto again',
+      `local x=[${'='.repeat(255)}[é]${'='.repeat(255)}]`,
+      `local x=[${'='.repeat(256)}[é]]`,
+      'local x <const> = 1', '-- café\nreturn "é\\n"',
+    ],
+    divergences: [],
+    rejections: ['local x = [=[bad]]', 'local x = [==[bad]=]', 'local x = [[bad',
+      'local x = [=[bad]=', 'local x=[[a\0b]]', 'local x =', 'function f(', 'if a then', 'local = 1'],
+  },
+  {
     id: 'json',
     language: 'JSON',
     grammar: 'parity/grammars/native/json.lino',
@@ -1172,6 +1196,16 @@ export function buildNativeGrammarFixture(entry) {
 
 export const fixturePath = (entry) => `parity/fixtures/native-grammars/${entry.id}.json`;
 
+/** Pinned corpus inputs; these are source cases, not execution evidence. */
+export function buildNativeGrammarCorpusSources(id) {
+  const entry = grammarSourceOf(`native-${id}`);
+  return {
+    generatedBy: 'js/scripts/generate-native-grammar-fixtures.mjs',
+    sourceSha256: entry.corpus.sha256,
+    cases: corpusCases(entry),
+  };
+}
+
 export const DEFAULT_CST_PATH = 'parity/fixtures/native-default-cst-expected.json';
 
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
@@ -1285,6 +1319,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   let stale = 0;
   const outputs = [
     ...NATIVE_GRAMMARS.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
+    ['parity/fixtures/native-grammars/lua-corpus.json', () => buildNativeGrammarCorpusSources('lua')],
     [DEFAULT_CST_PATH, buildNativeDefaultCstExpected],
   ];
   for (const [relative, build] of outputs) {

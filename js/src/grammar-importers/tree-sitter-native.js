@@ -527,6 +527,17 @@ export function importTreeSitterNative(source, options = {}) {
       }
       case 'FIELD': return `(capture labeled ${enc(node.name)} ${expr(node.content, inToken, keywords)})`;
       case 'ALIAS': {
+        // An optional alias applies only when its symbol is present. Keep
+        // the alias directly around that symbol so a hidden rule still
+        // builds its named node, and the absent branch builds no empty node.
+        if (!inToken && node.content.type === 'CHOICE'
+          && node.content.members.length === 2
+          && node.content.members.some((member) => member.type === 'BLANK')
+          && node.content.members.some((member) => member.type === 'SYMBOL')) {
+          const members = node.content.members.map((member) => member.type === 'BLANK'
+            ? member : { ...node, content: member });
+          return expr({ ...node.content, members }, inToken, keywords, aliased);
+        }
         // tree-sitter aliases each step of an aliased sequence, so
         // TypeScript's `unique symbol` is two leaves of that kind, no node
         // over them.

@@ -158,6 +158,12 @@ Repeated delimiter counts use the same operation language. The raw-string and
 long-bracket cases in `parity/fixtures/scanner-counted-delimiters.json` verify
 matching marker counts, shorter closing candidates inside content, Unicode
 bytes and independent state for successive tokens in both executors.
+The split counted-delimiter family retains the opening count across separate
+opening, content and closing tokens. The generated Lua scanner uses it for
+long strings and block comments, with empty content and NUL rejection, and
+reproduces the pinned upstream scanner's eight-bit counts. The native Lua
+grammar and its corpus inputs are pinned alongside the other source grammars;
+CI compares both executors with their independent Lua oracles.
 
 The grammar representation and its executor cover the complete union of the
 grammar features that the inventoried sources use:

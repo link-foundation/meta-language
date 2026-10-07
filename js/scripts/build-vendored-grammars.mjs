@@ -95,7 +95,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
     // its non-ASCII node names then are not UTF-8 on Windows.
     dir: '.',
   },
-  lua: { crate: 'tree-sitter-lua', dir: '.' },
+  lua: { crate: 'tree-sitter-lua', dir: '.', oracle: true },
   make: { crate: 'tree-sitter-make', dir: '.', oracle: true },
   markdown: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown' },
   markdown_inline: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown-inline' },

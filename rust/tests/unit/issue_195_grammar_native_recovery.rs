@@ -17,7 +17,12 @@ use super::cst_sexpression::{normalize, render_network};
 use super::issue_195_native_grammar_rows::{cases, parser, source};
 use super::issue_195_observations::{Observation, record};
 
-const GRAMMARS: [(&str, &str, &str); 21] = [
+const GRAMMARS: [(&str, &str, &str); 22] = [
+    (
+        "lua",
+        include_str!("../../../parity/grammars/native/lua.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/lua.json"),
+    ),
     (
         "json",
         include_str!("../../../parity/grammars/native/json.lino"),

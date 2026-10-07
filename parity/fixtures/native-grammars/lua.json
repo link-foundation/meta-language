@@ -1,0 +1,581 @@
+{
+  "schemaVersion": 1,
+  "id": "lua",
+  "language": "Lua",
+  "grammar": "parity/grammars/native/lua.lino",
+  "oracle": "tree-sitter-lua 0.5.0",
+  "sources": [
+    "https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9"
+  ],
+  "hidden": [],
+  "anonymous": [
+    "unnamed_token"
+  ],
+  "extras": [
+    "comment"
+  ],
+  "oracleKinds": {
+    "statement_block_body": "_block",
+    "variable_assignment_list": "_variable_assignment_varlist",
+    "assigned_expression_list": "_variable_assignment_explist",
+    "go_to_statement": "goto_statement",
+    "else_if_statement": "elseif_statement",
+    "name_list": "_name_list",
+    "local_function_declaration": "_local_function_declaration",
+    "global_function_declaration": "_global_function_declaration",
+    "function_name": "_function_name",
+    "function_name_prefix_expression": "_function_name_prefix_expression",
+    "function_name_dot_index_expression": "_function_name_dot_index_expression",
+    "function_name_method_index_expression": "_function_name_method_index_expression",
+    "global_variable_declaration": "_global_variable_declaration",
+    "variable_assignment": "_variable_assignment",
+    "attributed_name_list": "_att_name_list",
+    "global_implicit_variable_declaration": "_global_implicit_variable_declaration",
+    "attribute_body": "_attrib",
+    "expression_list_body": "_expression_list",
+    "null_value": "nil",
+    "false_value": "false",
+    "true_value": "true",
+    "quote_string": "_quote_string",
+    "double_quote_string_content": "_doublequote_string_content",
+    "single_quote_string_content": "_singlequote_string_content",
+    "block_string": "_block_string",
+    "variadic_expression": "vararg_expression",
+    "function_body": "_function_body",
+    "parameter_list": "parameters",
+    "parameter_list_body": "_parameter_list",
+    "variadic_parameter": "_vararg_parameter",
+    "prefix_expression": "_prefix_expression",
+    "argument_list": "arguments",
+    "field_list": "_field_list",
+    "field_sep": "_field_sep",
+    "contextual_keyword": "_contextual_keyword"
+  },
+  "matches": [
+    {
+      "source": "-- café\nlocal function f(x) return x .. \"é\" end\n--[[ block ]]\nlocal t = { a = 1, [2] = \"b\" }\n",
+      "rows": [
+        [0,null,"chunk",1,0,95,""],
+        [1,null,"comment",1,0,8,"X"],
+        [2,"start","--",0,0,2,""],
+        [2,"content","comment_content",1,2,8,""],
+        [1,"local_declaration","function_declaration",1,9,49,""],
+        [2,null,"local",0,9,14,""],
+        [2,null,"function",0,15,23,""],
+        [2,"name","identifier",1,24,25,""],
+        [2,"parameters","parameters",1,25,28,""],
+        [3,null,"(",0,25,26,""],
+        [3,"name","identifier",1,26,27,""],
+        [3,null,")",0,27,28,""],
+        [2,"body","block",1,29,45,""],
+        [3,null,"return_statement",1,29,45,""],
+        [4,null,"return",0,29,35,""],
+        [4,null,"expression_list",1,36,45,""],
+        [5,null,"binary_expression",1,36,45,""],
+        [6,"left","identifier",1,36,37,""],
+        [6,"operator","..",0,38,40,""],
+        [6,"right","string",1,41,45,""],
+        [7,"start","\"",0,41,42,""],
+        [7,"content","string_content",1,42,44,""],
+        [7,"end","\"",0,44,45,""],
+        [2,null,"end",0,46,49,""],
+        [1,null,"comment",1,50,63,"X"],
+        [2,"start","[[",0,50,54,""],
+        [2,"content","comment_content",1,54,61,""],
+        [2,"end","]]",0,61,63,""],
+        [1,"local_declaration","variable_declaration",1,64,94,""],
+        [2,null,"local",0,64,69,""],
+        [2,null,"assignment_statement",1,70,94,""],
+        [3,null,"variable_list",1,70,71,""],
+        [4,"name","identifier",1,70,71,""],
+        [3,"operator","=",0,72,73,""],
+        [3,null,"expression_list",1,74,94,""],
+        [4,"value","table_constructor",1,74,94,""],
+        [5,null,"{",0,74,75,""],
+        [5,null,"field",1,76,81,""],
+        [6,"name","identifier",1,76,77,""],
+        [6,null,"=",0,78,79,""],
+        [6,"value","number",1,80,81,""],
+        [5,null,",",0,81,82,""],
+        [5,null,"field",1,83,92,""],
+        [6,null,"[",0,83,84,""],
+        [6,"name","number",1,84,85,""],
+        [6,null,"]",0,85,86,""],
+        [6,"operator","=",0,87,88,""],
+        [6,"value","string",1,89,92,""],
+        [7,"start","\"",0,89,90,""],
+        [7,"content","string_content",1,90,91,""],
+        [7,"end","\"",0,91,92,""],
+        [5,null,"}",0,93,94,""]
+      ]
+    },
+    {
+      "source": "",
+      "rows": [
+        [0,null,"chunk",1,0,0,""]
+      ]
+    },
+    {
+      "source": "function f() end",
+      "rows": [
+        [0,null,"chunk",1,0,16,""],
+        [1,null,"function_declaration",1,0,16,""],
+        [2,null,"function",0,0,8,""],
+        [2,"name","identifier",1,9,10,""],
+        [2,"parameters","parameters",1,10,12,""],
+        [3,null,"(",0,10,11,""],
+        [3,null,")",0,11,12,""],
+        [2,null,"end",0,13,16,""]
+      ]
+    },
+    {
+      "source": "function f() return 1 end",
+      "rows": [
+        [0,null,"chunk",1,0,25,""],
+        [1,null,"function_declaration",1,0,25,""],
+        [2,null,"function",0,0,8,""],
+        [2,"name","identifier",1,9,10,""],
+        [2,"parameters","parameters",1,10,12,""],
+        [3,null,"(",0,10,11,""],
+        [3,null,")",0,11,12,""],
+        [2,"body","block",1,13,21,""],
+        [3,null,"return_statement",1,13,21,""],
+        [4,null,"return",0,13,19,""],
+        [4,null,"expression_list",1,20,21,""],
+        [5,null,"number",1,20,21,""],
+        [2,null,"end",0,22,25,""]
+      ]
+    },
+    {
+      "source": "local x = [[]]",
+      "rows": [
+        [0,null,"chunk",1,0,14,""],
+        [1,"local_declaration","variable_declaration",1,0,14,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"assignment_statement",1,6,14,""],
+        [3,null,"variable_list",1,6,7,""],
+        [4,"name","identifier",1,6,7,""],
+        [3,"operator","=",0,8,9,""],
+        [3,null,"expression_list",1,10,14,""],
+        [4,"value","string",1,10,14,""],
+        [5,"start","[[",0,10,12,""],
+        [5,"content","string_content",1,12,12,""],
+        [5,"end","]]",0,12,14,""]
+      ]
+    },
+    {
+      "source": "local x = [=[é😀]=]",
+      "rows": [
+        [0,null,"chunk",1,0,22,""],
+        [1,"local_declaration","variable_declaration",1,0,22,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"assignment_statement",1,6,22,""],
+        [3,null,"variable_list",1,6,7,""],
+        [4,"name","identifier",1,6,7,""],
+        [3,"operator","=",0,8,9,""],
+        [3,null,"expression_list",1,10,22,""],
+        [4,"value","string",1,10,22,""],
+        [5,"start","[[",0,10,13,""],
+        [5,"content","string_content",1,13,19,""],
+        [5,"end","]]",0,19,22,""]
+      ]
+    },
+    {
+      "source": "--[[block]]\nlocal x = 1",
+      "rows": [
+        [0,null,"chunk",1,0,23,""],
+        [1,null,"comment",1,0,11,"X"],
+        [2,"start","[[",0,0,4,""],
+        [2,"content","comment_content",1,4,9,""],
+        [2,"end","]]",0,9,11,""],
+        [1,"local_declaration","variable_declaration",1,12,23,""],
+        [2,null,"local",0,12,17,""],
+        [2,null,"assignment_statement",1,18,23,""],
+        [3,null,"variable_list",1,18,19,""],
+        [4,"name","identifier",1,18,19,""],
+        [3,"operator","=",0,20,21,""],
+        [3,null,"expression_list",1,22,23,""],
+        [4,"value","number",1,22,23,""]
+      ]
+    },
+    {
+      "source": "--[==[a]=]b]==]\nlocal x=2",
+      "rows": [
+        [0,null,"chunk",1,0,25,""],
+        [1,null,"comment",1,0,15,"X"],
+        [2,"start","[[",0,0,6,""],
+        [2,"content","comment_content",1,6,11,""],
+        [2,"end","]]",0,11,15,""],
+        [1,"local_declaration","variable_declaration",1,16,25,""],
+        [2,null,"local",0,16,21,""],
+        [2,null,"assignment_statement",1,22,25,""],
+        [3,null,"variable_list",1,22,23,""],
+        [4,"name","identifier",1,22,23,""],
+        [3,"operator","=",0,23,24,""],
+        [3,null,"expression_list",1,24,25,""],
+        [4,"value","number",1,24,25,""]
+      ]
+    },
+    {
+      "source": "local x = [=[a]==]b]=]",
+      "rows": [
+        [0,null,"chunk",1,0,22,""],
+        [1,"local_declaration","variable_declaration",1,0,22,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"assignment_statement",1,6,22,""],
+        [3,null,"variable_list",1,6,7,""],
+        [4,"name","identifier",1,6,7,""],
+        [3,"operator","=",0,8,9,""],
+        [3,null,"expression_list",1,10,22,""],
+        [4,"value","string",1,10,22,""],
+        [5,"start","[[",0,10,13,""],
+        [5,"content","string_content",1,13,19,""],
+        [5,"end","]]",0,19,22,""]
+      ]
+    },
+    {
+      "source": "local x=[=[a]=]; local y=[==[b]==]",
+      "rows": [
+        [0,null,"chunk",1,0,34,""],
+        [1,"local_declaration","variable_declaration",1,0,15,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"assignment_statement",1,6,15,""],
+        [3,null,"variable_list",1,6,7,""],
+        [4,"name","identifier",1,6,7,""],
+        [3,"operator","=",0,7,8,""],
+        [3,null,"expression_list",1,8,15,""],
+        [4,"value","string",1,8,15,""],
+        [5,"start","[[",0,8,11,""],
+        [5,"content","string_content",1,11,12,""],
+        [5,"end","]]",0,12,15,""],
+        [1,null,"empty_statement",1,15,16,""],
+        [2,null,";",0,15,16,""],
+        [1,"local_declaration","variable_declaration",1,17,34,""],
+        [2,null,"local",0,17,22,""],
+        [2,null,"assignment_statement",1,23,34,""],
+        [3,null,"variable_list",1,23,24,""],
+        [4,"name","identifier",1,23,24,""],
+        [3,"operator","=",0,24,25,""],
+        [3,null,"expression_list",1,25,34,""],
+        [4,"value","string",1,25,34,""],
+        [5,"start","[[",0,25,29,""],
+        [5,"content","string_content",1,29,30,""],
+        [5,"end","]]",0,30,34,""]
+      ]
+    },
+    {
+      "source": "local function f(...) return ... end",
+      "rows": [
+        [0,null,"chunk",1,0,36,""],
+        [1,"local_declaration","function_declaration",1,0,36,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"function",0,6,14,""],
+        [2,"name","identifier",1,15,16,""],
+        [2,"parameters","parameters",1,16,21,""],
+        [3,null,"(",0,16,17,""],
+        [3,null,"vararg_expression",1,17,20,""],
+        [3,null,")",0,20,21,""],
+        [2,"body","block",1,22,32,""],
+        [3,null,"return_statement",1,22,32,""],
+        [4,null,"return",0,22,28,""],
+        [4,null,"expression_list",1,29,32,""],
+        [5,null,"vararg_expression",1,29,32,""],
+        [2,null,"end",0,33,36,""]
+      ]
+    },
+    {
+      "source": "for i=1,3 do print(i) end",
+      "rows": [
+        [0,null,"chunk",1,0,25,""],
+        [1,null,"for_statement",1,0,25,""],
+        [2,null,"for",0,0,3,""],
+        [2,"clause","for_numeric_clause",1,4,9,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,"operator","=",0,5,6,""],
+        [3,"start","number",1,6,7,""],
+        [3,null,",",0,7,8,""],
+        [3,"end","number",1,8,9,""],
+        [2,null,"do",0,10,12,""],
+        [2,"body","block",1,13,21,""],
+        [3,null,"function_call",1,13,21,""],
+        [4,"name","identifier",1,13,18,""],
+        [4,"arguments","arguments",1,18,21,""],
+        [5,null,"(",0,18,19,""],
+        [5,null,"identifier",1,19,20,""],
+        [5,null,")",0,20,21,""],
+        [2,null,"end",0,22,25,""]
+      ]
+    },
+    {
+      "source": "for k,v in pairs(t) do print(k,v) end",
+      "rows": [
+        [0,null,"chunk",1,0,37,""],
+        [1,null,"for_statement",1,0,37,""],
+        [2,null,"for",0,0,3,""],
+        [2,"clause","for_generic_clause",1,4,19,""],
+        [3,null,"variable_list",1,4,7,""],
+        [4,"name","identifier",1,4,5,""],
+        [4,null,",",0,5,6,""],
+        [4,"name","identifier",1,6,7,""],
+        [3,null,"in",0,8,10,""],
+        [3,null,"expression_list",1,11,19,""],
+        [4,null,"function_call",1,11,19,""],
+        [5,"name","identifier",1,11,16,""],
+        [5,"arguments","arguments",1,16,19,""],
+        [6,null,"(",0,16,17,""],
+        [6,null,"identifier",1,17,18,""],
+        [6,null,")",0,18,19,""],
+        [2,null,"do",0,20,22,""],
+        [2,"body","block",1,23,33,""],
+        [3,null,"function_call",1,23,33,""],
+        [4,"name","identifier",1,23,28,""],
+        [4,"arguments","arguments",1,28,33,""],
+        [5,null,"(",0,28,29,""],
+        [5,null,"identifier",1,29,30,""],
+        [5,null,",",0,30,31,""],
+        [5,null,"identifier",1,31,32,""],
+        [5,null,")",0,32,33,""],
+        [2,null,"end",0,34,37,""]
+      ]
+    },
+    {
+      "source": "if a then return 1 elseif b then return 2 else return 3 end",
+      "rows": [
+        [0,null,"chunk",1,0,59,""],
+        [1,null,"if_statement",1,0,59,""],
+        [2,null,"if",0,0,2,""],
+        [2,"condition","identifier",1,3,4,""],
+        [2,null,"then",0,5,9,""],
+        [2,"consequence","block",1,10,18,""],
+        [3,null,"return_statement",1,10,18,""],
+        [4,null,"return",0,10,16,""],
+        [4,null,"expression_list",1,17,18,""],
+        [5,null,"number",1,17,18,""],
+        [2,"alternative","elseif_statement",1,19,41,""],
+        [3,null,"elseif",0,19,25,""],
+        [3,"condition","identifier",1,26,27,""],
+        [3,null,"then",0,28,32,""],
+        [3,"consequence","block",1,33,41,""],
+        [4,null,"return_statement",1,33,41,""],
+        [5,null,"return",0,33,39,""],
+        [5,null,"expression_list",1,40,41,""],
+        [6,null,"number",1,40,41,""],
+        [2,"alternative","else_statement",1,42,55,""],
+        [3,null,"else",0,42,46,""],
+        [3,"body","block",1,47,55,""],
+        [4,null,"return_statement",1,47,55,""],
+        [5,null,"return",0,47,53,""],
+        [5,null,"expression_list",1,54,55,""],
+        [6,null,"number",1,54,55,""],
+        [2,null,"end",0,56,59,""]
+      ]
+    },
+    {
+      "source": "repeat x=x+1 until x>2",
+      "rows": [
+        [0,null,"chunk",1,0,22,""],
+        [1,null,"repeat_statement",1,0,22,""],
+        [2,null,"repeat",0,0,6,""],
+        [2,"body","block",1,7,12,""],
+        [3,null,"assignment_statement",1,7,12,""],
+        [4,null,"variable_list",1,7,8,""],
+        [5,"name","identifier",1,7,8,""],
+        [4,"operator","=",0,8,9,""],
+        [4,null,"expression_list",1,9,12,""],
+        [5,"value","binary_expression",1,9,12,""],
+        [6,"left","identifier",1,9,10,""],
+        [6,"operator","+",0,10,11,""],
+        [6,"right","number",1,11,12,""],
+        [2,null,"until",0,13,18,""],
+        [2,"condition","binary_expression",1,19,22,""],
+        [3,"left","identifier",1,19,20,""],
+        [3,"operator",">",0,20,21,""],
+        [3,"right","number",1,21,22,""]
+      ]
+    },
+    {
+      "source": "while ready do ready=false end",
+      "rows": [
+        [0,null,"chunk",1,0,30,""],
+        [1,null,"while_statement",1,0,30,""],
+        [2,null,"while",0,0,5,""],
+        [2,"condition","identifier",1,6,11,""],
+        [2,null,"do",0,12,14,""],
+        [2,"body","block",1,15,26,""],
+        [3,null,"assignment_statement",1,15,26,""],
+        [4,null,"variable_list",1,15,20,""],
+        [5,"name","identifier",1,15,20,""],
+        [4,"operator","=",0,20,21,""],
+        [4,null,"expression_list",1,21,26,""],
+        [5,"value","false",1,21,26,""],
+        [2,null,"end",0,27,30,""]
+      ]
+    },
+    {
+      "source": "local t={a=1,[2]=\"b\"}; t.a=t[2]",
+      "rows": [
+        [0,null,"chunk",1,0,31,""],
+        [1,"local_declaration","variable_declaration",1,0,21,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"assignment_statement",1,6,21,""],
+        [3,null,"variable_list",1,6,7,""],
+        [4,"name","identifier",1,6,7,""],
+        [3,"operator","=",0,7,8,""],
+        [3,null,"expression_list",1,8,21,""],
+        [4,"value","table_constructor",1,8,21,""],
+        [5,null,"{",0,8,9,""],
+        [5,null,"field",1,9,12,""],
+        [6,"name","identifier",1,9,10,""],
+        [6,null,"=",0,10,11,""],
+        [6,"value","number",1,11,12,""],
+        [5,null,",",0,12,13,""],
+        [5,null,"field",1,13,20,""],
+        [6,null,"[",0,13,14,""],
+        [6,"name","number",1,14,15,""],
+        [6,null,"]",0,15,16,""],
+        [6,"operator","=",0,16,17,""],
+        [6,"value","string",1,17,20,""],
+        [7,"start","\"",0,17,18,""],
+        [7,"content","string_content",1,18,19,""],
+        [7,"end","\"",0,19,20,""],
+        [5,null,"}",0,20,21,""],
+        [1,null,"empty_statement",1,21,22,""],
+        [2,null,";",0,21,22,""],
+        [1,null,"assignment_statement",1,23,31,""],
+        [2,null,"variable_list",1,23,26,""],
+        [3,"name","dot_index_expression",1,23,26,""],
+        [4,"table","identifier",1,23,24,""],
+        [4,null,".",0,24,25,""],
+        [4,"field","identifier",1,25,26,""],
+        [2,"operator","=",0,26,27,""],
+        [2,null,"expression_list",1,27,31,""],
+        [3,"value","bracket_index_expression",1,27,31,""],
+        [4,"table","identifier",1,27,28,""],
+        [4,null,"[",0,28,29,""],
+        [4,"field","number",1,29,30,""],
+        [4,null,"]",0,30,31,""]
+      ]
+    },
+    {
+      "source": "::again:: goto again",
+      "rows": [
+        [0,null,"chunk",1,0,20,""],
+        [1,null,"label_statement",1,0,9,""],
+        [2,null,"::",0,0,2,""],
+        [2,null,"identifier",1,2,7,""],
+        [2,null,"::",0,7,9,""],
+        [1,null,"goto_statement",1,10,20,""],
+        [2,null,"goto",0,10,14,""],
+        [2,null,"identifier",1,15,20,""]
+      ]
+    },
+    {
+      "source": "local x=[===============================================================================================================================================================================================================================================================[é]===============================================================================================================================================================================================================================================================]",
+      "rows": [
+        [0,null,"chunk",1,0,524,""],
+        [1,"local_declaration","variable_declaration",1,0,524,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"assignment_statement",1,6,524,""],
+        [3,null,"variable_list",1,6,7,""],
+        [4,"name","identifier",1,6,7,""],
+        [3,"operator","=",0,7,8,""],
+        [3,null,"expression_list",1,8,524,""],
+        [4,"value","string",1,8,524,""],
+        [5,"start","[[",0,8,265,""],
+        [5,"content","string_content",1,265,267,""],
+        [5,"end","]]",0,267,524,""]
+      ]
+    },
+    {
+      "source": "local x=[================================================================================================================================================================================================================================================================[é]]",
+      "rows": [
+        [0,null,"chunk",1,0,270,""],
+        [1,"local_declaration","variable_declaration",1,0,270,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"assignment_statement",1,6,270,""],
+        [3,null,"variable_list",1,6,7,""],
+        [4,"name","identifier",1,6,7,""],
+        [3,"operator","=",0,7,8,""],
+        [3,null,"expression_list",1,8,270,""],
+        [4,"value","string",1,8,270,""],
+        [5,"start","[[",0,8,266,""],
+        [5,"content","string_content",1,266,268,""],
+        [5,"end","]]",0,268,270,""]
+      ]
+    },
+    {
+      "source": "local x <const> = 1",
+      "rows": [
+        [0,null,"chunk",1,0,19,""],
+        [1,"local_declaration","variable_declaration",1,0,19,""],
+        [2,null,"local",0,0,5,""],
+        [2,null,"assignment_statement",1,6,19,""],
+        [3,null,"variable_list",1,6,15,""],
+        [4,"name","identifier",1,6,7,""],
+        [4,"attribute","attribute",1,8,15,""],
+        [5,null,"<",0,8,9,""],
+        [5,null,"identifier",1,9,14,""],
+        [5,null,">",0,14,15,""],
+        [3,"operator","=",0,16,17,""],
+        [3,null,"expression_list",1,18,19,""],
+        [4,"value","number",1,18,19,""]
+      ]
+    },
+    {
+      "source": "-- café\nreturn \"é\\n\"",
+      "rows": [
+        [0,null,"chunk",1,0,22,""],
+        [1,null,"comment",1,0,8,"X"],
+        [2,"start","--",0,0,2,""],
+        [2,"content","comment_content",1,2,8,""],
+        [1,null,"return_statement",1,9,22,""],
+        [2,null,"return",0,9,15,""],
+        [2,null,"expression_list",1,16,22,""],
+        [3,null,"string",1,16,22,""],
+        [4,"start","\"",0,16,17,""],
+        [4,"content","string_content",1,17,21,""],
+        [5,null,"escape_sequence",1,19,21,""],
+        [4,"end","\"",0,21,22,""]
+      ]
+    }
+  ],
+  "divergences": [],
+  "rejections": [
+    {
+      "source": "local x = [=[bad]]",
+      "recovered": "(chunk local_declaration:(variable_declaration \"local\" (assignment_statement (variable_list ~\" \" name:(identifier \"x\")) ~\" \" operator:\"=\" (expression_list value:(string ~\" \" start:(\"'[[\" \"[=[\") (MISSING@13 string_content) (MISSING@13 \"']]\"))))) (ERROR@13..18 \"bad]]\"))"
+    },
+    {
+      "source": "local x = [==[bad]=]",
+      "recovered": "(chunk local_declaration:(variable_declaration \"local\" (assignment_statement (variable_list ~\" \" name:(identifier \"x\")) ~\" \" operator:\"=\" (expression_list value:(string ~\" \" start:(\"'[[\" \"[==[\") (MISSING@14 string_content) (MISSING@14 \"']]\"))))) (ERROR@14..20 \"bad]=]\"))"
+    },
+    {
+      "source": "local x = [[bad",
+      "recovered": "(chunk local_declaration:(variable_declaration \"local\" (assignment_statement (variable_list ~\" \" name:(identifier \"x\")) ~\" \" operator:\"=\" (expression_list value:(string ~\" \" start:(\"'[[\" \"[[\") (MISSING@12 string_content) (MISSING@12 \"']]\"))))) (ERROR@12..15 \"bad\"))"
+    },
+    {
+      "source": "local x = [=[bad]=",
+      "recovered": "(chunk local_declaration:(variable_declaration \"local\" (assignment_statement (variable_list ~\" \" name:(identifier \"x\")) ~\" \" operator:\"=\" (expression_list value:(string ~\" \" start:(\"'[[\" \"[=[\") (MISSING@13 string_content) (MISSING@13 \"']]\"))))) (ERROR@13..18 \"bad]=\"))"
+    },
+    {
+      "source": "local x=[[a\u0000b]]",
+      "recovered": "(chunk local_declaration:(variable_declaration \"local\" (assignment_statement (variable_list ~\" \" name:(identifier \"x\")) operator:\"=\" (expression_list value:(string start:(\"'[[\" \"[[\") (MISSING@10 string_content) (MISSING@10 \"']]\"))))) (ERROR@10..15 \"a\\u0000b]]\"))"
+    },
+    {
+      "source": "local x =",
+      "recovered": "(chunk local_declaration:(variable_declaration \"local\" (assignment_statement (variable_list ~\" \" name:(identifier \"x\")) ~\" \" operator:\"=\" (expression_list (MISSING@9 null_value)))))"
+    },
+    {
+      "source": "function f(",
+      "recovered": "(chunk (function_declaration \"function\" ~\" \" name:(identifier \"f\") parameters:(parameter_list \"(\" (MISSING@11 \")\")) (MISSING@11 \"end\")))"
+    },
+    {
+      "source": "if a then",
+      "recovered": "(chunk (if_statement \"if\" ~\" \" condition:(identifier \"a\") ~\" \" \"then\" (MISSING@9 \"end\")))"
+    },
+    {
+      "source": "local = 1",
+      "recovered": "(chunk local_declaration:(variable_declaration \"local\" (assignment_statement (variable_list (MISSING@5 identifier) ~\" \") operator:\"=\" (expression_list ~\" \" value:(number \"1\")))))"
+    }
+  ]
+}

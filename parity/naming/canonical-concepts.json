@@ -1185,6 +1185,10 @@
           "name": "expression"
         },
         {
+          "source": "native:lua",
+          "name": "expression"
+        },
+        {
           "source": "native:rust",
           "name": "expression"
         },
@@ -1287,6 +1291,10 @@
         },
         {
           "source": "native:lean",
+          "name": "number"
+        },
+        {
+          "source": "native:lua",
           "name": "number"
         },
         {
@@ -1403,6 +1411,10 @@
           "name": "identifier"
         },
         {
+          "source": "native:lua",
+          "name": "identifier"
+        },
+        {
           "source": "native:proto",
           "name": "identifier"
         },
@@ -1462,6 +1474,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "statement"
+        },
+        {
+          "source": "native:lua",
           "name": "statement"
         },
         {
@@ -1758,6 +1774,10 @@
           "name": "string"
         },
         {
+          "source": "native:lua",
+          "name": "string"
+        },
+        {
           "source": "native:make",
           "name": "string"
         },
@@ -1882,6 +1902,10 @@
         {
           "source": "native:json5",
           "name": "null"
+        },
+        {
+          "source": "native:lua",
+          "name": "null_value"
         },
         {
           "source": "native:tsx",
@@ -2021,6 +2045,10 @@
         },
         {
           "source": "native:lean",
+          "name": "comment"
+        },
+        {
+          "source": "native:lua",
           "name": "comment"
         },
         {
@@ -2548,6 +2576,10 @@
           "name": "escape_sequence"
         },
         {
+          "source": "native:lua",
+          "name": "escape_sequence"
+        },
+        {
           "source": "native:proto",
           "name": "escape_sequence"
         },
@@ -2610,6 +2642,10 @@
         {
           "source": "native:json5",
           "name": "false"
+        },
+        {
+          "source": "native:lua",
+          "name": "false_value"
         },
         {
           "source": "native:proto",
@@ -3262,6 +3298,10 @@
         {
           "source": "native:json5",
           "name": "true"
+        },
+        {
+          "source": "native:lua",
+          "name": "true_value"
         },
         {
           "source": "native:proto",
@@ -5402,6 +5442,10 @@
           "name": "function_definition"
         },
         {
+          "source": "native:lua",
+          "name": "function_definition"
+        },
+        {
           "source": "native:solidity",
           "name": "function_definition"
         }
@@ -5453,6 +5497,10 @@
         },
         {
           "source": "native:lean",
+          "name": "declaration"
+        },
+        {
+          "source": "native:lua",
           "name": "declaration"
         },
         {
@@ -6558,6 +6606,10 @@
           "name": "variadic_parameter"
         },
         {
+          "source": "native:lua",
+          "name": "variadic_parameter"
+        },
+        {
           "source": "native:rust",
           "name": "variadic_parameter"
         }
@@ -6580,6 +6632,10 @@
         },
         {
           "source": "native:go",
+          "name": "parameter_list"
+        },
+        {
+          "source": "native:lua",
           "name": "parameter_list"
         },
         {
@@ -6812,6 +6868,10 @@
           "name": "if_statement"
         },
         {
+          "source": "native:lua",
+          "name": "if_statement"
+        },
+        {
           "source": "native:make",
           "name": "conditional"
         },
@@ -6936,6 +6996,10 @@
           "name": "while_statement"
         },
         {
+          "source": "native:lua",
+          "name": "while_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "while_statement"
         },
@@ -6973,6 +7037,10 @@
           "name": "do_statement"
         },
         {
+          "source": "native:lua",
+          "name": "do_statement"
+        },
+        {
           "source": "native:tsx",
           "name": "do_statement"
         },
@@ -7007,6 +7075,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "for_statement"
+        },
+        {
+          "source": "native:lua",
           "name": "for_statement"
         },
         {
@@ -7068,6 +7140,10 @@
           "name": "return_statement"
         },
         {
+          "source": "native:lua",
+          "name": "return_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "return_statement"
         },
@@ -7106,6 +7182,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "break_statement"
+        },
+        {
+          "source": "native:lua",
           "name": "break_statement"
         },
         {
@@ -7180,6 +7260,10 @@
         },
         {
           "source": "native:go",
+          "name": "go_to_statement"
+        },
+        {
+          "source": "native:lua",
           "name": "go_to_statement"
         }
       ],
@@ -7410,6 +7494,10 @@
           "name": "unary_expression"
         },
         {
+          "source": "native:lua",
+          "name": "unary_expression"
+        },
+        {
           "source": "native:rust",
           "name": "unary_expression"
         },
@@ -7456,6 +7544,10 @@
         },
         {
           "source": "native:lean",
+          "name": "binary_expression"
+        },
+        {
+          "source": "native:lua",
           "name": "binary_expression"
         },
         {
@@ -7878,6 +7970,10 @@
           "name": "arguments"
         },
         {
+          "source": "native:lua",
+          "name": "argument_list"
+        },
+        {
           "source": "native:make",
           "name": "arguments"
         },
@@ -7969,6 +8065,10 @@
         {
           "source": "native:lean",
           "name": "parenthesized"
+        },
+        {
+          "source": "native:lua",
+          "name": "parenthesized_expression"
         },
         {
           "source": "native:rust",
@@ -8302,6 +8402,10 @@
           "name": "word_characters"
         },
         {
+          "source": "native:lua",
+          "name": "word_characters"
+        },
+        {
           "source": "native:make",
           "name": "word_characters"
         },
@@ -8381,6 +8485,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "empty_statement"
+        },
+        {
+          "source": "native:lua",
           "name": "empty_statement"
         },
         {
@@ -11432,6 +11540,10 @@
           "name": "hash_bang_line"
         },
         {
+          "source": "native:lua",
+          "name": "hash_bang_line"
+        },
+        {
           "source": "native:tsx",
           "name": "hash_bang_line"
         },
@@ -11803,6 +11915,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "variable_declaration"
+        },
+        {
+          "source": "native:lua",
           "name": "variable_declaration"
         },
         {
@@ -13026,6 +13142,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "function_declaration"
+        },
+        {
+          "source": "native:lua",
           "name": "function_declaration"
         },
         {
@@ -24409,12 +24529,16 @@
       "role": "concept",
       "definition": "A rule for an assignment statement, the construct the upstream grammar names assignment_statement.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "assignment_statement"
+        },
+        {
+          "source": "native:lua",
           "name": "assignment_statement"
         }
       ],
@@ -26133,12 +26257,16 @@
       "role": "concept",
       "definition": "A rule for a field, the construct the upstream grammar names field.",
       "constraints": [
-        "Only the native GraphQL grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:graphql",
+          "name": "field"
+        },
+        {
+          "source": "native:lua",
           "name": "field"
         }
       ],
@@ -26173,6 +26301,10 @@
       "sourceAliases": [
         {
           "source": "native:graphql",
+          "name": "variable"
+        },
+        {
+          "source": "native:lua",
           "name": "variable"
         },
         {
@@ -27365,10 +27497,14 @@
       "role": "concept",
       "definition": "A rule for a variable assignment, the construct the upstream grammar names variable_assignment.",
       "constraints": [
-        "Only the native Make grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "variable_assignment"
+        },
         {
           "source": "native:make",
           "name": "variable_assignment"
@@ -29320,10 +29456,14 @@
       "role": "concept",
       "definition": "A rule for a function body, the construct the upstream grammar names function_body.",
       "constraints": [
-        "Only the native Solidity grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "function_body"
+        },
         {
           "source": "native:solidity",
           "name": "function_body"
@@ -29769,6 +29909,635 @@
         {
           "source": "native:solidity",
           "name": "string_immediate_element_inside_quote"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.chunk",
+      "phrase": "chunk",
+      "role": "concept",
+      "definition": "A rule for a chunk, the construct the upstream grammar names chunk.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "chunk"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.statement-block-body",
+      "phrase": "statement block body",
+      "role": "concept",
+      "definition": "A rule for a statement block body, the construct the upstream grammar names _block.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "statement_block_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-assignment-list",
+      "phrase": "variable assignment list",
+      "role": "concept",
+      "definition": "A rule for a variable assignment list, the construct the upstream grammar names _variable_assignment_varlist.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "variable_assignment_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.assigned-expression-list",
+      "phrase": "assigned expression list",
+      "role": "concept",
+      "definition": "A rule for an assigned expression list, the construct the upstream grammar names _variable_assignment_explist.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "assigned_expression_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.label-statement",
+      "phrase": "label statement",
+      "role": "concept",
+      "definition": "A rule for a label statement, the construct the upstream grammar names label_statement.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "label_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.repeat-statement",
+      "phrase": "repeat statement",
+      "role": "concept",
+      "definition": "A rule for a repeat statement, the construct the upstream grammar names repeat_statement.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "repeat_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.else-if-statement",
+      "phrase": "else if statement",
+      "role": "concept",
+      "definition": "A rule for an else if statement, the construct the upstream grammar names elseif_statement.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "else_if_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.else-statement",
+      "phrase": "else statement",
+      "role": "concept",
+      "definition": "A rule for an else statement, the construct the upstream grammar names else_statement.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "else_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-generic-clause",
+      "phrase": "for generic clause",
+      "role": "concept",
+      "definition": "A rule for a for generic clause, the construct the upstream grammar names for_generic_clause.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "for_generic_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-numeric-clause",
+      "phrase": "for numeric clause",
+      "role": "concept",
+      "definition": "A rule for a for numeric clause, the construct the upstream grammar names for_numeric_clause.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "for_numeric_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.name-list",
+      "phrase": "name list",
+      "role": "concept",
+      "definition": "A rule for a name list, the construct the upstream grammar names _name_list.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "name_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.local-function-declaration",
+      "phrase": "local function declaration",
+      "role": "concept",
+      "definition": "A rule for a local function declaration, the construct the upstream grammar names _local_function_declaration.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "local_function_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-function-declaration",
+      "phrase": "global function declaration",
+      "role": "concept",
+      "definition": "A rule for a global function declaration, the construct the upstream grammar names _global_function_declaration.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "global_function_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-name",
+      "phrase": "function name",
+      "role": "concept",
+      "definition": "A rule for a function name, the construct the upstream grammar names _function_name.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "function_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-name-prefix-expression",
+      "phrase": "function name prefix expression",
+      "role": "concept",
+      "definition": "A rule for a function name prefix expression, the construct the upstream grammar names _function_name_prefix_expression.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "function_name_prefix_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-name-dot-index-expression",
+      "phrase": "function name dot index expression",
+      "role": "concept",
+      "definition": "A rule for a function name dot index expression, the construct the upstream grammar names _function_name_dot_index_expression.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "function_name_dot_index_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-name-method-index-expression",
+      "phrase": "function name method index expression",
+      "role": "concept",
+      "definition": "A rule for a function name method index expression, the construct the upstream grammar names _function_name_method_index_expression.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "function_name_method_index_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-variable-declaration",
+      "phrase": "global variable declaration",
+      "role": "concept",
+      "definition": "A rule for a global variable declaration, the construct the upstream grammar names _global_variable_declaration.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "global_variable_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attributed-name-list",
+      "phrase": "attributed name list",
+      "role": "concept",
+      "definition": "A rule for an attributed name list, the construct the upstream grammar names _att_name_list.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "attributed_name_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-implicit-variable-declaration",
+      "phrase": "global implicit variable declaration",
+      "role": "concept",
+      "definition": "A rule for a global implicit variable declaration, the construct the upstream grammar names _global_implicit_variable_declaration.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "global_implicit_variable_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-body",
+      "phrase": "attribute body",
+      "role": "concept",
+      "definition": "A rule for an attribute body, the construct the upstream grammar names _attrib.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "attribute_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-list-body",
+      "phrase": "expression list body",
+      "role": "concept",
+      "definition": "A rule for an expression list body, the construct the upstream grammar names _expression_list.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "expression_list_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.quote-string",
+      "phrase": "quote string",
+      "role": "concept",
+      "definition": "A rule for a quote string, the construct the upstream grammar names _quote_string.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "quote_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.double-quote-string-content",
+      "phrase": "double quote string content",
+      "role": "concept",
+      "definition": "A rule for a double quote string content, the construct the upstream grammar names _doublequote_string_content.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "double_quote_string_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.single-quote-string-content",
+      "phrase": "single quote string content",
+      "role": "concept",
+      "definition": "A rule for a single quote string content, the construct the upstream grammar names _singlequote_string_content.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "single_quote_string_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.block-string",
+      "phrase": "block string",
+      "role": "concept",
+      "definition": "A rule for a block string, the construct the upstream grammar names _block_string.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "block_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variadic-expression",
+      "phrase": "variadic expression",
+      "role": "concept",
+      "definition": "A rule for a variadic expression, the construct the upstream grammar names vararg_expression.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "variadic_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-list-body",
+      "phrase": "parameter list body",
+      "role": "concept",
+      "definition": "A rule for a parameter list body, the construct the upstream grammar names _parameter_list.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "parameter_list_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.prefix-expression",
+      "phrase": "prefix expression",
+      "role": "concept",
+      "definition": "A rule for a prefix expression, the construct the upstream grammar names _prefix_expression.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "prefix_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bracket-index-expression",
+      "phrase": "bracket index expression",
+      "role": "concept",
+      "definition": "A rule for a bracket index expression, the construct the upstream grammar names bracket_index_expression.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "bracket_index_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dot-index-expression",
+      "phrase": "dot index expression",
+      "role": "concept",
+      "definition": "A rule for a dot index expression, the construct the upstream grammar names dot_index_expression.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "dot_index_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-call",
+      "phrase": "function call",
+      "role": "concept",
+      "definition": "A rule for a function call, the construct the upstream grammar names function_call.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "function_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.method-index-expression",
+      "phrase": "method index expression",
+      "role": "concept",
+      "definition": "A rule for a method index expression, the construct the upstream grammar names method_index_expression.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "method_index_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.table-constructor",
+      "phrase": "table constructor",
+      "role": "concept",
+      "definition": "A rule for a table constructor, the construct the upstream grammar names table_constructor.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "table_constructor"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-list",
+      "phrase": "field list",
+      "role": "concept",
+      "definition": "A rule for a field list, the construct the upstream grammar names _field_list.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "field_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-sep",
+      "phrase": "field sep",
+      "role": "concept",
+      "definition": "A rule for a field sep, the construct the upstream grammar names _field_sep.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "field_sep"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.contextual-keyword",
+      "phrase": "contextual keyword",
+      "role": "concept",
+      "definition": "A rule for a contextual keyword, the construct the upstream grammar names _contextual_keyword.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "contextual_keyword"
         }
       ],
       "formerNames": []

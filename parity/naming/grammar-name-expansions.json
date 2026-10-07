@@ -408,6 +408,34 @@
         "yul_boolean": "grammar.yul-boolean-literal",
         "yul_continue": "grammar.yul-continue-statement"
       }
+    },
+    "lua": {
+      "names": {
+        "_block": "statement_block_body",
+        "_expression_list": "expression_list_body",
+        "_att_name_list": "attributed_name_list",
+        "_attrib": "attribute_body",
+        "_variable_assignment_varlist": "variable_assignment_list",
+        "_variable_assignment_explist": "assigned_expression_list",
+        "vararg_expression": "variadic_expression",
+        "_vararg_parameter": "variadic_parameter",
+        "elseif_statement": "else_if_statement",
+        "nil": "null_value",
+        "false": "false_value",
+        "true": "true_value",
+        "parameters": "parameter_list",
+        "_parameter_list": "parameter_list_body",
+        "arguments": "argument_list",
+        "_doublequote_string_content": "double_quote_string_content",
+        "_singlequote_string_content": "single_quote_string_content"
+      },
+      "concepts": {
+        "nil": "grammar.null",
+        "false": "grammar.false-value",
+        "true": "grammar.true-value",
+        "parameters": "grammar.parameter-list",
+        "arguments": "grammar.argument-list"
+      }
     }
   },
   "concepts": {

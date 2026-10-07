@@ -275,7 +275,7 @@ impl<'a> Rows<'a> {
 
 /// The rows of the pinned tree-sitter oracle's tree of `source`, and whether
 /// the oracle recovers from an error in it.
-fn oracle_rows(language: &tree_sitter::Language, source: &str) -> (Vec<Value>, bool) {
+pub fn oracle_rows(language: &tree_sitter::Language, source: &str) -> (Vec<Value>, bool) {
     fn visit(
         node: tree_sitter::Node<'_>,
         depth: usize,

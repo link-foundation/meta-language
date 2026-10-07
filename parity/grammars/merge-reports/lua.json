@@ -1,0 +1,267 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "lua",
+  "native": "native-lua",
+  "sources": [
+    {
+      "id": "tree-sitter-lua",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-lua 0.5.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-lua",
+      "revision": "10fe0054734eec83049514ea2e718b2a56acd0c9",
+      "path": "src/grammar.json",
+      "sha256": "016172714e10e7b5a3b25433cfd2a9626c983c6ede228fcc8301537da516e462",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/lua.lino",
+    "sha256": "a2408d8a0ffe56ff84cf12950cda309fa5c300db5c0b06f45f0bb222dda2fff3",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "35bbd630b5a7421d46d2e91185eeea09bf78565d44cb676b63ca20d0f1b54bbd"
+    },
+    "scanners": [
+      {
+        "name": "block_string",
+        "tokens": [
+          "block_string_start",
+          "block_string_content",
+          "block_string_end"
+        ]
+      },
+      {
+        "name": "block_comment",
+        "tokens": [
+          "block_comment_start",
+          "block_comment_content",
+          "block_comment_end"
+        ]
+      }
+    ],
+    "immediate": [
+      "_block_string_content",
+      "_block_string_end",
+      "_block_comment_content",
+      "_block_comment_end"
+    ]
+  },
+  "rules": 72,
+  "keywords": [
+    "and",
+    "break",
+    "do",
+    "else",
+    "elseif",
+    "end",
+    "false",
+    "for",
+    "function",
+    "global",
+    "goto",
+    "if",
+    "in",
+    "local",
+    "nil",
+    "not",
+    "or",
+    "repeat",
+    "return",
+    "then",
+    "true",
+    "until",
+    "while"
+  ],
+  "renamed": [
+    {
+      "source": "_block",
+      "native": "statement_block_body"
+    },
+    {
+      "source": "_variable_assignment_varlist",
+      "native": "variable_assignment_list"
+    },
+    {
+      "source": "_variable_assignment_explist",
+      "native": "assigned_expression_list"
+    },
+    {
+      "source": "goto_statement",
+      "native": "go_to_statement"
+    },
+    {
+      "source": "elseif_statement",
+      "native": "else_if_statement"
+    },
+    {
+      "source": "_name_list",
+      "native": "name_list"
+    },
+    {
+      "source": "_local_function_declaration",
+      "native": "local_function_declaration"
+    },
+    {
+      "source": "_global_function_declaration",
+      "native": "global_function_declaration"
+    },
+    {
+      "source": "_function_name",
+      "native": "function_name"
+    },
+    {
+      "source": "_function_name_prefix_expression",
+      "native": "function_name_prefix_expression"
+    },
+    {
+      "source": "_function_name_dot_index_expression",
+      "native": "function_name_dot_index_expression"
+    },
+    {
+      "source": "_function_name_method_index_expression",
+      "native": "function_name_method_index_expression"
+    },
+    {
+      "source": "_global_variable_declaration",
+      "native": "global_variable_declaration"
+    },
+    {
+      "source": "_variable_assignment",
+      "native": "variable_assignment"
+    },
+    {
+      "source": "_att_name_list",
+      "native": "attributed_name_list"
+    },
+    {
+      "source": "_global_implicit_variable_declaration",
+      "native": "global_implicit_variable_declaration"
+    },
+    {
+      "source": "_attrib",
+      "native": "attribute_body"
+    },
+    {
+      "source": "_expression_list",
+      "native": "expression_list_body"
+    },
+    {
+      "source": "nil",
+      "native": "null_value"
+    },
+    {
+      "source": "false",
+      "native": "false_value"
+    },
+    {
+      "source": "true",
+      "native": "true_value"
+    },
+    {
+      "source": "_quote_string",
+      "native": "quote_string"
+    },
+    {
+      "source": "_doublequote_string_content",
+      "native": "double_quote_string_content"
+    },
+    {
+      "source": "_singlequote_string_content",
+      "native": "single_quote_string_content"
+    },
+    {
+      "source": "_block_string",
+      "native": "block_string"
+    },
+    {
+      "source": "vararg_expression",
+      "native": "variadic_expression"
+    },
+    {
+      "source": "_function_body",
+      "native": "function_body"
+    },
+    {
+      "source": "parameters",
+      "native": "parameter_list"
+    },
+    {
+      "source": "_parameter_list",
+      "native": "parameter_list_body"
+    },
+    {
+      "source": "_vararg_parameter",
+      "native": "variadic_parameter"
+    },
+    {
+      "source": "_prefix_expression",
+      "native": "prefix_expression"
+    },
+    {
+      "source": "arguments",
+      "native": "argument_list"
+    },
+    {
+      "source": "_field_list",
+      "native": "field_list"
+    },
+    {
+      "source": "_field_sep",
+      "native": "field_sep"
+    },
+    {
+      "source": "_contextual_keyword",
+      "native": "contextual_keyword"
+    }
+  ],
+  "expandedWords": [
+    "goto"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "null_value",
+        "concept": "grammar.null"
+      },
+      {
+        "rule": "false_value",
+        "concept": "grammar.false-value"
+      },
+      {
+        "rule": "true_value",
+        "concept": "grammar.true-value"
+      },
+      {
+        "rule": "number",
+        "concept": "grammar.number"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 62
+  },
+  "approximations": [],
+  "unsupported": []
+}

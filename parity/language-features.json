@@ -900,7 +900,11 @@
           "parity/fixtures/grammar-feature-union.json",
           "rust/tests/unit/issue_195_grammar_scanner_families.rs",
           "parity/fixtures/scanner-families.json",
-          "parity/fixtures/scanner-counted-delimiters.json"
+          "parity/fixtures/scanner-counted-delimiters.json",
+          "rust/tests/unit/issue_195_grammar_native_lua.rs",
+          "parity/grammars/native/lua.lino",
+          "parity/fixtures/native-grammars/lua.json",
+          "parity/fixtures/native-grammars/lua-corpus.json"
         ]
       },
       "javascript": {
@@ -913,7 +917,11 @@
           "js/scripts/scanner-families.mjs",
           "js/tests/issue-195-grammar-scanner-families.test.js",
           "parity/fixtures/scanner-families.json",
-          "parity/fixtures/scanner-counted-delimiters.json"
+          "parity/fixtures/scanner-counted-delimiters.json",
+          "js/tests/issue-195-grammar-native-lua.test.js",
+          "parity/grammars/native/lua.lino",
+          "parity/fixtures/native-grammars/lua.json",
+          "parity/fixtures/native-grammars/lua-corpus.json"
         ]
       }
     },

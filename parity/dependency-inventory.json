@@ -4464,7 +4464,7 @@
       },
       "role": "direct",
       "requirement": "=0.5.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.5.0",
       "evidence": "crates.io, tree-sitter-lua"
     },
@@ -7251,9 +7251,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/lua.wasm.gz@0.5.0",
+      "id": "vendored-grammar js/oracles/grammars/lua.wasm.gz@0.5.0",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/lua.wasm.gz",
+      "name": "js/oracles/grammars/lua.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],

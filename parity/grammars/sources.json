@@ -381,6 +381,41 @@
         "sha256": "b0ae17f8fa1fd43a11763e81d78381b28cf8815a280edc2582245e40910a3245"
       },
       "oracle": "solidity"
+    },
+    {
+      "id": "tree-sitter-lua",
+      "language": "lua",
+      "native": "native-lua",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-lua 0.5.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-lua",
+      "revision": "10fe0054734eec83049514ea2e718b2a56acd0c9",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-lua-0.5.0.grammar.json.gz",
+      "sha256": "016172714e10e7b5a3b25433cfd2a9626c983c6ede228fcc8301537da516e462",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-lua-0.5.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/lua.lino",
+        "sha256": "a2408d8a0ffe56ff84cf12950cda309fa5c300db5c0b06f45f0bb222dda2fff3",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "35bbd630b5a7421d46d2e91185eeea09bf78565d44cb676b63ca20d0f1b54bbd"
+        },
+        "generator": "js/experiments/build-lua-scanner.mjs",
+        "immediate": [
+          "_block_string_content",
+          "_block_string_end",
+          "_block_comment_content",
+          "_block_comment_end"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-lua-0.5.0.corpus.json.gz",
+        "sha256": "6a7dc603c2e77bf03e11e57e4f8f9f56ae914c6d9452331f6e049457aede95a4"
+      },
+      "oracle": "lua"
     }
   ]
 }

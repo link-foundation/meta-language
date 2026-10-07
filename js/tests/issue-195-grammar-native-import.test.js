@@ -11,6 +11,29 @@ import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
 const rule = (character, length = 80) => character.repeat(length);
 
+test('an alias of an optional hidden rule preserves its child node and builds no absent node', () => {
+  const grammar = {
+    name: 'optional_body',
+    rules: {
+      document: { type: 'SEQ', members: [
+        { type: 'ALIAS', named: true, value: 'block', content: { type: 'CHOICE', members: [
+          { type: 'SYMBOL', name: '_body' }, { type: 'BLANK' },
+        ] } },
+        { type: 'STRING', value: '!' },
+      ] },
+      _body: { type: 'SYMBOL', name: 'return_statement' },
+      return_statement: { type: 'SEQ', members: [
+        { type: 'STRING', value: 'return' }, { type: 'SYMBOL', name: 'number' },
+      ] },
+      number: { type: 'PATTERN', value: '[0-9]+' },
+    },
+  };
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(grammar))));
+  const nodes = (tree) => tree.type === 'node' ? [tree.kind, ...tree.children.flatMap(nodes)] : [];
+  assert.deepEqual(nodes(parser.parseTree('return1!').tree), ['document', 'block', 'return_statement']);
+  assert.deepEqual(nodes(parser.parseTree('!').tree), ['document']);
+});
+
 test('a corpus case ends at its longest line of dashes, as in tree-sitter test', () => {
   const corpus = [
     rule('='),

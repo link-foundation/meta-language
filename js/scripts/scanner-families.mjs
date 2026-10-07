@@ -58,18 +58,42 @@ export function countedDelimiterScanner({ name, token, prefix = '', marker, open
   return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) ${beginning}(while (next ${repeated}) (do (consume ${repeated}) (push delimiters (integer 1)))) (consume ${open}) (while (not atEnd) (do (if (next ${close}) (then (consume ${close}) (while (all (next ${repeated}) (less (depth candidate) (depth delimiters))) (do (consume ${repeated}) (push candidate (integer 1)))) (if (all (equal (depth candidate) (depth delimiters))${suffixCondition}) (then ${ending}${clear('candidate')} ${clear('delimiters')} (emit ${token}))) ${clear('candidate')}) (else advance)))) fail))\n`;
 }
 
+/** Separate opening, content and closing tokens with shared delimiter state. */
+export function splitCountedDelimiterScanner({ name, startToken, contentToken, endToken, prefix = '', marker, opening, closing, suffix = '', skipWhitespace = false, contentStops = [], countModulo = null }) {
+  for (const value of [name, startToken, contentToken, endToken]) identifier(value);
+  if (countModulo !== null && (!Number.isSafeInteger(countModulo) || countModulo < 2)) throw new TypeError('a scanner count modulus must be an integer of at least two');
+  const repeated = delimiter(marker);
+  const open = delimiter(opening);
+  const close = delimiter(closing);
+  const beginning = prefix ? `(consume ${delimiter(prefix)}) ` : '';
+  const ending = suffix ? `(consume ${delimiter(suffix)}) ` : '';
+  const suffixCondition = suffix ? ` (next ${literal(suffix)})` : '';
+  const clear = (stack) => `(while (greater (depth ${stack}) (integer 0)) (do (pop ${stack})))`;
+  const push = (stack) => `(push ${stack} (integer 1))${countModulo === null ? '' : ` (if (equal (depth ${stack}) (integer ${countModulo})) (then ${clear(stack)}))`}`;
+  const stop = contentStops.length === 0 ? '' : `(if (some ${contentStops.map((text) => `(next ${delimiter(text)})`).join(' ')}) (then fail)) `;
+  const markers = '(depth delimiters)';
+  const seen = '(depth candidate)';
+  const skip = skipWhitespace ? '(while (next (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))))) ' : '';
+  const collect = `(while (next ${repeated}) (do (consume ${repeated}) ${push('candidate')}))`;
+  const start = `(if (valid ${startToken}) (then ${skip}${beginning}(while (next ${repeated}) (do (consume ${repeated}) ${push('delimiters')})) (consume ${open}) (emit ${startToken})))`;
+  const content = `(if (valid ${contentToken}) (then (while (not atEnd) (do ${stop}(if (next ${close}) (then mark (consume ${close}) ${collect} (if (all (equal ${seen} ${markers})${suffixCondition}) (then ${clear('candidate')} (emit ${contentToken}))) ${clear('candidate')}) (else advance)))) fail))`;
+  const end = `(if (valid ${endToken}) (then (consume ${close}) ${collect} (if (not (equal ${seen} ${markers})) (then fail)) ${ending}${clear('candidate')} ${clear('delimiters')} (emit ${endToken})))`;
+  return `(scanner ${name} (tokens ${startToken} ${contentToken} ${endToken}) (operations ${start} ${content} ${end} fail))\n`;
+}
+
 /** Generate each scanner from a JSON family descriptor, rejecting unknown families. */
 export function scannerFamilies(descriptors) {
   const names = new Set();
   const tokens = new Set();
   return descriptors.map(({ family, ...options }) => {
-    if (names.has(options.name) || tokens.has(options.token) || (options.closeToken && (tokens.has(options.closeToken) || options.closeToken === options.token))) throw new TypeError('duplicate scanner name or token');
+    const declared = family === 'split-counted-delimiter' ? [options.startToken, options.contentToken, options.endToken] : [options.token, ...(options.closeToken ? [options.closeToken] : [])];
+    if (names.has(options.name) || new Set(declared).size !== declared.length || declared.some((token) => tokens.has(token))) throw new TypeError('duplicate scanner name or token');
     names.add(options.name);
-    tokens.add(options.token);
-    if (options.closeToken) tokens.add(options.closeToken);
+    for (const token of declared) tokens.add(token);
     if (family === 'delimited') return delimitedScanner(options);
     if (family === 'content') return contentScanner(options);
     if (family === 'counted-delimiter') return countedDelimiterScanner(options);
+    if (family === 'split-counted-delimiter') return splitCountedDelimiterScanner(options);
     throw new TypeError(`unknown scanner family ${JSON.stringify(family)}`);
   }).join('');
 }
