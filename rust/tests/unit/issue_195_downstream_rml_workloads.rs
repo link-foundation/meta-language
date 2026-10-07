@@ -495,6 +495,8 @@ fn the_fixture_inventories_the_workload_test_files_of_both_runtimes() {
     assert_eq!(
         workload_test_files(&fixture, Runtime::JavaScript),
         [
+            "js/tests/meta-language-rename.test.mjs",
+            "js/tests/meta-language-structure.test.mjs",
             "js/tests/meta-language-support.test.mjs",
             "js/tests/theory-network-linked.test.mjs",
             "js/tests/theory-network.test.mjs",
@@ -503,6 +505,8 @@ fn the_fixture_inventories_the_workload_test_files_of_both_runtimes() {
     assert_eq!(
         workload_test_files(&fixture, Runtime::Rust),
         [
+            "rust/tests/meta_language_rename_tests.rs",
+            "rust/tests/meta_language_structure_tests.rs",
             "rust/tests/meta_language_support_tests.rs",
             "rust/tests/theory_network_tests.rs",
         ]

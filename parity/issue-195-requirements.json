@@ -1873,17 +1873,17 @@
     "planned:repository-directive:i195-downstream-consumer-matrix": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: consumer matrix for relative-meta-logic and formal-ai",
-      "sha256": "a405275fc1b3eef7ad54402447806135bcca6554436a5199e346314649583c73"
+      "sha256": "6c167f1c72b6139c7176fa00a454b0852439f7bc4abfb7410cf1530c4749e9cc"
     },
     "planned:repository-directive:i195-downstream-rml-workloads": {
       "path": "parity/fixtures/rml-pr184-workloads.json",
       "selector": "docs/vision.md#downstream-consumers: relative-meta-logic workloads on clean installed artifacts",
-      "sha256": "84c3e6f0331be87731891685121fdb981c4cf88e7caa52a72fdb87028dbee9c1"
+      "sha256": "051f37eec0c8753664aaba350070076bc14b6e651c99affb7b21d296fc1384b1"
     },
     "planned:repository-directive:i195-downstream-rml-pr184-audit": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: current relative-meta-logic pull request 184 workload inventory",
-      "sha256": "a405275fc1b3eef7ad54402447806135bcca6554436a5199e346314649583c73"
+      "sha256": "6c167f1c72b6139c7176fa00a454b0852439f7bc4abfb7410cf1530c4749e9cc"
     },
     "planned:repository-directive:i195-downstream-formal-ai-workloads": {
       "path": "parity/fixtures/formal-ai-workloads.json",
@@ -1893,7 +1893,7 @@
     "planned:repository-directive:i195-downstream-typescript-translations": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: Rust, JavaScript and TypeScript semantic projection for formal-ai",
-      "sha256": "a405275fc1b3eef7ad54402447806135bcca6554436a5199e346314649583c73"
+      "sha256": "6c167f1c72b6139c7176fa00a454b0852439f7bc4abfb7410cf1530c4749e9cc"
     },
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",

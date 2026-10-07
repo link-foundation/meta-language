@@ -75,11 +75,15 @@ const failing = (result) => RML_WORKLOAD_ASSERTIONS.filter((assertion) => !resul
 
 test('the fixture inventories the workload test files of both runtimes', () => {
   assert.deepEqual(workloadTestFiles(fixture, 'javascript'), [
+    'js/tests/meta-language-rename.test.mjs',
+    'js/tests/meta-language-structure.test.mjs',
     'js/tests/meta-language-support.test.mjs',
     'js/tests/theory-network-linked.test.mjs',
     'js/tests/theory-network.test.mjs',
   ]);
   assert.deepEqual(workloadTestFiles(fixture, 'rust'), [
+    'rust/tests/meta_language_rename_tests.rs',
+    'rust/tests/meta_language_structure_tests.rs',
     'rust/tests/meta_language_support_tests.rs',
     'rust/tests/theory_network_tests.rs',
   ]);
