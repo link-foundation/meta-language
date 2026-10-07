@@ -144,3 +144,15 @@ export const hasRecovery = (rows) => rows.some((row) => /[EM]/u.test(row[6]));
 export function oracleRecovers(source, language) {
   return withOracleTree(source, language, (root) => root.hasError);
 }
+
+/** Compact assertion diagnostics retain the first differing row for every corpus failure. */
+export function nativeCorpusFailure(label, error) {
+  const { actual, expected } = error;
+  if (Array.isArray(actual) && Array.isArray(expected)) {
+    let index = 0;
+    while (index < Math.max(actual.length, expected.length) && JSON.stringify(actual[index]) === JSON.stringify(expected[index])) index += 1;
+    return `${label}: first difference ${index}: ${JSON.stringify({ actual: actual[index] ?? null, expected: expected[index] ?? null, actualLength: actual.length, expectedLength: expected.length })}`;
+  }
+  const compact = (value) => typeof value === 'string' && value.length > 120 ? { prefix: value.slice(0, 120), length: value.length } : value;
+  return `${label}: ${JSON.stringify({ actual: compact(actual), expected: compact(expected), message: error.message.slice(0, 250) })}`;
+}

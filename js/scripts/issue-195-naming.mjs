@@ -512,6 +512,7 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'native grammar concept references',
+    occurrences: true,
     files: NATIVE_GRAMMAR_FILES,
     extract: (text) => nativeRuleConcepts(text).map(({ concept }) => concept),
     describe: (text, file) =>
@@ -590,10 +591,10 @@ export const FORMER_NAME_TABLES = Object.freeze([
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
   const names = [];
-  for (const { inventory, files, extract, recordOf = (name) => name, words = false } of inventories) {
+  for (const { inventory, files, extract, recordOf = (name) => name, words = false, occurrences = false } of inventories) {
     for (const file of files) {
       const text = existsSync(path.join(root, file)) ? readFileSync(path.join(root, file), 'utf8') : '';
-      for (const name of new Set(extract(text, file))) names.push({ inventory, file, name, record: words ? null : recordOf(name) });
+      for (const name of occurrences ? extract(text, file) : new Set(extract(text, file))) names.push({ inventory, file, name, record: words ? null : recordOf(name) });
     }
   }
   return names;

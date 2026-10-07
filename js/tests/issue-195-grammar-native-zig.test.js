@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { LinkNetwork, compileGrammar, parseGrammarLinks, renderGrammarLinks, renderSyntaxTree } from '../src/index.js';
 import { NATIVE_GRAMMARS, buildNativeGrammarCorpusSources, buildNativeGrammarFixture, fixturePath, renderFixture } from '../scripts/generate-native-grammar-fixtures.mjs';
-import { nativeRows, oracleRows, oracleRecovers } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, oracleRows, oracleRecovers, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
@@ -70,7 +70,7 @@ test('native Zig matches the independent oracle on every pinned upstream corpus 
         assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'Zig'), label);
         assert.equal(text(outcome.tree), source, label);
       }
-    } catch (error) { failures.push(`${label}: ${error.message.slice(0, 250)}`); }
+    } catch (error) { failures.push(nativeCorpusFailure(label, error)); }
   }
   assert.deepEqual(failures, []);
   observe(['nativeZigUpstreamCorpusMatchesOracle'], context.name);

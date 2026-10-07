@@ -1180,7 +1180,14 @@
         "block_expression": "scope_block_expression"
       },
       "concepts": {
-        "boolean": "grammar.boolean-value"
+        "boolean": "grammar.boolean-value",
+        "_iteration_range_expression": "grammar.range-expression",
+        "_iteration_primary_type_expression": "grammar.primary-type-expression",
+        "_iteration_type_expression": "grammar.type-expression",
+        "_iteration_expression": "grammar.expression",
+        "_iteration_binary_expression": "grammar.binary-expression",
+        "_iteration_unary_expression": "grammar.unary-expression",
+        "_iteration_error_union_type": "grammar.error-union-type"
       },
       "sourceTransforms": [
         {
@@ -1191,6 +1198,71 @@
             "expression_statement"
           ],
           "reason": "On complete assignment statements the pinned parser chooses the variable-declaration alias before the equivalent expression-statement form; both alternatives remain operational."
+        },
+        {
+          "family": "prefer-optional-literal",
+          "rule": "container_field",
+          "literal": "comptime",
+          "value": 1,
+          "reason": "The pinned parser consumes the field modifier instead of grouping it inside an unnamed compile-time type expression. Keep both productions and prefer the complete parse that consumes the modifier."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "nullable_type",
+          "associativity": "none",
+          "value": 11,
+          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "pointer_type",
+          "associativity": "right",
+          "value": 11,
+          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "slice_type",
+          "associativity": "right",
+          "value": 11,
+          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "array_type",
+          "associativity": "right",
+          "value": 11,
+          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "error_union_type",
+          "associativity": "right",
+          "value": 11,
+          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "range_expression",
+            "primary_type_expression",
+            "type_expression",
+            "expression",
+            "binary_expression",
+            "unary_expression",
+            "error_union_type"
+          ],
+          "insertInto": [
+            "_for_prefix"
+          ],
+          "prefix": "_iteration_",
+          "opaqueRules": [
+            "unary_expression",
+            "binary_expression",
+            "range_expression",
+            "error_union_type"
+          ],
+          "reason": "The pinned parser resolves the overlapping for-prefix range syntax within its iteration context. Preserve every original production, concept and concrete kind in contextual variants; unary, binary, range and error-union operands retain the ordinary expression context."
         }
       ]
     },
@@ -1572,7 +1644,7 @@
       "grammar.syntax-quotation": [
         {
           "id": "grammar.syntax-quote",
-          "reason": "A Lean syntax quotation `(\u2026) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
+          "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
         }
       ],
       "grammar.yield-statement": [

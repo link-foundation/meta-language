@@ -14,7 +14,7 @@
       "license": "MIT"
     }
   ],
-  "rules": 109,
+  "rules": 116,
   "keywords": [
     "addrspace",
     "align",
@@ -274,6 +274,34 @@
     {
       "source": "_reserved_identifier",
       "native": "reserved_identifier"
+    },
+    {
+      "source": "_iteration_range_expression",
+      "native": "iteration_range_expression"
+    },
+    {
+      "source": "_iteration_primary_type_expression",
+      "native": "iteration_primary_type_expression"
+    },
+    {
+      "source": "_iteration_type_expression",
+      "native": "iteration_type_expression"
+    },
+    {
+      "source": "_iteration_expression",
+      "native": "iteration_expression"
+    },
+    {
+      "source": "_iteration_binary_expression",
+      "native": "iteration_binary_expression"
+    },
+    {
+      "source": "_iteration_unary_expression",
+      "native": "iteration_unary_expression"
+    },
+    {
+      "source": "_iteration_error_union_type",
+      "native": "iteration_error_union_type"
     }
   ],
   "expandedWords": [
@@ -325,9 +353,13 @@
       {
         "rule": "comment",
         "concept": "grammar.comment"
+      },
+      {
+        "rule": "iteration_expression",
+        "concept": "grammar.expression"
       }
     ],
-    "generated": 101
+    "generated": 107
   },
   "sourceTransforms": [
     {
@@ -338,6 +370,71 @@
         "expression_statement"
       ],
       "reason": "On complete assignment statements the pinned parser chooses the variable-declaration alias before the equivalent expression-statement form; both alternatives remain operational."
+    },
+    {
+      "family": "prefer-optional-literal",
+      "rule": "container_field",
+      "literal": "comptime",
+      "value": 1,
+      "reason": "The pinned parser consumes the field modifier instead of grouping it inside an unnamed compile-time type expression. Keep both productions and prefer the complete parse that consumes the modifier."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "nullable_type",
+      "associativity": "none",
+      "value": 11,
+      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "pointer_type",
+      "associativity": "right",
+      "value": 11,
+      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "slice_type",
+      "associativity": "right",
+      "value": 11,
+      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "array_type",
+      "associativity": "right",
+      "value": 11,
+      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "error_union_type",
+      "associativity": "right",
+      "value": 11,
+      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+    },
+    {
+      "family": "context-rule-variants",
+      "rules": [
+        "range_expression",
+        "primary_type_expression",
+        "type_expression",
+        "expression",
+        "binary_expression",
+        "unary_expression",
+        "error_union_type"
+      ],
+      "insertInto": [
+        "_for_prefix"
+      ],
+      "prefix": "_iteration_",
+      "opaqueRules": [
+        "unary_expression",
+        "binary_expression",
+        "range_expression",
+        "error_union_type"
+      ],
+      "reason": "The pinned parser resolves the overlapping for-prefix range syntax within its iteration context. Preserve every original production, concept and concrete kind in contextual variants; unary, binary, range and error-union operands retain the ordinary expression context."
     }
   ],
   "approximations": [],

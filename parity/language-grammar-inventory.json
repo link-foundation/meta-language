@@ -120,7 +120,7 @@
     "native-solidity": { "version": "1.0.0", "grammar": "parity/grammars/native/solidity.lino", "hidden": [], "anonymous": ["unnamed_token", "hex_digit"], "extras": ["comment"] },
     "native-toml": {"version": "1.0.0", "grammar": "parity/grammars/native/toml.lino", "hidden": [], "anonymous": ["unnamed_token"], "extras": ["comment"]},
     "native-zig": {"version": "1.0.0", "grammar": "parity/grammars/native/zig.lino", "hidden": [], "anonymous": ["unnamed_token", "identifier_body"], "extras": ["comment"]},
-    "native-pascal": {"version": "1.0.0", "grammar": "parity/grammars/native/pascal.lino", "hidden": ["space"], "anonymous": ["unnamed_token"], "extras": ["comment"]},
+    "native-pascal": {"version": "1.0.0", "grammar": "parity/grammars/native/pascal.lino", "hidden": [], "anonymous": ["unnamed_token", "space"], "extras": ["comment"]},
     "native-vb": {"version": "1.0.0", "grammar": "parity/grammars/native/vb.lino", "hidden": [], "anonymous": ["unnamed_token", "newline"], "extras": ["comment"]},
     "native-lua": { "version": "1.0.0", "grammar": "parity/grammars/native/lua.lino", "hidden": [], "anonymous": ["unnamed_token"], "extras": ["comment"] },
     "native-rust": { "version": "1.0.0", "grammar": "parity/grammars/native/rust.lino", "hidden": [], "anonymous": ["unnamed_token"], "extras": ["line_comment", "block_comment"] }

@@ -2949,7 +2949,7 @@
     {
       "grammar": "native-zig",
       "language": "zig",
-      "rules": 109,
+      "rules": 116,
       "shared": [
         {"rule":"source_file","concept":"grammar.source-file","languages":["go","graphql","proto","rocq","rust","solidity","vb","zig"]},
         {"rule":"variable_declaration","concept":"grammar.variable-declaration","languages":["go","javascript","lua","solidity","tsx","typescript","zig"]},
@@ -3003,6 +3003,10 @@
         {"rule":"identifier","concept":"grammar.identifier","languages":["c","go","java","javascript","lean","lua","pascal","proto","rocq","rust","solidity","tsx","typescript","vb","zig"]},
         {"rule":"reserved_identifier","concept":"grammar.reserved-identifier","languages":["java","javascript","rust","tsx","typescript","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","diff","go","graphql","ini","javascript","json","json5","lean","lua","make","pascal","proto","racket","rocq","rust","scheme","solidity","toml","tsx","typescript","vb","zig"]},
+        {"rule":"iteration_range_expression","concept":"grammar.range-expression","languages":["rust","zig"]},
+        {"rule":"iteration_expression","concept":"grammar.expression","languages":["c","go","java","javascript","lean","lua","pascal","rust","solidity","tsx","typescript","vb","zig"]},
+        {"rule":"iteration_binary_expression","concept":"grammar.binary-expression","languages":["c","go","java","javascript","lean","lua","rust","solidity","tsx","typescript","vb","zig"]},
+        {"rule":"iteration_unary_expression","concept":"grammar.unary-expression","languages":["c","go","java","javascript","lean","lua","pascal","rust","solidity","tsx","typescript","vb","zig"]},
         {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","go","java","javascript","lean","lua","make","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
@@ -3061,7 +3065,10 @@
         {"rule":"built_in_type","concept":"grammar.built-in-type"},
         {"rule":"error_type","concept":"grammar.error-type"},
         {"rule":"built_in_identifier","concept":"grammar.built-in-identifier"},
-        {"rule":"identifier_body","concept":"grammar.identifier-body"}
+        {"rule":"identifier_body","concept":"grammar.identifier-body"},
+        {"rule":"iteration_primary_type_expression","concept":"grammar.primary-type-expression"},
+        {"rule":"iteration_type_expression","concept":"grammar.type-expression"},
+        {"rule":"iteration_error_union_type","concept":"grammar.error-union-type"}
       ]
     }
   ],

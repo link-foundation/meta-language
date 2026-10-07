@@ -1215,6 +1215,10 @@
         {
           "source": "native:zig",
           "name": "expression"
+        },
+        {
+          "source": "native:zig",
+          "name": "iteration_expression"
         }
       ],
       "formerNames": []
@@ -7735,6 +7739,10 @@
         },
         {
           "source": "native:zig",
+          "name": "iteration_unary_expression"
+        },
+        {
+          "source": "native:zig",
           "name": "unary_expression"
         }
       ],
@@ -7797,6 +7805,10 @@
         {
           "source": "native:zig",
           "name": "binary_expression"
+        },
+        {
+          "source": "native:zig",
+          "name": "iteration_binary_expression"
         }
       ],
       "formerNames": []
@@ -10405,6 +10417,10 @@
         {
           "source": "native:rust",
           "name": "range_expression"
+        },
+        {
+          "source": "native:zig",
+          "name": "iteration_range_expression"
         },
         {
           "source": "native:zig",
@@ -32103,6 +32119,10 @@
       "sourceAliases": [
         {
           "source": "native:zig",
+          "name": "iteration_type_expression"
+        },
+        {
+          "source": "native:zig",
           "name": "type_expression"
         }
       ],
@@ -32118,6 +32138,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:zig",
+          "name": "iteration_primary_type_expression"
+        },
         {
           "source": "native:zig",
           "name": "primary_type_expression"
@@ -32155,6 +32179,10 @@
         {
           "source": "native:zig",
           "name": "error_union_type"
+        },
+        {
+          "source": "native:zig",
+          "name": "iteration_error_union_type"
         }
       ],
       "formerNames": []

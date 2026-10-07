@@ -49,802 +49,802 @@
     "inventory:LiNo": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"LiNo\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:LiNo": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"LiNo\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:txt": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"txt\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:txt": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"txt\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Markdown": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Markdown\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Markdown": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Markdown\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:PDF": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PDF\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:PDF": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PDF\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:DOCX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DOCX\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:DOCX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DOCX\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:JavaScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JavaScript\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:JavaScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JavaScript\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Rust": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rust\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Rust": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rust\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Lean": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lean\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Lean": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lean\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Rocq": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rocq\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Rocq": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rocq\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Python": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Python\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Python": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Python\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:C": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:C": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:C++": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C++\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:C++": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C++\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:C#": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C#\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:C#": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C#\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Java": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Java\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Java": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Java\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:TypeScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TypeScript\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:TypeScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TypeScript\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:TSX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TSX\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:TSX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TSX\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Visual Basic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Visual Basic\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Visual Basic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Visual Basic\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Delphi/Object Pascal": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Delphi/Object Pascal\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Delphi/Object Pascal": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Delphi/Object Pascal\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Go": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Go\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Go": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Go\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:R": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"R\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:R": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"R\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Ruby": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Ruby\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Ruby": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Ruby\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:PHP": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PHP\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:PHP": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PHP\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Swift": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Swift\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Swift": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Swift\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Kotlin": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Kotlin\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Kotlin": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Kotlin\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Scala": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Scala\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Scala": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Scala\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Lua": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lua\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Lua": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lua\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Perl": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Perl\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Perl": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Perl\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Haskell": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Haskell\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Haskell": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Haskell\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:OCaml": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"OCaml\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:OCaml": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"OCaml\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:OCaml Interface": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"OCaml Interface\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:OCaml Interface": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"OCaml Interface\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Zig": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Zig\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Zig": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Zig\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Bash": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Bash\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Bash": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Bash\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Dart": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Dart\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Dart": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Dart\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Agda": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Agda\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Agda": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Agda\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:CMake": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CMake\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:CMake": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CMake\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Diff": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Diff\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Diff": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Diff\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Elixir": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Elixir\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Elixir": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Elixir\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Elm": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Elm\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Elm": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Elm\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Erlang": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Erlang\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Erlang": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Erlang\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Groovy": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Groovy\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Groovy": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Groovy\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:HCL": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"HCL\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:HCL": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"HCL\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Make": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Make\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Make": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Make\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:MATLAB": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"MATLAB\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:MATLAB": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"MATLAB\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Nix": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Nix\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Nix": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Nix\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Odin": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Odin\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Odin": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Odin\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:PowerShell": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PowerShell\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:PowerShell": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PowerShell\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Racket": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Racket\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Racket": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Racket\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Regex": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Regex\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Regex": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Regex\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Scheme": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Scheme\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Scheme": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Scheme\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Solidity": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Solidity\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Solidity": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Solidity\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:sql-ansi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-ansi\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:sql-ansi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-ansi\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:sql-postgres": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-postgres\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:sql-postgres": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-postgres\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:sql-mysql": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-mysql\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:sql-mysql": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-mysql\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:sql-sqlite": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-sqlite\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:sql-sqlite": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-sqlite\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:sql-server": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-server\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:sql-server": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-server\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:sql-oracle": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-oracle\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:sql-oracle": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-oracle\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:sql-bigquery": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-bigquery\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:sql-bigquery": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-bigquery\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:sql-snowflake": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-snowflake\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:sql-snowflake": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-snowflake\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:HTML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"HTML\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:HTML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"HTML\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:CSS": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSS\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:CSS": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSS\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:JSON": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:JSON": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:YAML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"YAML\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:YAML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"YAML\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:TOML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TOML\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:TOML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TOML\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:XML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"XML\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:XML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"XML\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:DTD": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DTD\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:DTD": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DTD\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:INI": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"INI\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:INI": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"INI\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Protocol Buffers": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Protocol Buffers\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Protocol Buffers": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Protocol Buffers\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:GraphQL": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"GraphQL\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:GraphQL": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"GraphQL\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:CSV": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSV\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:CSV": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSV\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:JSON5": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON5\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:JSON5": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON5\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:English": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"English\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:English": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"English\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Mandarin Chinese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Mandarin Chinese\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Mandarin Chinese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Mandarin Chinese\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Hindi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Hindi\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Hindi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Hindi\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Spanish": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Spanish\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Spanish": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Spanish\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Modern Standard Arabic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Modern Standard Arabic\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Modern Standard Arabic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Modern Standard Arabic\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:French": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"French\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:French": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"French\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Bengali": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Bengali\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Bengali": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Bengali\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Portuguese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Portuguese\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Portuguese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Portuguese\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Russian": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Russian\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Russian": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Russian\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "inventory:Urdu": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Urdu\"]",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:cst-negative:Urdu": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Urdu\"].source + negativeMutation",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:embedded:HTML:JavaScript": {
       "path": "parity/fixtures/issue-195-evidence.json",
@@ -1564,12 +1564,12 @@
     "planned:repository-directive:i195-grammar-native-zig": {
       "path": "parity/fixtures/native-grammars/zig.json",
       "selector": "docs/vision.md#native-merged-grammars: generated native Zig grammar and pinned independent source corpus",
-      "sha256": "f5c64ac397d2c5bcefe14d56169406af567126d590a478432afc29034c8630a4"
+      "sha256": "44253896549dfb95b1cfcc9dd6999db97646d3645a8d3f64b508b46427d2b846"
     },
     "planned:repository-directive:i195-grammar-native-pascal": {
       "path": "parity/fixtures/native-grammars/pascal.json",
       "selector": "docs/vision.md#native-merged-grammars: generated native Pascal grammar and pinned independent source corpus",
-      "sha256": "2f2fd801817eb0aed9113f21b5f829e78299028d2806f8087f040fd6200aa722"
+      "sha256": "6799f5e4d5206f2a88a7ed3437d22b342f6212563980abf27bc4ca2ce9c6e1cd"
     },
     "planned:repository-directive:i195-grammar-native-vb": {
       "path": "parity/fixtures/native-grammars/vb.json",
@@ -1599,7 +1599,7 @@
     "planned:repository-directive:i195-vision-specification": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: one authoritative vision and architecture specification",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
@@ -1609,7 +1609,7 @@
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: traceability from each atomic requirement to its evidence chain",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-vision-contradiction-audit": {
       "path": "parity/documentation/claim-fixtures.json",
@@ -1629,7 +1629,7 @@
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
       "selector": "#dependencies: external parser engines removed from the production packages",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
@@ -1654,12 +1654,12 @@
     "planned:repository-directive:i195-grammar-language-catalog": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "docs/vision.md#language-catalog-and-default-parsing: versioned language catalog with the strongest grammar sources per language",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:repository-directive:i195-grammar-native-merged": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "docs/vision.md#native-merged-grammars: native Links Notation grammar as the shipped canonical grammar of every language",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:repository-directive:i195-grammar-native-json": {
       "path": "parity/fixtures/native-grammars/json.json",
@@ -1789,7 +1789,7 @@
     "planned:repository-directive:i195-grammar-concept-reuse-report": {
       "path": "parity/fixtures/native-grammar-concept-reuse.json",
       "selector": "docs/vision.md#grammar-feature-union: per-language report of shared and language-specific native grammar rules",
-      "sha256": "96de339c540c1c95c48024b6fcd2639eccc045c0df4f969b3d77c79384061851"
+      "sha256": "62a08d5075f60cc16588de4ff19e173b1a5445adcefda0dbbcb8c3c52932da92"
     },
     "planned:repository-directive:i195-grammar-concept-translation": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
@@ -1799,12 +1799,12 @@
     "planned:repository-directive:i195-grammar-lossless-trees": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "docs/vision.md#concrete-and-abstract-syntax-trees: full lossless concrete syntax trees from native grammars, with optional abstract trees",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:repository-directive:i195-grammar-dependency-boundary": {
       "path": "docs/vision.md",
       "selector": "#native-merged-grammars: native dependency boundary of the installed packages",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-interchange-api-cli": {
       "path": "parity/fixtures/grammar-importers.json",
@@ -1839,7 +1839,7 @@
     "planned:repository-directive:i195-merge-automatic-pipeline": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: non-interactive multi-source grammar merge pipeline",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:repository-directive:i195-merge-binding-aware-rename": {
       "path": "parity/fixtures/grammar-merge.json",
@@ -1859,7 +1859,7 @@
     "planned:repository-directive:i195-merge-shipped-grammars-are-merged": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: shipped and test grammars produced by the multi-source merge",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:repository-directive:i195-merge-determinism": {
       "path": "parity/fixtures/grammar-merge.json",
@@ -1869,7 +1869,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "ad7d167c4ac1ea061193586647c10ce5cb1f0d7bc44fdfd8f4bc3dc137230c89"
+      "sha256": "af604d5f8ed303b69d24dbb922646403c1c5cd05475784a16b1da6d5fbd19ae9"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
       "path": "parity/grammars/reconcile/pairs.json",
@@ -1879,12 +1879,12 @@
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "6039e9fde779b4d76566eed7c4d918c83bed71d84066412d51d3974d981f6164"
+      "sha256": "73cce0ec49c489bc81ff384d77194d343537a3df03ac46a4ef7c8bd76da93b5d"
     },
     "planned:repository-directive:i195-naming-concept-records": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "6039e9fde779b4d76566eed7c4d918c83bed71d84066412d51d3974d981f6164"
+      "sha256": "73cce0ec49c489bc81ff384d77194d343537a3df03ac46a4ef7c8bd76da93b5d"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -1894,7 +1894,7 @@
     "planned:repository-directive:i195-naming-native-grammars": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: readable English rule names in the native grammars",
-      "sha256": "6039e9fde779b4d76566eed7c4d918c83bed71d84066412d51d3974d981f6164"
+      "sha256": "73cce0ec49c489bc81ff384d77194d343537a3df03ac46a4ef7c8bd76da93b5d"
     },
     "planned:repository-directive:i195-semantics-construct-inventory": {
       "path": "parity/fixtures/four-language-conformance.json",
@@ -1939,137 +1939,137 @@
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
       "selector": "#packages-and-publication: formal-ai consuming the published packages",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-acceptance-independent-oracles": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "docs/vision.md#acceptance-and-evidence: native merged grammars checked against independent oracles and real projects",
-      "sha256": "d80aa32432e4f3072fc0400da8d7ddb13f6e515f5e898f9fd9229cccffa967c3"
+      "sha256": "2eb5eb9ac2b40603d865bee5d64bc18030883d0c5f763ef827e05f85f5f14bcc"
     },
     "planned:repository-directive:i195-acceptance-gate-mutations": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: gate-mutation tests for the directive obligations",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-acceptance-required-merge-check": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: enforced full requirements merge check on the default branch",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-acceptance-pr-checks-passable": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: pull request checks that can all pass before merge",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-acceptance-finite-claims-documented": {
       "path": "docs/vision.md",
       "selector": "#what-finite-tests-establish: documented limits of finite test evidence",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-ci-compile-gate": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: fast compile gate ahead of every compiling CI job",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-ci-test-matrix": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: test execution split into bounded matrix jobs",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-ci-evidence-stages": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: checkpoint evidence produced by separate stage jobs",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-ci-concurrency": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: superseded workflow runs cancelled",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-agent-rules": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: targeted local checks and resource rules for agents and contributors",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-bounded-sequential-evidence": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: evidence suites run one at a time with bounded build parallelism",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-lazy-grammars": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: WebAssembly grammars loaded on first use",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-bounded-memory-regressions": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: bounded-heap and peak-RSS regressions for the parser and evidence memory fixes",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-grammar-tiering-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: grammar code kept off the optimizing compiler",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-inline-parser-reuse": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: one Markdown inline parser for every inline region",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-source-boundaries": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: source offset index with interval checkpoints",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-parity-digests": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: runtime parity evidence as entry digests",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-cache-cleanup-wrapper": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: cache cleanup wrapper as the documented way to run long local commands",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-native-output-cleanup": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: native compiler outputs deleted once each cell is recorded",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-ci-rust-after-javascript": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: Rust jobs gated on every JavaScript job",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-ci-acceptance-stage-order": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: Rust acceptance stages after the JavaScript stages",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-ci-report-every-failure": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: every failure of a job reported in one run",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-ci-acceptance-after-javascript": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: acceptance stages started only after every JavaScript job passed",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-ci-skipped-stage-one-gate-error": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: a stage skipped because JavaScript failed is one gate error",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-resource-parse-memory-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: a hard memory budget for every parse",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-development-rules-documented": {
       "path": "docs/vision.md",
       "selector": "#javascript-first-and-self-translation: JavaScript-first development rules",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-self-translation-tool": {
       "path": "parity/self-translation/cases.lino",
@@ -2099,7 +2099,7 @@
     "planned:repository-directive:i195-parity-feature-completeness": {
       "path": "docs/vision.md",
       "selector": "#javascript-first-and-self-translation: every public JavaScript feature listed and present in Rust",
-      "sha256": "1d51ab862c43b47f68fe15c35bf9bc706195c87061a5031d2d2c8106da4d7534"
+      "sha256": "74f650a77280b2c334f1e0c3339792305b8ba2013aae40432fbc1250d0bfa60f"
     },
     "planned:repository-directive:i195-grammar-bulk-pipeline": {
       "path": "docs/grammar/bulk-pipeline.md",

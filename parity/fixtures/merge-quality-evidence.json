@@ -253,7 +253,7 @@
       "mergeReport": "parity/grammars/merge-reports/pascal.json",
       "coverage": {"rules": {"normal": 127, "atomic": 0, "silent": 27, "token": 162}, "visibleRules": 127, "exercisedRules": 50, "checkedKinds": 92, "checkedFields": 19, "renamed": 297, "expandedWords": 9, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 0, "conflict": 10, "precedences": 0, "extra": 3, "kind": 0},
-      "correctness": {"matches": 32, "rows": 681, "bytes": 1301, "divergences": 0, "rejections": 4},
+      "correctness": {"matches": 34, "rows": 702, "bytes": 1345, "divergences": 0, "rejections": 4},
       "recovery": {"repaired": 4, "errorNodes": 2, "missingNodes": 6, "categories": {}},
       "reuse": {"shared": 34, "specific": 282}
     },
@@ -467,11 +467,11 @@
       ],
       "corpus": "https://github.com/ziglang/zig/tree/e4cbd752c8c05f131051f8c873cff7823177d7d3/test/cases",
       "mergeReport": "parity/grammars/merge-reports/zig.json",
-      "coverage": {"rules": {"normal": 87, "atomic": 0, "silent": 15, "token": 7}, "visibleRules": 87, "exercisedRules": 46, "checkedKinds": 52, "checkedFields": 14, "renamed": 45, "expandedWords": 14, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 87, "atomic": 0, "silent": 22, "token": 7}, "visibleRules": 87, "exercisedRules": 48, "checkedKinds": 54, "checkedFields": 15, "renamed": 52, "expandedWords": 14, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 0, "conflict": 6, "precedences": 1, "extra": 2, "kind": 0},
-      "correctness": {"matches": 33, "rows": 511, "bytes": 792, "divergences": 0, "rejections": 5},
+      "correctness": {"matches": 55, "rows": 1020, "bytes": 1439, "divergences": 0, "rejections": 5},
       "recovery": {"repaired": 5, "errorNodes": 0, "missingNodes": 8, "categories": {}},
-      "reuse": {"shared": 53, "specific": 56}
+      "reuse": {"shared": 57, "specific": 59}
     }
   ]
 }

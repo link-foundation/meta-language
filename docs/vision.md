@@ -171,7 +171,11 @@ newline or the end of input. TOML uses both families, and
 and line endings with both executors.
 The generated TOML, Zig, Pascal and Visual Basic grammars record reviewed
 precedence, overlapping-choice and field-variant reconciliations in the import
-pipeline. CI reads immutable pinned corpus inputs, including Zig compiler
+pipeline. Contextual rule variants keep original concrete kinds and concept
+identities while isolating overlapping loop-prefix expressions; opaque operand
+rules retain their ordinary expression context. Optional literal preferences
+retain the absent branch and consume the pinned parser's field modifier.
+CI reads immutable pinned corpus inputs, including Zig compiler
 source cases and Visual Basic project sources, and compares every input with
 its independent oracle in both runtimes.
 

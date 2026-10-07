@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
 import { corpusFileCases, nativeName, ruleConcept } from '../scripts/import-native-grammars.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
@@ -238,4 +239,48 @@ test('a reviewed field variant preserves fields and aliases while keeping the or
   assert.deepEqual(result.rules._member_invocation.members[0], { type: 'FIELD', name: 'target', content: sym('member') });
   assert.deepEqual(result.rules.expression.members.at(-1), { type: 'ALIAS', named: true, value: 'invocation', content: sym('_member_invocation') });
   for (const change of [{ helper: 'visible' }, { field: 'absent' }, { symbol: 'absent' }, { insertInto: 'invocation' }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('context variants preserve kinds, source productions and opaque operand contexts', () => {
+  const sym = (name) => ({ type: 'SYMBOL', name });
+  const source = { supertypes: ['expression'], rules: {
+    source: sym('expression'), expression: { type: 'CHOICE', members: [sym('term'), sym('prefix')] },
+    term: { type: 'STRING', value: 'x' }, prefix: { type: 'SEQ', members: [{ type: 'STRING', value: '!' }, sym('expression')] },
+  } };
+  const original = structuredClone(source);
+  const decision = { family: 'context-rule-variants', rules: ['expression', 'term', 'prefix'], insertInto: ['source'], prefix: '_context_', opaqueRules: ['prefix'] };
+  const result = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(result.rules.expression, source.rules.expression);
+  assert.deepEqual(result.rules._context_prefix, source.rules.prefix);
+  assert.deepEqual(result.rules._context_expression.members[0], { type: 'ALIAS', named: true, value: 'term', content: sym('_context_term') });
+  assert.deepEqual(result.rules.source, sym('_context_expression'));
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(result))));
+  for (const text of ['x', '!x', '!!x']) {
+    const outcome = parser.parseTree(text);
+    assert.equal(outcome.ok, true);
+    assert.deepEqual(outcome.ambiguities, []);
+    assert.equal(tokens(outcome.tree).map(([, value]) => value).join(''), text);
+    const kinds = (tree) => tree.type === 'node' ? [tree.kind, ...tree.children.flatMap(kinds)] : [];
+    assert.ok(kinds(outcome.tree).includes('term'));
+  }
+  for (const change of [{ prefix: 'visible' }, { rules: ['expression', 'expression'] }, { insertInto: ['absent'] }, { opaqueRules: ['absent'] }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('optional literal preference preserves the nullable branch and validates the selection', () => {
+  const source = { rules: { field: { type: 'SEQ', members: [{ type: 'CHOICE', members: [{ type: 'STRING', value: 'modifier' }, { type: 'BLANK' }] }, { type: 'STRING', value: 'x' }] } } };
+  const original = structuredClone(source);
+  const decision = { family: 'prefer-optional-literal', rule: 'field', literal: 'modifier', value: 1 };
+  const result = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(result.rules.field.members[0].members[1], { type: 'BLANK' });
+  assert.equal(result.rules.field.members[0].members[0].type, 'PREC_DYNAMIC');
+  for (const change of [{ literal: 'absent' }, { rule: 'absent' }, { value: 0 }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+
+test('corpus failure diagnostics identify changed rows and unequal row counts', () => {
+  assert.equal(nativeCorpusFailure('case', { actual: [[1], [2]], expected: [[1], [3]] }), 'case: first difference 1: {"actual":[2],"expected":[3],"actualLength":2,"expectedLength":2}');
+  assert.equal(nativeCorpusFailure('case', { actual: [[1]], expected: [[1], [2]] }), 'case: first difference 1: {"actual":null,"expected":[2],"actualLength":1,"expectedLength":2}');
+  assert.equal(nativeCorpusFailure('case', { actual: false, expected: true, message: 'rejected' }), 'case: {"actual":false,"expected":true,"message":"rejected"}');
 });

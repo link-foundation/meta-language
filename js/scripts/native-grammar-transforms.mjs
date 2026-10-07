@@ -3,6 +3,45 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'context-rule-variants') {
+      const { rules, insertInto, prefix, opaqueRules = [] } = decision;
+      if (!Array.isArray(rules) || !rules.length || new Set(rules).size !== rules.length || !Array.isArray(insertInto) || !insertInto.length || typeof prefix !== 'string' || !/^_[A-Za-z_]+$/u.test(prefix)) throw new TypeError('context variants need distinct rules, insertion rules and a hidden helper prefix');
+      const selected = new Set(rules);
+      const silent = new Set([...(grammar.inline ?? []), ...(grammar.supertypes ?? [])]);
+      for (const name of [...rules, ...insertInto]) if (!Object.hasOwn(grammar.rules, name)) throw new TypeError(`the context variant rule ${name} is absent`);
+      for (const name of rules) if (Object.hasOwn(grammar.rules, prefix + name)) throw new TypeError('a context helper must have a unique name');
+      for (const name of opaqueRules) if (!selected.has(name)) throw new TypeError('an opaque context rule must be selected');
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'SYMBOL' && selected.has(node.name)) {
+          const reference = { type: 'SYMBOL', name: prefix + node.name };
+          return silent.has(node.name) || node.name.startsWith('_') ? reference : { type: 'ALIAS', named: true, value: node.name, content: reference };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      for (const name of rules) grammar.rules[prefix + name] = opaqueRules.includes(name) ? structuredClone(grammar.rules[name]) : rewrite(grammar.rules[name]);
+      grammar.inline = [...(grammar.inline ?? []), ...rules.filter((name) => silent.has(name)).map((name) => prefix + name)];
+      for (const name of insertInto) grammar.rules[name] = rewrite(grammar.rules[name]);
+      continue;
+    }
+    if (decision.family === 'prefer-optional-literal') {
+      const { rule, literal, value } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || typeof literal !== 'string' || !literal || !Number.isSafeInteger(value) || value <= 0) throw new TypeError('an optional literal preference needs an existing rule, literal and positive integer weight');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'CHOICE' && node.members.length === 2 && node.members.some((member) => member.type === 'BLANK') && node.members.some((member) => member.type === 'STRING' && member.value === literal)) {
+          changes += 1;
+          return { ...node, members: node.members.map((member) => member.type === 'BLANK' ? member : { type: 'PREC_DYNAMIC', value, content: member }) };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('an optional literal preference must identify exactly one existing optional literal');
+      continue;
+    }
     if (decision.family === 'field-choice-variant') {
       const { rule, helper, field, symbol, alias, insertInto } = decision;
       if (!Object.hasOwn(grammar.rules, rule) || !helper.startsWith('_') || Object.hasOwn(grammar.rules, helper)) throw new TypeError('a field choice variant needs an existing rule and unique hidden helper');
