@@ -151,7 +151,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
   {
     id: 'lua', language: 'Lua', grammar: 'parity/grammars/native/lua.lino',
     oracle: 'tree-sitter-lua 0.5.0',
-    sources: ['https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9'],
+    sources: ['https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9', 'https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9/test/corpus'],
     ...nativeGrammar('native-lua'),
     matches: [
       inventory.languages.find(({ name }) => name === 'Lua').source,
@@ -160,6 +160,13 @@ export const NATIVE_GRAMMARS = Object.freeze([
       '--[[block]]\nlocal x = 1', '--[==[a]=]b]==]\nlocal x=2',
       'local x = [=[a]==]b]=]', 'local x=[=[a]=]; local y=[==[b]==]',
       'local function f(...) return ... end',
+      '--\n-- next\n', '-- \n-- next\n', '--\n--[[block]]',
+      'a,b=1,2', 'local f=function(x) return x end; f(2)',
+      'function t:f(x) return self.x+x end; t:f(2)',
+      'local x=-1+2*3^4; local y=not x and true or false',
+      'local x=0x1f; local y=1.25e-2', 'local t={1,2;a=3,}; return t',
+      '#!/usr/bin/lua\nreturn 1',
+
       'for i=1,3 do print(i) end', 'for k,v in pairs(t) do print(k,v) end',
       'if a then return 1 elseif b then return 2 else return 3 end',
       'repeat x=x+1 until x>2', 'while ready do ready=false end',

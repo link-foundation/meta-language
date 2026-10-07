@@ -103,16 +103,28 @@ fn native_lua_upstream_corpus_matches_the_independent_oracle() {
     let language = tree_sitter_lua::LANGUAGE.into();
     let inputs = corpus["cases"].as_array().unwrap();
     assert!(!inputs.is_empty());
+    let mut failures = Vec::new();
     for case in inputs {
-        let (expected, recovers) = oracle_rows(&language, source(case));
-        if recovers {
-            assert!(parse(&parser, source(case)).is_none(), "{case}");
-        } else {
-            let tree = parse(&parser, source(case)).unwrap_or_else(|| panic!("{case}"));
-            assert_eq!(rows.rows(&tree, source(case)), expected, "{case}");
-            assert_eq!(rebuilt(&tree), source(case));
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let (expected, recovers) = oracle_rows(&language, source(case));
+            if recovers {
+                assert!(parse(&parser, source(case)).is_none(), "{case}");
+            } else {
+                let tree = parse(&parser, source(case)).unwrap_or_else(|| panic!("{case}"));
+                assert_eq!(rows.rows(&tree, source(case)), expected, "{case}");
+                assert_eq!(rebuilt(&tree), source(case));
+            }
+        }));
+        if let Err(error) = result {
+            let message = error
+                .downcast_ref::<String>()
+                .map(String::as_str)
+                .or_else(|| error.downcast_ref::<&str>().copied())
+                .unwrap_or("parse panicked");
+            failures.push(format!("{}: {}: {message}", case["file"], case["title"]));
         }
     }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
     observe(
         &["nativeLuaUpstreamCorpusMatchesOracle"],
         "native_lua_upstream_corpus_matches_the_independent_oracle",

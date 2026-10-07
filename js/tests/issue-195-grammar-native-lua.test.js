@@ -58,16 +58,20 @@ test('native Lua matches the independent oracle on every pinned upstream corpus 
   assert.equal(read(file), renderFixture(buildNativeGrammarCorpusSources('lua')));
   const { cases } = JSON.parse(read(file));
   assert.ok(cases.length > 0);
+  const failures = [];
   for (const { file: sourceFile, title, source } of cases) {
     const label = `${sourceFile}: ${title}`;
-    const outcome = parser.parseTree(source);
-    if (oracleRecovers(source, 'Lua')) assert.equal(outcome.ok, false, label);
-    else {
-      assert.equal(outcome.ok, true, label);
-      assert.deepEqual(outcome.ambiguities, [], label);
-      assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'Lua'), label);
-      assert.equal(text(outcome.tree), source, label);
-    }
+    try {
+      const outcome = parser.parseTree(source);
+      if (oracleRecovers(source, 'Lua')) assert.equal(outcome.ok, false, label);
+      else {
+        assert.equal(outcome.ok, true, label);
+        assert.deepEqual(outcome.ambiguities, [], label);
+        assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'Lua'), label);
+        assert.equal(text(outcome.tree), source, label);
+      }
+    } catch (error) { failures.push(`${label}: ${error.message}`); }
   }
+  assert.deepEqual(failures, []);
   observe(['nativeLuaUpstreamCorpusMatchesOracle'], context.name);
 });

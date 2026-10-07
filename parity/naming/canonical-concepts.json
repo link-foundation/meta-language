@@ -30541,6 +30541,23 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "grammar.block-comment-extra",
+      "phrase": "block comment extra",
+      "role": "concept",
+      "definition": "A rule for a block comment extra, the construct the upstream grammar names _block_comment_extra.",
+      "constraints": [
+        "Only the native Lua grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:lua",
+          "name": "block_comment_extra"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

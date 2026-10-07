@@ -1770,7 +1770,7 @@
       "grammars": {
         "native-lua": {
           "version": "1.0.0",
-          "parserSha256": "6859d2aaf58389ce7297ad3ad2262fc9ba8463d7c26d436addcbed13f236ecba"
+          "parserSha256": "8e2f97b72c8853e992ac8ecf984dbc37f34bfa1c73e85aa0dc3117a81fa9e7d4"
         }
       },
       "oracleGrammars": {

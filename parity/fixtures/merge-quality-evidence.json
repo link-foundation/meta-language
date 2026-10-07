@@ -74,7 +74,7 @@
       "features": {"scanner": 0, "conflict": 8, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 106, "rows": 4369, "bytes": 9101, "divergences": 0, "rejections": 13},
       "recovery": {"repaired": 13, "errorNodes": 4, "missingNodes": 19, "categories": {}},
-      "reuse": {"shared": 55, "specific": 62}
+      "reuse": {"shared": 56, "specific": 61}
     },
     {
       "grammar": "native-graphql",
@@ -92,7 +92,7 @@
       "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 3, "kind": 0},
       "correctness": {"matches": 53, "rows": 1809, "bytes": 3211, "divergences": 0, "rejections": 29},
       "recovery": {"repaired": 29, "errorNodes": 8, "missingNodes": 40, "categories": {}},
-      "reuse": {"shared": 23, "specific": 51}
+      "reuse": {"shared": 24, "specific": 50}
     },
     {
       "grammar": "native-ini",
@@ -204,6 +204,24 @@
       "reuse": {"shared": 42, "specific": 105}
     },
     {
+      "grammar": "native-lua",
+      "language": "Lua",
+      "links": "parity/grammars/native/lua.lino",
+      "fixture": "parity/fixtures/native-grammars/lua.json",
+      "oracle": "tree-sitter-lua 0.5.0",
+      "sources": [
+        "https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9",
+        "https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9/test/corpus"
+      ],
+      "corpus": "https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/lua.json",
+      "coverage": {"rules": {"normal": 31, "atomic": 0, "silent": 33, "token": 9}, "visibleRules": 31, "exercisedRules": 29, "checkedKinds": 42, "checkedFields": 21, "renamed": 36, "expandedWords": 1, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 2, "conflict": 0, "precedences": 0, "extra": 2, "kind": 0},
+      "correctness": {"matches": 32, "rows": 562, "bytes": 1625, "divergences": 0, "rejections": 9},
+      "recovery": {"repaired": 9, "errorNodes": 5, "missingNodes": 15, "categories": {}},
+      "reuse": {"shared": 35, "specific": 38}
+    },
+    {
       "grammar": "native-make",
       "language": "Make",
       "links": "parity/grammars/native/make.lino",
@@ -219,7 +237,7 @@
       "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 3, "kind": 0},
       "correctness": {"matches": 168, "rows": 1985, "bytes": 4084, "divergences": 0, "rejections": 27},
       "recovery": {"repaired": 27, "errorNodes": 4, "missingNodes": 54, "categories": {}},
-      "reuse": {"shared": 13, "specific": 52}
+      "reuse": {"shared": 14, "specific": 51}
     },
     {
       "grammar": "native-proto",
@@ -345,7 +363,7 @@
       "features": {"scanner": 0, "conflict": 11, "precedences": 0, "extra": 2, "kind": 1},
       "correctness": {"matches": 166, "rows": 4312, "bytes": 10859, "divergences": 0, "rejections": 10},
       "recovery": {"repaired": 10, "errorNodes": 2, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 60, "specific": 107}
+      "reuse": {"shared": 61, "specific": 106}
     },
     {
       "grammar": "native-tsx",

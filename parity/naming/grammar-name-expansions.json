@@ -435,7 +435,18 @@
         "true": "grammar.true-value",
         "parameters": "grammar.parameter-list",
         "arguments": "grammar.argument-list"
-      }
+      },
+      "sourceTransforms": [
+        {
+          "family": "nullable-pattern-extras",
+          "rule": "comment",
+          "pattern": "[^\\r\\n]*",
+          "extraAlternative": 1,
+          "helper": "_block_comment_extra",
+          "whitespace": "[ \\t\\r\\n\\f\\v]*",
+          "reason": "The upstream external scanner recognizes block-comment extras before an empty line-comment content token. An ordinary following line comment instead ends that token at the line break."
+        }
+      ]
     }
   },
   "concepts": {

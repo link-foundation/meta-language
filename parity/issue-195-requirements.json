@@ -1559,7 +1559,7 @@
     "planned:repository-directive:i195-grammar-native-lua": {
       "path": "parity/fixtures/native-grammars/lua.json",
       "selector": "docs/vision.md#native-merged-grammars: generated native Lua grammar with shared long-bracket scanner data",
-      "sha256": "73b383bd3a818c898320dc900727f158e8f030a436fdc539cfb19572229d5d1a"
+      "sha256": "28c8e79699a96161211203f0dd6290cb0d845c62ab103b2eba002f75efbbc036"
     },
     "planned:repository-directive:i195-grammar-scanner-counted-delimiters": {
       "path": "parity/fixtures/scanner-counted-delimiters.json",
@@ -1759,17 +1759,17 @@
     "planned:repository-directive:i195-grammar-shared-concepts": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
       "selector": "docs/vision.md#grammar-feature-union: a canonical concept record for every rule of every native grammar",
-      "sha256": "b1d67e271227eeab52b66621444105aeb6dcd62afbc93b8cfc88dbf87a534f78"
+      "sha256": "f0932f807edd0b69c350e103fdb1f1169d52ea1f2ff34714e2bcc84ede53d381"
     },
     "planned:repository-directive:i195-grammar-concept-reuse-report": {
       "path": "parity/fixtures/native-grammar-concept-reuse.json",
       "selector": "docs/vision.md#grammar-feature-union: per-language report of shared and language-specific native grammar rules",
-      "sha256": "8a1463f0fd63ca575bc086eecf8ede7ef982b26c3776256094750b8d0b7445d0"
+      "sha256": "d959974032c3ba7dd3b3d7c67abfec0b62d49a335828b574edbb1e7672605617"
     },
     "planned:repository-directive:i195-grammar-concept-translation": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
       "selector": "docs/vision.md#grammar-feature-union: translation of shared constructs between native grammars through their concepts",
-      "sha256": "b1d67e271227eeab52b66621444105aeb6dcd62afbc93b8cfc88dbf87a534f78"
+      "sha256": "f0932f807edd0b69c350e103fdb1f1169d52ea1f2ff34714e2bcc84ede53d381"
     },
     "planned:repository-directive:i195-grammar-lossless-trees": {
       "path": "parity/language-grammar-inventory.json",
@@ -1844,7 +1844,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "b303c0d26f95254efa0f168583bc864c31b6193fd0c850ca06b50102a21efaa2"
+      "sha256": "5c02b6a59a0bab71bb7e6a140358ca79946951f0b59cd8428bd444df5a24b480"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
       "path": "parity/grammars/reconcile/pairs.json",
@@ -1854,12 +1854,12 @@
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "91aabffbc6fcb60c813a563dde2411b6204f7ef2c17391f46ee2ab4f07be339e"
+      "sha256": "a3007fce88229bcc7a1d4f7e16c2d468171e7b93b1f80768dc1390b527d612b0"
     },
     "planned:repository-directive:i195-naming-concept-records": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "91aabffbc6fcb60c813a563dde2411b6204f7ef2c17391f46ee2ab4f07be339e"
+      "sha256": "a3007fce88229bcc7a1d4f7e16c2d468171e7b93b1f80768dc1390b527d612b0"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -1869,7 +1869,7 @@
     "planned:repository-directive:i195-naming-native-grammars": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: readable English rule names in the native grammars",
-      "sha256": "91aabffbc6fcb60c813a563dde2411b6204f7ef2c17391f46ee2ab4f07be339e"
+      "sha256": "a3007fce88229bcc7a1d4f7e16c2d468171e7b93b1f80768dc1390b527d612b0"
     },
     "planned:repository-directive:i195-semantics-construct-inventory": {
       "path": "parity/fixtures/four-language-conformance.json",

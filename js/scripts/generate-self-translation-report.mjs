@@ -84,13 +84,16 @@ function counterpart(module) {
 }
 
 /** The top-level Rust functions of `text`, by name, with their text. */
-function functions(text) {
+export function rustFunctionDefinitions(text) {
   const tree = parseProgrammingLanguage(text, 'Rust')?.tree;
+  const bytes = Buffer.from(text, 'utf8');
   const found = new Map();
   for (const child of tree?.children ?? []) {
     if (child.term !== 'function_item') continue;
-    const code = Buffer.from(text, 'utf8').subarray(child.start, child.end).toString('utf8');
-    const name = /\bfn\s+([A-Za-z_][A-Za-z0-9_]*)/u.exec(code)?.[1];
+    const { start, end } = child.span.byteRange;
+    const code = bytes.subarray(start, end).toString('utf8');
+    const identifier = child.children.find((node) => node.field === 'name');
+    const name = identifier && bytes.subarray(identifier.span.byteRange.start, identifier.span.byteRange.end).toString('utf8');
     if (name && !found.has(name)) found.set(name, code);
   }
   return found;
@@ -114,18 +117,18 @@ function measure(module, decorators) {
   const items = Object.fromEntries(STATUSES.map((status) => [status, translation.items.filter((item) => item.status === status).length]));
   const milliseconds = Math.round(performance.now() - started);
   const handWritten = rust ? readFileSync(join(root, rust), 'utf8') : null;
-  const generic = compare(translation.code, handWritten);
-  const decorated = decorators.size > 0 ? compare(selfTranslate(source, 'JavaScript', 'Rust', { decorators }).code, handWritten) : generic;
+  const generic = compareRustDefinitions(translation.code, handWritten);
+  const decorated = decorators.size > 0 ? compareRustDefinitions(selfTranslate(source, 'JavaScript', 'Rust', { decorators }).code, handWritten) : generic;
   return { module, rust, items, milliseconds, ...generic, decorated };
 }
 
 /** How the Rust a translation writes compares with the hand-written Rust, or with none. */
-function compare(translated, handWritten) {
+export function compareRustDefinitions(translated, handWritten) {
   const code = translatedCode(translated);
-  const written = functions(code);
+  const written = rustFunctionDefinitions(code);
   const row = { functions: written.size };
   if (handWritten === null) return { ...row, matched: 0, identical: 0, codeLines: codeLines(code).length, sharedLines: 0, handWrittenLines: 0 };
-  const existing = functions(handWritten);
+  const existing = rustFunctionDefinitions(handWritten);
   let matched = 0;
   let identical = 0;
   for (const [name, text] of written) {
@@ -164,28 +167,32 @@ function markdown(rows) {
   return `${lines.join('\n')}\n`;
 }
 
-if (process.argv.includes('--list')) {
-  console.log(selectedModules().join('\n'));
-  process.exit(0);
-}
-const outDir = option('--out-dir');
-if (!outDir) {
-  console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js] [--decorators file.lino] [--shard K/N] [--list]');
-  process.exit(2);
-}
-const decorators = DecoratorSet.fromLino(readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8'));
-const rows = [];
-const failures = [];
-for (const module of selectedModules()) {
-  try {
-    rows.push(measure(module, decorators));
-  } catch (error) {
-    failures.push({ module, error: String(error?.message ?? error) });
+function main() {
+  if (process.argv.includes('--list')) {
+    console.log(selectedModules().join('\n'));
+    process.exit(0);
   }
+  const outDir = option('--out-dir');
+  if (!outDir) {
+    console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js] [--decorators file.lino] [--shard K/N] [--list]');
+    process.exit(2);
+  }
+  const decorators = DecoratorSet.fromLino(readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8'));
+  const rows = [];
+  const failures = [];
+  for (const module of selectedModules()) {
+    try {
+      rows.push(measure(module, decorators));
+    } catch (error) {
+      failures.push({ module, error: String(error?.message ?? error) });
+    }
+  }
+  mkdirSync(outDir, { recursive: true });
+  const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '');
+  writeFileSync(join(outDir, 'self-translation-report.md'), report);
+  writeFileSync(join(outDir, 'self-translation-report.json'), `${JSON.stringify({ decorators: decorators.ids(), modules: rows, failures }, null, 2)}\n`);
+  // Refused modules are listed in the report; the tests hold self-translation to its contract.
+  console.log(report);
 }
-mkdirSync(outDir, { recursive: true });
-const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '');
-writeFileSync(join(outDir, 'self-translation-report.md'), report);
-writeFileSync(join(outDir, 'self-translation-report.json'), `${JSON.stringify({ decorators: decorators.ids(), modules: rows, failures }, null, 2)}\n`);
-// Refused modules are listed in the report; the tests hold self-translation to its contract.
-console.log(report);
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

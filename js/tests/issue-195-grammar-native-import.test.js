@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
 import { corpusFileCases, nativeName, ruleConcept } from '../scripts/import-native-grammars.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
@@ -163,4 +164,31 @@ test('a hidden immediate token is a token tree-sitter leaves unnamed', () => {
   assert.deepEqual(kinds('_text'), [[null, '"'], ['unnamed_token', ' a'], [null, '"']]);
   // A visible one keeps its name.
   assert.deepEqual(kinds('text'), [[null, '"'], ['text', ' a'], [null, '"']]);
+});
+
+
+test('nullable pattern extras preserve the content field and leave the pinned source untouched', () => {
+  const alias = { type: 'ALIAS', named: true, value: 'comment_content', content: { type: 'PATTERN', value: '[a-z]*' } };
+  const block = { type: 'STRING', value: '[[x]]' };
+  const source = { rules: { comment: { type: 'CHOICE', members: [
+    { type: 'FIELD', name: 'content', content: alias }, block,
+  ] } } };
+  const original = structuredClone(source);
+  const decision = { family: 'nullable-pattern-extras', rule: 'comment', pattern: '[a-z]*', extraAlternative: 1, helper: '_block_extra', whitespace: '[ ]*' };
+  const result = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(result.rules._block_extra, block);
+  const [extras, content] = result.rules.comment.members[0].members;
+  assert.equal(extras.type, 'REPEAT');
+  assert.equal(extras.content.members[1].type, 'ALIAS');
+  assert.equal(extras.content.members[1].value, 'comment');
+  assert.equal(extras.content.members[1].content.name, '_block_extra');
+  assert.equal(content.type, 'FIELD');
+  assert.equal(content.name, 'content');
+  assert.equal(content.content.content.type, 'IMMEDIATE_TOKEN');
+  assert.deepEqual(content.content.content.content, alias.content);
+  for (const change of [
+    { family: 'unknown' }, { helper: 'visible' }, { helper: 'comment' },
+    { extraAlternative: 3 }, { pattern: 'absent' },
+  ]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
 });

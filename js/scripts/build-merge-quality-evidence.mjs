@@ -320,6 +320,10 @@ export function renderMergeQualityDocument(report, measurements) {
     return lines.join('\n');
   }
   const { measuredOn } = measurements;
+  for (const entry of measurements.grammars.filter((entry) => entry.measuredOn)) {
+    const host = entry.measuredOn;
+    lines.push(`The ${code(entry.grammar)} measurements use ${host.platform} ${host.arch}, ${host.cpu}, Node.js ${host.node}, and ${host.rustProfile}.`, '');
+  }
   lines.push(
     `Measured on ${measuredOn.platform} ${measuredOn.arch}, ${measuredOn.cpu}, with Node.js ${measuredOn.node}`,
     `and the ${measuredOn.rustProfile}. Times are milliseconds of one warm pass over`,

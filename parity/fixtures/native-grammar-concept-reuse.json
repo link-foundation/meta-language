@@ -995,7 +995,7 @@
     {
       "grammar": "native-lua",
       "language": "lua",
-      "rules": 72,
+      "rules": 73,
       "shared": [
         {"rule":"hash_bang_line","concept":"grammar.hash-bang-line","languages":["javascript","lua","tsx","typescript"]},
         {"rule":"statement","concept":"grammar.statement","languages":["c","go","java","javascript","lua","rust","solidity","tsx","typescript"]},
@@ -1070,7 +1070,8 @@
         {"rule":"table_constructor","concept":"grammar.table-constructor"},
         {"rule":"field_list","concept":"grammar.field-list"},
         {"rule":"field_sep","concept":"grammar.field-sep"},
-        {"rule":"contextual_keyword","concept":"grammar.contextual-keyword"}
+        {"rule":"contextual_keyword","concept":"grammar.contextual-keyword"},
+        {"rule":"block_comment_extra","concept":"grammar.block-comment-extra"}
       ]
     },
     {
@@ -2583,6 +2584,7 @@
     {"concept":"grammar.blank-identifier","languages":["go"],"shared":false},
     {"concept":"grammar.block","languages":["go","java","rust"],"shared":true},
     {"concept":"grammar.block-comment","languages":["java","racket","rust","scheme"],"shared":true},
+    {"concept":"grammar.block-comment-extra","languages":["lua"],"shared":false},
     {"concept":"grammar.block-documentation-comment-marker","languages":["rust"],"shared":false},
     {"concept":"grammar.block-field","languages":["proto"],"shared":false},
     {"concept":"grammar.block-item","languages":["c"],"shared":false},

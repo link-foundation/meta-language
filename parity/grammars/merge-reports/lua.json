@@ -46,7 +46,7 @@
       "_block_comment_end"
     ]
   },
-  "rules": 72,
+  "rules": 73,
   "keywords": [
     "and",
     "break",
@@ -212,6 +212,10 @@
     {
       "source": "_contextual_keyword",
       "native": "contextual_keyword"
+    },
+    {
+      "source": "_block_comment_extra",
+      "native": "block_comment_extra"
     }
   ],
   "expandedWords": [
@@ -260,8 +264,19 @@
         "concept": "grammar.comment"
       }
     ],
-    "generated": 62
+    "generated": 63
   },
+  "sourceTransforms": [
+    {
+      "family": "nullable-pattern-extras",
+      "rule": "comment",
+      "pattern": "[^\\r\\n]*",
+      "extraAlternative": 1,
+      "helper": "_block_comment_extra",
+      "whitespace": "[ \\t\\r\\n\\f\\v]*",
+      "reason": "The upstream external scanner recognizes block-comment extras before an empty line-comment content token. An ordinary following line comment instead ends that token at the line break."
+    }
+  ],
   "approximations": [],
   "unsupported": []
 }

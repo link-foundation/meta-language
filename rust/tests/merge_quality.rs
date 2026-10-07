@@ -151,6 +151,11 @@ fn natives() -> Vec<Native> {
         // development dependency, so its Rust row measures the native side.
         native!("native-lean", "lean", None),
         native!(
+            "native-lua",
+            "lua",
+            Some(|| tree_sitter_lua::LANGUAGE.into())
+        ),
+        native!(
             "native-make",
             "make",
             Some(|| tree_sitter_make::LANGUAGE.into())
