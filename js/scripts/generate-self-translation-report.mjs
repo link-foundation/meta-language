@@ -109,17 +109,61 @@ function translatedCode(code) {
   return end === -1 ? code : code.slice(end);
 }
 
+/** Account for every UTF-8 source byte independently of the emitted code. */
+export function sourceCoverage(source, items) {
+  const bytes = Buffer.from(source, 'utf8');
+  const coverage = { sourceBytes: bytes.length, itemBytes: 0, layoutBytes: 0, unrepresentedBytes: 0, unrepresentedRanges: [], bytesByStatus: {} };
+  let cursor = 0;
+  const gap = (end) => {
+    if (end === cursor) return;
+    const text = bytes.subarray(cursor, end).toString('utf8');
+    if (/^\s*$/u.test(text)) coverage.layoutBytes += end - cursor;
+    else {
+      coverage.unrepresentedBytes += end - cursor;
+      coverage.unrepresentedRanges.push({ start: cursor, end });
+    }
+  };
+  const boundary = (offset) => offset === bytes.length || (bytes[offset] & 0xc0) !== 0x80;
+  for (const { start, end, status } of items) {
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < cursor || end <= start || end > bytes.length || !boundary(start) || !boundary(end)) {
+      throw new Error(`invalid self-translation source range ${start}..${end} after ${cursor} of ${bytes.length} bytes`);
+    }
+    if (!['translated', 'carried', 'comment', 'kept', 'restored', 'provenance'].includes(status)) {
+      throw new Error(`unknown self-translation item status ${status}`);
+    }
+    gap(start);
+    coverage.itemBytes += end - start;
+    coverage.bytesByStatus[status] = (coverage.bytesByStatus[status] ?? 0) + end - start;
+    cursor = end;
+  }
+  gap(bytes.length);
+  return coverage;
+}
+
+function checkedCoverage(source, translation) {
+  const coverage = sourceCoverage(source, translation.items);
+  if (coverage.unrepresentedBytes !== 0) {
+    throw new Error(`self-translation omitted ${coverage.unrepresentedBytes} source bytes at ${coverage.unrepresentedRanges.map(({ start, end }) => `${start}..${end}`).join(', ')}`);
+  }
+  return coverage;
+}
+
 function measure(module, decorators) {
   const rust = counterpart(module);
   const source = readFileSync(join(root, module), 'utf8');
   const started = performance.now();
   const translation = selfTranslate(source, 'JavaScript', 'Rust');
+  const coverage = checkedCoverage(source, translation);
   const items = Object.fromEntries(STATUSES.map((status) => [status, translation.items.filter((item) => item.status === status).length]));
   const milliseconds = Math.round(performance.now() - started);
   const handWritten = rust ? readFileSync(join(root, rust), 'utf8') : null;
   const generic = compareRustDefinitions(translation.code, handWritten);
-  const decorated = decorators.size > 0 ? compareRustDefinitions(selfTranslate(source, 'JavaScript', 'Rust', { decorators }).code, handWritten) : generic;
-  return { module, rust, items, milliseconds, ...generic, decorated };
+  let decorated = { ...generic, coverage };
+  if (decorators.size > 0) {
+    const translation = selfTranslate(source, 'JavaScript', 'Rust', { decorators });
+    decorated = { ...compareRustDefinitions(translation.code, handWritten), coverage: checkedCoverage(source, translation) };
+  }
+  return { module, rust, items, coverage, milliseconds, ...generic, decorated };
 }
 
 /** How the Rust a translation writes compares with the hand-written Rust, or with none. */
@@ -156,6 +200,7 @@ function markdown(rows) {
     '# Self-translation of JavaScript modules against hand-written Rust',
     '',
     `${rows.length} modules; ${items('translated')} items translated, ${items('carried')} carried, ${items('comment')} comment groups copied.`,
+    `${rows.reduce((sum, row) => sum + row.coverage.sourceBytes, 0)} source bytes accounted for by item ranges and whitespace layout; modules with omitted code are refused.`,
     `${total('functions')} Rust functions written, ${total('matched')} named as in the hand-written Rust, ${total('identical')} identical to it up to whitespace;`,
     `${total('sharedLines')} of ${total('codeLines')} translated code lines appear in the hand-written Rust (${total('handWrittenLines')} code lines).`,
     `With the shared decorators: ${decorated('identical')} functions identical, ${decorated('sharedLines')} of ${decorated('codeLines')} translated code lines shared.`,
@@ -163,6 +208,10 @@ function markdown(rows) {
     '| JavaScript module | Rust module | translated | carried | functions | same name | identical | identical, decorated | shared / translated lines | shared, decorated | hand-written lines |',
     '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
     ...rows.map((row) => `| ${row.module} | ${row.rust ?? '—'} | ${row.items.translated} | ${row.items.carried} | ${row.functions} | ${row.matched} | ${row.identical} | ${row.decorated.identical} | ${row.sharedLines} / ${row.codeLines} | ${row.decorated.sharedLines} / ${row.decorated.codeLines} | ${row.handWrittenLines} |`),
+    '',
+    '| JavaScript module | source bytes | translated bytes | carried bytes | comment bytes | other item bytes | layout bytes |',
+    '| --- | ---: | ---: | ---: | ---: | ---: | ---: |',
+    ...rows.map(({ module, coverage: c }) => `| ${module} | ${c.sourceBytes} | ${c.bytesByStatus.translated ?? 0} | ${c.bytesByStatus.carried ?? 0} | ${c.bytesByStatus.comment ?? 0} | ${c.itemBytes - (c.bytesByStatus.translated ?? 0) - (c.bytesByStatus.carried ?? 0) - (c.bytesByStatus.comment ?? 0)} | ${c.layoutBytes} |`),
   ];
   return `${lines.join('\n')}\n`;
 }

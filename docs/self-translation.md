@@ -96,7 +96,12 @@ them after an intended change.
 (`rust/src/<module>.rs` or `rust/src/<module>/mod.rs`): the items by status,
 the Rust functions written, how many the hand-written Rust defines under the
 same name and how many are identical up to whitespace, and how many translated
-code lines the hand-written Rust holds too. Each module is measured twice: by
+code lines the hand-written Rust holds too. The report also accounts for every
+UTF-8 source byte using the item ranges and whitespace between them, and lists
+translated, carried, comment and layout byte counts. It rejects overlapping,
+out-of-bounds or split UTF-8 ranges. A module with code outside those ranges is
+listed as refused, including when a parser fallback returned no items, so zero
+carried items cannot conceal omitted source. Each module is measured twice: by
 the generic translation and by the translation with the shared emitter
 [decorators](decorators.md) of `parity/self-translation/decorators.lino`
 (`--decorators` names another set), so the report shows how much of the

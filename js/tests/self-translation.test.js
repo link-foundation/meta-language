@@ -169,6 +169,10 @@ test('the report measures each translated module against its hand-written Rust',
       ['js/src/self-translation.js', 'rust/src/self_translation.rs'],
     ]);
     for (const row of modules) {
+      assert.equal(row.coverage.sourceBytes, readFileSync(path.join(root, row.module)).length, row.module);
+      assert.equal(row.coverage.itemBytes + row.coverage.layoutBytes, row.coverage.sourceBytes, row.module);
+      assert.equal(row.coverage.unrepresentedBytes, 0, row.module);
+      assert.deepEqual(row.decorated.coverage, row.coverage, row.module);
       assert.ok(row.items.translated > 0 && row.handWrittenLines > 0, row.module);
       assert.ok(row.sharedLines <= row.codeLines && row.identical <= row.matched && row.matched <= row.functions, row.module);
       // The decorated translation is measured beside the generic one.
