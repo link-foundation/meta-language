@@ -7,6 +7,7 @@ use super::{
     arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
     negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
 };
+use crate::translation::frontend_rules::accept_argument_count;
 
 impl Checker {
     pub(super) fn coerce(&self, value: Expr, ty: &Type, span: Option<Span>) -> Result<Expr> {
@@ -666,12 +667,35 @@ impl Checker {
                 span,
             ));
         }
-        let (full_name, params, ret) = (
+        let (full_name, params, ret, module_path) = (
             entry.full_name.clone(),
             entry.params.clone(),
             entry.ret.clone(),
+            entry.module_path.clone(),
         );
-        if args.len() != params.len() {
+        let mut arguments: Vec<(&SExpr, bool)> = args.iter().map(|arg| (arg, false)).collect();
+        #[allow(clippy::cast_precision_loss)]
+        let argument_count = args.len() as f64;
+        if args.len() < params.len()
+            && accept_argument_count(
+                params
+                    .iter()
+                    .map(|param| param.default_value.is_some())
+                    .collect(),
+                argument_count,
+            )
+        {
+            arguments.extend(params[args.len()..].iter().map(|param| {
+                (
+                    param
+                        .default_value
+                        .as_ref()
+                        .expect("omitted parameter has a default"),
+                    true,
+                )
+            }));
+        }
+        if arguments.len() != params.len() {
             if args.len() < params.len() {
                 return Err(unsupported(
                     "partial application",
@@ -689,14 +713,21 @@ impl Checker {
             ));
         }
         let mut checked = Vec::new();
-        for (arg, param) in args.iter().zip(&params) {
+        let closed_env = Env::default();
+        for ((arg, closed_default), param) in arguments.iter().zip(&params) {
             // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
             let expected = if param.guard.is_some() && !matches!(arg.node, SNode::Num { .. }) {
                 &INT
             } else {
                 &param.ty
             };
-            let value = self.expr(arg, env, path, Some(expected), false)?;
+            let value = self.expr(
+                arg,
+                if *closed_default { &closed_env } else { env },
+                if *closed_default { &module_path } else { path },
+                Some(expected),
+                false,
+            )?;
             let flavor = param.guard.is_some().then_some(Flavor::Checked);
             let mut value = coerce(value, &param.ty, self.language, arg.span.or(span), flavor)?;
             if let (

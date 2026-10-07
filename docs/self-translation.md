@@ -89,6 +89,15 @@ modules round-trip byte for byte in both tests.
 translator; `node js/scripts/generate-self-translation-cases.mjs` rewrites
 them after an intended change.
 
+The Unicode-escape and default-parameter decisions in
+`js/src/translation/frontend-rules.js` also run inside the Rust translator.
+`node js/scripts/generate-frontend-rules.mjs` translates the complete module
+through the portable core, applies the shared emitter decorators in
+`parity/self-translation/frontend-rules-decorators.lino`, and formats the
+result as `rust/src/translation/frontend_rules.rs`. The adapters supply UTF-16
+code units and token records to these generated decisions. CI runs
+`npm run check:frontend-rules` to reject stale generated code.
+
 ## Translated against hand-written Rust
 
 `js/scripts/generate-self-translation-report.mjs` translates every module of

@@ -16,6 +16,7 @@ use super::{
     BOOL, BinaryOp, FLOAT, INT, ROOT, Result, SCtor, SEffect, SExpr, SFn, SItem, SNode, SPattern,
     SPatternNode, SProgram, SProp, SPropNode, STRING, Span, Type, UnaryOp, type_error,
 };
+use crate::translation::frontend_rules::accept_argument_count;
 use crate::translation::types::UNIT;
 
 /// Fills in the missing parameter and result types of the functions of a parsed JavaScript program.
@@ -55,7 +56,14 @@ fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr, Type>) {
     fn walk_items(items: &mut [SItem], arrays: &HashMap<*const SExpr, Type>) {
         for item in items {
             match item {
-                SItem::Fn(function) => walk(&mut function.body, arrays),
+                SItem::Fn(function) => {
+                    for param in &mut function.params {
+                        if let Some(default_value) = &mut param.default_value {
+                            walk(default_value, arrays);
+                        }
+                    }
+                    walk(&mut function.body, arrays);
+                }
                 SItem::Module(module) => walk_items(&mut module.items, arrays),
                 SItem::Data(_) | SItem::Theorem(_) => {}
             }
@@ -246,8 +254,10 @@ enum Term {
     Array(Box<Self>),
 }
 
+#[derive(Clone)]
 struct Signature {
     params: Vec<Term>,
+    defaults: Vec<bool>,
     ret: Term,
 }
 
@@ -439,11 +449,22 @@ impl Inference {
                 .map(|param| self.declared(param.ty.as_ref()))
                 .collect();
             let ret = self.declared(function.ret.as_ref());
-            self.signatures
-                .insert(path.join("."), Signature { params, ret });
+            let defaults = function
+                .params
+                .iter()
+                .map(|param| param.default_value.is_some())
+                .collect();
+            self.signatures.insert(
+                path.join("."),
+                Signature {
+                    params,
+                    defaults,
+                    ret,
+                },
+            );
         }
         for (path, function) in functions {
-            let signature = &self.signatures[&path.join(".")];
+            let signature = self.signatures[&path.join(".")].clone();
             let ret = signature.ret.clone();
             let env: Env = function
                 .params
@@ -452,6 +473,12 @@ impl Inference {
                 .map(|(param, term)| (param.name.clone(), term.clone()))
                 .collect();
             self.context = path[..path.len() - 1].to_vec();
+            for (param, term) in function.params.iter().zip(&signature.params) {
+                if let Some(default_value) = &param.default_value {
+                    let value = self.expr(default_value, &Env::new())?;
+                    self.unify(&value, term, param.span)?;
+                }
+            }
             let body = self.expr(&function.body, &env)?;
             self.unify(&body, &ret, function.span)?;
         }
@@ -612,7 +639,7 @@ impl Inference {
         }
     }
 
-    fn signature(&self, path: &[String]) -> Option<(Vec<Term>, Term)> {
+    fn signature(&self, path: &[String]) -> Option<Signature> {
         let found = self.signatures.get(&path.join(".")).or_else(|| {
             // A call inside a namespace may name a sibling relative to it.
             (1..=self.context.len()).rev().find_map(|depth| {
@@ -621,7 +648,7 @@ impl Inference {
                 self.signatures.get(&candidate.join("."))
             })
         })?;
-        Some((found.params.clone(), found.ret.clone()))
+        Some(found.clone())
     }
 
     fn expr(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {
@@ -801,16 +828,18 @@ impl Inference {
             .iter()
             .map(|arg| self.expr(arg, env))
             .collect::<Result<Vec<_>>>()?;
-        let Some((params, ret)) = self
+        #[allow(clippy::cast_precision_loss)]
+        let argument_count = args.len() as f64;
+        let Some(signature) = self
             .signature(path)
-            .filter(|(params, _)| params.len() == args.len())
+            .filter(|signature| accept_argument_count(signature.defaults.clone(), argument_count))
         else {
             return Ok(self.fresh(false));
         };
-        for ((term, param), arg) in arg_terms.iter().zip(&params).zip(args) {
+        for ((term, param), arg) in arg_terms.iter().zip(&signature.params).zip(args) {
             self.unify(term, param, arg.span.or(place))?;
         }
-        Ok(ret)
+        Ok(signature.ret)
     }
 
     fn binary(

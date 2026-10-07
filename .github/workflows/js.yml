@@ -236,6 +236,17 @@ jobs:
         run: npm run check:self-translation
         working-directory: js
 
+      - name: Setup Rust formatting for generated frontend rules
+        if: ${{ !cancelled() }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check the generated Rust frontend rules against JavaScript
+        if: ${{ !cancelled() }}
+        run: npm run check:frontend-rules
+        working-directory: js
+
       # The pull request description and the release reports are live texts
       # outside the commit; they are compared on main as a non-blocking report.
       - name: Compare the pull request description and the release reports with the requirement ledger (post-merge report)

@@ -1,5 +1,7 @@
 use meta_language::translation::Language;
+use meta_language::translation::Span;
 use meta_language::translation::decimal::Decimal;
+use meta_language::translation::diagnostics::ErrorKind;
 use meta_language::translation::lexer::{TokenCursor, tokenize};
 use meta_language::translation::types::{NAT, data, fixed, fixed_bounds, rust_fixed_type};
 
@@ -59,6 +61,50 @@ fn tokens_match_the_javascript_runtime() {
         cursor.expect("(", Some("call")).unwrap_err().to_string(),
         "expected ( in call but found \"x\" at 0..1"
     );
+}
+
+#[test]
+fn unicode_escapes_decode_scalar_values_and_preserve_diagnostic_spans() {
+    for (escape, language, expected) in [
+        (r"\u00e9", Language::JavaScript, "é"),
+        (r"\u{1F600}", Language::Rust, "😀"),
+        (r"\ud83d\uDE00", Language::JavaScript, "😀"),
+        (r"\u0000", Language::JavaScript, "\0"),
+        (r"\u{10ffff}", Language::Rust, "\u{10ffff}"),
+    ] {
+        let source = format!("\"{escape}\"");
+        let tokens = tokenize(&source, language).unwrap();
+        assert_eq!(tokens.tokens[0].value, expected, "{source}");
+        assert_eq!(tokens.tokens[0].span(), Span::new(0, source.len()));
+    }
+    for (escape, language, kind, end) in [
+        (r"\ud83d", Language::JavaScript, ErrorKind::Unsupported, 7),
+        (r"\udc00", Language::JavaScript, ErrorKind::Unsupported, 7),
+        (
+            r"\u{110000}",
+            Language::JavaScript,
+            ErrorKind::Unsupported,
+            11,
+        ),
+        (r"\u{d83d}", Language::JavaScript, ErrorKind::Unsupported, 9),
+        (r"\u00e9", Language::Rust, ErrorKind::Syntax, 3),
+        (r"\u12", Language::JavaScript, ErrorKind::Syntax, 3),
+        (r"\u{1234567}", Language::JavaScript, ErrorKind::Syntax, 3),
+        (r"\u{}", Language::JavaScript, ErrorKind::Syntax, 3),
+        (r"\u{no}", Language::JavaScript, ErrorKind::Syntax, 3),
+    ] {
+        let error = tokenize(&format!("\"{escape}\""), language).unwrap_err();
+        assert_eq!(error.kind, kind, "{escape}");
+        assert_eq!(error.span, Some(Span::new(1, end)), "{escape}");
+        let expected = if kind == ErrorKind::Syntax {
+            "malformed unicode escape".to_owned()
+        } else {
+            format!(
+                "unicode escape {escape} is not a scalar value; Rust strings hold scalar values only"
+            )
+        };
+        assert_eq!(error.reason, expected);
+    }
 }
 
 #[test]

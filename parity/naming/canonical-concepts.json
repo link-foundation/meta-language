@@ -29772,6 +29772,90 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "translation.decode-unicode-escape",
+      "phrase": "decode unicode escape",
+      "role": "operation",
+      "definition": "Decode one bounded UTF-16 Unicode escape into a scalar value or a precise refusal.",
+      "constraints": [
+        "The decoder accepts at most twelve code units.",
+        "JavaScript permits fixed escapes and surrogate pairs; Rust permits braced scalar escapes."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "decodeUnicodeEscape"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "decode_unicode_escape"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-argument-count",
+      "phrase": "accept argument count",
+      "role": "operation",
+      "definition": "Determine whether every omitted argument has a parameter default.",
+      "constraints": [
+        "An extra argument is refused.",
+        "Every omitted parameter must have a default."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptArgumentCount"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_argument_count"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.find-default-parameter-reference",
+      "phrase": "find default parameter reference",
+      "role": "operation",
+      "definition": "Find the first earlier parameter referenced by a default expression.",
+      "constraints": [
+        "Nested delimiters keep commas inside the default expression.",
+        "A member name following a dot is not a parameter reference."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "findDefaultParameterReference"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "find_default_parameter_reference"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.unicode-escape",
+      "phrase": "unicode escape",
+      "role": "concept",
+      "definition": "The result of reading a Unicode escape: a scalar value, malformed syntax, or an unsupported scalar.",
+      "constraints": [
+        "Scalar results carry the decoded code point and consumed code units.",
+        "Refusals retain the escape length required for matching diagnostics."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "UnicodeEscape"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "UnicodeEscape"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

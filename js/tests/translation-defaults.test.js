@@ -2,6 +2,17 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { translateProgram } from '../src/program-translation.js';
+import { checkProgram } from '../src/translation/check.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
+
+test('translation stages retain constant bindings and explicitly absent parameter defaults', () => {
+  const source = "function identity(value) { return value; }\nconst answer = identity(42);\n";
+  const surface = parseJavaScript(source);
+  assert.equal(surface.main.effects[0].constant, true);
+  const program = checkProgram(surface);
+  assert.equal(program.main.effects[0].constant, true);
+  assert.equal(program.declarations.get('identity').params[0].default, null);
+});
 
 const DEFAULTS = `function label(name, level = 'grammar-rule', depth = 2) {
   return \`\${name}:\${level}:\${depth}\`;
@@ -35,6 +46,13 @@ test('a call that leaves out defaulted parameters passes the defaults in every t
 test('defaults that are not filled in by a call are refused with a reason', () => {
   assert.match(refusal('function f(a = 1, b) {\n  return b;\n}\n'), /parameter b after a default/u);
   assert.match(refusal('function f(a, b = a) {\n  return b;\n}\nconsole.log(f(1));\n'), /default reading parameter a/u);
+});
+
+test('default calls resolve names outside the callers local scope', () => {
+  const source = 'function base() { return 7; }\nfunction chosen(value = base()) { return value; }\nfunction caller(base) { return chosen(); }\nconsole.log(caller(99));\n';
+  const translated = translateProgram(source, 'JavaScript', 'Rust');
+  assert.equal(translated.diagnostic, null);
+  assert.ok(translated.code.includes('crate::chosen(crate::base())'), translated.code);
 });
 
 test('self-translation writes top-level constants as Rust constants and restores them', async () => {
