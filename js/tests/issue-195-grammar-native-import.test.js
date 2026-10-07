@@ -349,3 +349,86 @@ test('dynamic rule priorities and lifted lexical aliases retain their original b
   assert.deepEqual(prioritized.rules.source, { type: 'PREC_DYNAMIC', value: 1, content: original.rules.source });
   for (const decision of [{ family: 'lift-token-aliases', rules: ['absent'] }, { family: 'rule-dynamic-precedence', rule: 'source', value: 0 }]) assert.throws(() => transformNativeSource(source, [decision]), TypeError);
 });
+
+test('end boundary reconciliation retains the sentinel and accepts only the empty input boundary', () => {
+  const source = { name: 'sentinel', rules: { document: { type: 'SEQ', members: [
+    { type: 'STRING', value: 'value' },
+    { type: 'CHOICE', members: [{ type: 'STRING', value: ';' }, { type: 'STRING', value: '\0' }] },
+  ] } } };
+  const original = structuredClone(source);
+  const decision = { family: 'literal-end-boundary', rule: 'document', literal: '\0' };
+  const transformed = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(transformed.rules.document.members[1].members[0], original.rules.document.members[1].members[0]);
+  assert.deepEqual(transformed.rules.document.members[1].members[1].content, original.rules.document.members[1].members[1]);
+  const imported = importTreeSitterNative(transformed);
+  assert.deepEqual(imported.report.unsupported, []);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported)));
+  for (const text of ['value', 'value;', 'value\0']) assert.equal(parser.parseTree(text).ok, true, JSON.stringify(text));
+  for (const text of ['value!', 'value;!', 'value\0!']) assert.equal(parser.parseTree(text).ok, false, JSON.stringify(text));
+  for (const change of [{ rule: 'absent' }, { literal: 'absent' }, { literal: '' }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('symbol preferences keep all productions and settle a shared complete span', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'preference', rules: {
+    document: { type: 'CHOICE', members: [symbol('first'), symbol('second')] },
+    first: symbol('word'), second: symbol('word'), word: { type: 'STRING', value: 'a' },
+  } };
+  const original = structuredClone(source);
+  const decision = { family: 'symbol-dynamic-precedence', rules: ['second'], symbol: 'word', value: 1 };
+  const transformed = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(transformed.rules.document, original.rules.document);
+  assert.deepEqual(transformed.rules.second.content, original.rules.second);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  const result = parser.parseTree('a');
+  assert.equal(result.ok, true);
+  assert.equal(result.tree.children[0].kind, 'second');
+  for (const change of [{ rules: ['absent'] }, { symbol: 'absent' }, { rules: ['word'] }, { value: 0 }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('a complete context preference preserves longer fallback productions', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'boundary', rules: {
+    document: { type: 'SEQ', members: [symbol('_replacement'), { type: 'STRING', value: ')' }] },
+    _replacement: { type: 'CHOICE', members: [symbol('guard'), symbol('expression')] },
+    guard: { type: 'CHOICE', members: [{ type: 'STRING', value: 'a' }, { type: 'STRING', value: 'a;b' }] },
+    expression: { type: 'STRING', value: 'a' },
+  } };
+  const original = structuredClone(source);
+  const decision = { family: 'complete-context-variant', rule: '_replacement', symbol: 'expression', boundary: ')' };
+  const transformed = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(transformed.rules._replacement.content, original.rules._replacement);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  assert.equal(parser.parseTree('a)').tree.children[0].kind, 'expression');
+  assert.equal(parser.parseTree('a;b)').tree.children[0].kind, 'guard');
+  assert.equal(parser.parseTree('a;!').ok, false);
+  for (const change of [{ rule: 'absent' }, { symbol: 'document' }, { boundary: '' }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('optional suffix preference requires a value without changing the original prefix', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'attachment', rules: {
+    document: { type: 'SEQ', members: [symbol('_prefix'), { type: 'CHOICE', members: [symbol('arguments'), { type: 'BLANK' }] }] },
+    _prefix: { type: 'CHOICE', members: [
+      { type: 'SEQ', members: [{ type: 'STRING', value: ' ' }, { type: 'CHOICE', members: [symbol('word'), { type: 'BLANK' }] }] },
+      symbol('parenthesized'),
+    ] },
+    word: { type: 'STRING', value: 'a' },
+    arguments: { type: 'STRING', value: '(b)' },
+    parenthesized: { type: 'STRING', value: ' (b)' },
+  } };
+  const original = structuredClone(source);
+  const decision = { family: 'optional-suffix-context', rule: 'document', prefix: '_prefix', suffix: 'arguments', helper: '_attachment_prefix', requiredSymbol: 'word', value: 1 };
+  const transformed = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(transformed.rules._prefix, original.rules._prefix);
+  assert.deepEqual(transformed.rules.document.content, original.rules.document);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  for (const text of [' ', ' a', ' a(b)', ' (b)']) assert.equal(parser.parseTree(text).ok, true, JSON.stringify(text));
+  assert.equal(parser.parseTree(' (b)').tree.children[0].kind, 'parenthesized');
+  assert.equal(parser.parseTree(' a(b)').tree.children.at(-1).kind, 'arguments');
+  for (const change of [{ prefix: 'absent' }, { helper: '_prefix' }, { requiredSymbol: 'arguments' }, { value: 0 }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});

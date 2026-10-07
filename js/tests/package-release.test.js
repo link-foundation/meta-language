@@ -74,7 +74,7 @@ test('the tree-sitter oracles of the native languages are development files only
   const oracles = Object.values(lock.grammars).filter((grammar) => grammar.oracle);
   assert.deepEqual(
     oracles.map(({ id }) => id),
-    ['c', 'css', 'csv', 'diff', 'erlang', 'go', 'graphql', 'ini', 'java', 'javascript', 'json', 'json5', 'lua', 'make', 'pascal', 'powershell', 'proto', 'racket', 'regex', 'rust', 'scheme', 'solidity', 'toml', 'tsx', 'typescript', 'vb', 'zig'],
+    ['c', 'css', 'csv', 'diff', 'erlang', 'go', 'graphql', 'groovy', 'ini', 'java', 'javascript', 'json', 'json5', 'lua', 'make', 'pascal', 'powershell', 'proto', 'racket', 'regex', 'rust', 'scheme', 'solidity', 'toml', 'tsx', 'typescript', 'vb', 'zig'],
   );
   assert.ok(packageJson.files.every((entry) => !entry.startsWith('oracles')));
   for (const grammar of oracles) {

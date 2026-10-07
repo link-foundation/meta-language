@@ -682,6 +682,13 @@ data-driven rules, never hand edits of generated grammars. Tree-sitter is only
 a test oracle. Changes are drafted and debugged as a batch and pushed once;
 nobody waits idle on CI.
 
+The pinned Groovy grammar runs through this same native pipeline, with its
+original parser confined to independent test oracles. Reviewed source rules
+reconcile literal end sentinels with the actual input boundary, prefer complete
+expressions at a context boundary, and require an argument value before
+preferring an optional call attachment. These decisions retain the original
+productions and generate shared executable Links Notation for both runtimes.
+
 ## Continuous integration
 
 CI follows the same order as development. One workflow

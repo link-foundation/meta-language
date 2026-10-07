@@ -176,6 +176,7 @@ mod issue_195_grammar_native_pascal;
 mod issue_195_grammar_native_vb;
 
 mod issue_195_grammar_native_css;
+mod issue_195_grammar_native_groovy;
 
 mod issue_195_grammar_native_powershell;
 

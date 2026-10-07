@@ -35,6 +35,10 @@ use crate::{
 /// catalog's native grammars are exactly the shipped files.
 const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
     (
+        "native-grammars/groovy.lino",
+        include_str!("data/native-grammars/groovy.lino"),
+    ),
+    (
         "native-grammars/erlang.lino",
         include_str!("data/native-grammars/erlang.lino"),
     ),

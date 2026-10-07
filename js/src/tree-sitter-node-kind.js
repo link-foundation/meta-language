@@ -9,10 +9,14 @@
 // symbol is the one `idForNodeType` returns for its grammar symbol's name, and
 // its native kind is that grammar symbol's name.
 export function treeSitterNodeKind(node) {
-  const type = node.type;
-  const grammarType = node.grammarType;
-  if (grammarType === undefined || type === grammarType) return type;
   const language = node.tree.language;
+  // Node.type uses `name || "ERROR"`, which turns a legitimate empty
+  // grammar symbol (a NUL sentinel) into an error name. The symbol API keeps
+  // the original name, as native Node::kind does.
+  const type = language.nodeTypeForId(node.typeId) ?? node.type;
+  const grammarType = node.grammarType === undefined ? undefined
+    : language.nodeTypeForId(node.grammarId) ?? node.grammarType;
+  if (grammarType === undefined || type === grammarType) return type;
   const unaliased = language.idForNodeType(grammarType, language.nodeTypeIsNamed(node.grammarId));
   return unaliased === node.typeId ? grammarType : type;
 }

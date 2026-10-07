@@ -880,6 +880,11 @@
       "word": "stylesheet",
       "replacement": "style_sheet",
       "reason": "The pinned CSS, PowerShell or Erlang source uses stylesheet for style sheet."
+    },
+    {
+      "word": "juxt",
+      "replacement": "juxtaposed",
+      "reason": "The pinned Groovy grammar abbreviates juxtaposed function calls as juxt."
     }
   ],
   "grammars": {
@@ -1706,6 +1711,16 @@
           "rule": "call_expression",
           "value": 1,
           "reason": "The pinned parser binds a function name and following arguments into one call instead of separate declaration values."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "pseudo_class_arguments",
+            "pseudo_element_arguments"
+          ],
+          "symbol": "_selector",
+          "value": 1,
+          "reason": "Preserve selector and value alternatives; choose the selector tree where an argument also parses as a value, matching the pinned oracle."
         }
       ]
     },
@@ -1839,6 +1854,16 @@
           ],
           "wordRule": "_command_token",
           "reason": "The statement parse state reserves initial keyword tokens even when the keyword production fails later. A contextual negative lookahead retains every pipeline alternative, command prefixes and explicit invocation forms without enumerating case variants."
+        },
+        {
+          "family": "optional-suffix-context",
+          "rule": "_command_element",
+          "prefix": "_command_argument",
+          "suffix": "argument_list",
+          "value": 1,
+          "reason": "An argument-list attachment requires the value of an optional generic-token prefix. Keep the original argument alternative, including a separator alone and parenthesized expressions, without the attachment preference.",
+          "helper": "_argument_attachment_command_argument",
+          "requiredSymbol": "generic_token"
         }
       ],
       "concepts": {
@@ -1919,6 +1944,118 @@
         "case_expr": "case_selection_expression",
         "_catch_clauses": "catch_clause_list",
         "_catch_pat": "exception_pattern"
+      },
+      "sourceTransforms": [
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "wild_attribute",
+          "value": 1,
+          "reason": "Prefer a complete dotted attribute over the source-file expression alternative where both fit."
+        },
+        {
+          "family": "complete-context-variant",
+          "rule": "_macro_def_replacement",
+          "symbol": "_expr",
+          "boundary": ")",
+          "reason": "Keep a complete expression at the macro closing boundary; preserve every guard and clause alternative when the expression does not span the replacement."
+        }
+      ]
+    },
+    "groovy": {
+      "names": {
+        "_string_literal": "string_literal_content",
+        "_multiline_string_fragment": "multiple_line_string_fragment_content",
+        "_escape_sequence": "escape_sequence_content",
+        "_annotation": "annotation_variant",
+        "_toplevel_statement": "top_level_statement",
+        "_variable_declarator_id": "variable_declarator_identifier"
+      },
+      "sourceTransforms": [
+        {
+          "family": "literal-end-boundary",
+          "rule": "expression_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "do_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "break_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "continue_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "return_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "yield_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "import_declaration",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "local_variable_declaration",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "method_declaration",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "statement",
+          "variants": [
+            "block",
+            "expression_statement"
+          ],
+          "reason": "The oracle uses a statement block where both a block and a closure expression statement fit; keep the expression alternative as fallback."
+        }
+      ],
+      "concepts": {
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "modifiers": "grammar.modifier-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "type_parameters": "grammar.type-parameter-list",
+        "type_arguments": "grammar.type-argument-list",
+        "dimensions": "grammar.array-dimensions",
+        "wildcard": "grammar.wildcard-type-argument",
+        "closure": "grammar.closure-expression",
+        "map_literal": "grammar.dictionary-expression",
+        "map_item": "grammar.key-value-pair"
       }
     }
   },
@@ -2006,7 +2143,7 @@
       "grammar.syntax-quotation": [
         {
           "id": "grammar.syntax-quote",
-          "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
+          "reason": "A Lean syntax quotation `(\u2026) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
         }
       ],
       "grammar.yield-statement": [

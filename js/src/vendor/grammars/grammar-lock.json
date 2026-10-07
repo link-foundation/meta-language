@@ -166,7 +166,8 @@
       "version": "0.1.2",
       "parserSha256": "786637c026add3b2112aa717fa17b34e3093ea291b3b46d60438ba84382fdb06",
       "wasmSha256": "9c7236d8ab8c127a59644321213e479ab8ac0f53ac5720c1461ef406e46db4a6",
-      "license": "groovy.LICENSE"
+      "license": "groovy.LICENSE",
+      "oracle": true
     },
     "haskell": {
       "id": "haskell",

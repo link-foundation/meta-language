@@ -36,7 +36,7 @@
       "_statement_terminator"
     ]
   },
-  "rules": 166,
+  "rules": 167,
   "keywords": [],
   "renamed": [
     {
@@ -250,6 +250,10 @@
     {
       "source": "attribute_argument",
       "native": "metadata_attribute_argument"
+    },
+    {
+      "source": "_argument_attachment_command_argument",
+      "native": "argument_attachment_command_argument"
     }
   ],
   "expandedWords": [
@@ -289,7 +293,7 @@
         "concept": "grammar.value"
       }
     ],
-    "generated": 161
+    "generated": 162
   },
   "sourceTransforms": [
     {
@@ -392,6 +396,16 @@
       ],
       "wordRule": "_command_token",
       "reason": "The statement parse state reserves initial keyword tokens even when the keyword production fails later. A contextual negative lookahead retains every pipeline alternative, command prefixes and explicit invocation forms without enumerating case variants."
+    },
+    {
+      "family": "optional-suffix-context",
+      "rule": "_command_element",
+      "prefix": "_command_argument",
+      "suffix": "argument_list",
+      "value": 1,
+      "reason": "An argument-list attachment requires the value of an optional generic-token prefix. Keep the original argument alternative, including a separator alone and parenthesized expressions, without the attachment preference.",
+      "helper": "_argument_attachment_command_argument",
+      "requiredSymbol": "generic_token"
     }
   ],
   "approximations": [],

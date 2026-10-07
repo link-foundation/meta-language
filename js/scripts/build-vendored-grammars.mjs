@@ -75,7 +75,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   erlang: { crate: 'tree-sitter-erlang', dir: '.', oracle: true },
   go: { crate: 'tree-sitter-go', dir: '.', oracle: true },
   graphql: { crate: 'tree-sitter-graphql', dir: '.', oracle: true },
-  groovy: { crate: 'tree-sitter-groovy', dir: '.' },
+  groovy: { crate: 'tree-sitter-groovy', dir: '.', oracle: true },
   haskell: { crate: 'tree-sitter-haskell', dir: '.' },
   hcl: { crate: 'tree-sitter-hcl', dir: '.' },
   html: { crate: 'tree-sitter-html', dir: '.' },

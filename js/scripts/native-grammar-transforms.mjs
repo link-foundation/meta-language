@@ -3,6 +3,84 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'complete-context-variant') {
+      const { rule, symbol, boundary } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || !Object.hasOwn(grammar.rules, symbol) || typeof boundary !== 'string' || !boundary) throw new TypeError('a complete context variant needs existing rules and a nonempty boundary');
+      let choice = grammar.rules[rule];
+      while (['PREC', 'PREC_LEFT', 'PREC_RIGHT'].includes(choice.type)) choice = choice.content;
+      if (choice.type !== 'CHOICE') throw new TypeError('a complete context variant needs a choice');
+      const selected = choice.members.filter((member) => {
+        while (['PREC', 'PREC_LEFT', 'PREC_RIGHT', 'PREC_DYNAMIC'].includes(member.type)) member = member.content;
+        return member.type === 'SYMBOL' && member.name === symbol;
+      });
+      if (selected.length !== 1) throw new TypeError('a complete context variant must select exactly one existing alternative');
+      grammar.rules[rule] = { type: 'NATIVE_COMPLETE_CONTEXT_VARIANT', preferred: selected[0], boundary, content: grammar.rules[rule] };
+      continue;
+    }
+    if (decision.family === 'optional-suffix-context') {
+      const { rule, prefix, suffix, helper, requiredSymbol, value = 1 } = decision;
+      if (![rule, prefix, suffix, requiredSymbol].every((name) => Object.hasOwn(grammar.rules, name)) || typeof helper !== 'string' || !/^_[A-Za-z_]+$/u.test(helper) || Object.hasOwn(grammar.rules, helper) || !Number.isSafeInteger(value) || value <= 0) throw new TypeError('an optional suffix context needs existing rules, a unique hidden helper and positive preference');
+      let requirements = 0;
+      const requireSymbol = (node) => {
+        if (Array.isArray(node)) return node.map(requireSymbol);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'CHOICE' && node.members.length === 2 && node.members.some((member) => member.type === 'BLANK') && node.members.some((member) => member.type === 'SYMBOL' && member.name === requiredSymbol)) {
+          requirements += 1;
+          return node.members.find((member) => member.type !== 'BLANK');
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, requireSymbol(child)]));
+      };
+      grammar.rules[helper] = requireSymbol(structuredClone(grammar.rules[prefix]));
+      if (requirements !== 1) throw new TypeError('an optional suffix context must identify exactly one optional prefix symbol');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'SEQ' && node.members.length === 2 && node.members[0].type === 'SYMBOL' && node.members[0].name === prefix && node.members[1].type === 'CHOICE' && node.members[1].members.length === 2 && node.members[1].members.some((member) => member.type === 'BLANK') && node.members[1].members.some((member) => member.type === 'SYMBOL' && member.name === suffix)) {
+          changes += 1;
+          return { type: 'NATIVE_OPTIONAL_SUFFIX_CONTEXT', content: node, helper, value };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('an optional suffix context must select one existing prefix and optional suffix sequence');
+      continue;
+    }
+    if (decision.family === 'symbol-dynamic-precedence') {
+      const { rules, symbol, value } = decision;
+      if (!Array.isArray(rules) || !rules.length || rules.some((name) => !Object.hasOwn(grammar.rules, name)) || !Object.hasOwn(grammar.rules, symbol) || !Number.isSafeInteger(value) || value <= 0) throw new TypeError('a symbol preference needs existing rules, symbol and positive integer weight');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'SYMBOL' && node.name === symbol) {
+          changes += 1;
+          return { type: 'PREC_DYNAMIC', value, content: node };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      for (const rule of rules) grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (!changes) throw new TypeError('the selected rules contain no matching symbols');
+      continue;
+    }
+    if (decision.family === 'literal-end-boundary') {
+      const { rule, literal, alias = null } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || typeof literal !== 'string' || !literal || (alias !== null && typeof alias !== 'string')) throw new TypeError('an end boundary needs an existing rule, nonempty sentinel literal and optional alias');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'STRING' && node.value === literal) {
+          changes += 1;
+          const content = { type: 'NATIVE_END_BOUNDARY', content: node };
+          return alias === null ? content : { type: 'ALIAS', named: false, value: alias, content };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('an end boundary must identify exactly one sentinel literal');
+      continue;
+    }
     if (decision.family === 'alias-pattern-precedence') {
       const { rules, alias, value } = decision;
       if (!Array.isArray(rules) || !rules.length || rules.some((name) => !Object.hasOwn(grammar.rules, name)) || typeof alias !== 'string' || !alias || !Number.isSafeInteger(value)) throw new TypeError('alias pattern precedence needs existing rules, an alias and integer precedence');

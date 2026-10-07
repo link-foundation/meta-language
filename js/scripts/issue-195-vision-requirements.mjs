@@ -41,6 +41,15 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-GROOVY', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/groovy.json',
+    construct: 'generated native Groovy grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Groovy grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Groovy parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeGroovyGrammarIsCanonicalLinks', 'nativeGroovyTreesMatchOracle', 'nativeGroovyTreesLossless', 'nativeGroovyRejectsInvalidInput', 'nativeGroovyUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-groovy.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_groovy.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-CSS', area: 'native-grammar', specification: 'native-merged-grammars',
     fixture: 'parity/fixtures/native-grammars/css.json',
     construct: 'generated native CSS grammar and pinned independent source corpus',

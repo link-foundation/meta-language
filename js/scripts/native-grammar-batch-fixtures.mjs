@@ -1,5 +1,27 @@
 // Focused source cases for the next generated native grammar batch.
 export const NATIVE_BATCH_FIXTURES = [
+  { id: 'groovy', language: 'Groovy', matches: [
+    '', '// café\n', '/* café */\n', 'def x = 1', 'def x = true\n', 'def x = null\n',
+    'def x = "é😀"\n', "def x = 'a'\n", 'def x = "hello ${name}"\n',
+    'def x = """a\nb"""\n', "def x = '''a\nb'''\n", 'def x = 0xff\n', 'def x = 1.5e2\n',
+    'def x = [1, 2, 3]\n', 'def x = [a: 1, b: 2]\n', 'def x = 1..3\n',
+    'def x = new C()\n', 'def x = a.b\n', 'def x = a[0]\n', 'def x = a + b * c\n',
+    'println("hi")\n', 'println "hi"\n', 'def f(int x) { return x + 1; }\n',
+    'class C {}\n', 'class C { int x; int f(int y) { return x + y; } }\n',
+    'interface I { int f(); }\n', 'enum E { A, B }\n', 'package demo\nimport java.util.List\n',
+    'if (x) { f() } else { g() }\n', 'while (x) { break; }\n',
+    'for (int i = 0; i < 3; i++) { f(i) }\n', 'for (x in xs) { f(x) }\n',
+    'try { f(); } catch (Exception e) { g(); } finally { h(); }\n',
+    'def x = { a -> a + 1 }\n', 'def x = { a, b -> a + b }\n',
+    'def x = a ? b : c\n', 'assert x == 1;\n', 'throw new Exception("x");\n',
+    '#!/usr/bin/env groovy\ndef x=1\n', '\r\n  def x=1\r\n',
+    'f()', 'return 1', 'break', 'continue', 'yield 1',
+    'import java.util.List', 'int f()', 'do {} while (true)',
+  ], rejections: ['def x =', 'class C {', 'def x = "unterminated', 'if (x { f() }', 'def x = [1,',
+    'def f(int x) { return x + 1 }\n', 'while (x) { break }\n',
+    'try { f() } catch (Exception e) { g() } finally { h() }\n',
+    'assert x == 1\n', 'throw new Exception("x")\n', 'package demo',
+  ] },
   { id: 'toml', language: 'TOML', matches: [
     '', '# café\n', 'x = 1', 'x = -1\n', 'x = +1\n', 'x = 0xFF\n', 'x = 0o77\n', 'x = 0b11\n',
     'x = 1.5e+2\n', 'x = inf\n', 'x = -nan\n', 'x = true\n', 'x = false\n',
@@ -76,6 +98,8 @@ export const NATIVE_BATCH_FIXTURES = [
     '@supports (display: grid) { a { display: grid; } }', '@keyframes pulse {from {opacity:0;} to {opacity:1;}}',
     '@font-face { font-family: demo; src: url(x); }', '@namespace svg "urn:svg";',
     'a /* hi */ b {}', 'a :hover {}', 'a { color: red; /* tail */ }\r\n',
+    '\n:root {}', '\n:nth-child(2n+1) {}', '::slotted(a) {}',
+    '@supports not selector(:matches(a, b)) {}',
   ],rejections:['a:hover/* { ignored } */ {}', 'a {', 'a { color: }', 'a { content: "unterminated; }', 'a > {}']},
   {id:'powershell',language:'PowerShell',matches:[
     '$x = 1', '$x = -1\n', '$x = 1.5\n', '$x = $true\n', '$x = $null\n',
@@ -89,6 +113,9 @@ export const NATIVE_BATCH_FIXTURES = [
     'foreach ($x in @(1,2)) { $x }\n', 'try { F } catch { G } finally { H }\n',
     'switch ($x) { 1 { F }\ndefault { G }\n}\n', 'class C { [int]$x }\n', 'enum E { A; B }\n',
     '<# café #>\n$x=1\r\n', '$x=1;$y=2', '$x=(1)\n', '$x=1  \n$y=2',
+    '& "F" "C"("x", 1)\n', 'F "C"("x", 1)\n', 'F $x(1,2)\n',
+    'F (1 + 2)\n', 'F ("a" +\n"b")\n', 'F ([T]::M("x"))\n',
+    'if ($x) { F 1 } else { F (1+2) }\n',
   ],rejections:['', '# café\n', 'switch ($x) { 1 { F } default { G } }\n', 'function F {', '$x = (', '$x = "unterminated', 'if ($true { 1 }']},
   {id:'erlang',language:'Erlang',matches:[
     '', '%% café\n', '-module(demo).\n', '-export([f/1]).\n', 'f() -> ok.\n', 'f(X) -> X.\n',
@@ -102,5 +129,9 @@ export const NATIVE_BATCH_FIXTURES = [
     '-define(X,1).\nf() -> ?X.\n', '-type t() :: integer().\n', '-spec f(integer()) -> integer().\n',
     'f() -> """\n café\n """.\n', 'f() -> """"\n é😀\n """".\n', 'f() -> ~s"""\n café\n """.\n',
     'f() -> """\n a""b\n """.\n', 'f() -> "x".\r\n',
+    '-custom hello.\n', '-custom {a,1}.\n',
+    '-define(T, atom() | integer()).\n', '-define(T, ?OTHER(X)).\n',
+    ...['()', '[]', '{}', '<>', '//', '||', "''", '""', '``', '##'].flatMap((pair) =>
+      ['', 's', 'S', 'b', 'B'].map((prefix) => `f() -> ~${prefix}${pair[0]}é${pair[1]}.\n`)),
   ],rejections:['f() -> .', 'f( -> ok.', 'f() -> "unterminated.', 'f() -> """\nno close.']},
 ];

@@ -1177,6 +1177,10 @@
           "name": "expression"
         },
         {
+          "source": "native:groovy",
+          "name": "expression"
+        },
+        {
           "source": "native:java",
           "name": "expression"
         },
@@ -1427,6 +1431,10 @@
           "name": "identifier"
         },
         {
+          "source": "native:groovy",
+          "name": "identifier"
+        },
+        {
           "source": "native:java",
           "name": "identifier"
         },
@@ -1506,6 +1514,10 @@
         },
         {
           "source": "native:go",
+          "name": "statement"
+        },
+        {
+          "source": "native:groovy",
           "name": "statement"
         },
         {
@@ -1697,6 +1709,10 @@
         },
         {
           "source": "native:graphql",
+          "name": "name"
+        },
+        {
+          "source": "native:groovy",
           "name": "name"
         },
         {
@@ -2040,6 +2056,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "block_comment"
+        },
+        {
           "source": "native:java",
           "name": "block_comment"
         },
@@ -2073,6 +2093,10 @@
         },
         {
           "source": "native:erlang",
+          "name": "character_literal"
+        },
+        {
+          "source": "native:groovy",
           "name": "character_literal"
         },
         {
@@ -2708,6 +2732,10 @@
           "name": "escape_sequence"
         },
         {
+          "source": "native:groovy",
+          "name": "escape_sequence"
+        },
+        {
           "source": "native:java",
           "name": "escape_sequence"
         },
@@ -2777,6 +2805,10 @@
         },
         {
           "source": "native:go",
+          "name": "false"
+        },
+        {
+          "source": "native:groovy",
           "name": "false"
         },
         {
@@ -2931,6 +2963,10 @@
         "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "program"
+        },
         {
           "source": "native:java",
           "name": "program"
@@ -3441,6 +3477,10 @@
         },
         {
           "source": "native:go",
+          "name": "true"
+        },
+        {
+          "source": "native:groovy",
           "name": "true"
         },
         {
@@ -5626,6 +5666,10 @@
           "name": "function_definition"
         },
         {
+          "source": "native:groovy",
+          "name": "function_definition"
+        },
+        {
           "source": "native:lua",
           "name": "function_definition"
         },
@@ -5673,6 +5717,10 @@
         },
         {
           "source": "native:go",
+          "name": "declaration"
+        },
+        {
+          "source": "native:groovy",
           "name": "declaration"
         },
         {
@@ -6730,6 +6778,10 @@
           "name": "field_declaration"
         },
         {
+          "source": "native:groovy",
+          "name": "field_declaration"
+        },
+        {
           "source": "native:java",
           "name": "field_declaration"
         },
@@ -6964,6 +7016,10 @@
           "name": "top_level_statement"
         },
         {
+          "source": "native:groovy",
+          "name": "top_level_statement"
+        },
+        {
           "source": "native:java",
           "name": "top_level_statement"
         }
@@ -6986,6 +7042,10 @@
         },
         {
           "source": "native:go",
+          "name": "labeled_statement"
+        },
+        {
+          "source": "native:groovy",
           "name": "labeled_statement"
         },
         {
@@ -7051,6 +7111,10 @@
           "name": "expression_statement"
         },
         {
+          "source": "native:groovy",
+          "name": "expression_statement"
+        },
+        {
           "source": "native:java",
           "name": "expression_statement"
         },
@@ -7097,6 +7161,10 @@
         },
         {
           "source": "native:go",
+          "name": "if_statement"
+        },
+        {
+          "source": "native:groovy",
           "name": "if_statement"
         },
         {
@@ -7264,6 +7332,10 @@
           "name": "while_statement"
         },
         {
+          "source": "native:groovy",
+          "name": "while_statement"
+        },
+        {
           "source": "native:java",
           "name": "while_statement"
         },
@@ -7317,6 +7389,10 @@
           "name": "do_statement"
         },
         {
+          "source": "native:groovy",
+          "name": "do_statement"
+        },
+        {
           "source": "native:java",
           "name": "do_statement"
         },
@@ -7363,6 +7439,10 @@
         },
         {
           "source": "native:go",
+          "name": "for_statement"
+        },
+        {
+          "source": "native:groovy",
           "name": "for_statement"
         },
         {
@@ -7444,6 +7524,10 @@
           "name": "return_statement"
         },
         {
+          "source": "native:groovy",
+          "name": "return_statement"
+        },
+        {
           "source": "native:java",
           "name": "return_statement"
         },
@@ -7493,6 +7577,10 @@
           "name": "break_statement"
         },
         {
+          "source": "native:groovy",
+          "name": "break_statement"
+        },
+        {
           "source": "native:java",
           "name": "break_statement"
         },
@@ -7535,6 +7623,10 @@
         },
         {
           "source": "native:go",
+          "name": "continue_statement"
+        },
+        {
+          "source": "native:groovy",
           "name": "continue_statement"
         },
         {
@@ -7748,6 +7840,10 @@
           "name": "assignment_expression"
         },
         {
+          "source": "native:groovy",
+          "name": "assignment_expression"
+        },
+        {
           "source": "native:java",
           "name": "assignment_expression"
         },
@@ -7819,6 +7915,10 @@
         },
         {
           "source": "native:go",
+          "name": "unary_expression"
+        },
+        {
+          "source": "native:groovy",
           "name": "unary_expression"
         },
         {
@@ -7899,6 +7999,10 @@
           "name": "binary_expression"
         },
         {
+          "source": "native:groovy",
+          "name": "binary_expression"
+        },
+        {
           "source": "native:java",
           "name": "binary_expression"
         },
@@ -7960,6 +8064,10 @@
           "name": "update_expression"
         },
         {
+          "source": "native:groovy",
+          "name": "update_expression"
+        },
+        {
           "source": "native:java",
           "name": "update_expression"
         },
@@ -7994,6 +8102,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "cast_expression"
+        },
+        {
+          "source": "native:groovy",
           "name": "cast_expression"
         },
         {
@@ -8354,6 +8466,10 @@
           "name": "arguments"
         },
         {
+          "source": "native:groovy",
+          "name": "argument_list"
+        },
+        {
           "source": "native:java",
           "name": "argument_list"
         },
@@ -8468,6 +8584,10 @@
         },
         {
           "source": "native:go",
+          "name": "parenthesized_expression"
+        },
+        {
+          "source": "native:groovy",
           "name": "parenthesized_expression"
         },
         {
@@ -8667,6 +8787,10 @@
           "name": "string_literal"
         },
         {
+          "source": "native:groovy",
+          "name": "string_literal"
+        },
+        {
           "source": "native:java",
           "name": "string_literal"
         },
@@ -8835,6 +8959,10 @@
         },
         {
           "source": "native:go",
+          "name": "word_characters"
+        },
+        {
+          "source": "native:groovy",
           "name": "word_characters"
         },
         {
@@ -9638,6 +9766,10 @@
           "name": "type_parameter_list"
         },
         {
+          "source": "native:groovy",
+          "name": "type_parameters"
+        },
+        {
           "source": "native:java",
           "name": "type_parameters"
         },
@@ -9687,6 +9819,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "type_parameter"
+        },
         {
           "source": "native:java",
           "name": "type_parameter"
@@ -9912,6 +10048,10 @@
           "name": "type"
         },
         {
+          "source": "native:groovy",
+          "name": "type"
+        },
+        {
           "source": "native:java",
           "name": "type"
         },
@@ -10019,6 +10159,10 @@
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "array_type"
+        },
+        {
+          "source": "native:groovy",
           "name": "array_type"
         },
         {
@@ -10176,6 +10320,10 @@
           "name": "generic_type"
         },
         {
+          "source": "native:groovy",
+          "name": "generic_type"
+        },
+        {
           "source": "native:java",
           "name": "generic_type"
         },
@@ -10261,6 +10409,10 @@
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "type_arguments"
+        },
+        {
+          "source": "native:groovy",
           "name": "type_arguments"
         },
         {
@@ -10532,6 +10684,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "scoped_identifier"
+        },
+        {
           "source": "native:java",
           "name": "scoped_identifier"
         },
@@ -10570,6 +10726,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "scoped_type_identifier"
+        },
+        {
           "source": "native:java",
           "name": "scoped_type_identifier"
         },
@@ -10590,6 +10750,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "range_expression"
+        },
         {
           "source": "native:powershell",
           "name": "range_expression"
@@ -11188,10 +11352,14 @@
       "role": "concept",
       "definition": "A rule for a closure expression, the construct the upstream grammar names closure_expression.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "closure"
+        },
         {
           "source": "native:rust",
           "name": "closure_expression"
@@ -11428,6 +11596,10 @@
           "name": "block"
         },
         {
+          "source": "native:groovy",
+          "name": "block"
+        },
+        {
           "source": "native:java",
           "name": "block"
         },
@@ -11452,6 +11624,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "pattern"
+        },
         {
           "source": "native:java",
           "name": "pattern"
@@ -11729,6 +11905,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "literal"
+        },
+        {
           "source": "native:java",
           "name": "literal"
         },
@@ -11899,6 +12079,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "line_comment"
+        },
+        {
           "source": "native:java",
           "name": "line_comment"
         },
@@ -12009,6 +12193,10 @@
           "name": "shebang"
         },
         {
+          "source": "native:groovy",
+          "name": "shebang"
+        },
+        {
           "source": "native:rust",
           "name": "shebang"
         }
@@ -12042,6 +12230,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "reserved_identifier"
+        },
         {
           "source": "native:java",
           "name": "reserved_identifier"
@@ -12096,6 +12288,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "super"
+        },
         {
           "source": "native:java",
           "name": "super"
@@ -12637,6 +12833,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "variable_declarator"
+        },
+        {
           "source": "native:java",
           "name": "variable_declarator"
         },
@@ -12749,6 +12949,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "try_statement"
+        },
+        {
           "source": "native:java",
           "name": "try_statement"
         },
@@ -12847,6 +13051,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "throw_statement"
+        },
         {
           "source": "native:java",
           "name": "throw_statement"
@@ -12968,6 +13176,10 @@
           "name": "catch_clause"
         },
         {
+          "source": "native:groovy",
+          "name": "catch_clause"
+        },
+        {
           "source": "native:java",
           "name": "catch_clause"
         },
@@ -13004,6 +13216,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "finally_clause"
+        },
         {
           "source": "native:java",
           "name": "finally_clause"
@@ -13062,6 +13278,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "primary_expression"
+        },
         {
           "source": "native:java",
           "name": "primary_expression"
@@ -13758,6 +13978,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "class_declaration"
+        },
+        {
           "source": "native:java",
           "name": "class_declaration"
         },
@@ -13983,6 +14207,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "formal_parameter"
+        },
         {
           "source": "native:java",
           "name": "formal_parameter"
@@ -14261,6 +14489,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "ternary_expression"
+        },
         {
           "source": "native:java",
           "name": "ternary_expression"
@@ -14582,6 +14814,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "this"
+        },
+        {
           "source": "native:java",
           "name": "this"
         },
@@ -14711,6 +14947,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "class_body"
+        },
+        {
           "source": "native:java",
           "name": "class_body"
         },
@@ -14772,6 +15012,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "formal_parameters"
+        },
         {
           "source": "native:java",
           "name": "formal_parameters"
@@ -15536,6 +15780,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "interface_declaration"
+        },
+        {
           "source": "native:java",
           "name": "interface_declaration"
         },
@@ -15586,6 +15834,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "enumeration_declaration"
+        },
+        {
           "source": "native:java",
           "name": "enumeration_declaration"
         },
@@ -15622,6 +15874,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "enumeration_body"
+        },
         {
           "source": "native:java",
           "name": "enumeration_body"
@@ -22872,6 +23128,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "decimal_integer_literal"
+        },
+        {
           "source": "native:java",
           "name": "decimal_integer_literal"
         },
@@ -22896,6 +23156,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "hex_integer_literal"
+        },
         {
           "source": "native:java",
           "name": "hex_integer_literal"
@@ -22922,6 +23186,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "octal_integer_literal"
+        },
+        {
           "source": "native:java",
           "name": "octal_integer_literal"
         },
@@ -22938,10 +23206,14 @@
       "role": "concept",
       "definition": "A rule for a binary integer literal, the construct the upstream grammar names binary_integer_literal.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "binary_integer_literal"
+        },
         {
           "source": "native:java",
           "name": "binary_integer_literal"
@@ -22955,10 +23227,14 @@
       "role": "concept",
       "definition": "A rule for a decimal floating point literal, the construct the upstream grammar names decimal_floating_point_literal.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "decimal_floating_point_literal"
+        },
         {
           "source": "native:java",
           "name": "decimal_floating_point_literal"
@@ -22972,10 +23248,14 @@
       "role": "concept",
       "definition": "A rule for a hex floating point literal, the construct the upstream grammar names hex_floating_point_literal.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "hex_floating_point_literal"
+        },
         {
           "source": "native:java",
           "name": "hex_floating_point_literal"
@@ -23023,10 +23303,14 @@
       "role": "concept",
       "definition": "A rule for a string fragment, the construct the upstream grammar names string_fragment.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "string_fragment"
+        },
         {
           "source": "native:java",
           "name": "string_fragment"
@@ -23057,10 +23341,14 @@
       "role": "concept",
       "definition": "A rule for a string interpolation, the construct the upstream grammar names string_interpolation.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "string_interpolation"
+        },
         {
           "source": "native:java",
           "name": "string_interpolation"
@@ -23091,10 +23379,14 @@
       "role": "concept",
       "definition": "A rule for a null literal, the construct the upstream grammar names null_literal.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "null_literal"
+        },
         {
           "source": "native:java",
           "name": "null_literal"
@@ -23108,10 +23400,14 @@
       "role": "concept",
       "definition": "A rule for an instance of expression, the construct the upstream grammar names instanceof_expression.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "instance_of_expression"
+        },
         {
           "source": "native:java",
           "name": "instance_of_expression"
@@ -23130,6 +23426,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "lambda_expression"
+        },
+        {
           "source": "native:java",
           "name": "lambda_expression"
         },
@@ -23146,10 +23446,14 @@
       "role": "concept",
       "definition": "A rule for an inferred parameters, the construct the upstream grammar names inferred_parameters.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "inferred_parameters"
+        },
         {
           "source": "native:java",
           "name": "inferred_parameters"
@@ -23163,10 +23467,14 @@
       "role": "concept",
       "definition": "A rule for an array creation expression, the construct the upstream grammar names array_creation_expression.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "array_creation_expression"
+        },
         {
           "source": "native:java",
           "name": "array_creation_expression"
@@ -23180,10 +23488,14 @@
       "role": "concept",
       "definition": "A rule for a dimensions expression, the construct the upstream grammar names dimensions_expr.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "dimensions_expression"
+        },
         {
           "source": "native:java",
           "name": "dimensions_expression"
@@ -23197,10 +23509,14 @@
       "role": "concept",
       "definition": "A rule for a class literal, the construct the upstream grammar names class_literal.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "class_literal"
+        },
         {
           "source": "native:java",
           "name": "class_literal"
@@ -23214,10 +23530,14 @@
       "role": "concept",
       "definition": "A rule for an object creation expression, the construct the upstream grammar names object_creation_expression.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "object_creation_expression"
+        },
         {
           "source": "native:java",
           "name": "object_creation_expression"
@@ -23231,10 +23551,14 @@
       "role": "concept",
       "definition": "A rule for an unqualified object creation expression, the construct the upstream grammar names _unqualified_object_creation_expression.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "unqualified_object_creation_expression"
+        },
         {
           "source": "native:java",
           "name": "unqualified_object_creation_expression"
@@ -23248,10 +23572,14 @@
       "role": "concept",
       "definition": "A rule for a field access, the construct the upstream grammar names field_access.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "field_access"
+        },
         {
           "source": "native:java",
           "name": "field_access"
@@ -23269,6 +23597,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "template_expression"
+        },
         {
           "source": "native:java",
           "name": "template_expression"
@@ -23291,6 +23623,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "array_access"
+        },
+        {
           "source": "native:java",
           "name": "array_access"
         },
@@ -23307,10 +23643,14 @@
       "role": "concept",
       "definition": "A rule for a method invocation, the construct the upstream grammar names method_invocation.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "method_invocation"
+        },
         {
           "source": "native:java",
           "name": "method_invocation"
@@ -23324,10 +23664,14 @@
       "role": "concept",
       "definition": "A rule for a method reference, the construct the upstream grammar names method_reference.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "method_reference"
+        },
         {
           "source": "native:java",
           "name": "method_reference"
@@ -23341,10 +23685,14 @@
       "role": "concept",
       "definition": "A rule for a wildcard type argument, the construct the upstream grammar names wildcard.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "wildcard"
+        },
         {
           "source": "native:java",
           "name": "wildcard"
@@ -23358,10 +23706,14 @@
       "role": "concept",
       "definition": "A rule for a wildcard bounds, the construct the upstream grammar names _wildcard_bounds.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "wildcard_bounds"
+        },
         {
           "source": "native:java",
           "name": "wildcard_bounds"
@@ -23375,10 +23727,14 @@
       "role": "concept",
       "definition": "A rule for an array dimensions, the construct the upstream grammar names dimensions.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "dimensions"
+        },
         {
           "source": "native:java",
           "name": "dimensions"
@@ -23397,6 +23753,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "switch_expression"
+        },
+        {
           "source": "native:java",
           "name": "switch_expression"
         },
@@ -23413,10 +23773,14 @@
       "role": "concept",
       "definition": "A rule for a switch block, the construct the upstream grammar names switch_block.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "switch_block"
+        },
         {
           "source": "native:java",
           "name": "switch_block"
@@ -23430,10 +23794,14 @@
       "role": "concept",
       "definition": "A rule for a switch block statement group, the construct the upstream grammar names switch_block_statement_group.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "switch_block_statement_group"
+        },
         {
           "source": "native:java",
           "name": "switch_block_statement_group"
@@ -23447,10 +23815,14 @@
       "role": "concept",
       "definition": "A rule for a switch rule, the construct the upstream grammar names switch_rule.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "switch_rule"
+        },
         {
           "source": "native:java",
           "name": "switch_rule"
@@ -23464,10 +23836,14 @@
       "role": "concept",
       "definition": "A rule for a switch label, the construct the upstream grammar names switch_label.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "switch_label"
+        },
         {
           "source": "native:java",
           "name": "switch_label"
@@ -23481,10 +23857,14 @@
       "role": "concept",
       "definition": "A rule for a type pattern, the construct the upstream grammar names type_pattern.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "type_pattern"
+        },
         {
           "source": "native:java",
           "name": "type_pattern"
@@ -23498,10 +23878,14 @@
       "role": "concept",
       "definition": "A rule for a record pattern, the construct the upstream grammar names record_pattern.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "record_pattern"
+        },
         {
           "source": "native:java",
           "name": "record_pattern"
@@ -23515,10 +23899,14 @@
       "role": "concept",
       "definition": "A rule for a record pattern body, the construct the upstream grammar names record_pattern_body.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "record_pattern_body"
+        },
         {
           "source": "native:java",
           "name": "record_pattern_body"
@@ -23532,10 +23920,14 @@
       "role": "concept",
       "definition": "A rule for a record pattern component, the construct the upstream grammar names record_pattern_component.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "record_pattern_component"
+        },
         {
           "source": "native:java",
           "name": "record_pattern_component"
@@ -23549,10 +23941,14 @@
       "role": "concept",
       "definition": "A rule for an underscore pattern, the construct the upstream grammar names underscore_pattern.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "underscore_pattern"
+        },
         {
           "source": "native:java",
           "name": "underscore_pattern"
@@ -23575,6 +23971,10 @@
           "name": "guard"
         },
         {
+          "source": "native:groovy",
+          "name": "guard"
+        },
+        {
           "source": "native:java",
           "name": "guard"
         }
@@ -23587,10 +23987,14 @@
       "role": "concept",
       "definition": "A rule for an assert statement, the construct the upstream grammar names assert_statement.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "assert_statement"
+        },
         {
           "source": "native:java",
           "name": "assert_statement"
@@ -23604,10 +24008,14 @@
       "role": "concept",
       "definition": "A rule for a yield statement, the construct the upstream grammar names yield_statement.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "yield_statement"
+        },
         {
           "source": "native:java",
           "name": "yield_statement"
@@ -23627,10 +24035,14 @@
       "role": "concept",
       "definition": "A rule for a synchronized statement, the construct the upstream grammar names synchronized_statement.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "synchronized_statement"
+        },
         {
           "source": "native:java",
           "name": "synchronized_statement"
@@ -23644,10 +24056,14 @@
       "role": "concept",
       "definition": "A rule for a catch formal parameter, the construct the upstream grammar names catch_formal_parameter.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "catch_formal_parameter"
+        },
         {
           "source": "native:java",
           "name": "catch_formal_parameter"
@@ -23661,10 +24077,14 @@
       "role": "concept",
       "definition": "A rule for a catch type, the construct the upstream grammar names catch_type.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "catch_type"
+        },
         {
           "source": "native:java",
           "name": "catch_type"
@@ -23684,10 +24104,14 @@
       "role": "concept",
       "definition": "A rule for a try with resources statement, the construct the upstream grammar names try_with_resources_statement.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "try_with_resources_statement"
+        },
         {
           "source": "native:java",
           "name": "try_with_resources_statement"
@@ -23701,10 +24125,14 @@
       "role": "concept",
       "definition": "A rule for a resource specification, the construct the upstream grammar names resource_specification.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "resource_specification"
+        },
         {
           "source": "native:java",
           "name": "resource_specification"
@@ -23718,10 +24146,14 @@
       "role": "concept",
       "definition": "A rule for a resource, the construct the upstream grammar names resource.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "resource"
+        },
         {
           "source": "native:java",
           "name": "resource"
@@ -23735,10 +24167,14 @@
       "role": "concept",
       "definition": "A rule for an enhanced for statement, the construct the upstream grammar names enhanced_for_statement.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "enhanced_for_statement"
+        },
         {
           "source": "native:java",
           "name": "enhanced_for_statement"
@@ -23769,10 +24205,14 @@
       "role": "concept",
       "definition": "A rule for a marker annotation, the construct the upstream grammar names marker_annotation.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "marker_annotation"
+        },
         {
           "source": "native:java",
           "name": "marker_annotation"
@@ -23786,10 +24226,14 @@
       "role": "concept",
       "definition": "A rule for an annotation, the construct the upstream grammar names annotation.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "annotation"
+        },
         {
           "source": "native:java",
           "name": "annotation"
@@ -23809,10 +24253,14 @@
       "role": "concept",
       "definition": "A rule for an annotation argument list, the construct the upstream grammar names annotation_argument_list.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "annotation_argument_list"
+        },
         {
           "source": "native:java",
           "name": "annotation_argument_list"
@@ -23826,10 +24274,14 @@
       "role": "concept",
       "definition": "A rule for an element value pair, the construct the upstream grammar names element_value_pair.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "element_value_pair"
+        },
         {
           "source": "native:java",
           "name": "element_value_pair"
@@ -23843,10 +24295,14 @@
       "role": "concept",
       "definition": "A rule for an element value, the construct the upstream grammar names _element_value.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "element_value"
+        },
         {
           "source": "native:java",
           "name": "element_value"
@@ -23860,10 +24316,14 @@
       "role": "concept",
       "definition": "A rule for an element value array initializer, the construct the upstream grammar names element_value_array_initializer.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "element_value_array_initializer"
+        },
         {
           "source": "native:java",
           "name": "element_value_array_initializer"
@@ -23877,10 +24337,14 @@
       "role": "concept",
       "definition": "A rule for a module declaration, the construct the upstream grammar names module_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "module_declaration"
+        },
         {
           "source": "native:java",
           "name": "module_declaration"
@@ -23894,10 +24358,14 @@
       "role": "concept",
       "definition": "A rule for a module body, the construct the upstream grammar names module_body.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "module_body"
+        },
         {
           "source": "native:java",
           "name": "module_body"
@@ -23911,10 +24379,14 @@
       "role": "concept",
       "definition": "A rule for a module directive, the construct the upstream grammar names module_directive.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "module_directive"
+        },
         {
           "source": "native:java",
           "name": "module_directive"
@@ -23928,10 +24400,14 @@
       "role": "concept",
       "definition": "A rule for a requires module directive, the construct the upstream grammar names requires_module_directive.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "requires_module_directive"
+        },
         {
           "source": "native:java",
           "name": "requires_module_directive"
@@ -23945,10 +24421,14 @@
       "role": "concept",
       "definition": "A rule for a requires modifier, the construct the upstream grammar names requires_modifier.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "requires_modifier"
+        },
         {
           "source": "native:java",
           "name": "requires_modifier"
@@ -23962,10 +24442,14 @@
       "role": "concept",
       "definition": "A rule for an exports module directive, the construct the upstream grammar names exports_module_directive.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "exports_module_directive"
+        },
         {
           "source": "native:java",
           "name": "exports_module_directive"
@@ -23979,10 +24463,14 @@
       "role": "concept",
       "definition": "A rule for an opens module directive, the construct the upstream grammar names opens_module_directive.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "opens_module_directive"
+        },
         {
           "source": "native:java",
           "name": "opens_module_directive"
@@ -23996,10 +24484,14 @@
       "role": "concept",
       "definition": "A rule for an uses module directive, the construct the upstream grammar names uses_module_directive.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "uses_module_directive"
+        },
         {
           "source": "native:java",
           "name": "uses_module_directive"
@@ -24013,10 +24505,14 @@
       "role": "concept",
       "definition": "A rule for a provides module directive, the construct the upstream grammar names provides_module_directive.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "provides_module_directive"
+        },
         {
           "source": "native:java",
           "name": "provides_module_directive"
@@ -24030,10 +24526,14 @@
       "role": "concept",
       "definition": "A rule for a package declaration, the construct the upstream grammar names package_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "package_declaration"
+        },
         {
           "source": "native:java",
           "name": "package_declaration"
@@ -24053,6 +24553,10 @@
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "import_declaration"
+        },
+        {
+          "source": "native:groovy",
           "name": "import_declaration"
         },
         {
@@ -24076,10 +24580,14 @@
       "role": "concept",
       "definition": "A rule for an asterisk, the construct the upstream grammar names asterisk.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "asterisk"
+        },
         {
           "source": "native:java",
           "name": "asterisk"
@@ -24093,10 +24601,14 @@
       "role": "concept",
       "definition": "A rule for an enumeration body declarations, the construct the upstream grammar names enum_body_declarations.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "enumeration_body_declarations"
+        },
         {
           "source": "native:java",
           "name": "enumeration_body_declarations"
@@ -24110,10 +24622,14 @@
       "role": "concept",
       "definition": "A rule for an enumeration constant, the construct the upstream grammar names enum_constant.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "enumeration_constant"
+        },
         {
           "source": "native:java",
           "name": "enumeration_constant"
@@ -24132,6 +24648,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "modifiers"
+        },
+        {
           "source": "native:java",
           "name": "modifiers"
         },
@@ -24148,10 +24668,14 @@
       "role": "concept",
       "definition": "A rule for a type bound, the construct the upstream grammar names type_bound.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "type_bound"
+        },
         {
           "source": "native:java",
           "name": "type_bound"
@@ -24165,10 +24689,14 @@
       "role": "concept",
       "definition": "A rule for a superclass, the construct the upstream grammar names superclass.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "superclass"
+        },
         {
           "source": "native:java",
           "name": "superclass"
@@ -24182,10 +24710,14 @@
       "role": "concept",
       "definition": "A rule for a super interfaces, the construct the upstream grammar names super_interfaces.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "super_interfaces"
+        },
         {
           "source": "native:java",
           "name": "super_interfaces"
@@ -24199,10 +24731,14 @@
       "role": "concept",
       "definition": "A rule for a type list, the construct the upstream grammar names type_list.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "type_list"
+        },
         {
           "source": "native:java",
           "name": "type_list"
@@ -24216,10 +24752,14 @@
       "role": "concept",
       "definition": "A rule for a permits, the construct the upstream grammar names permits.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "permits"
+        },
         {
           "source": "native:java",
           "name": "permits"
@@ -24233,10 +24773,14 @@
       "role": "concept",
       "definition": "A rule for a class body declaration, the construct the upstream grammar names _class_body_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "class_body_declaration"
+        },
         {
           "source": "native:java",
           "name": "class_body_declaration"
@@ -24250,10 +24794,14 @@
       "role": "concept",
       "definition": "A rule for a static initializer, the construct the upstream grammar names static_initializer.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "static_initializer"
+        },
         {
           "source": "native:java",
           "name": "static_initializer"
@@ -24272,6 +24820,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "constructor_declaration"
+        },
+        {
           "source": "native:java",
           "name": "constructor_declaration"
         },
@@ -24288,10 +24840,14 @@
       "role": "concept",
       "definition": "A rule for a constructor declarator, the construct the upstream grammar names _constructor_declarator.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "constructor_declarator"
+        },
         {
           "source": "native:java",
           "name": "constructor_declarator"
@@ -24305,10 +24861,14 @@
       "role": "concept",
       "definition": "A rule for a constructor body, the construct the upstream grammar names constructor_body.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "constructor_body"
+        },
         {
           "source": "native:java",
           "name": "constructor_body"
@@ -24322,10 +24882,14 @@
       "role": "concept",
       "definition": "A rule for an explicit constructor invocation, the construct the upstream grammar names explicit_constructor_invocation.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "explicit_constructor_invocation"
+        },
         {
           "source": "native:java",
           "name": "explicit_constructor_invocation"
@@ -24348,6 +24912,10 @@
           "name": "record_declaration"
         },
         {
+          "source": "native:groovy",
+          "name": "record_declaration"
+        },
+        {
           "source": "native:java",
           "name": "record_declaration"
         }
@@ -24360,10 +24928,14 @@
       "role": "concept",
       "definition": "A rule for an annotation type declaration, the construct the upstream grammar names annotation_type_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "annotation_type_declaration"
+        },
         {
           "source": "native:java",
           "name": "annotation_type_declaration"
@@ -24377,10 +24949,14 @@
       "role": "concept",
       "definition": "A rule for an annotation type body, the construct the upstream grammar names annotation_type_body.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "annotation_type_body"
+        },
         {
           "source": "native:java",
           "name": "annotation_type_body"
@@ -24394,10 +24970,14 @@
       "role": "concept",
       "definition": "A rule for an annotation type element declaration, the construct the upstream grammar names annotation_type_element_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "annotation_type_element_declaration"
+        },
         {
           "source": "native:java",
           "name": "annotation_type_element_declaration"
@@ -24420,6 +25000,10 @@
           "name": "default_value"
         },
         {
+          "source": "native:groovy",
+          "name": "default_value"
+        },
+        {
           "source": "native:java",
           "name": "default_value"
         },
@@ -24436,10 +25020,14 @@
       "role": "concept",
       "definition": "A rule for an extends interfaces, the construct the upstream grammar names extends_interfaces.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "extends_interfaces"
+        },
         {
           "source": "native:java",
           "name": "extends_interfaces"
@@ -24453,10 +25041,14 @@
       "role": "concept",
       "definition": "A rule for an interface body, the construct the upstream grammar names interface_body.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "interface_body"
+        },
         {
           "source": "native:java",
           "name": "interface_body"
@@ -24479,6 +25071,10 @@
           "name": "constant_declaration"
         },
         {
+          "source": "native:groovy",
+          "name": "constant_declaration"
+        },
+        {
           "source": "native:java",
           "name": "constant_declaration"
         },
@@ -24495,10 +25091,14 @@
       "role": "concept",
       "definition": "A rule for a variable declarator list, the construct the upstream grammar names _variable_declarator_list.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "variable_declarator_list"
+        },
         {
           "source": "native:java",
           "name": "variable_declarator_list"
@@ -24512,10 +25112,14 @@
       "role": "concept",
       "definition": "A rule for a variable declarator identifier, the construct the upstream grammar names _variable_declarator_id.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "variable_declarator_identifier"
+        },
         {
           "source": "native:java",
           "name": "variable_declarator_identifier"
@@ -24529,10 +25133,14 @@
       "role": "concept",
       "definition": "A rule for a variable initializer, the construct the upstream grammar names _variable_initializer.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "variable_initializer"
+        },
         {
           "source": "native:java",
           "name": "variable_initializer"
@@ -24551,6 +25159,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:groovy",
+          "name": "array_initializer"
+        },
+        {
           "source": "native:java",
           "name": "array_initializer"
         },
@@ -24567,10 +25179,14 @@
       "role": "concept",
       "definition": "A rule for an unannotated type, the construct the upstream grammar names _unannotated_type.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "unannotated_type"
+        },
         {
           "source": "native:java",
           "name": "unannotated_type"
@@ -24590,6 +25206,10 @@
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "simple_type"
+        },
+        {
+          "source": "native:groovy",
           "name": "simple_type"
         },
         {
@@ -24614,6 +25234,10 @@
           "name": "annotated_type"
         },
         {
+          "source": "native:groovy",
+          "name": "annotated_type"
+        },
+        {
           "source": "native:java",
           "name": "annotated_type"
         }
@@ -24626,10 +25250,14 @@
       "role": "concept",
       "definition": "A rule for an integral type, the construct the upstream grammar names integral_type.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "integral_type"
+        },
         {
           "source": "native:java",
           "name": "integral_type"
@@ -24643,10 +25271,14 @@
       "role": "concept",
       "definition": "A rule for a floating point type, the construct the upstream grammar names floating_point_type.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "floating_point_type"
+        },
         {
           "source": "native:java",
           "name": "floating_point_type"
@@ -24660,10 +25292,14 @@
       "role": "concept",
       "definition": "A rule for a boolean type, the construct the upstream grammar names boolean_type.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "boolean_type"
+        },
         {
           "source": "native:java",
           "name": "boolean_type"
@@ -24677,10 +25313,14 @@
       "role": "concept",
       "definition": "A rule for a void type, the construct the upstream grammar names void_type.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "void_type"
+        },
         {
           "source": "native:java",
           "name": "void_type"
@@ -24694,10 +25334,14 @@
       "role": "concept",
       "definition": "A rule for a method header, the construct the upstream grammar names _method_header.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "method_header"
+        },
         {
           "source": "native:java",
           "name": "method_header"
@@ -24711,10 +25355,14 @@
       "role": "concept",
       "definition": "A rule for a method declarator, the construct the upstream grammar names _method_declarator.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "method_declarator"
+        },
         {
           "source": "native:java",
           "name": "method_declarator"
@@ -24728,10 +25376,14 @@
       "role": "concept",
       "definition": "A rule for a receiver parameter, the construct the upstream grammar names receiver_parameter.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "receiver_parameter"
+        },
         {
           "source": "native:java",
           "name": "receiver_parameter"
@@ -24745,10 +25397,14 @@
       "role": "concept",
       "definition": "A rule for a spread parameter, the construct the upstream grammar names spread_parameter.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "spread_parameter"
+        },
         {
           "source": "native:java",
           "name": "spread_parameter"
@@ -24762,10 +25418,14 @@
       "role": "concept",
       "definition": "A rule for a throws, the construct the upstream grammar names throws.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "throws"
+        },
         {
           "source": "native:java",
           "name": "throws"
@@ -24779,10 +25439,14 @@
       "role": "concept",
       "definition": "A rule for a local variable declaration, the construct the upstream grammar names local_variable_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "local_variable_declaration"
+        },
         {
           "source": "native:java",
           "name": "local_variable_declaration"
@@ -24805,6 +25469,10 @@
           "name": "method_declaration"
         },
         {
+          "source": "native:groovy",
+          "name": "method_declaration"
+        },
+        {
           "source": "native:java",
           "name": "method_declaration"
         },
@@ -24821,10 +25489,14 @@
       "role": "concept",
       "definition": "A rule for a compact constructor declaration, the construct the upstream grammar names compact_constructor_declaration.",
       "constraints": [
-        "Only the native Java grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "compact_constructor_declaration"
+        },
         {
           "source": "native:java",
           "name": "compact_constructor_declaration"
@@ -38327,10 +38999,14 @@
       "role": "concept",
       "definition": "A rule for an array literal, the construct the upstream grammar names array_literal.",
       "constraints": [
-        "Only the native vb (Visual Basic) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "array_literal"
+        },
         {
           "source": "native:vb",
           "name": "array_literal"
@@ -41572,6 +42248,23 @@
       "formerNames": []
     },
     {
+      "id": "grammar.argument-attachment-command-argument",
+      "phrase": "argument attachment command argument",
+      "role": "concept",
+      "definition": "A rule for an argument attachment command argument, the construct the upstream grammar names _argument_attachment_command_argument.",
+      "constraints": [
+        "Only the native PowerShell grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:powershell",
+          "name": "argument_attachment_command_argument"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.structural-search-rule-definition",
       "phrase": "structural search rule definition",
       "role": "concept",
@@ -43005,13 +43698,17 @@
       "role": "concept",
       "definition": "A rule for a dictionary expression, the construct the upstream grammar names map_expr.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:erlang",
           "name": "dictionary_expression"
+        },
+        {
+          "source": "native:groovy",
+          "name": "map_literal"
         }
       ],
       "formerNames": []
@@ -44219,6 +44916,193 @@
         {
           "source": "native:erlang",
           "name": "prefixed_string_literal_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.string-literal-content",
+      "phrase": "string literal content",
+      "role": "concept",
+      "definition": "A rule for a string literal content, the construct the upstream grammar names _string_literal.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "string_literal_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.multiple-line-string-literal",
+      "phrase": "multiple line string literal",
+      "role": "concept",
+      "definition": "A rule for a multiple line string literal, the construct the upstream grammar names _multiline_string_literal.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "multiple_line_string_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.multiple-line-string-fragment-content",
+      "phrase": "multiple line string fragment content",
+      "role": "concept",
+      "definition": "A rule for a multiple line string fragment content, the construct the upstream grammar names _multiline_string_fragment.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "multiple_line_string_fragment_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.escape-sequence-content",
+      "phrase": "escape sequence content",
+      "role": "concept",
+      "definition": "A rule for an escape sequence content, the construct the upstream grammar names _escape_sequence.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "escape_sequence_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.annotation-variant",
+      "phrase": "annotation variant",
+      "role": "concept",
+      "definition": "A rule for an annotation variant, the construct the upstream grammar names _annotation.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "annotation_variant"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.juxtaposed-function-call",
+      "phrase": "juxtaposed function call",
+      "role": "concept",
+      "definition": "A rule for a juxtaposed function call, the construct the upstream grammar names juxt_function_call.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "juxtaposed_function_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.juxtaposed-function-name",
+      "phrase": "juxtaposed function name",
+      "role": "concept",
+      "definition": "A rule for a juxtaposed function name, the construct the upstream grammar names _juxt_function_name.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "juxtaposed_function_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.juxtaposed-argument-list",
+      "phrase": "juxtaposed argument list",
+      "role": "concept",
+      "definition": "A rule for a juxtaposed argument list, the construct the upstream grammar names _juxt_argument_list.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "juxtaposed_argument_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.key-value-pair",
+      "phrase": "key value pair",
+      "role": "concept",
+      "definition": "A rule for a key value pair, the construct the upstream grammar names map_item.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "map_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.multiple-line-string-fragment-double",
+      "phrase": "multiple line string fragment double",
+      "role": "concept",
+      "definition": "A rule for a multiple line string fragment double, the construct the upstream grammar names _multiline_string_fragment_double.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "multiple_line_string_fragment_double"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.multiple-line-string-fragment-single",
+      "phrase": "multiple line string fragment single",
+      "role": "concept",
+      "definition": "A rule for a multiple line string fragment single, the construct the upstream grammar names _multiline_string_fragment_single.",
+      "constraints": [
+        "Only the native Groovy grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:groovy",
+          "name": "multiple_line_string_fragment_single"
         }
       ],
       "formerNames": []

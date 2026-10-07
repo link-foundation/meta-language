@@ -31,9 +31,9 @@
       ],
       "corpus": "https://github.com/tree-sitter/tree-sitter-css/tree/dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/css.json",
-      "coverage": {"rules": {"normal": 48, "atomic": 0, "silent": 7, "token": 11}, "visibleRules": 48, "exercisedRules": 32, "checkedKinds": 49, "checkedFields": 0, "renamed": 20, "expandedWords": 5, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 48, "atomic": 0, "silent": 7, "token": 11}, "visibleRules": 48, "exercisedRules": 34, "checkedKinds": 51, "checkedFields": 0, "renamed": 20, "expandedWords": 5, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 3, "conflict": 0, "precedences": 0, "extra": 3, "kind": 2},
-      "correctness": {"matches": 36, "rows": 498, "bytes": 732, "divergences": 0, "rejections": 5},
+      "correctness": {"matches": 40, "rows": 556, "bytes": 817, "divergences": 0, "rejections": 5},
       "recovery": {"repaired": 5, "errorNodes": 1, "missingNodes": 6, "categories": {}},
       "reuse": {"shared": 15, "specific": 51}
     },
@@ -88,11 +88,11 @@
       ],
       "corpus": "https://github.com/WhatsApp/tree-sitter-erlang/tree/67e7f7f05baf492ca2a7c0d9538761b242d33d95/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/erlang.json",
-      "coverage": {"rules": {"normal": 138, "atomic": 0, "silent": 45, "token": 13}, "visibleRules": 138, "exercisedRules": 58, "checkedKinds": 64, "checkedFields": 31, "renamed": 127, "expandedWords": 26, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 138, "atomic": 0, "silent": 45, "token": 13}, "visibleRules": 138, "exercisedRules": 62, "checkedKinds": 68, "checkedFields": 31, "renamed": 127, "expandedWords": 26, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 3, "conflict": 14, "precedences": 0, "extra": 2, "kind": 0},
-      "correctness": {"matches": 41, "rows": 658, "bytes": 799, "divergences": 0, "rejections": 4},
+      "correctness": {"matches": 95, "rows": 1267, "bytes": 1624, "divergences": 0, "rejections": 4},
       "recovery": {"repaired": 4, "errorNodes": 2, "missingNodes": 3, "categories": {}},
-      "reuse": {"shared": 40, "specific": 156}
+      "reuse": {"shared": 41, "specific": 155}
     },
     {
       "grammar": "native-go",
@@ -131,6 +131,24 @@
       "reuse": {"shared": 25, "specific": 49}
     },
     {
+      "grammar": "native-groovy",
+      "language": "Groovy",
+      "links": "parity/grammars/native/groovy.lino",
+      "fixture": "parity/fixtures/native-grammars/groovy.json",
+      "oracle": "crates.io tree-sitter-groovy 0.1.2",
+      "sources": [
+        "https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf",
+        "https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf/test/corpus"
+      ],
+      "corpus": "https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/groovy.json",
+      "coverage": {"rules": {"normal": 127, "atomic": 0, "silent": 34, "token": 20}, "visibleRules": 127, "exercisedRules": 55, "checkedKinds": 68, "checkedFields": 24, "renamed": 34, "expandedWords": 5, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 0, "conflict": 33, "precedences": 0, "extra": 3, "kind": 1},
+      "correctness": {"matches": 48, "rows": 568, "bytes": 874, "divergences": 0, "rejections": 11},
+      "recovery": {"repaired": 11, "errorNodes": 3, "missingNodes": 14, "categories": {}},
+      "reuse": {"shared": 170, "specific": 11}
+    },
+    {
       "grammar": "native-ini",
       "language": "INI",
       "links": "parity/grammars/native/ini.lino",
@@ -164,7 +182,7 @@
       "features": {"scanner": 0, "conflict": 13, "precedences": 0, "extra": 3, "kind": 1},
       "correctness": {"matches": 146, "rows": 4848, "bytes": 11744, "divergences": 0, "rejections": 11},
       "recovery": {"repaired": 11, "errorNodes": 4, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 78, "specific": 91}
+      "reuse": {"shared": 164, "specific": 5}
     },
     {
       "grammar": "native-javascript",
@@ -305,11 +323,11 @@
       ],
       "corpus": "https://github.com/airbus-cert/tree-sitter-powershell/tree/d398441825243b00e317e87e1829b9d6a3e54ce0/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/powershell.json",
-      "coverage": {"rules": {"normal": 139, "atomic": 0, "silent": 13, "token": 14}, "visibleRules": 139, "exercisedRules": 81, "checkedKinds": 89, "checkedFields": 11, "renamed": 53, "expandedWords": 12, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 139, "atomic": 0, "silent": 14, "token": 14}, "visibleRules": 139, "exercisedRules": 90, "checkedKinds": 98, "checkedFields": 12, "renamed": 54, "expandedWords": 12, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 1, "conflict": 5, "precedences": 0, "extra": 5, "kind": 0},
-      "correctness": {"matches": 41, "rows": 1392, "bytes": 698, "divergences": 0, "rejections": 7},
+      "correctness": {"matches": 48, "rows": 1710, "bytes": 813, "divergences": 0, "rejections": 7},
       "recovery": {"repaired": 7, "errorNodes": 1, "missingNodes": 8, "categories": {}},
-      "reuse": {"shared": 47, "specific": 119}
+      "reuse": {"shared": 47, "specific": 120}
     },
     {
       "grammar": "native-proto",
@@ -399,7 +417,7 @@
       "features": {"scanner": 6, "conflict": 9, "precedences": 0, "extra": 3, "kind": 3},
       "correctness": {"matches": 182, "rows": 7903, "bytes": 15796, "divergences": 0, "rejections": 38},
       "recovery": {"repaired": 38, "errorNodes": 18, "missingNodes": 47, "categories": {"native-skips-more": 25, "oracle-skips-more": 36, "same-repair-sites": 7, "same-skipped-bytes": 7}},
-      "reuse": {"shared": 73, "specific": 111}
+      "reuse": {"shared": 74, "specific": 110}
     },
     {
       "grammar": "native-scheme",
@@ -507,7 +525,7 @@
       "features": {"scanner": 0, "conflict": 16, "precedences": 0, "extra": 3, "kind": 0},
       "correctness": {"matches": 34, "rows": 577, "bytes": 1599, "divergences": 0, "rejections": 3},
       "recovery": {"repaired": 3, "errorNodes": 1, "missingNodes": 2, "categories": {}},
-      "reuse": {"shared": 58, "specific": 53}
+      "reuse": {"shared": 59, "specific": 52}
     },
     {
       "grammar": "native-zig",

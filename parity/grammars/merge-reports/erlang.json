@@ -673,6 +673,21 @@
     ],
     "generated": 190
   },
+  "sourceTransforms": [
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "wild_attribute",
+      "value": 1,
+      "reason": "Prefer a complete dotted attribute over the source-file expression alternative where both fit."
+    },
+    {
+      "family": "complete-context-variant",
+      "rule": "_macro_def_replacement",
+      "symbol": "_expr",
+      "boundary": ")",
+      "reason": "Keep a complete expression at the macro closing boundary; preserve every guard and clause alternative when the expression does not span the replacement."
+    }
+  ],
   "approximations": [],
   "unsupported": []
 }

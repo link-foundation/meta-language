@@ -1342,7 +1342,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   let stale = 0;
   const outputs = [
     ...NATIVE_GRAMMARS.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
-    ...['lua', 'toml', 'zig', 'pascal', 'vb', 'css', 'powershell', 'erlang'].map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
+    ...['lua', 'toml', 'zig', 'pascal', 'vb', 'css', 'powershell', 'erlang', 'groovy'].map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
     [DEFAULT_CST_PATH, buildNativeDefaultCstExpected],
   ];
   for (const [relative, build] of outputs) {

@@ -491,6 +491,13 @@ export function importTreeSitterNative(source, options = {}) {
       case 'STRING':
         if (!inToken && keywords.has(node.value)) return `(token (seq (literal ${enc(node.value)}) (not (ref ${wordRule}))))`;
         return `(literal ${enc(node.value)})`;
+      case 'NATIVE_END_BOUNDARY': return `(choice unordered ${expr(node.content, inToken, keywords, aliased)} (token (not any)))`;
+      case 'NATIVE_COMPLETE_CONTEXT_VARIANT': return `(choice ordered (seq ${expr(node.preferred, inToken, keywords, aliased)} (and (literal ${enc(node.boundary)}))) ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': {
+        const prefix = expr(node.content.members[0], inToken, keywords);
+        const suffix = expr(node.content.members[1].members.find((member) => member.type !== 'BLANK'), inToken, keywords);
+        return `(choice unordered ${prefix} (dynamicPrecedence ${node.value} (seq ${ref(node.helper)} ${suffix})))`;
+      }
       case 'PATTERN': {
         const text = fixedPattern(parseTreeSitterPattern(node.value, node.flags ?? ''));
         return inToken ? text : unnamed(`(token ${text})`, aliased);

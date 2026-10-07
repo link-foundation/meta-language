@@ -547,9 +547,7 @@
           "css"
         ],
         "immediate": [
-          "_descendant_operator",
-          "_pseudo_class_selector_colon",
-          "__error_recovery"
+          "_descendant_operator"
         ]
       },
       "corpus": {
@@ -632,6 +630,27 @@
         "sha256": "f8171460dc7ead91bd4cae76057102391aab0427452400fe0026118d2645bbb6"
       },
       "oracle": "erlang"
+    },
+    {
+      "id": "tree-sitter-groovy",
+      "language": "groovy",
+      "native": "native-groovy",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-groovy 0.1.2",
+      "repository": "https://github.com/amaanq/tree-sitter-groovy",
+      "revision": "70efb0b9b50f95bcbd89dcfd42b275e0304e10cf",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-groovy-0.1.2.grammar.json.gz",
+      "sha256": "f063835d8233d37fd0da94a2e712e41edc23b35de8db737eadb4ccc46e0d0b7f",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-groovy-0.1.2.LICENSE",
+      "licenseNotice": "The pinned Cargo and npm manifests declare MIT; upstream ships no license file. The notice reproduces the declared MIT terms and identifies the author.",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-groovy-0.1.2.corpus.json.gz",
+        "sha256": "9d2d7d22b007bf0570d28b7350e6fc45ffb6eeab7b080cd0c33ec0ad33e99482"
+      },
+      "oracle": "groovy"
     }
   ]
 }

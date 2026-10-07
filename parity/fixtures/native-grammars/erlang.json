@@ -17,7 +17,9 @@
   "hidden": [],
   "anonymous": [
     "unnamed_token",
-    "quoted_string_token"
+    "quoted_string_token",
+    "prefixed_string_literal_body",
+    "prefixed_verbatim_string_literal_body"
   ],
   "extras": [
     "comment"
@@ -1013,6 +1015,885 @@
         [4,null,"->",0,4,6,""],
         [4,"exprs","string",1,7,10,""],
         [2,null,".",0,10,11,""]
+      ]
+    },
+    {
+      "source": "-custom hello.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","wild_attribute",1,0,14,""],
+        [2,"name","attr_name",1,0,7,""],
+        [3,null,"-",0,0,1,""],
+        [3,"name","atom",1,1,7,""],
+        [2,"value","atom",1,8,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "-custom {a,1}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","wild_attribute",1,0,14,""],
+        [2,"name","attr_name",1,0,7,""],
+        [3,null,"-",0,0,1,""],
+        [3,"name","atom",1,1,7,""],
+        [2,"value","tuple",1,8,13,""],
+        [3,null,"{",0,8,9,""],
+        [3,"expr","atom",1,9,10,""],
+        [3,null,",",0,10,11,""],
+        [3,"expr","integer",1,11,12,""],
+        [3,null,"}",0,12,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "-define(T, atom() | integer()).\n",
+      "rows": [
+        [0,null,"source_file",1,0,32,""],
+        [1,"forms_only","pp_define",1,0,31,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"define",0,1,7,""],
+        [2,null,"(",0,7,8,""],
+        [2,"lhs","macro_lhs",1,8,9,""],
+        [3,"name","var",1,8,9,""],
+        [2,null,",",0,9,10,""],
+        [2,"replacement","pipe",1,11,29,""],
+        [3,"lhs","call",1,11,17,""],
+        [4,"expr","atom",1,11,15,""],
+        [4,"args","expr_args",1,15,17,""],
+        [5,null,"(",0,15,16,""],
+        [5,null,")",0,16,17,""],
+        [3,null,"|",0,18,19,""],
+        [3,"rhs","call",1,20,29,""],
+        [4,"expr","atom",1,20,27,""],
+        [4,"args","expr_args",1,27,29,""],
+        [5,null,"(",0,27,28,""],
+        [5,null,")",0,28,29,""],
+        [2,null,")",0,29,30,""],
+        [2,null,".",0,30,31,""]
+      ]
+    },
+    {
+      "source": "-define(T, ?OTHER(X)).\n",
+      "rows": [
+        [0,null,"source_file",1,0,23,""],
+        [1,"forms_only","pp_define",1,0,22,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"define",0,1,7,""],
+        [2,null,"(",0,7,8,""],
+        [2,"lhs","macro_lhs",1,8,9,""],
+        [3,"name","var",1,8,9,""],
+        [2,null,",",0,9,10,""],
+        [2,"replacement","macro_call_expr",1,11,20,""],
+        [3,null,"?",0,11,12,""],
+        [3,"name","var",1,12,17,""],
+        [3,"args","macro_call_args",1,17,20,""],
+        [4,null,"(",0,17,18,""],
+        [4,"args","macro_expr",1,18,19,""],
+        [5,"expr","var",1,18,19,""],
+        [4,null,")",0,19,20,""],
+        [2,null,")",0,20,21,""],
+        [2,null,".",0,21,22,""]
+      ]
+    },
+    {
+      "source": "f() -> ~(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
       ]
     }
   ],

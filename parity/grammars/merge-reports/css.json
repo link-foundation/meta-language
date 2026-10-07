@@ -45,9 +45,7 @@
       }
     ],
     "immediate": [
-      "_descendant_operator",
-      "_pseudo_class_selector_colon",
-      "__error_recovery"
+      "_descendant_operator"
     ]
   },
   "rules": 66,
@@ -168,6 +166,16 @@
       "rule": "call_expression",
       "value": 1,
       "reason": "The pinned parser binds a function name and following arguments into one call instead of separate declaration values."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "pseudo_class_arguments",
+        "pseudo_element_arguments"
+      ],
+      "symbol": "_selector",
+      "value": 1,
+      "reason": "Preserve selector and value alternatives; choose the selector tree where an argument also parses as a value, matching the pinned oracle."
     }
   ],
   "approximations": [],

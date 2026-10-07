@@ -1,0 +1,381 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "9d2d7d22b007bf0570d28b7350e6fc45ffb6eeab7b080cd0c33ec0ad33e99482",
+  "cases": [
+    {
+      "file": "accessop.test",
+      "title": "Method call on dotted identifier",
+      "source": "x.y.z()"
+    },
+    {
+      "file": "annotation.test",
+      "title": "Annotate variable",
+      "source": "@annotation def x = 5"
+    },
+    {
+      "file": "annotation.test",
+      "title": "Annotate function",
+      "source": "@annotation(withArgs)\ndef f() {\n}"
+    },
+    {
+      "file": "annotation.test",
+      "title": "Annotate class",
+      "source": "@annotation(withArgs)\nstatic class f {\n}"
+    },
+    {
+      "file": "annotation.test",
+      "title": "Create annotation",
+      "source": "private @interface annotation {\n}"
+    },
+    {
+      "file": "annotation.test",
+      "title": "Multiple annotations",
+      "source": "@annotation(withArgs)\n@annotation2\nstatic class f {\n}"
+    },
+    {
+      "file": "binop.test",
+      "title": "Math order of operations",
+      "source": "x = 1 + 2 * 3 - 2 ** 4"
+    },
+    {
+      "file": "binop.test",
+      "title": "!in",
+      "source": "x = 3 * 4 in y"
+    },
+    {
+      "file": "binop.test",
+      "title": "Right assoc for **",
+      "source": "x = 1 ** 2 ** 3"
+    },
+    {
+      "file": "class.test",
+      "title": "Basic class",
+      "source": "class foo {\n}"
+    },
+    {
+      "file": "class.test",
+      "title": "Class with generics",
+      "source": "class Bar<T extends Collection> {\n}"
+    },
+    {
+      "file": "class.test",
+      "title": "Modifiers",
+      "source": "private static final class Baz {\n}"
+    },
+    {
+      "file": "class.test",
+      "title": "Interface",
+      "source": "interface foo {\n  public String toString()\n  public int add(int x, int y)\n}"
+    },
+    {
+      "file": "closure.test",
+      "title": "Closure with no args, no arrow, function call in body",
+      "source": "def myClosure = {\n       foo()\n}"
+    },
+    {
+      "file": "closure.test",
+      "title": "Closure with no args, no arrow, integer literal expression in body",
+      "source": "def myClosure = {\n       1\n}"
+    },
+    {
+      "file": "closure.test",
+      "title": "Closure with no args, arrow, function call in body",
+      "source": "def myClosure = {\n       -> \n       foo()\n}"
+    },
+    {
+      "file": "closure.test",
+      "title": "Closure with one arg",
+      "source": "def myClosure = {\n       a -> \n       y = a\n}"
+    },
+    {
+      "file": "closure.test",
+      "title": "Closure with multiple args",
+      "source": "def myClosure = {\n       a, b ->\n       y = a + b\n}"
+    },
+    {
+      "file": "comment.test",
+      "title": "Shebang",
+      "source": "#!/usr/bin/env groovy\npipeline {\n}"
+    },
+    {
+      "file": "comment.test",
+      "title": "Single line comment",
+      "source": "//hello\nx = 5 //TODO"
+    },
+    {
+      "file": "comment.test",
+      "title": "Multiline comment",
+      "source": "/*hello\n* / */"
+    },
+    {
+      "file": "comment.test",
+      "title": "groovydoc",
+      "source": "/**\n* hello world\n* @param abc - thing\n* @throws Exc\n* @asdf ghjkl\n* @return\n*/\nx = hi"
+    },
+    {
+      "file": "comment.test",
+      "title": "groovydoc with @TEXT",
+      "source": "/**\nhello world\n@THIS_IS_TEXT @tag\n*/"
+    },
+    {
+      "file": "declaration.test",
+      "title": "Basic declaration",
+      "source": "String x = \"hello\""
+    },
+    {
+      "file": "declaration.test",
+      "title": "Generic type",
+      "source": "Map<string, int> m"
+    },
+    {
+      "file": "declaration.test",
+      "title": "Array type",
+      "source": "int[][] x = [[]]"
+    },
+    {
+      "file": "declaration.test",
+      "title": "Declare without explicit type or def",
+      "source": "@Field final myvar = 'hello'"
+    },
+    {
+      "file": "each.test",
+      "title": "Basic each loop",
+      "source": "['11','17','21'].each {\n  println(\"hello!\" + it)\n}"
+    },
+    {
+      "file": "for.test",
+      "title": "Basic for loop",
+      "source": "for (int i = 0; i < 10; i++) {\n  println(\"hello!\")\n}"
+    },
+    {
+      "file": "for.test",
+      "title": "Multiple initializers and increments",
+      "source": "for (int x = 0, y = 0; x + y < 10; x++, y *= 2) {\n  println(\"hello!\")\n}"
+    },
+    {
+      "file": "for.test",
+      "title": "Infinite loop",
+      "source": "for (;;) {\n  println(\"to infinity and beyond\")\n}"
+    },
+    {
+      "file": "for.test",
+      "title": "For in expr",
+      "source": "for (x in m.values()) {\n  print(\"hello\")\n}"
+    },
+    {
+      "file": "for.test",
+      "title": "For in range",
+      "source": "for (x in 1..5) {\n  print(\"hello\")\n}"
+    },
+    {
+      "file": "function.test",
+      "title": "Zero-argument function call",
+      "source": "hello()"
+    },
+    {
+      "file": "function.test",
+      "title": "One-argument function call",
+      "source": "hello(24)\nhello(24,)"
+    },
+    {
+      "file": "function.test",
+      "title": "Map function call",
+      "source": "hello(foo: bar, hello: world)\nhello(foo: bar, hello: world,)"
+    },
+    {
+      "file": "function.test",
+      "title": "Simple function definition",
+      "source": "def foo() {\n  echo(\"hello\")\n}"
+    },
+    {
+      "file": "function.test",
+      "title": "Parameters",
+      "source": "def foo(int x, Boolean y = false) {\n  println(\"hi\")\n}"
+    },
+    {
+      "file": "function.test",
+      "title": "Return",
+      "source": "def foo() {\n  return 1 + 2\n  return x\n  return\n}"
+    },
+    {
+      "file": "function.test",
+      "title": "Juxtaposed function call",
+      "source": "f arg1: 2, arg2: \"hello\"\ng 3, 5\nh foo\nsh \"hello\""
+    },
+    {
+      "file": "function.test",
+      "title": "Typed function",
+      "source": "int foo() {\n  return 4\n}"
+    },
+    {
+      "file": "if.test",
+      "title": "Basic if statement",
+      "source": "if(x == y) {\n  println(\"hello world\")\n}"
+    },
+    {
+      "file": "if.test",
+      "title": "Else ifs",
+      "source": "if(a) {\n  f(a)\n} else if (b) {\n  f(b)\n} else {\n  error()\n}"
+    },
+    {
+      "file": "if.test",
+      "title": "No braces",
+      "source": "if (x) println(x) else println(y)"
+    },
+    {
+      "file": "import.test",
+      "title": "Basic import statement",
+      "source": "import thing\n"
+    },
+    {
+      "file": "import.test",
+      "title": "Import with alias",
+      "source": "\nimport thing as other_thing\n"
+    },
+    {
+      "file": "import.test",
+      "title": "Import with dotted ident",
+      "source": "import package.subpackage\n"
+    },
+    {
+      "file": "import.test",
+      "title": "Star import",
+      "source": "import all_of_the_things.*\nimport java.util.*\n"
+    },
+    {
+      "file": "import.test",
+      "title": "Static import statement",
+      "source": "import static thing\nimport static groovy.lang.*\nimport static Calendar.getInstance as now\n"
+    },
+    {
+      "file": "indexing.test",
+      "title": "Basic List indexing",
+      "source": "def a = [1,2,3]\ndef b = a[0]\na[0] = 2"
+    },
+    {
+      "file": "label.test",
+      "title": "Basic labeled statement",
+      "source": "label: def a = 1;"
+    },
+    {
+      "file": "label.test",
+      "title": "Spock test",
+      "source": "class Test {\n    def testAdd() {\n        when:\n        def a = 10\n        def b = 10\n        def result = a + b\n        then:\n        result == 20\n     }\n}"
+    },
+    {
+      "file": "list.test",
+      "title": "Basic List literals",
+      "source": "def canon = [1, 2, \"hello\", \"world\"]\ndef empty = []\ndef trailing = [1, 2, 3,]\ndef nested = [\"hello\", [\"world\", [\"three\"]]]"
+    },
+    {
+      "file": "map.test",
+      "title": "Basic Map literals",
+      "source": "def canon = [hello: world, foo: bar]\ndef trailing = [a: 1, b: 2,]\ndef num_key = [1: 2]\ndef expr_key = [(var): 3]\ndef nested = [a: \"hello\", c: [b: \"world\"]]\ndef str_key = [\"hello\": false]"
+    },
+    {
+      "file": "number.test",
+      "title": "Various numeric literals",
+      "source": "x = [\n  1,\n  24f,\n  -3,\n  54l,\n  0xff0000,\n  0b010101,\n  0.01,\n  200_000l,\n  6.2e23,\n  1.000_001,\n]"
+    },
+    {
+      "file": "package.test",
+      "title": "Basic package",
+      "source": "package my_package_name\n"
+    },
+    {
+      "file": "package.test",
+      "title": "Package with dotted ident",
+      "source": "package com.yoursite\n"
+    },
+    {
+      "file": "string.test",
+      "title": "Basic double quoted string",
+      "source": "x = \"hello world\""
+    },
+    {
+      "file": "string.test",
+      "title": "Escape sequences",
+      "source": "x = \"hello\\\\world\"\ny = \"hello\\\"world\"\nz = \"hello \\uff00 world\""
+    },
+    {
+      "file": "string.test",
+      "title": "interpolation",
+      "source": "x = \"hello ${name}\"\nx = \"hello ${3 + 4 * 2}!\"\nx = \"hello \\${3 + 4 * 2}\""
+    },
+    {
+      "file": "string.test",
+      "title": "Multiline string",
+      "source": "x = \"\"\"\"\"\"\ny = \"\"\"\nthis is a multiline string with \"quotes\" inside\nas well as \"\"double quotes\"\"\nescapes \\$\nplain backslashes \\\nand ${interpolation}\n\"\"\""
+    },
+    {
+      "file": "string.test",
+      "title": "Multiline edge case trailing quotes before interpolation",
+      "source": "print(\"\"\"hello world \"\"${0}\"\"\")"
+    },
+    {
+      "file": "string.test",
+      "title": "Single quoted string",
+      "source": "x = 'a + b \\' + c'\ny = 'a + $3'"
+    },
+    {
+      "file": "string.test",
+      "title": "Multiline single quoted string",
+      "source": "x = '''multiline string \" with\na bunch'' of quotes'''"
+    },
+    {
+      "file": "structure.test",
+      "title": "Basic program structure",
+      "source": "def a = 1\nString b = 2\npipeline {}"
+    },
+    {
+      "file": "structure.test",
+      "title": "Jenkins-specific structure",
+      "source": "pipeline {\n  agent none\n  stages {\n    stage(\"hello world\") {\n      steps {\n        sh abc\n        sh \"hello world\"\n      }\n    }\n    stage(\"Script\") {\n      steps {\n        script {\n          def foo = bar\n        }\n      }\n    }\n  }\n}"
+    },
+    {
+      "file": "structure.test",
+      "title": "Jenkins-import underscore",
+      "source": "@Library('my-library') _\n\npipeline {\n}"
+    },
+    {
+      "file": "switch.test",
+      "title": "Switch",
+      "source": "switch(x) {\n  case 1:\n    f()\n  case 24*60:\n    g()\n    break\n  default:\n    h()\n}"
+    },
+    {
+      "file": "ternary.test",
+      "title": "Simple ternary expression",
+      "source": "String x = condition ? \"a\" : \"b\""
+    },
+    {
+      "file": "ternary.test",
+      "title": "Deep ternary expression",
+      "source": "int y = (x + 3 < 2 ? 0 :\n  (x - 1 == 2 ? 1 : 2)\n)"
+    },
+    {
+      "file": "try.test",
+      "title": "Try catch",
+      "source": "try {\n  print(\"hello\")\n} catch (ex) {\n  print(\"fail\")\n}"
+    },
+    {
+      "file": "try.test",
+      "title": "Try catch finally",
+      "source": "try {\n  print(\"hello\")\n} catch (ex) {\n  print(\"fail\")\n} finally {\n  print(\"finally\")\n}"
+    },
+    {
+      "file": "unaryop.test",
+      "title": "Unary precedence",
+      "source": "x =  5 ** ++y\nx = ~5 ** y"
+    },
+    {
+      "file": "while.test",
+      "title": "Basic while loop",
+      "source": "while (x < 5) {\n  print(\"hello\")\n}"
+    },
+    {
+      "file": "while.test",
+      "title": "Do while loop",
+      "source": "do {\n  print(x--)\n} while (x > 0)"
+    }
+  ]
+}

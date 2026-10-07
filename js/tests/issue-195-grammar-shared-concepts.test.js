@@ -56,6 +56,21 @@ const alias = ([grammar, name]) => ({ source: nativeGrammarSource(grammar), name
 const conceptOf = (grammar, rule) => nativeGrammarRuleConcepts(grammar).find((entry) => entry.rule === rule)?.concept;
 const shape = (tree) => [tree.kind, ...tree.children.map(shape)];
 
+test('Groovy correspondences use the same reviewed identities as the existing constructs', () => {
+  const rules = new Map(nativeGrammarRuleConcepts('native-groovy').map(({ rule, concept }) => [rule, concept]));
+  let correspondences = 0;
+  for (const construct of fixture.sharedConstructs) {
+    for (const [grammar, rule] of construct.rules) {
+      if (grammar !== 'native-groovy') continue;
+      assert.equal(rules.get(rule), construct.concept, construct.construct);
+      correspondences += 1;
+    }
+  }
+  assert.ok(correspondences >= 20);
+  assert.equal(rules.get('closure'), 'grammar.closure-expression');
+  assert.notEqual(rules.get('closure'), rules.get('block'));
+});
+
 test('every rule of every native grammar names a concept record whose native aliases are exactly its rules', () => {
   assert.deepEqual(nativeGrammarIds(), Object.keys(LANGUAGE_CATALOG.nativeGrammars).sort());
   assert.deepEqual(checkNativeGrammarConcepts(), []);
