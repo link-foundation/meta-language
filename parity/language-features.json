@@ -405,7 +405,9 @@
           "parity/fixtures/four-language-conformance.json",
           "rust/tests/unit/translation_stages.rs",
           "rust/tests/unit/translation_defaults.rs",
-          "rust/tests/unit/translation_foundation.rs"
+          "rust/tests/unit/translation_foundation.rs",
+          "rust/src/translation/javascript/infer/arrays.rs",
+          "rust/tests/unit/self_translation.rs"
         ]
       },
       "javascript": {
@@ -416,7 +418,9 @@
           "js/tests/four-language-conformance.test.js",
           "parity/fixtures/four-language-conformance.json",
           "js/tests/translation-defaults.test.js",
-          "js/tests/translation-frontend-rules.test.js"
+          "js/tests/translation-frontend-rules.test.js",
+          "js/tests/self-translation.test.js",
+          "js/tests/translation-self-report.test.js"
         ]
       }
     },

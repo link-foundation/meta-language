@@ -655,6 +655,12 @@ test` runs with `--no-fail-fast`, every check step after the first runs unless
 the run was cancelled, and `cargo fmt`, clippy and `cargo doc` are independent
 steps. A repository test checks this structure.
 
+The self-translation report jobs publish generic and decorated measurements
+for every JavaScript source module, with the commit and hashes of both runtime
+sources. Both acceptance suites verify the complete published reports before
+recording the per-module difference assertion; a small local report test alone
+cannot supply that evidence.
+
 ## Resource limits
 
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling

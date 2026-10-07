@@ -115,6 +115,12 @@ number of source bytes, and `--list` prints a shard's modules. CI's
 `Self-Translation Report` jobs in `ci.yml` run eight shards beside the
 JavaScript and Rust workflows. Each shard publishes its part of the report in
 its job summary and as a `self-translation-report-<sha>-<shard>` artifact.
+The JSON records the observed commit and the SHA-256 hashes of each module and
+its Rust counterpart. Both acceptance suites download all eight shards and run
+`--verify-reports <directory> --commit <sha>` before recording the per-module
+report assertion. Verification rejects missing or duplicate modules, stale
+sources, failed translations, inconsistent measurements and missing Markdown
+rows without translating the whole corpus again.
 
 Decorators edit emitted lines; they cannot add what the translator carries
 untranslated (imports, classes, exports the emitters do not cover), so for

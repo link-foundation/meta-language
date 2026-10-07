@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -186,7 +187,9 @@ test('the report measures each translated module against its hand-written Rust',
   const outDir = mkdtempSync(path.join(tmpdir(), 'self-translation-report-'));
   try {
     execFileSync(process.execPath, [path.join(root, 'js/scripts/generate-self-translation-report.mjs'), '--out-dir', outDir, '--modules', 'language-support.js,self-translation.js'], { encoding: 'utf8' });
-    const { decorators, modules, failures } = JSON.parse(readFileSync(path.join(outDir, 'self-translation-report.json'), 'utf8'));
+    const { schemaVersion, commit, decorators, modules, failures } = JSON.parse(readFileSync(path.join(outDir, 'self-translation-report.json'), 'utf8'));
+    assert.equal(schemaVersion, 1);
+    assert.equal(commit, process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim());
     assert.deepEqual(failures, []);
     assert.deepEqual(decorators, ['borrowed-name', 'bare-sum', 'bare-comparison']);
     assert.deepEqual(modules.map(({ module, rust }) => [module, rust]), [
@@ -194,6 +197,9 @@ test('the report measures each translated module against its hand-written Rust',
       ['js/src/self-translation.js', 'rust/src/self_translation.rs'],
     ]);
     for (const row of modules) {
+      for (const [file, field] of [[row.module, 'sourceSha256'], [row.rust, 'rustSha256']]) {
+        assert.equal(row[field], createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex'));
+      }
       assert.ok(row.items.translated > 0 && row.handWrittenLines > 0, row.module);
       assert.ok(row.sharedLines <= row.codeLines && row.identical <= row.matched && row.matched <= row.functions, row.module);
       // The decorated translation is measured beside the generic one.
@@ -204,6 +210,14 @@ test('the report measures each translated module against its hand-written Rust',
     assert.match(report, /\| identical, decorated \|/u);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
+  }
+  if (process.env.ISSUE_195_OBSERVATION_FILE) {
+    assert.ok(process.env.ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY, 'acceptance downloads the complete published reports');
+    execFileSync(process.execPath, [
+      path.join(root, 'js/scripts/generate-self-translation-report.mjs'),
+      '--verify-reports', process.env.ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY,
+      '--commit', process.env.ISSUE_195_COMMIT,
+    ], { encoding: 'utf8' });
   }
   observe('I195-SELF-TRANSLATION-SHARED-CORPUS', ['differencePerModulePublished'], 'the report measures each translated module against its hand-written Rust');
 });

@@ -555,6 +555,23 @@ fn the_rust_suite_checks_the_published_per_module_difference_report() {
         );
     }
     fs::remove_dir_all(&directory).ok();
+    if std::env::var_os("ISSUE_195_OBSERVATION_FILE").is_some() {
+        let reports = std::env::var_os("ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY")
+            .expect("acceptance downloads the complete published reports");
+        let commit = std::env::var("ISSUE_195_COMMIT").expect("the observed commit");
+        let output = Command::new("node")
+            .arg(root().join("js/scripts/generate-self-translation-report.mjs"))
+            .arg("--verify-reports")
+            .arg(reports)
+            .args(["--commit", &commit])
+            .output()
+            .expect("the published report validator runs");
+        assert!(
+            output.status.success(),
+            "the complete reports match the observed commit:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
     observe(
         "I195-SELF-TRANSLATION-SHARED-CORPUS",
         &["differencePerModulePublished"],

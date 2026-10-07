@@ -151,6 +151,21 @@ test('both self-translation acceptance suites install Clippy for the generated R
   }
 });
 
+test('both acceptance suites verify the complete published self-translation reports', () => {
+  const acceptance = jobs('ci.yml');
+  assert.ok(needs(acceptance.get('javascript-suite')).includes('self-translation-report'));
+  for (const id of ['javascript-suite', 'rust-suite']) {
+    const steps = acceptance.get(id).steps;
+    const download = steps.findIndex((step) => step.name === 'Download the complete self-translation reports');
+    const execute = steps.findIndex((step) => step.name === 'Produce the stage evidence');
+    assert.ok(download >= 0 && execute > download, `${id} downloads all reports before observing evidence`);
+    assert.match(steps[download].text, /pattern: self-translation-report-\$\{\{ github.sha \}\}-\*/u);
+    assert.match(steps[download].text, /path: issue-195-artifacts\/self-translation-report/u);
+    assert.doesNotMatch(steps[download].text, /merge-multiple: true/u, 'each shard retains its JSON and Markdown pair');
+    assert.match(steps[execute].text, /ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY:/u);
+  }
+});
+
 test('the acceptance workflow runs each Rust stage only after the matching JavaScript stage passes', () => {
   const acceptance = jobs('ci.yml');
   for (const [rust, javascript] of [['native-rust', 'native-javascript'], ['rust-suite', 'javascript-suite']]) {
