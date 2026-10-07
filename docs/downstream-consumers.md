@@ -126,9 +126,14 @@ consumer test runs are not observations of the issue 195 acceptance suite.
 The workloads below are every file of that head that reaches meta-language:
 the sources that import the package or a source that does, and the tests that
 import such a source. [`parity/fixtures/rml-pr184-workloads.json`](../parity/fixtures/rml-pr184-workloads.json)
-records them with their blob ids, and `node js/scripts/issue-195-rml-pr184.mjs
---online` derives them again from the pull request on GitHub, so a new head or
-a new consuming file fails the audit until this section is updated.
+records them with their blob ids. Pre-merge acceptance derives the inventory
+again from verified immutable GitHub blobs at the committed pin.
+`node js/scripts/issue-195-rml-pr184.mjs --online` also compares the live pull
+request head with that pin in a non-blocking report on `main`; a new head or
+consuming file fails that report until the audit is updated in a follow-up.
+The live head moved to `b561767d6c104bcb222ac8e5530a728f791326fe` after
+this snapshot. It changes dependency delivery and adds consumer workloads;
+the pinned runs below do not verify those changes.
 
 | Consumer usage or requirement | meta-language capability | Ledger rows | Tests | Status |
 |---|---|---|---|---|

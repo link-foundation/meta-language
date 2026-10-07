@@ -151,6 +151,16 @@ test('both self-translation acceptance suites install Clippy for the generated R
   }
 });
 
+test('the live RML head audit runs on main as a non-blocking post-merge report', () => {
+  const report = jobs('js.yml').get('test').steps.find((step) => /issue-195-rml-pr184\.mjs --online/u.test(step.run));
+  assert.ok(report, 'the live head comparison remains executable');
+  assert.match(report.text, /github\.ref == 'refs\/heads\/main'/u);
+  assert.match(report.text, /!cancelled\(\)/u);
+  assert.match(report.text, /continue-on-error: true/u);
+  assert.match(report.text, /working-directory: js/u);
+  assert.match(report.text, /GITHUB_TOKEN:/u);
+});
+
 test('fresh merge keeps build artifacts out of its cache and optimizes the unchanged full test suite', () => {
   const job = jobs('rust.yml').get('fresh-merge');
   const cache = job.steps.find((step) => /actions\/cache@/u.test(step.text));

@@ -543,6 +543,9 @@ exists only after merge runs on `main`:
   default branch.
 - The live registries, the live discussion and the pull request description are
   compared with the committed audit and register by non-blocking reports.
+- The downstream pull request head is compared with its committed workload
+  pin by a non-blocking report. Pre-merge acceptance re-inventories verified
+  immutable blobs at that pin, so a live head change cannot alter its input.
 - A scheduled workflow on `main` refreshes the dependencies and opens its own
   pull request.
 - Published delivery is checked separately at the release-delivery checkpoint
