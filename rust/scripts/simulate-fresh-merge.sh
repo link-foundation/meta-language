@@ -64,7 +64,13 @@ cargo clippy --all-targets --all-features || status=1
 echo "::endgroup::"
 
 echo "::group::cargo test --no-fail-fast --all-features"
-cargo test --no-fail-fast --all-features || status=1
+# Native parsing is also optimized in the installed formal-ai workload run.
+# Keep the full suite and its debug assertions; avoid timing it in an
+# unoptimized parser build and clean its linked binaries before cache saving.
+node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features \
+  --config 'profile.test.package.meta-language.opt-level=3' \
+  --config 'profile.test.package.meta-language.debug-assertions=true' \
+  --config 'profile.test.package.meta-language.overflow-checks=true' || status=1
 echo "::endgroup::"
 
 if [ "${status}" -ne 0 ]; then

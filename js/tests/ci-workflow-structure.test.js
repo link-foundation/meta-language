@@ -151,6 +151,21 @@ test('both self-translation acceptance suites install Clippy for the generated R
   }
 });
 
+test('fresh merge keeps build artifacts out of its cache and optimizes the unchanged full test suite', () => {
+  const job = jobs('rust.yml').get('fresh-merge');
+  const cache = job.steps.find((step) => /actions\/cache@/u.test(step.text));
+  assert.ok(cache, 'fresh merge caches its registry dependencies');
+  assert.match(cache.text, /~\/\.cargo\/registry/u);
+  assert.match(cache.text, /~\/\.cargo\/git/u);
+  assert.doesNotMatch(cache.text, /(?:^|\n)\s*(?:rust\/)?target(?:\/|\s|$)/u, 'large build artifacts do not consume the cache-save deadline');
+  assert.match(job.header, /timeout-minutes: 20/u);
+  const script = read('rust/scripts/simulate-fresh-merge.sh');
+  assert.match(script, /with-cache-cleanup\.mjs --event test -- cargo test --no-fail-fast --all-features/u);
+  assert.match(script, /profile\.test\.package\.meta-language\.opt-level=3/u);
+  assert.match(script, /profile\.test\.package\.meta-language\.debug-assertions=true/u);
+  assert.match(script, /profile\.test\.package\.meta-language\.overflow-checks=true/u);
+});
+
 test('both acceptance suites verify the complete published self-translation reports', () => {
   const acceptance = jobs('ci.yml');
   assert.ok(needs(acceptance.get('javascript-suite')).includes('self-translation-report'));

@@ -199,7 +199,6 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            rust/target
           key: ${{ runner.os }}-cargo-fresh-merge-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-fresh-merge-
