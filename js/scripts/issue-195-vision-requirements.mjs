@@ -1331,6 +1331,18 @@ export const VISION_REQUIREMENTS = Object.freeze([
     tooling: ['js/src/programming-language-parser.js'],
   },
   {
+    id: 'I195-RESOURCE-BOUNDED-MEMORY-REGRESSIONS',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'bounded-heap and peak-RSS regressions for the parser and evidence memory fixes',
+    expectedBehavior:
+      'CI executes bounded-heap or peak-RSS regression checks for the parse memo budget, lazy grammar loading, Markdown inline parser reuse, compact source offset maps and streamed parity evidence. The formal-ai TypeScript parse exhaustion cause is recorded and its capped-heap diagnostic regression remains executable.',
+    assertions: ['parseMemoBudgetBoundedHeap', 'lazyGrammarsBoundedHeapAndPeakRss', 'inlineParserBoundedHeapAndPeakRss',
+      'sourceOffsetsBoundedHeapAndPeakRss', 'parityArtifactsBoundedHeapAndPeakRss'],
+    tooling: ['js/tests/issue-195-parse-memory-budget.test.js', 'js/tests/issue-195-evidence-memory.test.js',
+      'js/scripts/issue-195-parity-evidence.mjs'],
+  },
+  {
     id: 'I195-RESOURCE-GRAMMAR-TIERING-BUDGET',
     area: 'resource-limits',
     specification: 'resource-limits',

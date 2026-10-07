@@ -20,6 +20,8 @@ The scope below comes from
 [issue #195](https://github.com/link-foundation/meta-language/issues/195) and
 every requirement-bearing comment on
 [pull request #196](https://github.com/link-foundation/meta-language/pull/196).
+After that pull request merged, [issue #199](https://github.com/link-foundation/meta-language/issues/199)
+carries its remaining scope and adds release and memory-regression obligations.
 Four files keep it honest:
 
 | File | Role |
@@ -683,6 +685,13 @@ keeps every run within that bound instead of relying on a larger machine:
 - The runtime parity check streams the Rust observation as NDJSON, compares
   the runtimes entry by entry, and keeps one digest per entry plus the full
   entries only where the runtimes differ.
+- Bounded-heap and peak-RSS tests in `js/tests/issue-195-evidence-memory.test.js`
+  cover lazy grammar loading, Markdown inline parser reuse, multi-megabyte
+  Unicode offset maps and parity artifacts larger than the heap. Artifact
+  writing awaits each record instead of constructing the entire NDJSON string.
+  `js/tests/issue-195-parse-memory-budget.test.js` retains the formal-ai
+  regression: native TypeScript parsing accumulated memo cells until heap
+  exhaustion; the shared parse budget now returns a diagnostic before that.
 - A native validation stage deletes the compiler outputs no verification cell
   cites.
 - `AGENTS.md` and `CONTRIBUTING.md` tell agents and contributors to run only

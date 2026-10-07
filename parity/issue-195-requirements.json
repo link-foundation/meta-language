@@ -4,6 +4,7 @@
   "generatedBy": "js/scripts/check-issue-195-acceptance.mjs --refresh-manifest",
   "sources": {
     "issue": "https://github.com/link-foundation/meta-language/issues/195",
+    "remainingScope": "https://github.com/link-foundation/meta-language/issues/199",
     "clarification": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509",
     "acceptanceGate": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
     "completeScope": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5802299918",
@@ -21,7 +22,8 @@
     "recoveryAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5985077141",
     "finishTheWorkAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6023909737",
     "bulkDeliveryAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6024489303",
-    "bulkDeliveryRepost": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025209380"
+    "bulkDeliveryRepost": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025209380",
+    "bulkDeliveryFinalRepost": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025369792"
   },
   "checkpoints": {
     "pre-merge": "All implementation and candidate-artifact requirements must pass on the exact merge candidate. Every PR check must pass. A red check is a defect to fix now; unfinished requirements are work to implement, not a reason for red CI.",
@@ -1467,57 +1469,57 @@
     "fault:plain-text-parser-fallback": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: plain-text-parser-fallback",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:lexical-parser-fallback": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: lexical-parser-fallback",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:removed-inventory-row-or-alias": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: removed-inventory-row-or-alias",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:dropped-fields-trivia-or-spans": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: dropped-fields-trivia-or-spans",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:stubbed-binding-resolution": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: stubbed-binding-resolution",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:rename-capture-bug": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: rename-capture-bug",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:stale-structure-after-edit": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: stale-structure-after-edit",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:unsupported-translation-descriptor": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: unsupported-translation-descriptor",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:relabeled-source-translation": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: relabeled-source-translation",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:skipped-test-or-job": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: skipped-test-or-job",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "fault:falsified-capability-declaration": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: falsified-capability-declaration",
-      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
+      "sha256": "cad45dd1aac7aacf4d88398c5c9eb2773180e6f153fc06939bc949ac7248de92"
     },
     "planned:cache-cleanup:i195-cache-cleanup-entry-point": {
       "path": "scripts/lib/cache-classes.mjs",
@@ -1557,17 +1559,17 @@
     "planned:repository-directive:i195-vision-specification": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: one authoritative vision and architecture specification",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
       "selector": "docs/vision.md#sources-of-truth: register of every requirement source with its revision and content hash",
-      "sha256": "d3b7904045cb99542b3e5eaae49ad1fda221a681cee186bdffc90f73aa9ff342"
+      "sha256": "cf06b8cb5bfa366c3cf2756623b801abe2888feca8278f1128b25944cec287f6"
     },
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: traceability from each atomic requirement to its evidence chain",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-vision-contradiction-audit": {
       "path": "parity/documentation/claim-fixtures.json",
@@ -1587,7 +1589,7 @@
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
       "selector": "#dependencies: external parser engines removed from the production packages",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
@@ -1762,7 +1764,7 @@
     "planned:repository-directive:i195-grammar-dependency-boundary": {
       "path": "docs/vision.md",
       "selector": "#native-merged-grammars: native dependency boundary of the installed packages",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-interchange-api-cli": {
       "path": "parity/fixtures/grammar-importers.json",
@@ -1897,7 +1899,7 @@
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
       "selector": "#packages-and-publication: formal-ai consuming the published packages",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-acceptance-independent-oracles": {
       "path": "parity/language-grammar-inventory.json",
@@ -1907,122 +1909,127 @@
     "planned:repository-directive:i195-acceptance-gate-mutations": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: gate-mutation tests for the directive obligations",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-acceptance-required-merge-check": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: enforced full requirements merge check on the default branch",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-acceptance-pr-checks-passable": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: pull request checks that can all pass before merge",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-acceptance-finite-claims-documented": {
       "path": "docs/vision.md",
       "selector": "#what-finite-tests-establish: documented limits of finite test evidence",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-ci-compile-gate": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: fast compile gate ahead of every compiling CI job",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-ci-test-matrix": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: test execution split into bounded matrix jobs",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-ci-evidence-stages": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: checkpoint evidence produced by separate stage jobs",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-ci-concurrency": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: superseded workflow runs cancelled",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-agent-rules": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: targeted local checks and resource rules for agents and contributors",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-bounded-sequential-evidence": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: evidence suites run one at a time with bounded build parallelism",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-lazy-grammars": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: WebAssembly grammars loaded on first use",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
+    },
+    "planned:repository-directive:i195-resource-bounded-memory-regressions": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: bounded-heap and peak-RSS regressions for the parser and evidence memory fixes",
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-grammar-tiering-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: grammar code kept off the optimizing compiler",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-inline-parser-reuse": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: one Markdown inline parser for every inline region",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-source-boundaries": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: source offset index with interval checkpoints",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-parity-digests": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: runtime parity evidence as entry digests",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-cache-cleanup-wrapper": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: cache cleanup wrapper as the documented way to run long local commands",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-native-output-cleanup": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: native compiler outputs deleted once each cell is recorded",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-ci-rust-after-javascript": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: Rust jobs gated on every JavaScript job",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-ci-acceptance-stage-order": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: Rust acceptance stages after the JavaScript stages",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-ci-report-every-failure": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: every failure of a job reported in one run",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-ci-acceptance-after-javascript": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: acceptance stages started only after every JavaScript job passed",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-ci-skipped-stage-one-gate-error": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: a stage skipped because JavaScript failed is one gate error",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-resource-parse-memory-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: a hard memory budget for every parse",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-development-rules-documented": {
       "path": "docs/vision.md",
       "selector": "#javascript-first-and-self-translation: JavaScript-first development rules",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-self-translation-tool": {
       "path": "parity/self-translation/cases.lino",
@@ -2052,7 +2059,7 @@
     "planned:repository-directive:i195-parity-feature-completeness": {
       "path": "docs/vision.md",
       "selector": "#javascript-first-and-self-translation: every public JavaScript feature listed and present in Rust",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "sha256": "dc4d607b436149439e4c68afcf15e6d92bec5a7e811b0c21b97039064c52589e"
     },
     "planned:repository-directive:i195-grammar-bulk-pipeline": {
       "path": "docs/grammar/bulk-pipeline.md",
@@ -2127,7 +2134,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -2203,7 +2211,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -2286,7 +2295,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -2357,7 +2368,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -2422,7 +2434,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -15952,7 +15965,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16049,7 +16063,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16146,7 +16161,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16242,7 +16258,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16338,7 +16355,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16434,7 +16452,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16503,7 +16522,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16568,7 +16588,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16632,7 +16653,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16830,7 +16853,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16906,7 +16930,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -16997,7 +17022,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -17066,7 +17092,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -17157,7 +17184,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -17244,7 +17272,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -18985,7 +19015,8 @@
           "currentHeadAudit",
           "resourceAudit",
           "greenPathAudit",
-          "nextPhaseAudit"
+          "nextPhaseAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19071,7 +19102,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19160,7 +19192,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19246,7 +19279,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19335,7 +19369,8 @@
           "currentHeadAudit",
           "resourceAudit",
           "greenPathAudit",
-          "remainingWorkAudit"
+          "remainingWorkAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19420,7 +19455,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19514,7 +19551,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19601,7 +19639,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19690,7 +19730,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19783,7 +19825,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19875,7 +19918,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -19967,7 +20011,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20058,7 +20103,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20150,7 +20196,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20242,7 +20289,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20333,7 +20381,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20423,7 +20472,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20515,7 +20565,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20607,7 +20658,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20699,7 +20751,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20791,7 +20844,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20876,7 +20930,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -20968,7 +21024,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21060,7 +21117,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21149,7 +21207,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21240,7 +21299,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21330,7 +21390,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21420,7 +21481,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21512,7 +21574,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21604,7 +21667,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21694,7 +21758,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21784,7 +21849,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -21876,7 +21942,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22428,7 +22495,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22513,7 +22582,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22602,7 +22673,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22687,7 +22760,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22774,7 +22849,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -22865,7 +22942,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23222,7 +23301,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23312,7 +23393,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23402,7 +23484,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23488,7 +23571,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23578,7 +23662,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23665,7 +23750,8 @@
           "currentHeadAudit",
           "resourceAudit",
           "greenPathAudit",
-          "recoveryAudit"
+          "recoveryAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23750,7 +23836,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -23834,7 +23922,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -25604,6 +25693,73 @@
       }
     },
     {
+      "id": "I195-RESOURCE-BOUNDED-MEMORY-REGRESSIONS",
+      "source": "https://github.com/link-foundation/meta-language/issues/199",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "bounded-heap and peak-RSS regressions for the parser and evidence memory fixes",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "CI executes bounded-heap or peak-RSS regression checks for the parse memo budget, lazy grammar loading, Markdown inline parser reuse, compact source offset maps and streamed parity evidence. The formal-ai TypeScript parse exhaustion cause is recorded and its capped-heap diagnostic regression remains executable.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/tests/issue-195-parse-memory-budget.test.js",
+          "js/tests/issue-195-evidence-memory.test.js",
+          "js/scripts/issue-195-parity-evidence.mjs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-bounded-memory-regressions-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-bounded-memory-regressions"
+          ],
+          "assertions": [
+            "parseMemoBudgetBoundedHeap",
+            "lazyGrammarsBoundedHeapAndPeakRss",
+            "inlineParserBoundedHeapAndPeakRss",
+            "sourceOffsetsBoundedHeapAndPeakRss",
+            "parityArtifactsBoundedHeapAndPeakRss"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-bounded-memory-regressions-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "remainingScope"
+        ],
+        "workflow": ".github/workflows/ci.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
       "id": "I195-RESOURCE-BOUNDED-SEQUENTIAL-EVIDENCE",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
       "area": "resource-limits",
@@ -26522,7 +26678,9 @@
           "recoveryAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -26611,7 +26769,9 @@
           "nextPhaseAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -26703,7 +26863,9 @@
           "nextPhaseAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -26798,7 +26960,9 @@
           "nextPhaseAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -26895,7 +27059,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -26992,7 +27157,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27089,7 +27255,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27186,7 +27353,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27283,7 +27451,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27380,7 +27549,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27477,7 +27647,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27574,7 +27745,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27671,7 +27843,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27768,7 +27941,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27863,7 +28037,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -27958,7 +28133,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28053,7 +28229,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28148,7 +28325,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28243,7 +28421,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28338,7 +28517,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28433,7 +28613,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28528,7 +28709,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28623,7 +28805,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28718,7 +28901,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28813,7 +28997,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -28908,7 +29093,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29003,7 +29189,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29098,7 +29285,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29193,7 +29381,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29288,7 +29477,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29383,7 +29573,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29478,7 +29669,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29573,7 +29765,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29668,7 +29861,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29763,7 +29957,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29858,7 +30053,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -29953,7 +30149,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30048,7 +30245,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30143,7 +30341,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30238,7 +30437,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30333,7 +30533,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30428,7 +30629,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30523,7 +30725,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30618,7 +30821,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30705,7 +30909,9 @@
           "greenPathAudit",
           "finishTheWorkAudit",
           "bulkDeliveryAudit",
-          "bulkDeliveryRepost"
+          "bulkDeliveryRepost",
+          "bulkDeliveryFinalRepost",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30809,7 +31015,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -30907,7 +31114,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -31315,7 +31523,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -31432,7 +31641,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -31549,7 +31759,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -31668,7 +31879,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -31783,7 +31995,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -31898,7 +32111,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -32015,7 +32229,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -32130,7 +32345,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -32245,7 +32461,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -32362,7 +32579,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -32479,7 +32697,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [
@@ -32594,7 +32813,8 @@
           "consolidatedChecklist",
           "currentHeadAudit",
           "resourceAudit",
-          "greenPathAudit"
+          "greenPathAudit",
+          "remainingScope"
         ],
         "workflow": ".github/workflows/ci.yml",
         "evidenceGroups": [

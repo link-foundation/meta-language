@@ -143,9 +143,10 @@ export function validateSourceRegister(register, manifest, sources) {
  * edited or deleted registered source and an unregistered, non-automation
  * comment are errors.
  */
-export function compareWithLiveDiscussion(register, { issue, comments }) {
+export function compareWithLiveDiscussion(register, { issue, issues = [], comments }) {
   const errors = [];
   const live = new Map([[String(issue.number ?? 195), { ...issue, kind: 'issue' }]]);
+  for (const additional of issues) live.set(String(additional.number), { ...additional, kind: 'issue' });
   for (const comment of comments) live.set(String(comment.id), { ...comment, kind: 'comment' });
   const registered = new Map(registeredEntries(register).map((entry) => [String(entry.id), entry]));
   for (const [id, entry] of registered) {
@@ -174,8 +175,9 @@ export function compareWithLiveDiscussion(register, { issue, comments }) {
 }
 
 /** Rewrites the revision fields of the registered entries from the live discussion. */
-export function refreshRegister(register, { issue, comments }) {
+export function refreshRegister(register, { issue, issues = [], comments }) {
   const live = new Map([[String(issue.number ?? 195), issue]]);
+  for (const additional of issues) live.set(String(additional.number), additional);
   for (const comment of comments) live.set(String(comment.id), comment);
   const refresh = (entry) => {
     const current = live.get(String(entry.id));
@@ -225,15 +227,16 @@ async function githubGet(pathname, token) {
  */
 export async function fetchLiveDiscussion() {
   const token = githubToken();
-  const [issue, issueComments, conversation, reviewComments, reviews] = await Promise.all([
+  const [issue, issueComments, conversation, reviewComments, reviews, remainingScope] = await Promise.all([
     githubGet(`repos/${REPOSITORY}/issues/195`, token),
     githubGet(`repos/${REPOSITORY}/issues/195/comments?per_page=100`, token),
     githubGet(`repos/${REPOSITORY}/issues/196/comments?per_page=100`, token),
     githubGet(`repos/${REPOSITORY}/pulls/196/comments?per_page=100`, token),
     githubGet(`repos/${REPOSITORY}/pulls/196/reviews?per_page=100`, token),
+    githubGet(`repos/${REPOSITORY}/issues/199`, token),
   ]);
   const reviewBodies = reviews
     .filter((review) => (review.body ?? '').trim() !== '')
     .map((review) => ({ ...review, created_at: review.submitted_at, updated_at: review.submitted_at }));
-  return { issue, comments: [...issueComments, ...conversation, ...reviewComments, ...reviewBodies] };
+  return { issue, issues: [remainingScope], comments: [...issueComments, ...conversation, ...reviewComments, ...reviewBodies] };
 }

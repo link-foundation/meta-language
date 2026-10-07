@@ -151,3 +151,21 @@ test('an edited, deleted or unregistered comment is reported and automation outp
     'an edited, deleted or unregistered comment is reported and automation output is ignored',
   );
 });
+
+test('the remaining-scope issue is checked and refreshed independently of the original issue', () => {
+  const discussion = syntheticDiscussion();
+  const additional = { ...discussion.issue, number: 199, body: '# Remaining scope\nrelease and memory regressions' };
+  discussion.issues = [additional];
+  discussion.register.requirementSources.push({
+    id: '199', kind: 'issue', key: 'remainingScope', role: 'remaining scope',
+    url: 'https://github.com/link-foundation/meta-language/issues/199',
+    title: 'Remaining scope', ledgerCoverage: ['I195-'], ...revisionOf(additional),
+  });
+  assert.deepEqual(compareWithLiveDiscussion(discussion.register, discussion), []);
+  const edited = { ...discussion, issues: [{ ...additional, body: 'changed remaining scope' }] };
+  assert.match(compareWithLiveDiscussion(discussion.register, edited)[0], /issues\/199 was edited/u);
+  const refreshed = refreshRegister(discussion.register, edited);
+  assert.deepEqual(compareWithLiveDiscussion(refreshed, edited), []);
+  assert.equal(refreshed.requirementSources[0].sha256, contentHash(discussion.issue.body));
+  assert.match(compareWithLiveDiscussion(refreshed, { ...edited, issues: [] })[0], /issues\/199 no longer exists/u);
+});
