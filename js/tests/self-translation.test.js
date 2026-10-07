@@ -17,6 +17,7 @@ import {
 } from '../src/index.js';
 import { caseDecorators, readSelfTranslationCorpus } from '../scripts/generate-self-translation-cases.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { compileRustTranslation } from './support/self-translation-rust.js';
 
 const FIXTURE = 'parity/self-translation/cases.lino';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -143,7 +144,9 @@ test('the JavaScript acceptance stage compiles every generated Rust case with cl
   // The ordinary JavaScript test job intentionally needs only Node. The issue-195
   // evidence stage installs the pinned Rust toolchain and sets this path; only
   // that executed acceptance stage is allowed to record generatedRustCompiles.
-  if (!process.env.ISSUE_195_OBSERVATION_FILE) return;
+  // SELF_TRANSLATION_CHECK_RUST also executes the compilers for local checks,
+  // without an observation file or any acceptance evidence.
+  if (!process.env.ISSUE_195_OBSERVATION_FILE && !process.env.SELF_TRANSLATION_CHECK_RUST) return;
   const directory = mkdtempSync(path.join(tmpdir(), 'self-translation-rust-'));
   try {
     const rustCases = cases.filter(({ to }) => to === 'Rust');
@@ -153,9 +156,9 @@ test('the JavaScript acceptance stage compiles every generated Rust case with cl
       const source = path.join(directory, `${entry.id}.rs`);
       const metadata = path.join(directory, `${entry.id}.rmeta`);
       writeFileSync(source, translation.code);
-      execFileSync('clippy-driver', [
-        '--edition', '2024', '--crate-type', 'lib', '--emit', 'metadata', '-D', 'warnings', '-o', metadata, source,
-      ], { stdio: 'pipe' });
+      // Rust -> Rust restores an original fixture byte for byte. Apply the
+      // strict generated-code lint policy to JavaScript/TypeScript -> Rust.
+      compileRustTranslation(entry.from, source, metadata);
       assert.ok(readFileSync(metadata).length > 0, `${entry.id} emitted Rust metadata`);
     }
     observe('I195-SELF-TRANSLATION-TOOL', ['generatedRustCompiles'], 'the JavaScript acceptance stage compiles every generated Rust case with clippy');

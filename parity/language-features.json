@@ -420,6 +420,7 @@
           "js/tests/translation-defaults.test.js",
           "js/tests/translation-frontend-rules.test.js",
           "js/tests/self-translation.test.js",
+          "js/tests/translation-rust-compilation.test.js",
           "js/tests/translation-self-report.test.js"
         ]
       }
@@ -983,6 +984,7 @@
           "js/scripts/issue-195-rml-workloads.mjs",
           "js/scripts/issue-195-rml-workload-probes.mjs",
           "js/tests/issue-195-downstream-rml-workloads.test.js",
+          "js/tests/issue-195-rml-pr184-audit.test.js",
           "parity/fixtures/rml-pr184-workloads.json"
         ]
       }
