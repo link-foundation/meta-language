@@ -1,0 +1,60 @@
+// Generate external scanners as executable Links Notation data. Delimiters
+// and token names are parameters; the executors need no language callbacks.
+const encode = (text) => [...Buffer.from(text)].map((byte) => (
+  (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122)
+  || (byte >= 48 && byte <= 57) || [45, 46, 95].includes(byte)
+    ? String.fromCharCode(byte) : `%${byte.toString(16).toUpperCase().padStart(2, '0')}`
+)).join('') || '%';
+const literal = (text) => `(literal ${encode(text)})`;
+const identifier = (name) => {
+  if (typeof name !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name)) {
+    throw new TypeError(`invalid scanner identifier ${JSON.stringify(name)}`);
+  }
+  return name;
+};
+const delimiter = (text) => {
+  if (typeof text !== 'string' || text.length === 0) throw new TypeError('a scanner delimiter must be nonempty text');
+  return literal(text);
+};
+
+/** A complete delimiter token, optionally nesting and escaping its delimiters. */
+export function delimitedScanner({ name, token, opening, closing, nested = false, escape = null }) {
+  identifier(name);
+  identifier(token);
+  const open = delimiter(opening);
+  const close = delimiter(closing);
+  if (nested && opening === closing) throw new TypeError('nested delimiters must differ');
+  const escaped = escape === null ? '' : `(if (next ${delimiter(escape)}) (then (consume ${literal(escape)}) advance) (else `;
+  const nesting = nested ? `(if (next ${open}) (then (consume ${open}) (push levels (integer 1))) (else advance))` : 'advance';
+  const body = `(if (next ${close}) (then (consume ${close}) (pop levels)) (else ${nesting}))`;
+  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) (consume ${open}) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) ${escaped}${body}${escaped ? '))' : ''})) (emit ${token})))\n`;
+}
+
+/** Content between grammar-owned delimiters, including escaped code points. */
+export function contentScanner({ name, token, closing, escape = null, stops = [], closeToken = null, allowEnd = true }) {
+  identifier(name);
+  identifier(token);
+  if (closeToken !== null) identifier(closeToken);
+  const endings = [closing, ...stops].map((text) => `(next ${delimiter(text)})`);
+  const stop = `(some atEnd ${endings.join(' ')})`;
+  const body = escape === null ? 'advance'
+    : `(if (next ${delimiter(escape)}) (then (consume ${literal(escape)}) advance) (else advance))`;
+  const content = `(if (valid ${token}) (then (if ${stop} (then fail)) (while (not ${stop}) (do ${body}))${allowEnd ? '' : ' (if atEnd (then fail))'} (emit ${token})))`;
+  const close = closeToken === null ? '' : ` (if (valid ${closeToken}) (then (consume ${literal(closing)}) (emit ${closeToken})))`;
+  return `(scanner ${name} (tokens ${token}${closeToken === null ? '' : ` ${closeToken}`}) (operations ${content}${close} fail))\n`;
+}
+
+/** Generate each scanner from a JSON family descriptor, rejecting unknown families. */
+export function scannerFamilies(descriptors) {
+  const names = new Set();
+  const tokens = new Set();
+  return descriptors.map(({ family, ...options }) => {
+    if (names.has(options.name) || tokens.has(options.token) || (options.closeToken && (tokens.has(options.closeToken) || options.closeToken === options.token))) throw new TypeError('duplicate scanner name or token');
+    names.add(options.name);
+    tokens.add(options.token);
+    if (options.closeToken) tokens.add(options.closeToken);
+    if (family === 'delimited') return delimitedScanner(options);
+    if (family === 'content') return contentScanner(options);
+    throw new TypeError(`unknown scanner family ${JSON.stringify(family)}`);
+  }).join('');
+}

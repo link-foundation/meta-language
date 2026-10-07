@@ -59,6 +59,7 @@ pub(super) fn walk_output(node: SExpr, effects: &mut Vec<SEffect>) -> Result<()>
         } => {
             check_portable(&value)?;
             effects.push(SEffect::Let {
+                constant: false,
                 name,
                 ty,
                 value: *value,

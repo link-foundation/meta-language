@@ -148,6 +148,13 @@ an unrelated host-code patch.
 
 ## Grammar feature union
 
+Reusable scanner family descriptors generate executable Links Notation data
+through `js/scripts/scanner-families.mjs`. Delimiter parameters cover nested
+comments, escaped strings and content that stops at interpolation boundaries.
+Both executors consume the generated operations in
+`parity/fixtures/scanner-families.json` and compare complete concrete trees,
+including Unicode text and rejections of truncated delimiters.
+
 The grammar representation and its executor cover the complete union of the
 grammar features that the inventoried sources use:
 

@@ -527,7 +527,7 @@ impl JavaScriptParser {
 
     /// A parameter list after its `(`, through its `)`.
     fn parameters(&mut self, name: &str) -> Result<Vec<Token>> {
-        let mut tokens = Vec::new();
+        let mut tokens: Vec<Token> = Vec::new();
         while !self.cursor.is(")") {
             let token = self.peek();
             if self.cursor.is("...") {
@@ -545,11 +545,44 @@ impl JavaScriptParser {
                 ));
             }
             let param = self.cursor.identifier(Some("parameter"))?;
-            if self.cursor.is("=") {
+            if self.cursor.eat("=").is_some() {
+                let mut at = 0;
+                let mut depth = 0_i32;
+                loop {
+                    let token = self.cursor.peek_at(at);
+                    if token.kind == TokenKind::Eof
+                        || (depth <= 0 && [",", ")"].contains(&token.value.as_str()))
+                    {
+                        break;
+                    }
+                    if ["(", "[", "{"].contains(&token.value.as_str()) {
+                        depth += 1;
+                    }
+                    if [")", "]", "}"].contains(&token.value.as_str()) {
+                        depth -= 1;
+                    }
+                    if token.kind == TokenKind::Identifier
+                        && !(at > 0 && self.cursor.is_at(".", at - 1))
+                        && tokens.iter().any(|earlier| earlier.value == token.value)
+                    {
+                        return Err(unsupported(
+                            &format!("default reading parameter {}", token.value),
+                            "a call fills in a default where it leaves the argument out, so a default reads no parameter",
+                            Some(span(token, token)),
+                        ));
+                    }
+                    at += 1;
+                }
+                let value = self.expr()?;
+                self.parameter_defaults.insert(param.start, value);
+            } else if tokens
+                .last()
+                .is_some_and(|earlier| self.parameter_defaults.contains_key(&earlier.start))
+            {
                 return Err(unsupported(
-                    "default parameter",
-                    "every argument must be passed",
-                    Some(self.to_here(&param)),
+                    &format!("parameter {} after a default", param.value),
+                    "a call fills in trailing defaults only; give it a default too",
+                    Some(span(&param, &param)),
                 ));
             }
             tokens.push(param);
@@ -588,6 +621,7 @@ impl JavaScriptParser {
                     .map(|(_, text)| (text.clone(), doc.range))
             });
             params.push(SParam {
+                default: self.parameter_defaults.get(&token.start).cloned(),
                 name: token.value.clone(),
                 ty: text
                     .map(|(text, range)| self.ty(&text, range))

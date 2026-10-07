@@ -948,6 +948,7 @@ export async function buildIssue195Manifest(root) {
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'resource-limits')
           .map(({ id }) => [id, ISSUE_195_SOURCES.resourceAudit])),
         'I195-RESOURCE-BOUNDED-MEMORY-REGRESSIONS': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES': ISSUE_195_SOURCES.remainingScope,
         // The next-phase audit asks for JavaScript first, self-translation, decorators and bulk
         // grammar work; the audit of fe9b6ff1 makes the CI order and declared settling binding.
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'javascript-first')

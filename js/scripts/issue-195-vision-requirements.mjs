@@ -32,6 +32,18 @@ const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/
 
 export const VISION_REQUIREMENTS = Object.freeze([
   {
+    id: 'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-families.json',
+    construct: 'reusable data generators for nested delimiters, escaped strings and interpolation boundaries',
+    expectedBehavior:
+      'JSON scanner family descriptors generate executable Links Notation operations without host callbacks. Both executors preserve identical concrete trees and every UTF-8 byte for nested comment delimiters, escaped complete strings, escaped string content, interpolation boundaries and alternate nested delimiters, and reject each recorded truncated or invalid input.',
+    assertions: ['nestedComments', 'escapedStrings', 'quotedContent', 'interpolationBoundaries', 'alternateNestedDelimiters'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
     id: 'I195-VISION-SPECIFICATION',
     area: 'vision-and-traceability',
     specification: 'sources-of-truth',

@@ -1,0 +1,153 @@
+[
+  {
+    "name": "nested comments",
+    "scanners": [
+      {
+        "family": "delimited",
+        "name": "comments",
+        "token": "comment",
+        "opening": "/*",
+        "closing": "*/",
+        "nested": true
+      }
+    ],
+    "accept": [
+      "/**/",
+      "/*a/*b*/c*/",
+      "/*é😀/*inner*/tail*/"
+    ],
+    "reject": [
+      "/*",
+      "/*a/*b*/",
+      "/*a*/x"
+    ],
+    "generated": "(scanner comments (tokens comment) (operations (if (not (valid comment)) (then fail)) (consume (literal %2F%2A)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (next (literal %2A%2F)) (then (consume (literal %2A%2F)) (pop levels)) (else (if (next (literal %2F%2A)) (then (consume (literal %2F%2A)) (push levels (integer 1))) (else advance)))))) (emit comment)))\n",
+    "listing": "(grammar (start source))\n(scanner comments (tokens comment) (operations (if (not (valid comment)) (then fail)) (consume (literal %2F%2A)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (next (literal %2A%2F)) (then (consume (literal %2A%2F)) (pop levels)) (else (if (next (literal %2F%2A)) (then (consume (literal %2F%2A)) (push levels (integer 1))) (else advance)))))) (emit comment)))\n(rule source normal (repeat1 (ref comment)))\n",
+    "trees": {
+      "/**/": "(source (comment \"/**/\"))",
+      "/*a/*b*/c*/": "(source (comment \"/*a/*b*/c*/\"))",
+      "/*é😀/*inner*/tail*/": "(source (comment \"/*é😀/*inner*/tail*/\"))"
+    },
+    "assertion": "nestedComments"
+  },
+  {
+    "name": "escaped strings",
+    "scanners": [
+      {
+        "family": "delimited",
+        "name": "strings",
+        "token": "string",
+        "opening": "\"",
+        "closing": "\"",
+        "escape": "\\"
+      }
+    ],
+    "accept": [
+      "\"\"",
+      "\"a\\\"b\"",
+      "\"é😀\\\\tail\"",
+      "\"a\"\"b\""
+    ],
+    "reject": [
+      "\"",
+      "\"a\\",
+      "\"a\\\""
+    ],
+    "generated": "(scanner strings (tokens string) (operations (if (not (valid string)) (then fail)) (consume (literal %22)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (next (literal %5C)) (then (consume (literal %5C)) advance) (else (if (next (literal %22)) (then (consume (literal %22)) (pop levels)) (else advance)))))) (emit string)))\n",
+    "listing": "(grammar (start source))\n(scanner strings (tokens string) (operations (if (not (valid string)) (then fail)) (consume (literal %22)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (next (literal %5C)) (then (consume (literal %5C)) advance) (else (if (next (literal %22)) (then (consume (literal %22)) (pop levels)) (else advance)))))) (emit string)))\n(rule source normal (repeat1 (ref string)))\n",
+    "trees": {
+      "\"\"": "(source (string \"\\\"\\\"\"))",
+      "\"a\\\"b\"": "(source (string \"\\\"a\\\\\\\"b\\\"\"))",
+      "\"é😀\\\\tail\"": "(source (string \"\\\"é😀\\\\\\\\tail\\\"\"))",
+      "\"a\"\"b\"": "(source (string \"\\\"a\\\"\") (string \"\\\"b\\\"\"))"
+    },
+    "assertion": "escapedStrings"
+  },
+  {
+    "name": "quoted content",
+    "scanners": [
+      {
+        "family": "content",
+        "name": "contents",
+        "token": "content",
+        "closing": "\"",
+        "escape": "\\"
+      }
+    ],
+    "accept": [
+      "\"abc\"",
+      "\"é😀\\\"tail\""
+    ],
+    "reject": [
+      "\"\"",
+      "\"abc",
+      "\"a\\"
+    ],
+    "generated": "(scanner contents (tokens content) (operations (if (valid content) (then (if (some atEnd (next (literal %22))) (then fail)) (while (not (some atEnd (next (literal %22)))) (do (if (next (literal %5C)) (then (consume (literal %5C)) advance) (else advance)))) (emit content))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner contents (tokens content) (operations (if (valid content) (then (if (some atEnd (next (literal %22))) (then fail)) (while (not (some atEnd (next (literal %22)))) (do (if (next (literal %5C)) (then (consume (literal %5C)) advance) (else advance)))) (emit content))) fail))\n(rule source normal (seq (literal %22) (ref content) (literal %22)))\n",
+    "trees": {
+      "\"abc\"": "(source \"\\\"\" (content \"abc\") \"\\\"\")",
+      "\"é😀\\\"tail\"": "(source \"\\\"\" (content \"é😀\\\\\\\"tail\") \"\\\"\")"
+    },
+    "assertion": "quotedContent"
+  },
+  {
+    "name": "interpolation boundaries",
+    "scanners": [
+      {
+        "family": "content",
+        "name": "contents",
+        "token": "content",
+        "closing": "`",
+        "stops": [
+          "${"
+        ],
+        "escape": "\\"
+      }
+    ],
+    "accept": [
+      "`text`",
+      "`escaped\\${text`"
+    ],
+    "reject": [
+      "`text${x}`",
+      "`text",
+      "`text\\"
+    ],
+    "generated": "(scanner contents (tokens content) (operations (if (valid content) (then (if (some atEnd (next (literal %60)) (next (literal %24%7B))) (then fail)) (while (not (some atEnd (next (literal %60)) (next (literal %24%7B)))) (do (if (next (literal %5C)) (then (consume (literal %5C)) advance) (else advance)))) (emit content))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner contents (tokens content) (operations (if (valid content) (then (if (some atEnd (next (literal %60)) (next (literal %24%7B))) (then fail)) (while (not (some atEnd (next (literal %60)) (next (literal %24%7B)))) (do (if (next (literal %5C)) (then (consume (literal %5C)) advance) (else advance)))) (emit content))) fail))\n(rule source normal (seq (literal %60) (ref content) (literal %60)))\n",
+    "trees": {
+      "`text`": "(source \"`\" (content \"text\") \"`\")",
+      "`escaped\\${text`": "(source \"`\" (content \"escaped\\\\${text\") \"`\")"
+    },
+    "assertion": "interpolationBoundaries"
+  },
+  {
+    "name": "alternate nested delimiters",
+    "scanners": [
+      {
+        "family": "delimited",
+        "name": "comments",
+        "token": "comment",
+        "opening": "/-",
+        "closing": "-/",
+        "nested": true
+      }
+    ],
+    "accept": [
+      "/--/",
+      "/-a/-b-/c-/"
+    ],
+    "reject": [
+      "/-a/-b-/",
+      "/-"
+    ],
+    "generated": "(scanner comments (tokens comment) (operations (if (not (valid comment)) (then fail)) (consume (literal %2F-)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (next (literal -%2F)) (then (consume (literal -%2F)) (pop levels)) (else (if (next (literal %2F-)) (then (consume (literal %2F-)) (push levels (integer 1))) (else advance)))))) (emit comment)))\n",
+    "listing": "(grammar (start source))\n(scanner comments (tokens comment) (operations (if (not (valid comment)) (then fail)) (consume (literal %2F-)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (next (literal -%2F)) (then (consume (literal -%2F)) (pop levels)) (else (if (next (literal %2F-)) (then (consume (literal %2F-)) (push levels (integer 1))) (else advance)))))) (emit comment)))\n(rule source normal (ref comment))\n",
+    "trees": {
+      "/--/": "(source (comment \"/--/\"))",
+      "/-a/-b-/c-/": "(source (comment \"/-a/-b-/c-/\"))"
+    },
+    "assertion": "alternateNestedDelimiters"
+  }
+]

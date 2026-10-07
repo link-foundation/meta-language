@@ -21,7 +21,7 @@
   ],
   "scanner": {
     "file": "parity/grammars/scanners/rust.lino",
-    "sha256": "933d8dc709509e7a4613a836d928df83392b81833ce4e81a7945b696f400f8e9",
+    "sha256": "f6e3e317b500ed5b976f67c0f7534379d658f6832fdd569731f24a5d30360d46",
     "ports": {
       "path": "src/scanner.c",
       "sha256": "9609a2f92dbb7c32bc056fd8fb94e5478428f04496696aa08b048a9b66caf283"

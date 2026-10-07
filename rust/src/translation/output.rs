@@ -197,6 +197,7 @@ impl Threader<'_> {
                         name: out.to_owned(),
                         ty: Type::Output,
                         guard: None,
+                        default: None,
                     });
                     let ret = self.pair_type(&function.ret);
                     let body = self.io(&function.body, Expr::var(out, Type::Output))?;
@@ -815,9 +816,15 @@ impl Threader<'_> {
     /// main with the message of an abort, and the step itself on the value.
     fn effect(&mut self, effect: &Effect) -> Result<Vec<Effect>> {
         Ok(match effect {
-            Effect::Let { name, value, span } if self.effects(value) => {
+            Effect::Let {
+                name,
+                value,
+                span,
+                constant,
+            } if self.effects(value) => {
                 let (mut steps, value) = self.run(value)?;
                 steps.push(Effect::Let {
+                    constant: *constant,
                     name: name.clone(),
                     value,
                     span: *span,
@@ -848,6 +855,7 @@ impl Threader<'_> {
         let lines = self.close_one(lines, lines_var, Some(&|out, _| out));
         let mut steps = vec![
             Effect::Let {
+                constant: false,
                 name,
                 value,
                 span: e.span,

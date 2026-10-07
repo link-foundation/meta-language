@@ -671,6 +671,21 @@ impl Checker {
             entry.params.clone(),
             entry.ret.clone(),
         );
+        let default_path = entry.module_path.clone();
+        let supplied = args.len();
+        let mut arguments = args.to_vec();
+        if supplied < params.len()
+            && params[supplied..]
+                .iter()
+                .all(|param| param.default.is_some())
+        {
+            arguments.extend(
+                params[supplied..]
+                    .iter()
+                    .filter_map(|param| param.default.clone()),
+            );
+        }
+        let args = &arguments;
         if args.len() != params.len() {
             if args.len() < params.len() {
                 return Err(unsupported(
@@ -689,14 +704,18 @@ impl Checker {
             ));
         }
         let mut checked = Vec::new();
-        for (arg, param) in args.iter().zip(&params) {
+        for (index, (arg, param)) in args.iter().zip(&params).enumerate() {
             // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
             let expected = if param.guard.is_some() && !matches!(arg.node, SNode::Num { .. }) {
                 &INT
             } else {
                 &param.ty
             };
-            let value = self.expr(arg, env, path, Some(expected), false)?;
+            let value = if index >= supplied {
+                self.expr(arg, &Env::default(), &default_path, Some(expected), false)?
+            } else {
+                self.expr(arg, env, path, Some(expected), false)?
+            };
             let flavor = param.guard.is_some().then_some(Flavor::Checked);
             let mut value = coerce(value, &param.ty, self.language, arg.span.or(span), flavor)?;
             if let (

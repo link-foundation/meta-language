@@ -402,7 +402,8 @@
           "rust/src/program_translation.rs",
           "rust/src/language_support.rs",
           "rust/tests/unit/four_language_conformance.rs",
-          "parity/fixtures/four-language-conformance.json"
+          "parity/fixtures/four-language-conformance.json",
+          "rust/tests/unit/translation_defaults.rs"
         ]
       },
       "javascript": {
@@ -411,7 +412,9 @@
           "js/src/program-translation.js",
           "js/src/language-support.js",
           "js/tests/four-language-conformance.test.js",
-          "parity/fixtures/four-language-conformance.json"
+          "parity/fixtures/four-language-conformance.json",
+          "js/tests/translation-defaults.test.js",
+          "js/tests/translation-strings.test.js"
         ]
       }
     },
@@ -894,7 +897,9 @@
           "rust/src/grammar/merge/declarations.rs",
           "rust/tests/unit/issue_195_grammar_feature_union.rs",
           "rust/tests/unit/issue_195_grammar_feature_union_interchange.rs",
-          "parity/fixtures/grammar-feature-union.json"
+          "parity/fixtures/grammar-feature-union.json",
+          "rust/tests/unit/issue_195_grammar_scanner_families.rs",
+          "parity/fixtures/scanner-families.json"
         ]
       },
       "javascript": {
@@ -903,7 +908,10 @@
           "js/src/grammar-feature-forms.js",
           "js/src/grammar-runtime.js",
           "js/tests/issue-195-grammar-feature-union.test.js",
-          "parity/fixtures/grammar-feature-union.json"
+          "parity/fixtures/grammar-feature-union.json",
+          "js/scripts/scanner-families.mjs",
+          "js/tests/issue-195-grammar-scanner-families.test.js",
+          "parity/fixtures/scanner-families.json"
         ]
       }
     },

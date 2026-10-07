@@ -232,7 +232,13 @@ fn settle_effect(effect: &Effect) -> Effect {
             expr: settle(expr),
             span: *span,
         },
-        Effect::Let { name, value, span } => Effect::Let {
+        Effect::Let {
+            name,
+            value,
+            span,
+            constant,
+        } => Effect::Let {
+            constant: *constant,
             name: name.clone(),
             value: settle(value),
             span: *span,

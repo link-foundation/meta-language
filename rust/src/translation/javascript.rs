@@ -280,6 +280,7 @@ enum ScanEnd {
 }
 
 struct JavaScriptParser {
+    parameter_defaults: std::collections::HashMap<usize, SExpr>,
     source: Source,
     cursor: TokenCursor,
     docs: Vec<Comment>,
@@ -305,6 +306,7 @@ struct JavaScriptParser {
 impl JavaScriptParser {
     fn new(source: &str, tokens: Vec<Token>, comments: &[Comment]) -> Self {
         Self {
+            parameter_defaults: std::collections::HashMap::new(),
             source: Source::new(source),
             cursor: TokenCursor::new(tokens, Language::JavaScript),
             docs: comments

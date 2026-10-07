@@ -298,11 +298,17 @@ pub fn rename_main(
     main.effects
         .iter()
         .map(|effect| match effect {
-            Effect::Let { name, value, span } => {
+            Effect::Let {
+                name,
+                value,
+                span,
+                constant,
+            } => {
                 let value = rename_expr(value, &env, &mut scope);
                 let fresh = scope.fresh(name);
                 env.insert(name.clone(), fresh.clone());
                 Effect::Let {
+                    constant: *constant,
                     name: fresh,
                     value,
                     span: *span,
