@@ -6,7 +6,11 @@ import { compileGrammar, parseGrammarLinks, renderSyntaxTree } from '../src/inde
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const fixtures = JSON.parse(readFileSync(new URL('../../parity/fixtures/scanner-families.json', import.meta.url), 'utf8'));
+const fixtureGroups = [
+  ['parity/fixtures/scanner-families.json', 'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES'],
+  ['parity/fixtures/scanner-counted-delimiters.json', 'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS'],
+];
+const fixtures = fixtureGroups.flatMap(([fixtureFile, requirementId]) => JSON.parse(readFileSync(new URL(`../../${fixtureFile}`, import.meta.url), 'utf8')).map((item) => ({ ...item, fixtureFile, requirementId })));
 for (const fixture of fixtures) {
   test(`scanner family ${fixture.name} preserves text and rejects truncated delimiters`, () => {
     assert.equal(scannerFamilies(fixture.scanners), fixture.generated);
@@ -22,9 +26,9 @@ for (const fixture of fixtures) {
     }
     for (const input of fixture.reject) assert.equal(parser.parseTree(input).ok, false, input);
     recordIssue195Observations({
-      requirementId: 'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES', suffix: 'behavior',
-      fixtureId: 'planned:repository-directive:i195-grammar-scanner-delimiter-families',
-      fixtureFile: 'parity/fixtures/scanner-families.json', assertions: [fixture.assertion],
+      requirementId: fixture.requirementId, suffix: 'behavior',
+      fixtureId: `planned:repository-directive:${fixture.requirementId.toLowerCase()}`,
+      fixtureFile: fixture.fixtureFile, assertions: [fixture.assertion],
       testName: `scanner family ${fixture.name} preserves text and rejects truncated delimiters`,
     });
   });

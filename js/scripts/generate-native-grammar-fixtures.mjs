@@ -1177,45 +1177,47 @@ export const DEFAULT_CST_PATH = 'parity/fixtures/native-default-cst-expected.jso
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 
 /**
- * The default concrete syntax trees of the inventory sources of every
- * language a native grammar parses by default, in the rows of
+ * The default concrete syntax trees of one native grammar's inventory
+ * sources, in the rows of
  * parity/fixtures/default-cst-expected.json. A positive tree is the oracle's
  * tree of the source, which the native grammar must build; a recovery tree is
  * the native grammar's repair of the recovery source, which the oracle also
  * recovers from.
  */
-export function buildNativeDefaultCstExpected() {
-  const languages = {};
-  for (const entry of NATIVE_GRAMMARS) {
-    const language = inventory.languages.find(({ name }) => name === entry.language);
-    const catalog = languageEntry(entry.language);
-    if (catalog.grammars[0]?.id !== entry.nativeGrammar) {
-      throw new Error(`the catalog does not parse ${entry.language} with ${entry.nativeGrammar}`);
-    }
-    const parser = grammarParser(entry);
-    const positive = parser.parseTree(language.source);
-    if (!positive.ok) throw new Error(`${entry.grammar} rejects the ${entry.language} inventory source`);
-    const rows = oracleRows(language.source, entry.language);
-    if (JSON.stringify(nativeRows(positive.tree, language.source, entry)) !== JSON.stringify(rows)) {
-      throw new Error(`${entry.grammar} and ${entry.oracle} disagree on the ${entry.language} inventory source`);
-    }
-    if (!oracleRecovers(language.recoverySource, entry.language)) {
-      throw new Error(`the ${entry.oracle} oracle accepts the ${entry.language} recovery source`);
-    }
-    const repaired = parser.parseTree(language.recoverySource, { errorRecovery: true, recovery: 'accept' });
-    const recovery = nativeRows(repaired.tree, language.recoverySource, entry);
-    if (!hasRecovery(recovery)) throw new Error(`${entry.grammar} repairs the ${entry.language} recovery source without an ERROR or MISSING node`);
-    const versions = (grammars) => Object.fromEntries(grammars.map(({ id, version, parserSha256 }) => [id, { version, parserSha256 }]));
-    languages[entry.language] = {
-      grammars: versions(catalog.grammars),
-      oracleGrammars: versions(catalog.oracleGrammars),
-      sourceSha256: sha256(language.source),
-      recoverySourceSha256: sha256(language.recoverySource),
-      positive: rows,
-      recovery,
-      embedded: [],
-    };
+export function buildNativeDefaultLanguageExpected(entry) {
+  const language = inventory.languages.find(({ name }) => name === entry.language);
+  const catalog = languageEntry(entry.language);
+  if (catalog.grammars[0]?.id !== entry.nativeGrammar) {
+    throw new Error(`the catalog does not parse ${entry.language} with ${entry.nativeGrammar}`);
   }
+  const parser = grammarParser(entry);
+  const positive = parser.parseTree(language.source);
+  if (!positive.ok) throw new Error(`${entry.grammar} rejects the ${entry.language} inventory source`);
+  const rows = oracleRows(language.source, entry.language);
+  if (JSON.stringify(nativeRows(positive.tree, language.source, entry)) !== JSON.stringify(rows)) {
+    throw new Error(`${entry.grammar} and ${entry.oracle} disagree on the ${entry.language} inventory source`);
+  }
+  if (!oracleRecovers(language.recoverySource, entry.language)) {
+    throw new Error(`the ${entry.oracle} oracle accepts the ${entry.language} recovery source`);
+  }
+  const repaired = parser.parseTree(language.recoverySource, { errorRecovery: true, recovery: 'accept' });
+  const recovery = nativeRows(repaired.tree, language.recoverySource, entry);
+  if (!hasRecovery(recovery)) throw new Error(`${entry.grammar} repairs the ${entry.language} recovery source without an ERROR or MISSING node`);
+  const versions = (grammars) => Object.fromEntries(grammars.map(({ id, version, parserSha256 }) => [id, { version, parserSha256 }]));
+  return {
+    grammars: versions(catalog.grammars),
+    oracleGrammars: versions(catalog.oracleGrammars),
+    sourceSha256: sha256(language.source),
+    recoverySourceSha256: sha256(language.recoverySource),
+    positive: rows,
+    recovery,
+    embedded: [],
+  };
+}
+
+/** Every native default expectation and the shared embedded-region fixtures. */
+export function buildNativeDefaultCstExpected() {
+  const languages = Object.fromEntries(NATIVE_GRAMMARS.map((entry) => [entry.language, buildNativeDefaultLanguageExpected(entry)]));
   return {
     description:
       'Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default, and of the embedded regions in those languages of the shared embedded-language fixtures. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',

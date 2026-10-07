@@ -3,12 +3,8 @@ use super::issue_195_observations::{Observation, record};
 use meta_language::{FeatureParseOptions, compile_feature_grammar, parse_grammar_links};
 use serde_json::Value;
 
-#[test]
-fn generated_scanner_families_preserve_text_and_reject_truncated_delimiters() {
-    let fixtures: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/scanner-families.json"
-    ))
-    .unwrap();
+fn check_cases(text: &str) {
+    let fixtures: Value = serde_json::from_str(text).unwrap();
     for fixture in fixtures.as_array().unwrap() {
         let grammar = parse_grammar_links(fixture["listing"].as_str().unwrap()).unwrap();
         let parser =
@@ -43,6 +39,13 @@ fn generated_scanner_families_preserve_text_and_reject_truncated_delimiters() {
             );
         }
     }
+}
+
+#[test]
+fn generated_scanner_families_preserve_text_and_reject_truncated_delimiters() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-families.json"
+    ));
     record(&Observation {
         requirement_id: "I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES",
         suffix: "behavior",
@@ -56,5 +59,20 @@ fn generated_scanner_families_preserve_text_and_reject_truncated_delimiters() {
             "alternateNestedDelimiters",
         ],
         test_name: "generated_scanner_families_preserve_text_and_reject_truncated_delimiters",
+    });
+}
+
+#[test]
+fn counted_scanner_delimiters_preserve_content_and_clear_state_between_tokens() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-counted-delimiters.json"
+    ));
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-grammar-scanner-counted-delimiters",
+        fixture_file: "parity/fixtures/scanner-counted-delimiters.json",
+        assertions: &["rustStyleRawDelimiters", "luaStyleLongDelimiters"],
+        test_name: "counted_scanner_delimiters_preserve_content_and_clear_state_between_tokens",
     });
 }

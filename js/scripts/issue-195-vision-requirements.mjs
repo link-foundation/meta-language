@@ -32,6 +32,18 @@ const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/
 
 export const VISION_REQUIREMENTS = Object.freeze([
   {
+    id: 'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-counted-delimiters.json',
+    construct: 'raw tokens with parameterized repeated opening and closing delimiter counts',
+    expectedBehavior:
+      'Scanner family descriptors generate executable Links Notation operations that count opening markers and require the matching count at closing. Both executors preserve identical concrete trees and every UTF-8 byte for Rust-style raw strings and Lua-style long brackets, keep shorter embedded closing candidates as content, clear state between successive tokens, and reject the recorded wrong-count and truncated inputs.',
+    assertions: ['rustStyleRawDelimiters', 'luaStyleLongDelimiters'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

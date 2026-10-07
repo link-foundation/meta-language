@@ -44,6 +44,20 @@ export function contentScanner({ name, token, closing, escape = null, stops = []
   return `(scanner ${name} (tokens ${token}${closeToken === null ? '' : ` ${closeToken}`}) (operations ${content}${close} fail))\n`;
 }
 
+/** A raw token whose closing delimiter repeats the opening marker count. */
+export function countedDelimiterScanner({ name, token, prefix = '', marker, opening, closing, suffix = '' }) {
+  identifier(name);
+  identifier(token);
+  const repeated = delimiter(marker);
+  const open = delimiter(opening);
+  const close = delimiter(closing);
+  const beginning = prefix ? `(consume ${delimiter(prefix)}) ` : '';
+  const ending = suffix ? `(consume ${delimiter(suffix)}) ` : '';
+  const suffixCondition = suffix ? ` (next ${literal(suffix)})` : '';
+  const clear = (stack) => `(while (greater (depth ${stack}) (integer 0)) (do (pop ${stack})))`;
+  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) ${beginning}(while (next ${repeated}) (do (consume ${repeated}) (push delimiters (integer 1)))) (consume ${open}) (while (not atEnd) (do (if (next ${close}) (then (consume ${close}) (while (all (next ${repeated}) (less (depth candidate) (depth delimiters))) (do (consume ${repeated}) (push candidate (integer 1)))) (if (all (equal (depth candidate) (depth delimiters))${suffixCondition}) (then ${ending}${clear('candidate')} ${clear('delimiters')} (emit ${token}))) ${clear('candidate')}) (else advance)))) fail))\n`;
+}
+
 /** Generate each scanner from a JSON family descriptor, rejecting unknown families. */
 export function scannerFamilies(descriptors) {
   const names = new Set();
@@ -55,6 +69,7 @@ export function scannerFamilies(descriptors) {
     if (options.closeToken) tokens.add(options.closeToken);
     if (family === 'delimited') return delimitedScanner(options);
     if (family === 'content') return contentScanner(options);
+    if (family === 'counted-delimiter') return countedDelimiterScanner(options);
     throw new TypeError(`unknown scanner family ${JSON.stringify(family)}`);
   }).join('');
 }

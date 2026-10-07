@@ -154,6 +154,10 @@ comments, escaped strings and content that stops at interpolation boundaries.
 Both executors consume the generated operations in
 `parity/fixtures/scanner-families.json` and compare complete concrete trees,
 including Unicode text and rejections of truncated delimiters.
+Repeated delimiter counts use the same operation language. The raw-string and
+long-bracket cases in `parity/fixtures/scanner-counted-delimiters.json` verify
+matching marker counts, shorter closing candidates inside content, Unicode
+bytes and independent state for successive tokens in both executors.
 
 The grammar representation and its executor cover the complete union of the
 grammar features that the inventoried sources use:

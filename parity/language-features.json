@@ -899,7 +899,8 @@
           "rust/tests/unit/issue_195_grammar_feature_union_interchange.rs",
           "parity/fixtures/grammar-feature-union.json",
           "rust/tests/unit/issue_195_grammar_scanner_families.rs",
-          "parity/fixtures/scanner-families.json"
+          "parity/fixtures/scanner-families.json",
+          "parity/fixtures/scanner-counted-delimiters.json"
         ]
       },
       "javascript": {
@@ -911,7 +912,8 @@
           "parity/fixtures/grammar-feature-union.json",
           "js/scripts/scanner-families.mjs",
           "js/tests/issue-195-grammar-scanner-families.test.js",
-          "parity/fixtures/scanner-families.json"
+          "parity/fixtures/scanner-families.json",
+          "parity/fixtures/scanner-counted-delimiters.json"
         ]
       }
     },

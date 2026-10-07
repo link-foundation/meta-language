@@ -544,7 +544,7 @@
       "grammars": {
         "native-rust": {
           "version": "1.0.0",
-          "parserSha256": "734187afa0b6e0e2b81cdef00887ab58dbbf782cb721752205326e629edc5742"
+          "parserSha256": "2d273b9ab72658ad243d5c604bc18b0e2abc2c04c3df5ea87736086a8d133698"
         }
       },
       "oracleGrammars": {
