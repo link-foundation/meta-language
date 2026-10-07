@@ -32,6 +32,15 @@ const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/
 
 export const VISION_REQUIREMENTS = Object.freeze([
   {
+    id: 'I195-GRAMMAR-SCANNER-REMEMBERED-CONTENT', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-remembered-content.json',
+    construct: 'whole tagged literals and grammar surrounded remembered content',
+    expectedBehavior: 'Shared scanner families preserve exact opening label text through whole literals and separate content tokens surrounded by grammar-owned punctuation. They retain other labels inside content, empty labels where configured and independent successive literals; both executors reproduce the shared lossless concrete trees and reject mismatched, malformed and truncated labels.',
+    assertions: ['rememberedLiteralText', 'rememberedContentText'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-SCANNER-REMEMBERED-DELIMITERS', area: 'native-grammar', specification: 'grammar-feature-union',
     fixture: 'parity/fixtures/scanner-remembered-delimiters.json',
     construct: 'exact textual delimiter state in generated native grammar data',
@@ -48,6 +57,24 @@ export const VISION_REQUIREMENTS = Object.freeze([
     assertions: ['lookaheadBoundaries', 'contextTokens', 'lineCountedDelimiters'],
     javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
     rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-CPP', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/cpp.json',
+    construct: 'generated native C++ grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native C++ grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary C++ parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeCppGrammarIsCanonicalLinks', 'nativeCppTreesMatchOracle', 'nativeCppTreesLossless', 'nativeCppRejectsInvalidInput', 'nativeCppUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-cpp.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_cpp.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-SQL', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/sql.json',
+    construct: 'generated native SQL grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native SQL grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary SQL parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeSqlGrammarIsCanonicalLinks', 'nativeSqlTreesMatchOracle', 'nativeSqlTreesLossless', 'nativeSqlRejectsInvalidInput', 'nativeSqlUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-sql.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_sql.rs'],
   },
   {
     id: 'I195-GRAMMAR-NATIVE-GROOVY', area: 'native-grammar', specification: 'native-merged-grammars',

@@ -931,7 +931,16 @@
           "parity/fixtures/native-grammars/groovy.json",
           "parity/fixtures/native-grammars/groovy-corpus.json",
           "rust/tests/unit/issue_195_grammar_native_groovy.rs",
-          "parity/fixtures/scanner-context-tokens.json"
+          "parity/fixtures/scanner-context-tokens.json",
+          "parity/fixtures/scanner-remembered-content.json",
+          "parity/grammars/native/cpp.lino",
+          "parity/fixtures/native-grammars/cpp.json",
+          "parity/fixtures/native-grammars/cpp-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_cpp.rs",
+          "parity/grammars/native/sql.lino",
+          "parity/fixtures/native-grammars/sql.json",
+          "parity/fixtures/native-grammars/sql-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_sql.rs"
         ]
       },
       "javascript": {
@@ -975,7 +984,16 @@
           "parity/fixtures/native-grammars/groovy.json",
           "parity/fixtures/native-grammars/groovy-corpus.json",
           "js/tests/issue-195-grammar-native-groovy.test.js",
-          "parity/fixtures/scanner-context-tokens.json"
+          "parity/fixtures/scanner-context-tokens.json",
+          "parity/fixtures/scanner-remembered-content.json",
+          "parity/grammars/native/cpp.lino",
+          "parity/fixtures/native-grammars/cpp.json",
+          "parity/fixtures/native-grammars/cpp-corpus.json",
+          "js/tests/issue-195-grammar-native-cpp.test.js",
+          "parity/grammars/native/sql.lino",
+          "parity/fixtures/native-grammars/sql.json",
+          "parity/fixtures/native-grammars/sql-corpus.json",
+          "js/tests/issue-195-grammar-native-sql.test.js"
         ]
       }
     },
@@ -1269,7 +1287,9 @@
         "evidence": [
           "rust/src/concept_distinctions.rs",
           "rust/tests/unit/concept_distinctions.rs",
-          "parity/fixtures/concept-distinctions.json"
+          "parity/fixtures/concept-distinctions.json",
+          "parity/required-concept-distinctions.json",
+          "js/scripts/build-concept-records.mjs"
         ]
       },
       "javascript": {
@@ -1277,7 +1297,9 @@
         "evidence": [
           "js/src/concept-distinctions.js",
           "js/tests/concept-distinctions.test.js",
-          "parity/fixtures/concept-distinctions.json"
+          "parity/fixtures/concept-distinctions.json",
+          "parity/required-concept-distinctions.json",
+          "js/scripts/build-concept-records.mjs"
         ]
       }
     }

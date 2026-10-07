@@ -190,6 +190,7 @@ fn check_rejects_records_that_merge_or_fail_to_justify_a_required_distinction() 
             "grammar.true-constant / grammar.true-value",
             "grammar.symbol / grammar.keyword",
             "grammar.comment / grammar.block-comment",
+            "grammar.null-keyword / grammar.nil-keyword",
         ]
     );
     assert_eq!(REQUIRED_FOUNDATION_DISTINCTIONS.len(), 6);

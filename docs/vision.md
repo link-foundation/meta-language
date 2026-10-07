@@ -692,6 +692,19 @@ Context guards and preferred copies retain the source lexer token identities;
 they do not create duplicate source token occurrences. Field-local ordering,
 contextual keyword spellings and newline runs keep their decisions in grammar
 data, with input-boundary lookahead that skips extras and emits no CST leaf.
+The C++ and SQL imports use remembered-content and remembered-literal scanner
+families. Grammar-owned raw-string punctuation surrounds an exactly matched
+opening label; a whole dollar-quoted literal composes opening, content and
+closing rules. SQL function bodies retain their separate surrounding grammar
+and prevent a closing function label from starting an inner literal. Every
+catalog SQL dialect has its own default-source expectation for the shared
+grammar. Named choice aliases retain a complete boundary and the selected
+production beneath it. Contextual clause exclusions preserve quoted identifiers
+and longer words. A named NULL marker keeps absent-literal recovery visible.
+Required concept distinctions are shared data in
+`parity/required-concept-distinctions.json`; the record generator emits the
+JavaScript JSON and Rust constant data from the same pairs and reasons. SQL
+unknown values and Pascal null pointers keep separate concept identities.
 Remembered textual delimiters use grammar actions to store opening tags and
 predicates to compare closing tags exactly. The generated content scanner
 preserves other tags inside the body and supports successive distinct tags

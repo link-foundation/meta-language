@@ -1266,9 +1266,14 @@ export function buildNativeDefaultLanguageExpected(entry) {
   };
 }
 
+/** Catalog dialects sharing a native grammar each retain independent expectations. */
+export function nativeDefaultLanguages(entry) {
+  return inventory.languages.filter((language) => language.nativeGrammar === entry.nativeGrammar).map(({ name }) => name);
+}
+
 /** Every native default expectation and the shared embedded-region fixtures. */
 export function buildNativeDefaultCstExpected() {
-  const languages = Object.fromEntries(NATIVE_GRAMMARS.map((entry) => [entry.language, buildNativeDefaultLanguageExpected(entry)]));
+  const languages = Object.fromEntries(NATIVE_GRAMMARS.flatMap((entry) => nativeDefaultLanguages(entry).map((language) => [language, buildNativeDefaultLanguageExpected({ ...entry, language })])));
   return {
     description:
       'Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default, and of the embedded regions in those languages of the shared embedded-language fixtures. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
@@ -1294,7 +1299,8 @@ export function buildNativeEmbeddedFixtures(only = null) {
     const label = `${fixture.host} -> ${fixture.target}`;
     let native = false;
     const regions = (text, embedded, recovery) => embedded.map((region) => {
-      const entry = NATIVE_GRAMMARS.find(({ language }) => language === region.language);
+      const grammar = NATIVE_GRAMMARS.find((entry) => nativeDefaultLanguages(entry).includes(region.language));
+      const entry = grammar && { ...grammar, language: region.language };
       if (!entry || (only && !only.includes(entry.id))) return region;
       native = true;
       const regionText = Buffer.from(text, 'utf8').subarray(region.startByte, region.endByte).toString('utf8');

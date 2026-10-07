@@ -1,0 +1,901 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "0bce221046dfa7efa1c526129e5cc8975a2a2156cd3130505543f26f214cbcc0",
+  "cases": [
+    {
+      "file": "ambiguities.txt",
+      "title": "template functions vs relational expressions",
+      "source": "\nT1 a = b < c > d;\nT2 e = f<T3>(g);\nint a = std::get<0>(t);\nif (x.y < z) break; // Not a template missing a '>'\nif (x.y < x->y && x.y > 50) break;\nif (x.foo < 0 || bar >= 1) break;\nif (x.Base::foo < 0 || bar >= 1) {\n  bool i = x.Base::foo < 0 || 1 > (5); // No way to tell\n}\n"
+    },
+    {
+      "file": "ambiguities.txt",
+      "title": "function declarations vs variable initializations",
+      "source": "\n// Function declarations\nT1 a(T2 *b);\nT3 c(T4 &d, T5 &&e);\n\n// Variable declarations with initializers\nT7 f(g.h);\nT6 i{j};\n"
+    },
+    {
+      "file": "ambiguities.txt",
+      "title": "template classes vs relational expressions",
+      "source": "\nint main() {\n  T1<T2> v1;\n  T1<T2> v2 = v3;\n}\n"
+    },
+    {
+      "file": "c/ambiguities.txt",
+      "title": "pointer declarations vs expressions",
+      "source": "\nTSLanguage *(*lang_parser)(void);\n\nchar (*ptr_to_array)[];\n\nint main() {\n  // declare a function pointer\n  T1 * b(T2 a);\n\n  // evaluate expressions\n  c * d(5);\n  e(f * g);\n}\n"
+    },
+    {
+      "file": "c/ambiguities.txt",
+      "title": "casts vs multiplications",
+      "source": "\n/*\n * ambiguities\n */\n\nint main() {\n  // cast\n  a((B *)c);\n\n  // parenthesized product\n  d((e * f));\n}\n"
+    },
+    {
+      "file": "c/ambiguities.txt",
+      "title": "function calls vs parenthesized declarators vs macro types",
+      "source": "\nint main() {\n  /*\n   * Could be either:\n   *   - function call\n   *   - declaration w/ parenthesized declarator\n   *   - declaration w/ macro type, no declarator\n   */\n  ABC(d);\n\n  /*\n   * Normal declaration\n   */\n  efg hij;\n}\n"
+    },
+    {
+      "file": "c/ambiguities.txt",
+      "title": "Call expressions vs empty declarations w/ macros as types",
+      "source": "\nint main() {\n  int a = 1;\n  b(a);\n}\n"
+    },
+    {
+      "file": "c/ambiguities.txt",
+      "title": "Comments after for loops with ambiguities",
+      "source": "\nint main() {\n  for (a *b = c; d; e) {\n    aff;\n  }\n\n  // a-comment\n\n  g;\n}\n"
+    },
+    {
+      "file": "c/ambiguities.txt",
+      "title": "Top-level macro invocations",
+      "source": "\nDEFINE_SOMETHING(THING_A, \"this is a thing a\");\nDEFINE_SOMETHING(THING_B, \"this is a thing b\", \"thanks\");\n"
+    },
+    {
+      "file": "c/crlf.txt",
+      "title": "Line comments with escaped CRLF line endings",
+      "source": "\n// hello \\\n   this is still a comment\nthis_is_not a_comment;\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Struct declarations",
+      "source": "\nstruct s1;\n\nstruct s2 {\n  int x;\n  float y : 5;\n};\n\nstruct s3 {\n  int x : 1, y : 2;\n};\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Union declarations",
+      "source": "\nunion u1;\n\nunion s2 {\n  int x;\n  float y;\n};\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Enum declarations",
+      "source": "\nenum e1;\n\nenum e2 {\n  val1,\n  val2 = 5,\n  val3\n};\n\nenum e3 {\n  val1,\n};\n\nenum e4: int {\n  val1,\n};\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Struct declarations containing preprocessor directives",
+      "source": "\nstruct s {\n  #define A 5\n  int b[a];\n  #undef A\n};\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Primitive-typed variable declarations",
+      "source": "\nunsigned short int a;\nlong int b, c = 5, d;\nfloat d, e;\nunsigned f;\nshort g, h;\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Variable storage classes",
+      "source": "\nint a;\nextern int b, c;\nregister int e;\nstatic int f;\nregister uint64_t rd_ asm(\"x\" \"10\");\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Composite-typed variable declarations",
+      "source": "\nstruct b c;\nunion { int e; } f;\nenum { g, h } i;\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Pointer variable declarations",
+      "source": "\nchar *the_string;\nconst char **the_strings;\nint const * const restrict x;\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Typedefs",
+      "source": "\ntypedef int my_int;\n\ntypedef struct {\n  int x;\n} *a;\n\ntypedef void my_callback(void *, size_t);\n\ntypedef struct A {\n  int i;\n} a, b;\n\ntypedef void const *voidpc;\ntypedef void volatile *voidpv;\ntypedef void const volatile *const voidpcv;\n\ntypedef unsigned long int;\ntypedef unsigned short ptrdiff_t;\ntypedef short charptr_t;\ntypedef unsigned nullptr_t;\ntypedef signed max_align_t;\n\ntypedef unsigned long ulong_t;\ntypedef long long_t;\ntypedef unsigned short ushort_t;\ntypedef short short_t;\ntypedef unsigned unsigned_t;\ntypedef signed signed_t;\n\ntypedef long long;\ntypedef short short;\ntypedef unsigned int uint;\ntypedef unsigned short ushort;\ntypedef unsigned unsigned short;\ntypedef signed signed short;\ntypedef signed signed unsigned;\n\ntypedef int register_t __attribute__((__mode__(__word__)));\n\n__extension__ typedef long int greg_t;\n\n__extension__ typedef struct {\n    long long int quot;\n    long long int rem;\n} lldiv_t;\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Function declarations",
+      "source": "\nint main(int argc, const char **argv);\nstatic foo bar();\nstatic baz quux(...);\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Function definitions",
+      "source": "\nvoid * do_stuff(int arg1) {\n  return 5;\n}\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Function specifiers after types",
+      "source": "\nint static inline do_stuff(int arg1) {\n  return 5;\n}\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Linkage specifications",
+      "source": "\nextern \"C\" int foo();\n\nextern \"C\" int foo() { return 0; }\n\nextern \"C\" {\n  int bar();\n  int baz();\n}\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Type qualifiers",
+      "source": "\nconst _Atomic unsigned long int x = 5;\nrestrict int y = 6;\nvolatile int z = 7;\nconstexpr int a = 8;\n__thread int c = 9;\nnoreturn void b() {}\n __extension__ extern int ffsll (long long int __ll)\n     __attribute__ ((__nothrow__ )) __attribute__ ((__const__));\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Local array declarations",
+      "source": "\nint main() {\n  char the_buffer[the_size];\n  char the_other_buffer[*];\n}\n"
+    },
+    {
+      "file": "c/declarations.txt",
+      "title": "Attributes",
+      "source": "\nextern __attribute__((visibility(\"hidden\"))) int foo();\nextern int bar() __attribute__((const));\nvoid die(const char *format, ...) __attribute__((noreturn))\n                                  __attribute__((format(printf,1,2)));\nextern __attribute__((visibility(\"default\"), weak)) int print_status();\n\nextern int strerror_r(int __errnum, char *__buf,\n                      int __buflen) __asm__(\"\"\n                                            \"__xpg_strerror_r\")\n    __attribute__((__nothrow__)) __attribute__((__nonnull__(2)));\n\nint f([[a::b(c), d]] int x) {}\n\n[[gnu::always_inline]] [[gnu::hot]] [[gnu::const]] [[nodiscard]]\nint g(void);\n\n[[gnu::always_inline, gnu::hot, gnu::const, nodiscard]]\nint g(void);\n\nint i [[maybe_unused]];\nvoid f[[gnu::always_inline]]();\n\n[[nodiscard(\"reason\")]] int foo;\n\n[[fallthrough]];\n\nstruct S {\n  int a [[deprecated]];\n};\n\ntypedef int MyInt [[deprecated]];\n\nstruct X {\n    int a __attribute__((aligned(4)));\n} __attribute__((aligned(16)));\n\nunion Y {\n    int a __attribute__((aligned(4)));\n} __attribute__((aligned(16)));\n\nenum Z {\n    A\n} __attribute__((aligned(16)));\n\nstruct __attribute__((__packed__)) foo_t {\n  int x;\n};\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Number literals",
+      "source": "\ndouble a = {\n  0xAC00,\n  0.123,\n  0b1010001,\n  0xabc00ull,\n  -0.1f,\n  1'000'000.000'001,\n  24e-5,\n  0.1E1,\n  58.,\n  4e2,\n  123.456e-67,\n  .1E4f,\n  0x10.1p0,\n};\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Identifiers",
+      "source": "\nint main() {\n  _abc;\n  d_EG123;\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Unicode Identifiers",
+      "source": "\nint main() {\n  µs;\n  blah_accenté;\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Common constants",
+      "source": "\nint main() {\n  true;\n  false;\n  NULL;\n\n  // regression test - identifiers starting w/ these strings should tokenize correctly.\n  true_value;\n  false_value;\n  NULL_value;\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Function calls",
+      "source": "\nint main() {\n  printf(\"hi! %d\\n\", x);\n  __assert_fail(\"some_error_message\", 115, __extension__ __func__);\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "GNU inline assembly",
+      "source": "\nasm volatile (\n    \"mov r0, %0\\n\"\n    \"mov r1, %[y]\\n\"\n    \"add r2, r0, r1\\n\"\n    \"mov %1, r2\\n\"\n    :     \"r\"  (z)\n    :     \"=r\" (x),\n      [y] \"=r\" ((uintptr_t) y)\n    : \"r2\");\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Function call with compound statement",
+      "source": "\n#define TAKES_BLOCK(x, block) for (i = 0; i < x; i++) block\n\nint main(void) {\n  {\n    int x = 0;\n  }\n  TAKES_BLOCK(10, {\n    // Doesn't matter what I put in here\n  });\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "String literals",
+      "source": "\nint main() {\n  \"a\";\n  \"b\" \"c\" \"d\";\n  e \"f\" g;\n  \"\\\"hi\\\"\";\n  L\"bonjour\";\n  u\"guten morgen\";\n  U\"buenos dias\";\n  u8\"buongiorno\";\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Character literals",
+      "source": "\nint main() {\n  'a';\n  '\\0';\n  '\\t';\n  '\\'';\n  L'b';\n  u'c';\n  U'\\xa1';\n  u8'\\x1A';\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Field access",
+      "source": "\nint main() {\n  s.data1;\n  p->data2;\n  q[data3];\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Boolean operators",
+      "source": "\nint main() {\n  !x || !y && !z;\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Math operators",
+      "source": "\nint main() {\n  -a / b + c * -d;\n  a++ - ++b + c-- + --d;\n  ++L;\n  }\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "The comma operator",
+      "source": "\nint main() {\n  i--, j--;\n  (i--, j--);\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Assignments",
+      "source": "\nint main() {\n  static int a = 1;\n  b = *c = 2;\n  d.e = 3;\n  f->g = 4;\n  h[i] = j;\n  k += l;\n  m -= o;\n  n *= p;\n  q /= r;\n  *s++ = 1;\n  (*t) = 1;\n  a *= ((b!=c) ? d : e);\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Pointer operations",
+      "source": "\nint main() {\n  doSomething(&x, *x);\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Type-casts",
+      "source": "\nint main() {\n  x = (const SomeType *)thing;\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Sizeof expressions",
+      "source": "\nint main() {\n  sizeof x.a;\n  sizeof(x.a);\n  sizeof(const char **);\n  sizeof(char * ());\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Alignof expressions",
+      "source": "\ntypedef struct {\n    long long __clang_max_align_nonce1\n        __attribute__((__aligned__(__alignof__(long long))));\n    long double __clang_max_align_nonce2\n        __attribute__((__aligned__(__alignof__(long double))));\n} max_align_t;\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Offsetof expressions",
+      "source": "\nint main() {\n  offsetof( struct x, a );\n  offsetof( x, a );\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Compound literals",
+      "source": "\nint main() {\n  x = (SomeType) {\n    .f1.f2[f3] = 5,\n    .f4 = {}\n  };\n  y = (struct SomeStruct) {\n    7,\n    8\n  };\n  z = (char const []) {'a', 'b'};\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Compound literals with trailing commas",
+      "source": "\nint main() {\n  y = (struct SomeStruct) { 7, 8, };\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Comments with escaped newlines",
+      "source": "\n// one \\\n   two\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Comments with escaped chars and newlines",
+      "source": "\n// one \\a \\b \\\n   two\n// one \\c \\d"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Generic Expressions",
+      "source": "\nint main(int argc, char **argv) {\n  int    a = 10;\n  float  b = 3.14;\n  double c = 2.71828;\n  char   d = 'A';\n\n  a = _Generic(d, int: 5, float: 0, char: 100);\n  b = _Generic(a, void *: 0, int: 4.0, float: 3.14, double: 2.71828, char: 1.0);\n\tc = _Generic(b, void *: 0, int: 4.0, float: 3.14, double: 2.71828, char: 1.0);\n\td = _Generic(c, void *: '\\0', int: '0', float: '3', double: '2', char: '1');\n\n  _Generic(a, int: printf(\"a is an int\\n\"), float: printf(\"a is a float\\n\"), double: printf(\"a is a double\\n\"), char: printf(\"a is a char\\n\"));\n  _Generic(b, int: printf(\"b is an int\\n\"), float: printf(\"b is a float\\n\"), double: printf(\"b is a double\\n\"), char: printf(\"b is a char\\n\"));\n  _Generic(c, int: printf(\"c is an int\\n\"), float: printf(\"c is a float\\n\"), double: printf(\"c is a double\\n\"), char: printf(\"c is a char\\n\"));\n  _Generic(d, int: printf(\"d is an int\\n\"), float: printf(\"d is a float\\n\"), double: printf(\"d is a double\\n\"), char: printf(\"d is a char\\n\"));\n\n  return 0;\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Noreturn Type Qualifier",
+      "source": "\n_Noreturn void kill(void) {\n  printf(\"Killing the program\\n\");\n  exit(0);\n}\n"
+    },
+    {
+      "file": "c/expressions.txt",
+      "title": "Restrict Type Qualifier",
+      "source": "\nvoid fn (int *__restrict__ rptr) {\n  int *ptr = rptr;\n  *ptr = 0;\n}\n"
+    },
+    {
+      "file": "c/microsoft.txt",
+      "title": "declaration specs",
+      "source": "\nstruct __declspec(dllexport) s2\n{\n};\n\nunion __declspec(noinline) u2 {\n};\n"
+    },
+    {
+      "file": "c/microsoft.txt",
+      "title": "pointers",
+      "source": "\nstruct s2\n{\n    int * __restrict x;\n    int * __sptr psp;\n    int * __uptr pup;\n    int * __unaligned pup;\n};\n\nvoid sum2(int n, int * __restrict a, int * __restrict b,\n          int * c, int * d) {\n   int i;\n   for (i = 0; i < n; i++) {\n      a[i] = b[i] + c[i];\n      c[i] = b[i] + d[i];\n    }\n}\n\nvoid MyFunction(char * __uptr myValue);\n"
+    },
+    {
+      "file": "c/microsoft.txt",
+      "title": "call modifiers",
+      "source": "\n__cdecl void mymethod(){\n    return;\n}\n\n__fastcall void mymethod(){\n    return;\n}\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "Include directives",
+      "source": "\n#include \"some/path.h\"\n#include <stdint.h>\n#include MACRO\n#include MACRO(arg1, arg2)\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "Object-like macro definitions",
+      "source": "\n#define ONE\n    #define TWO int a = b;\n#define THREE \\\n  c == d ? \\\n  e : \\\n  f\n#define FOUR (mno * pq)\n#define FIVE(a,b) x \\\n                  + y\n#define SIX(a,   \\\n            b) x \\\n               + y\n#define SEVEN 7/* seven has an\n                * annoying comment */\n#define EIGHT(x) do { \\\n        x = x + 1;  \\\n        x = x / 2;  \\\n    } while (x > 0);\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "Function-like macro definitions",
+      "source": "\n#define ONE() a\n#define TWO(b) c\n#define THREE(d, e) f\n#define FOUR(...) g\n#define FIVE(h, i, ...) j\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "Ifdefs",
+      "source": "\n#ifndef DEFINE1\nint j;\n#endif\n\n#ifdef DEFINE2\nssize_t b;\n#define c 32\n#elif defined DEFINE3\n#else\nint b;\n#define c 16\n#endif\n\n#ifdef DEFINE2\n#else\n#  ifdef DEFINE3\n#  else\n#  endif\n#endif\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "Elifdefs",
+      "source": "\n#ifndef DEFINE1\nint j;\n#elifndef DEFINE2\nint k;\n#endif\n\n#ifdef DEFINE2\nssize_t b;\n#elifdef DEFINE3\nssize_t c;\n#else\nint b;\n#endif\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "General if blocks",
+      "source": "\n#if defined(__GNUC__) && defined(__PIC__)\n#define inline inline __attribute__((always_inline))\n#elif defined(_WIN32)\n#define something\n#elif !defined(SOMETHING_ELSE)\n#define SOMETHING_ELSE\n#else\n#include <something>\n#endif\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "Preprocessor conditionals in functions",
+      "source": "\nint main() {\n  #if d\n    puts(\"1\");\n  #else\n    puts(\"2\");\n  #endif\n\n  #if a\n    return 0;\n  #elif b\n    return 1;\n  #elif c\n    return 2;\n  #else\n    return 3;\n  #endif\n}\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "Preprocessor conditionals in struct/union bodies",
+      "source": "\nstruct S {\n#ifdef _WIN32\n  LONG f2;\n#else\n  uint32_t f2;\n#endif\n};\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "Unknown preprocessor directives",
+      "source": "\n#pragma mark - UIViewController\n"
+    },
+    {
+      "file": "c/preprocessor.txt",
+      "title": "Preprocessor expressions",
+      "source": "\n#if A(B || C) && \\\n    !D(F)\n\nuint32_t a;\n\n#endif\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "If statements",
+      "source": "\nint main() {\n  if (a)\n    1;\n\n  if (!a) {\n    2;\n  } else {\n    3;\n  }\n}\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "For loops",
+      "source": "\nint main() {\n  for (;;)\n    1;\n\n  for (int i = 0; i < 5; next(), i++) {\n    2;\n  }\n\n  for (start(); check(); step())\n    3;\n\n  for (i = 0, j = 0, k = 0, l = 0; i < 1, j < 1; i++, j++, k++, l++)\n    1;\n}\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "While loops",
+      "source": "\nint main() {\n  while (x)\n    printf(\"hi\");\n}\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "Labeled statements",
+      "source": "\nvoid foo(T *t) {\nrecur:\n  t = t->next();\n  if (t) goto recur;\n}\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "Switch statements",
+      "source": "\nvoid foo(int a) {\n  switch (a) {\n    puts(\"entered switch!\");\n\n    case 3:\n    case 5:\n      if (b) {\n        c();\n      }\n      break;\n\n    default:\n      c();\n      break;\n  }\n}\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "Case statements separate from switch statements",
+      "source": "\nint main() {\n  switch (count % 8) {\n  case 0:\n    do {\n      *to = *from++;\n      case 2: *to = *from++;\n      case 1: *to = *from++;\n    } while (--n > 0);\n  }\n}\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "Return statements",
+      "source": "\nvoid foo() {\n  return;\n  return a;\n  return a, b;\n}\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "Comments with asterisks",
+      "source": "\n/*************************\n * odd number of asterisks\n *************************/\nint a;\n\n/**************************\n * even number of asterisks\n **************************/\nint b;\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "Comment with multiple backslashes",
+      "source": "\nint a = 3; // Hello \\\\\nWorld\n"
+    },
+    {
+      "file": "c/statements.txt",
+      "title": "Attributes",
+      "source": "\nvoid f() {\n  [[a]] switch (b) {\n   [[c]] case 1: {}\n   case 2:\n     [[fallthrough]];\n   default:\n  }\n  [[a]] while (true) {}\n  [[a]] if (true) {}\n  [[a]] for (;;) {}\n  [[a]] return;\n  [[a]] a;\n  [[a]];\n  [[a]] label: {}\n  [[a]] goto label;\n\n  // these are c++ specific, but their bind locations should be c-compatible\n  if (true) [[likely]] {} else [[unlikely]] {}\n  do [[likely]] {} while (true);\n}\n"
+    },
+    {
+      "file": "c/types.txt",
+      "title": "Primitive types",
+      "source": "\nint a;\nuint8_t a;\nuint16_t a;\nuint32_t a;\nuint64_t a;\nuintptr_t a;\n\nint8_t a;\nint16_t a;\nint32_t a;\nint64_t a;\nintptr_t a;\n\nchar16_t a;\nchar32_t a;\n\nsize_t a;\nssize_t a;\n"
+    },
+    {
+      "file": "c/types.txt",
+      "title": "Type modifiers",
+      "source": "\nvoid f(unsigned);\nvoid f(unsigned int);\nvoid f(signed long int);\nvoid f(unsigned v1);\nvoid f(unsigned long v2);\n"
+    },
+    {
+      "file": "concepts.txt",
+      "title": "Concept definition",
+      "source": "\ntemplate <class T, class U>\nconcept Derived = std::is_base_of<U, T>::value;"
+    },
+    {
+      "file": "concepts.txt",
+      "title": "Concept definition with requires expression",
+      "source": "\ntemplate<typename T>\nconcept Hashable = requires(T a) {\n    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;\n};"
+    },
+    {
+      "file": "concepts.txt",
+      "title": "Requires clauses and expressions",
+      "source": "\ntemplate<typename T>\nvoid f(T&&) requires Eq<T>; // can appear as the last element of a function declarator\n\ntemplate<typename T> requires Addable<T> // or right after a template parameter list\nT add(T a, T b) { return a + b; }\n\ntemplate<typename T>\nconcept Addable = requires (T x) { x + x; }; // requires-expression\n\ntemplate<typename T>\n    requires requires (T x) { x + x; } // ad-hoc constraint, note keyword used twice\nT add(T a, T b) { return a + b; }\n\ntemplate<typename T>\n    requires (!std::is_same_v<T, bool>) // parenthesized expressions are allowed\nvoid f(T);\n\ntemplate<typename T> requires Addable<T> && Subtractable<T> // conjunctions\nT f(T);\n\ntemplate<typename T> requires Addable<T> and Subtractable<T> // conjunctions\nT f(T);\n\ntemplate<typename T> requires Addable<T> || Subtractable<T> // disjunctions\nT f(T);\n\ntemplate<typename T> requires Addable<T> or Subtractable<T> // conjunctions\nT f(T);\n\ntemplate<typename T> requires false || true // boolean literals\nT f(T);\n\ntemplate<typename... T> requires (... && Addable<T>) // fold expressions\nT f(T);\n"
+    },
+    {
+      "file": "concepts.txt",
+      "title": "Compound requirements",
+      "source": "\ntemplate<typename T> concept C2 =\nrequires(T x) {\n    {*x} -> std::convertible_to<typename T::inner>; // the expression *x must be valid\n                                                    // AND the type T::inner must be valid\n                                                    // AND the result of *x must be convertible to T::inner\n    {x + 1} -> std::same_as<int>; // the expression x + 1 must be valid\n                               // AND std::same_as<decltype((x + 1)), int> must be satisfied\n                               // i.e., (x + 1) must be a prvalue of type int\n    {x * 1} -> std::convertible_to<T>; // the expression x * 1 must be valid\n                                       // AND its result must be convertible to T\n};\n"
+    },
+    {
+      "file": "concepts.txt",
+      "title": "Nested requirements",
+      "source": "\ntemplate <class T>\nconcept Semiregular = DefaultConstructible<T> &&\n    CopyConstructible<T> && Destructible<T> && CopyAssignable<T> &&\nrequires(T a, size_t n) {\n    requires Same<T*, decltype(&a)>;  // nested: \"Same<...> evaluates to true\"\n    { a.~T() } noexcept;  // compound: \"a.~T()\" is a valid expression that doesn't throw\n    requires Same<T*, decltype(new T)>; // nested: \"Same<...> evaluates to true\"\n    requires Same<T*, decltype(new T[n])>; // nested\n    { delete new T };  // compound\n    { delete new T[n] }; // compound\n};"
+    },
+    {
+      "file": "concepts.txt",
+      "title": "Constraints",
+      "source": "\ntemplate <EqualityComparable T>\nvoid f(const T&); // constrained function template declaration\n\nvoid f(const EqualityComparable auto&); // constrained function template declaration\n\nSortable auto foo = f();\nSortable<T> auto bar = g();\nNS::Concept<T> auto baz = h();\n\nSortable decltype(auto) foo = i();\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Namespace definitions",
+      "source": "\nnamespace std {\n\nint x;\n\n}  // namespace std\n\nnamespace A::B { }\nnamespace A::B::inline C { }\nnamespace A::B::inline C::D { }\ninline namespace A { }\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Namespace alias definitions",
+      "source": "\nnamespace A = B;\nnamespace C = ::D;\nnamespace fs = std::filesystem;\nnamespace bfs = ::boost::filesystem;\nnamespace literals = std::chono::literals;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Using declarations",
+      "source": "\nusing a;\nusing ::b;\nusing c::d;\nusing ::e::f::g;\nusing h = i::j;\nusing namespace std;\nusing enum Foo;\n\ntemplate <typename T>\nusing a = typename b<T>::c;\n\nusing foobar [[deprecated]] = int;\nusing foobar [[deprecated]] [[maybe_unused]] = int;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Reference declarations",
+      "source": "\nint main() {\n  T &x = y<T &>();\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "R-value reference declarations",
+      "source": "\nint main(T &&);\n\nint main(T &&t) {\n  const U &&u = v;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Inline method definitions",
+      "source": "\nstruct S {\n  int f;\n\n  S() : f(0) {}\n\n private:\n  int getF1() const { return f; }\n  int getF2() const try { throw 1; } catch (...) { return f; }\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Inline method definitions with overrides",
+      "source": "\nstruct B : A {\n  int foo() override { return 2; }\n  int pho() final { return 3; }\n  int bar() const override { return 4; }\n  int baz() const final { return 5; }\n  int bag() const final override { return 6; }\n  int bah() const override final;\n  auto bai() const -> int override { return 7; }\n  auto baj() const -> int override;\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Virtual method declarations",
+      "source": "\nclass A {\n  virtual ~Point();\n  void b();\n  virtual void foo() {}\n  virtual void bar();\n  inline virtual void foo() override;\n  virtual inline void foo() final;\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Constructor and destructor declarations",
+      "source": "\nclass C {\n  void *data_;\n\n public:\n  C();\n  C(int, float);\n  inline C();\n  explicit inline C();\n  [[deprecated]] C();\n  template <typename T>\n  C(T t);\n  C() : NS::Base<C>() {}\n  ~C();\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Classes with inheritance",
+      "source": "\nclass A : public B {};\nclass C : C::D, public E {};\nclass F : [[deprecated]] public G {};\nclass H : public virtual I {};\nclass J : virtual protected I {};\nclass K : virtual I {};\nclass L : protected I {};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Classes with final virt specifier",
+      "source": "\nclass A final : public B {\n};\n\nclass C final {};\n\nstruct D final {};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Nested classes",
+      "source": "\nclass A {\n private:\n  class B : private C, public D {\n  };\n\n  B e, f;\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Friend declarations",
+      "source": "\nstruct C {\n  friend class D;\n  friend D;\n  friend int f(C &);\n\n  template <typename T>\n  friend int g();\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Default member initializers",
+      "source": "\nstruct A {\n  bool a = 1;\n  vector<int> b = {c, d, e};\n  F g {h};\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Function parameters with default values",
+      "source": "\nint foo(bool x = 5) {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Attributes",
+      "source": "\nint f([[a::b(c), d]] int x) {}\n\n[[gnu::always_inline]] [[gnu::hot]] [[gnu::const]] [[nodiscard]]\ninline int g();\n\n[[aaa]]\nint f() { }\n\nclass [[gnu::visibility(\"default\")]] A {};\nstruct [[gnu::visibility(\"default\")]] A {};\nunion [[gnu::visibility(\"default\")]] A {};\n\nclass [[gnu::visibility(\"default\")]] [[deprecated]] A {};\nclass A final : [[deprecated]] public B {};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Operator overload declarations",
+      "source": "\nostream &operator<<(ostream &, const A &a);\nFoo operator \"\" _foo(const char* s);\nstd::string_view operator \"\"s_v(const char* s);\nbool A::operator!=(const A &other) const;\n\nbool A::operator ==(const A &other) const;\n\nvoid * A::operator new(size_t s);\n\nvoid * A::operator delete   [](void * p);\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Template declarations",
+      "source": "\ntemplate <typename T>\nvoid foo(T &t);\n\ntemplate <typename T, int u>\nint bar(T &t) { return u; }\n\ntemplate <typename T>\nclass Foo {};\n\ntemplate <typename T>\nFoo<T>::Foo(int mem) : mem_(mem) {}\n\ntemplate <typename T>\ntemplate <typename U>\nvoid A<T>::foo(U&) {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Template template declarations",
+      "source": "\ntemplate <template <typename> typename T>\nvoid foo() {}\n\ntemplate <template <typename...> class>\nvoid bar() {}\n\ntemplate <template <typename> typename...>\nvoid baz() {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Template specializations",
+      "source": "\ntemplate <>\nvoid foo<T>(T &t);\n\ntemplate <>\nstruct foo::bar<T> {};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Template methods",
+      "source": "\nclass Person {\n  Person() {\n    this->speak<int>();\n  }\n\n  template <typename T>\n  void speak() {}\n\n  template <>\n  void speak<bool>() {}\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Templates with optional type parameters",
+      "source": "\ntemplate <typename T = U::V<void>>\nclass X\n{\n};\n\ntemplate <typename = void>\nclass Y\n{\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Templates with optional anonymous parameters",
+      "source": "\ntemplate <class T, typename a::b<!c<T>{} && (d<T>{} || e<T>{})>::type = 0>\nclass X\n{\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Declarations with braced initializer lists",
+      "source": "\nA foo{1, 2};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Empty function bodies",
+      "source": "\nint main() {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Explicit template instantiations",
+      "source": "\ntemplate A<int, bool>::A(char *, size_t);\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Structured binding declarations",
+      "source": "\nauto [a] = B{};\n\nint main() {\n  auto &&[b, c] = std::make_tuple(c);\n  const auto [x, y] {1, 2};\n\n  for (const auto &[a, b] : c) {}\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Constexpr/constinit/consteval declarations",
+      "source": "\nconstexpr double pi = 3.14159;\nconsteval int answer();\nconstinit int life = answer();\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Variadic templates",
+      "source": "\ntemplate <class T>\nclass TT {\n  template <typename... Ts>\n  void func1(Ts ... args) {\n    func3(nullptr);\n  }\n\n  void func2(Ts &&... args) {}\n\n  template <typename...>\n  void func3() {}\n\n  template <std::size_t...>\n  void func4() {}\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Enums",
+      "source": "\nenum Foo : char { };\nenum Foo : Bar { };\nenum Foo : unsigned int { };\nenum {a, b};\nenum Foo : Bar::Rab { };\nenum Foo::Oof : Bar::Rab { };\nenum class Foo;\nenum struct Foo : char { };\n\nclass Foo {\n  enum Bar {\n    A, B\n  };\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "static_assert declarations",
+      "source": "\nclass A { static_assert(true, \"message\"); };\nvoid f() { static_assert(false); }\nstatic_assert(std::is_constructible<A>::value);\nstatic_assert(true, \"string1\" \"string2\");\nstatic_assert(true, R\"FOO(string)FOO\");\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Cast operator overload declarations",
+      "source": "\noperator int() const;\nexplicit operator int*() const;\noperator arr_t*();\noperator B&();\noperator auto() const;\nvirtual operator A() = 0;\nA::B::operator C();\ntemplate <typename T>\noperator T*();\n[[nodiscard]] operator char *();\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Class scope cast operator overload declarations",
+      "source": "\nclass A {\n  operator int() const {}\n  explicit operator int*() const;\n  operator arr_t*();\n  operator B&();\n  operator auto() const;\n  virtual operator A() = 0;\n  A::B::operator C();\n  template <typename T>\n  operator T*();\n  [[nodiscard]] operator char *();\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Function declarations",
+      "source": "\ninline int g();\ninline int h() { }\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Variable storage classes",
+      "source": "\nint a;\nextern int b, c;\nregister int e;\nstatic int f;\nthread_local int c;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Ref-qualifiers",
+      "source": "\nclass C\n{\n  void f() &;\n  void f() && noexcept;\n  void f() & {}\n  void f() & noexcept {}\n};\n\nvoid C::f() &;\nvoid C::f() & noexcept;\nvoid C::f() && {}\nvoid C::f() & noexcept {}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Default comparison declarations",
+      "source": "\nstruct A {\n    auto operator<=>(A const &) = default;\n    friend auto operator<=>(A const &, A const &) = default;\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Pointers in qualified identifiers and field expressions",
+      "source": "\nclass MyClass {\n  public:\n    int memberFunction(int value) {\n        return value * 2;\n    }\n};\n\nint main() {\n    void (MyClass::*member_function_ptr)(int);\n    MyClass obj;\n\n    member_function_ptr = &MyClass::memberFunction;\n\n    (obj.*member_function_ptr)(42); // 84\n\n    this->Base::f();\n\n    return 0;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Unnamed default parameter",
+      "source": "\nclass Foo {\n    void foo(Bar& = defaultBar);\n};\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Alignas specifier and alignof expression",
+      "source": "\nstruct sse_t {\n    alignas(16) float sse_data[4];\n};\n\nstruct data {\n    char x;\n    alignas(128) char cacheline[128]; // over-aligned array of char,\n                                      // not array of over-aligned chars\n};\n\nint main(void) {\n    printf(\"sizeof(data) = %zu (1 byte + 127 bytes padding + 128-byte array)\\n\",\n           sizeof(struct data));\n\n    printf(\"alignment of sse_t is %zu\\n\", alignof(struct sse_t));\n\n    alignas(2048) struct data d; // this instance of data is aligned even stricter\n    (void)d; // suppresses \"maybe unused\" warning\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Attribute specifier after noexcept",
+      "source": "\ninline constexpr MyEnum operator|(MyEnum bit0, MyEnum bit1) noexcept\n    __attribute__((always_inline)) {}\n"
+    },
+    {
+      "file": "definitions.txt",
+      "title": "Scoped function definitions",
+      "source": "\nint T::foo() { return 1; }\nint T::foo() const { return 0; }\n"
+    },
+    {
+      "file": "definitions.txt",
+      "title": "Constructor definitions",
+      "source": "\nT::T() {}\n\nT::T() : f1(0), f2(1, 2) {\n  puts(\"HI\");\n}\n\nT::T() : Base<T>() {}\n\nT::T() try : f1(0) {} catch(...) {}\n"
+    },
+    {
+      "file": "definitions.txt",
+      "title": "Explicit constructor definitions",
+      "source": "\nclass C {\n  explicit C(int f) : f_(f) {}\n\n private:\n  int f_;\n};\n"
+    },
+    {
+      "file": "definitions.txt",
+      "title": "Explicit constructor declaration",
+      "source": "\nclass C {\n  explicit C(int f);\n  explicit(true) C(long f);\n};\n"
+    },
+    {
+      "file": "definitions.txt",
+      "title": "Default, delete, and pure virtual methods",
+      "source": "\nclass A : public B {\n  A() = default;\n  A(A &&) = delete;\n  void f() = delete;\n  A& operator=(const A&) = default;\n  A& operator=(A&&) = delete;\n  ~A() = 0;\n};\n"
+    },
+    {
+      "file": "definitions.txt",
+      "title": "Destructor definitions",
+      "source": "\n~T() {}\nT::~T() {}\n"
+    },
+    {
+      "file": "definitions.txt",
+      "title": "Function-try-block definitions",
+      "source": "\nvoid foo() try {} catch(...) {}\n"
+    },
+    {
+      "file": "definitions.txt",
+      "title": "Conversion operator definitions",
+      "source": "\nT::operator int() try { throw 1; } catch (...) { return 2; }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Scoped function calls",
+      "source": "\nint main() {\n  abc::def(\"hello\", \"world\");\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Compound literals without parentheses",
+      "source": "\nT x = T{0};\nU<V> y = U<V>{0};\nint x = int{1};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Explicit destructor calls",
+      "source": "\nint main() {\n  foo.~Foo();\n  bar->~Bar();\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "New and Delete expressions",
+      "source": "\nint main() {\n  auto a = new T();\n  auto b = new U::V<W, X>{};\n  auto c = new (&d) T;\n  auto d = new T[5][3]();\n  auto e = new int[5];\n  d = new(2, f) T;\n  delete a;\n  ::delete[] c;\n  ::new (foo(x)) T(this, x);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Initializer lists as arguments",
+      "source": "\nint main() {\n  pairs.push_back({true, false});\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Initializer list as assignment expression RHS",
+      "source": "\nvoid test() {\n    int b = int{1};\n    b = int{2};\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Lambda expressions",
+      "source": "\nauto f = [&](int x) -> bool {\n  return true;\n};\n\nauto f = [x, y](int z) {\n  return false;\n};\n\nauto f = [] {\n  return false;\n};\n\nauto f = [] <typename T> () {\n  return T();\n};\n\nauto f = [] <typename T> requires Hashable<T> {\n  return T();\n};\n\nauto f = [... args = std::forward<Args>(args)](auto &&func) mutable {\n  return std::invoke(std::forward<decltype(func)>(func), std::forward<Args>(args)...);\n};\n\nauto f = [&arg, &...etc = etc] {};\n\nauto f = [=, *this, &args...] {};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Nested template calls",
+      "source": "\nclass A {\n  A() : T::template Nested<int>::type() {}\n  A() : T::template Nested<int>::template Nested2<float>::type() {}\n\n  B<C::D<E, F>>::G field;\n  using B<C>::template D<int>;\n\n  H<I<J>> method() {\n    K::L<M<N>> variable1 = K::L<M<N>>{};\n    typename K::template L<M<N>>::type variable2;\n    typename K::template L<M<N>>::template O<P>::type variable3;\n  }\n\n  typename Z::template Nested<int>::type x;\n  typename X::template Nested<int>::Y::template Nested2<D> x;\n};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Comma expressions at the start of blocks",
+      "source": "\nint main() { a(), b(); }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Nullptr",
+      "source": "\nvoid *x = nullptr;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Raw string literals",
+      "source": "\nconst char *s1 = R\"(\n  This is a string. It ends with ')' and a quote.\n)\";\n\nconst char *s2 = R\"FOO(\n  This is a string. It ends with ')FOO' and a quote.\n)FOO\";\n\nconst char *s3 = uR\"FOO(\n  This is a string. It ends with ')FOO' and a quote.\n)FOO\";\n\nconst char *s4 = UR\"FOO(\n  This is a string. It ends with ')FOO' and a quote.\n)FOO\";\n\nconst char *s5 = u8R\"FOO(\n  This is a string. It ends with ')FOO' and a quote.\n)FOO\";\n\nconst char *s6 = LR\"FOO(\n  This is a string. It ends with ')FOO' and a quote.\n)FOO\";\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Template calls",
+      "source": "\nint main() {\n  // '<' and '>' as template argument list delimiters\n  if (a<b && c>()) {}\n\n  // '<' and '>' as binary operators\n  if (a < b && c >= d) {}\n\n  Q::template R<S>();\n  this->template f<T>();\n  foo.template f<U>();\n}"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Parameter pack expansions",
+      "source": "\ncontainer<A,B,C...> t1;\ncontainer<C...,A,B> t2;\n\ntypedef Tuple<Pair<Args1, Args2>...> type;\n\nf(&args...); // expands to f(&E1, &E2, &E3)\nf(n, ++args...); // expands to f(n, ++E1, ++E2, ++E3);\nf(++args..., n); // expands to f(++E1, ++E2, ++E3, n);\nf(const_cast<const Args*>(&args)...); // f(const_cast<const E1*>(&X1), const_cast<const E2*>(&X2), const_cast<const E3*>(&X3))\nf(h(args...) + args...); // expands to f(h(E1,E2,E3) + E1, h(E1,E2,E3) + E2, h(E1,E2,E3) + E3)\n\nconst int size = sizeof...(args) + 2;\nint res[size] = {1,args...,2};\nint dummy[sizeof...(Ts)] = { (std::cout << args, 0)... };\n\nauto lm = [&, args...] { return g(args...); };\n\nclass X : public Mixins... {\npublic:\n    X(const Mixins&... mixins) : Mixins(mixins)... { }\n};\n\ntemplate <typename... Args>\nvoid wrap(Args&&... args) {\n    f(forward<Args>(args)...);\n}\n\nvoid f(T...) {}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Concatenated string literals",
+      "source": "\n\"a\" \"b\" \"c\";\nR\"(a)\" R\"(b)\" R\"(c)\";\n\"a\" R\"(b)\" L\"c\" R\"FOO(d)FOO\";"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "User-defined literals",
+      "source": "\n1.2_km;\n\"foo\" \"bar\"_baz;"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Primitive types ctor",
+      "source": "\nx = int(1);\nx = new int(1);\nx = (int(1) + float(2));\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Array assignment expression",
+      "source": "\narray_[i] = s[i];\narray_[{i}] = s[{1,2,3}];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Coroutines",
+      "source": "\nco_await fn();\nco_await var;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Three-way comparison",
+      "source": "\nauto x = a <=> b;\n\nbool y = 0 > a <=> b;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Fold Expressions",
+      "source": "\nbool t  = (... + IndexOf<T>);\nbool t2 = (IndexOf<T> + ...);\nbool t3 = (1 + ... + IndexOf<T>);\nbool t3 = (IndexOf<T> + ... + 1);\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Alternative tokens (digraphs)",
+      "source": "\nif (not marked and (x < left or right < x)) {}\n\noperator not_eq(int) { return true; }\n\nfoo and_eq bar();\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Subscript expression",
+      "source": "\nauto x = a[1, 2, 3];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Dependent operator templates",
+      "source": "\nx.template operator()<int>();\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Numeric literals",
+      "source": "\nvoid f() {\n  0123'4567;\n  0b1001'0110;\n  0B10;\n  0xabcd'1234;\n  0XABCD;\n  1'234;\n  -123;\n  123l;\n  123u;\n  123ULL;\n  123z;\n  123UZ;\n\n  1.0;\n  -1.0;\n  1.f;\n  .1f;\n  1.0l;\n  1.0f16;\n  1.0bf16;\n  1.e1;\n  1.0e1;\n  0xa.bp1;\n  0xap-1;\n  0x.ap-1;\n}"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "While with assignment expression",
+      "source": "\nwhile ((a = b)) {}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Parenthesized Expressions that are not Fold Expressions",
+      "source": "\nint main() {\n  if ((a = a + 1)) {\n    (a += 1) %= 2;\n  }\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Complex fold expression",
+      "source": "\ntemplate <typename... Args> void negateValues(Args... args) {\n  ((std::cout << !args << \" \"), ...);\n}\n"
+    },
+    {
+      "file": "microsoft.txt",
+      "title": "declaration specs",
+      "source": "\nstruct __declspec(dllexport) s2\n{\n};\n\nunion __declspec(noinline) u2 {\n};\n\nclass __declspec(uuid) u2 {\n};\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Returning braced initializer lists",
+      "source": "\nT main() {\n  return {0, 5};\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Range-based for loops",
+      "source": "\nT main() {\n  for (Value &value : values) {\n    cout << value;\n  }\n\n  for (const auto &value : values) {\n    cout << value;\n  }\n\n  for (const auto &value : {1, 2, 3}) {\n    cout << value;\n  }\n\n  for (auto n = v.size(); auto i : v) {\n    cout << --n + i << ' ';\n  }\n\n  for (using elem_t = T::value_type; elem_t i : v) {\n    cout << --n + i << ' ';\n  }\n\n  for (int x; int v : {1}) {}\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Constexpr if statements",
+      "source": "\nT f() {\n  if constexpr (std::is_pointer_v<T>)\n    return *t;\n  else\n    return t;\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "If statements with declarations",
+      "source": "\nvoid f() {\n  if (const int x = foo()) { }\n  if (const int x { foo() }) { }\n  if (const int x = foo(); x != 0) { }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Try/catch statements",
+      "source": "\nvoid main() {\n  try {\n      f();\n  } catch (const std::overflow_error) {\n      // f() throws std::overflow_error (same type rule)\n  } catch (const exception &e) {\n      // f() throws std::logic_error (base class rule)\n  } catch (...) {\n      // f() throws std::string or int or any other unrelated type\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Throw statements",
+      "source": "\nvoid main() {\n     throw e;\n     throw x + 1;\n     throw \"exception\";\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Noexcept specifier",
+      "source": "\nvoid foo() noexcept;\nvoid foo() noexcept(true);\ntemplate<class T> T foo() noexcept(sizeof(T) < 4);\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Throw specifier",
+      "source": "\nvoid foo() throw();\nvoid foo() throw(int);\nvoid foo() throw(std::string, char *);\nvoid foo() throw(float) { }\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Assignment",
+      "source": "\na::b::c = 1;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Attributes",
+      "source": "\nvoid f() {\n  [[a]] switch (b) {\n   [[c]] case 1: {}\n  }\n  [[a]] while (true) {}\n  [[a]] if (true) {}\n  [[a]] for (auto x : y) {}\n  [[a]] for (;;) {}\n  [[a]] return;\n  [[a]] a;\n  [[a]];\n  [[a]] label: {}\n  [[a]] goto label;\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Coroutines",
+      "source": "\nco_return 1;\nco_return;\nco_yield 1;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Switch statements",
+      "source": "\nvoid foo(int a) {\n  switch (a) {\n    case 1:\n      for (auto i : vec) {}\n    case 2:\n      try {\n        // do something\n      } catch(...) {}\n      throw 1;\n    case 3:\n      co_return;\n    default:\n      co_yield a;\n  }\n}\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "The auto type",
+      "source": "\nvoid foo() {\n  auto x = 1;\n}\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "Namespaced types",
+      "source": "\nstd::string my_string;\nstd::vector<int>::size_typ my_string;\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "Dependent type names",
+      "source": "\ntemplate<typename T>\nstruct X : B<T>\n{\n    typename T::A* pa;\n};\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "Template types with empty argument lists",
+      "source": "\nuse_future_t<> use_future;\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "Function types as template arguments",
+      "source": "\ntypedef std::function<T(int)> MyFunc;\ntypedef std::function<void(int)> b;\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "Decltype",
+      "source": "\ndecltype(A) x;\ndecltype(B) foo(void x, decltype(C) y);\ntemplate<typename T, typename U> auto add(T t, U u) -> decltype(t + u);\narray<decltype(foo)::type, 5> arr;\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "Trailing return type",
+      "source": "\nauto a::foo() const -> const A<B>& {}\nauto b::foo() const -> A<B> const& {}\n"
+    }
+  ]
+}

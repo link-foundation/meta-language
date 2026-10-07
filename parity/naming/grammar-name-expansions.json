@@ -22,6 +22,11 @@
       "reason": "The C operator _Alignof (ISO/IEC 9899:2018 section 6.5.3.4) gives the alignment of a type."
     },
     {
+      "word": "ann",
+      "replacement": "annotated",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses ann for annotated."
+    },
+    {
       "word": "anyframe",
       "replacement": "any_frame",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses anyframe for any frame."
@@ -50,6 +55,11 @@
       "word": "asm",
       "replacement": "assembly",
       "reason": "The asm keyword introduces inline assembly."
+    },
+    {
+      "word": "assignement",
+      "replacement": "assignment",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses assignement for assignment."
     },
     {
       "word": "assumpt",
@@ -82,6 +92,11 @@
       "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)."
     },
     {
+      "word": "bitwise",
+      "replacement": "bit_level",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses bitwise for bit level."
+    },
+    {
       "word": "bool",
       "replacement": "boolean",
       "reason": "An abbreviation of boolean; the Protocol Buffers bool type holds true or false (Protocol Buffers Language Specification, Boolean)."
@@ -112,14 +127,29 @@
       "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string."
     },
     {
+      "word": "charset",
+      "replacement": "character_set",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses charset for character set."
+    },
+    {
       "word": "cmp",
       "replacement": "comparison",
       "reason": "An abbreviation of comparison: the parenthesized or quoted pair of arguments an ifeq or ifneq conditional of GNU make compares (GNU make manual, section 7.2 Syntax of Conditionals)."
     },
     {
+      "word": "comp",
+      "replacement": "comparison",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses comp for comparison."
+    },
+    {
       "word": "comptime",
       "replacement": "compile_time",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses comptime for compile time."
+    },
+    {
+      "word": "cond",
+      "replacement": "conditional",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses cond for conditional."
     },
     {
       "word": "config",
@@ -147,6 +177,11 @@
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses cppdecl for c plus plus declaration."
     },
     {
+      "word": "cte",
+      "replacement": "common_table_expression",
+      "reason": "The pinned SQL grammar uses cte for common table expression."
+    },
+    {
       "word": "cvar",
       "replacement": "c_variable",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses cvar for c variable."
@@ -160,6 +195,16 @@
       "word": "dbg",
       "replacement": "debug",
       "reason": "The Lean dbg_trace keyword prints a debugging message."
+    },
+    {
+      "word": "dcl",
+      "replacement": "data_control_language",
+      "reason": "The pinned SQL grammar uses dcl for data control language."
+    },
+    {
+      "word": "ddl",
+      "replacement": "data_definition_language",
+      "reason": "The pinned SQL grammar uses ddl for data definition language."
     },
     {
       "word": "decl",
@@ -215,6 +260,11 @@
       "word": "div",
       "replacement": "division",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses div for division."
+    },
+    {
+      "word": "dml",
+      "replacement": "data_manipulation_language",
+      "reason": "The pinned SQL grammar uses dml for data manipulation language."
     },
     {
       "word": "doc",
@@ -412,6 +462,11 @@
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses initializers for initializer list."
     },
     {
+      "word": "inlinescript",
+      "replacement": "inline_script",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses inlinescript for inline script."
+    },
+    {
       "word": "inst",
       "replacement": "instance",
       "reason": "An abbreviation of instance."
@@ -437,9 +492,29 @@
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses intf for interface."
     },
     {
+      "word": "invokation",
+      "replacement": "invocation",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses invokation for invocation."
+    },
+    {
       "word": "iocheck",
       "replacement": "input_output_check",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses iocheck for input output check."
+    },
+    {
+      "word": "juxt",
+      "replacement": "juxtaposed",
+      "reason": "The pinned Groovy grammar abbreviates juxtaposed function calls as juxt."
+    },
+    {
+      "word": "keyframe",
+      "replacement": "key_frame",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses keyframe for key frame."
+    },
+    {
+      "word": "keyframes",
+      "replacement": "key_frames",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses keyframes for key frames."
     },
     {
       "word": "lhs",
@@ -467,6 +542,11 @@
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses lte for less than or equal."
     },
     {
+      "word": "media",
+      "replacement": "medium",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses media for medium."
+    },
+    {
       "word": "mod",
       "replacement": "module",
       "reason": "The Rust keyword mod declares a module (The Rust Reference, Modules)."
@@ -480,6 +560,16 @@
       "word": "mul",
       "replacement": "multiplication",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses mul for multiplication."
+    },
+    {
+      "word": "mult",
+      "replacement": "multiplication",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses mult for multiplication."
+    },
+    {
+      "word": "multi",
+      "replacement": "multiple",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses multi for multiple."
     },
     {
       "word": "multiline",
@@ -557,6 +647,16 @@
       "reason": "The Protocol Buffers keyword oneof run together: at most one field of a oneof is set at a time (Protocol Buffers Language Guide, Oneof)."
     },
     {
+      "word": "op",
+      "replacement": "operator",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses op for operator."
+    },
+    {
+      "word": "param",
+      "replacement": "parameter",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses param for parameter."
+    },
+    {
       "word": "params",
       "replacement": "parameters",
       "reason": "An abbreviation of parameters."
@@ -567,9 +667,19 @@
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses parens for parentheses."
     },
     {
+      "word": "pat",
+      "replacement": "pattern",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses pat for pattern."
+    },
+    {
       "word": "pp",
       "replacement": "preprocessor",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses pp for preprocessor."
+    },
+    {
+      "word": "pre",
+      "replacement": "prefix",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses pre for prefix."
     },
     {
       "word": "preproc",
@@ -672,6 +782,16 @@
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses shr for shift right."
     },
     {
+      "word": "sig",
+      "replacement": "signature",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses sig for signature."
+    },
+    {
+      "word": "sigil",
+      "replacement": "modifier",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses sigil for modifier."
+    },
+    {
       "word": "sizeof",
       "replacement": "size_of",
       "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together."
@@ -687,6 +807,11 @@
       "reason": "An abbreviation of specification."
     },
     {
+      "word": "sq",
+      "replacement": "quoted",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses sq for quoted."
+    },
+    {
       "word": "stdcall",
       "replacement": "standard_call",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses stdcall for standard call."
@@ -695,6 +820,11 @@
       "word": "struct",
       "replacement": "structure",
       "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)."
+    },
+    {
+      "word": "stylesheet",
+      "replacement": "style_sheet",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses stylesheet for style sheet."
     },
     {
       "word": "sysv",
@@ -720,6 +850,16 @@
       "word": "tryif",
       "replacement": "try_if",
       "reason": "The Rocq tactical tryif run together (Rocq Reference Manual, section Ltac, tryif)."
+    },
+    {
+      "word": "tsquery",
+      "replacement": "text_search_query",
+      "reason": "The pinned SQL grammar uses tsquery for text search query."
+    },
+    {
+      "word": "tsvector",
+      "replacement": "text_search_vector",
+      "reason": "The pinned SQL grammar uses tsvector for text search vector."
     },
     {
       "word": "typeclasses",
@@ -775,116 +915,6 @@
       "word": "xor",
       "replacement": "exclusive_or",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses xor for exclusive or."
-    },
-    {
-      "word": "ann",
-      "replacement": "annotated",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses ann for annotated."
-    },
-    {
-      "word": "assignement",
-      "replacement": "assignment",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses assignement for assignment."
-    },
-    {
-      "word": "bitwise",
-      "replacement": "bit_level",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses bitwise for bit level."
-    },
-    {
-      "word": "charset",
-      "replacement": "character_set",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses charset for character set."
-    },
-    {
-      "word": "comp",
-      "replacement": "comparison",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses comp for comparison."
-    },
-    {
-      "word": "cond",
-      "replacement": "conditional",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses cond for conditional."
-    },
-    {
-      "word": "inlinescript",
-      "replacement": "inline_script",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses inlinescript for inline script."
-    },
-    {
-      "word": "invokation",
-      "replacement": "invocation",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses invokation for invocation."
-    },
-    {
-      "word": "keyframe",
-      "replacement": "key_frame",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses keyframe for key frame."
-    },
-    {
-      "word": "keyframes",
-      "replacement": "key_frames",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses keyframes for key frames."
-    },
-    {
-      "word": "media",
-      "replacement": "medium",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses media for medium."
-    },
-    {
-      "word": "mult",
-      "replacement": "multiplication",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses mult for multiplication."
-    },
-    {
-      "word": "multi",
-      "replacement": "multiple",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses multi for multiple."
-    },
-    {
-      "word": "op",
-      "replacement": "operator",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses op for operator."
-    },
-    {
-      "word": "param",
-      "replacement": "parameter",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses param for parameter."
-    },
-    {
-      "word": "pat",
-      "replacement": "pattern",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses pat for pattern."
-    },
-    {
-      "word": "pre",
-      "replacement": "prefix",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses pre for prefix."
-    },
-    {
-      "word": "sig",
-      "replacement": "signature",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses sig for signature."
-    },
-    {
-      "word": "sigil",
-      "replacement": "modifier",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses sigil for modifier."
-    },
-    {
-      "word": "sq",
-      "replacement": "quoted",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses sq for quoted."
-    },
-    {
-      "word": "stylesheet",
-      "replacement": "style_sheet",
-      "reason": "The pinned CSS, PowerShell or Erlang source uses stylesheet for style sheet."
-    },
-    {
-      "word": "juxt",
-      "replacement": "juxtaposed",
-      "reason": "The pinned Groovy grammar abbreviates juxtaposed function calls as juxt."
     }
   ],
   "grammars": {
@@ -1975,7 +2005,8 @@
         "_escape_sequence": "escape_sequence_content",
         "_annotation": "annotation_variant",
         "_toplevel_statement": "top_level_statement",
-        "_variable_declarator_id": "variable_declarator_identifier"
+        "_variable_declarator_id": "variable_declarator_identifier",
+        "_class__method_header": "class_method_header"
       },
       "sourceTransforms": [
         {
@@ -2049,16 +2080,33 @@
             "block",
             "expression_statement"
           ],
-          "reason": "Prefer the direct switch production and a semicolon-terminated statement block, retaining closure and expression alternatives for other contexts.",
-          "lookaheadPatterns": {
-            "block": "\\{(?:[^}]*;\\s*|\\s*)\\}"
-          }
+          "reason": "Prefer direct switches and statement blocks while consequence expressions retain their field-local order."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "method_declaration",
+            "_method_header"
+          ],
+          "insertInto": [
+            "_class_body_declaration"
+          ],
+          "prefix": "_class_",
+          "reason": "A class method has a contextual def type spelling; clone only its header and declaration, preserving the ordinary top-level productions."
+        },
+        {
+          "family": "field-literal-alternative",
+          "rule": "_class__method_header",
+          "field": "type",
+          "literal": "def",
+          "alias": "type_identifier",
+          "reason": "Permit the source contextual def method type only inside a class declaration."
         },
         {
           "family": "ordered-variants",
           "rule": "_class_body_declaration",
           "variants": [
-            "method_declaration",
+            "alias:method_declaration",
             "field_declaration"
           ],
           "reason": "Keep a complete method before an overlapping field prefix inside a class, retaining the field production when no method fits."
@@ -2085,35 +2133,31 @@
           "reason": "Prefer complete typed method declarations at the input boundary, preserving def functions and all original alternatives."
         },
         {
-          "family": "complete-context-variant",
-          "rule": "_toplevel_statement",
-          "symbol": "statement",
-          "boundary": null,
-          "reason": "Keep a complete top-level statement before overlapping juxtaposed call reductions; preserve every other alternative."
-        },
-        {
-          "family": "field-literal-alternative",
-          "rule": "_method_header",
-          "field": "type",
-          "literal": "def",
-          "alias": "type_identifier",
-          "reason": "The source identifier accepts def as the contextual method type; retain that spelling when the keyword extractor recognizes def elsewhere."
-        },
-        {
           "family": "pattern-trivia-run",
           "rule": "local_variable_declaration",
           "pattern": "\\n",
           "reason": "Keep the full run of existing newline extras in the declaration terminator span; a single newline remains the same production."
         },
         {
-          "family": "keyword-context-variant",
+          "family": "complete-context-variant",
           "rule": "_toplevel_statement",
-          "symbol": "function_definition",
+          "symbol": "statement",
+          "boundary": null,
           "includedKeywords": [
+            "if"
+          ],
+          "wordRule": "identifier",
+          "reason": "A complete conditional statement retains its direct consequence at the input boundary; the contextual keyword guard preserves unrelated literal and declaration choices."
+        },
+        {
+          "family": "symbol-keyword-exclusion",
+          "rule": "_method_header",
+          "symbol": "_unannotated_type",
+          "keywords": [
             "def"
           ],
           "wordRule": "identifier",
-          "reason": "Keep top-level def functions before the contextual class-method type spelling, preserving every other production."
+          "reason": "The def spelling starts a top-level function; reserve it at the method header type position, after annotations, while the separately cloned class header keeps its contextual alternative."
         }
       ],
       "concepts": {
@@ -2128,6 +2172,556 @@
         "closure": "grammar.closure-expression",
         "map_literal": "grammar.dictionary-expression",
         "map_item": "grammar.key-value-pair"
+      }
+    },
+    "cpp": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_statement_identifier": "statement_identifier_alias",
+        "_namespace_identifier": "namespace_identifier_alias",
+        "decltype_auto": "inferred_expression_type_specifier",
+        "decltype": "expression_type_specifier",
+        "ref_qualifier": "reference_qualifier",
+        "noexcept": "exception_exclusion_specification",
+        "raw_string_delimiter": "raw_string_boundary_marker",
+        "false": "false_value",
+        "auto": "inferred_type_keyword",
+        "_dependent_type": "dependent_type_body",
+        "dependent_type": "dependent_type_specifier",
+        "dependent_identifier": "dependent_identifier_expression"
+      },
+      "sourceTransforms": [
+        {
+          "family": "symbol-prefix-exclusion",
+          "rule": "concatenated_string",
+          "symbol": "identifier",
+          "prefixRule": "raw_string_literal",
+          "reason": "Commit the source lexer to an adjacent raw string prefix rather than accepting a failed raw string as an identifier followed by an ordinary quoted string. Preserve all identifier concatenations with other prefixes or intervening whitespace."
+        }
+      ],
+      "concepts": {
+        "preproc_include": "grammar.preprocessor-include-directive",
+        "preproc_if": "grammar.preprocessor-if-directive",
+        "preproc_ifdef": "grammar.preprocessor-if-defined-directive",
+        "preproc_else": "grammar.preprocessor-else-branch",
+        "preproc_elif": "grammar.preprocessor-else-if-branch",
+        "preproc_elifdef": "grammar.preprocessor-else-if-defined-branch",
+        "preproc_defined": "grammar.preprocessor-defined-operator",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "attribute": "program.attributes"
+      }
+    },
+    "sql": {
+      "names": {
+        "_array_size_definition": "array_size_definition_body",
+        "_cte": "common_table_expression_body",
+        "_identifier": "identifier_body",
+        "_dollar_quoted_string_start_tag": "dollar_quote_opening_tag",
+        "_dollar_quoted_string_end_tag": "dollar_quote_closing_tag",
+        "_dollar_quoted_string": "dollar_quoted_string",
+        "_column": "column_body",
+        "int": "integer_type",
+        "_integer": "integer_literal",
+        "keyword_char": "abbreviated_character_type_keyword",
+        "keyword_select": "select_keyword",
+        "keyword_delete": "delete_keyword",
+        "keyword_insert": "insert_keyword",
+        "keyword_replace": "replace_keyword",
+        "keyword_update": "update_keyword",
+        "keyword_truncate": "truncate_keyword",
+        "keyword_merge": "merge_keyword",
+        "keyword_show": "show_keyword",
+        "keyword_unload": "unload_keyword",
+        "keyword_into": "into_keyword",
+        "keyword_overwrite": "overwrite_keyword",
+        "keyword_values": "value_list_keyword",
+        "keyword_value": "value_keyword",
+        "keyword_matched": "matched_keyword",
+        "keyword_set": "set_keyword",
+        "keyword_from": "from_keyword",
+        "keyword_left": "left_keyword",
+        "keyword_right": "right_keyword",
+        "keyword_inner": "inner_keyword",
+        "keyword_full": "full_keyword",
+        "keyword_outer": "outer_keyword",
+        "keyword_cross": "cross_keyword",
+        "keyword_join": "join_keyword",
+        "keyword_lateral": "lateral_keyword",
+        "keyword_natural": "natural_keyword",
+        "keyword_on": "on_keyword",
+        "keyword_off": "off_keyword",
+        "keyword_where": "where_keyword",
+        "keyword_order": "order_keyword",
+        "keyword_group": "group_keyword",
+        "keyword_partition": "partition_keyword",
+        "keyword_by": "by_keyword",
+        "keyword_having": "having_keyword",
+        "keyword_desc": "descending_keyword",
+        "keyword_asc": "ascending_keyword",
+        "keyword_limit": "limit_keyword",
+        "keyword_offset": "offset_keyword",
+        "keyword_primary": "primary_keyword",
+        "keyword_create": "create_keyword",
+        "keyword_alter": "alter_keyword",
+        "keyword_change": "change_keyword",
+        "keyword_analyze": "analyze_keyword",
+        "keyword_explain": "explain_keyword",
+        "keyword_verbose": "verbose_keyword",
+        "keyword_modify": "modify_keyword",
+        "keyword_drop": "drop_keyword",
+        "keyword_add": "add_keyword",
+        "keyword_table": "table_keyword",
+        "keyword_tables": "table_list_keyword",
+        "keyword_view": "view_keyword",
+        "keyword_column": "column_keyword",
+        "keyword_columns": "column_list_keyword",
+        "keyword_materialized": "materialized_keyword",
+        "keyword_tablespace": "table_space_keyword",
+        "keyword_sequence": "sequence_keyword",
+        "keyword_increment": "increment_keyword",
+        "keyword_minvalue": "minimum_value_keyword",
+        "keyword_maxvalue": "maximum_value_keyword",
+        "keyword_none": "none_keyword",
+        "keyword_owned": "owned_keyword",
+        "keyword_start": "start_keyword",
+        "keyword_restart": "restart_keyword",
+        "keyword_key": "key_keyword",
+        "keyword_duplicate": "duplicate_keyword",
+        "keyword_as": "as_keyword",
+        "keyword_distinct": "distinct_keyword",
+        "keyword_constraint": "constraint_keyword",
+        "keyword_filter": "filter_keyword",
+        "keyword_cast": "cast_keyword",
+        "keyword_separator": "separator_keyword",
+        "keyword_case": "case_keyword",
+        "keyword_when": "condition_keyword",
+        "keyword_then": "then_keyword",
+        "keyword_else": "else_keyword",
+        "keyword_end": "end_keyword",
+        "keyword_in": "in_keyword",
+        "keyword_and": "and_keyword",
+        "keyword_or": "or_keyword",
+        "keyword_is": "is_keyword",
+        "keyword_not": "not_keyword",
+        "keyword_force": "force_keyword",
+        "keyword_ignore": "ignore_keyword",
+        "keyword_using": "using_keyword",
+        "keyword_use": "use_keyword",
+        "keyword_index": "index_keyword",
+        "keyword_for": "for_keyword",
+        "keyword_if": "if_keyword",
+        "keyword_exists": "exists_keyword",
+        "keyword_auto_increment": "auto_increment_keyword",
+        "keyword_generated": "generated_keyword",
+        "keyword_always": "always_keyword",
+        "keyword_collate": "collate_keyword",
+        "keyword_character": "character_keyword",
+        "keyword_engine": "engine_keyword",
+        "keyword_default": "default_keyword",
+        "keyword_cascade": "cascade_keyword",
+        "keyword_restrict": "restrict_keyword",
+        "keyword_with": "with_keyword",
+        "keyword_without": "without_keyword",
+        "keyword_no": "no_keyword",
+        "keyword_data": "data_keyword",
+        "keyword_type": "type_keyword",
+        "keyword_rename": "rename_keyword",
+        "keyword_to": "to_keyword",
+        "keyword_database": "database_keyword",
+        "keyword_schema": "schema_keyword",
+        "keyword_owner": "owner_keyword",
+        "keyword_user": "user_keyword",
+        "keyword_admin": "administration_keyword",
+        "keyword_password": "password_keyword",
+        "keyword_encrypted": "encrypted_keyword",
+        "keyword_valid": "valid_keyword",
+        "keyword_until": "end_condition_keyword",
+        "keyword_connection": "connection_keyword",
+        "keyword_role": "role_keyword",
+        "keyword_reset": "reset_keyword",
+        "keyword_temp": "abbreviated_temporary_keyword",
+        "keyword_temporary": "temporary_keyword",
+        "keyword_unlogged": "unrecorded_keyword",
+        "keyword_logged": "recorded_keyword",
+        "keyword_cycle": "cycle_keyword",
+        "keyword_union": "union_keyword",
+        "keyword_all": "all_keyword",
+        "keyword_any": "any_keyword",
+        "keyword_some": "some_keyword",
+        "keyword_except": "except_keyword",
+        "keyword_intersect": "intersect_keyword",
+        "keyword_returning": "returning_keyword",
+        "keyword_begin": "begin_keyword",
+        "keyword_commit": "commit_keyword",
+        "keyword_rollback": "rollback_keyword",
+        "keyword_transaction": "transaction_keyword",
+        "keyword_over": "over_keyword",
+        "keyword_nulls": "null_ordering_keyword",
+        "keyword_first": "first_keyword",
+        "keyword_after": "after_keyword",
+        "keyword_before": "before_keyword",
+        "keyword_last": "last_keyword",
+        "keyword_window": "window_keyword",
+        "keyword_range": "range_keyword",
+        "keyword_rows": "row_list_keyword",
+        "keyword_groups": "group_list_keyword",
+        "keyword_between": "between_keyword",
+        "keyword_unbounded": "unbounded_keyword",
+        "keyword_preceding": "preceding_keyword",
+        "keyword_following": "following_keyword",
+        "keyword_exclude": "exclude_keyword",
+        "keyword_current": "current_keyword",
+        "keyword_row": "row_keyword",
+        "keyword_ties": "ties_keyword",
+        "keyword_others": "other_values_keyword",
+        "keyword_only": "only_keyword",
+        "keyword_unique": "unique_keyword",
+        "keyword_foreign": "foreign_keyword",
+        "keyword_references": "reference_list_keyword",
+        "keyword_concurrently": "concurrently_keyword",
+        "keyword_btree": "balanced_tree_keyword",
+        "keyword_hash": "hash_keyword",
+        "keyword_gist": "gist_keyword",
+        "keyword_spgist": "space_partitioned_generalized_search_tree_keyword",
+        "keyword_gin": "gin_keyword",
+        "keyword_brin": "block_range_index_keyword",
+        "keyword_like": "like_keyword",
+        "keyword_similar": "similar_keyword",
+        "keyword_unsigned": "unsigned_keyword",
+        "keyword_zerofill": "zero_padding_keyword",
+        "keyword_conflict": "conflict_keyword",
+        "keyword_do": "do_keyword",
+        "keyword_nothing": "empty_result_keyword",
+        "keyword_high_priority": "high_priority_keyword",
+        "keyword_low_priority": "low_priority_keyword",
+        "keyword_delayed": "delayed_keyword",
+        "keyword_recursive": "recursive_keyword",
+        "keyword_cascaded": "cascaded_keyword",
+        "keyword_local": "local_keyword",
+        "keyword_current_timestamp": "current_time_stamp_keyword",
+        "keyword_check": "check_keyword",
+        "keyword_option": "option_keyword",
+        "keyword_vacuum": "vacuum_keyword",
+        "keyword_wait": "wait_keyword",
+        "keyword_nowait": "wait_bypass_keyword",
+        "keyword_attribute": "attribute_keyword",
+        "keyword_authorization": "authorization_keyword",
+        "keyword_action": "action_keyword",
+        "keyword_extension": "extension_keyword",
+        "keyword_copy": "copy_keyword",
+        "keyword_stdin": "standard_input_keyword",
+        "keyword_freeze": "freeze_keyword",
+        "keyword_escape": "escape_keyword",
+        "keyword_encoding": "encoding_keyword",
+        "keyword_force_quote": "force_quote_keyword",
+        "keyword_quote": "quote_keyword",
+        "keyword_force_null": "force_null_keyword",
+        "keyword_force_not_null": "force_not_null_keyword",
+        "keyword_header": "header_keyword",
+        "keyword_match": "match_keyword",
+        "keyword_program": "program_keyword",
+        "keyword_plain": "plain_keyword",
+        "keyword_extended": "extended_keyword",
+        "keyword_main": "main_keyword",
+        "keyword_storage": "storage_keyword",
+        "keyword_compression": "compression_keyword",
+        "keyword_trigger": "trigger_keyword",
+        "keyword_function": "function_keyword",
+        "keyword_returns": "return_list_keyword",
+        "keyword_return": "return_keyword",
+        "keyword_setof": "set_type_keyword",
+        "keyword_atomic": "atomic_keyword",
+        "keyword_declare": "declare_keyword",
+        "keyword_language": "language_keyword",
+        "keyword_immutable": "immutable_keyword",
+        "keyword_stable": "stable_keyword",
+        "keyword_volatile": "volatile_keyword",
+        "keyword_leakproof": "leakproof_keyword",
+        "keyword_parallel": "parallel_keyword",
+        "keyword_safe": "safe_keyword",
+        "keyword_unsafe": "unsafe_keyword",
+        "keyword_restricted": "restricted_keyword",
+        "keyword_called": "called_keyword",
+        "keyword_input": "input_keyword",
+        "keyword_strict": "strict_keyword",
+        "keyword_cost": "cost_keyword",
+        "keyword_support": "support_keyword",
+        "keyword_definer": "creator_keyword",
+        "keyword_invoker": "caller_keyword",
+        "keyword_security": "security_keyword",
+        "keyword_version": "version_keyword",
+        "keyword_out": "out_keyword",
+        "keyword_inout": "input_output_keyword",
+        "keyword_variadic": "variadic_keyword",
+        "keyword_ordinality": "ordinal_number_keyword",
+        "keyword_session": "session_keyword",
+        "keyword_isolation": "isolation_keyword",
+        "keyword_level": "level_keyword",
+        "keyword_serializable": "serial_execution_keyword",
+        "keyword_repeatable": "repeatable_keyword",
+        "keyword_read": "read_keyword",
+        "keyword_write": "write_keyword",
+        "keyword_committed": "committed_keyword",
+        "keyword_uncommitted": "uncommitted_keyword",
+        "keyword_deferrable": "postponement_keyword",
+        "keyword_names": "name_list_keyword",
+        "keyword_zone": "zone_keyword",
+        "keyword_immediate": "immediate_keyword",
+        "keyword_deferred": "postponed_keyword",
+        "keyword_constraints": "constraint_list_keyword",
+        "keyword_snapshot": "snapshot_keyword",
+        "keyword_characteristics": "characteristics_keyword",
+        "keyword_follows": "follows_keyword",
+        "keyword_precedes": "precedes_keyword",
+        "keyword_each": "each_keyword",
+        "keyword_instead": "instead_keyword",
+        "keyword_of": "of_keyword",
+        "keyword_initially": "initially_keyword",
+        "keyword_old": "old_keyword",
+        "keyword_new": "new_keyword",
+        "keyword_referencing": "referencing_keyword",
+        "keyword_statement": "statement_keyword",
+        "keyword_execute": "execute_keyword",
+        "keyword_procedure": "procedure_keyword",
+        "keyword_object_id": "object_identifier_keyword",
+        "keyword_external": "external_keyword",
+        "keyword_stored": "stored_keyword",
+        "keyword_virtual": "virtual_keyword",
+        "keyword_cached": "cached_keyword",
+        "keyword_uncached": "cache_bypass_keyword",
+        "keyword_replication": "replication_keyword",
+        "keyword_tblproperties": "table_properties_keyword",
+        "keyword_compute": "compute_keyword",
+        "keyword_stats": "abbreviated_statistics_keyword",
+        "keyword_statistics": "statistics_keyword",
+        "keyword_optimize": "optimize_keyword",
+        "keyword_rewrite": "rewrite_keyword",
+        "keyword_bin_pack": "bin_pack_keyword",
+        "keyword_incremental": "incremental_keyword",
+        "keyword_location": "location_keyword",
+        "keyword_partitioned": "partitioned_keyword",
+        "keyword_comment": "comment_keyword",
+        "keyword_sort": "sort_keyword",
+        "keyword_format": "format_keyword",
+        "keyword_delimited": "delimited_keyword",
+        "keyword_delimiter": "boundary_marker_keyword",
+        "keyword_fields": "fields_keyword",
+        "keyword_terminated": "terminated_keyword",
+        "keyword_escaped": "escaped_keyword",
+        "keyword_lines": "lines_keyword",
+        "keyword_cache": "cache_keyword",
+        "keyword_metadata": "metadata_keyword",
+        "keyword_noscan": "scan_bypass_keyword",
+        "keyword_parquet": "parquet_keyword",
+        "keyword_rcfile": "record_columnar_file_keyword",
+        "keyword_csv": "csv_keyword",
+        "keyword_textfile": "text_file_keyword",
+        "keyword_avro": "record_serialization_format_keyword",
+        "keyword_sequencefile": "sequence_file_keyword",
+        "keyword_orc": "optimized_row_columnar_format_keyword",
+        "keyword_jsonfile": "object_notation_file_keyword",
+        "_exclude_no_others": "exclude_no_other_values",
+        "keyword_null": "null_keyword",
+        "keyword_true": "true_keyword",
+        "keyword_false": "false_keyword",
+        "keyword_boolean": "boolean_keyword",
+        "keyword_bit": "bit_keyword",
+        "keyword_binary": "binary_keyword",
+        "keyword_varbinary": "variable_binary_keyword",
+        "keyword_image": "image_keyword",
+        "keyword_smallserial": "small_automatic_number_keyword",
+        "keyword_serial": "serial_keyword",
+        "keyword_bigserial": "large_automatic_number_keyword",
+        "keyword_tinyint": "tiny_integer_keyword",
+        "keyword_smallint": "small_integer_keyword",
+        "keyword_mediumint": "medium_integer_keyword",
+        "keyword_int": "integer_keyword",
+        "keyword_bigint": "big_integer_keyword",
+        "keyword_decimal": "decimal_keyword",
+        "keyword_numeric": "numeric_keyword",
+        "keyword_real": "real_keyword",
+        "keyword_float": "float_keyword",
+        "keyword_double": "double_keyword",
+        "keyword_precision": "precision_keyword",
+        "keyword_inet": "internet_address_keyword",
+        "keyword_money": "money_keyword",
+        "keyword_smallmoney": "small_monetary_value_keyword",
+        "keyword_varying": "varying_keyword",
+        "keyword_nchar": "national_character_keyword",
+        "keyword_varchar": "variable_character_keyword",
+        "keyword_nvarchar": "national_variable_character_keyword",
+        "keyword_text": "text_keyword",
+        "keyword_string": "string_keyword",
+        "keyword_uuid": "universally_unique_identifier_keyword",
+        "keyword_json": "object_notation_keyword",
+        "keyword_jsonb": "binary_object_notation_keyword",
+        "keyword_xml": "markup_language_keyword",
+        "keyword_bytea": "byte_array_keyword",
+        "keyword_enum": "enumeration_keyword",
+        "keyword_date": "date_keyword",
+        "keyword_datetime": "date_time_keyword",
+        "keyword_datetime2": "extended_date_time_keyword",
+        "keyword_smalldatetime": "small_date_time_keyword",
+        "keyword_datetimeoffset": "date_time_offset_keyword",
+        "keyword_time": "time_keyword",
+        "keyword_timestamp": "time_stamp_keyword",
+        "keyword_timestamptz": "time_stamp_with_time_zone_keyword",
+        "keyword_interval": "interval_keyword",
+        "keyword_geometry": "geometry_keyword",
+        "keyword_geography": "geography_keyword",
+        "keyword_box2d": "planar_box_keyword",
+        "keyword_box3d": "spatial_box_keyword",
+        "keyword_oid": "abbreviated_object_identifier_keyword",
+        "keyword_oids": "object_identifier_list_keyword",
+        "keyword_name": "name_keyword",
+        "keyword_regclass": "registered_relation_keyword",
+        "keyword_regnamespace": "registered_namespace_keyword",
+        "keyword_regproc": "registered_procedure_keyword",
+        "keyword_regtype": "registered_type_keyword",
+        "keyword_array": "array_keyword",
+        "tinyint": "tiny_integer",
+        "smallint": "small_integer",
+        "mediumint": "medium_integer",
+        "bigint": "big_integer",
+        "varbinary": "variable_binary",
+        "char": "character_type",
+        "varchar": "variable_character_type",
+        "nchar": "national_character",
+        "nvarchar": "national_variable_character",
+        "datetimeoffset": "date_time_offset",
+        "timestamp": "time_stamp",
+        "timestamptz": "time_stamp_with_time_zone",
+        "enum": "enumeration",
+        "_ddl_statement": "data_definition_language_statement",
+        "_dml_write": "data_manipulation_statement",
+        "_dml_read": "data_manipulation_language_read",
+        "cte": "common_table_expression",
+        "_argmode": "argument_mode",
+        "_user_access_role_config": "user_access_role_configuration",
+        "enum_elements": "enumeration_elements",
+        "when_clause": "condition_clause",
+        "_compute_stats": "compute_statistics",
+        "_partition_spec": "partition_specification",
+        "_mysql_update_statement": "relational_database_update_statement",
+        "_postgres_update_statement": "object_relational_database_update_statement",
+        "op_other": "additional_operator",
+        "op_unary_other": "additional_unary_operator",
+        "subquery": "nested_query",
+        "_postgres_escape_string": "object_relational_database_escape_string",
+        "_tsql_parameter": "transaction_query_language_parameter",
+        "object_id": "object_identifier",
+        "is_not": "negative_identity_operator",
+        "similar_to": "similarity_operator",
+        "not_similar_to": "negative_similarity_operator",
+        "distinct_from": "distinctness_operator",
+        "not_distinct_from": "negative_distinctness_operator",
+        "if_exists": "existence_condition",
+        "if_not_exists": "absence_condition",
+        "or_replace": "replacement_option",
+        "numeric": "numeric_type",
+        "commit": "transaction_commit_statement",
+        "show_create": "creation_display_statement",
+        "select": "selection_clause",
+        "delete_from": "deletion_source_clause",
+        "delete": "deletion_clause",
+        "function_leakproof": "function_information_security_attribute",
+        "stored_as": "storage_format_clause",
+        "exists": "existence_predicate",
+        "partition_by": "partition_key_clause",
+        "from": "source_clause",
+        "where": "filter_clause",
+        "group_by": "grouping_clause",
+        "having": "group_filter_clause",
+        "order_by": "ordering_clause",
+        "returning": "return_value_clause",
+        "_operator_other": "additional_operator",
+        "_operator_unary_other": "additional_unary_operator",
+        "not_in": "negative_membership_operator",
+        "character": "character_type",
+        "function_arguments": "function_argument_list",
+        "index_fields": "index_field_list",
+        "assignment": "column_assignment",
+        "column_definitions": "column_definition_list",
+        "constraints": "constraint_list",
+        "ordered_columns": "ordered_column_list",
+        "parameter": "query_parameter",
+        "values": "value_list",
+        "_natural_number": "natural_number_literal",
+        "case": "case_expression",
+        "bit": "bit_type",
+        "offset": "offset_clause",
+        "double": "double_precision_type",
+        "time": "time_type",
+        "set_statement": "configuration_statement",
+        "keyword_reference": "reference_keyword",
+        "keyword_object_identifier": "object_identifier_keyword",
+        "keyword_object_identifiers": "object_identifier_list_keyword",
+        "_if_exists": "existence_condition",
+        "_if_not_exists": "absence_condition",
+        "_or_replace": "replacement_option",
+        "_commit": "transaction_commit_statement",
+        "_show_create": "creation_display_statement",
+        "_delete_from": "deletion_source_clause",
+        "_having": "group_filter_clause"
+      },
+      "sourceTransforms": [
+        {
+          "family": "alias-choice-rule",
+          "rule": "cte",
+          "alias": "statement",
+          "helper": "_cte_statement",
+          "reason": "The named statement alias surrounds the complete read or write production in a common table expression, retaining its selected clause as a child."
+        },
+        {
+          "family": "symbol-keyword-exclusion",
+          "rule": "_alias",
+          "symbol": "identifier",
+          "keywordRules": [
+            "keyword_from",
+            "keyword_where",
+            "keyword_group",
+            "keyword_having",
+            "keyword_order",
+            "keyword_limit",
+            "keyword_offset",
+            "keyword_union",
+            "keyword_except",
+            "keyword_intersect",
+            "keyword_join",
+            "keyword_left",
+            "keyword_right",
+            "keyword_full",
+            "keyword_inner",
+            "keyword_cross",
+            "keyword_on",
+            "keyword_using",
+            "keyword_window"
+          ],
+          "wordRule": "_identifier",
+          "reason": "Source, filter, grouping, ordering, set-operation and join keywords begin their following clauses instead of becoming an optional implicit alias. Quoted identifiers and longer words retain their original alternatives.",
+          "keywordPatterns": true
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "literal"
+          ],
+          "symbol": "keyword_null",
+          "value": 1,
+          "reason": "When a literal is absent, prefer the named NULL recovery marker over an anonymous regular-expression token; every accepted literal production and its concrete kind remains available."
+        }
+      ],
+      "concepts": {
+        "keyword_char": "grammar.keyword-character",
+        "keyword_character": "grammar.keyword-character",
+        "keyword_stats": "grammar.statistics-keyword",
+        "keyword_statistics": "grammar.statistics-keyword",
+        "keyword_oid": "grammar.object-identifier-keyword",
+        "keyword_object_id": "grammar.object-identifier-keyword",
+        "keyword_temp": "grammar.temporary-keyword",
+        "keyword_temporary": "grammar.temporary-keyword"
       }
     }
   },
@@ -2258,6 +2852,222 @@
         {
           "id": "grammar.default-type",
           "reason": "A Go default case is the branch of a switch or select statement taken when no other case matches, while a default type is the type a TypeScript type parameter takes when none is given."
+        }
+      ],
+      "grammar.dependent-type": [
+        {
+          "id": "grammar.qualified-type",
+          "reason": "The pinned source grammar defines dependent type and qualified type as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.dependent-identifier": [
+        {
+          "id": "grammar.qualified-identifier",
+          "reason": "The pinned source grammar defines dependent identifier and qualified identifier as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.last-keyword": [
+        {
+          "id": "grammar.end-keyword",
+          "reason": "The pinned source grammar defines last keyword and end keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.varying-keyword": [
+        {
+          "id": "grammar.variable-keyword",
+          "reason": "The pinned source grammar defines varying keyword and variable keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.outer-keyword": [
+        {
+          "id": "grammar.out-keyword",
+          "reason": "The pinned source grammar defines outer keyword and out keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.attribute-keyword": [
+        {
+          "id": "grammar.property-keyword",
+          "reason": "The pinned source grammar defines attribute keyword and property keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.match-keyword": [
+        {
+          "id": "grammar.equal-keyword",
+          "reason": "The pinned source grammar defines match keyword and equal keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.extension-keyword": [
+        {
+          "id": "grammar.reference-keyword",
+          "reason": "The pinned source grammar defines extension keyword and reference keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.stable-keyword": [
+        {
+          "id": "grammar.static-keyword",
+          "reason": "The pinned source grammar defines stable keyword and static keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.template-argument-list": [
+        {
+          "id": "grammar.template-parameter-list",
+          "reason": "The pinned source grammar defines template argument list and template parameter list as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.co-yield-statement": [
+        {
+          "id": "grammar.co-return-statement",
+          "reason": "The pinned source grammar defines co yield statement and co return statement as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.qualified-field-identifier": [
+        {
+          "id": "grammar.dependent-field-identifier",
+          "reason": "The pinned source grammar defines qualified field identifier and dependent field identifier as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.qualified-type-identifier": [
+        {
+          "id": "grammar.dependent-type-identifier",
+          "reason": "The pinned source grammar defines qualified type identifier and dependent type identifier as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.union-keyword": [
+        {
+          "id": "grammar.join-keyword",
+          "reason": "The pinned source grammar defines union keyword and join keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.start-keyword": [
+        {
+          "id": "grammar.offset-keyword",
+          "reason": "The pinned source grammar defines start keyword and offset keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.first-keyword": [
+        {
+          "id": "grammar.offset-keyword",
+          "reason": "The pinned source grammar defines first keyword and offset keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        },
+        {
+          "id": "grammar.start-keyword",
+          "reason": "The pinned source grammar defines first keyword and start keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.main-keyword": [
+        {
+          "id": "grammar.primary-keyword",
+          "reason": "The pinned source grammar defines main keyword and primary keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.type-keyword": [
+        {
+          "id": "grammar.case-keyword",
+          "reason": "The pinned source grammar defines type keyword and case keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.role-keyword": [
+        {
+          "id": "grammar.use-keyword",
+          "reason": "The pinned source grammar defines role keyword and use keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.function-keyword": [
+        {
+          "id": "grammar.use-keyword",
+          "reason": "The pinned source grammar defines function keyword and use keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        },
+        {
+          "id": "grammar.role-keyword",
+          "reason": "The pinned source grammar defines function keyword and role keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.terminated-keyword": [
+        {
+          "id": "grammar.over-keyword",
+          "reason": "The pinned source grammar defines terminated keyword and over keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.image-keyword": [
+        {
+          "id": "grammar.range-keyword",
+          "reason": "The pinned source grammar defines image keyword and range keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.similar-keyword": [
+        {
+          "id": "grammar.like-keyword",
+          "reason": "The pinned source grammar defines similar keyword and like keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.postponement-keyword": [
+        {
+          "id": "grammar.wait-keyword",
+          "reason": "The pinned source grammar defines postponement keyword and wait keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.fields-keyword": [
+        {
+          "id": "grammar.plain-keyword",
+          "reason": "The pinned source grammar defines fields keyword and plain keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.procedure-keyword": [
+        {
+          "id": "grammar.function-keyword",
+          "reason": "The pinned source grammar defines procedure keyword and function keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.replication-keyword": [
+        {
+          "id": "grammar.return-keyword",
+          "reason": "The pinned source grammar defines replication keyword and return keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.comment-keyword": [
+        {
+          "id": "grammar.input-keyword",
+          "reason": "The pinned source grammar defines comment keyword and input keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.double-keyword": [
+        {
+          "id": "grammar.image-keyword",
+          "reason": "The pinned source grammar defines double keyword and image keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.create-role": [
+        {
+          "id": "grammar.create-function",
+          "reason": "The pinned source grammar defines create role and create function as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.drop-function": [
+        {
+          "id": "grammar.drop-role",
+          "reason": "The pinned source grammar defines drop function and drop role as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.case-expression": [
+        {
+          "id": "grammar.type-expression",
+          "reason": "A SQL CASE expression selects a result by conditions; a type expression denotes a type. The WordNet case/type synonym uses a classification sense, rather than the conditional grammar construct."
+        }
+      ],
+      "grammar.null-keyword": [
+        {
+          "id": "grammar.nil-keyword",
+          "reason": "SQL NULL denotes an absent or unknown database value with three-valued comparisons; Pascal nil denotes a null pointer. Their lexical synonym does not establish the same language semantics."
+        }
+      ],
+      "grammar.character-type": [
+        {
+          "id": "grammar.reference-type",
+          "reason": "The SQL character type stores character strings; a reference type denotes a reference to another value. The lexical character/reference synonym uses a testimonial sense."
+        },
+        {
+          "id": "grammar.type-case",
+          "reason": "The SQL character type stores strings; a type case is a branch selected by a value type. The lexical character/case synonym does not equate these grammar constructs."
         }
       ]
     }

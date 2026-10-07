@@ -1,0 +1,2154 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "sql",
+  "native": "native-sql",
+  "sources": [
+    {
+      "id": "tree-sitter-sequel",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-sequel 0.3.11",
+      "repository": "https://github.com/derekstride/tree-sitter-sql",
+      "revision": "7b51ecda191d36b92f5a90a8d1bc3faef1c7b8b8",
+      "path": "src/grammar.json",
+      "sha256": "d0ce0452876e14e73b533dd2a3010fbded021a55d153d6e6842cd0127efa971c",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/sql.lino",
+    "sha256": "92201ee76aa3a87a5ef40833307c5118d265a4317fcf24b5e3ee4848b574a266",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "de17b5cffc3c86f56cf6630abb969330c3c839a81ece0b901bdac0ecee93c403"
+    },
+    "scanners": [
+      {
+        "name": "dollar_function",
+        "tokens": [
+          "dollar_function_content"
+        ]
+      },
+      {
+        "name": "dollar_literal",
+        "tokens": [
+          "dollar_literal_content"
+        ]
+      }
+    ],
+    "immediate": []
+  },
+  "rules": 622,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "keyword_select",
+      "native": "select_keyword"
+    },
+    {
+      "source": "keyword_delete",
+      "native": "delete_keyword"
+    },
+    {
+      "source": "keyword_insert",
+      "native": "insert_keyword"
+    },
+    {
+      "source": "keyword_replace",
+      "native": "replace_keyword"
+    },
+    {
+      "source": "keyword_update",
+      "native": "update_keyword"
+    },
+    {
+      "source": "keyword_truncate",
+      "native": "truncate_keyword"
+    },
+    {
+      "source": "keyword_merge",
+      "native": "merge_keyword"
+    },
+    {
+      "source": "keyword_show",
+      "native": "show_keyword"
+    },
+    {
+      "source": "keyword_unload",
+      "native": "unload_keyword"
+    },
+    {
+      "source": "keyword_into",
+      "native": "into_keyword"
+    },
+    {
+      "source": "keyword_overwrite",
+      "native": "overwrite_keyword"
+    },
+    {
+      "source": "keyword_values",
+      "native": "value_list_keyword"
+    },
+    {
+      "source": "keyword_value",
+      "native": "value_keyword"
+    },
+    {
+      "source": "keyword_matched",
+      "native": "matched_keyword"
+    },
+    {
+      "source": "keyword_set",
+      "native": "set_keyword"
+    },
+    {
+      "source": "keyword_from",
+      "native": "from_keyword"
+    },
+    {
+      "source": "keyword_left",
+      "native": "left_keyword"
+    },
+    {
+      "source": "keyword_right",
+      "native": "right_keyword"
+    },
+    {
+      "source": "keyword_inner",
+      "native": "inner_keyword"
+    },
+    {
+      "source": "keyword_full",
+      "native": "full_keyword"
+    },
+    {
+      "source": "keyword_outer",
+      "native": "outer_keyword"
+    },
+    {
+      "source": "keyword_cross",
+      "native": "cross_keyword"
+    },
+    {
+      "source": "keyword_join",
+      "native": "join_keyword"
+    },
+    {
+      "source": "keyword_lateral",
+      "native": "lateral_keyword"
+    },
+    {
+      "source": "keyword_natural",
+      "native": "natural_keyword"
+    },
+    {
+      "source": "keyword_on",
+      "native": "on_keyword"
+    },
+    {
+      "source": "keyword_off",
+      "native": "off_keyword"
+    },
+    {
+      "source": "keyword_where",
+      "native": "where_keyword"
+    },
+    {
+      "source": "keyword_order",
+      "native": "order_keyword"
+    },
+    {
+      "source": "keyword_group",
+      "native": "group_keyword"
+    },
+    {
+      "source": "keyword_partition",
+      "native": "partition_keyword"
+    },
+    {
+      "source": "keyword_by",
+      "native": "by_keyword"
+    },
+    {
+      "source": "keyword_having",
+      "native": "having_keyword"
+    },
+    {
+      "source": "keyword_desc",
+      "native": "descending_keyword"
+    },
+    {
+      "source": "keyword_asc",
+      "native": "ascending_keyword"
+    },
+    {
+      "source": "keyword_limit",
+      "native": "limit_keyword"
+    },
+    {
+      "source": "keyword_offset",
+      "native": "offset_keyword"
+    },
+    {
+      "source": "keyword_primary",
+      "native": "primary_keyword"
+    },
+    {
+      "source": "keyword_create",
+      "native": "create_keyword"
+    },
+    {
+      "source": "keyword_alter",
+      "native": "alter_keyword"
+    },
+    {
+      "source": "keyword_change",
+      "native": "change_keyword"
+    },
+    {
+      "source": "keyword_analyze",
+      "native": "analyze_keyword"
+    },
+    {
+      "source": "keyword_explain",
+      "native": "explain_keyword"
+    },
+    {
+      "source": "keyword_verbose",
+      "native": "verbose_keyword"
+    },
+    {
+      "source": "keyword_modify",
+      "native": "modify_keyword"
+    },
+    {
+      "source": "keyword_drop",
+      "native": "drop_keyword"
+    },
+    {
+      "source": "keyword_add",
+      "native": "add_keyword"
+    },
+    {
+      "source": "keyword_table",
+      "native": "table_keyword"
+    },
+    {
+      "source": "keyword_tables",
+      "native": "table_list_keyword"
+    },
+    {
+      "source": "keyword_view",
+      "native": "view_keyword"
+    },
+    {
+      "source": "keyword_column",
+      "native": "column_keyword"
+    },
+    {
+      "source": "keyword_columns",
+      "native": "column_list_keyword"
+    },
+    {
+      "source": "keyword_materialized",
+      "native": "materialized_keyword"
+    },
+    {
+      "source": "keyword_tablespace",
+      "native": "table_space_keyword"
+    },
+    {
+      "source": "keyword_sequence",
+      "native": "sequence_keyword"
+    },
+    {
+      "source": "keyword_increment",
+      "native": "increment_keyword"
+    },
+    {
+      "source": "keyword_minvalue",
+      "native": "minimum_value_keyword"
+    },
+    {
+      "source": "keyword_maxvalue",
+      "native": "maximum_value_keyword"
+    },
+    {
+      "source": "keyword_none",
+      "native": "none_keyword"
+    },
+    {
+      "source": "keyword_owned",
+      "native": "owned_keyword"
+    },
+    {
+      "source": "keyword_start",
+      "native": "start_keyword"
+    },
+    {
+      "source": "keyword_restart",
+      "native": "restart_keyword"
+    },
+    {
+      "source": "keyword_key",
+      "native": "key_keyword"
+    },
+    {
+      "source": "keyword_duplicate",
+      "native": "duplicate_keyword"
+    },
+    {
+      "source": "keyword_as",
+      "native": "as_keyword"
+    },
+    {
+      "source": "keyword_distinct",
+      "native": "distinct_keyword"
+    },
+    {
+      "source": "keyword_constraint",
+      "native": "constraint_keyword"
+    },
+    {
+      "source": "keyword_filter",
+      "native": "filter_keyword"
+    },
+    {
+      "source": "keyword_cast",
+      "native": "cast_keyword"
+    },
+    {
+      "source": "keyword_separator",
+      "native": "separator_keyword"
+    },
+    {
+      "source": "keyword_case",
+      "native": "case_keyword"
+    },
+    {
+      "source": "keyword_when",
+      "native": "condition_keyword"
+    },
+    {
+      "source": "keyword_then",
+      "native": "then_keyword"
+    },
+    {
+      "source": "keyword_else",
+      "native": "else_keyword"
+    },
+    {
+      "source": "keyword_end",
+      "native": "end_keyword"
+    },
+    {
+      "source": "keyword_in",
+      "native": "in_keyword"
+    },
+    {
+      "source": "keyword_and",
+      "native": "and_keyword"
+    },
+    {
+      "source": "keyword_or",
+      "native": "or_keyword"
+    },
+    {
+      "source": "keyword_is",
+      "native": "is_keyword"
+    },
+    {
+      "source": "keyword_not",
+      "native": "not_keyword"
+    },
+    {
+      "source": "keyword_force",
+      "native": "force_keyword"
+    },
+    {
+      "source": "keyword_ignore",
+      "native": "ignore_keyword"
+    },
+    {
+      "source": "keyword_using",
+      "native": "using_keyword"
+    },
+    {
+      "source": "keyword_use",
+      "native": "use_keyword"
+    },
+    {
+      "source": "keyword_index",
+      "native": "index_keyword"
+    },
+    {
+      "source": "keyword_for",
+      "native": "for_keyword"
+    },
+    {
+      "source": "keyword_if",
+      "native": "if_keyword"
+    },
+    {
+      "source": "keyword_exists",
+      "native": "exists_keyword"
+    },
+    {
+      "source": "keyword_auto_increment",
+      "native": "auto_increment_keyword"
+    },
+    {
+      "source": "keyword_generated",
+      "native": "generated_keyword"
+    },
+    {
+      "source": "keyword_always",
+      "native": "always_keyword"
+    },
+    {
+      "source": "keyword_collate",
+      "native": "collate_keyword"
+    },
+    {
+      "source": "keyword_character",
+      "native": "character_keyword"
+    },
+    {
+      "source": "keyword_engine",
+      "native": "engine_keyword"
+    },
+    {
+      "source": "keyword_default",
+      "native": "default_keyword"
+    },
+    {
+      "source": "keyword_cascade",
+      "native": "cascade_keyword"
+    },
+    {
+      "source": "keyword_restrict",
+      "native": "restrict_keyword"
+    },
+    {
+      "source": "keyword_with",
+      "native": "with_keyword"
+    },
+    {
+      "source": "keyword_without",
+      "native": "without_keyword"
+    },
+    {
+      "source": "keyword_no",
+      "native": "no_keyword"
+    },
+    {
+      "source": "keyword_data",
+      "native": "data_keyword"
+    },
+    {
+      "source": "keyword_type",
+      "native": "type_keyword"
+    },
+    {
+      "source": "keyword_rename",
+      "native": "rename_keyword"
+    },
+    {
+      "source": "keyword_to",
+      "native": "to_keyword"
+    },
+    {
+      "source": "keyword_database",
+      "native": "database_keyword"
+    },
+    {
+      "source": "keyword_schema",
+      "native": "schema_keyword"
+    },
+    {
+      "source": "keyword_owner",
+      "native": "owner_keyword"
+    },
+    {
+      "source": "keyword_user",
+      "native": "user_keyword"
+    },
+    {
+      "source": "keyword_admin",
+      "native": "administration_keyword"
+    },
+    {
+      "source": "keyword_password",
+      "native": "password_keyword"
+    },
+    {
+      "source": "keyword_encrypted",
+      "native": "encrypted_keyword"
+    },
+    {
+      "source": "keyword_valid",
+      "native": "valid_keyword"
+    },
+    {
+      "source": "keyword_until",
+      "native": "end_condition_keyword"
+    },
+    {
+      "source": "keyword_connection",
+      "native": "connection_keyword"
+    },
+    {
+      "source": "keyword_role",
+      "native": "role_keyword"
+    },
+    {
+      "source": "keyword_reset",
+      "native": "reset_keyword"
+    },
+    {
+      "source": "keyword_temp",
+      "native": "abbreviated_temporary_keyword"
+    },
+    {
+      "source": "keyword_temporary",
+      "native": "temporary_keyword"
+    },
+    {
+      "source": "keyword_unlogged",
+      "native": "unrecorded_keyword"
+    },
+    {
+      "source": "keyword_logged",
+      "native": "recorded_keyword"
+    },
+    {
+      "source": "keyword_cycle",
+      "native": "cycle_keyword"
+    },
+    {
+      "source": "keyword_union",
+      "native": "union_keyword"
+    },
+    {
+      "source": "keyword_all",
+      "native": "all_keyword"
+    },
+    {
+      "source": "keyword_any",
+      "native": "any_keyword"
+    },
+    {
+      "source": "keyword_some",
+      "native": "some_keyword"
+    },
+    {
+      "source": "keyword_except",
+      "native": "except_keyword"
+    },
+    {
+      "source": "keyword_intersect",
+      "native": "intersect_keyword"
+    },
+    {
+      "source": "keyword_returning",
+      "native": "returning_keyword"
+    },
+    {
+      "source": "keyword_begin",
+      "native": "begin_keyword"
+    },
+    {
+      "source": "keyword_commit",
+      "native": "commit_keyword"
+    },
+    {
+      "source": "keyword_rollback",
+      "native": "rollback_keyword"
+    },
+    {
+      "source": "keyword_transaction",
+      "native": "transaction_keyword"
+    },
+    {
+      "source": "keyword_over",
+      "native": "over_keyword"
+    },
+    {
+      "source": "keyword_nulls",
+      "native": "null_ordering_keyword"
+    },
+    {
+      "source": "keyword_first",
+      "native": "first_keyword"
+    },
+    {
+      "source": "keyword_after",
+      "native": "after_keyword"
+    },
+    {
+      "source": "keyword_before",
+      "native": "before_keyword"
+    },
+    {
+      "source": "keyword_last",
+      "native": "last_keyword"
+    },
+    {
+      "source": "keyword_window",
+      "native": "window_keyword"
+    },
+    {
+      "source": "keyword_range",
+      "native": "range_keyword"
+    },
+    {
+      "source": "keyword_rows",
+      "native": "row_list_keyword"
+    },
+    {
+      "source": "keyword_groups",
+      "native": "group_list_keyword"
+    },
+    {
+      "source": "keyword_between",
+      "native": "between_keyword"
+    },
+    {
+      "source": "keyword_unbounded",
+      "native": "unbounded_keyword"
+    },
+    {
+      "source": "keyword_preceding",
+      "native": "preceding_keyword"
+    },
+    {
+      "source": "keyword_following",
+      "native": "following_keyword"
+    },
+    {
+      "source": "keyword_exclude",
+      "native": "exclude_keyword"
+    },
+    {
+      "source": "keyword_current",
+      "native": "current_keyword"
+    },
+    {
+      "source": "keyword_row",
+      "native": "row_keyword"
+    },
+    {
+      "source": "keyword_ties",
+      "native": "ties_keyword"
+    },
+    {
+      "source": "keyword_others",
+      "native": "other_values_keyword"
+    },
+    {
+      "source": "keyword_only",
+      "native": "only_keyword"
+    },
+    {
+      "source": "keyword_unique",
+      "native": "unique_keyword"
+    },
+    {
+      "source": "keyword_foreign",
+      "native": "foreign_keyword"
+    },
+    {
+      "source": "keyword_references",
+      "native": "reference_list_keyword"
+    },
+    {
+      "source": "keyword_concurrently",
+      "native": "concurrently_keyword"
+    },
+    {
+      "source": "keyword_btree",
+      "native": "balanced_tree_keyword"
+    },
+    {
+      "source": "keyword_hash",
+      "native": "hash_keyword"
+    },
+    {
+      "source": "keyword_gist",
+      "native": "gist_keyword"
+    },
+    {
+      "source": "keyword_spgist",
+      "native": "space_partitioned_generalized_search_tree_keyword"
+    },
+    {
+      "source": "keyword_gin",
+      "native": "gin_keyword"
+    },
+    {
+      "source": "keyword_brin",
+      "native": "block_range_index_keyword"
+    },
+    {
+      "source": "keyword_like",
+      "native": "like_keyword"
+    },
+    {
+      "source": "keyword_similar",
+      "native": "similar_keyword"
+    },
+    {
+      "source": "keyword_unsigned",
+      "native": "unsigned_keyword"
+    },
+    {
+      "source": "keyword_zerofill",
+      "native": "zero_padding_keyword"
+    },
+    {
+      "source": "keyword_conflict",
+      "native": "conflict_keyword"
+    },
+    {
+      "source": "keyword_do",
+      "native": "do_keyword"
+    },
+    {
+      "source": "keyword_nothing",
+      "native": "empty_result_keyword"
+    },
+    {
+      "source": "keyword_high_priority",
+      "native": "high_priority_keyword"
+    },
+    {
+      "source": "keyword_low_priority",
+      "native": "low_priority_keyword"
+    },
+    {
+      "source": "keyword_delayed",
+      "native": "delayed_keyword"
+    },
+    {
+      "source": "keyword_recursive",
+      "native": "recursive_keyword"
+    },
+    {
+      "source": "keyword_cascaded",
+      "native": "cascaded_keyword"
+    },
+    {
+      "source": "keyword_local",
+      "native": "local_keyword"
+    },
+    {
+      "source": "keyword_current_timestamp",
+      "native": "current_time_stamp_keyword"
+    },
+    {
+      "source": "keyword_check",
+      "native": "check_keyword"
+    },
+    {
+      "source": "keyword_option",
+      "native": "option_keyword"
+    },
+    {
+      "source": "keyword_vacuum",
+      "native": "vacuum_keyword"
+    },
+    {
+      "source": "keyword_wait",
+      "native": "wait_keyword"
+    },
+    {
+      "source": "keyword_nowait",
+      "native": "wait_bypass_keyword"
+    },
+    {
+      "source": "keyword_attribute",
+      "native": "attribute_keyword"
+    },
+    {
+      "source": "keyword_authorization",
+      "native": "authorization_keyword"
+    },
+    {
+      "source": "keyword_action",
+      "native": "action_keyword"
+    },
+    {
+      "source": "keyword_extension",
+      "native": "extension_keyword"
+    },
+    {
+      "source": "keyword_copy",
+      "native": "copy_keyword"
+    },
+    {
+      "source": "keyword_stdin",
+      "native": "standard_input_keyword"
+    },
+    {
+      "source": "keyword_freeze",
+      "native": "freeze_keyword"
+    },
+    {
+      "source": "keyword_escape",
+      "native": "escape_keyword"
+    },
+    {
+      "source": "keyword_encoding",
+      "native": "encoding_keyword"
+    },
+    {
+      "source": "keyword_force_quote",
+      "native": "force_quote_keyword"
+    },
+    {
+      "source": "keyword_quote",
+      "native": "quote_keyword"
+    },
+    {
+      "source": "keyword_force_null",
+      "native": "force_null_keyword"
+    },
+    {
+      "source": "keyword_force_not_null",
+      "native": "force_not_null_keyword"
+    },
+    {
+      "source": "keyword_header",
+      "native": "header_keyword"
+    },
+    {
+      "source": "keyword_match",
+      "native": "match_keyword"
+    },
+    {
+      "source": "keyword_program",
+      "native": "program_keyword"
+    },
+    {
+      "source": "keyword_plain",
+      "native": "plain_keyword"
+    },
+    {
+      "source": "keyword_extended",
+      "native": "extended_keyword"
+    },
+    {
+      "source": "keyword_main",
+      "native": "main_keyword"
+    },
+    {
+      "source": "keyword_storage",
+      "native": "storage_keyword"
+    },
+    {
+      "source": "keyword_compression",
+      "native": "compression_keyword"
+    },
+    {
+      "source": "keyword_trigger",
+      "native": "trigger_keyword"
+    },
+    {
+      "source": "keyword_function",
+      "native": "function_keyword"
+    },
+    {
+      "source": "keyword_returns",
+      "native": "return_list_keyword"
+    },
+    {
+      "source": "keyword_return",
+      "native": "return_keyword"
+    },
+    {
+      "source": "keyword_setof",
+      "native": "set_type_keyword"
+    },
+    {
+      "source": "keyword_atomic",
+      "native": "atomic_keyword"
+    },
+    {
+      "source": "keyword_declare",
+      "native": "declare_keyword"
+    },
+    {
+      "source": "keyword_language",
+      "native": "language_keyword"
+    },
+    {
+      "source": "keyword_immutable",
+      "native": "immutable_keyword"
+    },
+    {
+      "source": "keyword_stable",
+      "native": "stable_keyword"
+    },
+    {
+      "source": "keyword_volatile",
+      "native": "volatile_keyword"
+    },
+    {
+      "source": "keyword_leakproof",
+      "native": "leakproof_keyword"
+    },
+    {
+      "source": "keyword_parallel",
+      "native": "parallel_keyword"
+    },
+    {
+      "source": "keyword_safe",
+      "native": "safe_keyword"
+    },
+    {
+      "source": "keyword_unsafe",
+      "native": "unsafe_keyword"
+    },
+    {
+      "source": "keyword_restricted",
+      "native": "restricted_keyword"
+    },
+    {
+      "source": "keyword_called",
+      "native": "called_keyword"
+    },
+    {
+      "source": "keyword_input",
+      "native": "input_keyword"
+    },
+    {
+      "source": "keyword_strict",
+      "native": "strict_keyword"
+    },
+    {
+      "source": "keyword_cost",
+      "native": "cost_keyword"
+    },
+    {
+      "source": "keyword_support",
+      "native": "support_keyword"
+    },
+    {
+      "source": "keyword_definer",
+      "native": "creator_keyword"
+    },
+    {
+      "source": "keyword_invoker",
+      "native": "caller_keyword"
+    },
+    {
+      "source": "keyword_security",
+      "native": "security_keyword"
+    },
+    {
+      "source": "keyword_version",
+      "native": "version_keyword"
+    },
+    {
+      "source": "keyword_out",
+      "native": "out_keyword"
+    },
+    {
+      "source": "keyword_inout",
+      "native": "input_output_keyword"
+    },
+    {
+      "source": "keyword_variadic",
+      "native": "variadic_keyword"
+    },
+    {
+      "source": "keyword_ordinality",
+      "native": "ordinal_number_keyword"
+    },
+    {
+      "source": "keyword_session",
+      "native": "session_keyword"
+    },
+    {
+      "source": "keyword_isolation",
+      "native": "isolation_keyword"
+    },
+    {
+      "source": "keyword_level",
+      "native": "level_keyword"
+    },
+    {
+      "source": "keyword_serializable",
+      "native": "serial_execution_keyword"
+    },
+    {
+      "source": "keyword_repeatable",
+      "native": "repeatable_keyword"
+    },
+    {
+      "source": "keyword_read",
+      "native": "read_keyword"
+    },
+    {
+      "source": "keyword_write",
+      "native": "write_keyword"
+    },
+    {
+      "source": "keyword_committed",
+      "native": "committed_keyword"
+    },
+    {
+      "source": "keyword_uncommitted",
+      "native": "uncommitted_keyword"
+    },
+    {
+      "source": "keyword_deferrable",
+      "native": "postponement_keyword"
+    },
+    {
+      "source": "keyword_names",
+      "native": "name_list_keyword"
+    },
+    {
+      "source": "keyword_zone",
+      "native": "zone_keyword"
+    },
+    {
+      "source": "keyword_immediate",
+      "native": "immediate_keyword"
+    },
+    {
+      "source": "keyword_deferred",
+      "native": "postponed_keyword"
+    },
+    {
+      "source": "keyword_constraints",
+      "native": "constraint_list_keyword"
+    },
+    {
+      "source": "keyword_snapshot",
+      "native": "snapshot_keyword"
+    },
+    {
+      "source": "keyword_characteristics",
+      "native": "characteristics_keyword"
+    },
+    {
+      "source": "keyword_follows",
+      "native": "follows_keyword"
+    },
+    {
+      "source": "keyword_precedes",
+      "native": "precedes_keyword"
+    },
+    {
+      "source": "keyword_each",
+      "native": "each_keyword"
+    },
+    {
+      "source": "keyword_instead",
+      "native": "instead_keyword"
+    },
+    {
+      "source": "keyword_of",
+      "native": "of_keyword"
+    },
+    {
+      "source": "keyword_initially",
+      "native": "initially_keyword"
+    },
+    {
+      "source": "keyword_old",
+      "native": "old_keyword"
+    },
+    {
+      "source": "keyword_new",
+      "native": "new_keyword"
+    },
+    {
+      "source": "keyword_referencing",
+      "native": "referencing_keyword"
+    },
+    {
+      "source": "keyword_statement",
+      "native": "statement_keyword"
+    },
+    {
+      "source": "keyword_execute",
+      "native": "execute_keyword"
+    },
+    {
+      "source": "keyword_procedure",
+      "native": "procedure_keyword"
+    },
+    {
+      "source": "keyword_object_id",
+      "native": "object_identifier_keyword"
+    },
+    {
+      "source": "keyword_external",
+      "native": "external_keyword"
+    },
+    {
+      "source": "keyword_stored",
+      "native": "stored_keyword"
+    },
+    {
+      "source": "keyword_virtual",
+      "native": "virtual_keyword"
+    },
+    {
+      "source": "keyword_cached",
+      "native": "cached_keyword"
+    },
+    {
+      "source": "keyword_uncached",
+      "native": "cache_bypass_keyword"
+    },
+    {
+      "source": "keyword_replication",
+      "native": "replication_keyword"
+    },
+    {
+      "source": "keyword_tblproperties",
+      "native": "table_properties_keyword"
+    },
+    {
+      "source": "keyword_compute",
+      "native": "compute_keyword"
+    },
+    {
+      "source": "keyword_stats",
+      "native": "abbreviated_statistics_keyword"
+    },
+    {
+      "source": "keyword_statistics",
+      "native": "statistics_keyword"
+    },
+    {
+      "source": "keyword_optimize",
+      "native": "optimize_keyword"
+    },
+    {
+      "source": "keyword_rewrite",
+      "native": "rewrite_keyword"
+    },
+    {
+      "source": "keyword_bin_pack",
+      "native": "bin_pack_keyword"
+    },
+    {
+      "source": "keyword_incremental",
+      "native": "incremental_keyword"
+    },
+    {
+      "source": "keyword_location",
+      "native": "location_keyword"
+    },
+    {
+      "source": "keyword_partitioned",
+      "native": "partitioned_keyword"
+    },
+    {
+      "source": "keyword_comment",
+      "native": "comment_keyword"
+    },
+    {
+      "source": "keyword_sort",
+      "native": "sort_keyword"
+    },
+    {
+      "source": "keyword_format",
+      "native": "format_keyword"
+    },
+    {
+      "source": "keyword_delimited",
+      "native": "delimited_keyword"
+    },
+    {
+      "source": "keyword_delimiter",
+      "native": "boundary_marker_keyword"
+    },
+    {
+      "source": "keyword_fields",
+      "native": "fields_keyword"
+    },
+    {
+      "source": "keyword_terminated",
+      "native": "terminated_keyword"
+    },
+    {
+      "source": "keyword_escaped",
+      "native": "escaped_keyword"
+    },
+    {
+      "source": "keyword_lines",
+      "native": "lines_keyword"
+    },
+    {
+      "source": "keyword_cache",
+      "native": "cache_keyword"
+    },
+    {
+      "source": "keyword_metadata",
+      "native": "metadata_keyword"
+    },
+    {
+      "source": "keyword_noscan",
+      "native": "scan_bypass_keyword"
+    },
+    {
+      "source": "keyword_parquet",
+      "native": "parquet_keyword"
+    },
+    {
+      "source": "keyword_rcfile",
+      "native": "record_columnar_file_keyword"
+    },
+    {
+      "source": "keyword_csv",
+      "native": "csv_keyword"
+    },
+    {
+      "source": "keyword_textfile",
+      "native": "text_file_keyword"
+    },
+    {
+      "source": "keyword_avro",
+      "native": "record_serialization_format_keyword"
+    },
+    {
+      "source": "keyword_sequencefile",
+      "native": "sequence_file_keyword"
+    },
+    {
+      "source": "keyword_orc",
+      "native": "optimized_row_columnar_format_keyword"
+    },
+    {
+      "source": "keyword_jsonfile",
+      "native": "object_notation_file_keyword"
+    },
+    {
+      "source": "is_not",
+      "native": "negative_identity_operator"
+    },
+    {
+      "source": "similar_to",
+      "native": "similarity_operator"
+    },
+    {
+      "source": "not_similar_to",
+      "native": "negative_similarity_operator"
+    },
+    {
+      "source": "distinct_from",
+      "native": "distinctness_operator"
+    },
+    {
+      "source": "not_distinct_from",
+      "native": "negative_distinctness_operator"
+    },
+    {
+      "source": "_temporary",
+      "native": "temporary"
+    },
+    {
+      "source": "_not_null",
+      "native": "not_null"
+    },
+    {
+      "source": "_primary_key",
+      "native": "primary_key"
+    },
+    {
+      "source": "_if_exists",
+      "native": "existence_condition"
+    },
+    {
+      "source": "_if_not_exists",
+      "native": "absence_condition"
+    },
+    {
+      "source": "_or_replace",
+      "native": "replacement_option"
+    },
+    {
+      "source": "_default_null",
+      "native": "default_null"
+    },
+    {
+      "source": "_current_row",
+      "native": "current_row"
+    },
+    {
+      "source": "_exclude_current_row",
+      "native": "exclude_current_row"
+    },
+    {
+      "source": "_exclude_group",
+      "native": "exclude_group"
+    },
+    {
+      "source": "_exclude_no_others",
+      "native": "exclude_no_other_values"
+    },
+    {
+      "source": "_exclude_ties",
+      "native": "exclude_ties"
+    },
+    {
+      "source": "_check_option",
+      "native": "check_option"
+    },
+    {
+      "source": "keyword_null",
+      "native": "null_keyword"
+    },
+    {
+      "source": "keyword_true",
+      "native": "true_keyword"
+    },
+    {
+      "source": "keyword_false",
+      "native": "false_keyword"
+    },
+    {
+      "source": "keyword_boolean",
+      "native": "boolean_keyword"
+    },
+    {
+      "source": "keyword_bit",
+      "native": "bit_keyword"
+    },
+    {
+      "source": "keyword_binary",
+      "native": "binary_keyword"
+    },
+    {
+      "source": "keyword_varbinary",
+      "native": "variable_binary_keyword"
+    },
+    {
+      "source": "keyword_image",
+      "native": "image_keyword"
+    },
+    {
+      "source": "keyword_smallserial",
+      "native": "small_automatic_number_keyword"
+    },
+    {
+      "source": "keyword_serial",
+      "native": "serial_keyword"
+    },
+    {
+      "source": "keyword_bigserial",
+      "native": "large_automatic_number_keyword"
+    },
+    {
+      "source": "keyword_tinyint",
+      "native": "tiny_integer_keyword"
+    },
+    {
+      "source": "keyword_smallint",
+      "native": "small_integer_keyword"
+    },
+    {
+      "source": "keyword_mediumint",
+      "native": "medium_integer_keyword"
+    },
+    {
+      "source": "keyword_int",
+      "native": "integer_keyword"
+    },
+    {
+      "source": "keyword_bigint",
+      "native": "big_integer_keyword"
+    },
+    {
+      "source": "keyword_decimal",
+      "native": "decimal_keyword"
+    },
+    {
+      "source": "keyword_numeric",
+      "native": "numeric_keyword"
+    },
+    {
+      "source": "keyword_real",
+      "native": "real_keyword"
+    },
+    {
+      "source": "keyword_float",
+      "native": "float_keyword"
+    },
+    {
+      "source": "keyword_double",
+      "native": "double_keyword"
+    },
+    {
+      "source": "keyword_precision",
+      "native": "precision_keyword"
+    },
+    {
+      "source": "keyword_inet",
+      "native": "internet_address_keyword"
+    },
+    {
+      "source": "keyword_money",
+      "native": "money_keyword"
+    },
+    {
+      "source": "keyword_smallmoney",
+      "native": "small_monetary_value_keyword"
+    },
+    {
+      "source": "keyword_varying",
+      "native": "varying_keyword"
+    },
+    {
+      "source": "keyword_char",
+      "native": "abbreviated_character_type_keyword"
+    },
+    {
+      "source": "keyword_nchar",
+      "native": "national_character_keyword"
+    },
+    {
+      "source": "keyword_varchar",
+      "native": "variable_character_keyword"
+    },
+    {
+      "source": "keyword_nvarchar",
+      "native": "national_variable_character_keyword"
+    },
+    {
+      "source": "keyword_text",
+      "native": "text_keyword"
+    },
+    {
+      "source": "keyword_string",
+      "native": "string_keyword"
+    },
+    {
+      "source": "keyword_uuid",
+      "native": "universally_unique_identifier_keyword"
+    },
+    {
+      "source": "keyword_json",
+      "native": "object_notation_keyword"
+    },
+    {
+      "source": "keyword_jsonb",
+      "native": "binary_object_notation_keyword"
+    },
+    {
+      "source": "keyword_xml",
+      "native": "markup_language_keyword"
+    },
+    {
+      "source": "keyword_bytea",
+      "native": "byte_array_keyword"
+    },
+    {
+      "source": "keyword_enum",
+      "native": "enumeration_keyword"
+    },
+    {
+      "source": "keyword_date",
+      "native": "date_keyword"
+    },
+    {
+      "source": "keyword_datetime",
+      "native": "date_time_keyword"
+    },
+    {
+      "source": "keyword_datetime2",
+      "native": "extended_date_time_keyword"
+    },
+    {
+      "source": "keyword_smalldatetime",
+      "native": "small_date_time_keyword"
+    },
+    {
+      "source": "keyword_datetimeoffset",
+      "native": "date_time_offset_keyword"
+    },
+    {
+      "source": "keyword_time",
+      "native": "time_keyword"
+    },
+    {
+      "source": "keyword_timestamp",
+      "native": "time_stamp_keyword"
+    },
+    {
+      "source": "keyword_timestamptz",
+      "native": "time_stamp_with_time_zone_keyword"
+    },
+    {
+      "source": "keyword_interval",
+      "native": "interval_keyword"
+    },
+    {
+      "source": "keyword_geometry",
+      "native": "geometry_keyword"
+    },
+    {
+      "source": "keyword_geography",
+      "native": "geography_keyword"
+    },
+    {
+      "source": "keyword_box2d",
+      "native": "planar_box_keyword"
+    },
+    {
+      "source": "keyword_box3d",
+      "native": "spatial_box_keyword"
+    },
+    {
+      "source": "keyword_oid",
+      "native": "abbreviated_object_identifier_keyword"
+    },
+    {
+      "source": "keyword_oids",
+      "native": "object_identifier_list_keyword"
+    },
+    {
+      "source": "keyword_name",
+      "native": "name_keyword"
+    },
+    {
+      "source": "keyword_regclass",
+      "native": "registered_relation_keyword"
+    },
+    {
+      "source": "keyword_regnamespace",
+      "native": "registered_namespace_keyword"
+    },
+    {
+      "source": "keyword_regproc",
+      "native": "registered_procedure_keyword"
+    },
+    {
+      "source": "keyword_regtype",
+      "native": "registered_type_keyword"
+    },
+    {
+      "source": "keyword_array",
+      "native": "array_keyword"
+    },
+    {
+      "source": "_type",
+      "native": "type"
+    },
+    {
+      "source": "_array_size_definition",
+      "native": "array_size_definition_body"
+    },
+    {
+      "source": "tinyint",
+      "native": "tiny_integer"
+    },
+    {
+      "source": "smallint",
+      "native": "small_integer"
+    },
+    {
+      "source": "mediumint",
+      "native": "medium_integer"
+    },
+    {
+      "source": "int",
+      "native": "integer_type"
+    },
+    {
+      "source": "bigint",
+      "native": "big_integer"
+    },
+    {
+      "source": "bit",
+      "native": "bit_type"
+    },
+    {
+      "source": "varbinary",
+      "native": "variable_binary"
+    },
+    {
+      "source": "double",
+      "native": "double_precision_type"
+    },
+    {
+      "source": "numeric",
+      "native": "numeric_type"
+    },
+    {
+      "source": "char",
+      "native": "character_type"
+    },
+    {
+      "source": "varchar",
+      "native": "variable_character_type"
+    },
+    {
+      "source": "nchar",
+      "native": "national_character"
+    },
+    {
+      "source": "nvarchar",
+      "native": "national_variable_character"
+    },
+    {
+      "source": "_include_time_zone",
+      "native": "include_time_zone"
+    },
+    {
+      "source": "datetimeoffset",
+      "native": "date_time_offset"
+    },
+    {
+      "source": "time",
+      "native": "time_type"
+    },
+    {
+      "source": "timestamp",
+      "native": "time_stamp"
+    },
+    {
+      "source": "timestamptz",
+      "native": "time_stamp_with_time_zone"
+    },
+    {
+      "source": "enum",
+      "native": "enumeration"
+    },
+    {
+      "source": "_commit",
+      "native": "transaction_commit_statement"
+    },
+    {
+      "source": "_rollback",
+      "native": "rollback"
+    },
+    {
+      "source": "_ddl_statement",
+      "native": "data_definition_language_statement"
+    },
+    {
+      "source": "_cte",
+      "native": "common_table_expression_body"
+    },
+    {
+      "source": "_dml_write",
+      "native": "data_manipulation_statement"
+    },
+    {
+      "source": "_dml_read",
+      "native": "data_manipulation_language_read"
+    },
+    {
+      "source": "_unload_statement",
+      "native": "unload_statement"
+    },
+    {
+      "source": "_show_statement",
+      "native": "show_statement"
+    },
+    {
+      "source": "_show_tables",
+      "native": "show_tables"
+    },
+    {
+      "source": "_show_create",
+      "native": "creation_display_statement"
+    },
+    {
+      "source": "cte",
+      "native": "common_table_expression"
+    },
+    {
+      "source": "_select_statement",
+      "native": "select_statement"
+    },
+    {
+      "source": "_argmode",
+      "native": "argument_mode"
+    },
+    {
+      "source": "function_arguments",
+      "native": "function_argument_list"
+    },
+    {
+      "source": "_comment_target",
+      "native": "comment_target"
+    },
+    {
+      "source": "select",
+      "native": "selection_clause"
+    },
+    {
+      "source": "_truncate_statement",
+      "native": "truncate_statement"
+    },
+    {
+      "source": "_delete_statement",
+      "native": "delete_statement"
+    },
+    {
+      "source": "_delete_from",
+      "native": "deletion_source_clause"
+    },
+    {
+      "source": "delete",
+      "native": "deletion_clause"
+    },
+    {
+      "source": "_create_statement",
+      "native": "create_statement"
+    },
+    {
+      "source": "_table_settings",
+      "native": "table_settings"
+    },
+    {
+      "source": "_transaction_mode",
+      "native": "transaction_mode"
+    },
+    {
+      "source": "set_statement",
+      "native": "configuration_statement"
+    },
+    {
+      "source": "_function_return",
+      "native": "function_return"
+    },
+    {
+      "source": "_function_body_statement",
+      "native": "function_body_statement"
+    },
+    {
+      "source": "function_leakproof",
+      "native": "function_information_security_attribute"
+    },
+    {
+      "source": "_operator_class",
+      "native": "operator_class"
+    },
+    {
+      "source": "_index_field",
+      "native": "index_field"
+    },
+    {
+      "source": "index_fields",
+      "native": "index_field_list"
+    },
+    {
+      "source": "_with_settings",
+      "native": "with_settings"
+    },
+    {
+      "source": "_role_options",
+      "native": "role_options"
+    },
+    {
+      "source": "_user_access_role_config",
+      "native": "user_access_role_configuration"
+    },
+    {
+      "source": "_create_trigger_event",
+      "native": "create_trigger_event"
+    },
+    {
+      "source": "enum_elements",
+      "native": "enumeration_elements"
+    },
+    {
+      "source": "_alter_statement",
+      "native": "alter_statement"
+    },
+    {
+      "source": "_rename_statement",
+      "native": "rename_statement"
+    },
+    {
+      "source": "_rename_table_names",
+      "native": "rename_table_names"
+    },
+    {
+      "source": "_alter_specifications",
+      "native": "alter_specifications"
+    },
+    {
+      "source": "_drop_behavior",
+      "native": "drop_behavior"
+    },
+    {
+      "source": "_drop_statement",
+      "native": "drop_statement"
+    },
+    {
+      "source": "object_id",
+      "native": "object_identifier"
+    },
+    {
+      "source": "_copy_statement",
+      "native": "copy_statement"
+    },
+    {
+      "source": "_insert_statement",
+      "native": "insert_statement"
+    },
+    {
+      "source": "_on_conflict",
+      "native": "on_conflict"
+    },
+    {
+      "source": "_on_duplicate_key_update",
+      "native": "on_duplicate_key_update"
+    },
+    {
+      "source": "_insert_values",
+      "native": "insert_values"
+    },
+    {
+      "source": "_set_values",
+      "native": "set_values"
+    },
+    {
+      "source": "_column_list",
+      "native": "column_list"
+    },
+    {
+      "source": "_column",
+      "native": "column_body"
+    },
+    {
+      "source": "_update_statement",
+      "native": "update_statement"
+    },
+    {
+      "source": "_merge_statement",
+      "native": "merge_statement"
+    },
+    {
+      "source": "when_clause",
+      "native": "condition_clause"
+    },
+    {
+      "source": "_optimize_statement",
+      "native": "optimize_statement"
+    },
+    {
+      "source": "_compute_stats",
+      "native": "compute_statistics"
+    },
+    {
+      "source": "_optimize_table",
+      "native": "optimize_table"
+    },
+    {
+      "source": "_vacuum_table",
+      "native": "vacuum_table"
+    },
+    {
+      "source": "_vacuum_option",
+      "native": "vacuum_option"
+    },
+    {
+      "source": "_partition_spec",
+      "native": "partition_specification"
+    },
+    {
+      "source": "_mysql_update_statement",
+      "native": "relational_database_update_statement"
+    },
+    {
+      "source": "_postgres_update_statement",
+      "native": "object_relational_database_update_statement"
+    },
+    {
+      "source": "_key_value_pair",
+      "native": "key_value_pair"
+    },
+    {
+      "source": "stored_as",
+      "native": "storage_format_clause"
+    },
+    {
+      "source": "assignment",
+      "native": "column_assignment"
+    },
+    {
+      "source": "column_definitions",
+      "native": "column_definition_list"
+    },
+    {
+      "source": "_column_comment",
+      "native": "column_comment"
+    },
+    {
+      "source": "_column_constraint",
+      "native": "column_constraint"
+    },
+    {
+      "source": "_check_constraint",
+      "native": "check_constraint"
+    },
+    {
+      "source": "_default_expression",
+      "native": "default_expression"
+    },
+    {
+      "source": "_inner_default_expression",
+      "native": "inner_default_expression"
+    },
+    {
+      "source": "constraints",
+      "native": "constraint_list"
+    },
+    {
+      "source": "_constraint_literal",
+      "native": "constraint_literal"
+    },
+    {
+      "source": "_primary_key_constraint",
+      "native": "primary_key_constraint"
+    },
+    {
+      "source": "_key_constraint",
+      "native": "key_constraint"
+    },
+    {
+      "source": "ordered_columns",
+      "native": "ordered_column_list"
+    },
+    {
+      "source": "parameter",
+      "native": "query_parameter"
+    },
+    {
+      "source": "case",
+      "native": "case_expression"
+    },
+    {
+      "source": "_qualified_field",
+      "native": "qualified_field"
+    },
+    {
+      "source": "exists",
+      "native": "existence_predicate"
+    },
+    {
+      "source": "partition_by",
+      "native": "partition_key_clause"
+    },
+    {
+      "source": "_alias",
+      "native": "alias"
+    },
+    {
+      "source": "from",
+      "native": "source_clause"
+    },
+    {
+      "source": "values",
+      "native": "value_list"
+    },
+    {
+      "source": "where",
+      "native": "filter_clause"
+    },
+    {
+      "source": "group_by",
+      "native": "grouping_clause"
+    },
+    {
+      "source": "_having",
+      "native": "group_filter_clause"
+    },
+    {
+      "source": "order_by",
+      "native": "ordering_clause"
+    },
+    {
+      "source": "offset",
+      "native": "offset_clause"
+    },
+    {
+      "source": "returning",
+      "native": "return_value_clause"
+    },
+    {
+      "source": "_expression",
+      "native": "expression"
+    },
+    {
+      "source": "op_other",
+      "native": "additional_operator"
+    },
+    {
+      "source": "op_unary_other",
+      "native": "additional_unary_operator"
+    },
+    {
+      "source": "not_in",
+      "native": "negative_membership_operator"
+    },
+    {
+      "source": "subquery",
+      "native": "nested_query"
+    },
+    {
+      "source": "_double_quote_string",
+      "native": "double_quote_string"
+    },
+    {
+      "source": "_single_quote_string",
+      "native": "single_quote_string"
+    },
+    {
+      "source": "_postgres_escape_string",
+      "native": "object_relational_database_escape_string"
+    },
+    {
+      "source": "_literal_string",
+      "native": "literal_string"
+    },
+    {
+      "source": "_natural_number",
+      "native": "natural_number_literal"
+    },
+    {
+      "source": "_integer",
+      "native": "integer_literal"
+    },
+    {
+      "source": "_decimal_number",
+      "native": "decimal_number"
+    },
+    {
+      "source": "_bit_string",
+      "native": "bit_string"
+    },
+    {
+      "source": "_string_casting",
+      "native": "string_casting"
+    },
+    {
+      "source": "_tsql_parameter",
+      "native": "transaction_query_language_parameter"
+    },
+    {
+      "source": "_identifier",
+      "native": "identifier_body"
+    },
+    {
+      "source": "_cte_statement",
+      "native": "common_table_expression_statement"
+    },
+    {
+      "source": "_dollar_quoted_string_start_tag",
+      "native": "dollar_quote_opening_tag"
+    },
+    {
+      "source": "_dollar_quoted_string_end_tag",
+      "native": "dollar_quote_closing_tag"
+    },
+    {
+      "source": "_dollar_quoted_string",
+      "native": "dollar_quoted_string"
+    }
+  ],
+  "expandedWords": [
+    "bigint",
+    "char",
+    "config",
+    "cte",
+    "ddl",
+    "dml",
+    "enum",
+    "int",
+    "op",
+    "spec"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "program",
+        "concept": "grammar.program"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      },
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "term",
+        "concept": "grammar.term"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "list",
+        "concept": "grammar.list"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      }
+    ],
+    "generated": 615
+  },
+  "sourceTransforms": [
+    {
+      "family": "alias-choice-rule",
+      "rule": "cte",
+      "alias": "statement",
+      "helper": "_cte_statement",
+      "reason": "The named statement alias surrounds the complete read or write production in a common table expression, retaining its selected clause as a child."
+    },
+    {
+      "family": "symbol-keyword-exclusion",
+      "rule": "_alias",
+      "symbol": "identifier",
+      "keywordRules": [
+        "keyword_from",
+        "keyword_where",
+        "keyword_group",
+        "keyword_having",
+        "keyword_order",
+        "keyword_limit",
+        "keyword_offset",
+        "keyword_union",
+        "keyword_except",
+        "keyword_intersect",
+        "keyword_join",
+        "keyword_left",
+        "keyword_right",
+        "keyword_full",
+        "keyword_inner",
+        "keyword_cross",
+        "keyword_on",
+        "keyword_using",
+        "keyword_window"
+      ],
+      "wordRule": "_identifier",
+      "reason": "Source, filter, grouping, ordering, set-operation and join keywords begin their following clauses instead of becoming an optional implicit alias. Quoted identifiers and longer words retain their original alternatives.",
+      "keywordPatterns": true
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "literal"
+      ],
+      "symbol": "keyword_null",
+      "value": 1,
+      "reason": "When a literal is absent, prefer the named NULL recovery marker over an anonymous regular-expression token; every accepted literal production and its concrete kind remains available."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

@@ -6,12 +6,31 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
+import { rememberedDelimiterScanner } from '../scripts/scanner-families.mjs';
 import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
 import { corpusFileCases, nativeName, ruleConcept } from '../scripts/import-native-grammars.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
 const rule = (character, length = 80) => character.repeat(length);
+
+test('grammar-action external rules keep actions and provenance through the native importer', () => {
+  const names = ['opening_tag', 'body', 'closing_tag'];
+  const source = { name: 'text_labels', rules: { document: { type: 'SEQ', members: names.map((name) => ({ type: 'SYMBOL', name })) } }, externals: names.map((name) => ({ type: 'SYMBOL', name })) };
+  const scanners = rememberedDelimiterScanner({ name: 'labels', startToken: names[0], contentToken: names[1], endToken: names[2], tagPattern: '\\$[^$\\s]*\\$' });
+  const imported = importTreeSitterNative(source, { scanners });
+  assert.deepEqual(imported.report, { approximations: [], unsupported: [] });
+  for (const name of [names[0], names[2]]) {
+    const rules = imported.rules.filter((rule) => rule.name === name);
+    assert.equal(rules.length, 1);
+    assert.equal(rules[0].sourceName, name);
+    assert.match(rules[0].fields.join(' '), /\(action /u);
+  }
+  assert.ok(imported.scanners.every((line) => !line.startsWith('(rule ')));
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported)));
+  for (const text of ['$$$$', '$a$é😀$a$', '$a$x$b$']) assert.equal(parser.parseTree(text).ok, text !== '$a$x$b$');
+  assert.throws(() => importTreeSitterNative(source, { scanners: `${scanners}(rule document normal empty)\n` }), /duplicates a source rule/u);
+});
 
 test('an alias of an optional hidden rule preserves its child node and builds no absent node', () => {
   const grammar = {
@@ -498,4 +517,39 @@ test('optional suffix preference requires a value without changing the original 
   assert.equal(parser.parseTree(' (b)').tree.children[0].kind, 'parenthesized');
   assert.equal(parser.parseTree(' a(b)').tree.children.at(-1).kind, 'arguments');
   for (const change of [{ prefix: 'absent' }, { helper: '_prefix' }, { requiredSymbol: 'arguments' }, { value: 0 }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('a named choice alias preserves the selected production beneath its boundary', () => {
+  const source = { name: 'choice_alias', rules: {
+    document: { type: 'ALIAS', named: true, value: 'statement', content: { type: 'CHOICE', members: [{ type: 'SYMBOL', name: '_read' }, { type: 'SYMBOL', name: '_write' }] } },
+    _read: { type: 'SYMBOL', name: 'selection' },
+    _write: { type: 'SYMBOL', name: 'insertion' },
+    selection: { type: 'SEQ', members: [{ type: 'STRING', value: 'select' }, { type: 'SYMBOL', name: 'number' }] },
+    insertion: { type: 'SEQ', members: [{ type: 'STRING', value: 'insert' }, { type: 'SYMBOL', name: 'number' }] },
+    number: { type: 'PATTERN', value: '[0-9]+' },
+  } };
+  const decision = { family: 'alias-choice-rule', rule: 'document', alias: 'statement', helper: '_statement' };
+  const transformed = transformNativeSource(source, [decision]);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  const nodes = (tree) => tree.type === 'node' ? [tree.kind, ...tree.children.flatMap(nodes)] : [];
+  for (const [input, production] of [['select2', 'selection'], ['insert3', 'insertion']]) {
+    const result = parser.parseTree(input);
+    assert.equal(result.ok, true);
+    assert.deepEqual(nodes(result.tree), ['document', 'statement', production]);
+  }
+  assert.throws(() => transformNativeSource(source, [{ ...decision, alias: 'absent' }]), /exactly one/u);
+  assert.equal(Object.hasOwn(source.rules, '_statement'), false);
+});
+
+test('contextual keyword exclusions preserve quoted and longer identifier alternatives', () => {
+  const source = { name: 'aliases', extras: [{ type: 'PATTERN', value: '\\s+' }], rules: {
+    document: { type: 'SEQ', members: [{ type: 'STRING', value: '*' }, { type: 'SYMBOL', name: 'identifier' }] },
+    identifier: { type: 'CHOICE', members: [{ type: 'SYMBOL', name: 'word' }, { type: 'SEQ', members: [{ type: 'STRING', value: '"' }, { type: 'SYMBOL', name: 'word' }, { type: 'STRING', value: '"' }] }] },
+    word: { type: 'PATTERN', value: '[A-Za-z]+' },
+    keyword_from: { type: 'PATTERN', value: '[fF][rR][oO][mM]' },
+  } };
+  const decision = { family: 'symbol-keyword-exclusion', rule: 'document', symbol: 'identifier', keywordRules: ['keyword_from'], keywordPatterns: true, wordRule: 'word' };
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformNativeSource(source, [decision])))));
+  for (const input of ['* FROM', '* fRoM']) assert.equal(parser.parseTree(input).ok, false, input);
+  for (const input of ['* FROMage', '* "FROM"', '* named']) assert.equal(parser.parseTree(input).ok, true, input);
 });

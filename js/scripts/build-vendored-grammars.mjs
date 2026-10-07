@@ -53,7 +53,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
     patch: 'rust/vendor/tree-sitter-cmake/scanner-state.patch',
     dir: '.',
   },
-  cpp: { crate: 'tree-sitter-cpp', dir: '.' },
+  cpp: { crate: 'tree-sitter-cpp', dir: '.', oracle: true },
   csv: {
     vendored: 'rust/vendor/tree-sitter-csv',
     upstream: 'tree-sitter-grammars/tree-sitter-csv',
@@ -143,7 +143,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   scala: { crate: 'tree-sitter-scala', dir: '.' },
   scheme: { crate: 'tree-sitter-scheme', dir: '.', oracle: true },
   solidity: { crate: 'tree-sitter-solidity', dir: '.', oracle: true },
-  sql: { crate: 'tree-sitter-sequel', dir: '.' },
+  sql: { crate: 'tree-sitter-sequel', dir: '.', oracle: true },
   // The 0.7.4 scanner exits through stderr when allocation fails, which a
   // Wasm parser cannot import; the Wasm build traps instead.
   swift: { crate: 'tree-sitter-swift', dir: '.', wasmPatch: 'js/scripts/grammar-patches/tree-sitter-swift-wasm.patch' },

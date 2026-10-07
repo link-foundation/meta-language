@@ -110,6 +110,16 @@ macro_rules! native {
 
 fn natives() -> Vec<Native> {
     vec![
+        native!(
+            "native-cpp",
+            "cpp",
+            Some(|| tree_sitter_cpp::LANGUAGE.into())
+        ),
+        native!(
+            "native-sql",
+            "sql",
+            Some(|| tree_sitter_sequel::LANGUAGE.into())
+        ),
         native!("native-c", "c", Some(|| tree_sitter_c::LANGUAGE.into())),
         native!("native-csv", "csv", None),
         native!(

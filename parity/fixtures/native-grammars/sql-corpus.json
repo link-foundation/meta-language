@@ -1,0 +1,2066 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "9e56d442429a7dbb94355ebb8c2c4984c3306bf240aab81ef7edb47f464940a2",
+  "cases": [
+    {
+      "file": "alter.txt",
+      "title": "Alter table and add column",
+      "source": "\nALTER TABLE my_table\n  ADD COLUMN val3 VARCHAR(100) NOT NULL;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and add column with FQN",
+      "source": "\nALTER TABLE my_database.my_table.my_table\n  ADD COLUMN val3 VARCHAR(100) NOT NULL;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and add column, eliding column keyword",
+      "source": "\nALTER TABLE my_table\n  ADD val3 VARCHAR(100) NOT NULL;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and add column first",
+      "source": "\nALTER TABLE my_table\n  ADD val3 VARCHAR(100) NOT NULL FIRST;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and add column after column",
+      "source": "\nALTER TABLE my_table\n  ADD val3 VARCHAR(100) NOT NULL AFTER val2;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and alter column setting default",
+      "source": "\nALTER TABLE my_table\n  ALTER COLUMN val3 SET DEFAULT 'hi';\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and alter column dropping default",
+      "source": "\nALTER TABLE my_table\n  ALTER COLUMN val3 DROP DEFAULT;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and alter column changing type",
+      "source": "\nALTER TABLE my_table\n  ALTER COLUMN val3 TYPE VARCHAR(255);\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and modify column changing type and position",
+      "source": "\nALTER TABLE my_table\n  MODIFY COLUMN IF EXISTS val6 INT UNSIGNED NOT NULL AFTER val3;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and change column renaming and changing type",
+      "source": "\nALTER TABLE my_table\n  CHANGE COLUMN IF EXISTS val3 val4 INT UNSIGNED NOT NULL;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and alter column changing type, eliding column keyword",
+      "source": "\nALTER TABLE my_table\n  ALTER val3 TYPE VARCHAR(255);\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and alter column dropping not-null constraint",
+      "source": "\nALTER TABLE my_table\n  ALTER COLUMN val3 DROP NOT NULL;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and drop column",
+      "source": "\nALTER TABLE my_table\n  DROP COLUMN val3;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and drop column, eliding column keyword",
+      "source": "\nALTER TABLE my_table\n  DROP val3;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and rename column",
+      "source": "\nALTER TABLE my_table\n  RENAME COLUMN val3 TO valthree;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter and rename table",
+      "source": "\nALTER TABLE my_table\n  RENAME TO my_new_and_improved_table;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and set schema",
+      "source": "\nALTER TABLE my_table\n  SET SCHEMA new_schema;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and change owner",
+      "source": "\nALTER TABLE my_table\n  OWNER TO someone_else;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter table and multiple",
+      "source": "\nALTER TABLE IF EXISTS my_table\n  ADD COLUMN IF NOT EXISTS val4 DATE,\n  ALTER COLUMN val5 DROP NOT NULL, -- comment, ignore me!\n  DROP COLUMN IF EXISTS val8;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter view and change owner",
+      "source": "\nALTER VIEW my_view\n  OWNER TO someone_else;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter view and rename",
+      "source": "\nALTER VIEW IF EXISTS my_view\n  RENAME TO my_other_view;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "alter with constraint",
+      "source": "\nALTER TABLE \"Role\" ADD CONSTRAINT \"pkRole\" PRIMARY KEY (\"roleId\");\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Drop column constraint",
+      "source": "\nALTER TABLE posts DROP CONSTRAINT posts_user_id_fkey;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Add foreign key constraint",
+      "source": "\nALTER TABLE \"AccountRole\" ADD CONSTRAINT \"fkAccountRoleAccount\"\nFOREIGN KEY (\"accountId\") REFERENCES \"Account\" (\"accountId\") ON DELETE CASCADE;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "MySQL: Rename table",
+      "source": "\nRENAME TABLES IF EXISTS old_table\nNOWAIT\nTO backup_table,\nnew_table TO old_table;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "T-SQL: alter table add multiple columns at once",
+      "source": "\nALTER TABLE tab\nADD\ncol1 VARCHAR(255) NOT NULL DEFAULT('EMPTY'),\ncol2 VARCHAR(255) NOT NULL DEFAULT('EMPTY');\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter schema rename",
+      "source": "\nALTER SCHEMA sales RENAME TO mysales;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter schema owner",
+      "source": "\nALTER SCHEMA sales OWNER TO CURRENT_USER;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter index rename",
+      "source": "\nALTER INDEX IF EXISTS myindex RENAME TO my_index\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter index set",
+      "source": "\nALTER INDEX distributors SET (fillfactor = 75);\nALTER INDEX distributors SET TABLESPACE fasttablespace;\nALTER INDEX distributors RESET (fillfactor);\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter index alter column",
+      "source": "\nALTER INDEX coord_idx ALTER COLUMN 3 SET STATISTICS 1000;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter index set and reset",
+      "source": "\nALTER INDEX distributors SET (fillfactor = 75);\nALTER INDEX distributors SET TABLESPACE fasttablespace;\nALTER INDEX distributors RESET (fillfactor);\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter database rename",
+      "source": "\nALTER DATABASE hollywood RENAME TO bollywood;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter database set",
+      "source": "\nALTER DATABASE test SET enable_indexscan TO off;\nALTER DATABASE test SET enable_indexscan TO DEFAULT;\nALTER DATABASE test SET TABLESPACE fasttablespace;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter datbase reset",
+      "source": "\nALTER DATABASE test RESET ALL;\nALTER DATABASE test RESET enable_indexscan;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter datbase change ownership",
+      "source": "\nALTER DATABASE test OWNER TO me;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter role rename",
+      "source": "\nALTER ROLE rapunzel RENAME TO snow_white;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter role valid until",
+      "source": "\nALTER ROLE chris VALID UNTIL 'May 4 12:00:00 2015 +1';\nALTER ROLE fred VALID UNTIL 'infinity';\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter role set",
+      "source": "\nALTER ROLE fred IN DATABASE devel SET client_min_messages = DEBUG;\nALTER ROLE worker_bee SET maintenance_work_mem = 100000;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter role assigns",
+      "source": "\nALTER ROLE miriam CREATEROLE CREATEDB;\nALTER ROLE rapunzel SUPERUSER NOLOGIN CONNECTION LIMIT 69;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter sequence restart",
+      "source": "\nALTER SEQUENCE serial RESTART WITH 105;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter sequence rename",
+      "source": "\nALTER SEQUENCE IF EXISTS serial RENAME TO cereal;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter sequence change Schema",
+      "source": "\nALTER SEQUENCE serial SET SCHEMA serious_schema;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter sequence change owner",
+      "source": "\nALTER SEQUENCE serial OWNER TO count_von_count;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter sequence complex example",
+      "source": "\nALTER SEQUENCE IF EXISTS serial\nAS BIGINT\nINCREMENT BY 2\nMINVALUE 3\nMAXVALUE NO MAXVALUE\nSTART WITH 11\nRESTART WITH 1111\nCACHE 100\nOWNED BY numbers.number_sequences\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Add foreign key constraint",
+      "source": "\nALTER TABLE \"AccountRole\" ADD CONSTRAINT \"fkAccountRoleAccount\"\nFOREIGN KEY (\"accountId\") REFERENCES \"Account\" (\"accountId\")\nON DELETE SET NULL\nON UPDATE SET DEFAULT;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Add unique constraint",
+      "source": "\nALTER TABLE table_name\n    ADD CONSTRAINT constraint_name UNIQUE (col1, col2, col3);\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter Column Set Storage",
+      "source": "\nALTER TABLE table_name\n    ALTER COLUMN col1 SET STORAGE PLAIN;\nALTER TABLE table_name\n    ALTER COLUMN col1 SET STORAGE EXTERNAL;\nALTER TABLE table_name\n    ALTER COLUMN col1 SET STORAGE EXTENDED;\nALTER TABLE table_name\n    ALTER COLUMN col1 SET STORAGE MAIN;\nALTER TABLE table_name\n    ALTER COLUMN col1 SET STORAGE DEFAULT;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter Column Set Compression",
+      "source": "\nALTER TABLE table_name\n    ALTER COLUMN col1 SET COMPRESSION lz4;\n"
+    },
+    {
+      "file": "alter.txt",
+      "title": "Alter Column Set Statistics",
+      "source": "\nALTER TABLE table_name\n    ALTER COLUMN col1 SET STATISTICS 100;\n"
+    },
+    {
+      "file": "casting.txt",
+      "title": "Standard cast",
+      "source": "\nSELECT CAST(1 AS TEXT);\n"
+    },
+    {
+      "file": "casting.txt",
+      "title": "Aliased",
+      "source": "\nSELECT CAST(1 AS TEXT) AS fieldname;\n"
+    },
+    {
+      "file": "casting.txt",
+      "title": "Postgres shorthand",
+      "source": "\nSELECT\n  1::TEXT,\n  1::INT4;\n"
+    },
+    {
+      "file": "casting.txt",
+      "title": "Multiple casts",
+      "source": "\nSELECT\n  CAST ('100' AS INTEGER),\n  '100'::INTEGER,\n  '01-OCT-2015'::DATE;\n"
+    },
+    {
+      "file": "casting.txt",
+      "title": "Casts /w precision",
+      "source": "\nSELECT\nCAST (100 AS NUMERIC(32)),\n     100::FLOAT(32),\n     100::FLOAT8;\n"
+    },
+    {
+      "file": "casting.txt",
+      "title": "SELECT AS UNSIGNED",
+      "source": "\nSELECT CAST (\"1\" AS UNSIGNED INTEGER);\n"
+    },
+    {
+      "file": "casting.txt",
+      "title": "Cast intervals",
+      "source": "\nSELECT '1 day 10 seconds'::INTERVAL, CAST('1 month' AS INTERVAL)\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Can parse comments",
+      "source": "\n-- hello\nSELECT 1;\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Can parse comments anywhere...",
+      "source": "\n-- hello\nSELECT 1; --hi\n--hi\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "...including between statements",
+      "source": "\n-- hello\nSELECT 1; --hi\n-- hi again\nSELECT 2;\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Simple marginalia",
+      "source": "\n/* application=super-app */\nSELECT id /* MAX_EXECUTION_TIME(500) */\nFROM my_table;\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Can parse delete with marginalia",
+      "source": "\nDELETE /* MAX_EXECUTION_TIME(500) */\nFROM my_table;\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Multiline marginalia, basic",
+      "source": "\n/*\nThis is a query\nWith a multiline comment\n*/\nSELECT id\n/*\nSELECT id FROM my_table;\n*/\nFROM my_table;\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Multiline marginalia, empty",
+      "source": "\n/*\n*/\nSELECT id\n/*\n\n*/\nFROM my_table;\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Marginalia, more symbols",
+      "source": "\n/**\n * Javadoc style\n * -- with an inline comment\n */\nSELECT id\n/******/\nFROM my_table;\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Comment inside string literal",
+      "source": "\nSELECT '-- foo' FROM bar;\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Marginalia inside string literal",
+      "source": "\nSELECT '/* foo */' FROM bar;\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Empty comment",
+      "source": "\n--\nSELECT 1;\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on table",
+      "source": "\nCOMMENT ON TABLE my_schema.my_table IS \"this table is a test\";\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on table with FQN",
+      "source": "\nCOMMENT ON TABLE my_database.my_schema.my_table IS \"this table is a test\";\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on column is null",
+      "source": "\nCOMMENT ON COLUMN my_schema.my_table.my_column IS NULL;\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on column is null with FQN",
+      "source": "\nCOMMENT ON COLUMN my_database.my_schema.my_table.my_column IS NULL;\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on cast",
+      "source": "\nCOMMENT ON CAST (varchar AS text) IS \"convert varchar to text\";\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on materialized view",
+      "source": "\nCOMMENT ON MATERIALIZED VIEW matview IS \"this view is materialized\";\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on trigger",
+      "source": "\nCOMMENT ON TRIGGER on_insert ON users IS \"new user has been added\";\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on function",
+      "source": "\nCOMMENT ON FUNCTION schema_test.do_somthing(arg1 text) IS 'Do something';\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on extension",
+      "source": "\nCOMMENT ON EXTENSION ext_test IS 'A testing extension';\n"
+    },
+    {
+      "file": "comment_stat.txt",
+      "title": "Comment on function with arg mode",
+      "source": "\nCOMMENT ON FUNCTION schema_test.do_somthing(OUT arg1 text) IS 'Do something';\n"
+    },
+    {
+      "file": "compound_statements.txt",
+      "title": "Simple compound statement",
+      "source": "\nBEGIN\n  CREATE TABLE FOO (bar INT);\nEND;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table",
+      "source": "\nCREATE TABLE my_schema.my_table (id BIGINT NOT NULL PRIMARY KEY);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with FQN",
+      "source": "\nCREATE TABLE my_database.my_schema.my_table (id BIGINT NOT NULL PRIMARY KEY);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table multiple columns",
+      "source": "\nCREATE TABLE my_table (\n  id BIGINT NOT NULL PRIMARY KEY,\n  date DATE DEFAULT NULL ASC,\n  date2 DATE DEFAULT NULL UNIQUE ASC\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create temp table",
+      "source": "\nCREATE TEMP TABLE my_table (id BIGINT NOT NULL PRIMARY KEY);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with constraint",
+      "source": "\nCREATE TABLE my_table (\n  host CHAR(50) NOT NULL,\n  created_date DATE NOT NULL,\n  CONSTRAINT pk PRIMARY KEY (host ASC, created_date DESC)\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with constraint on multiple columns",
+      "source": "\nCREATE TABLE my_table (\n  host CHAR(50) NOT NULL,\n  created_date DATE NOT NULL,\n  random FLOAT DEFAULT RAND(),\n  random TEXT DEFAULT 'test',\n  with_comment TEXT COMMENT 'this column has a comment',\n  with_comment_and_constraint TEXT DEFAULT 'test' COMMENT 'this column also has a comment',\n  KEY `idx` (`host`, `created_date`),\n  UNIQUE KEY `unique_idx` (`host`,`with_comment`)\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with constraint checks",
+      "source": "\nCREATE TABLE products (\n    product_no integer,\n    name text,\n    price numeric CHECK (price > 0),\n    discounted_price numeric CHECK (discounted_price > 0),\n    CHECK (price > discounted_price)\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table if not exists",
+      "source": "\nCREATE TABLE IF NOT EXISTS `addresses` (\n  `id` bigint(20) NOT NULL AUTO_INCREMENT\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with unsigned zerofill types",
+      "source": "\nCREATE TABLE `addresses` (\n  `id` bigint(20) UNSIGNED ZEROFILL,\n  `id2` int4(20) ZEROFILL,\n  `id3` UNSIGNED tinyint(20),\n  `id4` mediumint(20) UNSIGNED,\n  `id5` float(20, 3) UNSIGNED,\n  `id6` double(20,3) UNSIGNED\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with auto increment",
+      "source": "\nCREATE TABLE IF NOT EXISTS `addresses` (\n  `id` bigint(20) NOT NULL AUTO_INCREMENT,\n  PRIMARY KEY (`id`),\n  KEY `addresses_s_id_index` (`s_id`)\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with multiple constraints",
+      "source": "\nCREATE TABLE IF NOT EXISTS `addresses` (\n  `id` bigint(20) NOT NULL AUTO_INCREMENT,\n  `s_id` bigint(20) DEFAULT NULL,\n  `first_name` varchar(255) DEFAULT NULL,\n  `updated_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `addresses_s_id_index` (`s_id`),\n  KEY `index_addresses_on_updated_at` (`updated_at`),\n  KEY `index_addresses_on_s_id_and_id` (`s_id`, `id`)\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Debugging",
+      "source": "\nCREATE TABLE IF NOT EXISTS `addresses` (\n  `id` bigint(20) NOT NULL AUTO_INCREMENT,\n  `s_id` bigint(20) DEFAULT NULL,\n  `first_name` varchar(255) DEFAULT NULL\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with table options",
+      "source": "\nCREATE TABLE my_table (\n  id BIGINT(20) NOT NULL,\n  date DATE DEFAULT NULL ASC\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create view",
+      "source": "\nCREATE VIEW my_view AS\nSELECT * FROM my_table;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create or replace view",
+      "source": "\nCREATE OR REPLACE VIEW my_view AS\nSELECT * FROM my_table;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create temp view",
+      "source": "\nCREATE TEMPORARY VIEW foo AS SELECT 1;\nCREATE TEMP VIEW foo AS SELECT 1;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create view with columns",
+      "source": "\nCREATE VIEW foo(a, b) AS SELECT 1 a, 2 b;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create view with check option",
+      "source": "\nCREATE VIEW foo AS SELECT 1 WITH CHECK OPTION;\nCREATE VIEW foo AS SELECT 1 WITH LOCAL CHECK OPTION;\nCREATE VIEW foo AS SELECT 1 WITH CASCADED CHECK OPTION;"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create matview",
+      "source": "\nCREATE MATERIALIZED VIEW my_view AS\nSELECT * FROM my_table\nWITH NO DATA;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create matview with ambiguous grammar",
+      "source": "\nCREATE MATERIALIZED VIEW my_view AS\nSELECT * FROM my_table\nWITH NO DATA\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with all types",
+      "source": "\nCREATE TABLE type_test (\n  a_bool BOOLEAN,\n  a_bit BIT,\n  a_bit2 BIT(2),\n  a_bit3 BIT VARYING(2),\n  a_binary BINARY,\n  a_varbinary VARBINARY,\n  a_image IMAGE,\n  a_smallser SMALLSERIAL,\n  a_serial SERIAL,\n  a_bigser BIGSERIAL,\n  an_int INT,\n  an_integer INTEGER,\n  a_bigint BIGINT,\n  a_decimal DECIMAL,\n  a_sized_decimal DECIMAL (8),\n  a_sized_decimal_with_scale DECIMAL (8, 4),\n  a_numeric NUMERIC,\n  a_sized_numeric NUMERIC (8),\n  a_sized_numeric_with_scale NUMERIC (8, 4),\n  a_real REAL,\n  a_double_precision DOUBLE PRECISION,\n  a_money MONEY,\n  a_smallmoney SMALLMONEY,\n  a_char CHAR,\n  a_nchar NCHAR,\n  a_nchar_precision NCHAR(8),\n  a_character CHARACTER,\n  a_sized_char CHAR (10),\n  a_varchar VARCHAR (10),\n  a_nvarchar NVARCHAR,\n  a_nvarchar_precision NVARCHAR (10),\n  a_character_varying CHARACTER VARYING (10),\n  a_text TEXT,\n  a_json JSON,\n  a_jsonb JSONB,\n  an_xml XML,\n  a_bytea BYTEA,\n  a_enum ENUM('one','two','three'),\n  a_date DATE,\n  a_datetime DATETIME,\n  a_datetime2 DATETIME2,\n  a_datetimeoffset DATETIMEOFFSET,\n  a_smalldatetime SMALLDATETIME,\n  a_time TIME,\n  a_timestamp TIMESTAMP,\n  a_verbose_timestamp TIMESTAMP WITHOUT TIME ZONE,\n  a_tstz TIMESTAMPTZ,\n  a_date_with_default_ts DATETIME DEFAULT CURRENT_TIMESTAMP,\n  a_verbose_tstz TIMESTAMP WITH TIME ZONE,\n  a_geometry GEOMETRY,\n  a_geography GEOGRAPHY,\n  a_box2d BOX2D,\n  a_box3d BOX3D,\n  a_uuid UUID\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with nullable columns",
+      "source": "\nCREATE TABLE tableName (\n    id NUMERIC NULL,\n    name VARCHAR NULL\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create unlogged table",
+      "source": "\nCREATE UNLOGGED TABLE tableName (\n    id NUMERIC\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with index",
+      "source": "\nCREATE TABLE some_table(\n    `id` bigint(20) NOT NULL AUTO_INCREMENT,\n    `s_id` bigint(20) DEFAULT NULL,\n    INDEX `parent`(pid),\n    INDEX `range`(publication, published_at)\n) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create unique index",
+      "source": "\nCREATE UNIQUE INDEX \"akRoleName\" ON \"Role\" (\"name\");\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table as select",
+      "source": "\nCREATE TABLE tableName AS SELECT * FROM otherTable;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table as select with cte",
+      "source": "\nCREATE TABLE tableName AS WITH _cte AS (\n    SELECT a FROM b\n)\nSELECT * FROM _cte\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table from select statement with parenthesis",
+      "source": "\nCREATE TABLE tb AS\n(\n  SELECT 1 as col\n)\nUNION ALL\n(\n  SELECT 2 as col\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create view as select with cte",
+      "source": "\nCREATE VIEW tableName AS WITH _cte AS (\n    SELECT a FROM b\n)\nSELECT * FROM _cte\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create materialized view as select with cte",
+      "source": "\nCREATE MATERIALIZED VIEW tableName AS WITH _cte AS (\n    SELECT a FROM b\n)\nSELECT * FROM _cte\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create external hive table",
+      "source": "\nCREATE EXTERNAL TABLE tab\n(col int, col2 string, col3 binary)\nPARTITIONED BY (col int)\nSORT BY (col)\nROW FORMAT DELIMITED FIELDS TERMINATED BY ';' ESCAPED BY '\"'\nLINES TERMINATED BY '\\n'\nSTORED AS PARQUET\nLOCATION '/path/data'\nCACHED IN 'pool1' WITH REPLICATION = 2\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table as select hive table",
+      "source": "\nCREATE TABLE tab\nPARTITIONED BY (col1, col2)\nSTORED AS PARQUET\nAS\nSELECT\n    col1,\n    col2,\n    col3\nFROM tab2\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with string name",
+      "source": "\nCREATE TABLE \"Role\" (\n    id BIGINT NOT NULL\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with generated always",
+      "source": "\nCREATE TABLE \"Role\" (\n  \"roleId\" bigint generated always as identity,\n  \"name\" varchar NOT NULL,\n  height_in numeric GENERATED ALWAYS AS (height_cm / 2.54) STORED,\n  item_type_name TEXT GENERATED ALWAYS AS (\n     CASE item_type\n       WHEN 1 THEN 'foo'\n       WHEN 2 THEN 'bar'\n       ELSE 'UNKNOWN'\n     END\n  ) VIRTUAL\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Inet type",
+      "source": "\nCREATE TABLE \"Session\" (\n  \"ip\" inet NOT NULL\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table with arrays and matrix",
+      "source": "\nCREATE TABLE tab (\n    name   text,\n    array2 integer[3],\n    matrix text[][],\n    square integer[3][3],\n    array4 integer ARRAY[4],\n    array_ integer ARRAY,\n    multid integer[3][3][3][3]\n);\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create schema",
+      "source": "\nCREATE SCHEMA myschema;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create schema with authorization",
+      "source": "\nCREATE SCHEMA IF NOT EXISTS test AUTHORIZATION joe;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create schema with subsequent creates",
+      "source": "\nCREATE SCHEMA hollywood\n    CREATE TABLE films (title text, release date, awards text[])\n    CREATE VIEW winners AS\n        SELECT title, release FROM films WHERE awards IS NOT NULL;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create database",
+      "source": "\nCREATE DATABASE hollywood\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create database if not exists",
+      "source": "\nCREATE DATABASE IF NOT EXISTS hollywood\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create database with settings",
+      "source": "\nCREATE DATABASE sales OWNER operations_dept;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create user",
+      "source": "\nCREATE ROLE rapunzel\nWITH ROLE hansel, gretel\nIN GROUP fairy, tale\nADMIN grandma\nPASSWORD 'secret'\nVALID UNTIL '2022-01-01'\nCONNECTION LIMIT 42\nNOLOGIN\nINHERIT;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create sequence",
+      "source": "\nCREATE TEMP SEQUENCE IF NOT EXISTS serial\nAS BIGINT\nINCREMENT BY 3\nMINVALUE 10\nMAXVALUE 9999\nSTART 101 CACHE 1000 NO CYCLE\nOWNED BY numbers.number_sequences;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create extension",
+      "source": "\nCREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create extension with version and cascade",
+      "source": "\nCREATE EXTENSION pg_stat_statements VERSION '12' CASCADE;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create view rule conflict with time and timestamp rules (check create_view)",
+      "source": "\ncreate view toto as select '123'::timestamp with check option;\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create a trigger on delete for each row",
+      "source": "\nCREATE TRIGGER update_at BEFORE DELETE ON public.table_A FOR EACH ROW EXECUTE FUNCTION public.update_timestamp();\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create a trigger on update",
+      "source": "\nCREATE TRIGGER update_at_user AFTER UPDATE OF name ON public.\"user\" EXECUTE FUNCTION public.update_timestamp();\n"
+    },
+    {
+      "file": "create.txt",
+      "title": "Create table column REFERENCES constraint",
+      "source": "\nCREATE TABLE foo (\n\tbar int NOT NULL REFERENCES bar(foo) ON DELETE CASCADE\n);\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "One cte",
+      "source": "\nWITH my_cte AS (\n  SELECT one, two\n  FROM my_table\n)\nSELECT *\nFROM my_cte;\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "Multiple ctes with returning",
+      "source": "\nWITH first AS (\n  INSERT INTO my_table (one, two)\n  VALUES (1, 2)\n  RETURNING *\n), second AS (\n  SELECT one, two\n  FROM my_table\n)\nSELECT *\nFROM second;\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "CTE with materializations",
+      "source": "\nWITH first AS NOT MATERIALIZED (\n  SELECT a FROM b\n), second AS MATERIALIZED (\n  SELECT one, two\n  FROM my_table\n)\nSELECT *\nFROM second;\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "Parenthesized CTE",
+      "source": "\n(\n  WITH data AS (\n    SELECT 1 AS col\n  )\n  SELECT *\n  FROM data\n)\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "Nested CTE",
+      "source": "\nWITH top_cte AS (\n  WITH nested_cte AS (\n    SELECT 1 as one, 2 as two\n  )\n  SELECT one, two\n  FROM nested_cte\n)\nSELECT *\nFROM top_cte;\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "Nested deeper",
+      "source": "\nWITH top_cte AS (\n  WITH nested_cte AS (\n    WITH nested_further AS (\n      SELECT 1 as one, 2 as two\n    )\n    SELECT * FROM nested_further\n  )\n  SELECT one, two\n  FROM nested_cte\n)\nSELECT *\nFROM top_cte;\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "CTE with parenthesized unions",
+      "source": "\nwith tb2 as (\n  SELECT * FROM tb1\n)\n(\n  (SELECT * FROM tb2)\n  UNION\n  (SELECT * FROM tb2)\n)\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "CTE with unions",
+      "source": "\nwith tb2 as (\n  SELECT * FROM tb1\n)\n(SELECT * FROM tb2)\nUNION\n(SELECT * FROM tb2)\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "Parenthesis around CTE",
+      "source": "\n(\n  with x as (select * from ints)\n)\n(select * from x);\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "Parenthesis around everything",
+      "source": "\n(\n  (with x as (select * from ints))\n  (select * from x)\n);\n"
+    },
+    {
+      "file": "cte.txt",
+      "title": "Recursive CTE",
+      "source": "\nWITH RECURSIVE included_parts(sub_part, part, quantity) AS (\n    SELECT sub_part, part, quantity FROM parts WHERE part = 'our_product'\n  UNION ALL\n    SELECT p.sub_part, p.part, p.quantity * pr.quantity\n    FROM included_parts pr, parts p\n    WHERE p.part = pr.sub_part\n)\nSELECT sub_part, SUM(quantity) as total_quantity\nFROM included_parts\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Create type",
+      "source": "\n CREATE TYPE sports\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Create type enum",
+      "source": "\nCREATE TYPE colors as ENUM (\n    'red',\n    'green',\n    'blue'\n);\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Create type object",
+      "source": "CREATE TYPE cities AS (\n    cityname text,\n    population INTEGER\n);"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Create type range",
+      "source": "\nCREATE TYPE marathon AS RANGE (\n    SUBTYPE = sports\n)\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Create type io",
+      "source": "CREATE TYPE bigobj (\n    INPUT = lo_filein, OUTPUT = lo_fileout,\n    INTERNALLENGTH = VARIABLE\n);"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Drop type",
+      "source": "\nDROP TYPE IF EXISTS boxes CASCADE;\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Alter type rename",
+      "source": "\nALTER TYPE boxes RENAME TO cubes;\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Alter type rename attribute",
+      "source": "\nALTER TYPE boxes\nRENAME ATTRIBUTE width TO height;\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Alter type change owner",
+      "source": "\nALTER TYPE boxes\nOWNER TO user2\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Alter type change schema",
+      "source": "\nALTER TYPE boxes\nSET SCHEMA new_schema\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Alter type add value",
+      "source": "\nALTER TYPE boxes\nADD VALUE  IF NOT EXISTS 'color' AFTER 'weight'\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Alter type rename value",
+      "source": "\nALTER TYPE boxes\nRENAME VALUE 'weight' TO 'mass'\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Alter type add attribute",
+      "source": "\nALTER TYPE boxes\nADD ATTRIBUTE label text\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Alter type drop attribute",
+      "source": "\nALTER TYPE boxes DROP ATTRIBUTE IF EXISTS label"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Alter type alter attribute",
+      "source": "\nALTER TYPE boxes\nADD ATTRIBUTE label varchar(255)\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Create table with custom type",
+      "source": "\nCREATE TABLE shipments (\nshipment boxes\n)"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Insert into table with custom type",
+      "source": "\nINSERT INTO shipments (shipment)\nVALUES (ROW(10, 500, 'Box1')),\n       (ROW(15, 800, 'Box2')),\n       (ROW(12, 600, 'Box3'));\n"
+    },
+    {
+      "file": "custom_types.txt",
+      "title": "Select from custom type",
+      "source": "\nSELECT\n    (boxes).height,\n    (boxes).mass,\n    (boxes).label\nFROM shipments\n"
+    },
+    {
+      "file": "delete.txt",
+      "title": "Delete whole table",
+      "source": "\nDELETE FROM my_table;\n"
+    },
+    {
+      "file": "delete.txt",
+      "title": "Delete whole table with FQN",
+      "source": "\nDELETE FROM my_database.my_schema.my_table;\n"
+    },
+    {
+      "file": "delete.txt",
+      "title": "Delete whole table and only the whole table",
+      "source": "\nDELETE FROM ONLY my_table;\n"
+    },
+    {
+      "file": "delete.txt",
+      "title": "Delete table with limit",
+      "source": "\nDELETE FROM my_table\nLIMIT 4;\n"
+    },
+    {
+      "file": "delete.txt",
+      "title": "Delete table with order by",
+      "source": "\nDELETE FROM my_table\nORDER BY id DESC\nLIMIT 4;\n"
+    },
+    {
+      "file": "delete.txt",
+      "title": "Delete table with where",
+      "source": "\nDELETE FROM my_table\nWHERE id = 9;\n"
+    },
+    {
+      "file": "delete.txt",
+      "title": "Truncate table",
+      "source": "\nTRUNCATE TABLE employees CASCADE;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop function",
+      "source": "\nDROP FUNCTION my_function;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop function if exists",
+      "source": "\nDROP FUNCTION IF EXISTS my_function;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop table",
+      "source": "\nDROP TABLE my_table;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop table with FQN",
+      "source": "\nDROP TABLE my_table.my_schema.my_table;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop table and cascade through",
+      "source": "\nDROP TABLE my_table CASCADE;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop view",
+      "source": "\nDROP VIEW my_view;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop view with FQN",
+      "source": "\nDROP VIEW my_database.my_schema.my_view;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop index",
+      "source": "\nDROP INDEX idx;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop index",
+      "source": "\nDROP INDEX idx ON tbl;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop index cascade full sequence",
+      "source": "\nDROP INDEX CONCURRENTLY IF EXISTS idx CASCADE ON tbl;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop index restrict full sequence",
+      "source": "\nDROP INDEX CONCURRENTLY IF EXISTS idx RESTRICT ON tbl;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop schema",
+      "source": "\nDROP SCHEMA IF EXISTS myschema CASCADE;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop Database",
+      "source": "\nDROP DATABASE IF EXISTS hollywood WITH FORCE;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop Role",
+      "source": "\nDROP ROLE hansel;\nDROP GROUP fairy;\nDROP USER rapunzel;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop sequence",
+      "source": "\nDROP SEQUENCE IF EXISTS serial RESTRICT;\n"
+    },
+    {
+      "file": "drop.txt",
+      "title": "Drop extension",
+      "source": "\nDROP EXTENSION my_extension;\n"
+    },
+    {
+      "file": "errors.txt",
+      "title": "^select",
+      "source": "\nselections\n"
+    },
+    {
+      "file": "errors.txt",
+      "title": "^selections for your perusal",
+      "source": "\nselections for your perusal\n"
+    },
+    {
+      "file": "errors.txt",
+      "title": "^inserted_at",
+      "source": "\ninserted_at\n"
+    },
+    {
+      "file": "errors.txt",
+      "title": "^updated_at",
+      "source": "\nupdated_at\n"
+    },
+    {
+      "file": "errors.txt",
+      "title": "^deleted_at",
+      "source": "\ndeleted_at\n"
+    },
+    {
+      "file": "errors.txt",
+      "title": "^created_at",
+      "source": "\ncreated_at\n"
+    },
+    {
+      "file": "errors.txt",
+      "title": "Function body with a $$ string literal with the same name",
+      "source": "\ncreate or replace function public.do_stuff()\n  returns trigger\n  language plpgsql\nas $a$\nbegin\n  return $a$text$a$;\nend;\n$a$\n"
+    },
+    {
+      "file": "errors.txt",
+      "title": "Function body with a unbalanced $$",
+      "source": "\ncreate or replace function public.do_stuff()\n  returns trigger\n  language plpgsql\nas $a$\nbegin\n  return $b$text$b$;\nend;\n$c$;\n"
+    },
+    {
+      "file": "errors.txt",
+      "title": "Function body with a tag name contains whitespace",
+      "source": "\ncreate or replace function public.do_stuff()\n  returns trigger\n  language plpgsql\nas $a$\nbegin\n  return $b $text$b $;\nend;\n$a$;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Single Field Predicate",
+      "source": "\nSELECT *\nFROM my_table m\nWHERE m.is_not_deleted;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Multiple Field Predicates",
+      "source": "\nSELECT *\nFROM my_table m\nWHERE m.is_not_deleted AND m.is_visible;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Single Unary Predicate",
+      "source": "\nSELECT *\nFROM my_table m\nWHERE NOT m.is_not_deleted;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Multiple Unary Predicates",
+      "source": "\nSELECT *\nFROM my_table m\nWHERE NOT m.is_not_deleted\n  AND NOT m.is_visible;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Mixed Predicate types",
+      "source": "\nSELECT *\nFROM my_table m\nWHERE m.status = \"success\"\n  AND m.name = \"foobar\"\n  AND m.id = 5\n  AND m.is_not_deleted\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Disjunctive Predicate",
+      "source": "\nSELECT *\nFROM my_table m\nWHERE m.status = \"success\"\n  AND m.name = \"foobar\"\n  OR m.id = 5\n  AND m.is_not_deleted\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Field Predicate w/ unary predicate",
+      "source": "\nSELECT *\nFROM my_table m\nWHERE NOT m.is_deleted;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Field Predicate w/ anonymous unary predicate",
+      "source": "\nSELECT *\nFROM my_table m\nWHERE !m.is_deleted;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Field Predicate w/ multiple unary predicate",
+      "source": "\nSELECT *\nFROM my_table m\nWHERE NOT m.is_deleted\n  AND NOT m.is_invisible;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "IS DISTINCT FROM",
+      "source": "\nSELECT *\nFROM my_table\nWHERE col IS DISTINCT FROM NULL;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "IS NOT DISTINCT FROM",
+      "source": "\nSELECT *\nFROM my_table\nWHERE col IS NOT DISTINCT FROM NULL;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Predicates with keywords",
+      "source": "\nSELECT *\nFROM my_table\nWHERE id IS NOT NULL\n  AND name IS NULL;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Complex Predicates",
+      "source": "\nSELECT id\nFROM my_table m\nWHERE m.id > 4 AND id < 3;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Where with pattern matching",
+      "source": "\nSELECT\n    *\nFROM\n    a\nWHERE\n        a LIKE '%a'\n    AND a NOT LIKE '%a'\n    AND a SIMILAR TO '%a'\n    AND a NOT SIMILAR TO '%a';\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "NOT EQUAL <> OPERATOR",
+      "source": "\nSELECT\n    *\nFROM\n    a\nWHERE\n    a <> '%a'\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "string operator concat and start with",
+      "source": "\nSELECT 'abc' ^@ 'a' || 'z';\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "full text search operators",
+      "source": "\nSELECT 'fat cats ate rats' @@ !! ('cat' <-> 'rat'::tsquery);\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Array subscript",
+      "source": "\nSELECT\n  (ARRAY[1, 4, 9])[1+1],\n  (ARRAY[1, 4, 9])[1:3 - 1],\n  (ARRAY[1, 4, 9])[1:2][3];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "TSQL OBJECT_ID",
+      "source": "\nSELECT OBJECT_ID (N'dbo.LEVENSHTEIN_DISTANCE', N'FN')\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Functions",
+      "source": "\nSELECT MAX(id)\nFROM my_table;"
+    },
+    {
+      "file": "functions.txt",
+      "title": "No-arg functions",
+      "source": "\nSELECT now();"
+    },
+    {
+      "file": "functions.txt",
+      "title": "More complex function arguments",
+      "source": "\nSELECT\n  user_id,\n  user_defined_func(user_id, 123, other_func(user_id, 321), user_id + 1 > 5) as something,\n  regexp_replace(t.username, '^(.)[^@]+', '\\1--', 'g') as username,\n  created_at\nFROM my_table AS t;"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Casts and arrays",
+      "source": "\nselect col_has_check(\n  'one'::name,\n  'two'::name,\n  array['three'::name, 'four'::name],\n  'description'\n);\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Count with postgres style aggregate expression",
+      "source": "\nSELECT COUNT(DISTINCT uid ORDER BY uid)\nFROM table_a;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "MYSQL period_diff",
+      "source": "\nSELECT\n    PERIOD_DIFF (\n        EXTRACT (YEAR_MONTH FROM NOW()), EXTRACT(YEAR_MONTH FROM t.a)\n    ) AS diffA\nFROM mytable;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "GROUP CONCAT",
+      "source": "\nSELECT GROUP_CONCAT(uid SEPARATOR \",\")\nFROM some_table\nGROUP BY some_field;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "GROUP CONCAT with all optional fields",
+      "source": "\nSELECT GROUP_CONCAT(DISTINCT uid ORDER BY uid DESC SEPARATOR \",\")\nFROM some_table\nGROUP BY some_field;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "GROUP CONCAT Impala",
+      "source": "\nSELECT GROUP_CONCAT(uid, \",\")\nFROM some_table\nGROUP BY some_field;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Unary ANY, ALL, SOME",
+      "source": "\nSELECT *\nFROM foo\nWHERE id = ANY (\n  SELECT 1\n)\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "In with subquery",
+      "source": "\nSELECT *\nFROM foo\nWHERE id IN (\n  SELECT 1\n  FROM bar\n)\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "exists & not exists",
+      "source": "\nSELECT *\nFROM foo\nWHERE (\n  NOT EXISTS (\n    SELECT 1\n    FROM bar\n    WHERE 0\n  ) OR EXISTS (\n    SELECT 1\n    FROM baz\n    WHERE 1\n  )\n)\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Basic SQL function creation",
+      "source": "\ncreate or replace function public.fn()\n returns int\n language sql\nreturn 1;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "With arguments",
+      "source": "\ncreate or replace function public.fn(one int, two text)\n returns int\n language sql\nreturn 1;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Function details",
+      "source": "\ncreate or replace function public.fn()\n  returns int\n  language sql\n  immutable\n  parallel safe\n  leakproof\n  strict\n  cost 100\n  rows 1\nreturn 1;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Function details, specified after string body",
+      "source": "\ncreate or replace function public.fn()\n  returns int\n  as $$select 1$$\n  language sql\n  volatile\n  parallel restricted\n  not leakproof\n  returns null on null input\n  cost 100\n  rows 1;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "With a string body",
+      "source": "\ncreate or replace function public.fn()\n  returns int\n  language sql\nas 'select 1;';\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Precedence between string body and `create table` with string options",
+      "source": "\ncreate or replace function public.fn()\n  returns int\n  language sql\nas 'create table x (id int) row_format=dynamic';\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "With `begin atomic`",
+      "source": "\ncreate or replace function public.fn()\n  returns int\n  language sql\nbegin atomic\n  return 1;\nend;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Dollar quoting a simple PLPGSQL body",
+      "source": "\ncreate or replace function public.fn()\n  returns int\n  language plpgsql\nas $function$\nbegin\n  return 1;\nend;\n$function$;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Variable declarations",
+      "source": "\ncreate or replace function public.fn()\n  returns int\n  language plpgsql\nas $function$\ndeclare\n  one int;\n  two text := (select 'hello');\n  three text := 'world';\nbegin\n  return 1;\nend;\n$function$;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "More complex function body",
+      "source": "\ncreate or replace function public.do_stuff()\n  returns trigger\n  language plpgsql\nas $function$\nbegin\n\n  -- comment!\n  with knn as (\n    select\n      h.alpha,\n      -- TODO factor in distance\n      avg(e.beta) as e_beta\n    from htable h\n    cross join lateral (\n      select\n        id,\n        gamma,\n        delta,\n        centroid\n      from ftable\n      limit 3\n    ) as e\n    group by h.alpha\n  )\n  update htable set epsilon = epsilon + e_beta\n  from knn\n  where knn.alpha = htable.alpha;\n\n  return new;\n\nend;\n$function$\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "SQL function creation with complex arguments",
+      "source": "\ncreate or replace function public.fn(IN arg1 text, OUT arg2 int DEFAULT 12, IN OUT arg3 text = 'test')\n returns int\n language sql\nreturn 1;\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Function body with a $$ string literal",
+      "source": "\ncreate or replace function public.do_stuff()\n  returns trigger\n  language plpgsql\nas $a$\nbegin\n  return $b$text$b$;\nend;\n$a$\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Function body with non alphabetic dollar quoted tags",
+      "source": "\ncreate or replace function public.do_stuff()\n  returns trigger\n  language plpgsql\nas $_$\nbegin\n  return $.$text$.$;\nend;\n$_$\n"
+    },
+    {
+      "file": "group_by.txt",
+      "title": "Group by",
+      "source": "\nSELECT other_id, COUNT(name)\nFROM my_table\nGROUP BY other_id\nHAVING other_id > 10;\n"
+    },
+    {
+      "file": "group_by.txt",
+      "title": "Group by numbered alias",
+      "source": "\nSELECT other_id, COUNT(name)\nFROM my_table\nGROUP BY 1\nHAVING other_id > 10;"
+    },
+    {
+      "file": "group_by.txt",
+      "title": "Group by with mixed list",
+      "source": "\nSELECT other_id, other_col, COUNT(name)\nFROM my_table\nGROUP BY 1, other_col\nHAVING other_id > 10;"
+    },
+    {
+      "file": "group_by.txt",
+      "title": "Having with count function",
+      "source": "\nSELECT other_id, COUNT(name)\nFROM my_table\nGROUP BY other_id\nHAVING COUNT(*) = 2;\n"
+    },
+    {
+      "file": "index.txt",
+      "title": "Create simple index",
+      "source": "\nCREATE INDEX ON tab(col);\n"
+    },
+    {
+      "file": "index.txt",
+      "title": "Create named index with options",
+      "source": "\nCREATE UNIQUE INDEX CONCURRENTLY\nIF NOT EXISTS idx1\nON tab USING HASH(col ASC)\nWHERE tab.col > 10;\n"
+    },
+    {
+      "file": "index.txt",
+      "title": "Create unique index with complex index fields",
+      "source": "\nCREATE UNIQUE INDEX foo_index ON foo (\n\tmd5(COALESCE(cat, '')) COLLATE some_collation ASC NULLS LAST,\n\tdog some_operator_class(1),\n\t(cow / 2)\n);\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Simple insert",
+      "source": "\nINSERT INTO my_table\nVALUES('foo','bar', 3);\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Simple insert with alias",
+      "source": "\nINSERT INTO my_table AS x\nVALUES('foo','bar', 3);\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Simple insert with column ordering",
+      "source": "\nREPLACE INTO my_table (name, id, year)\nVALUES ('foo', 123, '2020');\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Insert-select",
+      "source": "\nINSERT INTO my_table (a, b, c)\nSELECT a, b, c\nFROM my_other_table;\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Insert returning",
+      "source": "\nINSERT INTO my_table\nVALUES('foo','bar', 3)\nRETURNING *;\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Insert returning single column",
+      "source": "\nINSERT INTO my_table\nVALUES('foo','bar', 3)\nRETURNING id;\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Insert returning multiple defined columns",
+      "source": "\nINSERT INTO my_table\nVALUES('foo','bar', 3)\nRETURNING id, val1, val2;\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Insert with multple values",
+      "source": "\nINSERT INTO some_table\n  (field)\nVALUES\n  (\"String value\"),\n  (\"String value\");\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Insert with field name",
+      "source": "\nINSERT INTO some_table\n  SET field = \"String does not get highlight in INSERT SET syntax\";\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Simple insert with on conflict do nothing",
+      "source": "\nINSERT INTO my_table\nVALUES('foo','bar', 3)\nON CONFLICT DO NOTHING;\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Simple insert with on conflict do update",
+      "source": "\nINSERT INTO my_table\nVALUES('foo','bar', 3)\nON CONFLICT DO UPDATE SET dname = EXCLUDED.dname;\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Simple insert with low priority",
+      "source": "\nINSERT LOW_PRIORITY my_table\nVALUES('foo','bar', 3);\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Simple insert with delayed",
+      "source": "\nINSERT DELAYED my_table\nVALUES('foo','bar', 3);\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Simple insert with high priority",
+      "source": "\nINSERT HIGH_PRIORITY my_table\nVALUES('foo','bar', 3);\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Simple insert with ignore",
+      "source": "\nINSERT IGNORE my_table\nVALUES('foo','bar', 3);\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Insert overwrite",
+      "source": "\nINSERT OVERWRITE tab1\nSELECT\n  col1,\n  col2\nFROM\n(\n  SELECT\n    *\n  FROM\n    tab2\n  WHERE\n    key1 >= 'val'\n) a1;\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Insert overwrite with partition",
+      "source": "\nINSERT OVERWRITE tab1\nPARTITION (key1 = 'val1', key2 = 'val2')\nSELECT\n  col1,\n  col2\nFROM\n(\n  SELECT\n    *\n  FROM\n    tab2\n  WHERE\n    key1 >= 'val'\n) a1;\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "Insert from unioned select",
+      "source": "\nINSERT INTO some_table\n  (field)\n  (SELECT \"String value\"\n   UNION\n   SELECT \"String value\");\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "COPY FROM STDIN CSV",
+      "source": "\nCOPY some_table (a, b, c) FROM STDIN (FORMAT CSV);\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "COPY FROM FILE",
+      "source": "\nCOPY some_table (a, b, c) FROM '/tmp/data.csv' (FORMAT CSV);\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "ON DUPLICATE KEY UPDATE",
+      "source": "\nINSERT INTO table_1 (pk, col1, col2)\nVALUES\n  (1, 1, 1),\n  (2, 2, 2)\nON DUPLICATE KEY UPDATE\n  pk = VALUES(pk),\n  col1 = 1,\n  col2 = \"foo\";\n"
+    },
+    {
+      "file": "insert.txt",
+      "title": "COPY FROM STDIN CSV WITH OPTIONS",
+      "source": "\nCOPY some_table (a, b, c) FROM STDIN WITH\n(\n    FORMAT CSV\n    DELIMITER ';'\n    QUOTE '\"'\n    ESCAPE '\\'\n    FREEZE true\n    HEADER MATCH\n    NULL 'NaN'\n);\n"
+    },
+    {
+      "file": "json.txt",
+      "title": "JSON traversal",
+      "source": "\nSELECT\n    \"user\"->>'login' as login,\n    \"user\"->'address' ->> 'city',\n    \"user\"->'address' ->> 'state' as userstate,\n    \"user\" #> 'items',\n    \"user\" #>> 'more_items' AS more\nFROM users;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Hexadecimal number",
+      "source": "\nSELECT 0xAA;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "binary number",
+      "source": "\nSELECT 0b1010;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "big integer with _ separators",
+      "source": "\nSELECT 1_000_000_000;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "integer with exponent with _ separators",
+      "source": "\nSELECT 12e1_000;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "decimal with exponent",
+      "source": "\nSELECT .2e-1_000;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "positive number",
+      "source": "\nSELECT +1;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "bit string",
+      "source": "\nSELECT b'1010';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "bit string (hexa)",
+      "source": "\nSELECT x'AF';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "multi line string",
+      "source": "\nSELECT 'hello '\n'world';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "unicode string",
+      "source": "\nSELECT  u&'\\041f\\0440\\0438\\0432\\0456\\0442 '\n'\\0421\\0432\\0456\\0442';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Postgres escape string",
+      "source": "\nSELECT E'this is a test';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Postgres escape string terminates correctly",
+      "source": "\nSELECT E'this is a test';\nSELECT E'this is another test';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Postgres escape string with literal newlines",
+      "source": "\nSELECT E'this\nis a\ntest';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Postgres escape string that escapes a single quote",
+      "source": "\nSELECT E'the table\\'s name is my_table';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "TSQL N'string'",
+      "source": "\nSELECT N'the table''s name is my_tablé';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "string casting",
+      "source": "\nSELECT int '123';\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Support for nordic chars and umlaute",
+      "source": "\nSELECT äöüÄÖÜøæØÆ\n"
+    },
+    {
+      "file": "merge.txt",
+      "title": "Merge into delete",
+      "source": "\nMERGE INTO accounts t\nUSING monthly_accounts_update s\n    ON t.customer = s.customer\n    WHEN MATCHED\n        THEN DELETE\n"
+    },
+    {
+      "file": "merge.txt",
+      "title": "Merge into upsert",
+      "source": "\nMERGE INTO accounts t\nUSING monthly_accounts_update s\n    ON (t.customer = s.customer)\n    WHEN MATCHED\n        THEN UPDATE SET purchases = s.purchases + t.purchases\n    WHEN NOT MATCHED\n        THEN INSERT (customer, purchases, address)\n              VALUES(s.customer, s.purchases, s.address)\n"
+    },
+    {
+      "file": "merge.txt",
+      "title": "Merge into conditional upsert",
+      "source": "\nMERGE INTO accounts t\nUSING monthly_accounts_update s\n    ON (t.customer = s.customer)\n    WHEN MATCHED AND s.address = 'Centreville'\n        THEN DELETE\n    WHEN MATCHED\n        THEN UPDATE\n            SET purchases = s.purchases + t.purchases, address = s.address\n    WHEN NOT MATCHED\n        THEN INSERT (customer, purchases, address)\n              VALUES(s.customer, s.purchases, s.address)\n"
+    },
+    {
+      "file": "optimize.txt",
+      "title": "EXPLAIN Statement",
+      "source": "\nEXPLAIN SELECT * FROM tab\n"
+    },
+    {
+      "file": "optimize.txt",
+      "title": "EXPLAIN ANALYIZE VERBOSE Statement",
+      "source": "\nEXPLAIN ANALYZE VERBOSE SELECT * FROM tab\n"
+    },
+    {
+      "file": "optimize.txt",
+      "title": "Impala: Compute stats",
+      "source": "\nCOMPUTE STATS my_table (col1);\n"
+    },
+    {
+      "file": "optimize.txt",
+      "title": "Impala: Compute incremental stats",
+      "source": "\nCOMPUTE INCREMENTAL STATS my_table PARTITION (partition_col=col1);\n"
+    },
+    {
+      "file": "optimize.txt",
+      "title": "Hive: Analyze and Compute stats",
+      "source": "\nANALYZE TABLE mytable\nPARTITION (partcol1=col1, partcol2=col2)\nCOMPUTE STATISTICS\nFOR COLUMNS\nCACHE METADATA\nNOSCAN\n"
+    },
+    {
+      "file": "optimize.txt",
+      "title": "Athena/Iceberg: Optimize table",
+      "source": "\nOPTIMIZE mytable REWRITE DATA USING BIN_PACK\n  WHERE col1 is not null"
+    },
+    {
+      "file": "optimize.txt",
+      "title": "Vacuum",
+      "source": "\nVACUUM my_table;\n"
+    },
+    {
+      "file": "optimize.txt",
+      "title": "Vacuum Postgres with options",
+      "source": "\nVACUUM FULL true my_table (col1, col2);\n"
+    },
+    {
+      "file": "optimize.txt",
+      "title": "MariaDB Optimize Table",
+      "source": "\nOPTIMIZE LOCAL TABLE my_table1, my_table2\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select 1",
+      "source": "\nSELECT 1;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select aliased literals",
+      "source": "\nSELECT 1 AS one,\n  TRUE AS two,\n  NULL AS three;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select",
+      "source": "\nSELECT * FROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with ONLY",
+      "source": "\nSELECT * FROM ONLY my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Table.*",
+      "source": "\nSELECT my_table.* FROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Alias.*",
+      "source": "\nSELECT t.* FROM my_table AS t;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select TSQL parameters",
+      "source": "\nSELECT @id, @VERSION FROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with fields that look like keywords",
+      "source": "\nSELECT t.from_where, t.created_at, t.updated_at\nFROM join_something_on AS where_this_like_that;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with fields field table alias",
+      "source": "\nSELECT m.id, m.name\nFROM my_table m;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with aliased table and column name using double quotes",
+      "source": "\nSELECT \"My Table\".name as \"My Name\"\nFROM my_table \"My Table\";\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with quoted column",
+      "source": "\nSELECT tab.\"COL\" FROM tab;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with where",
+      "source": "\nSELECT id\nFROM my_table\nWHERE id = 4;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with where and string",
+      "source": "\nSELECT id\nFROM my_table\nWHERE id = \"abc\";\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with IN",
+      "source": "\nSELECT id\nFROM my_table\nWHERE id IN(1,2);\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with NOT IN",
+      "source": "\nSELECT id\nFROM my_table\nWHERE id NOT IN(1,2);\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with more NOT INs",
+      "source": "\nSELECT id\nFROM my_table\nWHERE id NOT IN(1,2) AND id NOT IN (SELECT id FROM other_table);\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with IF",
+      "source": "\nSELECT IF(m.is_published, 'global', 'local') as published_scope\nFROM my_table m;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with complex IF",
+      "source": "\nSELECT m.is_published, IF(m.is_published > 4, 'global', 'local') published_scope\nFROM my_table m;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with distinct without parenthesis",
+      "source": "\nSELECT DISTINCT id\nFROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with count and distinct without parenthesis and alias",
+      "source": "\nSELECT COUNT(DISTINCT id) AS count\nFROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with AS",
+      "source": "\nSELECT m.id AS m_id, m.a_id a_id\nFROM my_table AS m;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with order by",
+      "source": "\nSELECT id\nFROM my_table\nWHERE id > 4\nORDER BY id DESC;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with limit",
+      "source": "\nSELECT id\nFROM my_table\nLIMIT 5;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with offset",
+      "source": "\nSELECT id\nFROM my_table\nLIMIT 5\nOFFSET 40;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with schema",
+      "source": "\nSELECT * FROM my_schema.my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with FQN",
+      "source": "\nSELECT * FROM my_database.my_schema.my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with schema and fully-qualified *",
+      "source": "\nSELECT\n  my_database.my_schema.my_table.*\nFROM\n  my_database.my_schema.my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select with schema and fully-pathed fields",
+      "source": "\nSELECT\n  my_database.my_schema.my_table.my_field\nFROM\n  my_database.my_schema.my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Distinct",
+      "source": "\nSELECT DISTINCT(id)\nFROM my_table;"
+    },
+    {
+      "file": "select.txt",
+      "title": "Distinct, no extra parens",
+      "source": "\nSELECT DISTINCT id\nFROM my_table;"
+    },
+    {
+      "file": "select.txt",
+      "title": "Distinct in count function",
+      "source": "\nSELECT COUNT(DISTINCT(id))\nFROM my_table;"
+    },
+    {
+      "file": "select.txt",
+      "title": "COUNT *",
+      "source": "\nSELECT COUNT(*)\nFROM my_table;"
+    },
+    {
+      "file": "select.txt",
+      "title": "Distinct in count function, no extra parens",
+      "source": "\nSELECT COUNT(DISTINCT id)\nFROM my_table;"
+    },
+    {
+      "file": "select.txt",
+      "title": "Joins",
+      "source": "\nSELECT a.id, b.id\nFROM my_table a\nJOIN my_other_table b\nON a.id = b.a_id\nWHERE b.c_id = 4;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Join with boolean",
+      "source": "\nSELECT *\nFROM my_table\nJOIN my_other_table ON TRUE;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Joins with hint",
+      "source": "\nSELECT a.id, b.id\nFROM my_table a\nJOIN my_other_table b USE INDEX FOR JOIN (idx_a)\nON a.id = b.a_id;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Ignore index for join",
+      "source": "\nSELECT 1\nFROM my_table a\nJOIN my_other_table b IGNORE INDEX FOR JOIN (idx_a)\nON a.id = b.a_id;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Joins with USING",
+      "source": "\nSELECT a.id, b.id\nFROM my_table a\nJOIN my_other_table b USING (q, w);\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Join a VALUES clause",
+      "source": "\nSELECT *\nFROM my_table\nJOIN (VALUES (1, 2), (3, 4)) AS v (col1, col2) ON TRUE;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Specific Joins",
+      "source": "\nSELECT table_a.id\nFROM table_a a\nLEFT JOIN table_b b\nON a.id = b.a_id\nLEFT OUTER JOIN table_c c\nON a.id = c.a_id\nRIGHT JOIN table_d d\nON a.id = d.d_id\nRIGHT OUTER JOIN table_d d\nON a.id = d.d_id\nINNER JOIN table_e e\nON a.id = e.e_id\nFULL OUTER JOIN table_f f\nON a.id = f.f_id\nFULL JOIN table_g g\nON a.id = g.g_id\nNATURAL JOIN table_h h\nUSING (id);\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Lateral join",
+      "source": "\nSELECT a.id, arr.*\nFROM my_table a\nJOIN LATERAL unnest(a.arr) AS arr ON TRUE;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Lateral join subquery",
+      "source": "\nSELECT a.id, b.*\nFROM my_table a\nCROSS JOIN LATERAL (SELECT 1) AS b;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Multiple joins",
+      "source": "\nSELECT a.id, b.id, c.id\nFROM my_table a\nJOIN my_other_table b\nON a.id = b.a_id\nJOIN table_three c\nON a.id = c.a_id\nLEFT JOIN table_four d\nJOIN table_five e\nON d.e_id = e.id\nON c.id = d.c_id;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Complex Predicates with order by",
+      "source": "\nSELECT title, id\nFROM my_table m\nWHERE m.id > 4 AND id < 3\nORDER BY m.title, id ASC;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Order by with extra directives",
+      "source": "\nSELECT id\nFROM my_table\nWHERE id > 4\nORDER BY id DESC NULLS LAST, val USING < NULLS FIRST;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Index hints",
+      "source": "\nSELECT id\nFROM my_table FORCE INDEX (long_index_identifier)\nLIMIT 1;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Index hints (use)",
+      "source": "\nSELECT id\nFROM my_table USE INDEX (long_index_identifier)\nLIMIT 1;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Union",
+      "source": "\nSELECT 1 UNION ALL SELECT 2;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Union with parenthesis",
+      "source": "\n(SELECT * FROM tb2)\nUNION\n(SELECT * FROM tb2)\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Union with many parenthesis",
+      "source": "\n(\n (SELECT * FROM tb2)\n UNION\n (SELECT * FROM tb2)\n)\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Intersect",
+      "source": "\nSELECT a FROM one\nINTERSECT\nSELECT b FROM two;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple CASE",
+      "source": "\nSELECT a, CASE b WHEN 1 THEN 'yes' ELSE 'no' END AS is_b\nFROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Standard CASE",
+      "source": "\nSELECT\n    a,\n    CASE\n        WHEN b BETWEEN 0 AND 1 THEN 'small'\n        WHEN (b < 100) THEN 'lower_hundered'\n        WHEN ((b < 1000) and (b>300)) THEN 'middle'\n        WHEN b > 1 THEN 'yes'\n        ELSE 'no'\n    END AS is_b\nFROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Both CASEs, with missing ELSE and AS in the latter",
+      "source": "\nSELECT a, CASE\n    WHEN b = 1 THEN 'yes'\n    WHEN b = 2 THEN 'maybe'\n    ELSE 'no'\n  END AS is_b,\n  CASE b\n    WHEN 1 THEN 'yes'\n    WHEN 2 THEN 'maybe'\n  END is_b_really\nFROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Concatenation",
+      "source": "\nSELECT id || '-' || name FROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Altogether now",
+      "source": "\nSELECT c._id, c.p_id\n  FROM c_table c\nFORCE INDEX (idx_c_on_s_id_and_p_id_and_c_id)\nJOIN cp_table cp\n  ON cp.c_id = c.id\n  AND cp.s_id = c.s_id\nJOIN my_table USE INDEX FOR JOIN (idx_my_table_on_s_id_and_id)\n  ON c.c_id = my_table.id\n  AND c.s_id = my_table.s_id\nWHERE c.s_id = 1239\n  AND c.p_id in (1)\n  AND cp.ch_id = 6\n  AND cp.is_published = TRUE\nORDER BY my_table.title, my_table.id;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Multiple tables in list",
+      "source": "\nSELECT *\nFROM\n    Table1 a,\n    Table2 b,\n    Table3 c,\n    TableN z;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Parameterized Queries",
+      "source": "\nSELECT *\nFROM x\nWHERE id = ?;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Parameterized Queries w/ $1 syntax",
+      "source": "\nSELECT *\nFROM x\nWHERE id = $12;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select from aliased subquery",
+      "source": "\nSELECT a\nFROM\n  (SELECT * FROM tab2) AS tab;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select from inplace values insert",
+      "source": "\nSELECT\n    *\nFROM\n    (VALUES (1, 2), (3, 4)) AS V (col1, col2);\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "CASE WHEN with bool column",
+      "source": "\nWITH test_data AS (\nSELECT\n    *\nFROM\n    (VALUES\n        (true))\n    AS t (a)\n)\nSELECT\n    CASE WHEN a THEN 'A' END AS A\nFROM test_data;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "No semi-colon",
+      "source": "\nSELECT *\nFROM some_table s\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Aliases everywhere",
+      "source": "\nSELECT\n  s.id,\n  at.code AS codes,\n  -- comment\n  s.another_table_id\nFROM some_table s\n  LEFT JOIN another_table at\n    ON s.another_table_id = at.id\nWHERE\n  s.is_not_deleted = 1\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Arrays",
+      "source": "\nSELECT array[1, 2, 3 + 4, '5'::int, int_please()];\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select Array with nested dml_read",
+      "source": "\nSELECT ARRAY(SELECT col FROM tab)\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with positive and negative integers",
+      "source": "\nSELECT a + 3 from b where a >= -14\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with positive and negative floats",
+      "source": "\nSELECT a + 3.1415 from b where a >= -3.14\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select intervals",
+      "source": "\nSELECT interval '1m'\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with string literals containing single quotes",
+      "source": "\nSELECT 'foo''bar';\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with string literals starting/ending with single quotes",
+      "source": "\nSELECT '''foo''';\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with string literals containing consecutive single quotes",
+      "source": "\nSELECT 'foo''''''bar';\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select between timestamps",
+      "source": "\nselect\n    a\nfrom b\nwhere a between '2022-01-01' and '2023-01-01'\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select not between range",
+      "source": "\nselect\n    a\nfrom b\nwhere a not between 1 and 3\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "parameterized expressions",
+      "source": "\nSELECT 1\nFROM foo\nWHERE (foo OR bar) AND baz\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "parenthesized select",
+      "source": "\n(SELECT 1)\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select with filtered aggregation",
+      "source": "\nSELECT\n    count(*) FILTER (WHERE i < 5) AS filtered\nFROM tab\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "SELECT FROM SUBQUERY WITH UNION",
+      "source": "\nSELECT\na1.*\nFROM (\n  SELECT * FROM tb01\n  UNION ALL\n  SELECT * FROM tb01\n) a1;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "SELECT FROM UNNESTED ARRAY WITH ORDINALITY",
+      "source": "\nSELECT numbers, n, a\nFROM (\n  VALUES\n    (ARRAY[2, 5]),\n    (ARRAY[7, 8, 9])\n) AS x (numbers)\nCROSS JOIN UNNEST(numbers) WITH ORDINALITY AS t (n, a);\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Simple select into",
+      "source": "\nSELECT col into alpha FROM my_table;\n"
+    },
+    {
+      "file": "select.txt",
+      "title": "Select into multiple vars",
+      "source": "\nSELECT col1, col2, col3 into alpha, beta, gamma FROM my_table;\n"
+    },
+    {
+      "file": "set.txt",
+      "title": "Set statement",
+      "source": "\nSET client_encoding = 'UTF8';\n"
+    },
+    {
+      "file": "set.txt",
+      "title": "Set statement on",
+      "source": "\nSET standard_conforming_strings = on;\n"
+    },
+    {
+      "file": "set.txt",
+      "title": "Set statement off",
+      "source": "\nSET standard_conforming_strings = off;\n"
+    },
+    {
+      "file": "set.txt",
+      "title": "Set statement default",
+      "source": "\nSET standard_conforming_strings TO DEFAULT;\n"
+    },
+    {
+      "file": "set.txt",
+      "title": "Reset statement",
+      "source": "\nRESET standard_conforming_strings;\n"
+    },
+    {
+      "file": "set.txt",
+      "title": "Reset all",
+      "source": "\nRESET ALL;\n"
+    },
+    {
+      "file": "show.txt",
+      "title": "SHOW CREATE TABLE",
+      "source": "\nSHOW CREATE TABLE mytable;\n"
+    },
+    {
+      "file": "show.txt",
+      "title": "SHOW CREATE VIEW",
+      "source": "\nSHOW CREATE VIEW myview;\n"
+    },
+    {
+      "file": "show.txt",
+      "title": "SHOW CREATE SCHEMA",
+      "source": "\nSHOW CREATE SCHEMA myschema;\n"
+    },
+    {
+      "file": "show.txt",
+      "title": "SHOW CREATE USER",
+      "source": "\nSHOW CREATE USER einstein;\n"
+    },
+    {
+      "file": "show.txt",
+      "title": "SHOW ALL",
+      "source": "\nSHOW ALL;\n"
+    },
+    {
+      "file": "show.txt",
+      "title": "SHOW TABLES with PATTERN",
+      "source": "\nSHOW TABLES FROM tpch.tiny LIKE 'p%';\n"
+    },
+    {
+      "file": "subquery.txt",
+      "title": "Can parse subquery",
+      "source": "\nSELECT id\nFROM foo\nWHERE id < (\n  SELECT id\n  FROM bar\n  LIMIT 1);\n"
+    },
+    {
+      "file": "transaction.txt",
+      "title": "Empty transaction",
+      "source": "\nBEGIN;\nCOMMIT;\n"
+    },
+    {
+      "file": "transaction.txt",
+      "title": "Transaction begin and commit",
+      "source": "\nBEGIN;\nALTER TABLE my_table\n  ADD COLUMN val3 VARCHAR(100) NOT NULL;\nUPDATE my_table SET val3 = 'new';\nCOMMIT;\n"
+    },
+    {
+      "file": "transaction.txt",
+      "title": "Transaction begin and rollback",
+      "source": "\nBEGIN;\nALTER TABLE my_table\n  ADD COLUMN val3 VARCHAR(100) NOT NULL;\nROLLBACK;\n"
+    },
+    {
+      "file": "transaction.txt",
+      "title": "Use explicit transaction keywords",
+      "source": "\nBEGIN TRANSACTION;\nALTER TABLE my_table\n  ADD COLUMN val3 VARCHAR(100) NOT NULL;\nROLLBACK TRANSACTION;\n"
+    },
+    {
+      "file": "unload.txt",
+      "title": "Simple Unload",
+      "source": "\nUNLOAD (SELECT * FROM old_table)\nTO 's3://amzn-s3-demo-bucket/unload_test_1/'\nWITH (format = 'JSON')\n"
+    },
+    {
+      "file": "unload.txt",
+      "title": "Unload with ARRAY",
+      "source": "\nUNLOAD (SELECT name1, address1, comment1, key1 FROM table1)\nTO 's3://amzn-s3-demo-bucket/ partitioned/'\nWITH (format = 'TEXTFILE', partitioned_by = ARRAY['key1'])\n"
+    },
+    {
+      "file": "update.txt",
+      "title": "Simple update",
+      "source": "\nUPDATE my_table\nSET for = foo + 1;\n"
+    },
+    {
+      "file": "update.txt",
+      "title": "Simple update with ONLY",
+      "source": "\nUPDATE ONLY my_table\nSET for = foo + 1;\n"
+    },
+    {
+      "file": "update.txt",
+      "title": "update with multiple assignments",
+      "source": "\nUPDATE my_table\nSET for = foo + 1, col2 = col1;\n"
+    },
+    {
+      "file": "update.txt",
+      "title": "update with multiple table references",
+      "source": "\nUPDATE items, month\nSET items.price=month.price\nWHERE items.id=month.item_id;\n"
+    },
+    {
+      "file": "update.txt",
+      "title": "update with function call",
+      "source": "\nUPDATE my_table\nSET ts = now();\n"
+    },
+    {
+      "file": "update.txt",
+      "title": "Update with a JOIN",
+      "source": "\nUPDATE table_a a\nINNER JOIN table_b b ON b.a = a.uid\nINNER JOIN table_c c ON c.b = b.uid\nSET\na.d = 5;\n"
+    },
+    {
+      "file": "update.txt",
+      "title": "Postgres style update",
+      "source": "\nUPDATE table_a as a\nSET d = 5\nWHERE b.a = a.uid;\n"
+    },
+    {
+      "file": "update.txt",
+      "title": "Postgres style update w/ join",
+      "source": "\nUPDATE table_a as a\nSET d = 5\nFROM table_b b\nINNER JOIN table_c c ON c.b = b.uid\nWHERE b.a = a.uid;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions Partition by",
+      "source": "\nSELECT\n  x,\n  y,\n  z,\n  AVG(x) OVER (PARTITION BY y)\nFROM tab1;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions Order by",
+      "source": "\nSELECT\n  x,\n  y,\n  z,\n  AVG(x) OVER (ORDER BY y DESC NULLS LAST)\nFROM tab1;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions Partition and Order by",
+      "source": "\nSELECT\n  x,\n  y,\n  z,\n  AVG(x) OVER (PARTITION BY z ORDER BY y DESC NULLS FIRST)\nFROM tab1;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions Empty Window",
+      "source": "\nSELECT\n  a,\n  SUM(b) OVER () AS empty_sum\nFROM tab1;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions two inline functions",
+      "source": "\nSELECT\n  a,\n  SUM(b) OVER (PARTITION BY c) AS w1,\n  AVG(b) OVER (ORDER BY d) AS w2,\nFROM tab1;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions separate definition",
+      "source": "\nSELECT\n  x,\n  y,\n  MAX(x) OVER window_def\nFROM tab1\nWINDOW window_def AS (PARTITION BY y);\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions one inlined one named",
+      "source": "\nSELECT\n  a,\n  SUM(b) OVER (PARTITION BY c) AS w1,\n  AVG(b) OVER win AS w2\nFROM tab1\nWINDOW win AS (ORDER BY d)\n;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions partition order frame",
+      "source": "\nSELECT\n    a,\n    c,\n    MAX(c) OVER (\n        PARTITION BY a\n        ORDER BY a\n        RANGE BETWEEN UNBOUNDED PRECEDING\n        AND UNBOUNDED FOLLOWING\n    ),\n    MAX(c) OVER (\n        PARTITION BY a\n        RANGE a + 1 PRECEDING\n    )\nFROM\n    tab;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions complex example",
+      "source": "\nSELECT\n    a,\n    c,\n    MAX(c) OVER (\n        PARTITION BY a,b\n        ORDER BY a ASC NULLS FIRST\n        ROWS BETWEEN 3 PRECEDING\n        AND 3 FOLLOWING EXCLUDE CURRENT ROW\n    )\nFROM\n    tab;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window Functions complex example #2",
+      "source": "\nSELECT\n  a,\n  c,\n  MAX(c) OVER (\n    PARTITION BY\n      1,\n      a,\n      $1,\n      CASE WHEN a > 100 THEN TRUE ELSE FALSE END,\n      CAST(a AS DATE),\n      a::DATE,\n      (SELECT a FROM b),\n      date_trunc(a),\n      a * b\n    ORDER BY\n      1,\n      a,\n      $1,\n      CASE WHEN a > $2 THEN TRUE ELSE FALSE END,\n      CAST(a AS DATE),\n      a::DATE,\n      (SELECT a FROM b),\n      date_trunc(a),\n      a * b\n  )\nFROM\n    tab;\n"
+    },
+    {
+      "file": "window_functions.txt",
+      "title": "Window function with empty count as aggregation",
+      "source": "\nSELECT\n  count(*) OVER (PARTITION BY c) AS w1\nFROM tab1\n;\n"
+    }
+  ]
+}

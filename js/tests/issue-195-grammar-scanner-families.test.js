@@ -7,6 +7,7 @@ import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-i
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtureGroups = [
+  ['parity/fixtures/scanner-remembered-content.json', 'I195-GRAMMAR-SCANNER-REMEMBERED-CONTENT'],
   ['parity/fixtures/scanner-remembered-delimiters.json', 'I195-GRAMMAR-SCANNER-REMEMBERED-DELIMITERS'],
   ['parity/fixtures/scanner-context-tokens.json', 'I195-GRAMMAR-SCANNER-CONTEXT-TOKENS'],
   ['parity/fixtures/scanner-delimiter-runs.json', 'I195-GRAMMAR-SCANNER-DELIMITER-RUNS'],
@@ -92,4 +93,11 @@ test('remembered delimiter descriptors reject nullable tags and conflicting toke
   for (const change of [{ tagPattern: '' }, { tagPattern: 'a*' }, { tagPattern: '(a|)' }, { endToken: 'opening' }, { startToken: ') fail (' }]) {
     assert.throws(() => scannerFamilies([{ ...descriptor, ...change }]));
   }
+});
+
+test('remembered literal and content descriptors validate their state and boundary policies', () => {
+  const whole = { family: 'remembered-literal', name: 'tags', token: 'literal', startToken: 'opening', contentToken: 'body', endToken: 'closing', tagPattern: '\\$[^$\\s]*\\$' };
+  for (const change of [{ token: 'opening' }, { excludedLabels: ') fail (' }, { tagPattern: 'a*' }]) assert.throws(() => scannerFamilies([{ ...whole, ...change }]), TypeError);
+  const content = { family: 'remembered-content', name: 'tags', delimiterToken: 'marker', contentToken: 'body', delimiterPattern: '[a-z]{1,4}', closingPrefix: ')', closingSuffix: '"' };
+  for (const change of [{ contentToken: 'marker' }, { delimiterPattern: 'a*' }, { closingPrefix: '' }, { closingSuffix: '' }, { allowEmpty: 1 }, { allowEnd: 'yes' }]) assert.throws(() => scannerFamilies([{ ...content, ...change }]), TypeError);
 });

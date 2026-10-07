@@ -421,15 +421,14 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'required concept distinctions',
-    files: ['rust/src/concept_distinctions.rs'],
+    files: ['rust/src/data/required-concept-distinctions.rs'],
     extract: (text) =>
-      [...block(text, 'pub const REQUIRED_CONCEPT_DISTINCTIONS', '\n];').matchAll(/concepts: \[([^\]]*)\]/gu)].flatMap(([, pair]) => captures(pair, /"([^"]+)"/gu)),
+      [...text.matchAll(/concepts: \[([^\]]*)\]/gu)].flatMap(([, pair]) => captures(pair, /"([^"]+)"/gu)),
   },
   {
     inventory: 'required concept distinctions',
-    files: ['js/src/concept-distinctions.js'],
-    extract: (text) =>
-      [...block(text, 'export const REQUIRED_CONCEPT_DISTINCTIONS', '\n].map').matchAll(/concepts: \[([^\]]*)\]/gu)].flatMap(([, pair]) => captures(pair, /'([^']+)'/gu)),
+    files: ['js/src/data/required-concept-distinctions.json'],
+    extract: (text) => JSON.parse(text).flatMap(({ concepts }) => concepts),
   },
   {
     inventory: 'structural programming concepts',

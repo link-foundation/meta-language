@@ -125,3 +125,18 @@ fn generated_context_tokens_and_counted_line_delimiters_match_shared_trees() {
         test_name: "generated_context_tokens_and_counted_line_delimiters_match_shared_trees",
     });
 }
+
+#[test]
+fn remembered_content_matches_shared_trees_and_clears_state() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-remembered-content.json"
+    ));
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-SCANNER-REMEMBERED-CONTENT",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-grammar-scanner-remembered-content",
+        fixture_file: "parity/fixtures/scanner-remembered-content.json",
+        assertions: &["rememberedLiteralText", "rememberedContentText"],
+        test_name: "remembered_content_matches_shared_trees_and_clears_state",
+    });
+}

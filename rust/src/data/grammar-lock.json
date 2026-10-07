@@ -51,7 +51,8 @@
       "version": "0.23.4",
       "parserSha256": "2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814",
       "wasmSha256": "f5ff3ba7af054af846f37dfd2525bdfede95530d5747a8fe30df87d070ece607",
-      "license": "cpp.LICENSE"
+      "license": "cpp.LICENSE",
+      "oracle": true
     },
     "csharp": {
       "id": "csharp",
@@ -499,7 +500,8 @@
       "version": "0.3.11",
       "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
       "wasmSha256": "e03fb5079e88cfe0807056c284fd2b0589cee35df9bbb3d07e72f2f4178de8de",
-      "license": "sql.LICENSE"
+      "license": "sql.LICENSE",
+      "oracle": true
     },
     "swift": {
       "id": "swift",

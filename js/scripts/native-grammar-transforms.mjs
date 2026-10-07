@@ -3,6 +3,29 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'symbol-prefix-exclusion') {
+      const { rule, symbol, prefixRule } = decision;
+      if (![rule, symbol, prefixRule].every((name) => Object.hasOwn(grammar.rules, name))) throw new TypeError('prefix exclusions need existing target, symbol and prefix rules');
+      const prefixes = [];
+      const first = (node) => {
+        if (node.type === 'STRING' && node.value) prefixes.push(node);
+        else if (node.type === 'SEQ') first(node.members[0]);
+        else if (node.type === 'CHOICE') node.members.forEach(first);
+        else if (node.content) first(node.content);
+      };
+      first(grammar.rules[prefixRule]);
+      if (!prefixes.length) throw new TypeError('a prefix rule needs initial literal alternatives');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'SYMBOL' && node.name === symbol) { changes += 1; return { type: 'NATIVE_PREFIX_EXCLUSION', content: node, prefixes: { type: 'CHOICE', members: prefixes } }; }
+        return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, rewrite(value)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (!changes) throw new TypeError('the target rule contains no selected symbol');
+      continue;
+    }
     if (decision.family === 'field-ordered-variants') {
       const { rule, field, variants } = decision;
       if (!Object.hasOwn(grammar.rules, rule) || typeof field !== 'string' || !field || !Array.isArray(variants) || variants.length < 2 || new Set(variants).size !== variants.length) throw new TypeError('field ordering needs an existing rule, field and distinct alternatives');
@@ -179,6 +202,24 @@ export function transformNativeSource(source, transformations = []) {
       if (changes !== 1) throw new TypeError('variant precedence must select exactly one production');
       continue;
     }
+    if (decision.family === 'alias-choice-rule') {
+      const { rule, alias, helper } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || typeof alias !== 'string' || !alias || typeof helper !== 'string' || !/^_[A-Za-z_]+$/u.test(helper) || Object.hasOwn(grammar.rules, helper)) throw new TypeError('alias choice rules need an existing rule, alias and unique hidden helper');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'ALIAS' && node.named && node.value === alias && node.content.type === 'CHOICE') {
+          changes += 1;
+          grammar.rules[helper] = node.content;
+          return { ...node, content: { type: 'SYMBOL', name: helper } };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('alias choice rules must select exactly one named choice');
+      continue;
+    }
     if (decision.family === 'context-rule-variants') {
       const { rules, insertInto, prefix, opaqueRules = [] } = decision;
       if (!Array.isArray(rules) || !rules.length || new Set(rules).size !== rules.length || !Array.isArray(insertInto) || !insertInto.length || typeof prefix !== 'string' || !/^_[A-Za-z_]+$/u.test(prefix)) throw new TypeError('context variants need distinct rules, insertion rules and a hidden helper prefix');
@@ -260,10 +301,11 @@ export function transformNativeSource(source, transformations = []) {
       continue;
     }
     if (decision.family === 'symbol-keyword-exclusion') {
-      const { rule, symbol, keywordRules, wordRule } = decision;
-      if (!Object.hasOwn(grammar.rules, rule) || !Object.hasOwn(grammar.rules, symbol) || !Object.hasOwn(grammar.rules, wordRule) || !Array.isArray(keywordRules) || !keywordRules.length || keywordRules.some((name) => !Object.hasOwn(grammar.rules, name))) throw new TypeError('keyword exclusions need existing target, word and keyword rules');
-      const patterns = [];
+      const { rule, symbol, keywordRules = [], keywords = [], keywordPatterns = false, wordRule } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || !Object.hasOwn(grammar.rules, symbol) || !Object.hasOwn(grammar.rules, wordRule) || typeof keywordPatterns !== 'boolean' || !Array.isArray(keywordRules) || !Array.isArray(keywords) || (!keywordRules.length && !keywords.length) || keywords.some((word) => typeof word !== 'string' || !word) || keywordRules.some((name) => !Object.hasOwn(grammar.rules, name))) throw new TypeError('keyword exclusions need existing target, word and keyword rules');
+      const patterns = keywords.map((value) => ({ type: 'STRING', value }));
       const first = (node) => {
+        if (keywordPatterns && ['PATTERN', 'STRING'].includes(node.type)) { patterns.push(node); return; }
         if (node.type === 'ALIAS' && !node.named) {
           let token = node.content;
           while (['PREC', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(token.type)) token = token.content;

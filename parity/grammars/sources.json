@@ -651,6 +651,75 @@
         "sha256": "9d2d7d22b007bf0570d28b7350e6fc45ffb6eeab7b080cd0c33ec0ad33e99482"
       },
       "oracle": "groovy"
+    },
+    {
+      "id": "tree-sitter-cpp",
+      "language": "cpp",
+      "native": "native-cpp",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-cpp 0.23.4",
+      "repository": "https://github.com/tree-sitter/tree-sitter-cpp",
+      "revision": "f41e1a044c8a84ea9fa8577fdd2eab92ec96de02",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-cpp-0.23.4.grammar.json.gz",
+      "sha256": "c0a93751d708440bb2c1929d738a5b03c4b835f61e5aeb580d0af269faf68f8d",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-cpp-0.23.4.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/cpp.lino",
+        "sha256": "7a5c20b296a2b753daf1abe288fabe17353d4175bf6937ec5e37effa8473c0c6",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "cf60387d290271f4d2fb558d0569b2b9ef879cb72206a9df5cc73b0b1a4b20ff"
+        },
+        "generator": "js/experiments/build-cpp-scanner.mjs",
+        "immediate": [
+          "raw_string_delimiter",
+          "raw_string_content"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-cpp-0.23.4.corpus.json.gz",
+        "sha256": "0bce221046dfa7efa1c526129e5cc8975a2a2156cd3130505543f26f214cbcc0"
+      },
+      "oracle": "cpp"
+    },
+    {
+      "id": "tree-sitter-sequel",
+      "language": "sql",
+      "native": "native-sql",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-sequel 0.3.11",
+      "repository": "https://github.com/derekstride/tree-sitter-sql",
+      "revision": "7b51ecda191d36b92f5a90a8d1bc3faef1c7b8b8",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-sequel-0.3.11.grammar.json.gz",
+      "sha256": "d0ce0452876e14e73b533dd2a3010fbded021a55d153d6e6842cd0127efa971c",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-sequel-0.3.11.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/sql.lino",
+        "sha256": "92201ee76aa3a87a5ef40833307c5118d265a4317fcf24b5e3ee4848b574a266",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "de17b5cffc3c86f56cf6630abb969330c3c839a81ece0b901bdac0ecee93c403"
+        },
+        "generator": "js/experiments/build-sql-scanner.mjs",
+        "immediate": []
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-sequel-0.3.11.corpus.json.gz",
+        "sha256": "9e56d442429a7dbb94355ebb8c2c4984c3306bf240aab81ef7edb47f464940a2"
+      },
+      "oracle": "sql",
+      "generatedFrom": {
+        "path": "grammar.js",
+        "sha256": "6b1f0554a355d8fe3b341ef25c7236cf4b433f85b632e39ade62931b78de16bc",
+        "artifact": "crates.io tree-sitter-sequel 0.3.11 src/grammar.json",
+        "reason": "The release archive includes grammar.json generated from this exact grammar.js; the repository tracks the grammar definition and scanner but not the generated JSON."
+      }
     }
   ]
 }

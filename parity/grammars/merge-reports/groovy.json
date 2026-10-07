@@ -14,7 +14,7 @@
       "license": "MIT"
     }
   ],
-  "rules": 181,
+  "rules": 183,
   "keywords": [
     "_",
     "abstract",
@@ -223,6 +223,14 @@
     {
       "source": "_multiline_string_fragment_single",
       "native": "multiple_line_string_fragment_single"
+    },
+    {
+      "source": "_class_method_declaration",
+      "native": "class_method_declaration"
+    },
+    {
+      "source": "_class__method_header",
+      "native": "class_method_header"
     }
   ],
   "expandedWords": [
@@ -275,7 +283,7 @@
         "concept": "grammar.block-comment"
       }
     ],
-    "generated": 171
+    "generated": 173
   },
   "sourceTransforms": [
     {
@@ -349,16 +357,33 @@
         "block",
         "expression_statement"
       ],
-      "reason": "Prefer the direct switch production and a semicolon-terminated statement block, retaining closure and expression alternatives for other contexts.",
-      "lookaheadPatterns": {
-        "block": "\\{(?:[^}]*;\\s*|\\s*)\\}"
-      }
+      "reason": "Prefer direct switches and statement blocks while consequence expressions retain their field-local order."
+    },
+    {
+      "family": "context-rule-variants",
+      "rules": [
+        "method_declaration",
+        "_method_header"
+      ],
+      "insertInto": [
+        "_class_body_declaration"
+      ],
+      "prefix": "_class_",
+      "reason": "A class method has a contextual def type spelling; clone only its header and declaration, preserving the ordinary top-level productions."
+    },
+    {
+      "family": "field-literal-alternative",
+      "rule": "_class__method_header",
+      "field": "type",
+      "literal": "def",
+      "alias": "type_identifier",
+      "reason": "Permit the source contextual def method type only inside a class declaration."
     },
     {
       "family": "ordered-variants",
       "rule": "_class_body_declaration",
       "variants": [
-        "method_declaration",
+        "alias:method_declaration",
         "field_declaration"
       ],
       "reason": "Keep a complete method before an overlapping field prefix inside a class, retaining the field production when no method fits."
@@ -385,35 +410,31 @@
       "reason": "Prefer complete typed method declarations at the input boundary, preserving def functions and all original alternatives."
     },
     {
-      "family": "complete-context-variant",
-      "rule": "_toplevel_statement",
-      "symbol": "statement",
-      "boundary": null,
-      "reason": "Keep a complete top-level statement before overlapping juxtaposed call reductions; preserve every other alternative."
-    },
-    {
-      "family": "field-literal-alternative",
-      "rule": "_method_header",
-      "field": "type",
-      "literal": "def",
-      "alias": "type_identifier",
-      "reason": "The source identifier accepts def as the contextual method type; retain that spelling when the keyword extractor recognizes def elsewhere."
-    },
-    {
       "family": "pattern-trivia-run",
       "rule": "local_variable_declaration",
       "pattern": "\\n",
       "reason": "Keep the full run of existing newline extras in the declaration terminator span; a single newline remains the same production."
     },
     {
-      "family": "keyword-context-variant",
+      "family": "complete-context-variant",
       "rule": "_toplevel_statement",
-      "symbol": "function_definition",
+      "symbol": "statement",
+      "boundary": null,
       "includedKeywords": [
+        "if"
+      ],
+      "wordRule": "identifier",
+      "reason": "A complete conditional statement retains its direct consequence at the input boundary; the contextual keyword guard preserves unrelated literal and declaration choices."
+    },
+    {
+      "family": "symbol-keyword-exclusion",
+      "rule": "_method_header",
+      "symbol": "_unannotated_type",
+      "keywords": [
         "def"
       ],
       "wordRule": "identifier",
-      "reason": "Keep top-level def functions before the contextual class-method type spelling, preserving every other production."
+      "reason": "The def spelling starts a top-level function; reserve it at the method header type position, after annotations, while the separately cloned class header keeps its contextual alternative."
     }
   ],
   "approximations": [],
