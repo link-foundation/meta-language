@@ -1583,7 +1583,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "dd32a837bcf3ac7b321b3d8e15393a0d95b87ac1af831b3443d12bb3e5e88596"
+      "sha256": "ddc80c8084452ce7d4e19174f86c9701887677b532aa379d7df99be69c4895c3"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1593,7 +1593,7 @@
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "dd32a837bcf3ac7b321b3d8e15393a0d95b87ac1af831b3443d12bb3e5e88596"
+      "sha256": "ddc80c8084452ce7d4e19174f86c9701887677b532aa379d7df99be69c4895c3"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",
@@ -1838,12 +1838,12 @@
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "b1e19c3708431c513f3b776e628675aed9568cc88b913cbb6cccbe4f545cca6b"
+      "sha256": "d39c0780f6e75bdc2c954bd8cb64889c3a07e1e0529890f10a706638026f25d8"
     },
     "planned:repository-directive:i195-naming-concept-records": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "b1e19c3708431c513f3b776e628675aed9568cc88b913cbb6cccbe4f545cca6b"
+      "sha256": "d39c0780f6e75bdc2c954bd8cb64889c3a07e1e0529890f10a706638026f25d8"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -1853,7 +1853,7 @@
     "planned:repository-directive:i195-naming-native-grammars": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: readable English rule names in the native grammars",
-      "sha256": "b1e19c3708431c513f3b776e628675aed9568cc88b913cbb6cccbe4f545cca6b"
+      "sha256": "d39c0780f6e75bdc2c954bd8cb64889c3a07e1e0529890f10a706638026f25d8"
     },
     "planned:repository-directive:i195-semantics-construct-inventory": {
       "path": "parity/fixtures/four-language-conformance.json",
