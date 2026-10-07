@@ -1,0 +1,180 @@
+[
+  {
+    "name": "marked lookahead boundary",
+    "assertion": "lookaheadBoundaries",
+    "scanners": [
+      {
+        "family": "lookahead-boundary",
+        "name": "boundary",
+        "token": "boundary",
+        "before": [
+          "}"
+        ]
+      }
+    ],
+    "accept": [
+      "x}",
+      "x }",
+      "x\t\r}"
+    ],
+    "reject": [
+      "xq}",
+      "x"
+    ],
+    "generated": "(scanner boundary (tokens boundary) (operations (if (not (valid boundary)) (then fail)) mark (while (next (class plain (char %20) (char %09) (char %0D) (char %0B) (char %0C))) (do advance)) (if (some atEnd (next (literal %7D))) (then (emit boundary))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner boundary (tokens boundary) (operations (if (not (valid boundary)) (then fail)) mark (while (next (class plain (char %20) (char %09) (char %0D) (char %0B) (char %0C))) (do advance)) (if (some atEnd (next (literal %7D))) (then (emit boundary))) fail))\n(rule source normal (seq (literal x) (immediateToken (ref boundary)) (repeat0 (class plain (char %20) (char %09) (char %0D))) (literal %7D)))\n",
+    "trees": {
+      "x}": "(source \"x\" \"\" \"}\")",
+      "x }": "(source \"x\" \"\" \" \" \"}\")",
+      "x\t\r}": "(source \"x\" \"\" \"\\t\" \"\\r\" \"}\")"
+    }
+  },
+  {
+    "name": "context dependent marked colon",
+    "assertion": "contextTokens",
+    "scanners": [
+      {
+        "family": "context-token",
+        "name": "colon",
+        "token": "colon",
+        "opening": ":",
+        "rejectAfter": [
+          ":"
+        ],
+        "target": "{",
+        "stops": [
+          ";",
+          "}"
+        ],
+        "comments": true
+      }
+    ],
+    "accept": [
+      ":a{}",
+      ":é😀{}",
+      ":a/*{ ignored */{}"
+    ],
+    "reject": [
+      "::a{}",
+      ":a;",
+      "a{}",
+      ":a/*{ ignored */"
+    ],
+    "generated": "(scanner colon (tokens colon) (operations (if (not (valid colon)) (then fail)) (while (next (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C))))) (consume (literal %3A)) (if (some (next (literal %3A))) (then fail)) mark (while (not atEnd) (do (if (some (next (literal %3B)) (next (literal %7D))) (then fail)) (if (all (next (literal %7B)) (equal (depth comment) (integer 0))) (then (emit colon))) (if (all (equal (depth comment) (integer 0)) (next (literal %2F%2A))) (then (consume (literal %2F%2A)) (push comment (integer 1))) (else (if (all (greater (depth comment) (integer 0)) (next (literal %2A%2F))) (then (consume (literal %2A%2F)) (pop comment)) (else advance)))))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner colon (tokens colon) (operations (if (not (valid colon)) (then fail)) (while (next (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C))))) (consume (literal %3A)) (if (some (next (literal %3A))) (then fail)) mark (while (not atEnd) (do (if (some (next (literal %3B)) (next (literal %7D))) (then fail)) (if (all (next (literal %7B)) (equal (depth comment) (integer 0))) (then (emit colon))) (if (all (equal (depth comment) (integer 0)) (next (literal %2F%2A))) (then (consume (literal %2F%2A)) (push comment (integer 1))) (else (if (all (greater (depth comment) (integer 0)) (next (literal %2A%2F))) (then (consume (literal %2A%2F)) (pop comment)) (else advance)))))) fail))\n(rule source normal (seq (ref colon) (ref body)))\n(rule body token (repeat1 any))\n",
+    "trees": {
+      ":a{}": "(source (colon \":\") (body \"a{}\"))",
+      ":é😀{}": "(source (colon \":\") (body \"é😀{}\"))",
+      ":a/*{ ignored */{}": "(source (colon \":\") (body \"a/*{ ignored */{}\"))"
+    }
+  },
+  {
+    "name": "required whitespace context",
+    "assertion": "contextTokens",
+    "scanners": [
+      {
+        "family": "context-token",
+        "name": "gap",
+        "token": "gap",
+        "requireWhitespace": true,
+        "immediateCharacters": [
+          "b"
+        ],
+        "target": "{",
+        "stops": [
+          ";"
+        ]
+      }
+    ],
+    "accept": [
+      "a b{",
+      "a\tb{"
+    ],
+    "reject": [
+      "ab{",
+      "a c{"
+    ],
+    "generated": "(scanner gap (tokens gap) (operations (if (not (valid gap)) (then fail)) (if (not (next (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C)))) (then fail)) (while (next (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C))))) mark (if (next (class plain (char b))) (then (emit gap))) (while (not atEnd) (do (if (some (next (literal %3B))) (then fail)) (if (all (next (literal %7B))) (then (emit gap))) advance)) fail))\n",
+    "listing": "(grammar (start source))\n(scanner gap (tokens gap) (operations (if (not (valid gap)) (then fail)) (if (not (next (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C)))) (then fail)) (while (next (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0B) (char %0C))))) mark (if (next (class plain (char b))) (then (emit gap))) (while (not atEnd) (do (if (some (next (literal %3B))) (then fail)) (if (all (next (literal %7B))) (then (emit gap))) advance)) fail))\n(rule source normal (seq (literal a) (ref gap) (literal b) (literal %7B)))\n",
+    "trees": {
+      "a b{": "(source \"a\" ~\" \" (gap \"\") \"b\" \"{\")",
+      "a\tb{": "(source \"a\" ~\"\\t\" (gap \"\") \"b\" \"{\")"
+    }
+  },
+  {
+    "name": "line counted quotes",
+    "assertion": "lineCountedDelimiters",
+    "scanners": [
+      {
+        "family": "line-counted-delimiter",
+        "name": "quotes",
+        "token": "quotes",
+        "minimum": 3,
+        "whitespace": [
+          " ",
+          "\t",
+          "\r"
+        ]
+      }
+    ],
+    "accept": [
+      "\"\"\"\nbody\n\"\"\"",
+      "\"\"\"\n\n\"\"\"",
+      "\"\"\"\"\né😀\n\t\"\"\"\"",
+      "\"\"\"\nbody\n\"\"\n\"\"\""
+    ],
+    "reject": [
+      "\"\"\"\n\"\"\"",
+      "\"\"\nbody\n\"\"",
+      "\"\"\" x\nbody\n\"\"\"",
+      "\"\"\"\nbody"
+    ],
+    "generated": "(scanner quotes (tokens quotes) (operations (if (not (valid quotes)) (then fail)) (while (next (class plain (char %20) (char %09) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0D))))) (consume (literal %22)) (push delimiters (integer 1)) (consume (literal %22)) (push delimiters (integer 1)) (consume (literal %22)) (push delimiters (integer 1)) (while (next (literal %22)) (do (consume (literal %22)) (push delimiters (integer 1)))) (while (all (next (class plain (char %20) (char %09) (char %0D))) (not (next (literal %0A)))) (do advance)) (consume (literal %0A)) (while (not atEnd) (do (if (next (literal %0A)) (then advance (while (all (next (class plain (char %20) (char %09) (char %0D))) (not (next (literal %0A)))) (do advance)) (while (all (next (literal %22)) (less (depth candidate) (depth delimiters))) (do (consume (literal %22)) (push candidate (integer 1)))) (if (equal (depth candidate) (depth delimiters)) (then (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit quotes))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner quotes (tokens quotes) (operations (if (not (valid quotes)) (then fail)) (while (next (class plain (char %20) (char %09) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0D))))) (consume (literal %22)) (push delimiters (integer 1)) (consume (literal %22)) (push delimiters (integer 1)) (consume (literal %22)) (push delimiters (integer 1)) (while (next (literal %22)) (do (consume (literal %22)) (push delimiters (integer 1)))) (while (all (next (class plain (char %20) (char %09) (char %0D))) (not (next (literal %0A)))) (do advance)) (consume (literal %0A)) (while (not atEnd) (do (if (next (literal %0A)) (then advance (while (all (next (class plain (char %20) (char %09) (char %0D))) (not (next (literal %0A)))) (do advance)) (while (all (next (literal %22)) (less (depth candidate) (depth delimiters))) (do (consume (literal %22)) (push candidate (integer 1)))) (if (equal (depth candidate) (depth delimiters)) (then (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit quotes))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) fail))\n(rule source normal (ref quotes))\n",
+    "trees": {
+      "\"\"\"\nbody\n\"\"\"": "(source (quotes \"\\\"\\\"\\\"\\nbody\\n\\\"\\\"\\\"\"))",
+      "\"\"\"\n\n\"\"\"": "(source (quotes \"\\\"\\\"\\\"\\n\\n\\\"\\\"\\\"\"))",
+      "\"\"\"\"\né😀\n\t\"\"\"\"": "(source (quotes \"\\\"\\\"\\\"\\\"\\né😀\\n\\t\\\"\\\"\\\"\\\"\"))",
+      "\"\"\"\nbody\n\"\"\n\"\"\"": "(source (quotes \"\\\"\\\"\\\"\\nbody\\n\\\"\\\"\\n\\\"\\\"\\\"\"))"
+    }
+  },
+  {
+    "name": "prefixed counted quote overflow",
+    "assertion": "lineCountedDelimiters",
+    "scanners": [
+      {
+        "family": "line-counted-delimiter",
+        "name": "quotes",
+        "token": "quotes",
+        "minimum": 3,
+        "countModulo": 4,
+        "prefix": "~",
+        "optionalPrefixCharacters": [
+          "s",
+          "S"
+        ],
+        "whitespace": [
+          " ",
+          "\t",
+          "\r"
+        ]
+      }
+    ],
+    "accept": [
+      "~s\"\"\"\nbody\n\"\"\"",
+      "~S\"\"\"\"\"\nbody\n\"",
+      "~\"\"\"\nbody\n\"\"\""
+    ],
+    "reject": [
+      "~x\"\"\"\nbody\n\"\"\"",
+      "~s\"\"\"\nbody\n\"\""
+    ],
+    "generated": "(scanner quotes (tokens quotes) (operations (if (not (valid quotes)) (then fail)) (while (next (class plain (char %20) (char %09) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0D))))) (consume (literal %7E)) (if (next (class plain (char s) (char S))) (then advance)) (consume (literal %22)) (push delimiters (integer 1)) (if (equal (depth delimiters) (integer 4)) (then (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))))) (consume (literal %22)) (push delimiters (integer 1)) (if (equal (depth delimiters) (integer 4)) (then (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))))) (consume (literal %22)) (push delimiters (integer 1)) (if (equal (depth delimiters) (integer 4)) (then (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))))) (while (next (literal %22)) (do (consume (literal %22)) (push delimiters (integer 1)) (if (equal (depth delimiters) (integer 4)) (then (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))))))) (while (all (next (class plain (char %20) (char %09) (char %0D))) (not (next (literal %0A)))) (do advance)) (consume (literal %0A)) (while (not atEnd) (do (if (next (literal %0A)) (then advance (while (all (next (class plain (char %20) (char %09) (char %0D))) (not (next (literal %0A)))) (do advance)) (while (all (next (literal %22)) (less (depth candidate) (depth delimiters))) (do (consume (literal %22)) (push candidate (integer 1)))) (if (equal (depth candidate) (depth delimiters)) (then (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit quotes))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner quotes (tokens quotes) (operations (if (not (valid quotes)) (then fail)) (while (next (class plain (char %20) (char %09) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0D))))) (consume (literal %7E)) (if (next (class plain (char s) (char S))) (then advance)) (consume (literal %22)) (push delimiters (integer 1)) (if (equal (depth delimiters) (integer 4)) (then (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))))) (consume (literal %22)) (push delimiters (integer 1)) (if (equal (depth delimiters) (integer 4)) (then (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))))) (consume (literal %22)) (push delimiters (integer 1)) (if (equal (depth delimiters) (integer 4)) (then (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))))) (while (next (literal %22)) (do (consume (literal %22)) (push delimiters (integer 1)) (if (equal (depth delimiters) (integer 4)) (then (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))))))) (while (all (next (class plain (char %20) (char %09) (char %0D))) (not (next (literal %0A)))) (do advance)) (consume (literal %0A)) (while (not atEnd) (do (if (next (literal %0A)) (then advance (while (all (next (class plain (char %20) (char %09) (char %0D))) (not (next (literal %0A)))) (do advance)) (while (all (next (literal %22)) (less (depth candidate) (depth delimiters))) (do (consume (literal %22)) (push candidate (integer 1)))) (if (equal (depth candidate) (depth delimiters)) (then (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit quotes))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) fail))\n(rule source normal (ref quotes))\n",
+    "trees": {
+      "~s\"\"\"\nbody\n\"\"\"": "(source (quotes \"~s\\\"\\\"\\\"\\nbody\\n\\\"\\\"\\\"\"))",
+      "~S\"\"\"\"\"\nbody\n\"": "(source (quotes \"~S\\\"\\\"\\\"\\\"\\\"\\nbody\\n\\\"\"))",
+      "~\"\"\"\nbody\n\"\"\"": "(source (quotes \"~\\\"\\\"\\\"\\nbody\\n\\\"\\\"\\\"\"))"
+    }
+  }
+]

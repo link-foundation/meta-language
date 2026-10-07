@@ -91,3 +91,22 @@ fn generated_delimiter_runs_and_line_boundaries_match_shared_trees() {
         test_name: "generated_delimiter_runs_and_line_boundaries_match_shared_trees",
     });
 }
+
+#[test]
+fn generated_context_tokens_and_counted_line_delimiters_match_shared_trees() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-context-tokens.json"
+    ));
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-SCANNER-CONTEXT-TOKENS",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-grammar-scanner-context-tokens",
+        fixture_file: "parity/fixtures/scanner-context-tokens.json",
+        assertions: &[
+            "lookaheadBoundaries",
+            "contextTokens",
+            "lineCountedDelimiters",
+        ],
+        test_name: "generated_context_tokens_and_counted_line_delimiters_match_shared_trees",
+    });
+}

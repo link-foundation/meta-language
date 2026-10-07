@@ -112,6 +112,59 @@ export function transformNativeSource(source, transformations = []) {
       choice.members = choice.members.flatMap((node, index) => index === first ? [ordered] : indices.includes(index) ? [] : [node]);
       continue;
     }
+    if (decision.family === 'symbol-keyword-exclusion') {
+      const { rule, symbol, keywordRules, wordRule } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || !Object.hasOwn(grammar.rules, symbol) || !Object.hasOwn(grammar.rules, wordRule) || !Array.isArray(keywordRules) || !keywordRules.length || keywordRules.some((name) => !Object.hasOwn(grammar.rules, name))) throw new TypeError('keyword exclusions need existing target, word and keyword rules');
+      const patterns = [];
+      const first = (node) => {
+        if (node.type === 'ALIAS' && !node.named) {
+          let token = node.content;
+          while (['PREC', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(token.type)) token = token.content;
+          if (['PATTERN', 'STRING'].includes(token.type)) { patterns.push(token); return; }
+        }
+        if (node.type === 'SEQ') first(node.members[0]);
+        else if (node.type === 'CHOICE') node.members.forEach(first);
+        else if (node.content) first(node.content);
+      };
+      keywordRules.forEach((name) => first(grammar.rules[name]));
+      if (!patterns.length) throw new TypeError('the selected rules have no initial anonymous keyword tokens');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'SYMBOL' && node.name === symbol) {
+          changes += 1;
+          return { type: 'NATIVE_KEYWORD_EXCLUSION', content: node, keywords: { type: 'CHOICE', members: patterns }, word: grammar.rules[wordRule] };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('a keyword exclusion must select one contextual symbol');
+      continue;
+    }
+    if (decision.family === 'lift-token-aliases') {
+      const { rules } = decision;
+      if (!Array.isArray(rules) || !rules.length || rules.some((name) => !Object.hasOwn(grammar.rules, name))) throw new TypeError('token alias lifting needs existing rules');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (['TOKEN', 'IMMEDIATE_TOKEN'].includes(node.type) && node.content?.type === 'ALIAS') {
+          changes += 1;
+          return { ...node.content, content: { ...node, content: rewrite(node.content.content) } };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      for (const name of rules) grammar.rules[name] = rewrite(grammar.rules[name]);
+      if (!changes) throw new TypeError('the selected rules contain no token aliases');
+      continue;
+    }
+    if (decision.family === 'rule-dynamic-precedence') {
+      const { rule, value } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || !Number.isSafeInteger(value) || value <= 0) throw new TypeError('a dynamic rule preference needs an existing rule and a positive integer');
+      grammar.rules[rule] = { type: 'PREC_DYNAMIC', value, content: grammar.rules[rule] };
+      continue;
+    }
     if (decision.family === 'rule-precedence') {
       const { rule, associativity, value } = decision;
       if (!Object.hasOwn(grammar.rules, rule) || !['left', 'right', 'none'].includes(associativity) || !Number.isSafeInteger(value)) throw new TypeError('a rule precedence needs an existing rule, associativity and integer value');

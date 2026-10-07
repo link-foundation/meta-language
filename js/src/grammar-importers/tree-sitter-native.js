@@ -495,6 +495,11 @@ export function importTreeSitterNative(source, options = {}) {
         const text = fixedPattern(parseTreeSitterPattern(node.value, node.flags ?? ''));
         return inToken ? text : unnamed(`(token ${text})`, aliased);
       }
+      case 'NATIVE_KEYWORD_EXCLUSION': {
+        const keyword = expr(node.keywords, true, keywords);
+        const word = expr(unwrapPrecedence(node.word).type === 'TOKEN' ? unwrapPrecedence(node.word).content : node.word, true, keywords);
+        return `(seq (not (seq (token ${keyword}) (not (immediateToken ${word})))) ${expr(node.content, inToken, keywords, aliased)})`;
+      }
       case 'BLANK': return 'empty';
       case 'NATIVE_ORDERED_CHOICE': return `(choice ordered ${node.members.map((member) => expr(member, inToken, keywords)).join(' ')})`;
       case 'SEQ': {

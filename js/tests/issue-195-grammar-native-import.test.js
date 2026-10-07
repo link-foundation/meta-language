@@ -312,3 +312,40 @@ test('field-selected variant precedence keeps unselected alternatives and all fi
   assert.deepEqual(result.rules.binary.members[1].content.content, original.rules.binary.members[1].content);
   for (const change of [{ fields: { operator: 'less' } }, { fields: { lhs: 'absent' } }, { value: 1.5 }, { dynamic: -1 }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
 });
+
+test('contextual keyword exclusions preserve command prefixes and all source productions', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const literal = (value) => ({ type: 'STRING', value });
+  const source = { name: 'keywords', rules: {
+    source: { type: 'CHOICE', members: [symbol('good'), symbol('pipeline')] },
+    good: { type: 'SEQ', members: [{ type: 'ALIAS', named: false, value: 'when', content: { type: 'PREC', value: 1, content: { type: 'PATTERN', value: '[wW][hH][eE][nN]' } } }, literal('('), literal(')')] },
+    pipeline: { type: 'SEQ', members: [symbol('word'), literal('!')] },
+    word: { type: 'PATTERN', value: '[A-Za-z-]+' },
+  } };
+  const original = structuredClone(source);
+  const decision = { family: 'symbol-keyword-exclusion', rule: 'source', symbol: 'pipeline', keywordRules: ['good'], wordRule: 'word' };
+  const transformed = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(transformed.rules.good, original.rules.good);
+  assert.deepEqual(transformed.rules.pipeline, original.rules.pipeline);
+  assert.equal(transformed.rules.source.members.length, original.rules.source.members.length);
+  assert.deepEqual(transformed.rules.source.members[1].content, original.rules.source.members[1]);
+  const imported = importTreeSitterNative(transformed);
+  assert.deepEqual(imported.report.unsupported, []);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported)));
+  for (const text of ['when()', 'WhEn()', 'other!', 'when-extra!']) assert.equal(parser.parseTree(text).ok, true, text);
+  for (const text of ['when!', 'WhEn!']) assert.equal(parser.parseTree(text).ok, false, text);
+  for (const change of [{ symbol: 'absent' }, { keywordRules: ['word'] }, { wordRule: 'absent' }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('dynamic rule priorities and lifted lexical aliases retain their original bodies', () => {
+  const pattern = { type: 'PATTERN', value: '[aA]' };
+  const source = { rules: { source: { type: 'TOKEN', content: { type: 'ALIAS', named: false, value: 'a', content: { type: 'PREC', value: 1, content: pattern } } } } };
+  const original = structuredClone(source);
+  const lifted = transformNativeSource(source, [{ family: 'lift-token-aliases', rules: ['source'] }]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(lifted.rules.source, { type: 'ALIAS', named: false, value: 'a', content: { type: 'TOKEN', content: original.rules.source.content.content } });
+  const prioritized = transformNativeSource(source, [{ family: 'rule-dynamic-precedence', rule: 'source', value: 1 }]);
+  assert.deepEqual(prioritized.rules.source, { type: 'PREC_DYNAMIC', value: 1, content: original.rules.source });
+  for (const decision of [{ family: 'lift-token-aliases', rules: ['absent'] }, { family: 'rule-dynamic-precedence', rule: 'source', value: 0 }]) assert.throws(() => transformNativeSource(source, [decision]), TypeError);
+});

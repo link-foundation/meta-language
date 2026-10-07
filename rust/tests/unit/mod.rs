@@ -174,3 +174,9 @@ mod issue_195_grammar_native_zig;
 mod issue_195_grammar_native_pascal;
 
 mod issue_195_grammar_native_vb;
+
+mod issue_195_grammar_native_css;
+
+mod issue_195_grammar_native_powershell;
+
+mod issue_195_grammar_native_erlang;

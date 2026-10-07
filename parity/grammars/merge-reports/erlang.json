@@ -1,0 +1,678 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "erlang",
+  "native": "native-erlang",
+  "sources": [
+    {
+      "id": "tree-sitter-erlang",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-erlang 0.20.0",
+      "repository": "https://github.com/WhatsApp/tree-sitter-erlang",
+      "revision": "67e7f7f05baf492ca2a7c0d9538761b242d33d95",
+      "path": "src/grammar.json",
+      "sha256": "a225ad78f04d9f50b51c3907e0daece60c63e7b5992453cca2bb36d8fa323f16",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/erlang.lino",
+    "sha256": "1c0d30a458b8f64017b641ab0e3545c1a9b919e72fe9e9ff5cba18b1cbc9d546",
+    "ports": {
+      "path": "src/scanner.c",
+      "file": "parity/grammars/sources/tree-sitter-erlang-0.20.0.scanner.c.gz",
+      "sha256": "bcb05457c981783245db637ec98a0b47f18e0acfe939efdd69a9da3e26f1b8a6",
+      "license": "Apache-2.0",
+      "licenseFile": "parity/grammars/sources/tree-sitter-erlang-0.20.0.scanner.LICENSE-APACHE"
+    },
+    "scanners": [
+      {
+        "name": "multiple_quote_string",
+        "tokens": [
+          "multiple_quote_string"
+        ]
+      },
+      {
+        "name": "multiple_quote_sigil_string",
+        "tokens": [
+          "multiple_quote_sigil_string"
+        ]
+      },
+      {
+        "name": "rejection_guard",
+        "tokens": [
+          "error_sentinel"
+        ]
+      }
+    ],
+    "immediate": []
+  },
+  "rules": 196,
+  "keywords": [
+    "after",
+    "and",
+    "andalso",
+    "band",
+    "begin",
+    "behavior",
+    "behaviour",
+    "bnot",
+    "bor",
+    "bsl",
+    "bsr",
+    "bxor",
+    "callback",
+    "case",
+    "catch",
+    "compile",
+    "define",
+    "deprecated",
+    "div",
+    "elif",
+    "else",
+    "end",
+    "endif",
+    "export",
+    "export_record",
+    "export_type",
+    "feature",
+    "file",
+    "fun",
+    "if",
+    "ifdef",
+    "ifndef",
+    "import",
+    "import_record",
+    "include",
+    "include_lib",
+    "maybe",
+    "module",
+    "nominal",
+    "not",
+    "of",
+    "opaque",
+    "optional_callbacks",
+    "or",
+    "orelse",
+    "receive",
+    "record",
+    "rem",
+    "spec",
+    "ssr",
+    "try",
+    "type",
+    "undef",
+    "unit",
+    "when",
+    "where",
+    "xor"
+  ],
+  "renamed": [
+    {
+      "source": "_form",
+      "native": "top_level_declaration"
+    },
+    {
+      "source": "ssr_definition",
+      "native": "structural_search_rule_definition"
+    },
+    {
+      "source": "ssr_replacement",
+      "native": "structural_search_rule_replacement"
+    },
+    {
+      "source": "ssr_where",
+      "native": "structural_search_condition_clause"
+    },
+    {
+      "source": "_preprocessor_directive",
+      "native": "preprocessor_directive"
+    },
+    {
+      "source": "pp_include",
+      "native": "preprocessor_include_directive"
+    },
+    {
+      "source": "pp_include_lib",
+      "native": "preprocessor_library_include_directive"
+    },
+    {
+      "source": "pp_undef",
+      "native": "preprocessor_removal_directive"
+    },
+    {
+      "source": "pp_ifdef",
+      "native": "preprocessor_defined_condition_directive"
+    },
+    {
+      "source": "pp_ifndef",
+      "native": "preprocessor_undefined_condition_directive"
+    },
+    {
+      "source": "pp_else",
+      "native": "preprocessor_else_directive"
+    },
+    {
+      "source": "pp_endif",
+      "native": "preprocessor_end_directive"
+    },
+    {
+      "source": "pp_if",
+      "native": "preprocessor_if_directive"
+    },
+    {
+      "source": "pp_elif",
+      "native": "preprocessor_else_if_directive"
+    },
+    {
+      "source": "pp_define",
+      "native": "preprocessor_definition_directive"
+    },
+    {
+      "source": "_include_detail",
+      "native": "include_detail"
+    },
+    {
+      "source": "_deprecated_details",
+      "native": "deprecated_details"
+    },
+    {
+      "source": "deprecated_fas",
+      "native": "deprecated_function_arity_list"
+    },
+    {
+      "source": "deprecated_fa",
+      "native": "deprecated_function_arity"
+    },
+    {
+      "source": "deprecation_desc",
+      "native": "deprecation_description"
+    },
+    {
+      "source": "_desc",
+      "native": "description"
+    },
+    {
+      "source": "multi_string",
+      "native": "string_concatenation"
+    },
+    {
+      "source": "_string_like",
+      "native": "string_like"
+    },
+    {
+      "source": "_deprecated_fun_arity",
+      "native": "deprecated_fun_arity"
+    },
+    {
+      "source": "opaque",
+      "native": "opaque_type_declaration"
+    },
+    {
+      "source": "_type_def",
+      "native": "type_definition"
+    },
+    {
+      "source": "record_decl",
+      "native": "record_declaration"
+    },
+    {
+      "source": "spec",
+      "native": "specification"
+    },
+    {
+      "source": "_spec_def",
+      "native": "specification_definition"
+    },
+    {
+      "source": "_spec_fun",
+      "native": "specification_fun"
+    },
+    {
+      "source": "attr_name",
+      "native": "module_attribute_name"
+    },
+    {
+      "source": "fun_decl",
+      "native": "fun_declaration"
+    },
+    {
+      "source": "_fun_clause_separator",
+      "native": "fun_clause_separator"
+    },
+    {
+      "source": "type_sig",
+      "native": "type_signature"
+    },
+    {
+      "source": "ann_type",
+      "native": "annotated_type"
+    },
+    {
+      "source": "ann_var",
+      "native": "annotated_variable"
+    },
+    {
+      "source": "fun_type_sig",
+      "native": "function_type_signature"
+    },
+    {
+      "source": "_function_or_macro_clause",
+      "native": "function_or_macro_clause"
+    },
+    {
+      "source": "function_clause",
+      "native": "function_definition_clause"
+    },
+    {
+      "source": "_clause_guard",
+      "native": "clause_guard"
+    },
+    {
+      "source": "_expr",
+      "native": "expression"
+    },
+    {
+      "source": "dotdotdot",
+      "native": "ellipsis"
+    },
+    {
+      "source": "catch_expr",
+      "native": "exception_catch_expression"
+    },
+    {
+      "source": "match_expr",
+      "native": "match_expression"
+    },
+    {
+      "source": "cond_match_expr",
+      "native": "conditional_match_expression"
+    },
+    {
+      "source": "binary_op_expr",
+      "native": "binary_operator_expression"
+    },
+    {
+      "source": "unary_op_expr",
+      "native": "unary_operator_expression"
+    },
+    {
+      "source": "_expr_max",
+      "native": "primary_expression_body"
+    },
+    {
+      "source": "paren_expr",
+      "native": "parenthesized_expression"
+    },
+    {
+      "source": "block_expr",
+      "native": "scope_block_expression"
+    },
+    {
+      "source": "bit_size_expr",
+      "native": "bit_size_expression"
+    },
+    {
+      "source": "_bit_expr",
+      "native": "bit_expression"
+    },
+    {
+      "source": "unary_op_expr_max",
+      "native": "primary_unary_operator_expression"
+    },
+    {
+      "source": "binary_op_expr_max",
+      "native": "primary_binary_operator_expression"
+    },
+    {
+      "source": "_bit_type",
+      "native": "bit_type"
+    },
+    {
+      "source": "lc_exprs",
+      "native": "comprehension_qualifier_expression_list"
+    },
+    {
+      "source": "lc_or_zc_expr",
+      "native": "comprehension_zip_or_filter_expression"
+    },
+    {
+      "source": "_lc_expr",
+      "native": "comprehension_qualifier_expression"
+    },
+    {
+      "source": "_generator_op",
+      "native": "generator_operator"
+    },
+    {
+      "source": "_b_generator_op",
+      "native": "binary_generator_operator"
+    },
+    {
+      "source": "_map_expr",
+      "native": "map_expression_body"
+    },
+    {
+      "source": "map_expr_update",
+      "native": "map_expression_update"
+    },
+    {
+      "source": "map_expr",
+      "native": "dictionary_expression"
+    },
+    {
+      "source": "_map_expr_base",
+      "native": "map_expression_base"
+    },
+    {
+      "source": "_map_field_op",
+      "native": "map_field_operator"
+    },
+    {
+      "source": "_record_expr",
+      "native": "record_expression_body"
+    },
+    {
+      "source": "record_index_expr",
+      "native": "record_index_expression"
+    },
+    {
+      "source": "record_field_expr",
+      "native": "record_field_expression"
+    },
+    {
+      "source": "record_update_expr",
+      "native": "record_update_expression"
+    },
+    {
+      "source": "record_expr",
+      "native": "record_expression"
+    },
+    {
+      "source": "qualified_record_expr",
+      "native": "qualified_record_expression"
+    },
+    {
+      "source": "qualified_record_update_expr",
+      "native": "qualified_record_update_expression"
+    },
+    {
+      "source": "qualified_record_field_expr",
+      "native": "qualified_record_field_expression"
+    },
+    {
+      "source": "anon_record_expr",
+      "native": "anon_record_expression"
+    },
+    {
+      "source": "anon_record_update_expr",
+      "native": "anon_record_update_expression"
+    },
+    {
+      "source": "anon_record_field_expr",
+      "native": "anon_record_field_expression"
+    },
+    {
+      "source": "_record_expr_base",
+      "native": "record_expression_base"
+    },
+    {
+      "source": "_record_tuple",
+      "native": "record_tuple"
+    },
+    {
+      "source": "field_expr",
+      "native": "field_expression"
+    },
+    {
+      "source": "if_expr",
+      "native": "if_expression"
+    },
+    {
+      "source": "case_expr",
+      "native": "case_selection_expression"
+    },
+    {
+      "source": "_cr_clauses",
+      "native": "message_or_case_clause_list"
+    },
+    {
+      "source": "_cr_clause_or_macro",
+      "native": "message_or_case_clause_or_macro"
+    },
+    {
+      "source": "cr_clause",
+      "native": "message_or_case_clause"
+    },
+    {
+      "source": "receive_expr",
+      "native": "receive_expression"
+    },
+    {
+      "source": "receive_after",
+      "native": "receive_time_limit_clause"
+    },
+    {
+      "source": "_fun_expr",
+      "native": "fun_expression"
+    },
+    {
+      "source": "_macro_name",
+      "native": "macro_name"
+    },
+    {
+      "source": "_name",
+      "native": "name"
+    },
+    {
+      "source": "_arity_value",
+      "native": "arity_value"
+    },
+    {
+      "source": "fun_clauses",
+      "native": "anonymous_function_clause_list"
+    },
+    {
+      "source": "fun_clause",
+      "native": "anonymous_function_clause"
+    },
+    {
+      "source": "try_expr",
+      "native": "try_expression"
+    },
+    {
+      "source": "_try_catch",
+      "native": "try_catch"
+    },
+    {
+      "source": "try_after",
+      "native": "exception_cleanup_clause"
+    },
+    {
+      "source": "_catch_clauses",
+      "native": "catch_clause_list"
+    },
+    {
+      "source": "_catch_pat",
+      "native": "exception_pattern"
+    },
+    {
+      "source": "match_catch_pat",
+      "native": "match_catch_pattern"
+    },
+    {
+      "source": "binary_op_catch_pat",
+      "native": "binary_operator_exception_pattern"
+    },
+    {
+      "source": "maybe_expr",
+      "native": "maybe_expression"
+    },
+    {
+      "source": "_maybe_else_clause",
+      "native": "maybe_else_clause"
+    },
+    {
+      "source": "_macro_def_replacement",
+      "native": "macro_definition_replacement"
+    },
+    {
+      "source": "replacement_guard_or",
+      "native": "replacement_disjunction_guard"
+    },
+    {
+      "source": "replacement_guard_and",
+      "native": "replacement_conjunction_guard"
+    },
+    {
+      "source": "replacement_expr_guard",
+      "native": "replacement_expression_guard"
+    },
+    {
+      "source": "replacement_parens",
+      "native": "replacement_parenthesized_expression"
+    },
+    {
+      "source": "macro_lhs",
+      "native": "macro_left_hand_side"
+    },
+    {
+      "source": "_macro_body_expr",
+      "native": "macro_body_expression"
+    },
+    {
+      "source": "macro_call_expr",
+      "native": "macro_call_expression"
+    },
+    {
+      "source": "macro_call_args",
+      "native": "macro_call_arguments"
+    },
+    {
+      "source": "macro_expr",
+      "native": "macro_expression"
+    },
+    {
+      "source": "_exprs",
+      "native": "expression_list"
+    },
+    {
+      "source": "expr_args",
+      "native": "expression_argument_list"
+    },
+    {
+      "source": "var_args",
+      "native": "variable_arguments"
+    },
+    {
+      "source": "concatables",
+      "native": "concatenation_operand_list"
+    },
+    {
+      "source": "_concatable",
+      "native": "concatenation_operand"
+    },
+    {
+      "source": "_prefix_op",
+      "native": "prefix_operator"
+    },
+    {
+      "source": "_mult_op",
+      "native": "multiplication_operator"
+    },
+    {
+      "source": "_add_op",
+      "native": "addition_operator"
+    },
+    {
+      "source": "_list_op",
+      "native": "list_operator"
+    },
+    {
+      "source": "_comp_op",
+      "native": "comparison_operator"
+    },
+    {
+      "source": "var",
+      "native": "variable"
+    },
+    {
+      "source": "integer",
+      "native": "integer_literal"
+    },
+    {
+      "source": "_sq_string",
+      "native": "quoted_string_token"
+    },
+    {
+      "source": "_sigil_verbatim_string",
+      "native": "prefixed_verbatim_string_literal_body"
+    },
+    {
+      "source": "_sigil_string",
+      "native": "prefixed_string_literal_body"
+    },
+    {
+      "source": "char",
+      "native": "character_literal"
+    }
+  ],
+  "expandedWords": [
+    "ann",
+    "args",
+    "attr",
+    "char",
+    "comp",
+    "cond",
+    "decl",
+    "def",
+    "elif",
+    "endif",
+    "expr",
+    "ifdef",
+    "ifndef",
+    "lhs",
+    "lib",
+    "mult",
+    "multi",
+    "op",
+    "parens",
+    "pat",
+    "pp",
+    "sig",
+    "sigil",
+    "spec",
+    "sq",
+    "var"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "list",
+        "concept": "grammar.list"
+      },
+      {
+        "rule": "name",
+        "concept": "grammar.name"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "character_literal",
+        "concept": "grammar.character-literal"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 190
+  },
+  "approximations": [],
+  "unsupported": []
+}

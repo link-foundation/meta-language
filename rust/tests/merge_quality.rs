@@ -10,6 +10,7 @@
 //! `tests/unit/issue_195_merge_quality_evidence.rs`.
 
 use std::alloc::{GlobalAlloc, Layout, System};
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
@@ -151,6 +152,21 @@ fn natives() -> Vec<Native> {
         // development dependency, so its Rust row measures the native side.
         native!("native-lean", "lean", None),
         native!(
+            "native-css",
+            "css",
+            Some(|| tree_sitter_css::LANGUAGE.into())
+        ),
+        native!(
+            "native-powershell",
+            "powershell",
+            Some(|| tree_sitter_powershell::LANGUAGE.into())
+        ),
+        native!(
+            "native-erlang",
+            "erlang",
+            Some(|| tree_sitter_erlang::LANGUAGE.into())
+        ),
+        native!(
             "native-toml",
             "toml",
             Some(|| tree_sitter_toml_ng::LANGUAGE.into())
@@ -290,17 +306,33 @@ fn issue_195_merge_quality_time_and_memory_are_measured() {
     let published: Value = serde_json::from_str(MEASUREMENTS).expect("the measurements are JSON");
     let published = published["grammars"].as_array().expect("measured grammars");
     let natives = natives();
-    // `--measure` prints before the measurements are published.
-    assert!(
-        print
-            || published
-                .iter()
-                .map(|entry| entry["grammar"].as_str().expect("grammar"))
-                .collect::<Vec<_>>()
-                == natives.iter().map(|native| native.id).collect::<Vec<_>>(),
-        "every native grammar is measured"
+    // Measurement rows have identities; their order does not define a pairing.
+    let by_id: BTreeMap<_, _> = published
+        .iter()
+        .map(|entry| (entry["grammar"].as_str().expect("grammar"), entry))
+        .collect();
+    assert_eq!(
+        by_id.len(),
+        published.len(),
+        "measurement identities are unique"
     );
-    for (index, native) in natives.iter().enumerate() {
+    // `--measure` prints before new measurements are published.
+    if !print {
+        assert_eq!(
+            by_id.len(),
+            natives.len(),
+            "each native identity has one measurement"
+        );
+        assert_eq!(
+            by_id.keys().copied().collect::<BTreeSet<_>>(),
+            natives
+                .iter()
+                .map(|native| native.id)
+                .collect::<BTreeSet<_>>(),
+            "every native grammar is measured"
+        );
+    }
+    for native in &natives {
         if print && only.as_deref().is_some_and(|only| only != native.id) {
             continue;
         }
@@ -335,7 +367,9 @@ fn issue_195_merge_quality_time_and_memory_are_measured() {
             );
         }
         // The published measurements of both runtimes have every side.
-        let entry = &published[index];
+        let entry = by_id
+            .get(native.id)
+            .expect("the native grammar is measured");
         for (runtime, side, key) in [
             ("javascript", "native", "peakKiB"),
             ("javascript", "oracle", "peakKiB"),

@@ -32,6 +32,42 @@ const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/
 
 export const VISION_REQUIREMENTS = Object.freeze([
   {
+    id: 'I195-GRAMMAR-SCANNER-CONTEXT-TOKENS', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-context-tokens.json',
+    construct: 'marked context tokens and line counted delimiters',
+    expectedBehavior: 'Shared scanner data emits zero-width marked boundaries without consuming lookahead, requires configurable whitespace and delimiter contexts, excludes delimiters inside comments, and closes counted quote runs only after a later line break and padding. Optional prefixes and bounded counter overflow follow their descriptors. Both executors preserve every source byte, match the shared concrete trees and reject invalid contexts and truncated delimiters.',
+    assertions: ['lookaheadBoundaries', 'contextTokens', 'lineCountedDelimiters'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-CSS', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/css.json',
+    construct: 'generated native CSS grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native CSS grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary CSS parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeCssGrammarIsCanonicalLinks', 'nativeCssTreesMatchOracle', 'nativeCssTreesLossless', 'nativeCssRejectsInvalidInput', 'nativeCssUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-css.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_css.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-POWERSHELL', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/powershell.json',
+    construct: 'generated native PowerShell grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native PowerShell grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary PowerShell parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativePowerShellGrammarIsCanonicalLinks', 'nativePowerShellTreesMatchOracle', 'nativePowerShellTreesLossless', 'nativePowerShellRejectsInvalidInput', 'nativePowerShellUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-powershell.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_powershell.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-ERLANG', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/erlang.json',
+    construct: 'generated native Erlang grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Erlang grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Erlang parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeErlangGrammarIsCanonicalLinks', 'nativeErlangTreesMatchOracle', 'nativeErlangTreesLossless', 'nativeErlangRejectsInvalidInput', 'nativeErlangUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-erlang.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_erlang.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-TOML', area: 'native-grammar', specification: 'native-merged-grammars',
     fixture: 'parity/fixtures/native-grammars/toml.json',
     construct: 'generated native TOML grammar and pinned independent source corpus',

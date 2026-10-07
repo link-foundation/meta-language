@@ -179,6 +179,11 @@ Alias-pattern priorities distinguish explicit conditional directives from generi
 preprocessor extras. Field-selected associativity preserves each source alternative
 while reproducing reference-led chained comparisons. Error-union priorities retain
 optional and pointer type prefixes around their complete operand.
+The CSS, PowerShell and Erlang imports use shared marked-lookahead, contextual
+token and line-counted delimiter scanner families. Contextual keyword exclusions
+retain every source production and reserve initial statement keywords while
+preserving command prefixes, pipeline tails and explicit invocations. The pinned
+Erlang scanner license accompanies its source separately from the grammar license.
 CI reads immutable pinned corpus inputs, including Zig compiler
 source cases and Visual Basic project sources, and compares every input with
 its independent oracle in both runtimes.

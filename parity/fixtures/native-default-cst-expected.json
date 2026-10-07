@@ -286,6 +286,293 @@
       ],
       "embedded": []
     },
+    "CSS": {
+      "grammars": {
+        "native-css": {
+          "version": "1.0.0",
+          "parserSha256": "104ed187523aa37f42974a5bb1906216b88f6fe5548ebcea5728402dee8fd465"
+        }
+      },
+      "oracleGrammars": {
+        "css": {
+          "version": "0.25.0",
+          "parserSha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e"
+        }
+      },
+      "sourceSha256": "b0c546beeef68ca8c7e8e5396e1293f8b5ca8214b35c20622ce95d9cfa763f01",
+      "recoverySourceSha256": "43f57b4472ffa43a04cd65b7ca58199a7e0b1fffd6f685e44118f096bd1f9067",
+      "positive": [
+        [0,null,"stylesheet",1,0,86,""],
+        [1,null,"comment",1,0,11,"X"],
+        [1,null,"media_statement",1,12,85,""],
+        [2,null,"@media",0,12,18,""],
+        [2,null,"feature_query",1,19,36,""],
+        [3,null,"(",0,19,20,""],
+        [3,null,"feature_name",1,20,29,""],
+        [3,null,":",0,29,30,""],
+        [3,null,"integer_value",1,31,35,""],
+        [4,null,"unit",1,33,35,""],
+        [3,null,")",0,35,36,""],
+        [2,null,"block",1,37,85,""],
+        [3,null,"{",0,37,38,""],
+        [3,null,"rule_set",1,39,83,""],
+        [4,null,"selectors",1,39,51,""],
+        [5,null,"pseudo_class_selector",1,39,51,""],
+        [6,null,"child_selector",1,39,45,""],
+        [7,null,"class_selector",1,39,41,""],
+        [8,null,".",0,39,40,""],
+        [8,null,"class_name",1,40,41,""],
+        [9,null,"identifier",1,40,41,""],
+        [7,null,">",0,42,43,""],
+        [7,null,"tag_name",1,44,45,""],
+        [6,null,":",0,45,46,""],
+        [6,null,"class_name",1,46,51,""],
+        [7,null,"identifier",1,46,51,""],
+        [4,null,"block",1,52,83,""],
+        [5,null,"{",0,52,53,""],
+        [5,null,"declaration",1,54,66,""],
+        [6,null,"property_name",1,54,59,""],
+        [6,null,":",0,59,60,""],
+        [6,null,"color_value",1,61,65,""],
+        [7,null,"#",0,61,62,""],
+        [6,null,";",0,65,66,""],
+        [5,null,"declaration",1,67,81,""],
+        [6,null,"property_name",1,67,74,""],
+        [6,null,":",0,74,75,""],
+        [6,null,"string_value",1,76,80,""],
+        [7,null,"\"",0,76,77,""],
+        [7,null,"string_content",1,77,79,""],
+        [7,null,"\"",0,79,80,""],
+        [6,null,";",0,80,81,""],
+        [5,null,"}",0,82,83,""],
+        [3,null,"}",0,84,85,""]
+      ],
+      "recovery": [
+        [0,null,"stylesheet",1,0,16,""],
+        [1,null,"rule_set",1,0,15,""],
+        [2,null,"selectors",1,0,2,""],
+        [3,null,"class_selector",1,0,2,""],
+        [4,null,".",0,0,1,""],
+        [4,null,"class_name",1,1,2,""],
+        [5,null,"identifier",1,1,2,""],
+        [2,null,"block",1,3,15,""],
+        [3,null,"{",0,3,4,""],
+        [3,null,"declaration",1,5,15,""],
+        [4,null,"property_name",1,5,10,""],
+        [4,null,":",0,10,11,""],
+        [4,null,"plain_value",1,12,15,""],
+        [3,null,"}",0,15,15,"M"]
+      ],
+      "embedded": []
+    },
+    "PowerShell": {
+      "grammars": {
+        "native-powershell": {
+          "version": "1.0.0",
+          "parserSha256": "d7ba48f56c038835acb130063a34adca0bdc9b2aa6be805e9affe1099c43530e"
+        }
+      },
+      "oracleGrammars": {
+        "powershell": {
+          "version": "0.26.4",
+          "parserSha256": "f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720"
+        }
+      },
+      "sourceSha256": "cb85a6887947717f44d317bac4dbfe1a6e231de992209f180d48e45728d0a0e8",
+      "recoverySourceSha256": "759d1392964cdd670c38208d476a470a6c78ee99d5bd5556877ea2572be6ac0e",
+      "positive": [
+        [0,null,"program",1,0,89,""],
+        [1,null,"comment",1,0,7,"X"],
+        [1,null,"statement_list",1,8,88,""],
+        [2,null,"function_statement",1,8,62,""],
+        [3,null,"function",0,8,16,""],
+        [3,null,"function_name",1,17,25,""],
+        [3,null,"function_parameter_declaration",1,25,34,""],
+        [4,null,"(",0,25,26,""],
+        [4,null,"parameter_list",1,26,33,""],
+        [5,null,"script_parameter",1,26,33,""],
+        [6,null,"attribute_list",1,26,31,""],
+        [7,null,"attribute",1,26,31,""],
+        [8,null,"type_literal",1,26,31,""],
+        [9,null,"[",0,26,27,""],
+        [9,null,"type_spec",1,27,30,""],
+        [10,null,"type_name",1,27,30,""],
+        [11,null,"type_identifier",1,27,30,""],
+        [9,null,"]",0,30,31,""],
+        [6,null,"variable",1,31,33,""],
+        [4,null,")",0,33,34,""],
+        [3,null,"{",0,35,36,""],
+        [3,null,"script_block",1,39,60,""],
+        [4,"script_block_body","script_block_body",1,39,60,""],
+        [5,"statement_list","statement_list",1,39,60,""],
+        [6,null,"flow_control_statement",1,39,60,""],
+        [7,null,"return",0,39,45,""],
+        [7,null,"pipeline",1,46,60,""],
+        [8,null,"pipeline_chain",1,46,60,""],
+        [9,null,"logical_expression",1,46,60,""],
+        [10,null,"bitwise_expression",1,46,60,""],
+        [11,null,"comparison_expression",1,46,60,""],
+        [12,null,"additive_expression",1,46,60,""],
+        [13,null,"multiplicative_expression",1,46,60,""],
+        [14,null,"format_expression",1,46,60,""],
+        [15,null,"range_expression",1,46,60,""],
+        [16,null,"array_literal_expression",1,46,60,""],
+        [17,null,"unary_expression",1,46,60,""],
+        [18,null,"string_literal",1,46,60,""],
+        [19,null,"expandable_string_literal",1,46,60,""],
+        [20,null,"sub_expression",1,50,59,""],
+        [21,null,"$(",0,50,52,""],
+        [21,"statements","statement_list",1,52,58,""],
+        [22,null,"pipeline",1,52,58,""],
+        [23,null,"pipeline_chain",1,52,58,""],
+        [24,null,"logical_expression",1,52,58,""],
+        [25,null,"bitwise_expression",1,52,58,""],
+        [26,null,"comparison_expression",1,52,58,""],
+        [27,null,"additive_expression",1,52,58,""],
+        [28,null,"additive_expression",1,52,54,""],
+        [29,null,"multiplicative_expression",1,52,54,""],
+        [30,null,"format_expression",1,52,54,""],
+        [31,null,"range_expression",1,52,54,""],
+        [32,null,"array_literal_expression",1,52,54,""],
+        [33,null,"unary_expression",1,52,54,""],
+        [34,null,"variable",1,52,54,""],
+        [28,null,"+",0,55,56,""],
+        [28,null,"multiplicative_expression",1,57,58,""],
+        [29,null,"format_expression",1,57,58,""],
+        [30,null,"range_expression",1,57,58,""],
+        [31,null,"array_literal_expression",1,57,58,""],
+        [32,null,"unary_expression",1,57,58,""],
+        [33,null,"integer_literal",1,57,58,""],
+        [34,null,"decimal_integer_literal",1,57,58,""],
+        [21,null,")",0,58,59,""],
+        [3,null,"}",0,61,62,""],
+        [2,null,"pipeline",1,63,88,""],
+        [3,null,"pipeline_chain",1,63,88,""],
+        [4,null,"command",1,63,74,""],
+        [5,"command_name","command_name",1,63,71,""],
+        [5,"command_elements","command_elements",1,71,74,""],
+        [6,null,"command_argument_sep",1,71,72,""],
+        [7,null," ",0,71,72,""],
+        [6,null,"array_literal_expression",1,72,73,""],
+        [7,null,"unary_expression",1,72,73,""],
+        [8,null,"integer_literal",1,72,73,""],
+        [9,null,"decimal_integer_literal",1,72,73,""],
+        [6,null,"command_argument_sep",1,73,74,""],
+        [7,null," ",0,73,74,""],
+        [4,null,"|",0,74,75,""],
+        [4,null,"command",1,76,88,""],
+        [5,"command_name","command_name",1,76,88,""]
+      ],
+      "recovery": [
+        [0,null,"program",1,0,28,""],
+        [1,null,"statement_list",1,0,27,""],
+        [2,null,"function_statement",1,0,27,""],
+        [3,null,"function",0,0,8,""],
+        [3,null,"function_name",1,9,17,""],
+        [3,null,"function_parameter_declaration",1,17,25,""],
+        [4,null,"(",0,17,18,""],
+        [4,null,"parameter_list",1,18,25,""],
+        [5,null,"script_parameter",1,18,25,""],
+        [6,null,"attribute_list",1,18,23,""],
+        [7,null,"attribute",1,18,23,""],
+        [8,null,"type_literal",1,18,23,""],
+        [9,null,"[",0,18,19,""],
+        [9,null,"type_spec",1,19,22,""],
+        [10,null,"type_name",1,19,22,""],
+        [11,null,"type_identifier",1,19,22,""],
+        [9,null,"]",0,22,23,""],
+        [6,null,"variable",1,23,25,""],
+        [4,null,")",0,25,25,"M"],
+        [3,null,"{",0,26,27,""],
+        [3,null,"}",0,27,27,"M"]
+      ],
+      "embedded": []
+    },
+    "Erlang": {
+      "grammars": {
+        "native-erlang": {
+          "version": "1.0.0",
+          "parserSha256": "5fba5020ca7434a1f29ffb1aa3f6c23072522eda24cd395cbf0661269d6c0c87"
+        }
+      },
+      "oracleGrammars": {
+        "erlang": {
+          "version": "0.20.0",
+          "parserSha256": "c8c83443d536875c2f28f12ae4f0242f477cac82115073f4d9506c2bb188dbcc"
+        }
+      },
+      "sourceSha256": "70eda5f7da0b394a762010093b153c286862e7ea27fc781cc366a0150e4dd842",
+      "recoverySourceSha256": "c5d96914583ff1232558c1e00826de801eca26627ffc77eaf7a1a4b1207e1d76",
+      "positive": [
+        [0,null,"source_file",1,0,63,""],
+        [1,null,"comment",1,0,8,"X"],
+        [1,"forms_only","module_attribute",1,9,23,""],
+        [2,null,"-",0,9,10,""],
+        [2,null,"module",0,10,16,""],
+        [2,null,"(",0,16,17,""],
+        [2,"name","atom",1,17,21,""],
+        [2,null,")",0,21,22,""],
+        [2,null,".",0,22,23,""],
+        [1,"forms_only","export_attribute",1,24,39,""],
+        [2,null,"-",0,24,25,""],
+        [2,null,"export",0,25,31,""],
+        [2,null,"(",0,31,32,""],
+        [2,null,"[",0,32,33,""],
+        [2,"funs","fa",1,33,36,""],
+        [3,"fun","atom",1,33,34,""],
+        [3,"arity","arity",1,34,36,""],
+        [4,null,"/",0,34,35,""],
+        [4,"value","integer",1,35,36,""],
+        [2,null,"]",0,36,37,""],
+        [2,null,")",0,37,38,""],
+        [2,null,".",0,38,39,""],
+        [1,"forms_only","fun_decl",1,40,62,""],
+        [2,"clause","function_clause",1,40,61,""],
+        [3,"name","atom",1,40,41,""],
+        [3,"args","expr_args",1,41,44,""],
+        [4,null,"(",0,41,42,""],
+        [4,"args","var",1,42,43,""],
+        [4,null,")",0,43,44,""],
+        [3,"body","clause_body",1,45,61,""],
+        [4,null,"->",0,45,47,""],
+        [4,"exprs","list",1,48,61,""],
+        [5,null,"[",0,48,49,""],
+        [5,"exprs","binary_op_expr",1,49,54,""],
+        [6,"lhs","var",1,49,50,""],
+        [6,null,"+",0,51,52,""],
+        [6,"rhs","integer",1,53,54,""],
+        [5,null,",",0,54,55,""],
+        [5,"exprs","string",1,56,60,""],
+        [5,null,"]",0,60,61,""],
+        [2,null,".",0,61,62,""]
+      ],
+      "recovery": [
+        [0,null,"source_file",1,0,25,""],
+        [1,"forms_only","module_attribute",1,0,14,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"module",0,1,7,""],
+        [2,null,"(",0,7,8,""],
+        [2,"name","atom",1,8,12,""],
+        [2,null,")",0,12,13,""],
+        [2,null,".",0,13,14,""],
+        [1,"forms_only","fun_decl",1,15,24,""],
+        [2,"clause","function_clause",1,15,20,""],
+        [3,"name","atom",1,15,16,""],
+        [3,"args","expr_args",1,16,20,""],
+        [4,null,"(",0,16,17,""],
+        [4,"args","binary_op_expr",1,17,20,""],
+        [5,"lhs","var",1,17,18,""],
+        [5,null,"-",0,19,20,""],
+        [5,null,"dotdotdot",1,20,20,"M"],
+        [4,null,")",0,20,20,"M"],
+        [3,"body","clause_body",1,20,20,""],
+        [4,null,"->",0,20,20,"M"],
+        [4,null,"dotdotdot",1,20,20,"M"],
+        [2,null,"ERROR",1,20,23,"E"],
+        [2,null,".",0,23,24,""]
+      ],
+      "embedded": []
+    },
     "Lua": {
       "grammars": {
         "native-lua": {
@@ -2758,6 +3045,269 @@
                 [3,null,"{",0,19,20,""],
                 [3,null,"integer_literal",1,21,23,""],
                 [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "HTML -> CSS": {
+      "positive": {
+        "sourceSha256": "a5c4e0055546af01eb90207c552e511758078d6ce0c213e7d0e0a6b4e2f862c0",
+        "embedded": [
+          {
+            "path": "HTML style element",
+            "language": "CSS",
+            "startByte": 7,
+            "endByte": 32,
+            "rows": [
+              [0,null,"stylesheet",1,0,25,""],
+              [1,null,"rule_set",1,0,25,""],
+              [2,null,"selectors",1,0,7,""],
+              [3,null,"class_selector",1,0,7,""],
+              [4,null,".",0,0,1,""],
+              [4,null,"class_name",1,1,7,""],
+              [5,null,"identifier",1,1,7,""],
+              [2,null,"block",1,8,25,""],
+              [3,null,"{",0,8,9,""],
+              [3,null,"declaration",1,10,23,""],
+              [4,null,"property_name",1,10,15,""],
+              [4,null,":",0,15,16,""],
+              [4,null,"plain_value",1,17,22,""],
+              [4,null,";",0,22,23,""],
+              [3,null,"}",0,24,25,""]
+            ]
+          }
+        ]
+      },
+      "recovery": {
+        "sourceSha256": "22e2926a22278c91600d14dbdc69b77ebbec2a11a513fd2622894d3f97f89e24",
+        "embedded": [
+          {
+            "path": "HTML style element",
+            "language": "CSS",
+            "startByte": 7,
+            "endByte": 31,
+            "rows": [
+              [0,null,"stylesheet",1,0,24,""],
+              [1,null,"rule_set",1,0,23,""],
+              [2,null,"selectors",1,0,7,""],
+              [3,null,"class_selector",1,0,7,""],
+              [4,null,".",0,0,1,""],
+              [4,null,"class_name",1,1,7,""],
+              [5,null,"identifier",1,1,7,""],
+              [2,null,"block",1,8,23,""],
+              [3,null,"{",0,8,9,""],
+              [3,null,"declaration",1,10,23,""],
+              [4,null,"property_name",1,10,15,""],
+              [4,null,":",0,15,16,""],
+              [4,null,"plain_value",1,17,22,""],
+              [4,null,";",0,22,23,""],
+              [3,null,"}",0,23,23,"M"]
+            ]
+          }
+        ]
+      },
+      "spellings": [
+        {
+          "sourceSha256": "310dbd9e2f6eef4fafed91cfbcdffe7bebe896ff9b919d164a7de2a622dd2d59",
+          "embedded": [
+            {
+              "path": "HTML style element",
+              "language": "CSS",
+              "startByte": 23,
+              "endByte": 48,
+              "rows": [
+                [0,null,"stylesheet",1,0,25,""],
+                [1,null,"rule_set",1,0,25,""],
+                [2,null,"selectors",1,0,7,""],
+                [3,null,"class_selector",1,0,7,""],
+                [4,null,".",0,0,1,""],
+                [4,null,"class_name",1,1,7,""],
+                [5,null,"identifier",1,1,7,""],
+                [2,null,"block",1,8,25,""],
+                [3,null,"{",0,8,9,""],
+                [3,null,"declaration",1,10,23,""],
+                [4,null,"property_name",1,10,15,""],
+                [4,null,":",0,15,16,""],
+                [4,null,"plain_value",1,17,22,""],
+                [4,null,";",0,22,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "809e795b5c105385ddf059cb435a1c408b65dd0c90106c0ff05db075c43802a3",
+          "embedded": [
+            {
+              "path": "HTML style element",
+              "language": "CSS",
+              "startByte": 38,
+              "endByte": 63,
+              "rows": [
+                [0,null,"stylesheet",1,0,25,""],
+                [1,null,"rule_set",1,0,25,""],
+                [2,null,"selectors",1,0,7,""],
+                [3,null,"class_selector",1,0,7,""],
+                [4,null,".",0,0,1,""],
+                [4,null,"class_name",1,1,7,""],
+                [5,null,"identifier",1,1,7,""],
+                [2,null,"block",1,8,25,""],
+                [3,null,"{",0,8,9,""],
+                [3,null,"declaration",1,10,23,""],
+                [4,null,"property_name",1,10,15,""],
+                [4,null,":",0,15,16,""],
+                [4,null,"plain_value",1,17,22,""],
+                [4,null,";",0,22,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "76a354b2bafc36c4542947f5aa188a6ffb000061eac6b0b97ad0618ee0448325",
+          "embedded": [
+            {
+              "path": "HTML style element",
+              "language": "CSS",
+              "startByte": 7,
+              "endByte": 32,
+              "rows": [
+                [0,null,"stylesheet",1,0,25,""],
+                [1,null,"rule_set",1,0,25,""],
+                [2,null,"selectors",1,0,7,""],
+                [3,null,"class_selector",1,0,7,""],
+                [4,null,".",0,0,1,""],
+                [4,null,"class_name",1,1,7,""],
+                [5,null,"identifier",1,1,7,""],
+                [2,null,"block",1,8,25,""],
+                [3,null,"{",0,8,9,""],
+                [3,null,"declaration",1,10,23,""],
+                [4,null,"property_name",1,10,15,""],
+                [4,null,":",0,15,16,""],
+                [4,null,"plain_value",1,17,22,""],
+                [4,null,";",0,22,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "CSS style attribute -> CSS": {
+      "positive": {
+        "sourceSha256": "830f3300f4fba98141d6d712c289cd53a1f2eadbfed3d9152fd4de6c65197fe5",
+        "embedded": [
+          {
+            "path": "CSS style attribute",
+            "language": "CSS",
+            "startByte": 10,
+            "endByte": 21,
+            "rows": [
+              [0,null,"stylesheet",1,0,11,""],
+              [1,null,"declaration",1,0,11,""],
+              [2,null,"property_name",1,0,5,""],
+              [2,null,":",0,5,6,""],
+              [2,null,"plain_value",1,7,11,""]
+            ]
+          }
+        ]
+      },
+      "recovery": {
+        "sourceSha256": "e93aecc56971940e26b363174ffbe201ea956e4d98127f98164937bf7240af57",
+        "embedded": [
+          {
+            "path": "CSS style attribute",
+            "language": "CSS",
+            "startByte": 10,
+            "endByte": 23,
+            "rows": [
+              [0,null,"stylesheet",1,0,13,""],
+              [1,null,"rule_set",1,0,13,""],
+              [2,null,"selectors",1,0,11,""],
+              [3,null,"pseudo_class_selector",1,0,11,""],
+              [4,null,"tag_name",1,0,5,""],
+              [4,null,":",0,5,6,""],
+              [4,null,"class_name",1,7,11,""],
+              [5,null,"identifier",1,7,11,""],
+              [2,null,"block",1,12,13,""],
+              [3,null,"{",0,12,13,""],
+              [3,null,"}",0,13,13,"M"]
+            ]
+          }
+        ]
+      },
+      "spellings": [
+        {
+          "sourceSha256": "c3a0adab58576e4c8363eee8b6e0d5f3878c8a2219ffa34b20f2e0c4ac74f83c",
+          "embedded": [
+            {
+              "path": "CSS style attribute",
+              "language": "CSS",
+              "startByte": 10,
+              "endByte": 21,
+              "rows": [
+                [0,null,"stylesheet",1,0,11,""],
+                [1,null,"declaration",1,0,11,""],
+                [2,null,"property_name",1,0,5,""],
+                [2,null,":",0,5,6,""],
+                [2,null,"plain_value",1,7,11,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "41cea563ca27dc19df25c68fa1186be3b0857201b0fdbcf6bdf45e654caffb00",
+          "embedded": [
+            {
+              "path": "CSS style attribute",
+              "language": "CSS",
+              "startByte": 10,
+              "endByte": 21,
+              "rows": [
+                [0,null,"stylesheet",1,0,11,""],
+                [1,null,"declaration",1,0,11,""],
+                [2,null,"property_name",1,0,5,""],
+                [2,null,":",0,5,6,""],
+                [2,null,"plain_value",1,7,11,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "d28a2d51cfe4807c18d4e58b53e38f86a4249babfd796ff7aee5a1faf5879323",
+          "embedded": [
+            {
+              "path": "CSS style attribute",
+              "language": "CSS",
+              "startByte": 9,
+              "endByte": 19,
+              "rows": [
+                [0,null,"stylesheet",1,0,10,""],
+                [1,null,"declaration",1,0,10,""],
+                [2,null,"property_name",1,0,5,""],
+                [2,null,":",0,5,6,""],
+                [2,null,"plain_value",1,6,10,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "07df2f83a92ec2ab6091f78a8df5b671e275e2b91e74cd67acd0ffb27cf7b948",
+          "embedded": [
+            {
+              "path": "CSS style attribute",
+              "language": "CSS",
+              "startByte": 10,
+              "endByte": 22,
+              "rows": [
+                [0,null,"stylesheet",1,0,12,""],
+                [1,null,"declaration",1,0,12,""],
+                [2,null,"property_name",1,0,5,""],
+                [2,null,":",0,5,6,""],
+                [2,null,"plain_value",1,7,11,""],
+                [2,null,";",0,11,12,""]
               ]
             }
           ]

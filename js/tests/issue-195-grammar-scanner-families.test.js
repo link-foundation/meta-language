@@ -7,6 +7,7 @@ import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-i
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtureGroups = [
+  ['parity/fixtures/scanner-context-tokens.json', 'I195-GRAMMAR-SCANNER-CONTEXT-TOKENS'],
   ['parity/fixtures/scanner-delimiter-runs.json', 'I195-GRAMMAR-SCANNER-DELIMITER-RUNS'],
   ['parity/fixtures/scanner-families.json', 'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES'],
   ['parity/fixtures/scanner-counted-delimiters.json', 'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS'],
@@ -74,4 +75,13 @@ test('delimiter-run and line-boundary descriptors reject invalid token and count
   for (const count of [0, 1, 2.5, Infinity, '3']) assert.throws(() => scannerFamilies([{ ...run, count }]), TypeError);
   for (const change of [{ endToken: 'content' }, { delimiter: '' }, { name: ') fail (' }]) assert.throws(() => scannerFamilies([{ ...run, ...change }]), TypeError);
   assert.throws(() => scannerFamilies([{ family: 'line-boundary', name: 'lines', token: ') fail (' }]), TypeError);
+});
+
+test('context and counted line scanner descriptors reject malformed policies', () => {
+  const boundary = { family: 'lookahead-boundary', name: 'boundary', token: 'boundary', before: ['}'] };
+  for (const change of [{ before: [] }, { allowEnd: 1 }, { token: ') fail (' }]) assert.throws(() => scannerFamilies([{ ...boundary, ...change }]), TypeError);
+  const context = { family: 'context-token', name: 'colon', token: 'colon', opening: ':', target: '{', stops: [';'] };
+  for (const change of [{ stops: [] }, { comments: 1 }, { immediateCharacters: ['ab'] }, { immediateRanges: [['z', 'a']] }]) assert.throws(() => scannerFamilies([{ ...context, ...change }]), TypeError);
+  const counted = { family: 'line-counted-delimiter', name: 'quotes', token: 'quotes' };
+  for (const change of [{ minimum: 1 }, { minimum: 2.5 }, { countModulo: 2 }, { optionalPrefixCharacters: ['ab'], prefix: '~' }]) assert.throws(() => scannerFamilies([{ ...counted, ...change }]), TypeError);
 });

@@ -69,7 +69,8 @@
       "version": "0.25.0",
       "parserSha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e",
       "wasmSha256": "f0fa4c3171f3322560e3a56445989f2da9d77c38bae61e9f07ae0b3e01d88b36",
-      "license": "css.LICENSE"
+      "license": "css.LICENSE",
+      "oracle": true
     },
     "csv": {
       "id": "csv",
@@ -135,7 +136,8 @@
       "version": "0.20.0",
       "parserSha256": "c8c83443d536875c2f28f12ae4f0242f477cac82115073f4d9506c2bb188dbcc",
       "wasmSha256": "345a2693219c24236afdbacf3af1082aaa59eef6c21c06371845690505ee3af3",
-      "license": "erlang.LICENSE"
+      "license": "erlang.LICENSE",
+      "oracle": true
     },
     "go": {
       "id": "go",
@@ -379,7 +381,8 @@
       "version": "0.26.4",
       "parserSha256": "f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720",
       "wasmSha256": "84555e38f85a391095b349a906b9790d319e3946ce12d9bc21dbec5cded5dad9",
-      "license": "powershell.LICENSE"
+      "license": "powershell.LICENSE",
+      "oracle": true
     },
     "proto": {
       "id": "proto",

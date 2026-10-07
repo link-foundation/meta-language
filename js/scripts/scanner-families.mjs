@@ -99,6 +99,69 @@ export function lineBoundaryScanner({ name, token }) {
   return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) (while (next ${space}) (do (skip ${space}))) (if (next (literal %0D)) (then (skip (literal %0D)))) (if (some atEnd (next (literal %0A))) (then (emit ${token}))) fail))\n`;
 }
 
+const characterClass = (characters, ranges = []) => {
+  if (!Array.isArray(characters) || !Array.isArray(ranges) || characters.length + ranges.length === 0) throw new TypeError('a character class must be nonempty');
+  const character = (value) => {
+    if (typeof value !== 'string' || [...value].length !== 1) throw new TypeError('a character class item must be one code point');
+    return encode(value);
+  };
+  const items = characters.map((value) => `(char ${character(value)})`);
+  for (const range of ranges) {
+    if (!Array.isArray(range) || range.length !== 2 || range[0].codePointAt(0) > range[1].codePointAt(0)) throw new TypeError('a character range must have ordered endpoints');
+    items.push(`(range ${character(range[0])} ${character(range[1])})`);
+  }
+  return `(class plain ${items.join(' ')})`;
+};
+
+/** A zero-width token selected by lookahead, without consuming that context. */
+export function lookaheadBoundaryScanner({ name, token, whitespace = [' ', '\t', '\r', '\v', '\f'], before, allowEnd = true }) {
+  identifier(name);
+  identifier(token);
+  if (!Array.isArray(before) || before.length === 0 || typeof allowEnd !== 'boolean') throw new TypeError('a lookahead boundary needs terminators and an end policy');
+  const spaces = characterClass(whitespace);
+  const terminators = before.map((text) => `(next ${delimiter(text)})`).join(' ');
+  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) mark (while (next ${spaces}) (do advance)) (if (some ${allowEnd ? 'atEnd ' : ''}${terminators}) (then (emit ${token}))) fail))\n`;
+}
+
+/** A marked token whose acceptance depends on the following lexical context. */
+export function contextTokenScanner({ name, token, opening = '', whitespace = [' ', '\t', '\n', '\r', '\v', '\f'], requireWhitespace = false, rejectAfter = [], immediateCharacters = [], immediateRanges = [], contextPrefix = '', rejectContextWhitespace = false, target, stops, allowEnd = false, comments = false, advanceBeforeCheck = false, blockedTokens = [] }) {
+  identifier(name);
+  identifier(token);
+  blockedTokens.forEach(identifier);
+  if (![requireWhitespace, rejectContextWhitespace, allowEnd, comments, advanceBeforeCheck].every((value) => typeof value === 'boolean')) throw new TypeError('context token policies must be booleans');
+  if (!Array.isArray(stops) || stops.length === 0) throw new TypeError('a context token needs stopping delimiters');
+  const spaces = characterClass(whitespace);
+  const stop = `(some ${stops.map((text) => `(next ${delimiter(text)})`).join(' ')})`;
+  const blocked = blockedTokens.length ? `(if (some ${blockedTokens.map((item) => `(expected (ref ${item}))`).join(' ')}) (then fail)) ` : '';
+  const openingCode = opening ? `(consume ${delimiter(opening)}) ` : '';
+  const rejected = rejectAfter.length ? `(if (some ${rejectAfter.map((text) => `(next ${delimiter(text)})`).join(' ')}) (then fail)) ` : '';
+  const immediate = immediateCharacters.length + immediateRanges.length ? `(if (next ${characterClass(immediateCharacters, immediateRanges)}) (then (emit ${token}))) ` : '';
+  const prefix = contextPrefix ? `(consume ${delimiter(contextPrefix)}) ` : '';
+  const rejectSpace = rejectContextWhitespace ? `(if (next ${spaces}) (then fail)) ` : '';
+  const accepted = `(if (all (next ${delimiter(target)})${comments ? ' (equal (depth comment) (integer 0))' : ''}) (then (emit ${token})))`;
+  const commentCode = comments ? `(if (all (equal (depth comment) (integer 0)) (next (literal %2F%2A))) (then (consume (literal %2F%2A)) (push comment (integer 1))) (else (if (all (greater (depth comment) (integer 0)) (next (literal %2A%2F))) (then (consume (literal %2A%2F)) (pop comment)) (else advance))))` : 'advance';
+  const followingComment = comments ? `(if (all (equal (depth comment) (integer 0)) (next (literal %2F))) (then advance (if (next (literal %2A)) (then (push comment (integer 1))))) (else (if (all (greater (depth comment) (integer 0)) (next (literal %2A))) (then advance (if (next (literal %2F)) (then (pop comment)))))))` : '';
+  const loop = advanceBeforeCheck ? `advance ${accepted} ${followingComment}` : `${accepted} ${commentCode}`;
+  const clear = comments ? '(while (greater (depth comment) (integer 0)) (do (pop comment))) ' : '';
+  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) ${blocked}${requireWhitespace ? `(if (not (next ${spaces})) (then fail)) ` : ''}(while (next ${spaces}) (do (skip ${spaces}))) ${openingCode}${rejected}mark ${immediate}${prefix}${rejectSpace}(while (not atEnd) (do (if ${stop} (then fail)) ${loop})) ${allowEnd ? `${clear}(emit ${token})` : 'fail'}))\n`;
+}
+
+/** A quote run closed by a matching run after a line break and padding. */
+export function lineCountedDelimiterScanner({ name, token, delimiter: character = '"', minimum = 3, whitespace = [' ', '\t', '\r'], prefix = '', optionalPrefixCharacters = [], countModulo = null }) {
+  identifier(name);
+  identifier(token);
+  if (!Number.isSafeInteger(minimum) || minimum < 2 || (countModulo !== null && (!Number.isSafeInteger(countModulo) || countModulo < minimum))) throw new TypeError('line delimiter counts must be ordered integers');
+  const item = delimiter(character);
+  const padding = characterClass(whitespace);
+  const linePadding = `(all (next ${padding}) (not (next (literal %0A))))`;
+  const optionalPrefix = optionalPrefixCharacters.length ? `(if (next ${characterClass(optionalPrefixCharacters)}) (then advance)) ` : '';
+  const clear = (stack) => `(while (greater (depth ${stack}) (integer 0)) (do (pop ${stack})))`;
+  const increment = '(push delimiters (integer 1))' + (countModulo === null ? '' : ` (if (equal (depth delimiters) (integer ${countModulo})) (then ${clear('delimiters')}))`);
+  const initial = Array.from({ length: minimum }, () => `(consume ${item}) ${increment}`).join(' ');
+  const candidate = `(while (all (next ${item}) (less (depth candidate) (depth delimiters))) (do (consume ${item}) (push candidate (integer 1))))`;
+  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) (while (next ${padding}) (do (skip ${padding}))) ${prefix ? `(consume ${delimiter(prefix)}) ${optionalPrefix}` : ''}${initial} (while (next ${item}) (do (consume ${item}) ${increment})) (while ${linePadding} (do advance)) (consume (literal %0A)) (while (not atEnd) (do (if (next (literal %0A)) (then advance (while ${linePadding} (do advance)) ${candidate} (if (equal (depth candidate) (depth delimiters)) (then ${clear('candidate')} ${clear('delimiters')} (emit ${token}))) ${clear('candidate')}) (else advance)))) fail))\n`;
+}
+
 /** Generate each scanner from a JSON family descriptor, rejecting unknown families. */
 export function scannerFamilies(descriptors) {
   const names = new Set();
@@ -116,6 +179,9 @@ export function scannerFamilies(descriptors) {
     if (family === 'split-counted-delimiter') return splitCountedDelimiterScanner(options);
     if (family === 'delimiter-run') return delimiterRunScanner(options);
     if (family === 'line-boundary') return lineBoundaryScanner(options);
+    if (family === 'lookahead-boundary') return lookaheadBoundaryScanner(options);
+    if (family === 'context-token') return contextTokenScanner(options);
+    if (family === 'line-counted-delimiter') return lineCountedDelimiterScanner(options);
     throw new TypeError(`unknown scanner family ${JSON.stringify(family)}`);
   }).join('');
 }

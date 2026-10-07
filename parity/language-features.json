@@ -913,7 +913,20 @@
           "parity/fixtures/native-grammars/pascal.json",
           "parity/fixtures/native-grammars/pascal-corpus.json",
           "parity/fixtures/native-grammars/vb.json",
-          "parity/fixtures/native-grammars/vb-corpus.json"
+          "parity/fixtures/native-grammars/vb-corpus.json",
+          "parity/grammars/native/css.lino",
+          "parity/fixtures/native-grammars/css.json",
+          "parity/fixtures/native-grammars/css-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_css.rs",
+          "parity/grammars/native/powershell.lino",
+          "parity/fixtures/native-grammars/powershell.json",
+          "parity/fixtures/native-grammars/powershell-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_powershell.rs",
+          "parity/grammars/native/erlang.lino",
+          "parity/fixtures/native-grammars/erlang.json",
+          "parity/fixtures/native-grammars/erlang-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_erlang.rs",
+          "parity/fixtures/scanner-context-tokens.json"
         ]
       },
       "javascript": {
@@ -939,7 +952,20 @@
           "parity/fixtures/native-grammars/pascal.json",
           "parity/fixtures/native-grammars/pascal-corpus.json",
           "parity/fixtures/native-grammars/vb.json",
-          "parity/fixtures/native-grammars/vb-corpus.json"
+          "parity/fixtures/native-grammars/vb-corpus.json",
+          "parity/grammars/native/css.lino",
+          "parity/fixtures/native-grammars/css.json",
+          "parity/fixtures/native-grammars/css-corpus.json",
+          "js/tests/issue-195-grammar-native-css.test.js",
+          "parity/grammars/native/powershell.lino",
+          "parity/fixtures/native-grammars/powershell.json",
+          "parity/fixtures/native-grammars/powershell-corpus.json",
+          "js/tests/issue-195-grammar-native-powershell.test.js",
+          "parity/grammars/native/erlang.lino",
+          "parity/fixtures/native-grammars/erlang.json",
+          "parity/fixtures/native-grammars/erlang-corpus.json",
+          "js/tests/issue-195-grammar-native-erlang.test.js",
+          "parity/fixtures/scanner-context-tokens.json"
         ]
       }
     },

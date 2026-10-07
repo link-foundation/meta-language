@@ -775,6 +775,111 @@
       "word": "xor",
       "replacement": "exclusive_or",
       "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses xor for exclusive or."
+    },
+    {
+      "word": "ann",
+      "replacement": "annotated",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses ann for annotated."
+    },
+    {
+      "word": "assignement",
+      "replacement": "assignment",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses assignement for assignment."
+    },
+    {
+      "word": "bitwise",
+      "replacement": "bit_level",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses bitwise for bit level."
+    },
+    {
+      "word": "charset",
+      "replacement": "character_set",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses charset for character set."
+    },
+    {
+      "word": "comp",
+      "replacement": "comparison",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses comp for comparison."
+    },
+    {
+      "word": "cond",
+      "replacement": "conditional",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses cond for conditional."
+    },
+    {
+      "word": "inlinescript",
+      "replacement": "inline_script",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses inlinescript for inline script."
+    },
+    {
+      "word": "invokation",
+      "replacement": "invocation",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses invokation for invocation."
+    },
+    {
+      "word": "keyframe",
+      "replacement": "key_frame",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses keyframe for key frame."
+    },
+    {
+      "word": "keyframes",
+      "replacement": "key_frames",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses keyframes for key frames."
+    },
+    {
+      "word": "media",
+      "replacement": "medium",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses media for medium."
+    },
+    {
+      "word": "mult",
+      "replacement": "multiplication",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses mult for multiplication."
+    },
+    {
+      "word": "multi",
+      "replacement": "multiple",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses multi for multiple."
+    },
+    {
+      "word": "op",
+      "replacement": "operator",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses op for operator."
+    },
+    {
+      "word": "param",
+      "replacement": "parameter",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses param for parameter."
+    },
+    {
+      "word": "pat",
+      "replacement": "pattern",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses pat for pattern."
+    },
+    {
+      "word": "pre",
+      "replacement": "prefix",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses pre for prefix."
+    },
+    {
+      "word": "sig",
+      "replacement": "signature",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses sig for signature."
+    },
+    {
+      "word": "sigil",
+      "replacement": "modifier",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses sigil for modifier."
+    },
+    {
+      "word": "sq",
+      "replacement": "quoted",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses sq for quoted."
+    },
+    {
+      "word": "stylesheet",
+      "replacement": "style_sheet",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses stylesheet for style sheet."
     }
   ],
   "grammars": {
@@ -1582,6 +1687,239 @@
           "reason": "Shift the rank specifier into an array type before reducing a primitive type in object construction."
         }
       ]
+    },
+    "css": {
+      "names": {
+        "from": "initial_key_frame",
+        "to": "final_key_frame",
+        "postcss_statement": "post_processing_style_statement",
+        "id_selector": "identifier_selector",
+        "important": "importance_modifier",
+        "selectors": "selector_list",
+        "arguments": "argument_list",
+        "_query": "selection_query",
+        "id_name": "identifier_name"
+      },
+      "sourceTransforms": [
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "call_expression",
+          "value": 1,
+          "reason": "The pinned parser binds a function name and following arguments into one call instead of separate declaration values."
+        }
+      ]
+    },
+    "powershell": {
+      "names": {
+        "file_redirection_operator": "file_output_destination_operator",
+        "merging_redirection_operator": "merged_output_destination_operator",
+        "for_iterator": "loop_iteration_expression",
+        "data_commands_allowed": "allowable_data_command_list",
+        "_expandable_string_literal_immediate": "immediate_expandable_string_literal_body",
+        "_string_literal_immediate": "immediate_string_literal_body",
+        "stop_parsing": "verbatim_argument_marker",
+        "redirections": "output_destination_list",
+        "redirection": "output_destination",
+        "sub_expression": "subordinate_expression",
+        "pipeline_chain": "command_pipeline_sequence",
+        "dimension": "array_dimension_specifier",
+        "function_statement": "function_definition_statement",
+        "_command_argument": "command_argument_value",
+        "data_command": "data_command_name",
+        "elseif_clauses": "else_if_clause_list",
+        "switch_parameters": "switch_parameter_list",
+        "switch_clauses": "switch_clause_list",
+        "catch_clauses": "catch_clause_list",
+        "command_elements": "command_element_list",
+        "attribute": "metadata_attribute",
+        "attribute_name": "metadata_attribute_name",
+        "attribute_arguments": "metadata_attribute_argument_list",
+        "attribute_argument": "metadata_attribute_argument",
+        "attribute_list": "metadata_attribute_list",
+        "type_literal": "type_reference_literal"
+      },
+      "sourceTransforms": [
+        {
+          "family": "lift-token-aliases",
+          "rules": [
+            "class_statement",
+            "enum_statement"
+          ],
+          "reason": "An anonymous keyword alias names the complete lexical token. Lift it outside the token wrapper so it retains the pinned parser's keyword kind and lexical priority."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "function_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "class_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "enum_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "flow_control_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "try_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "else_clause",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "array_literal_expression",
+          "associativity": "none",
+          "value": 0,
+          "reason": "The fixed comma-list production retains source order without a recursive associativity conflict; all elements remain in the same concrete array node."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "while_statement",
+          "value": 1,
+          "reason": "Prefer complete control statements and attached clauses over the overlapping command productions, preserving every source alternative."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "catch_clause",
+          "value": 1,
+          "reason": "Prefer complete control statements and attached clauses over the overlapping command productions, preserving every source alternative."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "finally_clause",
+          "value": 1,
+          "reason": "Prefer complete control statements and attached clauses over the overlapping command productions, preserving every source alternative."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "if_statement",
+          "associativity": "none",
+          "value": 0,
+          "reason": "Keep optional else clauses inside their completed conditional statement instead of reducing an incomplete prefix before else."
+        },
+        {
+          "family": "symbol-keyword-exclusion",
+          "rule": "_statement",
+          "symbol": "pipeline",
+          "keywordRules": [
+            "switch_statement",
+            "flow_control_statement",
+            "function_statement",
+            "class_statement",
+            "enum_statement",
+            "if_statement",
+            "while_statement",
+            "for_statement",
+            "foreach_statement",
+            "do_statement",
+            "trap_statement",
+            "try_statement",
+            "data_statement",
+            "inlinescript_statement",
+            "parallel_statement",
+            "sequence_statement"
+          ],
+          "wordRule": "_command_token",
+          "reason": "The statement parse state reserves initial keyword tokens even when the keyword production fails later. A contextual negative lookahead retains every pipeline alternative, command prefixes and explicit invocation forms without enumerating case variants."
+        }
+      ],
+      "concepts": {
+        "hexadecimal_integer_literal": "grammar.hex-integer-literal"
+      }
+    },
+    "erlang": {
+      "names": {
+        "_tq_string": "multiple_quote_string",
+        "_tq_sigil_string": "multiple_quote_sigil_string",
+        "_map_expr": "map_expression_body",
+        "_record_expr": "record_expression_body",
+        "ssr_definition": "structural_search_rule_definition",
+        "ssr_replacement": "structural_search_rule_replacement",
+        "ssr_where": "structural_search_condition_clause",
+        "pp_include": "preprocessor_include_directive",
+        "pp_include_lib": "preprocessor_library_include_directive",
+        "pp_undef": "preprocessor_removal_directive",
+        "pp_ifdef": "preprocessor_defined_condition_directive",
+        "pp_ifndef": "preprocessor_undefined_condition_directive",
+        "pp_else": "preprocessor_else_directive",
+        "pp_endif": "preprocessor_end_directive",
+        "pp_if": "preprocessor_if_directive",
+        "pp_elif": "preprocessor_else_if_directive",
+        "pp_define": "preprocessor_definition_directive",
+        "deprecation_desc": "deprecation_description",
+        "_desc": "description",
+        "multi_string": "string_concatenation",
+        "opaque": "opaque_type_declaration",
+        "type_sig": "type_signature",
+        "ann_type": "annotated_type",
+        "ann_var": "annotated_variable",
+        "fun_type_sig": "function_type_signature",
+        "dotdotdot": "ellipsis",
+        "_expr_max": "primary_expression_body",
+        "paren_expr": "parenthesized_expression",
+        "unary_op_expr_max": "primary_unary_operator_expression",
+        "binary_op_expr_max": "primary_binary_operator_expression",
+        "lc_exprs": "comprehension_qualifier_expression_list",
+        "lc_or_zc_expr": "comprehension_zip_or_filter_expression",
+        "_lc_expr": "comprehension_qualifier_expression",
+        "_generator_op": "generator_operator",
+        "_b_generator_op": "binary_generator_operator",
+        "_map_field_op": "map_field_operator",
+        "receive_after": "receive_time_limit_clause",
+        "try_after": "exception_cleanup_clause",
+        "binary_op_catch_pat": "binary_operator_exception_pattern",
+        "replacement_guard_or": "replacement_disjunction_guard",
+        "replacement_guard_and": "replacement_conjunction_guard",
+        "replacement_parens": "replacement_parenthesized_expression",
+        "_exprs": "expression_list",
+        "concatables": "concatenation_operand_list",
+        "_concatable": "concatenation_operand",
+        "_prefix_op": "prefix_operator",
+        "_mult_op": "multiplication_operator",
+        "_add_op": "addition_operator",
+        "_list_op": "list_operator",
+        "_comp_op": "comparison_operator",
+        "_sq_string": "quoted_string_token",
+        "_sigil_verbatim_string": "prefixed_verbatim_string_literal_body",
+        "_sigil_string": "prefixed_string_literal_body",
+        "deprecated_fas": "deprecated_function_arity_list",
+        "deprecated_fa": "deprecated_function_arity",
+        "_cr_clauses": "message_or_case_clause_list",
+        "_cr_clause_or_macro": "message_or_case_clause_or_macro",
+        "cr_clause": "message_or_case_clause",
+        "fun_clauses": "anonymous_function_clause_list",
+        "fun_clause": "anonymous_function_clause",
+        "integer": "integer_literal",
+        "char": "character_literal",
+        "expr_args": "expression_argument_list",
+        "function_clause": "function_definition_clause",
+        "catch_expr": "exception_catch_expression",
+        "block_expr": "scope_block_expression",
+        "_form": "top_level_declaration",
+        "map_expr": "dictionary_expression",
+        "attr_name": "module_attribute_name",
+        "case_expr": "case_selection_expression",
+        "_catch_clauses": "catch_clause_list",
+        "_catch_pat": "exception_pattern"
+      }
     }
   },
   "concepts": {

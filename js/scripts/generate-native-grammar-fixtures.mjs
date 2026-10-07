@@ -1274,7 +1274,7 @@ export function buildNativeDefaultCstExpected() {
       'Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default, and of the embedded regions in those languages of the shared embedded-language fixtures. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
     generator: { script: 'js/scripts/generate-native-grammar-fixtures.mjs' },
     languages,
-    embeddedFixtures: nativeEmbeddedFixtures(),
+    embeddedFixtures: buildNativeEmbeddedFixtures(),
   };
 }
 
@@ -1286,7 +1286,7 @@ export function buildNativeDefaultCstExpected() {
  * a recovery region. The host grammar places the regions, so their bounds are
  * the oracle's. Only fixtures with such a region are listed.
  */
-function nativeEmbeddedFixtures() {
+export function buildNativeEmbeddedFixtures(only = null) {
   const oracle = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/default-cst-expected.json'), 'utf8')).embeddedFixtures;
   const evidence = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/issue-195-evidence.json'), 'utf8')).embedded;
   const fixtures = {};
@@ -1295,13 +1295,19 @@ function nativeEmbeddedFixtures() {
     let native = false;
     const regions = (text, embedded, recovery) => embedded.map((region) => {
       const entry = NATIVE_GRAMMARS.find(({ language }) => language === region.language);
-      if (!entry) return region;
+      if (!entry || (only && !only.includes(entry.id))) return region;
       native = true;
       const regionText = Buffer.from(text, 'utf8').subarray(region.startByte, region.endByte).toString('utf8');
       const parser = grammarParser(entry);
       if (!recovery) {
-        const positive = parser.parseTree(regionText);
-        if (!positive.ok || JSON.stringify(nativeRows(positive.tree, regionText, entry)) !== JSON.stringify(region.rows)) {
+        // The ordinary embedded API appends and clips a missing CSS terminator.
+        const trimmed = regionText.trimEnd();
+        const terminated = entry.id === 'css' && trimmed.length > 0 && !trimmed.endsWith(';') && !trimmed.endsWith('}') && !trimmed.includes('{');
+        const parseText = terminated ? `${regionText};` : regionText;
+        const positive = parser.parseTree(parseText);
+        const byteEnd = Buffer.byteLength(regionText);
+        const rows = nativeRows(positive.tree, parseText, entry).filter((row) => !(row[4] >= byteEnd && row[5] > byteEnd)).map((row) => row[5] > byteEnd ? [...row.slice(0, 5), byteEnd, row[6]] : row);
+        if (!positive.ok || JSON.stringify(rows) !== JSON.stringify(region.rows)) {
           throw new Error(`${entry.grammar} and ${entry.oracle} disagree on the ${region.path} region of ${label}`);
         }
         return region;
@@ -1336,7 +1342,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   let stale = 0;
   const outputs = [
     ...NATIVE_GRAMMARS.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
-    ...['lua', 'toml', 'zig', 'pascal', 'vb'].map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
+    ...['lua', 'toml', 'zig', 'pascal', 'vb', 'css', 'powershell', 'erlang'].map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
     [DEFAULT_CST_PATH, buildNativeDefaultCstExpected],
   ];
   for (const [relative, build] of outputs) {

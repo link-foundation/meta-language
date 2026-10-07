@@ -16,8 +16,10 @@ listed patch, if any).
 | File | Source | parser.c SHA-256 | wasm SHA-256 | License |
 | --- | --- | --- | --- | --- |
 | `c.wasm.gz` | crate `tree-sitter-c` 0.24.2 | `f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2` | `2030a766fa6c6fe18039524008e52fd4a4995bdd9ed07fc4a73ec892450d2f4a` | [`c.LICENSE`](c.LICENSE) |
+| `css.wasm.gz` | crate `tree-sitter-css` 0.25.0 | `2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e` | `f0fa4c3171f3322560e3a56445989f2da9d77c38bae61e9f07ae0b3e01d88b36` | [`css.LICENSE`](css.LICENSE) |
 | `csv.wasm.gz` | `tree-sitter-grammars/tree-sitter-csv` f6bf6e35eb0b95fbadea4bb39cb9709507fcb181 with [`rfc4180-quotes.patch`](../../../rust/vendor/tree-sitter-csv/rfc4180-quotes.patch) (vendored in `rust/vendor/tree-sitter-csv`) | `6a7ede804cb8ced3f9466cecf38872d175e6179e8ea951956a195b2d55add8bc` | `926e300e68fca1881734251e2b0b3a51cc56625c1afd3471f3102ce5274a1cd9` | [`csv.LICENSE`](csv.LICENSE) |
 | `diff.wasm.gz` | crate `tree-sitter-diff` 0.1.0 | `4c9e3e545073a7d93088f7d90b0ee89e56fb43ca751f25fa440c4a1906ecb3e6` | `8c32b60b7900e18ad10e2223e6311f4f1aff29b4d12226862a2a889a99596f29` | [`diff.LICENSE`](diff.LICENSE) |
+| `erlang.wasm.gz` | crate `tree-sitter-erlang` 0.20.0 | `c8c83443d536875c2f28f12ae4f0242f477cac82115073f4d9506c2bb188dbcc` | `345a2693219c24236afdbacf3af1082aaa59eef6c21c06371845690505ee3af3` | [`erlang.LICENSE`](erlang.LICENSE) |
 | `go.wasm.gz` | crate `tree-sitter-go` 0.25.0 | `3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85` | `058a4f6c7cb7156c599c2ca07af9645f03b3f655b84bced9c72816e755c7030b` | [`go.LICENSE`](go.LICENSE) |
 | `graphql.wasm.gz` | crate `tree-sitter-graphql` 0.3.0 | `8b7ebff40dc5b802df9ec03b1570fd53d234300ac4705899643ae61dda77dc57` | `a9239652fcc467ec3bf9dbe7d5271ff3511c40c7dc9bba440667599dcfb608bc` | [`graphql.LICENSE`](graphql.LICENSE) |
 | `ini.wasm.gz` | crate `tree-sitter-ini` 1.4.0 | `3537bf540af5b3def849c4f15d4ba8a02b37f5414849140f1c139d2abb1e4123` | `49e4442e41b44226268a89d810a4a3d2b3dde810b539579c2acd4a55223d8548` | [`ini.LICENSE`](ini.LICENSE) |
@@ -28,6 +30,7 @@ listed patch, if any).
 | `lua.wasm.gz` | crate `tree-sitter-lua` 0.5.0 | `933206d96a78f7785c13b2600182f1527dcd755c200b1271bb5bc4d8da4b17b3` | `43db0f3e64ffd4ed1ada7a77e4489e54afa5afd7b5aa013679d8284d4ea0f074` | [`lua.LICENSE`](lua.LICENSE) |
 | `make.wasm.gz` | crate `tree-sitter-make` 1.1.1 | `659bb2a3712bc6ecf77a96c82de2bc3062141f405c96d52582b2e01bd8722152` | `3cd0a9967c477e0cf3330d96ae79e2bbc8580119daf7e02266649fa6cd136e76` | [`make.LICENSE`](make.LICENSE) |
 | `pascal.wasm.gz` | crate `tree-sitter-pascal` 0.10.2 | `d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329` | `e1ae02b62ce27ba86d202e77fa42f5e59d8e945b00ff64803cc275741ecca628` | [`pascal.LICENSE`](pascal.LICENSE) |
+| `powershell.wasm.gz` | crate `tree-sitter-powershell` 0.26.4 | `f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720` | `84555e38f85a391095b349a906b9790d319e3946ce12d9bc21dbec5cded5dad9` | [`powershell.LICENSE`](powershell.LICENSE) |
 | `proto.wasm.gz` | crate `tree-sitter-proto` 0.6.0 | `ac481450c32e8fa52976075581701ecc63790fbab4c9c4f10d0901c9a39b61eb` | `2179ef77376c7c1a1c08c145915c8902436d6f08724cb055ce597879f107bf61` | [`proto.LICENSE`](proto.LICENSE) |
 | `racket.wasm.gz` | crate `tree-sitter-racket` 0.25.0 | `3cbab79ab9bd99684a7de4cb93a0aafd6773bb3ecf6720c59f1b7cdb0ceddd9c` | `5affec93f88d8b9e66aee6ad9a385d04f6af07dfc55bc6944993b02af1fa21b2` | [`racket.LICENSE`](racket.LICENSE) |
 | `regex.wasm.gz` | crate `tree-sitter-regex` 0.25.0 | `ddf28eb5ad0dd0898b9ed0f2593852edac639a339a410d9e93350e472859700f` | `0b64ac3dc55cfb73a95da3ea3eb1ac89e0f8fafd6050aa32139988b8413c14f1` | [`regex.LICENSE`](regex.LICENSE) |
