@@ -175,6 +175,10 @@ pipeline. Contextual rule variants keep original concrete kinds and concept
 identities while isolating overlapping loop-prefix expressions; opaque operand
 rules retain their ordinary expression context. Optional literal preferences
 retain the absent branch and consume the pinned parser's field modifier.
+Alias-pattern priorities distinguish explicit conditional directives from generic
+preprocessor extras. Field-selected associativity preserves each source alternative
+while reproducing reference-led chained comparisons. Error-union priorities retain
+optional and pointer type prefixes around their complete operand.
 CI reads immutable pinned corpus inputs, including Zig compiler
 source cases and Visual Basic project sources, and compares every input with
 its independent oracle in both runtimes.

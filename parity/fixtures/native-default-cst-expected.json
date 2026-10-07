@@ -62,7 +62,7 @@
       "grammars": {
         "native-zig": {
           "version": "1.0.0",
-          "parserSha256": "60074b4fbd9234216d3be6652503eca83b2411a30eb9df986777b36f3fbe808b"
+          "parserSha256": "e9f56c4ec73cc30cd7ffd9e9358ce89820c15a3dc0fc8378c48e8700bfe50888"
         }
       },
       "oracleGrammars": {
@@ -147,7 +147,7 @@
       "grammars": {
         "native-pascal": {
           "version": "1.0.0",
-          "parserSha256": "c2b5dbfc5a6b5fdf44b66767cc06c3b662edb9fa75b4ce44d42a5d51d4aca61e"
+          "parserSha256": "ddf656fb1db0fbe16b9337c537e353d840231a8850947c4c720c29ef40b78a0e"
         }
       },
       "oracleGrammars": {

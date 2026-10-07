@@ -79,7 +79,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-lean` | 251 | 5152 | 13446 | 1 | 42 |
 | `native-lua` | 35 | 614 | 1661 | 0 | 9 |
 | `native-make` | 168 | 1985 | 4084 | 0 | 27 |
-| `native-pascal` | 34 | 702 | 1345 | 0 | 4 |
+| `native-pascal` | 45 | 920 | 1817 | 0 | 4 |
 | `native-proto` | 79 | 6291 | 26218 | 0 | 20 |
 | `native-racket` | 306 | 1165 | 1769 | 22 | 60 |
 | `native-regex` | 82 | 1036 | 1007 | 2 | 24 |
@@ -91,8 +91,8 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-tsx` | 157 | 6525 | 13617 | 0 | 16 |
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
-| `native-zig` | 55 | 1020 | 1439 | 0 | 5 |
-| all | 3229 | 80041 | 185161 | 101 | 541 |
+| `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
+| all | 3244 | 80323 | 185742 | 101 | 541 |
 
 ## Coverage
 
@@ -119,7 +119,7 @@ language specification and checked against the oracle.
 | `native-lean` | 106 | 0 | 28 | 13 | 86 of 106 (81%) | 97 | 50 | 35 | 8 | 0 | 0 |
 | `native-lua` | 31 | 0 | 33 | 9 | 30 of 31 (97%) | 43 | 21 | 36 | 2 | 0 | 0 |
 | `native-make` | 36 | 0 | 25 | 4 | 35 of 36 (97%) | 44 | 24 | 36 | 12 | 0 | 0 |
-| `native-pascal` | 127 | 0 | 27 | 162 | 50 of 127 (39%) | 92 | 19 | 297 | 9 | 0 | 0 |
+| `native-pascal` | 127 | 0 | 27 | 162 | 50 of 127 (39%) | 97 | 19 | 297 | 9 | 0 | 0 |
 | `native-proto` | 43 | 0 | 3 | 9 | 43 of 43 (100%) | 52 | 5 | 20 | 7 | 0 | 0 |
 | `native-racket` | 22 | 0 | 3 | 14 | 22 of 22 (100%) | 32 | 0 | n/a | n/a | n/a | n/a |
 | `native-regex` | 24 | 0 | 4 | 12 | 24 of 24 (100%) | 38 | 0 | 4 | 0 | 0 | 0 |
@@ -210,13 +210,13 @@ generative cases with the oracle and gives each difference a category.
 
 The `native-lua` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
 
-The `native-pascal` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, no default features, one library code generation unit.
+The `native-pascal` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0.
 
 The `native-toml` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
 
 The `native-vb` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
 
-The `native-zig` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, no default features, one library code generation unit.
+The `native-zig` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0.
 
 Measured on linux x64, AMD EPYC Processor (with IBPB), with Node.js 26.10.0
 and the unoptimized test profile of rustc 1.98.1. Times are milliseconds of one warm pass over
@@ -244,7 +244,7 @@ loads the same modules and parses nothing.
 | `native-lean` | 6972.6 | 25.2 | 276.4× | 12324.1 | 4.5 | 139.9 | 44.7 |
 | `native-lua` | 100.5 | 1.0 | 96.3× | 53.7 | 0.4 | 48.3 | 5.9 |
 | `native-make` | 966.8 | 4.4 | 220.4× | 432.3 | 1.5 | 119.7 | 4.8 |
-| `native-pascal` | 126.2 | 0.7 | 186.4× | 48.1 | 0.2 | 78.8 | 6.2 |
+| `native-pascal` | 191.5 | 1.4 | 141.6× | 45.4 | 0.3 | 74.3 | 7.8 |
 | `native-proto` | 644.6 | 10.2 | 63.2× | 98.9 | 1.7 | 104.6 | 8.7 |
 | `native-racket` | 231.7 | 5.0 | 46.3× | 90.5 | 1.7 | 45.3 | 9.7 |
 | `native-regex` | 196.9 | 5.2 | 38.1× | 258.4 | 0.6 | 32.0 | 12.2 |
@@ -256,7 +256,7 @@ loads the same modules and parses nothing.
 | `native-tsx` | 11815.5 | 15.5 | 762.7× | 2168.5 | 2.1 | 140.9 | 15.7 |
 | `native-typescript` | 11832.2 | 15.4 | 770.1× | 1875.8 | 1.1 | 138.0 | 19.0 |
 | `native-vb` | 130.9 | 1.3 | 103.3× | 58.0 | 0.2 | 81.1 | 11.2 |
-| `native-zig` | 837.5 | 0.9 | 895.7× | 152.9 | 0.2 | 217.0 | 8.4 |
+| `native-zig` | 1039.8 | 0.9 | 1096.9× | 191.8 | 0.2 | 217.3 | 9.2 |
 
 Rust measures the native executor of `rust/src/` and, where the pinned
 grammar crate is a development dependency, the oracle through the
@@ -281,7 +281,7 @@ without optimization, as the tests run them.
 | `native-lean` | 25294.6 | n/a | n/a | 37711.2 | n/a | 15.4 |
 | `native-lua` | 178.9 | 0.6 | 280.8× | 124.4 | 0.2 | 1.4 |
 | `native-make` | 3320.8 | 3.2 | 1039.7× | 1308.5 | 1.1 | 1.6 |
-| `native-pascal` | 462.0 | 0.7 | 625.2× | 151.7 | 0.2 | 5.1 |
+| `native-pascal` | 719.8 | 1.4 | 520.5× | 188.3 | 0.3 | 5.1 |
 | `native-proto` | 2063.4 | 10.2 | 203.2× | 325.5 | 0.6 | 15.5 |
 | `native-racket` | 1406.2 | 2.1 | 657.1× | 246.0 | 1.3 | 3.0 |
 | `native-regex` | 678.6 | 2.2 | 306.6× | 431.9 | 0.5 | 0.8 |
@@ -293,4 +293,4 @@ without optimization, as the tests run them.
 | `native-tsx` | 37609.0 | 15.7 | 2390.9× | 7208.4 | 1.1 | 6.9 |
 | `native-typescript` | 36380.3 | 15.3 | 2373.9× | 7301.3 | 0.9 | 6.9 |
 | `native-vb` | 282.5 | 0.9 | 308.1× | 89.9 | 0.1 | 4.9 |
-| `native-zig` | 2445.6 | 1.0 | 2390.6× | 459.1 | 0.2 | 2.5 |
+| `native-zig` | 3452.3 | 1.1 | 3093.5× | 603.9 | 0.2 | 2.5 |

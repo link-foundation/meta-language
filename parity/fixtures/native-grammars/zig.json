@@ -694,6 +694,90 @@
       ]
     },
     {
+      "source": "const x: ?A!i32 = undefined;",
+      "rows": [
+        [0,null,"source_file",1,0,28,""],
+        [1,null,"variable_declaration",1,0,28,""],
+        [2,null,"const",0,0,5,""],
+        [2,null,"identifier",1,6,7,""],
+        [2,null,":",0,7,8,""],
+        [2,"type","nullable_type",1,9,15,""],
+        [3,null,"?",0,9,10,""],
+        [3,null,"error_union_type",1,10,15,""],
+        [4,"error","identifier",1,10,11,""],
+        [4,null,"!",0,11,12,""],
+        [4,"ok","builtin_type",1,12,15,""],
+        [2,null,"=",0,16,17,""],
+        [2,null,"undefined",0,18,27,""],
+        [2,null,";",0,27,28,""]
+      ]
+    },
+    {
+      "source": "fn f() ?A!i32 {return null;}",
+      "rows": [
+        [0,null,"source_file",1,0,28,""],
+        [1,null,"function_declaration",1,0,28,""],
+        [2,null,"fn",0,0,2,""],
+        [2,"name","identifier",1,3,4,""],
+        [2,null,"parameters",1,4,6,""],
+        [3,null,"(",0,4,5,""],
+        [3,null,")",0,5,6,""],
+        [2,"type","nullable_type",1,7,13,""],
+        [3,null,"?",0,7,8,""],
+        [3,null,"error_union_type",1,8,13,""],
+        [4,"error","identifier",1,8,9,""],
+        [4,null,"!",0,9,10,""],
+        [4,"ok","builtin_type",1,10,13,""],
+        [2,"body","block",1,14,28,""],
+        [3,null,"{",0,14,15,""],
+        [3,null,"expression_statement",1,15,27,""],
+        [4,null,"return_expression",1,15,26,""],
+        [5,null,"return",0,15,21,""],
+        [5,null,"null",0,22,26,""],
+        [4,null,";",0,26,27,""],
+        [3,null,"}",0,27,28,""]
+      ]
+    },
+    {
+      "source": "const x: *A!T = undefined;",
+      "rows": [
+        [0,null,"source_file",1,0,26,""],
+        [1,null,"variable_declaration",1,0,26,""],
+        [2,null,"const",0,0,5,""],
+        [2,null,"identifier",1,6,7,""],
+        [2,null,":",0,7,8,""],
+        [2,"type","pointer_type",1,9,13,""],
+        [3,null,"*",0,9,10,""],
+        [3,null,"error_union_type",1,10,13,""],
+        [4,"error","identifier",1,10,11,""],
+        [4,null,"!",0,11,12,""],
+        [4,"ok","identifier",1,12,13,""],
+        [2,null,"=",0,14,15,""],
+        [2,null,"undefined",0,16,25,""],
+        [2,null,";",0,25,26,""]
+      ]
+    },
+    {
+      "source": "const x: []A!T = undefined;",
+      "rows": [
+        [0,null,"source_file",1,0,27,""],
+        [1,null,"variable_declaration",1,0,27,""],
+        [2,null,"const",0,0,5,""],
+        [2,null,"identifier",1,6,7,""],
+        [2,null,":",0,7,8,""],
+        [2,"type","slice_type",1,9,14,""],
+        [3,null,"[",0,9,10,""],
+        [3,null,"]",0,10,11,""],
+        [3,null,"error_union_type",1,11,14,""],
+        [4,"error","identifier",1,11,12,""],
+        [4,null,"!",0,12,13,""],
+        [4,"ok","identifier",1,13,14,""],
+        [2,null,"=",0,15,16,""],
+        [2,null,"undefined",0,17,26,""],
+        [2,null,";",0,26,27,""]
+      ]
+    },
+    {
       "source": "const x: ?std.T = null;",
       "rows": [
         [0,null,"source_file",1,0,23,""],

@@ -1246,6 +1246,30 @@
     ],
     "generated": 310
   },
+  "sourceTransforms": [
+    {
+      "family": "alias-pattern-precedence",
+      "rules": [
+        "type",
+        "defProc"
+      ],
+      "alias": "pp",
+      "value": 1,
+      "reason": "A conditional branch directive consumes its own token before the generic preprocessor extra can skip it. Preserve the directive kind and all conditional alternatives."
+    },
+    {
+      "family": "rule-variant-precedence",
+      "rule": "exprBinary",
+      "fields": {
+        "operator": "kLt",
+        "lhs": "_ref"
+      },
+      "associativity": "right",
+      "value": 1,
+      "dynamic": 1,
+      "reason": "The pinned parser chooses the less-than variant with a reference left operand and a recursively grouped right operand, while other comparison operators retain their source associativity."
+    }
+  ],
   "approximations": [],
   "unsupported": []
 }

@@ -1238,8 +1238,8 @@
           "family": "rule-precedence",
           "rule": "error_union_type",
           "associativity": "right",
-          "value": 11,
-          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+          "value": 12,
+          "reason": "The pinned parser reduces error unions before member suffixes while retaining them inside optional and pointer type prefixes; their level must exceed both suffix and enclosing prefix levels."
         },
         {
           "family": "context-rule-variants",
@@ -1501,7 +1501,31 @@
         "declLabels": "label_declaration_list",
         "_declFields": "field_declaration_list"
       },
-      "concepts": {}
+      "concepts": {},
+      "sourceTransforms": [
+        {
+          "family": "alias-pattern-precedence",
+          "rules": [
+            "type",
+            "defProc"
+          ],
+          "alias": "pp",
+          "value": 1,
+          "reason": "A conditional branch directive consumes its own token before the generic preprocessor extra can skip it. Preserve the directive kind and all conditional alternatives."
+        },
+        {
+          "family": "rule-variant-precedence",
+          "rule": "exprBinary",
+          "fields": {
+            "operator": "kLt",
+            "lhs": "_ref"
+          },
+          "associativity": "right",
+          "value": 1,
+          "dynamic": 1,
+          "reason": "The pinned parser chooses the less-than variant with a reference left operand and a recursively grouped right operand, while other comparison operators retain their source associativity."
+        }
+      ]
     },
     "vb": {
       "names": {

@@ -3,6 +3,41 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'alias-pattern-precedence') {
+      const { rules, alias, value } = decision;
+      if (!Array.isArray(rules) || !rules.length || rules.some((name) => !Object.hasOwn(grammar.rules, name)) || typeof alias !== 'string' || !alias || !Number.isSafeInteger(value)) throw new TypeError('alias pattern precedence needs existing rules, an alias and integer precedence');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'ALIAS' && node.value === alias && node.content?.type === 'PATTERN') {
+          changes += 1;
+          return { ...node, content: { type: 'TOKEN', content: { type: 'PREC', value, content: node.content } } };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      for (const name of rules) grammar.rules[name] = rewrite(grammar.rules[name]);
+      if (!changes) throw new TypeError('the selected rules contain no matching aliased patterns');
+      continue;
+    }
+    if (decision.family === 'rule-variant-precedence') {
+      const { rule, fields, associativity, value, dynamic = 0 } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || !fields || !Object.keys(fields).length || !['left', 'right', 'none'].includes(associativity) || !Number.isSafeInteger(value) || !Number.isSafeInteger(dynamic) || dynamic < 0) throw new TypeError('variant precedence needs an existing rule, field selectors and integer precedence');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (['PREC', 'PREC_LEFT', 'PREC_RIGHT'].includes(node.type) && node.content?.type === 'SEQ' && Object.entries(fields).every(([name, symbol]) => node.content.members.some((member) => member.type === 'FIELD' && member.name === name && member.content.type === 'SYMBOL' && member.content.name === symbol))) {
+          changes += 1;
+          const production = { ...node, type: associativity === 'none' ? 'PREC' : `PREC_${associativity.toUpperCase()}`, value };
+          return dynamic ? { type: 'PREC_DYNAMIC', value: dynamic, content: production } : production;
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('variant precedence must select exactly one production');
+      continue;
+    }
     if (decision.family === 'context-rule-variants') {
       const { rules, insertInto, prefix, opaqueRules = [] } = decision;
       if (!Array.isArray(rules) || !rules.length || new Set(rules).size !== rules.length || !Array.isArray(insertInto) || !insertInto.length || typeof prefix !== 'string' || !/^_[A-Za-z_]+$/u.test(prefix)) throw new TypeError('context variants need distinct rules, insertion rules and a hidden helper prefix');

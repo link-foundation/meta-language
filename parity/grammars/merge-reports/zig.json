@@ -410,8 +410,8 @@
       "family": "rule-precedence",
       "rule": "error_union_type",
       "associativity": "right",
-      "value": 11,
-      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+      "value": 12,
+      "reason": "The pinned parser reduces error unions before member suffixes while retaining them inside optional and pointer type prefixes; their level must exceed both suffix and enclosing prefix levels."
     },
     {
       "family": "context-rule-variants",

@@ -284,3 +284,31 @@ test('corpus failure diagnostics identify changed rows and unequal row counts', 
   assert.equal(nativeCorpusFailure('case', { actual: [[1]], expected: [[1], [2]] }), 'case: first difference 1: {"actual":null,"expected":[2],"actualLength":1,"expectedLength":2}');
   assert.equal(nativeCorpusFailure('case', { actual: false, expected: true, message: 'rejected' }), 'case: {"actual":false,"expected":true,"message":"rejected"}');
 });
+
+test('alias pattern priorities keep the alias and distinguish explicit tokens from generic extras', () => {
+  const pattern = { type: 'PATTERN', value: '[ab]+' };
+  const source = { rules: { source: { type: 'ALIAS', named: true, value: 'directive', content: pattern } } };
+  const original = structuredClone(source);
+  const decision = { family: 'alias-pattern-precedence', rules: ['source'], alias: 'directive', value: 1 };
+  const result = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(result.rules.source, { type: 'ALIAS', named: true, value: 'directive', content: { type: 'TOKEN', content: { type: 'PREC', value: 1, content: pattern } } });
+  for (const change of [{ rules: ['absent'] }, { alias: 'absent' }, { value: 0.5 }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
+
+test('field-selected variant precedence keeps unselected alternatives and all fields', () => {
+  const sym = (name) => ({ type: 'SYMBOL', name });
+  const branch = (lhs) => ({ type: 'PREC_LEFT', value: 1, content: { type: 'SEQ', members: [
+    { type: 'FIELD', name: 'lhs', content: sym(lhs) }, { type: 'FIELD', name: 'operator', content: sym('less') }, { type: 'FIELD', name: 'rhs', content: sym('expression') },
+  ] } });
+  const source = { rules: { binary: { type: 'CHOICE', members: [branch('expression'), branch('reference')] } } };
+  const original = structuredClone(source);
+  const decision = { family: 'rule-variant-precedence', rule: 'binary', fields: { lhs: 'reference', operator: 'less' }, associativity: 'right', value: 1, dynamic: 1 };
+  const result = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, original);
+  assert.deepEqual(result.rules.binary.members[0], original.rules.binary.members[0]);
+  assert.equal(result.rules.binary.members[1].type, 'PREC_DYNAMIC');
+  assert.equal(result.rules.binary.members[1].content.type, 'PREC_RIGHT');
+  assert.deepEqual(result.rules.binary.members[1].content.content, original.rules.binary.members[1].content);
+  for (const change of [{ fields: { operator: 'less' } }, { fields: { lhs: 'absent' } }, { value: 1.5 }, { dynamic: -1 }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});
