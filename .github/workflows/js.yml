@@ -217,7 +217,7 @@ jobs:
         working-directory: js
 
       - name: Compare the pinned RML audit with the live pull request head (post-merge report)
-        if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         continue-on-error: true
         run: node scripts/issue-195-rml-pr184.mjs --online
         working-directory: js

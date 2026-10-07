@@ -155,6 +155,7 @@ test('the live RML head audit runs on main as a non-blocking post-merge report',
   const report = jobs('js.yml').get('test').steps.find((step) => /issue-195-rml-pr184\.mjs --online/u.test(step.run));
   assert.ok(report, 'the live head comparison remains executable');
   assert.match(report.text, /github\.ref == 'refs\/heads\/main'/u);
+  assert.match(report.text, /github\.event_name != 'pull_request'/u);
   assert.match(report.text, /!cancelled\(\)/u);
   assert.match(report.text, /continue-on-error: true/u);
   assert.match(report.text, /working-directory: js/u);
