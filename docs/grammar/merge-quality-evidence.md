@@ -74,10 +74,10 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-css` | 40 | 556 | 817 | 0 | 5 |
 | `native-csv` | 123 | 699 | 553 | 8 | 15 |
 | `native-diff` | 115 | 1175 | 3588 | 8 | 14 |
-| `native-erlang` | 95 | 1267 | 1624 | 0 | 4 |
+| `native-erlang` | 97 | 1287 | 1655 | 0 | 4 |
 | `native-go` | 106 | 4369 | 9101 | 0 | 13 |
 | `native-graphql` | 53 | 1809 | 3211 | 0 | 29 |
-| `native-groovy` | 48 | 568 | 874 | 0 | 11 |
+| `native-groovy` | 54 | 713 | 1060 | 0 | 11 |
 | `native-ini` | 55 | 444 | 710 | 9 | 15 |
 | `native-java` | 146 | 4848 | 11744 | 0 | 11 |
 | `native-javascript` | 146 | 5816 | 12130 | 0 | 24 |
@@ -100,7 +100,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 3475 | 84424 | 189870 | 101 | 568 |
+| all | 3483 | 84589 | 190087 | 101 | 568 |
 
 ## Coverage
 
@@ -118,10 +118,10 @@ language specification and checked against the oracle.
 | `native-css` | 48 | 0 | 7 | 11 | 34 of 48 (71%) | 51 | 0 | 20 | 5 | 0 | 0 |
 | `native-csv` | 4 | 0 | 4 | 0 | 4 of 4 (100%) | 7 | 0 | n/a | n/a | n/a | n/a |
 | `native-diff` | 17 | 0 | 7 | 0 | 17 of 17 (100%) | 23 | 2 | n/a | n/a | n/a | n/a |
-| `native-erlang` | 138 | 0 | 45 | 13 | 62 of 138 (45%) | 68 | 31 | 127 | 26 | 0 | 0 |
+| `native-erlang` | 138 | 0 | 45 | 13 | 63 of 138 (46%) | 69 | 31 | 127 | 26 | 0 | 0 |
 | `native-go` | 91 | 0 | 14 | 12 | 87 of 91 (96%) | 104 | 35 | 29 | 9 | 0 | 0 |
 | `native-graphql` | 67 | 0 | 0 | 7 | 67 of 67 (100%) | 74 | 0 | 6 | 2 | 0 | 0 |
-| `native-groovy` | 127 | 0 | 34 | 20 | 55 of 127 (43%) | 68 | 24 | 34 | 5 | 0 | 0 |
+| `native-groovy` | 127 | 0 | 34 | 20 | 63 of 127 (50%) | 77 | 24 | 34 | 5 | 0 | 0 |
 | `native-ini` | 5 | 0 | 0 | 0 | 5 of 5 (100%) | 8 | 0 | n/a | n/a | n/a | n/a |
 | `native-java` | 120 | 0 | 30 | 19 | 111 of 120 (93%) | 133 | 36 | 29 | 4 | 0 | 0 |
 | `native-javascript` | 94 | 0 | 34 | 15 | 90 of 94 (96%) | 113 | 36 | 25 | 2 | 0 | 0 |
@@ -131,7 +131,7 @@ language specification and checked against the oracle.
 | `native-lua` | 31 | 0 | 33 | 9 | 30 of 31 (97%) | 43 | 21 | 36 | 2 | 0 | 0 |
 | `native-make` | 36 | 0 | 25 | 4 | 35 of 36 (97%) | 44 | 24 | 36 | 12 | 0 | 0 |
 | `native-pascal` | 127 | 0 | 27 | 162 | 50 of 127 (39%) | 97 | 19 | 297 | 9 | 0 | 0 |
-| `native-powershell` | 139 | 0 | 14 | 14 | 90 of 139 (65%) | 98 | 12 | 54 | 12 | 0 | 0 |
+| `native-powershell` | 139 | 0 | 13 | 15 | 90 of 139 (65%) | 98 | 12 | 54 | 12 | 0 | 0 |
 | `native-proto` | 43 | 0 | 3 | 9 | 43 of 43 (100%) | 52 | 5 | 20 | 7 | 0 | 0 |
 | `native-racket` | 22 | 0 | 3 | 14 | 22 of 22 (100%) | 32 | 0 | n/a | n/a | n/a | n/a |
 | `native-regex` | 24 | 0 | 4 | 12 | 24 of 24 (100%) | 38 | 0 | 4 | 0 | 0 | 0 |
@@ -199,10 +199,10 @@ generative cases with the oracle and gives each difference a category.
 | `native-css` | 5 | 5 | 1 | 6 | none |
 | `native-csv` | 15 | 15 | 15 | 0 | none |
 | `native-diff` | 14 | 14 | 6 | 36 | none |
-| `native-erlang` | 4 | 4 | 2 | 3 | none |
+| `native-erlang` | 4 | 4 | 3 | 5 | none |
 | `native-go` | 13 | 13 | 4 | 19 | none |
 | `native-graphql` | 29 | 29 | 8 | 40 | none |
-| `native-groovy` | 11 | 11 | 3 | 14 | none |
+| `native-groovy` | 11 | 11 | 1 | 11 | none |
 | `native-ini` | 15 | 15 | 10 | 9 | none |
 | `native-java` | 11 | 11 | 4 | 15 | none |
 | `native-javascript` | 24 | 24 | 6 | 31 | native-skips-more 13, oracle-skips-more 35, same-repair-sites 13, same-skipped-bytes 1 |
@@ -263,10 +263,10 @@ loads the same modules and parses nothing.
 | `native-css` | 64.1 | 0.6 | 114.4× | 22.1 | 0.2 | 37.8 | 3.8 |
 | `native-csv` | 28.2 | 4.6 | 6.1× | 21.4 | 5.5 | 17.4 | 8.7 |
 | `native-diff` | 160.7 | 6.9 | 23.2× | 15.2 | 0.3 | 26.3 | 7.4 |
-| `native-erlang` | 308.4 | 2.0 | 151.0× | 68.3 | 0.2 | 75.8 | 9.1 |
+| `native-erlang` | 208.2 | 1.2 | 167.1× | 50.3 | 0.2 | 165.9 | 8.7 |
 | `native-go` | 2295.7 | 9.9 | 231.2× | 553.3 | 1.6 | 128.2 | 11.1 |
 | `native-graphql` | 193.7 | 5.0 | 38.9× | 192.0 | 0.8 | 81.6 | 7.5 |
-| `native-groovy` | 230.0 | 1.4 | 162.7× | 641.3 | 0.5 | 174.7 | 11.5 |
+| `native-groovy` | 295.6 | 1.2 | 240.7× | 329.9 | 0.5 | 136.7 | 10.7 |
 | `native-ini` | 18.5 | 1.5 | 12.3× | 14.9 | 0.4 | 15.7 | 3.9 |
 | `native-java` | 2078.1 | 10.0 | 207.0× | 397.1 | 0.8 | 124.3 | 12.0 |
 | `native-javascript` | 7646.4 | 14.9 | 513.3× | 2214.6 | 1.1 | 131.9 | 12.6 |
@@ -276,7 +276,7 @@ loads the same modules and parses nothing.
 | `native-lua` | 100.5 | 1.0 | 96.3× | 53.7 | 0.4 | 48.3 | 5.9 |
 | `native-make` | 966.8 | 4.4 | 220.4× | 432.3 | 1.5 | 119.7 | 4.8 |
 | `native-pascal` | 191.5 | 1.4 | 141.6× | 45.4 | 0.3 | 74.3 | 7.8 |
-| `native-powershell` | 176.6 | 1.4 | 126.2× | 488.3 | 0.4 | 184.1 | 14.3 |
+| `native-powershell` | 167.6 | 1.8 | 95.7× | 486.1 | 0.7 | 188.0 | 16.2 |
 | `native-proto` | 644.6 | 10.2 | 63.2× | 98.9 | 1.7 | 104.6 | 8.7 |
 | `native-racket` | 231.7 | 5.0 | 46.3× | 90.5 | 1.7 | 45.3 | 9.7 |
 | `native-regex` | 196.9 | 5.2 | 38.1× | 258.4 | 0.6 | 32.0 | 12.2 |
@@ -304,10 +304,10 @@ without optimization, as the tests run them.
 | `native-css` | 158.3 | 0.5 | 291.5× | 46.5 | 0.1 | 0.9 |
 | `native-csv` | 287.1 | n/a | n/a | 64.7 | n/a | 0.1 |
 | `native-diff` | 346.1 | 2.2 | 157.9× | 47.6 | 0.3 | 0.4 |
-| `native-erlang` | 1270.2 | 1.4 | 919.1× | 166.4 | 0.2 | 3.4 |
+| `native-erlang` | 931.3 | 1.9 | 495.7× | 155.8 | 0.2 | 3.4 |
 | `native-go` | 7025.9 | 10.9 | 642.6× | 1412.4 | 1.0 | 5.5 |
 | `native-graphql` | 665.5 | 2.0 | 326.6× | 458.1 | 0.8 | 1.6 |
-| `native-groovy` | 1233.3 | 0.7 | 1744.4× | 1845.9 | 0.4 | 8.7 |
+| `native-groovy` | 1507.8 | 0.9 | 1769.7× | 1113.8 | 0.5 | 7.4 |
 | `native-ini` | 148.8 | 3.5 | 42.7× | 54.6 | 0.5 | 0.1 |
 | `native-java` | 9722.4 | 7.9 | 1226.8× | 1413.3 | 0.6 | 5.6 |
 | `native-javascript` | 24702.9 | 24.3 | 1015.6× | 6176.5 | 1.3 | 5.4 |
@@ -317,7 +317,7 @@ without optimization, as the tests run them.
 | `native-lua` | 178.9 | 0.6 | 280.8× | 124.4 | 0.2 | 1.4 |
 | `native-make` | 3320.8 | 3.2 | 1039.7× | 1308.5 | 1.1 | 1.6 |
 | `native-pascal` | 719.8 | 1.4 | 520.5× | 188.3 | 0.3 | 5.1 |
-| `native-powershell` | 414.7 | 1.5 | 282.5× | 1340.1 | 0.5 | 11.7 |
+| `native-powershell` | 462.6 | 1.2 | 394.7× | 1286.6 | 0.5 | 11.6 |
 | `native-proto` | 2063.4 | 10.2 | 203.2× | 325.5 | 0.6 | 15.5 |
 | `native-racket` | 1406.2 | 2.1 | 657.1× | 246.0 | 1.3 | 3.0 |
 | `native-regex` | 678.6 | 2.2 | 306.6× | 431.9 | 0.5 | 0.8 |

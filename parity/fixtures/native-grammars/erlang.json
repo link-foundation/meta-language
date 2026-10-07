@@ -1047,6 +1047,36 @@
       ]
     },
     {
+      "source": "\n-custom(value).\n",
+      "rows": [
+        [0,null,"source_file",1,1,17,""],
+        [1,"forms_only","wild_attribute",1,1,16,""],
+        [2,"name","attr_name",1,1,8,""],
+        [3,null,"-",0,1,2,""],
+        [3,"name","atom",1,2,8,""],
+        [2,"value","paren_expr",1,8,15,""],
+        [3,null,"(",0,8,9,""],
+        [3,"expr","atom",1,9,14,""],
+        [3,null,")",0,14,15,""],
+        [2,null,".",0,15,16,""]
+      ]
+    },
+    {
+      "source": "\n-extra(\"x\").\n",
+      "rows": [
+        [0,null,"source_file",1,1,14,""],
+        [1,"forms_only","wild_attribute",1,1,13,""],
+        [2,"name","attr_name",1,1,7,""],
+        [3,null,"-",0,1,2,""],
+        [3,"name","atom",1,2,7,""],
+        [2,"value","paren_expr",1,7,12,""],
+        [3,null,"(",0,7,8,""],
+        [3,"expr","string",1,8,11,""],
+        [3,null,")",0,11,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
       "source": "-define(T, atom() | integer()).\n",
       "rows": [
         [0,null,"source_file",1,0,32,""],
@@ -1905,7 +1935,7 @@
     },
     {
       "source": "f( -> ok.",
-      "recovered": "(source_file exprs:(binary_operator_expression lhs:(call expr:(atom \"f\") args:(expression_argument_list \"(\" args:(unary_operator_expression ~\" \" \"-\" (MISSING@4 ellipsis)) (MISSING@4 \")\"))) \">\" ~\" \" rhs:(atom \"ok\")) exprs:\".\")"
+      "recovered": "(source_file forms_only:(fun_declaration clause:(function_definition_clause name:(atom \"f\") args:(expression_argument_list \"(\" args:(unary_operator_expression ~\" \" \"-\" (MISSING@4 ellipsis)) (MISSING@4 \")\")) body:(clause_body (MISSING@4 \"->\") (MISSING@4 ellipsis))) (ERROR@4..8 \"> ok\") \".\"))"
     },
     {
       "source": "f() -> \"unterminated.",

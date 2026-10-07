@@ -686,6 +686,13 @@
       "symbol": "_expr",
       "boundary": ")",
       "reason": "Keep a complete expression at the macro closing boundary; preserve every guard and clause alternative when the expression does not span the replacement."
+    },
+    {
+      "family": "complete-context-variant",
+      "rule": "source_file",
+      "field": "forms_only",
+      "boundary": null,
+      "reason": "Prefer a declaration sequence when it spans the input including trailing extras; preserve expression sequences otherwise."
     }
   ],
   "approximations": [],

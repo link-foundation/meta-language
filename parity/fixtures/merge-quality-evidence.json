@@ -88,10 +88,10 @@
       ],
       "corpus": "https://github.com/WhatsApp/tree-sitter-erlang/tree/67e7f7f05baf492ca2a7c0d9538761b242d33d95/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/erlang.json",
-      "coverage": {"rules": {"normal": 138, "atomic": 0, "silent": 45, "token": 13}, "visibleRules": 138, "exercisedRules": 62, "checkedKinds": 68, "checkedFields": 31, "renamed": 127, "expandedWords": 26, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 138, "atomic": 0, "silent": 45, "token": 13}, "visibleRules": 138, "exercisedRules": 63, "checkedKinds": 69, "checkedFields": 31, "renamed": 127, "expandedWords": 26, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 3, "conflict": 14, "precedences": 0, "extra": 2, "kind": 0},
-      "correctness": {"matches": 95, "rows": 1267, "bytes": 1624, "divergences": 0, "rejections": 4},
-      "recovery": {"repaired": 4, "errorNodes": 2, "missingNodes": 3, "categories": {}},
+      "correctness": {"matches": 97, "rows": 1287, "bytes": 1655, "divergences": 0, "rejections": 4},
+      "recovery": {"repaired": 4, "errorNodes": 3, "missingNodes": 5, "categories": {}},
       "reuse": {"shared": 41, "specific": 155}
     },
     {
@@ -142,10 +142,10 @@
       ],
       "corpus": "https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/groovy.json",
-      "coverage": {"rules": {"normal": 127, "atomic": 0, "silent": 34, "token": 20}, "visibleRules": 127, "exercisedRules": 55, "checkedKinds": 68, "checkedFields": 24, "renamed": 34, "expandedWords": 5, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 127, "atomic": 0, "silent": 34, "token": 20}, "visibleRules": 127, "exercisedRules": 63, "checkedKinds": 77, "checkedFields": 24, "renamed": 34, "expandedWords": 5, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 0, "conflict": 33, "precedences": 0, "extra": 3, "kind": 1},
-      "correctness": {"matches": 48, "rows": 568, "bytes": 874, "divergences": 0, "rejections": 11},
-      "recovery": {"repaired": 11, "errorNodes": 3, "missingNodes": 14, "categories": {}},
+      "correctness": {"matches": 54, "rows": 713, "bytes": 1060, "divergences": 0, "rejections": 11},
+      "recovery": {"repaired": 11, "errorNodes": 1, "missingNodes": 11, "categories": {}},
       "reuse": {"shared": 170, "specific": 11}
     },
     {
@@ -323,7 +323,7 @@
       ],
       "corpus": "https://github.com/airbus-cert/tree-sitter-powershell/tree/d398441825243b00e317e87e1829b9d6a3e54ce0/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/powershell.json",
-      "coverage": {"rules": {"normal": 139, "atomic": 0, "silent": 14, "token": 14}, "visibleRules": 139, "exercisedRules": 90, "checkedKinds": 98, "checkedFields": 12, "renamed": 54, "expandedWords": 12, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 139, "atomic": 0, "silent": 13, "token": 15}, "visibleRules": 139, "exercisedRules": 90, "checkedKinds": 98, "checkedFields": 12, "renamed": 54, "expandedWords": 12, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 1, "conflict": 5, "precedences": 0, "extra": 5, "kind": 0},
       "correctness": {"matches": 48, "rows": 1710, "bytes": 813, "divergences": 0, "rejections": 7},
       "recovery": {"repaired": 7, "errorNodes": 1, "missingNodes": 8, "categories": {}},

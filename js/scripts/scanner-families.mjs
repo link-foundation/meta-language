@@ -1,5 +1,6 @@
 // Generate external scanners as executable Links Notation data. Delimiters
 // and token names are parameters; the executors need no language callbacks.
+import { parseTreeSitterPattern, renderTreeSitterPattern } from '../src/grammar-importers/tree-sitter-native.js';
 const encode = (text) => [...Buffer.from(text)].map((byte) => (
   (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122)
   || (byte >= 48 && byte <= 57) || [45, 46, 95].includes(byte)
@@ -16,6 +17,19 @@ const delimiter = (text) => {
   if (typeof text !== 'string' || text.length === 0) throw new TypeError('a scanner delimiter must be nonempty text');
   return literal(text);
 };
+
+/** Opening and closing tags agree by text, rather than just delimiter count. */
+export function rememberedDelimiterScanner({ name, startToken, contentToken, endToken, tagPattern }) {
+  for (const value of [name, startToken, contentToken, endToken]) identifier(value);
+  if (new Set([startToken, contentToken, endToken]).size !== 3 || typeof tagPattern !== 'string' || !tagPattern) throw new TypeError('remembered delimiters need distinct tokens and a nonempty tag pattern');
+  const tag = renderTreeSitterPattern(parseTreeSitterPattern(tagPattern));
+  if (new RegExp(`^(?:${tagPattern})$`, 'u').test('')) throw new TypeError('a remembered delimiter tag must consume input');
+  const labels = `${name}_labels`;
+  const closing = `(predicate ${tag} (equal (matched) (top ${labels})))`;
+  return `(scanner ${name} (tokens ${contentToken}) (operations (if (not (valid ${contentToken})) (then fail)) (if (equal (depth ${labels}) (integer 0)) (then fail)) (while (not atEnd) (do (if (next ${closing}) (then mark (emit ${contentToken}))) advance)) fail))\n`
+    + `(rule ${startToken} token ${tag} (action (push ${labels} (matched))))\n`
+    + `(rule ${endToken} token ${closing} (action (pop ${labels})))\n`;
+}
 
 /** A complete delimiter token, optionally nesting and escaping its delimiters. */
 export function delimitedScanner({ name, token, opening, closing, nested = false, escape = null }) {
@@ -167,12 +181,13 @@ export function scannerFamilies(descriptors) {
   const names = new Set();
   const tokens = new Set();
   return descriptors.map(({ family, ...options }) => {
-    const declared = family === 'split-counted-delimiter' ? [options.startToken, options.contentToken, options.endToken]
+    const declared = ['split-counted-delimiter', 'remembered-delimiter'].includes(family) ? [options.startToken, options.contentToken, options.endToken]
       : family === 'delimiter-run' ? [options.contentToken, options.endToken]
         : [options.token, ...(options.closeToken ? [options.closeToken] : [])];
     if (names.has(options.name) || new Set(declared).size !== declared.length || declared.some((token) => tokens.has(token))) throw new TypeError('duplicate scanner name or token');
     names.add(options.name);
     for (const token of declared) tokens.add(token);
+    if (family === 'remembered-delimiter') return rememberedDelimiterScanner(options);
     if (family === 'delimited') return delimitedScanner(options);
     if (family === 'content') return contentScanner(options);
     if (family === 'counted-delimiter') return countedDelimiterScanner(options);

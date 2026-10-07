@@ -1358,6 +1358,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       if (current !== text) {
         stale += 1;
         console.error(`${relative} is stale; run node scripts/generate-native-grammar-fixtures.mjs`);
+        if (relative === DEFAULT_CST_PATH && current !== null) {
+          const before = JSON.parse(current);
+          const after = JSON.parse(text);
+          for (const [language, expected] of Object.entries(after.languages)) {
+            if (JSON.stringify(before.languages[language]) !== JSON.stringify(expected)) console.error(`  changed language: ${language}`);
+          }
+          if (JSON.stringify(before.embeddedFixtures) !== JSON.stringify(after.embeddedFixtures)) console.error('  changed embedded fixtures');
+        }
       }
     } else {
       mkdirSync(path.dirname(file), { recursive: true });

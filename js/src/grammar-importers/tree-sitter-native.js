@@ -364,6 +364,8 @@ function finiteTexts(node, limit = 64) {
 // (a TOKEN, an IMMEDIATE_TOKEN or a whole lexical rule) as one unit.
 function lexicalUnits(node, out) {
   if (!node || typeof node !== 'object') return out;
+  // Context guards and preferred copies introduce no source lexer tokens.
+  if (['NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return lexicalUnits(node.content, out);
   if (node.type === 'STRING' || node.type === 'TOKEN' || node.type === 'IMMEDIATE_TOKEN') {
     out.push(node);
     return out;
@@ -403,6 +405,7 @@ function countTokens(node, counts, around = []) {
     node.forEach((item) => countTokens(item, counts));
     return counts;
   }
+  if (['NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return countTokens(node.content, counts, around);
   const add = (key) => counts.set(key, (counts.get(key) ?? 0) + 1);
   if (node.type === 'STRING' || node.type === 'PATTERN') add(tokenKey(node));
   else if (node.type === 'TOKEN' || node.type === 'IMMEDIATE_TOKEN') add(tokenKey(node, around));
@@ -492,7 +495,9 @@ export function importTreeSitterNative(source, options = {}) {
         if (!inToken && keywords.has(node.value)) return `(token (seq (literal ${enc(node.value)}) (not (ref ${wordRule}))))`;
         return `(literal ${enc(node.value)})`;
       case 'NATIVE_END_BOUNDARY': return `(choice unordered ${expr(node.content, inToken, keywords, aliased)} (token (not any)))`;
-      case 'NATIVE_COMPLETE_CONTEXT_VARIANT': return `(choice ordered (seq ${expr(node.preferred, inToken, keywords, aliased)} (and (literal ${enc(node.boundary)}))) ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_KEYWORD_CONTEXT_VARIANT': return `(choice ordered ${expr(node.preferred, inToken, keywords, aliased)} ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_PATTERN_LOOKAHEAD': return `(seq (and (token ${renderTreeSitterPattern(parseTreeSitterPattern(node.pattern))})) ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_COMPLETE_CONTEXT_VARIANT': return `(choice ordered (seq ${expr(node.preferred, inToken, keywords, aliased)} ${node.boundary === null ? '(and (token (not any)))' : `(and (literal ${enc(node.boundary)}))`}) ${expr(node.content, inToken, keywords, aliased)})`;
       case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': {
         const prefix = expr(node.content.members[0], inToken, keywords);
         const suffix = expr(node.content.members[1].members.find((member) => member.type !== 'BLANK'), inToken, keywords);
@@ -502,10 +507,11 @@ export function importTreeSitterNative(source, options = {}) {
         const text = fixedPattern(parseTreeSitterPattern(node.value, node.flags ?? ''));
         return inToken ? text : unnamed(`(token ${text})`, aliased);
       }
+      case 'NATIVE_KEYWORD_REQUIREMENT':
       case 'NATIVE_KEYWORD_EXCLUSION': {
         const keyword = expr(node.keywords, true, keywords);
         const word = expr(unwrapPrecedence(node.word).type === 'TOKEN' ? unwrapPrecedence(node.word).content : node.word, true, keywords);
-        return `(seq (not (seq (token ${keyword}) (not (immediateToken ${word})))) ${expr(node.content, inToken, keywords, aliased)})`;
+        return `(seq (${node.type === 'NATIVE_KEYWORD_REQUIREMENT' ? 'and' : 'not'} (seq (token ${keyword}) (not (immediateToken ${word})))) ${expr(node.content, inToken, keywords, aliased)})`;
       }
       case 'BLANK': return 'empty';
       case 'NATIVE_ORDERED_CHOICE': return `(choice ordered ${node.members.map((member) => expr(member, inToken, keywords)).join(' ')})`;

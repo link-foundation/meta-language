@@ -1958,6 +1958,13 @@
           "symbol": "_expr",
           "boundary": ")",
           "reason": "Keep a complete expression at the macro closing boundary; preserve every guard and clause alternative when the expression does not span the replacement."
+        },
+        {
+          "family": "complete-context-variant",
+          "rule": "source_file",
+          "field": "forms_only",
+          "boundary": null,
+          "reason": "Prefer a declaration sequence when it spans the input including trailing extras; preserve expression sequences otherwise."
         }
       ]
     },
@@ -2038,10 +2045,75 @@
           "family": "ordered-variants",
           "rule": "statement",
           "variants": [
+            "switch_expression",
             "block",
             "expression_statement"
           ],
-          "reason": "The oracle uses a statement block where both a block and a closure expression statement fit; keep the expression alternative as fallback."
+          "reason": "Prefer the direct switch production and a semicolon-terminated statement block, retaining closure and expression alternatives for other contexts.",
+          "lookaheadPatterns": {
+            "block": "\\{(?:[^}]*;\\s*|\\s*)\\}"
+          }
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "_class_body_declaration",
+          "variants": [
+            "method_declaration",
+            "field_declaration"
+          ],
+          "reason": "Keep a complete method before an overlapping field prefix inside a class, retaining the field production when no method fits."
+        },
+        {
+          "family": "field-ordered-variants",
+          "rule": "if_statement",
+          "field": "consequence",
+          "variants": [
+            "expression",
+            "statement"
+          ],
+          "reason": "Prefer the direct consequence expression where it fits; retain statements with their explicit terminators."
+        },
+        {
+          "family": "complete-context-variant",
+          "rule": "_toplevel_statement",
+          "symbol": "method_declaration",
+          "boundary": null,
+          "excludedKeywords": [
+            "def"
+          ],
+          "wordRule": "identifier",
+          "reason": "Prefer complete typed method declarations at the input boundary, preserving def functions and all original alternatives."
+        },
+        {
+          "family": "complete-context-variant",
+          "rule": "_toplevel_statement",
+          "symbol": "statement",
+          "boundary": null,
+          "reason": "Keep a complete top-level statement before overlapping juxtaposed call reductions; preserve every other alternative."
+        },
+        {
+          "family": "field-literal-alternative",
+          "rule": "_method_header",
+          "field": "type",
+          "literal": "def",
+          "alias": "type_identifier",
+          "reason": "The source identifier accepts def as the contextual method type; retain that spelling when the keyword extractor recognizes def elsewhere."
+        },
+        {
+          "family": "pattern-trivia-run",
+          "rule": "local_variable_declaration",
+          "pattern": "\\n",
+          "reason": "Keep the full run of existing newline extras in the declaration terminator span; a single newline remains the same production."
+        },
+        {
+          "family": "keyword-context-variant",
+          "rule": "_toplevel_statement",
+          "symbol": "function_definition",
+          "includedKeywords": [
+            "def"
+          ],
+          "wordRule": "identifier",
+          "reason": "Keep top-level def functions before the contextual class-method type spelling, preserving every other production."
         }
       ],
       "concepts": {
@@ -2143,7 +2215,7 @@
       "grammar.syntax-quotation": [
         {
           "id": "grammar.syntax-quote",
-          "reason": "A Lean syntax quotation `(\u2026) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
+          "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
         }
       ],
       "grammar.yield-statement": [

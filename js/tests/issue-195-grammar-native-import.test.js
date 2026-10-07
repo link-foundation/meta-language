@@ -408,6 +408,73 @@ test('a complete context preference preserves longer fallback productions', () =
   for (const change of [{ rule: 'absent' }, { symbol: 'document' }, { boundary: '' }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
 });
 
+test('input boundary preferences skip extras, preserve fields and emit no boundary leaf', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'input_boundary', extras: [{ type: 'PATTERN', value: '\\s+' }], rules: {
+    document: { type: 'CHOICE', members: [
+      { type: 'FIELD', name: 'preferred', content: symbol('short') }, symbol('long'),
+    ] },
+    short: { type: 'STRING', value: 'a' },
+    long: { type: 'STRING', value: 'ab' },
+  } };
+  const transformed = transformNativeSource(source, [{ family: 'complete-context-variant', rule: 'document', field: 'preferred', boundary: null }]);
+  assert.deepEqual(transformed.rules.document.content, source.rules.document);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  const tree = parser.parseTree(' a\n').tree;
+  assert.equal(tree.children.find((child) => child.kind === 'short').field, 'preferred');
+  const leaves = (node) => node.type === 'node' ? node.children.flatMap(leaves) : [node];
+  assert.ok(leaves(tree).every((leaf) => leaf.end > leaf.start));
+  assert.equal(parser.parseTree('ab').ok, true);
+  assert.equal(parser.parseTree('ac').ok, false);
+});
+
+test('context keyword guards do not duplicate the source word token or its lexer candidates', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'context_words', word: 'identifier', extras: [{ type: 'PATTERN', value: '\\s+' }], rules: {
+    document: { type: 'CHOICE', members: [symbol('declaration'), symbol('identifier')] },
+    declaration: { type: 'SEQ', members: [{ type: 'STRING', value: 'def' }, symbol('identifier')] },
+    identifier: { type: 'PATTERN', value: '[a-z]+' },
+  } };
+  for (const family of ['complete-context-variant', 'keyword-context-variant']) for (const guards of [{ includedKeywords: ['def'] }, { excludedKeywords: ['def'] }]) {
+    const transformed = transformNativeSource(source, [{ family, rule: 'document', symbol: 'declaration', boundary: null, wordRule: 'identifier', ...guards }]);
+    const imported = importTreeSitterNative(transformed);
+    assert.equal(imported.rules.find((rule) => rule.name === 'identifier').kind, 'token');
+    assert.deepEqual(imported.keywords, importTreeSitterNative(source).keywords);
+    const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported)));
+    assert.equal(parser.parseTree('def name').ok, true);
+    assert.equal(parser.parseTree('name').ok, true);
+  }
+});
+
+test('field ordering and contextual literals preserve every original field production', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'fields', rules: {
+    document: { type: 'FIELD', name: 'value', content: { type: 'CHOICE', members: [symbol('first'), symbol('second')] } },
+    first: { type: 'STRING', value: 'a' }, second: { type: 'STRING', value: 'b' },
+  } };
+  const ordered = transformNativeSource(source, [{ family: 'field-ordered-variants', rule: 'document', field: 'value', variants: ['second', 'first'] }]);
+  assert.deepEqual(ordered.rules.document.content.members, [...source.rules.document.content.members].reverse());
+  const transformed = transformNativeSource(ordered, [{ family: 'field-literal-alternative', rule: 'document', field: 'value', literal: 'c', alias: 'first' }]);
+  assert.deepEqual(transformed.rules.document.content.members[1], ordered.rules.document.content);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  for (const text of ['a', 'b', 'c']) assert.equal(parser.parseTree(text).ok, true);
+  assert.equal(parser.parseTree('d').ok, false);
+  assert.throws(() => transformNativeSource(source, [{ family: 'field-ordered-variants', rule: 'document', field: 'value', variants: ['second', 'absent'] }]), TypeError);
+});
+
+test('a trivia pattern run retains one terminator and consumes successive terminators losslessly', () => {
+  const source = { name: 'terminators', rules: { document: { type: 'SEQ', members: [{ type: 'STRING', value: 'a' }, { type: 'PATTERN', value: '\\n' }] } } };
+  const transformed = transformNativeSource(source, [{ family: 'pattern-trivia-run', rule: 'document', pattern: '\\n' }]);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  for (const text of ['a\n', 'a\n\n']) {
+    const outcome = parser.parseTree(text);
+    assert.equal(outcome.ok, true);
+    assert.equal(outcome.tree.end, text.length);
+  }
+  assert.equal(parser.parseTree('a').ok, false);
+  assert.throws(() => transformNativeSource(source, [{ family: 'pattern-trivia-run', rule: 'document', pattern: 'x' }]), TypeError);
+});
+
 test('optional suffix preference requires a value without changing the original prefix', () => {
   const symbol = (name) => ({ type: 'SYMBOL', name });
   const source = { name: 'attachment', rules: {

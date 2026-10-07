@@ -1,0 +1,46 @@
+[
+  {
+    "name": "remembered textual delimiters",
+    "scanners": [
+      {
+        "family": "remembered-delimiter",
+        "name": "tagged_text",
+        "startToken": "opening_tag",
+        "contentToken": "body",
+        "endToken": "closing_tag",
+        "tagPattern": "\\$[^$\\s]*\\$"
+      }
+    ],
+    "generated": "(scanner tagged_text (tokens body) (operations (if (not (valid body)) (then fail)) (if (equal (depth tagged_text_labels) (integer 0)) (then fail)) (while (not atEnd) (do (if (next (predicate (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (equal (matched) (top tagged_text_labels)))) (then mark (emit body))) advance)) fail))\n(rule opening_tag token (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (action (push tagged_text_labels (matched))))\n(rule closing_tag token (predicate (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (equal (matched) (top tagged_text_labels))) (action (pop tagged_text_labels)))\n",
+    "listing": "(grammar (start source))\n(scanner tagged_text (tokens body) (operations (if (not (valid body)) (then fail)) (if (equal (depth tagged_text_labels) (integer 0)) (then fail)) (while (not atEnd) (do (if (next (predicate (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (equal (matched) (top tagged_text_labels)))) (then mark (emit body))) advance)) fail))\n(rule opening_tag token (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (action (push tagged_text_labels (matched))))\n(rule closing_tag token (predicate (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (equal (matched) (top tagged_text_labels))) (action (pop tagged_text_labels)))\n(rule source normal (repeat1 (seq (ref opening_tag) (ref body) (ref closing_tag))))\n",
+    "accept": [
+      "$$$$",
+      "$$hello$$",
+      "$name$a$other$b$name$",
+      "$a$é😀\n$a$",
+      "$left$x$left$$right$y$right$",
+      "$tag$one$ta$two$tag$",
+      "$A$case$a$still content$A$",
+      "$long_label$body$long_label$"
+    ],
+    "reject": [
+      "$$",
+      "$a$body$b$",
+      "$a$body$a",
+      "$a$body$A$",
+      "$ a$x$ a$",
+      "$a$x$a$tail"
+    ],
+    "trees": {
+      "$$$$": "(source (opening_tag \"$$\") (body \"\") (closing_tag \"$$\"))",
+      "$$hello$$": "(source (opening_tag \"$$\") (body \"hello\") (closing_tag \"$$\"))",
+      "$name$a$other$b$name$": "(source (opening_tag \"$name$\") (body \"a$other$b\") (closing_tag \"$name$\"))",
+      "$a$é😀\n$a$": "(source (opening_tag \"$a$\") (body \"é😀\\n\") (closing_tag \"$a$\"))",
+      "$left$x$left$$right$y$right$": "(source (opening_tag \"$left$\") (body \"x\") (closing_tag \"$left$\") (opening_tag \"$right$\") (body \"y\") (closing_tag \"$right$\"))",
+      "$tag$one$ta$two$tag$": "(source (opening_tag \"$tag$\") (body \"one$ta$two\") (closing_tag \"$tag$\"))",
+      "$A$case$a$still content$A$": "(source (opening_tag \"$A$\") (body \"case$a$still content\") (closing_tag \"$A$\"))",
+      "$long_label$body$long_label$": "(source (opening_tag \"$long_label$\") (body \"body\") (closing_tag \"$long_label$\"))"
+    },
+    "assertion": "rememberedDelimiterText"
+  }
+]

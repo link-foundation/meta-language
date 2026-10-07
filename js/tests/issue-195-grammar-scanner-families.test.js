@@ -7,6 +7,7 @@ import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-i
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtureGroups = [
+  ['parity/fixtures/scanner-remembered-delimiters.json', 'I195-GRAMMAR-SCANNER-REMEMBERED-DELIMITERS'],
   ['parity/fixtures/scanner-context-tokens.json', 'I195-GRAMMAR-SCANNER-CONTEXT-TOKENS'],
   ['parity/fixtures/scanner-delimiter-runs.json', 'I195-GRAMMAR-SCANNER-DELIMITER-RUNS'],
   ['parity/fixtures/scanner-families.json', 'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES'],
@@ -84,4 +85,11 @@ test('context and counted line scanner descriptors reject malformed policies', (
   for (const change of [{ stops: [] }, { comments: 1 }, { immediateCharacters: ['ab'] }, { immediateRanges: [['z', 'a']] }]) assert.throws(() => scannerFamilies([{ ...context, ...change }]), TypeError);
   const counted = { family: 'line-counted-delimiter', name: 'quotes', token: 'quotes' };
   for (const change of [{ minimum: 1 }, { minimum: 2.5 }, { countModulo: 2 }, { optionalPrefixCharacters: ['ab'], prefix: '~' }]) assert.throws(() => scannerFamilies([{ ...counted, ...change }]), TypeError);
+});
+
+test('remembered delimiter descriptors reject nullable tags and conflicting token names', () => {
+  const descriptor = { family: 'remembered-delimiter', name: 'tags', startToken: 'opening', contentToken: 'body', endToken: 'closing', tagPattern: '\\$[^$\\s]*\\$' };
+  for (const change of [{ tagPattern: '' }, { tagPattern: 'a*' }, { tagPattern: '(a|)' }, { endToken: 'opening' }, { startToken: ') fail (' }]) {
+    assert.throws(() => scannerFamilies([{ ...descriptor, ...change }]));
+  }
 });

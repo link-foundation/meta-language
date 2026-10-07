@@ -32,6 +32,15 @@ const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/
 
 export const VISION_REQUIREMENTS = Object.freeze([
   {
+    id: 'I195-GRAMMAR-SCANNER-REMEMBERED-DELIMITERS', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-remembered-delimiters.json',
+    construct: 'exact textual delimiter state in generated native grammar data',
+    expectedBehavior: 'A generated opening token stores its complete delimiter text. The content scanner ends only before an exactly matching closing tag, preserves other tags as content and clears delimiter state on closing. Both executors preserve every byte and match the shared concrete trees for empty, Unicode and successive differently tagged bodies, and reject mismatched, truncated or malformed tags.',
+    assertions: ['rememberedDelimiterText'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-SCANNER-CONTEXT-TOKENS', area: 'native-grammar', specification: 'grammar-feature-union',
     fixture: 'parity/fixtures/scanner-context-tokens.json',
     construct: 'marked context tokens and line counted delimiters',

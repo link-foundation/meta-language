@@ -3,18 +3,81 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
-    if (decision.family === 'complete-context-variant') {
-      const { rule, symbol, boundary } = decision;
-      if (!Object.hasOwn(grammar.rules, rule) || !Object.hasOwn(grammar.rules, symbol) || typeof boundary !== 'string' || !boundary) throw new TypeError('a complete context variant needs existing rules and a nonempty boundary');
+    if (decision.family === 'field-ordered-variants') {
+      const { rule, field, variants } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || typeof field !== 'string' || !field || !Array.isArray(variants) || variants.length < 2 || new Set(variants).size !== variants.length) throw new TypeError('field ordering needs an existing rule, field and distinct alternatives');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'FIELD' && node.name === field && node.content.type === 'CHOICE') {
+          const members = node.content.members;
+          const selected = variants.map((name) => members.find((member) => member.type === 'SYMBOL' && member.name === name));
+          if (selected.some((member) => !member) || selected.length !== members.length) throw new TypeError('field ordering must cover each existing alternative exactly once');
+          changes += 1;
+          return { ...node, content: { type: 'NATIVE_ORDERED_CHOICE', members: selected } };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, rewrite(value)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('field ordering must select exactly one choice');
+      continue;
+    }
+    if (decision.family === 'field-literal-alternative') {
+      const { rule, field, literal, alias } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || ![field, literal, alias].every((value) => typeof value === 'string' && value)) throw new TypeError('field literal alternatives need an existing rule and nonempty field, literal and alias');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'FIELD' && node.name === field) {
+          changes += 1;
+          return { ...node, content: { type: 'CHOICE', members: [{ type: 'ALIAS', named: true, value: alias, content: { type: 'STRING', value: literal } }, node.content] } };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, rewrite(value)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('field literal alternatives must select exactly one field');
+      continue;
+    }
+    if (decision.family === 'pattern-trivia-run') {
+      const { rule, pattern } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || typeof pattern !== 'string' || !pattern) throw new TypeError('pattern runs need an existing rule and nonempty pattern');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'PATTERN' && node.value === pattern) { changes += 1; return { type: 'TOKEN', content: { type: 'REPEAT1', content: node } }; }
+        return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, rewrite(value)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('pattern runs must select exactly one pattern');
+      continue;
+    }
+    if (['complete-context-variant', 'keyword-context-variant'].includes(decision.family)) {
+      const { rule, symbol = null, field = null, boundary, excludedKeywords = [], includedKeywords = [], wordRule = null } = decision;
+      const keywordOnly = decision.family === 'keyword-context-variant';
+      if (keywordOnly && !includedKeywords.length && !excludedKeywords.length) throw new TypeError('a keyword context variant needs a keyword guard');
+      if (!Object.hasOwn(grammar.rules, rule) || (symbol === null) === (field === null) || (symbol !== null && !Object.hasOwn(grammar.rules, symbol)) || (field !== null && (typeof field !== 'string' || !field)) || (!keywordOnly && boundary !== null && (typeof boundary !== 'string' || !boundary))) throw new TypeError('a complete context variant needs an existing rule, a symbol or field selector and a literal or input boundary');
       let choice = grammar.rules[rule];
-      while (['PREC', 'PREC_LEFT', 'PREC_RIGHT'].includes(choice.type)) choice = choice.content;
+      while (['PREC', 'PREC_LEFT', 'PREC_RIGHT', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT'].includes(choice.type)) choice = choice.content;
       if (choice.type !== 'CHOICE') throw new TypeError('a complete context variant needs a choice');
-      const selected = choice.members.filter((member) => {
+      const alternatives = (node) => node.type === 'CHOICE' ? node.members.flatMap(alternatives) : [node];
+      const selected = alternatives(choice).filter((member) => {
         while (['PREC', 'PREC_LEFT', 'PREC_RIGHT', 'PREC_DYNAMIC'].includes(member.type)) member = member.content;
-        return member.type === 'SYMBOL' && member.name === symbol;
+        return (symbol !== null && member.type === 'SYMBOL' && member.name === symbol) || (field !== null && member.type === 'FIELD' && member.name === field);
       });
       if (selected.length !== 1) throw new TypeError('a complete context variant must select exactly one existing alternative');
-      grammar.rules[rule] = { type: 'NATIVE_COMPLETE_CONTEXT_VARIANT', preferred: selected[0], boundary, content: grammar.rules[rule] };
+      let preferred = selected[0];
+      if (excludedKeywords.length) {
+        if (!Array.isArray(excludedKeywords) || excludedKeywords.some((word) => typeof word !== 'string' || !word) || !Object.hasOwn(grammar.rules, wordRule)) throw new TypeError('context keyword exclusions need words and an existing word rule');
+        preferred = { type: 'NATIVE_KEYWORD_EXCLUSION', content: preferred, keywords: { type: 'CHOICE', members: excludedKeywords.map((value) => ({ type: 'STRING', value })) }, word: grammar.rules[wordRule] };
+      }
+      if (includedKeywords.length) {
+        if (!Array.isArray(includedKeywords) || excludedKeywords.length || includedKeywords.some((word) => typeof word !== 'string' || !word) || !Object.hasOwn(grammar.rules, wordRule)) throw new TypeError('context keyword requirements need words and an existing word rule');
+        preferred = { type: 'NATIVE_KEYWORD_REQUIREMENT', content: preferred, keywords: { type: 'CHOICE', members: includedKeywords.map((value) => ({ type: 'STRING', value })) }, word: grammar.rules[wordRule] };
+      }
+      grammar.rules[rule] = { type: keywordOnly ? 'NATIVE_KEYWORD_CONTEXT_VARIANT' : 'NATIVE_COMPLETE_CONTEXT_VARIANT', preferred, boundary, content: grammar.rules[rule] };
       continue;
     }
     if (decision.family === 'optional-suffix-context') {
@@ -175,7 +238,7 @@ export function transformNativeSource(source, transformations = []) {
       continue;
     }
     if (decision.family === 'ordered-variants') {
-      const { rule, variants } = decision;
+      const { rule, variants, lookaheadPatterns = {} } = decision;
       let choice = grammar.rules[rule];
       while (choice && ['PREC', 'PREC_LEFT', 'PREC_RIGHT'].includes(choice.type)) choice = choice.content;
       if (choice?.type !== 'CHOICE' || !Array.isArray(variants) || variants.length < 2) throw new TypeError('ordered variants need a choice and at least two alternatives');
@@ -185,7 +248,13 @@ export function transformNativeSource(source, transformations = []) {
       };
       const indices = variants.map((name) => choice.members.findIndex((node) => selector(node) === name));
       if (indices.some((index) => index < 0) || new Set(indices).size !== indices.length) throw new TypeError('ordered variants must identify distinct existing alternatives');
-      const ordered = { type: 'NATIVE_ORDERED_CHOICE', members: indices.map((index) => choice.members[index]) };
+      for (const [name, pattern] of Object.entries(lookaheadPatterns)) if (!variants.includes(name) || typeof pattern !== 'string' || !pattern) throw new TypeError('ordered lookaheads need a selected variant and a nonempty pattern');
+      const ordered = { type: 'NATIVE_ORDERED_CHOICE', members: indices.map((index, position) => {
+        const name = variants[position];
+        let content = choice.members[index];
+        if (Object.hasOwn(lookaheadPatterns, name)) content = { type: 'NATIVE_PATTERN_LOOKAHEAD', content, pattern: lookaheadPatterns[name] };
+        return content;
+      }) };
       const first = Math.min(...indices);
       choice.members = choice.members.flatMap((node, index) => index === first ? [ordered] : indices.includes(index) ? [] : [node]);
       continue;

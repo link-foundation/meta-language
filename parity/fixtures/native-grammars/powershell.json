@@ -2044,11 +2044,11 @@
     },
     {
       "source": "switch ($x) { 1 { F } default { G } }\n",
-      "recovered": "(program (statement_list (switch_statement (\"'switch\" \"switch\") (switch_condition ~\" \" \"(\" (pipeline (command_pipeline_sequence (logical_expression (bit_level_expression (comparison_expression (additive_expression (multiplicative_expression (format_expression (range_expression (array_literal_expression (unary_expression (variable (unnamed_token \"$x\"))))))))))))) \")\") (switch_body ~\" \" \"{\" (switch_clause_list (switch_clause (switch_clause_condition (integer_literal ~\" \" (decimal_integer_literal \"1\"))) (statement_block ~\" \" \"{\" statement_list:(statement_list (pipeline (command_pipeline_sequence (command command_name:(command_name ~\" \" (unnamed_token \"F\"))))) (unnamed_token \"\")) ~\" \" \"}\") (MISSING@21 unnamed_token)) (switch_clause (switch_clause_condition ~\" \" (unnamed_token \"default\")) (statement_block ~\" \" \"{\" statement_list:(statement_list (pipeline (command_pipeline_sequence (command command_name:(command_name ~\" \" (unnamed_token \"G\"))))) (unnamed_token \"\")) ~\" \" \"}\") (unnamed_token \"\"))) ~\" \" \"}\"))) ~\"\\n\")"
+      "recovered": "(program (statement_list (switch_statement (\"'switch\" \"switch\") (switch_condition ~\" \" \"(\" (pipeline (command_pipeline_sequence (logical_expression (bit_level_expression (comparison_expression (additive_expression (multiplicative_expression (format_expression (range_expression (array_literal_expression (unary_expression (variable (unnamed_token \"$x\"))))))))))))) \")\") (switch_body ~\" \" \"{\" (switch_clause_list (switch_clause (switch_clause_condition (integer_literal ~\" \" (decimal_integer_literal \"1\"))) (statement_block ~\" \" \"{\" statement_list:(statement_list (pipeline (command_pipeline_sequence (command command_name:(command_name ~\" \" (unnamed_token \"F\"))))) (unnamed_token \"\")) ~\" \" \"}\") (MISSING@21 unnamed_token)) (switch_clause (switch_clause_condition ~\" \" (command_token \"default\")) (statement_block ~\" \" \"{\" statement_list:(statement_list (pipeline (command_pipeline_sequence (command command_name:(command_name ~\" \" (unnamed_token \"G\"))))) (unnamed_token \"\")) ~\" \" \"}\") (unnamed_token \"\"))) ~\" \" \"}\"))) ~\"\\n\")"
     },
     {
       "source": "function F {",
-      "recovered": "(program (statement_list (function_definition_statement (\"'function\" \"function\") (function_name ~\" \" (unnamed_token \"F\")) ~\" \" \"{\" (MISSING@12 \"}\"))))"
+      "recovered": "(program (statement_list (function_definition_statement (\"'function\" \"function\") (function_name ~\" \" (command_token \"F\")) ~\" \" \"{\" (MISSING@12 \"}\"))))"
     },
     {
       "source": "$x = (",

@@ -56,6 +56,14 @@ const alias = ([grammar, name]) => ({ source: nativeGrammarSource(grammar), name
 const conceptOf = (grammar, rule) => nativeGrammarRuleConcepts(grammar).find((entry) => entry.rule === rule)?.concept;
 const shape = (tree) => [tree.kind, ...tree.children.map(shape)];
 
+test('published correspondences include every concept shared by at least three native grammars', () => {
+  const report = JSON.parse(readFileSync(path.join(root, CONCEPT_REUSE_FIXTURE), 'utf8'));
+  const listed = new Set(fixture.sharedConstructs.map(({ concept }) => concept));
+  for (const entry of report.concepts) {
+    if (entry.languages.length >= 3) assert.ok(listed.has(entry.concept), entry.concept);
+  }
+});
+
 test('Groovy correspondences use the same reviewed identities as the existing constructs', () => {
   const rules = new Map(nativeGrammarRuleConcepts('native-groovy').map(({ rule, concept }) => [rule, concept]));
   let correspondences = 0;

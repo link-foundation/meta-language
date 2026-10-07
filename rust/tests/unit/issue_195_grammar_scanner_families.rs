@@ -42,6 +42,21 @@ fn check_cases(text: &str) {
 }
 
 #[test]
+fn remembered_delimiter_text_matches_shared_trees_and_clears_state() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-remembered-delimiters.json"
+    ));
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-SCANNER-REMEMBERED-DELIMITERS",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-grammar-scanner-remembered-delimiters",
+        fixture_file: "parity/fixtures/scanner-remembered-delimiters.json",
+        assertions: &["rememberedDelimiterText"],
+        test_name: "remembered_delimiter_text_matches_shared_trees_and_clears_state",
+    });
+}
+
+#[test]
 fn generated_scanner_families_preserve_text_and_reject_truncated_delimiters() {
     check_cases(include_str!(
         "../../../parity/fixtures/scanner-families.json"

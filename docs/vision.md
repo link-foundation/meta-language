@@ -688,6 +688,14 @@ reconcile literal end sentinels with the actual input boundary, prefer complete
 expressions at a context boundary, and require an argument value before
 preferring an optional call attachment. These decisions retain the original
 productions and generate shared executable Links Notation for both runtimes.
+Context guards and preferred copies retain the source lexer token identities;
+they do not create duplicate source token occurrences. Field-local ordering,
+contextual keyword spellings and newline runs keep their decisions in grammar
+data, with input-boundary lookahead that skips extras and emits no CST leaf.
+Remembered textual delimiters use grammar actions to store opening tags and
+predicates to compare closing tags exactly. The generated content scanner
+preserves other tags inside the body and supports successive distinct tags
+through the same shared state model.
 
 ## Continuous integration
 

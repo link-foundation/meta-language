@@ -17,6 +17,9 @@ export const NATIVE_BATCH_FIXTURES = [
     '#!/usr/bin/env groovy\ndef x=1\n', '\r\n  def x=1\r\n',
     'f()', 'return 1', 'break', 'continue', 'yield 1',
     'import java.util.List', 'int f()', 'do {} while (true)',
+    'int f() {\n return 2\n}', 'if (a == b) {\n f(\"x\")\n}',
+    'if (a) f(a) else f(b)', 'class C { def f() {\n given:\n def a=1\n expect:\n a==1\n } }',
+    '@Library(\"x\") _\n\nflow {}', 'switch (a) {\n case 2: f()\n default: g()\n}',
   ], rejections: ['def x =', 'class C {', 'def x = "unterminated', 'if (x { f() }', 'def x = [1,',
     'def f(int x) { return x + 1 }\n', 'while (x) { break }\n',
     'try { f() } catch (Exception e) { g() } finally { h() }\n',
@@ -130,7 +133,7 @@ export const NATIVE_BATCH_FIXTURES = [
     'f() -> """\n café\n """.\n', 'f() -> """"\n é😀\n """".\n', 'f() -> ~s"""\n café\n """.\n',
     'f() -> """\n a""b\n """.\n', 'f() -> "x".\r\n',
     '-custom hello.\n', '-custom {a,1}.\n',
-    '-define(T, atom() | integer()).\n', '-define(T, ?OTHER(X)).\n',
+    '\n-custom(value).\n', '\n-extra(\"x\").\n', '-define(T, atom() | integer()).\n', '-define(T, ?OTHER(X)).\n',
     ...['()', '[]', '{}', '<>', '//', '||', "''", '""', '``', '##'].flatMap((pair) =>
       ['', 's', 'S', 'b', 'B'].map((prefix) => `f() -> ~${prefix}${pair[0]}é${pair[1]}.\n`)),
   ],rejections:['f() -> .', 'f( -> ok.', 'f() -> "unterminated.', 'f() -> """\nno close.']},
