@@ -432,7 +432,6 @@ impl RustParser {
             self.cursor.expect(":", Some("parameter"))?;
             let ty = self.parse_type()?;
             params.push(SParam {
-                default: None,
                 name: param_name,
                 default_value: None,
                 ty: Some(ty),
@@ -637,7 +636,6 @@ impl RustParser {
             if self.cursor.is("let") {
                 let binding = self.let_statement(&[])?;
                 effects.push(SEffect::Let {
-                    constant: false,
                     name: binding.name,
                     ty: binding.ty,
                     value: binding.value,

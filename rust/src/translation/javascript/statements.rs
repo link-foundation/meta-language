@@ -525,7 +525,6 @@ impl JavaScriptParser {
             let start = self.cursor.advance();
             let (name, value, span) = self.const_binding(&start)?;
             return Ok(SEffect::Let {
-                constant: true,
                 name,
                 ty: None,
                 value,
@@ -555,7 +554,6 @@ impl JavaScriptParser {
         self.cursor.eat(";");
         self.generated_count += 1;
         Ok(SEffect::Let {
-            constant: false,
             name: format!("ml_main_ignored{}", self.generated_count),
             ty: None,
             value,

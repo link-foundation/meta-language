@@ -4,7 +4,7 @@
   "issue": 195,
   "pullRequest": 196,
   "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
-  "reconciledAt": "2026-10-07",
+  "reconciledAt": "2026-10-08",
   "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
   "requirementSources": [
     {
@@ -443,7 +443,7 @@
       ],
       "author": "konard",
       "createdAt": "2026-10-06T21:18:23Z",
-      "updatedAt": "2026-10-06T22:03:08Z",
+      "updatedAt": "2026-10-08T08:23:56Z",
       "bytes": 14543,
       "sha256": "48e3cbc08a83864d33fb85f8b34b2ee1931d6e34cf2b32175099bcc176e89098"
     }

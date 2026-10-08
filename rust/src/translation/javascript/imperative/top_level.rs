@@ -91,7 +91,6 @@ pub(in crate::translation::javascript) fn lower_top_level(
     let (carried, data) = carried.take();
     let effects = value.map(|value| {
         let bind = |name: String, value: SExpr| SEffect::Let {
-            constant: false,
             name,
             ty: None,
             value,

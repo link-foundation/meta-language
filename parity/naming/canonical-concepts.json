@@ -5113,6 +5113,98 @@
       "formerNames": []
     },
     {
+      "id": "translation.decode-unicode-escape",
+      "phrase": "decode unicode escape",
+      "role": "operation",
+      "definition": "Decode one bounded UTF-16 Unicode escape into a scalar value or a precise refusal.",
+      "constraints": [
+        "The decoder accepts at most twelve code units.",
+        "JavaScript permits fixed escapes and surrogate pairs; Rust permits braced scalar escapes.",
+        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
+        "The frontend decision inventory must include this stable concept record."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "decodeUnicodeEscape"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "decode_unicode_escape"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-argument-count",
+      "phrase": "accept argument count",
+      "role": "operation",
+      "definition": "Determine whether every omitted argument has a parameter default.",
+      "constraints": [
+        "An extra argument is refused.",
+        "Every omitted parameter must have a default.",
+        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
+        "The frontend decision inventory must include this stable concept record."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptArgumentCount"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_argument_count"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.find-default-parameter-reference",
+      "phrase": "find default parameter reference",
+      "role": "operation",
+      "definition": "Find the first earlier parameter referenced by a default expression.",
+      "constraints": [
+        "Nested delimiters keep commas inside the default expression.",
+        "A member name following a dot is not a parameter reference.",
+        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
+        "The frontend decision inventory must include this stable concept record."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "findDefaultParameterReference"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "find_default_parameter_reference"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.unicode-escape",
+      "phrase": "unicode escape",
+      "role": "concept",
+      "definition": "The result of reading a Unicode escape: a scalar value, malformed syntax, or an unsupported scalar.",
+      "constraints": [
+        "Scalar results carry the decoded code point and consumed code units.",
+        "Refusals retain the escape length required for matching diagnostics.",
+        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
+        "The frontend decision inventory must include this stable concept record."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "UnicodeEscape"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "UnicodeEscape"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",
@@ -62635,54 +62727,6 @@
           "name": "scope_closing_keyword"
         }
       ],
-      "formerNames": []
-    },
-    {
-      "id": "translation.decode-unicode-escape",
-      "phrase": "decode Unicode escape",
-      "role": "operation",
-      "definition": "Decode a Unicode escape sequence into a scalar value or a diagnostic, preserving its consumed extent.",
-      "constraints": [
-        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
-        "The frontend decision inventory must include this stable concept record."
-      ],
-      "sourceAliases": [],
-      "formerNames": []
-    },
-    {
-      "id": "translation.accept-argument-count",
-      "phrase": "accept argument count",
-      "role": "operation",
-      "definition": "Determine whether omitted function arguments are permitted by trailing default parameters.",
-      "constraints": [
-        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
-        "The frontend decision inventory must include this stable concept record."
-      ],
-      "sourceAliases": [],
-      "formerNames": []
-    },
-    {
-      "id": "translation.find-default-parameter-reference",
-      "phrase": "find default parameter reference",
-      "role": "operation",
-      "definition": "Find a reference to a previously declared parameter inside a default argument expression without mistaking member names for parameter references.",
-      "constraints": [
-        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
-        "The frontend decision inventory must include this stable concept record."
-      ],
-      "sourceAliases": [],
-      "formerNames": []
-    },
-    {
-      "id": "translation.unicode-escape",
-      "phrase": "Unicode escape",
-      "role": "concept",
-      "definition": "A decoded Unicode escape result, distinguishing a valid Unicode scalar, malformed spelling, and unsupported scalar value.",
-      "constraints": [
-        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
-        "The frontend decision inventory must include this stable concept record."
-      ],
-      "sourceAliases": [],
       "formerNames": []
     }
   ]

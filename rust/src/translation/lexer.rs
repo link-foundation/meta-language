@@ -11,7 +11,8 @@ use std::sync::OnceLock;
 use regex::Regex;
 
 use super::decimal::Decimal;
-use super::diagnostics::{Result, TranslationError};
+use super::diagnostics::{ErrorKind, Result, TranslationError};
+use super::frontend_rules::{UnicodeEscape, decode_unicode_escape};
 use super::js_number::js_number_literal;
 use super::{Language, Span};
 
@@ -612,10 +613,44 @@ fn string_token(source: &Source, index: usize, language: Language) -> Result<Tok
         if unit == u16::from(b'\\') && language != Language::Rocq {
             let escaped = source.char_at(cursor + 1);
             if escaped == Some('u') {
-                let (text, end) = unicode_escape(source, cursor, language)?;
-                value.extend(text.encode_utf16());
-                cursor = end;
-                continue;
+                let units = source.units()[cursor..source.len().min(cursor + 12)]
+                    .iter()
+                    .map(|unit| f64::from(*unit))
+                    .collect();
+                match decode_unicode_escape(units, language == Language::JavaScript) {
+                    UnicodeEscape::Scalar(code, end) => {
+                        // The generated decoder returns integral scalar values and
+                        // offsets inside the twelve-code-unit input window.
+                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                        let character =
+                            char::from_u32(code as u32).expect("decoded Unicode scalar");
+                        let mut units = [0; 2];
+                        value.extend_from_slice(character.encode_utf16(&mut units));
+                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                        {
+                            cursor += end as usize;
+                        }
+                        continue;
+                    }
+                    UnicodeEscape::Malformed => {
+                        return Err(TranslationError::syntax(
+                            "malformed unicode escape",
+                            Some(span(cursor, cursor + 2)),
+                        ));
+                    }
+                    UnicodeEscape::Unsupported(end, escape_length) => {
+                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                        let (end, escape_length) = (end as usize, escape_length as usize);
+                        return Err(TranslationError::new(
+                            ErrorKind::Unsupported,
+                            format!(
+                                "unicode escape {} is not a scalar value; Rust strings hold scalar values only",
+                                source.slice(cursor, cursor + escape_length)
+                            ),
+                            Some(span(cursor, cursor + end)),
+                        ));
+                    }
+                }
             }
             let replacement = match escaped {
                 Some('n') => "\n",
@@ -709,53 +744,6 @@ fn template_token(source: &Source, index: usize) -> Result<Token> {
         "unterminated template literal",
         Some(span(index, source.len())),
     ))
-}
-
-/// Decode scalar escapes, including JavaScript's paired UTF-16 escapes.
-fn unicode_escape(source: &Source, at: usize, language: Language) -> Result<(String, usize)> {
-    let malformed = || TranslationError::syntax("malformed unicode escape", Some(span(at, at + 2)));
-    let braced = source.starts_with("\\u{", at);
-    let (digits, end) = if braced {
-        let mut end = at + 3;
-        while source.char_at(end).is_some_and(|ch| ch.is_ascii_hexdigit()) && end < at + 9 {
-            end += 1;
-        }
-        if end == at + 3 || !source.is_char(end, '}') {
-            return Err(malformed());
-        }
-        (source.slice(at + 3, end), end + 1)
-    } else if language == Language::JavaScript {
-        let digits = source.slice(at + 2, at + 6);
-        if digits.len() != 4 || !digits.chars().all(|ch| ch.is_ascii_hexdigit()) {
-            return Err(malformed());
-        }
-        (digits, at + 6)
-    } else {
-        return Err(malformed());
-    };
-    let original = source.slice(at, end);
-    let mut code = u32::from_str_radix(&digits, 16).map_err(|_| malformed())?;
-    let mut end = end;
-    if !braced && (0xd800..=0xdbff).contains(&code) && source.starts_with("\\u", end) {
-        let low = source.slice(end + 2, end + 6);
-        if low.len() == 4 && low.chars().all(|ch| ch.is_ascii_hexdigit()) {
-            let low = u32::from_str_radix(&low, 16).map_err(|_| malformed())?;
-            if (0xdc00..=0xdfff).contains(&low) {
-                code = 0x10000 + ((code - 0xd800) << 10) + (low - 0xdc00);
-                end += 6;
-            }
-        }
-    }
-    let Some(character) = char::from_u32(code) else {
-        return Err(TranslationError::new(
-            super::diagnostics::ErrorKind::Unsupported,
-            format!(
-                "unicode escape {original} is not a scalar value; Rust strings hold scalar values only"
-            ),
-            Some(span(at, end)),
-        ));
-    };
-    Ok((character.to_string(), end))
 }
 
 /// The escaped unit as JavaScript interpolates it (`undefined` past the end).

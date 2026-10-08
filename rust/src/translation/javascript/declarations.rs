@@ -10,6 +10,8 @@ use super::{
     guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
     lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
 };
+use crate::translation::frontend_rules::find_default_parameter_reference;
+use crate::translation::surface::SExpr;
 
 /// How a function's body is written: a block, or an arrow's block or expression.
 #[derive(Clone, Copy)]
@@ -449,7 +451,7 @@ impl JavaScriptParser {
             let tokens = if self.cursor.eat("(").is_some() {
                 self.parameters(&name_token.value)?
             } else {
-                vec![self.cursor.identifier(Some("parameter"))?]
+                vec![(self.cursor.identifier(Some("parameter"))?, None)]
             };
             self.cursor.expect("=>", Some(&name_token.value))?;
             self.function_body(start, &name_token, doc, &tokens, Body::Arrow, is_async)?
@@ -526,8 +528,8 @@ impl JavaScriptParser {
     }
 
     /// A parameter list after its `(`, through its `)`.
-    fn parameters(&mut self, name: &str) -> Result<Vec<Token>> {
-        let mut tokens: Vec<Token> = Vec::new();
+    fn parameters(&mut self, name: &str) -> Result<Vec<(Token, Option<SExpr>)>> {
+        let mut tokens: Vec<(Token, Option<SExpr>)> = Vec::new();
         while !self.cursor.is(")") {
             let token = self.peek();
             if self.cursor.is("...") {
@@ -545,47 +547,49 @@ impl JavaScriptParser {
                 ));
             }
             let param = self.cursor.identifier(Some("parameter"))?;
-            if self.cursor.eat("=").is_some() {
-                let mut at = 0;
-                let mut depth = 0_i32;
-                loop {
-                    let token = self.cursor.peek_at(at);
-                    if token.kind == TokenKind::Eof
-                        || (depth <= 0 && [",", ")"].contains(&token.value.as_str()))
-                    {
-                        break;
-                    }
-                    if ["(", "[", "{"].contains(&token.value.as_str()) {
-                        depth += 1;
-                    }
-                    if [")", "]", "}"].contains(&token.value.as_str()) {
-                        depth -= 1;
-                    }
-                    if token.kind == TokenKind::Identifier
-                        && !(at > 0 && self.cursor.is_at(".", at - 1))
-                        && tokens.iter().any(|earlier| earlier.value == token.value)
-                    {
-                        return Err(unsupported(
-                            &format!("default reading parameter {}", token.value),
-                            "a call fills in a default where it leaves the argument out, so a default reads no parameter",
-                            Some(span(token, token)),
-                        ));
-                    }
-                    at += 1;
+            let default_value = if self.cursor.eat("=").is_some() {
+                let remaining = &self.cursor.tokens[self.cursor.index..];
+                let kinds = remaining
+                    .iter()
+                    .map(|token| {
+                        match token.kind {
+                            TokenKind::Identifier => "identifier",
+                            TokenKind::Eof => "eof",
+                            _ => "other",
+                        }
+                        .to_owned()
+                    })
+                    .collect();
+                let values = remaining.iter().map(|token| token.value.clone()).collect();
+                let parameters = tokens
+                    .iter()
+                    .map(|(token, _)| token.value.clone())
+                    .collect();
+                let reference = find_default_parameter_reference(kinds, values, parameters);
+                if reference >= 0.0 {
+                    // The generated rule returns an index into the token input.
+                    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                    let token = &remaining[reference as usize];
+                    return Err(unsupported(
+                        &format!("default reading parameter {}", token.value),
+                        "a call fills in a default where it leaves the argument out, so a default reads no parameter",
+                        Some(token.span()),
+                    ));
                 }
-                let value = self.expr()?;
-                self.parameter_defaults.insert(param.start, value);
+                Some(self.expr()?)
             } else if tokens
                 .last()
-                .is_some_and(|earlier| self.parameter_defaults.contains_key(&earlier.start))
+                .is_some_and(|(_, default_value)| default_value.is_some())
             {
                 return Err(unsupported(
                     &format!("parameter {} after a default", param.value),
                     "a call fills in trailing defaults only; give it a default too",
-                    Some(span(&param, &param)),
+                    Some(param.span()),
                 ));
-            }
-            tokens.push(param);
+            } else {
+                None
+            };
+            tokens.push((param, default_value));
             if self.cursor.eat(",").is_none() {
                 break;
             }
@@ -602,7 +606,7 @@ impl JavaScriptParser {
         doc_token: &Token,
         name_token: &Token,
         doc: Option<JsDoc>,
-        tokens: &[Token],
+        tokens: &[(Token, Option<SExpr>)],
         body: Body,
         is_async: bool,
     ) -> Result<SFn> {
@@ -612,7 +616,7 @@ impl JavaScriptParser {
         }
         // A type JSDoc does not declare is inferred once the whole program is read.
         let mut params = Vec::new();
-        for token in tokens {
+        for (token, default_value) in tokens {
             reserved(token)?;
             let text = doc.as_ref().and_then(|doc| {
                 doc.params
@@ -621,8 +625,8 @@ impl JavaScriptParser {
                     .map(|(_, text)| (text.clone(), doc.range))
             });
             params.push(SParam {
-                default: self.parameter_defaults.get(&token.start).cloned(),
                 name: token.value.clone(),
+                default_value: default_value.clone(),
                 ty: text
                     .map(|(text, range)| self.ty(&text, range))
                     .transpose()?,

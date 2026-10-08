@@ -1,6 +1,6 @@
 [package]
 name = "meta-language"
-version = "0.58.2"
+version = "1.0.0"
 edition = "2024"
 description = "A self-describing links-network core for lossless language representation"
 readme = "README.md"

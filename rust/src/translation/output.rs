@@ -197,7 +197,7 @@ impl Threader<'_> {
                         name: out.to_owned(),
                         ty: Type::Output,
                         guard: None,
-                        default: None,
+                        default_value: None,
                     });
                     let ret = self.pair_type(&function.ret);
                     let body = self.io(&function.body, Expr::var(out, Type::Output))?;
@@ -819,14 +819,14 @@ impl Threader<'_> {
             Effect::Let {
                 name,
                 value,
-                span,
                 constant,
+                span,
             } if self.effects(value) => {
                 let (mut steps, value) = self.run(value)?;
                 steps.push(Effect::Let {
-                    constant: *constant,
                     name: name.clone(),
                     value,
+                    constant: *constant,
                     span: *span,
                 });
                 steps
@@ -855,9 +855,9 @@ impl Threader<'_> {
         let lines = self.close_one(lines, lines_var, Some(&|out, _| out));
         let mut steps = vec![
             Effect::Let {
-                constant: false,
                 name,
                 value,
+                constant: false,
                 span: e.span,
             },
             Effect::Output {

@@ -3419,6 +3419,13 @@
           "pattern": "[^()#\"\\\\]",
           "excludedPattern": "\\$(ENV|CACHE)?\\{",
           "reason": "The source variable token takes lexical priority over the overlapping character token at a variable opening, retaining other literal dollar characters."
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_untrimmed_argument",
+          "pattern": "\\s",
+          "excludedPattern": "\\s*\\[=*\\[",
+          "reason": "The external bracket scanner skips leading whitespace before marking the opening token. Retain whitespace tokens elsewhere, but let the scanner own its skipped prefix at a bracket argument opening."
         }
       ],
       "concepts": {

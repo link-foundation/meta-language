@@ -66,6 +66,832 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.0.0] - 2026-10-08
+
+The native grammar importer compiles character-class intersection, difference
+and symmetric difference into shared Links data. Both runtime executors cover
+nested and negated sets, Unicode ranges, operator precedence and repetition
+without using a regular expression engine to execute imported classes.
+Fixed-width and braced hexadecimal scalar escapes lower to native characters
+and ranges, including the braced escapes in the Swift identifier pattern.
+Imported emoji classes also include their ASCII keycap base characters.
+
+### Added
+- Add parity-tested structured frontends and lossless emitters for JavaScript,
+  Rust, Lean, and Rocq/Coq in both runtime packages.
+- Add real grammar CST dispatch for JavaScript, Rust, and Lean in both
+  runtimes, Rocq/Coq in JavaScript, and the existing JavaScript language
+  inventory; add a shared 57-target coverage ledger that keeps fallback paths
+  visibly incomplete.
+- Add versioned capability reports, parser extension registration in
+  JavaScript, and explicit fail-closed contracts for all 12 directed language
+  pairs.
+- Add an atomic executable requirement manifest, generated evidence ledger,
+  protected-scope checks, fault-injection coverage, and a fail-closed aggregate
+  workflow for the full issue #195 acceptance target.
+
+### Fixed
+- Prevent JavaScript identifier queries and replacements from matching text in
+  string literals or comments.
+- Parse JavaScript regular-expression literals and template interpolations
+  structurally, and report invalid programs through grammar recovery flags.
+
+### Fixed
+- Reject binding renames that would capture an unresolved reference in the binding's scope in both runtime packages.
+
+### Fixed
+- Allow binding renames across nested scopes when existing bindings of the target name cannot capture any references, while continuing to reject actual capture in both runtime packages.
+
+### Fixed
+- Resolve JavaScript `var` declarations in function scope, including references before the declaration, so binding-aware rename updates the intended references in both packages.
+
+### Changed
+- Parse LiNo into a grammar CST that mirrors the official links-notation grammar in both packages: `link` nodes with `id`, `value` and `child` fields, `reference` and `quoted_reference` leaves, whitespace extras and line-scoped `ERROR` recovery, checked against the official parser on a shared case corpus.
+
+### Changed
+- Parse PDF into a COS grammar CST in both packages: `indirect_object`, `stream` (with `content_stream` operations and inline images, or `stream_data`), `dictionary`, `array`, `indirect_reference`, value tokens, `cross_reference_table`, `trailer`, `start_cross_reference` and `end_of_file` nodes with fields, comment and whitespace extras, and `ERROR` and missing nodes for malformed input, checked against pdf-lib on a shared case corpus.
+
+### Changed
+- Parse plain text and natural-language text through versioned built-in grammar CSTs (`text_document` of `line` nodes, `natural_language_document` of `sentence` nodes, with `word`, `punctuation`, whitespace extras and `ERROR` nodes for control characters) in both packages.
+- Record Grammar provenance for the built-in LiNo (links-notation 0.13.0), PDF COS, plain-text and natural-language grammars; the language catalog lists them with the SHA-256 of their specifications in `parity/grammars/`.
+
+### Fixed
+- Compile natural-number numeral patterns above 16 as equality tests and reject `n + k` patterns with offsets above 16, so a large numeral no longer unfolds into a successor chain with one node per unit. Mixed numeral and successor matches keep their meaning in both packages.
+
+### Fixed
+- Report an empty or invalid radix BigInt literal such as `0xn` as a syntax diagnostic at the literal in both packages, instead of a raw `SyntaxError` crash in JavaScript and a span-less error in Rust.
+- Run the JavaScript/Rust translation stage parity test over all 1770 recorded programs in ordinary CI; it was previously ignored.
+
+### Added
+- `emit_tree_sitter_json` renders a grammar as tree-sitter `grammar.json`, and the JavaScript package now exports `emitAbnf`, `emitBnf`, `emitEbnf`, `emitPest`, and `emitTreeSitterJson`, so every importer has a same-format emitter in both packages.
+- Shared importer corpus `parity/fixtures/grammar-importers.json`: each ABNF, BNF, EBNF, pest, and tree-sitter JSON case is imported, run through the generated JavaScript and Rust parsers, re-emitted, re-imported, and serialized in both packages.
+
+### Fixed
+- EBNF import decodes `\t \b \n \r \f \/ \\` and quote escapes, gives concatenation precedence over alternation (ISO 14977), and accepts the empty literal `""`; EBNF emission escapes terminals to match.
+- BNF emission no longer writes backslash escapes, which classic BNF does not have: terminals containing a double quote are single-quoted, and terminals containing both quote kinds are split into quoted runs.
+- JavaScript BNF/EBNF import maps an empty terminal to the empty expression, as Rust does, and treats BNF backslashes literally.
+- The pest compound-atomic modifier `$` imports as a token rule in both packages, so it survives an import/emit round trip.
+- Rust ABNF import appends referenced core rules in first-reference order, matching JavaScript.
+- Generated Rust AST types no longer shadow types the generated module uses: rules named `string`, `vec`, `option`, `box`, `result`, `rule`, or `self` get a `Node` suffix (`StringNode`), so their parsers compile.
+
+### Added
+- Binding resolution follows Rust `self::`, `super::`, `crate::`, and module paths and single-item `use` aliases, declares Rust `let`/`for`/closure pattern bindings and `macro_rules!` metavariables (`$name` only sees metavariables), and resolves identifiers inside format-macro strings (`{x}`, not `{{x}}`) and Lean `s!` interpolations.
+- Lean and Rocq binder groups, `fun`, `∀`/`forall`, and `let … in` binders are scoped to their extent, so shadowing proof binders resolve to the innermost one.
+- `rename_binding` rewrites Rust struct shorthand `S { x }` as `S { x: y }` and rejects any rename that changes how another name resolves, reporting the first changed offset as a capture conflict.
+- Shared `bindingRenameCorpus` evidence for JavaScript, Rust, Lean, and Rocq, with JavaScript/Rust runtime parity of each fixture's resolution and rename outcome.
+
+### Added
+- `ProgramProjectContext::with_entry` names the analyzed program's path within a project and supplies the project's files (`ProgramProjectSource`), enabling project-aware semantics for JavaScript (`package.json`, relative module resolution, named/default/namespace imports, JSON import attributes, tagged templates), Rust (`Cargo.toml`, `mod` trees, `use` paths, `pub` visibility, `macro_rules!` expansion, derives and attributes), Lean (`lakefile.toml` libraries, imports, namespaces, notations, attributes, tactics), and Rocq (`_CoqProject` load paths, `Require`, notations, lemmas and tactics).
+- `ProgramRepresentation::project_modules`, `project_facts`, `project_references`, and `expansions` report the resolved modules, the project files and manifests read, the links from the entry program to declarations in other project files, and the macro, template and notation expansions; every semantic construct's evidence includes these project links (`ProgramFact::file`).
+- Missing or broken project context is diagnosed (`missing-project-context`, `missing-project-symbol`, `inaccessible-project-symbol`, `missing-project-library`, `missing-import-attribute`, `import-attribute-mismatch`, `project-parse-error`) without fabricating links, and program snapshots keep the project entry and sources.
+
+### Fixed
+- JavaScript module requests take the statement's last string outside its import attributes, Rust `use` requests take only the leading identifier, and `node:assert`/`node:assert/strict` are recognized toolchain modules, matching the JavaScript runtime.
+
+### Added
+- `translate_program` translates portable-core programs with the parse, check and emit pipeline. It produces a native target program that prints the same lines and restates every theorem and assertion. `ProgramTranslation::semantics` records the entry point, the observation procedure, encodings, assumptions, proof obligations and how the target discharges them, source mappings with UTF-16 spans, runtime dependencies, and provenance (source language, SHA-256 and byte length). The contract's support is `TranslationSupport::SemanticTranslation`.
+- `read_translation_provenance` reads the provenance comment a semantic translation starts with and rejects artifacts without it.
+- Programs outside the portable core keep the portable-encoding envelope and report why in `ProgramTranslation::diagnostic`.
+
+### Fixed
+- The Rocq grammar parses Recdef's `Function`, mutually recursive and redefining `Ltac` definitions, the `first [ ... ]` and `solve [ ... ]` tacticals and Ltac `let ... in` without error nodes, so translated Rocq programs round-trip through clean CSTs. The vendored parser is regenerated from upstream with `meta-language-tactics.patch`.
+
+### Fixed
+
+- Lean translations now emit `case ... =>` blocks after `induction`/`cases`, ordered `try` closing tactics instead of `first | ...`, and no `termination_by` for structurally decreasing recursion, so every translated Lean program reparses to a clean CST with the vendored Lean grammar while still proving in Lean 4.33.1.
+
+### Fixed
+- The vendored Rocq grammar (`meta-language.patch`) now parses the pinned Rocq 9.2.0 stdlib and Corelib files (Init, Classes.Morphisms, Program.Basics, Arith.PeanoNat, Bool, Lists.List, Sorting.Permutation, Structures.Orders) without error nodes: module functors and types, records, classes and instances, schemes, `Arguments` scopes, hints, obligations, subset/projection/`rew`/quotation terms, Ltac term matches, closures, `eval`, `tryif`, tacticals, rewrite multiplicities, occurrence clauses and focused goal blocks.
+
+### Fixed
+- The JavaScript runtime no longer splits astral characters (UTF-16 surrogate pairs) that straddle web-tree-sitter's 5119-code-unit input chunk boundary: grammar-backed parses read the text through a chunked callback whose chunks never end on a high surrogate, so files such as `regex-syntax`'s Unicode tables parse cleanly in both runtimes. Both runtimes test every alignment around the boundary for JavaScript, Rust, Lean and Rocq.
+
+### Fixed
+- Rust sources from real published crates no longer produce error nodes: both runtimes now parse Rust with `tree-sitter-rust` v0.24.2 vendored under `rust/vendor/tree-sitter-rust` with a patch for `~` and bare `$` in macro token trees, unit structs with a where clause, attributes on struct-pattern fields and later tuple elements, `as T <= e`, unit types in where predicates, turbofish calls of functions named like primitive types, the 2015 `try!` macro and cargo script frontmatter.
+
+### Fixed
+- The JavaScript runtime recovers from malformed input exactly as the native runtime does. The published web-tree-sitter runtime always parses UTF-16, and tree-sitter charges error recovery per skipped byte, so it chose different recoveries on malformed input (Lean `import` without a module gave `(MISSING identifier)` instead of `(ERROR)`; similar cases in Rocq comments, Rust `extern` and JavaScript `if`). The package now ships a web-tree-sitter 0.27.0 runtime rebuilt with a small patch that makes it read UTF-8 (`js/src/vendor/web-tree-sitter`, reproducible with `js/scripts/build-web-tree-sitter-runtime.mjs`, whose unpatched build equals the npm wasm byte for byte). `parity/fixtures/issue-195-conformance/error-recovery.json` holds the diverging cases with trees from the native tree-sitter CLI, and both runtimes test them.
+
+### Added
+- Four-language conformance fixtures (`parity/fixtures/issue-195-conformance/`). They include the upstream tree-sitter test corpora of JavaScript, Lean, Rocq and Rust at the pinned grammar revisions, and files of real projects at pinned tags with their licenses. There are also hand-authored construct, Unicode, malformed and mixed-language (Markdown fences, HTML scripts) inputs. Each case carries the concrete syntax tree the native tree-sitter 0.27.0 CLI prints, and `manifest.json` records its provenance. `js/scripts/generate-issue-195-conformance.mjs` regenerates them, and `--check` verifies them. The JavaScript suite `js/tests/issue-195-conformance.test.js` and the Rust suite `rust/tests/unit/issue_195_conformance.rs` compare every public tree with the CLI tree. They check structure, kinds, fields, spans, error and missing nodes, trivia coverage, verification diagnostics and exact reconstruction, and compares against the upstream expected trees where they agree with the CLI.
+
+### Fixed
+- The JavaScript runtime now attaches trivia to whitespace before and after the grammar root (for example the leading blank line of a file), as the Rust runtime does. Before, that whitespace had a source token but no trivia link.
+- Both runtimes now treat U+200B, U+2060 and U+FEFF around hidden-rule text as whitespace trivia. The JavaScript grammar lexes these characters as extras, but they were kept as non-trivia hidden text.
+
+### Added
+- Generative fixtures for JavaScript, Lean, Rocq and Rust in `parity/fixtures/issue-195-generative/`, built from the conformance inputs by a seeded PRNG (mulberry32 seeded with FNV-1a of `<seed>:<language>`). Each language has 16 property compositions, 32 fuzz mutations and 8 metamorphic pairs (two leading blank lines, and CRLF line ends), plus 8 four-step edit sequences and the kept reproducers of `reproducers.json`. Each input carries the tree printed by the native tree-sitter 0.27.0 CLI, which is the independent oracle. `js/scripts/generate-issue-195-generative.mjs` regenerates the fixtures, `--seed` picks another seed and `--check` verifies them.
+- The JavaScript suite `js/tests/issue-195-generative.test.js` and the Rust suite `rust/tests/unit/issue_195_generative.rs` regenerate the inputs from the recorded seed and compare every public tree with the oracle. Every parse must also keep oracle-free properties: exact reconstruction; spans inside the source, on code point boundaries and with matching points; children inside their parents; and a verification report that is clean exactly when no link is flagged. The Rust suite applies edit sequences through the incremental `apply_edit` and compares each step with a fresh parse. Both suites then fuzz new inputs at run time. `ISSUE_195_GENERATIVE_SEED` and `ISSUE_195_GENERATIVE_CASES` set the run's seed and case count, and a failure prints the seed, source and edits to keep as a reproducer.
+
+### Fixed
+- `LinkNetwork::apply_edit` now gives the same network as a fresh parse of the edited text when that text is malformed. Before, tree-sitter's incremental error recovery reused subtrees of the old tree and could settle on another tree. For example, after an edit of `if (x) y;` followed by an `else` clause, an ERROR node could swallow the `else` clause, which a fresh parse and the JavaScript runtime do not produce. An incremental tree with errors is now parsed again from scratch.
+
+### Changed
+- The conformance and generative test helpers order the siblings of a Rust network by start and then end byte. After an incremental edit the link ids no longer follow tree order, so a zero-width MISSING node could be listed after a longer sibling that starts at the same byte.
+
+### Fixed
+- Documents with many embedded regions parse in linear time again. Both runtimes recorded grammar provenance by scanning every link of the network once per region, so a Markdown file with a fenced block in every section parsed in quadratic time: at 1024 sections a release build spent 58 µs per byte instead of 1.2. Provenance is now recorded once per region language. The JavaScript runtime also stops re-encoding the whole text for every region, resolves region points with a line index instead of walking the text from its start, and builds the UTF-8 input string of the tree-sitter parse once.
+- `rust/tests/unit/parse_scaling.rs` and `js/tests/parse-scaling.test.js` guard Markdown and HTML documents with a region in every unit, and fail on the old quadratic behavior.
+
+### Added
+
+- `node scripts/clean-caches.mjs`, a single entry point that cleans every regenerable cache class of the worktree: Rust targets (including custom target directories and nested consumer targets), JavaScript caches and packed consumers, generated parser and compiler intermediates, Lean and Rocq build output, acceptance scratch, marked temporary clones, and labeled container and BuildKit caches. It keeps a warm cache within a configurable budget, escalates to a full clean when disk is low, reports the bytes before, after and reclaimed, and never removes tracked, uncommitted, evidence, active-build or other-worktree files, anything reached through a symlink, or anything outside the repository.
+- `.githooks/pre-commit`, installed by `node scripts/install-dev-hooks.mjs`, cleans on every commit, including documentation-only commits, after running any existing pre-commit hook.
+- `node scripts/with-cache-cleanup.mjs`, which cleans after a build, test, coverage, benchmark or package command whether it passes, fails or is interrupted, keeps the command's exit status, and bounds its parallelism, incremental state and compiler cache.
+- `node scripts/check-cache-policy.mjs`, which fails CI when the hook, the bootstrap, a wrapper, a job's teardown, a cache category or the lean Cargo profile is missing.
+
+### Changed
+
+- The dev and test profiles use `debug = "line-tables-only"` and `incremental = false`. CI runs every cargo and npm command that fills caches through the wrapper, checks examples instead of linking them, and ends every such job with a cleanup that runs after failures.
+
+### Added
+- Default grammar CSTs for Haskell, OCaml, OCaml interfaces, Zig, Bash and Dart in both runtimes, through `tree-sitter-haskell`, `tree-sitter-ocaml`, `tree-sitter-zig`, `tree-sitter-bash` and `tree-sitter-dart`. Each language has labels, file extensions, a vendored WebAssembly grammar for JavaScript, and pinned structural and recovery CST expectations checked against the tree-sitter CLI.
+
+### Fixed
+- Lean parses on Windows again. The `tree-sitter-lean4` crate compiles its generated parser without MSVC's `/utf-8`, so its non-ASCII node kind names (`×`, `→`, `∀`, `⟨` …) were re-encoded in the Windows code page: `Node::kind` panicked on `×` and silently returned `?` for the others. The same parser (upstream `wvhulle/tree-sitter-lean` revision `bd942cd2`, byte-identical to the crate's sources) is now vendored under `rust/vendor/tree-sitter-lean` and compiled with `-utf-8` like the other vendored grammars.
+- The issue #195 conformance and generative fixtures keep LF line endings on Windows checkouts, since their manifests pin file digests and byte offsets.
+
+### Added
+- `grammar_names` (Rust) and `grammarNames` (JavaScript) return a default grammar's node kind and field names. The default CST expectations record a digest of them for every grammar, and both runtimes check it, so a compiler that garbles a grammar's names fails on every platform CI runs.
+
+### Added
+- Default grammar CSTs for Agda, CMake, Diff, Elixir, Elm, Erlang, Groovy, HCL (Terraform), Make, MATLAB, Nix, Odin, PowerShell, Racket, Regex, Scheme and Solidity in both runtimes. Each has labels and extension dispatch (`CMakeLists.txt` and `Makefile` match by file name; Regex is label-only), a vendored WebAssembly grammar for JavaScript, a pinned crate for Rust, and structural and recovery expectations that the tree-sitter CLI cross-checks. The catalog now lists 80 languages, 67 of them with a default grammar.
+
+### Fixed
+- The cache cleanup no longer keeps every Cargo target because of a `rustc` that exits while the cleanup lists processes. Such a process has already released its working directory, which Linux reports as `ENOENT`, and was taken for a live Cargo process of unknown workspace; exiting processes and zombies are now dropped, while a process whose directory is unreadable for another reason still keeps the targets.
+
+### Fixed
+- CMake parses with a vendored tree-sitter-cmake 0.7.5 whose external scanner starts with no bracket open. Upstream read uninitialised memory, so recovery trees differed between macOS/Windows and Linux/WebAssembly; both runtimes now compile the same patched scanner.
+
+### Added
+- JavaScript Numbers translate as IEEE-754 binary64 in both runtimes instead of being rejected, so `console.log(42)`, `console.log(6 * 7)` and `console.log(0.1 + 0.2)` are semantic translations. Rust uses `f64` with an `ml_number` prelude (ECMAScript `Number::toString`, `console.log` formatting of `-0`, SameValue); Lean uses `Float`, with Number-dependent assertions checked at run time; Rocq uses `PrimFloat`, with assertions proved by the kernel. `%` is the exact truncated remainder in every target, and `assert.strictEqual` compares with SameValue (NaN equals NaN, 0 differs from -0).
+
+### Added
+
+- JavaScript functions no longer need JSDoc to translate: a parameter or result type JSDoc leaves out is inferred by unification from the function bodies, the calls and the top-level statements, in both the JavaScript and the Rust runtime. BigInt literals are `bigint`, `+` with a string is concatenation, a type nothing constrains is a Number, and uses that need two different types are reported as a type error with their span. A new corpus program with unannotated functions runs natively in Rust, Lean, Rocq and JavaScript with the same output as Node.
+
+### Added
+
+- JavaScript arrow functions and function expressions bound to top-level constants (`const inc = x => x + 1;`, `const f = function (n) { … };`) translate as functions in both runtimes, with an expression or block body, before the first top-level statement; a corpus program of them runs natively in Rust, Lean, Rocq and JavaScript with Node's output.
+
+### Fixed
+
+- The clean npm and crate consumers of issue #195 accept a semantic translation by its provenance, whose source language, size and SHA-256 must name the exact source, since `console.log(42);` became a semantic translation to Rust that has no source envelope to decode; `readTranslationProvenance` and `read_translation_provenance` are declared public entry points of the delivery corpus.
+
+### Added
+
+- JavaScript async functions (declared by name, exported, or bound to a top-level constant as an arrow or function expression) and `await`, in functions and at the top level of a module, translate in both runtimes when every call of an async function is awaited where it is made, or returned from another async function. Nothing then runs concurrently, so each await is the ordinary call of its function; `@returns {Promise<T>}` declares a `T` result, and every target records the `sequential-async` encoding. A call whose Promise the program could observe, and `await` outside an async function, are rejected with a diagnostic at the call. A corpus program of async functions runs natively in Rust, Lean, Rocq and JavaScript with Node's output.
+
+### Added
+
+- The Rocq target translates recursion with no termination argument Rocq could check, which it used to reject, as a plain `Definition` over `ml_fix`, the function's one-step unfolding unfolded lazily to 2^64 nested calls. Every run that terminates computes the same value, so a program such as Collatz, gcd or an accumulating loop is now a semantic translation in every target. The JavaScript and Rust runtimes agree, and a corpus program's native Rust, Lean, Rocq and JavaScript runs match Node.
+
+### Added
+
+- The JavaScript frontend translates `let` bindings, assignments (`=`, the portable compound assignments, `++` and `--`), `while`, `do … while` and `for` loops, and `break` and `continue`, which it used to reject. An assignment binds a new variable, each loop is lifted to a generated tail-recursive function of the variables it uses, and statements that continue at several places are joined by a generated data type. The Rust and JavaScript emitters run a lifted loop as a loop, so a hundred thousand iterations need no hundred thousand stack frames. The Rust frontend mirrors the JavaScript one stage by stage, and `var`, labels, `for…of`, uninitialised `let` and assignments in the temporal dead zone are rejected with the construct and its span.
+
+### Added
+
+- The Lean and Rocq targets translate mutually recursive functions, which they used to reject. Lean writes each group as a `mutual` block of `partial def`s. Rocq writes it as one `ml_fix` over the sum of the functions' parameter tuples, with each function a plain `Definition` projecting the whole, so every run that terminates computes the same value. Both runtimes agree, and a corpus program (even and odd, Hofstadter's female and male sequences, and three functions taking turns) has native Rust, Lean, Rocq and JavaScript runs that match Node.
+
+### Added
+
+- Translate top-level JavaScript `let`, assignments, `if`, blocks and loops, in both runtimes: the statements before each print, constant or assertion are lowered as a function body is, and main binds each top-level variable they declare or assign, with a corpus program whose native Rust, Lean, Rocq and JavaScript runs match Node.
+
+### Fixed
+
+- A variable named `label` is no longer rejected as a statement keyword.
+
+### Added
+
+- Translate `console.log` inside JavaScript functions, in both runtimes: Rust and JavaScript print where the source prints, and the Lean and Rocq targets thread the lines printed through every function that prints, directly or through a function it calls, as a value paired with its result in a generated data type, with a corpus program whose native Rust, Lean, Rocq and JavaScript runs match Node.
+- Lean checks an assertion over a mutually recursive or general-recursive function when `main` runs, since the kernel cannot unfold a partial def.
+
+### Added
+
+- JavaScript functions that return nothing now translate, in both runtimes: a function that finishes without a return value, or leaves with `return;`, returns undefined as the unit value, and a statement that discards a call's value, in a function body or at the top level, still runs the call for the lines it prints. A function that returns a value on one path and nothing on another is refused with a reason.
+- Lean output turns off the `constructorNameAsVariable` linter, so a source variable named like a constructor, such as `unit`, compiles without warnings.
+
+### Added
+
+- JavaScript `console.log` with several arguments translates in both runtimes. It prints what Node's `util.format` does. A literal first string reads its `%s`, `%d`, `%i`, `%c` and `%%` directives, and a directive with no argument left stays as written. The arguments left over follow, each after a space. The translator refuses, with a reason, a computed first string, `%d` or `%i` of a value whose conversion it does not keep, a computed `%c` style, and the `%j`, `%o`, `%O` and `%f` directives. A corpus program's native Rust, Lean, Rocq and JavaScript runs match Node.
+
+### Added
+
+- JavaScript arrays that a program reads now translate in both runtimes. This covers array literals with spread elements, `xs[i]` with a Number or a BigInt index, `xs.length`, `for (const x of xs)`, and `T[]` and `Array<T>` in JSDoc, including in `@typedef` fields. Inference gives an empty array the element type that its later use requires.
+- An array becomes a Rust `Vec`, a Lean `Array` or a Rocq list. Every read goes through a bounds-checked helper. JavaScript reads `undefined` outside an array, where the target aborts, so the contract states the new `in-bounds-array-reads` assumption.
+- The translator refuses these forms, with a reason:
+  - printing an array, and `String` of an array;
+  - `===` on arrays;
+  - `.length` of a string;
+  - assigning to an element;
+  - array holes;
+  - `for…in` loops.
+- A corpus program's native Rust, Lean, Rocq and JavaScript runs match Node.
+
+### Added
+
+- The exactly specified `Math` and `Number` functions and constants now translate in both runtimes:
+  - `Math.abs`, `floor`, `ceil`, `trunc`, `round`, `sign`, `sqrt`, `max` and `min`, including `Math.max(...xs)` over an array;
+  - `Number.isInteger`, `isSafeInteger`, `isFinite` and `isNaN`, and the globals `isNaN` and `isFinite`;
+  - the `Math` and `Number` constants.
+- Each of these is exact or correctly rounded, so every target computes the same binary64 value, with ECMAScript's -0, NaN and infinities. A target uses its own function where it agrees with JavaScript. Otherwise it uses a generated helper: `ml_math` in Rust, `ml_round`, `ml_max` and similar in Lean, and exact `Prim2SF` decompositions in Rocq.
+- Inference makes an untyped parameter that a `Math` function reads a Number.
+- The translator refuses these forms, with a reason:
+  - `Math` functions whose results are not exactly specified, such as `Math.sin`;
+  - a `Math` function applied to a BigInt;
+  - the wrong number of arguments;
+  - a spread argument where the function takes one Number;
+  - a `Math` function used as a value;
+  - a top-level declaration that shadows a JavaScript global.
+- A corpus program's native Rust, Lean, Rocq and JavaScript runs match Node.
+
+### Fixed
+
+- JavaScript `LinkNetwork.renderSource` now omits synthetic missing tokens, preserving the exact source of unknown language labels such as `RML` and matching Rust rendering.
+
+### Changed
+
+- Both packages now depend on Links Notation 0.22.0, up from 0.13. The Rust crate is built without default features, so it does not pull in a second `syn`.
+- The built-in LiNo grammar CST in both runtimes now mirrors the official 0.22 grammar, and the vendored PEG file, grammar cases and CST fixtures were regenerated:
+  - Parenthesized groups nest with their own indentation context.
+  - A group alone on a line is the whole link.
+  - `#` comments are named extras.
+  - Blank lines of spaces or tabs end a line.
+  - Quoted references follow the 0.22 run rule: 2N delimiters escape N, and an even run on its own is the empty reference.
+  - Nesting deeper than 64 levels becomes an `ERROR` node.
+
+### Fixed
+
+- Parsing deeply nested parentheses as LiNo no longer overflows the stack in either runtime. The link-semantics reader now uses an explicit stack.
+- A new scaling guard in both runtimes checks the Links Notation regression inputs that relative-meta-logic tracks, and they parse in linear time:
+  - deep parentheses and deep indentation;
+  - long runs of unclosed groups or quotes;
+  - long delimiter runs, comments and failing indented lines.
+
+### Added
+
+- A Links Notation compatibility matrix, `parity/fixtures/lino-compatibility-matrix.json`, in both runtimes. It covers named and anonymous links, arity, shared, recursive and forward references, identity, ordering, indentation, nested multiline groups, quoting, escaping, comments and trivia, Unicode and source mappings. Every feature is:
+  - decoded by the official parser and by meta-language's own reading alike;
+  - reconstructed byte for byte;
+  - edited through the network;
+  - encoded back into text that both parsers read the same way.
+- `LinkNetwork::links_notation_reading` / `linksNotationReading` returns the official reading of one parsed link, and `links_notation_text` / `linksNotationText` writes links back as Links Notation text.
+- `docs/downstream-consumers.md` maps what relative-meta-logic and link-assistant/formal-ai use and require to meta-language capabilities, ledger rows and tests. `npm run check:downstream-consumers` fails when a mapped row or test does not exist.
+
+### Changed
+
+- The link-semantics reader in both runtimes now follows the LiNo CST. `#` comments, blank lines and nested groups are read the way the official 0.22 parser reads them.
+- The Links Notation scaling guards read their regression inputs, including the RML upstream regressions, from the compatibility matrix.
+
+### Changed
+
+- Every Rust dependency is updated to the latest release its version requirement allows (`cargo update`), including `clap` 4.6, `pest` 2.9 and `zerovec` 0.11.8.
+- The minimum supported Rust version is now 1.90, the highest `rust-version` any locked dependency declares (`tree-sitter-language` 0.1.8). A new `Minimum Supported Rust Version` CI job builds the library, binaries and tests with that toolchain.
+
+### Changed
+
+- Canonical concept and grammar construct names are readable English noun phrases: `counted-repetition`, `zero-or-more-repetition`, `one-or-more-repetition`, `optional-expression`, `empty-expression`, `nonterminal`, `character-class`, `character-range`, `any-character`, `positive-predicate`, `negative-predicate`, `boolean-value`, `sequential-composition`, `strong-emphasis` and `block-quote`. Grammar links are tagged `grammar::expression::*`, `grammar::character-class-item::*` and `grammar::value::{absent-value, present-value, character, boolean-value, natural-number}`. External vocabularies are written `external-identifier:<vocabulary>` in both runtimes.
+
+### Added
+
+- `FORMER_CONCEPT_IDS`, `current_concept_id`, `FORMER_GRAMMAR_CONSTRUCTS` and `current_grammar_construct` keep every former name. Seeding records each former concept identity as a `meta-language` alias of its concept. Grammar networks written with the former link tags still decode, and imports still read the former `external-id:` vocabulary prefix.
+
+### Changed
+
+- Structural rule names generated by grammar inference are readable English phrases: `sequence_N`, `unordered_choice_N`, `ordered_choice_N`, `optional_<stem>`, `zero_or_more_<stem>`, `one_or_more_<stem>`, `repeated_<stem>`, `<stem>_positive_predicate`, `<stem>_negative_predicate`, `character_range`, `character_class`, `any_character` and `empty_expression` replace `seq_N`, `choice_N`, `<stem>_opt`, `<stem>_star`, `<stem>_plus`, `<stem>_repeat`, `<stem>_and`, `<stem>_not`, `char_range`, `char_class`, `any_char` and `empty`.
+
+### Added
+
+- `concept_records()`, `concept_record(name)` and `concept_records_for_source_name(source, name)` return the concept records both runtimes ship, generated from `parity/naming/canonical-concepts.json`. Each record has a stable identity, a readable English phrase, a role (a concept is a noun phrase and an operation is a verb phrase), a definition, constraints, source aliases and former names.
+- `LinkNetwork::insert_concept_record` and `LinkNetwork::seed_concept_records` assign records to a network. A record becomes a concept link with its definition, its English phrase, and alias links for its source names and former names.
+- `LinkNetwork::import_concept_ontology(&source)` merges another network's concepts. It renames former identities, keeps each former identity as a `meta-language` alias, and assigns the concept record where one exists. `ConceptOntologyImportReport` reports `assigned()` and `renamed()`.
+
+### Changed
+
+- The crate and the website crate use the Rust 2024 edition, and the sources follow the 2024 style edition of `rustfmt`.
+- `sha2` is updated to 0.11, `doublets` to 0.5 and `lindera` to 6.2. Mandarin segmentation uses lindera's `Segmenter` and no longer pulls in an HTTP client, so `reqwest`, `tokio` and their TLS stack leave the lockfile.
+
+### Changed
+
+- Lean support targets Lean 4.34.1: the language profile, the proof-checker description and the translation runtime name it, and the prelude names an emitted Lean program may not redeclare are regenerated from Lean 4.34.1.
+
+### Changed
+
+- Both runtimes parse with tree-sitter 0.27.0: the `tree-sitter` crate, the web-tree-sitter runtime (rebuilt reproducibly with emscripten 4.0.15, the version tree-sitter 0.27.0 pins) and the tree-sitter CLI that builds the vendored grammar wasm files, regenerates the vendored CSV, Rocq and Rust parsers and produces every CLI oracle fixture.
+- The grammar crates follow their current releases: `tree-sitter-graphql` 0.2.1, `tree-sitter-lua` 0.5.0, `tree-sitter-ocaml` 0.26.0, `ts-parser-perl` 2.0.0, `tree-sitter-proto` 0.6.0, `tree-sitter-r` 1.3.0, `tree-sitter-scala` 0.26.2 and `tree-sitter-language` 0.1.8.
+
+### Fixed
+
+- The JavaScript runtime reports the node kind the native runtime reports when a grammar aliases a token to a named rule (tree-sitter-scala's immediate `(` is `(`, not `arguments`), so the two runtimes agree on every public tree.
+
+### Added
+
+- `emit_antlr` writes a combined ANTLR v4 grammar. Normal and silent rules become parser rules, and token and atomic rules become lexer rules. `emit_lark` writes a Lark grammar with lowercase rules and uppercase terminals. `?` marks inlined rules and `_` marks filtered ones. Character classes become regex terminals, and `%ignore` is emitted only for the grammar's own ignore rules.
+- Both emitters return an `EmitReport` alongside the text. The report records every deterministic rename (collisions, reserved words, identifier case) and every lowering. Lowered constructs include ordered choice, lookahead predicates, case-insensitive literals, ranges, any-character, counted repetition, captures and regex terminals. No construct is dropped without a note. `import_antlr(emit_antlr(g))` and `import_lark(emit_lark(g))` give back `g` modulo those notes, and emission is a fixpoint from the first re-import.
+- `emit-grammar --format antlr|lark` and `import-grammar --to antlr|lark` now emit instead of reporting an unsupported format.
+
+### Added
+
+- `concept_correspondence` relates two source spellings through the concept records and the foundation register: `Shared` only when each spelling means exactly one concept and it is the same one (with the definition that justifies sharing it), `Distinct` with the recorded reason when the concepts differ, `Ambiguous` when a spelling has several meanings, and `Unknown` when it has none. Pest's `|` and BNF's `|`, Rust's and Lean's `panic!`, and Lean's and Rocq's `Prop` therefore never merge.
+- `check_concept_distinctions` keeps ordered and unordered choice, lexical and syntactic precedence, binding and assignment, and the integer, overflow, effect, universe, proof and logic models distinct, and requires every concept several sources share to state the meaning that justifies the correspondence.
+- `grammar_precedence_concepts` classifies each tree-sitter precedence use as lexical precedence (inside a token) or syntactic precedence (between parse alternatives). The concept records gain `grammar.lexical-precedence` and `grammar.syntactic-precedence`, and the foundation register records why Lean's non-cumulative and Rocq's cumulative universes differ.
+
+### Fixed
+
+- Keep the generated local OCaml toolchain out of source checkout status so acceptance suites can run after installing Rocq. Evidence still rejects source edits and untracked tests, and reports the offending paths when the checkout is dirty.
+
+### Changed
+
+- Add read-only live inspection of the default-branch aggregate merge rule, its bypass settings, and a failed check on the current PR revision. Preserve the GitHub responses with acceptance evidence; stale or incomplete probes remain unverified.
+- Reject dirty or mislabeled evidence checkouts before executing suites or packing candidates, verify the checkout again afterwards, and allow the scope comparison to read the complete ledger beyond Node's default subprocess buffer.
+- Add `npm run check:dependencies:delivery`, which rejects stale retained dependencies and generated descendants even when their compatibility reasons pass inventory validation. Outstanding upgrades keep their delivery assertions unverified.
+- Upgrade six npm build resolutions, including Peggy's compiler utilities and PDF compression and TypeScript helpers, with executable parser, source-map, CLI and PDF interoperability regressions. Clean consumers still require separate verification because repository overrides do not propagate to installed packages.
+- Run JavaScript test files sequentially to bound simultaneous grammar-runtime allocations during local verification.
+
+### Fixed
+- Keep live merge-rule evidence readable when installed toolchains force terminal colors by clearing forced-color and forced-terminal settings in GitHub CLI JSON subprocesses.
+
+### Fixed
+- Run the Full Requirements Aggregate even when delivery candidates are missing and fail it explicitly, because GitHub counts a skipped required check as passing; live merge evidence now rejects an acceptance workflow that can skip the aggregate.
+- Name the missing repository Administration read permission when the workflow token cannot see ruleset bypass actors, and read rulesets with an optional `ISSUE_195_RULESET_TOKEN`.
+- Recognize killed-session log uploads as automation output and register the maintainer working-process directive, so the source register matches the live discussion again.
+- Refresh the atomic manifest's pinned hash of the source register.
+- Compile generated Rust parsers against the most recently built `pest`/`pest_derive` artifacts, so a target cache restored from an older rustc no longer breaks the generated-parser tests, and satisfy the Clippy lints added in Rust 1.99, including `assert_is_empty` in the test suites, whose assertions now report the unexpected contents on failure.
+
+### Added
+- Merge grammars from several sources with `merge_grammars` (JavaScript `mergeGrammars`). Rules are merged only when a recursive structural proof shows they are equivalent, whatever their names. Same-named rules with different meanings, name lookalikes and rules that only parse the same samples stay distinct and are reported as decisions, nominations, alternatives or failures. The output is reproducible, idempotent and independent of input order. It re-merges incrementally after an upstream change and keeps language and edition boundaries. `assert_merge_complete` fails on an unresolved required equivalence.
+- Rename a grammar rule with `rename_grammar_rule` (JavaScript `renameGrammarRule`) through recursive, qualified and reloaded references. The rename rejects collisions and invalid names and keeps source aliases. `restore_source_names` (JavaScript `restoreSourceNames`) uses those aliases to undo it for export.
+
+### Added
+- Check a grammar importer and emitter pair with `check_grammar_round_trip` (JavaScript `checkGrammarRoundTrip`). The guard adds a marker alternative to the start rule before export and requires the marker in the exported text and in the re-imported grammar. It also checks independent accept and reject samples, so a pair that re-emits a saved source, or two halves that are wrong in ways that cancel out, are reported as broken. Malformed sources fail with the importer's error. `parity/fixtures/grammar-importers.json` now lists malformed sources for every shared format.
+
+### Fixed
+- `merge_grammars` (JavaScript `mergeGrammars`) now keeps the alternatives of an unordered choice in their source order. Before, the merged grammar sorted them. A parser that commits to the first matching alternative, such as the peggy parser behind JavaScript `parseWithGrammar`, then rejected input the source grammar accepted: `word ::= letter word | letter` became `letter | letter word` and stopped after one letter. The order-free form is still used to compare rules, so merge decisions and fingerprints are unchanged.
+
+### Added
+- Add a `meta-language grammar` command with `formats`, `import`, `validate`, `convert`, `export`, `merge`, `rename`, `round-trip` and `help`. The JavaScript package installs the same `meta-language` command, and both commands give the same output and exit status for every case in `parity/fixtures/grammar-importers.json`. The library entry point is `run_grammar_command` (JavaScript `runGrammarCommand`). It reads and writes abnf, antlr, bnf, ebnf, gbnf, lark, pest, tree-sitter-json and `native`. The `native` format is a line-per-rule listing of the grammar model, read by `parse_native_grammar` and written by `render_native_grammar`.
+- Add `validateGrammar` and the ANTLR and Lark emitters to the JavaScript package so it matches the Rust grammar diagnostics and exporters.
+
+### Added
+- Check reverse conversion with `check_grammar_reverse_conversion` (JavaScript `checkGrammarReverseConversion`). The source grammar is written as native links by `render_grammar_links` and read back by `parse_grammar_links`, and the emitter is given only the grammar read back from those links. The export is re-imported and compared rule by rule (names, start rule, kinds, definitions and documentation), and both grammars are run on independent accept and reject samples.
+- Add a lossless mode for abnf, antlr, bnf, ebnf, gbnf, lark, pest and tree-sitter-json. `import_grammar_lossless` returns the grammar and a `GrammarLayout` with the definition texts, comments and spacing of the source. `render_grammar_layout_links` and `parse_grammar_layout_links` write and read the layout as links. `emit_grammar_lossless` rebuilds the source byte for byte and writes only changed or new rules fresh. `parity/fixtures/grammar-importers.json` has a `reverse` section with one commented source per format, recorded for both runtimes.
+
+### Fixed
+- The GBNF emitter writes rule documentation as `#` comments instead of dropping it.
+- JavaScript grammars rebuilt by renames, merges and start rule mutations keep their rule documentation, as the Rust ones already did.
+- The EBNF importer skips ISO `(* ... *)` comments outside string literals, as the JavaScript importer does.
+
+### Added
+- Lower a grammar into a less expressive notation with `lower_grammar` (JavaScript `lowerGrammar`) for abnf, antlr, bnf, ebnf, gbnf, lark, pest and tree-sitter-json. Each construct the target cannot write moves into a helper rule encoded in constructs it can write, and the lowering is `exact` or `approximate`. The result is the executable text, which the target's own importer reads back, plus reconstruction metadata as links. The metadata names every helper, its construct, encoding and original expression, plus every rename, rule kind and documentation the target does not keep. `render_lowering_metadata` and `parse_lowering_metadata` write and read the metadata, and `reconstruct_grammar` rebuilds the original grammar from the executable and the metadata.
+- Check a lowering with `check_grammar_lowering`, which reports lossy emission, an executable that does not read back as the lowered grammar, every feature the reconstruction lost (`dropped_grammar_features`) and, for an exact lowering, every sample it disagrees on. `parity/fixtures/grammar-importers.json` has a `lowering` section that records the executable, metadata and reconstruction of two grammars in every target, for both runtimes.
+
+### Fixed
+- A Rocq proof step now rewrites with each hypothesis or lemma at most eight times. An unbounded `rewrite <- ?ih` with `ih : Tree.mirror l = l` rewrote `l` into `Tree.mirror l` forever, so the Rocq translation of a false Lean theorem searched for over eleven minutes before failing. It now fails in under two seconds, and every true corpus proof still checks.
+
+### Added
+- The shared translation corpus (`parity/fixtures/four-language-conformance.json`) records, for every Lean and Rocq theorem, a false restatement and a restatement that holds only on the bounded domain of `--ml-check-theorems`. The proof preservation tests in both runtimes observe three things. Each theorem is carried as an obligation naming the source theorem, and every false restatement is rejected by the source kernel and by every target. Into Lean and Rocq each obligation is discharged by the target kernel with no axiom of the translation. Into JavaScript and Rust a theorem is a bounded check, reported apart from the source-kernel proof, which the bounded-only restatement passes while every kernel rejects it.
+
+### Added
+- Read and write every form of the grammar feature union (docs/grammar/feature-union.md) in the native listing, links and JSON forms, with grammar declarations (`GrammarDeclarations`: matching, imports, modes, extras, conflicts, macros and scanners) and rule fields (`RuleAttributes`: parameters, channel, modes and action).
+- Run feature union grammars with a native executor (`compile_feature_grammar`, `FeatureGrammarParser`) that uses no parser generator. It matches `parity/fixtures/grammar-feature-union.json` byte for byte with the JavaScript executor: concrete syntax trees, ambiguities, rejections and the mutation of every feature, plus external scanners and semantic actions run as link definitions.
+
+### Changed
+- BREAKING: `GrammarExpr` has a new `Feature` variant that holds the feature union forms. Exhaustive matches on `GrammarExpr` must handle it.
+- BREAKING: `GrammarLoweringStep` has new `Declarations` and `Attributes` variants, `GrammarMergeDecisionKind` has a new `DeclarationConflict` variant and `GrammarMergeAlternativeReason` has a new `DeclarationConflict` variant. Exhaustive matches on these enums must handle them.
+
+### Fixed
+- `merge_grammars` no longer drops grammar declarations and rule fields. It renames them with the rules, unites imports, modes, extras and conflict groups, keeps the first matching, macro and scanner of a name and reports a different later one as a `declaration-conflict` decision and alternative. Rules that differ only in their parameters, channel, modes or action stay distinct.
+- `lower_grammar` no longer drops grammar declarations and rule fields. It records them as `declarations` and `attributes` metadata steps, which makes the lowering `approximate`; `reconstruct_grammar` restores them, and `check_grammar_lowering` reports `feature-dropped` when they are missing.
+
+### Changed
+- The ABNF, BNF, EBNF, and pest importers are hand-written ports of the JavaScript importers in `js/src/grammar-importers/`. They accept the same language and report the same grammar IR and diagnostics, so the `abnf`, `bnf`, `ebnf`, and `pest_meta` crates are no longer runtime dependencies. `pest_meta` remains a development dependency, used to check emitted `.pest` grammars. Dropping these dependencies removes 22 packages from `Cargo.lock`, including `nom` 7, `rand` 0.9, and `thiserror` 1.
+- An EBNF `#'...'` inline regex is reported as an unsupported construct by both importers.
+
+### Changed
+- The issue 195 acceptance workflow installs Rust 1.99.0, and the four-language contracts, the translation dependency lists and the toolchain evidence declare Rust 1.99.0.
+- The grammar crates follow their current releases: `tree-sitter-graphql` 0.3.0 and `tree-sitter-haskell` 0.24.1, with the JavaScript WebAssembly parsers rebuilt from the same crates by tree-sitter CLI 0.27.0 so both runtimes parse with the same generated parsers. `yoke-derive` follows 0.8.4.
+
+### Added
+- The dependency delivery gate accepts an item behind its current stable release only at its verified newest compatible release. The audit records that release and the holders that exclude the current one, derived from the registries, the Cargo resolve graph, the emscripten version that tree-sitter pins, and the ocamlfind bound on OCaml. Every holder must itself be delivered.
+- `check-dependencies.mjs --delivery --live` refreshes the audit from the registries and fails when the recorded audit is outdated or the registries cannot be reached. Live mode is the default in CI, and the clean-consumer acceptance job runs it against the installed npm artifact.
+
+### Added
+- The issue 195 acceptance workflow has a "Formal AI Workloads" job. It checks out link-assistant/formal-ai at the pinned revision and verifies every inventoried file. It patches formal-ai's Rust crate to the unpacked candidate crate, after refreshing formal-ai's `Cargo.lock` for meta-language alone. It then runs formal-ai's own meta-language test groups. A clean consumer of the npm candidate runs formal-ai's Links Notation data through the public JavaScript API. Both runtimes write the same outputs, and the job compares them. The JavaScript and Rust suites validate the report and observe `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS` only when it holds.
+
+### Added
+- `CROSS_FORMAT_CONCEPT_IDS` lists the readable cross-format concept ids. `CROSS_FORMAT_CONCEPTS` keeps the identities published before the naming migration, such as `strong`. `LanguageProfile::supports_concept` and `LanguageProfile::concept_fallback` accept either spelling, so callers written against the published list (formal-ai's `issue_425` tests) keep resolving.
+- The formal-ai workload regenerates formal-ai's self-AST census with formal-ai's `regenerate_self_ast_census` example against the candidate crate before running its tests. The probe fails if the refresh changes anything except a document's `total_link_count`. That count grows deliberately, from the grammar provenance link and the `hidden_text` tokens split from grammar gap text.
+
+### Fixed
+- The JavaScript parser compiles a vendored grammar when it is first used, not all 60 at import.
+- V8 tiered the grammars' generated lexers up to TurboFan in the background. Some lexers are single functions of 130 to 360 KB (PowerShell, Swift, Markdown and its inline grammar), and each tier-up took 0.5 to 2 GB, enough to kill whole-suite runs after every parse had returned. The parser now compiles grammar modules with a tiering budget that no parse exhausts, so their code stays on V8's baseline compiler. The runtime and every other module keep the process's budget. `check:default-cst` loads its grammars the same way.
+- The JavaScript parser maps string offsets to UTF-8 bytes and points through one typed-array checkpoint per 64 characters with a binary search. It no longer builds an object per source character. Markdown inline regions share one inline parser and still delete each tree.
+- AGENTS.md and CONTRIBUTING.md list the targeted local checks, the resource limits for local runs, and the suites that run only in CI.
+
+### Changed
+- The issue #195 evidence runs as separate CI stage jobs: the JavaScript suite, the Rust suite, runtime parity, one job per native translation target (JavaScript, Rust, Lean, Rocq), delivery and merge enforcement. Each stage uploads its own record and logs. The Full Requirements Aggregate only merges the stage outputs and evaluates them. A stage that fails or never reports is one gate error naming the stage, not a failure of every row it feeds.
+- A local evidence run executes its stages one after another with `CARGO_BUILD_JOBS=2`, `RUST_TEST_THREADS=2` and `CARGO_INCREMENTAL=0` unless the caller set them. It builds only the default Rust features. A native validation stage deletes the compiler outputs no cell cites.
+- The Rust runtime probe (`examples/issue_195_runtime_probe.rs`) streams its observation as NDJSON to the file given as its argument. The parity check reads that file without a large output buffer, compares the runtimes entry by entry, and keeps one digest per entry plus the full entries only where the runtimes differ. Without an argument, the probe still prints the whole observation.
+- `docs/vision.md` has a Resource limits section. The ledger has one row each for the compile gate, the test matrices, the evidence stages, workflow concurrency, the agent resource rules, the bounded sequential evidence run, lazy grammars, the grammar tiering budget, inline-parser reuse, source-boundary checkpoints, parity digests, the cleanup wrapper and the native output cleanup.
+
+### Fixed
+- Temporary directories of the generated-parser, translation, CLI, storage and benchmark tests add a per-process sequence to the timestamp. On macOS the clock has microsecond resolution, so two parallel generated-parser builds could share a directory and delete each other's object files before linking.
+- `docs/vision.md` is checked out with LF line endings on every platform. The grammar-feature-union test slices its sections at blank lines, and the directive rows hash it as their fixture.
+
+### Added
+- A native merged JSON grammar in Links Notation, `parity/grammars/native/json.lino`. It merges RFC 8259, ECMA-404 and tree-sitter-json 0.24.8: it accepts comments, several top-level values and a plus sign in an exponent, and it keeps a leading byte order mark as a `byte_order_mark` leaf. Both native executors run it. The default JSON parse still uses tree-sitter-json until the grammar has recovery rules.
+- `parity/fixtures/native-grammars/json.json` and `js/scripts/generate-native-grammar-fixtures.mjs` check the grammar against tree-sitter-json: the native rows equal the oracle rows on every match, divergences carry their RFC 8259 reason, and invalid sources are rejected. `npm run check:native-grammars` fails on a stale fixture, and CI runs it. The ledger row `I195-GRAMMAR-NATIVE-JSON` tracks the JavaScript and Rust suites.
+- `docs/grammar/native-grammars.md` describes the format, the merge and the oracle check.
+
+### Changed
+- libc is updated to 0.2.190, released on 2026-10-02, so the delivered lockfile stays on the current stable release the dependency audit requires.
+
+### Fixed
+- The JavaScript UTF-8 decoders keep a leading byte order mark (`ignoreBOM: true`). Before, a Links Notation grammar with the literal `%EF%BB%BF` lost it on reading, and the text of a leaf starting at byte 0 dropped it.
+- `rust/src/translation/output.rs` is back under the 1000-line limit the Rust lint enforces. Its totalization of machine-integer operations and checked conversions moved, unchanged, to `rust/src/translation/output/settle.rs`.
+
+### Added
+- A native merged INI grammar in Links Notation, `parity/grammars/native/ini.lino`. It merges tree-sitter-ini 1.4.0 and the Python configparser INI file structure: it builds the tree-sitter-ini trees, comments as extras included, accepts a last comment line without a line break, and keeps blank lines, line breaks and comment markers as named leaves. Both native executors run it with no ambiguity. The default INI parse still uses tree-sitter-ini until the grammar has recovery rules.
+- `parity/fixtures/native-grammars/ini.json` checks the grammar against tree-sitter-ini on 55 matches, 9 configparser divergences and 15 rejections. A last line without a line break is a divergence: tree-sitter-ini completes it with a missing line break, which only the has-error flag of its root shows. The ledger row `I195-GRAMMAR-NATIVE-INI` tracks the JavaScript and Rust suites.
+- The oracle row projection reads two more fixture fields: `anonymous` leaves are not rows but count in the spans, and `extras` nodes are rows with flag X. The Rust projection moved to `rust/tests/unit/issue_195_native_grammar_rows.rs`, shared by the JSON and INI suites.
+
+### Fixed
+- The acceptance manifest pins the current digest of the dependency inventory after the libc update.
+
+### Added
+- A native merged unified diff grammar in Links Notation, `parity/grammars/native/diff.lino`. It merges tree-sitter-diff 0.1.0, the GNU diffutils unified format and the git patch format: it builds the tree-sitter-diff trees of blocks, headers, hunks and changes, reads a hunk line by its first character as GNU diff does, accepts abbreviated object names of four to forty hex digits and a block cut at the end of the input, and keeps line breaks and blank lines as named leaves. Both native executors run it with no ambiguity. The default Diff parse still uses tree-sitter-diff until the grammar has recovery rules.
+- `parity/fixtures/native-grammars/diff.json` checks the grammar against tree-sitter-diff on 115 matches, 8 GNU and git divergences and 14 rejections. The ledger row `I195-GRAMMAR-NATIVE-DIFF` tracks the JavaScript and Rust suites.
+
+### Fixed
+- The native grammar fixtures count a source as recovered by the oracle when the root's has-error flag is set, not only when a row has an error or missing flag: tree-sitter can insert a missing line break at the end of the input that no row shows. `oracleRecovers` in `js/scripts/native-grammar-rows.mjs` checks both, and the JSON, INI and Diff suites use it.
+- The dependency inventory records emscripten/emsdk 6.0.11 as the newest image; the delivered image stays 4.0.15, held by tree-sitter 0.27.0.
+
+### Added
+- A native merged CSV grammar in Links Notation, `parity/grammars/native/csv.lino`. It merges tree-sitter-csv (revision `f6bf6e3` with the RFC 4180 quotes patch) and RFC 4180: it builds the tree-sitter-csv trees of rows and of number, float, boolean and text fields, reads quoted fields with commas, line breaks and doubled quotes, accepts an empty last field at the end of the input, and keeps line breaks and the spaces after a closing quote as named leaves. Both native executors run it with no ambiguity. The default CSV parse still uses tree-sitter-csv until the grammar has recovery rules.
+- `parity/fixtures/native-grammars/csv.json` checks the grammar against tree-sitter-csv on 123 matches, 8 RFC 4180 divergences and 15 rejections. The ledger row `I195-GRAMMAR-NATIVE-CSV` tracks the JavaScript and Rust suites.
+
+### Added
+- A native merged JSON5 grammar in Links Notation, `parity/grammars/native/json5.lino`. It merges tree-sitter-json5-orchard 0.1.0 and the JSON5 1.0.0 specification: it builds the tree-sitter-json5-orchard trees of objects with quoted and unquoted member names, arrays, single- and double-quoted strings, hexadecimal, signed, `Infinity` and `NaN` numbers, trailing commas and line and block comments, and it reads the JSON5 white space (NBSP, LS, PS, a byte order mark and every Zs space), ECMAScript 5.1 identifier names and string escapes the oracle recovers from. Both native executors run it with no ambiguity. The default JSON5 parse still uses tree-sitter-json5-orchard until the grammar has recovery rules.
+- `parity/fixtures/native-grammars/json5.json` checks the grammar against tree-sitter-json5-orchard on 120 matches, 26 JSON5 specification divergences and 36 rejections. The ledger row `I195-GRAMMAR-NATIVE-JSON5` tracks the JavaScript and Rust suites.
+
+### Changed
+- uuid is updated to 1.27.0, released on 2026-10-02, so the delivered lockfile stays on the current stable release the dependency audit requires.
+
+### Added
+- A native merged Scheme grammar in Links Notation, `parity/grammars/native/scheme.lino`. It merges tree-sitter-scheme 0.24.7 and the R7RS small report: it builds the tree-sitter-scheme trees of lists with any bracket style, vectors, `#vu8(` byte vectors, quote, quasiquote, unquote and syntax forms, booleans, characters, strings with escape sequences, the R5RS, R6RS and R7RS numbers, symbols, keywords, directives and line, datum and nested block comments, and it reads the R7RS `#u8(` bytevectors and `#<n>=` / `#<n>#` datum labels the oracle recovers from. Both native executors run it with no ambiguity. The default Scheme parse still uses tree-sitter-scheme until the grammar has recovery rules.
+- `parity/fixtures/native-grammars/scheme.json` checks the grammar against tree-sitter-scheme on 264 matches, 23 R7RS small divergences and 50 rejections. The ledger row `I195-GRAMMAR-NATIVE-SCHEME` tracks the JavaScript and Rust suites.
+
+### Changed
+- The cmake scanner experiment pins cc 1.6.0, released on 2026-10-03, and the dependency audit records 1.6.0 as the current cc release; the delivered lockfile stays on cc 1.2.67, held by tree-sitter-sequel 0.3.11 (`~1.2.1`).
+
+### Added
+- A native merged Racket grammar in Links Notation, `parity/grammars/native/racket.lino`. It merges tree-sitter-racket 0.25.0 and the reader chapter of the Racket Reference: it builds the tree-sitter-racket trees of lists with dots in any bracket style, vectors, flvectors and fxvectors, structures, hash tables, boxes, graph labels, quote, quasiquote, unquote and syntax forms, booleans, characters, strings, byte strings, regular expressions, numbers and extflonums, symbols, keywords, `#lang`, `#!` and `#reader` extensions and line, datum and nested block comments. Here strings replace the oracle's external scanner with grammar actions that store the terminator in a state variable, and the grammar reads the line feeds a backslash quotes in characters and symbols, which the oracle recovers from. Both native executors run it with no ambiguity. The default Racket parse still uses tree-sitter-racket until the grammar has recovery rules.
+- `parity/fixtures/native-grammars/racket.json` checks the grammar against tree-sitter-racket on 306 matches, 22 Racket Reference divergences and 60 rejections. The ledger row `I195-GRAMMAR-NATIVE-RACKET` tracks the JavaScript and Rust suites.
+
+### Changed
+- Every pull request check now depends only on state that exists before merge, and every one of them can pass. The live default-branch rule inspection of `I195-ACCEPTANCE-REQUIRED-MERGE-CHECK` moves to a new `post-merge` checkpoint. It runs on `main` as a non-blocking Post-merge Report with the workflow token. The `ISSUE_195_RULESET_TOKEN` secret is no longer used anywhere.
+- Pull requests compare delivered dependencies offline against the committed audit. `check-dependencies.mjs` goes live only with `--live`, which runs on `main` as a non-blocking report. The `--online` source-register and documentation comparisons also run only on `main`.
+- A scheduled Dependency Refresh workflow on `main` updates the lockfiles, refreshes the dependency audit and opens its own pull request.
+
+### Added
+- A gate self-test (`I195-ACCEPTANCE-PR-CHECKS-PASSABLE`) checks that the pre-merge aggregate is green on a fixture in which every pre-merge row passes, and that no pre-merge row needs its own aggregate to fail.
+
+### Fixed
+- The release pipeline dispatches the npm publisher on the release tag, so npm receives the merged commit the crate was published from.
+- The npm publish job performs the trusted-publisher exchange before `npm publish` and reports the registry's answer and the matched OIDC claims instead of a bare `ENEEDAUTH`.
+
+### Added
+- `docs/ci-cd/npm-trusted-publishing.md` lists the exact trusted-publisher settings on npmjs.com (organization `link-foundation`, repository `meta-language`, workflow filename `js.yml`, no environment).
+
+### Added
+- Automatic error recovery in the native grammar executor. With `FeatureParseOptions::error_recovery` (`errorRecovery` in JavaScript) a parse the grammar rejects is repaired without recovery rules in the grammar: at the farthest failing element the executor inserts a zero-width MISSING leaf or skips to the element's next match behind an ERROR leaf, whichever costs less, in rounds of repair points bounded by `max_repairs` (default 32). The tree stays lossless and is reported as `recovered`. Every rejection of the seven native grammar fixtures records its repaired tree, and both executors build the same trees. The ledger row `I195-GRAMMAR-NATIVE-RECOVERY` tracks the JavaScript and Rust suites.
+
+### Fixed
+- The native grammar executor builds the children of a long repetition in linear time and memory. Joining results copied every child before the join, so a repetition of n items cost O(n²): a 737 KB JSON document ran out of memory. A join now links its two parts with their child count, the list is flattened once when it is first read, and a rule node shares the unflattened list. The JavaScript and Rust executors match, and a 10,000-item repetition repaired near its end is tested in both.
+
+### Added
+- The native merged grammars are the default parsers of JSON, INI, Diff, CSV, JSON5, Scheme and Racket. `parse_programming_language`, embedded regions and incremental reparses run the catalog's native grammar with automatic error recovery and project its tree as the pinned tree-sitter oracle places nodes, so valid input keeps the oracle's default CST rows and invalid input gets the native repair. The crate ships the grammars under `src/data/native-grammars/`, and the catalog lists each native grammar first in `grammars`, the tree-sitter grammars in `oracleGrammars`, and the projection kinds in `nativeGrammars`. New public items: `NativeGrammarEntry`, `native_grammar`, `native_grammars` and `oracle_grammar_provenance`.
+
+### Changed
+- The tree-sitter grammars of the languages the native grammars parse by default (tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket and the vendored tree-sitter-csv) are no longer production dependencies: the crates are development dependencies that pin the oracle in the tests, and the vendored CSV parser is no longer compiled or published. `grammar_by_id` and `grammar_names` return `None` for these oracle ids; the native grammar is the parse of these languages.
+
+### Added
+- Every rule of every native grammar names a canonical concept record, and the record lists the rule as a `native:<language>` source alias. Constructs that mean the same in two or more languages share one concept, such as `grammar.member` for a JSON `pair` and a JSON5 `member`. Lookalikes keep distinct concepts, such as `grammar.list` for a JSON `array` and `grammar.linked-list` for a Scheme `list`. `check_native_grammar_concepts` reports rules without a record and stale aliases. `native_grammar_concept_reuse` gives the per-language counts of shared and language-specific rules. `translate_native_construct` and `translate_native_construct_tree` translate constructs between native grammars through their concept records alone, and report every construct the target grammar has no rule for. New public items: `NativeRuleConcept`, `NativeConceptProblem`, `NativeConceptProblemKind`, `NativeConceptReuse`, `GrammarConceptReuse`, `ConceptReuse`, `SharedRule`, `SpecificRule`, `ConstructTree`, `ConstructTranslation`, `ConstructTranslationRelation`, `ConstructTranslationProblem`, `ConstructTreeTranslation`, `native_grammar_ids`, `native_grammar_language`, `native_grammar_source`, `native_grammar_rule_concepts`, `check_native_grammar_concepts`, `check_native_grammar_concepts_in`, `native_grammar_concept_reuse`, `translate_native_construct`, `translate_native_construct_in`, `native_construct_tree` and `translate_native_construct_tree`.
+
+### Changed
+- tree-sitter-c is no longer a production dependency: C parses with the native merged grammar by default, so the crate is a development dependency that pins the oracle in the tests, and `grammar_by_id` and `grammar_names` return `None` for the `c` oracle id.
+
+### Added
+- A native merged C grammar in Links Notation, `parity/grammars/native/c.lino`, the first written by the automatic import pipeline `js/scripts/import-native-grammars.mjs` from the pinned `src/grammar.json` of tree-sitter-c 0.24.2. The pipeline checks each pinned source against its hash, renames every rule to readable English through the reviewed decisions of `parity/naming/grammar-name-expansions.json`, gives every rule a concept record and writes the merge report `parity/grammars/merge-reports/c.json`; `npm run check:native-imports` fails on drift. C parses with the native grammar by default in both runtimes.
+- The feature grammar executor settles LR conflicts as a generated tree-sitter parser does: a conflict between silent rules is not an ambiguity, a shift/reduce choice under `matching longest` follows precedence and associativity, and complete parses are ranked by cost, preferred tokens, shift order and dynamic precedence.
+- `parity/fixtures/native-grammars/c.json` checks the grammar against tree-sitter-c on 100 matches and 30 rejections. The ledger row `I195-GRAMMAR-NATIVE-C` tracks the JavaScript and Rust suites.
+
+### Added
+- Rust parses with the native merged grammar `parity/grammars/native/rust.lino` by default in both runtimes. The import pipeline writes it from the pinned `src/grammar.json` of tree-sitter-rust 0.24.2 with the oracle's patch, and `parity/grammars/scanners/rust.lino` ports its external scanner to native scanner links.
+- `parity/fixtures/native-grammars/rust.json` checks the grammar against tree-sitter-rust on 170 matches and 35 rejections, with no ambiguity. The ledger row `I195-GRAMMAR-NATIVE-RUST` tracks the JavaScript and Rust suites.
+- `parity/fixtures/native-default-cst-expected.json` gives the native rows of embedded regions in a native language; the Markdown fenced Rust recovery region is repaired with a MISSING `}`.
+
+### Fixed
+- The feature grammar executor settles a reduce/reduce conflict by precedence, as tree-sitter does (Rust's `m!(x);` is an expression statement), and two parses that build the same tree are no longer an ambiguity.
+
+### Changed
+- The patched tree-sitter-rust parser is the oracle of the native Rust grammar only: the crate no longer compiles or publishes it, `grammar_by_id("rust")` and `grammar_names("rust")` return `None`, and its WebAssembly build moves out of the npm package to `js/oracles/grammars`.
+
+### Fixed
+- The native C and Rust grammars skip only ASCII white space, as tree-sitter's `\s` does: a no-break, ideographic or line separator space between items is an error, as in the tree-sitter oracles.
+
+### Changed
+- Left recursion grows each pass only from the results the pass before added or changed, so an operator chain of n links takes n passes of one seed each instead of n passes of every seed. A Rust source such as the `weird-exprs.rs` test of rustc now parses within the default step budget; every tree and ambiguity stays the same.
+
+### Fixed
+- The native executor settles the shifts and reductions an LR parser resolves by precedence the way tree-sitter does: a closure `|a| b` and an or-pattern `|a|b` that start together and end their leftmost chains apart keep the result the parser would shift into, a node that nests the other from the same offset keeps its tokens aligned, and a bare right operand such as the `..` of `a ..= ..` stands only where no reduction of the same precedence expression ends just before it. Rust sources with closures inside or-patterns and runs of bare, prefix and postfix ranges now give the tree-sitter trees, and the JS and Rust runtimes agree on them.
+
+### Changed
+- A MISSING leaf that automatic recovery inserts now comes before the white space that precedes the repair point, at the end of the token it follows, as tree-sitter places its missing leaves, which have no padding. `{"a" 1}` is repaired with a MISSING `":"` at 4 instead of 5, and the recorded repairs of the native JSON, INI, diff, JSON5, C and Rust fixtures and the default CST rows of invalid input follow; the JS and Rust runtimes place them alike.
+
+### Fixed
+- Automatic recovery no longer looks for a skip that ends at an external scanner token, as tree-sitter, whose recovery lexes in its error state where a scanner refuses to run, never resumes at one. A scanner such as the content of a Rust string reads to the end of the input before it fails, so the scan from every later offset was quadratic: a Rust file of a few kilobytes with one stray byte ran out of its step budget and became a single ERROR over the whole input, while it is now repaired with one ERROR at the stray byte. The JS and Rust executors skip alike.
+
+### Fixed
+- Automatic recovery no longer takes all the input after an early error as one ERROR when a later error could be repaired where it is. When the cheapest complete result of a repair round takes the rest of the input as ERROR at a repair point while the result that reaches farthest ends past that point and could still complete for less, the round asks for that end as the next repair point; the complete result stands when the rounds end. `struct S { a: u8,, }` followed by an impl with a stray `]` is now repaired with one ERROR at the comma and one at the bracket, as tree-sitter repairs it, and twenty Rust conformance and generative recoveries become local. The recorded repairs of three native Racket and Rust fixtures follow; the JS and Rust executors defer alike.
+
+### Fixed
+
+- A rule of a left-associative precedence whose sequence ends in optional parts is reduced before a token those parts could begin with where that token may also follow the rule, as an LR parser reduces it, so Rust's `break -1` is a binary expression of `break` and `1`, and Lean's `#eval x[i]!` reads as the oracle reads it.
+- A token a silent rule reduced alone where the other parse shifted it parts the two parses on that token, before either node is reduced, so Lean's `f a.b` is read as the oracle reads it.
+- An alias shared by tokens of different content (Lean's `unnamed_token`) names no lookahead such a reduction is decided by, and a conflict the grammar declares between the rule and a rule that begins with the token keeps both parses (Lean's `hash_command` and `explicit`), so `#check @ident` is read.
+
+### Fixed
+- The ERROR leaf that automatic recovery makes of the rest of the input no longer covers the white space at the end of the input, which now follows it as separators, as tree-sitter keeps that white space out of its ERROR nodes. A stray `]` before the final newline is now `ERROR@61..62` instead of `ERROR@61..63`; two recorded repairs of the native Rust fixture follow, and the JS and Rust executors trim alike.
+
+### Fixed
+- A MISSING leaf that automatic recovery inserts for a keyword token (a literal and the lookaheads after it, as a merged native grammar writes `return`) is now named by its literal, as tree-sitter names its keyword token, instead of having no kind, which the canonical CST lines printed as `MISSING null`. `oc =c =>=` now holds `(return_expression (MISSING@7 "return"))`; the recorded repairs of the native C and Rust fixtures follow, and the JS and Rust executors name it alike.
+
+### Changed
+- Where a language parses with its native grammar, a conformance or generative case whose native recovery differs from the tree-sitter oracle is now recorded in `parity/fixtures/native-recovery.json` (written by `js/scripts/generate-native-recovery.mjs`) with the digests and repair sites of both trees and a category whose justification the file gives. The JS and Rust suites accept such a case only if it matches its record, both trees are malformed, the native tree is lossless and consistent with its diagnostics, and the category follows from the two trees; a record whose case matches the oracle, has a clean oracle or meets no case fails the suites.
+
+### Added
+- A grammar scanner may ask `(expected ITEM)`: whether the parse requested a literal or a rule at the scanner's context offset, as a tree-sitter scanner reads `valid_symbols`. A parse that answered before a later request at the same offset runs again with the requests so far. The Rust runtime answers it as the JavaScript runtime does, and the grammar feature union fixture's layout feature exercises it with a mutation and two load errors.
+
+### Fixed
+- The native Rust grammar now builds the tree-sitter oracle rows for the formal-ai sources the downstream workload parses. Both runtimes made four fixes:
+  - A keyword makes a span keyword-only only where it matched in the tree's parse state. Before, `m!('"') //"` followed by `type A = _;` was rejected.
+  - Where two parses part deep in shared nodes, the shift order compares the pair of nodes that ends apart (`g(|| a, |p| p)`, `a + b..*c`).
+  - A node that ends a silent rule keeps the rule's reduction precedence, as a token does (`if let A = b && !c && d {}`).
+- The native Rust fixture keeps these sources as matches.
+
+### Fixed
+- Where a token from an external scanner conflicts with a token the lexer matches, both runtimes now take the scanner's token, under any alias. Tree-sitter runs the external scanner before its lexer wherever one of the scanner's tokens is valid. For example, JavaScript's automatic semicolon after `return` before a line break now wins over the next line's expression.
+- The tree-sitter importer now substitutes an `inline` rule that an alias names, as tree-sitter does, so the alias gives one leaf. It also keeps an alias of a lexical `IMMEDIATE_TOKEN` rule as an immediate token, for example a string fragment.
+
+### Fixed
+- Two nodes of one kind may part before either ends, where their children first differ by end. Both runtimes now settle this as an LR parser does. One parse shifts on in its node. The other reduced the shorter child alone to a silent rule that a `rule` entry of the precedence orders names. The node's precedence against that reduction decides. For example, JavaScript's `new f()` followed by a template now parses as a `new_expression` that is called, as tree-sitter parses it.
+
+### Fixed
+- Both runtimes now settle three more conflicts as tree-sitter's LR parser does.
+  - Two nodes of different kinds over the same tokens are a reduce/reduce conflict. The higher precedence they are reduced with decides. For example, JavaScript's `{}` and `{b}` are a block where a statement is expected.
+  - A leaf that one parse has alone, where the other has a node beginning with it, puts off the lexer's conflict to the lookahead only where one parse reduced that leaf.
+  - Two leaves of one span that one token rule built, such as JavaScript's `identifier` and its alias `shorthand_property_identifier`, are one token to the lexer.
+- An item that silent rules reduce alone now records every such rule the precedence orders name, not only the outermost one.
+
+### Changed
+- In both runtimes, a left-recursive call whose first pass finds no result no longer runs another pass with the same empty seed. Previously that repeated pass doubled the work at each level of nested left recursion. A JavaScript statement now parses in about half the steps, so the corpus cases `Functions` and `if/for/while/do statements without semicolons` fit within the default step budget.
+
+### Fixed
+- `LinkNetwork::apply_edit` keeps the order of siblings that share a span, as two zero-width MISSING leaves at one point, so the edited network equals a fresh parse.
+
+### Added
+- JavaScript parses with the native merged grammar `parity/grammars/native/javascript.lino` by default in both runtimes. The import pipeline writes it from the pinned `src/grammar.json` of tree-sitter-javascript 0.25.0, and `parity/grammars/scanners/javascript.lino` ports its external scanner to five native scanners: automatic semicolons, template characters, the ternary question mark, HTML-like comments and JSX text.
+- `parity/fixtures/native-grammars/javascript.json` checks the grammar against tree-sitter-javascript on 146 matches and 24 rejections, with no ambiguity. The ledger row `I195-GRAMMAR-NATIVE-JAVASCRIPT` tracks the JavaScript and Rust suites.
+
+### Fixed
+- The JavaScript scanner links no longer carry a stray space before a closing parenthesis, so the grammar round-trips its concepts and source names.
+- A MISSING leaf for a literal under a lexical precedence, as the closing `/` of an unterminated JavaScript regular expression, carries the literal as its kind in both runtimes, and a MISSING leaf of no kind is a named `MISSING` node in JavaScript as in Rust.
+
+### Changed
+- tree-sitter-javascript is a development dependency only: the native merged grammar is the default JavaScript parse, `grammar_by_id("javascript")` returns nothing, and the pinned oracle is loaded only by `pinned_javascript_oracle_gives_the_fixture`.
+
+### Fixed
+
+- The native grammar runtime settles two more parse conflicts as tree-sitter does: a shift into a right operand whose first part an LR parser would reduce below the operator first (TypeScript's `<C>e.f` asserts the type of `e.f`), the reduction a shift needs before it (`keyof U & V`), and two parses that fork at a conflict the grammar declares, where the rule defined first is kept (`<A>(a): T => a` is an arrow function). A token's scanner item (TypeScript's `function_signature_automatic_semicolon`) is now requested where the parse asks for it, so a scanner's `expected` sees it.
+
+### Fixed
+
+- The native grammar runtime forks at a shift-reduce conflict the grammar declares, as tree-sitter's `handle_conflict` leaves it to the declared conflicts: where the items that shift the next token after a left operand rank some above and some below its reduction, both parses go on and the one that reduced the operand is kept (TypeScript's `!g<T>()` calls `!g` and `await g<T>;` instantiates `await g`, as tree-sitter-typescript parses them).
+
+### Fixed
+
+- The native grammar runtime orders TypeScript's declaration and expression readings as tree-sitter does: a node reduced to different parents ranks by the rule each reduced it to alone (`namespace N {}` before `x` is a declaration), an extra reduction ranks against the precedence that holds the results (`extends A<X>` is an extends clause, not an instantiation), a reduction's precedence is that of the last node it closed (the body of `module A {}` shifts), and a zero-width scanner token one parse takes after a node both reduced decides for that parse, as tree-sitter's lexer scans it first (`namespace A {}` before a line break is an expression statement).
+
+### Added
+- TypeScript and TSX parse with the native merged grammars `parity/grammars/native/typescript.lino` and `parity/grammars/native/tsx.lino` by default in both runtimes. The import pipeline writes them from the pinned `typescript/src/grammar.json` and `tsx/src/grammar.json` of tree-sitter-typescript 0.23.2, and `parity/grammars/scanners/typescript.lino` ports their shared external scanner to seven native scanners: the five of JavaScript, the automatic semicolon after a function signature and the error recovery sentinel.
+- `parity/fixtures/native-grammars/typescript.json` checks the TypeScript grammar against tree-sitter-typescript on 155 matches and 15 rejections, and `parity/fixtures/native-grammars/tsx.json` the TSX grammar on 157 matches and 16 rejections, with no ambiguity. The ledger rows `I195-GRAMMAR-NATIVE-TYPESCRIPT` and `I195-GRAMMAR-NATIVE-TSX` track the JavaScript and Rust suites, and the recovery suites cover their rejections.
+- The concept records, the shared concepts and concept reuse reports, the catalogs, the grammar inventory and the native grammar docs list TypeScript and TSX; 128 more concepts that three or more native grammars name are listed as shared constructs.
+
+### Changed
+- tree-sitter-typescript is a development dependency only: the native merged grammars are the default TypeScript and TSX parses, `grammar_by_id("typescript")` and `grammar_by_id("tsx")` return nothing, and the pinned oracles are loaded only by `pinned_typescript_oracle_gives_the_fixture` and `pinned_tsx_oracle_gives_the_fixture`.
+
+### Fixed
+
+- The native TypeScript and TSX grammars pass the naming gate. The rule
+  `omitting_type_annotation` is now `required_type_annotation` and `asserts`
+  is now `assertion_signature`; both keep their tree-sitter names as source
+  names and oracle kinds. `type_arguments` and `type_parameters` resolve to
+  the Rust concepts `grammar.type-argument-list` and
+  `grammar.type-parameter-list`, which are now shared constructs. The
+  technical vocabulary gains the reviewed words "mapped", "predefined" and
+  "readonly", and a type assertion is declared distinct from a case statement.
+
+### Added
+
+- The merge quality evidence of the native grammars
+  (`docs/grammar/merge-quality-evidence.md`): every native grammar against the
+  pinned tree-sitter grammar it was merged from, on that grammar's upstream
+  corpus, with coverage, preserved features, correctness, recovery, shared
+  reuse, and the time and memory of the native executor and the oracle in both
+  runtimes. `rust/tests/merge_quality.rs` measures the Rust executor with a
+  counting allocator.
+
+### Fixed
+
+- Error recovery no longer repairs again and again at one offset after a
+  MISSING leaf that tokens the external scanner scanned of no width follow, as
+  a layout token opening an indented block does: each repaired block opened
+  another up to the scanner's deepest indentation, so recovering a Lean source
+  ran out of steps. The default step budget of a parse with error recovery is
+  twice that of one without, since its rounds parse each repaired alternative
+  too.
+
+### Fixed
+
+- Native grammars under `(matching longest)`: a literal the grammar also
+  takes as an immediate token (`(immediateToken (literal [))`) is no longer
+  lexed plainly where the immediate one is valid, as a tree-sitter lexer
+  prefers the immediate token there. Lean's `foo[1:2:3]` opens a subscript
+  (and is rejected) instead of applying `foo` to a range.
+
+### Fixed
+
+- Native grammars under `(matching longest)`: where one parse ended a silent
+  rule under a precedence with a token and the other shifted on in the same
+  rule, which it ends later with that precedence, the associativity of the
+  rule decides, right to shift and left to reduce. Lean's `set_option pp.all
+  true` names the option `pp.all` instead of applying a projection `.all` of
+  `pp` to `true`.
+
+### Added
+
+- Lean parses natively by default with the merged grammar `parity/grammars/native/lean.lino`, whose rules use shared concepts and readable names, and the public `file` root of a Lean parse is kept over its `module` rule.
+
+### Fixed
+
+- A token the external scanner scans with no width, such as the automatic semicolon of JavaScript, no longer hides the parse state a following keyword is lexed in, so `x\nclass` is rejected as the oracle rejects it.
+
+### Added
+
+- Every public export of the JavaScript package now has a public Rust counterpart, listed in `parity/language-features.json` and checked by a generated test. New public Rust items: `sequence`, `choice` and `canonical_repeat` (with `RepetitionBoundsError`) build grammar expressions; `display_grammar_expression`, `GRAMMAR_DIAGNOSTIC_KINDS`, `canonical_rule_definition`, `accepts_text` and `carry_rule_docs` validate, compare and document grammars; `parse_with_grammar` (with `ParseWithGrammarError`) compiles and parses in one call; `render_declaration_links` and `render_rule_fields` render grammar links; `QueryIndex`, `query_by_concept_term` and `RejectPredicateHost` query networks; `detect_embedded_regions` detects the embedded regions of source text and `detect_embedded_regions_in_tree` those of a parsed document; `sniff_language` guesses a language from content.
+
+### Added
+
+- Decorators at every pipeline level (importer, grammar rule, merge decision, concept mapping, executor, recovery, CST-to-AST, transformation, emitter and translation rule). `DecoratorSet` composes them by order and then by id, stores them as Links Notation shared with the JavaScript runtime, and returns new sets from `add` and `remove`. The hooks are `decorate_grammar`, `FeatureParseOptions::decorators`, `GrammarMergeOptions::decorators`, `translate_native_construct_decorated`, `analyze_program_decorated`, `LinkNetwork::replace_decorated`, `decorate_emitted` and `TranslationRuleSet::decorated`.
+
+### Added
+
+- Rocq parses natively by default with the merged grammar `parity/grammars/native/rocq.lino`, whose rules use shared concepts and readable names, and a native Rocq parse keeps the semantic `identifier` and `primitive_type` leaves under each `ident` with text.
+
+### Added
+
+- Self-translation of meta-language's own modules between JavaScript, TypeScript and Rust through links: `self_translate(source, from, to)` and the `meta-language translate --to <language> [--from <language>] [--items] <file>` command. Within one language the source is written back byte for byte. Into the other language, each top-level item the portable core expresses is translated and every other item is carried verbatim in a marked comment. Both keep their source as provenance, so translating an unedited translation back restores the source byte for byte, and an edited translated item is translated again. The shared cases in `parity/self-translation` are checked in both runtimes.
+
+### Changed
+
+- The Rust emitter compares operands in place (`a == b`, and `s == "text"` for a string literal) instead of borrowing both sides, so clippy accepts the comparisons it writes.
+
+### Added
+
+- Every parse has a hard memory budget. The memo cells it keeps, across its runs, repair rounds and embedded grammars, count against `FeatureParseOptions::memory_limit` (2,000,000 cells by default). A parse that needs more ends with a `memoryBudget` rejection whose message names the limit ("the parse needed more than N memo cells"), instead of growing until the process runs out of memory. The JavaScript package has the same budget as `memoryLimit`.
+
+### Fixed
+
+- An ANTLR lexer rule with `-> type(NAME)` is re-typed only once, so importing an emitted ANTLR grammar again gives the same grammar.
+- A comment no longer starts inside a string. Where an immediate token of raised lexical precedence matches, such as JavaScript's string fragment `//` in `"//"`, no lower-precedence extra is lexed at its offset in the rule call it is lexed for, as in tree-sitter's lexer. An error later on the line is then reported where it is, not as a missing quote at the end of the line.
+
+### Changed
+
+- The name tier of a reconciling merge compares rule names without a leading name of their language, so grammars-v4's `htmlElement`, `htmlAttribute` and `htmlDocument` reconcile with HTML's `element`, `attribute` and `document`.
+
+### Added
+
+- Java parses natively by default with the merged grammar `parity/grammars/native/java.lino`, imported from tree-sitter-java 0.23.5, whose rules use shared concepts and readable names.
+
+### Fixed
+
+- Where two parses fork at a declared conflict, the higher dynamic precedence is kept where they merge before the rule defined first, and two leaves one token rule lexed under different kinds count as one step (Java's `A<B> c;` is a `generic_type`).
+- A leaf reduced alone to two rules of one declared conflict under the same parent keeps the rule defined first (Java's `b` of `a = b::m;`).
+- Two nodes over the same tokens are ordered by the precedence of the reduction that closes them on their last token where those differ (Java's `@A(v = 1)` is an `element_value_pair`).
+
+### Fixed
+
+- Native recovery inserts a MISSING token only where a rule reduces before the next token, as tree-sitter does: no part of the same rule after a MISSING leaf takes input (TypeScript's `[ 0 .92 ]` misses no `,` before `.92` and builds no `as_expression`).
+- The public tree has no node for a MISSING token of a hidden or anonymous kind, though the node it is missing from still has an error.
+- A repair round that completes nothing asks for the offset its farthest result stopped at as the next repair point, and a round that runs out of steps ends the rounds with the previous partial tree.
+
+### Added
+
+- Go parses natively by default with the merged grammar `parity/grammars/native/go.lino`, imported from tree-sitter-go 0.25.0, whose rules use shared concepts and readable names (`function_literal`, `integer_literal`, `short_variable_declaration`).
+
+### Fixed
+
+- Two nodes of one span whose parses first differ in a reduction on the same token are ordered by the precedence of those reductions, a reduce/reduce conflict (Go's `<-chan int(c)` converts to a `<-chan int` channel type).
+- Two parses that forked at a declared conflict and end with the same dynamic precedence keep the one whose stack held the higher dynamic precedence at the last token where the two differed (Go's `a[b](c)` converts to the generic type `a[b]`).
+- A token whose parse goes on with a sibling that ends where the other parse's node ends is ordered by the precedence of the first reductions that differ along the two rightmost chains (Go's `chan<- chan int` is a `chan<-` channel type of `chan int`).
+- Where one parse has ended and the other's next token covers a separator the ended parse skipped, the token is kept over the separator (Go's newline that ends a statement).
+
+### Added
+
+- Regex parses natively by default with the merged grammar `parity/grammars/native/regex.lino`, imported from tree-sitter-regex 0.25.0, whose rules use shared concepts and readable names (`zero_or_more`, `one_or_more`, `optional` read as repetition concepts). Its fixture records `a{` and `[[:alpha:]` as divergences: ECMA-262 Annex B.1.2 accepts both, as literal characters, where tree-sitter's lexer errors.
+
+### Fixed
+
+- A left-recursive rule no longer grows again a result that a pass grew by no width, and the same-tree checks along two leftmost chains remember the pairs they compared, so Lean's `elab "a" : term => (` recovers in a fraction of the time it took and the generative Lean suite fits its CI time limit, in JavaScript and Rust.
+
+### Added
+
+- GraphQL parses natively by default, with a merged grammar imported from tree-sitter-graphql 0.3.0, in JavaScript and Rust.
+
+### Fixed
+
+- An extra token that a rule names where the rule asks for it is that rule's own token, and a token beats a skipped extra of its own kind at the same start (GraphQL's comma, which ends a variable definition and an object field), in JavaScript and Rust.
+
+### Fixed
+
+- Code coverage runs in the five suites of the test job, each under its own timeout, and a coverage report job merges their lcov reports with `scripts/merge-lcov.mjs`, enforces the 84.30% line coverage floor on the merged report and uploads it to Codecov: the whole suite under instrumentation in one job outgrew its 15-minute timeout.
+
+### Added
+
+- Protocol Buffers parses natively by default, with a merged grammar imported from tree-sitter-proto 0.6.0; the native trees match the oracle rows of the upstream corpus and of hand-written sources, keep every byte and reject the invalid input the oracle recovers from, in JavaScript and Rust.
+
+### Fixed
+
+- The dependency inventory names the Rust workflow among the users of the artifact upload and download actions, and the shared-construct listing names the value of a data grammar, floating-point literals and import declarations.
+
+### Changed
+
+- tree-sitter-go, tree-sitter-java, tree-sitter-regex, tree-sitter-graphql and tree-sitter-proto no longer back a default parse, so they are `[dev-dependencies]` only: their lock entries carry `"oracle": true`, `grammar_by_id` returns nothing for their ids, and their WebAssembly builds moved to `js/oracles/grammars`, outside the npm package.
+
+### Added
+
+- Make parses natively by default, with a merged grammar imported from tree-sitter-make 1.1.1; the native trees match the oracle rows of the upstream corpus and of hand-written sources, keep every byte and reject the invalid input the oracle recovers from, in JavaScript and Rust.
+
+### Fixed
+
+- The native lexer takes a separator into a token only where a valid token goes on with it, ranks each aliased token expression on its own, and takes an immediate literal over an immediate pattern of one length, as tree-sitter does.
+
+### Changed
+
+- tree-sitter-make no longer backs a default parse, so it is a `[dev-dependencies]` entry only: its lock entry carries `"oracle": true`, `grammar_by_id` returns nothing for `make`, and its WebAssembly build moved to `js/oracles/grammars`, outside the npm package.
+
+### Added
+
+- Solidity parses natively by default, with a merged grammar imported from tree-sitter-solidity 1.2.13; the native trees match the oracle rows of all 125 upstream corpus sources and 41 hand-written ones, keep every byte and reject the invalid input the oracle recovers from, in JavaScript and Rust. Its rules get readable names (`unsigned_integer_type`, `yul_built_in_function`) and share the concepts of the other native grammars where they mean the same, such as `mapping` with the map type and `contract_body` with the declaration body.
+
+### Fixed
+
+- The native lexer reads a separator into a token that begins with it only where the token is still alive at the separator's end, so Make's `\` before a newline stays apart from the word.
+- A precedence conflict looks through the nodes that only wrap the conflicting node, a shift/reduce conflict is first decided inside the two parts, a reduction against the same tokens under another name is decided by the reduced node's associativity, and two parses that reduce apart on one lookahead keep the tree of the lower symbol, as tree-sitter does.
+
+### Changed
+
+- tree-sitter-solidity no longer backs a default parse, so it is a `[dev-dependencies]` entry only: its lock entry carries `"oracle": true`, `grammar_by_id` returns nothing for `solidity`, and its WebAssembly build moved to `js/oracles/grammars`, outside the npm package.
+
+### Fixed
+
+- The native Lean recovery of the generative case `:f f : Foo where\n  bar :=⟩` now builds the oracle's `tactic_apply` over an `application`, because a precedence conflict compares the parts inside first. Its record in `parity/fixtures/native-recovery.json` is updated to match. The repair sites are unchanged.
+
+### Added
+- The portable translation core translates `startsWith`, `endsWith` and `includes` on strings, and Rust `starts_with`, `ends_with`, `contains` and `as_str`, into Rust, JavaScript, Lean and Rocq.
+
+### Added
+
+- Translation: default parameters that a call leaves out are filled in, in every target. Self-translation writes top-level constants as Rust `const`/`static` items and restores them.
+
+### Added
+
+- Translation: string `toLowerCase`/`toUpperCase` translate to Rust's `to_lowercase`/`to_uppercase`, which follow the same Unicode case mapping. Lean and Rocq refuse them with a reason, because their libraries map ASCII letters only.
+
+### Added
+
+- Translation: string `trim`/`trimStart`/`trimEnd` translate into Rust with the JavaScript whitespace set (Unicode White_Space without U+0085, plus U+FEFF). Lean and Rocq refuse them with a reason.
+- Translation: the lexer reads `\u{…}` escapes, and in JavaScript also `\uXXXX` escapes, where a surrogate pair becomes one code point. A lone surrogate is refused, because Rust strings cannot hold it.
+
+### Fixed
+- Preserve JavaScript constant-binding and parameter-default metadata in Rust translation stage serialization.
+- Decode Unicode escapes and fill omitted JavaScript arguments from parameter defaults in Rust, using frontend decisions translated automatically from JavaScript.
+- Install the shared JavaScript report dependencies before Rust tests and fresh-merge checks.
+- Use portable module paths and verify the complete reports before recording self-translation reporting evidence.
+
 ## [0.58.2] - 2026-08-20
 
 ### Fixed

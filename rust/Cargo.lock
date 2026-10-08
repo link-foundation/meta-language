@@ -1021,7 +1021,7 @@ dependencies = [
 
 [[package]]
 name = "meta-language"
-version = "0.58.2"
+version = "1.0.0"
 dependencies = [
  "cc",
  "clap",

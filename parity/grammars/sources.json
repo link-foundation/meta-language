@@ -823,7 +823,7 @@
       "licenseFile": "parity/grammars/sources/tree-sitter-cmake-0.7.5.LICENSE",
       "scanner": {
         "file": "parity/grammars/scanners/cmake.lino",
-        "sha256": "b26b78769e667d66a28bf6fa0a8b6e7b30d5f772888c7cc4f5f949f8e11dd5df",
+        "sha256": "c21218be72569a652096701b47bf484f1de0e3ed0202fa8a15f760c6adb7a715",
         "ports": {
           "path": "src/scanner.c",
           "file": "parity/grammars/sources/tree-sitter-cmake-0.7.5.scanner.c.gz",

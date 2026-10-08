@@ -729,7 +729,6 @@ impl<'a> LeanParser<'a> {
             self.cursor.expect(":=", Some("let"))?;
             let value = self.expr()?;
             return Ok(SEffect::Let {
-                constant: false,
                 name,
                 ty,
                 value,
@@ -777,7 +776,6 @@ fn bind_or_ctor(head: PatternHead, token: &Token) -> SPattern {
 
 const fn param(name: String, ty: Type) -> SParam {
     SParam {
-        default: None,
         name,
         default_value: None,
         ty: Some(ty),

@@ -220,7 +220,7 @@
       "grammars": {
         "native-cmake": {
           "version": "1.0.0",
-          "parserSha256": "ff39992ac40846b7620bf5e00d4cc8b2064375ab8ce73fe1f7c009e9b083a81c"
+          "parserSha256": "7a3f008463ffbd62c9642f3feefc3c3e97fe0cc73b91701713ae05a34d813b61"
         }
       },
       "oracleGrammars": {
