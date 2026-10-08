@@ -762,5 +762,124 @@ pub fn read_string_test_support(target: &str, operation: &str) -> String {
     }
 }
 
+pub fn read_string_map_operation(language: &str, method: &str) -> String {
+    if (language == "JavaScript") {
+        if (((((method == "toLowerCase") || (method == "toUpperCase")) || (method == "trim"))
+            || (method == "trimStart"))
+            || (method == "trimEnd"))
+        {
+            method.to_owned()
+        } else {
+            String::new()
+        }
+    } else {
+        if (language == "Rust") {
+            if (method == "to_lowercase") {
+                String::from("toLowerCase")
+            } else if (method == "to_uppercase") {
+                String::from("toUpperCase")
+            } else {
+                String::new()
+            }
+        } else {
+            String::new()
+        }
+    }
+}
+
+pub fn render_string_map_expression(target: &str, operation: &str, object: &str) -> String {
+    if (target == "JavaScript") {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!("{}{}", object, (String::from(".")))),
+                operation
+            )),
+            (String::from("()"))
+        )
+    } else if (operation == "toLowerCase") {
+        format!("{}{}", object, (String::from(".to_lowercase()")))
+    } else if (operation == "toUpperCase") {
+        format!("{}{}", object, (String::from(".to_uppercase()")))
+    } else {
+        {
+            let method = String::new();
+            {
+                let method_3 = if (operation == "trim") {
+                    { String::from("trim_matches") }
+                } else {
+                    method
+                };
+                {
+                    let method_5 = if (operation == "trimStart") {
+                        { String::from("trim_start_matches") }
+                    } else {
+                        method_3
+                    };
+                    {
+                        let method_7 = if (operation == "trimEnd") {
+                            { String::from("trim_end_matches") }
+                        } else {
+                            method_5
+                        };
+                        format!(
+                            "{}{}",
+                            (format!(
+                                "{}{}",
+                                (format!("{}{}", object, (String::from(".")))),
+                                method_7
+                            )),
+                            (String::from(
+                                "(|c: char| (c.is_whitespace() && c != '\\u{85}') || c == '\\u{feff}').to_string()"
+                            ))
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn read_string_map_refusal(target: &str, operation: &str) -> String {
+    if (((operation == "trim") || (operation == "trimStart")) || (operation == "trimEnd")) {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (String::from("JavaScript whitespace trimming has no ")),
+                        target
+                    )),
+                    (String::from(" library counterpart; "))
+                )),
+                target
+            )),
+            (String::from(" trims ASCII whitespace only"))
+        )
+    } else {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (String::from("Unicode case mapping has no ")),
+                        target
+                    )),
+                    (String::from(" library counterpart; "))
+                )),
+                target
+            )),
+            (String::from(" maps ASCII letters only"))
+        )
+    }
+}
+
 mod continuations;
 pub use continuations::*;

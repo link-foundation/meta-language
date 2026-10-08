@@ -404,6 +404,28 @@ impl JavaScriptParser {
                         );
                         continue;
                     }
+                    let mapping = crate::translation::frontend_rules::read_string_map_operation(
+                        "JavaScript",
+                        &field.value,
+                    );
+                    if !mapping.is_empty() {
+                        let args = self.arguments(&field.value)?;
+                        if !args.is_empty() {
+                            return Err(unsupported(
+                                &format!(".{}() with {} arguments", field.value, args.len()),
+                                "string maps take no arguments",
+                                Some(self.to_here(&token)),
+                            ));
+                        }
+                        expr = node(
+                            SNode::StringMap {
+                                op: mapping,
+                                object: Box::new(expr),
+                            },
+                            self.to_here(&token),
+                        );
+                        continue;
+                    }
                     let operation = crate::translation::frontend_rules::read_string_test_operation(
                         "JavaScript",
                         &field.value,

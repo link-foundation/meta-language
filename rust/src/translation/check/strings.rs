@@ -4,6 +4,27 @@ use super::{
 };
 
 impl Checker {
+    pub(super) fn string_map(&mut self, node: &SExpr, env: &Env, path: &[String]) -> Result<Expr> {
+        let SNode::StringMap { op, object } = &node.node else {
+            unreachable!("string map dispatch")
+        };
+        let string = self.expr(object, env, path, None, true)?;
+        if string.ty != STRING {
+            return Err(unsupported(
+                &format!("method call .{op}()"),
+                &format!(".{op}() is portable on strings, not on {}", string.ty.key()),
+                node.span,
+            ));
+        }
+        Ok(Expr::new(
+            Node::StringMap {
+                op: op.clone(),
+                string: Box::new(string),
+            },
+            STRING,
+        ))
+    }
+
     pub(super) fn string_test(&mut self, node: &SExpr, env: &Env, path: &[String]) -> Result<Expr> {
         let SNode::StringTest { op, object, search } = &node.node else {
             unreachable!("string predicate dispatch")

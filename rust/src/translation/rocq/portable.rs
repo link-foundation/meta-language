@@ -32,6 +32,7 @@ pub(super) fn check_portable(node: &SExpr) -> Result<()> {
         SNode::TypeOf { arg }
         | SNode::Unary { arg, .. }
         | SNode::Cast { arg, .. }
+        | SNode::StringMap { object: arg, .. }
         | SNode::ToString { arg } => {
             vec![arg]
         }
@@ -112,6 +113,10 @@ pub(super) fn scope_expr(node: SExpr, ty: &Type) -> SExpr {
             ty: Some(ty.clone()),
             negative,
             unit: false,
+        },
+        SNode::StringMap { op, object } => SNode::StringMap {
+            op,
+            object: visit(object),
         },
         SNode::StringTest { op, object, search } => SNode::StringTest {
             op,

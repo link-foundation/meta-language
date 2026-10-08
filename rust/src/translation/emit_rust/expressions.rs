@@ -120,6 +120,14 @@ impl RustEmitter<'_> {
                 Ok(block(&format!("let {name} = {value};\n{body}")))
             }
             Node::Match { .. } => self.match_expr(expr),
+            Node::StringMap { op, string } => {
+                let object = self.receiver(string)?;
+                Ok(
+                    crate::translation::frontend_rules::render_string_map_expression(
+                        "Rust", op, &object,
+                    ),
+                )
+            }
             Node::StringTest { op, string, search } => {
                 let object = self.receiver(string)?;
                 let search = match &search.node {

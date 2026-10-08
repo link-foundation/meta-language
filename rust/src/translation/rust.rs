@@ -317,6 +317,18 @@ fn method_call(
             ))
         }
     };
+    let mapping =
+        crate::translation::frontend_rules::read_string_map_operation("Rust", &method.value);
+    if !mapping.is_empty() {
+        expect(0)?;
+        return Ok(SExpr::new(
+            SNode::StringMap {
+                op: mapping,
+                object: Box::new(receiver),
+            },
+            range,
+        ));
+    }
     let operation =
         crate::translation::frontend_rules::read_string_test_operation("Rust", &method.value);
     if !operation.is_empty() {

@@ -1,3 +1,7 @@
+---
+bump: minor
+---
+
 Native C++ raw strings and SQL dollar-quoted bodies now use shared remembered
 text scanner families, with pinned source grammars, licenses and corpus inputs.
 C++ and every catalog SQL dialect select the generated Links Notation grammar;

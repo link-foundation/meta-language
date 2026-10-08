@@ -193,3 +193,5 @@ mod issue_195_grammar_native_nix;
 mod issue_195_grammar_native_cmake;
 
 mod translation_string_predicates;
+
+mod translation_string_maps;

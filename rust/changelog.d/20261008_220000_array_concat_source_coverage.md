@@ -1,3 +1,7 @@
+---
+bump: minor
+---
+
 ### Added
 
 - Translate homogeneous JavaScript array concatenation through checked array spreads in both runtimes, preserving order, nested arrays and zero-argument copies. Scalar arguments remain unsupported.

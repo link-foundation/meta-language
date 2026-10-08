@@ -127,6 +127,7 @@ impl Expr {
             | Node::Array { items: args }
             | Node::Math { args, .. } => args.iter().collect(),
             Node::Unary { arg, .. }
+            | Node::StringMap { string: arg, .. }
             | Node::ToString { arg, .. }
             | Node::Cast { arg, .. }
             | Node::Length { array: arg } => vec![arg],
@@ -209,6 +210,10 @@ impl Expr {
                 op: *op,
                 arg: Box::new(visit(arg)),
                 semantics: *semantics,
+            },
+            Node::StringMap { op, string } => Node::StringMap {
+                op: op.clone(),
+                string: Box::new(visit(string)),
             },
             Node::StringTest { op, string, search } => Node::StringTest {
                 op: op.clone(),
@@ -353,6 +358,10 @@ pub enum Node {
         scrutinee: Box<Expr>,
         cases: Vec<Case>,
     },
+    StringMap {
+        op: String,
+        string: Box<Expr>,
+    },
     StringTest {
         op: String,
         string: Box<Expr>,
@@ -432,6 +441,7 @@ impl Node {
             Self::If { .. } => "if",
             Self::Let { .. } => "let",
             Self::Match { .. } => "match",
+            Self::StringMap { .. } => "stringMap",
             Self::StringTest { .. } => "stringTest",
             Self::ToString { .. } => "toString",
             Self::Cast { .. } => "cast",

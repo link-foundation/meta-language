@@ -5621,6 +5621,72 @@
       "formerNames": []
     },
     {
+      "id": "translation.read-string-map-operation",
+      "phrase": "read string map operation",
+      "role": "operation",
+      "definition": "Read the canonical string transformation from a source method spelling.",
+      "constraints": [
+        "String transformations take no arguments.",
+        "JavaScript trimming retains U+0085 and treats U+FEFF as whitespace.",
+        "Lean and Rocq Unicode case and whitespace transformations remain refused."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "readStringMapOperation"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "read_string_map_operation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.render-string-map-expression",
+      "phrase": "render string map expression",
+      "role": "operation",
+      "definition": "Render a string transformation with the source language whitespace and case behavior.",
+      "constraints": [
+        "String transformations take no arguments.",
+        "JavaScript trimming retains U+0085 and treats U+FEFF as whitespace.",
+        "Lean and Rocq Unicode case and whitespace transformations remain refused."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "renderStringMapExpression"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "render_string_map_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-string-map-refusal",
+      "phrase": "read string map refusal",
+      "role": "operation",
+      "definition": "Read the reason a target cannot express a string transformation.",
+      "constraints": [
+        "String transformations take no arguments.",
+        "JavaScript trimming retains U+0085 and treats U+FEFF as whitespace.",
+        "Lean and Rocq Unicode case and whitespace transformations remain refused."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "readStringMapRefusal"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "read_string_map_refusal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",

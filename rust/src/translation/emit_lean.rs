@@ -604,6 +604,13 @@ impl LeanEmitter<'_> {
                 )
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
+            Node::StringMap { op, .. } => {
+                return Err(crate::translation::diagnostics::unsupported(
+                    &format!(".{op}()"),
+                    &crate::translation::frontend_rules::read_string_map_refusal("Lean", op),
+                    e.span,
+                ));
+            }
             Node::StringTest { op, string, search } => {
                 let helper =
                     crate::translation::frontend_rules::read_string_test_helper("Lean", op);

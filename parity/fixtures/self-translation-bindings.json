@@ -146,6 +146,27 @@
       "call": "missingSearch('abc')",
       "rustCall": "missing_search(String::from(\"abc\"))",
       "expected": "false\n"
+    },
+    {
+      "name": "unicode-case-mapping",
+      "source": "/** @param {string} value @returns {string} */\nexport function caseForms(value) { return value.toUpperCase() + '|' + value.toLowerCase(); }\n",
+      "call": "caseForms(\"Grüße ΣΑΣ İ\")",
+      "rustCall": "case_forms(String::from(\"Grüße ΣΑΣ İ\"))",
+      "expected": "GRÜSSE ΣΑΣ İ|grüße σας i̇\n"
+    },
+    {
+      "name": "javascript-whitespace-trimming",
+      "source": "/** @param {string} value @returns {string} */\nexport function trimForms(value) { return '[' + value.trim() + '|' + value.trimStart() + '|' + value.trimEnd() + ']'; }\n",
+      "call": "trimForms(\"﻿ a b　\\n\")",
+      "rustCall": "trim_forms(String::from(\"﻿ a b　\\n\"))",
+      "expected": "[a b|a b　\n|﻿ a b]\n"
+    },
+    {
+      "name": "non-javascript-whitespace-retained",
+      "source": "/** @param {string} value @returns {string} */\nexport function trimForms(value) { return '[' + value.trim() + '|' + value.trimStart() + '|' + value.trimEnd() + ']'; }\n",
+      "call": "trimForms(\"﻿ a b　\\n\")",
+      "rustCall": "trim_forms(String::from(\"﻿ a b　\\n\"))",
+      "expected": "[﻿ a b|﻿ a b　\n|﻿ a b]\n"
     }
   ],
   "refusals": [

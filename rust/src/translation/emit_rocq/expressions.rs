@@ -92,6 +92,11 @@ impl RocqEmitter<'_> {
                 Ok(format!("(let {name} := {value} in {})", self.expr(body)?))
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases),
+            Node::StringMap { op, .. } => Err(crate::translation::diagnostics::unsupported(
+                &format!(".{op}()"),
+                &crate::translation::frontend_rules::read_string_map_refusal("Rocq", op),
+                e.span,
+            )),
             Node::StringTest { op, string, search } => {
                 let helper =
                     crate::translation::frontend_rules::read_string_test_helper("Rocq", op);

@@ -360,3 +360,35 @@ export function readStringTestSupport(target, operation) {
   if (target === "Rocq" && operation === "includes") return "(* String.prototype.includes: the search occurs at some position of the string. *)\nDefinition ml_string_includes (string search : string) : bool :=\n  match String.index 0 search string with Some _ => true | None => false end.";
   return '';
 }
+
+/** @param {string} language @param {string} method @returns {string} */
+export function readStringMapOperation(language, method) {
+  if (language === 'JavaScript') {
+    if (method === 'toLowerCase' || method === 'toUpperCase' || method === 'trim' || method === 'trimStart' || method === 'trimEnd') return method;
+    return '';
+  }
+  if (language === 'Rust') {
+    if (method === 'to_lowercase') return 'toLowerCase';
+    if (method === 'to_uppercase') return 'toUpperCase';
+    return '';
+  }
+  return '';
+}
+
+/** @param {string} target @param {string} operation @param {string} object @returns {string} */
+export function renderStringMapExpression(target, operation, object) {
+  if (target === 'JavaScript') return object + '.' + operation + '()';
+  if (operation === 'toLowerCase') return object + '.to_lowercase()';
+  if (operation === 'toUpperCase') return object + '.to_uppercase()';
+  let method = '';
+  if (operation === 'trim') method = 'trim_matches';
+  if (operation === 'trimStart') method = 'trim_start_matches';
+  if (operation === 'trimEnd') method = 'trim_end_matches';
+  return object + '.' + method + "(|c: char| (c.is_whitespace() && c != '\\u{85}') || c == '\\u{feff}').to_string()";
+}
+
+/** @param {string} target @param {string} operation @returns {string} */
+export function readStringMapRefusal(target, operation) {
+  if (operation === 'trim' || operation === 'trimStart' || operation === 'trimEnd') return 'JavaScript whitespace trimming has no ' + target + ' library counterpart; ' + target + ' trims ASCII whitespace only';
+  return 'Unicode case mapping has no ' + target + ' library counterpart; ' + target + ' maps ASCII letters only';
+}

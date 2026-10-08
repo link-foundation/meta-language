@@ -1,3 +1,7 @@
+---
+bump: patch
+---
+
 ### Fixed
 
 - Read bracketed optional JSDoc parameter names in both runtimes while preserving declared types and actual function defaults. Documentation defaults remain metadata. Shared fixtures check execution and exact source restoration.

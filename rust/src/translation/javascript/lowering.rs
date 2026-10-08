@@ -517,6 +517,7 @@ pub(super) fn children(expr: &SExpr) -> Vec<&SExpr> {
         }
         SNode::TypeOf { arg }
         | SNode::Unary { arg, .. }
+        | SNode::StringMap { object: arg, .. }
         | SNode::ToString { arg }
         | SNode::Show { arg, .. } => {
             out.push(arg);
@@ -581,6 +582,7 @@ pub(super) fn children_mut(expr: &mut SExpr) -> Vec<&mut SExpr> {
         }
         SNode::TypeOf { arg }
         | SNode::Unary { arg, .. }
+        | SNode::StringMap { object: arg, .. }
         | SNode::ToString { arg }
         | SNode::Show { arg, .. } => {
             out.push(arg);

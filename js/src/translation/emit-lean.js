@@ -1,4 +1,4 @@
-import { renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
+import { readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 // Lean 4 emitter. Naturals are `Nat`, integers `Int`; machine integers are
 // represented by `Nat`/`Int` with explicit range checks that `panic!` where
 // Rust would panic. Recursion is structural and annotated as such, so the
@@ -418,7 +418,7 @@ class LeanEmitter {
       case 'toString':
         return e.arg.type.kind === 'string' ? this.expr(e.arg, depth) : this.toText(e.arg, depth, e.console);
       case 'stringMap':
-        throw unsupported(`.${e.op}()`, e.op.startsWith('trim') ? 'JavaScript whitespace trimming has no Lean library counterpart; Lean trims ASCII whitespace only' : 'Unicode case mapping has no Lean library counterpart; Lean maps ASCII letters only', e.span);
+        throw unsupported(`.${e.op}()`, readStringMapRefusal('Lean', e.op), e.span);
       case 'stringTest': {
         const string = this.expr(e.string, depth);
         const search = this.expr(e.search, depth);

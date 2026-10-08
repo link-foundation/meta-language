@@ -1,4 +1,4 @@
-import { renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
+import { readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
 // run at their source sizes (unary `nat` cannot hold 20!). Structural
 // recursion over data is a `Fixpoint`; recursion that decreases a natural is
@@ -653,7 +653,7 @@ class RocqEmitter {
       case 'toString':
         return this.toText(e.arg, e.console);
       case 'stringMap':
-        throw unsupported(`.${e.op}()`, e.op.startsWith('trim') ? 'JavaScript whitespace trimming has no Rocq library counterpart; Rocq trims ASCII whitespace only' : 'Unicode case mapping has no Rocq library counterpart; Rocq maps ASCII letters only', e.span);
+        throw unsupported(`.${e.op}()`, readStringMapRefusal('Rocq', e.op), e.span);
       case 'stringTest': {
         const helper = readStringTestHelper('Rocq', e.op);
         this.helpers.add(helper);

@@ -1,4 +1,4 @@
-import { renderStringTestExpression } from './frontend-rules.js';
+import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 // Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer
 // the translation carries in its own prelude, so no value is ever narrowed;
 // machine integers stay Rust machine integers with checked arithmetic, which
@@ -949,11 +949,7 @@ class RustEmitter {
         }
         return `${this.receiver(e.arg)}.to_string()`;
       case 'stringMap':
-        if (e.op === 'toLowerCase' || e.op === 'toUpperCase') {
-          return `${this.receiver(e.string)}.${e.op === 'toLowerCase' ? 'to_lowercase' : 'to_uppercase'}()`;
-        }
-        // JavaScript whitespace is Unicode White_Space without U+0085, plus U+FEFF.
-        return `${this.receiver(e.string)}.${{ trim: 'trim_matches', trimStart: 'trim_start_matches', trimEnd: 'trim_end_matches' }[e.op]}(|c: char| (c.is_whitespace() && c != '\\u{85}') || c == '\\u{feff}').to_string()`;
+        return renderStringMapExpression('Rust', e.op, this.receiver(e.string));
       case 'stringTest': {
         const search = e.search.k === 'lit' ? rustString(String(e.search.value)) : `${this.receiver(e.search)}.as_str()`;
         return renderStringTestExpression('Rust', e.op, this.receiver(e.string), search);

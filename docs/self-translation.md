@@ -252,3 +252,9 @@ empty searches, missing matches, four-target emission parity and Rust method
 spellings (`starts_with`, `ends_with`, `contains`). Positional search arguments
 and non-string operands remain explicit refusals. These checks do not establish
 complete JavaScript string support or the full native execution matrix.
+
+The Rust translator also handles Unicode lower/upper case mapping and
+JavaScript `trim`, `trimStart` and `trimEnd`. Shared generated render decisions
+retain U+0085 and trim U+FEFF. The shared binding examples check expanded case
+mappings and both whitespace cases against JavaScript execution. Lean and Rocq
+keep explicit refusals for these Unicode transformations.

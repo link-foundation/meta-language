@@ -1,4 +1,4 @@
-import { renderStringTestExpression } from './frontend-rules.js';
+import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
 // integers stay unbounded and machine integers are range-checked exactly as
 // Rust checks them; a Number stays a Number. Data values are plain objects whose `$` property names
@@ -404,7 +404,7 @@ class JavaScriptEmitter {
         return e.arg.type.kind === 'string' ? this.expr(e.arg) : this.toText(e.arg);
       case 'stringMap': {
         const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;
-        return `${string}.${e.op}()`;
+        return renderStringMapExpression('JavaScript', e.op, string);
       }
       case 'stringTest': {
         const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;

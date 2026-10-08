@@ -263,6 +263,10 @@ pub enum SNode {
         scrutinee: Box<SExpr>,
         cases: Vec<SCase>,
     },
+    StringMap {
+        op: String,
+        object: Box<SExpr>,
+    },
     StringTest {
         op: String,
         object: Box<SExpr>,
@@ -356,6 +360,7 @@ impl SNode {
             Self::Let { .. } => "let",
             Self::Match { .. } => "match",
             Self::Match1 { .. } => "match1",
+            Self::StringMap { .. } => "stringMap",
             Self::StringTest { .. } => "stringTest",
             Self::ToString { .. } => "toString",
             Self::Show { .. } => "show",

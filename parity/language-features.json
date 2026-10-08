@@ -508,7 +508,8 @@
           "rust/tests/unit/self_translation_scope.rs",
           "rust/tests/unit/translation_string_predicates.rs",
           "rust/src/translation/emit_rocq/expressions.rs",
-          "rust/src/translation/check/strings.rs"
+          "rust/src/translation/check/strings.rs",
+          "rust/tests/unit/translation_string_maps.rs"
         ]
       },
       "javascript": {
