@@ -16814,9 +16814,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return typeof n === 'bigint' ? n : 0n;\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "typeof operator: outside the portable core at 75..81"
+        "sha256": "fb7dfcdf936a7f6ff5e8b3bc1c543edaea66a1a1165bb4995726f8dd9370cf5b"
+      },
+      "check": {
+        "sha256": "5240aebd74a214c4c2d78fe9f560d103423ee86dfb89878163fc36200258e754"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "54d80ed3a3f9577a81f92c03d415f2c2e0586579101bad8399dcfd15fd2f6b66"
+        },
+        "rust": {
+          "sha256": "0ac799f62db72c3b64301984ce05121425f6df0af78b282db002a4e7801a6622"
+        },
+        "lean": {
+          "sha256": "ff10d89184974ab702a5f1eed066fd16cc936eadbdae647ebb386d26b23e15db"
+        },
+        "rocq": {
+          "sha256": "038c502ffa5c522a2832a24f5bffff113c0ec7c2f936eda6216e7810d59cbb03"
         }
       }
     },
