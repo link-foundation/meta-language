@@ -150,10 +150,12 @@ export function splitCountedDelimiterScanner({ name, startToken, contentToken, e
   const stop = contentStops.length === 0 ? '' : `(if (some ${contentStops.map((text) => `(next ${delimiter(text)})`).join(' ')}) (then fail)) `;
   const markers = '(depth delimiters)';
   const seen = '(depth candidate)';
-  const skip = skipWhitespace ? '(while (next (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))))) ' : '';
+  const whitespace = '(while (next (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))))) ';
+  const skip = skipWhitespace ? whitespace : '';
+  const contentSkip = skipContentWhitespace ? whitespace : '';
   const collect = `(while (next ${repeated}) (do (consume ${repeated}) ${push('candidate')}))`;
   const start = `(if (valid ${startToken}) (then ${skip}${beginning}(while (next ${repeated}) (do (consume ${repeated}) ${push('delimiters')})) (consume ${open}) (emit ${startToken})))`;
-  const content = `(if (valid ${contentToken}) (then ${skipContentWhitespace ? skip : ''}(while (not atEnd) (do ${stop}(if (next ${close}) (then mark (consume ${close}) ${collect} (if (all (equal ${seen} ${markers})${suffixCondition}) (then ${clear('candidate')} (emit ${contentToken}))) ${clear('candidate')}) (else advance)))) ${allowEnd ? `mark (emit ${contentToken})` : 'fail'}))`;
+  const content = `(if (valid ${contentToken}) (then ${contentSkip}(while (not atEnd) (do ${stop}(if (next ${close}) (then mark (consume ${close}) ${collect} (if (all (equal ${seen} ${markers})${suffixCondition}) (then ${clear('candidate')} (emit ${contentToken}))) ${clear('candidate')}) (else advance)))) ${allowEnd ? `mark (emit ${contentToken})` : 'fail'}))`;
   const end = `(if (valid ${endToken}) (then (consume ${close}) ${collect} (if (not (equal ${seen} ${markers})) (then fail)) ${ending}${clear('candidate')} ${clear('delimiters')} (emit ${endToken})))`;
   return `(scanner ${name} (tokens ${startToken} ${contentToken} ${endToken}) (operations ${start} ${content} ${end} fail))\n`;
 }

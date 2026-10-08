@@ -1213,13 +1213,58 @@ export function buildNativeGrammarFixture(entry) {
 
 export const fixturePath = (entry) => `parity/fixtures/native-grammars/${entry.id}.json`;
 
+// The pinned tree-sitter-nix revision has no upstream corpus cases. Keep that
+// evidence gap explicit and use independent Nix 2.28.8 manual-derived cases,
+// each tested against the pinned tree-sitter oracle in both runtimes.
+const NIX_REFERENCE = 'https://nix.dev/manual/nix/2.28/language/syntax';
+const NIX_REFERENCE_CASES = Object.freeze([
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Integer expression",
+    "source": "1"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "List literal",
+    "source": "[1 2 3]"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Attribute path definition",
+    "source": "{ a.b=1; }"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Recursive attribute set",
+    "source": "rec { x=1; y=x; }"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Let expression",
+    "source": "let x=1; in x"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Function expression",
+    "source": "x: x+1"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Inherit attributes",
+    "source": "{ inherit x y; }"
+  }
+]);
+
 /** Pinned corpus inputs; these are source cases, not execution evidence. */
 export function buildNativeGrammarCorpusSources(id) {
   const entry = grammarSourceOf(`native-${id}`);
+  const upstream = corpusCases(entry);
+  const supplement = id === 'nix' && upstream.length === 0 ? NIX_REFERENCE_CASES : [];
   return {
     generatedBy: 'js/scripts/generate-native-grammar-fixtures.mjs',
     sourceSha256: entry.corpus.sha256,
-    cases: corpusCases(entry),
+    ...(supplement.length ? { supplementalReference: NIX_REFERENCE } : {}),
+    cases: [...upstream, ...supplement],
   };
 }
 

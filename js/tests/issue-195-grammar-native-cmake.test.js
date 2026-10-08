@@ -52,6 +52,13 @@ test('native Cmake rejects and losslessly recovers invalid focused sources', (co
   observe(['nativeCmakeRejectsInvalidInput'], context.name);
 });
 
+test('counted CMake bracket tokens do not swallow preceding command indentation', () => {
+  const source = '\nmessage(\n  [====[first argument]====]\n  [====[second argument]====]\n)\n';
+  const outcome = parser.parseTree(source);
+  assert.equal(outcome.ok, true);
+  assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'CMake'));
+});
+
 // CI executes the upstream corpus; local checks select the focused tests.
 test('native Cmake matches the independent oracle on every pinned upstream corpus input', (context) => {
   const file = 'parity/fixtures/native-grammars/cmake-corpus.json';

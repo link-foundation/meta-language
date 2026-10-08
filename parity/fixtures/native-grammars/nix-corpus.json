@@ -1,5 +1,42 @@
 {
   "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
   "sourceSha256": "62b405d88881f963e77d8b9452f6bd6de13151d866f980edd90e394f0ababe27",
-  "cases": []
+  "cases": [
+    {
+      "file": "Nix 2.28.8 language syntax",
+      "title": "Integer expression",
+      "source": "1"
+    },
+    {
+      "file": "Nix 2.28.8 language syntax",
+      "title": "List literal",
+      "source": "[1 2 3]"
+    },
+    {
+      "file": "Nix 2.28.8 language syntax",
+      "title": "Attribute path definition",
+      "source": "{ a.b=1; }"
+    },
+    {
+      "file": "Nix 2.28.8 language syntax",
+      "title": "Recursive attribute set",
+      "source": "rec { x=1; y=x; }"
+    },
+    {
+      "file": "Nix 2.28.8 language syntax",
+      "title": "Let expression",
+      "source": "let x=1; in x"
+    },
+    {
+      "file": "Nix 2.28.8 language syntax",
+      "title": "Function expression",
+      "source": "x: x+1"
+    },
+    {
+      "file": "Nix 2.28.8 language syntax",
+      "title": "Inherit attributes",
+      "source": "{ inherit x y; }"
+    }
+  ],
+  "supplementalReference": "https://nix.dev/manual/nix/2.28/language/syntax"
 }

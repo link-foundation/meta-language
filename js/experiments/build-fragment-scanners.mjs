@@ -24,7 +24,7 @@ export const NIX_SCANNERS = [
   { family: 'pattern-token', name: 'indented_dollar_escape', token: 'indented_dollar_escape', pattern: "''(\\\\)?", before: '\\$' },
 ];
 export const CMAKE_SCANNERS = [
-  ...['argument', 'comment'].map((kind) => ({ family: 'split-counted-delimiter', name: `bracket_${kind}`, startToken: `bracket_${kind}_opening`, contentToken: `bracket_${kind}_content`, endToken: `bracket_${kind}_closing`, prefix: kind === 'comment' ? '#[' : '[', marker: '=', opening: '[', closing: ']', suffix: ']', skipWhitespace: true, skipContentWhitespace: true, allowEnd: true })),
+  ...['argument', 'comment'].map((kind) => ({ family: 'split-counted-delimiter', name: `bracket_${kind}`, startToken: `bracket_${kind}_opening`, contentToken: `bracket_${kind}_content`, endToken: `bracket_${kind}_closing`, prefix: kind === 'comment' ? '#[' : '[', marker: '=', opening: '[', closing: ']', suffix: ']', skipWhitespace: false, skipContentWhitespace: true, allowEnd: true })),
   { family: 'pattern-token', name: 'line_comment', token: 'line_comment', pattern: '#[^\\r\\n\\x00]*', excludedAtStart: '#\\[=*\\[' },
 ];
 export const FRAGMENT_SCANNERS = { dart: DART_SCANNERS, nix: NIX_SCANNERS, cmake: CMAKE_SCANNERS };
