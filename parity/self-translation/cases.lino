@@ -21,3 +21,5 @@
 (call siblings-to-rust (javascript greets) (rust greets) (arguments (str Hello)) (result false))
 (call siblings-to-rust (javascript cappedTwice) (rust capped_twice) (arguments (f64 1)) (result 2))
 (call math-to-rust (javascript double) (rust double) (arguments (f64 2.5)) (result 5))
+(case long-lines-to-rust (source sources/long-lines.mjs) (from JavaScript) (to Rust) (expected expected/long-lines-to-rust.rs))
+(call long-lines-to-rust (javascript weightedSum) (rust weighted_sum) (arguments (f64 1) (f64 2) (f64 3) (f64 4)) (result 13574))
