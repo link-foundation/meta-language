@@ -87,11 +87,12 @@ export const GRAMMAR_SOURCES = Object.freeze({
   json5: { crate: 'tree-sitter-json5-orchard', dir: '.', oracle: true },
   kotlin: { crate: 'tree-sitter-kotlin-ng', dir: '.' },
   lean: {
+    oracle: true,
     vendored: 'rust/vendor/tree-sitter-lean',
     upstream: 'wvhulle/tree-sitter-lean',
     version: 'bd942cd2795016239be02b3b3d5ef635645ddd38',
     revision: 'bd942cd2795016239be02b3b3d5ef635645ddd38',
-    // The tree-sitter-lean4 0.3.0 crate's sources, vendored so rust/build.rs
+    // The tree-sitter-lean4 0.3.0 crate's sources, vendored so the development oracle build
     // compiles them with MSVC's /utf-8: the crate's build script does not, and
     // its non-ASCII node names then are not UTF-8 on Windows.
     dir: '.',
@@ -116,6 +117,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   regex: { crate: 'tree-sitter-regex', dir: '.', oracle: true },
   ruby: { crate: 'tree-sitter-ruby', dir: '.' },
   rocq: {
+    oracle: true,
     vendored: 'rust/vendor/tree-sitter-rocq',
     upstream: 'aruzdh/tree-sitter-rocq',
     version: '300fe33fc299c30f736fd56d8ef8a28b08acd4e6',

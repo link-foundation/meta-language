@@ -4,33 +4,6 @@ use tree_sitter::{
     InputEdit, Language, Node, Parser, Point as TreeSitterPoint, Range as TreeSitterRange, Tree,
 };
 
-#[allow(unsafe_code)]
-mod rocq_grammar {
-    use tree_sitter_language::LanguageFn;
-
-    unsafe extern "C" {
-        fn tree_sitter_rocq() -> *const ();
-    }
-
-    // SAFETY: build.rs compiles the generated parser from the pinned revision
-    // recorded in vendor/tree-sitter-rocq/NOTICE.md with this exact symbol.
-    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_rocq) };
-}
-
-#[allow(unsafe_code)]
-mod lean_grammar {
-    use tree_sitter_language::LanguageFn;
-
-    unsafe extern "C" {
-        fn tree_sitter_lean() -> *const ();
-    }
-
-    // SAFETY: build.rs compiles the generated parser and scanner from the
-    // pinned revision recorded in vendor/tree-sitter-lean/NOTICE.md with this
-    // exact symbol.
-    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_lean) };
-}
-
 mod native;
 
 use crate::line_index::LineIndex;
@@ -368,7 +341,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "hcl" => tree_sitter_hcl::LANGUAGE.into(),
         "html" => tree_sitter_html::LANGUAGE.into(),
         "kotlin" => tree_sitter_kotlin_ng::LANGUAGE.into(),
-        "lean" => lean_grammar::LANGUAGE.into(),
         "markdown" => tree_sitter_md_025::LANGUAGE.into(),
         "markdown_inline" => tree_sitter_md_025::INLINE_LANGUAGE.into(),
         "matlab" => tree_sitter_matlab::LANGUAGE.into(),
@@ -378,7 +350,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "perl" => ts_parser_perl::LANGUAGE.into(),
         "php" => tree_sitter_php::LANGUAGE_PHP.into(),
         "r" => tree_sitter_r::LANGUAGE.into(),
-        "rocq" => rocq_grammar::LANGUAGE.into(),
         "ruby" => tree_sitter_ruby::LANGUAGE.into(),
         "scala" => tree_sitter_scala::LANGUAGE.into(),
         "swift" => tree_sitter_swift::LANGUAGE.into(),

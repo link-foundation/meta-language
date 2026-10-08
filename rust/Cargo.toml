@@ -25,8 +25,6 @@ include = [
     "src/data/concept-records.json",
     "src/data/foundation-models.json",
     "src/data/language-trigrams.json",
-    "vendor/tree-sitter-rocq/**",
-    "vendor/tree-sitter-lean/**",
     "examples/**/*.rs",
     "README.md",
     "/LICENSE",
@@ -106,6 +104,7 @@ llm-assist = []
 no-default-features = true
 
 [dev-dependencies]
+native-source-oracles = { path = "oracles/native-source-oracles" }
 tree-sitter-python = "=0.25.0"
 tree-sitter-dart = "=0.2.0"
 tree-sitter-nix = "=0.3.0"
@@ -144,10 +143,6 @@ tree-sitter-scheme = "=0.24.7"
 tree-sitter-solidity = "=1.2.13"
 tree-sitter-typescript = "=0.23.2"
 walkdir = "2"
-
-[build-dependencies]
-cc = "1.2"
-flate2 = "1"
 
 [lints.rust]
 unsafe_code = "deny"

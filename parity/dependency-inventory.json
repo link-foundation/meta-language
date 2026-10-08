@@ -449,6 +449,22 @@
       "id": "setting rust/oracles/cmake-source-oracle/Cargo.toml edition@2024"
     },
     {
+      "id": "setting rust/oracles/native-source-oracles/Cargo.toml edition@2024",
+      "category": "setting",
+      "scope": "rust/oracles/native-source-oracles/Cargo.toml",
+      "name": "edition",
+      "declaredIn": [
+        "rust/oracles/native-source-oracles/Cargo.toml"
+      ],
+      "pinned": "2024",
+      "compare": "version",
+      "source": {
+        "type": "rust-edition"
+      },
+      "current": "2024",
+      "evidence": "Rust editions, the newest stable edition"
+    },
+    {
       "id": "setting rust/web/Cargo.toml edition@2024",
       "category": "setting",
       "scope": "rust/web/Cargo.toml",
@@ -840,8 +856,8 @@
       "name": "cc",
       "declaredIn": [
         "rust/Cargo.lock",
-        "rust/Cargo.toml",
-        "rust/oracles/cmake-source-oracle/Cargo.toml"
+        "rust/oracles/cmake-source-oracle/Cargo.toml",
+        "rust/oracles/native-source-oracles/Cargo.toml"
       ],
       "pinned": "1.2.67",
       "compare": "version",
@@ -1435,8 +1451,8 @@
       "name": "flate2",
       "declaredIn": [
         "rust/Cargo.lock",
-        "rust/Cargo.toml",
-        "rust/oracles/cmake-source-oracle/Cargo.toml"
+        "rust/oracles/cmake-source-oracle/Cargo.toml",
+        "rust/oracles/native-source-oracles/Cargo.toml"
       ],
       "pinned": "1.1.10",
       "compare": "version",
@@ -4452,7 +4468,8 @@
       "declaredIn": [
         "rust/Cargo.lock",
         "rust/Cargo.toml",
-        "rust/oracles/cmake-source-oracle/Cargo.toml"
+        "rust/oracles/cmake-source-oracle/Cargo.toml",
+        "rust/oracles/native-source-oracles/Cargo.toml"
       ],
       "pinned": "0.1.8",
       "compare": "version",
@@ -4714,7 +4731,7 @@
       },
       "role": "direct",
       "requirement": "=0.25.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.25.0",
       "evidence": "crates.io, tree-sitter-python"
     },
@@ -6066,6 +6083,22 @@
       "evidence": "Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json."
     },
     {
+      "category": "crate",
+      "name": "native-source-oracles",
+      "scope": "rust/Cargo.toml",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "oracles/native-source-oracles",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "role": "direct",
+      "kind": "development",
+      "id": "crate rust/Cargo.toml native-source-oracles@oracles/native-source-oracles"
+    },
+    {
       "id": "crate rust/web/Cargo.lock bumpalo@3.20.3",
       "category": "crate",
       "scope": "rust/web/Cargo.lock",
@@ -6949,6 +6982,23 @@
       ]
     },
     {
+      "id": "vendored-grammar js/oracles/grammars/lean.wasm.gz@bd942cd2795016239be02b3b3d5ef635645ddd38",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/lean.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "bd942cd2795016239be02b3b3d5ef635645ddd38",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "vendored-parser rust/vendor/tree-sitter-lean@bd942cd2795016239be02b3b3d5ef635645ddd38",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
       "id": "vendored-grammar js/oracles/grammars/lua.wasm.gz@0.5.0",
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/lua.wasm.gz",
@@ -7052,6 +7102,23 @@
       ]
     },
     {
+      "id": "vendored-grammar js/oracles/grammars/python.wasm.gz@0.25.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/python.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.25.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-python@0.25.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
       "id": "vendored-grammar js/oracles/grammars/racket.wasm.gz@0.25.0",
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/racket.wasm.gz",
@@ -7082,6 +7149,23 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-regex@0.25.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/rocq.wasm.gz@300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/rocq.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "vendored-parser rust/vendor/tree-sitter-rocq@300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -7409,23 +7493,6 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/lean.wasm.gz@bd942cd2795016239be02b3b3d5ef635645ddd38",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/lean.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "bd942cd2795016239be02b3b3d5ef635645ddd38",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "vendored-parser rust/vendor/tree-sitter-lean@bd942cd2795016239be02b3b3d5ef635645ddd38",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
       "id": "vendored-grammar js/src/vendor/grammars/markdown_inline.wasm.gz@0.5.6",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/markdown_inline.wasm.gz",
@@ -7562,23 +7629,6 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/python.wasm.gz@0.25.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/python.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.25.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-python@0.25.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
       "id": "vendored-grammar js/src/vendor/grammars/r.wasm.gz@1.3.0",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/r.wasm.gz",
@@ -7592,23 +7642,6 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-r@1.3.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/rocq.wasm.gz@300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/rocq.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "vendored-parser rust/vendor/tree-sitter-rocq@300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -8888,34 +8921,6 @@
       "category": "published",
       "scope": "crate",
       "name": "src/data/semantic-lexicon.json",
-      "declaredIn": [
-        "rust/Cargo.toml"
-      ],
-      "pinned": "include",
-      "compare": "unversioned",
-      "source": {
-        "type": "none"
-      }
-    },
-    {
-      "id": "published crate vendor/tree-sitter-lean/**@include",
-      "category": "published",
-      "scope": "crate",
-      "name": "vendor/tree-sitter-lean/**",
-      "declaredIn": [
-        "rust/Cargo.toml"
-      ],
-      "pinned": "include",
-      "compare": "unversioned",
-      "source": {
-        "type": "none"
-      }
-    },
-    {
-      "id": "published crate vendor/tree-sitter-rocq/**@include",
-      "category": "published",
-      "scope": "crate",
-      "name": "vendor/tree-sitter-rocq/**",
       "declaredIn": [
         "rust/Cargo.toml"
       ],

@@ -265,7 +265,8 @@
       "version": "bd942cd2795016239be02b3b3d5ef635645ddd38",
       "parserSha256": "d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b",
       "wasmSha256": "7b58425afbe7f59e90fa9f01ebafe9241cdedbf1fe7e2daca4bec2f15122cc59",
-      "license": "lean.LICENSE"
+      "license": "lean.LICENSE",
+      "oracle": true
     },
     "lua": {
       "id": "lua",
@@ -446,7 +447,8 @@
       "version": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
       "parserSha256": "4f0807b15d47e4335c28ccb7be5eb8d01851baaab4843dfa24b2d8fb1966ecd2",
       "wasmSha256": "9d0d3172500d14ee0d06d61b0d3a3a33e757003a94eb7f1c7221b11c740e0530",
-      "license": "rocq.LICENSE"
+      "license": "rocq.LICENSE",
+      "oracle": true
     },
     "ruby": {
       "id": "ruby",

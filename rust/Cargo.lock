@@ -1023,14 +1023,13 @@ dependencies = [
 name = "meta-language"
 version = "1.0.0"
 dependencies = [
- "cc",
  "clap",
  "cmake-source-oracle",
  "doublets",
- "flate2",
  "lindera",
  "lingua",
  "links-notation",
+ "native-source-oracles",
  "pest",
  "pest_derive",
  "pest_meta",
@@ -1133,6 +1132,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "native-source-oracles"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "flate2",
+ "tree-sitter-language",
 ]
 
 [[package]]

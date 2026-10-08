@@ -917,3 +917,10 @@ The Python Tree-sitter crate is a development oracle, with no production grammar
 dispatch entry. Ordinary Python parsing selects the shipped native Links grammar
 in both packages. The other remaining parser dependencies still require their
 native replacements before the complete production dependency boundary passes.
+
+The pinned Lean and Rocq parser sources are built only by the development oracle
+crate. Production Rust builds do not compile or package those foreign parsers;
+the JavaScript package also excludes their oracle WebAssembly assets. Both
+ordinary parse paths retain the native Links grammars. Independent development
+parsers keep the original source revisions and the MSVC UTF-8 and stream-close
+build guarantees for oracle comparisons.
