@@ -12,7 +12,9 @@ use regex::Regex;
 
 use super::decimal::Decimal;
 use super::diagnostics::{ErrorKind, Result, TranslationError};
-use super::frontend_rules::{UnicodeEscape, decode_unicode_escape};
+use super::frontend_rules::{
+    UnicodeEscape, decode_unicode_escape, regular_expression_end, start_regular_expression,
+};
 use super::js_number::js_number_literal;
 use super::{Language, Span};
 
@@ -107,6 +109,7 @@ pub enum TokenKind {
     Identifier,
     Macro,
     Punct,
+    RegularExpression,
     String,
     Interpolation,
     Template,
@@ -363,6 +366,39 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
         }
         let start = index;
         let ch = source.char_at(index);
+        if language == Language::JavaScript && ch == Some('/') {
+            let previous = tokens.last();
+            let kind = previous.map_or("", |token| match token.kind {
+                TokenKind::Identifier => "identifier",
+                TokenKind::Punct => "punct",
+                _ => "other",
+            });
+            let value = previous.map_or("", |token| token.value.as_str());
+            if start_regular_expression(kind.to_owned(), value.to_owned()) {
+                let units = source.units()[index..]
+                    .iter()
+                    .map(|unit| f64::from(*unit))
+                    .collect();
+                let length = regular_expression_end(units, 0.0);
+                if length < 0.0 {
+                    return Err(TranslationError::syntax(
+                        "unterminated regular expression literal",
+                        Some(span(start, source.len())),
+                    ));
+                }
+                #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                let end = index + length as usize;
+                tokens.push(Token::new(
+                    TokenKind::RegularExpression,
+                    "/".to_owned(),
+                    source.slice(index, end),
+                    start,
+                    end,
+                ));
+                index = end;
+                continue;
+            }
+        }
         if language == Language::JavaScript && ch == Some('`') {
             let token = template_token(source, index)?;
             index = token.end;
@@ -704,9 +740,24 @@ fn template_token(source: &Source, index: usize) -> Result<Token> {
             return Ok(token);
         }
         if unit == u16::from(b'\\') {
+            if source.char_at(cursor + 1) == Some('0')
+                && source
+                    .char_at(cursor + 2)
+                    .is_some_and(|character| character.is_ascii_digit())
+            {
+                return Err(TranslationError::syntax(
+                    "legacy octal template escape",
+                    Some(span(cursor, cursor + 3)),
+                ));
+            }
             let replacement = match source.char_at(cursor + 1) {
                 Some('n') => '\n',
                 Some('t') => '\t',
+                Some('r') => '\r',
+                Some('b') => '\u{0008}',
+                Some('f') => '\u{000c}',
+                Some('v') => '\u{000b}',
+                Some('0') => '\0',
                 Some('\\') => '\\',
                 Some('`') => '`',
                 Some('$') => '$',

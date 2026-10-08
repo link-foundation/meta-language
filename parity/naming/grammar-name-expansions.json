@@ -3283,11 +3283,41 @@
           "reason": "The source setter keyword retains its complete setter signature before an overlapping function whose return type and name split the same input."
         },
         {
-          "family": "alias-choice-rule",
+          "family": "alias-choice-branches",
           "rule": "_type_not_function",
           "alias": "type",
-          "helper": "_ordinary_type_body",
-          "reason": "A named alias of the ordinary type choice preserves its nested type identifier rather than replacing that child with the outer alias."
+          "helpers": [
+            "_ordinary_type_body",
+            "_ordinary_function_keyword_body",
+            "_ordinary_record_type_body",
+            "_ordinary_void_type_body"
+          ],
+          "suffix": "?",
+          "reason": "Preserve the nested type identifier of each aliased choice branch and the separate nullable suffix reduction, without adding or removing source alternatives."
+        },
+        {
+          "family": "alias-choice-branches",
+          "rule": "_type_not_void",
+          "alias": "type",
+          "helpers": [
+            "_non_void_function_type_body",
+            "_non_void_record_type_body",
+            "_non_void_named_type_body",
+            "_non_void_function_keyword_body"
+          ],
+          "suffix": "?",
+          "reason": "Preserve the nested type identifier of each aliased choice branch and the separate nullable suffix reduction, without adding or removing source alternatives."
+        },
+        {
+          "family": "alias-choice-branches",
+          "rule": "_type_not_void_not_function",
+          "alias": "type",
+          "helpers": [
+            "_non_void_non_function_named_type_body",
+            "_non_void_non_function_keyword_body"
+          ],
+          "suffix": "?",
+          "reason": "Preserve the nested type identifier of each aliased choice branch and the separate nullable suffix reduction, without adding or removing source alternatives."
         }
       ]
     },

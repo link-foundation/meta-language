@@ -1542,7 +1542,7 @@ class JavaScriptParser {
     }
     if (c.is('{')) return this.objectLiteral();
     if (c.is('[')) return this.arrayLiteral();
-    if (c.is('/')) throw unsupported('regular expression', 'outside the portable core', span(token, token));
+    if (token.kind === 'regex' || c.is('/')) throw unsupported('regular expression', 'outside the portable core', span(token, token));
     throw this.fail('expected an expression');
   }
 

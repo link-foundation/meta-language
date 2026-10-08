@@ -1,0 +1,21 @@
+{
+  "regexLiterals": [
+    "/^[A-Za-z_][0-9A-Za-z_]*$/u",
+    "/[0-9_]/u",
+    "/^['\"]|['\"]$/gu",
+    "/[`]/u",
+    "/[\\/]/g",
+    "/a\\/b/i"
+  ],
+  "divisionPrograms": [
+    "function f(x) { return x / 2; }",
+    "function f(x) { x /= 2; return x; }",
+    "function f(x) { return (x + 1) / 2; }"
+  ],
+  "malformedRegex": [
+    "return /[unterminated",
+    "return /first\nsecond/",
+    "return /first\u2028second/"
+  ],
+  "templateProgram": "function terminated(name) { return `${name}\\0`; }"
+}

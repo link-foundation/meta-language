@@ -143,3 +143,53 @@ fn unicode_escape_scalars_match_the_javascript_oracle_and_rust_frontend() {
             .contains("malformed unicode escape")
     );
 }
+
+#[test]
+fn lexical_boundaries_keep_regular_expression_bodies_and_division_distinct() {
+    use meta_language::translation::Language;
+    use meta_language::translation::diagnostics::ErrorKind;
+    use meta_language::translation::lexer::{TokenKind, tokenize};
+    let fixtures: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/translation-lexical-boundaries.json"
+    ))
+    .unwrap();
+    for literal in fixtures["regexLiterals"].as_array().unwrap() {
+        let literal = literal.as_str().unwrap();
+        let source = format!("function matches(text) {{ return {literal}.test(text); }}");
+        let tokens = tokenize(&source, Language::JavaScript).unwrap();
+        assert!(
+            tokens
+                .tokens
+                .iter()
+                .any(|token| token.kind == TokenKind::RegularExpression && token.raw == literal),
+            "{literal}"
+        );
+        let error = parse_javascript(&source).unwrap_err();
+        assert_eq!(error.kind, ErrorKind::Unsupported, "{literal}: {error}");
+        assert_eq!(error.construct.as_deref(), Some("regular expression"));
+    }
+    for source in fixtures["divisionPrograms"].as_array().unwrap() {
+        let source = source.as_str().unwrap();
+        check_program(&parse_javascript(source).unwrap()).unwrap();
+        assert!(
+            !tokenize(source, Language::JavaScript)
+                .unwrap()
+                .tokens
+                .iter()
+                .any(|token| token.kind == TokenKind::RegularExpression)
+        );
+    }
+    for source in fixtures["malformedRegex"].as_array().unwrap() {
+        let error = tokenize(source.as_str().unwrap(), Language::JavaScript).unwrap_err();
+        assert_eq!(error.kind, ErrorKind::Syntax);
+        assert!(error.reason.contains("unterminated regular expression"));
+    }
+    let source = fixtures["templateProgram"].as_str().unwrap();
+    emit_javascript(&check_program(&parse_javascript(source).unwrap()).unwrap()).unwrap();
+    assert!(
+        tokenize(r"`\01`", Language::JavaScript)
+            .unwrap_err()
+            .reason
+            .contains("octal")
+    );
+}

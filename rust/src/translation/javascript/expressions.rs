@@ -524,7 +524,7 @@ impl JavaScriptParser {
         if self.cursor.is("[") {
             return self.array_literal();
         }
-        if self.cursor.is("/") {
+        if token.kind == TokenKind::RegularExpression || self.cursor.is("/") {
             return Err(unsupported(
                 "regular expression",
                 "outside the portable core",

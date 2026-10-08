@@ -2,6 +2,48 @@
   "generatedBy": "js/scripts/import-native-grammars.mjs --character-class-fixtures",
   "cases": [
     {
+      "id": "double-hyphen",
+      "pattern": "[--]",
+      "asciiAccepts": "-",
+      "accepts": [
+        "-"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "--"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (class plain (char -) (char -)))))\n"
+    },
+    {
+      "id": "double-ampersand",
+      "pattern": "[&&]",
+      "asciiAccepts": "&",
+      "accepts": [
+        "&"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "&&"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (class plain (char %26) (char %26)))))\n"
+    },
+    {
+      "id": "double-tilde",
+      "pattern": "[~~]",
+      "asciiAccepts": "~",
+      "accepts": [
+        "~"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "~~"
+      ],
+      "grammar": "(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))\n(rule source_file normal (alias unnamed_token (token (class plain (char %7E) (char %7E)))))\n"
+    },
+    {
       "id": "intersection",
       "pattern": "[a-z&&[def]]",
       "asciiAccepts": "def",

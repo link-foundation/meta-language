@@ -279,6 +279,28 @@ export function transformNativeSource(source, transformations = []) {
       if (changes !== 1) throw new TypeError('variant precedence must select exactly one production');
       continue;
     }
+    if (decision.family === 'alias-choice-branches') {
+      const { rule, alias, helpers, suffix } = decision;
+      const source = grammar.rules[rule];
+      if (source?.type !== 'ALIAS' || !source.named || source.value !== alias || source.content?.type !== 'CHOICE'
+        || !Array.isArray(helpers) || helpers.length !== source.content.members.length || new Set(helpers).size !== helpers.length
+        || helpers.some((helper) => typeof helper !== 'string' || !/^_[A-Za-z_]+$/u.test(helper) || Object.hasOwn(grammar.rules, helper))
+        || typeof suffix !== 'string' || !suffix) throw new TypeError('alias branches need a named choice, unique hidden helpers and a suffix literal');
+      const members = source.content.members.map((member, index) => {
+        const last = member.type === 'SEQ' ? member.members.at(-1) : null;
+        const optionalSuffix = last?.type === 'CHOICE' && last.members.length === 2
+          && last.members.some((item) => item.type === 'BLANK')
+          && last.members.some((item) => item.type === 'STRING' && item.value === suffix);
+        const prefix = optionalSuffix ? { type: 'SEQ', members: member.members.slice(0, -1) } : member;
+        grammar.rules[helpers[index]] = prefix;
+        const body = { ...source, content: { type: 'SYMBOL', name: helpers[index] } };
+        return optionalSuffix ? { type: 'SEQ', members: [body, {
+          type: 'CHOICE', members: [{ ...source, content: { type: 'STRING', value: suffix } }, { type: 'BLANK' }],
+        }] } : body;
+      });
+      grammar.rules[rule] = { type: 'CHOICE', members };
+      continue;
+    }
     if (decision.family === 'alias-choice-rule') {
       const { rule, alias, helper } = decision;
       if (!Object.hasOwn(grammar.rules, rule) || typeof alias !== 'string' || !alias || typeof helper !== 'string' || !/^_[A-Za-z_]+$/u.test(helper) || Object.hasOwn(grammar.rules, helper)) throw new TypeError('alias choice rules need an existing rule, alias and unique hidden helper');

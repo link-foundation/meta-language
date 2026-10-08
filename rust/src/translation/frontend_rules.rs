@@ -219,6 +219,61 @@ pub fn find_default_parameter_reference(
     }
 }
 
+pub fn start_regular_expression(kind: String, value: String) -> bool {
+    if (kind == "") {
+        true
+    } else {
+        if (kind == "identifier") {
+            ((((((((((value == "return") || (value == "throw")) || (value == "case"))
+                || (value == "delete"))
+                || (value == "void"))
+                || (value == "typeof"))
+                || (value == "yield"))
+                || (value == "await"))
+                || (value == "in"))
+                || (value == "of"))
+        } else {
+            if (kind != "punct") {
+                false
+            } else {
+                (((((((value != ")") && (value != "]")) && (value != "}")) && (value != "."))
+                    && (value != "?."))
+                    && (value != "++"))
+                    && (value != "--"))
+            }
+        }
+    }
+}
+
+pub fn regular_expression_end(units: Vec<f64>, start: f64) -> f64 {
+    {
+        let index = (start + 1f64);
+        {
+            let escaped = false;
+            {
+                let character_class = false;
+                {
+                    let ml_s9 =
+                        crate::translation::frontend_rules::ml_regular_expression_end_loop10(
+                            units.clone(),
+                            index,
+                            escaped,
+                            character_class,
+                        );
+                    match ml_s9.clone() {
+                        crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Done => {
+                            (-1f64)
+                        }
+                        crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Return(ml_result10) => {
+                            ml_result10
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlDecodeUnicodeEscapeJoin4 {
     MlDecodeUnicodeEscapeJoin4Next(f64, f64),
@@ -466,7 +521,7 @@ pub fn ml_find_default_parameter_reference_loop7(
                             depth_3
                         };
                         {
-                            let ml_s10 = if (((crate::translation::frontend_rules::ml_array::at(
+                            let ml_s11 = if (((crate::translation::frontend_rules::ml_array::at(
                                 &kinds,
                                 crate::translation::frontend_rules::ml_array::number_index(at),
                             )) == "identifier")
@@ -481,8 +536,8 @@ pub fn ml_find_default_parameter_reference_loop7(
                                 {
                                     let parameter_index = 0f64;
                                     {
-                                        let ml_s11 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop9(parameters.clone(), at, value.clone(), parameter_index);
-                                        match ml_s11.clone() {
+                                        let ml_s12 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop9(parameters.clone(), at, value.clone(), parameter_index);
+                                        match ml_s12.clone() {
                                             crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Done => {
                                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next
                                             }
@@ -495,7 +550,7 @@ pub fn ml_find_default_parameter_reference_loop7(
                             } else {
                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next
                             };
-                            match ml_s10.clone() {
+                            match ml_s11.clone() {
                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next => {
                                     {
                                         let at_2 = (at + 1f64);
@@ -515,6 +570,127 @@ pub fn ml_find_default_parameter_reference_loop7(
             }
         } else {
             crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result::MlFindDefaultParameterReferenceLoop7Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlRegularExpressionEndLoop10Result {
+    MlRegularExpressionEndLoop10Done,
+    MlRegularExpressionEndLoop10Return(f64),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlRegularExpressionEndJoin11 {
+    MlRegularExpressionEndJoin11Next(f64, bool, bool),
+    MlRegularExpressionEndJoin11Return(f64),
+}
+
+pub fn ml_regular_expression_end_loop12(mut units: Vec<f64>, mut index: f64) -> f64 {
+    loop {
+        return if (index < (units.len() as f64)) {
+            {
+                let flag = crate::translation::frontend_rules::ml_array::at(
+                    &units,
+                    crate::translation::frontend_rules::ml_array::number_index(index),
+                );
+                if !(((flag >= (65f64)) && (flag <= (90f64)))
+                    || ((flag >= (97f64)) && (flag <= (122f64))))
+                {
+                    index
+                } else {
+                    {
+                        let index_2 = (index + 1f64);
+                        {
+                            index = index_2;
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            index
+        };
+    }
+}
+
+pub fn ml_regular_expression_end_loop10(
+    mut units: Vec<f64>,
+    mut index: f64,
+    mut escaped: bool,
+    mut character_class: bool,
+) -> crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result {
+    loop {
+        return if (index < (units.len() as f64)) {
+            {
+                let unit = crate::translation::frontend_rules::ml_array::at(
+                    &units,
+                    crate::translation::frontend_rules::ml_array::number_index(index),
+                );
+                if ((((unit == (10f64)) || (unit == (13f64))) || (unit == (8232f64)))
+                    || (unit == (8233f64)))
+                {
+                    crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Return((-1f64))
+                } else {
+                    {
+                        let ml_s13 = if escaped {
+                            {
+                                let escaped_2 = false;
+                                crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped_2, character_class)
+                            }
+                        } else {
+                            if (unit == (92f64)) {
+                                {
+                                    let escaped_3 = true;
+                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped_3, character_class)
+                                }
+                            } else {
+                                if (unit == (91f64)) {
+                                    {
+                                        let character_class_2 = true;
+                                        crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class_2)
+                                    }
+                                } else {
+                                    if (unit == (93f64)) {
+                                        {
+                                            let character_class_3 = false;
+                                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class_3)
+                                        }
+                                    } else {
+                                        if ((unit == (47f64)) && !character_class) {
+                                            {
+                                                let index_2 = (index + 1f64);
+                                                {
+                                                    let index_3 = crate::translation::frontend_rules::ml_regular_expression_end_loop12(units.clone(), index_2);
+                                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Return(index_3)
+                                                }
+                                            }
+                                        } else {
+                                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class)
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        match ml_s13.clone() {
+                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index_4, escaped_4, character_class_4) => {
+                                {
+                                    let index_5 = (index_4 + 1f64);
+                                    {
+                                        (index, escaped, character_class) = (index_5, escaped_4, character_class_4);
+                                        continue;
+                                    }
+                                }
+                            }
+                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Return(ml_result11) => {
+                                crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Return(ml_result11)
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Done
         };
     }
 }

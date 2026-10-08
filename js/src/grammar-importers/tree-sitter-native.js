@@ -170,7 +170,11 @@ export function parseTreeSitterPattern(source, flags = '') {
   };
   const classBody = () => {
     const negated = eat('^');
-    const isSetOperator = () => ['&&', '--', '~~'].includes(source.slice(index, index + 2));
+    const start = index;
+    // Doubled punctuation at an edge is literal class content, as in the
+    // PowerShell grammar's [--]. A binary operator needs both operands.
+    const isSetOperator = () => index > start && source[index + 2] !== ']' && source[index + 2] !== undefined
+      && ['&&', '--', '~~'].includes(source.slice(index, index + 2));
     // Ranges and implicit union bind before the three set operators. Each
     // operand consumes exactly one scalar; lookahead checks membership without
     // consuming it a second time. The binary operators associate to the left.

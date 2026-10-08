@@ -101,3 +101,54 @@ export function findDefaultParameterReference(kinds, values, parameters) {
   }
   return -1;
 }
+
+/**
+ * Whether a slash follows a token that starts an expression rather than one
+ * that ends it. Comments are removed before this decision.
+ * @param {string} kind
+ * @param {string} value
+ * @returns {boolean}
+ */
+export function startRegularExpression(kind, value) {
+  if (kind === '') return true;
+  if (kind === 'identifier') {
+    return value === 'return' || value === 'throw' || value === 'case'
+      || value === 'delete' || value === 'void' || value === 'typeof'
+      || value === 'yield' || value === 'await' || value === 'in' || value === 'of';
+  }
+  if (kind !== 'punct') return false;
+  return value !== ')' && value !== ']' && value !== '}' && value !== '.'
+    && value !== '?.' && value !== '++' && value !== '--';
+}
+
+/**
+ * Read a complete regular expression literal without interpreting its body
+ * as numbers, strings or template literals. Offsets are UTF-16 code units.
+ * @param {number[]} units
+ * @param {number} start
+ * @returns {number}
+ */
+export function regularExpressionEnd(units, start) {
+  let index = start + 1;
+  let escaped = false;
+  let characterClass = false;
+  while (index < units.length) {
+    const unit = units[index];
+    if (unit === 10 || unit === 13 || unit === 8232 || unit === 8233) return -1;
+    if (escaped) escaped = false;
+    else if (unit === 92) escaped = true;
+    else if (unit === 91) characterClass = true;
+    else if (unit === 93) characterClass = false;
+    else if (unit === 47 && !characterClass) {
+      index += 1;
+      while (index < units.length) {
+        const flag = units[index];
+        if (!((flag >= 65 && flag <= 90) || (flag >= 97 && flag <= 122))) break;
+        index += 1;
+      }
+      return index;
+    }
+    index += 1;
+  }
+  return -1;
+}

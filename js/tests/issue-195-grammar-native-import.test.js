@@ -14,6 +14,33 @@ import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
 const rule = (character, length = 80) => character.repeat(length);
 
+test('aliased choice branches preserve child nodes and separate optional suffix reductions', () => {
+  const symbol = (name) => ({ type: 'SYMBOL', name });
+  const source = { name: 'types', rules: {
+    document: symbol('_type'),
+    _type: { type: 'ALIAS', named: true, value: 'type', content: { type: 'CHOICE', members: [
+      { type: 'SEQ', members: [symbol('identifier'), { type: 'CHOICE', members: [{ type: 'STRING', value: '?' }, { type: 'BLANK' }] }] },
+      { type: 'STRING', value: 'void' },
+    ] } },
+    identifier: { type: 'PATTERN', value: '[A-Z][A-Za-z]*' },
+  } };
+  const decision = { family: 'alias-choice-branches', rule: '_type', alias: 'type', helpers: ['_named_type', '_void_type'], suffix: '?' };
+  const transformed = transformNativeSource(source, [decision]);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  const outcome = parser.parseTree('Name?');
+  assert.equal(outcome.ok, true);
+  assert.equal(outcome.tree.children[0].kind, 'type');
+  assert.equal(outcome.tree.children[0].children[0].kind, 'identifier');
+  assert.equal(outcome.tree.children[1].kind, 'type');
+  assert.equal(outcome.tree.children[1].text, '?');
+  for (const text of ['Name', 'void']) assert.equal(parser.parseTree(text).ok, true, text);
+  for (const text of ['?', 'void?', 'Name??']) assert.equal(parser.parseTree(text).ok, false, text);
+  assert.equal(source.rules._type.type, 'ALIAS');
+  for (const change of [{ helpers: ['_same', '_same'] }, { helpers: ['_only'] }, { alias: 'absent' }]) {
+    assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+  }
+});
+
 test('grammar-action external rules keep actions and provenance through the native importer', () => {
   const names = ['opening_tag', 'body', 'closing_tag'];
   const source = { name: 'text_labels', rules: { document: { type: 'SEQ', members: names.map((name) => ({ type: 'SYMBOL', name })) } }, externals: names.map((name) => ({ type: 'SYMBOL', name })) };

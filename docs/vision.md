@@ -682,6 +682,12 @@ corpus:
 the round trips, the shared corpus and the per-module report against the
 hand-written Rust.
 
+The portable frontend tokenizes JavaScript regular expression bodies as whole
+literals, including escaped delimiters and character classes, before reporting
+unsupported regular expression semantics. Lexical boundaries and division
+disambiguation use shared JavaScript decisions translated into Rust; lexical
+recognition alone does not establish executable regular expression support.
+
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
 CST → AST, transformations, emitters and translation rules. Decorators compose

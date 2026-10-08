@@ -4,7 +4,7 @@
 // part of the JavaScript frontend's input.
 
 import { TranslationError } from './diagnostics.js';
-import { decodeUnicodeEscape } from './frontend-rules.js';
+import { decodeUnicodeEscape, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -49,6 +49,15 @@ export function tokenize(source, language) {
       continue;
     }
     const start = index;
+    if (language === 'JavaScript' && char === '/' && startRegularExpression(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '')) {
+      const units = Array.from({ length: source.length - index }, (_, offset) => source.charCodeAt(index + offset));
+      const length = regularExpressionEnd(units, 0);
+      if (length < 0) throw new TranslationError('syntax', 'unterminated regular expression literal', { start, end: source.length });
+      const end = index + length;
+      tokens.push({ kind: 'regex', value: '/', raw: source.slice(index, end), start, end });
+      index = end;
+      continue;
+    }
     if (language === 'JavaScript' && char === '`') {
       tokens.push(templateToken(source, index));
       index = tokens.at(-1).end;
@@ -231,7 +240,10 @@ function templateToken(source, index) {
     }
     if (char === '\\') {
       const escaped = source[cursor + 1];
-      const simple = { n: '\n', t: '\t', '\\': '\\', '`': '`', $: '$' };
+      const simple = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', 0: '\0', '\\': '\\', '`': '`', $: '$' };
+      if (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? '')) {
+        throw new TranslationError('syntax', 'legacy octal template escape', { start: cursor, end: cursor + 3 });
+      }
       if (!(escaped in simple)) {
         throw new TranslationError('syntax', `unsupported template escape \\${escaped}`, { start: cursor, end: cursor + 2 });
       }
