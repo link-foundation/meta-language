@@ -2,6 +2,7 @@
 // rust/src/grammar/import/antlr/lexer.rs; both report error offsets in UTF-8
 // bytes so parse errors carry the same text in both runtimes.
 import { parseError } from './common.js';
+import { decodeUnicodeEscape } from '../translation/frontend-rules.js';
 
 export const FORMAT = 'antlr';
 
@@ -244,6 +245,14 @@ class AntlrLexer {
   }
 
   unicodeEscape(start) {
+    if (this.peekChar() === '{') {
+      const text = '\\u' + this.chars.slice(this.cursor, this.cursor + 10).join('');
+      const units = Array.from({ length: Math.min(text.length, 12) }, (_, index) => text.charCodeAt(index));
+      const decoded = decodeUnicodeEscape(units, false);
+      if (decoded.$ !== 'scalar') throw errorAt(start, 'invalid braced unicode escape');
+      this.cursor += decoded.end - 2;
+      return String.fromCodePoint(decoded.code);
+    }
     let value = 0;
     for (let digit = 0; digit < 4; digit += 1) {
       if (this.isEnd()) throw errorAt(start, 'unterminated unicode escape');

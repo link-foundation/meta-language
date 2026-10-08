@@ -498,7 +498,9 @@
           "rust/src/translation/javascript/infer/arrays.rs",
           "rust/tests/unit/self_translation.rs",
           "parity/fixtures/translation-lexical-boundaries.json",
-          "parity/fixtures/self-translation-bindings.json"
+          "parity/fixtures/self-translation-bindings.json",
+          "rust/src/translation/frontend_rules.rs",
+          "rust/src/translation/surface.rs"
         ]
       },
       "javascript": {
@@ -517,7 +519,9 @@
           "js/tests/translation-regex-tokenization.test.js",
           "parity/fixtures/translation-lexical-boundaries.json",
           "parity/fixtures/self-translation-bindings.json",
-          "js/tests/translation-self-bindings.test.js"
+          "js/tests/translation-self-bindings.test.js",
+          "js/src/translation/frontend-rules.js",
+          "js/tests/translation-type-queries.test.js"
         ]
       }
     },
@@ -977,7 +981,10 @@
           "rust/src/grammar/interchange/lowering/encoding.rs",
           "rust/src/grammar/interchange/lowering/metadata.rs",
           "rust/tests/unit/issue_195_interchange_faithful_lowering.rs",
-          "parity/fixtures/grammar-importers.json"
+          "parity/fixtures/grammar-importers.json",
+          "rust/src/grammar/import/antlr/lexer.rs",
+          "rust/tests/unit/grammar_import_antlr.rs",
+          "rust/tests/fixtures/grammar/antlr/braced-unicode.g4"
         ]
       },
       "javascript": {
@@ -985,7 +992,10 @@
         "evidence": [
           "js/src/grammar-lowering.js",
           "js/tests/issue-195-interchange-faithful-lowering.test.js",
-          "parity/fixtures/grammar-importers.json"
+          "parity/fixtures/grammar-importers.json",
+          "js/src/grammar-importers/antlr-lexer.js",
+          "js/tests/grammar-antlr.test.js",
+          "rust/tests/fixtures/grammar/antlr/braced-unicode.g4"
         ]
       }
     },

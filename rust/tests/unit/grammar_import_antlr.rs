@@ -543,3 +543,40 @@ fn type_commands_let_a_rule_match_where_the_type_does() {
     assert!(accepts("ab 12 # note\ncd\n"));
     assert!(!accepts("ab ; cd\n"));
 }
+
+#[test]
+fn braced_unicode_literals_and_ranges_retain_scalar_values() {
+    let grammar =
+        import_antlr(include_str!("../fixtures/grammar/antlr/braced-unicode.g4")).unwrap();
+    assert_eq!(
+        grammar.rule("DIGIT").unwrap().expr(),
+        &GrammarExpr::CharRange('0', '9')
+    );
+    assert_eq!(
+        grammar.rule("EMOJI").unwrap().expr(),
+        &GrammarExpr::Terminal("😀".to_owned())
+    );
+    assert_eq!(
+        grammar.rule("LIMIT").unwrap().expr(),
+        &GrammarExpr::Terminal("\u{10ffff}".to_owned())
+    );
+    assert_eq!(
+        grammar.rule("NUL").unwrap().expr(),
+        &GrammarExpr::Terminal("\0".to_owned())
+    );
+    for escape in [
+        r"\u{}",
+        r"\u{D800}",
+        r"\u{110000}",
+        r"\u{1234567}",
+        r"\u{12",
+        r"\u{xyz}",
+    ] {
+        let source = format!("grammar Invalid; entry: '{escape}';");
+        let error = import_antlr(&source).unwrap_err();
+        assert!(
+            error.to_string().contains("invalid braced unicode escape"),
+            "{error}"
+        );
+    }
+}

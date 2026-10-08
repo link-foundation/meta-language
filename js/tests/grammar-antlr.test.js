@@ -274,3 +274,15 @@ test('a -> type(NAME) command lets a rule match where NAME does, in both runtime
   assert.equal(parser.parseTree('ab 12 # note\ncd\n').ok, true);
   assert.equal(parser.parseTree('ab ; cd\n').ok, false);
 });
+
+
+test('braced Unicode literals and ranges retain scalar values', () => {
+  const grammar = importAntlr(fixture('braced-unicode.g4'));
+  assert.deepEqual(grammar.rule('DIGIT').expression, G.charRange('0', '9'));
+  assert.deepEqual(grammar.rule('EMOJI').expression, G.literal('😀'));
+  assert.deepEqual(grammar.rule('LIMIT').expression, G.literal(String.fromCodePoint(0x10ffff)));
+  assert.deepEqual(grammar.rule('NUL').expression, G.literal('\0'));
+  for (const escape of ['\\u{}', '\\u{D800}', '\\u{110000}', '\\u{1234567}', '\\u{12', '\\u{xyz}']) {
+    assert.throws(() => importAntlr("grammar Invalid; entry: '" + escape + "';"), /invalid braced unicode escape/u, escape);
+  }
+});

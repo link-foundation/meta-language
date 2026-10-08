@@ -1,5 +1,6 @@
 use super::error_at;
 use crate::grammar::import::GrammarImportError;
+use crate::translation::frontend_rules::{UnicodeEscape, decode_unicode_escape, ml_array};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct Token {
@@ -348,6 +349,27 @@ impl<'text> Lexer<'text> {
     }
 
     fn unicode_escape(&mut self, start: usize) -> Result<char, GrammarImportError> {
+        if self.peek_char() == Some('{') {
+            let text = format!(
+                "\\u{}",
+                self.text[self.cursor..]
+                    .chars()
+                    .take(10)
+                    .collect::<String>()
+            );
+            let units = text.encode_utf16().take(12).map(f64::from).collect();
+            let UnicodeEscape::Scalar(code, end) = decode_unicode_escape(units, false) else {
+                return Err(error_at(start, "invalid braced unicode escape"));
+            };
+            let length = ml_array::number_index(end)
+                .ok_or_else(|| error_at(start, "invalid braced unicode escape"))?;
+            let value = ml_array::number_index(code)
+                .and_then(|value| u32::try_from(value).ok())
+                .and_then(char::from_u32)
+                .ok_or_else(|| error_at(start, "invalid braced unicode escape"))?;
+            self.cursor += length - 2;
+            return Ok(value);
+        }
         let mut value = 0_u32;
         for _ in 0..4 {
             let Some(character) = self.advance_char() else {
