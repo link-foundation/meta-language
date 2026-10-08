@@ -12,7 +12,7 @@
 //! Mirrors `js/src/self-translation.js`.
 
 use crate::translation::frontend_rules::{
-    accept_binding_scope, accept_literal_binding, find_binding_run_end,
+    accept_binding_scope, accept_literal_binding, accept_module_binding_scope, find_binding_run_end,
 };
 use crate::translation::surface::{SEffect, SExpr, SNode};
 use std::collections::{HashMap, HashSet};
@@ -565,6 +565,46 @@ fn translate_binding_groups<'a>(
         }
         index = end;
     }
+    let module_terms: Vec<String> = groups
+        .iter()
+        .map(|group| match &group.kind {
+            GroupKind::Item { term, .. } => term.clone(),
+            GroupKind::Comment { .. } => String::new(),
+            _ => "blocked".to_owned(),
+        })
+        .collect();
+    if bind
+        && accept_module_binding_scope(
+            &module_terms,
+            results.iter().any(|(_, out)| out.status == "carried"),
+        )
+    {
+        let items: Vec<_> = groups
+            .iter()
+            .flat_map(|group| group.items.clone())
+            .collect();
+        let first = items.first().expect("a declaration module has items");
+        let last = items.last().expect("a declaration module has items");
+        let term = match &groups[0].kind {
+            GroupKind::Item { term, .. } | GroupKind::Comment { term, .. } => term.clone(),
+            _ => unreachable!("provenance and carried groups are not module declarations"),
+        };
+        let combined = Group {
+            kind: GroupKind::Item {
+                text: source[first.start..last.end].to_owned(),
+                term,
+            },
+            items,
+            after: groups
+                .last()
+                .expect("a declaration module is nonempty")
+                .after,
+        };
+        let out = translate_group(&combined, from, to, decorators, &literals);
+        if out.status == "translated" {
+            return vec![(combined, out)];
+        }
+    }
     results
 }
 
@@ -699,9 +739,15 @@ fn translate_group(
     if code.trim().is_empty() {
         return carry(text, term, from, "dropped by a decorator");
     }
+    // Count the CST children the provenance reader consumes, including
+    // attributes and documentation that accompany a declaration.
+    let count = top_level_items(&code, to).len();
+    if count == 0 {
+        return carry(text, term, from, "no target item");
+    }
     let marker = format!(
         "{TRANSLATED}{from} {term} items={} sha256={}",
-        emitted.definitions.len(),
+        count,
         sha256(&code)
     );
     let mut lines = vec![marker];

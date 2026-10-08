@@ -41,6 +41,20 @@
       "call": "label()",
       "rustCall": "label()",
       "expected": "ready\n"
+    },
+    {
+      "name": "module-type-and-function-scope",
+      "source": "/** @typedef {{ $: 'value', value: number } | { $: 'none' }} Choice */\n\n/** @param {number} x @returns {Choice} */\nexport function makeChoice(x) { return { $: 'value', value: x }; }\n\n/** @param {Choice} choice @returns {number} */\nexport function readChoice(choice) { switch (choice.$) { case 'value': return choice.value; case 'none': return 0; } }\n",
+      "call": "readChoice(makeChoice(7))",
+      "rustCall": "read_choice(make_choice(7.0))",
+      "expected": "7\n"
+    },
+    {
+      "name": "complete-frontend-decision-module",
+      "module": "js/src/translation/frontend-rules.js",
+      "call": "acceptArgumentCount([false, true], 1)",
+      "rustCall": "accept_argument_count(vec![false, true], 1.0)",
+      "expected": "true\n"
     }
   ],
   "refusals": [

@@ -158,3 +158,11 @@ over those bindings, including a local declaration in its temporal dead zone.
 This does not bind mutable values, array or object identities, or imported values.
 Rust constant storage decisions and declaration rendering are generated from
 the same JavaScript rules.
+
+A declaration-only module with carried groups is also retried as one checked
+scope, so JSDoc data types can bind across declarations. A failed retry keeps
+its earlier decisions. Imports, executable statements and stored provenance
+blocks are excluded. The frontend decision module itself is checked for zero
+carried items, generated Rust execution and exact restoration in both runtimes.
+Provenance counts the target CST items, including attributes and documentation
+that accompany a declaration, rather than assuming one CST item per definition.

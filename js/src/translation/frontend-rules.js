@@ -215,3 +215,23 @@ export function renderConstantBinding(form, name, type, value) {
   if (form === 'lazy') return 'pub static ' + name + ': std::sync::LazyLock<' + type + '> = std::sync::LazyLock::new(|| ' + value + ');';
   return 'pub const ' + name + ': ' + type + ' = ' + value + ';';
 }
+
+/**
+ * Retry a complete declaration module when isolated groups still carry items.
+ * Imports, statements and provenance blocks need other binding mechanisms.
+ * @param {string[]} terms
+ * @param {boolean} carried
+ * @returns {boolean}
+ */
+export function acceptModuleBindingScope(terms, carried) {
+  if (!carried) return false;
+  let declarations = 0;
+  for (let index = 0; index < terms.length; index += 1) {
+    const term = terms[index];
+    if (term !== '') {
+      if (term !== 'function_declaration' && term !== 'lexical_declaration' && term !== 'export_statement') return false;
+      declarations += 1;
+    }
+  }
+  return declarations > 0;
+}

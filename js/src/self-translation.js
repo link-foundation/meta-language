@@ -18,7 +18,7 @@ import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
 import { parseRust } from './translation/rust.js';
-import { acceptBindingScope, acceptLiteralBinding, findBindingRunEnd } from './translation/frontend-rules.js';
+import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, findBindingRunEnd } from './translation/frontend-rules.js';
 
 /** The languages self-translation reads and writes. */
 export const SELF_TRANSLATION_LANGUAGES = Object.freeze(['JavaScript', 'TypeScript', 'Rust']);
@@ -239,6 +239,13 @@ function translateBindingGroups(groups, bytes, from, to, decorators) {
     } else results.push(...isolated);
     index = end;
   }
+  const moduleTerms = groups.map((group) => group.kind === 'item' ? group.term : group.kind === 'comment' ? '' : 'blocked');
+  if (bind && acceptModuleBindingScope(moduleTerms, results.some(({ out }) => out.status === 'carried'))) {
+    const items = groups.flatMap((group) => group.items);
+    const combined = { kind: 'item', term: groups[0].term, items, text: bytes.subarray(items[0].start, items.at(-1).end).toString('utf8'), after: groups.at(-1).after };
+    const out = translateGroup(combined, from, to, decorators, literals);
+    if (out.status === 'translated') return [{ group: combined, out }];
+  }
   return results;
 }
 
@@ -293,7 +300,11 @@ function translateGroup(group, from, to, decorators, literalBindings = new Map()
   const generic = emitted.definitions.map((definition) => (exported ? `export ${definition}` : definition)).join('\n\n');
   const code = decorateEmitted(to, { source: generic }, decorators).source;
   if (code.trim() === '') return carry(text, term, from, 'dropped by a decorator');
-  const count = emitted.definitions.length;
+  // Attributes and documentation can be separate CST children even when
+  // the emitter regards them as part of a declaration. Provenance counts
+  // the actual target items that its reader will consume.
+  const count = topLevelItems(code, to, Buffer.from(code, 'utf8')).length;
+  if (count === 0) return carry(text, term, from, 'no target item');
   const marker = `${TRANSLATED}${from} ${term} items=${count} sha256=${sha256(code)}`;
   return {
     code: [marker, ...text.split(/\r?\n/u).map(sourceLine), code].join('\n'),

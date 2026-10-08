@@ -26,7 +26,7 @@ fn sibling_binding_runs_match_javascript_and_restore_their_source() {
         "../../../parity/fixtures/self-translation-bindings.json"
     ))
     .unwrap();
-    let script = "import fs from 'node:fs'; import {selfTranslate} from './js/src/self-translation.js'; const fixture=JSON.parse(fs.readFileSync('parity/fixtures/self-translation-bindings.json')); process.stdout.write(JSON.stringify(fixture.cases.map(entry=>selfTranslate(entry.source,'JavaScript','Rust').code)));";
+    let script = "import fs from 'node:fs'; import {selfTranslate} from './js/src/self-translation.js'; const fixture=JSON.parse(fs.readFileSync('parity/fixtures/self-translation-bindings.json')); process.stdout.write(JSON.stringify(fixture.cases.map(entry=>selfTranslate(entry.module ? fs.readFileSync(entry.module,'utf8') : entry.source,'JavaScript','Rust').code)));";
     let output = Command::new("node")
         .current_dir(root())
         .args(["--input-type=module", "-e", script])
@@ -39,8 +39,13 @@ fn sibling_binding_runs_match_javascript_and_restore_their_source() {
     );
     let expected: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
     for (index, entry) in fixture["cases"].as_array().unwrap().iter().enumerate() {
-        let source = entry["source"].as_str().unwrap();
-        let translated = self_translate(source, "JavaScript", "Rust").unwrap();
+        let source = entry["source"]
+            .as_str()
+            .map(str::to_owned)
+            .unwrap_or_else(|| {
+                fs::read_to_string(root().join(entry["module"].as_str().unwrap())).unwrap()
+            });
+        let translated = self_translate(&source, "JavaScript", "Rust").unwrap();
         assert!(
             translated
                 .items

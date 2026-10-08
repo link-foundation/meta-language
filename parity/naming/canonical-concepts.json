@@ -5375,6 +5375,27 @@
       "formerNames": []
     },
     {
+      "id": "translation.accept-module-binding-scope",
+      "phrase": "accept module binding scope",
+      "role": "operation",
+      "definition": "Determine whether carried groups in a declaration-only module require a retry in its complete checked binding scope.",
+      "constraints": [
+        "Imports, statements and provenance blocks cannot enter this retry.",
+        "A refused module retains the existing per-group decisions."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptModuleBindingScope"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_module_binding_scope"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",

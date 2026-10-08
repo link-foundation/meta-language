@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import { selfTranslate } from '../src/self-translation.js';
 
 const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/self-translation-bindings.json', import.meta.url), 'utf8'));
+fixture.cases = fixture.cases.map((entry) => entry.module ? { ...entry, source: readFileSync(new URL(`../../${entry.module}`, import.meta.url), 'utf8') } : entry);
 
 test('sibling bindings share a checked scope, execute faithfully and restore their source', () => {
   const directory = mkdtempSync(path.join(tmpdir(), 'self-translation-bindings-'));

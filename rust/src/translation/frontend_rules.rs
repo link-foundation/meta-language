@@ -391,6 +391,35 @@ pub fn render_constant_binding(form: &str, name: &str, type_: &str, value: &str)
     }
 }
 
+pub fn accept_module_binding_scope(terms: &[String], carried: bool) -> bool {
+    if carried {
+        {
+            let declarations = 0f64;
+            {
+                let index = 0f64;
+                {
+                    let ml_s11 =
+                        crate::translation::frontend_rules::ml_accept_module_binding_scope_loop15(
+                            terms.to_vec(),
+                            declarations,
+                            index,
+                        );
+                    match ml_s11 {
+                        crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result::MlAcceptModuleBindingScopeLoop15Done(declarations_2) => {
+                            (declarations_2 > (0f64))
+                        }
+                        crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result::MlAcceptModuleBindingScopeLoop15Return(ml_result15) => {
+                            ml_result15
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        false
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlDecodeUnicodeEscapeJoin4 {
     MlDecodeUnicodeEscapeJoin4Next(f64, f64),
@@ -638,7 +667,7 @@ pub fn ml_find_default_parameter_reference_loop7(
                             depth_3
                         };
                         {
-                            let ml_s12 = if (((crate::translation::frontend_rules::ml_array::at(
+                            let ml_s13 = if (((crate::translation::frontend_rules::ml_array::at(
                                 &kinds,
                                 crate::translation::frontend_rules::ml_array::number_index(at),
                             )) == "identifier")
@@ -653,8 +682,8 @@ pub fn ml_find_default_parameter_reference_loop7(
                                 {
                                     let parameter_index = 0f64;
                                     {
-                                        let ml_s13 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop9(parameters.clone(), at, value.clone(), parameter_index);
-                                        match ml_s13.clone() {
+                                        let ml_s14 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop9(parameters.clone(), at, value.clone(), parameter_index);
+                                        match ml_s14.clone() {
                                             crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Done => {
                                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next
                                             }
@@ -667,7 +696,7 @@ pub fn ml_find_default_parameter_reference_loop7(
                             } else {
                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next
                             };
-                            match ml_s12.clone() {
+                            match ml_s13.clone() {
                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next => {
                                     {
                                         let at_2 = (at + 1f64);
@@ -747,7 +776,7 @@ pub fn ml_regular_expression_end_loop10(
                     crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Return(-1f64)
                 } else {
                     {
-                        let ml_s14 = if escaped {
+                        let ml_s15 = if escaped {
                             {
                                 let escaped_2 = false;
                                 crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped_2, character_class)
@@ -778,7 +807,7 @@ pub fn ml_regular_expression_end_loop10(
                         } else {
                             crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class)
                         };
-                        match ml_s14.clone() {
+                        match ml_s15.clone() {
                             crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index_4, escaped_4, character_class_4) => {
                                 {
                                     let index_5 = (index_4 + 1f64);
@@ -863,6 +892,56 @@ pub fn ml_accept_binding_scope_loop14(
             }
         } else {
             crate::translation::frontend_rules::MlAcceptBindingScopeLoop14Result::MlAcceptBindingScopeLoop14Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlAcceptModuleBindingScopeLoop15Result {
+    MlAcceptModuleBindingScopeLoop15Done(f64),
+    MlAcceptModuleBindingScopeLoop15Return(bool),
+}
+
+pub fn ml_accept_module_binding_scope_loop15(
+    mut terms: Vec<String>,
+    mut declarations: f64,
+    mut index: f64,
+) -> crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result {
+    loop {
+        return if (index < (terms.len() as f64)) {
+            {
+                let term = crate::translation::frontend_rules::ml_array::at(
+                    &terms,
+                    crate::translation::frontend_rules::ml_array::number_index(index),
+                );
+                if term.is_empty() {
+                    {
+                        let index_3 = (index + 1f64);
+                        {
+                            index = index_3;
+                            continue;
+                        }
+                    }
+                }
+                if (((term != "function_declaration") && (term != "lexical_declaration"))
+                    && (term != "export_statement"))
+                {
+                    crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result::MlAcceptModuleBindingScopeLoop15Return(false)
+                } else {
+                    {
+                        let declarations_2 = (declarations + 1f64);
+                        {
+                            let index_2 = (index + 1f64);
+                            {
+                                (declarations, index) = (declarations_2, index_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result::MlAcceptModuleBindingScopeLoop15Done(declarations)
         };
     }
 }
