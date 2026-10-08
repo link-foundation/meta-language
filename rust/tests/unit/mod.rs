@@ -132,6 +132,7 @@ mod query_matching;
 mod query_plan;
 mod query_transform;
 mod rust_codec;
+mod rust_layout;
 mod self_description;
 mod self_translation;
 mod source_generation;
