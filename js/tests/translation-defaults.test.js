@@ -62,7 +62,12 @@ test('self-translation writes top-level constants as Rust constants and restores
   assert.deepEqual(rust.items.map(({ status }) => status), ['translated', 'translated', 'translated']);
   assert.ok(rust.code.includes('pub const MAX_LENGTH: f64 = 2048f64;'), rust.code);
   assert.ok(rust.code.includes('pub const TERM: &str = "identifier:trigram";'), rust.code);
-  assert.ok(rust.code.includes('pub static PAIRS: std::sync::LazyLock<Vec<Vec<String>>> = std::sync::LazyLock::new(|| vec![vec![String::from("en"), String::from("Hawaii")]]);'), rust.code);
+  // Longer than 100 columns on one line, so the layout of #217 wraps it.
+  assert.ok(rust.code.includes([
+    'pub static PAIRS: std::sync::LazyLock<Vec<Vec<String>>> = std::sync::LazyLock::new(',
+    '    || vec![vec![String::from("en"), String::from("Hawaii")]]',
+    ');',
+  ].join('\n')), rust.code);
   assert.equal(selfTranslate(rust.code, 'Rust', 'JavaScript').code, source);
   // A top-level let and a statement with effects still run as a program.
   assert.equal(selfTranslate('let count = 1;\n', 'JavaScript', 'Rust').items[0].status, 'carried');
