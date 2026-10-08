@@ -11,7 +11,9 @@
 //!
 //! Mirrors `js/src/self-translation.js`.
 
-use crate::translation::frontend_rules::accept_source_prefix_restoration;
+use crate::translation::frontend_rules::{
+    accept_source_envelope_restoration, accept_source_prefix_restoration,
+};
 use crate::translation::surface::SExpr;
 use std::collections::BTreeMap;
 use std::collections::{HashMap, HashSet};
@@ -387,6 +389,34 @@ fn translate_module(
         return Ok((translation, signatures));
     }
     if let Some(header) = header {
+        static SOURCE_ENVELOPE: LazyLock<Regex> = LazyLock::new(|| {
+            Regex::new(r" envelope-sha256=([a-f0-9]{64}) original=(.*)$").unwrap()
+        });
+        if let Some(envelope) = SOURCE_ENVELOPE.captures(header.text)
+            && let Ok(original) = serde_json::from_str::<String>(&envelope[2])
+            && accept_source_envelope_restoration(
+                header.text.contains(&format!(" source={to} ")),
+                sha256(&source[header.end..]) == envelope[1],
+                header.text.split_ascii_whitespace().find_map(|field| {
+                    field
+                        .strip_prefix("bytes=")
+                        .and_then(|value| value.parse::<usize>().ok())
+                }) == Some(original.len())
+                    && header
+                        .text
+                        .contains(&format!(" sha256={} ", sha256(&original))),
+            )
+        {
+            return Ok((
+                SelfTranslation {
+                    source_language: from,
+                    target_language: to,
+                    code: original,
+                    items: recorded,
+                },
+                signatures,
+            ));
+        }
         let original_length = header.text.split_ascii_whitespace().find_map(|field| {
             field
                 .strip_prefix("bytes=")
@@ -437,6 +467,19 @@ fn translate_module(
         }
         lines.push(PRELUDE_END.to_owned());
         lines.push(String::new());
+    }
+    if source.contains('\r') {
+        let tail = format!("\n{}\n{body}", lines[1..].join("\n"));
+        let original = serde_json::to_string(source)
+            .expect("source text serializes")
+            .replace('\u{2028}', "\\u2028")
+            .replace('\u{2029}', "\\u2029");
+        write!(
+            lines[0],
+            " envelope-sha256={} original={original}",
+            sha256(&tail)
+        )
+        .expect("writing a string succeeds");
     }
     let translation = SelfTranslation {
         source_language: from,

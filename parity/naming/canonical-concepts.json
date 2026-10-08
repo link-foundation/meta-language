@@ -65131,6 +65131,26 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "translation.accept-source-envelope-restoration",
+      "phrase": "accept source envelope restoration",
+      "role": "operation",
+      "definition": "Accept a serialized original source only when the language, byte length, original digest and complete translated body digest match.",
+      "constraints": [
+        "A changed emitted body or damaged envelope prevents restoration; legacy provenance remains supported."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptSourceEnvelopeRestoration"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_source_envelope_restoration"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

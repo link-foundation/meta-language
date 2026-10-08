@@ -410,3 +410,8 @@ export function readScannerContinuationAction(widthless, startsAfter, endsAfter)
   if (startsAfter && endsAfter) return 1;
   return -1;
 }
+
+/** @param {boolean} sourceMatches @param {boolean} bodyMatches @param {boolean} originalMatches @returns {boolean} */
+export function acceptSourceEnvelopeRestoration(sourceMatches, bodyMatches, originalMatches) {
+  return sourceMatches && bodyMatches && originalMatches;
+}

@@ -19,7 +19,7 @@ import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
 import { tokenize } from './translation/lexer.js';
 import { parseRust } from './translation/rust.js';
-import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
+import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 
 /** The languages self-translation reads and writes. */
 export const SELF_TRANSLATION_LANGUAGES = Object.freeze(['JavaScript', 'TypeScript', 'Rust']);
@@ -152,6 +152,19 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     return { translation: freeze(from, to, body, recorded), signatures };
   }
   if (header) {
+    const envelope = / envelope-sha256=([a-f0-9]{64}) original=(.*)$/u.exec(header.text);
+    if (envelope) {
+      try {
+        const original = JSON.parse(envelope[2]);
+        const length = Number(/(?:^| )bytes=(\d+)(?: |$)/u.exec(header.text)?.[1]);
+        if (typeof original === 'string' && acceptSourceEnvelopeRestoration(
+          header.text.includes(` source=${to} `),
+          sha256(bytes.subarray(header.end).toString('utf8')) === envelope[1],
+          Buffer.byteLength(original, 'utf8') === length &&
+          header.text.includes(` sha256=${sha256(original)} `),
+        )) return { translation: freeze(from, to, original, recorded), signatures };
+      } catch (error) { if (!(error instanceof SyntaxError)) throw error; }
+    }
     const originalLength = Number(/(?:^| )bytes=(\d+)(?: |$)/u.exec(header.text)?.[1]);
     const bodyBytes = Buffer.from(body, 'utf8');
     if (Number.isSafeInteger(originalLength) && originalLength >= 0 && originalLength <= bodyBytes.length) {
@@ -167,6 +180,11 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   if (family(to) === 'Rust' && recorded.some(({ status }) => status === 'translated')) preludes.unshift(RUST_ALLOW);
   const lines = [`${HEADER}source=${from} target=${to} sha256=${sha256(text)} bytes=${bytes.length}`, ''];
   if (preludes.length) lines.push(PRELUDE_BEGIN, ...preludes.flatMap((prelude, index) => (index ? ['', prelude] : [prelude])), PRELUDE_END, '');
+  if (text.includes('\r')) {
+    const tail = `\n${lines.slice(1).join('\n')}\n${body}`;
+    const original = JSON.stringify(text).replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
+    lines[0] += ` envelope-sha256=${sha256(tail)} original=${original}`;
+  }
   return { translation: freeze(from, to, `${lines.join('\n')}\n${body}`, recorded), signatures };
 }
 

@@ -510,7 +510,9 @@
           "rust/src/translation/emit_rocq/expressions.rs",
           "rust/src/translation/check/strings.rs",
           "rust/tests/unit/translation_string_maps.rs",
-          "rust/src/translation/check/type_queries.rs"
+          "rust/src/translation/check/type_queries.rs",
+          "rust/tests/unit/self_translation_line_endings.rs",
+          "parity/fixtures/self-translation-line-endings.json"
         ]
       },
       "javascript": {
@@ -535,7 +537,9 @@
           "js/tests/translation-array-concatenation.test.js",
           "js/tests/translation-self-root-error.test.js",
           "js/tests/translation-self-module-signatures.test.js",
-          "js/tests/translation-string-predicates-parity.test.js"
+          "js/tests/translation-string-predicates-parity.test.js",
+          "js/tests/translation-self-line-endings.test.js",
+          "parity/fixtures/self-translation-line-endings.json"
         ]
       }
     },

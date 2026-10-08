@@ -906,3 +906,9 @@ gaps against the target above:
   open.
 - **Unpublished release.** The npm and crates.io releases that carry this work
   have not been published, and formal-ai does not consume them yet.
+
+Self-translation preserves carriage-return sources through a serialized source
+envelope guarded by the original byte length and digest and the complete emitted
+body digest. The shared JavaScript decision is generated into Rust; each host
+only adapts JSON serialization, byte offsets and hashing. Edits invalidate the
+envelope and use the existing per-item translation and provenance behavior.

@@ -197,3 +197,5 @@ mod issue_195_grammar_native_cmake;
 mod translation_string_predicates;
 
 mod translation_string_maps;
+
+mod self_translation_line_endings;

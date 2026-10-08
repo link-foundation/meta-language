@@ -900,5 +900,13 @@ pub const fn read_scanner_continuation_action(
     }
 }
 
+pub const fn accept_source_envelope_restoration(
+    source_matches: bool,
+    body_matches: bool,
+    original_matches: bool,
+) -> bool {
+    source_matches && body_matches && original_matches
+}
+
 mod continuations;
 pub use continuations::*;
