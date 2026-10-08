@@ -5417,6 +5417,46 @@
       "formerNames": []
     },
     {
+      "id": "translation.accept-type-query-operand",
+      "phrase": "accept type query operand",
+      "role": "operation",
+      "definition": "Determine whether a type query can inspect a checked binding or literal without discarding operand effects or exceptions.",
+      "constraints": [
+        "Unsupported operand shapes and unresolved value types retain an explicit diagnostic."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptTypeQueryOperand"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_type_query_operand"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-type-query-result",
+      "phrase": "read type query result",
+      "role": "operation",
+      "definition": "Read the JavaScript typeof result for a resolved portable value type, preserving Number, BigInt, boolean, string and object distinctions.",
+      "constraints": [
+        "Unsupported operand shapes and unresolved value types retain an explicit diagnostic."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "readTypeQueryResult"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "read_type_query_result"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",

@@ -69,6 +69,41 @@
       "call": "identity('ready')",
       "rustCall": "identity(String::from(\"ready\"))",
       "expected": "ready\n"
+    },
+    {
+      "name": "type-query-number",
+      "source": "/** @param {number} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType(7)",
+      "rustCall": "read_type(7.0)",
+      "expected": "number\n"
+    },
+    {
+      "name": "type-query-bigint",
+      "source": "/** @param {bigint} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType(7n)",
+      "rustCall": "read_type(ml::Big::from_i128(7))",
+      "expected": "bigint\n"
+    },
+    {
+      "name": "type-query-boolean",
+      "source": "/** @param {boolean} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType(false)",
+      "rustCall": "read_type(false)",
+      "expected": "boolean\n"
+    },
+    {
+      "name": "type-query-string",
+      "source": "/** @param {string} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType('ready')",
+      "rustCall": "read_type(String::from(\"ready\"))",
+      "expected": "string\n"
+    },
+    {
+      "name": "type-query-array",
+      "source": "/** @param {number[]} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType([1])",
+      "rustCall": "read_type(vec![1.0])",
+      "expected": "object\n"
     }
   ],
   "refusals": [

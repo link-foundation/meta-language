@@ -264,3 +264,18 @@ export function findDocumentationParameterRange(units) {
   }
   return [start, end];
 }
+
+/** @param {string} kind @returns {boolean} */
+export function acceptTypeQueryOperand(kind) {
+  return kind === 'var' || kind === 'lit' || kind === 'name' || kind === 'num' || kind === 'bool' || kind === 'str';
+}
+
+/** @param {string} kind @returns {string} */
+export function readTypeQueryResult(kind) {
+  if (kind === 'float') return 'number';
+  if (kind === 'nat' || kind === 'int') return 'bigint';
+  if (kind === 'bool') return 'boolean';
+  if (kind === 'string') return 'string';
+  if (kind === 'array' || kind === 'data') return 'object';
+  return '';
+}

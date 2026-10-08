@@ -58,6 +58,7 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                 }
             }
             SNode::Field { object, .. }
+            | SNode::TypeOf { arg: object }
             | SNode::Unary { arg: object, .. }
             | SNode::ToString { arg: object }
             | SNode::Show { arg: object, .. }

@@ -1440,6 +1440,10 @@ class JavaScriptParser {
   unary() {
     const c = this.cursor;
     const token = c.peek();
+    if (token.kind === 'identifier' && c.eat('typeof')) {
+      const arg = this.unary();
+      return { k: 'typeOf', arg, span: joined(token, arg, token) };
+    }
     if (c.eat('!')) {
       const arg = this.unary();
       return { k: 'unary', op: 'not', arg, span: joined(token, arg, token) };

@@ -606,7 +606,7 @@ impl Inference {
                 }
                 Ok(result.unwrap_or_else(|| self.fresh(false)))
             }
-            SNode::ToString { arg } | SNode::Show { arg, .. } => {
+            SNode::TypeOf { arg } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
                 self.expr(arg, env)?;
                 Ok(Term::Known(STRING))
             }

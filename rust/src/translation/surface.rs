@@ -227,6 +227,9 @@ pub enum SNode {
         object: Box<SExpr>,
         field: String,
     },
+    TypeOf {
+        arg: Box<SExpr>,
+    },
     Unary {
         op: UnaryOp,
         arg: Box<SExpr>,
@@ -341,6 +344,7 @@ impl SNode {
             Self::DotCtor { .. } => "dotCtor",
             Self::App { .. } => "app",
             Self::Field { .. } => "field",
+            Self::TypeOf { .. } => "typeOf",
             Self::Unary { .. } => "unary",
             Self::Binary { .. } => "binary",
             Self::If { .. } => "if",

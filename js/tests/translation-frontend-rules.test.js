@@ -46,7 +46,7 @@ test('default references distinguish member names and nested delimiters', () => 
 test('the complete frontend decision module translates through meta-language', () => {
   const source = readFileSync(new URL('../src/translation/frontend-rules.js', import.meta.url), 'utf8');
   const emitted = emitRust(checkProgram(parseJavaScript(source)));
-  for (const name of ['decode_unicode_escape', 'accept_argument_count', 'find_default_parameter_reference', 'start_regular_expression', 'regular_expression_end', 'find_binding_run_end', 'accept_binding_scope', 'accept_literal_binding', 'constant_binding_form', 'accept_constant_emission', 'render_constant_binding', 'accept_module_binding_scope', 'find_documentation_parameter_range']) {
+  for (const name of ['decode_unicode_escape', 'accept_argument_count', 'find_default_parameter_reference', 'start_regular_expression', 'regular_expression_end', 'find_binding_run_end', 'accept_binding_scope', 'accept_literal_binding', 'constant_binding_form', 'accept_constant_emission', 'render_constant_binding', 'accept_module_binding_scope', 'find_documentation_parameter_range', 'accept_type_query_operand', 'read_type_query_result']) {
     assert.ok(emitted.text.includes(`pub fn ${name}(`), name);
   }
 });

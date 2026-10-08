@@ -493,6 +493,28 @@ pub fn find_documentation_parameter_range(units: &[f64]) -> Vec<f64> {
     }
 }
 
+pub fn accept_type_query_operand(kind: &str) -> bool {
+    ((((((kind == "var") || (kind == "lit")) || (kind == "name")) || (kind == "num"))
+        || (kind == "bool"))
+        || (kind == "str"))
+}
+
+pub fn read_type_query_result(kind: &str) -> String {
+    if kind == "float" {
+        String::from("number")
+    } else if kind == "nat" || kind == "int" {
+        String::from("bigint")
+    } else if kind == "bool" {
+        String::from("boolean")
+    } else if kind == "string" {
+        String::from("string")
+    } else if kind == "array" || kind == "data" {
+        String::from("object")
+    } else {
+        String::new()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlDecodeUnicodeEscapeJoin4 {
     MlDecodeUnicodeEscapeJoin4Next(f64, f64),

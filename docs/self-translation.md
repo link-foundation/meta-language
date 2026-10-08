@@ -173,3 +173,10 @@ documentation metadata: only the JavaScript function's actual default supplies
 an omitted argument. The shared frontend decision is generated into Rust;
 checks cover mismatched names, required arguments, execution and restoration.
 This does not implement nullable values, tuple or record types, or Map types.
+
+JavaScript `typeof` now translates for typed bindings and primitive literals,
+with the JavaScript names `number`, `bigint`, `boolean`, `string` and `object`.
+Both runtimes use generated decisions for eligible operands and type names.
+Calls, field reads and other operand expressions remain refused: a type query
+must not discard their evaluation, effects or exceptions. This is a bounded
+extension of #212, not support for dynamic type unions or unbound names.

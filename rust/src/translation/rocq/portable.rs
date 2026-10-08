@@ -28,7 +28,10 @@ pub(super) fn check_portable(node: &SExpr) -> Result<()> {
             .chain(rows.iter().map(|row| &row.body))
             .collect(),
         SNode::App { func, args } => std::iter::once(func.as_ref()).chain(args).collect(),
-        SNode::Unary { arg, .. } | SNode::Cast { arg, .. } | SNode::ToString { arg } => {
+        SNode::TypeOf { arg }
+        | SNode::Unary { arg, .. }
+        | SNode::Cast { arg, .. }
+        | SNode::ToString { arg } => {
             vec![arg]
         }
         _ => Vec::new(),
@@ -109,6 +112,7 @@ pub(super) fn scope_expr(node: SExpr, ty: &Type) -> SExpr {
             negative,
             unit: false,
         },
+        SNode::TypeOf { arg } => SNode::TypeOf { arg: visit(arg) },
         SNode::Unary { op, arg } => SNode::Unary {
             op,
             arg: visit(arg),

@@ -515,7 +515,10 @@ pub(super) fn children(expr: &SExpr) -> Vec<&SExpr> {
         SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
             out.extend(items.iter().map(|item| &item.value));
         }
-        SNode::Unary { arg, .. } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
+        SNode::TypeOf { arg }
+        | SNode::Unary { arg, .. }
+        | SNode::ToString { arg }
+        | SNode::Show { arg, .. } => {
             out.push(arg);
         }
         SNode::Binary { left, right, .. } => {
@@ -571,7 +574,10 @@ pub(super) fn children_mut(expr: &mut SExpr) -> Vec<&mut SExpr> {
         SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
             out.extend(items.iter_mut().map(|item| &mut item.value));
         }
-        SNode::Unary { arg, .. } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
+        SNode::TypeOf { arg }
+        | SNode::Unary { arg, .. }
+        | SNode::ToString { arg }
+        | SNode::Show { arg, .. } => {
             out.push(arg);
         }
         SNode::Binary { left, right, .. } => {
