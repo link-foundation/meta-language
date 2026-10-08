@@ -195,6 +195,27 @@
       "call": "readType()",
       "rustCall": "read_type()",
       "expected": "bigint\n"
+    },
+    {
+      "name": "array-slice-copy",
+      "source": "/** @param {number[]} values @returns {number} */\nexport function copyOrder(values) { let order = 0; for (const value of values.slice()) order = order * 10 + value; return order; }\n",
+      "call": "copyOrder([1, 2, 3])",
+      "rustCall": "copy_order(vec![1.0, 2.0, 3.0])",
+      "expected": "123\n"
+    },
+    {
+      "name": "array-from-copy",
+      "source": "/** @param {number[]} values @returns {number} */\nexport function fromOrder(values) { let order = 0; for (const value of Array.from(values)) order = order * 10 + value; return order; }\n",
+      "call": "fromOrder([1, 2, 3])",
+      "rustCall": "from_order(vec![1.0, 2.0, 3.0])",
+      "expected": "123\n"
+    },
+    {
+      "name": "array-of-construction",
+      "source": "/** @param {number} left @param {number} right @returns {number} */\nexport function constructOrder(left, right) { let order = 0; for (const value of Array.of(left, right)) order = order * 10 + value; return order; }\n",
+      "call": "constructOrder(2, 3)",
+      "rustCall": "construct_order(2.0, 3.0)",
+      "expected": "23\n"
     }
   ],
   "refusals": [

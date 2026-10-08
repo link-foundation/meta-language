@@ -271,3 +271,11 @@ endings, leading and trailing whitespace and Unicode separators when the
 translation is unedited. An edited body or damaged envelope falls back to the
 ordinary per-item provenance rules; it cannot restore the stale envelope.
 The restoration decision is generated from the JavaScript frontend module.
+
+Dense immutable arrays also support zero-argument `slice()`, one-array
+`Array.from()` without a mapper, and homogeneous `Array.of()` construction.
+Their frontend forms and argument decisions are generated from JavaScript into
+Rust, then bound to the existing checked array and spread representation. Both
+runtimes test order, nested arrays, empty arrays, strings, booleans and a receiver
+that prints once. Indexed slicing, non-array iterators, array-like objects and
+mapping functions remain explicit diagnostics until their behavior is modeled.

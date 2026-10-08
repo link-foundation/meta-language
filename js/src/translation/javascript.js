@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, readStringTestOperation, readStringMapOperation } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
@@ -1519,8 +1519,10 @@ class JavaScriptParser {
       if (c.is('.') && c.peek(1).kind === 'identifier') {
         c.next();
         const field = c.next();
-        if (c.is('(') && readArrayMethodForm(field.value) === 'concatenate') {
+        const arrayForm = readArrayMethodForm(field.value);
+        if (c.is('(') && arrayForm !== '') {
           const args = this.arguments(field.value);
+          if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`.${field.value}() with arguments`, 'array copying takes no index arguments until their bounds are modeled', span(token, c.peek()));
           expr = { k: 'array', items: [expr, ...args].map((value) => ({ spread: true, value })), span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
@@ -1754,6 +1756,11 @@ class JavaScriptParser {
     }
     const args = this.arguments(name);
     const called = span(token, c.peek());
+    const arrayForm = readArrayMethodForm(name);
+    if (arrayForm === 'copy-from' || arrayForm === 'construct') {
+      if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`${name}() with ${args.length} arguments`, 'array copying takes one array and no mapping function', called);
+      return { k: 'array', items: args.map(value => ({ spread: arrayForm === 'copy-from', value })), span: called };
+    }
     if (name === 'String' && args.length === 1) return { k: 'toString', arg: args[0], span: called };
     if (name === 'Object.freeze' && args.length === 1) return { ...args[0], span: called };
     if (GLOBALS.has(segments[0]) || name === 'String') {

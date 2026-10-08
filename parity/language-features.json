@@ -512,6 +512,9 @@
           "rust/tests/unit/translation_string_maps.rs",
           "rust/src/translation/check/type_queries.rs",
           "rust/tests/unit/self_translation_line_endings.rs",
+          "rust/tests/unit/translation_array_construction.rs",
+          "rust/src/translation/javascript/array_methods.rs",
+          "parity/fixtures/translation-array-construction.json",
           "parity/fixtures/self-translation-line-endings.json"
         ]
       },
@@ -539,6 +542,8 @@
           "js/tests/translation-self-module-signatures.test.js",
           "js/tests/translation-string-predicates-parity.test.js",
           "js/tests/translation-self-line-endings.test.js",
+          "js/tests/translation-array-concatenation.test.js",
+          "parity/fixtures/translation-array-construction.json",
           "parity/fixtures/self-translation-line-endings.json"
         ]
       }

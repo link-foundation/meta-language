@@ -518,13 +518,19 @@ pub fn read_type_query_result(kind: &str) -> String {
 pub fn read_array_method_form(method: &str) -> String {
     if method == "concat" {
         String::from("concatenate")
+    } else if method == "slice" {
+        String::from("copy")
+    } else if method == "Array.from" {
+        String::from("copy-from")
+    } else if method == "Array.of" {
+        String::from("construct")
     } else {
         String::new()
     }
 }
 
 pub fn accept_root_syntax_item(term: &str, has_children: bool, has_content: bool) -> bool {
-    (((term == "ERROR") && !has_children) && has_content)
+    term == "ERROR" && !has_children && has_content
 }
 
 pub const fn accept_source_prefix_restoration(
@@ -532,7 +538,7 @@ pub const fn accept_source_prefix_restoration(
     body_matches: bool,
     layout_only: bool,
 ) -> bool {
-    ((source_matches && body_matches) && layout_only)
+    source_matches && body_matches && layout_only
 }
 
 pub const fn accept_declaration_signature(constant: bool, literal: bool) -> bool {
@@ -906,6 +912,17 @@ pub const fn accept_source_envelope_restoration(
     original_matches: bool,
 ) -> bool {
     source_matches && body_matches && original_matches
+}
+
+pub fn accept_array_method_arguments(
+    form: &str,
+    has_arguments: bool,
+    has_single_argument: bool,
+) -> bool {
+    form == "concatenate"
+        || form == "construct"
+        || (form == "copy" && !has_arguments)
+        || (form == "copy-from" && has_single_argument)
 }
 
 mod continuations;

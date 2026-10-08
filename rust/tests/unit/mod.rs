@@ -199,3 +199,5 @@ mod translation_string_predicates;
 mod translation_string_maps;
 
 mod self_translation_line_endings;
+
+mod translation_array_construction;

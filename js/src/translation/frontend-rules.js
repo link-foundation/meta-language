@@ -283,6 +283,9 @@ export function readTypeQueryResult(kind) {
 /** @param {string} method @returns {string} */
 export function readArrayMethodForm(method) {
   if (method === 'concat') return 'concatenate';
+  if (method === 'slice') return 'copy';
+  if (method === 'Array.from') return 'copy-from';
+  if (method === 'Array.of') return 'construct';
   return '';
 }
 
@@ -414,4 +417,9 @@ export function readScannerContinuationAction(widthless, startsAfter, endsAfter)
 /** @param {boolean} sourceMatches @param {boolean} bodyMatches @param {boolean} originalMatches @returns {boolean} */
 export function acceptSourceEnvelopeRestoration(sourceMatches, bodyMatches, originalMatches) {
   return sourceMatches && bodyMatches && originalMatches;
+}
+
+/** @param {string} form @param {boolean} hasArguments @param {boolean} hasSingleArgument @returns {boolean} */
+export function acceptArrayMethodArguments(form, hasArguments, hasSingleArgument) {
+  return form === 'concatenate' || form === 'construct' || (form === 'copy' && !hasArguments) || (form === 'copy-from' && hasSingleArgument);
 }

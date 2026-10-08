@@ -383,25 +383,12 @@ impl JavaScriptParser {
                 self.cursor.advance();
                 let field = self.cursor.advance();
                 if self.cursor.is("(") {
-                    if crate::translation::frontend_rules::read_array_method_form(&field.value)
-                        == "concatenate"
-                    {
+                    let array_form =
+                        crate::translation::frontend_rules::read_array_method_form(&field.value);
+                    if !array_form.is_empty() {
                         let args = self.arguments(&field.value)?;
                         let place = Span::new(start, self.to_here(&token).end);
-                        let items = std::iter::once(expr)
-                            .chain(args)
-                            .map(|value| SArrayItem {
-                                spread: true,
-                                value,
-                            })
-                            .collect();
-                        expr = node(
-                            SNode::Array {
-                                items,
-                                element: None,
-                            },
-                            place,
-                        );
+                        expr = Self::array_method_expression(&array_form, args, Some(expr), place)?;
                         continue;
                     }
                     let mapping = crate::translation::frontend_rules::read_string_map_operation(
@@ -896,6 +883,10 @@ impl JavaScriptParser {
         }
         let mut args = self.arguments(&name)?;
         let called = self.to_here(&token);
+        let array_form = crate::translation::frontend_rules::read_array_method_form(&name);
+        if array_form == "copy-from" || array_form == "construct" {
+            return Self::array_method_expression(&array_form, args, None, called);
+        }
         if name == "String" && args.len() == 1 {
             let arg = args.remove(0);
             return Ok(node(SNode::ToString { arg: Box::new(arg) }, called));

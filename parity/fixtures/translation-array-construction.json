@@ -1,0 +1,14 @@
+{
+  "cases": [
+    {
+      "name": "copy-orders",
+      "source": "/** @param {number[]} values @returns {number} */\nfunction copyOrder(values) { let order = 0; for (const value of values.slice()) order = order * 10 + value; return order; }\n/** @param {number[][]} values @returns {number} */\nfunction copyNested(values) { let size = 0; for (const row of values.slice()) size = size + row.length; return size; }\n/** @param {string[]} values @returns {string} */\nfunction copyText(values) { let text = ''; for (const value of values.slice()) text = text + value; return text; }\n/** @param {boolean[]} values @returns {number} */\nfunction copyFlags(values) { let count = 0; for (const value of values.slice()) if (value) count = count + 1; return count; }\n/** @returns {number[]} */\nfunction observe() { console.log('once'); return [4, 5]; }\nconsole.log(copyOrder([1, 2, 3]), copyOrder([]), copyNested([[1, 2], [], [3]]), copyText(['café', '😀']), copyFlags([true, false, true]), observe().slice().length);\n",
+      "expected": "once\n123 0 3 café😀 2 2\n"
+    },
+    {
+      "name": "construct-arrays",
+      "source": "/** @param {number[]} values @returns {number} */\nfunction copyOrder(values) { let order = 0; for (const value of Array.from(values)) order = order * 10 + value; return order; }\n/** @returns {number[][]} */\nfunction constructNested() { return Array.of([1, 2], [], [3]); }\n/** @returns {string[]} */\nfunction constructText() { return Array.of('café', '😀'); }\n/** @returns {boolean[]} */\nfunction constructEmpty() { return Array.of(); }\n/** @returns {number[]} */\nfunction observe() { console.log('once'); return [4, 5]; }\nconsole.log(copyOrder([1, 2, 3]), copyOrder([]), constructNested().length, constructText().length, constructEmpty().length, Array.from(observe()).length);\n",
+      "expected": "once\n123 0 3 2 0 2\n"
+    }
+  ]
+}
