@@ -1,3 +1,4 @@
+import { renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 // Lean 4 emitter. Naturals are `Nat`, integers `Int`; machine integers are
 // represented by `Nat`/`Int` with explicit range checks that `panic!` where
 // Rust would panic. Recursion is structural and annotated as such, so the
@@ -125,9 +126,7 @@ def ml_float_rem (x y : Float) : Float :=
     let r := (mx * 2 ^ (ex - e).toNat) % (my * 2 ^ (ey - e).toNat)
     let magnitude := Float.scaleB (Float.ofNat r) e
     if x.toBits.toNat ≥ 2 ^ 63 then -magnitude else magnitude`,
-  stringIncludes: `/-- String.prototype.includes: the search occurs at some position of the string. -/
-def ml_string_includes (string search : String) : Bool :=
-  (List.range (string.length + 1)).any fun index => (string.drop index).startsWith search`,
+  stringIncludes: readStringTestSupport('Lean', 'includes'),
   arrayAt: `/-- The element at an index; a read outside the array, undefined in JavaScript, panics. -/
 def ml_array_at {α : Type} [Inhabited α] (values : Array α) (index : Int) : α :=
   if h : 0 ≤ index ∧ index.toNat < values.size then values[index.toNat]'h.2
@@ -423,11 +422,9 @@ class LeanEmitter {
       case 'stringTest': {
         const string = this.expr(e.string, depth);
         const search = this.expr(e.search, depth);
-        if (e.op === 'includes') {
-          this.helpers.add('stringIncludes');
-          return `(ml_string_includes ${string} ${search})`;
-        }
-        return `(String.${e.op} ${string} ${search})`;
+        const helper = readStringTestHelper('Lean', e.op);
+        if (helper) this.helpers.add(helper);
+        return renderStringTestExpression('Lean', e.op, string, search);
       }
       case 'cast':
         return this.cast(e, depth);

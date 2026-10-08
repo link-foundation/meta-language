@@ -120,6 +120,18 @@ impl RustEmitter<'_> {
                 Ok(block(&format!("let {name} = {value};\n{body}")))
             }
             Node::Match { .. } => self.match_expr(expr),
+            Node::StringTest { op, string, search } => {
+                let object = self.receiver(string)?;
+                let search = match &search.node {
+                    Node::Lit { value } => rust_string(&value.text()),
+                    _ => format!("{}.as_str()", self.receiver(search)?),
+                };
+                Ok(
+                    crate::translation::frontend_rules::render_string_test_expression(
+                        "Rust", op, &object, &search,
+                    ),
+                )
+            }
             Node::ToString { arg, console } => {
                 match arg.ty {
                     Type::String => return self.expr(arg),

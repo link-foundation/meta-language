@@ -521,7 +521,12 @@ pub(super) fn children(expr: &SExpr) -> Vec<&SExpr> {
         | SNode::Show { arg, .. } => {
             out.push(arg);
         }
-        SNode::Binary { left, right, .. } => {
+        SNode::StringTest {
+            object: left,
+            search: right,
+            ..
+        }
+        | SNode::Binary { left, right, .. } => {
             out.push(left);
             out.push(right);
         }
@@ -580,7 +585,12 @@ pub(super) fn children_mut(expr: &mut SExpr) -> Vec<&mut SExpr> {
         | SNode::Show { arg, .. } => {
             out.push(arg);
         }
-        SNode::Binary { left, right, .. } => {
+        SNode::StringTest {
+            object: left,
+            search: right,
+            ..
+        }
+        | SNode::Binary { left, right, .. } => {
             out.push(left);
             out.push(right);
         }

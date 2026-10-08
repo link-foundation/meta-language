@@ -22,6 +22,7 @@ pub(super) fn check_portable(node: &SExpr) -> Result<()> {
             then,
             otherwise,
         } => vec![cond, then, otherwise],
+        SNode::StringTest { object, search, .. } => vec![object, search],
         SNode::Let { value, body, .. } => vec![value, body],
         SNode::Match { scrutinees, rows } => scrutinees
             .iter()
@@ -111,6 +112,11 @@ pub(super) fn scope_expr(node: SExpr, ty: &Type) -> SExpr {
             ty: Some(ty.clone()),
             negative,
             unit: false,
+        },
+        SNode::StringTest { op, object, search } => SNode::StringTest {
+            op,
+            object: visit(object),
+            search: visit(search),
         },
         SNode::TypeOf { arg } => SNode::TypeOf { arg: visit(arg) },
         SNode::Unary { op, arg } => SNode::Unary {

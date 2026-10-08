@@ -125,6 +125,27 @@
       "call": "copySize([1, 2])",
       "rustCall": "copy_size(vec![1.0, 2.0])",
       "expected": "2\n"
+    },
+    {
+      "name": "unicode-string-predicates",
+      "source": "/** @param {string} value @returns {boolean} */\nexport function allTests(value) { return value.startsWith('👋') && value.endsWith('.js') && value.includes('é'); }\n",
+      "call": "allTests('👋 café.js')",
+      "rustCall": "all_tests(String::from(\"👋 café.js\"))",
+      "expected": "true\n"
+    },
+    {
+      "name": "empty-string-predicates",
+      "source": "/** @param {string} value @returns {boolean} */\nexport function emptySearch(value) { return value.startsWith('') && value.endsWith('') && value.includes(''); }\n",
+      "call": "emptySearch('你好')",
+      "rustCall": "empty_search(String::from(\"你好\"))",
+      "expected": "true\n"
+    },
+    {
+      "name": "missing-string-predicates",
+      "source": "/** @param {string} value @returns {boolean} */\nexport function missingSearch(value) { return value.includes('absent') || value.startsWith('absent') || value.endsWith('absent'); }\n",
+      "call": "missingSearch('abc')",
+      "rustCall": "missing_search(String::from(\"abc\"))",
+      "expected": "false\n"
     }
   ],
   "refusals": [

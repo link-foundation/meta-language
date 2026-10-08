@@ -1,3 +1,4 @@
+import { renderStringTestExpression } from './frontend-rules.js';
 // Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer
 // the translation carries in its own prelude, so no value is ever narrowed;
 // machine integers stay Rust machine integers with checked arithmetic, which
@@ -954,9 +955,8 @@ class RustEmitter {
         // JavaScript whitespace is Unicode White_Space without U+0085, plus U+FEFF.
         return `${this.receiver(e.string)}.${{ trim: 'trim_matches', trimStart: 'trim_start_matches', trimEnd: 'trim_end_matches' }[e.op]}(|c: char| (c.is_whitespace() && c != '\\u{85}') || c == '\\u{feff}').to_string()`;
       case 'stringTest': {
-        const method = { startsWith: 'starts_with', endsWith: 'ends_with', includes: 'contains' }[e.op];
         const search = e.search.k === 'lit' ? rustString(String(e.search.value)) : `${this.receiver(e.search)}.as_str()`;
-        return `${this.receiver(e.string)}.${method}(${search})`;
+        return renderStringTestExpression('Rust', e.op, this.receiver(e.string), search);
       }
       case 'cast':
         return this.cast(e);

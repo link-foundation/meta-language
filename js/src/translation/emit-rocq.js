@@ -1,3 +1,4 @@
+import { renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
 // run at their source sizes (unary `nat` cannot hold 20!). Structural
 // recursion over data is a `Fixpoint`; recursion that decreases a natural is
@@ -12,9 +13,6 @@ import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
 import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-common.js';
 
-const ROCQ_STRING_TESTS = Object.freeze({
-  startsWith: 'ml_string_starts_with', endsWith: 'ml_string_ends_with', includes: 'ml_string_includes',
-});
 const KEYWORDS = new Set([
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
   'match', 'mod', 'Prop', 'return', 'Set', 'SProp', 'then', 'Type', 'using', 'where', 'with', 'struct', 'measure',
@@ -206,15 +204,9 @@ Definition ml_is_finite (x : float) : bool := negb (orb (PrimFloat.is_nan x) (Pr
 Definition ml_is_integer (x : float) : bool := andb (ml_is_finite x) (PrimFloat.eqb (ml_trunc x) x).
 Definition ml_is_safe_integer (x : float) : bool :=
   andb (ml_is_integer x) (PrimFloat.leb (PrimFloat.abs x) 9007199254740991%float).`,
-  stringStartsWith: `(* String.prototype.startsWith: the string begins with the search. *)
-Definition ml_string_starts_with (string search : string) : bool := String.prefix search string.`,
-  stringEndsWith: `(* String.prototype.endsWith: the string ends with the search. *)
-Definition ml_string_ends_with (string search : string) : bool :=
-  Nat.leb (String.length search) (String.length string) &&
-  String.eqb (String.substring (String.length string - String.length search) (String.length search) string) search.`,
-  stringIncludes: `(* String.prototype.includes: the search occurs at some position of the string. *)
-Definition ml_string_includes (string search : string) : bool :=
-  match String.index 0 search string with Some _ => true | None => false end.`,
+  stringStartsWith: readStringTestSupport('Rocq', 'startsWith'),
+  stringEndsWith: readStringTestSupport('Rocq', 'endsWith'),
+  stringIncludes: readStringTestSupport('Rocq', 'includes'),
   listAt: `(* The element at an index, walking the list; a read outside it, undefined
    in JavaScript, is outside the in-bounds assumption. *)
 Fixpoint ml_list_at {A : Type} (values : list A) (index : Z) (fallback : A) : A :=
@@ -663,9 +655,9 @@ class RocqEmitter {
       case 'stringMap':
         throw unsupported(`.${e.op}()`, e.op.startsWith('trim') ? 'JavaScript whitespace trimming has no Rocq library counterpart; Rocq trims ASCII whitespace only' : 'Unicode case mapping has no Rocq library counterpart; Rocq maps ASCII letters only', e.span);
       case 'stringTest': {
-        const helper = { startsWith: 'stringStartsWith', endsWith: 'stringEndsWith', includes: 'stringIncludes' }[e.op];
+        const helper = readStringTestHelper('Rocq', e.op);
         this.helpers.add(helper);
-        return `(${ROCQ_STRING_TESTS[e.op]} ${this.expr(e.string)} ${this.expr(e.search)})`;
+        return renderStringTestExpression('Rocq', e.op, this.expr(e.string), this.expr(e.search));
       }
       case 'cast':
         return this.cast(e);

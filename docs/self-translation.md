@@ -245,3 +245,10 @@ exclude algebraic data types and guarded natural-number parameters. Nonliteral
 constant captures stay unbound: lazy initialization does not establish eager
 JavaScript initialization order or effects. The shared generated eligibility
 rule is used by both binders.
+
+Whole-string `startsWith`, `endsWith` and `includes` predicates use shared
+generated decisions in both translators. Focused checks cover Unicode text,
+empty searches, missing matches, four-target emission parity and Rust method
+spellings (`starts_with`, `ends_with`, `contains`). Positional search arguments
+and non-string operands remain explicit refusals. These checks do not establish
+complete JavaScript string support or the full native execution matrix.

@@ -300,3 +300,63 @@ export function acceptSourcePrefixRestoration(sourceMatches, bodyMatches, layout
 export function acceptDeclarationSignature(constant, literal) {
   return !constant || literal;
 }
+
+/** @param {string} language @param {string} method @returns {string} */
+export function readStringTestOperation(language, method) {
+  if (language === 'JavaScript') {
+    if (method === 'startsWith' || method === 'endsWith' || method === 'includes') return method;
+    return '';
+  }
+  if (language === 'Rust') {
+    if (method === 'starts_with') return 'startsWith';
+    if (method === 'ends_with') return 'endsWith';
+    if (method === 'contains') return 'includes';
+    return '';
+  }
+  return '';
+}
+
+/** @param {string} target @param {string} operation @param {string} object @param {string} search @returns {string} */
+export function renderStringTestExpression(target, operation, object, search) {
+  if (target === 'JavaScript') return object + '.' + operation + '(' + search + ')';
+  if (target === 'Rust') {
+    let method = '';
+    if (operation === 'startsWith') method = 'starts_with';
+    if (operation === 'endsWith') method = 'ends_with';
+    if (operation === 'includes') method = 'contains';
+    return object + '.' + method + '(' + search + ')';
+  }
+  if (target === 'Lean') {
+    if (operation === 'includes') return '(ml_string_includes ' + object + ' ' + search + ')';
+    return '(String.' + operation + ' ' + object + ' ' + search + ')';
+  }
+  let helper = '';
+  if (operation === 'startsWith') helper = 'ml_string_starts_with';
+  if (operation === 'endsWith') helper = 'ml_string_ends_with';
+  if (operation === 'includes') helper = 'ml_string_includes';
+  return '(' + helper + ' ' + object + ' ' + search + ')';
+}
+
+/** @param {string} target @param {string} operation @returns {string} */
+export function readStringTestHelper(target, operation) {
+  if (target === 'Lean') {
+    if (operation === 'includes') return 'stringIncludes';
+    return '';
+  }
+  if (target === 'Rocq') {
+    if (operation === 'startsWith') return 'stringStartsWith';
+    if (operation === 'endsWith') return 'stringEndsWith';
+    if (operation === 'includes') return 'stringIncludes';
+    return '';
+  }
+  return '';
+}
+
+/** @param {string} target @param {string} operation @returns {string} */
+export function readStringTestSupport(target, operation) {
+  if (target === "Lean" && operation === "includes") return "/-- String.prototype.includes: the search occurs at some position of the string. -/\ndef ml_string_includes (string search : String) : Bool :=\n  (List.range (string.length + 1)).any fun index => (string.drop index).startsWith search";
+  if (target === "Rocq" && operation === "startsWith") return "(* String.prototype.startsWith: the string begins with the search. *)\nDefinition ml_string_starts_with (string search : string) : bool := String.prefix search string.";
+  if (target === "Rocq" && operation === "endsWith") return "(* String.prototype.endsWith: the string ends with the search. *)\nDefinition ml_string_ends_with (string search : string) : bool :=\n  Nat.leb (String.length search) (String.length string) &&\n  String.eqb (String.substring (String.length string - String.length search) (String.length search) string) search.";
+  if (target === "Rocq" && operation === "includes") return "(* String.prototype.includes: the search occurs at some position of the string. *)\nDefinition ml_string_includes (string search : string) : bool :=\n  match String.index 0 search string with Some _ => true | None => false end.";
+  return '';
+}

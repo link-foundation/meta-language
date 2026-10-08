@@ -697,6 +697,23 @@ impl<'p> JavaScriptEmitter<'p> {
                 "(() => {{\n{}\n}})()",
                 indent(&self.statements(e)?.join("\n"), 1)
             )),
+            Node::StringTest { op, string, search } => {
+                let value = self.expr(string)?;
+                let object = if matches!(string.node, Node::Var { .. } | Node::Lit { .. }) {
+                    value
+                } else {
+                    format!("({value})")
+                };
+                let search = self.expr(search)?;
+                Ok(
+                    crate::translation::frontend_rules::render_string_test_expression(
+                        "JavaScript",
+                        op,
+                        &object,
+                        &search,
+                    ),
+                )
+            }
             Node::ToString { arg, console } => {
                 if *console && arg.ty.is_float() {
                     self.helpers.insert(Helper::ShowNumber);

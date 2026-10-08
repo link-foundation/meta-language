@@ -620,6 +620,13 @@ impl Inference {
                 }
                 Ok(result.unwrap_or_else(|| self.fresh(false)))
             }
+            SNode::StringTest { object, search, .. } => {
+                let object_type = self.expr(object, env)?;
+                self.unify(&object_type, &Term::Known(STRING), expr.span)?;
+                let search_type = self.expr(search, env)?;
+                self.unify(&search_type, &Term::Known(STRING), expr.span)?;
+                Ok(Term::Known(BOOL))
+            }
             SNode::TypeOf { arg } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
                 self.expr(arg, env)?;
                 Ok(Term::Known(STRING))

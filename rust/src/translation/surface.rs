@@ -263,6 +263,11 @@ pub enum SNode {
         scrutinee: Box<SExpr>,
         cases: Vec<SCase>,
     },
+    StringTest {
+        op: String,
+        object: Box<SExpr>,
+        search: Box<SExpr>,
+    },
     ToString {
         arg: Box<SExpr>,
     },
@@ -351,6 +356,7 @@ impl SNode {
             Self::Let { .. } => "let",
             Self::Match { .. } => "match",
             Self::Match1 { .. } => "match1",
+            Self::StringTest { .. } => "stringTest",
             Self::ToString { .. } => "toString",
             Self::Show { .. } => "show",
             Self::Cast { .. } => "cast",

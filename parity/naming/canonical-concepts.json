@@ -5457,6 +5457,170 @@
       "formerNames": []
     },
     {
+      "id": "translation.read-array-method-form",
+      "phrase": "read array method form",
+      "role": "operation",
+      "definition": "Read the portable lowering form for an array method.",
+      "constraints": [
+        "Concatenation accepts homogeneous arrays through the checked array spread representation."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "readArrayMethodForm"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "read_array_method_form"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-root-syntax-item",
+      "phrase": "accept root syntax item",
+      "role": "operation",
+      "definition": "Retain a nonempty childless parser ERROR root as a top-level syntax item.",
+      "constraints": [
+        "The parser resource budget remains unchanged and the complete error span is carried with provenance."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptRootSyntaxItem"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_root_syntax_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-source-prefix-restoration",
+      "phrase": "accept source prefix restoration",
+      "role": "operation",
+      "definition": "Accept a verified original source prefix followed only by generated layout.",
+      "constraints": [
+        "The source language and SHA-256 digest must match; trailing executable edits prevent restoration."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptSourcePrefixRestoration"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_source_prefix_restoration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-declaration-signature",
+      "phrase": "accept declaration signature",
+      "role": "operation",
+      "definition": "Accept function signatures and literal constant signatures for cross-item bindings.",
+      "constraints": [
+        "Nonliteral constant initialization remains unbound until eager evaluation and effects are represented."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptDeclarationSignature"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_declaration_signature"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-string-test-operation",
+      "phrase": "read string test operation",
+      "role": "operation",
+      "definition": "Read the canonical string predicate operation from a method spelling.",
+      "constraints": [
+        "Whole-string predicates accept exactly one string search argument.",
+        "Method spellings are normalized separately for JavaScript and Rust."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "readStringTestOperation"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "read_string_test_operation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.render-string-test-expression",
+      "phrase": "render string test expression",
+      "role": "operation",
+      "definition": "Render a checked string predicate in the target language.",
+      "constraints": [
+        "Whole-string predicates accept exactly one string search argument.",
+        "Method spellings are normalized separately for JavaScript and Rust."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "renderStringTestExpression"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "render_string_test_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-string-test-helper",
+      "phrase": "read string test helper",
+      "role": "operation",
+      "definition": "Read the support definition key for a string predicate.",
+      "constraints": [
+        "Whole-string predicates accept exactly one string search argument.",
+        "Method spellings are normalized separately for JavaScript and Rust."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "readStringTestHelper"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "read_string_test_helper"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-string-test-support",
+      "phrase": "read string test support",
+      "role": "operation",
+      "definition": "Read the target support definition for a string predicate.",
+      "constraints": [
+        "Whole-string predicates accept exactly one string search argument.",
+        "Method spellings are normalized separately for JavaScript and Rust."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "readStringTestSupport"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "read_string_test_support"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",
@@ -63130,86 +63294,6 @@
         {
           "source": "native:cmake",
           "name": "scope_closing_keyword"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "translation.read-array-method-form",
-      "phrase": "read array method form",
-      "role": "operation",
-      "definition": "Read the portable lowering form for an array method.",
-      "constraints": [
-        "Concatenation accepts homogeneous arrays through the checked array spread representation."
-      ],
-      "sourceAliases": [
-        {
-          "source": "JavaScript frontend decisions",
-          "name": "readArrayMethodForm"
-        },
-        {
-          "source": "Rust frontend decisions",
-          "name": "read_array_method_form"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "translation.accept-root-syntax-item",
-      "phrase": "accept root syntax item",
-      "role": "operation",
-      "definition": "Retain a nonempty childless parser ERROR root as a top-level syntax item.",
-      "constraints": [
-        "The parser resource budget remains unchanged and the complete error span is carried with provenance."
-      ],
-      "sourceAliases": [
-        {
-          "source": "JavaScript frontend decisions",
-          "name": "acceptRootSyntaxItem"
-        },
-        {
-          "source": "Rust frontend decisions",
-          "name": "accept_root_syntax_item"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "translation.accept-source-prefix-restoration",
-      "phrase": "accept source prefix restoration",
-      "role": "operation",
-      "definition": "Accept a verified original source prefix followed only by generated layout.",
-      "constraints": [
-        "The source language and SHA-256 digest must match; trailing executable edits prevent restoration."
-      ],
-      "sourceAliases": [
-        {
-          "source": "JavaScript frontend decisions",
-          "name": "acceptSourcePrefixRestoration"
-        },
-        {
-          "source": "Rust frontend decisions",
-          "name": "accept_source_prefix_restoration"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "translation.accept-declaration-signature",
-      "phrase": "accept declaration signature",
-      "role": "operation",
-      "definition": "Accept function signatures and literal constant signatures for cross-item bindings.",
-      "constraints": [
-        "Nonliteral constant initialization remains unbound until eager evaluation and effects are represented."
-      ],
-      "sourceAliases": [
-        {
-          "source": "JavaScript frontend decisions",
-          "name": "acceptDeclarationSignature"
-        },
-        {
-          "source": "Rust frontend decisions",
-          "name": "accept_declaration_signature"
         }
       ],
       "formerNames": []

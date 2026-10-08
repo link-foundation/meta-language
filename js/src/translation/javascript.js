@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, readStringTestOperation } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
@@ -19,7 +19,6 @@ import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
-const STRING_TESTS = new Set(['startsWith', 'endsWith', 'includes']);
 // String-to-string maps: the Unicode case mappings, which Rust's
 // to_lowercase/to_uppercase also follow, and trimming of the JavaScript
 // whitespace set.
@@ -1526,7 +1525,7 @@ class JavaScriptParser {
           expr = { k: 'array', items: [expr, ...args].map((value) => ({ spread: true, value })), span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
-        if (c.is('(') && STRING_TESTS.has(field.value)) {
+        if (c.is('(') && readStringTestOperation('JavaScript', field.value) !== '') {
           const args = this.arguments(field.value);
           if (args.length !== 1) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'search the whole string, with one argument', span(token, c.peek()));
           expr = { k: 'stringTest', op: field.value, object: expr, search: args[0], span: joined(expr, { span: span(token, c.peek()) }, token) };

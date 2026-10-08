@@ -92,6 +92,23 @@ impl RocqEmitter<'_> {
                 Ok(format!("(let {name} := {value} in {})", self.expr(body)?))
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases),
+            Node::StringTest { op, string, search } => {
+                let helper =
+                    crate::translation::frontend_rules::read_string_test_helper("Rocq", op);
+                self.helpers.insert(match helper.as_str() {
+                    "stringStartsWith" => Helper::StringStartsWith,
+                    "stringEndsWith" => Helper::StringEndsWith,
+                    "stringIncludes" => Helper::StringIncludes,
+                    _ => unreachable!("checked string predicate has a helper"),
+                });
+                let object = self.expr(string)?;
+                let search = self.expr(search)?;
+                Ok(
+                    crate::translation::frontend_rules::render_string_test_expression(
+                        "Rocq", op, &object, &search,
+                    ),
+                )
+            }
             Node::ToString { arg, console } => self.text_of(arg, *console),
             Node::Cast {
                 arg,

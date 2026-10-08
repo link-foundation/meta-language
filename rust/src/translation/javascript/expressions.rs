@@ -404,6 +404,32 @@ impl JavaScriptParser {
                         );
                         continue;
                     }
+                    let operation = crate::translation::frontend_rules::read_string_test_operation(
+                        "JavaScript",
+                        &field.value,
+                    );
+                    if !operation.is_empty() {
+                        let args = self.arguments(&field.value)?;
+                        if args.len() != 1 {
+                            return Err(unsupported(
+                                &format!(".{}() with {} arguments", field.value, args.len()),
+                                "search the whole string, with one argument",
+                                Some(self.to_here(&token)),
+                            ));
+                        }
+                        let place = Span::new(start, self.to_here(&token).end);
+                        expr = node(
+                            SNode::StringTest {
+                                op: operation,
+                                object: Box::new(expr),
+                                search: Box::new(
+                                    args.into_iter().next().expect("one search argument"),
+                                ),
+                            },
+                            place,
+                        );
+                        continue;
+                    }
                     if field.value != "toString" {
                         return Err(unsupported(
                             &format!("method call .{}()", field.value),

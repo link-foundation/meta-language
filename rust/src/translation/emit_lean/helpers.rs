@@ -1,7 +1,7 @@
 //! The Lean helper definitions a translation may use.
 
 /// Helper definitions by name, in the order the file lists the ones it uses.
-pub(super) const HELPERS: [(&str, &str); 7] = [
+pub(super) const HELPERS: [(&str, &str); 8] = [
     (
         "jsNumber",
         r#"/-- ECMAScript Number::toString: the shortest decimal that reads back as the
@@ -136,6 +136,7 @@ def ml_min (a b : Float) : Float :=
 def ml_is_integer (x : Float) : Bool := x.isFinite && ml_trunc x == x
 def ml_is_safe_integer (x : Float) : Bool := ml_is_integer x && decide (x.abs ≤ 9007199254740991)",
     ),
+    ("stringIncludes", ""),
     (
         "arrayAt",
         r#"/-- The element at an index; a read outside the array, undefined in JavaScript, panics. -/

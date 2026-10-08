@@ -301,6 +301,7 @@ impl Checker {
             SNode::Match1 { scrutinee, cases } => {
                 self.match_cases(scrutinee, cases, span, env, path, expected)
             }
+            SNode::StringTest { .. } => self.string_test(node, env, path),
             SNode::ToString { arg } => {
                 let arg = self.expr(arg, env, path, None, false)?;
                 if arg.ty == Type::String {

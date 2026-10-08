@@ -64,7 +64,12 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             | SNode::Show { arg: object, .. }
             | SNode::Cast { arg: object, .. }
             | SNode::Length { object, .. } => walk(object, arrays),
-            SNode::Binary { left, right, .. }
+            SNode::StringTest {
+                object: left,
+                search: right,
+                ..
+            }
+            | SNode::Binary { left, right, .. }
             | SNode::Let {
                 value: left,
                 body: right,
