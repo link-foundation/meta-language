@@ -13,8 +13,8 @@
 use std::collections::{HashMap, HashSet};
 
 use super::{
-    BOOL, BinaryOp, External, FLOAT, INT, ROOT, Result, SCtor, SEffect, SExpr, SFn, SItem, SNode,
-    SPattern, SPatternNode, SProgram, SProp, SPropNode, STRING, Span, Type, UnaryOp, type_error,
+    BOOL, BinaryOp, FLOAT, INT, ROOT, Result, SCtor, SEffect, SExpr, SFn, SItem, SNode, SPattern,
+    SPatternNode, SProgram, SProp, SPropNode, STRING, Span, Type, UnaryOp, type_error,
 };
 use crate::translation::types::UNIT;
 
@@ -434,18 +434,13 @@ impl Inference {
     ) -> Result<Vec<(Vec<Type>, Type)>> {
         // The other items of the module keep the types their own translation checked.
         for external in &program.externals {
-            let signature = match external {
-                External::Function { params, ret, .. } => Signature {
-                    params: params
-                        .iter()
-                        .map(|param| self.declared(Some(&param.ty)))
-                        .collect(),
-                    ret: self.declared(Some(ret)),
-                },
-                External::Constant { ty, .. } => Signature {
-                    params: Vec::new(),
-                    ret: self.declared(Some(ty)),
-                },
+            let (params, ret) = external.signature();
+            let signature = Signature {
+                params: params
+                    .into_iter()
+                    .map(|ty| self.declared(Some(ty)))
+                    .collect(),
+                ret: self.declared(Some(ret)),
             };
             self.signatures
                 .insert(format!("{ROOT}.{}", external.name()), signature);

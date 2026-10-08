@@ -856,6 +856,17 @@ impl External {
         }
     }
 
+    /// The types of a function's parameters and its result, or a constant's type.
+    #[must_use]
+    pub fn signature(&self) -> (Vec<&Type>, &Type) {
+        match self {
+            Self::Function { params, ret, .. } => {
+                (params.iter().map(|param| &param.ty).collect(), ret)
+            }
+            Self::Constant { ty, .. } => (Vec::new(), ty),
+        }
+    }
+
     /// The item under the name `name`.
     #[must_use]
     pub fn renamed(&self, name: &str) -> Self {
