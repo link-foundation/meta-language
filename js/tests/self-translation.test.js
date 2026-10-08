@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -153,11 +153,25 @@ test('the JavaScript acceptance stage compiles every generated Rust case with cl
   try {
     const rustCases = cases.filter(({ to }) => to === 'Rust');
     assert.ok(rustCases.length > 0, 'the shared corpus includes JavaScript/TypeScript -> Rust cases');
+    const translate = (entry) => selfTranslate(read(entry.source), entry.from, entry.to, { decorators: decoratorsOf.get(entry.id) }).code;
+    // The case that translates the sibling source a module path names.
+    const moduleCase = (name) => rustCases.find((entry) => entry.from !== 'Rust' && path.basename(entry.source).replace(/\.[^.]+$/u, '') === name);
     for (const entry of rustCases) {
-      const translation = selfTranslate(read(entry.source), entry.from, entry.to, { decorators: decoratorsOf.get(entry.id) });
-      const source = path.join(directory, `${entry.id}.rs`);
+      const code = translate(entry);
+      // A relative import becomes `use crate::<module>::…`, so a case that
+      // imports compiles as the root of a crate holding the translations of
+      // the sibling sources it names, each as a module file beside it.
+      const imported = [...new Set([...code.matchAll(/^use crate::([A-Za-z_][A-Za-z0-9_]*)::/gmu)].map((match) => match[1]))];
+      const crate = path.join(directory, entry.id);
+      mkdirSync(crate);
+      for (const name of imported) {
+        const sibling = moduleCase(name);
+        assert.ok(sibling, `${entry.id} imports crate module ${name}, which a corpus case translates`);
+        writeFileSync(path.join(crate, `${name}.rs`), translate(sibling));
+      }
+      const source = path.join(crate, 'lib.rs');
       const metadata = path.join(directory, `${entry.id}.rmeta`);
-      writeFileSync(source, translation.code);
+      writeFileSync(source, `${code}${imported.map((name) => `\nmod ${name};`).join('')}\n`);
       // Rust -> Rust restores an original fixture byte for byte. Apply the
       // strict generated-code lint policy to JavaScript/TypeScript -> Rust.
       compileRustTranslation(entry.from, source, metadata);
