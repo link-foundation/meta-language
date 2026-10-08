@@ -8,7 +8,8 @@
 // Each probe observes three assertions of I195-DOWNSTREAM-RML-WORKLOADS:
 // - sharedConceptsReused: RML's bridge hands out the package's own types (the
 //   JavaScript re-exports are the identical classes; the Rust network binds to
-//   meta_language::LinkNetwork and equals the crate's own parse), and RML's
+//   meta_language::LinkNetwork and equals the crate's own parse with RML's
+//   declared structure extension applied), and RML's
 //   truth and substitution planning compute what the package computes.
 // - distinctionsPreserved: RML source round-trips byte for byte, including an
 //   unmatched parenthesis in a quote and a comment, the network keeps the RML
@@ -92,6 +93,7 @@ const sharedConceptsReused = assertion([
     const network = bridge.parseRmlToMetaLanguage(SAMPLE);
     assert.ok(network instanceof api.LinkNetwork);
     const direct = api.LinkNetwork.parse(SAMPLE, 'RML', api.ParseConfiguration.default());
+    bridge.attachRmlStructure(direct, SAMPLE, 'RML');
     assert.equal(network.toLino(), direct.toLino());
     return { links: network.len() };
   }),
@@ -227,6 +229,7 @@ use meta_language::{
     LinkNetwork, LinkType, ParseConfiguration, ProbabilisticTruthValue, Probability, TruthValue,
 };
 use rml::evaluate;
+use rml::meta_language_structure::attach_rml_structure;
 use rml::meta_language_support::{
     meta_language_substitution_smoke, meta_language_truth_smoke, parse_rml_links_via_meta_language,
     parse_rml_to_meta_language, reconstruct_rml_from_meta_language,
@@ -267,7 +270,8 @@ fn has_document(network: &LinkNetwork, language: &str) -> bool {
 fn shared_concepts_reused() {
     // The binding compiles only when RML's network is the patched crate's own type.
     let network: LinkNetwork = parse_rml_to_meta_language(SAMPLE);
-    let direct = LinkNetwork::parse(SAMPLE, RML_META_LANGUAGE, ParseConfiguration::default());
+    let mut direct = LinkNetwork::parse(SAMPLE, RML_META_LANGUAGE, ParseConfiguration::default());
+    attach_rml_structure(&mut direct, SAMPLE);
     assert_eq!(network, direct);
 
     let half = ProbabilisticTruthValue::from_ratio(1, 2).expect("valid probability ratio");

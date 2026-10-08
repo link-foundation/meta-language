@@ -854,6 +854,7 @@ impl Lowering {
                 .map(|entry| SParam {
                     default: None,
                     name: entry.ir.clone(),
+                    default_value: None,
                     ty: None,
                     span: Some(place),
                     guard: None,

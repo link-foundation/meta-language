@@ -23,9 +23,34 @@ import {
   workloadTestFiles,
 } from '../scripts/issue-195-rml-workloads.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { JAVASCRIPT_PROBE } from '../scripts/issue-195-rml-workload-probes.mjs';
+import { LanguageProfile, LinkNetwork, LinkType, ParseConfiguration } from '../src/index.js';
 
 const fixture = loadRmlWorkloadFixture();
 const reportPath = process.env[RML_WORKLOAD_REPORT_VARIABLE];
+
+test('the consumer reuse probe compares the entire network with its declared structure profile', () => {
+  const source = '(a: a is a)\n';
+  const api = { LinkNetwork, ParseConfiguration };
+  const attachRmlStructure = (network) => LanguageProfile.new('consumer:structure:1', 'RML')
+    .withLinkType(LinkType.Syntax).withConcept('consumer:structure:1:document').declareIn(network);
+  const parseRmlToMetaLanguage = (text) => {
+    const network = LinkNetwork.parse(text, 'RML', ParseConfiguration.default());
+    attachRmlStructure(network);
+    return network;
+  };
+  const body = JAVASCRIPT_PROBE.match(/check\('RML source is held in the package link network', \(\) => \{([\s\S]*?)\n  \}\),/u)?.[1];
+  assert.ok(body, 'the installed consumer probe contains the network comparison');
+  const probe = new Function('assert', 'bridge', 'api', 'SAMPLE', body);
+  const bridge = { parseRmlToMetaLanguage, attachRmlStructure };
+  assert.ok(probe(assert, bridge, api, source).links > LinkNetwork.parse(source, 'RML').len());
+  assert.throws(() => probe(assert, {
+    ...bridge, parseRmlToMetaLanguage: (text) => parseRmlToMetaLanguage(text.replace('a', 'b')),
+  }, api, source), assert.AssertionError, 'a changed source token is still rejected');
+  assert.throws(() => probe(assert, {
+    ...bridge, parseRmlToMetaLanguage: (text) => LinkNetwork.parse(text, 'RML'),
+  }, api, source), assert.AssertionError, 'an omitted structure profile is still rejected');
+});
 
 // A report on which every assertion of both runtimes holds.
 function passingReport() {
@@ -75,11 +100,15 @@ const failing = (result) => RML_WORKLOAD_ASSERTIONS.filter((assertion) => !resul
 
 test('the fixture inventories the workload test files of both runtimes', () => {
   assert.deepEqual(workloadTestFiles(fixture, 'javascript'), [
+    'js/tests/meta-language-rename.test.mjs',
+    'js/tests/meta-language-structure.test.mjs',
     'js/tests/meta-language-support.test.mjs',
     'js/tests/theory-network-linked.test.mjs',
     'js/tests/theory-network.test.mjs',
   ]);
   assert.deepEqual(workloadTestFiles(fixture, 'rust'), [
+    'rust/tests/meta_language_rename_tests.rs',
+    'rust/tests/meta_language_structure_tests.rs',
     'rust/tests/meta_language_support_tests.rs',
     'rust/tests/theory_network_tests.rs',
   ]);

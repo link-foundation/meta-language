@@ -7909,6 +7909,22 @@
       "dependsOn": []
     },
     {
+      "id": "generator js/scripts/generate-frontend-rules.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/generate-frontend-rules.mjs",
+      "declaredIn": [
+        "js/scripts/generate-frontend-rules.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "action dtolnay/rust-toolchain@stable"
+      ]
+    },
+    {
       "id": "generator js/scripts/generate-issue-195-conformance.mjs@script",
       "category": "generator",
       "name": "js/scripts/generate-issue-195-conformance.mjs",
@@ -8558,6 +8574,7 @@
       "category": "action",
       "name": "dtolnay/rust-toolchain",
       "declaredIn": [
+        ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
       ],
       "pinned": "stable",

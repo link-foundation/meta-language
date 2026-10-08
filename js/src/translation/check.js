@@ -6,6 +6,7 @@
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import { acceptArgumentCount } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, isFloat, isNatural, isNumeric, sameType, typeKey,
@@ -649,7 +650,7 @@ class Checker {
     if (entry.k !== 'fn') throw typeError(`${head.path.join('.')} is not a function`, span);
     if (!entry.params) throw typeError(`${entry.fullName} is used before its signature is known`, span);
     // A call that leaves out trailing parameters with defaults passes the defaults.
-    if (args.length < entry.params.length && entry.params.slice(args.length).every((param) => param.default)) {
+    if (args.length < entry.params.length && acceptArgumentCount(entry.params.map((param) => Boolean(param.default)), args.length)) {
       args = [...args, ...entry.params.slice(args.length).map((param) => ({ ...param.default, closedDefault: true }))];
     }
     if (args.length !== entry.params.length) {

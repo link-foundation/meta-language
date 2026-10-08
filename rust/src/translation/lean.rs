@@ -733,6 +733,7 @@ impl<'a> LeanParser<'a> {
                 name,
                 ty,
                 value,
+                constant: false,
                 span: Some(self.span_to_next(&token)),
             });
         }
@@ -778,6 +779,7 @@ const fn param(name: String, ty: Type) -> SParam {
     SParam {
         default: None,
         name,
+        default_value: None,
         ty: Some(ty),
         span: None,
         guard: None,

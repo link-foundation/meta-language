@@ -531,6 +531,20 @@ export const NAME_INVENTORIES = Object.freeze([
     ],
     recordOf: (name) => `translation.${name}`,
   },
+  {
+    inventory: 'frontend decision operations',
+    files: ['js/src/translation/frontend-rules.js', 'rust/src/translation/frontend_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
+      .filter((name) => !name.startsWith('ml_'))
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'frontend decision result concepts',
+    files: ['js/src/translation/frontend-rules.js', 'rust/src/translation/frontend_rules.rs'],
+    extract: (text) => captures(text, /(?:\} |^pub enum )(UnicodeEscape)(?: \*\/| \{)/gmu).map(() => 'unicode-escape'),
+    recordOf: () => 'translation.unicode-escape',
+  },
 ]);
 
 /**

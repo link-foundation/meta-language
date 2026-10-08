@@ -434,6 +434,7 @@ impl RustParser {
             params.push(SParam {
                 default: None,
                 name: param_name,
+                default_value: None,
                 ty: Some(ty),
                 span: span(&param_token, self.cursor.peek()),
                 guard: None,
@@ -640,6 +641,7 @@ impl RustParser {
                     name: binding.name,
                     ty: binding.ty,
                     value: binding.value,
+                    constant: false,
                     span: binding.span,
                 });
                 continue;

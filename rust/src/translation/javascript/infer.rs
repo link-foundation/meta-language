@@ -10,12 +10,16 @@
 //!
 //! Mirrors `js/src/translation/javascript-infer.js`.
 
+mod arrays;
+
+use arrays::fill_arrays;
 use std::collections::{HashMap, HashSet};
 
 use super::{
     BOOL, BinaryOp, FLOAT, INT, ROOT, Result, SCtor, SEffect, SExpr, SFn, SItem, SNode, SPattern,
     SPatternNode, SProgram, SProp, SPropNode, STRING, Span, Type, UnaryOp, type_error,
 };
+use crate::translation::frontend_rules::accept_argument_count;
 use crate::translation::types::UNIT;
 
 /// Fills in the missing parameter and result types of the functions of a parsed JavaScript program.
@@ -48,132 +52,6 @@ pub(super) fn infer_javascript_types(mut program: SProgram) -> Result<SProgram> 
         fill_arrays(&mut program, &arrays);
     }
     Ok(program)
-}
-
-/// Writes the inferred element types of the array literals with no element of their own back.
-fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr, Type>) {
-    fn walk_items(items: &mut [SItem], arrays: &HashMap<*const SExpr, Type>) {
-        for item in items {
-            match item {
-                SItem::Fn(function) => walk(&mut function.body, arrays),
-                SItem::Module(module) => walk_items(&mut module.items, arrays),
-                SItem::Data(_) | SItem::Theorem(_) => {}
-            }
-        }
-    }
-    fn walk_prop(prop: &mut SProp, arrays: &HashMap<*const SExpr, Type>) {
-        match &mut prop.node {
-            SPropNode::Eq(comparison)
-            | SPropNode::Ne(comparison)
-            | SPropNode::Lt(comparison)
-            | SPropNode::Le(comparison)
-            | SPropNode::Gt(comparison)
-            | SPropNode::Ge(comparison) => {
-                walk(&mut comparison.left, arrays);
-                walk(&mut comparison.right, arrays);
-            }
-            SPropNode::And { left, right }
-            | SPropNode::Or { left, right }
-            | SPropNode::Implies { left, right } => {
-                walk_prop(left, arrays);
-                walk_prop(right, arrays);
-            }
-            SPropNode::Not { arg } | SPropNode::Forall { body: arg, .. } => walk_prop(arg, arrays),
-            SPropNode::Bool { expr: value } => walk(value, arrays),
-        }
-    }
-    fn walk(node: &mut SExpr, arrays: &HashMap<*const SExpr, Type>) {
-        if let Some(ty) = arrays.get(&std::ptr::from_ref::<SExpr>(node))
-            && let SNode::Array { element, .. } = &mut node.node
-        {
-            *element = Some(ty.clone());
-        }
-        if let Some(test) = &mut node.tag_test {
-            walk(&mut test.object, arrays);
-        }
-        match &mut node.node {
-            SNode::App { func, args } => {
-                walk(func, arrays);
-                for arg in args {
-                    walk(arg, arrays);
-                }
-            }
-            SNode::Field { object, .. }
-            | SNode::Unary { arg: object, .. }
-            | SNode::ToString { arg: object }
-            | SNode::Show { arg: object, .. }
-            | SNode::Cast { arg: object, .. }
-            | SNode::Length { object, .. } => walk(object, arrays),
-            SNode::Binary { left, right, .. }
-            | SNode::Let {
-                value: left,
-                body: right,
-                ..
-            }
-            | SNode::Print {
-                expr: left,
-                body: right,
-                ..
-            }
-            | SNode::Cons {
-                head: left,
-                tail: right,
-            }
-            | SNode::Index {
-                object: left,
-                index: right,
-            } => {
-                walk(left, arrays);
-                walk(right, arrays);
-            }
-            SNode::If {
-                cond,
-                then,
-                otherwise,
-            } => {
-                walk(cond, arrays);
-                walk(then, arrays);
-                walk(otherwise, arrays);
-            }
-            SNode::Match { scrutinees, rows } => {
-                for scrutinee in scrutinees {
-                    walk(scrutinee, arrays);
-                }
-                for row in rows {
-                    walk(&mut row.body, arrays);
-                }
-            }
-            SNode::Match1 { scrutinee, cases } => {
-                walk(scrutinee, arrays);
-                for case in cases {
-                    walk(&mut case.body, arrays);
-                }
-            }
-            SNode::CtorObject { fields, .. } => {
-                for (_, value) in fields {
-                    walk(value, arrays);
-                }
-            }
-            SNode::List { items } => {
-                for item in items {
-                    walk(item, arrays);
-                }
-            }
-            SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
-                for item in items {
-                    walk(&mut item.value, arrays);
-                }
-            }
-            _ => {}
-        }
-    }
-    walk_items(&mut program.items, arrays);
-    for effect in program.main.iter_mut().flat_map(|main| &mut main.effects) {
-        match effect {
-            SEffect::Print { expr: value, .. } | SEffect::Let { value, .. } => walk(value, arrays),
-            SEffect::Assert { prop: value, .. } => walk_prop(value, arrays),
-        }
-    }
 }
 
 /// Writes the inferred types of the fields the translator makes up back.
@@ -246,8 +124,10 @@ enum Term {
     Array(Box<Self>),
 }
 
+#[derive(Clone)]
 struct Signature {
     params: Vec<Term>,
+    defaults: Vec<bool>,
     ret: Term,
 }
 
@@ -439,11 +319,22 @@ impl Inference {
                 .map(|param| self.declared(param.ty.as_ref()))
                 .collect();
             let ret = self.declared(function.ret.as_ref());
-            self.signatures
-                .insert(path.join("."), Signature { params, ret });
+            let defaults = function
+                .params
+                .iter()
+                .map(|param| param.default_value.is_some())
+                .collect();
+            self.signatures.insert(
+                path.join("."),
+                Signature {
+                    params,
+                    defaults,
+                    ret,
+                },
+            );
         }
         for (path, function) in functions {
-            let signature = &self.signatures[&path.join(".")];
+            let signature = self.signatures[&path.join(".")].clone();
             let ret = signature.ret.clone();
             let env: Env = function
                 .params
@@ -452,6 +343,12 @@ impl Inference {
                 .map(|(param, term)| (param.name.clone(), term.clone()))
                 .collect();
             self.context = path[..path.len() - 1].to_vec();
+            for (param, term) in function.params.iter().zip(&signature.params) {
+                if let Some(default_value) = &param.default_value {
+                    let value = self.expr(default_value, &Env::new())?;
+                    self.unify(&value, term, param.span)?;
+                }
+            }
             let body = self.expr(&function.body, &env)?;
             self.unify(&body, &ret, function.span)?;
         }
@@ -612,7 +509,7 @@ impl Inference {
         }
     }
 
-    fn signature(&self, path: &[String]) -> Option<(Vec<Term>, Term)> {
+    fn signature(&self, path: &[String]) -> Option<Signature> {
         let found = self.signatures.get(&path.join(".")).or_else(|| {
             // A call inside a namespace may name a sibling relative to it.
             (1..=self.context.len()).rev().find_map(|depth| {
@@ -621,7 +518,7 @@ impl Inference {
                 self.signatures.get(&candidate.join("."))
             })
         })?;
-        Some((found.params.clone(), found.ret.clone()))
+        Some(found.clone())
     }
 
     fn expr(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {
@@ -801,16 +698,18 @@ impl Inference {
             .iter()
             .map(|arg| self.expr(arg, env))
             .collect::<Result<Vec<_>>>()?;
-        let Some((params, ret)) = self
+        #[allow(clippy::cast_precision_loss)]
+        let argument_count = args.len() as f64;
+        let Some(signature) = self
             .signature(path)
-            .filter(|(params, _)| params.len() == args.len())
+            .filter(|signature| accept_argument_count(signature.defaults.clone(), argument_count))
         else {
             return Ok(self.fresh(false));
         };
-        for ((term, param), arg) in arg_terms.iter().zip(&params).zip(args) {
+        for ((term, param), arg) in arg_terms.iter().zip(&signature.params).zip(args) {
             self.unify(term, param, arg.span.or(place))?;
         }
-        Ok(ret)
+        Ok(signature.ret)
     }
 
     fn binary(

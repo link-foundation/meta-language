@@ -48,6 +48,10 @@ echo "Merge succeeded. Running checks on the merged tree..."
 # This repository is a Rust/JavaScript monorepo. Cargo commands must run from
 # the Rust package rather than the repository root.
 REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "${REPO_ROOT}/js"
+# Rust's shared self-translation report executes the JavaScript runtime.
+# Install from the simulated merge's lockfile before running its checks.
+npm ci --ignore-scripts
 cd "${REPO_ROOT}/rust"
 
 status=0
@@ -60,7 +64,13 @@ cargo clippy --all-targets --all-features || status=1
 echo "::endgroup::"
 
 echo "::group::cargo test --no-fail-fast --all-features"
-cargo test --no-fail-fast --all-features || status=1
+# Native parsing is also optimized in the installed formal-ai workload run.
+# Keep the full suite and its debug assertions; avoid timing it in an
+# unoptimized parser build and clean its linked binaries before cache saving.
+node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features \
+  --config 'profile.test.package.meta-language.opt-level=3' \
+  --config 'profile.test.package.meta-language.debug-assertions=true' \
+  --config 'profile.test.package.meta-language.overflow-checks=true' || status=1
 echo "::endgroup::"
 
 if [ "${status}" -ne 0 ]; then
