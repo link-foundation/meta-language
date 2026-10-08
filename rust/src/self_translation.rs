@@ -27,7 +27,9 @@ use crate::translation::emit_common::Emitted;
 use crate::translation::javascript::{ModuleContext, parse_javascript_in};
 use crate::translation::surface::External;
 use crate::translation::{
-    emit_javascript::emit_javascript, emit_rust::emit_rust, rust::parse_rust,
+    emit_javascript::emit_javascript,
+    emit_rust::{emit_rust, emit_rust_constants},
+    rust::parse_rust,
 };
 use crate::{LinkNetwork, ParseConfiguration};
 
@@ -734,20 +736,29 @@ fn emit_item(
         parse_javascript_in(text, context)?
     };
     let program = check_program(&surface)?;
-    if program
-        .main
-        .as_ref()
-        .is_some_and(|main| !main.effects.is_empty())
+    // A top-level constant is a Rust constant; other top-level statements run
+    // once, as a program.
+    let constants = if family(to) == "Rust" {
+        emit_rust_constants(&program)?
+    } else {
+        None
+    };
+    let is_constant = constants.is_some();
+    if !is_constant
+        && program
+            .main
+            .as_ref()
+            .is_some_and(|main| !main.effects.is_empty())
     {
         return Ok(None);
     }
-    let emitted = if family(to) == "Rust" {
-        emit_rust(&program)?
-    } else {
-        emit_javascript(&program)?
+    let emitted = match constants {
+        Some(emitted) => emitted,
+        None if family(to) == "Rust" => emit_rust(&program)?,
+        None => emit_javascript(&program)?,
     };
     let signatures = if program.imports.is_empty() {
-        declared_signatures(&program)
+        declared_signatures(&program, is_constant)
     } else {
         context.externals.clone()
     };

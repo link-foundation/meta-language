@@ -10,7 +10,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use super::{Group, GroupKind, Translated, translate_group};
 use crate::decorators::DecoratorSet;
 use crate::translation::Language;
-use crate::translation::ir::{Decl, Program};
+use crate::translation::ir::{Decl, Effect, Node, Program};
 use crate::translation::javascript::ModuleContext;
 use crate::translation::lexer::{Token, TokenKind, tokenize};
 use crate::translation::surface::{External, ExternalParam};
@@ -106,10 +106,26 @@ fn scan_item(text: &str) -> Option<Scan> {
 
 /// The signatures a translated item gives the other items of its module.
 ///
-/// They are its functions at the top level, other than the ones the
+/// A constant gives its name and type when no data type is in it. Otherwise
+/// they are its functions at the top level, other than the ones the
 /// translator makes up, when no data type is among their types and no
-/// parameter is a guarded natural number.
-pub(super) fn declared_signatures(program: &Program) -> Vec<External> {
+/// parameter is a guarded natural number (mirrors `declaredSignatures`).
+pub(super) fn declared_signatures(program: &Program, constant: bool) -> Vec<External> {
+    if constant {
+        let Some(Effect::Let { name, value, .. }) =
+            program.main.as_ref().and_then(|main| main.effects.first())
+        else {
+            return Vec::new();
+        };
+        if !portable(&value.ty) {
+            return Vec::new();
+        }
+        return vec![External::Constant {
+            name: name.clone(),
+            ty: value.ty.clone(),
+            literal: matches!(value.node, Node::Lit { .. }),
+        }];
+    }
     program
         .declarations
         .iter()
