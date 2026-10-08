@@ -23,6 +23,7 @@
 // how much of the difference the decorators close.
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 import { DecoratorSet } from '../src/decorators.js';
@@ -216,7 +217,63 @@ function markdown(rows) {
   return `${lines.join('\n')}\n`;
 }
 
+
+/** Validate published sharded reports against the source tree and observed commit.
+ * A report is evidence only when all modules, hashes, decorators and rows agree.
+ */
+function verifyReports(directory, commit) {
+  if (!/^[a-f0-9]{40}$/u.test(commit ?? '')) throw new Error('missing or invalid commit');
+  const expected = modules();
+  const discovered = readdirSync(directory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => join(directory, entry.name));
+  if (discovered.length === 0) throw new Error('missing report shards');
+  const seen = new Set();
+  const expectedDecorators = DecoratorSet.fromLino(
+    readFileSync(join(root, DEFAULT_DECORATORS), 'utf8'),
+  ).ids();
+  const ordered = (values) => [...values].sort().join('\\0');
+  for (const shard of discovered) {
+    const data = JSON.parse(readFileSync(join(shard, 'self-translation-report.json'), 'utf8'));
+    const markdown = readFileSync(join(shard, 'self-translation-report.md'), 'utf8');
+    if (data.commit !== commit) throw new Error('report commit does not match the observed commit');
+    if (ordered(data.decorators ?? []) !== ordered(expectedDecorators)) {
+      throw new Error('report decorators do not match the registered decorators');
+    }
+    if (data.failures?.length) throw new Error('report contains failed modules');
+    if (!Array.isArray(data.modules)) throw new Error('missing module rows');
+    for (const row of data.modules) {
+      if (!expected.includes(row.module)) throw new Error(`unexpected module ${row.module}`);
+      if (seen.has(row.module)) throw new Error(`duplicate module ${row.module}`);
+      seen.add(row.module);
+      const sha256 = (file) => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
+      if (row.sourceSha256 !== sha256(row.module)) throw new Error(`source hash mismatch for ${row.module}`);
+      if (row.rust !== counterpart(row.module)) throw new Error(`Rust counterpart mismatch for ${row.module}`);
+      if (row.rust && row.rustSha256 !== sha256(row.rust)) throw new Error(`Rust hash mismatch for ${row.module}`);
+      const valid = (metrics) =>
+        metrics && ['functions', 'matched', 'identical', 'codeLines', 'sharedLines', 'handWrittenLines']
+          .every((key) => Number.isSafeInteger(metrics[key]) && metrics[key] >= 0) &&
+        metrics.identical <= metrics.matched && metrics.matched <= metrics.functions &&
+        metrics.sharedLines <= metrics.codeLines && metrics.sharedLines <= metrics.handWrittenLines;
+      if (!valid(row) || !valid(row.decorated)) throw new Error(`invalid measurements for ${row.module}`);
+      if (!markdown.includes(`| ${row.module} |`)) throw new Error(`missing Markdown row for ${row.module}`);
+    }
+  }
+  const missing = expected.filter((module) => !seen.has(module));
+  if (missing.length) throw new Error(`missing module ${missing[0]} (${missing.length} missing)`);
+  console.log(`Verified ${seen.size} modules at ${commit}`);
+}
+
 function main() {
+  if (process.argv.includes('--verify-reports')) {
+    try {
+      verifyReports(option('--verify-reports'), option('--commit'));
+    } catch (error) {
+      console.error(String(error.message ?? error));
+      process.exitCode = 1;
+    }
+    return;
+  }
   if (process.argv.includes('--list')) {
     console.log(selectedModules().join('\n'));
     process.exit(0);
