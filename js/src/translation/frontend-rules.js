@@ -279,3 +279,19 @@ export function readTypeQueryResult(kind) {
   if (kind === 'array' || kind === 'data') return 'object';
   return '';
 }
+
+/** @param {string} method @returns {string} */
+export function readArrayMethodForm(method) {
+  if (method === 'concat') return 'concatenate';
+  return '';
+}
+
+/** @param {string} term @param {boolean} hasChildren @param {boolean} hasContent @returns {boolean} */
+export function acceptRootSyntaxItem(term, hasChildren, hasContent) {
+  return term === 'ERROR' && !hasChildren && hasContent;
+}
+
+/** @param {boolean} sourceMatches @param {boolean} bodyMatches @param {boolean} layoutOnly @returns {boolean} */
+export function acceptSourcePrefixRestoration(sourceMatches, bodyMatches, layoutOnly) {
+  return sourceMatches && bodyMatches && layoutOnly;
+}

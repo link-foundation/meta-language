@@ -500,7 +500,8 @@
           "parity/fixtures/translation-lexical-boundaries.json",
           "parity/fixtures/self-translation-bindings.json",
           "rust/src/translation/frontend_rules.rs",
-          "rust/src/translation/surface.rs"
+          "rust/src/translation/surface.rs",
+          "rust/src/tree_sitter_adapter.rs"
         ]
       },
       "javascript": {
@@ -521,7 +522,9 @@
           "parity/fixtures/self-translation-bindings.json",
           "js/tests/translation-self-bindings.test.js",
           "js/src/translation/frontend-rules.js",
-          "js/tests/translation-type-queries.test.js"
+          "js/tests/translation-type-queries.test.js",
+          "js/tests/translation-array-concatenation.test.js",
+          "js/tests/translation-self-root-error.test.js"
         ]
       }
     },

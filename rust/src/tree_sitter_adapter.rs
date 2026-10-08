@@ -831,6 +831,13 @@ impl<'a> ConvertContext<'a> {
 pub fn top_level_nodes(text: &str, language: &str) -> Option<Vec<(String, usize, usize)>> {
     if let Some(id) = native_grammar_for_language(language) {
         let root = parse_native(id, text);
+        if crate::translation::frontend_rules::accept_root_syntax_item(
+            &root.term,
+            !root.children.is_empty(),
+            root.end > root.start,
+        ) {
+            return Some(vec![(root.term, root.start, root.end)]);
+        }
         return Some(
             root.children
                 .iter()

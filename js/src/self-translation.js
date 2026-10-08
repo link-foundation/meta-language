@@ -18,7 +18,7 @@ import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
 import { parseRust } from './translation/rust.js';
-import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, findBindingRunEnd } from './translation/frontend-rules.js';
+import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, findBindingRunEnd } from './translation/frontend-rules.js';
 
 /** The languages self-translation reads and writes. */
 export const SELF_TRANSLATION_LANGUAGES = Object.freeze(['JavaScript', 'TypeScript', 'Rust']);
@@ -114,6 +114,19 @@ export function selfTranslate(source, sourceLanguage, targetLanguage, { decorato
   if (header && header.text.includes(` source=${to} `) && header.text.includes(` sha256=${sha256(body)} `)) {
     return freeze(from, to, body, recorded);
   }
+  if (header) {
+    const originalLength = Number(/(?:^| )bytes=(\d+)(?: |$)/u.exec(header.text)?.[1]);
+    const bodyBytes = Buffer.from(body, 'utf8');
+    if (Number.isSafeInteger(originalLength) && originalLength >= 0 && originalLength <= bodyBytes.length) {
+      const original = bodyBytes.subarray(0, originalLength).toString('utf8');
+      const layout = bodyBytes.subarray(originalLength).toString('utf8');
+      if (Buffer.byteLength(original, 'utf8') === originalLength && acceptSourcePrefixRestoration(
+        header.text.includes(` source=${to} `),
+        header.text.includes(` sha256=${sha256(original)} `),
+        /^\s*$/u.test(layout),
+      )) return freeze(from, to, original, recorded);
+    }
+  }
   if (family(to) === 'Rust' && recorded.some(({ status }) => status === 'translated')) preludes.unshift(RUST_ALLOW);
   const lines = [`${HEADER}source=${from} target=${to} sha256=${sha256(text)} bytes=${bytes.length}`, ''];
   if (preludes.length) lines.push(PRELUDE_BEGIN, ...preludes.flatMap((prelude, index) => (index ? ['', prelude] : [prelude])), PRELUDE_END, '');
@@ -137,7 +150,9 @@ function breaks(gap) {
 /** The top-level items of `text`, with their text and the layout after each. */
 function topLevelItems(text, language, bytes) {
   const parsed = parseProgrammingLanguage(text, language);
-  const children = (parsed?.tree.children ?? [])
+  const root = parsed?.tree;
+  const nodes = root && acceptRootSyntaxItem(root.term, root.children.length > 0, root.span.byteRange.end > root.span.byteRange.start) ? [root] : root?.children ?? [];
+  const children = nodes
     .filter((child) => child.term !== 'whitespace')
     .map((child) => {
       const { start } = child.span.byteRange;
@@ -276,6 +291,7 @@ function translateGroup(group, from, to, decorators, literalBindings = new Map()
     return { code: [marker, ...group.lines.map(sourceLine)].join('\n'), status: 'carried', reason: 'carried from another language' };
   }
   const { text, term } = group;
+  if (term === 'ERROR') return carry(text, term, from, 'syntax');
   if (group.kind === 'comment') {
     // A copied comment has no provenance, so it must also fit the source.
     if (group.items.every((item) => commentFits(item.text, from) && commentFits(item.text, to))) return { code: text, status: 'comment' };

@@ -104,6 +104,27 @@
       "call": "readType([1])",
       "rustCall": "read_type(vec![1.0])",
       "expected": "object\n"
+    },
+    {
+      "name": "ordered-array-concatenation",
+      "source": "/** @param {number[]} left @param {number[]} right @returns {number} */\nexport function combinedOrder(left, right) { let order = 0; for (const value of left.concat(right, [])) order = order * 10 + value; return order; }\n",
+      "call": "combinedOrder([1, 2], [3])",
+      "rustCall": "combined_order(vec![1.0, 2.0], vec![3.0])",
+      "expected": "123\n"
+    },
+    {
+      "name": "nested-array-concatenation",
+      "source": "/** @param {number[][]} left @param {number[][]} right @returns {number} */\nexport function nestedSize(left, right) { return left.concat(right).length; }\n",
+      "call": "nestedSize([[1, 2]], [[3]])",
+      "rustCall": "nested_size(vec![vec![1.0, 2.0]], vec![vec![3.0]])",
+      "expected": "2\n"
+    },
+    {
+      "name": "array-copy-concatenation",
+      "source": "/** @param {number[]} values @returns {number} */\nexport function copySize(values) { return values.concat().length; }\n",
+      "call": "copySize([1, 2])",
+      "rustCall": "copy_size(vec![1.0, 2.0])",
+      "expected": "2\n"
     }
   ],
   "refusals": [

@@ -515,6 +515,26 @@ pub fn read_type_query_result(kind: &str) -> String {
     }
 }
 
+pub fn read_array_method_form(method: &str) -> String {
+    if method == "concat" {
+        String::from("concatenate")
+    } else {
+        String::new()
+    }
+}
+
+pub fn accept_root_syntax_item(term: &str, has_children: bool, has_content: bool) -> bool {
+    (((term == "ERROR") && !has_children) && has_content)
+}
+
+pub const fn accept_source_prefix_restoration(
+    source_matches: bool,
+    body_matches: bool,
+    layout_only: bool,
+) -> bool {
+    ((source_matches && body_matches) && layout_only)
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlDecodeUnicodeEscapeJoin4 {
     MlDecodeUnicodeEscapeJoin4Next(f64, f64),

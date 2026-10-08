@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDocumentationParameterRange, findDefaultParameterReference } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
@@ -1477,6 +1477,11 @@ class JavaScriptParser {
       if (c.is('.') && c.peek(1).kind === 'identifier') {
         c.next();
         const field = c.next();
+        if (c.is('(') && readArrayMethodForm(field.value) === 'concatenate') {
+          const args = this.arguments(field.value);
+          expr = { k: 'array', items: [expr, ...args].map((value) => ({ spread: true, value })), span: joined(expr, { span: span(token, c.peek()) }, token) };
+          continue;
+        }
         if (c.is('(') && STRING_TESTS.has(field.value)) {
           const args = this.arguments(field.value);
           if (args.length !== 1) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'search the whole string, with one argument', span(token, c.peek()));

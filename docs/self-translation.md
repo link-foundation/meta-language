@@ -180,3 +180,16 @@ Both runtimes use generated decisions for eligible operands and type names.
 Calls, field reads and other operand expressions remain refused: a type query
 must not discard their evaluation, effects or exceptions. This is a bounded
 extension of #212, not support for dynamic type unions or unbound names.
+
+Homogeneous array `concat` calls lower to the existing checked array spread
+representation. Checks cover argument order, one-level spreading for nested
+arrays and a zero-argument copy. Scalar arguments and non-array receivers
+retain diagnostics; this does not complete the remaining array operations.
+
+A nonempty, childless parser `ERROR` root is retained as a carried syntax item
+with its entire byte span. Parser budgets remain unchanged. Reverse translation
+can restore an original source prefix when the header's byte length, language
+and SHA-256 digest match and only formatting whitespace follows it. Appended
+executable code prevents that restoration. Targeted checks cover the repository's
+executor module and a source without a final newline. These changes preserve
+source coverage; carrying a syntax error is not a semantic translation.

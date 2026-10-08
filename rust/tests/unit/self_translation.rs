@@ -39,12 +39,10 @@ fn sibling_binding_runs_match_javascript_and_restore_their_source() {
     );
     let expected: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
     for (index, entry) in fixture["cases"].as_array().unwrap().iter().enumerate() {
-        let source = entry["source"]
-            .as_str()
-            .map(str::to_owned)
-            .unwrap_or_else(|| {
-                fs::read_to_string(root().join(entry["module"].as_str().unwrap())).unwrap()
-            });
+        let source = entry["source"].as_str().map_or_else(
+            || fs::read_to_string(root().join(entry["module"].as_str().unwrap())).unwrap(),
+            str::to_owned,
+        );
         let translated = self_translate(&source, "JavaScript", "Rust").unwrap();
         assert!(
             translated
@@ -722,4 +720,54 @@ fn languages_are_named_by_name_or_extension_and_others_are_refused() {
     assert_eq!(self_translation_language("mjs"), Some("JavaScript"));
     assert_eq!(self_translation_language("python"), None);
     assert!(self_translate("x\n", "python", "rust").is_err());
+}
+
+#[test]
+fn resource_limited_executor_preserves_source_and_restores_exactly() {
+    let source = include_str!("../../../js/src/grammar-runtime/executor.js");
+    let translated = self_translate(source, "JavaScript", "Rust").unwrap();
+    assert_ne!(translated.items, [] as [SelfTranslationItem; 0]);
+    let mut cursor = 0;
+    for item in &translated.items {
+        assert!(item.start >= cursor && item.end > item.start && item.end <= source.len());
+        assert!(
+            source[cursor..item.start]
+                .encode_utf16()
+                .all(meta_language::translation::lexer::is_js_space)
+        );
+        cursor = item.end;
+        if item.term == "ERROR" {
+            assert_eq!(item.status, "carried");
+        }
+    }
+    assert!(
+        source[cursor..]
+            .encode_utf16()
+            .all(meta_language::translation::lexer::is_js_space)
+    );
+    assert_eq!(
+        self_translate(&translated.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
+}
+
+#[test]
+fn source_prefix_restoration_rejects_appended_code() {
+    let source = "/** @param {number} value @returns {number} */\nfunction identity(value) { return value; }";
+    let translated = self_translate(source, "JavaScript", "Rust").unwrap();
+    assert_eq!(
+        self_translate(&translated.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
+    let edited = self_translate(
+        &format!("{}\nconst EXTRA: f64 = 2.0;\n", translated.code),
+        "Rust",
+        "JavaScript",
+    )
+    .unwrap();
+    assert_ne!(edited.code, source);
 }

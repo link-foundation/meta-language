@@ -383,6 +383,27 @@ impl JavaScriptParser {
                 self.cursor.advance();
                 let field = self.cursor.advance();
                 if self.cursor.is("(") {
+                    if crate::translation::frontend_rules::read_array_method_form(&field.value)
+                        == "concatenate"
+                    {
+                        let args = self.arguments(&field.value)?;
+                        let place = Span::new(start, self.to_here(&token).end);
+                        let items = std::iter::once(expr)
+                            .chain(args)
+                            .map(|value| SArrayItem {
+                                spread: true,
+                                value,
+                            })
+                            .collect();
+                        expr = node(
+                            SNode::Array {
+                                items,
+                                element: None,
+                            },
+                            place,
+                        );
+                        continue;
+                    }
                     if field.value != "toString" {
                         return Err(unsupported(
                             &format!("method call .{}()", field.value),

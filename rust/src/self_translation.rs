@@ -12,7 +12,8 @@
 //! Mirrors `js/src/self-translation.js`.
 
 use crate::translation::frontend_rules::{
-    accept_binding_scope, accept_literal_binding, accept_module_binding_scope, find_binding_run_end,
+    accept_binding_scope, accept_literal_binding, accept_module_binding_scope,
+    accept_source_prefix_restoration, find_binding_run_end,
 };
 use crate::translation::surface::{SEffect, SExpr, SNode};
 use std::collections::{HashMap, HashSet};
@@ -264,6 +265,33 @@ pub fn self_translate_decorated(
             code: body,
             items: recorded,
         });
+    }
+    if let Some(header) = header {
+        let original_length = header.text.split_ascii_whitespace().find_map(|field| {
+            field
+                .strip_prefix("bytes=")
+                .and_then(|value| value.parse::<usize>().ok())
+        });
+        if let Some(length) = original_length
+            && let Some(original) = body.get(..length)
+            && let Some(layout) = body.get(length..)
+            && accept_source_prefix_restoration(
+                header.text.contains(&format!(" source={to} ")),
+                header
+                    .text
+                    .contains(&format!(" sha256={} ", sha256(original))),
+                layout
+                    .encode_utf16()
+                    .all(crate::translation::lexer::is_js_space),
+            )
+        {
+            return Ok(SelfTranslation {
+                source_language: from,
+                target_language: to,
+                code: original.to_owned(),
+                items: recorded,
+            });
+        }
     }
     if family(to) == "Rust" && recorded.iter().any(|item| item.status == "translated") {
         preludes.insert(0, RUST_ALLOW.to_owned());
@@ -709,6 +737,9 @@ fn translate_group(
         }
         GroupKind::Item { text, term } => (text, term),
     };
+    if term == "ERROR" {
+        return carry(text, term, from, "syntax");
+    }
     let emitted = match emit_item(text, from, to, literal_bindings) {
         Ok(Some(emitted)) => emitted,
         Ok(None) => return carry(text, term, from, "top-level statement"),
