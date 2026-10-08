@@ -672,6 +672,8 @@ pub struct Guard {
 #[serde(rename_all = "camelCase")]
 pub struct SParam {
     pub name: String,
+    #[serde(default, rename = "default", skip_serializing_if = "Option::is_none")]
+    pub default_value: Option<SExpr>,
     #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
     pub ty: Option<Type>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -771,6 +773,8 @@ pub enum SEffect {
         #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
         ty: Option<Type>,
         value: SExpr,
+        #[serde(default, skip_serializing_if = "is_false")]
+        constant: bool,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         span: Option<Span>,
     },

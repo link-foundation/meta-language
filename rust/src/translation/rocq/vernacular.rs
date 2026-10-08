@@ -438,6 +438,7 @@ impl RocqParser {
                 .into_iter()
                 .map(|binder| SParam {
                     name: binder.name,
+                    default_value: None,
                     ty: binder.ty,
                     span: binder.span,
                     guard: None,

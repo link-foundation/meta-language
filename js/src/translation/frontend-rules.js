@@ -1,0 +1,103 @@
+// Frontend decisions expressed in JavaScript and translated into Rust by
+// js/scripts/generate-frontend-rules.mjs. Inputs use code units and token
+// records so both host runtimes can use the same decisions.
+
+/** @typedef {{ $: 'scalar', code: number, end: number } | { $: 'malformed' } | { $: 'unsupported', end: number, escapeLength: number }} UnicodeEscape */
+
+/**
+ * Read one Unicode escape from at most twelve UTF-16 code units, starting
+ * with its backslash. Offsets in the result are relative to that backslash.
+ * @param {number[]} units
+ * @param {boolean} allowFixed
+ * @returns {UnicodeEscape}
+ */
+export function decodeUnicodeEscape(units, allowFixed) {
+  let index = 2;
+  let code = 0;
+  let digits = 0;
+  let braced = false;
+  if (units.length > 2 && units[2] === 123) {
+    braced = true;
+    index = 3;
+  } else if (!allowFixed) return { $: 'malformed' };
+  while (index < units.length && digits < (braced ? 6 : 4)) {
+    const unit = units[index];
+    let digit = -1;
+    if (unit >= 48 && unit <= 57) digit = unit - 48;
+    else if (unit >= 65 && unit <= 70) digit = unit - 55;
+    else if (unit >= 97 && unit <= 102) digit = unit - 87;
+    if (digit < 0) break;
+    code = code * 16 + digit;
+    digits += 1;
+    index += 1;
+  }
+  if (braced) {
+    if (digits === 0 || index >= units.length || units[index] !== 125) return { $: 'malformed' };
+    index += 1;
+  } else if (digits !== 4) return { $: 'malformed' };
+  const escapeLength = index;
+  if (!braced && code >= 55296 && code <= 56319 && units.length >= index + 6 && units[index] === 92 && units[index + 1] === 117) {
+    let low = 0;
+    let offset = 2;
+    while (offset < 6) {
+      const unit = units[index + offset];
+      let digit = -1;
+      if (unit >= 48 && unit <= 57) digit = unit - 48;
+      else if (unit >= 65 && unit <= 70) digit = unit - 55;
+      else if (unit >= 97 && unit <= 102) digit = unit - 87;
+      if (digit < 0) break;
+      low = low * 16 + digit;
+      offset += 1;
+    }
+    if (offset === 6 && low >= 56320 && low <= 57343) {
+      code = 65536 + (code - 55296) * 1024 + low - 56320;
+      index += 6;
+    }
+  }
+  if (code > 1114111 || (code >= 55296 && code <= 57343)) return { $: 'unsupported', end: index, escapeLength };
+  return { $: 'scalar', code, end: index };
+}
+
+/**
+ * Whether every omitted argument has a trailing default.
+ * @param {boolean[]} defaults
+ * @param {number} count
+ * @returns {boolean}
+ */
+export function acceptArgumentCount(defaults, count) {
+  if (count > defaults.length) return false;
+  let index = count;
+  while (index < defaults.length) {
+    if (!defaults[index]) return false;
+    index += 1;
+  }
+  return true;
+}
+
+/**
+ * Find a reference to an earlier parameter in a default expression. Member
+ * names after a dot are not references, and nested delimiters keep commas
+ * and closing parentheses inside the expression.
+ * @param {string[]} kinds
+ * @param {string[]} values
+ * @param {string[]} parameters
+ * @returns {number}
+ */
+export function findDefaultParameterReference(kinds, values, parameters) {
+  let at = 0;
+  let depth = 0;
+  while (at < values.length && kinds[at] !== 'eof' && (depth > 0 || (values[at] !== ',' && values[at] !== ')'))) {
+    const value = values[at];
+    if (value === '(' || value === '[' || value === '{') depth += 1;
+    if (value === ')' || value === ']' || value === '}') depth -= 1;
+    if (kinds[at] === 'identifier' && !(at > 0 && values[at - 1] === '.')) {
+      let parameterIndex = 0;
+      while (parameterIndex < parameters.length) {
+        if (parameters[parameterIndex] === value) return at;
+        parameterIndex += 1;
+      }
+    }
+    at += 1;
+  }
+  return -1;
+}

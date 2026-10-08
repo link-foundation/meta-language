@@ -122,6 +122,76 @@ test('cargo fmt, cargo clippy and cargo doc are separate steps of the lint job',
   observe('I195-CI-REPORT-EVERY-FAILURE', ['lintStepsIndependent'], 'cargo fmt, clippy and doc run in separate steps');
 });
 
+test('Rust test jobs install the JavaScript dependencies used by the shared reports', () => {
+  const rust = jobs('rust.yml');
+  for (const id of ['test', 'coverage', 'fresh-merge']) {
+    const job = rust.get(id);
+    const setup = job.steps.findIndex((step) => /actions\/setup-node@/u.test(step.text));
+    assert.ok(setup >= 0, `${id} sets up Node.js`);
+    const install = job.steps.findIndex((step) => /\bnpm ci\b/u.test(step.run));
+    if (id === 'fresh-merge') {
+      const script = read('rust/scripts/simulate-fresh-merge.sh');
+      assert.match(script, /npm ci --ignore-scripts/u);
+      assert.ok(script.indexOf('npm ci --ignore-scripts') < script.indexOf('cargo fmt --all'), 'the merged tree installs before checks');
+    } else {
+      assert.ok(install > setup, `${id} installs JavaScript dependencies after Node.js setup`);
+      assert.match(job.steps[install].text, /working-directory: js/u);
+      const run = job.steps.findIndex((step) => /cargo (?:test|llvm-cov)/u.test(step.run));
+      assert.ok(run > install, `${id} installs before executing Rust tests`);
+    }
+  }
+});
+
+test('both self-translation acceptance suites install Clippy for the generated Rust', () => {
+  const acceptance = jobs('ci.yml');
+  for (const id of ['javascript-suite', 'rust-suite']) {
+    const setup = acceptance.get(id).steps.find((step) => /dtolnay\/rust-toolchain@/u.test(step.text));
+    assert.ok(setup, `${id} sets up Rust`);
+    assert.match(setup.text, /components:.*\bclippy\b/u, `${id} installs clippy-driver`);
+  }
+});
+
+test('the live RML head audit runs on main as a non-blocking post-merge report', () => {
+  const report = jobs('js.yml').get('test').steps.find((step) => /issue-195-rml-pr184\.mjs --online/u.test(step.run));
+  assert.ok(report, 'the live head comparison remains executable');
+  assert.match(report.text, /github\.ref == 'refs\/heads\/main'/u);
+  assert.match(report.text, /github\.event_name != 'pull_request'/u);
+  assert.match(report.text, /!cancelled\(\)/u);
+  assert.match(report.text, /continue-on-error: true/u);
+  assert.match(report.text, /working-directory: js/u);
+  assert.match(report.text, /GITHUB_TOKEN:/u);
+});
+
+test('fresh merge keeps build artifacts out of its cache and optimizes the unchanged full test suite', () => {
+  const job = jobs('rust.yml').get('fresh-merge');
+  const cache = job.steps.find((step) => /actions\/cache@/u.test(step.text));
+  assert.ok(cache, 'fresh merge caches its registry dependencies');
+  assert.match(cache.text, /~\/\.cargo\/registry/u);
+  assert.match(cache.text, /~\/\.cargo\/git/u);
+  assert.doesNotMatch(cache.text, /(?:^|\n)\s*(?:rust\/)?target(?:\/|\s|$)/u, 'large build artifacts do not consume the cache-save deadline');
+  assert.match(job.header, /timeout-minutes: 20/u);
+  const script = read('rust/scripts/simulate-fresh-merge.sh');
+  assert.match(script, /with-cache-cleanup\.mjs --event test -- cargo test --no-fail-fast --all-features/u);
+  assert.match(script, /profile\.test\.package\.meta-language\.opt-level=3/u);
+  assert.match(script, /profile\.test\.package\.meta-language\.debug-assertions=true/u);
+  assert.match(script, /profile\.test\.package\.meta-language\.overflow-checks=true/u);
+});
+
+test('both acceptance suites verify the complete published self-translation reports', () => {
+  const acceptance = jobs('ci.yml');
+  assert.ok(needs(acceptance.get('javascript-suite')).includes('self-translation-report'));
+  for (const id of ['javascript-suite', 'rust-suite']) {
+    const steps = acceptance.get(id).steps;
+    const download = steps.findIndex((step) => step.name === 'Download the complete self-translation reports');
+    const execute = steps.findIndex((step) => step.name === 'Produce the stage evidence');
+    assert.ok(download >= 0 && execute > download, `${id} downloads all reports before observing evidence`);
+    assert.match(steps[download].text, /pattern: self-translation-report-\$\{\{ github.sha \}\}-\*/u);
+    assert.match(steps[download].text, /path: issue-195-artifacts\/self-translation-report/u);
+    assert.doesNotMatch(steps[download].text, /merge-multiple: true/u, 'each shard retains its JSON and Markdown pair');
+    assert.match(steps[execute].text, /ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY:/u);
+  }
+});
+
 test('the acceptance workflow runs each Rust stage only after the matching JavaScript stage passes', () => {
   const acceptance = jobs('ci.yml');
   for (const [rust, javascript] of [['native-rust', 'native-javascript'], ['rust-suite', 'javascript-suite']]) {

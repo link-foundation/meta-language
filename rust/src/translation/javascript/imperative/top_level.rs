@@ -94,6 +94,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
             name,
             ty: None,
             value,
+            constant: false,
             span: Some(place),
         };
         match (carried.as_slice(), data) {

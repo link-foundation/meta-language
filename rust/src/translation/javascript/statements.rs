@@ -528,6 +528,7 @@ impl JavaScriptParser {
                 name,
                 ty: None,
                 value,
+                constant: true,
                 span: Some(span),
             });
         }
@@ -556,6 +557,7 @@ impl JavaScriptParser {
             name: format!("ml_main_ignored{}", self.generated_count),
             ty: None,
             value,
+            constant: false,
             span: Some(self.to_here(&token)),
         })
     }

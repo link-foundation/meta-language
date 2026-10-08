@@ -10,6 +10,8 @@
 //
 //   node js/scripts/import-native-grammars.mjs          # write the grammars, concepts and reports
 //   node js/scripts/import-native-grammars.mjs --check  # fail on drift
+//   node js/scripts/import-native-grammars.mjs --character-class-fixtures [--check]
+//     # bounded shared fixtures; the same importer compiles the catalog in CI
 //
 // After writing, run build-language-catalog.mjs and build-concept-records.mjs
 // to refresh the shipped copies.
@@ -277,6 +279,20 @@ export function mergeReport(result, register, words) {
 
 const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
 
+/** Compiles the character-class corpus through the catalog's native importer. */
+export function importCharacterClassFixtures() {
+  const fixture = readJson('parity/fixtures/native-character-classes.json');
+  return [['parity/fixtures/native-character-class-grammars.json', json({
+    generatedBy: 'js/scripts/import-native-grammars.mjs --character-class-fixtures',
+    cases: fixture.cases.map((entry) => {
+      const { id, pattern } = entry;
+      const imported = importTreeSitterNative({ name: 'character_classes', rules: { source_file: { type: 'PATTERN', value: pattern } } });
+      if (imported.report.unsupported.length > 0) throw new Error(`${id}: ${imported.report.unsupported.join('; ')}`);
+      return { ...entry, grammar: renderTreeSitterNative(imported) };
+    }),
+  })]];
+}
+
 /** Every file the pipeline produces, `[path, text]`. */
 export function importNativeGrammars() {
   const registry = readJson(GRAMMAR_SOURCES);
@@ -292,7 +308,7 @@ export function importNativeGrammars() {
 }
 
 function main() {
-  const files = importNativeGrammars();
+  const files = process.argv.includes('--character-class-fixtures') ? importCharacterClassFixtures() : importNativeGrammars();
   if (process.argv.includes('--check')) {
     const stale = files.filter(([file, text]) => {
       try {
@@ -303,7 +319,7 @@ function main() {
     }).map(([file]) => file);
     if (stale.length > 0) {
       console.error(`imported native grammars are stale: ${stale.join(', ')}`);
-      console.error('run: node js/scripts/import-native-grammars.mjs');
+      console.error(`run: node js/scripts/import-native-grammars.mjs${process.argv.includes('--character-class-fixtures') ? ' --character-class-fixtures' : ''}`);
       process.exit(1);
     }
     console.log(`imported native grammars match their pinned sources (${files.length} files)`);

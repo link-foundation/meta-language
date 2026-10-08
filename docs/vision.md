@@ -171,6 +171,15 @@ External scanner behavior and action semantics become structured, executable
 link definitions. They are not uninterpreted source blobs or hidden
 language-specific callbacks.
 
+The native importer lowers character-class intersection, difference and
+symmetric difference to the existing Links lookahead and consuming operations.
+Ranges and implicit union bind before set operations, which associate to the
+left; outer negation binds last. Both packages execute the generated Links
+data, with positive and negative ASCII and Unicode fixtures, and an independent
+regular expression oracle in tests.
+Hexadecimal scalar escapes with fixed widths or braces lower to literal
+characters and ranges through the same importer.
+
 Every unique concept and semantic distinction is preserved. Concepts are shared
 only where a faithful one-to-one correspondence of meaning is established:
 similar spelling, or accepting the same strings, is not enough. In particular
@@ -543,6 +552,9 @@ exists only after merge runs on `main`:
   default branch.
 - The live registries, the live discussion and the pull request description are
   compared with the committed audit and register by non-blocking reports.
+- The downstream pull request head is compared with its committed workload
+  pin by a non-blocking report. Pre-merge acceptance re-inventories verified
+  immutable blobs at that pin, so a live head change cannot alter its input.
 - A scheduled workflow on `main` refreshes the dependencies and opens its own
   pull request.
 - Published delivery is checked separately at the release-delivery checkpoint
@@ -654,6 +666,12 @@ Every job reports all of its failures in one run, not only the first: `cargo
 test` runs with `--no-fail-fast`, every check step after the first runs unless
 the run was cancelled, and `cargo fmt`, clippy and `cargo doc` are independent
 steps. A repository test checks this structure.
+
+The self-translation report jobs publish generic and decorated measurements
+for every JavaScript source module, with the commit and hashes of both runtime
+sources. Both acceptance suites verify the complete published reports before
+recording the per-module difference assertion; a small local report test alone
+cannot supply that evidence.
 
 ## Resource limits
 

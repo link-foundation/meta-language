@@ -35,10 +35,10 @@ mod binding;
 
 use self::binding::{Binder, declared_signatures};
 
-/// The signature of an exported item of a JavaScript or TypeScript module,
-/// which binds the name a module that imports it uses: a function's
-/// parameters and result, or a constant's type and whether a literal gives
-/// its value.
+/// The signature of an exported item of a JavaScript or TypeScript module.
+///
+/// It binds the name a module that imports it uses: a function's parameters
+/// and result, or a constant's type and whether a literal gives its value.
 pub type SelfTranslationSignature = External;
 
 /// What [`self_translate_with`] translates a module with.
@@ -531,31 +531,35 @@ fn group_items<'a>(items: &[Item<'a>], text: &'a str) -> Vec<Group<'a>> {
             };
             let lines_end = lines_after(index);
             let count = field("items").and_then(|count| count.parse::<usize>().ok());
-            match count.and_then(|count| definitions_end(items, lines_end, count)) {
-                Some(last) => {
-                    let code = between(&items[lines_end + 1], &items[last]);
-                    if field("sha256") == Some(sha256(&code).as_str()) {
-                        let lines = source_lines(&items[index + 1..=lines_end]);
+            count
+                .and_then(|count| definitions_end(items, lines_end, count))
+                .map_or_else(
+                    || {
                         (
-                            last,
-                            GroupKind::Carried {
-                                language: first_word(rest),
-                                lines,
+                            index,
+                            GroupKind::Comment {
+                                text: item.text.to_owned(),
+                                term: item.term.clone(),
                             },
                         )
-                    } else {
-                        // An edited translation is translated again; its provenance is dropped.
-                        (lines_end, GroupKind::Provenance)
-                    }
-                }
-                _ => (
-                    index,
-                    GroupKind::Comment {
-                        text: item.text.to_owned(),
-                        term: item.term.clone(),
                     },
-                ),
-            }
+                    |last| {
+                        let code = between(&items[lines_end + 1], &items[last]);
+                        if field("sha256") == Some(sha256(&code).as_str()) {
+                            let lines = source_lines(&items[index + 1..=lines_end]);
+                            (
+                                last,
+                                GroupKind::Carried {
+                                    language: first_word(rest),
+                                    lines,
+                                },
+                            )
+                        } else {
+                            // An edited translation is translated again; its provenance is dropped.
+                            (lines_end, GroupKind::Provenance)
+                        }
+                    },
+                )
         } else {
             // Comments directly before an item document it and travel with it.
             let mut end = index;

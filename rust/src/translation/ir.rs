@@ -617,6 +617,8 @@ pub struct Param {
     /// A JavaScript parameter guarded to the naturals.
     #[serde(default)]
     pub guard: Option<Guard>,
+    #[serde(default, rename = "default")]
+    pub default_value: Option<super::surface::SExpr>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -754,6 +756,8 @@ pub enum Effect {
     Let {
         name: String,
         value: Expr,
+        #[serde(default, skip_serializing_if = "is_false")]
+        constant: bool,
         #[serde(default)]
         span: Option<Span>,
     },

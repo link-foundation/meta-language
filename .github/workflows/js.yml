@@ -216,6 +216,14 @@ jobs:
         run: npm run check:downstream-consumers
         working-directory: js
 
+      - name: Compare the pinned RML audit with the live pull request head (post-merge report)
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
+        run: node scripts/issue-195-rml-pr184.mjs --online
+        working-directory: js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Check that every dependency, toolchain, action and image is inventoried at its current stable release or records why not
         if: ${{ !cancelled() }}
         run: npm run check:dependencies
@@ -234,6 +242,17 @@ jobs:
       - name: Check the shared self-translation cases
         if: ${{ !cancelled() }}
         run: npm run check:self-translation
+        working-directory: js
+
+      - name: Setup Rust formatting for generated frontend rules
+        if: ${{ !cancelled() }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check the generated Rust frontend rules against JavaScript
+        if: ${{ !cancelled() }}
+        run: npm run check:frontend-rules
         working-directory: js
 
       # The pull request description and the release reports are live texts

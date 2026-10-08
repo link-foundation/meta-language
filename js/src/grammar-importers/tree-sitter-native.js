@@ -74,6 +74,10 @@ const PROPERTY_CATEGORIES = {
   C: ['C'], Cc: ['Cc'], Cf: ['Cf'], Co: ['Co'], Cs: ['Cs'], Cn: ['Cn'], Control: ['Cc'], Format: ['Cf'], Other: ['C'],
   Emoji: ['So'], Emoji_Presentation: ['So'], Extended_Pictographic: ['So'], EMod: ['Sk'], Emoji_Modifier: ['Sk'],
 };
+// Emoji includes ASCII keycap bases as well as symbols. Keep character
+// members in the property data, so importing any grammar lowers them to the
+// same class operations as its Unicode category members.
+const PROPERTY_CHARACTERS = { Emoji: '0123456789#*' };
 const SCRIPTS = new Set([
   'Arabic', 'Armenian', 'Bengali', 'Cyrillic', 'Devanagari', 'Georgian', 'Greek', 'Han', 'Hangul', 'Hebrew', 'Hiragana',
   'Katakana', 'Latin', 'Thai',
@@ -101,7 +105,17 @@ export function parseTreeSitterPattern(source, flags = '') {
     const text = source.slice(index, index + count);
     if (!/^[0-9a-fA-F]+$/u.test(text) || text.length !== count) fail('bad hex escape');
     index += count;
-    return String.fromCodePoint(Number.parseInt(text, 16));
+    const scalar = Number.parseInt(text, 16);
+    if (scalar > 0x10ffff || (scalar >= 0xd800 && scalar <= 0xdfff)) fail('invalid Unicode scalar');
+    return String.fromCodePoint(scalar);
+  };
+  const readHexadecimalEscape = (count) => {
+    if (!eat('{')) return { kind: 'char', value: hexDigits(count) };
+    const end = source.indexOf('}', index);
+    if (end < 0) fail('unterminated hex escape');
+    const value = hexDigits(end - index);
+    index += 1;
+    return { kind: 'char', value };
   };
   const property = (negated) => {
     let name;
@@ -120,6 +134,7 @@ export function parseTreeSitterPattern(source, flags = '') {
     if (SCRIPTS.has(scriptName)) items = [{ kind: 'script', value: scriptName }];
     else if (PROPERTY_CATEGORIES[name]) items = PROPERTY_CATEGORIES[name].map((value) => ({ kind: 'category', value }));
     else fail(`unknown property ${name}`);
+    items.push(...[...(PROPERTY_CHARACTERS[name] ?? '')].map((value) => ({ kind: 'char', value })));
     return { kind: 'class', negated, items };
   };
   // An escape outside or inside a class: a single character, or a class.
@@ -143,15 +158,9 @@ export function parseTreeSitterPattern(source, flags = '') {
       case 'a': return { kind: 'char', value: '\x07' };
       case 'e': return { kind: 'char', value: '\x1b' };
       case 'b': if (inClass) return { kind: 'char', value: '\b' }; return fail('word boundary');
-      case 'x': return { kind: 'char', value: hexDigits(2) };
-      case 'u':
-        if (eat('{')) {
-          const end = source.indexOf('}', index);
-          const value = String.fromCodePoint(Number.parseInt(source.slice(index, end), 16));
-          index = end + 1;
-          return { kind: 'char', value };
-        }
-        return { kind: 'char', value: hexDigits(4) };
+      case 'x': return readHexadecimalEscape(2);
+      case 'u': return readHexadecimalEscape(4);
+      case 'U': return readHexadecimalEscape(8);
       case 'c': return { kind: 'char', value: String.fromCharCode(codePoint().charCodeAt(0) % 32) };
       default:
         if (/[A-Za-z]/u.test(c) && !inClass) return fail(`escape \\${c}`);
@@ -160,34 +169,51 @@ export function parseTreeSitterPattern(source, flags = '') {
   };
   const classBody = () => {
     const negated = eat('^');
-    const items = [];
-    const nested = [];
-    while (index < source.length && peek() !== ']') {
-      if (peek() === '&' && source[index + 1] === '&') fail('class intersection');
-      let item;
-      if (eat('\\')) item = escape(true);
-      else if (peek() === '[' && source[index + 1] === ':') fail('posix class');
-      else if (peek() === '[') { index += 1; item = classBody(); }
-      else item = { kind: 'char', value: codePoint() };
-      if (item.kind === 'char' && peek() === '-' && source[index + 1] !== ']' && source[index + 1] !== undefined) {
-        index += 1;
-        let end;
-        if (eat('\\')) end = escape(true);
-        else end = { kind: 'char', value: codePoint() };
-        if (end.kind !== 'char') fail('range to a class');
-        items.push({ kind: 'range', start: item.value, end: end.value });
-      } else if (item.kind === 'char') items.push(item);
-      else if (item.kind === 'class' && !item.negated) items.push(...item.items);
-      else nested.push(item);
+    const isSetOperator = () => ['&&', '--', '~~'].includes(source.slice(index, index + 2));
+    // Ranges and implicit union bind before the three set operators. Each
+    // operand consumes exactly one scalar; lookahead checks membership without
+    // consuming it a second time. The binary operators associate to the left.
+    const readUnionOperand = () => {
+      const items = [];
+      const nested = [];
+      while (index < source.length && peek() !== ']' && !isSetOperator()) {
+        let item;
+        if (eat('\\')) item = escape(true);
+        else if (peek() === '[' && source[index + 1] === ':') fail('posix class');
+        else if (peek() === '[') { index += 1; item = classBody(); }
+        else item = { kind: 'char', value: codePoint() };
+        if (item.kind === 'char' && peek() === '-' && !isSetOperator() && source[index + 1] !== ']' && source[index + 1] !== undefined) {
+          index += 1;
+          let end;
+          if (eat('\\')) end = escape(true);
+          else end = { kind: 'char', value: codePoint() };
+          if (end.kind !== 'char') fail('range to a class');
+          items.push({ kind: 'range', start: item.value, end: end.value });
+        } else if (item.kind === 'char') items.push(item);
+        else if (item.kind === 'class' && !item.negated) items.push(...item.items);
+        else nested.push(item);
+      }
+      if (nested.length === 0) return { kind: 'class', negated: false, items };
+      const alternatives = nested.slice();
+      if (items.length > 0) alternatives.unshift({ kind: 'class', negated: false, items });
+      return alternatives.length === 1 ? alternatives[0] : { kind: 'alt', items: alternatives };
+    };
+    const subtractClasses = (left, right) => ({ kind: 'seq', items: [{ kind: 'not', item: right }, left] });
+    let result = readUnionOperand();
+    while (isSetOperator()) {
+      const operator = source.slice(index, index + 2);
+      index += 2;
+      const right = readUnionOperand();
+      if (operator === '&&') result = { kind: 'seq', items: [{ kind: 'and', item: result }, right] };
+      else if (operator === '--') result = subtractClasses(result, right);
+      else result = { kind: 'alt', items: [subtractClasses(result, right), subtractClasses(right, result)] };
     }
     if (!eat(']')) fail('unterminated class');
-    if (nested.length === 0) return { kind: 'class', negated, items };
-    // [x\S] is x or not-space; [^x\S] is neither x nor not-space.
-    const alternatives = nested.slice();
-    if (items.length > 0) alternatives.unshift({ kind: 'class', negated: false, items });
-    const union = alternatives.length === 1 ? alternatives[0] : { kind: 'alt', items: alternatives };
-    if (!negated) return union;
-    return { kind: 'seq', items: [{ kind: 'not', item: union }, { kind: 'class', negated: true, items: [] }] };
+    if (!negated) return result;
+    if (result.kind === 'class' && !result.negated) return { ...result, negated: true };
+    // Negation binds last and still consumes one scalar, including when the
+    // set being complemented is empty. At end of input the consuming part fails.
+    return { kind: 'seq', items: [{ kind: 'not', item: result }, { kind: 'class', negated: true, items: [] }] };
   };
   const atom = () => {
     const c = peek();

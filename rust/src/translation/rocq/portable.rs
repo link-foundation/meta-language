@@ -62,6 +62,7 @@ pub(super) fn walk_output(node: SExpr, effects: &mut Vec<SEffect>) -> Result<()>
                 name,
                 ty,
                 value: *value,
+                constant: false,
                 span: node_span,
             });
             walk_output(*body, effects)

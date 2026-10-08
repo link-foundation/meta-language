@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -18,6 +19,7 @@ import {
 } from '../src/index.js';
 import { caseDecorators, readSelfTranslationCorpus } from '../scripts/generate-self-translation-cases.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { compileRustTranslation } from './support/self-translation-rust.js';
 
 const FIXTURE = 'parity/self-translation/cases.lino';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -138,6 +140,33 @@ test('the JavaScript side of every case computes the shared results', async () =
     assert.equal(String(loaded[call.javascript](...call.arguments.map(value))), call.result, `${call.case} ${call.javascript}`);
   }
   observe('I195-SELF-TRANSLATION-ROUND-TRIP', ['crossLanguageBehaviorPreserved'], 'the JavaScript side of every case computes the shared results');
+});
+
+test('the JavaScript acceptance stage compiles every generated Rust case with clippy', () => {
+  // The ordinary JavaScript test job intentionally needs only Node. The issue-195
+  // evidence stage installs the pinned Rust toolchain and sets this path; only
+  // that executed acceptance stage is allowed to record generatedRustCompiles.
+  // SELF_TRANSLATION_CHECK_RUST also executes the compilers for local checks,
+  // without an observation file or any acceptance evidence.
+  if (!process.env.ISSUE_195_OBSERVATION_FILE && !process.env.SELF_TRANSLATION_CHECK_RUST) return;
+  const directory = mkdtempSync(path.join(tmpdir(), 'self-translation-rust-'));
+  try {
+    const rustCases = cases.filter(({ to }) => to === 'Rust');
+    assert.ok(rustCases.length > 0, 'the shared corpus includes JavaScript/TypeScript -> Rust cases');
+    for (const entry of rustCases) {
+      const translation = selfTranslate(read(entry.source), entry.from, entry.to, { decorators: decoratorsOf.get(entry.id) });
+      const source = path.join(directory, `${entry.id}.rs`);
+      const metadata = path.join(directory, `${entry.id}.rmeta`);
+      writeFileSync(source, translation.code);
+      // Rust -> Rust restores an original fixture byte for byte. Apply the
+      // strict generated-code lint policy to JavaScript/TypeScript -> Rust.
+      compileRustTranslation(entry.from, source, metadata);
+      assert.ok(readFileSync(metadata).length > 0, `${entry.id} emitted Rust metadata`);
+    }
+    observe('I195-SELF-TRANSLATION-TOOL', ['generatedRustCompiles'], 'the JavaScript acceptance stage compiles every generated Rust case with clippy');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test('the translate command prints the translation and its items', () => {
@@ -307,7 +336,9 @@ test('the report measures each translated module against its hand-written Rust',
   const outDir = mkdtempSync(path.join(tmpdir(), 'self-translation-report-'));
   try {
     execFileSync(process.execPath, [path.join(root, 'js/scripts/generate-self-translation-report.mjs'), '--out-dir', outDir, '--modules', 'language-support.js,self-translation.js'], { encoding: 'utf8' });
-    const { decorators, modules, failures } = JSON.parse(readFileSync(path.join(outDir, 'self-translation-report.json'), 'utf8'));
+    const { schemaVersion, commit, decorators, modules, failures } = JSON.parse(readFileSync(path.join(outDir, 'self-translation-report.json'), 'utf8'));
+    assert.equal(schemaVersion, 1);
+    assert.equal(commit, process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim());
     assert.deepEqual(failures, []);
     assert.deepEqual(decorators, ['borrowed-name', 'bare-sum', 'bare-comparison']);
     assert.deepEqual(modules.map(({ module, rust }) => [module, rust]), [
@@ -315,6 +346,9 @@ test('the report measures each translated module against its hand-written Rust',
       ['js/src/self-translation.js', 'rust/src/self_translation.rs'],
     ]);
     for (const row of modules) {
+      for (const [file, field] of [[row.module, 'sourceSha256'], [row.rust, 'rustSha256']]) {
+        assert.equal(row[field], createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex'));
+      }
       assert.ok(row.items.translated > 0 && row.handWrittenLines > 0, row.module);
       assert.ok(row.sharedLines <= row.codeLines && row.identical <= row.matched && row.matched <= row.functions, row.module);
       // The decorated translation is measured beside the generic one.
@@ -325,6 +359,14 @@ test('the report measures each translated module against its hand-written Rust',
     assert.match(report, /\| identical, decorated \|/u);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
+  }
+  if (process.env.ISSUE_195_OBSERVATION_FILE) {
+    assert.ok(process.env.ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY, 'acceptance downloads the complete published reports');
+    execFileSync(process.execPath, [
+      path.join(root, 'js/scripts/generate-self-translation-report.mjs'),
+      '--verify-reports', process.env.ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY,
+      '--commit', process.env.ISSUE_195_COMMIT,
+    ], { encoding: 'utf8' });
   }
   observe('I195-SELF-TRANSLATION-SHARED-CORPUS', ['differencePerModulePublished'], 'the report measures each translated module against its hand-written Rust');
 });

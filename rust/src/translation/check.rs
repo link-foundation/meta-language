@@ -28,6 +28,7 @@ use super::{Language, Span};
 
 mod arrays;
 mod expressions;
+mod externals;
 mod items;
 mod matches;
 mod math;

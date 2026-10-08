@@ -2,11 +2,12 @@
 
 use super::arrays::array_text;
 use super::{
-    BOOL, BinaryOp, Checker, Ctor, Decimal, Decl, Entry, Env, Expr, External, FLOAT, Flavor, INT,
-    Language, LitValue, Node, Param, Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type,
-    UNIT, UnaryOp, arithmetic_semantics, binary_node, cast_to, coerce, comparison, data,
-    fixed_bounds, negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
+    BOOL, BinaryOp, Checker, Ctor, Decimal, Decl, Entry, Env, Expr, FLOAT, Flavor, INT, Language,
+    LitValue, Node, Param, Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT,
+    UnaryOp, arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
+    negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
 };
+use crate::translation::frontend_rules::accept_argument_count;
 
 impl Checker {
     pub(super) fn coerce(&self, value: Expr, ty: &Type, span: Option<Span>) -> Result<Expr> {
@@ -669,69 +670,52 @@ impl Checker {
                 span,
             ));
         }
-        let (full_name, params, ret) = (
+        let (full_name, params, ret, module_path) = (
             entry.full_name.clone(),
             entry.params.clone(),
             entry.ret.clone(),
+            entry.module_path.clone(),
         );
-        self.checked_call(full_name, &params, ret, args, env, path, span)
+        self.checked_call(full_name, &params, ret, &module_path, args, env, path, span)
     }
 
-    /// A call of another item's function of the module, or a read of one of
-    /// its constants: a `call` of its name.
-    fn external_application(
-        &mut self,
-        name: &str,
-        segments: &[String],
-        args: &[SExpr],
-        env: &Env,
-        path: &[String],
-        span: Option<Span>,
-    ) -> Result<Expr> {
-        let external = self
-            .externals
-            .iter()
-            .find(|external| external.name() == name)
-            .cloned();
-        match external {
-            Some(External::Function { params, ret, .. }) => {
-                let params: Vec<Param> = params
-                    .into_iter()
-                    .map(|param| Param {
-                        name: param.name,
-                        ty: param.ty,
-                        guard: None,
-                    })
-                    .collect();
-                self.checked_call(name.to_owned(), &params, ret, args, env, path, span)
-            }
-            Some(External::Constant { ty, .. }) if args.is_empty() => Ok(Expr::new(
-                Node::Call {
-                    func: name.to_owned(),
-                    args: Vec::new(),
-                },
-                ty,
-            )),
-            _ => Err(type_error(
-                format!("{} is not a function", segments.join(".")),
-                span,
-            )),
-        }
-    }
-
-    /// A call of the function `full_name` with its checked arguments.
+    /// A call of the function `full_name` with its checked arguments: an
+    /// omitted argument takes its parameter's default, checked in `module_path`.
     #[allow(clippy::too_many_arguments)]
-    fn checked_call(
+    pub(super) fn checked_call(
         &mut self,
         full_name: String,
         params: &[Param],
         ret: Type,
+        module_path: &[String],
         args: &[SExpr],
         env: &Env,
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
-        if args.len() != params.len() {
+        let mut arguments: Vec<(&SExpr, bool)> = args.iter().map(|arg| (arg, false)).collect();
+        #[allow(clippy::cast_precision_loss)]
+        let argument_count = args.len() as f64;
+        if args.len() < params.len()
+            && accept_argument_count(
+                params
+                    .iter()
+                    .map(|param| param.default_value.is_some())
+                    .collect(),
+                argument_count,
+            )
+        {
+            arguments.extend(params[args.len()..].iter().map(|param| {
+                (
+                    param
+                        .default_value
+                        .as_ref()
+                        .expect("omitted parameter has a default"),
+                    true,
+                )
+            }));
+        }
+        if arguments.len() != params.len() {
             if args.len() < params.len() {
                 return Err(unsupported(
                     "partial application",
@@ -749,14 +733,21 @@ impl Checker {
             ));
         }
         let mut checked = Vec::new();
-        for (arg, param) in args.iter().zip(params) {
+        let closed_env = Env::default();
+        for ((arg, closed_default), param) in arguments.iter().zip(params) {
             // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
             let expected = if param.guard.is_some() && !matches!(arg.node, SNode::Num { .. }) {
                 &INT
             } else {
                 &param.ty
             };
-            let value = self.expr(arg, env, path, Some(expected), false)?;
+            let value = self.expr(
+                arg,
+                if *closed_default { &closed_env } else { env },
+                if *closed_default { module_path } else { path },
+                Some(expected),
+                false,
+            )?;
             let flavor = param.guard.is_some().then_some(Flavor::Checked);
             let mut value = coerce(value, &param.ty, self.language, arg.span.or(span), flavor)?;
             if let (

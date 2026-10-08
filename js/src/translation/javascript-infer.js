@@ -7,6 +7,7 @@
 // type error: the function would need a declared type for each use.
 
 import { typeError } from './diagnostics.js';
+import { acceptArgumentCount } from './frontend-rules.js';
 import { BOOL, FLOAT, INT, STRING, UNIT } from './types.js';
 
 const ROOT = 'crate';
@@ -116,13 +117,13 @@ class Inference {
     // The other items of the module keep the types their own translation checked.
     for (const external of externals) {
       this.signatures.set(`${ROOT}.${external.name}`, external.k === 'fn'
-        ? { params: external.params.map((param) => this.declared(param.type)), defaults: 0, ret: this.declared(external.ret) }
-        : { params: [], defaults: 0, ret: this.declared(external.type) });
+        ? { params: external.params.map((param) => this.declared(param.type)), defaults: external.params.map(() => false), ret: this.declared(external.ret) }
+        : { params: [], defaults: [], ret: this.declared(external.type) });
     }
     for (const { path, fn } of functions) {
       this.signatures.set(path.join('.'), {
         params: fn.params.map((param) => this.declared(param.type)),
-        defaults: fn.params.filter((param) => param.default).length,
+        defaults: fn.params.map((param) => Boolean(param.default)),
         ret: this.declared(fn.ret),
       });
     }
@@ -334,7 +335,7 @@ class Inference {
   call(path, args, env, where) {
     const argTypes = args.map((arg) => this.expr(arg, env));
     const signature = this.signature(path);
-    if (!signature || args.length > signature.params.length || args.length < signature.params.length - (signature.defaults ?? 0)) return this.fresh();
+    if (!signature || !acceptArgumentCount(signature.defaults, args.length)) return this.fresh();
     argTypes.forEach((type, index) => this.unify(type, signature.params[index], args[index].span ?? where));
     return signature.ret;
   }

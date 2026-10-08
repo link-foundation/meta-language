@@ -11,7 +11,8 @@ use std::sync::OnceLock;
 use regex::Regex;
 
 use super::decimal::Decimal;
-use super::diagnostics::{Result, TranslationError};
+use super::diagnostics::{ErrorKind, Result, TranslationError};
+use super::frontend_rules::{UnicodeEscape, decode_unicode_escape};
 use super::js_number::js_number_literal;
 use super::{Language, Span};
 
@@ -611,6 +612,46 @@ fn string_token(source: &Source, index: usize, language: Language) -> Result<Tok
         }
         if unit == u16::from(b'\\') && language != Language::Rocq {
             let escaped = source.char_at(cursor + 1);
+            if escaped == Some('u') {
+                let units = source.units()[cursor..source.len().min(cursor + 12)]
+                    .iter()
+                    .map(|unit| f64::from(*unit))
+                    .collect();
+                match decode_unicode_escape(units, language == Language::JavaScript) {
+                    UnicodeEscape::Scalar(code, end) => {
+                        // The generated decoder returns integral scalar values and
+                        // offsets inside the twelve-code-unit input window.
+                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                        let character =
+                            char::from_u32(code as u32).expect("decoded Unicode scalar");
+                        let mut units = [0; 2];
+                        value.extend_from_slice(character.encode_utf16(&mut units));
+                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                        {
+                            cursor += end as usize;
+                        }
+                        continue;
+                    }
+                    UnicodeEscape::Malformed => {
+                        return Err(TranslationError::syntax(
+                            "malformed unicode escape",
+                            Some(span(cursor, cursor + 2)),
+                        ));
+                    }
+                    UnicodeEscape::Unsupported(end, escape_length) => {
+                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                        let (end, escape_length) = (end as usize, escape_length as usize);
+                        return Err(TranslationError::new(
+                            ErrorKind::Unsupported,
+                            format!(
+                                "unicode escape {} is not a scalar value; Rust strings hold scalar values only",
+                                source.slice(cursor, cursor + escape_length)
+                            ),
+                            Some(span(cursor, cursor + end)),
+                        ));
+                    }
+                }
+            }
             let replacement = match escaped {
                 Some('n') => "\n",
                 Some('t') => "\t",

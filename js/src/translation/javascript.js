@@ -11,6 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
+import { findDefaultParameterReference } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
@@ -449,13 +450,11 @@ class JavaScriptParser {
       const param = c.identifier('parameter');
       // A default is filled in where a call leaves the argument out; it reads no parameter.
       if (c.eat('=')) {
-        for (let at = 0, depth = 0; !c.isKind('eof', at) && (depth > 0 || !(c.is(',', at) || c.is(')', at))); at += 1) {
-          const token = c.peek(at);
-          if (['(', '[', '{'].includes(token.value)) depth += 1;
-          if ([')', ']', '}'].includes(token.value)) depth -= 1;
-          if (token.kind === 'identifier' && !(at > 0 && c.is('.', at - 1)) && tokens.some((earlier) => earlier.value === token.value)) {
-            throw unsupported(`default reading parameter ${token.value}`, 'a call fills in a default where it leaves the argument out, so a default reads no parameter', span(token, token));
-          }
+        const remaining = c.tokens.slice(c.index);
+        const reference = findDefaultParameterReference(remaining.map((token) => token.kind), remaining.map((token) => token.value), tokens.map((token) => token.value));
+        if (reference >= 0) {
+          const token = c.peek(reference);
+          throw unsupported(`default reading parameter ${token.value}`, 'a call fills in a default where it leaves the argument out, so a default reads no parameter', span(token, token));
         }
         tokens.push({ ...param, defaultValue: this.expr() });
       }

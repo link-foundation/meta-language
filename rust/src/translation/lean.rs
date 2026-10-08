@@ -734,6 +734,7 @@ impl<'a> LeanParser<'a> {
                 name,
                 ty,
                 value,
+                constant: false,
                 span: Some(self.span_to_next(&token)),
             });
         }
@@ -778,6 +779,7 @@ fn bind_or_ctor(head: PatternHead, token: &Token) -> SPattern {
 const fn param(name: String, ty: Type) -> SParam {
     SParam {
         name,
+        default_value: None,
         ty: Some(ty),
         span: None,
         guard: None,

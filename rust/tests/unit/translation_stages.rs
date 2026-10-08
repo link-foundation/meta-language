@@ -136,6 +136,21 @@ fn parse(extension: &str, source: &str) -> Result<SProgram, TranslationError> {
 }
 
 #[test]
+fn stage_metadata_retains_constant_bindings_and_absent_parameter_defaults() {
+    let surface = parse_javascript(
+        "function identity(value) { return value; }\nconst answer = identity(42);\n",
+    )
+    .expect("the program parses");
+    let parsed = serde_json::to_value(&surface).expect("the surface serializes");
+    assert_eq!(parsed["main"]["effects"][0]["constant"], true);
+    let program = check_program(&surface).expect("the program checks");
+    let checked = serde_json::to_value(&program).expect("the checked program serializes");
+    assert_eq!(checked["main"]["effects"][0]["constant"], true);
+    let parameter = &checked["declarations"][0]["params"][0];
+    assert_eq!(parameter.get("default"), Some(&Value::Null));
+}
+
+#[test]
 fn every_translation_stage_matches_the_javascript_pipeline() {
     let fixtures: Value = serde_json::from_str(
         &fs::read_to_string(repository_path("parity/fixtures/translation-stages.json"))
