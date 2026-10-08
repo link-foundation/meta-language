@@ -30,6 +30,7 @@ use crate::translation::{
     emit_javascript::emit_javascript,
     emit_rust::{emit_rust, emit_rust_constants},
     rust::parse_rust,
+    rust_layout::{RUST_WIDTH, wrap_rust},
 };
 use crate::{LinkNetwork, ParseConfiguration};
 
@@ -696,7 +697,13 @@ fn translate_group(
         })
         .collect::<Vec<_>>()
         .join("\n\n");
-    let code = decorate_emitted(to, &generic, decorators);
+    let decorated = decorate_emitted(to, &generic, decorators);
+    // Rust that does not fit the width is laid out the way rustfmt would (#217).
+    let code = if family(to) == "Rust" {
+        wrap_rust(&decorated, RUST_WIDTH)
+    } else {
+        decorated
+    };
     if code.trim().is_empty() {
         return carry(text, term, from, "dropped by a decorator");
     }

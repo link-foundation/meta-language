@@ -19,6 +19,7 @@ import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
 import { tokenize } from './translation/lexer.js';
 import { parseRust } from './translation/rust.js';
+import { wrapRust } from './translation/rust-layout.js';
 
 /** The languages self-translation reads and writes. */
 export const SELF_TRANSLATION_LANGUAGES = Object.freeze(['JavaScript', 'TypeScript', 'Rust']);
@@ -411,7 +412,9 @@ function translateGroup(group, from, to, decorators, context = {}) {
   if (emitted.definitions.length === 0) return carry(text, term, from, 'no definition');
   const exported = family(to) === 'JavaScript' && (family(from) === 'Rust' ? /^pub(\([^)]*\))?\s/mu : /^export\s/mu).test(text);
   const generic = emitted.definitions.map((definition) => (exported ? `export ${definition}` : definition)).join('\n\n');
-  const code = decorateEmitted(to, { source: generic }, decorators).source;
+  const decorated = decorateEmitted(to, { source: generic }, decorators).source;
+  // Rust that does not fit the width is laid out the way rustfmt would (#217).
+  const code = family(to) === 'Rust' ? wrapRust(decorated) : decorated;
   if (code.trim() === '') return carry(text, term, from, 'dropped by a decorator');
   const count = emitted.definitions.length;
   const marker = `${TRANSLATED}${from} ${term} items=${count} sha256=${sha256(code)}`;

@@ -31,6 +31,7 @@ pub mod output;
 pub mod proof;
 pub mod rocq;
 pub mod rust;
+pub mod rust_layout;
 pub mod surface;
 pub mod types;
 
