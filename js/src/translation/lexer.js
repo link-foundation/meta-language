@@ -4,6 +4,7 @@
 // part of the JavaScript frontend's input.
 
 import { TranslationError } from './diagnostics.js';
+import { decodeUnicodeEscape } from './frontend-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -171,23 +172,14 @@ function blockCommentEnd(source, index, comments) {
 // JavaScript, where a surrogate pair of two such escapes is one code point.
 // A lone surrogate is refused, because Rust strings cannot hold it.
 function unicodeEscape(source, at, language) {
-  const braced = /^\\u\{([0-9a-fA-F]{1,6})\}/u.exec(source.slice(at, at + 10));
-  const fixed = language === 'JavaScript' ? /^\\u([0-9a-fA-F]{4})/u.exec(source.slice(at, at + 6)) : null;
-  const match = braced ?? fixed;
-  if (!match) throw new TranslationError('syntax', 'malformed unicode escape', { start: at, end: at + 2 });
-  let code = Number.parseInt(match[1], 16);
-  let end = at + match[0].length;
-  if (fixed && !braced && code >= 0xd800 && code <= 0xdbff) {
-    const low = /^\\u([dD][c-fC-F][0-9a-fA-F]{2})/u.exec(source.slice(end, end + 6));
-    if (low) {
-      code = 0x10000 + ((code - 0xd800) << 10) + (Number.parseInt(low[1], 16) - 0xdc00);
-      end += 6;
-    }
+  const units = [];
+  for (let index = at; index < Math.min(source.length, at + 12); index += 1) units.push(source.charCodeAt(index));
+  const escape = decodeUnicodeEscape(units, language === 'JavaScript');
+  if (escape.$ === 'malformed') throw new TranslationError('syntax', 'malformed unicode escape', { start: at, end: at + 2 });
+  if (escape.$ === 'unsupported') {
+    throw new TranslationError('unsupported', `unicode escape ${source.slice(at, at + escape.escapeLength)} is not a scalar value; Rust strings hold scalar values only`, { start: at, end: at + escape.end });
   }
-  if (code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)) {
-    throw new TranslationError('unsupported', `unicode escape ${match[0]} is not a scalar value; Rust strings hold scalar values only`, { start: at, end });
-  }
-  return { text: String.fromCodePoint(code), end };
+  return { text: String.fromCodePoint(escape.code), end: at + escape.end };
 }
 
 function stringToken(source, index, language) {

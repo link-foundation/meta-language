@@ -27,7 +27,7 @@ satisfied.
   consumer lives under `link-assistant`.
 - RML pull request
   [#184](https://github.com/link-foundation/relative-meta-logic/pull/184) was
-  open at the audit date, head `f24d0f1f183fc92b39563d2f6fd5d3795d3235c5`
+  open at the audit date, head `fddfba1dda94ec177c652e1406e2d3383a337847`
   on branch `issue-183-7fedfddffe9c`. Its implementation is audited separately
   below; the default-branch table describes the earlier committed consumer.
 - meta-language itself was read at the working tree of this branch, whose
@@ -109,10 +109,14 @@ has no JavaScript use of it.
 ### Current RML pull request 184
 
 This table inspects the pinned pull request head
-`f24d0f1f183fc92b39563d2f6fd5d3795d3235c5`, rather than treating its
+`fddfba1dda94ec177c652e1406e2d3383a337847`, rather than treating its
 new code as part of the older default branch. Its JavaScript package still
-pins meta-language `^0.46.0` and its Rust crate pins 0.58.2. On 2026-09-29,
-a packed JavaScript 0.58.2 candidate from this branch passed all 145 targeted
+pins meta-language `^0.46.0` and its Rust crate pins 0.58.2. The inventory was
+re-derived from the head's GitHub tree on 2026-10-07, verifying every source
+blob and including the added structure and identifier-rewrite workloads.
+The following earlier runs used head
+`f24d0f1f183fc92b39563d2f6fd5d3795d3235c5` and do not verify this head.
+On 2026-09-29, a packed JavaScript 0.58.2 candidate from this branch passed all 145 targeted
 consumer tests covering the meta-language facade, LiNo front end and formal
 workspace after the source rendering correction below. The complete RML
 JavaScript suite also passed (1,506 tests). Rust candidate integration has not
@@ -122,36 +126,48 @@ consumer test runs are not observations of the issue 195 acceptance suite.
 The workloads below are every file of that head that reaches meta-language:
 the sources that import the package or a source that does, and the tests that
 import such a source. [`parity/fixtures/rml-pr184-workloads.json`](../parity/fixtures/rml-pr184-workloads.json)
-records them with their blob ids, and `node js/scripts/issue-195-rml-pr184.mjs
---online` derives them again from the pull request on GitHub, so a new head or
-a new consuming file fails the audit until this section is updated.
+records them with their blob ids. Pre-merge acceptance derives the inventory
+again from verified immutable GitHub blobs at the committed pin.
+`node js/scripts/issue-195-rml-pr184.mjs --online` also compares the live pull
+request head with that pin in a non-blocking report on `main`; a new head or
+consuming file fails that report until the audit is updated in a follow-up.
+The live head moved to `b561767d6c104bcb222ac8e5530a728f791326fe` after
+this snapshot. It changes dependency delivery and adds consumer workloads;
+the pinned runs below do not verify those changes.
 
 | Consumer usage or requirement | meta-language capability | Ledger rows | Tests | Status |
 |---|---|---|---|---|
 | Parse and normalize RML's Links Notation source in both runtimes, including comments, indentation, Unicode space, quote runs, depth and scaling cases | [JavaScript front end][rml-pr184-lino-js], [Rust front end][rml-pr184-lino-rs] and [shared cases][rml-pr184-lino-cases] still call `links-notation` 0.20 after consumer-owned preprocessing. This pull request does not call meta-language's LiNo grammar. | `I195-CST-lino`, `I195-LINO-UPGRADE`, `I195-LINO-UPSTREAM-REGRESSIONS`, `I195-LINO-COMPATIBILITY-MATRIX`, `I195-DOWNSTREAM-RML-PR184-AUDIT` | `js/tests/lino-grammar.test.js`, `rust/tests/unit/lino_grammar.rs` (meta-language only) | not yet verified |
-| Round-trip RML source through meta-language and compare links and evaluation | [JavaScript facade][rml-pr184-meta-js] and [Rust facade][rml-pr184-meta-rs] parse with the unregistered `RML` label, reconstruct tokens, then call RML's own LiNo parser and evaluator. Neither facade tests a registered RML grammar. | `I195-GRAMMAR-LOSSLESS-TREES`, `I195-DOWNSTREAM-RML-WORKLOADS` | `rust/tests/unit/parity_corpora.rs` (meta-language only) | not yet verified |
-| Rewrite a JavaScript identifier as part of RML's meta-language integration | The [JavaScript facade][rml-pr184-meta-js] reconstructs a meta-language network, then uses RML's own `parseJs` and `printJs` CST for lexical edits; the [Rust facade][rml-pr184-meta-rs] uses meta-language query and replacement. The two implementations are not the same binding-aware operation. | `I195-XFORM-javascript-query`, `I195-XFORM-javascript-replace`, `I195-RENAME-javascript`, `I195-PARITY-TRANSFORMS` | `js/tests/issue-195-binding-rename.test.js`, `rust/tests/unit/issue_195_binding_rename.rs` (meta-language only) | not yet implemented |
+| Round-trip RML source through meta-language and compare links and evaluation | [JavaScript facade][rml-pr184-meta-js] and [Rust facade][rml-pr184-meta-rs] retain source tokens, attach RML-owned syntax structure and compare its forms with RML's LiNo parser and evaluator. The extension does not register a meta-language parser for `RML`. | `I195-GRAMMAR-LOSSLESS-TREES`, `I195-DOWNSTREAM-RML-WORKLOADS` | `rust/tests/unit/parity_corpora.rs` (meta-language only) | not yet verified |
+| Retain, serialize, edit and reconstruct RML syntax after discarding source tokens, with bounded graph expansion | [JavaScript structure][rml-pr184-structure-js] and [Rust structure][rml-pr184-structure-rs] declare a language profile and store consumer-defined syntax concepts in public meta-language links. Their [JavaScript tests][rml-pr184-structure-tests-js] and [Rust tests][rml-pr184-structure-tests-rs] check round trips, substitution, malformed graphs, expansion limits and explicit unsupported translation obligations. RML owns parsing and reconstruction of this extension. | `I195-GRAMMAR-LOSSLESS-TREES`, `I195-DOWNSTREAM-RML-WORKLOADS` | `js/tests/issue-195-downstream-rml-workloads.test.js`, `rust/tests/unit/issue_195_downstream_rml_workloads.rs` | not yet verified |
+| Rewrite a JavaScript identifier as part of RML's meta-language integration | The [JavaScript facade][rml-pr184-meta-js] and [Rust facade][rml-pr184-meta-rs] render source from a meta-language network, then use RML's own conservative rename implementations. Their [JavaScript tests][rml-pr184-rename-tests-js] and [Rust tests][rml-pr184-rename-tests-rs] share capture and shadowing cases; they do not exercise meta-language's binding-aware rename. | `I195-XFORM-javascript-query`, `I195-XFORM-javascript-replace`, `I195-RENAME-javascript`, `I195-PARITY-TRANSFORMS` | `js/tests/issue-195-binding-rename.test.js`, `rust/tests/unit/issue_195_binding_rename.rs` (meta-language only) | not yet implemented |
 | Load and validate linked Lean and Rocq formal corpus content | [JavaScript corpus][rml-pr184-corpus-js] and [Rust corpus][rml-pr184-corpus-rs] first round-trip the source through the `RML` network, then use RML's own form parser and trusted contract to interpret and fingerprint declarations. Meta-language does not validate declarations or certify proofs. | `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-GRAMMAR-LOSSLESS-TREES`, `I195-SEMANTICS-PROOF-PRESERVATION` | [JavaScript consumer tests][rml-pr184-theory-js], [Rust consumer tests][rml-pr184-theory-rs]; none here | not yet verified |
 | Read an executable meta-theory network, including link-defined logics, from RML source in both runtimes | The [JavaScript network][rml-pr184-network-js] and [Rust network][rml-pr184-network-rs] round-trip each theory source through the meta-language facade before RML's own form parser, proof-object checker and linked-program registry interpret it. Meta-language only carries the source. | `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-GRAMMAR-LOSSLESS-TREES` | [JavaScript consumer tests][rml-pr184-theory-js], [linked-theory tests][rml-pr184-theory-linked-js], [Rust consumer tests][rml-pr184-theory-rs]; none here | not yet verified |
 | Use meta-language substitution rules, translation rules and truth values from RML planning | The [JavaScript facade][rml-pr184-meta-js] and [Rust facade][rml-pr184-meta-rs] apply a `SubstitutionRule`, render through a `TranslationRuleSet` and combine `TruthValue` and `ProbabilisticTruthValue`; the [JavaScript facade tests][rml-pr184-support-js] and [Rust facade tests][rml-pr184-support-rs] check the results. | `I195-PARITY-SEMANTICS`, `I195-PARITY-TRANSFORMS`, `I195-DOWNSTREAM-RML-WORKLOADS` | `js/tests/core.test.js`, `js/tests/translation.test.js`, `rust/tests/unit/substitution.rs`, `rust/tests/unit/translation_rules.rs`, `rust/tests/unit/link_network.rs` (meta-language only) | not yet verified |
-| Keep JavaScript and Rust RML behavior aligned across the pull request's tests | [JavaScript LiNo tests][rml-pr184-tests-js], [Rust LiNo tests][rml-pr184-tests-rs], and facade tests in both runtimes exercise consumer code. The 145 targeted tests and complete JavaScript suite (1,506 tests) passed on a packed candidate; the Rust candidate and full acceptance matrix remain unverified. | `I195-PARITY-CST`, `I195-PARITY-TRANSFORMS`, `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-DELIVERY-RML-CANDIDATE` | `js/tests/core.test.js`, `rust/tests/unit/source_generation.rs` (source rendering parity) | not yet verified |
+| Keep JavaScript and Rust RML behavior aligned across the pull request's tests | [JavaScript LiNo tests][rml-pr184-tests-js], [Rust LiNo tests][rml-pr184-tests-rs], and facade tests in both runtimes exercise consumer code. The earlier 145 targeted tests and complete JavaScript suite (1,506 tests) used the older head described above; the new pinned head requires fresh installed-candidate observations in both runtimes. | `I195-PARITY-CST`, `I195-PARITY-TRANSFORMS`, `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-DELIVERY-RML-CANDIDATE` | `js/tests/core.test.js`, `rust/tests/unit/source_generation.rs` (source rendering parity) | not yet verified |
 
-[rml-pr184-lino-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/src/rml-lino-frontend.mjs
-[rml-pr184-lino-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/src/lino_frontend.rs
-[rml-pr184-lino-cases]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/test-corpus/lino-frontend/cases.json
-[rml-pr184-meta-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/src/rml-meta-language.mjs
-[rml-pr184-meta-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/src/meta_language_support.rs
-[rml-pr184-corpus-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/src/rml-formal-corpus.mjs
-[rml-pr184-corpus-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/src/formal_corpus.rs
-[rml-pr184-tests-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/tests/lino-frontend.test.mjs
-[rml-pr184-tests-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/tests/lino_frontend_tests.rs
-[rml-pr184-theory-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/tests/theory-network.test.mjs
-[rml-pr184-theory-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/tests/theory_network_tests.rs
-[rml-pr184-theory-linked-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/tests/theory-network-linked.test.mjs
-[rml-pr184-network-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/src/rml-theory-network.mjs
-[rml-pr184-network-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/src/theory_network.rs
-[rml-pr184-support-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/tests/meta-language-support.test.mjs
-[rml-pr184-support-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/tests/meta_language_support_tests.rs
+[rml-pr184-lino-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/src/rml-lino-frontend.mjs
+[rml-pr184-lino-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/src/lino_frontend.rs
+[rml-pr184-lino-cases]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/test-corpus/lino-frontend/cases.json
+[rml-pr184-meta-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/src/rml-meta-language.mjs
+[rml-pr184-meta-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/src/meta_language_support.rs
+[rml-pr184-corpus-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/src/rml-formal-corpus.mjs
+[rml-pr184-corpus-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/src/formal_corpus.rs
+[rml-pr184-tests-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/tests/lino-frontend.test.mjs
+[rml-pr184-tests-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/tests/lino_frontend_tests.rs
+[rml-pr184-theory-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/tests/theory-network.test.mjs
+[rml-pr184-theory-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/tests/theory_network_tests.rs
+[rml-pr184-theory-linked-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/tests/theory-network-linked.test.mjs
+[rml-pr184-network-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/src/rml-theory-network.mjs
+[rml-pr184-network-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/src/theory_network.rs
+[rml-pr184-support-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/tests/meta-language-support.test.mjs
+[rml-pr184-support-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/tests/meta_language_support_tests.rs
+[rml-pr184-structure-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/src/rml-meta-structure.mjs
+[rml-pr184-structure-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/src/meta_language_structure.rs
+[rml-pr184-structure-tests-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/tests/meta-language-structure.test.mjs
+[rml-pr184-structure-tests-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/tests/meta_language_structure_tests.rs
+[rml-pr184-rename-tests-js]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/js/tests/meta-language-rename.test.mjs
+[rml-pr184-rename-tests-rs]: https://github.com/link-foundation/relative-meta-logic/blob/fddfba1dda94ec177c652e1406e2d3383a337847/rust/tests/meta_language_rename_tests.rs
 
 ## formal-ai
 

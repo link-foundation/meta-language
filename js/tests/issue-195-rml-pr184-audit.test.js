@@ -2,8 +2,9 @@
 // (docs/downstream-consumers.md, "Current RML pull request 184"): the section
 // pins the pull request head, links every file of that head that reaches
 // meta-language, and maps each workload to ledger rows with executable
-// acceptance cells. In acceptance mode the inventory is derived again from the
-// live pull request on GitHub, so a moved head or a new consuming file fails.
+// acceptance cells. In acceptance mode the inventory is derived again from
+// verified immutable GitHub blobs. --online compares the live head separately
+// in the non-blocking post-merge report on main.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
@@ -86,16 +87,16 @@ test('the audit section maps every pull request 184 workload to executable accep
   observe(['eachWorkloadMappedToExecutableAcceptance'], 'the audit section maps every pull request 184 workload to executable acceptance rows');
 });
 
-test('the pinned head is the live pull request head and its workloads are the inventoried ones', {
+test('the pinned pull request revision and its workloads match the GitHub tree', {
   skip: acceptance ? false : 'reads GitHub; runs in the issue 195 acceptance suite',
 }, async () => {
-  const live = await readRmlPr184(fixture.headRevision);
-  assert.equal(live.head, fixture.headRevision, `pull request 184 moved; regenerate ${RML_PR184_FIXTURE}`);
+  const live = await readRmlPr184(fixture.headRevision, { live: false });
+  assert.equal(live.head, fixture.headRevision, `the GitHub tree must match the revision in ${RML_PR184_FIXTURE}`);
   assert.deepEqual(live.workloads, fixture.workloads);
   assert.deepEqual(validateRmlPr184Audit(audit, { ...fixture, workloads: live.workloads }, context), noProblems);
   observe(
     ['currentPullRequestRevisionPinned', 'actualWorkloadsInventoried'],
-    'the pinned head is the live pull request head and its workloads are the inventoried ones',
+    'the pinned pull request revision and its workloads match the GitHub tree',
   );
 });
 
@@ -174,4 +175,38 @@ test('reading the live pull request rejects contents that do not match the tree'
   const live = await readRmlPr184(head, { fetch: fetchFrom(responses(gitBlob(text))) });
   assert.deepEqual(live, { head, state: 'open', workloads: [{ file: 'js/src/facade.mjs', kind: 'source', blob: gitBlob(text) }] });
   await assert.rejects(readRmlPr184(head, { fetch: fetchFrom(responses('1'.repeat(40))) }), /does not match its tree blob/u);
+});
+
+test('the pre-merge inventory uses immutable blobs even when the live pull request has moved', async () => {
+  const text = "import { LinkNetwork } from 'meta-language';\n";
+  const requests = [];
+  const moved = 'e'.repeat(40);
+  const fetchPinned = async (url) => {
+    requests.push(url);
+    if (url.endsWith('/pulls/184')) {
+      return { ok: true, json: async () => ({ head: { sha: moved }, state: 'open' }) };
+    }
+    if (url.includes('/git/trees/')) {
+      assert.ok(url.includes(head));
+      return { ok: true, json: async () => ({ truncated: false, tree: [
+        { type: 'blob', path: 'js/src/facade.mjs', sha: gitBlob(text) },
+      ] }) };
+    }
+    assert.equal(url, `https://raw.githubusercontent.com/link-foundation/relative-meta-logic/${head}/js/src/facade.mjs`);
+    return { ok: true, arrayBuffer: async () => new TextEncoder().encode(text).buffer };
+  };
+  assert.deepEqual(await readRmlPr184(head, { fetch: fetchPinned, live: false }), {
+    head, workloads: [{ file: 'js/src/facade.mjs', kind: 'source', blob: gitBlob(text) }],
+  });
+  assert.equal(requests.length, 2);
+  assert.ok(requests.every((url) => !url.endsWith('/pulls/184')));
+  const live = await readRmlPr184(head, { fetch: fetchPinned });
+  assert.equal(live.head, moved, 'the post-merge reader still exposes a moved live head');
+  assert.notEqual(live.head, head);
+  const corrupted = async (url) => url.includes('/git/trees/')
+    ? { ok: true, json: async () => ({ truncated: false, tree: [
+      { type: 'blob', path: 'js/src/facade.mjs', sha: '1'.repeat(40) },
+    ] }) }
+    : fetchPinned(url);
+  await assert.rejects(readRmlPr184(head, { fetch: corrupted, live: false }), /does not match its tree blob/u);
 });

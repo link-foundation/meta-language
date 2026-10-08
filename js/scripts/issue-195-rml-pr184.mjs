@@ -8,8 +8,8 @@
 // pins the same head, links every inventoried file at that head, and maps
 // every workload to existing ledger rows with an implementation and
 // executable acceptance cells. `readRmlPr184` re-derives the inventory from
-// GitHub, so the fixture is checked against the live pull request rather
-// than against itself.
+// immutable GitHub blobs in pre-merge acceptance. The live pull request head
+// is compared separately by --online as a non-blocking report on main.
 //
 // Usage:
 //   node js/scripts/issue-195-rml-pr184.mjs            check the fixture and the audit section
@@ -237,11 +237,13 @@ async function githubJson(pathname, fetchImpl) {
 }
 
 /**
- * The live pull request: its current head and the workloads of `revision`,
- * re-derived from the files of that revision on GitHub.
+ * The workloads of `revision`, re-derived from verified immutable GitHub
+ * blobs. With `live` (the default), also read the current pull request head
+ * and state. Pre-merge acceptance uses `live: false` to depend only on the
+ * committed revision; --online retains the comparison with the moving head.
  */
-export async function readRmlPr184(revision, { fetch: fetchImpl = fetch } = {}) {
-  const pull = await githubJson(`repos/${RML_REPOSITORY}/pulls/${RML_PULL_REQUEST}`, fetchImpl);
+export async function readRmlPr184(revision, { fetch: fetchImpl = fetch, live = true } = {}) {
+  const pull = live ? await githubJson(`repos/${RML_REPOSITORY}/pulls/${RML_PULL_REQUEST}`, fetchImpl) : null;
   const tree = await githubJson(`repos/${RML_REPOSITORY}/git/trees/${revision}?recursive=1`, fetchImpl);
   if (tree.truncated) throw new Error(`the tree of ${revision} is truncated`);
   const scanned = tree.tree.filter(({ type, path: file }) => type === 'blob' && SCANNED.test(file));
@@ -255,7 +257,7 @@ export async function readRmlPr184(revision, { fetch: fetchImpl = fetch } = {}) 
       files.set(file, bytes);
     }));
   }
-  return { head: pull.head.sha, state: pull.state, workloads: inventoryWorkloads(files) };
+  return { head: pull ? pull.head.sha : revision, ...(pull ? { state: pull.state } : {}), workloads: inventoryWorkloads(files) };
 }
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');

@@ -88,8 +88,8 @@ jobs:
   # Publishes, per module, how far the self-translation of each JavaScript
   # module is from its hand-written Rust. The whole of js/src takes over an
   # hour on one runner, so the modules are split into shards of about the same
-  # size. It runs beside the JavaScript and Rust workflows and holds neither
-  # back.
+  # size. It runs beside the JavaScript and Rust workflows; acceptance verifies
+  # every published module before recording the reporting assertion.
   self-translation-report:
     name: Self-Translation Report (${{ matrix.shard }}/8)
     if: ${{ github.event_name != 'release' }}
@@ -798,7 +798,7 @@ jobs:
 
   javascript-suite:
     name: Evidence Stage (javascript-suite)
-    needs: [candidates, consumers, rml-workloads, formal-ai-workloads]
+    needs: [candidates, consumers, rml-workloads, formal-ai-workloads, self-translation-report]
     if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -817,6 +817,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
+        with:
+          # JavaScript self-translation acceptance checks the emitted Rust.
+          components: clippy
 
       - name: Setup Lean
         env:
@@ -867,8 +870,17 @@ jobs:
           name: issue-195-formal-ai-workloads-${{ github.sha }}
           path: issue-195-artifacts/formal-ai-workloads
 
+      - name: Download the complete self-translation reports
+        # Missing reports fail their assertion while the other suite tests still run.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          pattern: self-translation-report-${{ github.sha }}-*
+          path: issue-195-artifacts/self-translation-report
+
       - name: Produce the stage evidence
         env:
+          ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
           ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
           ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
           GH_TOKEN: ${{ github.token }}
@@ -979,8 +991,17 @@ jobs:
           name: issue-195-formal-ai-workloads-${{ github.sha }}
           path: issue-195-artifacts/formal-ai-workloads
 
+      - name: Download the complete self-translation reports
+        # Missing reports fail their assertion while the other suite tests still run.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          pattern: self-translation-report-${{ github.sha }}-*
+          path: issue-195-artifacts/self-translation-report
+
       - name: Produce the stage evidence
         env:
+          ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
           ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
           ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
           GH_TOKEN: ${{ github.token }}

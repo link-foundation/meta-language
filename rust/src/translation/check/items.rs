@@ -171,6 +171,7 @@ impl Checker {
                     name: param.name.clone(),
                     ty: self.resolve_type(param.ty.as_ref(), path, item.span)?,
                     guard: param.guard.clone(),
+                    default_value: param.default_value.clone(),
                 });
             }
             let ret = self.resolve_type(item.ret.as_ref(), path, item.span)?;
@@ -373,6 +374,7 @@ impl Checker {
                     name,
                     ty,
                     value,
+                    constant,
                     span,
                 } => {
                     let expected = match ty {
@@ -387,6 +389,7 @@ impl Checker {
                     effects.push(Effect::Let {
                         name: name.clone(),
                         value,
+                        constant: *constant,
                         span: *span,
                     });
                 }

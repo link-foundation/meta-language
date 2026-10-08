@@ -402,7 +402,12 @@
           "rust/src/program_translation.rs",
           "rust/src/language_support.rs",
           "rust/tests/unit/four_language_conformance.rs",
-          "parity/fixtures/four-language-conformance.json"
+          "parity/fixtures/four-language-conformance.json",
+          "rust/tests/unit/translation_stages.rs",
+          "rust/tests/unit/translation_defaults.rs",
+          "rust/tests/unit/translation_foundation.rs",
+          "rust/src/translation/javascript/infer/arrays.rs",
+          "rust/tests/unit/self_translation.rs"
         ]
       },
       "javascript": {
@@ -411,7 +416,12 @@
           "js/src/program-translation.js",
           "js/src/language-support.js",
           "js/tests/four-language-conformance.test.js",
-          "parity/fixtures/four-language-conformance.json"
+          "parity/fixtures/four-language-conformance.json",
+          "js/tests/translation-defaults.test.js",
+          "js/tests/translation-frontend-rules.test.js",
+          "js/tests/self-translation.test.js",
+          "js/tests/translation-rust-compilation.test.js",
+          "js/tests/translation-self-report.test.js"
         ]
       }
     },
@@ -894,6 +904,8 @@
           "rust/src/grammar/merge/declarations.rs",
           "rust/tests/unit/issue_195_grammar_feature_union.rs",
           "rust/tests/unit/issue_195_grammar_feature_union_interchange.rs",
+          "rust/tests/unit/issue_195_grammar_character_classes.rs",
+          "parity/fixtures/native-character-class-grammars.json",
           "parity/fixtures/grammar-feature-union.json"
         ]
       },
@@ -903,6 +915,8 @@
           "js/src/grammar-feature-forms.js",
           "js/src/grammar-runtime.js",
           "js/tests/issue-195-grammar-feature-union.test.js",
+          "js/tests/grammar-character-classes.test.js",
+          "parity/fixtures/native-character-class-grammars.json",
           "parity/fixtures/grammar-feature-union.json"
         ]
       }
@@ -974,6 +988,7 @@
           "js/scripts/issue-195-rml-workloads.mjs",
           "js/scripts/issue-195-rml-workload-probes.mjs",
           "js/tests/issue-195-downstream-rml-workloads.test.js",
+          "js/tests/issue-195-rml-pr184-audit.test.js",
           "parity/fixtures/rml-pr184-workloads.json"
         ]
       }

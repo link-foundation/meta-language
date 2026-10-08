@@ -47,6 +47,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6024489303',
   bulkDeliveryRepost:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025209380',
+  bulkDeliverySecondRepost:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025369792',
 });
 
 // The rows the audit of c39470d0 lists as open work.

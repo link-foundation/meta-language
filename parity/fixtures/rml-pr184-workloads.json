@@ -2,7 +2,7 @@
   "description": "The files of the current relative-meta-logic pull request 184 head that reach meta-language: sources that import the package or a source that does, and the tests that import them. Regenerate with node js/scripts/issue-195-rml-pr184.mjs --write <checkout of the head>.",
   "repository": "link-foundation/relative-meta-logic",
   "pullRequest": 184,
-  "headRevision": "f24d0f1f183fc92b39563d2f6fd5d3795d3235c5",
+  "headRevision": "fddfba1dda94ec177c652e1406e2d3383a337847",
   "dependencies": {
     "javascript": "^0.46.0",
     "rust": "0.58.2"
@@ -16,12 +16,27 @@
     {
       "file": "js/src/rml-meta-language.mjs",
       "kind": "source",
-      "blob": "55b13dcf0540280c118b3a8446a6c17f925424ea"
+      "blob": "e95bfb76bccbb5a97eb9a1abb4b9ab7b9a2ba442"
+    },
+    {
+      "file": "js/src/rml-meta-structure.mjs",
+      "kind": "source",
+      "blob": "b6a54fff9231585d5b5fa887d7280cfdef8db6c0"
     },
     {
       "file": "js/src/rml-theory-network.mjs",
       "kind": "source",
       "blob": "23ba4b239e66325ac1993c73e784246fa27913a1"
+    },
+    {
+      "file": "js/tests/meta-language-rename.test.mjs",
+      "kind": "test",
+      "blob": "3fae2f3e4c1e1990590222ac114bf8f1d07b8502"
+    },
+    {
+      "file": "js/tests/meta-language-structure.test.mjs",
+      "kind": "test",
+      "blob": "20adacc713d633155acc24d0a0b92ff90f64f8f3"
     },
     {
       "file": "js/tests/meta-language-support.test.mjs",
@@ -44,14 +59,29 @@
       "blob": "ecf7b5ae767afe2fe524fe688ddd00f29ac14ef6"
     },
     {
+      "file": "rust/src/meta_language_structure.rs",
+      "kind": "source",
+      "blob": "31a19210f803285ce408628e2e235cc0e2067c35"
+    },
+    {
       "file": "rust/src/meta_language_support.rs",
       "kind": "source",
-      "blob": "617678009b03f140f9786810d7b77b4d508105ca"
+      "blob": "3626626ee5f70ddb95ba4fd3e127adc3c5885b5f"
     },
     {
       "file": "rust/src/theory_network.rs",
       "kind": "source",
       "blob": "5d1ed14e196ff41e8f29943a0deb323900848ad2"
+    },
+    {
+      "file": "rust/tests/meta_language_rename_tests.rs",
+      "kind": "test",
+      "blob": "64c120524cf3691bd0b12f0291e82a75fe8788fd"
+    },
+    {
+      "file": "rust/tests/meta_language_structure_tests.rs",
+      "kind": "test",
+      "blob": "861f2c24f0da5ff13fd6b3129d1db05251a2bd2b"
     },
     {
       "file": "rust/tests/meta_language_support_tests.rs",
