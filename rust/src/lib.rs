@@ -266,7 +266,8 @@ pub use rust_codec::{
 };
 pub use self_translation::{
     SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError, SelfTranslationItem,
-    self_translate, self_translate_decorated, self_translation_language,
+    SelfTranslationOptions, SelfTranslationSignature, self_translate, self_translate_decorated,
+    self_translate_with, self_translation_language, self_translation_signatures,
 };
 pub use semantic_translation::{
     ReadTranslationProvenance, SEMANTIC_ENCODING, SEMANTIC_OBSERVATION, SemanticTranslation,

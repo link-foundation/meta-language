@@ -11,6 +11,7 @@
 //!
 //! Mirrors `js/src/self-translation.js`.
 
+use std::collections::BTreeMap;
 use std::fmt;
 use std::fmt::Write as _;
 use std::sync::LazyLock;
@@ -23,11 +24,38 @@ use crate::grammar::decorate_emitted;
 use crate::translation::check::check_program;
 use crate::translation::diagnostics::TranslationError;
 use crate::translation::emit_common::Emitted;
+use crate::translation::javascript::{ModuleContext, parse_javascript_in};
+use crate::translation::surface::External;
 use crate::translation::{
-    emit_javascript::emit_javascript, emit_rust::emit_rust, javascript::parse_javascript,
+    emit_javascript::emit_javascript,
+    emit_rust::{emit_rust, emit_rust_constants},
     rust::parse_rust,
 };
 use crate::{LinkNetwork, ParseConfiguration};
+
+mod binding;
+
+use self::binding::{Binder, declared_signatures};
+
+/// The signature of an exported item of a JavaScript or TypeScript module.
+///
+/// It binds the name a module that imports it uses: a function's parameters
+/// and result, or a constant's type and whether a literal gives its value.
+pub type SelfTranslationSignature = External;
+
+/// What [`self_translate_with`] translates a module with.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct SelfTranslationOptions {
+    /// The emitter decorators, as [`self_translate_decorated`] applies them.
+    pub decorators: DecoratorSet,
+    /// The module's directory inside its crate, as path segments: the crate
+    /// root when empty. A relative import becomes a `use crate::…` of the
+    /// module it names from there.
+    pub module_directory: Vec<String>,
+    /// The signatures [`self_translation_signatures`] gives for each module
+    /// the module imports, by import specifier, which bind the imported names.
+    pub imports: BTreeMap<String, Vec<SelfTranslationSignature>>,
+}
 
 /// The languages self-translation reads and writes.
 pub const SELF_TRANSLATION_LANGUAGES: [&str; 3] = ["JavaScript", "TypeScript", "Rust"];
@@ -180,6 +208,65 @@ pub fn self_translate_decorated(
     target_language: &str,
     decorators: &DecoratorSet,
 ) -> Result<SelfTranslation, SelfTranslationError> {
+    let options = SelfTranslationOptions {
+        decorators: decorators.clone(),
+        ..SelfTranslationOptions::default()
+    };
+    self_translate_with(source, source_language, target_language, &options)
+}
+
+/// [`self_translate`] with `options`.
+///
+/// From JavaScript or TypeScript into Rust, an item may call and read the
+/// module's other top-level items: each item is translated after the items
+/// it names, with the signatures of those that translated bound, and the
+/// Rust names them as its own translation does. `import { a, b as c } from
+/// './m.mjs'` becomes `use crate::m::{a, b as c};`, and the signatures
+/// `options.imports` gives for `./m.mjs` bind the imported names the same way.
+///
+/// # Errors
+///
+/// As [`self_translate`].
+pub fn self_translate_with(
+    source: &str,
+    source_language: &str,
+    target_language: &str,
+    options: &SelfTranslationOptions,
+) -> Result<SelfTranslation, SelfTranslationError> {
+    translate_module(source, source_language, target_language, options)
+        .map(|(translation, _)| translation)
+}
+
+/// The signatures of the exported items of the JavaScript or TypeScript
+/// module `source` that translate into Rust, in source order, for the
+/// `imports` of a module that imports them.
+///
+/// # Errors
+///
+/// A [`SelfTranslationError`] for an unknown or a Rust language or a source
+/// its links do not reproduce.
+pub fn self_translation_signatures(
+    source: &str,
+    language: &str,
+    options: &SelfTranslationOptions,
+) -> Result<Vec<SelfTranslationSignature>, SelfTranslationError> {
+    if family(required(language)?) != "JavaScript" {
+        return Err(SelfTranslationError {
+            message: format!(
+                "signatures are read from JavaScript or TypeScript modules, not {language}"
+            ),
+        });
+    }
+    translate_module(source, language, "Rust", options).map(|(_, signatures)| signatures)
+}
+
+fn translate_module(
+    source: &str,
+    source_language: &str,
+    target_language: &str,
+    options: &SelfTranslationOptions,
+) -> Result<(SelfTranslation, Vec<SelfTranslationSignature>), SelfTranslationError> {
+    let decorators = &options.decorators;
     let from = required(source_language)?;
     let to = required(target_language)?;
     let reconstructed =
@@ -201,19 +288,49 @@ pub fn self_translate_decorated(
                 reason: None,
             })
             .collect();
-        return Ok(SelfTranslation {
+        let translation = SelfTranslation {
             source_language: from,
             target_language: to,
             code: reconstructed,
             items,
-        });
+        };
+        return Ok((translation, Vec::new()));
     }
     let mut blocks: Vec<String> = Vec::new();
     let mut preludes: Vec<String> = Vec::new();
     let mut recorded = Vec::new();
     let mut gap = String::new();
-    for group in group_items(&items, source) {
-        let out = translate_group(&group, from, to, decorators);
+    let groups = group_items(&items, source);
+    let (outs, scans) = if family(to) == "Rust" {
+        Binder {
+            groups: &groups,
+            from,
+            to,
+            decorators,
+            module_directory: &options.module_directory,
+            imports: &options.imports,
+        }
+        .translate()
+    } else {
+        let outs = groups
+            .iter()
+            .map(|group| translate_group(group, from, to, decorators, &ModuleContext::default()))
+            .collect();
+        (outs, Vec::new())
+    };
+    let signatures: Vec<SelfTranslationSignature> = outs
+        .iter()
+        .enumerate()
+        .filter(|(index, out)| {
+            out.status == "translated"
+                && scans
+                    .get(*index)
+                    .and_then(Option::as_ref)
+                    .is_some_and(|scan| scan.exported)
+        })
+        .flat_map(|(_, out)| out.signatures.iter().cloned())
+        .collect();
+    for (group, out) in groups.iter().zip(outs) {
         for prelude in out.preludes {
             if !preludes.contains(&prelude) {
                 preludes.push(prelude);
@@ -250,12 +367,13 @@ pub fn self_translate_decorated(
         && header.text.contains(&format!(" source={to} "))
         && header.text.contains(&format!(" sha256={} ", sha256(&body)))
     {
-        return Ok(SelfTranslation {
+        let translation = SelfTranslation {
             source_language: from,
             target_language: to,
             code: body,
             items: recorded,
-        });
+        };
+        return Ok((translation, signatures));
     }
     if family(to) == "Rust" && recorded.iter().any(|item| item.status == "translated") {
         preludes.insert(0, RUST_ALLOW.to_owned());
@@ -279,12 +397,13 @@ pub fn self_translate_decorated(
         lines.push(PRELUDE_END.to_owned());
         lines.push(String::new());
     }
-    Ok(SelfTranslation {
+    let translation = SelfTranslation {
         source_language: from,
         target_language: to,
         code: format!("{}\n{body}", lines.join("\n")),
         items: recorded,
-    })
+    };
+    Ok((translation, signatures))
 }
 
 // The layout between two emitted blocks: its line breaks, at least one.
@@ -414,32 +533,35 @@ fn group_items<'a>(items: &[Item<'a>], text: &'a str) -> Vec<Group<'a>> {
             };
             let lines_end = lines_after(index);
             let count = field("items").and_then(|count| count.parse::<usize>().ok());
-            match count {
-                Some(count) if count > 0 && lines_end + count < items.len() => {
-                    let last = lines_end + count;
-                    let code = between(&items[lines_end + 1], &items[last]);
-                    if field("sha256") == Some(sha256(&code).as_str()) {
-                        let lines = source_lines(&items[index + 1..=lines_end]);
+            count
+                .and_then(|count| definitions_end(items, lines_end, count))
+                .map_or_else(
+                    || {
                         (
-                            last,
-                            GroupKind::Carried {
-                                language: first_word(rest),
-                                lines,
+                            index,
+                            GroupKind::Comment {
+                                text: item.text.to_owned(),
+                                term: item.term.clone(),
                             },
                         )
-                    } else {
-                        // An edited translation is translated again; its provenance is dropped.
-                        (lines_end, GroupKind::Provenance)
-                    }
-                }
-                _ => (
-                    index,
-                    GroupKind::Comment {
-                        text: item.text.to_owned(),
-                        term: item.term.clone(),
                     },
-                ),
-            }
+                    |last| {
+                        let code = between(&items[lines_end + 1], &items[last]);
+                        if field("sha256") == Some(sha256(&code).as_str()) {
+                            let lines = source_lines(&items[index + 1..=lines_end]);
+                            (
+                                last,
+                                GroupKind::Carried {
+                                    language: first_word(rest),
+                                    lines,
+                                },
+                            )
+                        } else {
+                            // An edited translation is translated again; its provenance is dropped.
+                            (lines_end, GroupKind::Provenance)
+                        }
+                    },
+                )
         } else {
             // Comments directly before an item document it and travel with it.
             let mut end = index;
@@ -469,6 +591,24 @@ fn group_items<'a>(items: &[Item<'a>], text: &'a str) -> Vec<Group<'a>> {
     groups
 }
 
+/// The last item of the `count` definitions after the item at `after`: a
+/// definition's attributes (`#[derive(…)]`) are items of their own in Rust.
+fn definitions_end(items: &[Item<'_>], after: usize, count: usize) -> Option<usize> {
+    if count == 0 {
+        return None;
+    }
+    let mut left = count;
+    for (at, item) in items.iter().enumerate().skip(after + 1) {
+        if item.term != "attribute_item" {
+            left -= 1;
+        }
+        if left == 0 {
+            return Some(at);
+        }
+    }
+    None
+}
+
 fn first_word(text: &str) -> String {
     text.split(' ').next().unwrap_or_default().to_owned()
 }
@@ -478,6 +618,8 @@ struct Translated {
     preludes: Vec<String>,
     status: &'static str,
     reason: Option<String>,
+    /// The signatures a translated item gives the other items of its module.
+    signatures: Vec<External>,
 }
 
 fn translate_group(
@@ -485,12 +627,14 @@ fn translate_group(
     from: &str,
     to: &str,
     decorators: &DecoratorSet,
+    context: &ModuleContext,
 ) -> Translated {
     let done = |code: String, status: &'static str| Translated {
         code: Some(code),
         preludes: Vec::new(),
         status,
         reason: None,
+        signatures: Vec::new(),
     };
     let (text, term) = match &group.kind {
         GroupKind::Provenance => {
@@ -499,6 +643,7 @@ fn translate_group(
                 preludes: Vec::new(),
                 status: "provenance",
                 reason: None,
+                signatures: Vec::new(),
             };
         }
         GroupKind::Carried { language, lines } => {
@@ -525,7 +670,7 @@ fn translate_group(
         }
         GroupKind::Item { text, term } => (text, term),
     };
-    let emitted = match emit_item(text, from, to) {
+    let (emitted, signatures) = match emit_item(text, from, to, context) {
         Ok(Some(emitted)) => emitted,
         Ok(None) => return carry(text, term, from, "top-level statement"),
         Err(error) => return carry(text, term, from, error.kind.as_str()),
@@ -568,11 +713,18 @@ fn translate_group(
         preludes: emitted.preludes,
         status: "translated",
         reason: None,
+        signatures,
     }
 }
 
-/// The item emitted by the portable core, or `None` for a top-level statement.
-fn emit_item(text: &str, from: &str, to: &str) -> Result<Option<Emitted>, TranslationError> {
+/// The item emitted by the portable core with the signatures it gives the
+/// module's other items, or `None` for a top-level statement.
+fn emit_item(
+    text: &str,
+    from: &str,
+    to: &str,
+    context: &ModuleContext,
+) -> Result<Option<(Emitted, Vec<External>)>, TranslationError> {
     let surface = if family(from) == "Rust" {
         // The Rust frontend reads a program, so an item alone gets an empty main.
         if RUST_MAIN.is_match(text) {
@@ -581,22 +733,36 @@ fn emit_item(text: &str, from: &str, to: &str) -> Result<Option<Emitted>, Transl
             parse_rust(&format!("{text}\nfn main() {{}}\n"))?
         }
     } else {
-        parse_javascript(text)?
+        parse_javascript_in(text, context)?
     };
     let program = check_program(&surface)?;
-    if program
-        .main
-        .as_ref()
-        .is_some_and(|main| !main.effects.is_empty())
+    // A top-level constant is a Rust constant; other top-level statements run
+    // once, as a program.
+    let constants = if family(to) == "Rust" {
+        emit_rust_constants(&program)?
+    } else {
+        None
+    };
+    let is_constant = constants.is_some();
+    if !is_constant
+        && program
+            .main
+            .as_ref()
+            .is_some_and(|main| !main.effects.is_empty())
     {
         return Ok(None);
     }
-    let emitted = if family(to) == "Rust" {
-        emit_rust(&program)?
-    } else {
-        emit_javascript(&program)?
+    let emitted = match constants {
+        Some(emitted) => emitted,
+        None if family(to) == "Rust" => emit_rust(&program)?,
+        None => emit_javascript(&program)?,
     };
-    Ok(Some(emitted))
+    let signatures = if program.imports.is_empty() {
+        declared_signatures(&program, is_constant)
+    } else {
+        context.externals.clone()
+    };
+    Ok(Some((emitted, signatures)))
 }
 
 fn carry(text: &str, term: &str, from: &str, reason: &str) -> Translated {
@@ -607,6 +773,7 @@ fn carry(text: &str, term: &str, from: &str, reason: &str) -> Translated {
         preludes: Vec::new(),
         status: "carried",
         reason: Some(reason.to_owned()),
+        signatures: Vec::new(),
     }
 }
 

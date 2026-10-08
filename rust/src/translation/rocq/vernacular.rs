@@ -15,6 +15,8 @@ impl RocqParser {
             language: Language::Rocq,
             items,
             main,
+            imports: Vec::new(),
+            externals: Vec::new(),
         })
     }
 

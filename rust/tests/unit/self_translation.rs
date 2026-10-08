@@ -10,9 +10,13 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
+use meta_language::translation::javascript::parse_javascript;
+use meta_language::translation::surface::{External, ExternalParam};
+use meta_language::translation::types::Type;
 use meta_language::{
-    DecoratorSet, SELF_TRANSLATION_LANGUAGES, SelfTranslationItem, self_translate,
-    self_translate_decorated, self_translation_language,
+    DecoratorSet, SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationItem,
+    SelfTranslationOptions, self_translate, self_translate_decorated, self_translate_with,
+    self_translation_language, self_translation_signatures,
 };
 
 use super::issue_195_observations::{Observation, record};
@@ -636,4 +640,199 @@ fn languages_are_named_by_name_or_extension_and_others_are_refused() {
     assert_eq!(self_translation_language("mjs"), Some("JavaScript"));
     assert_eq!(self_translation_language("python"), None);
     assert!(self_translate("x\n", "python", "rust").is_err());
+}
+
+/// The Rust a translation emits, without its provenance lines.
+fn emitted_rust(translation: &SelfTranslation) -> String {
+    translation
+        .code
+        .split('\n')
+        .filter(|line| !line.starts_with("// "))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// The status of the item of `source` whose text contains `needle`.
+fn status_of<'a>(translation: &'a SelfTranslation, source: &str, needle: &str) -> &'a str {
+    translation
+        .items
+        .iter()
+        .find(|item| source[item.start..item.end].contains(needle))
+        .map_or("", |item| item.status)
+}
+
+#[test]
+fn an_item_calls_the_other_top_level_items_of_its_module() {
+    let source = "/** @param {number} x @returns {number} */\nfunction square(x) {\n  return x * x;\n}\n\n/** @param {number} x @returns {number} */\nexport function cappedSquare(x) {\n  return square(x) + 1;\n}\n";
+    let translation = self_translate(source, "JavaScript", "Rust").expect("translates");
+    assert!(
+        translation
+            .items
+            .iter()
+            .all(|item| item.status == "translated")
+    );
+    let rust = emitted_rust(&translation);
+    assert!(
+        rust.contains("pub fn capped_square(x: f64) -> f64 {\n    (square(x) + 1f64)\n}"),
+        "{rust}"
+    );
+    // The translation back restores the source.
+    let back = self_translate(&translation.code, "Rust", "JavaScript").expect("translates back");
+    assert_eq!(back.code, source);
+}
+
+#[test]
+fn a_translated_item_whose_definitions_carry_attributes_translates_back_to_its_source() {
+    let source = "/** @param {string[]} parts @returns {boolean} */\nexport function balanced(parts) {\n  let depth = 0;\n  for (const part of parts) {\n    if (part === '(') depth += 1;\n    if (part === ')') depth -= 1;\n    if (depth < 0) return false;\n  }\n  return depth === 0;\n}\n";
+    let translation = self_translate(source, "JavaScript", "Rust").expect("translates");
+    // The loop's result is a data type, whose `#[derive(…)]` is an item of its own in Rust.
+    assert!(translation.code.contains("items=3 "));
+    assert!(translation.code.contains("#[derive("));
+    let back = self_translate(&translation.code, "Rust", "JavaScript").expect("translates back");
+    assert_eq!(back.code, source);
+}
+
+#[test]
+fn a_sibling_that_does_not_translate_leaves_its_callers_carried() {
+    let source = "/** @param {bigint} n @returns {boolean} */\nfunction isEven(n) {\n  return n === 0n ? true : isOdd(n - 1n);\n}\n\n/** @param {bigint} n @returns {boolean} */\nfunction isOdd(n) {\n  return n === 0n ? false : isEven(n - 1n);\n}\n\n/** @param {number} x @returns {number} */\nfunction opaque(x) {\n  return [x].map((y) => y)[0];\n}\n\n/** @param {number} x @returns {number} */\nfunction caller(x) {\n  return opaque(x) + 1;\n}\n";
+    let translation = self_translate(source, "JavaScript", "Rust").expect("translates");
+    // Mutually recursive siblings are a cycle, which stays unbound.
+    for needle in [
+        "function isEven",
+        "function isOdd",
+        "function opaque",
+        "function caller",
+    ] {
+        assert_eq!(
+            status_of(&translation, source, needle),
+            "carried",
+            "{needle}"
+        );
+    }
+    let caller = translation
+        .items
+        .iter()
+        .find(|item| source[item.start..].starts_with("function caller"))
+        .expect("the caller is an item");
+    assert_eq!(caller.reason.as_deref(), Some("type"));
+}
+
+#[test]
+fn a_relative_import_of_items_of_the_crate_translates_as_a_use_declaration() {
+    let math = "/** @param {number} x @returns {number} */\nexport function double(x) {\n  return x * 2;\n}\n\nfunction hidden(x) {\n  return x;\n}\n";
+    let defaults = SelfTranslationOptions::default();
+    let signatures = self_translation_signatures(math, "JavaScript", &defaults).expect("reads");
+    assert_eq!(
+        signatures,
+        [External::Function {
+            name: "double".to_owned(),
+            params: vec![ExternalParam {
+                name: "x".to_owned(),
+                ty: Type::Float,
+            }],
+            ret: Type::Float,
+        }]
+    );
+    let quad = "import { double } from './math.mjs';\n\n/** @param {number} x @returns {number} */\nexport function quadruple(x) {\n  return double(double(x));\n}\n";
+    let options = SelfTranslationOptions {
+        imports: [("./math.mjs".to_owned(), signatures)].into(),
+        ..SelfTranslationOptions::default()
+    };
+    let bound = self_translate_with(quad, "JavaScript", "Rust", &options).expect("translates");
+    assert!(bound.items.iter().all(|item| item.status == "translated"));
+    let rust = emitted_rust(&bound);
+    assert!(
+        rust.contains("use crate::math::double;\n\npub fn quadruple(x: f64) -> f64 {\n    double(double(x))\n}"),
+        "{rust}"
+    );
+    // Without the signatures the import still translates; its users are carried.
+    let unbound = self_translate(quad, "JavaScript", "Rust").expect("translates");
+    assert_eq!(status_of(&unbound, quad, "import {"), "translated");
+    assert_eq!(status_of(&unbound, quad, "function quadruple"), "carried");
+    // A renamed function is named in snake case on both sides of `as`.
+    let renamed = SelfTranslationOptions {
+        imports: [(
+            "./math.mjs".to_owned(),
+            vec![External::Function {
+                name: "cappedSquare".to_owned(),
+                params: Vec::new(),
+                ret: Type::Float,
+            }],
+        )]
+        .into(),
+        ..SelfTranslationOptions::default()
+    };
+    let translation = self_translate_with(
+        "import { cappedSquare as capped } from './math.mjs';\n",
+        "JavaScript",
+        "Rust",
+        &renamed,
+    )
+    .expect("translates");
+    assert!(emitted_rust(&translation).contains("use crate::math::capped_square as capped;\n"));
+    // The module directory places the module inside the crate.
+    let nested = SelfTranslationOptions {
+        module_directory: vec!["agentic".to_owned(), "crate".to_owned()],
+        ..SelfTranslationOptions::default()
+    };
+    let translation = self_translate_with(
+        "import { realm } from '../host.mjs';\nimport { a, b } from './sub/part-two.js';\n",
+        "JavaScript",
+        "Rust",
+        &nested,
+    )
+    .expect("translates");
+    assert!(emitted_rust(&translation).contains(
+        "use crate::agentic::host::realm;\nuse crate::agentic::crate_::sub::part_two::{a, b};"
+    ));
+}
+
+#[test]
+fn imports_outside_the_crate_are_refused_with_their_own_diagnostics() {
+    for (source, message) in [
+        (
+            "import fs from 'node:fs';",
+            "import from 'node:fs': Node.js built-in modules are outside the portable core at 0..15",
+        ),
+        (
+            "import { readFileSync } from 'node:fs';",
+            "import from 'node:fs': Node.js built-in modules are outside the portable core at 0..29",
+        ),
+        (
+            "import { parse } from 'links-notation';",
+            "import from 'links-notation': packages are outside the portable core; a module imports the items of the other modules of its crate by relative path, as in import { f } from './m.mjs' at 0..22",
+        ),
+        (
+            "import * as m from './m.mjs';",
+            "namespace import: import the items of a module by name, as in import { f } from './m.mjs', or the assertion module as a whole, as in import assert from 'node:assert/strict' at 0..7",
+        ),
+        (
+            "import m from './m.mjs';",
+            "default import from './m.mjs': a translated module has no default export; import its items by name, as in import { f } from './m.mjs' at 0..14",
+        ),
+        (
+            "import {} from './m.mjs';",
+            "import {} from './m.mjs': an import names the items it imports at 0..15",
+        ),
+    ] {
+        let error = parse_javascript(source).expect_err("the import is refused");
+        assert_eq!(error.message(), message);
+        let translation =
+            self_translate(&format!("{source}\n"), "JavaScript", "Rust").expect("translates");
+        assert_eq!(translation.items[0].status, "carried", "{source}");
+    }
+    // A whole program is one module, so a relative import is refused there.
+    let error = parse_javascript("import { f } from './m.mjs';").expect_err("refused");
+    assert_eq!(
+        error.message(),
+        "import from './m.mjs': a relative import names another module of a crate, and self-translation translates a crate module by module at 0..18"
+    );
+    // The crate root has no parent directory.
+    let climbing = self_translate("import { f } from '../m.mjs';\n", "JavaScript", "Rust")
+        .expect("translates");
+    assert_eq!(climbing.items[0].status, "carried");
+    assert!(
+        self_translation_signatures("fn main() {}\n", "Rust", &SelfTranslationOptions::default())
+            .is_err()
+    );
 }

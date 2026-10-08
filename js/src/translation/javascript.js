@@ -52,17 +52,31 @@ const CONSTANTS = {
   'Number.MAX_VALUE': '1.7976931348623157e+308', 'Number.MIN_VALUE': '5e-324', 'Number.POSITIVE_INFINITY': 'Infinity',
   'Number.NEGATIVE_INFINITY': '-Infinity', 'Number.NaN': 'NaN',
 };
+const ASSERTION_MODULES = new Set(['node:assert', 'node:assert/strict', 'assert', 'assert/strict']);
+const NAMESPACE_IMPORT = 'import the items of a module by name, as in import { f } from \'./m.mjs\', or the assertion module as a whole, as in import assert from \'node:assert/strict\'';
 const STRICT_ASSERTIONS = { equal: 'eq', notEqual: 'ne', deepEqual: 'deep', notDeepEqual: 'notDeep' };
 const ASSERTIONS = { strictEqual: 'eq', notStrictEqual: 'ne', deepStrictEqual: 'deep', notDeepStrictEqual: 'notDeep' };
 
-export function parseJavaScript(source) {
+/**
+ * Reads `source` as a portable-core program. Self-translation reads one
+ * top-level item of a module at a time and passes its `context`:
+ * `externals`, the signatures of the module's other items and of the items
+ * it imports, which the item may call and read, and `moduleDirectory`, the
+ * module's directory inside its crate as path segments, which makes relative
+ * imports items of the crate.
+ */
+export function parseJavaScript(source, context = {}) {
   const { tokens, comments } = tokenize(source, 'JavaScript');
-  return new JavaScriptParser(source, tokens, comments).file();
+  return new JavaScriptParser(source, tokens, comments, context).file();
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null } = {}) {
     this.source = source;
+    // The other items of the module an item may call and read, by name.
+    this.externals = new Map(externals.map((external) => [external.name, external]));
+    this.moduleDirectory = moduleDirectory;
+    this.imports = [];
     this.cursor = new TokenCursor(tokens, 'JavaScript');
     this.docs = comments.filter((comment) => comment.text.startsWith('/**') && comment.text !== '/**/');
     // Tags of every @typedef data type, for `switch (x.$)`.
@@ -166,7 +180,10 @@ class JavaScriptParser {
     items.push(...this.generated);
     const main = { effects, span: { start: 0, end: this.source.length } };
     if (this.sequentialAsync) main.sequentialAsync = true;
-    return inferJavaScriptTypes({ language: 'JavaScript', items, main });
+    const program = { language: 'JavaScript', items, main };
+    if (this.imports.length) program.imports = this.imports;
+    if (this.externals.size) program.externals = [...this.externals.values()];
+    return inferJavaScriptTypes(program);
   }
 
   /** Names of the top-level async functions, which every call must await. */
@@ -204,22 +221,30 @@ class JavaScriptParser {
     return token.kind === 'punct' && token.value === '(' && tokens[this.matching(index) + 1]?.value === '=>';
   }
 
-  /** `import assert from 'node:assert/strict'` is the only portable import. */
+  /**
+   * `import assert from 'node:assert/strict'` binds the assertion module. In a
+   * module of a crate, which self-translation reads, `import { a, b as c } from
+   * './m.mjs'` imports items of another module of the crate. Every other import
+   * is outside the portable core.
+   */
   importDeclaration() {
     const c = this.cursor;
     const start = c.next();
-    let local;
-    let strict = false;
+    if (c.is('*')) throw unsupported('namespace import', NAMESPACE_IMPORT, span(start, c.peek()));
+    let local = null;
+    let braced = false;
+    const names = [];
     if (c.eat('{')) {
-      const imported = c.identifier('import');
-      if (imported.value !== 'strict' || !c.eat('as')) {
-        throw unsupported(`import { ${imported.value} }`, 'import the assertion module as a whole, e.g. import assert from \'node:assert/strict\'', span(start, c.peek()));
+      braced = true;
+      while (!c.is('}')) {
+        const imported = c.identifier('import');
+        // A refused named import of node:assert ends at the token after its name.
+        const after = c.peek();
+        const alias = c.eat('as') ? c.identifier('import') : null;
+        names.push({ imported: imported.value, local: (alias ?? imported).value, aliased: alias !== null, after });
+        if (!c.eat(',')) break;
       }
-      local = c.identifier('import');
       c.expect('}', 'import');
-      strict = true;
-    } else if (c.is('*')) {
-      throw unsupported('namespace import', 'only node:assert can be imported', span(start, c.peek()));
     } else {
       local = c.identifier('import');
     }
@@ -227,13 +252,32 @@ class JavaScriptParser {
     const module = c.next();
     if (module.kind !== 'string') throw this.fail('expected a module name', module);
     c.eat(';');
-    if (module.value === 'node:assert/strict' || module.value === 'assert/strict') strict = true;
-    else if (module.value !== 'node:assert' && module.value !== 'assert') {
-      throw unsupported(`import from '${module.value}'`, 'modules other than node:assert are outside the portable core', span(start, module));
+    const specifier = module.value;
+    if (braced && !names.length) throw unsupported(`import {} from '${specifier}'`, 'an import names the items it imports', span(start, module));
+    if (ASSERTION_MODULES.has(specifier)) {
+      const refused = names.find((name, index) => index > 0 || name.imported !== 'strict' || !name.aliased);
+      if (refused) {
+        throw unsupported(`import { ${refused.imported} }`, 'import the assertion module as a whole, e.g. import assert from \'node:assert/strict\'', span(start, refused.after));
+      }
+      if (this.assertion) throw unsupported('second assertion import', 'import node:assert once', span(start, module));
+      const name = names.length ? names[0].local : local.value;
+      this.assertion = { name, strict: names.length > 0 || specifier.endsWith('/strict') };
+      this.scope.tdz.delete(name);
+      return;
     }
-    if (this.assertion) throw unsupported('second assertion import', 'import node:assert once', span(start, module));
-    this.assertion = { name: local.value, strict };
-    this.scope.tdz.delete(local.value);
+    if (!/^\.\.?\//u.test(specifier)) {
+      const reason = specifier.startsWith('node:')
+        ? 'Node.js built-in modules are outside the portable core'
+        : 'packages are outside the portable core; a module imports the items of the other modules of its crate by relative path, as in import { f } from \'./m.mjs\'';
+      throw unsupported(`import from '${specifier}'`, reason, span(start, module));
+    }
+    if (!names.length) throw unsupported(`default import from '${specifier}'`, 'a translated module has no default export; import its items by name, as in import { f } from \'./m.mjs\'', span(start, module));
+    if (!this.moduleDirectory) {
+      throw unsupported(`import from '${specifier}'`, 'a relative import names another module of a crate, and self-translation translates a crate module by module', span(start, module));
+    }
+    const path = cratePath(specifier, this.moduleDirectory);
+    if (!path) throw unsupported(`import from '${specifier}'`, 'the specifier names no module file inside the crate', span(start, module));
+    this.imports.push({ module: path, names: names.map(({ imported, local: name }) => ({ imported, local: name })), span: span(start, module) });
   }
 
   /**
@@ -1678,6 +1722,8 @@ class JavaScriptParser {
     c.next();
     if (this.scope.locals.has(token.value) || this.scope.tdz.has(token.value)) return this.reference(token);
     if (this.assertion?.name === token.value) throw unsupported('assertion in an expression', 'assertions are top-level statements', span(token, token));
+    // A constant of another item of the module is read by name.
+    if (this.externals.get(token.value)?.k === 'const' && !c.is('(')) return { k: 'name', path: [ROOT, token.value], span: span(token, token) };
     // A global: a function, or a namespace path to a method, which must be called.
     const segments = [token.value];
     while (c.is('.') && c.peek(1).kind === 'identifier') {
@@ -1915,6 +1961,27 @@ function propOf(expr) {
   if (expr.k === 'binary' && (expr.op === 'and' || expr.op === 'or')) return { p: expr.op, left: propOf(expr.left), right: propOf(expr.right) };
   if (expr.k === 'unary' && expr.op === 'not') return { p: 'not', arg: propOf(expr.arg) };
   return { p: 'bool', expr };
+}
+
+/**
+ * The path inside the crate of the module a relative `specifier` names from
+ * the module directory `directory`, or null when it climbs above the crate
+ * root or names no file.
+ */
+function cratePath(specifier, directory) {
+  const parts = specifier.split('/');
+  const file = parts.pop().replace(/\.[cm]?[jt]s$/u, '');
+  const path = [...directory];
+  for (const part of parts) {
+    if (part === '..') {
+      if (!path.length) return null;
+      path.pop();
+    } else if (part !== '.') {
+      if (!part) return null;
+      path.push(part);
+    }
+  }
+  return file && file !== '.' && file !== '..' ? [...path, file] : null;
 }
 
 function joined(left, right, token) {

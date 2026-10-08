@@ -52,6 +52,9 @@ impl RustEmitter<'_> {
                 };
                 Ok(block(&format!("{assign}continue;")))
             }
+            Node::Call { func, args } if self.program.external(func).is_some() => {
+                self.external_call(func, args, &expr.ty)
+            }
             Node::Call { func, args } => {
                 let head = format!("crate::{}", self.state.reference(func, "::"));
                 let mut texts = Vec::with_capacity(args.len());

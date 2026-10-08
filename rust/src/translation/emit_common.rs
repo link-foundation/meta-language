@@ -265,6 +265,12 @@ impl<'p> EmitState<'p> {
         candidate
     }
 
+    /// Keeps locals off `name`, the target name of another item of the
+    /// module that the program calls or reads.
+    pub fn reserve(&mut self, name: String) {
+        self.claimed.insert(name);
+    }
+
     /// Names a local binder may not take: a local named like a module, a
     /// top-level function or a constructor would shadow it in the target.
     #[must_use]

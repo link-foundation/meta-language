@@ -22,6 +22,8 @@ impl RustParser {
             language: Language::Rust,
             items,
             main: Some(main),
+            imports: Vec::new(),
+            externals: Vec::new(),
         })
     }
 

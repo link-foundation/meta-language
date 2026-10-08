@@ -9,7 +9,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
-use super::surface::{BinaryOp, Flavor, Guard, Rounding, UnaryOp};
+use super::surface::{BinaryOp, External, Flavor, Guard, Rounding, SImport, UnaryOp};
 use super::types::Type;
 use super::{Language, Span};
 
@@ -812,9 +812,28 @@ pub struct Program {
     /// Functions that may abort return the abort's message instead of a value (see `output`).
     #[serde(default, skip_serializing_if = "is_false")]
     pub aborts_threaded: bool,
+    /// Imports of the items of other modules of the crate (self-translation only).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub imports: Vec<SImport>,
+    /// The other items of the module, which the program calls and reads but
+    /// does not declare: a call of one is a `call` of its name.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub externals: Vec<External>,
 }
 
 impl Program {
+    /// The other item of the module that a call of `name` calls or reads,
+    /// when the program declares nothing under that name.
+    #[must_use]
+    pub fn external(&self, name: &str) -> Option<&External> {
+        if self.declaration(name).is_some() {
+            return None;
+        }
+        self.externals
+            .iter()
+            .find(|external| external.name() == name)
+    }
+
     #[must_use]
     pub fn declaration(&self, full_name: &str) -> Option<&Decl> {
         self.declarations
