@@ -4,9 +4,9 @@ use super::infer::infer_javascript_types;
 use super::loops::reserved;
 use super::math::global;
 use super::{
-    Assertion, BOOL, FLOAT, Guard, HashSet, INT, JavaScriptParser, JsDoc, Language, NAT, ROOT,
-    Result, SCtor, SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram, STRING, ScanEnd,
-    Scope, Span, Stmt, Token, TokenCursor, TokenKind, TranslationError, Type, array, describe,
+    BOOL, FLOAT, Guard, HashSet, INT, JavaScriptParser, JsDoc, Language, NAT, ROOT, Result, SCtor,
+    SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram, STRING, ScanEnd, Scope, Span,
+    Stmt, Token, TokenCursor, TokenKind, TranslationError, Type, array, describe,
     guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
     lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
 };
@@ -135,63 +135,9 @@ impl JavaScriptParser {
                 span: Some(Span::new(0, self.source.len())),
                 sequential_async: self.sequential_async,
             }),
+            imports: std::mem::take(&mut self.imports),
+            externals: std::mem::take(&mut self.externals),
         })
-    }
-
-    /// `import assert from 'node:assert/strict'` is the only portable import.
-    pub(super) fn import_declaration(&mut self) -> Result<()> {
-        let start = self.cursor.advance();
-        let local;
-        let mut strict = false;
-        if self.cursor.eat("{").is_some() {
-            let imported = self.cursor.identifier(Some("import"))?;
-            if imported.value != "strict" || self.cursor.eat("as").is_none() {
-                return Err(unsupported(
-                    &format!("import {{ {} }}", imported.value),
-                    "import the assertion module as a whole, e.g. import assert from 'node:assert/strict'",
-                    Some(self.to_here(&start)),
-                ));
-            }
-            local = self.cursor.identifier(Some("import"))?;
-            self.cursor.expect("}", Some("import"))?;
-            strict = true;
-        } else if self.cursor.is("*") {
-            return Err(unsupported(
-                "namespace import",
-                "only node:assert can be imported",
-                Some(self.to_here(&start)),
-            ));
-        } else {
-            local = self.cursor.identifier(Some("import"))?;
-        }
-        self.cursor.expect("from", Some("import"))?;
-        let module = self.cursor.advance();
-        if module.kind != TokenKind::String {
-            return Err(Self::fail("expected a module name", &module));
-        }
-        self.cursor.eat(";");
-        if module.value == "node:assert/strict" || module.value == "assert/strict" {
-            strict = true;
-        } else if module.value != "node:assert" && module.value != "assert" {
-            return Err(unsupported(
-                &format!("import from '{}'", module.value),
-                "modules other than node:assert are outside the portable core",
-                Some(span(&start, &module)),
-            ));
-        }
-        if self.assertion.is_some() {
-            return Err(unsupported(
-                "second assertion import",
-                "import node:assert once",
-                Some(span(&start, &module)),
-            ));
-        }
-        self.scope.tdz.remove(&local.value);
-        self.assertion = Some(Assertion {
-            name: local.value,
-            strict,
-        });
-        Ok(())
     }
 
     /// `@typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint }} Tree`

@@ -35,14 +35,27 @@ function bindLocal(env, name, type) {
 }
 
 export function checkProgram(surface) {
-  const checker = new Checker(surface.language);
+  const checker = new Checker(surface.language, surface.externals ?? []);
   return checker.program(surface);
 }
 
+/**
+ * The checker's entry for another item of the module, which the program
+ * calls or reads by name but does not declare: a function with its
+ * signature, or a constant with its type. A call of either is a `call` of
+ * its name, which no declaration of the program has.
+ */
+function externalEntry(external) {
+  const entry = { k: external.k, name: external.name, fullName: external.name, modulePath: [] };
+  if (external.k === 'const') return { ...entry, type: external.type };
+  return { ...entry, params: external.params.map(({ name, type }) => ({ name, type, guard: null, default: null })), ret: external.ret };
+}
+
 class Checker {
-  constructor(language) {
+  constructor(language, externals) {
     this.language = language;
     this.items = new Map();
+    this.externals = new Map(externals.map((external) => [external.name, externalEntry(external)]));
     this.fresh = 0;
     this.modules = new Map([['', { path: [], names: new Map(), modules: new Map() }]]);
   }
@@ -58,6 +71,8 @@ class Checker {
       main,
       declarations: this.items,
     };
+    if (surface.imports) program.imports = surface.imports;
+    if (surface.externals) program.externals = surface.externals;
     for (const entry of this.items.values()) {
       if (entry.k === 'fn') entry.body = reuseSuccessors(entry.body, new Map());
     }
@@ -190,7 +205,8 @@ class Checker {
       if (found) return found;
       if (segments[0] === 'crate' || segments[0] === 'self' || segments[0] === 'super') break;
     }
-    return undefined;
+    // The other items of the module are in scope after the program's own.
+    return names.length === 1 ? this.externals.get(names[0]) : undefined;
   }
 
   lookupFrom(modulePath, names) {
@@ -650,6 +666,10 @@ class Checker {
     }
     const entry = this.lookup(head.path, path, span);
     if (!entry) throw typeError(`unknown name ${head.path.join('.')}`, span);
+    if (entry.k === 'const') {
+      if (args.length) throw typeError(`${head.path.join('.')} is not a function`, span);
+      return { k: 'call', fn: entry.fullName, args: [], type: entry.type };
+    }
     if (entry.k === 'ctor') {
       const dataEntry = this.items.get(entry.data);
       const ctor = dataEntry.ctors.find((candidate) => candidate.name === entry.name);

@@ -239,7 +239,7 @@ fn rejections_name_the_construct_and_its_span() {
         (
             "import fs from 'node:fs';".to_owned(),
             ErrorKind::Unsupported,
-            "import from 'node:fs': modules other than node:assert are outside the portable core at 0..15",
+            "import from 'node:fs': Node.js built-in modules are outside the portable core at 0..15",
         ),
         (
             "/** @typedef {{ $: 'a' } | { $: 'a' }} A */\nconsole.log('x');".to_owned(),

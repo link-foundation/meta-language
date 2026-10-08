@@ -3,9 +3,10 @@
 use std::collections::BTreeSet;
 
 use super::{
-    ARRAY_PRELUDE, Binder, Decl, Emitted, Expr, MATH_PRELUDE, ModuleTree, NUMBER_PRELUDE, Node,
-    PRELUDE, Prelude, Prop, Result, RustEmitter, TheoremCheck, Type, block, comparison_operator,
-    format_escape, indent, own, rename_function, rename_theorem, rust_string, snake, tail_loop,
+    ARRAY_PRELUDE, Binder, Decl, Emitted, Expr, External, MATH_PRELUDE, ModuleTree, NUMBER_PRELUDE,
+    Node, PRELUDE, Prelude, Prop, Result, RustEmitter, TheoremCheck, Type, block,
+    comparison_operator, format_escape, indent, own, rename_function, rename_theorem, rust_string,
+    snake, tail_loop,
 };
 
 impl<'p> RustEmitter<'p> {
@@ -27,7 +28,12 @@ impl<'p> RustEmitter<'p> {
             }
             node.items.push(entry);
         }
-        let body = self.module_body(&tree, &[])?;
+        let mut body: Vec<String> = program
+            .imports
+            .iter()
+            .map(|import| self.use_declaration(import))
+            .collect();
+        body.extend(self.module_body(&tree, &[])?);
         let main = match &program.main {
             Some(main) => Some(self.main(main)?),
             None => None,
@@ -489,6 +495,14 @@ impl<'p> RustEmitter<'p> {
     pub(super) fn compared(&mut self, expr: &Expr) -> Result<String> {
         if let (Node::Lit { value }, Type::String) = (&expr.node, &expr.ty) {
             return Ok(rust_string(&value.text()));
+        }
+        if let (Node::Call { func, .. }, Type::String) = (&expr.node, &expr.ty)
+            && matches!(
+                self.program.external(func),
+                Some(External::Constant { literal: true, .. })
+            )
+        {
+            return Ok(func.clone());
         }
         self.receiver(expr)
     }

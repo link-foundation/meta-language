@@ -1,9 +1,9 @@
 //! Expressions from operator precedence down to literals and references.
 
 use super::{
-    ASSIGNMENTS, BinaryOp, FLOAT, GLOBALS, JavaScriptParser, Language, ROOT, Result, SArrayItem,
-    SData, SExpr, SNode, SPattern, SPatternNode, SRow, STagTest, ShowStyle, Span, Token,
-    TokenCursor, TokenKind, UnaryOp, binary, describe, has_ctor, is_tag_field, joined, node,
+    ASSIGNMENTS, BinaryOp, External, FLOAT, GLOBALS, JavaScriptParser, Language, ROOT, Result,
+    SArrayItem, SData, SExpr, SNode, SPattern, SPatternNode, SRow, STagTest, ShowStyle, Span,
+    Token, TokenCursor, TokenKind, UnaryOp, binary, describe, has_ctor, is_tag_field, joined, node,
     number_literal, span, tokenize, type_error, unsupported, wild,
 };
 
@@ -813,6 +813,19 @@ impl JavaScriptParser {
                 "assertion in an expression",
                 "assertions are top-level statements",
                 here,
+            ));
+        }
+        // A constant of another item of the module is read by name.
+        if !self.cursor.is("(")
+            && self.externals.iter().any(|external| {
+                matches!(external, External::Constant { name, .. } if *name == token.value)
+            })
+        {
+            return Ok(node(
+                SNode::Name {
+                    path: vec![ROOT.to_owned(), token.value.clone()],
+                },
+                span(&token, &token),
             ));
         }
         // A global: a function, or a namespace path to a method, which must be called.

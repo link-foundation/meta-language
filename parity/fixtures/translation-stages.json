@@ -14244,7 +14244,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "import from 'node:fs': modules other than node:assert are outside the portable core at 0..15"
+          "message": "import from 'node:fs': Node.js built-in modules are outside the portable core at 0..15"
         }
       }
     },
@@ -15232,7 +15232,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "namespace import: only node:assert can be imported at 0..7"
+          "message": "namespace import: import the items of a module by name, as in import { f } from './m.mjs', or the assertion module as a whole, as in import assert from 'node:assert/strict' at 0..7"
         }
       }
     },

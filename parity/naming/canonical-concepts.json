@@ -63193,6 +63193,26 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "translation.accept-declaration-signature",
+      "phrase": "accept declaration signature",
+      "role": "operation",
+      "definition": "Accept function signatures and literal constant signatures for cross-item bindings.",
+      "constraints": [
+        "Nonliteral constant initialization remains unbound until eager evaluation and effects are represented."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptDeclarationSignature"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_declaration_signature"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

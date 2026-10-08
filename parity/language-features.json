@@ -420,6 +420,7 @@
     "scriptLanguage": { "rust": "script_language", "kind": "function" },
     "selfTranslate": { "rust": "self_translate", "kind": "function" },
     "selfTranslationLanguage": { "rust": "self_translation_language", "kind": "function" },
+    "selfTranslationSignatures": { "rust": "self_translation_signatures", "kind": "function" },
     "sequence": { "rust": "sequence", "kind": "function" },
     "serializeGrammar": { "rust": "serialize_grammar", "kind": "function" },
     "sharedRuleDecisions": { "rust": "shared_rule_decisions", "kind": "function" },
@@ -501,7 +502,10 @@
           "parity/fixtures/self-translation-bindings.json",
           "rust/src/translation/frontend_rules.rs",
           "rust/src/translation/surface.rs",
-          "rust/src/tree_sitter_adapter.rs"
+          "rust/src/tree_sitter_adapter.rs",
+          "rust/src/self_translation/binding.rs",
+          "rust/src/self_translation/scope.rs",
+          "rust/tests/unit/self_translation_scope.rs"
         ]
       },
       "javascript": {
@@ -524,7 +528,8 @@
           "js/src/translation/frontend-rules.js",
           "js/tests/translation-type-queries.test.js",
           "js/tests/translation-array-concatenation.test.js",
-          "js/tests/translation-self-root-error.test.js"
+          "js/tests/translation-self-root-error.test.js",
+          "js/tests/translation-self-module-signatures.test.js"
         ]
       }
     },

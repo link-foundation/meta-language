@@ -244,6 +244,7 @@ mod items {
     use meta_language::script_language as _;
     use meta_language::self_translate as _;
     use meta_language::self_translation_language as _;
+    use meta_language::self_translation_signatures as _;
     use meta_language::sequence as _;
     use meta_language::serialize_grammar as _;
     use meta_language::shared_rule_decisions as _;
@@ -746,6 +747,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "selfTranslationLanguage",
         "self_translation_language",
+        "function",
+    ),
+    (
+        "selfTranslationSignatures",
+        "self_translation_signatures",
         "function",
     ),
     ("sequence", "sequence", "function"),

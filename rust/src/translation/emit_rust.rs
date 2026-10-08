@@ -26,16 +26,18 @@ use super::ir::{
     Binder, ByZero, Decl, Effect, Expr, LitValue, Node, Pattern, Program, Prop, Semantics,
     rename_function, rename_main, rename_theorem, tail_loop,
 };
-use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
+use super::surface::{BinaryOp, External, Flavor, Rounding, SImport, UnaryOp};
 use super::types::Type;
 
 mod arrays;
 mod declarations;
 mod expressions;
+mod externals;
 mod math;
 mod number_prelude;
 
 use self::arrays::ARRAY_PRELUDE;
+use self::externals::external_name;
 use self::math::MATH_PRELUDE;
 use self::number_prelude::NUMBER_PRELUDE;
 
@@ -512,7 +514,13 @@ fn camel(name: &str) -> String {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_rust(program: &Program) -> Result<Emitted> {
-    let state = EmitState::new(
+    rust_emitter(program).file()
+}
+
+/// The Rust emitter of `program`, with every name of the module's other items
+/// reserved.
+fn rust_emitter(program: &Program) -> RustEmitter<'_> {
+    let mut state = EmitState::new(
         program,
         Language::Rust,
         snake,
@@ -528,6 +536,10 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
             ..EmitOptions::default()
         },
     );
+    // A local may not shadow another item of the module that the program calls or reads.
+    for external in &program.externals {
+        state.reserve(external_name(external, external.name()));
+    }
     RustEmitter {
         program,
         state,
@@ -536,11 +548,14 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
         preludes: BTreeSet::new(),
         loop_params: None,
     }
-    .file()
 }
 
-// AST and emitter adapter for the JavaScript-generated constant decisions.
-pub(crate) fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
+/// Emits a top-level constant with the JavaScript-generated eligibility,
+/// binding form and rendering decisions, or `None` for other programs.
+///
+/// # Errors
+/// On a constant value the target cannot express faithfully.
+pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
     let Some(main) = &program.main else {
         return Ok(None);
     };
@@ -568,30 +583,7 @@ pub(crate) fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> 
     ) {
         return Ok(None);
     }
-    let state = EmitState::new(
-        program,
-        Language::Rust,
-        snake,
-        KEYWORDS,
-        EmitOptions {
-            ctor_style: CtorStyle::Data,
-            type_name: Some(camel),
-            value_name: Some(snake),
-            ctor_name: Some(camel),
-            module_segment: Some(snake),
-            type_space: true,
-            modules_share_type_space: true,
-            ..EmitOptions::default()
-        },
-    );
-    let mut emitter = RustEmitter {
-        program,
-        state,
-        temporaries: 0,
-        theorem_checks: Vec::new(),
-        preludes: BTreeSet::new(),
-        loop_params: None,
-    };
+    let mut emitter = rust_emitter(program);
     let form = constant_binding_form(
         if matches!(value.node, Node::Lit { .. }) {
             "lit"

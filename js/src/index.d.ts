@@ -96,12 +96,45 @@ export interface SelfTranslation {
   readonly items: readonly SelfTranslationItem[];
 }
 
+/** A portable-core type, as the checker writes it (`{ kind: 'float' }`, `{ kind: 'array', element }`). */
+export type SelfTranslationType = { readonly kind: string; readonly [field: string]: unknown };
+
+/**
+ * The signature of an exported item of a JavaScript or TypeScript module,
+ * which binds the name a module that imports it uses.
+ */
+export type SelfTranslationSignature =
+  | {
+      readonly k: 'fn';
+      readonly name: string;
+      readonly params: readonly { readonly name: string; readonly type: SelfTranslationType }[];
+      readonly ret: SelfTranslationType;
+    }
+  | { readonly k: 'const'; readonly name: string; readonly type: SelfTranslationType; readonly literal: boolean };
+
+export interface SelfTranslationOptions {
+  /** Emitter decorators applied to each translated item. */
+  readonly decorators?: unknown;
+  /** The module's directory inside its crate, as path segments; the crate root by default. */
+  readonly moduleDirectory?: readonly string[];
+  /** The signatures `selfTranslationSignatures` gives for each imported module, by import specifier. */
+  readonly imports?: Readonly<Record<string, readonly SelfTranslationSignature[]>>;
+}
+
 /**
  * Translates one of meta-language's own modules between JavaScript,
  * TypeScript and Rust through links: same-language translation is byte for
  * byte, and translating an unedited translation back restores the source.
+ * Into Rust, an item may call and read the module's other items, and a
+ * relative named import becomes a `use crate::…` declaration.
  */
-export function selfTranslate(source: string, from: string, to: string): SelfTranslation;
+export function selfTranslate(source: string, from: string, to: string, options?: SelfTranslationOptions): SelfTranslation;
+
+/**
+ * The signatures of the exported items of a JavaScript or TypeScript module
+ * that translate into Rust, for the `imports` of a module that imports them.
+ */
+export function selfTranslationSignatures(source: string, language: string, options?: SelfTranslationOptions): SelfTranslationSignature[];
 
 export type LinkTypeValue =
   | 'Concept'

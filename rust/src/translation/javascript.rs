@@ -20,9 +20,9 @@ use super::lexer::{
     Comment, Source, Token, TokenCursor, TokenKind, describe, is_js_space, tokenize,
 };
 use super::surface::{
-    BinaryOp, Guard, SArrayItem, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem,
-    SMain, SModule, SNode, SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow,
-    STagTest, ShowStyle, UnaryOp,
+    BinaryOp, External, Guard, SArrayItem, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn,
+    SImport, SImportName, SItem, SMain, SModule, SNode, SParam, SPattern, SPatternNode, SProgram,
+    SProp, SPropNode, SRow, STagTest, ShowStyle, UnaryOp,
 };
 use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, array};
 use super::{Language, Span};
@@ -32,6 +32,7 @@ mod declarations;
 mod expressions;
 mod flow;
 mod imperative;
+mod imports;
 mod infer;
 mod loops;
 mod lowering;
@@ -117,16 +118,41 @@ enum AssertionKind {
 /// On syntax errors, type errors in `JSDoc` annotations and constructs outside
 /// the portable core.
 pub fn parse_javascript(source: &str) -> Result<SProgram> {
-    parse_javascript_bound(source, &HashMap::new())
+    parse_javascript_in(source, &ModuleContext::default())
 }
 
-pub(crate) fn parse_javascript_bound(
+/// What self-translation tells the frontend about the module of the item it reads.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ModuleContext {
+    /// The signatures of the module's other items and of the items it
+    /// imports, which the item may call and read.
+    pub externals: Vec<External>,
+    /// The module's directory inside its crate, as path segments; with it,
+    /// relative imports are items of the crate.
+    pub module_directory: Option<Vec<String>>,
+}
+
+/// [`parse_javascript`] for one item of a module in `context`.
+///
+/// # Errors
+///
+/// As [`parse_javascript`].
+pub fn parse_javascript_in(source: &str, context: &ModuleContext) -> Result<SProgram> {
+    parse_javascript_bound_in(source, context, &HashMap::new())
+}
+
+pub(crate) fn parse_javascript_bound_in(
     source: &str,
+    context: &ModuleContext,
     literal_bindings: &HashMap<String, SExpr>,
 ) -> Result<SProgram> {
     let tokens = tokenize(source, Language::JavaScript)?;
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
     parser.literal_bindings.clone_from(literal_bindings);
+    parser.externals.clone_from(&context.externals);
+    parser
+        .module_directory
+        .clone_from(&context.module_directory);
     parser.file()
 }
 
@@ -310,6 +336,11 @@ struct JavaScriptParser {
     /// Functions and data types that loops and joins of statements lower to, and their count.
     generated: Vec<SItem>,
     generated_count: usize,
+    /// The other items of the module an item may call and read.
+    externals: Vec<External>,
+    /// The module's directory inside its crate, which makes relative imports items of the crate.
+    module_directory: Option<Vec<String>>,
+    imports: Vec<SImport>,
 }
 
 impl JavaScriptParser {
@@ -334,6 +365,9 @@ impl JavaScriptParser {
             top_level: false,
             generated: Vec::new(),
             generated_count: 0,
+            externals: Vec::new(),
+            module_directory: None,
+            imports: Vec::new(),
         }
     }
 

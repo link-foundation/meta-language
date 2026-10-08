@@ -320,6 +320,8 @@ impl<'a> LeanParser<'a> {
             language: Language::Lean,
             items,
             main,
+            imports: Vec::new(),
+            externals: Vec::new(),
         })
     }
 

@@ -549,7 +549,14 @@ export function emitRust(program) {
     typeSpace: true,
     modulesShareTypeSpace: true,
   });
+  // A local may not shadow another item of the module that the program calls or reads.
+  for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
   return new RustEmitter(program, state).file();
+}
+
+/** The Rust name of another item of the module: a function's in snake case, a constant's as it is written. */
+function externalName(kind, name) {
+  return kind === 'fn' ? snake(name) : name;
 }
 
 /**
@@ -567,6 +574,7 @@ export function emitRustConstants(program) {
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data', typeName: camel, valueName: snake, ctorName: camel, moduleSegment: snake, typeSpace: true, modulesShareTypeSpace: true,
   });
+  for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
   const emitter = new RustEmitter(program, state);
   const [{ name, value }] = effects;
   const form = constantBindingForm(value.k, value.type.kind);
@@ -586,6 +594,8 @@ class RustEmitter {
   constructor(program, state) {
     this.program = program;
     this.state = state;
+    // The other items of the module the program calls or reads, which it does not declare.
+    this.externals = new Map((program.externals ?? []).filter(({ name }) => !program.declarations.has(name)).map((external) => [external.name, external]));
     this.temporaries = 0;
     this.theoremChecks = [];
     this.usesBig = false;
@@ -604,7 +614,7 @@ class RustEmitter {
       }
       node.items.push(entry);
     }
-    const body = this.moduleBody(tree, []);
+    const body = [...(this.program.imports ?? []).map((entry) => this.use(entry)), ...this.moduleBody(tree, [])];
     const main = this.program.main ? this.main(this.program.main) : null;
     const runner = this.theoremRunner();
     const entry = this.entry(Boolean(main));
@@ -634,6 +644,32 @@ class RustEmitter {
       theorems: this.state.theorems,
       entry: main ? 'main' : null,
     }, preludes, body);
+  }
+
+  /**
+   * An import of items of another module of the crate, `use crate::m::{a, b as c};`.
+   * A function is named in snake case, as its own translation names it, and
+   * any other item as it is written.
+   */
+  use({ module, names }) {
+    const kinds = new Map((this.program.externals ?? []).map((external) => [external.name, external.k]));
+    const items = names.map(({ imported, local }) => {
+      const kind = kinds.get(local);
+      const from = externalName(kind, imported);
+      const to = externalName(kind, local);
+      return from === to ? from : `${from} as ${to}`;
+    });
+    const path = ['crate', ...module.map(snake)].join('::');
+    return items.length === 1 ? `use ${path}::${items[0]};` : `use ${path}::{${items.join(', ')}};`;
+  }
+
+  /** A call of another item of the module, or a read of one of its constants. */
+  external(e, { k, literal }) {
+    if (k === 'fn') return `${externalName(k, e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+    // A literal Number, boolean or machine integer is a const, a literal string a &str const, and any other value a static.
+    if (literal && COPY.has(e.type.kind)) return e.fn;
+    if (literal && e.type.kind === 'string') return `String::from(${e.fn})`;
+    return COPY.has(e.type.kind) ? `*${e.fn}` : `${e.fn}.clone()`;
   }
 
   moduleBody(node, path) {
@@ -858,6 +894,7 @@ class RustEmitter {
   /** A comparison operand: read in place, a string literal as a `&str`. */
   compared(e) {
     if (e.k === 'lit' && e.type.kind === 'string') return rustString(String(e.value));
+    if (e.k === 'call' && this.externals.get(e.fn)?.literal && e.type.kind === 'string') return e.fn;
     return this.receiver(e);
   }
 
@@ -875,6 +912,7 @@ class RustEmitter {
       case 'var':
         return this.own(e.name, e.type);
       case 'call':
+        if (this.externals.has(e.fn)) return this.external(e, this.externals.get(e.fn));
         return `crate::${this.state.ref(e.fn, '::')}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
       case 'ctor': {
         const entry = this.program.declarations.get(e.data);

@@ -3,8 +3,8 @@
 use super::arrays::array_text;
 use super::{
     BOOL, BinaryOp, Checker, Ctor, Decimal, Decl, Entry, Env, Expr, FLOAT, Flavor, INT, Language,
-    LitValue, Node, Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp,
-    arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
+    LitValue, Node, Param, Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT,
+    UnaryOp, arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
     negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
 };
 use crate::translation::frontend_rules::{
@@ -674,6 +674,9 @@ impl Checker {
                 };
                 return self.construct(&data, &ctor, args, env, path, span);
             }
+            Entry::External(name) => {
+                return self.external_application(&name, segments, args, env, path, span);
+            }
             Entry::Decl(name) => name,
         };
         let Some(Decl::Fn(entry)) = self.decls.get(&decl_name) else {
@@ -694,6 +697,23 @@ impl Checker {
             entry.ret.clone(),
             entry.module_path.clone(),
         );
+        self.checked_call(full_name, &params, ret, &module_path, args, env, path, span)
+    }
+
+    /// A call of the function `full_name` with its checked arguments: an
+    /// omitted argument takes its parameter's default, checked in `module_path`.
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn checked_call(
+        &mut self,
+        full_name: String,
+        params: &[Param],
+        ret: Type,
+        module_path: &[String],
+        args: &[SExpr],
+        env: &Env,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<Expr> {
         let mut arguments: Vec<(&SExpr, bool)> = args.iter().map(|arg| (arg, false)).collect();
         #[allow(clippy::cast_precision_loss)]
         let argument_count = args.len() as f64;
@@ -735,7 +755,7 @@ impl Checker {
         }
         let mut checked = Vec::new();
         let closed_env = Env::default();
-        for ((arg, closed_default), param) in arguments.iter().zip(&params) {
+        for ((arg, closed_default), param) in arguments.iter().zip(params) {
             // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
             let expected = if param.guard.is_some() && !matches!(arg.node, SNode::Num { .. }) {
                 &INT
@@ -745,7 +765,7 @@ impl Checker {
             let value = self.expr(
                 arg,
                 if *closed_default { &closed_env } else { env },
-                if *closed_default { &module_path } else { path },
+                if *closed_default { module_path } else { path },
                 Some(expected),
                 false,
             )?;

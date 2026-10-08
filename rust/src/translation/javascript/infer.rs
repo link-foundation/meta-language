@@ -312,6 +312,20 @@ impl Inference {
         functions: &[(Vec<String>, &SFn)],
         program: &SProgram,
     ) -> Result<Vec<(Vec<Type>, Type)>> {
+        // The other items of the module keep the types their own translation checked.
+        for external in &program.externals {
+            let (params, ret) = external.signature();
+            let signature = Signature {
+                defaults: vec![false; params.len()],
+                params: params
+                    .into_iter()
+                    .map(|ty| self.declared(Some(ty)))
+                    .collect(),
+                ret: self.declared(Some(ret)),
+            };
+            self.signatures
+                .insert(format!("{ROOT}.{}", external.name()), signature);
+        }
         for (path, function) in functions {
             let params = function
                 .params

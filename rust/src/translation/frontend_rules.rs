@@ -535,6 +535,10 @@ pub const fn accept_source_prefix_restoration(
     ((source_matches && body_matches) && layout_only)
 }
 
+pub const fn accept_declaration_signature(constant: bool, literal: bool) -> bool {
+    (!constant || literal)
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlDecodeUnicodeEscapeJoin4 {
     MlDecodeUnicodeEscapeJoin4Next(f64, f64),

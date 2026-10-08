@@ -295,3 +295,8 @@ export function acceptRootSyntaxItem(term, hasChildren, hasContent) {
 export function acceptSourcePrefixRestoration(sourceMatches, bodyMatches, layoutOnly) {
   return sourceMatches && bodyMatches && layoutOnly;
 }
+
+/** @param {boolean} constant @param {boolean} literal @returns {boolean} */
+export function acceptDeclarationSignature(constant, literal) {
+  return !constant || literal;
+}

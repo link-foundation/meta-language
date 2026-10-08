@@ -136,6 +136,7 @@ mod query_transform;
 mod rust_codec;
 mod self_description;
 mod self_translation;
+mod self_translation_scope;
 mod source_generation;
 mod source_points;
 mod storage;

@@ -1954,12 +1954,12 @@
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "f09de5850aaade95b12262e1a4fb1bd39a7428fe42ed30c9545a9f3a3118eeaf"
+      "sha256": "728e31b8a25b7144f9f9114b05bbe3dad2733b8b23ce36e083fbdba377582ca9"
     },
     "planned:repository-directive:i195-naming-concept-records": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "f09de5850aaade95b12262e1a4fb1bd39a7428fe42ed30c9545a9f3a3118eeaf"
+      "sha256": "728e31b8a25b7144f9f9114b05bbe3dad2733b8b23ce36e083fbdba377582ca9"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -1969,7 +1969,7 @@
     "planned:repository-directive:i195-naming-native-grammars": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: readable English rule names in the native grammars",
-      "sha256": "f09de5850aaade95b12262e1a4fb1bd39a7428fe42ed30c9545a9f3a3118eeaf"
+      "sha256": "728e31b8a25b7144f9f9114b05bbe3dad2733b8b23ce36e083fbdba377582ca9"
     },
     "planned:repository-directive:i195-semantics-construct-inventory": {
       "path": "parity/fixtures/four-language-conformance.json",
@@ -2149,22 +2149,22 @@
     "planned:repository-directive:i195-self-translation-tool": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: JavaScript/TypeScript ↔ Rust self-translation library API and CLI",
-      "sha256": "455ad1719cfa4727794a52ea0fb8941428265dc288d8c3fcd33b23d1b5fce37c"
+      "sha256": "721e84b054d2af3c92b1a290c0244c7652ea64c8a68a5eceee76d7303a3ede2e"
     },
     "planned:repository-directive:i195-self-translation-round-trip": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: lossless self-translation round trips",
-      "sha256": "455ad1719cfa4727794a52ea0fb8941428265dc288d8c3fcd33b23d1b5fce37c"
+      "sha256": "721e84b054d2af3c92b1a290c0244c7652ea64c8a68a5eceee76d7303a3ede2e"
     },
     "planned:repository-directive:i195-self-translation-shared-corpus": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: shared Links Notation corpus checked in both runtimes",
-      "sha256": "455ad1719cfa4727794a52ea0fb8941428265dc288d8c3fcd33b23d1b5fce37c"
+      "sha256": "721e84b054d2af3c92b1a290c0244c7652ea64c8a68a5eceee76d7303a3ede2e"
     },
     "planned:repository-directive:i195-self-translation-carried-zero": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: every self-translated item translated, none carried",
-      "sha256": "455ad1719cfa4727794a52ea0fb8941428265dc288d8c3fcd33b23d1b5fce37c"
+      "sha256": "721e84b054d2af3c92b1a290c0244c7652ea64c8a68a5eceee76d7303a3ede2e"
     },
     "planned:repository-directive:i195-decorators-every-level": {
       "path": "parity/decorators/cases.json",
