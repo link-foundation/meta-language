@@ -36,7 +36,7 @@ pub struct RustBracket {
     pub commas: Vec<usize>,
 }
 
-struct Open {
+struct DelimiterFrame {
     character: char,
     open: usize,
     enclosed: bool,
@@ -115,7 +115,7 @@ fn literal_length(characters: &[char], index: usize) -> usize {
 /// The parentheses and square brackets closed on a line, with their commas.
 #[must_use]
 pub fn rust_brackets(characters: &[char]) -> Vec<RustBracket> {
-    let mut stack: Vec<Open> = Vec::new();
+    let mut stack: Vec<DelimiterFrame> = Vec::new();
     let mut brackets = Vec::new();
     let mut index = 0;
     while index < characters.len() {
@@ -134,7 +134,7 @@ pub fn rust_brackets(characters: &[char]) -> Vec<RustBracket> {
         let generic = character == '<' && (is_identifier_character(before) || before == Some(&':'));
         if matches!(character, '(' | '[' | '{') || generic {
             let enclosed = stack.iter().any(|open| matches!(open.character, '(' | '['));
-            stack.push(Open {
+            stack.push(DelimiterFrame {
                 character,
                 open: index,
                 enclosed,
@@ -148,17 +148,15 @@ pub fn rust_brackets(characters: &[char]) -> Vec<RustBracket> {
             .last()
             .is_some_and(|top| character == closer(top.character))
             && !(character == '>' && before == Some(&'-'))
+            && let Some(open) = stack.pop()
+            && matches!(open.character, '(' | '[')
         {
-            if let Some(open) = stack.pop()
-                && matches!(open.character, '(' | '[')
-            {
-                brackets.push(RustBracket {
-                    open: open.open,
-                    close: index,
-                    enclosed: open.enclosed,
-                    commas: open.commas,
-                });
-            }
+            brackets.push(RustBracket {
+                open: open.open,
+                close: index,
+                enclosed: open.enclosed,
+                commas: open.commas,
+            });
         }
         index += 1;
     }
