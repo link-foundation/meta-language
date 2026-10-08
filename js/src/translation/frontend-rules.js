@@ -397,3 +397,16 @@ export function readStringMapRefusal(target, operation) {
 export function acceptCheckedTypeQueryOperand(kind, constantReference) {
   return acceptTypeQueryOperand(kind) || (kind === 'call' && constantReference);
 }
+/**
+ * Classifies leaves while looking backwards for a lexed continuation.
+ * Virtual scanner tokens retain the last actual token encountered.
+ * @param {boolean} widthless
+ * @param {boolean} startsAfter
+ * @param {boolean} endsAfter
+ * @returns {number}
+ */
+export function readScannerContinuationAction(widthless, startsAfter, endsAfter) {
+  if (widthless) return 0;
+  if (startsAfter && endsAfter) return 1;
+  return -1;
+}

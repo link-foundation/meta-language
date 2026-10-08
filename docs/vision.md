@@ -188,6 +188,14 @@ CI reads immutable pinned corpus inputs, including Zig compiler
 source cases and Visual Basic project sources, and compares every input with
 its independent oracle in both runtimes.
 
+The indentation family generates zero width newline, indent and dedent tokens
+with descriptor owned widths, bounded counts, comments, continuation and reset
+characters. The shared `parity/fixtures/scanner-indentation.json` examples check
+independently specified nested block structures and exact source preservation.
+The executor retains actual lexed continuations across intervening virtual
+tokens when deciding whether a pending layout token preempts a longer parse.
+This family does not yet constitute a complete Python grammar or scanner port.
+
 The grammar representation and its executor cover the complete union of the
 grammar features that the inventoried sources use:
 

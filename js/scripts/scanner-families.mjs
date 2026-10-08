@@ -170,6 +170,40 @@ export function delimiterRunScanner({ name, contentToken, endToken, delimiter: c
   return `(scanner ${name} (tokens ${contentToken} ${endToken}) (operations (consume ${item}) mark ${tail}))\n`;
 }
 
+/** Zero-width layout tokens retain bounded indentation stacks across lines. */
+export function indentationScanner({ name, newlineToken, indentToken, dedentToken, tabWidth = 8, countModulo = 65536, commentPrefix = '#', continuation = '\\', resetCharacters = ['\r', '\f'], commentTokens = [], bracketClosers = [')', ']', '}'], stringStartToken = null, stringContentToken = null, quoteCharacters = ['"', "'", '`'], interpolationVariable = null }) {
+  for (const value of [name, newlineToken, indentToken, dedentToken, ...commentTokens]) identifier(value);
+  for (const value of [stringStartToken, stringContentToken, interpolationVariable]) if (value !== null) identifier(value);
+  if (new Set([newlineToken, indentToken, dedentToken]).size !== 3 || !Number.isSafeInteger(tabWidth) || tabWidth < 1 || !Number.isSafeInteger(countModulo) || countModulo <= tabWidth) throw new TypeError('indentation needs distinct tokens and positive bounded widths');
+  const resets = characterClass(resetCharacters);
+  const quotes = characterClass(quoteCharacters);
+  const comment = delimiter(commentPrefix);
+  const escape = delimiter(continuation);
+  const available = (token) => [newlineToken, indentToken, dedentToken].includes(token) ? `(valid ${token})` : `(expected (ref ${token}))`;
+  const stack = `${name}_indentations`;
+  const width = `${name}_indentation`;
+  const found = `${name}_line_end`;
+  const firstComment = `${name}_comment_indentation`;
+  const value = (variable) => `(variable ${variable})`;
+  const set = (variable, expression) => `(set ${variable} ${expression})`;
+  const zero = '(integer 0)';
+  const commentsAvailable = `(some ${[indentToken, dedentToken, newlineToken, ...commentTokens].map(available).join(' ')})`;
+  const commentAhead = `(all (next ${comment}) ${commentsAvailable})`;
+  const whitespace = `(some (next (literal %0A)) (next (literal %20)) (next (literal %09)) (next ${resets}) ${commentAhead} (next ${escape}))`;
+  const increment = (amount) => `${set(width, `(add ${value(width)} (integer ${amount}))`)} (if (not (less ${value(width)} (integer ${countModulo}))) (then ${set(width, `(subtract ${value(width)} (integer ${countModulo}))`)})) advance`;
+  const newline = `${set(found, '(integer 1)')} ${set(width, zero)} advance`;
+  const commentBody = `(if (equal ${value(found)} ${zero}) (then fail)) (if (equal ${value(firstComment)} (integer -1)) (then ${set(firstComment, value(width))})) (while (all (not atEnd) (not (next (literal %0A)))) (do advance)) (if (not atEnd) (then advance)) ${set(width, zero)}`;
+  const continuationBody = `(consume ${escape}) (if (next (literal %0D)) (then advance)) (if (not atEnd) (then (if (not (next (literal %0A))) (then fail)) advance))`;
+  const scan = `(while (all (not atEnd) ${whitespace}) (do (if (next (literal %0A)) (then ${newline}) (else (if (next (literal %20)) (then ${increment(1)}) (else (if (next (literal %09)) (then ${increment(tabWidth)}) (else (if (next ${resets}) (then ${set(width, zero)} advance) (else (if ${commentAhead} (then ${commentBody}) (else ${continuationBody}))))))))))))`;
+  const brackets = bracketClosers.length ? `(some ${bracketClosers.map((text) => `(expected ${delimiter(text)})`).join(' ')})` : '(equal (integer 0) (integer 1))';
+  const startsString = stringStartToken === null ? '(equal (integer 0) (integer 1))' : `(all ${available(stringStartToken)} (next ${quotes}))`;
+  const recovery = stringContentToken === null ? '' : ` (not (all ${available(stringContentToken)} ${available(indentToken)}))`;
+  const outsideInterpolation = interpolationVariable === null ? '' : ` (equal (variable ${interpolationVariable}) (integer 0))`;
+  const dedentAvailable = `(some ${available(dedentToken)} (all (not ${available(newlineToken)}) (not ${startsString}) (not ${brackets})))`;
+  const emit = `(if (greater ${value(found)} ${zero}) (then (if (all ${available(indentToken)} (greater ${value(width)} (top ${stack}))) (then (push ${stack} ${value(width)}) (emit ${indentToken}))) (if (all ${dedentAvailable} (greater (depth ${stack}) ${zero}) (less ${value(width)} (top ${stack})) (less ${value(firstComment)} (top ${stack}))${outsideInterpolation}) (then (pop ${stack}) (emit ${dedentToken}))) (if (all ${available(newlineToken)}${recovery}) (then (emit ${newlineToken})))))`;
+  return `(scanner ${name} (tokens ${newlineToken} ${indentToken} ${dedentToken}) (operations mark ${set(found, zero)} ${set(width, zero)} ${set(firstComment, '(integer -1)')} ${scan} (if atEnd (then ${set(found, '(integer 1)')} ${set(width, zero)})) ${emit} fail))\n`;
+}
+
 /** A zero-width line boundary, after optional horizontal space and CR. */
 export function lineBoundaryScanner({ name, token }) {
   identifier(name);
@@ -246,7 +280,8 @@ export function scannerFamilies(descriptors) {
   const names = new Set();
   const tokens = new Set();
   const generated = descriptors.map(({ family, ...options }) => {
-    const declared = family === 'remembered-content' ? [options.delimiterToken, options.contentToken]
+    const declared = family === 'indentation' ? [options.newlineToken, options.indentToken, options.dedentToken]
+      : family === 'remembered-content' ? [options.delimiterToken, options.contentToken]
       : family === 'remembered-literal' ? [options.token, options.startToken, options.contentToken, options.endToken]
       : ['split-counted-delimiter', 'remembered-delimiter'].includes(family) ? [options.startToken, options.contentToken, options.endToken]
       : family === 'delimiter-run' ? [options.contentToken, options.endToken]
@@ -265,6 +300,7 @@ export function scannerFamilies(descriptors) {
     if (family === 'split-counted-delimiter') return splitCountedDelimiterScanner(options);
     if (family === 'delimiter-run') return delimiterRunScanner(options);
     if (family === 'line-boundary') return lineBoundaryScanner(options);
+    if (family === 'indentation') return indentationScanner(options);
     if (family === 'lookahead-boundary') return lookaheadBoundaryScanner(options);
     if (family === 'context-token') return contextTokenScanner(options);
     if (family === 'line-counted-delimiter') return lineCountedDelimiterScanner(options);

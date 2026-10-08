@@ -41,6 +41,7 @@ mod grammar_merge;
 mod grammar_parsing;
 mod grammar_render;
 mod grammar_runtime;
+mod grammar_scanner_indentation;
 mod grammar_surface;
 mod grammar_token_over_extra;
 mod grammar_translate;

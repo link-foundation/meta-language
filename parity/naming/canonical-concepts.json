@@ -5709,6 +5709,44 @@
       "formerNames": []
     },
     {
+      "id": "translation.read-scanner-continuation-action",
+      "phrase": "read scanner continuation action",
+      "role": "operation",
+      "definition": "Classify a concrete token when locating the nearest lexed continuation behind virtual scanner tokens.",
+      "constraints": [
+        "Virtual tokens leave the nearest actual continuation intact.",
+        "A token beyond the prior boundary becomes the retained continuation; an earlier token is compared with the prior token."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "readScannerContinuationAction"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "read_scanner_continuation_action"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generate-indentation-scanner",
+      "phrase": "generate indentation scanner",
+      "role": "operation",
+      "definition": "Generate executable Links Notation operations for bounded indentation stacks and zero width line, indent and dedent tokens.",
+      "constraints": [
+        "Whitespace widths, wrapping, comments, continuation and reset characters are descriptor data.",
+        "Both runtime executors consume the same generated scanner operations."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript scanner family generators",
+          "name": "indentationScanner"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",

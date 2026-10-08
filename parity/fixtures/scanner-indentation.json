@@ -1,0 +1,256 @@
+{
+  "scanners": [
+    {
+      "family": "indentation",
+      "name": "layout",
+      "newlineToken": "newline",
+      "indentToken": "indent",
+      "dedentToken": "dedent",
+      "bracketClosers": []
+    }
+  ],
+  "generated": "(scanner layout (tokens newline indent dedent) (operations mark (set layout_line_end (integer 0)) (set layout_indentation (integer 0)) (set layout_comment_indentation (integer -1)) (while (all (not atEnd) (some (next (literal %0A)) (next (literal %20)) (next (literal %09)) (next (class plain (char %0D) (char %0C))) (all (next (literal %23)) (some (valid indent) (valid dedent) (valid newline))) (next (literal %5C)))) (do (if (next (literal %0A)) (then (set layout_line_end (integer 1)) (set layout_indentation (integer 0)) advance) (else (if (next (literal %20)) (then (set layout_indentation (add (variable layout_indentation) (integer 1))) (if (not (less (variable layout_indentation) (integer 65536))) (then (set layout_indentation (subtract (variable layout_indentation) (integer 65536))))) advance) (else (if (next (literal %09)) (then (set layout_indentation (add (variable layout_indentation) (integer 8))) (if (not (less (variable layout_indentation) (integer 65536))) (then (set layout_indentation (subtract (variable layout_indentation) (integer 65536))))) advance) (else (if (next (class plain (char %0D) (char %0C))) (then (set layout_indentation (integer 0)) advance) (else (if (all (next (literal %23)) (some (valid indent) (valid dedent) (valid newline))) (then (if (equal (variable layout_line_end) (integer 0)) (then fail)) (if (equal (variable layout_comment_indentation) (integer -1)) (then (set layout_comment_indentation (variable layout_indentation)))) (while (all (not atEnd) (not (next (literal %0A)))) (do advance)) (if (not atEnd) (then advance)) (set layout_indentation (integer 0))) (else (consume (literal %5C)) (if (next (literal %0D)) (then advance)) (if (not atEnd) (then (if (not (next (literal %0A))) (then fail)) advance)))))))))))))) (if atEnd (then (set layout_line_end (integer 1)) (set layout_indentation (integer 0)))) (if (greater (variable layout_line_end) (integer 0)) (then (if (all (valid indent) (greater (variable layout_indentation) (top layout_indentations))) (then (push layout_indentations (variable layout_indentation)) (emit indent))) (if (all (some (valid dedent) (all (not (valid newline)) (not (equal (integer 0) (integer 1))) (not (equal (integer 0) (integer 1))))) (greater (depth layout_indentations) (integer 0)) (less (variable layout_indentation) (top layout_indentations)) (less (variable layout_comment_indentation) (top layout_indentations))) (then (pop layout_indentations) (emit dedent))) (if (all (valid newline)) (then (emit newline))))) fail))\n",
+  "listing": "(grammar (start source) (matching longest))\n(extra (repeat1 (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0C))))\n(extra (ref comment))\n(scanner layout (tokens newline indent dedent) (operations mark (set layout_line_end (integer 0)) (set layout_indentation (integer 0)) (set layout_comment_indentation (integer -1)) (while (all (not atEnd) (some (next (literal %0A)) (next (literal %20)) (next (literal %09)) (next (class plain (char %0D) (char %0C))) (all (next (literal %23)) (some (valid indent) (valid dedent) (valid newline))) (next (literal %5C)))) (do (if (next (literal %0A)) (then (set layout_line_end (integer 1)) (set layout_indentation (integer 0)) advance) (else (if (next (literal %20)) (then (set layout_indentation (add (variable layout_indentation) (integer 1))) (if (not (less (variable layout_indentation) (integer 65536))) (then (set layout_indentation (subtract (variable layout_indentation) (integer 65536))))) advance) (else (if (next (literal %09)) (then (set layout_indentation (add (variable layout_indentation) (integer 8))) (if (not (less (variable layout_indentation) (integer 65536))) (then (set layout_indentation (subtract (variable layout_indentation) (integer 65536))))) advance) (else (if (next (class plain (char %0D) (char %0C))) (then (set layout_indentation (integer 0)) advance) (else (if (all (next (literal %23)) (some (valid indent) (valid dedent) (valid newline))) (then (if (equal (variable layout_line_end) (integer 0)) (then fail)) (if (equal (variable layout_comment_indentation) (integer -1)) (then (set layout_comment_indentation (variable layout_indentation)))) (while (all (not atEnd) (not (next (literal %0A)))) (do advance)) (if (not atEnd) (then advance)) (set layout_indentation (integer 0))) (else (consume (literal %5C)) (if (next (literal %0D)) (then advance)) (if (not atEnd) (then (if (not (next (literal %0A))) (then fail)) advance)))))))))))))) (if atEnd (then (set layout_line_end (integer 1)) (set layout_indentation (integer 0)))) (if (greater (variable layout_line_end) (integer 0)) (then (if (all (valid indent) (greater (variable layout_indentation) (top layout_indentations))) (then (push layout_indentations (variable layout_indentation)) (emit indent))) (if (all (some (valid dedent) (all (not (valid newline)) (not (equal (integer 0) (integer 1))) (not (equal (integer 0) (integer 1))))) (greater (depth layout_indentations) (integer 0)) (less (variable layout_indentation) (top layout_indentations)) (less (variable layout_comment_indentation) (top layout_indentations))) (then (pop layout_indentations) (emit dedent))) (if (all (valid newline)) (then (emit newline))))) fail))\n(rule comment token (seq (literal %23) (repeat0 (class negated (char %0A)))))\n(rule source normal (repeat1 (ref statement)))\n(rule statement normal (choice unordered (seq (ref name) (literal %3A) (immediateToken (ref indent)) (ref block) (immediateToken (ref dedent))) (seq (ref name) (immediateToken (ref newline)))))\n(rule block normal (repeat1 (ref statement)))\n(rule name token (repeat1 (choice unordered (class plain (range a z)) (literal %C3%A9) (literal %F0%9F%98%80))))\n",
+  "accept": [
+    {
+      "input": "a\n",
+      "structure": [
+        "a"
+      ],
+      "tree": "(source (statement (name \"a\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n  b\nc\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ],
+        "c"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" (name \"b\") \"\")) \"\") (statement ~\"\\n\" (name \"c\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n  b\n  c\nd\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b",
+            "c"
+          ]
+        ],
+        "d"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" (name \"b\") \"\") (statement ~\"\\n  \" (name \"c\") \"\")) \"\") (statement ~\"\\n\" (name \"d\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n  b:\n    c\nd\n",
+      "structure": [
+        [
+          "a",
+          [
+            [
+              "b",
+              [
+                "c"
+              ]
+            ]
+          ]
+        ],
+        "d"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" (name \"b\") \":\" \"\" (block (statement ~\"\\n    \" (name \"c\") \"\")) \"\")) \"\") (statement ~\"\\n\" (name \"d\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n  b:\n    c",
+      "structure": [
+        [
+          "a",
+          [
+            [
+              "b",
+              [
+                "c"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" (name \"b\") \":\" \"\" (block (statement ~\"\\n    \" (name \"c\") \"\")) \"\")) \"\"))"
+    },
+    {
+      "input": "a:\n  b",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ]
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" (name \"b\") \"\")) \"\"))"
+    },
+    {
+      "input": "a:\n\tb\nc\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ],
+        "c"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n\\t\" (name \"b\") \"\")) \"\") (statement ~\"\\n\" (name \"c\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n \tb\nc\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ],
+        "c"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n \\t\" (name \"b\") \"\")) \"\") (statement ~\"\\n\" (name \"c\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n \tb\n        c\nd\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ],
+        "c",
+        "d"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n \\t\" (name \"b\") \"\")) \"\") (statement ~\"\\n        \" (name \"c\") \"\") (statement ~\"\\n\" (name \"d\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\r\n  b\r\nc\r\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ],
+        "c"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\r\\n  \" (name \"b\") \"\")) \"\") (statement ~\"\\r\\n\" (name \"c\") \"\") ~\"\\r\\n\")"
+    },
+    {
+      "input": "a:\n \f  b\n  c\nd\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b",
+            "c"
+          ]
+        ],
+        "d"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n \\f  \" (name \"b\") \"\") (statement ~\"\\n  \" (name \"c\") \"\")) \"\") (statement ~\"\\n\" (name \"d\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n  # same\n  b\nc\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ],
+        "c"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" ~(comment \"# same\") ~\"\\n  \" (name \"b\") \"\")) \"\") (statement ~\"\\n\" (name \"c\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n  b\n  # block\nc\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ],
+        "c"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" (name \"b\") \"\")) ~\"\\n  \" ~(comment \"# block\") \"\") (statement ~\"\\n\" (name \"c\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n  b\n# outer\nc\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ],
+        "c"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" (name \"b\") \"\")) \"\") (statement ~\"\\n\" ~(comment \"# outer\") ~\"\\n\" (name \"c\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n  b\n\n  c\nd\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b",
+            "c"
+          ]
+        ],
+        "d"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" (name \"b\") \"\") (statement ~\"\\n\\n  \" (name \"c\") \"\")) \"\") (statement ~\"\\n\" (name \"d\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "é:\n  😀\na\n",
+      "structure": [
+        [
+          "é",
+          [
+            "😀"
+          ]
+        ],
+        "a"
+      ],
+      "tree": "(source (statement (name \"é\") \":\" \"\" (block (statement ~\"\\n  \" (name \"😀\") \"\")) \"\") (statement ~\"\\n\" (name \"a\") \"\") ~\"\\n\")"
+    },
+    {
+      "input": "a:\n  b\nc:\n  d\ne\n",
+      "structure": [
+        [
+          "a",
+          [
+            "b"
+          ]
+        ],
+        [
+          "c",
+          [
+            "d"
+          ]
+        ],
+        "e"
+      ],
+      "tree": "(source (statement (name \"a\") \":\" \"\" (block (statement ~\"\\n  \" (name \"b\") \"\")) \"\") (statement ~\"\\n\" (name \"c\") \":\" \"\" (block (statement ~\"\\n  \" (name \"d\") \"\")) \"\") (statement ~\"\\n\" (name \"e\") \"\") ~\"\\n\")"
+    }
+  ],
+  "reject": [
+    "a:",
+    "a:\nb\n",
+    "a:\\\n  b\n",
+    "a:\\x\n  b\n",
+    "a:\n  b\\x"
+  ]
+}

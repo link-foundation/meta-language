@@ -886,5 +886,19 @@ pub fn accept_checked_type_query_operand(kind: &str, constant_reference: bool) -
         || ((kind == "call") && constant_reference))
 }
 
+pub const fn read_scanner_continuation_action(
+    widthless: bool,
+    starts_after: bool,
+    ends_after: bool,
+) -> f64 {
+    if widthless {
+        0f64
+    } else if starts_after && ends_after {
+        1f64
+    } else {
+        -1f64
+    }
+}
+
 mod continuations;
 pub use continuations::*;

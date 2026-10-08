@@ -1081,7 +1081,11 @@
           "parity/fixtures/native-grammars/cmake-corpus.json",
           "rust/tests/unit/issue_195_grammar_native_cmake.rs",
           "rust/tests/unit/issue_195_grammar_character_classes.rs",
-          "parity/fixtures/native-character-class-grammars.json"
+          "parity/fixtures/native-character-class-grammars.json",
+          "rust/tests/unit/grammar_scanner_indentation.rs",
+          "rust/src/grammar/feature_runtime/parting.rs",
+          "parity/fixtures/scanner-indentation.json",
+          "rust/src/translation/frontend_rules.rs"
         ]
       },
       "javascript": {
@@ -1148,7 +1152,11 @@
           "parity/fixtures/native-grammars/cmake-corpus.json",
           "js/tests/issue-195-grammar-native-cmake.test.js",
           "js/tests/grammar-character-classes.test.js",
-          "parity/fixtures/native-character-class-grammars.json"
+          "parity/fixtures/native-character-class-grammars.json",
+          "js/tests/grammar-scanner-indentation.test.js",
+          "js/experiments/build-indentation-scanner-fixtures.mjs",
+          "parity/fixtures/scanner-indentation.json",
+          "js/src/translation/frontend-rules.js"
         ]
       }
     },

@@ -18,6 +18,7 @@ import {
   workingState,
 } from './operations.js';
 import { columnOf, decodeAt, encodeText, quoteText, textOf, utf16View } from './text.js';
+import { readScannerContinuationAction } from '../translation/frontend-rules.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -1617,8 +1618,9 @@ function startsWidthless(result) {
 function lexedPast(result, last) {
   let after = null;
   for (const leaf of leavesBackward(result.children)) {
-    if (leaf.start >= last.end && (leaf.end > last.end || widthless(leaf))) after = leaf;
-    else return after !== null && !widthless(after) && oneLeaf(leaf, last);
+    const action = readScannerContinuationAction(widthless(leaf), leaf.start >= last.end, leaf.end > last.end);
+    if (action === 1) after = leaf;
+    else if (action === -1) return after !== null && oneLeaf(leaf, last);
   }
   return false;
 }

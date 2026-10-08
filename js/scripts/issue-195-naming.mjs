@@ -534,10 +534,17 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'frontend decision operations',
     files: ['js/src/translation/frontend-rules.js', 'rust/src/translation/frontend_rules.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
       .filter((name) => !name.startsWith('ml_'))
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'indentation scanner generator',
+    files: ['js/scripts/scanner-families.mjs'],
+    extract: (text) => captures(text, /^export function (indentationScanner)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: () => 'grammar.generate-indentation-scanner',
   },
   {
     inventory: 'frontend decision result concepts',
