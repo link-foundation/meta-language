@@ -26,6 +26,7 @@ fn observe(assertions: &[&str], test_name: &str) {
 
 #[test]
 fn native_python_grammar_is_canonical_links_notation() {
+    assert!(meta_language::grammar_names("python").is_none());
     let grammar = parse_grammar_links(GRAMMAR).unwrap();
     assert_eq!(render_grammar_links(&grammar), GRAMMAR);
     observe(

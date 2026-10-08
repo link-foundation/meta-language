@@ -377,7 +377,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "odin" => tree_sitter_odin::LANGUAGE.into(),
         "perl" => ts_parser_perl::LANGUAGE.into(),
         "php" => tree_sitter_php::LANGUAGE_PHP.into(),
-        "python" => tree_sitter_python::LANGUAGE.into(),
         "r" => tree_sitter_r::LANGUAGE.into(),
         "rocq" => rocq_grammar::LANGUAGE.into(),
         "ruby" => tree_sitter_ruby::LANGUAGE.into(),

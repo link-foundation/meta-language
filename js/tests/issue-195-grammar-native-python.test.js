@@ -21,6 +21,11 @@ const observe = (assertions, testName) => recordIssue195Observations({
 });
 
 test('native Python grammar and scanners are canonical generated Links Notation', (context) => {
+  const manifest = read('rust/Cargo.toml');
+  const production = manifest.split('[dependencies]')[1].split('[dev-dependencies]')[0];
+  const development = manifest.split('[dev-dependencies]')[1].split('[build-dependencies]')[0];
+  assert.doesNotMatch(production, /^tree-sitter-python\s*=/mu);
+  assert.match(development, /^tree-sitter-python\s*=\s*"=0\.25\.0"/mu);
   assert.equal(renderGrammarLinks(parseGrammarLinks(listing)), listing);
   assert.equal(scannerFamilies(pythonScannerDescriptors), pythonScanner);
   assert.equal(read('parity/grammars/scanners/python.lino'), pythonScanner);

@@ -912,3 +912,8 @@ envelope guarded by the original byte length and digest and the complete emitted
 body digest. The shared JavaScript decision is generated into Rust; each host
 only adapts JSON serialization, byte offsets and hashing. Edits invalidate the
 envelope and use the existing per-item translation and provenance behavior.
+
+The Python Tree-sitter crate is a development oracle, with no production grammar
+dispatch entry. Ordinary Python parsing selects the shipped native Links grammar
+in both packages. The other remaining parser dependencies still require their
+native replacements before the complete production dependency boundary passes.
