@@ -152,3 +152,34 @@ export function regularExpressionEnd(units, start) {
   }
   return -1;
 }
+
+/**
+ * Find the end of a contiguous declaration run. Non-item groups supply an
+ * empty term, so comments and provenance boundaries cannot be absorbed.
+ * @param {string[]} terms
+ * @param {number} start
+ * @returns {number}
+ */
+export function findBindingRunEnd(terms, start) {
+  let end = start;
+  while (end < terms.length) {
+    const term = terms[end];
+    if (term !== 'function_declaration' && term !== 'lexical_declaration' && term !== 'export_statement') break;
+    end += 1;
+  }
+  return end === start ? start + 1 : end;
+}
+
+/**
+ * Retry a declaration run only when an isolated item failed type resolution.
+ * @param {string[]} statuses
+ * @param {string[]} reasons
+ * @returns {boolean}
+ */
+export function acceptBindingScope(statuses, reasons) {
+  if (statuses.length < 2) return false;
+  for (let index = 0; index < statuses.length; index += 1) {
+    if (statuses[index] === 'carried' && reasons[index] === 'type') return true;
+  }
+  return false;
+}

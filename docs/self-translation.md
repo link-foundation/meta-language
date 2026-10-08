@@ -46,6 +46,15 @@ Each top-level item of the source then becomes one block:
   syntax fits both languages. A comment directly before an item travels with
   that item.
 
+An isolated JavaScript declaration that fails type resolution is retried with
+its contiguous declaration run in one checked scope when targeting Rust. A
+successful run has one provenance block covering all of its source items;
+forward calls and arrow-bound siblings use their actual checked declarations.
+A failed run retains the original per-item decisions, so a carried sibling
+never acquires a placeholder signature or implementation. Top-level constant
+captures and bindings across intervening imports or statements remain separate
+translation obligations.
+
 The definitions the translated code needs (helpers and, for Rust, an
 `#![allow(...)]` line) sit once between `// meta-language:prelude begin` and
 `// meta-language:prelude end`.

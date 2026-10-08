@@ -1,0 +1,25 @@
+{
+  "cases": [
+    {
+      "name": "sibling-call",
+      "source": "/** @param {number} x @returns {number} */\nfunction square(x) { return x * x; }\n\n/** @param {number} x @returns {number} */\nexport function cappedSquare(x) { return Math.min(square(x), 3); }\n",
+      "call": "cappedSquare(2)",
+      "rustCall": "capped_square(2.0)",
+      "expected": "3\n"
+    },
+    {
+      "name": "forward-call",
+      "source": "/** @param {number} x @returns {number} */\nexport function twice(x) { return double(x); }\n\n/** @param {number} x @returns {number} */\nfunction double(x) { return x * 2; }\n",
+      "call": "twice(4)",
+      "rustCall": "twice(4.0)",
+      "expected": "8\n"
+    },
+    {
+      "name": "arrow-bound-sibling",
+      "source": "/** @param {number} x @returns {number} */\nconst square = (x) => x * x;\n\n/** @param {number} x @returns {number} */\nexport function cappedSquare(x) { return Math.min(square(x), 3); }\n",
+      "call": "cappedSquare(2)",
+      "rustCall": "capped_square(2.0)",
+      "expected": "3\n"
+    }
+  ]
+}

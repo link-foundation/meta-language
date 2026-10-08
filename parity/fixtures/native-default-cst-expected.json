@@ -8,7 +8,7 @@
       "grammars": {
         "native-dart": {
           "version": "1.0.0",
-          "parserSha256": "8d79589d01f277b0771804f4fde0c63234b921d450f8adbc6d32b9d3cfe6fe44"
+          "parserSha256": "fcf2b5fe16a9503b8dabee88ff01a137ceafdbc47a20846626663903a0d003b1"
         }
       },
       "oracleGrammars": {

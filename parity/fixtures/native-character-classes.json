@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "cases": [
-    {"id": "double-hyphen", "pattern": "[--]", "asciiAccepts": "-", "accepts": ["-"], "rejects": ["a", "", "--"]},
-    {"id": "double-ampersand", "pattern": "[&&]", "asciiAccepts": "&", "accepts": ["&"], "rejects": ["a", "", "&&"]},
-    {"id": "double-tilde", "pattern": "[~~]", "asciiAccepts": "~", "accepts": ["~"], "rejects": ["a", "", "~~"]},
+    {"id": "double-hyphen", "pattern": "[--]", "rustOraclePattern": "[\\-\\-]", "asciiAccepts": "-", "accepts": ["-"], "rejects": ["a", "", "--"]},
+    {"id": "double-ampersand", "pattern": "[&&]", "rustOraclePattern": "[\\&\\&]", "asciiAccepts": "&", "accepts": ["&"], "rejects": ["a", "", "&&"]},
+    {"id": "double-tilde", "pattern": "[~~]", "rustOraclePattern": "[\\~\\~]", "asciiAccepts": "~", "accepts": ["~"], "rejects": ["a", "", "~~"]},
     { "id": "intersection", "pattern": "[a-z&&[def]]", "asciiAccepts": "def", "accepts": ["d", "f"], "rejects": ["a", "1", "", "dd"] },
     { "id": "difference", "pattern": "[a-z--aeiou]", "asciiAccepts": "bcdfghjklmnpqrstvwxyz", "accepts": ["b", "z"], "rejects": ["a", "e", "1", "", "bb"] },
     { "id": "symmetric-difference", "pattern": "[a-g~~b-h]", "asciiAccepts": "ah", "accepts": ["a", "h"], "rejects": ["b", "g", "", "ah"] },

@@ -5249,6 +5249,48 @@
       "formerNames": []
     },
     {
+      "id": "translation.find-binding-run-end",
+      "phrase": "find binding run end",
+      "role": "operation",
+      "definition": "Find the end of a contiguous run of self-translation declarations that can share binding scope.",
+      "constraints": [
+        "A comment or provenance group ends the run.",
+        "Every source item remains represented in the combined provenance."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "findBindingRunEnd"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "find_binding_run_end"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-binding-scope",
+      "phrase": "accept binding scope",
+      "role": "operation",
+      "definition": "Determine whether an isolated type-resolution refusal requires retrying a declaration run in a shared checked scope.",
+      "constraints": [
+        "Only runs with multiple items and an isolated type refusal are retried.",
+        "A failed retry preserves every original translated or carried decision."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptBindingScope"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_binding_scope"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",
@@ -61227,23 +61269,6 @@
       "formerNames": []
     },
     {
-      "id": "grammar.annotation-opening-parenthesis",
-      "phrase": "annotation opening parenthesis",
-      "role": "concept",
-      "definition": "A rule for an annotation opening parenthesis, the construct the upstream grammar names annotation_open_paren.",
-      "constraints": [
-        "Only the native Dart grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:dart",
-          "name": "annotation_opening_parenthesis"
-        }
-      ],
-      "formerNames": []
-    },
-    {
       "id": "grammar.ordinary-function-keyword-body",
       "phrase": "ordinary function keyword body",
       "role": "concept",
@@ -61392,6 +61417,23 @@
         {
           "source": "native:dart",
           "name": "non_void_non_function_keyword_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.annotation-opening-parenthesis",
+      "phrase": "annotation opening parenthesis",
+      "role": "concept",
+      "definition": "A rule for an annotation opening parenthesis, the construct the upstream grammar names annotation_open_paren.",
+      "constraints": [
+        "Only the native Dart grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:dart",
+          "name": "annotation_opening_parenthesis"
         }
       ],
       "formerNames": []

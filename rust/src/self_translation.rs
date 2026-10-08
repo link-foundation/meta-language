@@ -11,6 +11,7 @@
 //!
 //! Mirrors `js/src/self-translation.js`.
 
+use crate::translation::frontend_rules::{accept_binding_scope, find_binding_run_end};
 use std::fmt;
 use std::fmt::Write as _;
 use std::sync::LazyLock;
@@ -212,8 +213,9 @@ pub fn self_translate_decorated(
     let mut preludes: Vec<String> = Vec::new();
     let mut recorded = Vec::new();
     let mut gap = String::new();
-    for group in group_items(&items, source) {
-        let out = translate_group(&group, from, to, decorators);
+    for (group, out) in
+        translate_binding_groups(group_items(&items, source), source, from, to, decorators)
+    {
         for prelude in out.preludes {
             if !preludes.contains(&prelude) {
                 preludes.push(prelude);
@@ -347,7 +349,7 @@ fn is_marker(item: &Item<'_>) -> bool {
             .any(|marker| item.text.starts_with(marker))
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum GroupKind {
     Provenance,
     Carried {
@@ -364,6 +366,7 @@ enum GroupKind {
     },
 }
 
+#[derive(Clone)]
 struct Group<'a> {
     kind: GroupKind,
     items: Vec<Item<'a>>,
@@ -478,6 +481,78 @@ struct Translated {
     preludes: Vec<String>,
     status: &'static str,
     reason: Option<String>,
+}
+
+// Only the collection/provenance adapter is host code; run boundaries and
+// retry eligibility use the same JavaScript-generated frontend decisions.
+fn translate_binding_groups<'a>(
+    groups: Vec<Group<'a>>,
+    source: &'a str,
+    from: &str,
+    to: &str,
+    decorators: &DecoratorSet,
+) -> Vec<(Group<'a>, Translated)> {
+    let bind = family(from) == "JavaScript" && family(to) == "Rust";
+    let terms: Vec<String> = groups
+        .iter()
+        .map(|group| match &group.kind {
+            GroupKind::Item { term, .. } => term.clone(),
+            _ => String::new(),
+        })
+        .collect();
+    let mut results = Vec::new();
+    let mut index = 0;
+    while index < groups.len() {
+        #[allow(
+            clippy::cast_precision_loss,
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss
+        )]
+        let end = if bind {
+            find_binding_run_end(terms.clone(), index as f64) as usize
+        } else {
+            index + 1
+        };
+        let run = &groups[index..end];
+        let isolated: Vec<_> = run
+            .iter()
+            .map(|group| (group.clone(), translate_group(group, from, to, decorators)))
+            .collect();
+        let statuses = isolated
+            .iter()
+            .map(|(_, out)| out.status.to_owned())
+            .collect();
+        let reasons = isolated
+            .iter()
+            .map(|(_, out)| out.reason.clone().unwrap_or_default())
+            .collect();
+        if accept_binding_scope(statuses, reasons) {
+            let items: Vec<_> = run.iter().flat_map(|group| group.items.clone()).collect();
+            let first = items.first().expect("a binding run has source items");
+            let last = items.last().expect("a binding run has source items");
+            let GroupKind::Item { term, .. } = &run[0].kind else {
+                unreachable!("only item runs can combine")
+            };
+            let combined = Group {
+                kind: GroupKind::Item {
+                    text: source[first.start..last.end].to_owned(),
+                    term: term.clone(),
+                },
+                items,
+                after: run.last().expect("a binding run is nonempty").after,
+            };
+            let out = translate_group(&combined, from, to, decorators);
+            if out.status == "translated" {
+                results.push((combined, out));
+            } else {
+                results.extend(isolated);
+            }
+        } else {
+            results.extend(isolated);
+        }
+        index = end;
+    }
+    results
 }
 
 fn translate_group(

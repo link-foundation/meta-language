@@ -20,6 +20,65 @@ use super::issue_195_observations::{Observation, record};
 const FIXTURE: &str = "parity/self-translation/cases.lino";
 const HEADER: &str = "// meta-language:self-translation:v1 ";
 
+#[test]
+fn sibling_binding_runs_match_javascript_and_restore_their_source() {
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/self-translation-bindings.json"
+    ))
+    .unwrap();
+    let script = "import fs from 'node:fs'; import {selfTranslate} from './js/src/self-translation.js'; const fixture=JSON.parse(fs.readFileSync('parity/fixtures/self-translation-bindings.json')); process.stdout.write(JSON.stringify(fixture.cases.map(entry=>selfTranslate(entry.source,'JavaScript','Rust').code)));";
+    let output = Command::new("node")
+        .current_dir(root())
+        .args(["--input-type=module", "-e", script])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let expected: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
+    for (index, entry) in fixture["cases"].as_array().unwrap().iter().enumerate() {
+        let source = entry["source"].as_str().unwrap();
+        let translated = self_translate(source, "JavaScript", "Rust").unwrap();
+        assert!(
+            translated
+                .items
+                .iter()
+                .all(|item| item.status == "translated")
+        );
+        assert_eq!(translated.code, expected[index], "{}", entry["name"]);
+        assert_eq!(
+            self_translate(&translated.code, "Rust", "JavaScript")
+                .unwrap()
+                .code,
+            source
+        );
+    }
+    let source = "/** @returns {number} */\nfunction good() { return 7; }\n\nfunction unavailable() { return new Date(); }\n\n/** @returns {number} */\nexport function caller() { return unavailable(); }\n";
+    let translated = self_translate(source, "JavaScript", "Rust").unwrap();
+    let statuses: Vec<_> = translated
+        .items
+        .iter()
+        .filter(|item| {
+            matches!(
+                item.term.as_str(),
+                "function_declaration" | "export_statement"
+            )
+        })
+        .map(|item| item.status)
+        .collect();
+    assert_eq!(statuses, ["translated", "carried", "carried"]);
+    assert!(!translated.code.contains("pub fn unavailable("));
+    assert!(!translated.code.contains("pub fn caller("));
+    assert_eq!(
+        self_translate(&translated.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
+}
+
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
 }

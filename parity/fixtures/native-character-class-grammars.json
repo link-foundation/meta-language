@@ -4,6 +4,7 @@
     {
       "id": "double-hyphen",
       "pattern": "[--]",
+      "rustOraclePattern": "[\\-\\-]",
       "asciiAccepts": "-",
       "accepts": [
         "-"
@@ -18,6 +19,7 @@
     {
       "id": "double-ampersand",
       "pattern": "[&&]",
+      "rustOraclePattern": "[\\&\\&]",
       "asciiAccepts": "&",
       "accepts": [
         "&"
@@ -32,6 +34,7 @@
     {
       "id": "double-tilde",
       "pattern": "[~~]",
+      "rustOraclePattern": "[\\~\\~]",
       "asciiAccepts": "~",
       "accepts": [
         "~"

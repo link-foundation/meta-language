@@ -20,7 +20,7 @@ pub mod emit_javascript;
 pub mod emit_lean;
 pub mod emit_rocq;
 pub mod emit_rust;
-mod frontend_rules;
+pub(crate) mod frontend_rules;
 pub mod ir;
 pub mod javascript;
 pub mod js_number;

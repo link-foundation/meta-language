@@ -497,7 +497,8 @@
           "rust/tests/unit/translation_foundation.rs",
           "rust/src/translation/javascript/infer/arrays.rs",
           "rust/tests/unit/self_translation.rs",
-          "parity/fixtures/translation-lexical-boundaries.json"
+          "parity/fixtures/translation-lexical-boundaries.json",
+          "parity/fixtures/self-translation-bindings.json"
         ]
       },
       "javascript": {
@@ -514,7 +515,9 @@
           "js/tests/translation-rust-compilation.test.js",
           "js/tests/translation-self-report.test.js",
           "js/tests/translation-regex-tokenization.test.js",
-          "parity/fixtures/translation-lexical-boundaries.json"
+          "parity/fixtures/translation-lexical-boundaries.json",
+          "parity/fixtures/self-translation-bindings.json",
+          "js/tests/translation-self-bindings.test.js"
         ]
       }
     },
