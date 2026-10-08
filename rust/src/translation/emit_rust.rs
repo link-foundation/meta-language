@@ -23,16 +23,18 @@ use super::ir::{
     Binder, ByZero, Decl, Effect, Expr, LitValue, Node, Pattern, Program, Prop, Semantics,
     rename_function, rename_main, rename_theorem, tail_loop,
 };
-use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
+use super::surface::{BinaryOp, External, Flavor, Rounding, SImport, UnaryOp};
 use super::types::Type;
 
 mod arrays;
 mod declarations;
 mod expressions;
+mod externals;
 mod math;
 mod number_prelude;
 
 use self::arrays::ARRAY_PRELUDE;
+use self::externals::external_name;
 use self::math::MATH_PRELUDE;
 use self::number_prelude::NUMBER_PRELUDE;
 
@@ -509,7 +511,7 @@ fn camel(name: &str) -> String {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_rust(program: &Program) -> Result<Emitted> {
-    let state = EmitState::new(
+    let mut state = EmitState::new(
         program,
         Language::Rust,
         snake,
@@ -525,6 +527,10 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
             ..EmitOptions::default()
         },
     );
+    // A local may not shadow another item of the module that the program calls or reads.
+    for external in &program.externals {
+        state.claim(external_name(external, external.name()));
+    }
     RustEmitter {
         program,
         state,

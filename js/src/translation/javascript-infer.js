@@ -21,7 +21,7 @@ export function inferJavaScriptTypes(program) {
   const untyped = program.items.some((item) => item.k === 'data' && item.ctors.some((ctor) => ctor.fields.some((field) => !field.type)));
   if (!untyped && functions.every(({ fn }) => fn.ret && fn.params.every((param) => param.type))) return program;
   const inference = new Inference(program.items);
-  inference.run(functions, program.main);
+  inference.run(functions, program.main, program.externals ?? []);
   return program;
 }
 
@@ -112,7 +112,13 @@ class Inference {
     }
   }
 
-  run(functions, main) {
+  run(functions, main, externals) {
+    // The other items of the module keep the types their own translation checked.
+    for (const external of externals) {
+      this.signatures.set(`${ROOT}.${external.name}`, external.k === 'fn'
+        ? { params: external.params.map((param) => this.declared(param.type)), defaults: 0, ret: this.declared(external.ret) }
+        : { params: [], defaults: 0, ret: this.declared(external.type) });
+    }
     for (const { path, fn } of functions) {
       this.signatures.set(path.join('.'), {
         params: fn.params.map((param) => this.declared(param.type)),

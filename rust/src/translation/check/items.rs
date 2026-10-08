@@ -322,7 +322,18 @@ impl Checker {
                 break;
             }
         }
-        Ok(None)
+        // The other items of the module are in scope after the program's own.
+        Ok(match names {
+            [name]
+                if self
+                    .externals
+                    .iter()
+                    .any(|external| external.name() == name) =>
+            {
+                Some(Entry::External(name.clone()))
+            }
+            _ => None,
+        })
     }
 
     pub(super) fn lookup_from(&self, module_path: &[String], names: &[String]) -> Option<Entry> {

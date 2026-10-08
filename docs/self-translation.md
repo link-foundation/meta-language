@@ -122,3 +122,47 @@ the decorated translation still translates back to its source. The corpus case
 `decorators.lino` and is checked, function by function, against
 `hand-written/arithmetic.rs`; removing the decorators gives the generic
 translation again.
+
+## Items that use other items
+
+From JavaScript or TypeScript into Rust, a module is one scope. Each item is
+translated after the items it names, and the signatures of the ones that
+translated are bound for it: a function may call a function declared before or
+after it (`const f = (x) => …` included) and read a top-level constant. The
+Rust calls the function by the name its own translation gives it (`square(x)`,
+`capped_square(x)`) and reads the constant by its name (`LIMIT`, `*COMPUTED`
+for a `static`). A name whose item is carried, or that a cycle of items leaves
+untranslated, stays unbound, so its callers are carried with the checker's
+diagnostic. The corpus case `siblings-to-rust` runs such calls in both
+runtimes. The Rust package does not translate top-level constants into Rust
+yet, so there only functions are bound.
+
+A relative named import of another module of the crate,
+`import { a, b as c } from './m.mjs'`, becomes `use crate::m::{a, b as c};`.
+The module path comes from the specifier: `.mjs`, `.js` and the TypeScript
+extensions are dropped, each segment is a Rust module name in snake case, and
+`..` climbs from the module's directory, which the `moduleDirectory` option
+(`module_directory` in Rust) gives as path segments; it is the crate root by
+default, above which an import is refused. The imported names are bound when
+the `imports` option maps the specifier to the signatures
+`selfTranslationSignatures(source, language)` (`self_translation_signatures`
+in Rust) gives for that module, its exported items that translate:
+
+```js
+const math = selfTranslationSignatures(mathSource, 'JavaScript');
+selfTranslate(quadSource, 'JavaScript', 'Rust', { imports: { './math.mjs': math } });
+```
+
+```rust
+let options = SelfTranslationOptions {
+    imports: [("./math.mjs".to_owned(), signatures)].into(),
+    ..SelfTranslationOptions::default()
+};
+self_translate_with(&quad_source, "JavaScript", "Rust", &options)?;
+```
+
+A bound function is named in snake case on both sides of `as`, as its own
+translation names it. Without signatures the import still translates and the
+items that use its names are carried. Default and namespace imports, Node.js
+built-in modules and packages are refused with their own diagnostics; the
+corpus case `imports-to-rust` lists them.

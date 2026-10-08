@@ -2,10 +2,10 @@
 
 use super::arrays::array_text;
 use super::{
-    BOOL, BinaryOp, Checker, Ctor, Decimal, Decl, Entry, Env, Expr, FLOAT, Flavor, INT, Language,
-    LitValue, Node, Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp,
-    arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
-    negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
+    BOOL, BinaryOp, Checker, Ctor, Decimal, Decl, Entry, Env, Expr, External, FLOAT, Flavor, INT,
+    Language, LitValue, Node, Param, Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type,
+    UNIT, UnaryOp, arithmetic_semantics, binary_node, cast_to, coerce, comparison, data,
+    fixed_bounds, negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
 };
 
 impl Checker {
@@ -652,6 +652,9 @@ impl Checker {
                 };
                 return self.construct(&data, &ctor, args, env, path, span);
             }
+            Entry::External(name) => {
+                return self.external_application(&name, segments, args, env, path, span);
+            }
             Entry::Decl(name) => name,
         };
         let Some(Decl::Fn(entry)) = self.decls.get(&decl_name) else {
@@ -671,6 +674,63 @@ impl Checker {
             entry.params.clone(),
             entry.ret.clone(),
         );
+        self.checked_call(full_name, &params, ret, args, env, path, span)
+    }
+
+    /// A call of another item's function of the module, or a read of one of
+    /// its constants: a `call` of its name.
+    fn external_application(
+        &mut self,
+        name: &str,
+        segments: &[String],
+        args: &[SExpr],
+        env: &Env,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<Expr> {
+        let external = self
+            .externals
+            .iter()
+            .find(|external| external.name() == name)
+            .cloned();
+        match external {
+            Some(External::Function { params, ret, .. }) => {
+                let params: Vec<Param> = params
+                    .into_iter()
+                    .map(|param| Param {
+                        name: param.name,
+                        ty: param.ty,
+                        guard: None,
+                    })
+                    .collect();
+                self.checked_call(name.to_owned(), &params, ret, args, env, path, span)
+            }
+            Some(External::Constant { ty, .. }) if args.is_empty() => Ok(Expr::new(
+                Node::Call {
+                    func: name.to_owned(),
+                    args: Vec::new(),
+                },
+                ty,
+            )),
+            _ => Err(type_error(
+                format!("{} is not a function", segments.join(".")),
+                span,
+            )),
+        }
+    }
+
+    /// A call of the function `full_name` with its checked arguments.
+    #[allow(clippy::too_many_arguments)]
+    fn checked_call(
+        &mut self,
+        full_name: String,
+        params: &[Param],
+        ret: Type,
+        args: &[SExpr],
+        env: &Env,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<Expr> {
         if args.len() != params.len() {
             if args.len() < params.len() {
                 return Err(unsupported(
@@ -689,7 +749,7 @@ impl Checker {
             ));
         }
         let mut checked = Vec::new();
-        for (arg, param) in args.iter().zip(&params) {
+        for (arg, param) in args.iter().zip(params) {
             // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
             let expected = if param.guard.is_some() && !matches!(arg.node, SNode::Num { .. }) {
                 &INT

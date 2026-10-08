@@ -12,7 +12,9 @@ import {
   SELF_TRANSLATION_LANGUAGES,
   selfTranslate,
   selfTranslationLanguage,
+  selfTranslationSignatures,
   SelfTranslationError,
+  translateProgram,
 } from '../src/index.js';
 import { caseDecorators, readSelfTranslationCorpus } from '../scripts/generate-self-translation-cases.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
@@ -146,6 +148,141 @@ test('the translate command prints the translation and its items', () => {
   const listed = execFileSync(process.execPath, [cli, 'translate', '--to', 'rs', '--from', 'js', '--items', source], { encoding: 'utf8' });
   assert.equal(listed, expectedItems(`${entry.expected}.items.lino`).map(({ start, end, term, status, reason }) => `${start}..${end} ${term} ${status}${reason ? ` (${reason})` : ''}\n`).join(''));
   observe('I195-SELF-TRANSLATION-TOOL', ['cliInBothPackages'], 'the translate command prints the translation and its items');
+});
+
+// The Rust a translation emits, without its provenance lines.
+const emittedRust = (translation) => translation.code.split('\n').filter((line) => !line.startsWith('// ')).join('\n');
+const statusOf = (translation, source, needle) => translation.items.find(({ start, end }) => source.slice(start, end).includes(needle))?.status;
+
+test('an item calls and reads the other top-level items of its module', () => {
+  const source = [
+    'const LIMIT = 3;',
+    '',
+    '/** @param {number} x @returns {number} */',
+    'function square(x) {',
+    '  return x * x;',
+    '}',
+    '',
+    '/** @param {number} x @returns {number} */',
+    'export function cappedSquare(x) {',
+    '  return Math.min(square(x), LIMIT);',
+    '}',
+    '',
+  ].join('\n');
+  const translation = selfTranslate(source, 'JavaScript', 'Rust');
+  assert.deepEqual(translation.items.map(({ status }) => status), ['translated', 'translated', 'translated', 'translated', 'translated']);
+  const rust = emittedRust(translation);
+  assert.match(rust, /pub const LIMIT: f64 = 3f64;/u);
+  assert.match(rust, /pub fn square\(x: f64\) -> f64 \{/u);
+  assert.match(rust, /pub fn capped_square\(x: f64\) -> f64 \{\n {4}crate::ml_math::min\(square\(x\), LIMIT\)\n\}/u);
+  // The translation back restores the source.
+  assert.equal(selfTranslate(translation.code, 'Rust', 'JavaScript').code, source);
+});
+
+test('a sibling that does not translate leaves its callers carried', () => {
+  const source = [
+    '/** @param {bigint} n @returns {boolean} */',
+    'function isEven(n) {',
+    '  return n === 0n ? true : isOdd(n - 1n);',
+    '}',
+    '',
+    '/** @param {bigint} n @returns {boolean} */',
+    'function isOdd(n) {',
+    '  return n === 0n ? false : isEven(n - 1n);',
+    '}',
+    '',
+    '/** @param {number} x @returns {number} */',
+    'function opaque(x) {',
+    '  return [x].map((y) => y)[0];',
+    '}',
+    '',
+    '/** @param {number} x @returns {number} */',
+    'function caller(x) {',
+    '  return opaque(x) + 1;',
+    '}',
+    '',
+  ].join('\n');
+  const translation = selfTranslate(source, 'JavaScript', 'Rust');
+  // Mutually recursive siblings are a cycle, which stays unbound.
+  assert.equal(statusOf(translation, source, 'function isEven'), 'carried');
+  assert.equal(statusOf(translation, source, 'function isOdd'), 'carried');
+  assert.equal(statusOf(translation, source, 'function opaque'), 'carried');
+  assert.equal(statusOf(translation, source, 'function caller'), 'carried');
+  assert.equal(translation.items.find(({ start }) => source.slice(start).startsWith('function caller')).reason, 'type');
+});
+
+test('a relative import of items of the crate translates as a use declaration', () => {
+  const math = [
+    '/** @param {number} x @returns {number} */',
+    'export function double(x) {',
+    '  return x * 2;',
+    '}',
+    '',
+    '/** @param {number} x @returns {number} */',
+    'function hidden(x) {',
+    '  return x;',
+    '}',
+    '',
+    'export const UNIT = \'m\';',
+    '',
+  ].join('\n');
+  const signatures = selfTranslationSignatures(math, 'JavaScript');
+  assert.deepEqual(signatures, [
+    { k: 'fn', name: 'double', params: [{ name: 'x', type: { kind: 'float' } }], ret: { kind: 'float' } },
+    { k: 'const', name: 'UNIT', type: { kind: 'string' }, literal: true },
+  ]);
+  const quad = [
+    'import { double, UNIT as unit } from \'./math.mjs\';',
+    '',
+    '/** @param {number} x @returns {number} */',
+    'export function quadruple(x) {',
+    '  return double(double(x));',
+    '}',
+    '',
+    '/** @param {string} name @returns {boolean} */',
+    'export function isUnit(name) {',
+    '  return name === unit;',
+    '}',
+    '',
+  ].join('\n');
+  const bound = selfTranslate(quad, 'JavaScript', 'Rust', { imports: { './math.mjs': signatures } });
+  assert.ok(bound.items.every(({ status }) => status === 'translated'));
+  const rust = emittedRust(bound);
+  assert.match(rust, /^use crate::math::\{double, UNIT as unit\};$/mu);
+  assert.match(rust, /^ {4}double\(double\(x\)\)$/mu);
+  assert.match(rust, /^ {4}\(name == unit\)$/mu);
+  // Without the signatures the import still translates; its users are carried.
+  const unbound = selfTranslate(quad, 'JavaScript', 'Rust');
+  assert.equal(statusOf(unbound, quad, 'import {'), 'translated');
+  assert.equal(statusOf(unbound, quad, 'function quadruple'), 'carried');
+  // A renamed function is named in snake case on both sides of `as`.
+  const renamed = selfTranslate('import { cappedSquare as capped } from \'./math.mjs\';\n', 'JavaScript', 'Rust', {
+    imports: { './math.mjs': [{ k: 'fn', name: 'cappedSquare', params: [], ret: { kind: 'float' } }] },
+  });
+  assert.match(emittedRust(renamed), /^use crate::math::capped_square as capped;$/mu);
+  // The module directory places the module inside the crate.
+  const nested = selfTranslate('import { realm } from \'../host.mjs\';\nimport { a, b } from \'./sub/part-two.js\';\n', 'JavaScript', 'Rust', { moduleDirectory: ['agentic', 'crate'] });
+  assert.match(emittedRust(nested), /^use crate::agentic::host::realm;\nuse crate::agentic::crate_::sub::part_two::\{a, b\};$/mu);
+});
+
+test('imports outside the crate are refused with their own diagnostics', () => {
+  const refused = (source) => {
+    const translation = selfTranslate(source, 'JavaScript', 'Rust');
+    assert.equal(translation.items[0].status, 'carried', source);
+    return translateProgram(source, 'JavaScript', 'Rust').diagnostic.message;
+  };
+  assert.match(refused('import fs from \'node:fs\';\n'), /^import from 'node:fs': Node\.js built-in modules are outside the portable core/u);
+  assert.match(refused('import { readFileSync } from \'node:fs\';\n'), /^import from 'node:fs': Node\.js built-in modules/u);
+  assert.match(refused('import { parse } from \'links-notation\';\n'), /^import from 'links-notation': packages are outside the portable core/u);
+  assert.match(refused('import * as m from \'./m.mjs\';\n'), /^namespace import: import the items of a module by name/u);
+  assert.match(refused('import m from \'./m.mjs\';\n'), /^default import from '\.\/m\.mjs': a translated module has no default export/u);
+  assert.match(refused('import {} from \'./m.mjs\';\n'), /^import \{\} from '\.\/m\.mjs': an import names the items it imports/u);
+  // A whole program is one module, so translateProgram refuses a relative import.
+  assert.match(translateProgram('import { f } from \'./m.mjs\';\n', 'JavaScript', 'Rust').diagnostic.message, /^import from '\.\/m\.mjs': a relative import names another module of a crate/u);
+  // The crate root has no parent directory.
+  const climbing = selfTranslate('import { f } from \'../m.mjs\';\n', 'JavaScript', 'Rust');
+  assert.equal(climbing.items[0].status, 'carried');
+  assert.throws(() => selfTranslationSignatures('fn main() {}\n', 'Rust'), SelfTranslationError);
 });
 
 test('languages are named by name or extension, and others are refused', () => {

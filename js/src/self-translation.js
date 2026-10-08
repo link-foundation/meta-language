@@ -17,6 +17,7 @@ import { TranslationError } from './translation/diagnostics.js';
 import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
+import { tokenize } from './translation/lexer.js';
 import { parseRust } from './translation/rust.js';
 
 /** The languages self-translation reads and writes. */
@@ -77,8 +78,37 @@ const sha256 = (text) => createHash('sha256').update(Buffer.from(text, 'utf8')).
  * record per line of its definitions with the target language as `format`,
  * before its provenance is recorded, so a translation can be brought to match
  * hand-written code and still restores its source.
+ *
+ * From JavaScript or TypeScript into Rust, an item may call and read the
+ * module's other top-level items: each item is translated after the items it
+ * names, with the signatures of those that translated bound, and the Rust
+ * names them as its own translation does. `import { a, b as c } from
+ * './m.mjs'` becomes `use crate::m::{a, b as c};`: `options.moduleDirectory`
+ * (path segments, the crate root by default) is the module's directory inside
+ * the crate, and `options.imports` maps an import specifier to the signatures
+ * {@link selfTranslationSignatures} gives for that module, which bind the
+ * imported names the same way.
  */
-export function selfTranslate(source, sourceLanguage, targetLanguage, { decorators } = {}) {
+export function selfTranslate(source, sourceLanguage, targetLanguage, options = {}) {
+  return translateModule(source, sourceLanguage, targetLanguage, options).translation;
+}
+
+/**
+ * The signatures of the exported items of the JavaScript or TypeScript module
+ * `source` that translate into Rust, in source order, for
+ * {@link selfTranslate}'s `options.imports` of a module that imports them:
+ * `{ k: 'fn', name, params: [{ name, type }], ret }` for a function and
+ * `{ k: 'const', name, type, literal }` for a constant, where `literal` tells
+ * whether a literal gives its value. `options` are {@link selfTranslate}'s.
+ */
+export function selfTranslationSignatures(source, language, options = {}) {
+  if (family(required(language)) !== 'JavaScript') {
+    throw new SelfTranslationError(`signatures are read from JavaScript or TypeScript modules, not ${language}`);
+  }
+  return translateModule(source, language, 'Rust', options).signatures;
+}
+
+function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {} } = {}) {
   const from = required(sourceLanguage);
   const to = required(targetLanguage);
   const set = decoratorSet(decorators);
@@ -90,14 +120,19 @@ export function selfTranslate(source, sourceLanguage, targetLanguage, { decorato
   const bytes = Buffer.from(text, 'utf8');
   const items = topLevelItems(text, from, bytes);
   if (family(from) === family(to)) {
-    return freeze(from, to, reconstructed, items.map(({ term, start, end }) => ({ term, start, end, status: 'kept', reason: null })));
+    return { translation: freeze(from, to, reconstructed, items.map(({ term, start, end }) => ({ term, start, end, status: 'kept', reason: null }))), signatures: [] };
   }
   const blocks = [];
   const preludes = [];
   const recorded = [];
   let gap = '';
-  for (const group of groupItems(items, bytes)) {
-    const out = translateGroup(group, from, to, set);
+  const groups = groupItems(items, bytes);
+  const { outs, scans } = family(to) === 'Rust'
+    ? translateBound(groups, from, to, set, { moduleDirectory, imports })
+    : { outs: groups.map((group) => translateGroup(group, from, to, set)), scans: [] };
+  const signatures = outs.flatMap((out, index) => (scans[index]?.exported && out.status === 'translated' ? out.signatures : []));
+  for (const [index, group] of groups.entries()) {
+    const out = outs[index];
     for (const prelude of out.preludes ?? []) if (!preludes.includes(prelude)) preludes.push(prelude);
     for (const { term, start, end } of group.items) recorded.push({ term, start, end, status: out.status, reason: out.reason ?? null });
     if (out.code !== null) {
@@ -112,12 +147,125 @@ export function selfTranslate(source, sourceLanguage, targetLanguage, { decorato
   // An unedited translation back gives the source its header describes.
   const header = items.find((item) => item.comment && item.text.startsWith(HEADER));
   if (header && header.text.includes(` source=${to} `) && header.text.includes(` sha256=${sha256(body)} `)) {
-    return freeze(from, to, body, recorded);
+    return { translation: freeze(from, to, body, recorded), signatures };
   }
   if (family(to) === 'Rust' && recorded.some(({ status }) => status === 'translated')) preludes.unshift(RUST_ALLOW);
   const lines = [`${HEADER}source=${from} target=${to} sha256=${sha256(text)} bytes=${bytes.length}`, ''];
   if (preludes.length) lines.push(PRELUDE_BEGIN, ...preludes.flatMap((prelude, index) => (index ? ['', prelude] : [prelude])), PRELUDE_END, '');
-  return freeze(from, to, `${lines.join('\n')}\n${body}`, recorded);
+  return { translation: freeze(from, to, `${lines.join('\n')}\n${body}`, recorded), signatures };
+}
+
+/**
+ * Translates the groups of a JavaScript module into Rust, each item after the
+ * items it names, with the signatures of the ones that translated bound. A
+ * name that a cycle of items leaves untranslated stays unbound, so its
+ * callers are carried with the checker's diagnostic.
+ */
+function translateBound(groups, from, to, decorators, { moduleDirectory, imports }) {
+  const scans = groups.map((group) => (group.kind === 'item' ? scanItem(group.text) : null));
+  const owners = new Map();
+  scans.forEach((scan, index) => {
+    const names = scan?.imports ? scan.imports.names.map(({ local }) => local) : scan?.declares ? [scan.declares] : [];
+    for (const name of names) if (!owners.has(name)) owners.set(name, index);
+  });
+  const outs = new Array(groups.length);
+  const visiting = new Set();
+  const visit = (index) => {
+    if (outs[index] || visiting.has(index)) return;
+    const scan = scans[index];
+    if (!scan) {
+      outs[index] = translateGroup(groups[index], from, to, decorators);
+      return;
+    }
+    visiting.add(index);
+    const externals = [];
+    if (scan.imports) {
+      const { specifier, names } = scan.imports;
+      const provided = Object.hasOwn(imports, specifier) ? imports[specifier] : [];
+      for (const { imported, local } of names) {
+        const signature = provided.find(({ name }) => name === imported);
+        if (signature) externals.push({ ...signature, name: local });
+      }
+    } else {
+      for (const name of scan.mentions) {
+        const owner = owners.get(name);
+        if (owner === undefined || owner === index) continue;
+        visit(owner);
+        if (outs[owner]?.status !== 'translated' || scans[owner].async) continue;
+        const signature = outs[owner].signatures.find((candidate) => candidate.name === name);
+        if (signature) externals.push(signature);
+      }
+    }
+    outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory });
+    visiting.delete(index);
+  };
+  groups.forEach((_, index) => visit(index));
+  return { outs, scans };
+}
+
+/**
+ * What a JavaScript item declares and names, read from its tokens: the name
+ * of the function or constant it declares, whether it is exported or async,
+ * the identifiers it mentions, and the specifier and names of a named import.
+ * Null when the item does not tokenize.
+ */
+function scanItem(text) {
+  let tokens;
+  try {
+    ({ tokens } = tokenize(text, 'JavaScript'));
+  } catch (error) {
+    if (error instanceof TranslationError) return null;
+    throw error;
+  }
+  const at = (index) => tokens[Math.min(index, tokens.length - 1)];
+  const word = (index, value) => at(index).kind === 'identifier' && at(index).value === value;
+  const exported = word(0, 'export');
+  let index = exported ? 1 : 0;
+  let declares = null;
+  let isAsync = false;
+  let imports = null;
+  if (word(index, 'async') && word(index + 1, 'function')) {
+    isAsync = true;
+    index += 1;
+  }
+  if (word(index, 'function') && at(index + 1).kind === 'identifier') {
+    declares = at(index + 1).value;
+  } else if (word(index, 'const') && at(index + 1).kind === 'identifier' && at(index + 2).value === '=') {
+    declares = at(index + 1).value;
+    isAsync = word(index + 3, 'async');
+  } else if (word(0, 'import') && at(1).value === '{') {
+    const names = [];
+    let next = 2;
+    while (at(next).kind === 'identifier') {
+      const imported = at(next).value;
+      const aliased = word(next + 1, 'as') && at(next + 2).kind === 'identifier';
+      names.push({ imported, local: aliased ? at(next + 2).value : imported });
+      next += aliased ? 3 : 1;
+      if (at(next).value !== ',') break;
+      next += 1;
+    }
+    if (at(next).value === '}' && word(next + 1, 'from') && at(next + 2).kind === 'string') imports = { specifier: at(next + 2).value, names };
+  }
+  const mentions = [...new Set(tokens.filter((token) => token.kind === 'identifier').map((token) => token.value))];
+  return { declares, exported, async: isAsync, mentions, imports };
+}
+
+/**
+ * The signatures a translated item gives the other items of its module: its
+ * functions at the top level, other than the ones the translator makes up,
+ * or its constant, when no data type is among their types and no parameter
+ * is a guarded natural number.
+ */
+function declaredSignatures(program, constants) {
+  const portable = (type) => (type.kind === 'array' ? portable(type.element) : type.kind !== 'data');
+  if (constants) {
+    const [{ name, value }] = program.main.effects;
+    return portable(value.type) ? [{ k: 'const', name, type: value.type, literal: value.k === 'lit' }] : [];
+  }
+  return [...program.declarations.values()]
+    .filter((entry) => entry.k === 'fn' && entry.modulePath.length === 0 && !entry.name.startsWith('ml_')
+      && entry.params.every((param) => !param.guard && portable(param.type)) && portable(entry.ret))
+    .map((entry) => ({ k: 'fn', name: entry.name, params: entry.params.map(({ name, type }) => ({ name, type })), ret: entry.ret }));
 }
 
 function freeze(sourceLanguage, targetLanguage, code, items) {
@@ -218,7 +366,7 @@ function groupItems(items, bytes) {
 
 const isMarker = (item) => item.comment && [HEADER, CARRIED, TRANSLATED, PRELUDE_BEGIN].some((marker) => item.text.startsWith(marker));
 
-function translateGroup(group, from, to, decorators) {
+function translateGroup(group, from, to, decorators, context = {}) {
   if (group.kind === 'provenance') return { code: null, status: 'provenance' };
   if (group.kind === 'carried') {
     if (family(group.language) === family(to)) return { code: group.lines.join('\n'), status: 'restored' };
@@ -232,15 +380,17 @@ function translateGroup(group, from, to, decorators) {
     return carry(text, term, from, 'comment the target cannot hold');
   }
   let emitted;
+  let signatures;
   try {
     // The Rust frontend reads a program, so an item alone gets an empty main.
     const program = checkProgram(family(from) === 'Rust'
       ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`)
-      : parseJavaScript(text));
+      : parseJavaScript(text, context));
     // A top-level constant is a Rust constant; other top-level statements run once, as a program.
     const constants = family(to) === 'Rust' ? emitRustConstants(program) : null;
     if (!constants && program.main.effects.length > 0) return carry(text, term, from, 'top-level statement');
     emitted = constants ?? (family(to) === 'Rust' ? emitRust : emitJavaScript)(program);
+    signatures = program.imports ? context.externals : declaredSignatures(program, constants);
   } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
     return carry(text, term, from, error.kind);
@@ -256,6 +406,7 @@ function translateGroup(group, from, to, decorators) {
     code: [marker, ...text.split(/\r?\n/u).map(sourceLine), code].join('\n'),
     preludes: emitted.preludes,
     status: 'translated',
+    signatures,
   };
 }
 

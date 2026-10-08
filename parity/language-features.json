@@ -331,6 +331,7 @@
     "scriptLanguage": { "rust": "script_language", "kind": "function" },
     "selfTranslate": { "rust": "self_translate", "kind": "function" },
     "selfTranslationLanguage": { "rust": "self_translation_language", "kind": "function" },
+    "selfTranslationSignatures": { "rust": "self_translation_signatures", "kind": "function" },
     "sequence": { "rust": "sequence", "kind": "function" },
     "serializeGrammar": { "rust": "serialize_grammar", "kind": "function" },
     "sharedRuleDecisions": { "rust": "shared_rule_decisions", "kind": "function" },

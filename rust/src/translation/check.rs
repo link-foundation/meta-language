@@ -20,8 +20,8 @@ use super::ir::{
 };
 use super::proof::{ProofContext, ProofName, TheoremHead, normalise_proof};
 use super::surface::{
-    BinaryOp, Flavor, Rounding, SArrayItem, SCase, SCasePattern, SEffect, SExpr, SItem, SMain,
-    SNode, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow, ShowStyle, UnaryOp,
+    BinaryOp, External, Flavor, Rounding, SArrayItem, SCase, SCasePattern, SEffect, SExpr, SItem,
+    SMain, SNode, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow, ShowStyle, UnaryOp,
 };
 use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, UNIT, array, data, fixed, fixed_bounds};
 use super::{Language, Span};
@@ -39,7 +39,7 @@ pub use self::recursion::*;
 /// # Errors
 /// On name, type and exhaustiveness errors, and on constructs outside the portable core.
 pub fn check_program(surface: &SProgram) -> Result<Program> {
-    Checker::new(surface.language).program(surface)
+    Checker::new(surface.language, surface.externals.clone()).program(surface)
 }
 
 /// Inserts the source language's implicit conversions, which only JavaScript has.
@@ -139,7 +139,12 @@ fn cast_to(arg: Expr, to: &Type, flavor: Flavor, span: Option<Span>) -> Result<E
 #[derive(Clone, Debug)]
 enum Entry {
     Decl(String),
-    Ctor { data: String, name: String },
+    Ctor {
+        data: String,
+        name: String,
+    },
+    /// Another item of the module, by name, which the program does not declare.
+    External(String),
 }
 
 #[derive(Default)]
@@ -321,10 +326,12 @@ struct Checker {
     signatures: HashSet<String>,
     fresh: usize,
     modules: HashMap<String, Scope>,
+    /// The other items of the module, in scope after the program's own.
+    externals: Vec<External>,
 }
 
 impl Checker {
-    fn new(language: Language) -> Self {
+    fn new(language: Language, externals: Vec<External>) -> Self {
         let mut modules = HashMap::new();
         modules.insert(String::new(), Scope::default());
         Self {
@@ -334,6 +341,7 @@ impl Checker {
             signatures: HashSet::new(),
             fresh: 0,
             modules,
+            externals,
         }
     }
 
@@ -363,6 +371,8 @@ impl Checker {
             declarations,
             output_threaded: false,
             aborts_threaded: false,
+            imports: surface.imports.clone(),
+            externals: self.externals,
         })
     }
 
@@ -386,7 +396,7 @@ impl ProofContext for ProofScope<'_> {
         Ok(
             match self.checker.lookup(&segments, self.path, self.span)? {
                 None => None,
-                Some(Entry::Ctor { .. }) => Some(ProofName::Other),
+                Some(Entry::Ctor { .. } | Entry::External(_)) => Some(ProofName::Other),
                 Some(Entry::Decl(full_name)) => Some(match self.checker.decls.get(&full_name) {
                     Some(Decl::Fn(_)) => ProofName::Function(full_name),
                     Some(Decl::Theorem(_)) => ProofName::Theorem(full_name),
