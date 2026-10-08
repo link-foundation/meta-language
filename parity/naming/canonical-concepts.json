@@ -62636,6 +62636,54 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "translation.decode-unicode-escape",
+      "phrase": "decode Unicode escape",
+      "role": "operation",
+      "definition": "Decode a Unicode escape sequence into a scalar value or a diagnostic, preserving its consumed extent.",
+      "constraints": [
+        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
+        "The frontend decision inventory must include this stable concept record."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-argument-count",
+      "phrase": "accept argument count",
+      "role": "operation",
+      "definition": "Determine whether omitted function arguments are permitted by trailing default parameters.",
+      "constraints": [
+        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
+        "The frontend decision inventory must include this stable concept record."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "translation.find-default-parameter-reference",
+      "phrase": "find default parameter reference",
+      "role": "operation",
+      "definition": "Find a reference to a previously declared parameter inside a default argument expression without mistaking member names for parameter references.",
+      "constraints": [
+        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
+        "The frontend decision inventory must include this stable concept record."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "translation.unicode-escape",
+      "phrase": "Unicode escape",
+      "role": "concept",
+      "definition": "A decoded Unicode escape result, distinguishing a valid Unicode scalar, malformed spelling, and unsupported scalar value.",
+      "constraints": [
+        "The JavaScript and Rust frontends use the same translated decisions and return the same observable result.",
+        "The frontend decision inventory must include this stable concept record."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
     }
   ]
 }
