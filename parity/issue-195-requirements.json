@@ -2038,22 +2038,22 @@
     "planned:repository-directive:i195-self-translation-tool": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: JavaScript/TypeScript ↔ Rust self-translation library API and CLI",
-      "sha256": "8c0eed192e0e8ea7491bed8be5ced8ea80938d757ee50f56db27d4924df25321"
+      "sha256": "721e84b054d2af3c92b1a290c0244c7652ea64c8a68a5eceee76d7303a3ede2e"
     },
     "planned:repository-directive:i195-self-translation-round-trip": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: lossless self-translation round trips",
-      "sha256": "8c0eed192e0e8ea7491bed8be5ced8ea80938d757ee50f56db27d4924df25321"
+      "sha256": "721e84b054d2af3c92b1a290c0244c7652ea64c8a68a5eceee76d7303a3ede2e"
     },
     "planned:repository-directive:i195-self-translation-shared-corpus": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: shared Links Notation corpus checked in both runtimes",
-      "sha256": "8c0eed192e0e8ea7491bed8be5ced8ea80938d757ee50f56db27d4924df25321"
+      "sha256": "721e84b054d2af3c92b1a290c0244c7652ea64c8a68a5eceee76d7303a3ede2e"
     },
     "planned:repository-directive:i195-self-translation-carried-zero": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: every self-translated item translated, none carried",
-      "sha256": "8c0eed192e0e8ea7491bed8be5ced8ea80938d757ee50f56db27d4924df25321"
+      "sha256": "721e84b054d2af3c92b1a290c0244c7652ea64c8a68a5eceee76d7303a3ede2e"
     },
     "planned:repository-directive:i195-decorators-every-level": {
       "path": "parity/decorators/cases.json",
