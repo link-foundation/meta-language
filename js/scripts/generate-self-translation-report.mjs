@@ -164,7 +164,8 @@ function measure(module, decorators) {
     const translation = selfTranslate(source, 'JavaScript', 'Rust', { decorators });
     decorated = { ...compareRustDefinitions(translation.code, handWritten), coverage: checkedCoverage(source, translation) };
   }
-  return { module, rust, items, coverage, milliseconds, ...generic, decorated };
+  const sha256 = (file) => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
+  return { module, rust, sourceSha256: sha256(module), rustSha256: rust ? sha256(rust) : null, items, coverage, milliseconds, ...generic, decorated };
 }
 
 /** How the Rust a translation writes compares with the hand-written Rust, or with none. */
@@ -296,7 +297,7 @@ function main() {
   mkdirSync(outDir, { recursive: true });
   const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '');
   writeFileSync(join(outDir, 'self-translation-report.md'), report);
-  writeFileSync(join(outDir, 'self-translation-report.json'), `${JSON.stringify({ decorators: decorators.ids(), modules: rows, failures }, null, 2)}\n`);
+  writeFileSync(join(outDir, 'self-translation-report.json'), `${JSON.stringify({ schemaVersion: 1, commit: process.env.GITHUB_SHA ?? null, decorators: decorators.ids(), modules: rows, failures }, null, 2)}\n`);
   // Refused modules are listed in the report; the tests hold self-translation to its contract.
   console.log(report);
 }
