@@ -338,9 +338,8 @@ function groupItems(items, bytes) {
     } else if (item.comment && item.text.startsWith(TRANSLATED)) {
       const fields = Object.fromEntries(item.text.slice(TRANSLATED.length).split(' ').slice(2).map((field) => field.split('=')));
       const linesEnd = linesAfter(index);
-      const count = Number(fields.items);
-      const last = linesEnd + count;
-      if (Number.isSafeInteger(count) && count > 0 && last < items.length) {
+      const last = definitionsEnd(items, linesEnd, Number(fields.items));
+      if (last >= 0) {
         const code = textBetween(items[linesEnd + 1], items[last]);
         const [language] = item.text.slice(TRANSLATED.length).split(' ');
         const lines = sourceLines(items.slice(index + 1, linesEnd + 1));
@@ -362,6 +361,20 @@ function groupItems(items, bytes) {
     }
   }
   return groups;
+}
+
+/**
+ * The last item of the `count` definitions after the item at `after`, or -1:
+ * a definition's attributes (`#[derive(…)]`) are items of their own in Rust.
+ */
+function definitionsEnd(items, after, count) {
+  if (!Number.isSafeInteger(count) || count <= 0) return -1;
+  let left = count;
+  for (let at = after + 1; at < items.length; at += 1) {
+    if (items[at].term !== 'attribute_item') left -= 1;
+    if (left === 0) return at;
+  }
+  return -1;
 }
 
 const isMarker = (item) => item.comment && [HEADER, CARRIED, TRANSLATED, PRELUDE_BEGIN].some((marker) => item.text.startsWith(marker));

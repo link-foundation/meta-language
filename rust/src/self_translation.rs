@@ -531,9 +531,8 @@ fn group_items<'a>(items: &[Item<'a>], text: &'a str) -> Vec<Group<'a>> {
             };
             let lines_end = lines_after(index);
             let count = field("items").and_then(|count| count.parse::<usize>().ok());
-            match count {
-                Some(count) if count > 0 && lines_end + count < items.len() => {
-                    let last = lines_end + count;
+            match count.and_then(|count| definitions_end(items, lines_end, count)) {
+                Some(last) => {
                     let code = between(&items[lines_end + 1], &items[last]);
                     if field("sha256") == Some(sha256(&code).as_str()) {
                         let lines = source_lines(&items[index + 1..=lines_end]);
@@ -584,6 +583,24 @@ fn group_items<'a>(items: &[Item<'a>], text: &'a str) -> Vec<Group<'a>> {
         index = end + 1;
     }
     groups
+}
+
+/// The last item of the `count` definitions after the item at `after`: a
+/// definition's attributes (`#[derive(…)]`) are items of their own in Rust.
+fn definitions_end(items: &[Item<'_>], after: usize, count: usize) -> Option<usize> {
+    if count == 0 {
+        return None;
+    }
+    let mut left = count;
+    for (at, item) in items.iter().enumerate().skip(after + 1) {
+        if item.term != "attribute_item" {
+            left -= 1;
+        }
+        if left == 0 {
+            return Some(at);
+        }
+    }
+    None
 }
 
 fn first_word(text: &str) -> String {

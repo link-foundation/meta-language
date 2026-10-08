@@ -608,6 +608,17 @@ fn an_item_calls_the_other_top_level_items_of_its_module() {
 }
 
 #[test]
+fn a_translated_item_whose_definitions_carry_attributes_translates_back_to_its_source() {
+    let source = "/** @param {string[]} parts @returns {boolean} */\nexport function balanced(parts) {\n  let depth = 0;\n  for (const part of parts) {\n    if (part === '(') depth += 1;\n    if (part === ')') depth -= 1;\n    if (depth < 0) return false;\n  }\n  return depth === 0;\n}\n";
+    let translation = self_translate(source, "JavaScript", "Rust").expect("translates");
+    // The loop's result is a data type, whose `#[derive(…)]` is an item of its own in Rust.
+    assert!(translation.code.contains("items=3 "));
+    assert!(translation.code.contains("#[derive("));
+    let back = self_translate(&translation.code, "Rust", "JavaScript").expect("translates back");
+    assert_eq!(back.code, source);
+}
+
+#[test]
 fn a_sibling_that_does_not_translate_leaves_its_callers_carried() {
     let source = "/** @param {bigint} n @returns {boolean} */\nfunction isEven(n) {\n  return n === 0n ? true : isOdd(n - 1n);\n}\n\n/** @param {bigint} n @returns {boolean} */\nfunction isOdd(n) {\n  return n === 0n ? false : isEven(n - 1n);\n}\n\n/** @param {number} x @returns {number} */\nfunction opaque(x) {\n  return [x].map((y) => y)[0];\n}\n\n/** @param {number} x @returns {number} */\nfunction caller(x) {\n  return opaque(x) + 1;\n}\n";
     let translation = self_translate(source, "JavaScript", "Rust").expect("translates");

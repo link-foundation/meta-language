@@ -179,6 +179,15 @@ test('an item calls and reads the other top-level items of its module', () => {
   assert.equal(selfTranslate(translation.code, 'Rust', 'JavaScript').code, source);
 });
 
+test('a translated item whose definitions carry attributes translates back to its source', () => {
+  const source = "/** @param {string[]} parts @returns {boolean} */\nexport function balanced(parts) {\n  let depth = 0;\n  for (const part of parts) {\n    if (part === '(') depth += 1;\n    if (part === ')') depth -= 1;\n    if (depth < 0) return false;\n  }\n  return depth === 0;\n}\n";
+  const translation = selfTranslate(source, 'JavaScript', 'Rust');
+  // The loop's result is a data type, whose `#[derive(…)]` is an item of its own in Rust.
+  assert.match(translation.code, /items=3 /u);
+  assert.match(translation.code, /#\[derive\(/u);
+  assert.equal(selfTranslate(translation.code, 'Rust', 'JavaScript').code, source);
+});
+
 test('a sibling that does not translate leaves its callers carried', () => {
   const source = [
     '/** @param {bigint} n @returns {boolean} */',
