@@ -589,10 +589,10 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
         .collect();
     let mut text = preludes.clone();
     text.push(definition.clone());
-    let mut emitted = emitter.state.finish(text.join("\n\n"), None);
-    emitted.preludes = preludes;
-    emitted.definitions = vec![definition];
-    Ok(Some(emitted))
+    let mut result = emitter.state.finish(text.join("\n\n"), None);
+    result.preludes = preludes;
+    result.definitions = vec![definition];
+    Ok(Some(result))
 }
 
 /// The Rust emitter of `program`, with every name of the module's other items
