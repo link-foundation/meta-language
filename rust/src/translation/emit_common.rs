@@ -267,7 +267,7 @@ impl<'p> EmitState<'p> {
 
     /// Keeps locals off `name`, the target name of another item of the
     /// module that the program calls or reads.
-    pub fn claim(&mut self, name: String) {
+    pub fn reserve(&mut self, name: String) {
         self.claimed.insert(name);
     }
 

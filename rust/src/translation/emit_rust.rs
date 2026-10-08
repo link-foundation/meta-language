@@ -529,7 +529,7 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
     );
     // A local may not shadow another item of the module that the program calls or reads.
     for external in &program.externals {
-        state.claim(external_name(external, external.name()));
+        state.reserve(external_name(external, external.name()));
     }
     RustEmitter {
         program,
