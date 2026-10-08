@@ -258,3 +258,7 @@ JavaScript `trim`, `trimStart` and `trimEnd`. Shared generated render decisions
 retain U+0085 and trim U+FEFF. The shared binding examples check expanded case
 mappings and both whitespace cases against JavaScript execution. Lean and Rocq
 keep explicit refusals for these Unicode transformations.
+
+Type queries also accept reads of eligible captured primitive literal constants.
+The checked reference is identified from its external constant signature; source
+calls and unsafe captures keep their existing refusals.

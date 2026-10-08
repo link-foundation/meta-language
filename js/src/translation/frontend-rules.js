@@ -392,3 +392,8 @@ export function readStringMapRefusal(target, operation) {
   if (operation === 'trim' || operation === 'trimStart' || operation === 'trimEnd') return 'JavaScript whitespace trimming has no ' + target + ' library counterpart; ' + target + ' trims ASCII whitespace only';
   return 'Unicode case mapping has no ' + target + ' library counterpart; ' + target + ' maps ASCII letters only';
 }
+
+/** @param {string} kind @param {boolean} constantReference @returns {boolean} */
+export function acceptCheckedTypeQueryOperand(kind, constantReference) {
+  return acceptTypeQueryOperand(kind) || (kind === 'call' && constantReference);
+}

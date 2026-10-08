@@ -167,6 +167,34 @@
       "call": "trimForms(\"﻿ a b　\\n\")",
       "rustCall": "trim_forms(String::from(\"﻿ a b　\\n\"))",
       "expected": "[﻿ a b|﻿ a b　\n|﻿ a b]\n"
+    },
+    {
+      "name": "captured-string-type-query",
+      "source": "const LABEL = 'ready';\n/** @returns {string} */\nexport function readType() { return typeof LABEL; }\n",
+      "call": "readType()",
+      "rustCall": "read_type()",
+      "expected": "string\n"
+    },
+    {
+      "name": "captured-boolean-type-query",
+      "source": "const LABEL = true;\n/** @returns {string} */\nexport function readType() { return typeof LABEL; }\n",
+      "call": "readType()",
+      "rustCall": "read_type()",
+      "expected": "boolean\n"
+    },
+    {
+      "name": "captured-number-type-query",
+      "source": "const LABEL = 7;\n/** @returns {string} */\nexport function readType() { return typeof LABEL; }\n",
+      "call": "readType()",
+      "rustCall": "read_type()",
+      "expected": "number\n"
+    },
+    {
+      "name": "captured-bigint-type-query",
+      "source": "const LABEL = 7n;\n/** @returns {string} */\nexport function readType() { return typeof LABEL; }\n",
+      "call": "readType()",
+      "rustCall": "read_type()",
+      "expected": "bigint\n"
     }
   ],
   "refusals": [

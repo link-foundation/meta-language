@@ -5687,6 +5687,28 @@
       "formerNames": []
     },
     {
+      "id": "translation.accept-checked-type-query-operand",
+      "phrase": "accept checked type query operand",
+      "role": "operation",
+      "definition": "Accept an operand whose checked expression can be queried without discarding evaluation effects.",
+      "constraints": [
+        "External constant reads have validated signatures and no call arguments.",
+        "Source calls, fields and unknown operands keep their existing refusals.",
+        "Mutable and nonliteral captures remain excluded by declaration binding."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptCheckedTypeQueryOperand"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_checked_type_query_operand"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",

@@ -7,9 +7,7 @@ use super::{
     UnaryOp, arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
     negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
 };
-use crate::translation::frontend_rules::{
-    accept_argument_count, accept_type_query_operand, read_type_query_result,
-};
+use crate::translation::frontend_rules::accept_argument_count;
 
 impl Checker {
     pub(super) fn coerce(&self, value: Expr, ty: &Type, span: Option<Span>) -> Result<Expr> {
@@ -119,25 +117,7 @@ impl Checker {
                     span,
                 ))
             }
-            SNode::TypeOf { arg } => {
-                let hint = "type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions";
-                if !accept_type_query_operand(arg.node.kind()) {
-                    return Err(unsupported("typeof operand", hint, span));
-                }
-                let arg = self.expr(arg, env, path, None, false)?;
-                if !accept_type_query_operand(arg.node.kind()) {
-                    return Err(unsupported("typeof operand", hint, span));
-                }
-                let value = read_type_query_result(arg.ty.kind());
-                if value.is_empty() {
-                    return Err(unsupported(
-                        &format!("typeof {}", arg.ty.key()),
-                        "type queries require a known JavaScript value type",
-                        span,
-                    ));
-                }
-                Ok(text_lit(STRING, value))
-            }
+            SNode::TypeOf { arg } => self.type_query(arg, env, path, span),
             SNode::Unary {
                 op: UnaryOp::Not,
                 arg,

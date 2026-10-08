@@ -6,7 +6,7 @@
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
-import { acceptArgumentCount, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
+import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, isFloat, isNatural, isNumeric, sameType, typeKey,
@@ -410,7 +410,8 @@ class Checker {
       case 'typeOf': {
         if (!acceptTypeQueryOperand(node.arg.k)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
         const arg = this.expr(node.arg, env, path, undefined);
-        if (!acceptTypeQueryOperand(arg.k)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
+        const constantReference = arg.k === 'call' && this.externals.get(arg.fn)?.k === 'const';
+        if (!acceptCheckedTypeQueryOperand(arg.k, constantReference)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
         const value = readTypeQueryResult(arg.type.kind);
         if (!value) throw unsupported(`typeof ${typeKey(arg.type)}`, 'type queries require a known JavaScript value type', node.span);
         return literal(STRING, value);

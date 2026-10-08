@@ -881,5 +881,10 @@ pub fn read_string_map_refusal(target: &str, operation: &str) -> String {
     }
 }
 
+pub fn accept_checked_type_query_operand(kind: &str, constant_reference: bool) -> bool {
+    (crate::translation::frontend_rules::accept_type_query_operand(kind)
+        || ((kind == "call") && constant_reference))
+}
+
 mod continuations;
 pub use continuations::*;
