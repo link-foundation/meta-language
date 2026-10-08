@@ -442,22 +442,18 @@ fn next_tag(text: &[char], from: usize) -> Option<(usize, usize)> {
     })
 }
 
-/// `^[ \t]*([A-Za-z_$][\w$]*)`.
+/// Read the shared `JSDoc` name range; convert its UTF-16 offsets at the host boundary.
 fn jsdoc_name(text: &[char]) -> Option<String> {
-    let start = text
-        .iter()
-        .take_while(|&&ch| ch == ' ' || ch == '\t')
-        .count();
-    let first = *text.get(start)?;
-    if !(first.is_ascii_alphabetic() || first == '_' || first == '$') {
+    let tail: String = text.iter().collect();
+    let units: Vec<u16> = tail.encode_utf16().collect();
+    let numeric: Vec<f64> = units.iter().map(|&unit| f64::from(unit)).collect();
+    let range = super::frontend_rules::find_documentation_parameter_range(&numeric);
+    if range.is_empty() {
         return None;
     }
-    Some(
-        text[start..]
-            .iter()
-            .take_while(|&&ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '$')
-            .collect(),
-    )
+    let start = super::frontend_rules::ml_array::number_index(range[0])?;
+    let end = super::frontend_rules::ml_array::number_index(range[1])?;
+    Some(String::from_utf16_lossy(units.get(start..end)?))
 }
 
 /// `/^[A-Za-z_$][\w$]*$/`.

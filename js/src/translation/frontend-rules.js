@@ -235,3 +235,32 @@ export function acceptModuleBindingScope(terms, carried) {
   }
   return declarations > 0;
 }
+
+/**
+ * Locate an ASCII parameter name after JSDoc whitespace and an optional `[`.
+ * The documented default is metadata; only the function supplies defaults.
+ * @param {number[]} units
+ * @returns {number[]}
+ */
+export function findDocumentationParameterRange(units) {
+  let start = 0;
+  while (start < units.length && (units[start] === 32 || units[start] === 9)) start += 1;
+  let optional = false;
+  if (start < units.length && units[start] === 91) {
+    optional = true;
+    start += 1;
+  }
+  let end = start;
+  while (end < units.length) {
+    const code = units[end];
+    if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122) || code === 95 || code === 36 || (end > start && code >= 48 && code <= 57)) end += 1;
+    else break;
+  }
+  if (end === start) return [];
+  if (optional) {
+    let after = end;
+    while (after < units.length && (units[after] === 32 || units[after] === 9)) after += 1;
+    if (after >= units.length || (units[after] !== 93 && units[after] !== 61)) return [];
+  }
+  return [start, end];
+}

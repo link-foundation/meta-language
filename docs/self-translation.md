@@ -166,3 +166,10 @@ blocks are excluded. The frontend decision module itself is checked for zero
 carried items, generated Rust execution and exact restoration in both runtimes.
 Provenance counts the target CST items, including attributes and documentation
 that accompany a declaration, rather than assuming one CST item per definition.
+
+Bracketed JSDoc parameter names (`[value]` and `[value=99]`) now bind the
+same declared type as an ordinary `value` parameter. Their default text is
+documentation metadata: only the JavaScript function's actual default supplies
+an omitted argument. The shared frontend decision is generated into Rust;
+checks cover mismatched names, required arguments, execution and restoration.
+This does not implement nullable values, tuple or record types, or Map types.

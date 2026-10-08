@@ -5396,6 +5396,27 @@
       "formerNames": []
     },
     {
+      "id": "translation.find-documentation-parameter-range",
+      "phrase": "find documentation parameter range",
+      "role": "operation",
+      "definition": "Locate an ASCII parameter name in required or bracketed optional documentation, preserving documented defaults as metadata.",
+      "constraints": [
+        "Bracketed names require a closing bracket or a metadata default delimiter.",
+        "Only a function declaration supplies a runtime parameter default."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "findDocumentationParameterRange"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "find_documentation_parameter_range"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",

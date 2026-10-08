@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDefaultParameterReference } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
@@ -1840,7 +1840,9 @@ function jsdocTags(comment) {
       type = text.slice(index + 1, end).replaceAll('\n', ' ');
       index = end + 1;
     }
-    const name = /^[ \t]*([A-Za-z_$][\w$]*)/u.exec(text.slice(index))?.[1] ?? null;
+    const tail = text.slice(index);
+    const range = findDocumentationParameterRange(Array.from({ length: tail.length }, (_, offset) => tail.charCodeAt(offset)));
+    const name = range.length ? tail.slice(range[0], range[1]) : null;
     tags.push({ tag: match[1], type, name });
     pattern.lastIndex = index;
     match = pattern.exec(text);

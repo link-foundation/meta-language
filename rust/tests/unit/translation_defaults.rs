@@ -193,3 +193,35 @@ fn lexical_boundaries_keep_regular_expression_bodies_and_division_distinct() {
             .contains("octal")
     );
 }
+
+#[test]
+fn optional_documentation_names_preserve_types_and_runtime_defaults() {
+    let source = "/** @param {number} [value=99] @returns {number} */\nfunction add(value = 2) { return value + 1; }\nconsole.log(add(), add(7));\n";
+    let surface = parse_javascript(source).unwrap();
+    let program = check_program(&surface).unwrap();
+    assert_eq!(javascript_output(source), "3 8\n");
+    assert_eq!(
+        javascript_output(&emit_javascript(&program).unwrap().text),
+        "3 8\n"
+    );
+    let rust = emit_rust(&program).unwrap().text;
+    assert!(rust.contains("crate::add(2f64)"), "{rust}");
+    assert!(rust.contains("crate::add(7f64)"), "{rust}");
+    for target in ["Rust", "Lean", "Rocq"] {
+        let translated = translate_program(source, "JavaScript", target).unwrap();
+        assert_eq!(translated.diagnostic(), None, "{target}");
+    }
+    for (source, reason) in [
+        (
+            "/** @param {number} [value=99] @returns {number} */\nfunction add(value) { return value + 1; }\nconsole.log(add());\n",
+            "argument",
+        ),
+        (
+            "/** @param {number} [other] */\nfunction identity(value) { return value; }\n",
+            "other is not a parameter",
+        ),
+    ] {
+        let translated = translate_program(source, "JavaScript", "Rust").unwrap();
+        assert!(translated.diagnostic().unwrap().message.contains(reason));
+    }
+}
