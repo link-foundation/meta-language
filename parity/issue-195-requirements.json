@@ -1864,7 +1864,7 @@
     "planned:repository-directive:i195-grammar-concept-reuse-report": {
       "path": "parity/fixtures/native-grammar-concept-reuse.json",
       "selector": "docs/vision.md#grammar-feature-union: per-language report of shared and language-specific native grammar rules",
-      "sha256": "5962b7567f90942fdf3f04e48b002d7593383055ac104ff78ad27800a9b22608"
+      "sha256": "350338f9127874ea5b12545c824400e15c6c73e0bf7c7d0b516c9af3b26ebe12"
     },
     "planned:repository-directive:i195-grammar-concept-translation": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
@@ -1944,7 +1944,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "4c597502880b16522196a53a0f4ebd07ef93177836a3dd19a7b81f9f2eb69057"
+      "sha256": "87ec17b987a97c6be2b37fca73f41f48409434af3dee6889eeec5661814f2b33"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
       "path": "parity/grammars/reconcile/pairs.json",

@@ -16954,7 +16954,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "regular expression: outside the portable core at 75..76"
+          "message": "regular expression: outside the portable core at 75..78"
         }
       }
     },

@@ -104,11 +104,11 @@
       ],
       "corpus": "https://github.com/nielsenko/tree-sitter-dart/tree/b57d734c84f510bbd524097902cab671e4dbfca9/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/dart.json",
-      "coverage": {"rules": {"normal": 203, "atomic": 0, "silent": 61, "token": 11}, "visibleRules": 203, "exercisedRules": 83, "checkedKinds": 95, "checkedFields": 18, "renamed": 98, "expandedWords": 8, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 203, "atomic": 0, "silent": 70, "token": 11}, "visibleRules": 203, "exercisedRules": 98, "checkedKinds": 111, "checkedFields": 23, "renamed": 107, "expandedWords": 8, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 7, "conflict": 127, "precedences": 1, "extra": 2, "kind": 5},
-      "correctness": {"matches": 44, "rows": 814, "bytes": 978, "divergences": 0, "rejections": 6},
+      "correctness": {"matches": 53, "rows": 1187, "bytes": 1847, "divergences": 0, "rejections": 6},
       "recovery": {"repaired": 6, "errorNodes": 2, "missingNodes": 5, "categories": {}},
-      "reuse": {"shared": 94, "specific": 181}
+      "reuse": {"shared": 94, "specific": 190}
     },
     {
       "grammar": "native-diff",

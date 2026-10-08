@@ -80,7 +80,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-cpp` | 77 | 1732 | 2272 | 0 | 9 |
 | `native-css` | 40 | 556 | 817 | 0 | 5 |
 | `native-csv` | 123 | 699 | 553 | 8 | 15 |
-| `native-dart` | 44 | 814 | 978 | 0 | 6 |
+| `native-dart` | 53 | 1187 | 1847 | 0 | 6 |
 | `native-diff` | 115 | 1175 | 3588 | 8 | 14 |
 | `native-erlang` | 97 | 1287 | 1655 | 0 | 4 |
 | `native-go` | 106 | 4369 | 9101 | 0 | 13 |
@@ -110,7 +110,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 3736 | 88932 | 196207 | 101 | 608 |
+| all | 3745 | 89305 | 197076 | 101 | 608 |
 
 ## Coverage
 
@@ -129,7 +129,7 @@ language specification and checked against the oracle.
 | `native-cpp` | 231 | 0 | 57 | 17 | 80 of 231 (35%) | 96 | 26 | 131 | 27 | 0 | 0 |
 | `native-css` | 48 | 0 | 7 | 11 | 34 of 48 (71%) | 51 | 0 | 20 | 5 | 0 | 0 |
 | `native-csv` | 4 | 0 | 4 | 0 | 4 of 4 (100%) | 7 | 0 | n/a | n/a | n/a | n/a |
-| `native-dart` | 203 | 0 | 61 | 11 | 83 of 203 (41%) | 95 | 18 | 98 | 8 | 0 | 0 |
+| `native-dart` | 203 | 0 | 70 | 11 | 98 of 203 (48%) | 111 | 23 | 107 | 8 | 0 | 0 |
 | `native-diff` | 17 | 0 | 7 | 0 | 17 of 17 (100%) | 23 | 2 | n/a | n/a | n/a | n/a |
 | `native-erlang` | 138 | 0 | 45 | 13 | 63 of 138 (46%) | 69 | 31 | 127 | 26 | 0 | 0 |
 | `native-go` | 91 | 0 | 14 | 12 | 87 of 91 (96%) | 104 | 35 | 29 | 9 | 0 | 0 |
@@ -175,7 +175,7 @@ rules name a concept another native grammar names
 | `native-cpp` | 1 | 33 | 2 | 2 | 0 | 201 | 104 |
 | `native-css` | 3 | 0 | 0 | 3 | 5 | 16 | 50 |
 | `native-csv` | 0 | 0 | 0 | 0 | 0 | 3 | 5 |
-| `native-dart` | 7 | 127 | 1 | 2 | 5 | 94 | 181 |
+| `native-dart` | 7 | 127 | 1 | 2 | 5 | 94 | 190 |
 | `native-diff` | 0 | 0 | 0 | 1 | 0 | 2 | 22 |
 | `native-erlang` | 3 | 14 | 0 | 2 | 2 | 44 | 152 |
 | `native-go` | 0 | 8 | 0 | 2 | 0 | 67 | 50 |
