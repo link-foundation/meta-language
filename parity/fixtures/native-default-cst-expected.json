@@ -4,6 +4,94 @@
     "script": "js/scripts/generate-native-grammar-fixtures.mjs"
   },
   "languages": {
+    "Python": {
+      "grammars": {
+        "native-python": {
+          "version": "1.0.0",
+          "parserSha256": "752d06b24923ae3453174a7415a670aca31b53d447996f36cca4c32ffcd41edc"
+        }
+      },
+      "oracleGrammars": {
+        "python": {
+          "version": "0.25.0",
+          "parserSha256": "a895f10b3cf7b2608f3283b43cd5cfed70971c7ee4a0136abbaaccbc4a7a25e0"
+        }
+      },
+      "sourceSha256": "f2299cb39840320af7014a1c62cf90ada4e6559be2ab68859d28644d48ca22b2",
+      "recoverySourceSha256": "ba9bcb541d172d8972333a9c4b12f9b145d581f03b16ab4f946d988402a9a700",
+      "positive": [
+        [0,null,"module",1,0,149,""],
+        [1,null,"comment",1,0,20,"X"],
+        [1,null,"function_definition",1,21,118,""],
+        [2,null,"def",0,21,24,""],
+        [2,"name","identifier",1,25,30,""],
+        [2,"parameters","parameters",1,30,52,""],
+        [3,null,"(",0,30,31,""],
+        [3,null,"typed_default_parameter",1,31,51,""],
+        [4,"name","identifier",1,31,35,""],
+        [4,null,":",0,35,36,""],
+        [4,"type","type",1,37,40,""],
+        [5,null,"identifier",1,37,40,""],
+        [4,null,"=",0,41,42,""],
+        [4,"value","string",1,43,51,""],
+        [5,null,"string_start",1,43,44,""],
+        [5,null,"string_content",1,44,50,""],
+        [5,null,"string_end",1,50,51,""],
+        [3,null,")",0,51,52,""],
+        [2,null,"->",0,53,55,""],
+        [2,"return_type","type",1,56,59,""],
+        [3,null,"identifier",1,56,59,""],
+        [2,null,":",0,59,60,""],
+        [2,"body","block",1,65,118,""],
+        [3,null,"expression_statement",1,65,89,""],
+        [4,null,"string",1,65,89,""],
+        [5,null,"string_start",1,65,68,""],
+        [5,null,"string_content",1,68,86,""],
+        [5,null,"string_end",1,86,89,""],
+        [3,null,"return_statement",1,94,118,""],
+        [4,null,"return",0,94,100,""],
+        [4,null,"string",1,101,118,""],
+        [5,null,"string_start",1,101,103,""],
+        [5,null,"string_content",1,103,110,""],
+        [5,null,"interpolation",1,110,116,""],
+        [6,null,"{",0,110,111,""],
+        [6,"expression","identifier",1,111,115,""],
+        [6,null,"}",0,115,116,""],
+        [5,null,"string_content",1,116,117,""],
+        [5,null,"string_end",1,117,118,""],
+        [1,null,"class_definition",1,121,148,""],
+        [2,null,"class",0,121,126,""],
+        [2,"name","identifier",1,127,132,""],
+        [2,null,":",0,132,133,""],
+        [2,"body","block",1,138,148,""],
+        [3,null,"expression_statement",1,138,148,""],
+        [4,null,"assignment",1,138,148,""],
+        [5,"left","identifier",1,138,139,""],
+        [5,null,":",0,139,140,""],
+        [5,"type","type",1,141,144,""],
+        [6,null,"identifier",1,141,144,""],
+        [5,null,"=",0,145,146,""],
+        [5,"right","integer",1,147,148,""]
+      ],
+      "recovery": [
+        [0,null,"module",1,0,24,""],
+        [1,null,"function_definition",1,0,20,""],
+        [2,null,"def",0,0,3,""],
+        [2,"name","identifier",1,4,5,""],
+        [2,"parameters","parameters",1,5,19,""],
+        [3,null,"(",0,5,6,""],
+        [3,null,"typed_parameter",1,6,19,""],
+        [4,null,"identifier",1,6,7,""],
+        [4,null,":",0,7,8,""],
+        [4,"type","type",1,13,19,""],
+        [5,null,"identifier",1,13,19,""],
+        [3,null,")",0,19,19,"M"],
+        [2,null,":",0,20,20,"M"],
+        [2,null,"block",1,20,20,"M"],
+        [1,null,"ERROR",1,20,23,"E"]
+      ],
+      "embedded": []
+    },
     "Dart": {
       "grammars": {
         "native-dart": {

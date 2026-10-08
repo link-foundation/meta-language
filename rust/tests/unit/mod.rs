@@ -85,6 +85,7 @@ mod issue_195_grammar_native_lean;
 mod issue_195_grammar_native_lua;
 mod issue_195_grammar_native_make;
 mod issue_195_grammar_native_proto;
+mod issue_195_grammar_native_python;
 mod issue_195_grammar_native_racket;
 mod issue_195_grammar_native_recovery;
 mod issue_195_grammar_native_regex;

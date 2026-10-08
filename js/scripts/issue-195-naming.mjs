@@ -542,9 +542,9 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'indentation scanner generator',
     files: ['js/scripts/scanner-families.mjs'],
-    extract: (text) => captures(text, /^export function (indentationScanner)\(/gmu)
+    extract: (text) => captures(text, /^export function (indentationScanner|prefixedQuotedScanner)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
-    recordOf: () => 'grammar.generate-indentation-scanner',
+    recordOf: (name) => `grammar.generate-${name}`,
   },
   {
     inventory: 'frontend decision result concepts',

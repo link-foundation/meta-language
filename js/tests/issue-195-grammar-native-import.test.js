@@ -667,3 +667,44 @@ test('literal and pattern prefix exclusions preserve character token identities'
   for (const input of ['${broken', 'a${broken']) assert.equal(parser.parseTree(input).ok, false, input);
   for (const family of ['literal-prefix-exclusion', 'pattern-prefix-exclusion']) assert.throws(() => transformNativeSource(source, [{ family, rule: 'document', pattern: 'absent', excludedPattern: 'x' }]), TypeError);
 });
+
+test('named aliases of choice symbols retain the concrete child below the alias', () => {
+  const source = {
+    name: 'aliases', supertypes: ['expression'],
+    rules: {
+      source: { type: 'ALIAS', named: true, value: 'target', content: { type: 'SYMBOL', name: 'expression' } },
+      expression: { type: 'CHOICE', members: [{ type: 'SYMBOL', name: 'identifier' }, { type: 'SYMBOL', name: 'number' }] },
+      identifier: { type: 'PATTERN', value: '[a-z]+' }, number: { type: 'PATTERN', value: '[0-9]+' },
+    },
+  };
+  const transformed = transformNativeSource(source, [{ family: 'alias-choice-rule', rule: 'source', alias: 'target', helper: '_target_content' }]);
+  assert.deepEqual(transformed.rules._target_content, source.rules.expression);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  for (const [input, kind] of [['abc', 'identifier'], ['123', 'number']]) {
+    const result = parser.parseTree(input);
+    assert.equal(result.ok, true);
+    assert.equal(result.tree.children[0].kind, 'target');
+    assert.equal(result.tree.children[0].children[0].kind, kind);
+  }
+});
+
+test('complete alternative preferences keep the original fallback and every production', () => {
+  const source = {
+    name: 'alternatives', rules: {
+      source: { type: 'CHOICE', members: [
+        { type: 'ALIAS', named: true, value: 'short', content: { type: 'SYMBOL', name: 'opening' } },
+        { type: 'SEQ', members: [{ type: 'SYMBOL', name: 'opening' }, { type: 'SYMBOL', name: 'closing' }] },
+      ] },
+      opening: { type: 'STRING', value: 'x' }, closing: { type: 'STRING', value: 'y' },
+    },
+  };
+  const decision = { family: 'complete-alternative-preference', rule: 'source', symbol: 'opening' };
+  const transformed = transformNativeSource(source, [decision]);
+  assert.deepEqual(transformed.rules.source.content, source.rules.source);
+  assert.deepEqual(transformed.rules.source.preferred, source.rules.source.members[1]);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  assert.equal(parser.parseTree('xy').ok, true);
+  assert.equal(parser.parseTree('x').ok, true);
+  assert.equal(parser.parseTree('y').ok, false);
+  for (const change of [{ symbol: 'missing' }, { rule: 'missing' }, { symbol: null }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
+});

@@ -3461,6 +3461,74 @@
       "concepts": {
         "integer": "grammar.integer-literal"
       }
+    },
+    "python": {
+      "names": {
+        "_string_content": "string_fragment",
+        "_parameters": "parameter_sequence",
+        "_as_pattern": "as_pattern_content",
+        "_list_pattern": "list_pattern_content",
+        "_tuple_pattern": "tuple_pattern_content",
+        "aliased_import": "import_with_alias",
+        "nonlocal_statement": "non_local_statement",
+        "dict_pattern": "dictionary_pattern",
+        "not in": "non_membership_operator",
+        "is not": "identity_inequality_operator",
+        "false": "false_literal",
+        "await": "await_expression",
+        "_simple_statements": "simple_statement_sequence",
+        "_expressions": "expression_sequence",
+        "parameters": "parameter_list",
+        "lambda_parameters": "lambda_parameter_list",
+        "_patterns": "pattern_sequence",
+        "parameter": "parameter_declaration",
+        "assignment": "value_assignment",
+        "attribute": "attribute_access",
+        "_collection_elements": "collection_element_sequence",
+        "integer": "integer_literal",
+        "yield": "yield_expression",
+        "case_pattern": "match_case_pattern",
+        "pass_statement": "pass_keyword_statement",
+        "_not_in": "non_membership_operator",
+        "_is_not": "identity_inequality_operator"
+      },
+      "sourceTransforms": [
+        {
+          "family": "alias-choice-rule",
+          "rule": "as_pattern",
+          "alias": "as_pattern_target",
+          "helper": "_as_pattern_target_content",
+          "reason": "Retain the identifier or expression subtree beneath an as pattern target alias when the source alias references the expression supertype."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "expression",
+            "as_pattern"
+          ],
+          "insertInto": [
+            "except_clause"
+          ],
+          "prefix": "_exception_",
+          "reason": "The pinned parser retains the complete as pattern in an exception value before the overlapping separate alias field, without changing either source alternative."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "_exception_as_pattern",
+          "value": 1,
+          "reason": "Prefer the complete exception value as pattern reduction that the pinned parser uses; retain the separate exception alias alternative."
+        },
+        {
+          "family": "complete-alternative-preference",
+          "rule": "_suite",
+          "symbol": "_indent",
+          "reason": "The source external scanner selects an indentation token before an overlapping inline suite whose first token follows a line break. Prefer the complete indented block and retain all original alternatives as fallback."
+        }
+      ],
+      "concepts": {
+        "_exception_expression": "grammar.expression",
+        "_exception_as_pattern": "grammar.as-pattern"
+      }
     }
   },
   "concepts": {

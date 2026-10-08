@@ -194,7 +194,13 @@ characters. The shared `parity/fixtures/scanner-indentation.json` examples check
 independently specified nested block structures and exact source preservation.
 The executor retains actual lexed continuations across intervening virtual
 tokens when deciding whether a pending layout token preempts a longer parse.
-This family does not yet constitute a complete Python grammar or scanner port.
+The prefixed quoted family stores raw, bytes and interpolation flags with each
+quote delimiter and its triple quote policy. Python uses the indentation and
+prefixed quoted families in its generated native grammar; ordinary parsing
+selects that grammar in both packages. Focused examples retain complete oracle
+trees for nested formatted strings, escapes, layout and exception aliases.
+The pinned upstream corpus remains a separate CI check; this implementation
+does not yet constitute the required multi source union of Python grammars.
 
 The grammar representation and its executor cover the complete union of the
 grammar features that the inventoried sources use:

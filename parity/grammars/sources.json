@@ -843,6 +843,43 @@
         "sha256": "068194999223242a059d0fc286c1853f0d73dd8392a5f78461933b3f78b78eea"
       },
       "oracle": "cmake"
+    },
+    {
+      "id": "tree-sitter-python",
+      "language": "python",
+      "native": "native-python",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-python 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-python",
+      "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-python-0.25.0.grammar.json.gz",
+      "sha256": "2adc15e78f4dae293e85de1517c45bcee2f8b075fa30a083c658925b944afec4",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-python-0.25.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/python.lino",
+        "sha256": "0dfcda258e8a1cf4cd66855d2bcc45028f740b5e3e6027bd08550f6a96db2466",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "6db82134ac2d4c90a1a1475487a625cface02662ebda9b7478cad9c7147e9afe"
+        },
+        "generator": "js/experiments/build-python-scanner.mjs",
+        "immediate": [
+          "_newline",
+          "_indent",
+          "_dedent",
+          "_string_content",
+          "string_end",
+          "escape_interpolation"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-python-0.25.0.corpus.json.gz",
+        "sha256": "ff26117b53813be29d5978f1ef04dc8c8fe83b590634f6a92216be8d2dccee8c"
+      },
+      "oracle": "python"
     }
   ]
 }

@@ -150,20 +150,22 @@ export function transformNativeSource(source, transformations = []) {
       if (changes !== 1) throw new TypeError('pattern runs must select exactly one pattern');
       continue;
     }
-    if (['complete-context-variant', 'keyword-context-variant', 'pattern-context-variant'].includes(decision.family)) {
+    if (['complete-context-variant', 'keyword-context-variant', 'pattern-context-variant', 'complete-alternative-preference'].includes(decision.family)) {
       const { rule, symbol = null, field = null, boundary, excludedKeywords = [], includedKeywords = [], wordRule = null } = decision;
       const patternOnly = decision.family === 'pattern-context-variant';
-      const keywordOnly = decision.family === 'keyword-context-variant' || patternOnly;
+      const keywordOnly = ['keyword-context-variant', 'complete-alternative-preference'].includes(decision.family) || patternOnly;
       if (patternOnly && (typeof decision.pattern !== 'string' || !decision.pattern || includedKeywords.length || excludedKeywords.length)) throw new TypeError('a pattern context variant needs a nonempty pattern and no keyword guard');
-      if (keywordOnly && !patternOnly && !includedKeywords.length && !excludedKeywords.length) throw new TypeError('a keyword context variant needs a keyword guard');
-      if (!Object.hasOwn(grammar.rules, rule) || (symbol === null) === (field === null) || (symbol !== null && !Object.hasOwn(grammar.rules, symbol)) || (field !== null && (typeof field !== 'string' || !field)) || (!keywordOnly && boundary !== null && (typeof boundary !== 'string' || !boundary))) throw new TypeError('a complete context variant needs an existing rule, a symbol or field selector and a literal or input boundary');
+      if (decision.family === 'keyword-context-variant' && !includedKeywords.length && !excludedKeywords.length) throw new TypeError('a keyword context variant needs a keyword guard');
+      const declaredSymbol = symbol === null || Object.hasOwn(grammar.rules, symbol) || (grammar.externals ?? []).some((external) => external.type === 'SYMBOL' && external.name === symbol);
+      if (!Object.hasOwn(grammar.rules, rule) || (symbol === null) === (field === null) || !declaredSymbol || (field !== null && (typeof field !== 'string' || !field)) || (!keywordOnly && boundary !== null && (typeof boundary !== 'string' || !boundary))) throw new TypeError('a complete context variant needs an existing rule, a symbol or field selector and a literal or input boundary');
       let choice = grammar.rules[rule];
       while (['PREC', 'PREC_LEFT', 'PREC_RIGHT', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT'].includes(choice.type)) choice = choice.content;
       if (choice.type !== 'CHOICE') throw new TypeError('a complete context variant needs a choice');
       const alternatives = (node) => node.type === 'CHOICE' ? node.members.flatMap(alternatives) : [node];
       const selected = alternatives(choice).filter((member) => {
         while (['PREC', 'PREC_LEFT', 'PREC_RIGHT', 'PREC_DYNAMIC'].includes(member.type)) member = member.content;
-        return (symbol !== null && member.type === 'SYMBOL' && member.name === symbol) || (field !== null && member.type === 'FIELD' && member.name === field);
+        const first = decision.family === 'complete-alternative-preference' && member.type === 'SEQ' ? member.members[0] : member;
+        return (symbol !== null && first.type === 'SYMBOL' && first.name === symbol) || (field !== null && member.type === 'FIELD' && member.name === field);
       });
       if (selected.length !== 1) throw new TypeError('a complete context variant must select exactly one existing alternative');
       let preferred = selected[0];
@@ -308,9 +310,11 @@ export function transformNativeSource(source, transformations = []) {
       const rewrite = (node) => {
         if (Array.isArray(node)) return node.map(rewrite);
         if (!node || typeof node !== 'object') return node;
-        if (node.type === 'ALIAS' && node.named && node.value === alias && node.content.type === 'CHOICE') {
+        const body = node.type === 'ALIAS' && node.content?.type === 'SYMBOL'
+          ? grammar.rules[node.content.name] : node.content;
+        if (node.type === 'ALIAS' && node.named && node.value === alias && body?.type === 'CHOICE') {
           changes += 1;
-          grammar.rules[helper] = node.content;
+          grammar.rules[helper] = structuredClone(body);
           return { ...node, content: { type: 'SYMBOL', name: helper } };
         }
         return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));

@@ -705,6 +705,17 @@
         "escape_identity"
       ],
       "extras": []
+    },
+    "native-python": {
+      "version": "1.0.0",
+      "grammar": "parity/grammars/native/python.lino",
+      "hidden": [],
+      "anonymous": [
+        "unnamed_token"
+      ],
+      "extras": [
+        "comment"
+      ]
     }
   },
   "languages": [
@@ -909,12 +920,13 @@
       "recoverySource": "def f(x:\n    return x +\n",
       "javascript": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-python"
+        "backend": "native Links Notation grammar native-python"
       },
       "rust": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-python"
-      }
+        "backend": "native Links Notation grammar native-python"
+      },
+      "nativeGrammar": "native-python"
     },
     {
       "name": "C",

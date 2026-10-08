@@ -1217,6 +1217,14 @@
           "name": "expression"
         },
         {
+          "source": "native:python",
+          "name": "exception_expression"
+        },
+        {
+          "source": "native:python",
+          "name": "expression"
+        },
+        {
           "source": "native:rust",
           "name": "expression"
         },
@@ -1495,6 +1503,10 @@
           "name": "identifier"
         },
         {
+          "source": "native:python",
+          "name": "identifier"
+        },
+        {
           "source": "native:rocq",
           "name": "identifier"
         },
@@ -1586,6 +1598,10 @@
         },
         {
           "source": "native:powershell",
+          "name": "statement"
+        },
+        {
+          "source": "native:python",
           "name": "statement"
         },
         {
@@ -1681,6 +1697,10 @@
         },
         {
           "source": "native:make",
+          "name": "list"
+        },
+        {
+          "source": "native:python",
           "name": "list"
         },
         {
@@ -1935,6 +1955,10 @@
         },
         {
           "source": "native:proto",
+          "name": "string"
+        },
+        {
+          "source": "native:python",
           "name": "string"
         },
         {
@@ -2285,6 +2309,10 @@
         },
         {
           "source": "native:proto",
+          "name": "comment"
+        },
+        {
+          "source": "native:python",
           "name": "comment"
         },
         {
@@ -2853,6 +2881,10 @@
         },
         {
           "source": "native:proto",
+          "name": "escape_sequence"
+        },
+        {
+          "source": "native:python",
           "name": "escape_sequence"
         },
         {
@@ -5747,6 +5779,23 @@
       "formerNames": []
     },
     {
+      "id": "grammar.generate-prefixed-quoted-scanner",
+      "phrase": "generate prefixed quoted scanner",
+      "role": "operation",
+      "definition": "Generate executable quote scanners with prefix flags and correlated delimiter state.",
+      "constraints": [
+        "Quote counts, raw and bytes prefixes, interpolation and escape policies remain inspectable Links operations.",
+        "Separate opening, content, ending and interpolation escape tokens share immutable scanner state in both executors."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript scanner family generators",
+          "name": "prefixedQuotedScanner"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",
@@ -6581,6 +6630,10 @@
         },
         {
           "source": "native:lua",
+          "name": "function_definition"
+        },
+        {
+          "source": "native:python",
           "name": "function_definition"
         },
         {
@@ -7633,6 +7686,10 @@
         {
           "source": "native:cpp",
           "name": "compound_statement"
+        },
+        {
+          "source": "native:python",
+          "name": "compound_statement"
         }
       ],
       "formerNames": []
@@ -8077,6 +8134,10 @@
           "name": "parameter_list"
         },
         {
+          "source": "native:python",
+          "name": "parameter_list"
+        },
+        {
           "source": "native:rust",
           "name": "parameters"
         },
@@ -8136,6 +8197,10 @@
         },
         {
           "source": "native:go",
+          "name": "parameter_declaration"
+        },
+        {
+          "source": "native:python",
           "name": "parameter_declaration"
         },
         {
@@ -8337,6 +8402,10 @@
           "name": "expression_statement"
         },
         {
+          "source": "native:python",
+          "name": "expression_statement"
+        },
+        {
           "source": "native:rust",
           "name": "expression_statement"
         },
@@ -8414,6 +8483,10 @@
           "name": "if_statement"
         },
         {
+          "source": "native:python",
+          "name": "if_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "if_statement"
         },
@@ -8464,6 +8537,10 @@
         },
         {
           "source": "native:powershell",
+          "name": "else_clause"
+        },
+        {
+          "source": "native:python",
           "name": "else_clause"
         },
         {
@@ -8598,6 +8675,10 @@
           "name": "while_statement"
         },
         {
+          "source": "native:python",
+          "name": "while_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "while_statement"
         },
@@ -8728,6 +8809,10 @@
           "name": "for_statement"
         },
         {
+          "source": "native:python",
+          "name": "for_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "for_statement"
         },
@@ -8814,6 +8899,10 @@
           "name": "return_statement"
         },
         {
+          "source": "native:python",
+          "name": "return_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "return_statement"
         },
@@ -8875,6 +8964,10 @@
           "name": "break_statement"
         },
         {
+          "source": "native:python",
+          "name": "break_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "break_statement"
         },
@@ -8925,6 +9018,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "continue_statement"
+        },
+        {
+          "source": "native:python",
           "name": "continue_statement"
         },
         {
@@ -9129,6 +9226,10 @@
         },
         {
           "source": "native:dart",
+          "name": "conditional_expression"
+        },
+        {
+          "source": "native:python",
           "name": "conditional_expression"
         }
       ],
@@ -9948,6 +10049,10 @@
           "name": "argument_list"
         },
         {
+          "source": "native:python",
+          "name": "argument_list"
+        },
+        {
           "source": "native:rust",
           "name": "arguments"
         },
@@ -10090,6 +10195,10 @@
         },
         {
           "source": "native:powershell",
+          "name": "parenthesized_expression"
+        },
+        {
+          "source": "native:python",
           "name": "parenthesized_expression"
         },
         {
@@ -10277,6 +10386,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "concatenated_string"
+        },
+        {
+          "source": "native:python",
           "name": "concatenated_string"
         }
       ],
@@ -10541,6 +10654,10 @@
         },
         {
           "source": "native:nix",
+          "name": "word_characters"
+        },
+        {
+          "source": "native:python",
           "name": "word_characters"
         },
         {
@@ -11410,6 +11527,10 @@
           "name": "type_parameter"
         },
         {
+          "source": "native:python",
+          "name": "type_parameter"
+        },
+        {
           "source": "native:rust",
           "name": "type_parameter"
         },
@@ -11647,6 +11768,10 @@
         },
         {
           "source": "native:proto",
+          "name": "type"
+        },
+        {
+          "source": "native:python",
           "name": "type"
         },
         {
@@ -11919,6 +12044,10 @@
         },
         {
           "source": "native:java",
+          "name": "generic_type"
+        },
+        {
+          "source": "native:python",
           "name": "generic_type"
         },
         {
@@ -12501,6 +12630,10 @@
           "name": "yield_expression"
         },
         {
+          "source": "native:python",
+          "name": "yield_expression"
+        },
+        {
           "source": "native:rust",
           "name": "yield_expression"
         },
@@ -12818,10 +12951,14 @@
       "role": "concept",
       "definition": "A rule for a match block, the construct the upstream grammar names match_block.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "match_block"
+        },
         {
           "source": "native:rust",
           "name": "match_block"
@@ -13121,6 +13258,10 @@
           "name": "await_expression"
         },
         {
+          "source": "native:python",
+          "name": "await_expression"
+        },
+        {
           "source": "native:rust",
           "name": "await_expression"
         },
@@ -13242,6 +13383,10 @@
           "name": "block"
         },
         {
+          "source": "native:python",
+          "name": "block"
+        },
+        {
           "source": "native:rust",
           "name": "block"
         },
@@ -13280,6 +13425,10 @@
         },
         {
           "source": "native:lean",
+          "name": "pattern"
+        },
+        {
+          "source": "native:python",
           "name": "pattern"
         },
         {
@@ -13340,6 +13489,10 @@
       "sourceAliases": [
         {
           "source": "native:lean",
+          "name": "tuple_pattern"
+        },
+        {
+          "source": "native:python",
           "name": "tuple_pattern"
         },
         {
@@ -13651,6 +13804,10 @@
         },
         {
           "source": "native:proto",
+          "name": "integer_literal"
+        },
+        {
+          "source": "native:python",
           "name": "integer_literal"
         },
         {
@@ -14225,6 +14382,10 @@
           "name": "import_statement"
         },
         {
+          "source": "native:python",
+          "name": "import_statement"
+        },
+        {
           "source": "native:rocq",
           "name": "import_command"
         },
@@ -14643,6 +14804,10 @@
           "name": "try_statement"
         },
         {
+          "source": "native:python",
+          "name": "try_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "try_statement"
         },
@@ -14677,6 +14842,10 @@
         },
         {
           "source": "native:pascal",
+          "name": "with_statement"
+        },
+        {
+          "source": "native:python",
           "name": "with_statement"
         },
         {
@@ -14927,6 +15096,10 @@
           "name": "finally_clause"
         },
         {
+          "source": "native:python",
+          "name": "finally_clause"
+        },
+        {
           "source": "native:tsx",
           "name": "finally_clause"
         },
@@ -14986,6 +15159,10 @@
         },
         {
           "source": "native:powershell",
+          "name": "primary_expression"
+        },
+        {
+          "source": "native:python",
           "name": "primary_expression"
         },
         {
@@ -16630,6 +16807,10 @@
           "name": "decorator"
         },
         {
+          "source": "native:python",
+          "name": "decorator"
+        },
+        {
           "source": "native:tsx",
           "name": "decorator"
         },
@@ -16900,6 +17081,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "pair"
+        },
+        {
+          "source": "native:python",
           "name": "pair"
         },
         {
@@ -17454,6 +17639,10 @@
       "sourceAliases": [
         {
           "source": "native:erlang",
+          "name": "module"
+        },
+        {
+          "source": "native:python",
           "name": "module"
         },
         {
@@ -18751,6 +18940,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:python",
+          "name": "union_type"
+        },
+        {
           "source": "native:tsx",
           "name": "union_type"
         },
@@ -19644,13 +19837,21 @@
       "role": "concept",
       "definition": "A rule for an as pattern, the construct the upstream grammar names as_pattern.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:lean",
           "name": "as_pattern"
+        },
+        {
+          "source": "native:python",
+          "name": "as_pattern"
+        },
+        {
+          "source": "native:python",
+          "name": "exception_as_pattern"
         }
       ],
       "formerNames": []
@@ -19709,6 +19910,10 @@
       "sourceAliases": [
         {
           "source": "native:lean",
+          "name": "subscript"
+        },
+        {
+          "source": "native:python",
           "name": "subscript"
         },
         {
@@ -20163,6 +20368,10 @@
         },
         {
           "source": "native:lean",
+          "name": "list_pattern"
+        },
+        {
+          "source": "native:python",
           "name": "list_pattern"
         },
         {
@@ -20743,6 +20952,10 @@
           "name": "float"
         },
         {
+          "source": "native:python",
+          "name": "float"
+        },
+        {
           "source": "native:sql",
           "name": "float"
         },
@@ -20773,6 +20986,10 @@
         },
         {
           "source": "native:make",
+          "name": "string_content"
+        },
+        {
+          "source": "native:python",
           "name": "string_content"
         }
       ],
@@ -20902,6 +21119,10 @@
         },
         {
           "source": "native:lean",
+          "name": "ellipsis"
+        },
+        {
+          "source": "native:python",
           "name": "ellipsis"
         }
       ],
@@ -24562,10 +24783,14 @@
       "role": "concept",
       "definition": "A rule for a with clause, the construct the upstream grammar names with_clause.",
       "constraints": [
-        "Only the native Rocq grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "with_clause"
+        },
         {
           "source": "native:rocq",
           "name": "with_clause"
@@ -25883,6 +26108,10 @@
         },
         {
           "source": "native:java",
+          "name": "assert_statement"
+        },
+        {
+          "source": "native:python",
           "name": "assert_statement"
         }
       ],
@@ -27705,6 +27934,10 @@
         {
           "source": "native:go",
           "name": "expression_list"
+        },
+        {
+          "source": "native:python",
+          "name": "expression_list"
         }
       ],
       "formerNames": []
@@ -27930,12 +28163,16 @@
       "role": "concept",
       "definition": "A rule for a simple statement, the construct the upstream grammar names _simple_statement.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "simple_statement"
+        },
+        {
+          "source": "native:python",
           "name": "simple_statement"
         }
       ],
@@ -36293,12 +36530,16 @@
       "role": "concept",
       "definition": "A rule for a lambda, the construct the upstream grammar names lambda.",
       "constraints": [
-        "Only the native pascal (Delphi/Object Pascal) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:pascal",
+          "name": "lambda"
+        },
+        {
+          "source": "native:python",
           "name": "lambda"
         }
       ],
@@ -40882,10 +41123,14 @@
       "role": "concept",
       "definition": "A rule for a left hand side, the construct the upstream grammar names left_hand_side.",
       "constraints": [
-        "Only the native vb (Visual Basic) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "left_hand_side"
+        },
         {
           "source": "native:vb",
           "name": "left_hand_side"
@@ -40922,6 +41167,10 @@
       "sourceAliases": [
         {
           "source": "native:powershell",
+          "name": "else_if_clause"
+        },
+        {
+          "source": "native:python",
           "name": "else_if_clause"
         },
         {
@@ -40988,10 +41237,14 @@
       "role": "concept",
       "definition": "A rule for a case clause, the construct the upstream grammar names case_clause.",
       "constraints": [
-        "Only the native vb (Visual Basic) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "case_clause"
+        },
         {
           "source": "native:vb",
           "name": "case_clause"
@@ -41378,6 +41631,10 @@
           "name": "interpolation"
         },
         {
+          "source": "native:python",
+          "name": "interpolation"
+        },
+        {
           "source": "native:vb",
           "name": "interpolation"
         }
@@ -41424,10 +41681,14 @@
       "role": "concept",
       "definition": "A rule for a line continuation, the construct the upstream grammar names _line_continuation.",
       "constraints": [
-        "Only the native vb (Visual Basic) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "line_continuation"
+        },
         {
           "source": "native:vb",
           "name": "line_continuation"
@@ -42564,6 +42825,10 @@
         },
         {
           "source": "native:powershell",
+          "name": "comparison_operator"
+        },
+        {
+          "source": "native:python",
           "name": "comparison_operator"
         }
       ],
@@ -45642,12 +45907,16 @@
       "role": "concept",
       "definition": "A rule for a list comprehension, the construct the upstream grammar names list_comprehension.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:erlang",
+          "name": "list_comprehension"
+        },
+        {
+          "source": "native:python",
           "name": "list_comprehension"
         }
       ],
@@ -45829,12 +46098,16 @@
       "role": "concept",
       "definition": "A rule for a tuple, the construct the upstream grammar names tuple.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:erlang",
+          "name": "tuple"
+        },
+        {
+          "source": "native:python",
           "name": "tuple"
         }
       ],
@@ -46224,12 +46497,16 @@
       "role": "concept",
       "definition": "A rule for a call, the construct the upstream grammar names call.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:erlang",
+          "name": "call"
+        },
+        {
+          "source": "native:python",
           "name": "call"
         }
       ],
@@ -46241,12 +46518,16 @@
       "role": "concept",
       "definition": "A rule for an if clause, the construct the upstream grammar names if_clause.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:erlang",
+          "name": "if_clause"
+        },
+        {
+          "source": "native:python",
           "name": "if_clause"
         }
       ],
@@ -55745,10 +56026,14 @@
       "role": "concept",
       "definition": "A rule for a delete statement, the construct the upstream grammar names _delete_statement.",
       "constraints": [
-        "Only the native sql grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "delete_statement"
+        },
         {
           "source": "native:sql",
           "name": "delete_statement"
@@ -59282,12 +59567,16 @@
       "role": "concept",
       "definition": "A rule for a true, the construct the upstream grammar names true.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:dart",
+          "name": "true"
+        },
+        {
+          "source": "native:python",
           "name": "true"
         }
       ],
@@ -59299,12 +59588,16 @@
       "role": "concept",
       "definition": "A rule for a false literal, the construct the upstream grammar names false.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:dart",
+          "name": "false_literal"
+        },
+        {
+          "source": "native:python",
           "name": "false_literal"
         }
       ],
@@ -60965,12 +61258,16 @@
       "role": "concept",
       "definition": "A rule for a binary operator, the construct the upstream grammar names binary_operator.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:dart",
+          "name": "binary_operator"
+        },
+        {
+          "source": "native:python",
           "name": "binary_operator"
         }
       ],
@@ -63420,6 +63717,1417 @@
         {
           "source": "native:cmake",
           "name": "scope_closing_keyword"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.simple-statement-sequence",
+      "phrase": "simple statement sequence",
+      "role": "concept",
+      "definition": "A rule for a simple statement sequence, the construct the upstream grammar names _simple_statements.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "simple_statement_sequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-prefix",
+      "phrase": "import prefix",
+      "role": "concept",
+      "definition": "A rule for an import prefix, the construct the upstream grammar names import_prefix.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "import_prefix"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.relative-import",
+      "phrase": "relative import",
+      "role": "concept",
+      "definition": "A rule for a relative import, the construct the upstream grammar names relative_import.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "relative_import"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.future-import-statement",
+      "phrase": "future import statement",
+      "role": "concept",
+      "definition": "A rule for a future import statement, the construct the upstream grammar names future_import_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "future_import_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-from-statement",
+      "phrase": "import from statement",
+      "role": "concept",
+      "definition": "A rule for an import from statement, the construct the upstream grammar names import_from_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "import_from_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-list",
+      "phrase": "import list",
+      "role": "concept",
+      "definition": "A rule for an import list, the construct the upstream grammar names _import_list.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "import_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-with-alias",
+      "phrase": "import with alias",
+      "role": "concept",
+      "definition": "A rule for an import with alias, the construct the upstream grammar names aliased_import.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "import_with_alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.wildcard-import",
+      "phrase": "wildcard import",
+      "role": "concept",
+      "definition": "A rule for a wildcard import, the construct the upstream grammar names wildcard_import.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "wildcard_import"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.print-statement",
+      "phrase": "print statement",
+      "role": "concept",
+      "definition": "A rule for a print statement, the construct the upstream grammar names print_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "print_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.chevron",
+      "phrase": "chevron",
+      "role": "concept",
+      "definition": "A rule for a chevron, the construct the upstream grammar names chevron.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "chevron"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.named-expression",
+      "phrase": "named expression",
+      "role": "concept",
+      "definition": "A rule for a named expression, the construct the upstream grammar names named_expression.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "named_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.named-expression-left-hand-side",
+      "phrase": "named expression left hand side",
+      "role": "concept",
+      "definition": "A rule for a named expression left hand side, the construct the upstream grammar names _named_expression_lhs.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "named_expression_left_hand_side"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-sequence",
+      "phrase": "expression sequence",
+      "role": "concept",
+      "definition": "A rule for an expression sequence, the construct the upstream grammar names _expressions.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "expression_sequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.raise-statement",
+      "phrase": "raise statement",
+      "role": "concept",
+      "definition": "A rule for a raise statement, the construct the upstream grammar names raise_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "raise_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pass-keyword-statement",
+      "phrase": "pass keyword statement",
+      "role": "concept",
+      "definition": "A rule for a pass keyword statement, the construct the upstream grammar names pass_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "pass_keyword_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.match-statement",
+      "phrase": "match statement",
+      "role": "concept",
+      "definition": "A rule for a match statement, the construct the upstream grammar names match_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "match_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.except-clause",
+      "phrase": "except clause",
+      "role": "concept",
+      "definition": "A rule for an except clause, the construct the upstream grammar names except_clause.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "except_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.with-item",
+      "phrase": "with item",
+      "role": "concept",
+      "definition": "A rule for a with item, the construct the upstream grammar names with_item.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "with_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-parameter-list",
+      "phrase": "lambda parameter list",
+      "role": "concept",
+      "definition": "A rule for a lambda parameter list, the construct the upstream grammar names lambda_parameters.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "lambda_parameter_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.list-splat",
+      "phrase": "list splat",
+      "role": "concept",
+      "definition": "A rule for a list splat, the construct the upstream grammar names list_splat.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "list_splat"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dictionary-splat",
+      "phrase": "dictionary splat",
+      "role": "concept",
+      "definition": "A rule for a dictionary splat, the construct the upstream grammar names dictionary_splat.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "dictionary_splat"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-statement",
+      "phrase": "global statement",
+      "role": "concept",
+      "definition": "A rule for a global statement, the construct the upstream grammar names global_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "global_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.non-local-statement",
+      "phrase": "non local statement",
+      "role": "concept",
+      "definition": "A rule for a non local statement, the construct the upstream grammar names nonlocal_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "non_local_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.exec-statement",
+      "phrase": "exec statement",
+      "role": "concept",
+      "definition": "A rule for an exec statement, the construct the upstream grammar names exec_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "exec_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-alias-statement",
+      "phrase": "type alias statement",
+      "role": "concept",
+      "definition": "A rule for a type alias statement, the construct the upstream grammar names type_alias_statement.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "type_alias_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.class-definition",
+      "phrase": "class definition",
+      "role": "concept",
+      "definition": "A rule for a class definition, the construct the upstream grammar names class_definition.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "class_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parenthesized-list-splat",
+      "phrase": "parenthesized list splat",
+      "role": "concept",
+      "definition": "A rule for a parenthesized list splat, the construct the upstream grammar names parenthesized_list_splat.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "parenthesized_list_splat"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.decorated-definition",
+      "phrase": "decorated definition",
+      "role": "concept",
+      "definition": "A rule for a decorated definition, the construct the upstream grammar names decorated_definition.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "decorated_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.suite",
+      "phrase": "suite",
+      "role": "concept",
+      "definition": "A rule for a suite, the construct the upstream grammar names _suite.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "suite"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dotted-name",
+      "phrase": "dotted name",
+      "role": "concept",
+      "definition": "A rule for a dotted name, the construct the upstream grammar names dotted_name.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "dotted_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.match-case-pattern",
+      "phrase": "match case pattern",
+      "role": "concept",
+      "definition": "A rule for a match case pattern, the construct the upstream grammar names case_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "match_case_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.simple-pattern",
+      "phrase": "simple pattern",
+      "role": "concept",
+      "definition": "A rule for a simple pattern, the construct the upstream grammar names _simple_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "simple_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.as-pattern-content",
+      "phrase": "as pattern content",
+      "role": "concept",
+      "definition": "A rule for an as pattern content, the construct the upstream grammar names _as_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "as_pattern_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.union-pattern",
+      "phrase": "union pattern",
+      "role": "concept",
+      "definition": "A rule for an union pattern, the construct the upstream grammar names union_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "union_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.list-pattern-content",
+      "phrase": "list pattern content",
+      "role": "concept",
+      "definition": "A rule for a list pattern content, the construct the upstream grammar names _list_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "list_pattern_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tuple-pattern-content",
+      "phrase": "tuple pattern content",
+      "role": "concept",
+      "definition": "A rule for a tuple pattern content, the construct the upstream grammar names _tuple_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "tuple_pattern_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dictionary-pattern",
+      "phrase": "dictionary pattern",
+      "role": "concept",
+      "definition": "A rule for a dictionary pattern, the construct the upstream grammar names dict_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "dictionary_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.key-value-pattern",
+      "phrase": "key value pattern",
+      "role": "concept",
+      "definition": "A rule for a key value pattern, the construct the upstream grammar names _key_value_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "key_value_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.keyword-pattern",
+      "phrase": "keyword pattern",
+      "role": "concept",
+      "definition": "A rule for a keyword pattern, the construct the upstream grammar names keyword_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "keyword_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.splat-pattern",
+      "phrase": "splat pattern",
+      "role": "concept",
+      "definition": "A rule for a splat pattern, the construct the upstream grammar names splat_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "splat_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.class-pattern",
+      "phrase": "class pattern",
+      "role": "concept",
+      "definition": "A rule for a class pattern, the construct the upstream grammar names class_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "class_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.complex-pattern",
+      "phrase": "complex pattern",
+      "role": "concept",
+      "definition": "A rule for a complex pattern, the construct the upstream grammar names complex_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "complex_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-sequence",
+      "phrase": "parameter sequence",
+      "role": "concept",
+      "definition": "A rule for a parameter sequence, the construct the upstream grammar names _parameters.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "parameter_sequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pattern-sequence",
+      "phrase": "pattern sequence",
+      "role": "concept",
+      "definition": "A rule for a pattern sequence, the construct the upstream grammar names _patterns.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "pattern_sequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.default-parameter",
+      "phrase": "default parameter",
+      "role": "concept",
+      "definition": "A rule for a default parameter, the construct the upstream grammar names default_parameter.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "default_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.typed-default-parameter",
+      "phrase": "typed default parameter",
+      "role": "concept",
+      "definition": "A rule for a typed default parameter, the construct the upstream grammar names typed_default_parameter.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "typed_default_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.list-splat-pattern",
+      "phrase": "list splat pattern",
+      "role": "concept",
+      "definition": "A rule for a list splat pattern, the construct the upstream grammar names list_splat_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "list_splat_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dictionary-splat-pattern",
+      "phrase": "dictionary splat pattern",
+      "role": "concept",
+      "definition": "A rule for a dictionary splat pattern, the construct the upstream grammar names dictionary_splat_pattern.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "dictionary_splat_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-within-for-in-clause",
+      "phrase": "expression within for in clause",
+      "role": "concept",
+      "definition": "A rule for an expression within for in clause, the construct the upstream grammar names _expression_within_for_in_clause.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "expression_within_for_in_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.not-operator",
+      "phrase": "not operator",
+      "role": "concept",
+      "definition": "A rule for a not operator, the construct the upstream grammar names not_operator.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "not_operator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.boolean-operator",
+      "phrase": "boolean operator",
+      "role": "concept",
+      "definition": "A rule for a boolean operator, the construct the upstream grammar names boolean_operator.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "boolean_operator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unary-operator",
+      "phrase": "unary operator",
+      "role": "concept",
+      "definition": "A rule for an unary operator, the construct the upstream grammar names unary_operator.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "unary_operator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.non-membership-operator",
+      "phrase": "non membership operator",
+      "role": "concept",
+      "definition": "A rule for a non membership operator, the construct the upstream grammar names _not_in.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "non_membership_operator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.identity-inequality-operator",
+      "phrase": "identity inequality operator",
+      "role": "concept",
+      "definition": "A rule for an identity inequality operator, the construct the upstream grammar names _is_not.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "identity_inequality_operator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-within-for-in-clause",
+      "phrase": "lambda within for in clause",
+      "role": "concept",
+      "definition": "A rule for a lambda within for in clause, the construct the upstream grammar names lambda_within_for_in_clause.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "lambda_within_for_in_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.value-assignment",
+      "phrase": "value assignment",
+      "role": "concept",
+      "definition": "A rule for a value assignment, the construct the upstream grammar names assignment.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "value_assignment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.augmented-assignment",
+      "phrase": "augmented assignment",
+      "role": "concept",
+      "definition": "A rule for an augmented assignment, the construct the upstream grammar names augmented_assignment.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "augmented_assignment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pattern-list",
+      "phrase": "pattern list",
+      "role": "concept",
+      "definition": "A rule for a pattern list, the construct the upstream grammar names pattern_list.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "pattern_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.right-hand-side",
+      "phrase": "right hand side",
+      "role": "concept",
+      "definition": "A rule for a right hand side, the construct the upstream grammar names _right_hand_side.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "right_hand_side"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-access",
+      "phrase": "attribute access",
+      "role": "concept",
+      "definition": "A rule for an attribute access, the construct the upstream grammar names attribute.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "attribute_access"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.slice",
+      "phrase": "slice",
+      "role": "concept",
+      "definition": "A rule for a slice, the construct the upstream grammar names slice.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "slice"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.typed-parameter",
+      "phrase": "typed parameter",
+      "role": "concept",
+      "definition": "A rule for a typed parameter, the construct the upstream grammar names typed_parameter.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "typed_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.splat-type",
+      "phrase": "splat type",
+      "role": "concept",
+      "definition": "A rule for a splat type, the construct the upstream grammar names splat_type.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "splat_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constrained-type",
+      "phrase": "constrained type",
+      "role": "concept",
+      "definition": "A rule for a constrained type, the construct the upstream grammar names constrained_type.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "constrained_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.member-type",
+      "phrase": "member type",
+      "role": "concept",
+      "definition": "A rule for a member type, the construct the upstream grammar names member_type.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "member_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.keyword-argument",
+      "phrase": "keyword argument",
+      "role": "concept",
+      "definition": "A rule for a keyword argument, the construct the upstream grammar names keyword_argument.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "keyword_argument"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.set",
+      "phrase": "set",
+      "role": "concept",
+      "definition": "A rule for a set, the construct the upstream grammar names set.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "set"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dictionary",
+      "phrase": "dictionary",
+      "role": "concept",
+      "definition": "A rule for a dictionary, the construct the upstream grammar names dictionary.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "dictionary"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dictionary-comprehension",
+      "phrase": "dictionary comprehension",
+      "role": "concept",
+      "definition": "A rule for a dictionary comprehension, the construct the upstream grammar names dictionary_comprehension.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "dictionary_comprehension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.set-comprehension",
+      "phrase": "set comprehension",
+      "role": "concept",
+      "definition": "A rule for a set comprehension, the construct the upstream grammar names set_comprehension.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "set_comprehension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generator-expression",
+      "phrase": "generator expression",
+      "role": "concept",
+      "definition": "A rule for a generator expression, the construct the upstream grammar names generator_expression.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "generator_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.comprehension-clauses",
+      "phrase": "comprehension clauses",
+      "role": "concept",
+      "definition": "A rule for a comprehension clauses, the construct the upstream grammar names _comprehension_clauses.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "comprehension_clauses"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.collection-element-sequence",
+      "phrase": "collection element sequence",
+      "role": "concept",
+      "definition": "A rule for a collection element sequence, the construct the upstream grammar names _collection_elements.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "collection_element_sequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-in-clause",
+      "phrase": "for in clause",
+      "role": "concept",
+      "definition": "A rule for a for in clause, the construct the upstream grammar names for_in_clause.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "for_in_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.f-expression",
+      "phrase": "f expression",
+      "role": "concept",
+      "definition": "A rule for a f expression, the construct the upstream grammar names _f_expression.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "f_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.not-escape-sequence",
+      "phrase": "not escape sequence",
+      "role": "concept",
+      "definition": "A rule for a not escape sequence, the construct the upstream grammar names _not_escape_sequence.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "not_escape_sequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.format-specifier",
+      "phrase": "format specifier",
+      "role": "concept",
+      "definition": "A rule for a format specifier, the construct the upstream grammar names format_specifier.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "format_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-conversion",
+      "phrase": "type conversion",
+      "role": "concept",
+      "definition": "A rule for a type conversion, the construct the upstream grammar names type_conversion.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "type_conversion"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.keyword-identifier",
+      "phrase": "keyword identifier",
+      "role": "concept",
+      "definition": "A rule for a keyword identifier, the construct the upstream grammar names keyword_identifier.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "keyword_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.none",
+      "phrase": "none",
+      "role": "concept",
+      "definition": "A rule for a none, the construct the upstream grammar names none.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "none"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.positional-separator",
+      "phrase": "positional separator",
+      "role": "concept",
+      "definition": "A rule for a positional separator, the construct the upstream grammar names positional_separator.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "positional_separator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.keyword-separator",
+      "phrase": "keyword separator",
+      "role": "concept",
+      "definition": "A rule for a keyword separator, the construct the upstream grammar names keyword_separator.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "keyword_separator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.as-pattern-target-content",
+      "phrase": "as pattern target content",
+      "role": "concept",
+      "definition": "A rule for an as pattern target content, the construct the upstream grammar names _as_pattern_target_content.",
+      "constraints": [
+        "Only the native Python grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:python",
+          "name": "as_pattern_target_content"
         }
       ],
       "formerNames": []

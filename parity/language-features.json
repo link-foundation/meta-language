@@ -1085,7 +1085,12 @@
           "rust/tests/unit/grammar_scanner_indentation.rs",
           "rust/src/grammar/feature_runtime/parting.rs",
           "parity/fixtures/scanner-indentation.json",
-          "rust/src/translation/frontend_rules.rs"
+          "rust/src/translation/frontend_rules.rs",
+          "rust/tests/unit/issue_195_grammar_native_python.rs",
+          "rust/src/native_grammar_parser.rs",
+          "parity/grammars/native/python.lino",
+          "parity/fixtures/native-grammars/python.json",
+          "parity/fixtures/native-grammars/python-corpus.json"
         ]
       },
       "javascript": {
@@ -1156,7 +1161,12 @@
           "js/tests/grammar-scanner-indentation.test.js",
           "js/experiments/build-indentation-scanner-fixtures.mjs",
           "parity/fixtures/scanner-indentation.json",
-          "js/src/translation/frontend-rules.js"
+          "js/src/translation/frontend-rules.js",
+          "js/tests/issue-195-grammar-native-python.test.js",
+          "js/experiments/build-python-scanner.mjs",
+          "parity/grammars/native/python.lino",
+          "parity/fixtures/native-grammars/python.json",
+          "parity/fixtures/native-grammars/python-corpus.json"
         ]
       }
     },

@@ -171,7 +171,7 @@ export function delimiterRunScanner({ name, contentToken, endToken, delimiter: c
 }
 
 /** Zero-width layout tokens retain bounded indentation stacks across lines. */
-export function indentationScanner({ name, newlineToken, indentToken, dedentToken, tabWidth = 8, countModulo = 65536, commentPrefix = '#', continuation = '\\', resetCharacters = ['\r', '\f'], commentTokens = [], bracketClosers = [')', ']', '}'], stringStartToken = null, stringContentToken = null, quoteCharacters = ['"', "'", '`'], interpolationVariable = null }) {
+export function indentationScanner({ name, newlineToken, indentToken, dedentToken, tabWidth = 8, countModulo = 65536, commentPrefix = '#', continuation = '\\', resetCharacters = ['\r', '\f'], commentTokens = [], commentLiterals = [], bracketClosers = [')', ']', '}'], stringStartToken = null, stringContentToken = null, quoteCharacters = ['"', "'", '`'], interpolationVariable = null }) {
   for (const value of [name, newlineToken, indentToken, dedentToken, ...commentTokens]) identifier(value);
   for (const value of [stringStartToken, stringContentToken, interpolationVariable]) if (value !== null) identifier(value);
   if (new Set([newlineToken, indentToken, dedentToken]).size !== 3 || !Number.isSafeInteger(tabWidth) || tabWidth < 1 || !Number.isSafeInteger(countModulo) || countModulo <= tabWidth) throw new TypeError('indentation needs distinct tokens and positive bounded widths');
@@ -187,7 +187,7 @@ export function indentationScanner({ name, newlineToken, indentToken, dedentToke
   const value = (variable) => `(variable ${variable})`;
   const set = (variable, expression) => `(set ${variable} ${expression})`;
   const zero = '(integer 0)';
-  const commentsAvailable = `(some ${[indentToken, dedentToken, newlineToken, ...commentTokens].map(available).join(' ')})`;
+  const commentsAvailable = `(some ${[indentToken, dedentToken, newlineToken, ...commentTokens].map(available).join(' ')}${commentLiterals.map((text) => ` (expected ${delimiter(text)})`).join('')})`;
   const commentAhead = `(all (next ${comment}) ${commentsAvailable})`;
   const whitespace = `(some (next (literal %0A)) (next (literal %20)) (next (literal %09)) (next ${resets}) ${commentAhead} (next ${escape}))`;
   const increment = (amount) => `${set(width, `(add ${value(width)} (integer ${amount}))`)} (if (not (less ${value(width)} (integer ${countModulo}))) (then ${set(width, `(subtract ${value(width)} (integer ${countModulo}))`)})) advance`;
@@ -225,6 +225,40 @@ const characterClass = (characters, ranges = []) => {
   }
   return `(class plain ${items.join(' ')})`;
 };
+
+/** Prefix flags and quote counts remain inspectable scanner state. */
+export function prefixedQuotedScanner({ name, startToken, contentToken, endToken, interpolationEscapeToken, quotes = [{ text: "'", triple: true }, { text: '"', triple: true }, { text: '`', triple: false }], rawPrefixes = ['r', 'R'], bytesPrefixes = ['b', 'B'], interpolationPrefixes = ['f', 'F', 't', 'T'], ignoredPrefixes = ['u', 'U'], interpolationCharacters = ['{', '}'], ordinaryEscapePrefixes = ['N', 'u', 'U'], interpolationVariable = null, recoveryTokens = [] }) {
+  for (const value of [name, startToken, contentToken, endToken, interpolationEscapeToken, ...recoveryTokens]) identifier(value);
+  if (new Set([startToken, contentToken, endToken, interpolationEscapeToken]).size !== 4 || !Array.isArray(quotes) || !quotes.length || new Set(quotes.map(({ text }) => text)).size !== quotes.length) throw new TypeError('prefixed quotes need distinct tokens and delimiters');
+  for (const quote of quotes) if (typeof quote.triple !== 'boolean' || typeof quote.text !== 'string' || [...quote.text].length !== 1) throw new TypeError('quote delimiters need one character and a triple policy');
+  if (interpolationVariable !== null) identifier(interpolationVariable);
+  const prefixCharacters = [...rawPrefixes, ...bytesPrefixes, ...interpolationPrefixes, ...ignoredPrefixes];
+  if (new Set(prefixCharacters).size !== prefixCharacters.length) throw new TypeError('prefix flag characters must be disjoint');
+  const characters = (items) => items.length ? `(next ${characterClass(items)})` : '(equal (integer 0) (integer 1))';
+  const raw = `${name}_raw`;
+  const bytes = `${name}_bytes`;
+  const formatted = `${name}_formatted`;
+  const triple = `${name}_triple`;
+  const endings = `${name}_quotes`;
+  const hasContent = `${name}_content`;
+  const set = (variable, number) => `(set ${variable} (integer ${number}))`;
+  const flag = (stack) => `(equal (top ${stack}) (integer 1))`;
+  const close = `(some ${quotes.map(({ text }) => `(all (equal (top ${endings}) (text ${encode(text)})) (next ${literal(text)}))`).join(' ')})`;
+  const pop = [raw, bytes, formatted, triple, endings].map((stack) => `(pop ${stack})`).join(' ');
+  const content = `(if (equal (variable ${hasContent}) (integer 0)) (then fail)) mark (emit ${contentToken})`;
+  const finish = `${pop}${interpolationVariable === null ? '' : ` ${set(interpolationVariable, 0)}`} mark (emit ${endToken})`;
+  const recovery = recoveryTokens.length ? `(some ${recoveryTokens.map((token) => `(expected (ref ${token}))`).join(' ')})` : '(equal (integer 0) (integer 1))';
+  const escapedInterpolation = interpolationCharacters.map((text) => `(if (next ${literal(text + text)}) (then (consume ${literal(text + text)}) mark (emit ${interpolationEscapeToken})))`).join(' ');
+  const escape = `(if (valid ${interpolationEscapeToken}) (then (if (all (greater (depth ${endings}) (integer 0)) ${flag(formatted)} (not ${recovery})) (then ${escapedInterpolation})) fail))`;
+  const prefixes = prefixCharacters.length ? `(while ${characters(prefixCharacters)} (do (if ${characters(rawPrefixes)} (then ${set(raw, 1)})) (if ${characters(bytesPrefixes)} (then ${set(bytes, 1)})) (if ${characters(interpolationPrefixes)} (then ${set(formatted, 1)})) advance))` : '';
+  const opening = quotes.map(({ text, triple: canTriple }) => `(if (next ${literal(text)}) (then (push ${endings} (text ${encode(text)})) advance mark ${canTriple ? `(if (next ${literal(text)}) (then advance (if (next ${literal(text)}) (then advance mark ${set(triple, 1)})))) ` : ''}${[raw, bytes, formatted, triple].map((stack) => `(push ${stack} (variable ${stack}))`).join(' ')}${interpolationVariable === null ? '' : ` (set ${interpolationVariable} (variable ${formatted}))`} (emit ${startToken})))`).join(' ');
+  const start = `(if (valid ${startToken}) (then ${[raw, bytes, formatted, triple].map((variable) => set(variable, 0)).join(' ')} ${prefixes} ${opening} fail))`;
+  const rawEscape = `advance (if (some ${close} (next (literal %5C))) (then advance)) (if (next (literal %0D)) (then advance (if (next (literal %0A)) (then advance))) (else (if (next (literal %0A)) (then advance))))`;
+  const bytesEscape = `mark advance (if ${characters(ordinaryEscapePrefixes)} (then advance advance ${set(hasContent, 1)}) (else ${content.replace(' mark (emit', ' (emit')}))`;
+  const closing = `(if ${flag(triple)} (then mark advance (if ${close} (then advance (if ${close} (then (if (greater (variable ${hasContent}) (integer 0)) (then (emit ${contentToken})) (else advance ${finish}))) (else mark (emit ${contentToken})))) (else mark (emit ${contentToken})))) (else (if (greater (variable ${hasContent}) (integer 0)) (then mark (emit ${contentToken})) (else advance ${finish}))))`;
+  const body = `(if (all (some (valid ${contentToken}) (valid ${endToken})) (greater (depth ${endings}) (integer 0)) (not ${recovery})) (then ${set(hasContent, 0)} (while (all (not atEnd) (not (next (literal %00)))) (do (if (all ${flag(formatted)} ${characters(interpolationCharacters)}) (then ${content})) (if (next (literal %5C)) (then (if ${flag(raw)} (then ${rawEscape}) (else (if ${flag(bytes)} (then ${bytesEscape}) (else ${content}))))) (else (if ${close} (then ${closing}) (else (if (all (next (literal %0A)) (greater (variable ${hasContent}) (integer 0)) (not ${flag(triple)})) (then fail)) advance ${set(hasContent, 1)})))))) fail))`;
+  return `(scanner ${name} (tokens ${startToken} ${contentToken} ${endToken} ${interpolationEscapeToken}) (operations ${escape} ${body} ${start} fail))\n`;
+}
 
 /** A zero-width token selected by lookahead, without consuming that context. */
 export function lookaheadBoundaryScanner({ name, token, whitespace = [' ', '\t', '\r', '\v', '\f'], before, allowEnd = true }) {
@@ -280,7 +314,8 @@ export function scannerFamilies(descriptors) {
   const names = new Set();
   const tokens = new Set();
   const generated = descriptors.map(({ family, ...options }) => {
-    const declared = family === 'indentation' ? [options.newlineToken, options.indentToken, options.dedentToken]
+    const declared = family === 'prefixed-quoted' ? [options.startToken, options.contentToken, options.endToken, options.interpolationEscapeToken]
+      : family === 'indentation' ? [options.newlineToken, options.indentToken, options.dedentToken]
       : family === 'remembered-content' ? [options.delimiterToken, options.contentToken]
       : family === 'remembered-literal' ? [options.token, options.startToken, options.contentToken, options.endToken]
       : ['split-counted-delimiter', 'remembered-delimiter'].includes(family) ? [options.startToken, options.contentToken, options.endToken]
@@ -301,6 +336,7 @@ export function scannerFamilies(descriptors) {
     if (family === 'delimiter-run') return delimiterRunScanner(options);
     if (family === 'line-boundary') return lineBoundaryScanner(options);
     if (family === 'indentation') return indentationScanner(options);
+    if (family === 'prefixed-quoted') return prefixedQuotedScanner(options);
     if (family === 'lookahead-boundary') return lookaheadBoundaryScanner(options);
     if (family === 'context-token') return contextTokenScanner(options);
     if (family === 'line-counted-delimiter') return lineCountedDelimiterScanner(options);

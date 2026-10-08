@@ -86,6 +86,15 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_nix.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-PYTHON', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/python.json',
+    construct: 'generated native Python grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Python grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Python parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativePythonGrammarIsCanonicalLinks', 'nativePythonTreesMatchOracle', 'nativePythonTreesLossless', 'nativePythonRejectsInvalidInput', 'nativePythonUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-python.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_python.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-CMAKE', area: 'native-grammar', specification: 'native-merged-grammars',
     fixture: 'parity/fixtures/native-grammars/cmake.json',
     construct: 'generated native CMake grammar and pinned independent source corpus',
