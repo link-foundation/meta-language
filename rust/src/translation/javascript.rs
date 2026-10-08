@@ -13,7 +13,7 @@
 //!
 //! Mirrors `js/src/translation/javascript.js`.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use super::diagnostics::{Result, TranslationError, type_error, unsupported};
 use super::lexer::{
@@ -117,8 +117,17 @@ enum AssertionKind {
 /// On syntax errors, type errors in `JSDoc` annotations and constructs outside
 /// the portable core.
 pub fn parse_javascript(source: &str) -> Result<SProgram> {
+    parse_javascript_bound(source, &HashMap::new())
+}
+
+pub(crate) fn parse_javascript_bound(
+    source: &str,
+    literal_bindings: &HashMap<String, SExpr>,
+) -> Result<SProgram> {
     let tokens = tokenize(source, Language::JavaScript)?;
-    JavaScriptParser::new(source, tokens.tokens, &tokens.comments).file()
+    let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
+    parser.literal_bindings.clone_from(literal_bindings);
+    parser.file()
 }
 
 /// Locals in scope, the ones `let` or a parameter makes assignable, and
@@ -286,6 +295,7 @@ struct JavaScriptParser {
     /// Tags of every @typedef data type, for `switch (x.$)`.
     data_types: Vec<SData>,
     scope: Scope,
+    literal_bindings: HashMap<String, SExpr>,
     assertion: Option<Assertion>,
     /// Async functions run sequentially: each call of one is awaited where it
     /// is made, so nothing else runs until its result is back. `await` is
@@ -314,6 +324,7 @@ impl JavaScriptParser {
                 .collect(),
             data_types: Vec::new(),
             scope: Scope::default(),
+            literal_bindings: HashMap::new(),
             assertion: None,
             async_names: HashSet::new(),
             in_async: true,

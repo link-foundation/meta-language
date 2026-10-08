@@ -36,3 +36,13 @@ test('a carried sibling and its caller stay carried without poisoning an indepen
   assert.ok(!translated.code.includes('pub fn caller('));
   assert.equal(selfTranslate(translated.code, 'Rust', 'JavaScript').code, source);
 });
+
+
+test('mutable, nonliteral and temporal-dead-zone bindings stay unbound', () => {
+  for (const entry of fixture.refusals) {
+    const translated = selfTranslate(entry.source, 'JavaScript', 'Rust');
+    const functions = translated.items.filter(({ term }) => term === 'function_declaration' || term === 'export_statement');
+    assert.deepEqual(functions.map(({ status }) => status), ['carried'], entry.name);
+    assert.equal(selfTranslate(translated.code, 'Rust', 'JavaScript').code, entry.source, entry.name);
+  }
+});

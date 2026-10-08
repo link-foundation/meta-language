@@ -55,6 +55,28 @@ fn sibling_binding_runs_match_javascript_and_restore_their_source() {
             source
         );
     }
+    for entry in fixture["refusals"].as_array().unwrap() {
+        let source = entry["source"].as_str().unwrap();
+        let translated = self_translate(source, "JavaScript", "Rust").unwrap();
+        let statuses: Vec<_> = translated
+            .items
+            .iter()
+            .filter(|item| {
+                matches!(
+                    item.term.as_str(),
+                    "function_declaration" | "export_statement"
+                )
+            })
+            .map(|item| item.status)
+            .collect();
+        assert_eq!(statuses, ["carried"], "{}", entry["name"]);
+        assert_eq!(
+            self_translate(&translated.code, "Rust", "JavaScript")
+                .unwrap()
+                .code,
+            source
+        );
+    }
     let source = "/** @returns {number} */\nfunction good() { return 7; }\n\nfunction unavailable() { return new Date(); }\n\n/** @returns {number} */\nexport function caller() { return unavailable(); }\n";
     let translated = self_translate(source, "JavaScript", "Rust").unwrap();
     let statuses: Vec<_> = translated

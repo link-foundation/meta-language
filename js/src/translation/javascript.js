@@ -55,15 +55,16 @@ const CONSTANTS = {
 const STRICT_ASSERTIONS = { equal: 'eq', notEqual: 'ne', deepEqual: 'deep', notDeepEqual: 'notDeep' };
 const ASSERTIONS = { strictEqual: 'eq', notStrictEqual: 'ne', deepStrictEqual: 'deep', notDeepStrictEqual: 'notDeep' };
 
-export function parseJavaScript(source) {
+export function parseJavaScript(source, literalBindings = new Map()) {
   const { tokens, comments } = tokenize(source, 'JavaScript');
-  return new JavaScriptParser(source, tokens, comments).file();
+  return new JavaScriptParser(source, tokens, comments, literalBindings).file();
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments) {
+  constructor(source, tokens, comments, literalBindings) {
     this.source = source;
     this.cursor = new TokenCursor(tokens, 'JavaScript');
+    this.literalBindings = literalBindings;
     this.docs = comments.filter((comment) => comment.text.startsWith('/**') && comment.text !== '/**/');
     // Tags of every @typedef data type, for `switch (x.$)`.
     this.dataTypes = new Map();
@@ -1677,6 +1678,7 @@ class JavaScriptParser {
     }
     c.next();
     if (this.scope.locals.has(token.value) || this.scope.tdz.has(token.value)) return this.reference(token);
+    if (this.literalBindings.has(token.value)) return { ...this.literalBindings.get(token.value), span: span(token, token) };
     if (this.assertion?.name === token.value) throw unsupported('assertion in an expression', 'assertions are top-level statements', span(token, token));
     // A global: a function, or a namespace path to a method, which must be called.
     const segments = [token.value];

@@ -183,3 +183,35 @@ export function acceptBindingScope(statuses, reasons) {
   }
   return false;
 }
+
+/**
+ * Immutable primitive literals have no identity, mutation or initialisation
+ * effect, so their value can be read from a sibling function's scope.
+ * @param {string} valueKind
+ * @param {boolean} constant
+ * @param {number} effectCount
+ * @param {number} declarationCount
+ * @returns {boolean}
+ */
+export function acceptLiteralBinding(valueKind, constant, effectCount, declarationCount) {
+  return constant && effectCount === 1 && declarationCount === 0
+    && (valueKind === 'num' || valueKind === 'bool' || valueKind === 'str');
+}
+
+/** @param {string} valueKind @param {string} typeKind @returns {string} */
+export function constantBindingForm(valueKind, typeKind) {
+  if (valueKind === 'lit' && (typeKind === 'float' || typeKind === 'bool' || typeKind === 'fixed')) return 'scalar';
+  if (valueKind === 'lit' && typeKind === 'string') return 'string';
+  return 'lazy';
+}
+
+/** @param {boolean} constant @param {number} effects @param {number} declarations @param {boolean} legalName @returns {boolean} */
+export function acceptConstantEmission(constant, effects, declarations, legalName) {
+  return constant && effects === 1 && declarations === 0 && legalName;
+}
+
+/** @param {string} form @param {string} name @param {string} type @param {string} value @returns {string} */
+export function renderConstantBinding(form, name, type, value) {
+  if (form === 'lazy') return 'pub static ' + name + ': std::sync::LazyLock<' + type + '> = std::sync::LazyLock::new(|| ' + value + ');';
+  return 'pub const ' + name + ': ' + type + ' = ' + value + ';';
+}

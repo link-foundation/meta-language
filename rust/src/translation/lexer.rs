@@ -374,12 +374,12 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
                 _ => "other",
             });
             let value = previous.map_or("", |token| token.value.as_str());
-            if start_regular_expression(kind.to_owned(), value.to_owned()) {
-                let units = source.units()[index..]
+            if start_regular_expression(kind, value) {
+                let units: Vec<f64> = source.units()[index..]
                     .iter()
                     .map(|unit| f64::from(*unit))
                     .collect();
-                let length = regular_expression_end(units, 0.0);
+                let length = regular_expression_end(&units, 0.0);
                 if length < 0.0 {
                     return Err(TranslationError::syntax(
                         "unterminated regular expression literal",

@@ -51,8 +51,8 @@ its contiguous declaration run in one checked scope when targeting Rust. A
 successful run has one provenance block covering all of its source items;
 forward calls and arrow-bound siblings use their actual checked declarations.
 A failed run retains the original per-item decisions, so a carried sibling
-never acquires a placeholder signature or implementation. Top-level constant
-captures and bindings across intervening imports or statements remain separate
+never acquires a placeholder signature or implementation. Captures of mutable
+or non-literal globals and bindings across intervening imports or statements remain separate
 translation obligations.
 
 The definitions the translated code needs (helpers and, for Rust, an
@@ -151,3 +151,10 @@ the decorated translation still translates back to its source. The corpus case
 `decorators.lino` and is checked, function by function, against
 `hand-written/arithmetic.rs`; removing the decorators gives the generic
 translation again.
+
+Sibling functions can also read immutable number, string and boolean literal
+constants from their module. Local declarations and parameters take precedence
+over those bindings, including a local declaration in its temporal dead zone.
+This does not bind mutable values, array or object identities, or imported values.
+Rust constant storage decisions and declaration rendering are generated from
+the same JavaScript rules.

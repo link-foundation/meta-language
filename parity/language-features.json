@@ -1421,7 +1421,7 @@
           "rust/tests/unit/concept_distinctions.rs",
           "parity/fixtures/concept-distinctions.json",
           "parity/required-concept-distinctions.json",
-          "js/scripts/build-concept-records.mjs"
+          "rust/src/data/concept-records.json"
         ]
       },
       "javascript": {

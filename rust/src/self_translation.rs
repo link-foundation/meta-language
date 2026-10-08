@@ -11,7 +11,11 @@
 //!
 //! Mirrors `js/src/self-translation.js`.
 
-use crate::translation::frontend_rules::{accept_binding_scope, find_binding_run_end};
+use crate::translation::frontend_rules::{
+    accept_binding_scope, accept_literal_binding, find_binding_run_end,
+};
+use crate::translation::surface::{SEffect, SExpr, SNode};
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::fmt::Write as _;
 use std::sync::LazyLock;
@@ -25,7 +29,9 @@ use crate::translation::check::check_program;
 use crate::translation::diagnostics::TranslationError;
 use crate::translation::emit_common::Emitted;
 use crate::translation::{
-    emit_javascript::emit_javascript, emit_rust::emit_rust, javascript::parse_javascript,
+    emit_javascript::emit_javascript,
+    emit_rust::{emit_rust, emit_rust_constants},
+    javascript::{parse_javascript, parse_javascript_bound},
     rust::parse_rust,
 };
 use crate::{LinkNetwork, ParseConfiguration};
@@ -214,7 +220,7 @@ pub fn self_translate_decorated(
     let mut recorded = Vec::new();
     let mut gap = String::new();
     for (group, out) in
-        translate_binding_groups(group_items(&items, source), source, from, to, decorators)
+        translate_binding_groups(&group_items(&items, source), source, from, to, decorators)
     {
         for prelude in out.preludes {
             if !preludes.contains(&prelude) {
@@ -486,17 +492,19 @@ struct Translated {
 // Only the collection/provenance adapter is host code; run boundaries and
 // retry eligibility use the same JavaScript-generated frontend decisions.
 fn translate_binding_groups<'a>(
-    groups: Vec<Group<'a>>,
+    groups: &[Group<'a>],
     source: &'a str,
     from: &str,
     to: &str,
     decorators: &DecoratorSet,
 ) -> Vec<(Group<'a>, Translated)> {
     let bind = family(from) == "JavaScript" && family(to) == "Rust";
+    let (literals, literal_groups) = collect_literal_bindings(groups, bind, from, to, decorators);
     let terms: Vec<String> = groups
         .iter()
-        .map(|group| match &group.kind {
-            GroupKind::Item { term, .. } => term.clone(),
+        .enumerate()
+        .map(|(index, group)| match &group.kind {
+            GroupKind::Item { term, .. } if !literal_groups.contains(&index) => term.clone(),
             _ => String::new(),
         })
         .collect();
@@ -509,24 +517,29 @@ fn translate_binding_groups<'a>(
             clippy::cast_sign_loss
         )]
         let end = if bind {
-            find_binding_run_end(terms.clone(), index as f64) as usize
+            find_binding_run_end(&terms, index as f64) as usize
         } else {
             index + 1
         };
         let run = &groups[index..end];
         let isolated: Vec<_> = run
             .iter()
-            .map(|group| (group.clone(), translate_group(group, from, to, decorators)))
+            .map(|group| {
+                (
+                    group.clone(),
+                    translate_group(group, from, to, decorators, &literals),
+                )
+            })
             .collect();
-        let statuses = isolated
+        let statuses: Vec<String> = isolated
             .iter()
             .map(|(_, out)| out.status.to_owned())
             .collect();
-        let reasons = isolated
+        let reasons: Vec<String> = isolated
             .iter()
             .map(|(_, out)| out.reason.clone().unwrap_or_default())
             .collect();
-        if accept_binding_scope(statuses, reasons) {
+        if accept_binding_scope(&statuses, &reasons) {
             let items: Vec<_> = run.iter().flat_map(|group| group.items.clone()).collect();
             let first = items.first().expect("a binding run has source items");
             let last = items.last().expect("a binding run has source items");
@@ -541,7 +554,7 @@ fn translate_binding_groups<'a>(
                 items,
                 after: run.last().expect("a binding run is nonempty").after,
             };
-            let out = translate_group(&combined, from, to, decorators);
+            let out = translate_group(&combined, from, to, decorators, &literals);
             if out.status == "translated" {
                 results.push((combined, out));
             } else {
@@ -555,11 +568,67 @@ fn translate_binding_groups<'a>(
     results
 }
 
+fn collect_literal_bindings(
+    groups: &[Group<'_>],
+    bind: bool,
+    from: &str,
+    to: &str,
+    decorators: &DecoratorSet,
+) -> (HashMap<String, SExpr>, HashSet<usize>) {
+    let mut literals = HashMap::new();
+    let mut literal_groups = HashSet::new();
+    if bind {
+        for (index, group) in groups.iter().enumerate() {
+            let GroupKind::Item { text, .. } = &group.kind else {
+                continue;
+            };
+            let Ok(parsed) = parse_javascript(text) else {
+                continue;
+            };
+            let Some(main) = &parsed.main else {
+                continue;
+            };
+            let Some(SEffect::Let {
+                name,
+                value,
+                constant,
+                ..
+            }) = main.effects.first()
+            else {
+                continue;
+            };
+            let kind = match &value.node {
+                SNode::Num { .. } => "num",
+                SNode::Bool { .. } => "bool",
+                SNode::Str { .. } => "str",
+                _ => "",
+            };
+            #[allow(clippy::cast_precision_loss)]
+            if accept_literal_binding(
+                kind,
+                *constant,
+                main.effects.len() as f64,
+                parsed.items.len() as f64,
+            ) {
+                if translate_group(group, from, to, decorators, &HashMap::new()).status
+                    != "translated"
+                {
+                    continue;
+                }
+                literals.insert(name.clone(), value.clone());
+                literal_groups.insert(index);
+            }
+        }
+    }
+    (literals, literal_groups)
+}
+
 fn translate_group(
     group: &Group<'_>,
     from: &str,
     to: &str,
     decorators: &DecoratorSet,
+    literal_bindings: &HashMap<String, SExpr>,
 ) -> Translated {
     let done = |code: String, status: &'static str| Translated {
         code: Some(code),
@@ -600,7 +669,7 @@ fn translate_group(
         }
         GroupKind::Item { text, term } => (text, term),
     };
-    let emitted = match emit_item(text, from, to) {
+    let emitted = match emit_item(text, from, to, literal_bindings) {
         Ok(Some(emitted)) => emitted,
         Ok(None) => return carry(text, term, from, "top-level statement"),
         Err(error) => return carry(text, term, from, error.kind.as_str()),
@@ -647,7 +716,12 @@ fn translate_group(
 }
 
 /// The item emitted by the portable core, or `None` for a top-level statement.
-fn emit_item(text: &str, from: &str, to: &str) -> Result<Option<Emitted>, TranslationError> {
+fn emit_item(
+    text: &str,
+    from: &str,
+    to: &str,
+    literal_bindings: &HashMap<String, SExpr>,
+) -> Result<Option<Emitted>, TranslationError> {
     let surface = if family(from) == "Rust" {
         // The Rust frontend reads a program, so an item alone gets an empty main.
         if RUST_MAIN.is_match(text) {
@@ -656,9 +730,14 @@ fn emit_item(text: &str, from: &str, to: &str) -> Result<Option<Emitted>, Transl
             parse_rust(&format!("{text}\nfn main() {{}}\n"))?
         }
     } else {
-        parse_javascript(text)?
+        parse_javascript_bound(text, literal_bindings)?
     };
     let program = check_program(&surface)?;
+    if family(to) == "Rust"
+        && let Some(emitted) = emit_rust_constants(&program)?
+    {
+        return Ok(Some(emitted));
+    }
     if program
         .main
         .as_ref()

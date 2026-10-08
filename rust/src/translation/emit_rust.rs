@@ -19,6 +19,9 @@ use super::Language;
 use super::decimal::Decimal;
 use super::diagnostics::{Result, unsupported};
 use super::emit_common::{CtorStyle, EmitOptions, EmitState, Emitted};
+use super::frontend_rules::{
+    accept_constant_emission, constant_binding_form, render_constant_binding,
+};
 use super::ir::{
     Binder, ByZero, Decl, Effect, Expr, LitValue, Node, Pattern, Program, Prop, Semantics,
     rename_function, rename_main, rename_theorem, tail_loop,
@@ -534,6 +537,103 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
         loop_params: None,
     }
     .file()
+}
+
+// AST and emitter adapter for the JavaScript-generated constant decisions.
+pub(crate) fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
+    let Some(main) = &program.main else {
+        return Ok(None);
+    };
+    let Some(Effect::Let {
+        name,
+        value,
+        constant,
+        ..
+    }) = main.effects.first()
+    else {
+        return Ok(None);
+    };
+    let legal_name = !name.starts_with("ml_")
+        && !KEYWORDS.contains(&name.as_str())
+        && name.bytes().enumerate().all(|(index, byte)| {
+            byte.is_ascii_alphabetic() || byte == b'_' || (index > 0 && byte.is_ascii_digit())
+        })
+        && !name.is_empty();
+    #[allow(clippy::cast_precision_loss)]
+    if !accept_constant_emission(
+        *constant,
+        main.effects.len() as f64,
+        program.declarations.len() as f64,
+        legal_name,
+    ) {
+        return Ok(None);
+    }
+    let state = EmitState::new(
+        program,
+        Language::Rust,
+        snake,
+        KEYWORDS,
+        EmitOptions {
+            ctor_style: CtorStyle::Data,
+            type_name: Some(camel),
+            value_name: Some(snake),
+            ctor_name: Some(camel),
+            module_segment: Some(snake),
+            type_space: true,
+            modules_share_type_space: true,
+            ..EmitOptions::default()
+        },
+    );
+    let mut emitter = RustEmitter {
+        program,
+        state,
+        temporaries: 0,
+        theorem_checks: Vec::new(),
+        preludes: BTreeSet::new(),
+        loop_params: None,
+    };
+    let form = constant_binding_form(
+        if matches!(value.node, Node::Lit { .. }) {
+            "lit"
+        } else {
+            ""
+        },
+        value.ty.kind(),
+    );
+    let (ty, expression) = if form == "string" {
+        let Node::Lit { value } = &value.node else {
+            unreachable!("the generated string form requires a literal");
+        };
+        ("&str".to_owned(), rust_string(&value.text()))
+    } else {
+        (emitter.ty(&value.ty), emitter.expr(value)?)
+    };
+    let definition = render_constant_binding(&form, name, &ty, &expression);
+    let preludes: Vec<String> = emitter
+        .preludes
+        .iter()
+        .map(|prelude| {
+            match prelude {
+                Prelude::Big => PRELUDE,
+                Prelude::Number => NUMBER_PRELUDE,
+                Prelude::Math => MATH_PRELUDE,
+                Prelude::Array => ARRAY_PRELUDE,
+            }
+            .to_owned()
+        })
+        .collect();
+    let mut output = emitter.state.finish(
+        preludes
+            .iter()
+            .chain(std::iter::once(&definition))
+            .cloned()
+            .collect::<Vec<_>>()
+            .join("\n\n"),
+        None,
+    );
+    output.preludes = preludes;
+    output.definitions = vec![definition];
+    Ok(Some(output))
 }
 
 /// Declarations grouped by source module, in declaration order.

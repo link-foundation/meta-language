@@ -219,33 +219,29 @@ pub fn find_default_parameter_reference(
     }
 }
 
-pub fn start_regular_expression(kind: String, value: String) -> bool {
-    if (kind == "") {
+pub fn start_regular_expression(kind: &str, value: &str) -> bool {
+    if (kind.is_empty()) {
         true
+    } else if (kind == "identifier") {
+        ((((((((((value == "return") || (value == "throw")) || (value == "case"))
+            || (value == "delete"))
+            || (value == "void"))
+            || (value == "typeof"))
+            || (value == "yield"))
+            || (value == "await"))
+            || (value == "in"))
+            || (value == "of"))
+    } else if kind == "punct" {
+        (((((((value != ")") && (value != "]")) && (value != "}")) && (value != "."))
+            && (value != "?."))
+            && (value != "++"))
+            && (value != "--"))
     } else {
-        if (kind == "identifier") {
-            ((((((((((value == "return") || (value == "throw")) || (value == "case"))
-                || (value == "delete"))
-                || (value == "void"))
-                || (value == "typeof"))
-                || (value == "yield"))
-                || (value == "await"))
-                || (value == "in"))
-                || (value == "of"))
-        } else {
-            if (kind != "punct") {
-                false
-            } else {
-                (((((((value != ")") && (value != "]")) && (value != "}")) && (value != "."))
-                    && (value != "?."))
-                    && (value != "++"))
-                    && (value != "--"))
-            }
-        }
+        false
     }
 }
 
-pub fn regular_expression_end(units: Vec<f64>, start: f64) -> f64 {
+pub fn regular_expression_end(units: &[f64], start: f64) -> f64 {
     {
         let index = (start + 1f64);
         {
@@ -255,12 +251,12 @@ pub fn regular_expression_end(units: Vec<f64>, start: f64) -> f64 {
                 {
                     let ml_s9 =
                         crate::translation::frontend_rules::ml_regular_expression_end_loop10(
-                            units.clone(),
+                            units.to_vec(),
                             index,
                             escaped,
                             character_class,
                         );
-                    match ml_s9.clone() {
+                    match ml_s9 {
                         crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Done => {
                             (-1f64)
                         }
@@ -274,12 +270,12 @@ pub fn regular_expression_end(units: Vec<f64>, start: f64) -> f64 {
     }
 }
 
-pub fn find_binding_run_end(terms: Vec<String>, start: f64) -> f64 {
+pub fn find_binding_run_end(terms: &[String], start: f64) -> f64 {
     {
         let end = start;
         {
             let end_2 = crate::translation::frontend_rules::ml_find_binding_run_end_loop13(
-                terms.clone(),
+                terms.to_vec(),
                 end,
             );
             if (end_2 == start) {
@@ -291,7 +287,7 @@ pub fn find_binding_run_end(terms: Vec<String>, start: f64) -> f64 {
     }
 }
 
-pub fn accept_binding_scope(statuses: Vec<String>, reasons: Vec<String>) -> bool {
+pub fn accept_binding_scope(statuses: &[String], reasons: &[String]) -> bool {
     if ((statuses.len() as f64) < (2f64)) {
         false
     } else {
@@ -299,11 +295,11 @@ pub fn accept_binding_scope(statuses: Vec<String>, reasons: Vec<String>) -> bool
             let index = 0f64;
             {
                 let ml_s10 = crate::translation::frontend_rules::ml_accept_binding_scope_loop14(
-                    statuses.clone(),
-                    reasons.clone(),
+                    statuses.to_vec(),
+                    reasons.to_vec(),
                     index,
                 );
-                match ml_s10.clone() {
+                match ml_s10 {
                     crate::translation::frontend_rules::MlAcceptBindingScopeLoop14Result::MlAcceptBindingScopeLoop14Done => {
                         false
                     }
@@ -313,6 +309,85 @@ pub fn accept_binding_scope(statuses: Vec<String>, reasons: Vec<String>) -> bool
                 }
             }
         }
+    }
+}
+
+pub fn accept_literal_binding(
+    value_kind: &str,
+    constant: bool,
+    effect_count: f64,
+    declaration_count: f64,
+) -> bool {
+    (((constant && (effect_count == (1f64))) && (declaration_count == (0f64)))
+        && (((value_kind == "num") || (value_kind == "bool")) || (value_kind == "str")))
+}
+
+pub fn constant_binding_form(value_kind: &str, type_kind: &str) -> String {
+    if ((value_kind == "lit")
+        && (((type_kind == "float") || (type_kind == "bool")) || (type_kind == "fixed")))
+    {
+        String::from("scalar")
+    } else if ((value_kind == "lit") && (type_kind == "string")) {
+        String::from("string")
+    } else {
+        String::from("lazy")
+    }
+}
+
+pub fn accept_constant_emission(
+    constant: bool,
+    effects: f64,
+    declarations: f64,
+    legal_name: bool,
+) -> bool {
+    (((constant && (effects == (1f64))) && (declarations == (0f64))) && legal_name)
+}
+
+pub fn render_constant_binding(form: &str, name: &str, type_: &str, value: &str) -> String {
+    if (form == "lazy") {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (format!(
+                            "{}{}",
+                            (format!("{}{}", (String::from("pub static ")), name)),
+                            (String::from(": std::sync::LazyLock<"))
+                        )),
+                        type_
+                    )),
+                    (String::from("> = std::sync::LazyLock::new(|| "))
+                )),
+                value
+            )),
+            (String::from(");"))
+        )
+    } else {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (format!(
+                            "{}{}",
+                            (format!("{}{}", (String::from("pub const ")), name)),
+                            (String::from(": "))
+                        )),
+                        type_
+                    )),
+                    (String::from(" = "))
+                )),
+                value
+            )),
+            (String::from(";"))
+        )
     }
 }
 
@@ -636,11 +711,7 @@ pub fn ml_regular_expression_end_loop12(mut units: Vec<f64>, mut index: f64) -> 
                     &units,
                     crate::translation::frontend_rules::ml_array::number_index(index),
                 );
-                if !(((flag >= (65f64)) && (flag <= (90f64)))
-                    || ((flag >= (97f64)) && (flag <= (122f64))))
-                {
-                    index
-                } else {
+                if ((65f64..=90f64).contains(&flag) || (97f64..=122f64).contains(&flag)) {
                     {
                         let index_2 = (index + 1f64);
                         {
@@ -649,6 +720,7 @@ pub fn ml_regular_expression_end_loop12(mut units: Vec<f64>, mut index: f64) -> 
                         }
                     }
                 }
+                index
             }
         } else {
             index
@@ -672,7 +744,7 @@ pub fn ml_regular_expression_end_loop10(
                 if ((((unit == (10f64)) || (unit == (13f64))) || (unit == (8232f64)))
                     || (unit == (8233f64)))
                 {
-                    crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Return((-1f64))
+                    crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Return(-1f64)
                 } else {
                     {
                         let ml_s14 = if escaped {
@@ -680,39 +752,31 @@ pub fn ml_regular_expression_end_loop10(
                                 let escaped_2 = false;
                                 crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped_2, character_class)
                             }
-                        } else {
-                            if (unit == (92f64)) {
+                        } else if (unit == (92f64)) {
+                            {
+                                let escaped_3 = true;
+                                crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped_3, character_class)
+                            }
+                        } else if (unit == (91f64)) {
+                            {
+                                let character_class_2 = true;
+                                crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class_2)
+                            }
+                        } else if (unit == (93f64)) {
+                            {
+                                let character_class_3 = false;
+                                crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class_3)
+                            }
+                        } else if ((unit == (47f64)) && !character_class) {
+                            {
+                                let index_2 = (index + 1f64);
                                 {
-                                    let escaped_3 = true;
-                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped_3, character_class)
-                                }
-                            } else {
-                                if (unit == (91f64)) {
-                                    {
-                                        let character_class_2 = true;
-                                        crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class_2)
-                                    }
-                                } else {
-                                    if (unit == (93f64)) {
-                                        {
-                                            let character_class_3 = false;
-                                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class_3)
-                                        }
-                                    } else {
-                                        if ((unit == (47f64)) && !character_class) {
-                                            {
-                                                let index_2 = (index + 1f64);
-                                                {
-                                                    let index_3 = crate::translation::frontend_rules::ml_regular_expression_end_loop12(units.clone(), index_2);
-                                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Return(index_3)
-                                                }
-                                            }
-                                        } else {
-                                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class)
-                                        }
-                                    }
+                                    let index_3 = crate::translation::frontend_rules::ml_regular_expression_end_loop12(units.clone(), index_2);
+                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Return(index_3)
                                 }
                             }
+                        } else {
+                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class)
                         };
                         match ml_s14.clone() {
                             crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index_4, escaped_4, character_class_4) => {

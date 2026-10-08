@@ -5291,6 +5291,90 @@
       "formerNames": []
     },
     {
+      "id": "translation.accept-literal-binding",
+      "phrase": "accept literal binding",
+      "role": "operation",
+      "definition": "Determine whether an isolated immutable primitive literal can supply a sibling function binding.",
+      "constraints": [
+        "JavaScript supplies the decision; Rust uses its generated implementation.",
+        "The host adapter supplies only parsed or checked AST fields."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptLiteralBinding"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_literal_binding"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.constant-binding-form",
+      "phrase": "constant binding form",
+      "role": "concept",
+      "definition": "Select scalar, string or lazily initialised Rust storage for a checked JavaScript constant.",
+      "constraints": [
+        "JavaScript supplies the decision; Rust uses its generated implementation.",
+        "The host adapter supplies only parsed or checked AST fields."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "constantBindingForm"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "constant_binding_form"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-constant-emission",
+      "phrase": "accept constant emission",
+      "role": "operation",
+      "definition": "Determine whether a program contains exactly one legally named constant and no declarations.",
+      "constraints": [
+        "JavaScript supplies the decision; Rust uses its generated implementation.",
+        "The host adapter supplies only parsed or checked AST fields."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptConstantEmission"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_constant_emission"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.render-constant-binding",
+      "phrase": "render constant binding",
+      "role": "operation",
+      "definition": "Render the selected Rust constant storage using the checked type and value supplied by the emitter.",
+      "constraints": [
+        "JavaScript supplies the decision; Rust uses its generated implementation.",
+        "The host adapter supplies only parsed or checked AST fields."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "renderConstantBinding"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "render_constant_binding"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.translation-unit",
       "phrase": "translation unit",
       "role": "concept",

@@ -773,6 +773,11 @@ impl JavaScriptParser {
         if self.scope.locals.contains(&token.value) || self.scope.tdz.contains(&token.value) {
             return self.reference(&token);
         }
+        if let Some(value) = self.literal_bindings.get(&token.value) {
+            let mut value = value.clone();
+            value.span = Some(span(&token, &token));
+            return Ok(value);
+        }
         if self
             .assertion
             .as_ref()

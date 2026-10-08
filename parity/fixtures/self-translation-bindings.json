@@ -20,6 +20,45 @@
       "call": "cappedSquare(2)",
       "rustCall": "capped_square(2.0)",
       "expected": "3\n"
+    },
+    {
+      "name": "constant-and-siblings",
+      "source": "const LIMIT = 3;\n\n/** @param {number} x @returns {number} */\nfunction square(x) { return x * x; }\n\n/** @param {number} x @returns {number} */\nexport function cappedSquare(x) { return Math.min(square(x), LIMIT); }\n",
+      "call": "cappedSquare(2)",
+      "rustCall": "capped_square(2.0)",
+      "expected": "3\n"
+    },
+    {
+      "name": "shadowed-constant",
+      "source": "const LIMIT = 3;\n\n/** @param {number} LIMIT @returns {number} */\nexport function shadow(LIMIT) { return LIMIT; }\n",
+      "call": "shadow(9)",
+      "rustCall": "shadow(9.0)",
+      "expected": "9\n"
+    },
+    {
+      "name": "string-and-boolean-constants",
+      "source": "const LABEL = 'ready';\nconst ENABLED = true;\n\n/** @returns {string} */\nexport function label() { if (ENABLED) return LABEL; return 'disabled'; }\n",
+      "call": "label()",
+      "rustCall": "label()",
+      "expected": "ready\n"
+    }
+  ],
+  "refusals": [
+    {
+      "name": "mutable-global",
+      "source": "let LIMIT = 3;\n\n/** @returns {number} */\nexport function capture() { return LIMIT; }\n"
+    },
+    {
+      "name": "nonliteral-global",
+      "source": "const LIMIT = 1 + 2;\n\n/** @returns {number} */\nexport function capture() { return LIMIT; }\n"
+    },
+    {
+      "name": "local-temporal-dead-zone",
+      "source": "const LIMIT = 3;\n\n/** @returns {number} */\nexport function capture() { const x = LIMIT; const LIMIT = 9; return x; }\n"
+    },
+    {
+      "name": "carried-constant",
+      "source": "const main = 3;\n\n/** @returns {number} */\nexport function capture() { return main; }\n"
     }
   ]
 }

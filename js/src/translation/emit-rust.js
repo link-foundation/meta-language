@@ -13,6 +13,7 @@ import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState, withParts } from './emit-common.js';
+import { acceptConstantEmission, constantBindingForm, renderConstantBinding } from './frontend-rules.js';
 
 const KEYWORDS = new Set([
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
@@ -560,19 +561,18 @@ export function emitRust(program) {
  */
 export function emitRustConstants(program) {
   const effects = program.main?.effects ?? [];
-  if (program.declarations.size > 0 || effects.length !== 1 || !effects[0].constant || effects[0].name.startsWith('ml_')) return null;
+  const effect = effects[0];
+  const legalName = effect && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);
+  if (!acceptConstantEmission(effect?.constant ?? false, effects.length, program.declarations.size, legalName ?? false)) return null;
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data', typeName: camel, valueName: snake, ctorName: camel, moduleSegment: snake, typeSpace: true, modulesShareTypeSpace: true,
   });
   const emitter = new RustEmitter(program, state);
   const [{ name, value }] = effects;
-  if (KEYWORDS.has(name) || !/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name)) return null;
-  const scalar = value.k === 'lit' && ['float', 'bool', 'fixed'].includes(value.type.kind);
-  const definition = scalar
-    ? `pub const ${name}: ${emitter.type(value.type)} = ${emitter.expr(value)};`
-    : value.k === 'lit' && value.type.kind === 'string'
-      ? `pub const ${name}: &str = ${rustString(String(value.value))};`
-      : `pub static ${name}: std::sync::LazyLock<${emitter.type(value.type)}> = std::sync::LazyLock::new(|| ${emitter.expr(value)});`;
+  const form = constantBindingForm(value.k, value.type.kind);
+  const definition = renderConstantBinding(form, name,
+    form === 'string' ? '&str' : emitter.type(value.type),
+    form === 'string' ? rustString(String(value.value)) : emitter.expr(value));
   const preludes = [
     ...(emitter.usesBig ? [PRELUDE] : []),
     ...(emitter.usesNumber ? [NUMBER_PRELUDE] : []),

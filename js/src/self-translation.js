@@ -18,7 +18,7 @@ import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
 import { parseRust } from './translation/rust.js';
-import { acceptBindingScope, findBindingRunEnd } from './translation/frontend-rules.js';
+import { acceptBindingScope, acceptLiteralBinding, findBindingRunEnd } from './translation/frontend-rules.js';
 
 /** The languages self-translation reads and writes. */
 export const SELF_TRANSLATION_LANGUAGES = Object.freeze(['JavaScript', 'TypeScript', 'Rust']);
@@ -223,16 +223,17 @@ const isMarker = (item) => item.comment && [HEADER, CARRIED, TRANSLATED, PRELUDE
 // per-item decisions, so a carried sibling is never represented by a stub.
 function translateBindingGroups(groups, bytes, from, to, decorators) {
   const bind = family(from) === 'JavaScript' && family(to) === 'Rust';
-  const terms = groups.map((group) => group.kind === 'item' ? group.term : '');
+  const { literals, literalGroups } = collectLiteralBindings(groups, bind, from, to, decorators);
+  const terms = groups.map((group) => group.kind === 'item' && !literalGroups.has(group) ? group.term : '');
   const results = [];
   for (let index = 0; index < groups.length;) {
     const end = bind ? findBindingRunEnd(terms, index) : index + 1;
     const run = groups.slice(index, end);
-    const isolated = run.map((group) => ({ group, out: translateGroup(group, from, to, decorators) }));
+    const isolated = run.map((group) => ({ group, out: translateGroup(group, from, to, decorators, literals) }));
     if (acceptBindingScope(isolated.map(({ out }) => out.status), isolated.map(({ out }) => out.reason ?? ''))) {
       const items = run.flatMap((group) => group.items);
       const combined = { ...run[0], items, text: bytes.subarray(items[0].start, items.at(-1).end).toString('utf8'), after: run.at(-1).after };
-      const out = translateGroup(combined, from, to, decorators);
+      const out = translateGroup(combined, from, to, decorators, literals);
       if (out.status === 'translated') results.push({ group: combined, out });
       else results.push(...isolated);
     } else results.push(...isolated);
@@ -241,7 +242,26 @@ function translateBindingGroups(groups, bytes, from, to, decorators) {
   return results;
 }
 
-function translateGroup(group, from, to, decorators) {
+function collectLiteralBindings(groups, bind, from, to, decorators) {
+  const literals = new Map();
+  const literalGroups = new Set();
+  if (bind) for (const group of groups) {
+    if (group.kind !== 'item') continue;
+    try {
+      const parsed = parseJavaScript(group.text);
+      const effects = parsed.main.effects;
+      const effect = effects[0];
+      if (effect && acceptLiteralBinding(effect.value?.k ?? '', effect.constant ?? false, effects.length, parsed.items.length)) {
+        if (translateGroup(group, from, to, decorators).status !== 'translated') continue;
+        literals.set(effect.name, effect.value);
+        literalGroups.add(group);
+      }
+    } catch (error) { if (!(error instanceof TranslationError)) throw error; }
+  }
+  return { literals, literalGroups };
+}
+
+function translateGroup(group, from, to, decorators, literalBindings = new Map()) {
   if (group.kind === 'provenance') return { code: null, status: 'provenance' };
   if (group.kind === 'carried') {
     if (family(group.language) === family(to)) return { code: group.lines.join('\n'), status: 'restored' };
@@ -259,7 +279,7 @@ function translateGroup(group, from, to, decorators) {
     // The Rust frontend reads a program, so an item alone gets an empty main.
     const program = checkProgram(family(from) === 'Rust'
       ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`)
-      : parseJavaScript(text));
+      : parseJavaScript(text, literalBindings));
     // A top-level constant is a Rust constant; other top-level statements run once, as a program.
     const constants = family(to) === 'Rust' ? emitRustConstants(program) : null;
     if (!constants && program.main.effects.length > 0) return carry(text, term, from, 'top-level statement');
