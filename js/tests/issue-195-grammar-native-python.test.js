@@ -21,6 +21,8 @@ const observe = (assertions, testName) => recordIssue195Observations({
 });
 
 test('native Python grammar and scanners are canonical generated Links Notation', (context) => {
+  const lock = JSON.parse(read('js/src/vendor/grammars/grammar-lock.json'));
+  assert.equal(lock.grammars.python.oracle, true);
   const manifest = read('rust/Cargo.toml');
   const production = manifest.split('[dependencies]')[1].split('[dev-dependencies]')[0];
   const development = manifest.split('[dev-dependencies]')[1].split('[build-dependencies]')[0];

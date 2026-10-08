@@ -406,7 +406,8 @@
       "version": "0.25.0",
       "parserSha256": "a895f10b3cf7b2608f3283b43cd5cfed70971c7ee4a0136abbaaccbc4a7a25e0",
       "wasmSha256": "3523e4dc3d12894bbb2f7ea4b86b50eec69aed321c3d9b49271d82ed9f5f79b0",
-      "license": "python.LICENSE"
+      "license": "python.LICENSE",
+      "oracle": true
     },
     "r": {
       "id": "r",
