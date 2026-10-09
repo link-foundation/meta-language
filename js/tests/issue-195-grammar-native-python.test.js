@@ -83,6 +83,18 @@ test('native Python quoted strings preserve empty, ordinary and triple quote bou
   }
 });
 
+// Modern print(...) is a call, not the older unparenthesized print statement.
+test('native Python resolves parenthesized print calls as independent-oracle expression statements', () => {
+  for (const source of ['print()\n', 'print(a)\n', 'print(a, b=c)\n', 'print(d, *e)\n']) {
+    assert.equal(oracleRecovers(source, 'Python'), false, JSON.stringify(source));
+    const outcome = parser.parseTree(source);
+    assert.equal(outcome.ok, true, JSON.stringify(source));
+    assert.deepEqual(outcome.ambiguities, [], JSON.stringify(source));
+    assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'Python'), JSON.stringify(source));
+    assert.equal(text(outcome.tree), source);
+  }
+});
+
 // CI executes the upstream corpus; local checks select the focused tests.
 test('native Python matches the independent oracle on every pinned upstream corpus input', (context) => {
   const file = 'parity/fixtures/native-grammars/python-corpus.json';

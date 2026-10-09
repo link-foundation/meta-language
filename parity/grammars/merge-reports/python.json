@@ -340,6 +340,12 @@
       "rule": "_suite",
       "symbol": "_indent",
       "reason": "The source external scanner selects an indentation token before an overlapping inline suite whose first token follows a line break. Prefer the complete indented block and retain all original alternatives as fallback."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "print_statement",
+      "pattern": "print\\s*\\(",
+      "reason": "Parenthesized print(...) is a Python call expression in the pinned tree-sitter corpus, while unparenthesized Python 2 print remains a print statement; preserve the source alternatives and exclude the call prefix only from print_statement."
     }
   ],
   "approximations": [],
