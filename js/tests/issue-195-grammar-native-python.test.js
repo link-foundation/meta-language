@@ -67,11 +67,11 @@ test('native Python rejects and losslessly recovers invalid focused sources', (c
 // Regresses the generic scanner bug that swallowed the following Python lines.
 test('native Python quoted strings preserve empty, ordinary and triple quote boundaries', () => {
   const sources = [
-    'x = ""\\ny = 2\\n',
-    "x = ''\\ny = 2\\n",
-    'x = """hello"""\\ny = 2\\n',
-    "x = '''hello'''\\ny = 2\\n",
-    'x = b""\\ny = "world"\\n',
+    'x = ""\ny = 2\n',
+    "x = ''\ny = 2\n",
+    'x = """hello"""\ny = 2\n',
+    "x = '''hello'''\ny = 2\n",
+    'x = b""\ny = "world"\n',
   ];
   for (const source of sources) {
     assert.equal(oracleRecovers(source, 'Python'), false, JSON.stringify(source));
