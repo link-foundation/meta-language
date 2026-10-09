@@ -423,3 +423,15 @@ export function acceptSourceEnvelopeRestoration(sourceMatches, bodyMatches, orig
 export function acceptArrayMethodArguments(form, hasArguments, hasSingleArgument) {
   return form === 'concatenate' || form === 'construct' || (form === 'copy' && !hasArguments) || (form === 'copy-from' && hasSingleArgument);
 }
+
+/**
+ * Count UTF-16 code units rather than UTF-8 bytes or Unicode scalars.
+ * Each target expression evaluates its receiver once.
+ * @param {string} target @param {string} object @returns {string}
+ */
+export function renderStringLengthExpression(target, object) {
+  if (target === 'JavaScript') return object + '.length';
+  if (target === 'Rust') return '(' + object + '.encode_utf16().count() as f64)';
+  if (target === 'Lean') return '(Float.ofNat (String.foldl (fun (count : Nat) c => count + (if c.toNat > 65535 then 2 else 1)) 0 ' + object + '))';
+  return '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat ((fix ml_utf16_length (s : string) : nat := match s with EmptyString => 0%nat | String c rest => ((if Nat.ltb (Ascii.nat_of_ascii c) 128 then 1 else if Nat.ltb (Ascii.nat_of_ascii c) 192 then 0 else if Nat.ltb (Ascii.nat_of_ascii c) 240 then 1 else 2) + ml_utf16_length rest)%nat end) ' + object + '))))';
+}

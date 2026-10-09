@@ -1,4 +1,4 @@
-import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
+import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 // Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer
 // the translation carries in its own prelude, so no value is ever narrowed;
 // machine integers stay Rust machine integers with checked arithmetic, which
@@ -972,6 +972,7 @@ class RustEmitter {
         return `crate::ml_array::at(${this.borrow(e.array)}, ${index})`;
       }
       case 'length':
+        if (e.array.type.kind === 'string') return renderStringLengthExpression('Rust', this.receiver(e.array));
         if (e.type.kind === 'float') return `(${this.receiver(e.array)}.len() as f64)`;
         this.usesBig = true;
         return `crate::ml::Big::from_u128(${this.receiver(e.array)}.len() as u128)`;

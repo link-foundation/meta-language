@@ -60,7 +60,7 @@ test('the array forms that are not kept are refused with a reason', () => {
   assert.equal(refusal('const xs = [1, 2];\nconsole.log(xs);\n'), 'text of an array: console.log lays an array out with util.inspect and String joins its elements with commas, which the translation does not reproduce yet; print the elements one by one at 31..33');
   assert.equal(refusal('const xs = [1, 2];\nxs[0] = 3;\n'), 'assignment of an array element: the portable core reads arrays and does not mutate them; build a new array with [...xs, value] at 19..24');
   assert.equal(refusal('const xs = [1, 2];\nconsole.log(xs === xs);\n'), 'comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40');
-  assert.equal(refusal("const s = 'ab';\nconsole.log(s.length);\n"), 'length of a string: String.prototype.length counts UTF-16 code units, which the portable string types do not keep at 28..36');
+  assert.equal(refusal("const s = 'ab';\nconsole.log(s.length);\n"), undefined);
   assert.equal(refusal('const xs = [1, , 2];\n'), refusal('const xs = [1, , 2];\n'));
   assert.match(refusal('const xs = [1, , 2];\n'), /^array hole/u);
   assert.match(refusal('for (const k in { a: 1 }) console.log(k);\n'), /^for…in loop/u);

@@ -37,6 +37,14 @@ impl LeanEmitter<'_> {
                 }
             }
             Node::Length { array } => {
+                if array.ty == Type::String {
+                    return Ok(
+                        crate::translation::frontend_rules::render_string_length_expression(
+                            "Lean",
+                            &self.expr(array, depth)?,
+                        ),
+                    );
+                }
                 let of = if e.ty.is_float() {
                     "Float.ofNat"
                 } else {

@@ -203,7 +203,7 @@ class Inference {
 
   fieldStep({ object, field, result, where }) {
     const type = this.resolve(object);
-    if (type.kind === 'array' && field === 'length') {
+    if ((type.kind === 'array' || type.kind === 'string') && field === 'length') {
       this.unify(result, FLOAT, where);
       return true;
     }

@@ -65195,6 +65195,28 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "translation.render-string-length-expression",
+      "phrase": "render string length expression",
+      "role": "operation",
+      "definition": "Render the number of UTF-16 code units in a JavaScript string.",
+      "constraints": [
+        "Supplementary Unicode scalars count as two code units.",
+        "The receiver is evaluated exactly once.",
+        "UTF-8 continuation bytes do not contribute to the count."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "renderStringLengthExpression"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "render_string_length_expression"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

@@ -456,7 +456,7 @@ impl Inference {
     fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
         let name = match self.resolve(&constraint.object) {
             Term::Known(Type::Data { name }) => name,
-            Term::Array(_) if constraint.field == "length" => {
+            Term::Array(_) | Term::Known(Type::String) if constraint.field == "length" => {
                 self.unify(&constraint.result, &Term::Known(FLOAT), constraint.place)?;
                 return Ok(true);
             }

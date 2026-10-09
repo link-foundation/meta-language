@@ -1,4 +1,4 @@
-import { readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
+import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
 // run at their source sizes (unary `nat` cannot hold 20!). Structural
 // recursion over data is a `Fixpoint`; recursion that decreases a natural is
@@ -678,6 +678,10 @@ class RocqEmitter {
         return `(ml_list_at ${this.expr(e.array)} ${index} ${this.inhabitant(e.type)})`;
       }
       case 'length': {
+        if (e.array.type.kind === 'string') {
+          this.floats();
+          return renderStringLengthExpression('Rocq', this.expr(e.array));
+        }
         const length = `(Z.of_nat (List.length ${this.expr(e.array)}))`;
         if (e.type.kind !== 'float') return length;
         this.floats();

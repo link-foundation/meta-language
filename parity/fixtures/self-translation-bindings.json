@@ -216,6 +216,13 @@
       "call": "constructOrder(2, 3)",
       "rustCall": "construct_order(2.0, 3.0)",
       "expected": "23\n"
+    },
+    {
+      "name": "utf16-string-length",
+      "source": "/** @param {string} value @returns {number} */\nexport function codeUnits(value) { return value.length; }\n",
+      "call": "codeUnits('aé中😀𝄞e\\u0301\\u0000')",
+      "rustCall": "code_units(String::from(\"aé中😀𝄞e\\u{301}\\u{0}\"))",
+      "expected": "10\n"
     }
   ],
   "refusals": [

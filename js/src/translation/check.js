@@ -380,10 +380,7 @@ class Checker {
       case 'field': {
         if (node.field === 'length') {
           const object = this.expr(node.object, env, path, undefined);
-          if (object.type.kind === 'array') return { k: 'length', array: object, type: FLOAT };
-          if (object.type.kind === 'string') {
-            throw unsupported('length of a string', 'String.prototype.length counts UTF-16 code units, which the portable string types do not keep', node.span);
-          }
+          if (object.type.kind === 'array' || object.type.kind === 'string') return { k: 'length', array: object, type: FLOAT };
         }
         throw unsupported('field access', `field ${node.field} is only portable inside a constructor match`, node.span);
       }

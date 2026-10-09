@@ -515,7 +515,9 @@
           "rust/tests/unit/translation_array_construction.rs",
           "rust/src/translation/javascript/array_methods.rs",
           "parity/fixtures/translation-array-construction.json",
-          "parity/fixtures/self-translation-line-endings.json"
+          "parity/fixtures/self-translation-line-endings.json",
+          "parity/fixtures/translation-corpus/string-length.mjs",
+          "rust/tests/unit/translation_string_length.rs"
         ]
       },
       "javascript": {
@@ -544,7 +546,9 @@
           "js/tests/translation-self-line-endings.test.js",
           "js/tests/translation-array-concatenation.test.js",
           "parity/fixtures/translation-array-construction.json",
-          "parity/fixtures/self-translation-line-endings.json"
+          "parity/fixtures/self-translation-line-endings.json",
+          "parity/fixtures/translation-corpus/string-length.mjs",
+          "js/tests/translation-string-length.test.js"
         ]
       }
     },

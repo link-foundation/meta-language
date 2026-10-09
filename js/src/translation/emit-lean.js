@@ -1,4 +1,4 @@
-import { readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
+import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 // Lean 4 emitter. Naturals are `Nat`, integers `Int`; machine integers are
 // represented by `Nat`/`Int` with explicit range checks that `panic!` where
 // Rust would panic. Recursion is structural and annotated as such, so the
@@ -446,6 +446,7 @@ class LeanEmitter {
         return `(ml_array_at ${values} ${e.index.type.kind === 'nat' ? `(Int.ofNat ${index})` : index})`;
       }
       case 'length':
+        if (e.array.type.kind === 'string') return renderStringLengthExpression('Lean', this.expr(e.array, depth));
         return `(${e.type.kind === 'float' ? 'Float.ofNat' : 'Int.ofNat'} ${this.expr(e.array, depth)}.size)`;
       case 'math':
         return this.math(e, depth);

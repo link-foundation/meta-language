@@ -925,5 +925,18 @@ pub fn accept_array_method_arguments(
         || (form == "copy-from" && has_single_argument)
 }
 
+pub fn render_string_length_expression(target: &str, object: &str) -> String {
+    match target {
+        "JavaScript" => format!("{object}.length"),
+        "Rust" => format!("({object}.encode_utf16().count() as f64)"),
+        "Lean" => format!(
+            "(Float.ofNat (String.foldl (fun (count : Nat) c => count + (if c.toNat > 65535 then 2 else 1)) 0 {object}))"
+        ),
+        _ => format!(
+            "(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat ((fix ml_utf16_length (s : string) : nat := match s with EmptyString => 0%nat | String c rest => ((if Nat.ltb (Ascii.nat_of_ascii c) 128 then 1 else if Nat.ltb (Ascii.nat_of_ascii c) 192 then 0 else if Nat.ltb (Ascii.nat_of_ascii c) 240 then 1 else 2) + ml_utf16_length rest)%nat end) {object}))))"
+        ),
+    }
+}
+
 mod continuations;
 pub use continuations::*;

@@ -777,6 +777,31 @@
       }
     },
     {
+      "name": "corpus/string-length.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/string-length.mjs",
+      "parse": {
+        "sha256": "c91e5d8f0cdedfd92bb367e7eb919cb7a41df2de55913030a65930adf1ecd6c1"
+      },
+      "check": {
+        "sha256": "e2fed32dd5a4e19c9d4246a40849ad882bb3505ddc283eff2df10940c84d808d"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "1551cc98d94224e6da2fadc3e6266e4d8d1c1245b50df5a55f0cd46a7b4edc54"
+        },
+        "rust": {
+          "sha256": "7d020359a45a1d8bbff71c6ca287e4ebddb74f29a84b8ebbdd52e0f65c14194f"
+        },
+        "lean": {
+          "sha256": "56fbc0076ab156a5d626a73e6e1822334c902de26767ace12b28cd2ed9cb1166"
+        },
+        "rocq": {
+          "sha256": "fec26d0b7293f17a2d38d35952045ad80a3bea05fe6a58b2a84f6b055d26390f"
+        }
+      }
+    },
+    {
       "name": "corpus/top-level-statements.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/top-level-statements.mjs",
