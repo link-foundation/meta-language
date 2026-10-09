@@ -859,7 +859,7 @@
       "licenseFile": "parity/grammars/sources/tree-sitter-python-0.25.0.LICENSE",
       "scanner": {
         "file": "parity/grammars/scanners/python.lino",
-        "sha256": "c1da992cd84451a855206ff3b6e025e13d1a7035e69743e124fc9bdbdeaa9508",
+        "sha256": "0c2708a625fc261e9492891510eaa7e0cdec5fb76c8d3e9b1ae8da19a3b36114",
         "ports": {
           "path": "src/scanner.c",
           "sha256": "6db82134ac2d4c90a1a1475487a625cface02662ebda9b7478cad9c7147e9afe"
