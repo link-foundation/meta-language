@@ -8,11 +8,44 @@ import { test } from 'node:test';
 import { nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { rememberedDelimiterScanner } from '../scripts/scanner-families.mjs';
 import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
-import { corpusFileCases, nativeName, ruleConcept } from '../scripts/import-native-grammars.mjs';
+import { GENERATED, corpusFileCases, mergeConcepts, nativeName, ruleConcept } from '../scripts/import-native-grammars.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
 const rule = (character, length = 80) => character.repeat(length);
+
+test('the native concept merge keeps stable record order and prunes only unused generated identities', () => {
+  const entry = { language: 'fixture' };
+  const generated = {
+    id: 'grammar.fixture-item',
+    phrase: 'fixture item',
+    role: 'concept',
+    definition: 'A fixture item in a grammar.',
+    constraints: ['Only the native fixture grammar defines this construct.', GENERATED],
+    sourceAliases: [{ source: 'native:fixture', name: 'item' }],
+    formerNames: [],
+  };
+  const authored = {
+    id: 'translation.authored-concept',
+    phrase: 'authored concept',
+    role: 'concept',
+    definition: 'An authored concept remains in place.',
+    constraints: ['Hand-authored and not generated.'],
+    sourceAliases: [{ source: 'JavaScript source', name: 'authoredConcept' }],
+    formerNames: [],
+  };
+  const register = { concepts: [generated, authored] };
+  const imports = [{ entry, rules: [{ name: 'item', sourceName: 'item', concept: generated.id }] }];
+
+  const first = mergeConcepts(register, imports);
+  assert.deepEqual(first, register, 're-importing the same source does not reorder the register');
+  assert.deepEqual(mergeConcepts(first, imports), first, 'a second import is byte-for-byte idempotent');
+  assert.deepEqual(register.concepts, [generated, authored], 'the input register is not mutated');
+
+  const afterRemoval = mergeConcepts(first, [{ entry, rules: [] }]);
+  assert.deepEqual(afterRemoval.concepts, [authored], 'unused generated records are removed only after import');
+});
+
 
 test('aliased choice branches preserve child nodes and separate optional suffix reductions', () => {
   const symbol = (name) => ({ type: 'SYMBOL', name });

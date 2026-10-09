@@ -197,9 +197,12 @@ function languageName(entry) {
  */
 export function mergeConcepts(register, imports, decisions = {}) {
   const sources = new Set(imports.map(({ entry }) => nativeSource(entry)));
+  // Keep existing identities and their stable order while rebuilding imported
+  // aliases. A temporarily empty generated record may be used again below:
+  // dropping it here would append it at the end on every regeneration, making
+  // an unchanged committed register fail --check whenever later records exist.
   const concepts = register.concepts
-    .map((record) => ({ ...record, sourceAliases: record.sourceAliases.filter(({ source }) => !sources.has(source)) }))
-    .filter((record) => !(record.constraints.includes(GENERATED) && record.sourceAliases.length === 0));
+    .map((record) => ({ ...record, sourceAliases: record.sourceAliases.filter(({ source }) => !sources.has(source)) }));
   const byId = new Map(concepts.map((record) => [record.id, record]));
   const former = new Map(concepts.flatMap((record) => record.formerNames.map((name) => [name, record.id])));
   for (const { entry, rules } of imports) {
@@ -238,7 +241,12 @@ export function mergeConcepts(register, imports, decisions = {}) {
     const usage = native.size > 1 ? SHARED : `Only the native ${names.get([...native][0])} grammar defines this construct.`;
     record.constraints = [usage, ...record.constraints.filter((text) => text !== SHARED && !ONLY.test(text))];
   }
-  return { ...register, concepts };
+  // Prune only genuinely unreferenced generated records after all sources
+  // were re-imported; authored concepts and former names remain intact.
+  return {
+    ...register,
+    concepts: concepts.filter((record) => !(record.constraints.includes(GENERATED) && record.sourceAliases.length === 0)),
+  };
 }
 
 /** The merge report of one imported language. */
