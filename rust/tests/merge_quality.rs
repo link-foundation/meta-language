@@ -222,6 +222,11 @@ fn natives() -> Vec<Native> {
             Some(|| tree_sitter_lua::LANGUAGE.into())
         ),
         native!(
+            "native-python",
+            "python",
+            Some(|| tree_sitter_python::LANGUAGE.into())
+        ),
+        native!(
             "native-make",
             "make",
             Some(|| tree_sitter_make::LANGUAGE.into())

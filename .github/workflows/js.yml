@@ -103,6 +103,41 @@ jobs:
             docs/grammar/merge-quality-evidence.md
           if-no-files-found: error
 
+
+      - name: Regenerate the reviewed Lean recovery differences
+        continue-on-error: true
+        run: node js/scripts/generate-native-recovery.mjs Lean
+
+      # CI produced these outputs using Node, Cargo and the pinned test inputs.
+      # Log chunks give the connected GitHub reviewer exact UTF-8 text even for
+      # artifacts above the GitHub connector's per-file response limit.
+      - name: Export generated evidence in bounded reviewable chunks
+        run: |
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync } from 'node:fs';
+          const files = [
+            'parity/issue-195-requirements.json',
+            'parity/fixtures/translation-stages.json',
+            'parity/fixtures/merge-quality-evidence.json',
+            'parity/fixtures/merge-quality-measurements.json',
+            'docs/grammar/merge-quality-evidence.md',
+            'parity/fixtures/native-recovery.json',
+          ];
+          for (const path of files) {
+            const source = readFileSync(path, 'utf8');
+            const chars = 4000;
+            const count = Math.ceil(source.length / chars);
+            const sha256 = createHash('sha256').update(source).digest('hex');
+            for (let index = 0; index < count; index++) {
+              console.log('EVIDENCE_CHUNK ' + JSON.stringify({
+                path, index, count, length: source.length, sha256,
+                part: source.slice(index * chars, (index + 1) * chars),
+              }));
+            }
+          }
+          NODE
+
   # The test files run in groups, one job each, so no job holds the whole
   # suite in one process. scripts/test-groups.mjs fails when a test file is in
   # no group or in more than one.
