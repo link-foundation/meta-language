@@ -16885,7 +16885,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "method call .slice(): methods of values are outside the portable core at 76..82"
+          "message": ".slice() with arguments: array copying takes no index arguments until their bounds are modeled at 76..86"
         }
       }
     },

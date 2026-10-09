@@ -52,6 +52,7 @@ grammar builds. The sources are the specifications and grammars merged.
 | `native-pascal` | crates.io tree-sitter-pascal 0.10.2 | [upstream](https://github.com/Isopod/tree-sitter-pascal/tree/042119eca2e18a60e56317fb06ee3ba5c32cb447/test/corpus) | [1](https://github.com/Isopod/tree-sitter-pascal/tree/042119eca2e18a60e56317fb06ee3ba5c32cb447) [2](https://github.com/Isopod/tree-sitter-pascal/tree/042119eca2e18a60e56317fb06ee3ba5c32cb447/test/corpus) |
 | `native-powershell` | crates.io tree-sitter-powershell 0.26.4 | [upstream](https://github.com/airbus-cert/tree-sitter-powershell/tree/d398441825243b00e317e87e1829b9d6a3e54ce0/test/corpus) | [1](https://github.com/airbus-cert/tree-sitter-powershell/tree/d398441825243b00e317e87e1829b9d6a3e54ce0) [2](https://github.com/airbus-cert/tree-sitter-powershell/tree/d398441825243b00e317e87e1829b9d6a3e54ce0/test/corpus) |
 | `native-proto` | tree-sitter-proto 0.6.0 | [upstream](https://github.com/coder3101/tree-sitter-proto/tree/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/test/corpus) | [1](https://github.com/coder3101/tree-sitter-proto/blob/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/grammar.js) [2](https://github.com/coder3101/tree-sitter-proto/tree/6c878d18628ebbff3474479d2fdd6d8ba1954c3e/test/corpus) |
+| `native-python` | crates.io tree-sitter-python 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-python/tree/293fdc02038ee2bf0e2e206711b69c90ac0d413f/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-python/tree/293fdc02038ee2bf0e2e206711b69c90ac0d413f) [2](https://github.com/tree-sitter/tree-sitter-python/tree/293fdc02038ee2bf0e2e206711b69c90ac0d413f/test/corpus) |
 | `native-racket` | tree-sitter-racket 0.25.0 | curated | [1](https://docs.racket-lang.org/reference/reader.html) [2](https://docs.rs/crate/tree-sitter-racket/0.25.0/source/grammar.js) |
 | `native-regex` | tree-sitter-regex 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-regex/blob/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/grammar.js) [2](https://github.com/tree-sitter/tree-sitter-regex/tree/b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b/test/corpus) |
 | `native-rocq` | tree-sitter-rocq 300fe33 | [upstream](https://github.com/aruzdh/tree-sitter-rocq/tree/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/test/corpus) | [1](https://github.com/aruzdh/tree-sitter-rocq/blob/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/grammar.js) [2](https://github.com/aruzdh/tree-sitter-rocq/tree/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/test/corpus) |
@@ -98,6 +99,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-pascal` | 45 | 920 | 1817 | 0 | 4 |
 | `native-powershell` | 48 | 1710 | 813 | 0 | 7 |
 | `native-proto` | 79 | 6291 | 26218 | 0 | 20 |
+| `native-python` | 48 | 704 | 1039 | 0 | 6 |
 | `native-racket` | 306 | 1165 | 1769 | 22 | 60 |
 | `native-regex` | 82 | 1036 | 1007 | 2 | 24 |
 | `native-rocq` | 230 | 9440 | 20820 | 0 | 12 |
@@ -110,7 +112,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 3745 | 89305 | 197076 | 101 | 608 |
+| all | 3793 | 90009 | 198115 | 101 | 614 |
 
 ## Coverage
 
@@ -147,6 +149,7 @@ language specification and checked against the oracle.
 | `native-pascal` | 127 | 0 | 27 | 162 | 50 of 127 (39%) | 97 | 19 | 297 | 9 | 0 | 0 |
 | `native-powershell` | 139 | 0 | 13 | 15 | 90 of 139 (65%) | 98 | 12 | 54 | 12 | 0 | 0 |
 | `native-proto` | 43 | 0 | 3 | 9 | 43 of 43 (100%) | 52 | 5 | 20 | 7 | 0 | 0 |
+| `native-python` | 108 | 0 | 34 | 11 | 51 of 108 (47%) | 65 | 26 | 43 | 2 | 0 | 0 |
 | `native-racket` | 22 | 0 | 3 | 14 | 22 of 22 (100%) | 32 | 0 | n/a | n/a | n/a | n/a |
 | `native-regex` | 24 | 0 | 4 | 12 | 24 of 24 (100%) | 38 | 0 | 4 | 0 | 0 | 0 |
 | `native-rocq` | 203 | 0 | 46 | 16 | 191 of 203 (94%) | 203 | 29 | 84 | 27 | 0 | 0 |
@@ -175,10 +178,10 @@ rules name a concept another native grammar names
 | `native-cpp` | 1 | 33 | 2 | 2 | 0 | 201 | 104 |
 | `native-css` | 3 | 0 | 0 | 3 | 5 | 16 | 50 |
 | `native-csv` | 0 | 0 | 0 | 0 | 0 | 3 | 5 |
-| `native-dart` | 7 | 127 | 1 | 2 | 5 | 94 | 190 |
+| `native-dart` | 7 | 127 | 1 | 2 | 5 | 97 | 187 |
 | `native-diff` | 0 | 0 | 0 | 1 | 0 | 2 | 22 |
-| `native-erlang` | 3 | 14 | 0 | 2 | 2 | 44 | 152 |
-| `native-go` | 0 | 8 | 0 | 2 | 0 | 67 | 50 |
+| `native-erlang` | 3 | 14 | 0 | 2 | 2 | 48 | 148 |
+| `native-go` | 0 | 8 | 0 | 2 | 0 | 68 | 49 |
 | `native-graphql` | 0 | 0 | 0 | 3 | 0 | 26 | 48 |
 | `native-groovy` | 0 | 33 | 0 | 3 | 1 | 171 | 12 |
 | `native-ini` | 0 | 0 | 0 | 2 | 0 | 2 | 3 |
@@ -186,24 +189,25 @@ rules name a concept another native grammar names
 | `native-javascript` | 5 | 18 | 9 | 3 | 3 | 143 | 0 |
 | `native-json` | 0 | 0 | 0 | 2 | 0 | 11 | 0 |
 | `native-json5` | 0 | 0 | 0 | 2 | 0 | 11 | 1 |
-| `native-lean` | 1 | 11 | 0 | 2 | 5 | 51 | 96 |
+| `native-lean` | 1 | 11 | 0 | 2 | 5 | 52 | 95 |
 | `native-lua` | 2 | 0 | 0 | 2 | 6 | 38 | 35 |
 | `native-make` | 0 | 0 | 0 | 3 | 0 | 16 | 49 |
 | `native-nix` | 2 | 0 | 0 | 2 | 1 | 15 | 41 |
-| `native-pascal` | 0 | 10 | 0 | 3 | 0 | 72 | 244 |
+| `native-pascal` | 0 | 10 | 0 | 3 | 0 | 73 | 243 |
 | `native-powershell` | 1 | 5 | 0 | 5 | 1 | 51 | 116 |
 | `native-proto` | 0 | 0 | 0 | 2 | 0 | 22 | 33 |
+| `native-python` | 2 | 9 | 0 | 3 | 4 | 70 | 83 |
 | `native-racket` | 0 | 0 | 0 | 0 | 0 | 23 | 16 |
 | `native-regex` | 0 | 1 | 0 | 1 | 0 | 2 | 38 |
-| `native-rocq` | 0 | 16 | 2 | 2 | 0 | 41 | 224 |
-| `native-rust` | 6 | 9 | 0 | 3 | 10 | 76 | 108 |
+| `native-rocq` | 0 | 16 | 2 | 2 | 0 | 42 | 223 |
+| `native-rust` | 6 | 9 | 0 | 3 | 10 | 77 | 107 |
 | `native-scheme` | 0 | 0 | 0 | 0 | 0 | 23 | 5 |
 | `native-solidity` | 0 | 11 | 0 | 2 | 1 | 68 | 99 |
-| `native-sql` | 2 | 5 | 1 | 4 | 0 | 72 | 550 |
+| `native-sql` | 2 | 5 | 1 | 4 | 0 | 73 | 549 |
 | `native-toml` | 3 | 0 | 0 | 2 | 5 | 10 | 17 |
 | `native-tsx` | 7 | 49 | 44 | 3 | 5 | 230 | 0 |
 | `native-typescript` | 7 | 48 | 44 | 3 | 5 | 230 | 0 |
-| `native-vb` | 0 | 16 | 0 | 3 | 0 | 62 | 49 |
+| `native-vb` | 0 | 16 | 0 | 3 | 0 | 65 | 46 |
 | `native-zig` | 0 | 6 | 1 | 2 | 0 | 61 | 55 |
 
 ## Recovery
@@ -238,6 +242,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-pascal` | 4 | 4 | 2 | 6 | none |
 | `native-powershell` | 7 | 7 | 1 | 8 | none |
 | `native-proto` | 20 | 20 | 12 | 19 | none |
+| `native-python` | 6 | 6 | 1 | 10 | none |
 | `native-racket` | 60 | 60 | 29 | 75 | none |
 | `native-regex` | 24 | 24 | 7 | 32 | none |
 | `native-rocq` | 12 | 12 | 2 | 25 | native-skips-more 16, oracle-skips-more 45, same-repair-sites 4, same-skipped-bytes 7 |
@@ -281,8 +286,8 @@ The `native-vb` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Nod
 
 The `native-zig` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0.
 
-Measured on linux x64, AMD EPYC Processor (with IBPB), with Node.js 26.10.0
-and the unoptimized test profile of rustc 1.98.1. Times are milliseconds of one warm pass over
+Measured on linux x64, AMD EPYC 7763 64-Core Processor, with Node.js 22.23.3
+and the unoptimized test profile of rustc 1.99.0. Times are milliseconds of one warm pass over
 the matches (parse) and over the rejections (recover: the native executor
 with `errorRecovery`, the oracle with its own recovery), after one pass to
 warm up. Machines differ; the ratios matter more than the values.
@@ -317,6 +322,7 @@ loads the same modules and parses nothing.
 | `native-pascal` | 191.5 | 1.4 | 141.6× | 45.4 | 0.3 | 74.3 | 7.8 |
 | `native-powershell` | 167.6 | 1.8 | 95.7× | 486.1 | 0.7 | 188.0 | 16.2 |
 | `native-proto` | 644.6 | 10.2 | 63.2× | 98.9 | 1.7 | 104.6 | 8.7 |
+| `native-python` | 257.4 | 2.2 | 114.7× | 67.4 | 0.5 | 46.8 | 5.8 |
 | `native-racket` | 231.7 | 5.0 | 46.3× | 90.5 | 1.7 | 45.3 | 9.7 |
 | `native-regex` | 196.9 | 5.2 | 38.1× | 258.4 | 0.6 | 32.0 | 12.2 |
 | `native-rocq` | 4542.7 | 28.8 | 158.0× | 572.1 | 2.1 | 127.9 | 119.9 |
@@ -363,6 +369,7 @@ without optimization, as the tests run them.
 | `native-pascal` | 719.8 | 1.4 | 520.5× | 188.3 | 0.3 | 5.1 |
 | `native-powershell` | 462.6 | 1.2 | 394.7× | 1286.6 | 0.5 | 11.6 |
 | `native-proto` | 2063.4 | 10.2 | 203.2× | 325.5 | 0.6 | 15.5 |
+| `native-python` | 1012.5 | 1.2 | 830.6× | 210.5 | 0.3 | 3.7 |
 | `native-racket` | 1406.2 | 2.1 | 657.1× | 246.0 | 1.3 | 3.0 |
 | `native-regex` | 678.6 | 2.2 | 306.6× | 431.9 | 0.5 | 0.8 |
 | `native-rocq` | 18852.0 | n/a | n/a | 2261.6 | n/a | 10.5 |

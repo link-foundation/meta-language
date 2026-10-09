@@ -899,42 +899,42 @@
     "planned:conformance:JavaScript": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "JavaScript mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "37ccf2057006aa9f2a703f67565bfe8e00536bba78e0b7a95a4a2d0fe47230fd"
+      "sha256": "522ab00445f7be7c05801deedf862980f80523f88b7cd553da1524b2aa306e32"
     },
     "planned:generative:JavaScript": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "JavaScript property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "86c1eb0bc184054a521da630c1e12c7042fdc4cd63ff50a231686ff41293d90f"
+      "sha256": "10a08ce26dc4d7a5943556922271e2dec1b94a10ab13fb2d00861c2425f52f7c"
     },
     "planned:conformance:Rust": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "Rust mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "37ccf2057006aa9f2a703f67565bfe8e00536bba78e0b7a95a4a2d0fe47230fd"
+      "sha256": "522ab00445f7be7c05801deedf862980f80523f88b7cd553da1524b2aa306e32"
     },
     "planned:generative:Rust": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Rust property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "86c1eb0bc184054a521da630c1e12c7042fdc4cd63ff50a231686ff41293d90f"
+      "sha256": "10a08ce26dc4d7a5943556922271e2dec1b94a10ab13fb2d00861c2425f52f7c"
     },
     "planned:conformance:Lean": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "Lean mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "37ccf2057006aa9f2a703f67565bfe8e00536bba78e0b7a95a4a2d0fe47230fd"
+      "sha256": "522ab00445f7be7c05801deedf862980f80523f88b7cd553da1524b2aa306e32"
     },
     "planned:generative:Lean": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Lean property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "86c1eb0bc184054a521da630c1e12c7042fdc4cd63ff50a231686ff41293d90f"
+      "sha256": "10a08ce26dc4d7a5943556922271e2dec1b94a10ab13fb2d00861c2425f52f7c"
     },
     "planned:conformance:Rocq": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "Rocq mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "37ccf2057006aa9f2a703f67565bfe8e00536bba78e0b7a95a4a2d0fe47230fd"
+      "sha256": "522ab00445f7be7c05801deedf862980f80523f88b7cd553da1524b2aa306e32"
     },
     "planned:generative:Rocq": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Rocq property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "86c1eb0bc184054a521da630c1e12c7042fdc4cd63ff50a231686ff41293d90f"
+      "sha256": "10a08ce26dc4d7a5943556922271e2dec1b94a10ab13fb2d00861c2425f52f7c"
     },
     "planned:semantic:JavaScript:modules-and-imports": {
       "path": "parity/fixtures/four-language-conformance.json",
@@ -1864,17 +1864,17 @@
     "planned:repository-directive:i195-grammar-shared-concepts": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
       "selector": "docs/vision.md#grammar-feature-union: a canonical concept record for every rule of every native grammar",
-      "sha256": "199beb0ec2b0151fe73700fedaf94ad6c87a95748adb520213ff9261648fc26f"
+      "sha256": "f4f8f2a7d885a5dbdb90ccb2bfa8f499184a18677a718d127fbeb6c03663d00e"
     },
     "planned:repository-directive:i195-grammar-concept-reuse-report": {
       "path": "parity/fixtures/native-grammar-concept-reuse.json",
       "selector": "docs/vision.md#grammar-feature-union: per-language report of shared and language-specific native grammar rules",
-      "sha256": "350338f9127874ea5b12545c824400e15c6c73e0bf7c7d0b516c9af3b26ebe12"
+      "sha256": "054d94e139fb951e51e3e96f3f162bab676e8548c91d37db4bf468dc3519b433"
     },
     "planned:repository-directive:i195-grammar-concept-translation": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
       "selector": "docs/vision.md#grammar-feature-union: translation of shared constructs between native grammars through their concepts",
-      "sha256": "199beb0ec2b0151fe73700fedaf94ad6c87a95748adb520213ff9261648fc26f"
+      "sha256": "f4f8f2a7d885a5dbdb90ccb2bfa8f499184a18677a718d127fbeb6c03663d00e"
     },
     "planned:repository-directive:i195-grammar-lossless-trees": {
       "path": "parity/language-grammar-inventory.json",
@@ -1949,7 +1949,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "87ec17b987a97c6be2b37fca73f41f48409434af3dee6889eeec5661814f2b33"
+      "sha256": "f33f652231e228fe3413d414ae8f95f01f6b74ebfd394b98c91dccfd36dd45ab"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
       "path": "parity/grammars/reconcile/pairs.json",
