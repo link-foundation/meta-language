@@ -24,6 +24,10 @@
         [
           "native-cpp",
           "function_definition"
+        ],
+        [
+          "native-python",
+          "function_definition"
         ]
       ]
     },
@@ -161,6 +165,10 @@
         ],
         [
           "native-cpp",
+          "string"
+        ],
+        [
+          "native-python",
           "string"
         ]
       ]
@@ -368,6 +376,10 @@
         [
           "native-sql",
           "comment"
+        ],
+        [
+          "native-python",
+          "comment"
         ]
       ]
     },
@@ -443,6 +455,10 @@
         ],
         [
           "native-sql",
+          "list"
+        ],
+        [
+          "native-python",
           "list"
         ]
       ]
@@ -746,6 +762,10 @@
         [
           "native-cpp",
           "escape_sequence"
+        ],
+        [
+          "native-python",
+          "escape_sequence"
         ]
       ]
     },
@@ -986,6 +1006,10 @@
         [
           "native-sql",
           "identifier"
+        ],
+        [
+          "native-python",
+          "identifier"
         ]
       ]
     },
@@ -1068,6 +1092,14 @@
         [
           "native-sql",
           "expression"
+        ],
+        [
+          "native-python",
+          "expression"
+        ],
+        [
+          "native-python",
+          "exception_expression"
         ]
       ]
     },
@@ -1138,6 +1170,10 @@
         [
           "native-sql",
           "statement"
+        ],
+        [
+          "native-python",
+          "statement"
         ]
       ]
     },
@@ -1187,6 +1223,10 @@
         ],
         [
           "native-cpp",
+          "expression_statement"
+        ],
+        [
+          "native-python",
           "expression_statement"
         ]
       ]
@@ -1265,6 +1305,10 @@
         ],
         [
           "native-sql",
+          "parenthesized_expression"
+        ],
+        [
+          "native-python",
           "parenthesized_expression"
         ]
       ]
@@ -1576,6 +1620,10 @@
         [
           "native-cpp",
           "argument_list"
+        ],
+        [
+          "native-python",
+          "argument_list"
         ]
       ]
     },
@@ -1621,6 +1669,10 @@
         ],
         [
           "native-cpp",
+          "else_clause"
+        ],
+        [
+          "native-python",
           "else_clause"
         ]
       ]
@@ -1687,6 +1739,10 @@
         ],
         [
           "native-cpp",
+          "word_characters"
+        ],
+        [
+          "native-python",
           "word_characters"
         ]
       ]
@@ -1898,6 +1954,10 @@
         [
           "native-zig",
           "await_expression"
+        ],
+        [
+          "native-python",
+          "await_expression"
         ]
       ]
     },
@@ -1943,6 +2003,10 @@
         ],
         [
           "native-cpp",
+          "break_statement"
+        ],
+        [
+          "native-python",
           "break_statement"
         ]
       ]
@@ -2178,6 +2242,10 @@
         [
           "native-cpp",
           "continue_statement"
+        ],
+        [
+          "native-python",
+          "continue_statement"
         ]
       ]
     },
@@ -2267,6 +2335,10 @@
         ],
         [
           "native-typescript",
+          "decorator"
+        ],
+        [
+          "native-python",
           "decorator"
         ]
       ]
@@ -2640,6 +2712,10 @@
         [
           "native-powershell",
           "finally_clause"
+        ],
+        [
+          "native-python",
+          "finally_clause"
         ]
       ]
     },
@@ -2733,6 +2809,10 @@
         ],
         [
           "native-cpp",
+          "for_statement"
+        ],
+        [
+          "native-python",
           "for_statement"
         ]
       ]
@@ -2948,6 +3028,10 @@
         [
           "native-vb",
           "generic_type"
+        ],
+        [
+          "native-python",
+          "generic_type"
         ]
       ]
     },
@@ -3098,6 +3182,10 @@
         [
           "native-cpp",
           "if_statement"
+        ],
+        [
+          "native-python",
+          "if_statement"
         ]
       ]
     },
@@ -3211,6 +3299,10 @@
         ],
         [
           "native-vb",
+          "import_statement"
+        ],
+        [
+          "native-python",
           "import_statement"
         ]
       ]
@@ -3928,6 +4020,10 @@
         [
           "native-toml",
           "pair"
+        ],
+        [
+          "native-python",
+          "pair"
         ]
       ]
     },
@@ -3984,6 +4080,10 @@
         [
           "native-regex",
           "pattern"
+        ],
+        [
+          "native-python",
+          "pattern"
         ]
       ]
     },
@@ -4013,6 +4113,10 @@
         ],
         [
           "native-powershell",
+          "primary_expression"
+        ],
+        [
+          "native-python",
           "primary_expression"
         ]
       ]
@@ -4239,6 +4343,10 @@
         ],
         [
           "native-cpp",
+          "return_statement"
+        ],
+        [
+          "native-python",
           "return_statement"
         ]
       ]
@@ -4632,6 +4740,10 @@
         [
           "native-cpp",
           "try_statement"
+        ],
+        [
+          "native-python",
+          "try_statement"
         ]
       ]
     },
@@ -4699,6 +4811,10 @@
         ],
         [
           "native-sql",
+          "type"
+        ],
+        [
+          "native-python",
           "type"
         ]
       ]
@@ -4781,6 +4897,10 @@
         ],
         [
           "native-java",
+          "type_parameter"
+        ],
+        [
+          "native-python",
           "type_parameter"
         ]
       ]
@@ -5050,6 +5170,10 @@
         [
           "native-cpp",
           "while_statement"
+        ],
+        [
+          "native-python",
+          "while_statement"
         ]
       ]
     },
@@ -5076,6 +5200,10 @@
         [
           "native-vb",
           "with_statement"
+        ],
+        [
+          "native-python",
+          "with_statement"
         ]
       ]
     },
@@ -5097,6 +5225,10 @@
         ],
         [
           "native-typescript",
+          "yield_expression"
+        ],
+        [
+          "native-python",
           "yield_expression"
         ]
       ]
@@ -5127,6 +5259,10 @@
         ],
         [
           "native-sql",
+          "block"
+        ],
+        [
+          "native-python",
           "block"
         ]
       ]
@@ -5284,6 +5420,10 @@
         [
           "native-cpp",
           "parameter_list"
+        ],
+        [
+          "native-python",
+          "parameter_list"
         ]
       ]
     },
@@ -5393,6 +5533,10 @@
         ],
         [
           "native-sql",
+          "integer_literal"
+        ],
+        [
+          "native-python",
           "integer_literal"
         ]
       ]
@@ -5672,6 +5816,10 @@
         [
           "native-sql",
           "float"
+        ],
+        [
+          "native-python",
+          "float"
         ]
       ]
     },
@@ -5769,6 +5917,10 @@
         ],
         [
           "native-cpp",
+          "parameter_declaration"
+        ],
+        [
+          "native-python",
           "parameter_declaration"
         ]
       ]
@@ -5939,6 +6091,10 @@
         ],
         [
           "native-typescript",
+          "module"
+        ],
+        [
+          "native-python",
           "module"
         ]
       ]
@@ -6734,6 +6890,10 @@
         [
           "native-java",
           "assert_statement"
+        ],
+        [
+          "native-python",
+          "assert_statement"
         ]
       ]
     },
@@ -6751,6 +6911,10 @@
         ],
         [
           "native-dart",
+          "conditional_expression"
+        ],
+        [
+          "native-python",
           "conditional_expression"
         ]
       ]
@@ -6895,6 +7059,10 @@
         ],
         [
           "native-rocq",
+          "list_pattern"
+        ],
+        [
+          "native-python",
           "list_pattern"
         ]
       ]
@@ -7094,6 +7262,204 @@
         [
           "native-java",
           "yield_statement"
+        ]
+      ]
+    },
+    {
+      "construct": "comparison operator",
+      "concept": "grammar.comparison-operator",
+      "rules": [
+        [
+          "native-erlang",
+          "comparison_operator"
+        ],
+        [
+          "native-powershell",
+          "comparison_operator"
+        ],
+        [
+          "native-python",
+          "comparison_operator"
+        ]
+      ]
+    },
+    {
+      "construct": "compound statement",
+      "concept": "grammar.compound-statement",
+      "rules": [
+        [
+          "native-c",
+          "compound_statement"
+        ],
+        [
+          "native-cpp",
+          "compound_statement"
+        ],
+        [
+          "native-python",
+          "compound_statement"
+        ]
+      ]
+    },
+    {
+      "construct": "concatenated string",
+      "concept": "grammar.concatenated-string",
+      "rules": [
+        [
+          "native-c",
+          "concatenated_string"
+        ],
+        [
+          "native-cpp",
+          "concatenated_string"
+        ],
+        [
+          "native-python",
+          "concatenated_string"
+        ]
+      ]
+    },
+    {
+      "construct": "ellipsis",
+      "concept": "grammar.ellipsis",
+      "rules": [
+        [
+          "native-erlang",
+          "ellipsis"
+        ],
+        [
+          "native-lean",
+          "ellipsis"
+        ],
+        [
+          "native-python",
+          "ellipsis"
+        ]
+      ]
+    },
+    {
+      "construct": "else if clause",
+      "concept": "grammar.else-if-clause",
+      "rules": [
+        [
+          "native-powershell",
+          "else_if_clause"
+        ],
+        [
+          "native-python",
+          "else_if_clause"
+        ],
+        [
+          "native-vb",
+          "else_if_clause"
+        ]
+      ]
+    },
+    {
+      "construct": "expression list",
+      "concept": "grammar.expression-list",
+      "rules": [
+        [
+          "native-erlang",
+          "expression_list"
+        ],
+        [
+          "native-go",
+          "expression_list"
+        ],
+        [
+          "native-python",
+          "expression_list"
+        ]
+      ]
+    },
+    {
+      "construct": "interpolation",
+      "concept": "grammar.interpolation",
+      "rules": [
+        [
+          "native-nix",
+          "interpolation"
+        ],
+        [
+          "native-python",
+          "interpolation"
+        ],
+        [
+          "native-vb",
+          "interpolation"
+        ]
+      ]
+    },
+    {
+      "construct": "string content",
+      "concept": "grammar.string-content",
+      "rules": [
+        [
+          "native-lean",
+          "string_content"
+        ],
+        [
+          "native-make",
+          "string_content"
+        ],
+        [
+          "native-python",
+          "string_content"
+        ]
+      ]
+    },
+    {
+      "construct": "subscript",
+      "concept": "grammar.subscript",
+      "rules": [
+        [
+          "native-lean",
+          "subscript"
+        ],
+        [
+          "native-python",
+          "subscript"
+        ],
+        [
+          "native-sql",
+          "subscript"
+        ]
+      ]
+    },
+    {
+      "construct": "tuple pattern",
+      "concept": "grammar.tuple-pattern",
+      "rules": [
+        [
+          "native-lean",
+          "tuple_pattern"
+        ],
+        [
+          "native-python",
+          "tuple_pattern"
+        ],
+        [
+          "native-rust",
+          "tuple_pattern"
+        ]
+      ]
+    },
+    {
+      "construct": "union type",
+      "concept": "grammar.union-type",
+      "rules": [
+        [
+          "native-python",
+          "union_type"
+        ],
+        [
+          "native-tsx",
+          "union_type"
+        ],
+        [
+          "native-typescript",
+          "union_type"
         ]
       ]
     }
