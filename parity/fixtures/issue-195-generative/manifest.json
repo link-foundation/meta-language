@@ -39,7 +39,7 @@
   },
   "inputs": {
     "reproducers.json": "0789c7978e4e6616eec6ebfec6d39c44009788f9c660740fa2e06e94400dbe0d",
-    "issue-195-conformance/manifest.json": "37ccf2057006aa9f2a703f67565bfe8e00536bba78e0b7a95a4a2d0fe47230fd"
+    "issue-195-conformance/manifest.json": "522ab00445f7be7c05801deedf862980f80523f88b7cd553da1524b2aa306e32"
   },
   "oracle": {
     "tool": "tree-sitter 0.27.0",

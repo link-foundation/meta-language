@@ -33,6 +33,76 @@ env:
   GIT_CONFIG_VALUE_0: main
 
 jobs:
+  # PR #201 diagnostic: execute the repository's actual generators on a clean
+  # CI checkout and export their outputs for review. This does not bypass any
+  # required validation, modify the checked-out PR branch, or attest a pass.
+  issue-195-evidence-snapshot:
+    name: Generate issue 195 evidence snapshots
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 201 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Simulate fresh merge with base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bash js/scripts/simulate-fresh-merge.sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Regenerate atomic requirement manifest
+        run: node js/scripts/check-issue-195-acceptance.mjs --refresh-manifest
+
+      - name: Regenerate translation-stage fixtures
+        run: node js/scripts/build-translation-stage-fixtures.mjs
+
+      - name: Regenerate deterministic merge-quality evidence
+        run: node js/scripts/build-merge-quality-evidence.mjs
+
+      - name: Upload deterministic generator outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue195-pr201-deterministic-snapshot
+          retention-days: 2
+          path: |
+            parity/issue-195-requirements.json
+            parity/fixtures/translation-stages.json
+            parity/fixtures/merge-quality-evidence.json
+            docs/grammar/merge-quality-evidence.md
+          if-no-files-found: error
+
+      - name: Install Rust toolchain to measure native Python
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Measure Python in the two real runtimes
+        continue-on-error: true
+        run: node js/scripts/build-merge-quality-evidence.mjs --measure --only native-python
+
+      - name: Upload measured grammar evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue195-pr201-measured-snapshot
+          retention-days: 2
+          path: |
+            parity/fixtures/merge-quality-measurements.json
+            parity/fixtures/merge-quality-evidence.json
+            docs/grammar/merge-quality-evidence.md
+          if-no-files-found: error
+
   # The test files run in groups, one job each, so no job holds the whole
   # suite in one process. scripts/test-groups.mjs fails when a test file is in
   # no group or in more than one.
