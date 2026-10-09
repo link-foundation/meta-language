@@ -16,7 +16,7 @@
   ],
   "scanner": {
     "file": "parity/grammars/scanners/python.lino",
-    "sha256": "0dfcda258e8a1cf4cd66855d2bcc45028f740b5e3e6027bd08550f6a96db2466",
+    "sha256": "c1da992cd84451a855206ff3b6e025e13d1a7035e69743e124fc9bdbdeaa9508",
     "ports": {
       "path": "src/scanner.c",
       "sha256": "6db82134ac2d4c90a1a1475487a625cface02662ebda9b7478cad9c7147e9afe"

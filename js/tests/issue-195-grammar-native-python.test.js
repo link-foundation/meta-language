@@ -63,6 +63,26 @@ test('native Python rejects and losslessly recovers invalid focused sources', (c
   observe(['nativePythonRejectsInvalidInput'], context.name);
 });
 
+// A paired quote is a complete empty string, not the start of a triple quote.
+// Regresses the generic scanner bug that swallowed the following Python lines.
+test('native Python quoted strings preserve empty, ordinary and triple quote boundaries', () => {
+  const sources = [
+    'x = ""\\ny = 2\\n',
+    "x = ''\\ny = 2\\n",
+    'x = """hello"""\\ny = 2\\n',
+    "x = '''hello'''\\ny = 2\\n",
+    'x = b""\\ny = "world"\\n',
+  ];
+  for (const source of sources) {
+    assert.equal(oracleRecovers(source, 'Python'), false, JSON.stringify(source));
+    const outcome = parser.parseTree(source);
+    assert.equal(outcome.ok, true, JSON.stringify(source));
+    assert.deepEqual(outcome.ambiguities, [], JSON.stringify(source));
+    assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'Python'), JSON.stringify(source));
+    assert.equal(text(outcome.tree), source);
+  }
+});
+
 // CI executes the upstream corpus; local checks select the focused tests.
 test('native Python matches the independent oracle on every pinned upstream corpus input', (context) => {
   const file = 'parity/fixtures/native-grammars/python-corpus.json';
