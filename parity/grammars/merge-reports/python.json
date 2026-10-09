@@ -16,7 +16,7 @@
   ],
   "scanner": {
     "file": "parity/grammars/scanners/python.lino",
-    "sha256": "0c2708a625fc261e9492891510eaa7e0cdec5fb76c8d3e9b1ae8da19a3b36114",
+    "sha256": "6a80b04646d502fbb96d66fcc8a2278d1d839460c6dab0ee242d3f26f18b804e",
     "ports": {
       "path": "src/scanner.c",
       "sha256": "6db82134ac2d4c90a1a1475487a625cface02662ebda9b7478cad9c7147e9afe"
@@ -49,7 +49,7 @@
       "escape_interpolation"
     ]
   },
-  "rules": 153,
+  "rules": 159,
   "keywords": [
     "False",
     "None",
@@ -266,6 +266,30 @@
     {
       "source": "_exception_as_pattern",
       "native": "exception_as_pattern"
+    },
+    {
+      "source": "_collection_expression",
+      "native": "collection_expression"
+    },
+    {
+      "source": "_collection_primary_expression",
+      "native": "collection_primary_expression"
+    },
+    {
+      "source": "_collection_list_splat_pattern",
+      "native": "collection_list_splat_pattern"
+    },
+    {
+      "source": "_collection_attribute",
+      "native": "collection_attribute"
+    },
+    {
+      "source": "_collection_subscript",
+      "native": "collection_subscript"
+    },
+    {
+      "source": "_collection_call",
+      "native": "collection_call"
     }
   ],
   "expandedWords": [
@@ -305,9 +329,13 @@
       {
         "rule": "exception_expression",
         "concept": "grammar.expression"
+      },
+      {
+        "rule": "collection_expression",
+        "concept": "grammar.expression"
       }
     ],
-    "generated": 145
+    "generated": 150
   },
   "sourceTransforms": [
     {
@@ -346,6 +374,36 @@
       "rule": "print_statement",
       "pattern": "print\\s*\\(",
       "reason": "Parenthesized print(...) is a Python call expression in the pinned tree-sitter corpus, while unparenthesized Python 2 print remains a print statement; preserve the source alternatives and exclude the call prefix only from print_statement."
+    },
+    {
+      "family": "prefer-optional-literal",
+      "rule": "except_clause",
+      "literal": "*",
+      "value": 2,
+      "reason": "The exception-group marker belongs to the except clause before its value. Retain the absent marker and splat-expression alternatives while preferring the present marker as the pinned parser does."
+    },
+    {
+      "family": "context-rule-variants",
+      "rules": [
+        "expression",
+        "primary_expression",
+        "list_splat_pattern",
+        "attribute",
+        "subscript",
+        "call"
+      ],
+      "insertInto": [
+        "_collection_elements"
+      ],
+      "prefix": "_collection_",
+      "reason": "Collection elements need a splat-pattern reduction before suffixes without changing exception-value or assignment-pattern contexts. Retain every original alternative and use variants with the same concrete kinds and concepts."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "_collection_list_splat_pattern",
+      "associativity": "left",
+      "value": 23,
+      "reason": "The pinned parser reduces the collection splat pattern before attribute, subscript and call suffixes; preserve ordinary splat patterns outside the collection context."
     }
   ],
   "approximations": [],

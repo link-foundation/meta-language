@@ -1218,6 +1218,10 @@
         },
         {
           "source": "native:python",
+          "name": "collection_expression"
+        },
+        {
+          "source": "native:python",
           "name": "exception_expression"
         },
         {
@@ -15163,6 +15167,10 @@
         },
         {
           "source": "native:python",
+          "name": "collection_primary_expression"
+        },
+        {
+          "source": "native:python",
           "name": "primary_expression"
         },
         {
@@ -19911,6 +19919,10 @@
         {
           "source": "native:lean",
           "name": "subscript"
+        },
+        {
+          "source": "native:python",
+          "name": "collection_subscript"
         },
         {
           "source": "native:python",
@@ -46508,6 +46520,10 @@
         {
           "source": "native:python",
           "name": "call"
+        },
+        {
+          "source": "native:python",
+          "name": "collection_call"
         }
       ],
       "formerNames": []
@@ -64515,6 +64531,10 @@
       "sourceAliases": [
         {
           "source": "native:python",
+          "name": "collection_list_splat_pattern"
+        },
+        {
+          "source": "native:python",
           "name": "list_splat_pattern"
         }
       ],
@@ -64737,6 +64757,10 @@
         {
           "source": "native:python",
           "name": "attribute_access"
+        },
+        {
+          "source": "native:python",
+          "name": "collection_attribute"
         }
       ],
       "formerNames": []

@@ -99,7 +99,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-pascal` | 45 | 920 | 1817 | 0 | 4 |
 | `native-powershell` | 48 | 1710 | 813 | 0 | 7 |
 | `native-proto` | 79 | 6291 | 26218 | 0 | 20 |
-| `native-python` | 48 | 704 | 1039 | 0 | 6 |
+| `native-python` | 53 | 851 | 1199 | 0 | 6 |
 | `native-racket` | 306 | 1165 | 1769 | 22 | 60 |
 | `native-regex` | 82 | 1036 | 1007 | 2 | 24 |
 | `native-rocq` | 230 | 9440 | 20820 | 0 | 12 |
@@ -112,7 +112,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 3793 | 90009 | 198115 | 101 | 614 |
+| all | 3798 | 90156 | 198275 | 101 | 614 |
 
 ## Coverage
 
@@ -149,7 +149,7 @@ language specification and checked against the oracle.
 | `native-pascal` | 127 | 0 | 27 | 162 | 50 of 127 (39%) | 97 | 19 | 297 | 9 | 0 | 0 |
 | `native-powershell` | 139 | 0 | 13 | 15 | 90 of 139 (65%) | 98 | 12 | 54 | 12 | 0 | 0 |
 | `native-proto` | 43 | 0 | 3 | 9 | 43 of 43 (100%) | 52 | 5 | 20 | 7 | 0 | 0 |
-| `native-python` | 108 | 0 | 34 | 11 | 51 of 108 (47%) | 65 | 26 | 43 | 2 | 0 | 0 |
+| `native-python` | 108 | 0 | 40 | 11 | 53 of 108 (49%) | 67 | 27 | 49 | 2 | 0 | 0 |
 | `native-racket` | 22 | 0 | 3 | 14 | 22 of 22 (100%) | 32 | 0 | n/a | n/a | n/a | n/a |
 | `native-regex` | 24 | 0 | 4 | 12 | 24 of 24 (100%) | 38 | 0 | 4 | 0 | 0 | 0 |
 | `native-rocq` | 203 | 0 | 46 | 16 | 191 of 203 (94%) | 203 | 29 | 84 | 27 | 0 | 0 |
@@ -196,7 +196,7 @@ rules name a concept another native grammar names
 | `native-pascal` | 0 | 10 | 0 | 3 | 0 | 73 | 243 |
 | `native-powershell` | 1 | 5 | 0 | 5 | 1 | 51 | 116 |
 | `native-proto` | 0 | 0 | 0 | 2 | 0 | 22 | 33 |
-| `native-python` | 2 | 9 | 0 | 3 | 4 | 70 | 83 |
+| `native-python` | 2 | 9 | 0 | 3 | 4 | 74 | 85 |
 | `native-racket` | 0 | 0 | 0 | 0 | 0 | 23 | 16 |
 | `native-regex` | 0 | 1 | 0 | 1 | 0 | 2 | 38 |
 | `native-rocq` | 0 | 16 | 2 | 2 | 0 | 42 | 223 |

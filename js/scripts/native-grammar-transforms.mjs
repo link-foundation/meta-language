@@ -352,7 +352,10 @@ export function transformNativeSource(source, transformations = []) {
       const rewrite = (node) => {
         if (Array.isArray(node)) return node.map(rewrite);
         if (!node || typeof node !== 'object') return node;
-        if (node.type === 'CHOICE' && node.members.length === 2 && node.members.some((member) => member.type === 'BLANK') && node.members.some((member) => member.type === 'STRING' && member.value === literal)) {
+        if (node.type === 'CHOICE' && node.members.length === 2 && node.members.some((member) => member.type === 'BLANK') && node.members.some((member) => {
+          while (['TOKEN', 'IMMEDIATE_TOKEN', 'PREC'].includes(member.type)) member = member.content;
+          return member.type === 'STRING' && member.value === literal;
+        })) {
           changes += 1;
           return { ...node, members: node.members.map((member) => member.type === 'BLANK' ? member : { type: 'PREC_DYNAMIC', value, content: member }) };
         }

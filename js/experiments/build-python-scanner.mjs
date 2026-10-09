@@ -2,7 +2,7 @@
 // executable Links data. The source and scanner hashes live in sources.json.
 import { scannerFamilies } from '../scripts/scanner-families.mjs';
 export const pythonScannerDescriptors = [
-  { family: 'indentation', name: 'layout', newlineToken: 'newline', indentToken: 'indent', dedentToken: 'dedent', interpolationVariable: 'strings_inside', stringStartToken: 'string_start', stringContentToken: 'string_fragment', commentLiterals: ['except'] },
+  { family: 'indentation', name: 'layout', newlineToken: 'newline', indentToken: 'indent', dedentToken: 'dedent', interpolationVariable: 'strings_inside', stringStartToken: 'string_start', stringContentToken: 'string_fragment', commentLiterals: ['except'], stringPrefixCharacters: ['r', 'R', 'b', 'B', 'f', 'F', 't', 'T', 'u', 'U'] },
   { family: 'prefixed-quoted', name: 'strings', startToken: 'string_start', contentToken: 'string_fragment', endToken: 'string_end', interpolationEscapeToken: 'escape_interpolation', interpolationVariable: 'strings_inside', recoveryTokens: ['indent'] },
 ];
 export const pythonScanner = scannerFamilies(pythonScannerDescriptors);

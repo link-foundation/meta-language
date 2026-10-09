@@ -171,12 +171,13 @@ export function delimiterRunScanner({ name, contentToken, endToken, delimiter: c
 }
 
 /** Zero-width layout tokens retain bounded indentation stacks across lines. */
-export function indentationScanner({ name, newlineToken, indentToken, dedentToken, tabWidth = 8, countModulo = 65536, commentPrefix = '#', continuation = '\\', resetCharacters = ['\r', '\f'], commentTokens = [], commentLiterals = [], bracketClosers = [')', ']', '}'], stringStartToken = null, stringContentToken = null, quoteCharacters = ['"', "'", '`'], interpolationVariable = null }) {
+export function indentationScanner({ name, newlineToken, indentToken, dedentToken, tabWidth = 8, countModulo = 65536, commentPrefix = '#', continuation = '\\', resetCharacters = ['\r', '\f'], commentTokens = [], commentLiterals = [], bracketClosers = [')', ']', '}'], stringStartToken = null, stringContentToken = null, quoteCharacters = ['"', "'", '`'], stringPrefixCharacters = [], interpolationVariable = null }) {
   for (const value of [name, newlineToken, indentToken, dedentToken, ...commentTokens]) identifier(value);
   for (const value of [stringStartToken, stringContentToken, interpolationVariable]) if (value !== null) identifier(value);
   if (new Set([newlineToken, indentToken, dedentToken]).size !== 3 || !Number.isSafeInteger(tabWidth) || tabWidth < 1 || !Number.isSafeInteger(countModulo) || countModulo <= tabWidth) throw new TypeError('indentation needs distinct tokens and positive bounded widths');
   const resets = characterClass(resetCharacters);
   const quotes = characterClass(quoteCharacters);
+  const stringOpening = stringPrefixCharacters.length ? `(seq (repeat0 ${characterClass(stringPrefixCharacters)}) ${quotes})` : quotes;
   const comment = delimiter(commentPrefix);
   const escape = delimiter(continuation);
   const available = (token) => [newlineToken, indentToken, dedentToken].includes(token) ? `(valid ${token})` : `(expected (ref ${token}))`;
@@ -196,7 +197,7 @@ export function indentationScanner({ name, newlineToken, indentToken, dedentToke
   const continuationBody = `(consume ${escape}) (if (next (literal %0D)) (then advance)) (if (not atEnd) (then (if (not (next (literal %0A))) (then fail)) advance))`;
   const scan = `(while (all (not atEnd) ${whitespace}) (do (if (next (literal %0A)) (then ${newline}) (else (if (next (literal %20)) (then ${increment(1)}) (else (if (next (literal %09)) (then ${increment(tabWidth)}) (else (if (next ${resets}) (then ${set(width, zero)} advance) (else (if ${commentAhead} (then ${commentBody}) (else ${continuationBody}))))))))))))`;
   const brackets = bracketClosers.length ? `(some ${bracketClosers.map((text) => `(expected ${delimiter(text)})`).join(' ')})` : '(equal (integer 0) (integer 1))';
-  const startsString = stringStartToken === null ? '(equal (integer 0) (integer 1))' : `(all ${available(stringStartToken)} (next ${quotes}))`;
+  const startsString = stringStartToken === null ? '(equal (integer 0) (integer 1))' : `(all ${available(stringStartToken)} (next ${stringOpening}))`;
   const recovery = stringContentToken === null ? '' : ` (not (all ${available(stringContentToken)} ${available(indentToken)}))`;
   const outsideInterpolation = interpolationVariable === null ? '' : ` (equal (variable ${interpolationVariable}) (integer 0))`;
   const dedentAvailable = `(some ${available(dedentToken)} (all (not ${available(newlineToken)}) (not ${startsString}) (not ${brackets})))`;
@@ -246,7 +247,10 @@ export function prefixedQuotedScanner({ name, startToken, contentToken, endToken
   const close = `(some ${quotes.map(({ text }) => `(all (equal (top ${endings}) (text ${encode(text)})) (next ${literal(text)}))`).join(' ')})`;
   const pop = [raw, bytes, formatted, triple, endings].map((stack) => `(pop ${stack})`).join(' ');
   const content = `(if (equal (variable ${hasContent}) (integer 0)) (then fail)) mark (emit ${contentToken})`;
-  const finish = `${pop}${interpolationVariable === null ? '' : ` ${set(interpolationVariable, 0)}`} mark (emit ${endToken})`;
+  // Prefix flags are local to the opener; leaving them behind makes completed
+  // strings with different prefixes look like different scanner states. Restore
+  // the enclosing interpolation flag after closing a nested string.
+  const finish = `${pop} ${[raw, bytes, formatted, triple].map((variable) => set(variable, 0)).join(' ')}${interpolationVariable === null ? '' : ` (set ${interpolationVariable} (top ${formatted}))`} mark (emit ${endToken})`;
   const recovery = recoveryTokens.length ? `(some ${recoveryTokens.map((token) => `(expected (ref ${token}))`).join(' ')})` : '(equal (integer 0) (integer 1))';
   const escapedInterpolation = interpolationCharacters.map((text) => `(if (next ${literal(text + text)}) (then (consume ${literal(text + text)}) mark (emit ${interpolationEscapeToken})))`).join(' ');
   const escape = `(if (valid ${interpolationEscapeToken}) (then (if (all (greater (depth ${endings}) (integer 0)) ${flag(formatted)} (not ${recovery})) (then ${escapedInterpolation})) fail))`;

@@ -2929,7 +2929,7 @@
     {
       "grammar": "native-python",
       "language": "python",
-      "rules": 153,
+      "rules": 159,
       "shared": [
         {"rule":"module","concept":"grammar.module","languages":["erlang","python","tsx","typescript"]},
         {"rule":"statement","concept":"grammar.statement","languages":["c","cpp","dart","go","groovy","java","javascript","lua","pascal","powershell","python","rust","solidity","sql","tsx","typescript","vb","zig"]},
@@ -3000,6 +3000,10 @@
         {"rule":"line_continuation","concept":"grammar.line-continuation","languages":["python","vb"]},
         {"rule":"exception_expression","concept":"grammar.expression","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","python","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"exception_as_pattern","concept":"grammar.as-pattern","languages":["lean","python"]},
+        {"rule":"collection_expression","concept":"grammar.expression","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","python","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"collection_primary_expression","concept":"grammar.primary-expression","languages":["groovy","java","javascript","powershell","python","solidity","tsx","typescript"]},
+        {"rule":"collection_subscript","concept":"grammar.subscript","languages":["lean","python","sql"]},
+        {"rule":"collection_call","concept":"grammar.call","languages":["erlang","python"]},
         {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
@@ -3085,7 +3089,9 @@
         {"rule":"none","concept":"grammar.none"},
         {"rule":"positional_separator","concept":"grammar.positional-separator"},
         {"rule":"keyword_separator","concept":"grammar.keyword-separator"},
-        {"rule":"as_pattern_target_content","concept":"grammar.as-pattern-target-content"}
+        {"rule":"as_pattern_target_content","concept":"grammar.as-pattern-target-content"},
+        {"rule":"collection_list_splat_pattern","concept":"grammar.list-splat-pattern"},
+        {"rule":"collection_attribute","concept":"grammar.attribute-access"}
       ]
     },
     {

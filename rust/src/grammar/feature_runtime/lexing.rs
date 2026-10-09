@@ -594,8 +594,8 @@ impl Executor<'_> {
     /// matches, at least as far, and without the trivia from it on (CSV's row
     /// ends with a `\n` token where `\s` is trivia); otherwise `skipped`. An
     /// extra that is a token rule is taken over too where the token wins the
-    /// lexical conflict with it, lexing longer at no lower precedence or as
-    /// far at a higher one: Make's `raw_line` of a define directive,
+    /// lexical conflict with it, lexing longer at no lower precedence or matching a
+    /// nonempty token at a higher one: Make's `raw_line` of a define directive,
     /// `#comment\n`, is no comment of a lower precedence.
     pub(super) fn token_before_extra(
         &mut self,
@@ -625,7 +625,7 @@ impl Executor<'_> {
             let takes = match (plain, other, reach) {
                 (true, _, Some(reach)) => reach >= leaf.end,
                 (false, Some(other), Some(reach)) => {
-                    (reach > leaf.end && level >= other) || (reach == leaf.end && level > other)
+                    (reach > leaf.end && level >= other) || (reach > leaf.start && level > other)
                 }
                 _ => false,
             };

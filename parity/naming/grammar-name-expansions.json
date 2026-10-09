@@ -3529,11 +3529,47 @@
           "rule": "print_statement",
           "pattern": "print\\s*\\(",
           "reason": "Parenthesized print(...) is a Python call expression in the pinned tree-sitter corpus, while unparenthesized Python 2 print remains a print statement; preserve the source alternatives and exclude the call prefix only from print_statement."
+        },
+        {
+          "family": "prefer-optional-literal",
+          "rule": "except_clause",
+          "literal": "*",
+          "value": 2,
+          "reason": "The exception-group marker belongs to the except clause before its value. Retain the absent marker and splat-expression alternatives while preferring the present marker as the pinned parser does."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "expression",
+            "primary_expression",
+            "list_splat_pattern",
+            "attribute",
+            "subscript",
+            "call"
+          ],
+          "insertInto": [
+            "_collection_elements"
+          ],
+          "prefix": "_collection_",
+          "reason": "Collection elements need a splat-pattern reduction before suffixes without changing exception-value or assignment-pattern contexts. Retain every original alternative and use variants with the same concrete kinds and concepts."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "_collection_list_splat_pattern",
+          "associativity": "left",
+          "value": 23,
+          "reason": "The pinned parser reduces the collection splat pattern before attribute, subscript and call suffixes; preserve ordinary splat patterns outside the collection context."
         }
       ],
       "concepts": {
         "_exception_expression": "grammar.expression",
-        "_exception_as_pattern": "grammar.as-pattern"
+        "_exception_as_pattern": "grammar.as-pattern",
+        "_collection_expression": "grammar.expression",
+        "_collection_primary_expression": "grammar.primary-expression",
+        "_collection_list_splat_pattern": "grammar.list-splat-pattern",
+        "_collection_attribute": "grammar.attribute-access",
+        "_collection_subscript": "grammar.subscript",
+        "_collection_call": "grammar.call"
       }
     }
   },

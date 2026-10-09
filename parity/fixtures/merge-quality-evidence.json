@@ -431,11 +431,11 @@
       ],
       "corpus": "https://github.com/tree-sitter/tree-sitter-python/tree/293fdc02038ee2bf0e2e206711b69c90ac0d413f/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/python.json",
-      "coverage": {"rules": {"normal": 108, "atomic": 0, "silent": 34, "token": 11}, "visibleRules": 108, "exercisedRules": 51, "checkedKinds": 65, "checkedFields": 26, "renamed": 43, "expandedWords": 2, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 108, "atomic": 0, "silent": 40, "token": 11}, "visibleRules": 108, "exercisedRules": 53, "checkedKinds": 67, "checkedFields": 27, "renamed": 49, "expandedWords": 2, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 2, "conflict": 9, "precedences": 0, "extra": 3, "kind": 4},
-      "correctness": {"matches": 48, "rows": 704, "bytes": 1039, "divergences": 0, "rejections": 6},
+      "correctness": {"matches": 53, "rows": 851, "bytes": 1199, "divergences": 0, "rejections": 6},
       "recovery": {"repaired": 6, "errorNodes": 1, "missingNodes": 10, "categories": {}},
-      "reuse": {"shared": 70, "specific": 83}
+      "reuse": {"shared": 74, "specific": 85}
     },
     {
       "grammar": "native-racket",

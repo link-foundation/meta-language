@@ -2445,8 +2445,8 @@ export class Executor {
   // least as far, and without the trivia from it on (CSV's row ends with a
   // `\n` token where `\s` is trivia); otherwise `start` after them.
   // An extra that is a token rule is taken over too where the token wins the
-  // lexical conflict with it, lexing longer at no lower precedence or as far
-  // at a higher one: Make's `raw_line` of a define directive, `#comment\n`,
+  // lexical conflict with it, lexing longer at no lower precedence or matching a
+  // nonempty token at a higher one: Make's `raw_line` of a define directive, `#comment\n`,
   // is no comment of a lower precedence.
   tokenBeforeExtra(item, start, leaves, state) {
     const level = this.priorityOf(item);
@@ -2457,7 +2457,7 @@ export class Executor {
       const reach = this.quietly(() => longestResult(this.evaluate(item, leaf.start, state, true))?.end ?? -1);
       if (plain) return reach >= leaf.end;
       const other = rule.lexicalPriority ?? 0;
-      return (reach > leaf.end && level >= other) || (reach === leaf.end && level > other);
+      return (reach > leaf.end && level >= other) || (reach > leaf.start && level > other);
     });
     if (at >= 0 && isSeparator(leaves[at]) && this.quietly(() => longestResult(this.evaluate(item, leaves[at].start, state, true))?.end ?? -1) > start) {
       const chain = this.callStack.filter((entry) => entry.rule.kind === 'normal').map((entry) => [entry.rule.nodeKind, entry.position]);
