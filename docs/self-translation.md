@@ -107,6 +107,14 @@ result as `rust/src/translation/frontend_rules.rs`. The adapters supply UTF-16
 code units and token records to these generated decisions. CI runs
 `npm run check:frontend-rules` to reject stale generated code.
 
+`node js/scripts/generate-frontend-rule-styles.mjs` derives style decorators
+from machine-applicable Clippy suggestions on temporary copies of the generated
+module. It records line context around each replacement, then regeneration
+applies formatting and decorators to a fixed point. Run the frontend generator
+again after deriving styles. CI also runs `npm run check:frontend-rule-styles`
+to compile these generated modules with the crate's lint groups and warnings
+denied, without downloading or building the crate's dependencies.
+
 ## Translated against hand-written Rust
 
 `js/scripts/generate-self-translation-report.mjs` translates every module of

@@ -8,7 +8,8 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { DecoratorSet } from '../src/decorators.js';
-import { selfTranslate } from '../src/self-translation.js';
+import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
+import { LinkNetwork } from '../src/network.js';
 import { createModuleContext } from '../scripts/generate-self-translation-report.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -138,4 +139,23 @@ test('incomplete, stale or inconsistent reports cannot record the reporting asse
   const result = verify(fixture(), 'No per-module rows.');
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Markdown row/u);
+});
+
+
+test('signature discovery checks exports without constructing another complete source graph', () => {
+  const source = '/** @returns {number} */\nexport function count() { return 2; }\nexport const limit = 3;\nexport class Unsupported {}\n';
+  const original = LinkNetwork.parse;
+  let signatures;
+  try {
+    LinkNetwork.parse = () => { throw new Error('signature discovery constructed a source graph'); };
+    signatures = selfTranslationSignatures(source, 'JavaScript');
+  } finally { LinkNetwork.parse = original; }
+  assert.deepEqual(signatures, [
+    { k: 'fn', name: 'count', params: [], ret: { kind: 'float' } },
+    { k: 'const', name: 'limit', type: { kind: 'float' }, literal: true },
+  ]);
+  const translation = selfTranslate(source, 'JavaScript', 'Rust');
+  assert.ok(translation.items.some(({ status }) => status === 'translated'));
+  assert.ok(translation.items.some(({ status }) => status === 'carried'));
+  assert.throws(() => selfTranslationSignatures("export const invalid = '\ud800';", 'JavaScript'), /do not reproduce/u);
 });

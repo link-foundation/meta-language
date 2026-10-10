@@ -5,22 +5,28 @@
 /** @typedef {{ $: 'scalar', code: number, end: number } | { $: 'malformed' } | { $: 'unsupported', end: number, escapeLength: number }} UnicodeEscape */
 
 /**
- * Read one Unicode escape from at most twelve UTF-16 code units, starting
+ * Read one Unicode or hexadecimal escape from at most twelve UTF-16 code units, starting
  * with its backslash. Offsets in the result are relative to that backslash.
  * @param {number[]} units
  * @param {boolean} allowFixed
  * @returns {UnicodeEscape}
  */
 export function decodeUnicodeEscape(units, allowFixed) {
+  if (units.length < 2 || units[0] !== 92 || (units[1] !== 117 && units[1] !== 120)) return { $: 'malformed' };
+  let fixed = 4;
+  if (units[1] === 120) {
+    if (!allowFixed) return { $: 'malformed' };
+    fixed = 2;
+  }
   let index = 2;
   let code = 0;
   let digits = 0;
   let braced = false;
-  if (units.length > 2 && units[2] === 123) {
+  if (fixed === 4 && units.length > 2 && units[2] === 123) {
     braced = true;
     index = 3;
   } else if (!allowFixed) return { $: 'malformed' };
-  while (index < units.length && digits < (braced ? 6 : 4)) {
+  while (index < units.length && digits < (braced ? 6 : fixed)) {
     const unit = units[index];
     let digit = -1;
     if (unit >= 48 && unit <= 57) digit = unit - 48;
@@ -34,7 +40,7 @@ export function decodeUnicodeEscape(units, allowFixed) {
   if (braced) {
     if (digits === 0 || index >= units.length || units[index] !== 125) return { $: 'malformed' };
     index += 1;
-  } else if (digits !== 4) return { $: 'malformed' };
+  } else if (digits !== fixed) return { $: 'malformed' };
   const escapeLength = index;
   if (!braced && code >= 55296 && code <= 56319 && units.length >= index + 6 && units[index] === 92 && units[index + 1] === 117) {
     let low = 0;

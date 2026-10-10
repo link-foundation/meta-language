@@ -254,6 +254,33 @@ fn lexical_boundaries_keep_regular_expression_bodies_and_division_distinct() {
         assert_eq!(token.raw, literal);
         assert_eq!(encoded.slice(token.start, token.end), literal);
     }
+    for fixture in fixtures["escapedLiterals"].as_array().unwrap() {
+        let source = fixture["source"].as_str().unwrap();
+        let expected = format!("{}\n", fixture["value"].as_str().unwrap());
+        let program = format!("console.log({source});");
+        let emitted =
+            emit_javascript(&check_program(&parse_javascript(&program).unwrap()).unwrap())
+                .unwrap()
+                .text;
+        assert_eq!(javascript_output(&program), expected);
+        assert_eq!(javascript_output(&emitted), expected);
+    }
+    for source in fixtures["malformedEscapedLiterals"].as_array().unwrap() {
+        assert_eq!(
+            tokenize(source.as_str().unwrap(), Language::JavaScript)
+                .unwrap_err()
+                .kind,
+            ErrorKind::Syntax
+        );
+    }
+    for source in fixtures["unsupportedEscapedLiterals"].as_array().unwrap() {
+        assert_eq!(
+            tokenize(source.as_str().unwrap(), Language::JavaScript)
+                .unwrap_err()
+                .kind,
+            ErrorKind::Unsupported
+        );
+    }
     let source = fixtures["templateBoundaryProgram"].as_str().unwrap();
     let expected = fixtures["templateBoundaryOutput"].as_str().unwrap();
     assert_eq!(javascript_output(source), expected);

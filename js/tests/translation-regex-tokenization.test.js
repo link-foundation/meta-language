@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { tokenize } from '../src/translation/lexer.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
+import { emitRust } from '../src/translation/emit-rust.js';
 
 const fixtures = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-lexical-boundaries.json', import.meta.url), 'utf8'));
 
@@ -104,4 +107,36 @@ test('template regex substitutions share one source encoding', () => {
   const templates = result.tokens.filter(({ kind }) => kind === 'template');
   assert.equal(templates.length, count);
   for (const template of templates) assert.equal(template.parts[0].expression.source, literal);
+});
+
+
+test('template and string escapes use the shared scalar decoder', () => {
+  for (const { source, value } of fixtures.escapedLiterals) {
+    const program = `console.log(${source});`;
+    const emitted = emitJavaScript(checkProgram(parseJavaScript(program))).text;
+    for (const code of [program, emitted]) {
+      assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8' }), `${value}\n`, source);
+    }
+  }
+  for (const source of fixtures.malformedEscapedLiterals) {
+    assert.throws(() => tokenize(source, 'JavaScript'), (error) => error.kind === 'syntax', source);
+  }
+  for (const source of fixtures.unsupportedEscapedLiterals) {
+    assert.throws(() => tokenize(source, 'JavaScript'), (error) => error.kind === 'unsupported', source);
+  }
+});
+
+
+test('escaped literal programs compile and preserve output in Rust', () => {
+  const source = fixtures.escapedLiterals.map(({ source }) => `console.log(${source});`).join('\n');
+  const expected = fixtures.escapedLiterals.map(({ value }) => `${value}\n`).join('');
+  const code = emitRust(checkProgram(parseJavaScript(source))).text;
+  const directory = mkdtempSync(join(tmpdir(), 'translation-escapes-'));
+  try {
+    const file = join(directory, 'main.rs');
+    const binary = join(directory, 'main');
+    writeFileSync(file, code);
+    execFileSync('rustc', ['--edition', '2024', file, '-o', binary], { stdio: 'pipe' });
+    assert.equal(execFileSync(binary, [], { encoding: 'utf8' }), expected);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
 });

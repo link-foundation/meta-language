@@ -705,6 +705,10 @@ Control-statement parentheses retain their lexical context through nested
 expressions and comments, while qualified method calls retain value-expression
 context. Each tokenizer lazily encodes its source once and reuses the encoding
 across regular-expression literals, with absolute UTF-16 token offsets.
+Template substitutions reuse these lexical decisions and the same encoding:
+braces inside strings, comments, regex bodies and nested templates cannot end
+a substitution. String and template escapes use the shared scalar decoder;
+template cooking preserves line continuations and normalizes line endings.
 
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
@@ -773,6 +777,12 @@ before every JavaScript job passed, and the Rust jobs show as skipped when
 JavaScript fails. Inside the acceptance workflow, the Rust evidence stages,
 the Rust native translations and the Rust consumers likewise need the
 JavaScript stages.
+
+The JavaScript package checks also compile the generated shared frontend rules
+as a standalone Rust module with the crate's Clippy lint groups and warnings
+denied. This checks the generated interface without building the crate's
+dependencies. Compiler style fixes remain decorator data applied to a fixed
+point by the generator.
 
 Every job reports all of its failures in one run, not only the first: `cargo
 test` runs with `--no-fail-fast`, every check step after the first runs unless

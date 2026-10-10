@@ -683,6 +683,43 @@ fn block_comment_end(source: &Source, index: usize, comments: &CommentSyntax) ->
     ))
 }
 
+fn read_unicode_escape(
+    source: &Source,
+    cursor: usize,
+    language: Language,
+) -> Result<(char, usize)> {
+    let units = source.units()[cursor..source.len().min(cursor + 12)]
+        .iter()
+        .map(|unit| f64::from(*unit))
+        .collect();
+    match decode_unicode_escape(units, language == Language::JavaScript) {
+        UnicodeEscape::Scalar(code, end) => {
+            // The generated decoder returns integral scalar values and
+            // offsets inside the twelve-code-unit input window.
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            let character = char::from_u32(code as u32).expect("decoded Unicode scalar");
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            Ok((character, end as usize))
+        }
+        UnicodeEscape::Malformed => Err(TranslationError::syntax(
+            "malformed unicode escape",
+            Some(span(cursor, cursor + 2)),
+        )),
+        UnicodeEscape::Unsupported(end, escape_length) => {
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            let (end, escape_length) = (end as usize, escape_length as usize);
+            Err(TranslationError::new(
+                ErrorKind::Unsupported,
+                format!(
+                    "unicode escape {} is not a scalar value; Rust strings hold scalar values only",
+                    source.slice(cursor, cursor + escape_length)
+                ),
+                Some(span(cursor, cursor + end)),
+            ))
+        }
+    }
+}
+
 fn string_token(source: &Source, index: usize, language: Language) -> Result<Token> {
     let quote = source.units[index];
     let mut cursor = index + 1;
@@ -707,44 +744,32 @@ fn string_token(source: &Source, index: usize, language: Language) -> Result<Tok
         }
         if unit == u16::from(b'\\') && language != Language::Rocq {
             let escaped = source.char_at(cursor + 1);
-            if escaped == Some('u') {
-                let units = source.units()[cursor..source.len().min(cursor + 12)]
-                    .iter()
-                    .map(|unit| f64::from(*unit))
-                    .collect();
-                match decode_unicode_escape(units, language == Language::JavaScript) {
-                    UnicodeEscape::Scalar(code, end) => {
-                        // The generated decoder returns integral scalar values and
-                        // offsets inside the twelve-code-unit input window.
-                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                        let character =
-                            char::from_u32(code as u32).expect("decoded Unicode scalar");
-                        let mut units = [0; 2];
-                        value.extend_from_slice(character.encode_utf16(&mut units));
-                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                        {
-                            cursor += end as usize;
-                        }
-                        continue;
-                    }
-                    UnicodeEscape::Malformed => {
-                        return Err(TranslationError::syntax(
-                            "malformed unicode escape",
-                            Some(span(cursor, cursor + 2)),
-                        ));
-                    }
-                    UnicodeEscape::Unsupported(end, escape_length) => {
-                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                        let (end, escape_length) = (end as usize, escape_length as usize);
-                        return Err(TranslationError::new(
-                            ErrorKind::Unsupported,
-                            format!(
-                                "unicode escape {} is not a scalar value; Rust strings hold scalar values only",
-                                source.slice(cursor, cursor + escape_length)
-                            ),
-                            Some(span(cursor, cursor + end)),
-                        ));
-                    }
+            if escaped == Some('u') || (language == Language::JavaScript && escaped == Some('x')) {
+                let (character, end) = read_unicode_escape(source, cursor, language)?;
+                let mut encoded = [0; 2];
+                value.extend_from_slice(character.encode_utf16(&mut encoded));
+                cursor += end;
+                continue;
+            }
+            if language == Language::JavaScript {
+                if escaped.is_some_and(|character| matches!(character, '1'..='9'))
+                    || (escaped == Some('0')
+                        && source
+                            .char_at(cursor + 2)
+                            .is_some_and(|character| character.is_ascii_digit()))
+                {
+                    return Err(TranslationError::syntax(
+                        "legacy octal string escape",
+                        Some(span(cursor, cursor + 2)),
+                    ));
+                }
+                if matches!(escaped, Some('\n' | '\r' | '\u{2028}' | '\u{2029}')) {
+                    cursor += if escaped == Some('\r') && source.is_char(cursor + 2, '\n') {
+                        3
+                    } else {
+                        2
+                    };
+                    continue;
                 }
             }
             let replacement = match escaped {
@@ -755,7 +780,16 @@ fn string_token(source: &Source, index: usize, language: Language) -> Result<Tok
                 Some('"') => "\"",
                 Some('\'') => "'",
                 Some('0') => "\0",
+                Some('{') if language == Language::JavaScript => "{",
                 Some('{') => "\\{",
+                Some('b') if language == Language::JavaScript => "\u{0008}",
+                Some('f') if language == Language::JavaScript => "\u{000c}",
+                Some('v') if language == Language::JavaScript => "\u{000b}",
+                Some(_) if language == Language::JavaScript => {
+                    value.push(source.units[cursor + 1]);
+                    cursor += 2;
+                    continue;
+                }
                 _ => {
                     return Err(TranslationError::syntax(
                         format!(
@@ -770,7 +804,9 @@ fn string_token(source: &Source, index: usize, language: Language) -> Result<Tok
             cursor += 2;
             continue;
         }
-        if unit == u16::from(b'\n') && language == Language::JavaScript {
+        if (unit == u16::from(b'\n') || unit == u16::from(b'\r'))
+            && language == Language::JavaScript
+        {
             break;
         }
         value.push(unit);
@@ -799,15 +835,36 @@ fn template_token(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -
             return Ok(token);
         }
         if unit == u16::from(b'\\') {
-            if source.char_at(cursor + 1) == Some('0')
-                && source
-                    .char_at(cursor + 2)
-                    .is_some_and(|character| character.is_ascii_digit())
+            if matches!(source.char_at(cursor + 1), Some('u' | 'x')) {
+                let (character, end) = read_unicode_escape(source, cursor, Language::JavaScript)?;
+                let mut encoded = [0; 2];
+                text.extend_from_slice(character.encode_utf16(&mut encoded));
+                cursor += end;
+                continue;
+            }
+            if source
+                .char_at(cursor + 1)
+                .is_some_and(|character| matches!(character, '1'..='9'))
+                || (source.char_at(cursor + 1) == Some('0')
+                    && source
+                        .char_at(cursor + 2)
+                        .is_some_and(|character| character.is_ascii_digit()))
             {
                 return Err(TranslationError::syntax(
                     "legacy octal template escape",
                     Some(span(cursor, cursor + 3)),
                 ));
+            }
+            if matches!(
+                source.char_at(cursor + 1),
+                Some('\n' | '\r' | '\u{2028}' | '\u{2029}')
+            ) {
+                cursor += if source.is_char(cursor + 1, '\r') && source.is_char(cursor + 2, '\n') {
+                    3
+                } else {
+                    2
+                };
+                continue;
             }
             let replacement = match source.char_at(cursor + 1) {
                 Some('n') => '\n',
@@ -820,7 +877,8 @@ fn template_token(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -
                 Some('\\') => '\\',
                 Some('`') => '`',
                 Some('$') => '$',
-                _ => {
+                Some(character) => character,
+                None => {
                     return Err(TranslationError::syntax(
                         format!(
                             "unsupported template escape \\{}",
@@ -832,6 +890,15 @@ fn template_token(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -
             };
             text.push(replacement as u16);
             cursor += 2;
+            continue;
+        }
+        if unit == u16::from(b'\r') {
+            text.push(u16::from(b'\n'));
+            cursor += if source.is_char(cursor + 1, '\n') {
+                2
+            } else {
+                1
+            };
             continue;
         }
         if source.starts_with("${", cursor) {

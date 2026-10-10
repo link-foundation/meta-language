@@ -52,116 +52,157 @@ pub fn decode_unicode_escape(
     units: Vec<f64>,
     allow_fixed: bool,
 ) -> crate::translation::frontend_rules::UnicodeEscape {
+    if ((((units.len() as f64) < (2f64))
+        || ((crate::translation::frontend_rules::ml_array::at(
+            &units,
+            crate::translation::frontend_rules::ml_array::number_index(0f64),
+        )) != (92f64)))
+        || (((crate::translation::frontend_rules::ml_array::at(
+            &units,
+            crate::translation::frontend_rules::ml_array::number_index(1f64),
+        )) != (117f64))
+            && ((crate::translation::frontend_rules::ml_array::at(
+                &units,
+                crate::translation::frontend_rules::ml_array::number_index(1f64),
+            )) != (120f64))))
     {
-        let index = 2f64;
+        crate::translation::frontend_rules::UnicodeEscape::Malformed
+    } else {
         {
-            let code = 0f64;
+            let fixed = 4f64;
             {
-                let digits = 0f64;
+                let ml_s1 = if ((crate::translation::frontend_rules::ml_array::at(
+                    &units,
+                    crate::translation::frontend_rules::ml_array::number_index(1f64),
+                )) == (120f64))
                 {
-                    let braced = false;
-                    {
-                        let ml_s1 = if (((units.len() as f64) > (2f64))
-                            && ((crate::translation::frontend_rules::ml_array::at(
-                                &units,
-                                crate::translation::frontend_rules::ml_array::number_index(2f64),
-                            )) == (123f64)))
+                    if allow_fixed {
                         {
+                            let fixed_2 = 2f64;
+                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(fixed_2)
+                        }
+                    } else {
+                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
+                    }
+                } else {
+                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(fixed)
+                };
+                match ml_s1 {
+                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(fixed_3) => {
+                        {
+                            let index = 2f64;
                             {
-                                let braced_2 = true;
+                                let code = 0f64;
                                 {
-                                    let index_2 = 3f64;
-                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(index_2, braced_2)
-                                }
-                            }
-                        } else if allow_fixed {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(index, braced)
-                        } else {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
-                        };
-                        match ml_s1 {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(index_3, braced_3) => {
-                                {
-                                    let ml_s2 = crate::translation::frontend_rules::ml_decode_unicode_escape_loop2(units.clone(), index_3, code, digits, braced_3);
-                                    match ml_s2 {
-                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop2Result::MlDecodeUnicodeEscapeLoop2Done(index_4, code_2, digits_2) => {
-                                            {
-                                                let ml_s3 = if braced_3 {
-                                                    if (((digits_2 == (0f64)) || (index_4 >= (units.len() as f64))) || ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_4))) != (125f64))) {
-                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
-                                                    } else {
-                                                        {
-                                                            let index_5 = (index_4 + 1f64);
-                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Next(index_5)
-                                                        }
+                                    let digits = 0f64;
+                                    {
+                                        let braced = false;
+                                        {
+                                            let ml_s2 = if (((fixed_3 == (4f64)) && ((units.len() as f64) > (2f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(2f64))) == (123f64))) {
+                                                {
+                                                    let braced_2 = true;
+                                                    {
+                                                        let index_2 = 3f64;
+                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Next(index_2, braced_2)
                                                     }
-                                                } else {
-                                                    if digits_2 == (4f64) {
-                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Next(index_4)
-                                                    } else {
-                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
-                                                    }
-                                                };
-                                                match ml_s3 {
-                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Next(index_6) => {
-                                                        {
-                                                            let escape_length = index_6;
-                                                            {
-                                                                let ml_s5 = if (((((!braced_3 && (code_2 >= (55296f64))) && (code_2 <= (56319f64))) && ((units.len() as f64) >= (index_6 + 6f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_6))) == (92f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_6 + 1f64))) == (117f64))) {
-                                                                    {
-                                                                        let low = 0f64;
-                                                                        {
-                                                                            let offset = 2f64;
+                                                }
+                                            } else if allow_fixed {
+                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Next(index, braced)
+                                            } else {
+                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
+                                            };
+                                            match ml_s2 {
+                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Next(index_3, braced_3) => {
+                                                    {
+                                                        let ml_s3 = crate::translation::frontend_rules::ml_decode_unicode_escape_loop3(units.clone(), fixed_3, index_3, code, digits, braced_3);
+                                                        match ml_s3 {
+                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop3Result::MlDecodeUnicodeEscapeLoop3Done(index_4, code_2, digits_2) => {
+                                                                {
+                                                                    let ml_s4 = if braced_3 {
+                                                                        if (((digits_2 == (0f64)) || (index_4 >= (units.len() as f64))) || ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_4))) != (125f64))) {
+                                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
+                                                                        } else {
                                                                             {
-                                                                                let ml_s6 = crate::translation::frontend_rules::ml_decode_unicode_escape_loop5(units, index_6, low, offset);
-                                                                                match ml_s6 {
-                                                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop5Result::MlDecodeUnicodeEscapeLoop5Done(low_2, offset_2) => {
-                                                                                        if (((offset_2 == (6f64)) && (low_2 >= (56320f64))) && (low_2 <= (57343f64))) {
+                                                                                let index_5 = (index_4 + 1f64);
+                                                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_5)
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        if digits_2 == fixed_3 {
+                                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_4)
+                                                                        } else {
+                                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
+                                                                        }
+                                                                    };
+                                                                    match ml_s4 {
+                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_6) => {
+                                                                            {
+                                                                                let escape_length = index_6;
+                                                                                {
+                                                                                    let ml_s6 = if (((((!braced_3 && (code_2 >= (55296f64))) && (code_2 <= (56319f64))) && ((units.len() as f64) >= (index_6 + 6f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_6))) == (92f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_6 + 1f64))) == (117f64))) {
+                                                                                        {
+                                                                                            let low = 0f64;
                                                                                             {
-                                                                                                let code_3 = (((65536f64 + ((code_2 - 55296f64) * 1024f64)) + low_2) - 56320f64);
+                                                                                                let offset = 2f64;
                                                                                                 {
-                                                                                                    let index_7 = (index_6 + 6f64);
-                                                                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_7, code_3)
+                                                                                                    let ml_s7 = crate::translation::frontend_rules::ml_decode_unicode_escape_loop6(units, index_6, low, offset);
+                                                                                                    match ml_s7 {
+                                                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop6Result::MlDecodeUnicodeEscapeLoop6Done(low_2, offset_2) => {
+                                                                                                            if (((offset_2 == (6f64)) && (low_2 >= (56320f64))) && (low_2 <= (57343f64))) {
+                                                                                                                {
+                                                                                                                    let code_3 = (((65536f64 + ((code_2 - 55296f64) * 1024f64)) + low_2) - 56320f64);
+                                                                                                                    {
+                                                                                                                        let index_7 = (index_6 + 6f64);
+                                                                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_7, code_3)
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            } else {
+                                                                                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_6, code_2)
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
                                                                                                 }
                                                                                             }
-                                                                                        } else {
-                                                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_6, code_2)
+                                                                                        }
+                                                                                    } else {
+                                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_6, code_2)
+                                                                                    };
+                                                                                    match ml_s6 {
+                                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_8, code_4) => {
+                                                                                            if ((code_4 > (1_114_111_f64)) || (55296f64..=57343f64).contains(&code_4)) {
+                                                                                                crate::translation::frontend_rules::UnicodeEscape::Unsupported(index_8, escape_length)
+                                                                                            } else {
+                                                                                                crate::translation::frontend_rules::UnicodeEscape::Scalar(code_4, index_8)
+                                                                                            }
                                                                                         }
                                                                                     }
                                                                                 }
                                                                             }
                                                                         }
-                                                                    }
-                                                                } else {
-                                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_6, code_2)
-                                                                };
-                                                                match ml_s5 {
-                                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_8, code_4) => {
-                                                                        if ((code_4 > (1_114_111_f64)) || (55296f64..=57343f64).contains(&code_4)) {
-                                                                            crate::translation::frontend_rules::UnicodeEscape::Unsupported(index_8, escape_length)
-                                                                        } else {
-                                                                            crate::translation::frontend_rules::UnicodeEscape::Scalar(code_4, index_8)
+                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(ml_result6) => {
+
+                                                                            *ml_result6
                                                                         }
                                                                     }
                                                                 }
                                                             }
                                                         }
                                                     }
-                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Return(ml_result5) => {
+                                                }
+                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Return(ml_result6_2) => {
 
-                                                        *ml_result5
-                                                    }
+                                                    *ml_result6_2
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(ml_result5_2) => {
-
-                                *ml_result5_2
-                            }
                         }
+                    }
+                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(ml_result6_3) => {
+
+                        *ml_result6_3
                     }
                 }
             }
@@ -176,15 +217,15 @@ pub fn accept_argument_count(defaults: Vec<bool>, count: f64) -> bool {
         {
             let index = count;
             {
-                let ml_s7 = crate::translation::frontend_rules::ml_accept_argument_count_loop6(
+                let ml_s8 = crate::translation::frontend_rules::ml_accept_argument_count_loop7(
                     defaults, index,
                 );
-                match ml_s7 {
-                    crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result::MlAcceptArgumentCountLoop6Done => {
+                match ml_s8 {
+                    crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result::MlAcceptArgumentCountLoop7Done => {
                         true
                     }
-                    crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result::MlAcceptArgumentCountLoop6Return(ml_result6) => {
-                        ml_result6
+                    crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result::MlAcceptArgumentCountLoop7Return(ml_result7) => {
+                        ml_result7
                     }
                 }
             }
@@ -202,16 +243,16 @@ pub fn find_default_parameter_reference(
         {
             let depth = 0f64;
             {
-                let ml_s8 =
-                    crate::translation::frontend_rules::ml_find_default_parameter_reference_loop7(
+                let ml_s9 =
+                    crate::translation::frontend_rules::ml_find_default_parameter_reference_loop8(
                         kinds, values, parameters, at, depth,
                     );
-                match ml_s8 {
-                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result::MlFindDefaultParameterReferenceLoop7Done => {
+                match ml_s9 {
+                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop8Result::MlFindDefaultParameterReferenceLoop8Done => {
                         (-1f64)
                     }
-                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result::MlFindDefaultParameterReferenceLoop7Return(ml_result7) => {
-                        ml_result7
+                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop8Result::MlFindDefaultParameterReferenceLoop8Return(ml_result8) => {
+                        ml_result8
                     }
                 }
             }
@@ -219,35 +260,31 @@ pub fn find_default_parameter_reference(
     }
 }
 
-pub fn start_regular_expression(kind: String, value: String) -> bool {
-    if (kind == "") {
+pub fn start_regular_expression(kind: &str, value: &str) -> bool {
+    if (kind.is_empty()) {
         true
+    } else if (kind == "identifier") {
+        ((((((((((((value == "return") || (value == "throw")) || (value == "case"))
+            || (value == "delete"))
+            || (value == "void"))
+            || (value == "typeof"))
+            || (value == "yield"))
+            || (value == "await"))
+            || (value == "in"))
+            || (value == "of"))
+            || (value == "else"))
+            || (value == "do"))
+    } else if kind == "punct" {
+        (((((((value != ")") && (value != "]")) && (value != "}")) && (value != "."))
+            && (value != "?."))
+            && (value != "++"))
+            && (value != "--"))
     } else {
-        if (kind == "identifier") {
-            ((((((((((((value == "return") || (value == "throw")) || (value == "case"))
-                || (value == "delete"))
-                || (value == "void"))
-                || (value == "typeof"))
-                || (value == "yield"))
-                || (value == "await"))
-                || (value == "in"))
-                || (value == "of"))
-                || (value == "else"))
-                || (value == "do"))
-        } else {
-            if (kind != "punct") {
-                false
-            } else {
-                (((((((value != ")") && (value != "]")) && (value != "}")) && (value != "."))
-                    && (value != "?."))
-                    && (value != "++"))
-                    && (value != "--"))
-            }
-        }
+        false
     }
 }
 
-pub fn accept_control_parenthesis(kind: String, value: String, qualified: bool) -> bool {
+pub fn accept_control_parenthesis(kind: &str, value: &str, qualified: bool) -> bool {
     if (qualified || (kind != "identifier")) {
         false
     } else {
@@ -257,7 +294,7 @@ pub fn accept_control_parenthesis(kind: String, value: String, qualified: bool) 
     }
 }
 
-pub fn regular_expression_end(units: Vec<f64>, start: f64) -> f64 {
+pub fn regular_expression_end(units: &[f64], start: f64) -> f64 {
     {
         let index = (start + 1f64);
         {
@@ -265,19 +302,19 @@ pub fn regular_expression_end(units: Vec<f64>, start: f64) -> f64 {
             {
                 let character_class = false;
                 {
-                    let ml_s9 =
-                        crate::translation::frontend_rules::ml_regular_expression_end_loop10(
+                    let ml_s10 =
+                        crate::translation::frontend_rules::ml_regular_expression_end_loop11(
                             units.to_vec(),
                             index,
                             escaped,
                             character_class,
                         );
-                    match ml_s9 {
-                        crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Done => {
+                    match ml_s10 {
+                        crate::translation::frontend_rules::MlRegularExpressionEndLoop11Result::MlRegularExpressionEndLoop11Done => {
                             (-1f64)
                         }
-                        crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Return(ml_result10) => {
-                            ml_result10
+                        crate::translation::frontend_rules::MlRegularExpressionEndLoop11Result::MlRegularExpressionEndLoop11Return(ml_result11) => {
+                            ml_result11
                         }
                     }
                 }
@@ -290,7 +327,7 @@ pub fn find_binding_run_end(terms: &[String], start: f64) -> f64 {
     {
         let end = start;
         {
-            let end_2 = crate::translation::frontend_rules::ml_find_binding_run_end_loop13(
+            let end_2 = crate::translation::frontend_rules::ml_find_binding_run_end_loop14(
                 terms.to_vec(),
                 end,
             );
@@ -310,17 +347,17 @@ pub fn accept_binding_scope(statuses: &[String], reasons: &[String]) -> bool {
         {
             let index = 0f64;
             {
-                let ml_s10 = crate::translation::frontend_rules::ml_accept_binding_scope_loop14(
+                let ml_s11 = crate::translation::frontend_rules::ml_accept_binding_scope_loop15(
                     statuses.to_vec(),
                     reasons.to_vec(),
                     index,
                 );
-                match ml_s10 {
-                    crate::translation::frontend_rules::MlAcceptBindingScopeLoop14Result::MlAcceptBindingScopeLoop14Done => {
+                match ml_s11 {
+                    crate::translation::frontend_rules::MlAcceptBindingScopeLoop15Result::MlAcceptBindingScopeLoop15Done => {
                         false
                     }
-                    crate::translation::frontend_rules::MlAcceptBindingScopeLoop14Result::MlAcceptBindingScopeLoop14Return(ml_result14) => {
-                        ml_result14
+                    crate::translation::frontend_rules::MlAcceptBindingScopeLoop15Result::MlAcceptBindingScopeLoop15Return(ml_result15) => {
+                        ml_result15
                     }
                 }
             }
@@ -407,25 +444,25 @@ pub fn render_constant_binding(form: &str, name: &str, type_: &str, value: &str)
     }
 }
 
-pub fn accept_module_binding_scope(terms: &[String], carried: bool) -> bool {
+pub fn accept_module_binding_scope(terms: Vec<String>, carried: bool) -> bool {
     if carried {
         {
             let declarations = 0f64;
             {
                 let index = 0f64;
                 {
-                    let ml_s11 =
-                        crate::translation::frontend_rules::ml_accept_module_binding_scope_loop15(
-                            terms.to_vec(),
+                    let ml_s12 =
+                        crate::translation::frontend_rules::ml_accept_module_binding_scope_loop16(
+                            terms,
                             declarations,
                             index,
                         );
-                    match ml_s11 {
-                        crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result::MlAcceptModuleBindingScopeLoop15Done(declarations_2) => {
+                    match ml_s12 {
+                        crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop16Result::MlAcceptModuleBindingScopeLoop16Done(declarations_2) => {
                             (declarations_2 > (0f64))
                         }
-                        crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result::MlAcceptModuleBindingScopeLoop15Return(ml_result15) => {
-                            ml_result15
+                        crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop16Result::MlAcceptModuleBindingScopeLoop16Return(ml_result16) => {
+                            ml_result16
                         }
                     }
                 }
@@ -441,14 +478,14 @@ pub fn find_documentation_parameter_range(units: &[f64]) -> Vec<f64> {
         let start = 0f64;
         {
             let start_2 =
-                crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop16(
+                crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop17(
                     units.to_vec(),
                     start,
                 );
             {
                 let optional = false;
                 {
-                    let ml_s12 = if ((start_2 < (units.len() as f64))
+                    let ml_s13 = if ((start_2 < (units.len() as f64))
                         && ((crate::translation::frontend_rules::ml_array::at(
                             units,
                             crate::translation::frontend_rules::ml_array::number_index(start_2),
@@ -458,43 +495,43 @@ pub fn find_documentation_parameter_range(units: &[f64]) -> Vec<f64> {
                             let optional_2 = true;
                             {
                                 let start_3 = (start_2 + 1f64);
-                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin17::MlFindDocumentationParameterRangeJoin17Next(start_3, optional_2)
+                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin18::MlFindDocumentationParameterRangeJoin18Next(start_3, optional_2)
                             }
                         }
                     } else {
-                        crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin17::MlFindDocumentationParameterRangeJoin17Next(start_2, optional)
+                        crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin18::MlFindDocumentationParameterRangeJoin18Next(start_2, optional)
                     };
-                    match ml_s12 {
-                        crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin17::MlFindDocumentationParameterRangeJoin17Next(start_4, optional_3) => {
+                    match ml_s13 {
+                        crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin18::MlFindDocumentationParameterRangeJoin18Next(start_4, optional_3) => {
                             {
                                 let end = start_4;
                                 {
-                                    let end_2 = crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop18(units.to_vec(), start_4, end);
+                                    let end_2 = crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop19(units.to_vec(), start_4, end);
                                     if (end_2 == start_4) {
                                         Vec::<f64>::new()
                                     } else {
                                         {
-                                            let ml_s13 = if optional_3 {
+                                            let ml_s14 = if optional_3 {
                                                 {
                                                     let after = end_2;
                                                     {
-                                                        let after_2 = crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop20(units.to_vec(), after);
+                                                        let after_2 = crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop21(units.to_vec(), after);
                                                         if ((after_2 >= (units.len() as f64)) || (((crate::translation::frontend_rules::ml_array::at(units, crate::translation::frontend_rules::ml_array::number_index(after_2))) != (93f64)) && ((crate::translation::frontend_rules::ml_array::at(units, crate::translation::frontend_rules::ml_array::number_index(after_2))) != (61f64)))) {
-                                                            crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin19::MlFindDocumentationParameterRangeJoin19Return(Vec::<f64>::new())
+                                                            crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Return(Vec::<f64>::new())
                                                         } else {
-                                                            crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin19::MlFindDocumentationParameterRangeJoin19Next
+                                                            crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Next
                                                         }
                                                     }
                                                 }
                                             } else {
-                                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin19::MlFindDocumentationParameterRangeJoin19Next
+                                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Next
                                             };
-                                            match ml_s13 {
-                                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin19::MlFindDocumentationParameterRangeJoin19Next => {
+                                            match ml_s14 {
+                                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Next => {
                                                     vec![start_4, end_2]
                                                 }
-                                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin19::MlFindDocumentationParameterRangeJoin19Return(ml_result19) => {
-                                                    ml_result19
+                                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Return(ml_result20) => {
+                                                    ml_result20
                                                 }
                                             }
                                         }

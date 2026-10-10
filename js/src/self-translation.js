@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import { decoratorSet } from './decorators.js';
 import { decorateEmitted } from './grammar-emitters/common.js';
 import { LinkNetwork } from './network.js';
+import { ParseConfiguration } from './primitives.js';
 import { parseProgrammingLanguage } from './programming-language-parser.js';
 import { checkProgram } from './translation/check.js';
 import { TranslationError } from './translation/diagnostics.js';
@@ -106,20 +107,23 @@ export function selfTranslationSignatures(source, language, options = {}) {
   if (family(required(language)) !== 'JavaScript') {
     throw new SelfTranslationError(`signatures are read from JavaScript or TypeScript modules, not ${language}`);
   }
-  return translateModule(source, language, 'Rust', options).signatures;
+  return translateModule(source, language, 'Rust', options, true).signatures;
 }
 
-function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {} } = {}) {
+function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {} } = {}, signaturesOnly = false) {
   const from = required(sourceLanguage);
   const to = required(targetLanguage);
   const set = decoratorSet(decorators);
   const text = String(source);
-  const reconstructed = LinkNetwork.parse(text, from).reconstructText();
+  const bytes = Buffer.from(text, 'utf8');
+  const parsed = parseProgrammingLanguage(text, from);
+  // Signature discovery still checks and translates every declaration. It
+  // does not need a second complete source graph or a provenance envelope.
+  const reconstructed = signaturesOnly ? bytes.toString('utf8') : LinkNetwork._parseWithLinks(text, from, ParseConfiguration.default(), parsed).network.reconstructText();
   if (reconstructed !== text) {
     throw new SelfTranslationError(`the ${from} links of the source do not reproduce it`);
   }
-  const bytes = Buffer.from(text, 'utf8');
-  const items = topLevelItems(text, from, bytes);
+  const items = topLevelItems(bytes, parsed);
   if (family(from) === family(to)) {
     return { translation: freeze(from, to, reconstructed, items.map(({ term, start, end }) => ({ term, start, end, status: 'kept', reason: null }))), signatures: [] };
   }
@@ -134,6 +138,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory });
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
   const signatures = results.flatMap(({ out }) => out.status === 'translated' ? (out.signatures ?? []).filter(signature => exportedNames.has(signature.name)) : []);
+  if (signaturesOnly) return { signatures };
   for (const { group, out } of results) {
     for (const prelude of out.preludes ?? []) if (!preludes.includes(prelude)) preludes.push(prelude);
     for (const { term, start, end } of group.items) recorded.push({ term, start, end, status: out.status, reason: out.reason ?? null });
@@ -316,8 +321,7 @@ function breaks(gap) {
 }
 
 /** The top-level items of `text`, with their text and the layout after each. */
-function topLevelItems(text, language, bytes) {
-  const parsed = parseProgrammingLanguage(text, language);
+function topLevelItems(bytes, parsed) {
   const root = parsed?.tree;
   const nodes = root && acceptRootSyntaxItem(root.term, root.children.length > 0, root.span.byteRange.end > root.span.byteRange.start) ? [root] : root?.children ?? [];
   const children = nodes

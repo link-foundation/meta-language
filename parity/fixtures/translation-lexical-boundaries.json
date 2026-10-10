@@ -75,5 +75,52 @@
     "`head ${`nested ${1}`"
   ],
   "templateBoundaryProgram": "console.log(`head ${\"}\"} ${`nested ${\"{\"}`} ${1 /* } */ + 2} tail`);",
-  "templateBoundaryOutput": "head } nested { 3 tail\n"
+  "templateBoundaryOutput": "head } nested { 3 tail\n",
+  "escapedLiterals": [
+    {
+      "source": "`\\u00e9\\u{1F600}\\ud83d\\ude00\\xE9`",
+      "value": "é😀😀é"
+    },
+    {
+      "source": "\"\\x00\\x41\\xFF\"",
+      "value": "\u0000Aÿ"
+    },
+    {
+      "source": "`\\x00${1}\\u00e9`",
+      "value": "\u00001é"
+    },
+    {
+      "source": "\"\\b\\f\\v\\q\\{\"",
+      "value": "\b\f\u000bq{"
+    },
+    {
+      "source": "`left\\\r\nright`",
+      "value": "leftright"
+    },
+    {
+      "source": "\"left\\\nright\"",
+      "value": "leftright"
+    },
+    {
+      "source": "`left\r\ncenter\rright`",
+      "value": "left\ncenter\nright"
+    }
+  ],
+  "malformedEscapedLiterals": [
+    "`\\xA`",
+    "`\\xGG`",
+    "`\\x{41}`",
+    "`\\u12`",
+    "`\\u{no}`",
+    "\"\\xG0\"",
+    "`\\8`",
+    "`\\9`",
+    "\"\\01\"",
+    "\"\\9\"",
+    "\"left\rright\""
+  ],
+  "unsupportedEscapedLiterals": [
+    "`\\ud800`",
+    "`\\u{110000}`"
+  ]
 }

@@ -3,21 +3,21 @@
 use super::*;
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeUnicodeEscapeJoin4 {
-    MlDecodeUnicodeEscapeJoin4Next(f64, f64),
+pub enum MlDecodeUnicodeEscapeJoin5 {
+    MlDecodeUnicodeEscapeJoin5Next(f64, f64),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeUnicodeEscapeLoop5Result {
-    MlDecodeUnicodeEscapeLoop5Done(f64, f64),
+pub enum MlDecodeUnicodeEscapeLoop6Result {
+    MlDecodeUnicodeEscapeLoop6Done(f64, f64),
 }
 
-pub fn ml_decode_unicode_escape_loop5(
+pub fn ml_decode_unicode_escape_loop6(
     mut units: Vec<f64>,
     mut index: f64,
     mut low: f64,
     mut offset: f64,
-) -> crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop5Result {
+) -> crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop6Result {
     loop {
         return if (offset < (6f64)) {
             {
@@ -38,7 +38,7 @@ pub fn ml_decode_unicode_escape_loop5(
                             digit
                         };
                         if (digit_5 < (0f64)) {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop5Result::MlDecodeUnicodeEscapeLoop5Done(low, offset)
+                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop6Result::MlDecodeUnicodeEscapeLoop6Done(low, offset)
                         } else {
                             {
                                 let low_2 = ((low * 16f64) + digit_5);
@@ -55,31 +55,32 @@ pub fn ml_decode_unicode_escape_loop5(
                 }
             }
         } else {
-            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop5Result::MlDecodeUnicodeEscapeLoop5Done(low, offset)
+            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop6Result::MlDecodeUnicodeEscapeLoop6Done(low, offset)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeUnicodeEscapeJoin3 {
-    MlDecodeUnicodeEscapeJoin3Next(f64),
-    MlDecodeUnicodeEscapeJoin3Return(Box<crate::translation::frontend_rules::UnicodeEscape>),
+pub enum MlDecodeUnicodeEscapeJoin4 {
+    MlDecodeUnicodeEscapeJoin4Next(f64),
+    MlDecodeUnicodeEscapeJoin4Return(Box<crate::translation::frontend_rules::UnicodeEscape>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeUnicodeEscapeLoop2Result {
-    MlDecodeUnicodeEscapeLoop2Done(f64, f64, f64),
+pub enum MlDecodeUnicodeEscapeLoop3Result {
+    MlDecodeUnicodeEscapeLoop3Done(f64, f64, f64),
 }
 
-pub fn ml_decode_unicode_escape_loop2(
+pub fn ml_decode_unicode_escape_loop3(
     mut units: Vec<f64>,
+    mut fixed: f64,
     mut index: f64,
     mut code: f64,
     mut digits: f64,
     mut braced: bool,
-) -> crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop2Result {
+) -> crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop3Result {
     loop {
-        return if ((index < (units.len() as f64)) && (digits < (if braced { 6f64 } else { 4f64 })))
+        return if ((index < (units.len() as f64)) && (digits < (if braced { 6f64 } else { fixed })))
         {
             {
                 let unit = crate::translation::frontend_rules::ml_array::at(
@@ -99,7 +100,7 @@ pub fn ml_decode_unicode_escape_loop2(
                             digit
                         };
                         if (digit_5 < (0f64)) {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop2Result::MlDecodeUnicodeEscapeLoop2Done(index, code, digits)
+                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop3Result::MlDecodeUnicodeEscapeLoop3Done(index, code, digits)
                         } else {
                             {
                                 let code_2 = ((code * 16f64) + digit_5);
@@ -119,27 +120,33 @@ pub fn ml_decode_unicode_escape_loop2(
                 }
             }
         } else {
-            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop2Result::MlDecodeUnicodeEscapeLoop2Done(index, code, digits)
+            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop3Result::MlDecodeUnicodeEscapeLoop3Done(index, code, digits)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum MlDecodeUnicodeEscapeJoin2 {
+    MlDecodeUnicodeEscapeJoin2Next(f64, bool),
+    MlDecodeUnicodeEscapeJoin2Return(Box<crate::translation::frontend_rules::UnicodeEscape>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum MlDecodeUnicodeEscapeJoin1 {
-    MlDecodeUnicodeEscapeJoin1Next(f64, bool),
+    MlDecodeUnicodeEscapeJoin1Next(f64),
     MlDecodeUnicodeEscapeJoin1Return(Box<crate::translation::frontend_rules::UnicodeEscape>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptArgumentCountLoop6Result {
-    MlAcceptArgumentCountLoop6Done,
-    MlAcceptArgumentCountLoop6Return(bool),
+pub enum MlAcceptArgumentCountLoop7Result {
+    MlAcceptArgumentCountLoop7Done,
+    MlAcceptArgumentCountLoop7Return(bool),
 }
 
-pub fn ml_accept_argument_count_loop6(
+pub fn ml_accept_argument_count_loop7(
     mut defaults: Vec<bool>,
     mut index: f64,
-) -> crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result {
+) -> crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result {
     loop {
         return if (index < (defaults.len() as f64)) {
             if (crate::translation::frontend_rules::ml_array::at(
@@ -154,37 +161,37 @@ pub fn ml_accept_argument_count_loop6(
                     }
                 }
             }
-            crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result::MlAcceptArgumentCountLoop6Return(false)
+            crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result::MlAcceptArgumentCountLoop7Return(false)
         } else {
-            crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result::MlAcceptArgumentCountLoop6Done
+            crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result::MlAcceptArgumentCountLoop7Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlFindDefaultParameterReferenceLoop7Result {
-    MlFindDefaultParameterReferenceLoop7Done,
-    MlFindDefaultParameterReferenceLoop7Return(f64),
+pub enum MlFindDefaultParameterReferenceLoop8Result {
+    MlFindDefaultParameterReferenceLoop8Done,
+    MlFindDefaultParameterReferenceLoop8Return(f64),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlFindDefaultParameterReferenceJoin8 {
-    MlFindDefaultParameterReferenceJoin8Next,
-    MlFindDefaultParameterReferenceJoin8Return(f64),
+pub enum MlFindDefaultParameterReferenceJoin9 {
+    MlFindDefaultParameterReferenceJoin9Next,
+    MlFindDefaultParameterReferenceJoin9Return(f64),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlFindDefaultParameterReferenceLoop9Result {
-    MlFindDefaultParameterReferenceLoop9Done,
-    MlFindDefaultParameterReferenceLoop9Return(f64),
+pub enum MlFindDefaultParameterReferenceLoop10Result {
+    MlFindDefaultParameterReferenceLoop10Done,
+    MlFindDefaultParameterReferenceLoop10Return(f64),
 }
 
-pub fn ml_find_default_parameter_reference_loop9(
+pub fn ml_find_default_parameter_reference_loop10(
     mut parameters: Vec<String>,
     mut at: f64,
     mut value: String,
     mut parameter_index: f64,
-) -> crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result {
+) -> crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop10Result {
     loop {
         return if (parameter_index < (parameters.len() as f64)) {
             if ((crate::translation::frontend_rules::ml_array::at(
@@ -192,7 +199,7 @@ pub fn ml_find_default_parameter_reference_loop9(
                 crate::translation::frontend_rules::ml_array::number_index(parameter_index),
             )) == value)
             {
-                crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Return(at)
+                crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop10Result::MlFindDefaultParameterReferenceLoop10Return(at)
             } else {
                 {
                     let parameter_index_2 = (parameter_index + 1f64);
@@ -203,18 +210,18 @@ pub fn ml_find_default_parameter_reference_loop9(
                 }
             }
         } else {
-            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Done
+            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop10Result::MlFindDefaultParameterReferenceLoop10Done
         };
     }
 }
 
-pub fn ml_find_default_parameter_reference_loop7(
+pub fn ml_find_default_parameter_reference_loop8(
     mut kinds: Vec<String>,
     mut values: Vec<String>,
     mut parameters: Vec<String>,
     mut at: f64,
     mut depth: f64,
-) -> crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result {
+) -> crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop8Result {
     loop {
         return if (((at < (values.len() as f64))
             && ((crate::translation::frontend_rules::ml_array::at(
@@ -249,7 +256,7 @@ pub fn ml_find_default_parameter_reference_loop7(
                             depth_3
                         };
                         {
-                            let ml_s15 = if (((crate::translation::frontend_rules::ml_array::at(
+                            let ml_s16 = if (((crate::translation::frontend_rules::ml_array::at(
                                 &kinds,
                                 crate::translation::frontend_rules::ml_array::number_index(at),
                             )) == "identifier")
@@ -264,22 +271,22 @@ pub fn ml_find_default_parameter_reference_loop7(
                                 {
                                     let parameter_index = 0f64;
                                     {
-                                        let ml_s16 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop9(parameters.clone(), at, value.clone(), parameter_index);
-                                        match ml_s16.clone() {
-                                            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Done => {
-                                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next
+                                        let ml_s17 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop10(parameters.clone(), at, value.clone(), parameter_index);
+                                        match ml_s17.clone() {
+                                            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop10Result::MlFindDefaultParameterReferenceLoop10Done => {
+                                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Next
                                             }
-                                            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Return(ml_result9) => {
-                                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Return(ml_result9)
+                                            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop10Result::MlFindDefaultParameterReferenceLoop10Return(ml_result10) => {
+                                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Return(ml_result10)
                                             }
                                         }
                                     }
                                 }
                             } else {
-                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next
+                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Next
                             };
-                            match ml_s15.clone() {
-                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next => {
+                            match ml_s16.clone() {
+                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Next => {
                                     {
                                         let at_2 = (at + 1f64);
                                         {
@@ -288,8 +295,8 @@ pub fn ml_find_default_parameter_reference_loop7(
                                         }
                                     }
                                 }
-                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Return(ml_result8) => {
-                                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result::MlFindDefaultParameterReferenceLoop7Return(ml_result8)
+                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Return(ml_result9) => {
+                                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop8Result::MlFindDefaultParameterReferenceLoop8Return(ml_result9)
                                 }
                             }
                         }
@@ -297,24 +304,24 @@ pub fn ml_find_default_parameter_reference_loop7(
                 }
             }
         } else {
-            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result::MlFindDefaultParameterReferenceLoop7Done
+            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop8Result::MlFindDefaultParameterReferenceLoop8Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlRegularExpressionEndLoop10Result {
-    MlRegularExpressionEndLoop10Done,
-    MlRegularExpressionEndLoop10Return(f64),
+pub enum MlRegularExpressionEndLoop11Result {
+    MlRegularExpressionEndLoop11Done,
+    MlRegularExpressionEndLoop11Return(f64),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlRegularExpressionEndJoin11 {
-    MlRegularExpressionEndJoin11Next(f64, bool, bool),
-    MlRegularExpressionEndJoin11Return(f64),
+pub enum MlRegularExpressionEndJoin12 {
+    MlRegularExpressionEndJoin12Next(f64, bool, bool),
+    MlRegularExpressionEndJoin12Return(f64),
 }
 
-pub fn ml_regular_expression_end_loop12(mut units: Vec<f64>, mut index: f64) -> f64 {
+pub fn ml_regular_expression_end_loop13(mut units: Vec<f64>, mut index: f64) -> f64 {
     loop {
         return if (index < (units.len() as f64)) {
             {
@@ -339,12 +346,12 @@ pub fn ml_regular_expression_end_loop12(mut units: Vec<f64>, mut index: f64) -> 
     }
 }
 
-pub fn ml_regular_expression_end_loop10(
+pub fn ml_regular_expression_end_loop11(
     mut units: Vec<f64>,
     mut index: f64,
     mut escaped: bool,
     mut character_class: bool,
-) -> crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result {
+) -> crate::translation::frontend_rules::MlRegularExpressionEndLoop11Result {
     loop {
         return if (index < (units.len() as f64)) {
             {
@@ -355,42 +362,42 @@ pub fn ml_regular_expression_end_loop10(
                 if ((((unit == (10f64)) || (unit == (13f64))) || (unit == (8232f64)))
                     || (unit == (8233f64)))
                 {
-                    crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Return(-1f64)
+                    crate::translation::frontend_rules::MlRegularExpressionEndLoop11Result::MlRegularExpressionEndLoop11Return(-1f64)
                 } else {
                     {
-                        let ml_s17 = if escaped {
+                        let ml_s18 = if escaped {
                             {
                                 let escaped_2 = false;
-                                crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped_2, character_class)
+                                crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped_2, character_class)
                             }
                         } else if (unit == (92f64)) {
                             {
                                 let escaped_3 = true;
-                                crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped_3, character_class)
+                                crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped_3, character_class)
                             }
                         } else if (unit == (91f64)) {
                             {
                                 let character_class_2 = true;
-                                crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class_2)
+                                crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class_2)
                             }
                         } else if (unit == (93f64)) {
                             {
                                 let character_class_3 = false;
-                                crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class_3)
+                                crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class_3)
                             }
                         } else if ((unit == (47f64)) && !character_class) {
                             {
                                 let index_2 = (index + 1f64);
                                 {
-                                    let index_3 = crate::translation::frontend_rules::ml_regular_expression_end_loop12(units.clone(), index_2);
-                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Return(index_3)
+                                    let index_3 = crate::translation::frontend_rules::ml_regular_expression_end_loop13(units.clone(), index_2);
+                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Return(index_3)
                                 }
                             }
                         } else {
-                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index, escaped, character_class)
+                            crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class)
                         };
-                        match ml_s17.clone() {
-                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Next(index_4, escaped_4, character_class_4) => {
+                        match ml_s18.clone() {
+                            crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index_4, escaped_4, character_class_4) => {
                                 {
                                     let index_5 = (index_4 + 1f64);
                                     {
@@ -399,20 +406,20 @@ pub fn ml_regular_expression_end_loop10(
                                     }
                                 }
                             }
-                            crate::translation::frontend_rules::MlRegularExpressionEndJoin11::MlRegularExpressionEndJoin11Return(ml_result11) => {
-                                crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Return(ml_result11)
+                            crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Return(ml_result12) => {
+                                crate::translation::frontend_rules::MlRegularExpressionEndLoop11Result::MlRegularExpressionEndLoop11Return(ml_result12)
                             }
                         }
                     }
                 }
             }
         } else {
-            crate::translation::frontend_rules::MlRegularExpressionEndLoop10Result::MlRegularExpressionEndLoop10Done
+            crate::translation::frontend_rules::MlRegularExpressionEndLoop11Result::MlRegularExpressionEndLoop11Done
         };
     }
 }
 
-pub fn ml_find_binding_run_end_loop13(mut terms: Vec<String>, mut end: f64) -> f64 {
+pub fn ml_find_binding_run_end_loop14(mut terms: Vec<String>, mut end: f64) -> f64 {
     loop {
         return if (end < (terms.len() as f64)) {
             {
@@ -441,16 +448,16 @@ pub fn ml_find_binding_run_end_loop13(mut terms: Vec<String>, mut end: f64) -> f
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptBindingScopeLoop14Result {
-    MlAcceptBindingScopeLoop14Done,
-    MlAcceptBindingScopeLoop14Return(bool),
+pub enum MlAcceptBindingScopeLoop15Result {
+    MlAcceptBindingScopeLoop15Done,
+    MlAcceptBindingScopeLoop15Return(bool),
 }
 
-pub fn ml_accept_binding_scope_loop14(
+pub fn ml_accept_binding_scope_loop15(
     mut statuses: Vec<String>,
     mut reasons: Vec<String>,
     mut index: f64,
-) -> crate::translation::frontend_rules::MlAcceptBindingScopeLoop14Result {
+) -> crate::translation::frontend_rules::MlAcceptBindingScopeLoop15Result {
     loop {
         return if (index < (statuses.len() as f64)) {
             if (((crate::translation::frontend_rules::ml_array::at(
@@ -462,7 +469,7 @@ pub fn ml_accept_binding_scope_loop14(
                     crate::translation::frontend_rules::ml_array::number_index(index),
                 )) == "type"))
             {
-                crate::translation::frontend_rules::MlAcceptBindingScopeLoop14Result::MlAcceptBindingScopeLoop14Return(true)
+                crate::translation::frontend_rules::MlAcceptBindingScopeLoop15Result::MlAcceptBindingScopeLoop15Return(true)
             } else {
                 {
                     let index_2 = (index + 1f64);
@@ -473,22 +480,22 @@ pub fn ml_accept_binding_scope_loop14(
                 }
             }
         } else {
-            crate::translation::frontend_rules::MlAcceptBindingScopeLoop14Result::MlAcceptBindingScopeLoop14Done
+            crate::translation::frontend_rules::MlAcceptBindingScopeLoop15Result::MlAcceptBindingScopeLoop15Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlAcceptModuleBindingScopeLoop15Result {
-    MlAcceptModuleBindingScopeLoop15Done(f64),
-    MlAcceptModuleBindingScopeLoop15Return(bool),
+pub enum MlAcceptModuleBindingScopeLoop16Result {
+    MlAcceptModuleBindingScopeLoop16Done(f64),
+    MlAcceptModuleBindingScopeLoop16Return(bool),
 }
 
-pub fn ml_accept_module_binding_scope_loop15(
+pub fn ml_accept_module_binding_scope_loop16(
     mut terms: Vec<String>,
     mut declarations: f64,
     mut index: f64,
-) -> crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result {
+) -> crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop16Result {
     loop {
         return if (index < (terms.len() as f64)) {
             {
@@ -504,11 +511,10 @@ pub fn ml_accept_module_binding_scope_loop15(
                             continue;
                         }
                     }
-                }
-                if (((term != "function_declaration") && (term != "lexical_declaration"))
+                } else if (((term != "function_declaration") && (term != "lexical_declaration"))
                     && (term != "export_statement"))
                 {
-                    crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result::MlAcceptModuleBindingScopeLoop15Return(false)
+                    crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop16Result::MlAcceptModuleBindingScopeLoop16Return(false)
                 } else {
                     {
                         let declarations_2 = (declarations + 1f64);
@@ -523,12 +529,12 @@ pub fn ml_accept_module_binding_scope_loop15(
                 }
             }
         } else {
-            crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop15Result::MlAcceptModuleBindingScopeLoop15Done(declarations)
+            crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop16Result::MlAcceptModuleBindingScopeLoop16Done(declarations)
         };
     }
 }
 
-pub fn ml_find_documentation_parameter_range_loop16(mut units: Vec<f64>, mut start: f64) -> f64 {
+pub fn ml_find_documentation_parameter_range_loop17(mut units: Vec<f64>, mut start: f64) -> f64 {
     loop {
         return if ((start < (units.len() as f64))
             && (((crate::translation::frontend_rules::ml_array::at(
@@ -553,7 +559,7 @@ pub fn ml_find_documentation_parameter_range_loop16(mut units: Vec<f64>, mut sta
     }
 }
 
-pub fn ml_find_documentation_parameter_range_loop18(
+pub fn ml_find_documentation_parameter_range_loop19(
     mut units: Vec<f64>,
     mut start: f64,
     mut end: f64,
@@ -587,12 +593,12 @@ pub fn ml_find_documentation_parameter_range_loop18(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlFindDocumentationParameterRangeJoin19 {
-    MlFindDocumentationParameterRangeJoin19Next,
-    MlFindDocumentationParameterRangeJoin19Return(Vec<f64>),
+pub enum MlFindDocumentationParameterRangeJoin20 {
+    MlFindDocumentationParameterRangeJoin20Next,
+    MlFindDocumentationParameterRangeJoin20Return(Vec<f64>),
 }
 
-pub fn ml_find_documentation_parameter_range_loop20(mut units: Vec<f64>, mut after: f64) -> f64 {
+pub fn ml_find_documentation_parameter_range_loop21(mut units: Vec<f64>, mut after: f64) -> f64 {
     loop {
         return if ((after < (units.len() as f64))
             && (((crate::translation::frontend_rules::ml_array::at(
@@ -618,8 +624,8 @@ pub fn ml_find_documentation_parameter_range_loop20(mut units: Vec<f64>, mut aft
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlFindDocumentationParameterRangeJoin17 {
-    MlFindDocumentationParameterRangeJoin17Next(f64, bool),
+pub enum MlFindDocumentationParameterRangeJoin18 {
+    MlFindDocumentationParameterRangeJoin18Next(f64, bool),
 }
 
 const fn ml_main() {}

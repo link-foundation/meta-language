@@ -35,6 +35,7 @@
     "check:default-cst": "node scripts/generate-default-cst-expectations.mjs --check",
     "check:self-translation": "node scripts/generate-self-translation-cases.mjs --check",
     "check:frontend-rules": "node scripts/generate-frontend-rules.mjs --check",
+    "check:frontend-rule-styles": "node scripts/generate-frontend-rule-styles.mjs --check",
     "check:lino-grammar": "node scripts/generate-lino-grammar-cases.mjs --check",
     "check:pdf-grammar": "node scripts/generate-pdf-grammar-cases.mjs --check",
     "check:native-imports": "node scripts/import-native-grammars.mjs --check",

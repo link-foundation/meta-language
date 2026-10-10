@@ -226,21 +226,28 @@ function stringToken(source, index, language) {
     }
     if (char === '\\' && language !== 'Rocq') {
       const escaped = source[cursor + 1];
-      const simple = { n: '\n', t: '\t', r: '\r', '\\': '\\', '"': '"', "'": "'", 0: '\0', '{': '\\{' };
-      if (escaped === 'u') {
+      if (language === 'JavaScript' && (/[1-9]/u.test(escaped ?? '') || (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? '')))) {
+        throw new TranslationError('syntax', 'legacy octal string escape', { start: cursor, end: cursor + 2 });
+      }
+      if (language === 'JavaScript' && ['\n', '\r', '\u2028', '\u2029'].includes(escaped)) {
+        cursor += escaped === '\r' && source[cursor + 2] === '\n' ? 3 : 2;
+        continue;
+      }
+      const simple = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', '\\': '\\', '"': '"', "'": "'", 0: '\0', '{': language === 'JavaScript' ? '{' : '\\{' };
+      if (escaped === 'u' || (language === 'JavaScript' && escaped === 'x')) {
         const escape = unicodeEscape(source, cursor, language);
         value += escape.text;
         cursor = escape.end;
         continue;
       }
-      if (!(escaped in simple)) {
+      if (!(escaped in simple) && (language !== 'JavaScript' || escaped === undefined)) {
         throw new TranslationError('syntax', `unsupported string escape \\${escaped}`, { start: cursor, end: cursor + 2 });
       }
-      value += simple[escaped];
+      value += simple[escaped] ?? escaped;
       cursor += 2;
       continue;
     }
-    if (char === '\n' && language === 'JavaScript') break;
+    if ((char === '\n' || char === '\r') && language === 'JavaScript') break;
     value += char;
     cursor += 1;
   }
@@ -259,15 +266,30 @@ function templateToken(source, index, encoding) {
     }
     if (char === '\\') {
       const escaped = source[cursor + 1];
+      if (['\n', '\r', '\u2028', '\u2029'].includes(escaped)) {
+        cursor += escaped === '\r' && source[cursor + 2] === '\n' ? 3 : 2;
+        continue;
+      }
       const simple = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', 0: '\0', '\\': '\\', '`': '`', $: '$' };
-      if (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? '')) {
+      if (escaped === 'u' || escaped === 'x') {
+        const escape = unicodeEscape(source, cursor, 'JavaScript');
+        text += escape.text;
+        cursor = escape.end;
+        continue;
+      }
+      if (/[1-9]/u.test(escaped ?? '') || (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? ''))) {
         throw new TranslationError('syntax', 'legacy octal template escape', { start: cursor, end: cursor + 3 });
       }
-      if (!(escaped in simple)) {
+      if (escaped === undefined) {
         throw new TranslationError('syntax', `unsupported template escape \\${escaped}`, { start: cursor, end: cursor + 2 });
       }
-      text += simple[escaped];
+      text += simple[escaped] ?? escaped;
       cursor += 2;
+      continue;
+    }
+    if (char === '\r') {
+      text += '\n';
+      cursor += source[cursor + 1] === '\n' ? 2 : 1;
       continue;
     }
     if (source.startsWith('${', cursor)) {
