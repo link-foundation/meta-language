@@ -46,6 +46,29 @@ fn native_hcl_and_terraform_use_the_ordinary_catalog_parser() {
 }
 
 #[test]
+fn native_hcl_root_spans_include_leading_trivia() {
+    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&fixture);
+    for source in ["\na=1\n", "  a=1\n", "\n\t\n"] {
+        let tree = parse(&parser, source).unwrap();
+        assert_eq!(
+            rows.rows(&tree, source),
+            oracle_rows(&tree_sitter_hcl::LANGUAGE.into(), source).0
+        );
+        for language in ["HCL", "terraform"] {
+            let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+            assert_eq!(network.reconstruct_text(), source);
+            let root = network
+                .links()
+                .find(|link| link.metadata().term() == Some("config_file"))
+                .unwrap();
+            assert_eq!(root.metadata().span().unwrap().byte_range().start(), 0);
+        }
+    }
+}
+
+#[test]
 fn native_hcl_grammar_is_canonical_links_notation() {
     let grammar = parse_grammar_links(GRAMMAR).unwrap();
     assert_eq!(render_grammar_links(&grammar), GRAMMAR);

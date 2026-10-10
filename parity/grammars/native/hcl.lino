@@ -36,7 +36,7 @@
 (rule path_expansion normal (choice unordered (ref attribute_expansion) (ref complete_expansion)) (concept grammar.path-expansion) (source-names (tree-sitter splat)))
 (rule attribute_expansion normal (precedence 0 right (seq (literal .%2A) (repeat0 (choice unordered (ref get_attribute) (ref index))))) (concept grammar.attribute-expansion) (source-names (tree-sitter attr_splat)))
 (rule complete_expansion normal (precedence 0 right (seq (literal %5B%2A%5D) (repeat0 (choice unordered (ref get_attribute) (ref index))))) (concept grammar.complete-expansion) (source-names (tree-sitter full_splat)))
-(rule for_expression normal (choice unordered (ref for_tuple_expression) (ref for_object_expression)) (concept grammar.for-expression) (source-names (tree-sitter for_expr)))
+(rule for_expression normal (choice unordered (ref for_tuple_expression) (ref for_object_expression)) (concept grammar.collection-comprehension) (source-names (tree-sitter for_expr)))
 (rule for_tuple_expression normal (seq (ref tuple_start) (ref for_intro) (ref expression) (optional (ref iteration_condition)) (ref tuple_end)) (concept grammar.for-tuple-expression) (source-names (tree-sitter for_tuple_expr)))
 (rule for_object_expression normal (seq (ref object_start) (ref for_intro) (ref expression) (literal %3D%3E) (ref expression) (optional (ref ellipsis)) (optional (ref iteration_condition)) (ref object_end)) (concept grammar.for-object-expression) (source-names (tree-sitter for_object_expr)))
 (rule for_intro normal (seq (literal for) (ref identifier) (optional (seq (literal %2C) (ref identifier))) (literal in) (ref expression) (literal %3A)) (concept grammar.for-intro))

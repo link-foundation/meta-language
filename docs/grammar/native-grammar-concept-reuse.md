@@ -27,7 +27,7 @@ when only its own grammar names the concept.
 | `native-go` | 117 | 69 | 48 | 59% |
 | `native-graphql` | 74 | 27 | 47 | 36% |
 | `native-groovy` | 183 | 171 | 12 | 93% |
-| `native-hcl` | 65 | 19 | 46 | 29% |
+| `native-hcl` | 65 | 18 | 47 | 28% |
 | `native-ini` | 5 | 2 | 3 | 40% |
 | `native-java` | 169 | 164 | 5 | 97% |
 | `native-javascript` | 143 | 143 | 0 | 100% |
@@ -53,7 +53,7 @@ when only its own grammar names the concept.
 | `native-typescript` | 230 | 230 | 0 | 100% |
 | `native-vb` | 111 | 65 | 46 | 59% |
 | `native-zig` | 116 | 61 | 55 | 53% |
-| all | 5004 | 2429 | 2575 | 49% |
+| all | 5004 | 2428 | 2576 | 49% |
 
 ### `native-c`
 
@@ -112,8 +112,8 @@ when only its own grammar names the concept.
 
 ### `native-hcl`
 
-- Shared: `body` → `grammar.body`, `block` → `grammar.block`, `identifier` → `grammar.identifier`, `expression` → `grammar.expression`, `literal_value` → `grammar.literal-value`, `boolean_literal` → `grammar.boolean-literal`, `null_literal` → `grammar.null-literal`, `string_literal` → `grammar.string-literal`, `comma` → `grammar.comma`, `tuple` → `grammar.tuple`, `object` → `grammar.object`, `for_expression` → `grammar.for-expression`, `variable_expression` → `grammar.variable-expression`, `function_call` → `grammar.function-call`, `function_argument_list` → `grammar.function-argument-list`, `ellipsis` → `grammar.ellipsis`, `conditional_expression` → `grammar.conditional-expression`, `template_expression` → `grammar.template-expression`, `comment` → `grammar.comment`.
-- Language-specific: `configuration_file` → `grammar.configuration-file`, `configuration_attribute` → `grammar.configuration-attribute`, `block_start` → `grammar.block-start`, `block_end` → `grammar.block-end`, `expression_term` → `grammar.expression-term`, `numeric_literal` → `grammar.numeric-literal`, `collection_value` → `grammar.collection-value`, `tuple_start` → `grammar.tuple-start`, `tuple_end` → `grammar.tuple-end`, `tuple_element_list` → `grammar.tuple-element-list`, `object_start` → `grammar.object-start`, `object_end` → `grammar.object-end`, `object_element_list` → `grammar.object-element-list`, `object_element` → `grammar.object-element`, `index` → `grammar.index`, `new_index` → `grammar.new-index`, `legacy_index` → `grammar.legacy-index`, `get_attribute` → `grammar.get-attribute`, `path_expansion` → `grammar.path-expansion`, `attribute_expansion` → `grammar.attribute-expansion`, `complete_expansion` → `grammar.complete-expansion`, `for_tuple_expression` → `grammar.for-tuple-expression`, `for_object_expression` → `grammar.for-object-expression`, `for_intro` → `grammar.for-intro`, `iteration_condition` → `grammar.iteration-condition`, `function_call_start` → `grammar.function-call-start`, `function_call_end` → `grammar.function-call-end`, `operation` → `grammar.operation`, `unary_operation` → `grammar.unary-operation`, `binary_operation` → `grammar.binary-operation`, `quoted_template` → `grammar.quoted-template`, `here_document_template` → `grammar.here-document-template`, `here_document_start` → `grammar.here-document-start`, `strip_marker` → `grammar.strip-marker`, `template` → `grammar.template`, `template_literal` → `grammar.template-literal`, `template_interpolation` → `grammar.template-interpolation`, `template_directive` → `grammar.template-directive`, `iteration_template` → `grammar.iteration-template`, `template_for_start` → `grammar.template-for-start`, `template_for_end` → `grammar.template-for-end`, `conditional_template` → `grammar.conditional-template`, `template_if_intro` → `grammar.template-if-intro`, `template_else_intro` → `grammar.template-else-intro`, `template_if_end` → `grammar.template-if-end`, `whitespace` → `grammar.whitespace`.
+- Shared: `body` → `grammar.body`, `block` → `grammar.block`, `identifier` → `grammar.identifier`, `expression` → `grammar.expression`, `literal_value` → `grammar.literal-value`, `boolean_literal` → `grammar.boolean-literal`, `null_literal` → `grammar.null-literal`, `string_literal` → `grammar.string-literal`, `comma` → `grammar.comma`, `tuple` → `grammar.tuple`, `object` → `grammar.object`, `variable_expression` → `grammar.variable-expression`, `function_call` → `grammar.function-call`, `function_argument_list` → `grammar.function-argument-list`, `ellipsis` → `grammar.ellipsis`, `conditional_expression` → `grammar.conditional-expression`, `template_expression` → `grammar.template-expression`, `comment` → `grammar.comment`.
+- Language-specific: `configuration_file` → `grammar.configuration-file`, `configuration_attribute` → `grammar.configuration-attribute`, `block_start` → `grammar.block-start`, `block_end` → `grammar.block-end`, `expression_term` → `grammar.expression-term`, `numeric_literal` → `grammar.numeric-literal`, `collection_value` → `grammar.collection-value`, `tuple_start` → `grammar.tuple-start`, `tuple_end` → `grammar.tuple-end`, `tuple_element_list` → `grammar.tuple-element-list`, `object_start` → `grammar.object-start`, `object_end` → `grammar.object-end`, `object_element_list` → `grammar.object-element-list`, `object_element` → `grammar.object-element`, `index` → `grammar.index`, `new_index` → `grammar.new-index`, `legacy_index` → `grammar.legacy-index`, `get_attribute` → `grammar.get-attribute`, `path_expansion` → `grammar.path-expansion`, `attribute_expansion` → `grammar.attribute-expansion`, `complete_expansion` → `grammar.complete-expansion`, `for_expression` → `grammar.collection-comprehension`, `for_tuple_expression` → `grammar.for-tuple-expression`, `for_object_expression` → `grammar.for-object-expression`, `for_intro` → `grammar.for-intro`, `iteration_condition` → `grammar.iteration-condition`, `function_call_start` → `grammar.function-call-start`, `function_call_end` → `grammar.function-call-end`, `operation` → `grammar.operation`, `unary_operation` → `grammar.unary-operation`, `binary_operation` → `grammar.binary-operation`, `quoted_template` → `grammar.quoted-template`, `here_document_template` → `grammar.here-document-template`, `here_document_start` → `grammar.here-document-start`, `strip_marker` → `grammar.strip-marker`, `template` → `grammar.template`, `template_literal` → `grammar.template-literal`, `template_interpolation` → `grammar.template-interpolation`, `template_directive` → `grammar.template-directive`, `iteration_template` → `grammar.iteration-template`, `template_for_start` → `grammar.template-for-start`, `template_for_end` → `grammar.template-for-end`, `conditional_template` → `grammar.conditional-template`, `template_if_intro` → `grammar.template-if-intro`, `template_else_intro` → `grammar.template-else-intro`, `template_if_end` → `grammar.template-if-end`, `whitespace` → `grammar.whitespace`.
 
 ### `native-ini`
 
@@ -467,7 +467,7 @@ when only its own grammar names the concept.
 | `grammar.floating-point-type` | groovy, java |
 | `grammar.flow-maybe-type` | tsx, typescript |
 | `grammar.for-each-statement` | pascal, powershell, vb |
-| `grammar.for-expression` | hcl, rust, zig |
+| `grammar.for-expression` | rust, zig |
 | `grammar.for-header` | javascript, tsx, typescript |
 | `grammar.for-in-statement` | javascript, tsx, typescript |
 | `grammar.for-keyword` | pascal, sql |

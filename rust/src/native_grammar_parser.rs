@@ -113,6 +113,7 @@ pub fn parse_native(id: &str, source: &str) -> NativeNode {
                 anonymous: entry.anonymous.iter().map(String::as_str).collect(),
                 extras: entry.extras.iter().map(String::as_str).collect(),
                 oracle_kinds: &entry.oracle_kinds,
+                root_includes_leading_trivia: entry.root_includes_leading_trivia,
             }
             .root(&tree, length),
             _ => error_root(),
@@ -122,6 +123,7 @@ pub fn parse_native(id: &str, source: &str) -> NativeNode {
 }
 
 struct Projection<'a> {
+    root_includes_leading_trivia: bool,
     hidden: BTreeSet<&'a str>,
     anonymous: BTreeSet<&'a str>,
     extras: BTreeSet<&'a str>,
@@ -301,10 +303,14 @@ impl Projection<'_> {
         };
         let mut leaves = Vec::new();
         collect_leaves(tree, &mut leaves);
-        let start = leaves
-            .iter()
-            .find(|leaf| !self.invisible(leaf))
-            .map_or(length, |leaf| self.span(leaf).0);
+        let start = if self.root_includes_leading_trivia {
+            tree.start()
+        } else {
+            leaves
+                .iter()
+                .find(|leaf| !self.invisible(leaf))
+                .map_or(length, |leaf| self.span(leaf).0)
+        };
         let hidden_missing = children.iter().any(|child| self.hidden_missing(child));
         let children = self.project(children);
         NativeNode {

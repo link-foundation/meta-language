@@ -59,6 +59,7 @@
     "template_literal_chunk": "_template_literal_chunk",
     "here_document_identifier": "heredoc_identifier"
   },
+  "rootIncludesLeadingTrivia": true,
   "matches": [
     {
       "source": "",
@@ -899,7 +900,7 @@
     },
     {
       "source": "a=\"unterminated\n",
-      "recovered": "(configuration_file (body (configuration_attribute (identifier \"a\") \"=\" (expression (literal_value (string_literal (quoted_template_start \"\\\"\") (template_literal (unnamed_token \"u\") (unnamed_token \"n\") (unnamed_token \"t\") (unnamed_token \"e\") (unnamed_token \"r\") (unnamed_token \"m\") (unnamed_token \"i\") (unnamed_token \"n\") (unnamed_token \"a\") (unnamed_token \"t\") (unnamed_token \"e\") (unnamed_token \"d\")) ~(whitespace \"\\n\") (MISSING@16 quoted_template_end)))))))"
+      "recovered": "(configuration_file (ERROR@0..16 \"a=\\\"unterminated\\n\"))"
     },
     {
       "source": "a=\"${x\"\n",
@@ -907,7 +908,7 @@
     },
     {
       "source": "a=<<END\nbody\nOTHER\n",
-      "recovered": "(configuration_file (body (configuration_attribute (identifier \"a\") \"=\" (expression (template_expression (here_document_template (here_document_start \"<<\") (here_document_identifier \"END\") (template_literal ~\"\\n\" (unnamed_token \"b\") (unnamed_token \"o\") (unnamed_token \"d\") (unnamed_token \"y\") ~\"\\n\" (unnamed_token \"O\") (unnamed_token \"T\") (unnamed_token \"H\") (unnamed_token \"E\") (unnamed_token \"R\")) ~(whitespace \"\\n\") (MISSING@19 here_document_identifier)))))))"
+      "recovered": "(configuration_file (ERROR@0..19 \"a=<<END\\nbody\\nOTHER\\n\"))"
     },
     {
       "source": "a=<<END\nbody\nEND",

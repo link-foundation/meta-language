@@ -10,7 +10,9 @@
 // Whitespace trivia is not a node, named trivia (a comment token) is an extra
 // node, leading trivia belongs before the node it precedes, a node spans its
 // first to last non-trivia leaf, and the root starts at its first leaf that is
-// not whitespace and ends at the end of the input. Kinds in `hidden` are
+// not whitespace and ends at the end of the input. A catalog entry whose root
+// includes leading trivia retains the native tree's input start instead.
+// Kinds in `hidden` are
 // leaves the oracle drops, such as a byte order mark, and kinds in
 // `anonymous` are leaves the oracle keeps inside a node without a node of
 // their own; the text of both is the gap text between nodes. Node kinds in
@@ -57,16 +59,16 @@ function nativeParser(id) {
  * cannot finish within its resource limits is one ERROR root.
  */
 export function parseNative(id, source) {
-  const { hidden, anonymous, extras, oracleKinds } = NATIVE_GRAMMARS[id];
+  const { hidden, anonymous, extras, oracleKinds, rootIncludesLeadingTrivia = false } = NATIVE_GRAMMARS[id];
   const { tree } = nativeParser(id).parseTree(source, { errorRecovery: true, recovery: 'accept' });
   const length = Buffer.byteLength(source);
   if (!tree || tree.type !== 'node') {
     return { term: 'ERROR', named: true, start: 0, end: length, isError: true, isMissing: false, isExtra: false, hasError: true, children: [] };
   }
-  return projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKinds });
+  return projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKinds, rootIncludesLeadingTrivia });
 }
 
-function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKinds }) {
+function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKinds, rootIncludesLeadingTrivia }) {
   const oracleNames = new Map(Object.entries(oracleKinds));
   const oracleKind = (kind) => oracleNames.get(kind) ?? kind;
   const anonymousAlias = (kind) => typeof kind === 'string' && kind.startsWith("'");
@@ -121,7 +123,7 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKind
   const first = leaves.find((leaf) => !invisible(leaf));
   const children = project(tree.children);
   return {
-    term: oracleKind(tree.kind), named: true, start: first ? first.start : length, end: length, isError: false, isMissing: false,
+    term: oracleKind(tree.kind), named: true, start: rootIncludesLeadingTrivia ? tree.start : first ? first.start : length, end: length, isError: false, isMissing: false,
     isExtra: false, hasError: children.some(({ node }) => node.hasError) || tree.children.some(hiddenMissing), children,
   };
 }

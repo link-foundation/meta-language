@@ -6,6 +6,7 @@ import { HCL_SCANNERS } from '../experiments/build-hcl-scanner.mjs';
 import { scannerFamilies } from '../scripts/scanner-families.mjs';
 import { NATIVE_GRAMMARS, buildNativeGrammarCorpusSources, buildNativeGrammarFixture, fixturePath, renderFixture } from '../scripts/generate-native-grammar-fixtures.mjs';
 import { nativeRows, oracleRows, oracleRecovers } from '../scripts/native-grammar-rows.mjs';
+import { parseNative } from '../src/native-grammar-parser.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
@@ -18,6 +19,15 @@ const observe = (assertions, testName) => recordIssue195Observations({
   requirementId: 'I195-GRAMMAR-NATIVE-HCL', suffix: 'behavior',
   fixtureId: 'planned:repository-directive:i195-grammar-native-hcl',
   fixtureFile: fixturePath(entry), assertions, testName,
+});
+
+test('native HCL root spans include leading trivia as the independent oracle requires', () => {
+  for (const source of ['\na=1\n', '  a=1\n', '\n\t\n']) {
+    const outcome = parser.parseTree(source);
+    assert.equal(outcome.ok, true);
+    assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'HCL'));
+    assert.equal(parseNative('native-hcl', source).start, 0);
+  }
 });
 
 test('native HCL and Terraform use the ordinary catalog parser', (context) => {

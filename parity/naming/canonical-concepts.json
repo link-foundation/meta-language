@@ -13102,10 +13102,6 @@
       ],
       "sourceAliases": [
         {
-          "source": "native:hcl",
-          "name": "for_expression"
-        },
-        {
           "source": "native:rust",
           "name": "for_expression"
         },
@@ -65623,40 +65619,6 @@
       "formerNames": []
     },
     {
-      "id": "grammar.for-tuple-expression",
-      "phrase": "for tuple expression",
-      "role": "concept",
-      "definition": "A rule for a for tuple expression, the construct the upstream grammar names for_tuple_expr.",
-      "constraints": [
-        "Only the native HCL grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:hcl",
-          "name": "for_tuple_expression"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.for-object-expression",
-      "phrase": "for object expression",
-      "role": "concept",
-      "definition": "A rule for a for object expression, the construct the upstream grammar names for_object_expr.",
-      "constraints": [
-        "Only the native HCL grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:hcl",
-          "name": "for_object_expression"
-        }
-      ],
-      "formerNames": []
-    },
-    {
       "id": "grammar.for-intro",
       "phrase": "for intro",
       "role": "concept",
@@ -66130,6 +66092,58 @@
         {
           "source": "JavaScript catalog generators",
           "name": "nativeGrammarRustSource"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.collection-comprehension",
+      "phrase": "collection comprehension",
+      "role": "concept",
+      "definition": "An expression that constructs a collection by mapping and optionally filtering the elements of another collection.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "for_expression"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": []
+    },
+    {
+      "id": "grammar.for-tuple-expression",
+      "phrase": "for tuple expression",
+      "role": "concept",
+      "definition": "A rule for a for tuple expression, the construct the upstream grammar names for_tuple_expr.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "for_tuple_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-object-expression",
+      "phrase": "for object expression",
+      "role": "concept",
+      "definition": "A rule for a for object expression, the construct the upstream grammar names for_object_expr.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "for_object_expression"
         }
       ],
       "formerNames": []

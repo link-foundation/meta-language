@@ -93,6 +93,7 @@ fn kinds<'a>(fixture: &'a Value, key: &str) -> HashSet<&'a str> {
 /// `extras` nodes are rows with flag X. A rule renamed from its tree-sitter
 /// name is a row of that name (`oracleKinds`).
 pub struct Rows<'a> {
+    root_includes_leading_trivia: bool,
     hidden: HashSet<&'a str>,
     anonymous: HashSet<&'a str>,
     extras: HashSet<&'a str>,
@@ -102,6 +103,9 @@ pub struct Rows<'a> {
 impl<'a> Rows<'a> {
     pub fn new(fixture: &'a Value) -> Self {
         Self {
+            root_includes_leading_trivia: fixture["rootIncludesLeadingTrivia"]
+                .as_bool()
+                .unwrap_or(false),
             hidden: kinds(fixture, "hidden"),
             anonymous: kinds(fixture, "anonymous"),
             extras: kinds(fixture, "extras"),
@@ -256,7 +260,11 @@ impl<'a> Rows<'a> {
             panic!("the root is a node");
         };
         let first = leaves(tree).into_iter().find(|leaf| !self.invisible(leaf));
-        let start = first.map_or(source.len(), SyntaxTree::start);
+        let start = if self.root_includes_leading_trivia {
+            tree.start()
+        } else {
+            first.map_or(source.len(), SyntaxTree::start)
+        };
         let mut rows = vec![json!([
             0,
             null,

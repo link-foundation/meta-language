@@ -187,7 +187,7 @@ rules name a concept another native grammar names
 | `native-go` | 0 | 8 | 0 | 2 | 0 | 69 | 48 |
 | `native-graphql` | 0 | 0 | 0 | 3 | 0 | 27 | 47 |
 | `native-groovy` | 0 | 33 | 0 | 3 | 1 | 171 | 12 |
-| `native-hcl` | 1 | 0 | 0 | 2 | 2 | 19 | 46 |
+| `native-hcl` | 1 | 0 | 0 | 2 | 2 | 18 | 47 |
 | `native-ini` | 0 | 0 | 0 | 2 | 0 | 2 | 3 |
 | `native-java` | 0 | 13 | 0 | 3 | 1 | 164 | 5 |
 | `native-javascript` | 5 | 18 | 9 | 3 | 3 | 143 | 0 |
@@ -234,7 +234,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-go` | 13 | 13 | 5 | 15 | none |
 | `native-graphql` | 29 | 29 | 8 | 40 | none |
 | `native-groovy` | 11 | 11 | 3 | 14 | none |
-| `native-hcl` | 10 | 10 | 4 | 11 | none |
+| `native-hcl` | 10 | 10 | 6 | 9 | none |
 | `native-ini` | 15 | 15 | 10 | 9 | none |
 | `native-java` | 11 | 11 | 4 | 15 | none |
 | `native-javascript` | 24 | 24 | 6 | 31 | native-skips-more 13, oracle-skips-more 35, same-repair-sites 13, same-skipped-bytes 1 |

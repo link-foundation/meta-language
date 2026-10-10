@@ -3724,7 +3724,7 @@
       "grammars": {
         "native-hcl": {
           "version": "1.0.0",
-          "parserSha256": "36256676a362457aa74b3406ea3c553826edc087047c4c67f41a37376411e737"
+          "parserSha256": "08c7adf30d5fcb65c3eada6e3bebc3c7b2eb89591bf8420a05d589202f2faa44"
         }
       },
       "oracleGrammars": {

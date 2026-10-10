@@ -3602,11 +3602,16 @@
         "conditional": "conditional_expression",
         "template_for": "iteration_template",
         "template_if": "conditional_template"
+      },
+      "concepts": {
+        "for_expr": "grammar.collection-comprehension"
       }
     }
   },
   "concepts": {
-    "definitions": {},
+    "definitions": {
+      "grammar.collection-comprehension": "An expression that constructs a collection by mapping and optionally filtering the elements of another collection."
+    },
     "distinctFrom": {
       "grammar.type-assertion": [
         {
@@ -3949,7 +3954,8 @@
           "id": "grammar.type-case",
           "reason": "The SQL character type stores strings; a type case is a branch selected by a value type. The lexical character/case synonym does not equate these grammar constructs."
         }
-      ]
+      ],
+      "grammar.collection-comprehension": []
     }
   }
 }

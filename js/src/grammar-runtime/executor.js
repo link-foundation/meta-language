@@ -2653,9 +2653,13 @@ export class Executor {
     // A scanner owns its token start after skip(). Wrapping that token must
     // retain the skipped trivia, rather than turn it into token content.
     if (!inToken && item.kind === 'ref' && this.program.externalTokens.has(item.name)) {
-      return this.scannerToken(item.name, start, state, false, true).map((result) => copyResult(result, {
-        children: [...leaves, ...result.children.map((child) => (child.scanned ? { ...child, kind } : child))],
-      }));
+      const scanned = this.scannerToken(item.name, start, state, false, true);
+      // Layout tokens of no width keep their grammar-owned padding span.
+      if (scanned.every((result) => result.children.some((child) => child.scanned && child.end > child.start))) {
+        return scanned.map((result) => copyResult(result, {
+          children: [...leaves, ...result.children.map((child) => (child.scanned ? { ...child, kind } : child))],
+        }));
+      }
     }
     const best = longestResult(this.evaluate(item, start, state, true));
     if (!best) return [];

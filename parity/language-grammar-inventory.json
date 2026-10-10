@@ -729,7 +729,8 @@
       "extras": [
         "comment",
         "whitespace"
-      ]
+      ],
+      "rootIncludesLeadingTrivia": true
     }
   },
   "languages": [

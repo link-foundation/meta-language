@@ -671,23 +671,31 @@ impl Executor<'_> {
         // A wrapped scanner keeps its skipped trivia outside its token.
         if !in_token && let Expr::Ref(Target::External(name)) = item {
             let mut results = self.scanner_token(name, start, state, false, true)?;
-            for result in &mut results {
-                let children: Vec<_> = result
+            // Layout tokens of no width keep their grammar-owned padding span.
+            if results.iter().all(|result| {
+                result
                     .children
                     .iter()
-                    .map(|child| {
-                        if child.scanned {
-                            let mut leaf = (**child).clone();
-                            leaf.kind = None;
-                            Rc::new(leaf)
-                        } else {
-                            Rc::clone(child)
-                        }
-                    })
-                    .collect();
-                result.children = concat(&skipped.leaves, &children);
+                    .any(|child| child.scanned && child.end > child.start)
+            }) {
+                for result in &mut results {
+                    let children: Vec<_> = result
+                        .children
+                        .iter()
+                        .map(|child| {
+                            if child.scanned {
+                                let mut leaf = (**child).clone();
+                                leaf.kind = None;
+                                Rc::new(leaf)
+                            } else {
+                                Rc::clone(child)
+                            }
+                        })
+                        .collect();
+                    result.children = concat(&skipped.leaves, &children);
+                }
+                return Ok(results);
             }
-            return Ok(results);
         }
         let Some(best) = longest_result(self.evaluate(item, start, state, true)?) else {
             return Ok(Vec::new());

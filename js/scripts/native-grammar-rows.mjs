@@ -11,7 +11,9 @@
 // is not a row, named trivia (comments) is an extra row (flag X), leading
 // trivia belongs before the node it precedes, a node spans its first to last
 // non-trivia leaf, and the root starts at its first leaf that is not
-// whitespace and ends at the end of the input. Kinds in `hidden` are leaves
+// whitespace and ends at the end of the input, unless the fixture's root
+// includes leading trivia and retains the native tree's input start.
+// Kinds in `hidden` are leaves
 // the native tree keeps and the oracle drops, such as a byte order mark; they
 // are projected like whitespace. Kinds in `anonymous` are leaves the oracle
 // keeps inside a node without a row of their own, as tree-sitter keeps a
@@ -82,7 +84,7 @@ export function oracleRows(source, language) {
 }
 
 /** The rows of a native `SyntaxTree` of `source`. */
-export function nativeRows(tree, source, { hidden = [], anonymous = [], extras = [], oracleKinds = {} } = {}) {
+export function nativeRows(tree, source, { hidden = [], anonymous = [], extras = [], oracleKinds = {}, rootIncludesLeadingTrivia = false } = {}) {
   const oracleNames = new Map(Object.entries(oracleKinds));
   const oracleKind = (kind) => oracleNames.get(kind) ?? kind;
   const anonymousAlias = (kind) => typeof kind === 'string' && kind.startsWith("'");
@@ -127,7 +129,7 @@ export function nativeRows(tree, source, { hidden = [], anonymous = [], extras =
   const collect = (node) => (node.type === 'node' ? node.children.forEach(collect) : leaves.push(node));
   collect(tree);
   const first = leaves.find((leaf) => !invisible(leaf));
-  rows.push([0, null, oracleKind(tree.kind), 1, first ? first.start : length, length, '']);
+  rows.push([0, null, oracleKind(tree.kind), 1, rootIncludesLeadingTrivia ? tree.start : first ? first.start : length, length, '']);
   for (const child of tree.children.flatMap(hoist)) visit(child, 1);
   return rows;
 }

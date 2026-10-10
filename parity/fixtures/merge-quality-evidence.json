@@ -217,8 +217,8 @@
       "coverage": {"rules": {"normal": 52, "atomic": 0, "silent": 7, "token": 6}, "visibleRules": 52, "exercisedRules": 50, "checkedKinds": 62, "checkedFields": 2, "renamed": 31, "expandedWords": 8, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 1, "conflict": 0, "precedences": 0, "extra": 2, "kind": 2},
       "correctness": {"matches": 37, "rows": 645, "bytes": 610, "divergences": 0, "rejections": 10},
-      "recovery": {"repaired": 10, "errorNodes": 4, "missingNodes": 11, "categories": {}},
-      "reuse": {"shared": 19, "specific": 46}
+      "recovery": {"repaired": 10, "errorNodes": 6, "missingNodes": 9, "categories": {}},
+      "reuse": {"shared": 18, "specific": 47}
     },
     {
       "grammar": "native-ini",

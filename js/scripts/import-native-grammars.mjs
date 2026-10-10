@@ -226,11 +226,11 @@ export function mergeConcepts(register, imports, decisions = {}) {
           sourceAliases: [],
           formerNames: [],
         };
-        const distinct = decisions.distinctFrom?.[rule.concept];
-        if (distinct) record.distinctFrom = distinct;
         concepts.push(record);
         byId.set(record.id, record);
       }
+      if (Object.hasOwn(decisions.definitions ?? {}, rule.concept)) record.definition = decisions.definitions[rule.concept];
+      if (Object.hasOwn(decisions.distinctFrom ?? {}, rule.concept)) record.distinctFrom = decisions.distinctFrom[rule.concept];
       record.sourceAliases = sortAliases([...record.sourceAliases, alias]);
     }
   }

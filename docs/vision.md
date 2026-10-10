@@ -207,7 +207,11 @@ and here-document contexts, with closing labels on a separate text stack.
 The generated HCL grammar uses that family in both packages; Tree-sitter HCL
 is a development oracle. Scanner `matched` reads from the token start through
 the current cursor, independently of a marked token end. Wrapping a scanner
-token retains its skipped trivia outside the token span. Focused fixtures
+token retains its skipped trivia outside the token span; zero-width layout
+tokens keep their grammar-owned padding. The shared catalog also records
+whether a language's root includes leading trivia, so HCL retains its input
+start while its child nodes keep their actual token boundaries. HCL collection
+comprehensions are distinct from imperative loop expressions. Focused fixtures
 check nested templates, Unicode escapes, closing-line boundaries and label
 reset; CI checks the pinned upstream corpus. This single pinned HCL source
 does not yet constitute the required multi source grammar union.

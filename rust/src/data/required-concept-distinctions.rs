@@ -63,4 +63,8 @@
         concepts: ["grammar.null-keyword", "grammar.nil-keyword"],
         reason: "SQL NULL denotes an absent or unknown database value with three-valued comparisons; Pascal nil denotes a null pointer. Their lexical synonym does not establish the same language semantics.",
     },
+    RequiredDistinction {
+        concepts: ["grammar.collection-comprehension", "grammar.for-expression"],
+        reason: "A collection comprehension computes a tuple or object from iteration; an imperative for expression executes a loop body.",
+    },
 ]

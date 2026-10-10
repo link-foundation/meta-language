@@ -37,9 +37,9 @@ const inventory = JSON.parse(readFileSync(path.join(root, 'parity/language-gramm
 // default tree places as the oracle does, which both runtimes read from the
 // language catalog.
 function nativeGrammar(id) {
-  const { grammar, hidden, anonymous, extras } = inventory.nativeGrammars[id];
+  const { grammar, hidden, anonymous, extras, rootIncludesLeadingTrivia } = inventory.nativeGrammars[id];
   const oracleKinds = nativeOracleKinds(readFileSync(path.join(root, grammar), 'utf8'));
-  return { nativeGrammar: id, hidden, anonymous, extras, oracleKinds };
+  return { nativeGrammar: id, hidden, anonymous, extras, oracleKinds, ...(rootIncludesLeadingTrivia ? { rootIncludesLeadingTrivia } : {}) };
 }
 
 // The empty last field the RFC 4180 ABNF allows and the oracle recovers from.
@@ -1205,9 +1205,9 @@ export function buildNativeGrammarFixture(entry) {
     if (repaired.rejection?.reason !== 'recovered') throw new Error(`${entry.grammar} does not recover from ${JSON.stringify(source)}`);
     return { source, recovered: renderSyntaxTree(repaired.tree) };
   });
-  const { id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds, corpus } = entry;
+  const { id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds, corpus, rootIncludesLeadingTrivia } = entry;
   return {
-    schemaVersion: 1, id, language, grammar, oracle, sources, ...(corpus ? { corpus } : {}), hidden, anonymous, extras, oracleKinds, matches, divergences, rejections,
+    schemaVersion: 1, id, language, grammar, oracle, sources, ...(corpus ? { corpus } : {}), hidden, anonymous, extras, oracleKinds, ...(rootIncludesLeadingTrivia ? { rootIncludesLeadingTrivia } : {}), matches, divergences, rejections,
   };
 }
 

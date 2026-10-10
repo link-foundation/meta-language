@@ -7462,6 +7462,24 @@
           "union_type"
         ]
       ]
+    },
+    {
+      "construct": "tuple",
+      "concept": "grammar.tuple",
+      "rules": [
+        [
+          "native-erlang",
+          "tuple"
+        ],
+        [
+          "native-python",
+          "tuple"
+        ],
+        [
+          "native-hcl",
+          "tuple"
+        ]
+      ]
     }
   ],
   "lookalikes": [
@@ -7631,6 +7649,20 @@
       "concepts": [
         "grammar.null-keyword",
         "grammar.nil-keyword"
+      ]
+    },
+    {
+      "first": [
+        "native-hcl",
+        "for_expression"
+      ],
+      "second": [
+        "native-rust",
+        "for_expression"
+      ],
+      "concepts": [
+        "grammar.collection-comprehension",
+        "grammar.for-expression"
       ]
     }
   ],

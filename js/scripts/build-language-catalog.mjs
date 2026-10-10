@@ -103,6 +103,7 @@ function nativeGrammarCatalog(inventory) {
     hidden: native.hidden,
     anonymous: native.anonymous,
     extras: native.extras,
+    ...(native.rootIncludesLeadingTrivia ? { rootIncludesLeadingTrivia: true } : {}),
     oracleKinds: nativeOracleKinds(readFileSync(join(root, native.grammar), 'utf8')),
   }]));
 }
