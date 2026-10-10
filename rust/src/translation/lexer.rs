@@ -332,18 +332,33 @@ pub fn tokenize(text: &str, language: Language) -> Result<Tokens> {
 ///
 /// See [`tokenize`].
 pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
+    tokenize_region(source, language, 0, false, &mut None)
+}
+
+// Use ordinary lexical decisions for template substitutions: opaque tokens
+// cannot close their surrounding expression. Offsets stay in the full source.
+fn tokenize_region(
+    source: &Source,
+    language: Language,
+    start: usize,
+    braced: bool,
+    units: &mut Option<Vec<f64>>,
+) -> Result<Tokens> {
     let operators = operators(language);
     let comments = comment_syntax(language);
     let mut tokens: Vec<Token> = Vec::new();
     let mut comment_list = Vec::new();
     // Encode lazily once; copying each suffix is quadratic in modules with
     // many regular-expression literals. The shared rule uses absolute offsets.
-    let mut units: Option<Vec<f64>> = None;
     let mut scopes = Vec::new();
     let mut closed = false;
-    let mut index = 0;
+    let mut depth = 0usize;
+    let mut index = start;
     while index < source.len() {
         let unit = source.units[index];
+        if braced && source.is_char(index, '}') && depth == 0 {
+            break;
+        }
         if is_js_space(unit) {
             index += 1;
             continue;
@@ -418,7 +433,7 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
         }
         closed = false;
         if language == Language::JavaScript && ch == Some('`') {
-            let token = template_token(source, index)?;
+            let token = template_token(source, index, units)?;
             index = token.end;
             tokens.push(token);
             continue;
@@ -535,6 +550,12 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
                 |operator| (*operator).to_owned(),
             );
         let length = text.encode_utf16().count();
+        if braced && text == "{" {
+            depth += 1;
+        }
+        if braced && text == "}" {
+            depth -= 1;
+        }
         if language == Language::JavaScript {
             if text == "(" {
                 let qualified = tokens
@@ -568,8 +589,8 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
         TokenKind::Eof,
         String::new(),
         String::new(),
-        source.len(),
-        source.len(),
+        index,
+        index,
     ));
     Ok(Tokens {
         tokens,
@@ -761,7 +782,7 @@ fn string_token(source: &Source, index: usize, language: Language) -> Result<Tok
     ))
 }
 
-fn template_token(source: &Source, index: usize) -> Result<Token> {
+fn template_token(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -> Result<Token> {
     let mut parts = Vec::new();
     let mut cursor = index + 1;
     let mut text: Vec<u16> = Vec::new();
@@ -814,7 +835,7 @@ fn template_token(source: &Source, index: usize) -> Result<Token> {
             continue;
         }
         if source.starts_with("${", cursor) {
-            let close = matching_brace(source, cursor + 1)?;
+            let close = interpolation_boundary(source, cursor + 1, units)?;
             parts.push(TemplatePart {
                 text: String::from_utf16_lossy(&text),
                 expression: Some(TemplateExpression {
@@ -850,17 +871,18 @@ fn escaped_text(source: &Source, index: usize) -> String {
 ///
 /// Returns a syntax error when the braces are unbalanced.
 pub fn matching_brace(source: &Source, open: usize) -> Result<usize> {
-    let mut depth = 0i64;
-    for cursor in open..source.len() {
-        if source.is_char(cursor, '{') {
-            depth += 1;
-        }
-        if source.is_char(cursor, '}') {
-            depth -= 1;
-            if depth == 0 {
-                return Ok(cursor);
-            }
-        }
+    interpolation_boundary(source, open, &mut None)
+}
+
+fn interpolation_boundary(
+    source: &Source,
+    open: usize,
+    units: &mut Option<Vec<f64>>,
+) -> Result<usize> {
+    let tokens = tokenize_region(source, Language::JavaScript, open + 1, true, units)?;
+    let close = tokens.tokens.last().expect("end token").end;
+    if close < source.len() {
+        return Ok(close);
     }
     Err(TranslationError::syntax(
         "unbalanced braces",

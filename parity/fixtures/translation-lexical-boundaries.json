@@ -37,5 +37,43 @@
     "function f(x) { return obj?.while(x) / 2; }",
     "function f(x) { return obj.return / 2; }",
     "function f(x) { return obj?.do / 2; }"
-  ]
+  ],
+  "templateBoundaries": [
+    {
+      "source": "`head ${\"}\"} tail`",
+      "expression": "\"}\""
+    },
+    {
+      "source": "`head ${'{'} tail`",
+      "expression": "'{'"
+    },
+    {
+      "source": "`head ${1 /* } { */ + 2} tail`",
+      "expression": "1 /* } { */ + 2"
+    },
+    {
+      "source": "`head ${1 // }\n + 2} tail`",
+      "expression": "1 // }\n + 2"
+    },
+    {
+      "source": "`head ${/[{}]/.test(\"}\")} tail`",
+      "expression": "/[{}]/.test(\"}\")"
+    },
+    {
+      "source": "`head ${`nested ${\"}\"}`} tail`",
+      "expression": "`nested ${\"}\"}`"
+    },
+    {
+      "source": "`head ${{text: \"}\"}.text} tail`",
+      "expression": "{text: \"}\"}.text"
+    }
+  ],
+  "malformedTemplates": [
+    "`head ${1",
+    "`head ${\"}\"",
+    "`head ${1 /* } */",
+    "`head ${`nested ${1}`"
+  ],
+  "templateBoundaryProgram": "console.log(`head ${\"}\"} ${`nested ${\"{\"}`} ${1 /* } */ + 2} tail`);",
+  "templateBoundaryOutput": "head } nested { 3 tail\n"
 }

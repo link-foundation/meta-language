@@ -204,6 +204,38 @@ fn lexical_boundaries_keep_regular_expression_bodies_and_division_distinct() {
                 .any(|token| token.kind == TokenKind::RegularExpression)
         );
     }
+    for fixture in fixtures["templateBoundaries"].as_array().unwrap() {
+        let source = fixture["source"].as_str().unwrap();
+        let expression = fixture["expression"].as_str().unwrap();
+        let tokens = tokenize(
+            &format!("{source}; const following = 1;"),
+            Language::JavaScript,
+        )
+        .unwrap();
+        let template = &tokens.tokens[0];
+        assert_eq!(template.raw, source);
+        let substitution = template.parts[0].expression.as_ref().unwrap();
+        assert_eq!(substitution.source, expression, "{source}");
+        assert_eq!(template.parts[0].text, "head ");
+        assert_eq!(template.parts[1].text, " tail");
+        let encoded = meta_language::translation::lexer::Source::new(source);
+        assert_eq!(
+            encoded.slice(
+                substitution.offset,
+                substitution.offset + expression.encode_utf16().count()
+            ),
+            expression
+        );
+        assert!(tokens.tokens.iter().any(|token| token.value == "following"));
+    }
+    for source in fixtures["malformedTemplates"].as_array().unwrap() {
+        assert_eq!(
+            tokenize(source.as_str().unwrap(), Language::JavaScript)
+                .unwrap_err()
+                .kind,
+            ErrorKind::Syntax
+        );
+    }
     let count = fixtures["repeatedRegex"]["count"].as_u64().unwrap();
     let literal = fixtures["repeatedRegex"]["literal"].as_str().unwrap();
     let source = (0..count)
@@ -221,6 +253,30 @@ fn lexical_boundaries_keep_regular_expression_bodies_and_division_distinct() {
     for token in literals {
         assert_eq!(token.raw, literal);
         assert_eq!(encoded.slice(token.start, token.end), literal);
+    }
+    let source = fixtures["templateBoundaryProgram"].as_str().unwrap();
+    let expected = fixtures["templateBoundaryOutput"].as_str().unwrap();
+    assert_eq!(javascript_output(source), expected);
+    let emitted = emit_javascript(&check_program(&parse_javascript(source).unwrap()).unwrap())
+        .unwrap()
+        .text;
+    assert_eq!(javascript_output(&emitted), expected);
+    let source = (0..count)
+        .map(|index| format!("const r{index} = `prefix ${{{literal}}} suffix`;"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let tokens = tokenize(&source, Language::JavaScript).unwrap();
+    let templates: Vec<_> = tokens
+        .tokens
+        .iter()
+        .filter(|token| token.kind == TokenKind::Template)
+        .collect();
+    assert_eq!(u64::try_from(templates.len()).unwrap(), count);
+    for template in templates {
+        assert_eq!(
+            template.parts[0].expression.as_ref().unwrap().source,
+            literal
+        );
     }
     let source = fixtures["templateProgram"].as_str().unwrap();
     emit_javascript(&check_program(&parse_javascript(source).unwrap()).unwrap()).unwrap();

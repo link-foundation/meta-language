@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { tokenize } from '../src/translation/lexer.js';
@@ -61,4 +62,46 @@ test('many regex literals encode the source only once and keep absolute Unicode 
     assert.equal(literal.raw, raw);
     assert.equal(source.slice(literal.start, literal.end), literal.raw);
   }
+});
+
+
+test('template substitutions ignore braces in opaque lexical tokens', () => {
+  for (const { source, expression } of fixtures.templateBoundaries) {
+    const tokens = tokenize(`${source}; const following = 1;`, 'JavaScript').tokens;
+    const template = tokens[0];
+    assert.equal(template.raw, source);
+    assert.equal(template.parts[0].expression.source, expression, source);
+    assert.equal(template.parts[0].text, 'head ');
+    assert.equal(template.parts[1].text, ' tail');
+    assert.equal(source.slice(template.parts[0].expression.offset, template.parts[0].expression.offset + expression.length), expression);
+    assert.ok(tokens.some(({ value }) => value === 'following'));
+  }
+  for (const source of fixtures.malformedTemplates) assert.throws(() => tokenize(source, 'JavaScript'), (error) => error.kind === 'syntax', source);
+});
+
+
+test('template boundary corrections preserve emitted program behavior', () => {
+  const source = fixtures.templateBoundaryProgram;
+  const emitted = emitJavaScript(checkProgram(parseJavaScript(source))).text;
+  for (const program of [source, emitted]) {
+    assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', program], { encoding: 'utf8' }), fixtures.templateBoundaryOutput);
+  }
+});
+
+test('template regex substitutions share one source encoding', () => {
+  const { count, literal } = fixtures.repeatedRegex;
+  const source = Array.from({ length: count }, (_, index) => `const r${index} = \`prefix \${${literal}} suffix\`;`).join('\n');
+  const original = String.prototype.charCodeAt;
+  let calls = 0;
+  let result;
+  try {
+    String.prototype.charCodeAt = function (index) { calls += 1; return original.call(this, index); };
+    result = tokenize(source, 'JavaScript');
+  } finally {
+    String.prototype.charCodeAt = original;
+  }
+  assert.equal(calls, source.length);
+  const templates = result.tokens.filter(({ kind }) => kind === 'template');
+  assert.equal(templates.length, count);
+  for (const template of templates) assert.equal(template.parts[0].expression.source, literal);
 });

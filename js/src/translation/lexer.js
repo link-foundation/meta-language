@@ -24,18 +24,25 @@ const COMMENTS = {
 };
 
 export function tokenize(source, language) {
+  return tokenizeRegion(source, language, 0, false, { units: null });
+}
+
+// Reuse the ordinary lexical decisions when finding a template substitution.
+// Opaque string, comment, regex and nested-template tokens cannot close it.
+function tokenizeRegion(source, language, startIndex, braced, encoding) {
   const operators = [...OPERATORS[language]].sort((left, right) => right.length - left.length);
   const comments = COMMENTS[language];
   const tokens = [];
   const commentList = [];
   // Encode once, on the first regular expression. Copying each remaining
   // suffix makes a module with many literals take quadratic time and space.
-  let units = null;
   const scopes = [];
   let closed = false;
-  let index = 0;
+  let depth = 0;
+  let index = startIndex;
   while (index < source.length) {
     const char = source[index];
+    if (braced && char === '}' && depth === 0) break;
     if (/\s/u.test(char)) {
       index += 1;
       continue;
@@ -55,8 +62,8 @@ export function tokenize(source, language) {
     }
     const start = index;
     if (language === 'JavaScript' && char === '/' && (closed || startRegularExpression(['.', '?.'].includes(tokens.at(-2)?.value) ? 'member' : tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? ''))) {
-      units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
-      const end = regularExpressionEnd(units, index);
+      encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const end = regularExpressionEnd(encoding.units, index);
       if (end < 0) throw new TranslationError('syntax', 'unterminated regular expression literal', { start, end: source.length });
       tokens.push({ kind: 'regex', value: '/', raw: source.slice(index, end), start, end });
       index = end;
@@ -65,7 +72,7 @@ export function tokenize(source, language) {
     }
     closed = false;
     if (language === 'JavaScript' && char === '`') {
-      tokens.push(templateToken(source, index));
+      tokens.push(templateToken(source, index, encoding));
       index = tokens.at(-1).end;
       continue;
     }
@@ -124,6 +131,8 @@ export function tokenize(source, language) {
     }
     const operator = operators.find((candidate) => source.startsWith(candidate, index));
     const text = operator ?? String.fromCodePoint(source.codePointAt(index));
+    if (braced && text === '{') depth += 1;
+    if (braced && text === '}') depth -= 1;
     if (language === 'JavaScript') {
       if (text === '(') scopes.push(acceptControlParenthesis(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '', ['.', '?.'].includes(tokens.at(-2)?.value)));
       if (text === ')') closed = scopes.pop() ?? false;
@@ -131,7 +140,7 @@ export function tokenize(source, language) {
     tokens.push({ kind: 'punct', value: text, start, end: start + text.length, raw: text });
     index += text.length;
   }
-  tokens.push({ kind: 'eof', value: '', start: source.length, end: source.length, raw: '' });
+  tokens.push({ kind: 'eof', value: '', start: index, end: index, raw: '' });
   return { tokens, comments: commentList };
 }
 
@@ -238,7 +247,7 @@ function stringToken(source, index, language) {
   throw new TranslationError('syntax', 'unterminated string literal', { start: index, end: source.length });
 }
 
-function templateToken(source, index) {
+function templateToken(source, index, encoding) {
   const parts = [];
   let cursor = index + 1;
   let text = '';
@@ -262,7 +271,7 @@ function templateToken(source, index) {
       continue;
     }
     if (source.startsWith('${', cursor)) {
-      const close = matchingBrace(source, cursor + 1);
+      const close = matchingBrace(source, cursor + 1, encoding);
       parts.push({ text, expression: { source: source.slice(cursor + 2, close), offset: cursor + 2 } });
       text = '';
       cursor = close + 1;
@@ -274,15 +283,9 @@ function templateToken(source, index) {
   throw new TranslationError('syntax', 'unterminated template literal', { start: index, end: source.length });
 }
 
-export function matchingBrace(source, open) {
-  let depth = 0;
-  for (let cursor = open; cursor < source.length; cursor += 1) {
-    if (source[cursor] === '{') depth += 1;
-    if (source[cursor] === '}') {
-      depth -= 1;
-      if (depth === 0) return cursor;
-    }
-  }
+export function matchingBrace(source, open, encoding = { units: null }) {
+  const close = tokenizeRegion(source, 'JavaScript', open + 1, true, encoding).tokens.at(-1).end;
+  if (close < source.length) return close;
   throw new TranslationError('syntax', 'unbalanced braces', { start: open, end: source.length });
 }
 
