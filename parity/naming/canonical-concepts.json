@@ -9574,6 +9574,14 @@
           "name": "binary_expression"
         },
         {
+          "source": "native:python",
+          "name": "binary_operator"
+        },
+        {
+          "source": "native:r",
+          "name": "binary_operator"
+        },
+        {
           "source": "native:rust",
           "name": "binary_expression"
         },
@@ -10758,6 +10766,10 @@
         },
         {
           "source": "native:python",
+          "name": "word_characters"
+        },
+        {
+          "source": "native:r",
           "name": "word_characters"
         },
         {
@@ -61458,20 +61470,12 @@
       "role": "concept",
       "definition": "A rule for a binary operator, the construct the upstream grammar names binary_operator.",
       "constraints": [
-        "Native grammars share this concept only where the construct means the same in each language.",
+        "Only the native Dart grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:dart",
-          "name": "binary_operator"
-        },
-        {
-          "source": "native:python",
-          "name": "binary_operator"
-        },
-        {
-          "source": "native:r",
           "name": "binary_operator"
         }
       ],

@@ -935,7 +935,7 @@
       "licenseFile": "parity/grammars/sources/tree-sitter-r-1.3.0.LICENSE",
       "scanner": {
         "file": "parity/grammars/scanners/r.lino",
-        "sha256": "7c79b4643df5a83713be169281065c97ee4a51cc9e022ca32890eafeb3f03f90",
+        "sha256": "d461c8e0646b254b9e41a223bdbda283272e306db274674da4742615cd354be9",
         "ports": {
           "path": "src/scanner.c",
           "sha256": "e99e003ab8b0463dee975432b6f9f7e39cd75eb0047989f064fdf57927fa8e9d"

@@ -7480,6 +7480,154 @@
           "tuple"
         ]
       ]
+    },
+    {
+      "construct": "argument",
+      "concept": "argument",
+      "rules": [
+        [
+          "native-graphql",
+          "argument"
+        ],
+        [
+          "native-r",
+          "argument"
+        ],
+        [
+          "native-rocq",
+          "argument"
+        ]
+      ]
+    },
+    {
+      "construct": "call",
+      "concept": "grammar.call",
+      "rules": [
+        [
+          "native-erlang",
+          "call"
+        ],
+        [
+          "native-python",
+          "call"
+        ],
+        [
+          "native-python",
+          "collection_call"
+        ],
+        [
+          "native-r",
+          "call"
+        ]
+      ]
+    },
+    {
+      "construct": "comma",
+      "concept": "grammar.comma",
+      "rules": [
+        [
+          "native-graphql",
+          "comma"
+        ],
+        [
+          "native-hcl",
+          "comma"
+        ],
+        [
+          "native-r",
+          "comma"
+        ]
+      ]
+    },
+    {
+      "construct": "else keyword",
+      "concept": "grammar.else-keyword",
+      "rules": [
+        [
+          "native-pascal",
+          "else_keyword"
+        ],
+        [
+          "native-r",
+          "else_keyword"
+        ],
+        [
+          "native-sql",
+          "else_keyword"
+        ]
+      ]
+    },
+    {
+      "construct": "named argument",
+      "concept": "grammar.named-argument",
+      "rules": [
+        [
+          "native-dart",
+          "named_argument"
+        ],
+        [
+          "native-lean",
+          "named_argument"
+        ],
+        [
+          "native-r",
+          "named_argument"
+        ]
+      ]
+    },
+    {
+      "construct": "parameter name",
+      "concept": "grammar.parameter-name",
+      "rules": [
+        [
+          "native-r",
+          "parameter_name"
+        ],
+        [
+          "native-tsx",
+          "parameter_name"
+        ],
+        [
+          "native-typescript",
+          "parameter_name"
+        ]
+      ]
+    },
+    {
+      "construct": "true",
+      "concept": "grammar.true",
+      "rules": [
+        [
+          "native-dart",
+          "true"
+        ],
+        [
+          "native-python",
+          "true"
+        ],
+        [
+          "native-r",
+          "true"
+        ]
+      ]
+    },
+    {
+      "construct": "parameter",
+      "concept": "parameter",
+      "rules": [
+        [
+          "native-r",
+          "parameter"
+        ],
+        [
+          "native-rust",
+          "parameter"
+        ],
+        [
+          "native-solidity",
+          "parameter"
+        ]
+      ]
     }
   ],
   "lookalikes": [
@@ -7663,6 +7811,34 @@
       "concepts": [
         "grammar.collection-comprehension",
         "grammar.for-expression"
+      ]
+    },
+    {
+      "first": [
+        "native-r",
+        "binary_operator"
+      ],
+      "second": [
+        "native-dart",
+        "binary_operator"
+      ],
+      "concepts": [
+        "grammar.binary-expression",
+        "grammar.binary-operator"
+      ]
+    },
+    {
+      "first": [
+        "native-python",
+        "binary_operator"
+      ],
+      "second": [
+        "native-dart",
+        "binary_operator"
+      ],
+      "concepts": [
+        "grammar.binary-expression",
+        "grammar.binary-operator"
       ]
     }
   ],

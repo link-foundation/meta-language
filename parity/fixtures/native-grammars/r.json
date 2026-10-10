@@ -15,15 +15,18 @@
     "url": "https://github.com/r-lib/tree-sitter-r/tree/f2289db204dda2bf7c7ea720de5c2a2c3eff2530/test/corpus"
   },
   "hidden": [
-    "whitespace"
+    "whitespace",
+    "scoped_whitespace"
   ],
   "anonymous": [
     "unnamed_token",
-    "number_literal"
+    "number_literal",
+    "hex_literal"
   ],
   "extras": [
     "comment",
-    "whitespace"
+    "whitespace",
+    "scoped_whitespace"
   ],
   "oracleKinds": {
     "parameter_list": "parameters",
@@ -79,7 +82,8 @@
     "external_close_bracket": "_external_close_bracket",
     "external_open_double_bracket": "_external_open_bracket2",
     "external_close_double_bracket": "_external_close_bracket2",
-    "error_sentinel": "_error_sentinel"
+    "error_sentinel": "_error_sentinel",
+    "scoped_whitespace": "_scoped_whitespace"
   },
   "rootIncludesLeadingTrivia": true,
   "matches": [
@@ -606,6 +610,156 @@
         [3,"content","string_content",1,263,267,""],
         [3,"close","string_close",1,267,524,""]
       ]
+    },
+    {
+      "source": "1-2*3\n",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"binary_operator",1,0,5,""],
+        [2,"lhs","float",1,0,1,""],
+        [2,"operator","-",0,1,2,""],
+        [2,"rhs","binary_operator",1,2,5,""],
+        [3,"lhs","float",1,2,3,""],
+        [3,"operator","*",0,3,4,""],
+        [3,"rhs","float",1,4,5,""]
+      ]
+    },
+    {
+      "source": "x && f(y) + z\n",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"binary_operator",1,0,13,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","&&",0,2,4,""],
+        [2,"rhs","binary_operator",1,5,13,""],
+        [3,"lhs","call",1,5,9,""],
+        [4,"function","identifier",1,5,6,""],
+        [4,"arguments","arguments",1,6,9,""],
+        [5,"open","(",0,6,7,""],
+        [5,"argument","argument",1,7,8,""],
+        [6,"value","identifier",1,7,8,""],
+        [5,"close",")",0,8,9,""],
+        [3,"operator","+",0,10,11,""],
+        [3,"rhs","identifier",1,12,13,""]
+      ]
+    },
+    {
+      "source": "a$b$c\n",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"extract_operator",1,0,5,""],
+        [2,"lhs","extract_operator",1,0,3,""],
+        [3,"lhs","identifier",1,0,1,""],
+        [3,"operator","$",0,1,2,""],
+        [3,"rhs","identifier",1,2,3,""],
+        [2,"operator","$",0,3,4,""],
+        [2,"rhs","identifier",1,4,5,""]
+      ]
+    },
+    {
+      "source": "a@b@c\n",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"extract_operator",1,0,5,""],
+        [2,"lhs","extract_operator",1,0,3,""],
+        [3,"lhs","identifier",1,0,1,""],
+        [3,"operator","@",0,1,2,""],
+        [3,"rhs","identifier",1,2,3,""],
+        [2,"operator","@",0,3,4,""],
+        [2,"rhs","identifier",1,4,5,""]
+      ]
+    },
+    {
+      "source": "0x1p2\n",
+      "rows": [
+        [0,null,"program",1,0,6,""],
+        [1,null,"float",1,0,5,""]
+      ]
+    },
+    {
+      "source": "1+2i\n",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"binary_operator",1,0,4,""],
+        [2,"lhs","float",1,0,1,""],
+        [2,"operator","+",0,1,2,""],
+        [2,"rhs","complex",1,2,4,""],
+        [3,null,"i",0,3,4,""]
+      ]
+    },
+    {
+      "source": "if(x) if(y) a else b\n",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"if_statement",1,0,20,""],
+        [2,null,"if",0,0,2,""],
+        [2,"open","(",0,2,3,""],
+        [2,"condition","identifier",1,3,4,""],
+        [2,"close",")",0,4,5,""],
+        [2,"consequence","if_statement",1,6,20,""],
+        [3,null,"if",0,6,8,""],
+        [3,"open","(",0,8,9,""],
+        [3,"condition","identifier",1,9,10,""],
+        [3,"close",")",0,10,11,""],
+        [3,"consequence","identifier",1,12,13,""],
+        [3,null,"else",0,14,18,""],
+        [3,"alternative","identifier",1,19,20,""]
+      ]
+    },
+    {
+      "source": "{if(x) y\nelse_if <- 1}\n",
+      "rows": [
+        [0,null,"program",1,0,23,""],
+        [1,null,"braced_expression",1,0,22,""],
+        [2,"open","{",0,0,1,""],
+        [2,"body","if_statement",1,1,8,""],
+        [3,null,"if",0,1,3,""],
+        [3,"open","(",0,3,4,""],
+        [3,"condition","identifier",1,4,5,""],
+        [3,"close",")",0,5,6,""],
+        [3,"consequence","identifier",1,7,8,""],
+        [2,"body","binary_operator",1,9,21,""],
+        [3,"lhs","identifier",1,9,16,""],
+        [3,"operator","<-",0,17,19,""],
+        [3,"rhs","float",1,20,21,""],
+        [2,"close","}",0,21,22,""]
+      ]
+    },
+    {
+      "source": "f(\n x +\n y\n)\n",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"call",1,0,12,""],
+        [2,"function","identifier",1,0,1,""],
+        [2,"arguments","arguments",1,1,12,""],
+        [3,"open","(",0,1,2,""],
+        [3,"argument","argument",1,4,10,""],
+        [4,"value","binary_operator",1,4,10,""],
+        [5,"lhs","identifier",1,4,5,""],
+        [5,"operator","+",0,6,7,""],
+        [5,"rhs","identifier",1,9,10,""],
+        [3,"close",")",0,11,12,""]
+      ]
+    },
+    {
+      "source": "for(x in xs) f(x)\n",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"for_statement",1,0,17,""],
+        [2,null,"for",0,0,3,""],
+        [2,"open","(",0,3,4,""],
+        [2,"variable","identifier",1,4,5,""],
+        [2,null,"in",0,6,8,""],
+        [2,"sequence","identifier",1,9,11,""],
+        [2,"close",")",0,11,12,""],
+        [2,"body","call",1,13,17,""],
+        [3,"function","identifier",1,13,14,""],
+        [3,"arguments","arguments",1,14,17,""],
+        [4,"open","(",0,14,15,""],
+        [4,"argument","argument",1,15,16,""],
+        [5,"value","identifier",1,15,16,""],
+        [4,"close",")",0,16,17,""]
+      ]
     }
   ],
   "divergences": [],
@@ -645,6 +799,18 @@
     {
       "source": "x <- c(1,",
       "recovered": "(program (unnamed_token \"\") (binary_operator lhs:(identifier (unnamed_token \"x\")) ~\" \" operator:\"<-\" rhs:(call function:(identifier ~\" \" (unnamed_token \"c\")) arguments:(arguments open:(\"'(\" \"(\") argument:(argument value:(float (number_literal \"1\"))) (comma \",\") (MISSING@9 \"')\")))))"
+    },
+    {
+      "source": "x\n$y\n",
+      "recovered": "(program (unnamed_token \"\") (identifier (unnamed_token \"x\")) (unnamed_token \"\\n\") (identifier (unnamed_token (ERROR@2..3 \"$\") \"y\")) (unnamed_token \"\\n\"))"
+    },
+    {
+      "source": "x\n@y\n",
+      "recovered": "(program (unnamed_token \"\") (identifier (unnamed_token \"x\")) (unnamed_token \"\\n\") (identifier (unnamed_token (ERROR@2..3 \"@\") \"y\")) (unnamed_token \"\\n\"))"
+    },
+    {
+      "source": "x\n::y\n",
+      "recovered": "(program (unnamed_token \"\") (identifier (unnamed_token \"x\")) (unnamed_token \"\\n\") (identifier (unnamed_token (ERROR@2..4 \"::\") \"y\")) (unnamed_token \"\\n\"))"
     }
   ]
 }

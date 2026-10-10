@@ -144,7 +144,7 @@
         {"rule":"assignment_expression","concept":"grammar.assignment-expression","languages":["c","cpp","dart","groovy","java","javascript","pascal","powershell","rust","solidity","tsx","typescript","zig"]},
         {"rule":"pointer_expression","concept":"grammar.pointer-expression","languages":["c","cpp"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"update_expression","concept":"grammar.update-expression","languages":["c","cpp","groovy","java","javascript","solidity","tsx","typescript"]},
         {"rule":"cast_expression","concept":"grammar.cast-expression","languages":["c","cpp","groovy","java","powershell"]},
         {"rule":"type_descriptor","concept":"grammar.type-descriptor","languages":["c","cpp"]},
@@ -188,7 +188,7 @@
         {"rule":"empty_declaration","concept":"grammar.empty-declaration","languages":["c","cpp"]},
         {"rule":"macro_type_specifier","concept":"grammar.macro-type-specifier","languages":["c","cpp"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": []
     },
@@ -406,7 +406,7 @@
         {"rule":"assignment_expression","concept":"grammar.assignment-expression","languages":["c","cpp","dart","groovy","java","javascript","pascal","powershell","rust","solidity","tsx","typescript","zig"]},
         {"rule":"pointer_expression","concept":"grammar.pointer-expression","languages":["c","cpp"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"update_expression","concept":"grammar.update-expression","languages":["c","cpp","groovy","java","javascript","solidity","tsx","typescript"]},
         {"rule":"cast_expression","concept":"grammar.cast-expression","languages":["c","cpp","groovy","java","powershell"]},
         {"rule":"type_descriptor","concept":"grammar.type-descriptor","languages":["c","cpp"]},
@@ -468,7 +468,7 @@
         {"rule":"qualified_identifier","concept":"grammar.qualified-identifier","languages":["cpp","proto","rocq"]},
         {"rule":"operator_name","concept":"grammar.operator-name","languages":["cpp","pascal"]},
         {"rule":"this","concept":"grammar.this","languages":["cpp","groovy","java","javascript","tsx","typescript"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"placeholder_type_specifier","concept":"grammar.placeholder-type-specifier"},
@@ -592,7 +592,7 @@
         {"rule":"escape_sequence","concept":"grammar.escape-sequence","languages":["c","cmake","cpp","css","dart","go","groovy","java","javascript","lean","lua","nix","proto","python","r","racket","rust","scheme","solidity","toml","tsx","typescript","zig"]},
         {"rule":"unit","concept":"grammar.unit","languages":["css","pascal"]},
         {"rule":"call_expression","concept":"grammar.call-expression","languages":["c","cpp","css","dart","go","javascript","make","rust","solidity","tsx","typescript","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"argument_list","concept":"grammar.argument-list","languages":["c","cmake","cpp","css","dart","go","graphql","groovy","java","javascript","lua","make","powershell","python","rust","tsx","typescript","vb","zig"]},
         {"rule":"class_name","concept":"grammar.class-name","languages":["cpp","css"]},
         {"rule":"identifier","concept":"grammar.identifier","languages":["c","cmake","cpp","css","dart","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","proto","python","r","rocq","rust","solidity","sql","tsx","typescript","vb","zig"]},
@@ -750,7 +750,6 @@
         {"rule":"declaration","concept":"grammar.declaration","languages":["c","cpp","css","dart","go","groovy","java","javascript","lean","lua","solidity","tsx","typescript"]},
         {"rule":"initializer_list","concept":"grammar.initializer-list","languages":["c","cpp","dart","zig"]},
         {"rule":"field_initializer","concept":"grammar.field-initializer","languages":["cpp","dart","rust","zig"]},
-        {"rule":"binary_operator","concept":"grammar.binary-operator","languages":["dart","python","r"]},
         {"rule":"class_declaration","concept":"grammar.class-declaration","languages":["cpp","dart","groovy","java","javascript","tsx","typescript"]},
         {"rule":"class_body","concept":"grammar.class-body","languages":["dart","groovy","java","javascript","tsx","typescript"]},
         {"rule":"method_declaration","concept":"grammar.method-declaration","languages":["dart","go","groovy","java","vb"]},
@@ -770,7 +769,7 @@
         {"rule":"built_in_identifier","concept":"grammar.built-in-identifier","languages":["dart","zig"]},
         {"rule":"identifier","concept":"grammar.identifier","languages":["c","cmake","cpp","css","dart","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","proto","python","r","rocq","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"top_level_definition","concept":"grammar.top-level-definition"},
@@ -906,6 +905,7 @@
         {"rule":"constructor_target_clause","concept":"grammar.constructor-target-clause"},
         {"rule":"initializer_list_entry","concept":"grammar.initializer-list-entry"},
         {"rule":"operator_signature","concept":"grammar.operator-signature"},
+        {"rule":"binary_operator","concept":"grammar.binary-operator"},
         {"rule":"static_final_declaration_list","concept":"grammar.static-final-declaration-list"},
         {"rule":"static_final_declaration","concept":"grammar.static-final-declaration"},
         {"rule":"initialized_identifier_list","concept":"grammar.initialized-identifier-list"},
@@ -1047,7 +1047,7 @@
         {"rule":"character_literal","concept":"grammar.character-literal","languages":["c","cpp","erlang","groovy","java","lean","pascal","racket","rust","scheme","vb","zig"]},
         {"rule":"atom","concept":"grammar.atom","languages":["erlang","lean"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"structural_search_rule_definition","concept":"grammar.structural-search-rule-definition"},
@@ -1260,7 +1260,7 @@
         {"rule":"index_expression","concept":"grammar.index-expression","languages":["dart","go","rust","zig"]},
         {"rule":"literal_value","concept":"grammar.literal-value","languages":["go","hcl"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"qualified_type","concept":"grammar.qualified-type","languages":["go","rust"]},
         {"rule":"identifier","concept":"grammar.identifier","languages":["c","cmake","cpp","css","dart","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","proto","python","r","rocq","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"type_identifier_alias","concept":"grammar.type-identifier-alias","languages":["c","cpp","go","rust","tsx","typescript"]},
@@ -1274,7 +1274,7 @@
         {"rule":"true","concept":"grammar.true-value","languages":["c","cpp","go","groovy","java","javascript","json","json5","lua","proto","solidity","tsx","typescript"]},
         {"rule":"false","concept":"grammar.false-value","languages":["c","cpp","go","groovy","java","javascript","json","json5","lua","proto","r","solidity","tsx","typescript"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"dot","concept":"grammar.dot"},
@@ -1434,7 +1434,7 @@
         {"rule":"expression","concept":"grammar.expression","languages":["c","cpp","dart","erlang","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"cast_expression","concept":"grammar.cast-expression","languages":["c","cpp","groovy","java","powershell"]},
         {"rule":"assignment_expression","concept":"grammar.assignment-expression","languages":["c","cpp","dart","groovy","java","javascript","pascal","powershell","rust","solidity","tsx","typescript","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"instance_of_expression","concept":"grammar.instance-of-expression","languages":["groovy","java"]},
         {"rule":"lambda_expression","concept":"grammar.lambda-expression","languages":["cpp","groovy","java","vb"]},
         {"rule":"inferred_parameters","concept":"grammar.inferred-parameters","languages":["groovy","java"]},
@@ -1584,7 +1584,7 @@
         {"rule":"range_expression","concept":"grammar.range-expression","languages":["groovy","powershell","rust","zig"]},
         {"rule":"array_literal","concept":"grammar.array-literal","languages":["groovy","vb"]},
         {"rule":"map_literal","concept":"grammar.dictionary-expression","languages":["erlang","groovy"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"string_literal_content","concept":"grammar.string-literal-content"},
@@ -1714,7 +1714,7 @@
         {"rule":"expression","concept":"grammar.expression","languages":["c","cpp","dart","erlang","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"cast_expression","concept":"grammar.cast-expression","languages":["c","cpp","groovy","java","powershell"]},
         {"rule":"assignment_expression","concept":"grammar.assignment-expression","languages":["c","cpp","dart","groovy","java","javascript","pascal","powershell","rust","solidity","tsx","typescript","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"instance_of_expression","concept":"grammar.instance-of-expression","languages":["groovy","java"]},
         {"rule":"lambda_expression","concept":"grammar.lambda-expression","languages":["cpp","groovy","java","vb"]},
         {"rule":"inferred_parameters","concept":"grammar.inferred-parameters","languages":["groovy","java"]},
@@ -1857,7 +1857,7 @@
         {"rule":"identifier","concept":"grammar.identifier","languages":["c","cmake","cpp","css","dart","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","proto","python","r","rocq","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"line_comment","concept":"grammar.line-comment","languages":["cmake","groovy","java","rust"]},
         {"rule":"block_comment","concept":"grammar.block-comment","languages":["groovy","java","racket","rust","scheme"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"single_line_string_literal","concept":"grammar.single-line-string-literal"},
@@ -1972,7 +1972,7 @@
         {"rule":"destructuring_pattern","concept":"grammar.destructuring-pattern","languages":["javascript","rocq","tsx","typescript"]},
         {"rule":"spread_element","concept":"grammar.spread-element","languages":["dart","javascript","tsx","typescript"]},
         {"rule":"ternary_expression","concept":"grammar.ternary-expression","languages":["groovy","java","javascript","solidity","tsx","typescript","vb"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"update_expression","concept":"grammar.update-expression","languages":["c","cpp","groovy","java","javascript","solidity","tsx","typescript"]},
         {"rule":"sequence_expression","concept":"grammar.sequence-expression","languages":["javascript","tsx","typescript"]},
@@ -2014,7 +2014,7 @@
         {"rule":"computed_property_name","concept":"grammar.computed-property-name","languages":["javascript","tsx","typescript"]},
         {"rule":"reserved_identifier","concept":"grammar.reserved-identifier","languages":["groovy","java","javascript","rust","tsx","typescript","zig"]},
         {"rule":"semicolon","concept":"grammar.semicolon","languages":["javascript","solidity","tsx","typescript"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": []
     },
@@ -2087,7 +2087,7 @@
         {"rule":"application","concept":"grammar.function-application","languages":["lean","rocq"]},
         {"rule":"subscript","concept":"grammar.subscript","languages":["lean","python","sql"]},
         {"rule":"name","concept":"grammar.name","languages":["erlang","graphql","groovy","java","lean","make","rocq"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"tactic_sequence","concept":"grammar.tactic-sequence","languages":["lean","rocq"]},
         {"rule":"if","concept":"grammar.if-expression","languages":["erlang","lean","nix","rocq","rust","zig"]},
@@ -2114,7 +2114,7 @@
         {"rule":"ellipsis","concept":"grammar.ellipsis","languages":["erlang","hcl","lean","python"]},
         {"rule":"boolean","concept":"grammar.boolean-value","languages":["csv","graphql","lean","proto","racket","scheme","toml","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"module_header","concept":"grammar.module-header"},
@@ -2254,11 +2254,11 @@
         {"rule":"argument_list","concept":"grammar.argument-list","languages":["c","cmake","cpp","css","dart","go","graphql","groovy","java","javascript","lua","make","powershell","python","rust","tsx","typescript","vb","zig"]},
         {"rule":"parenthesized_expression","concept":"grammar.parenthesized-expression","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"field","concept":"grammar.field","languages":["graphql","lua","sql"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"identifier","concept":"grammar.identifier","languages":["c","cmake","cpp","css","dart","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","proto","python","r","rocq","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"chunk","concept":"grammar.chunk"},
@@ -2316,7 +2316,7 @@
         {"rule":"string","concept":"grammar.string","languages":["c","cpp","csv","erlang","graphql","javascript","json","json5","lean","lua","make","proto","python","r","racket","rocq","scheme","solidity","toml","tsx","typescript","zig"]},
         {"rule":"string_content","concept":"grammar.string-content","languages":["lean","make","python"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"makefile","concept":"grammar.makefile"},
@@ -2384,13 +2384,13 @@
         {"rule":"let_expression","concept":"grammar.let-expression","languages":["nix","rocq"]},
         {"rule":"if_expression","concept":"grammar.if-expression","languages":["erlang","lean","nix","rocq","rust","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"select_expression","concept":"grammar.select-expression","languages":["nix","sql"]},
         {"rule":"parenthesized_expression","concept":"grammar.parenthesized-expression","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"escape_sequence","concept":"grammar.escape-sequence","languages":["c","cmake","cpp","css","dart","go","groovy","java","javascript","lean","lua","nix","proto","python","r","racket","rust","scheme","solidity","toml","tsx","typescript","zig"]},
         {"rule":"interpolation","concept":"grammar.interpolation","languages":["nix","python","vb"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"source_code","concept":"grammar.source-code"},
@@ -3041,7 +3041,7 @@
         {"rule":"as_pattern","concept":"grammar.as-pattern","languages":["lean","python"]},
         {"rule":"expression","concept":"grammar.expression","languages":["c","cpp","dart","erlang","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"primary_expression","concept":"grammar.primary-expression","languages":["groovy","java","javascript","powershell","python","solidity","tsx","typescript"]},
-        {"rule":"binary_operator","concept":"grammar.binary-operator","languages":["dart","python","r"]},
+        {"rule":"binary_operator","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"unary_operator","concept":"grammar.unary-operator","languages":["python","r"]},
         {"rule":"comparison_operator","concept":"grammar.comparison-operator","languages":["erlang","powershell","python"]},
         {"rule":"lambda","concept":"grammar.lambda","languages":["pascal","python"]},
@@ -3079,7 +3079,7 @@
         {"rule":"collection_primary_expression","concept":"grammar.primary-expression","languages":["groovy","java","javascript","powershell","python","solidity","tsx","typescript"]},
         {"rule":"collection_subscript","concept":"grammar.subscript","languages":["lean","python","sql"]},
         {"rule":"collection_call","concept":"grammar.call","languages":["erlang","python","r"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"simple_statement_sequence","concept":"grammar.simple-statement-sequence"},
@@ -3171,7 +3171,7 @@
     {
       "grammar": "native-r",
       "language": "r",
-      "rules": 66,
+      "rules": 67,
       "shared": [
         {"rule":"program","concept":"grammar.program","languages":["groovy","java","javascript","lean","pascal","powershell","r","racket","scheme","sql","tsx","typescript"]},
         {"rule":"function_definition","concept":"grammar.function-definition","languages":["c","cmake","cpp","groovy","lua","python","r","solidity"]},
@@ -3188,7 +3188,7 @@
         {"rule":"argument","concept":"argument","languages":["graphql","r","rocq"]},
         {"rule":"named_argument","concept":"grammar.named-argument","languages":["dart","lean","r"]},
         {"rule":"unary_operator","concept":"grammar.unary-operator","languages":["python","r"]},
-        {"rule":"binary_operator","concept":"grammar.binary-operator","languages":["dart","python","r"]},
+        {"rule":"binary_operator","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"integer_literal","concept":"grammar.integer-literal","languages":["cmake","erlang","go","graphql","powershell","proto","python","r","rocq","rust","sql","toml","vb","zig"]},
         {"rule":"float","concept":"grammar.float","languages":["erlang","lean","python","r","sql","toml","zig"]},
         {"rule":"number_literal","concept":"grammar.number-literal","languages":["c","cpp","r","solidity"]},
@@ -3204,7 +3204,8 @@
         {"rule":"expression","concept":"grammar.expression","languages":["c","cpp","dart","erlang","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
         {"rule":"comma","concept":"grammar.comma","languages":["graphql","hcl","r"]},
-        {"rule":"else_keyword","concept":"grammar.else-keyword","languages":["pascal","r","sql"]}
+        {"rule":"else_keyword","concept":"grammar.else-keyword","languages":["pascal","r","sql"]},
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"parameter_with_default","concept":"grammar.parameter-with-default"},
@@ -3386,7 +3387,7 @@
         {"rule":"big_integer","concept":"grammar.big-integer","languages":["rocq","sql"]},
         {"rule":"hexadecimal_digit","concept":"grammar.hexadecimal-digit","languages":["rocq","solidity"]},
         {"rule":"string","concept":"grammar.string","languages":["c","cpp","csv","erlang","graphql","javascript","json","json5","lean","lua","make","proto","python","r","racket","rocq","scheme","solidity","toml","tsx","typescript","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"sentence","concept":"grammar.sentence"},
@@ -3647,7 +3648,7 @@
         {"rule":"range_expression","concept":"grammar.range-expression","languages":["groovy","powershell","rust","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"try_expression","concept":"grammar.try-expression","languages":["erlang","rust","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"assignment_expression","concept":"grammar.assignment-expression","languages":["c","cpp","dart","groovy","java","javascript","pascal","powershell","rust","solidity","tsx","typescript","zig"]},
         {"rule":"type_cast_expression","concept":"grammar.type-cast-expression","languages":["dart","rust","solidity"]},
         {"rule":"return_expression","concept":"grammar.return-expression","languages":["lean","rust","zig"]},
@@ -3695,7 +3696,7 @@
         {"rule":"field_identifier_alias","concept":"grammar.field-identifier-alias","languages":["c","cpp","go","rust"]},
         {"rule":"super","concept":"grammar.super","languages":["groovy","java","javascript","rust","tsx","typescript"]},
         {"rule":"metavariable","concept":"grammar.metavariable","languages":["rocq","rust"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"declaration_statement","concept":"grammar.declaration-statement"},
@@ -3885,7 +3886,7 @@
         {"rule":"ternary_expression","concept":"grammar.ternary-expression","languages":["groovy","java","javascript","solidity","tsx","typescript","vb"]},
         {"rule":"new_expression","concept":"grammar.new-expression","languages":["cpp","dart","javascript","solidity","tsx","typescript","vb"]},
         {"rule":"tuple_expression","concept":"grammar.tuple-expression","languages":["lean","rust","solidity"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"update_expression","concept":"grammar.update-expression","languages":["c","cpp","groovy","java","javascript","solidity","tsx","typescript"]},
         {"rule":"member_expression","concept":"grammar.member-expression","languages":["dart","javascript","solidity","tsx","typescript"]},
@@ -3917,7 +3918,7 @@
         {"rule":"escape_sequence","concept":"grammar.escape-sequence","languages":["c","cmake","cpp","css","dart","go","groovy","java","javascript","lean","lua","nix","proto","python","r","racket","rust","scheme","solidity","toml","tsx","typescript","zig"]},
         {"rule":"string","concept":"grammar.string","languages":["c","cpp","csv","erlang","graphql","javascript","json","json5","lean","lua","make","proto","python","r","racket","rocq","scheme","solidity","toml","tsx","typescript","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"source_unit","concept":"grammar.source-unit"},
@@ -4090,7 +4091,7 @@
         {"rule":"expression","concept":"grammar.expression","languages":["c","cpp","dart","erlang","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"parenthesized_expression","concept":"grammar.parenthesized-expression","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"subscript","concept":"grammar.subscript","languages":["lean","python","sql"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"list","concept":"grammar.list","languages":["erlang","graphql","json","json5","lean","make","python","racket","scheme","sql"]},
         {"rule":"literal","concept":"grammar.literal","languages":["dart","groovy","java","pascal","powershell","rust","solidity","sql","vb"]},
@@ -4791,7 +4792,7 @@
         {"rule":"destructuring_pattern","concept":"grammar.destructuring-pattern","languages":["javascript","rocq","tsx","typescript"]},
         {"rule":"spread_element","concept":"grammar.spread-element","languages":["dart","javascript","tsx","typescript"]},
         {"rule":"ternary_expression","concept":"grammar.ternary-expression","languages":["groovy","java","javascript","solidity","tsx","typescript","vb"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"update_expression","concept":"grammar.update-expression","languages":["c","cpp","groovy","java","javascript","solidity","tsx","typescript"]},
         {"rule":"sequence_expression","concept":"grammar.sequence-expression","languages":["javascript","tsx","typescript"]},
@@ -4921,7 +4922,7 @@
         {"rule":"intersection_type","concept":"grammar.intersection-type","languages":["tsx","typescript"]},
         {"rule":"function_type","concept":"grammar.function-type","languages":["dart","go","rust","solidity","tsx","typescript"]},
         {"rule":"type_identifier_alias","concept":"grammar.type-identifier-alias","languages":["c","cpp","go","rust","tsx","typescript"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": []
     },
@@ -5029,7 +5030,7 @@
         {"rule":"destructuring_pattern","concept":"grammar.destructuring-pattern","languages":["javascript","rocq","tsx","typescript"]},
         {"rule":"spread_element","concept":"grammar.spread-element","languages":["dart","javascript","tsx","typescript"]},
         {"rule":"ternary_expression","concept":"grammar.ternary-expression","languages":["groovy","java","javascript","solidity","tsx","typescript","vb"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"update_expression","concept":"grammar.update-expression","languages":["c","cpp","groovy","java","javascript","solidity","tsx","typescript"]},
         {"rule":"sequence_expression","concept":"grammar.sequence-expression","languages":["javascript","tsx","typescript"]},
@@ -5159,7 +5160,7 @@
         {"rule":"intersection_type","concept":"grammar.intersection-type","languages":["tsx","typescript"]},
         {"rule":"function_type","concept":"grammar.function-type","languages":["dart","go","rust","solidity","tsx","typescript"]},
         {"rule":"type_identifier_alias","concept":"grammar.type-identifier-alias","languages":["c","cpp","go","rust","tsx","typescript"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": []
     },
@@ -5222,7 +5223,7 @@
         {"rule":"element_access","concept":"grammar.element-access","languages":["powershell","vb"]},
         {"rule":"new_expression","concept":"grammar.new-expression","languages":["cpp","dart","javascript","solidity","tsx","typescript","vb"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"ternary_expression","concept":"grammar.ternary-expression","languages":["groovy","java","javascript","solidity","tsx","typescript","vb"]},
         {"rule":"literal","concept":"grammar.literal","languages":["dart","groovy","java","pascal","powershell","rust","solidity","sql","vb"]},
         {"rule":"boolean_literal","concept":"grammar.boolean-literal","languages":["hcl","rust","solidity","vb"]},
@@ -5311,7 +5312,7 @@
         {"rule":"while_expression","concept":"grammar.while-expression","languages":["rust","zig"]},
         {"rule":"assignment_expression","concept":"grammar.assignment-expression","languages":["c","cpp","dart","groovy","java","javascript","pascal","powershell","rust","solidity","tsx","typescript","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
-        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"await_expression","concept":"grammar.await-expression","languages":["dart","javascript","python","rust","tsx","typescript","zig"]},
         {"rule":"continue_expression","concept":"grammar.continue-expression","languages":["rust","zig"]},
         {"rule":"return_expression","concept":"grammar.return-expression","languages":["lean","rust","zig"]},
@@ -5346,9 +5347,9 @@
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
         {"rule":"iteration_range_expression","concept":"grammar.range-expression","languages":["groovy","powershell","rust","zig"]},
         {"rule":"iteration_expression","concept":"grammar.expression","languages":["c","cpp","dart","erlang","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
-        {"rule":"iteration_binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"]},
+        {"rule":"iteration_binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"iteration_unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
       ],
       "specific": [
         {"rule":"container_members","concept":"grammar.container-members"},
@@ -5654,7 +5655,7 @@
     {"concept":"grammar.bin-pack-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.binary","languages":["erlang","sql"],"shared":true},
     {"concept":"grammar.binary-comprehension","languages":["erlang"],"shared":false},
-    {"concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","rust","solidity","sql","tsx","typescript","vb","zig"],"shared":true},
+    {"concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"],"shared":true},
     {"concept":"grammar.binary-fold","languages":["cpp"],"shared":false},
     {"concept":"grammar.binary-fold-operator","languages":["cpp"],"shared":false},
     {"concept":"grammar.binary-generator-operator","languages":["erlang"],"shared":false},
@@ -5662,7 +5663,7 @@
     {"concept":"grammar.binary-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.binary-object-notation-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.binary-operation","languages":["hcl"],"shared":false},
-    {"concept":"grammar.binary-operator","languages":["dart","python","r"],"shared":true},
+    {"concept":"grammar.binary-operator","languages":["dart"],"shared":false},
     {"concept":"grammar.binary-operator-exception-pattern","languages":["erlang"],"shared":false},
     {"concept":"grammar.binary-operator-expression","languages":["erlang"],"shared":false},
     {"concept":"grammar.binary-query","languages":["css"],"shared":false},
@@ -8680,7 +8681,7 @@
     {"concept":"grammar.with-statement","languages":["javascript","pascal","python","tsx","typescript","vb"],"shared":true},
     {"concept":"grammar.without-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.word","languages":["make"],"shared":false},
-    {"concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","rocq","rust","solidity","tsx","typescript","zig"],"shared":true},
+    {"concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"],"shared":true},
     {"concept":"grammar.write-keyword","languages":["pascal","sql"],"shared":true},
     {"concept":"grammar.yield-each-statement","languages":["dart"],"shared":false},
     {"concept":"grammar.yield-expression","languages":["javascript","python","rust","tsx","typescript"],"shared":true},

@@ -67,4 +67,8 @@
         concepts: ["grammar.collection-comprehension", "grammar.for-expression"],
         reason: "A collection comprehension computes a tuple or object from iteration; an imperative for expression executes a loop body.",
     },
+    RequiredDistinction {
+        concepts: ["grammar.binary-expression", "grammar.binary-operator"],
+        reason: "A binary expression contains its operands and the operation applied to them, while a binary operator names only the operation token.",
+    },
 ]

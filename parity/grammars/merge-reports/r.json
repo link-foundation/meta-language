@@ -16,7 +16,7 @@
   ],
   "scanner": {
     "file": "parity/grammars/scanners/r.lino",
-    "sha256": "7c79b4643df5a83713be169281065c97ee4a51cc9e022ca32890eafeb3f03f90",
+    "sha256": "d461c8e0646b254b9e41a223bdbda283272e306db274674da4742615cd354be9",
     "ports": {
       "path": "src/scanner.c",
       "sha256": "e99e003ab8b0463dee975432b6f9f7e39cd75eb0047989f064fdf57927fa8e9d"
@@ -29,6 +29,7 @@
           "newline",
           "semicolon",
           "external_else",
+          "scoped_whitespace",
           "external_open_parenthesis",
           "external_close_parenthesis",
           "external_open_brace",
@@ -68,8 +69,29 @@
       "_error_sentinel"
     ]
   },
-  "rules": 66,
-  "keywords": [],
+  "rules": 67,
+  "keywords": [
+    "FALSE",
+    "Inf",
+    "L",
+    "NA",
+    "NA_character_",
+    "NA_complex_",
+    "NA_integer_",
+    "NA_real_",
+    "NULL",
+    "NaN",
+    "TRUE",
+    "break",
+    "for",
+    "function",
+    "i",
+    "if",
+    "in",
+    "next",
+    "repeat",
+    "while"
+  ],
   "renamed": [
     {
       "source": "parameters",
@@ -268,9 +290,15 @@
         "concept": "grammar.comment"
       }
     ],
-    "generated": 56
+    "generated": 57
   },
   "sourceTransforms": [
+    {
+      "family": "contextual-newline-extras",
+      "pattern": "\\s",
+      "token": "_scoped_whitespace",
+      "reason": "Line feeds belong to the contextual scanner: outside continuation brackets they are statement separators, while inside parentheses or brackets they are trivia."
+    },
     {
       "family": "rule-prefix-exclusion",
       "rule": "identifier",
@@ -298,10 +326,23 @@
       "rule": "identifier",
       "pattern": "[rR][\"']",
       "reason": "A raw-literal opening is one lexical token even when its matching closing delimiter is missing; it cannot become an identifier followed by a separate ordinary string."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "extract_operator",
+      "value": 1,
+      "reason": "A complete chained extraction stays one expression instead of splitting after the optional missing right-hand name."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "extract_operator"
+      ],
+      "symbol": "_string_or_identifier",
+      "value": 1,
+      "reason": "A present extraction member name outranks the recovery alternative that omits it and starts a separate expression."
     }
   ],
-  "approximations": [
-    "word rule identifier is not a token; no keyword extraction"
-  ],
+  "approximations": [],
   "unsupported": []
 }

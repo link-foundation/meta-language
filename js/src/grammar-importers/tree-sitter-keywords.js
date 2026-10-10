@@ -12,7 +12,7 @@
 // conflicts are tree-sitter's, of the tokens' NFAs.
 import { MATCHES_DIFFERENT_STRING, MATCHES_SAME_STRING, firstCharacters, tokenConflicts } from './tree-sitter-token-conflicts.js';
 
-const unwrap = (node) => (node.type.startsWith('PREC') || node.type === 'FIELD' || node.type === 'ALIAS' || node.type === 'RESERVED' ? unwrap(node.content) : node);
+const unwrap = (node) => (node.type.startsWith('PREC') || node.type === 'FIELD' || node.type === 'ALIAS' || node.type === 'RESERVED' || node.type === 'NATIVE_PREFIX_EXCLUSION' ? unwrap(node.content) : node);
 const isLexical = (node) => ['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(unwrap(node).type);
 
 /**
@@ -29,7 +29,9 @@ export function excludedKeywordTexts(grammar, word, candidates, tokenKey) {
   const nodes = new Map();
   const keyOf = (node, name = null) => {
     const key = tokenKey(node, name);
-    if (!nodes.has(key)) nodes.set(key, node);
+    let lexical = node;
+    while (lexical.type === 'NATIVE_PREFIX_EXCLUSION') lexical = lexical.content;
+    if (!nodes.has(key)) nodes.set(key, lexical);
     return key;
   };
   // FIRST sets of the syntactic rules, to a fixed point.

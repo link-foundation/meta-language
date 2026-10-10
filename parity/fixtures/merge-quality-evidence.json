@@ -108,7 +108,7 @@
       "features": {"scanner": 7, "conflict": 127, "precedences": 1, "extra": 2, "kind": 5},
       "correctness": {"matches": 53, "rows": 1187, "bytes": 1847, "divergences": 0, "rejections": 6},
       "recovery": {"repaired": 6, "errorNodes": 2, "missingNodes": 5, "categories": {}},
-      "reuse": {"shared": 97, "specific": 187}
+      "reuse": {"shared": 96, "specific": 188}
     },
     {
       "grammar": "native-diff",
@@ -216,7 +216,7 @@
       "mergeReport": "parity/grammars/merge-reports/hcl.json",
       "coverage": {"rules": {"normal": 52, "atomic": 0, "silent": 7, "token": 6}, "visibleRules": 52, "exercisedRules": 50, "checkedKinds": 62, "checkedFields": 2, "renamed": 31, "expandedWords": 8, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 1, "conflict": 0, "precedences": 0, "extra": 2, "kind": 2},
-      "correctness": {"matches": 37, "rows": 645, "bytes": 610, "divergences": 0, "rejections": 10},
+      "correctness": {"matches": 45, "rows": 860, "bytes": 751, "divergences": 0, "rejections": 10},
       "recovery": {"repaired": 10, "errorNodes": 6, "missingNodes": 9, "categories": {}},
       "reuse": {"shared": 18, "specific": 47}
     },
@@ -467,11 +467,11 @@
       ],
       "corpus": "https://github.com/r-lib/tree-sitter-r/tree/f2289db204dda2bf7c7ea720de5c2a2c3eff2530/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/r.json",
-      "coverage": {"rules": {"normal": 27, "atomic": 0, "silent": 26, "token": 13}, "visibleRules": 27, "exercisedRules": 17, "checkedKinds": 26, "checkedFields": 20, "renamed": 38, "expandedWords": 0, "approximations": 1, "unsupported": 0},
-      "features": {"scanner": 2, "conflict": 0, "precedences": 0, "extra": 2, "kind": 16},
-      "correctness": {"matches": 33, "rows": 359, "bytes": 1077, "divergences": 0, "rejections": 9},
-      "recovery": {"repaired": 9, "errorNodes": 2, "missingNodes": 10, "categories": {}},
-      "reuse": {"shared": 32, "specific": 34}
+      "coverage": {"rules": {"normal": 27, "atomic": 0, "silent": 26, "token": 14}, "visibleRules": 27, "exercisedRules": 19, "checkedKinds": 28, "checkedFields": 20, "renamed": 38, "expandedWords": 0, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 2, "conflict": 0, "precedences": 0, "extra": 3, "kind": 17},
+      "correctness": {"matches": 43, "rows": 459, "bytes": 1195, "divergences": 0, "rejections": 12},
+      "recovery": {"repaired": 12, "errorNodes": 5, "missingNodes": 10, "categories": {}},
+      "reuse": {"shared": 33, "specific": 34}
     },
     {
       "grammar": "native-racket",

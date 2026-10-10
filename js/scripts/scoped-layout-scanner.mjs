@@ -5,9 +5,10 @@ export function scopedLayoutScanner({ name, startToken, newlineToken, separatorT
   separator = ';', continuationToken, continuation = 'else',
   identifierContinuation = '[A-Za-z0-9_.\\u0080-\\u{10ffff}]',
   commentPrefix = '#', pairs, whitespace = [' ', '\t', '\n', '\r', '\v', '\f'],
-  recoveryToken = null }) {
+  recoveryToken = null, triviaToken = null }) {
   if (!Array.isArray(pairs) || !pairs.length) throw new TypeError('scoped layout needs bracket pairs');
   const tokens = [startToken, newlineToken, separatorToken, continuationToken,
+    ...(triviaToken === null ? [] : [triviaToken]),
     ...pairs.flatMap(({ openToken, closeToken }) => [openToken, closeToken]),
     ...(recoveryToken === null ? [] : [recoveryToken])];
   for (const value of [name, ...tokens]) {
@@ -44,6 +45,8 @@ export function scopedLayoutScanner({ name, startToken, newlineToken, separatorT
   return `(scanner ${name} (tokens ${tokens.join(' ')}) (operations `
     + (recoveryToken === null ? '' : branch(`(valid ${recoveryToken})`, 'fail') + ' ')
     + branch(`(valid ${startToken})`, `(emit ${startToken})`) + ' '
+    + (triviaToken === null ? '' : branch(`(all (valid ${triviaToken}) ${anyScope('ignoreNewlines')} (next ${space}))`, `(consume (repeat1 ${space})) (emit ${triviaToken})`) + ' ')
+    + (triviaToken === null ? '' : branch(`(all (valid ${triviaToken}) ${anyScope('allowContinuation')} (expected (ref ${continuationToken})) (next ${space}))`, `(consume (repeat1 ${space})) (if (not (next ${literal(commentPrefix)})) (then fail)) (emit ${triviaToken})`) + ' ')
     + `(while (all (next ${space}) (some (not (next ${literal('\n')})) ${anyScope('ignoreNewlines')})) (do (skip ${space}))) `
     + brackets + ' '
     + branch(`(all (valid ${separatorToken}) (next ${literal(separator)}))`, `(consume ${literal(separator)}) (emit ${separatorToken})`) + ' '

@@ -8,7 +8,7 @@
       "grammars": {
         "native-python": {
           "version": "1.0.0",
-          "parserSha256": "ff42f64e1c0620d99a962bb575edf3dd2bab05ab6f341816d8878f9fae772252"
+          "parserSha256": "6302ad2ff1b12870ce25932b54a5bae09a117efb4eb9798fafdb183922253ed1"
         }
       },
       "oracleGrammars": {
@@ -3826,7 +3826,7 @@
       "grammars": {
         "native-r": {
           "version": "1.0.0",
-          "parserSha256": "6e0e48cc157a9bd0b389ae32d277dbcfc1ed604f0ed27b6e21739058953c1de1"
+          "parserSha256": "912564796117a24f79e6185e4ebfb97c95bbc1161eadc47b7c1d855398c7746c"
         }
       },
       "oracleGrammars": {
@@ -3900,9 +3900,10 @@
         [4,"argument","argument",1,11,12,""],
         [5,"value","float",1,11,12,""],
         [4,null,"comma",1,12,13,""],
-        [4,"argument","argument",1,14,15,""],
-        [5,"value","integer",1,14,15,""],
-        [6,null,"L",0,15,15,"M"],
+        [4,"argument","argument",1,14,16,""],
+        [5,"value","extract_operator",1,14,16,""],
+        [6,"lhs","float",1,14,15,""],
+        [6,null,"$",0,16,16,"M"],
         [4,null,")",0,16,16,"M"]
       ],
       "embedded": []

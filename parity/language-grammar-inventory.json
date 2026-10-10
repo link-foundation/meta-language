@@ -736,15 +736,18 @@
       "version": "1.0.0",
       "grammar": "parity/grammars/native/r.lino",
       "hidden": [
-        "whitespace"
+        "whitespace",
+        "scoped_whitespace"
       ],
       "anonymous": [
         "unnamed_token",
-        "number_literal"
+        "number_literal",
+        "hex_literal"
       ],
       "extras": [
         "comment",
-        "whitespace"
+        "whitespace",
+        "scoped_whitespace"
       ],
       "rootIncludesLeadingTrivia": true
     }

@@ -3,6 +3,21 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'contextual-newline-extras') {
+      const { pattern, token } = decision;
+      if (typeof pattern !== 'string' || !pattern || typeof token !== 'string' || !/^_[A-Za-z_]+$/u.test(token)
+        || Object.hasOwn(grammar.rules, token) || (grammar.externals ?? []).some((external) => external.name === token)) throw new TypeError('contextual newline extras need a source pattern and a unique hidden scanner token');
+      let changes = 0;
+      grammar.extras = (grammar.extras ?? []).map((extra) => {
+        if (extra.type !== 'PATTERN' || extra.value !== pattern) return extra;
+        changes += 1;
+        return { type: 'NATIVE_PREFIX_EXCLUSION', content: extra, prefixes: { type: 'STRING', value: '\n' } };
+      });
+      if (changes !== 1) throw new TypeError('contextual newline extras must select exactly one source pattern');
+      grammar.externals = [...(grammar.externals ?? []), { type: 'SYMBOL', name: token }];
+      grammar.extras.push({ type: 'SYMBOL', name: token });
+      continue;
+    }
     if (decision.family === 'rule-prefix-exclusion') {
       const { rule, pattern, continuationPattern = null } = decision;
       if (!Object.hasOwn(grammar.rules, rule) || typeof pattern !== 'string' || !pattern) throw new TypeError('rule prefix exclusions need an existing rule and nonempty pattern');

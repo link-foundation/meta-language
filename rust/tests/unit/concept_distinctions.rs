@@ -192,6 +192,7 @@ fn check_rejects_records_that_merge_or_fail_to_justify_a_required_distinction() 
             "grammar.comment / grammar.block-comment",
             "grammar.null-keyword / grammar.nil-keyword",
             "grammar.collection-comprehension / grammar.for-expression",
+            "grammar.binary-expression / grammar.binary-operator",
         ]
     );
     assert_eq!(REQUIRED_FOUNDATION_DISTINCTIONS.len(), 6);

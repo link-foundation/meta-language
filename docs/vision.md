@@ -963,3 +963,11 @@ quotes, brackets and bounded marker counts. Both runtimes execute these Links
 operations, and the original parser remains a development oracle. Focused
 fixtures run locally; CI checks every pinned upstream corpus input. This
 single-source import does not complete the required multi-source grammar union.
+
+R line feeds remain statement boundaries outside continuation brackets, including
+before extraction and namespace operators. Contextual trivia preserves line
+feeds inside brackets and comments before a brace-scoped continuation keyword.
+The executor retains silent operand boundaries when settling precedence, and
+compares optional member-name shifts within the same recursive production. R
+and Python binary-expression rules share their expression concept; Dart
+operator tokens retain a distinct operator concept and every source alias.

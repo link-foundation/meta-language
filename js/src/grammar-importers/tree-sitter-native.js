@@ -356,7 +356,11 @@ export function renderTreeSitterPattern(node) {
 // ---------------------------------------------------------------- grammar
 
 const unwrapPrecedence = (node) => (node.type.startsWith('PREC') ? unwrapPrecedence(node.content) : node);
-const isLexicalBody = (node) => ['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN', 'NATIVE_WORD_BOUNDARY'].includes(unwrapPrecedence(node).type);
+const isLexicalBody = (node) => {
+  const bare = unwrapPrecedence(node);
+  return bare.type === 'NATIVE_PREFIX_EXCLUSION' ? isLexicalBody(bare.content)
+    : ['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN', 'NATIVE_WORD_BOUNDARY'].includes(bare.type);
+};
 const memberName = (member) => member.name ?? member.value ?? member;
 
 // The finite set of texts a lexical expression matches, or null when it is
@@ -678,7 +682,10 @@ export function importTreeSitterNative(source, options = {}) {
   const keywordUnits = new Set();
   let wordBody = null;
   if (word !== null) {
-    const bare = unwrapPrecedence(grammar.rules[word]);
+    // Reviewed prefix guards constrain identifier parsing, not the original
+    // lexical word language used to discover keywords and their boundaries.
+    let bare = unwrapPrecedence(grammar.rules[word]);
+    while (bare.type === 'NATIVE_PREFIX_EXCLUSION') bare = unwrapPrecedence(bare.content);
     try {
       wordBody = expr(bare.type === 'TOKEN' || bare.type === 'IMMEDIATE_TOKEN' ? bare.content : bare, true, keywords);
     } catch (error) {

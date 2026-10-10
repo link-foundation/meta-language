@@ -89,7 +89,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-go` | 106 | 4369 | 9101 | 0 | 13 |
 | `native-graphql` | 53 | 1809 | 3211 | 0 | 29 |
 | `native-groovy` | 61 | 857 | 1314 | 0 | 11 |
-| `native-hcl` | 37 | 645 | 610 | 0 | 10 |
+| `native-hcl` | 45 | 860 | 751 | 0 | 10 |
 | `native-ini` | 55 | 444 | 710 | 9 | 15 |
 | `native-java` | 146 | 4848 | 11744 | 0 | 11 |
 | `native-javascript` | 146 | 5816 | 12130 | 0 | 24 |
@@ -103,7 +103,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-powershell` | 48 | 1710 | 813 | 0 | 7 |
 | `native-proto` | 79 | 6291 | 26218 | 0 | 20 |
 | `native-python` | 56 | 890 | 1228 | 0 | 6 |
-| `native-r` | 33 | 359 | 1077 | 0 | 9 |
+| `native-r` | 43 | 459 | 1195 | 0 | 12 |
 | `native-racket` | 306 | 1165 | 1769 | 22 | 60 |
 | `native-regex` | 82 | 1036 | 1007 | 2 | 24 |
 | `native-rocq` | 230 | 9440 | 20820 | 0 | 12 |
@@ -116,7 +116,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 3871 | 91199 | 199991 | 101 | 633 |
+| all | 3889 | 91514 | 200250 | 101 | 636 |
 
 ## Coverage
 
@@ -155,7 +155,7 @@ language specification and checked against the oracle.
 | `native-powershell` | 139 | 0 | 13 | 15 | 90 of 139 (65%) | 98 | 12 | 54 | 12 | 0 | 0 |
 | `native-proto` | 43 | 0 | 3 | 9 | 43 of 43 (100%) | 52 | 5 | 20 | 7 | 0 | 0 |
 | `native-python` | 108 | 0 | 40 | 11 | 54 of 108 (50%) | 68 | 27 | 49 | 2 | 0 | 0 |
-| `native-r` | 27 | 0 | 26 | 13 | 17 of 27 (63%) | 26 | 20 | 38 | 0 | 1 | 0 |
+| `native-r` | 27 | 0 | 26 | 14 | 19 of 27 (70%) | 28 | 20 | 38 | 0 | 0 | 0 |
 | `native-racket` | 22 | 0 | 3 | 14 | 22 of 22 (100%) | 32 | 0 | n/a | n/a | n/a | n/a |
 | `native-regex` | 24 | 0 | 4 | 12 | 24 of 24 (100%) | 38 | 0 | 4 | 0 | 0 | 0 |
 | `native-rocq` | 203 | 0 | 46 | 16 | 191 of 203 (94%) | 203 | 29 | 84 | 27 | 0 | 0 |
@@ -184,7 +184,7 @@ rules name a concept another native grammar names
 | `native-cpp` | 1 | 33 | 2 | 2 | 0 | 201 | 104 |
 | `native-css` | 3 | 0 | 0 | 3 | 5 | 16 | 50 |
 | `native-csv` | 0 | 0 | 0 | 0 | 0 | 3 | 5 |
-| `native-dart` | 7 | 127 | 1 | 2 | 5 | 97 | 187 |
+| `native-dart` | 7 | 127 | 1 | 2 | 5 | 96 | 188 |
 | `native-diff` | 0 | 0 | 0 | 1 | 0 | 2 | 22 |
 | `native-erlang` | 3 | 14 | 0 | 2 | 2 | 48 | 148 |
 | `native-go` | 0 | 8 | 0 | 2 | 0 | 70 | 47 |
@@ -204,7 +204,7 @@ rules name a concept another native grammar names
 | `native-powershell` | 1 | 5 | 0 | 5 | 1 | 51 | 116 |
 | `native-proto` | 0 | 0 | 0 | 2 | 0 | 22 | 33 |
 | `native-python` | 2 | 9 | 0 | 3 | 4 | 75 | 84 |
-| `native-r` | 2 | 0 | 0 | 2 | 16 | 32 | 34 |
+| `native-r` | 2 | 0 | 0 | 3 | 17 | 33 | 34 |
 | `native-racket` | 0 | 0 | 0 | 0 | 0 | 23 | 16 |
 | `native-regex` | 0 | 1 | 0 | 1 | 0 | 2 | 38 |
 | `native-rocq` | 0 | 16 | 2 | 2 | 0 | 42 | 223 |
@@ -252,7 +252,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-powershell` | 7 | 7 | 1 | 8 | none |
 | `native-proto` | 20 | 20 | 12 | 19 | none |
 | `native-python` | 6 | 6 | 1 | 10 | none |
-| `native-r` | 9 | 9 | 2 | 10 | none |
+| `native-r` | 12 | 12 | 5 | 10 | none |
 | `native-racket` | 60 | 60 | 29 | 75 | none |
 | `native-regex` | 24 | 24 | 7 | 32 | none |
 | `native-rocq` | 12 | 12 | 2 | 25 | native-skips-more 16, oracle-skips-more 45, same-repair-sites 4, same-skipped-bytes 7 |
@@ -280,7 +280,7 @@ The `native-erlang` measurements use linux x64, AMD EPYC 9V74 80-Core Processor,
 
 The `native-groovy` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, without optional dictionary features.
 
-The `native-hcl` measurements use linux x64, INTEL(R) XEON(R) PLATINUM 8573C, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0; --no-default-features.
+The `native-hcl` measurements use linux x64, INTEL(R) XEON(R) PLATINUM 8573C, Node.js 24.19.0, and unoptimized test profile, no default features, one crate codegen unit.
 
 The `native-lua` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
 
@@ -324,7 +324,7 @@ loads the same modules and parses nothing.
 | `native-go` | 2295.7 | 9.9 | 231.2× | 553.3 | 1.6 | 128.2 | 11.1 |
 | `native-graphql` | 193.7 | 5.0 | 38.9× | 192.0 | 0.8 | 81.6 | 7.5 |
 | `native-groovy` | 386.9 | 1.6 | 237.4× | 666.3 | 0.7 | 238.8 | 10.5 |
-| `native-hcl` | 65.4 | 1.9 | 34.9× | 68.3 | 1.0 | 41.5 | 6.3 |
+| `native-hcl` | 165.8 | 14.7 | 11.3× | 115.7 | 0.9 | 78.3 | 8.8 |
 | `native-ini` | 18.5 | 1.5 | 12.3× | 14.9 | 0.4 | 15.7 | 3.9 |
 | `native-java` | 2078.1 | 10.0 | 207.0× | 397.1 | 0.8 | 124.3 | 12.0 |
 | `native-javascript` | 7646.4 | 14.9 | 513.3× | 2214.6 | 1.1 | 131.9 | 12.6 |
@@ -338,7 +338,7 @@ loads the same modules and parses nothing.
 | `native-powershell` | 167.6 | 1.8 | 95.7× | 486.1 | 0.7 | 188.0 | 16.2 |
 | `native-proto` | 644.6 | 10.2 | 63.2× | 98.9 | 1.7 | 104.6 | 8.7 |
 | `native-python` | 257.4 | 2.2 | 114.7× | 67.4 | 0.5 | 46.8 | 5.8 |
-| `native-r` | 172.0 | 1.2 | 147.2× | 159.5 | 0.6 | 74.2 | 7.0 |
+| `native-r` | 256.5 | 1.1 | 230.6× | 214.9 | 0.6 | 77.6 | 7.9 |
 | `native-racket` | 231.7 | 5.0 | 46.3× | 90.5 | 1.7 | 45.3 | 9.7 |
 | `native-regex` | 196.9 | 5.2 | 38.1× | 258.4 | 0.6 | 32.0 | 12.2 |
 | `native-rocq` | 4542.7 | 28.8 | 158.0× | 572.1 | 2.1 | 127.9 | 119.9 |
@@ -373,7 +373,7 @@ without optimization, as the tests run them.
 | `native-go` | 7025.9 | 10.9 | 642.6× | 1412.4 | 1.0 | 5.5 |
 | `native-graphql` | 665.5 | 2.0 | 326.6× | 458.1 | 0.8 | 1.6 |
 | `native-groovy` | 1666.0 | 1.1 | 1514.5× | 1932.5 | 0.7 | 10.8 |
-| `native-hcl` | 216.4 | 1.3 | 171.2× | 183.9 | 0.6 | 2.1 |
+| `native-hcl` | 257.5 | 1.2 | 213.0× | 230.7 | 0.6 | 2.2 |
 | `native-ini` | 148.8 | 3.5 | 42.7× | 54.6 | 0.5 | 0.1 |
 | `native-java` | 9722.4 | 7.9 | 1226.8× | 1413.3 | 0.6 | 5.6 |
 | `native-javascript` | 24702.9 | 24.3 | 1015.6× | 6176.5 | 1.3 | 5.4 |
@@ -387,7 +387,7 @@ without optimization, as the tests run them.
 | `native-powershell` | 462.6 | 1.2 | 394.7× | 1286.6 | 0.5 | 11.6 |
 | `native-proto` | 2063.4 | 10.2 | 203.2× | 325.5 | 0.6 | 15.5 |
 | `native-python` | 1012.5 | 1.2 | 830.6× | 210.5 | 0.3 | 3.7 |
-| `native-r` | 560.8 | 0.7 | 785.4× | 403.1 | 0.3 | 3.0 |
+| `native-r` | 713.3 | 0.7 | 1006.1× | 511.0 | 0.6 | 4.1 |
 | `native-racket` | 1406.2 | 2.1 | 657.1× | 246.0 | 1.3 | 3.0 |
 | `native-regex` | 678.6 | 2.2 | 306.6× | 431.9 | 0.5 | 0.8 |
 | `native-rocq` | 18852.0 | n/a | n/a | 2261.6 | n/a | 10.5 |

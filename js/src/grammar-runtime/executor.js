@@ -1833,13 +1833,25 @@ function shiftPreferred(long, short, orders, grammar, lookahead = null) {
   for (;;) {
     const inner = progress.children.find((child) => child.type === 'node' && child.start < short.end && child.end > short.end);
     if (!inner) break;
-    if (firstLeafStart(inner) === begin) {
+    if (firstLeafStart(inner) === begin && inner.rule !== short.rule) {
       return -comparePrecedence(reduction(short), unranked(), orders);
     }
     progress = inner;
   }
-  const shifted = progress.precedence ?? unranked(progress.rule);
-  const reduced = reducedBefore(short, progress);
+  let shifted = progress.precedence ?? unranked(progress.rule);
+  // A suffix inside the first operand shifts before the enclosing operator.
+  const head = progress.children.find((child) => !isTrivia(child));
+  if (grammar && head?.end === short.end && lookahead !== null) {
+    grammar.first ??= firstSets(grammar.rules);
+    const rule = grammar.rules.get(progress.rule);
+    const slots = rule ? directEdge(rule.expression, 'right', rule.name).map(([slot]) => slot) : [];
+    const shifts = slots.flatMap((slot) => shiftItems(grammar, slot))
+      .filter((item) => firstOf({ kind: 'seq', items: item.rest }, grammar.rules, grammar.first).has(lookahead));
+    if (shifts.length && !shifts.some((item) => item.rule === progress.rule)) {
+      shifted = shifts.reduce((best, item) => comparePrecedence(item.tag, best, orders) > 0 ? item.tag : best, shifts[0].tag);
+    }
+  }
+  const reduced = reducedBefore(short, progress, grammar);
   const before = shiftReduction(short, progress, grammar);
   if (before !== null) {
     const order = comparePrecedence(unranked(before), reduced, orders);
@@ -1902,7 +1914,7 @@ function reduction(node) {
 // whose `module_name_and_body` of level 0 right ends with the name where the
 // body is left out, so the body shifts); else the precedence `short` reduces
 // with.
-function reducedBefore(short, progress) {
+function reducedBefore(short, progress, grammar) {
   const first = progress.children.find((child) => !isTrivia(child));
   let closing = null;
   for (let node = short; first && node.type === 'node';) {
@@ -1921,7 +1933,7 @@ function reducedBefore(short, progress) {
     node = last;
     closing = (node.type === 'token' ? node.reduced ?? node.precedence : node.closes) ?? closing;
   }
-  return closing ?? reduction(short);
+  return closing && grammar?.rules.get(closing.rule)?.kind === 'silent' ? closing : reduction(short);
 }
 
 // The offset of the first leaf under a node that is not white space.
@@ -2798,6 +2810,8 @@ export class Executor {
     // The offset each result's optional parts begin at, where its rule
     // could have been reduced (see `reductionFacts`).
     const boundaries = split ? new Map() : null;
+    // Silent operands may expose several children; keep their sequence boundaries.
+    const firstParts = keep ? new WeakMap() : null;
     let current = [makeResult(position, state)];
     for (const [index, item] of items.entries()) {
       const next = new Map();
@@ -2820,7 +2834,11 @@ export class Executor {
               if (split.marked.has(lookahead)) joined = Object.assign(joined, { before: lookahead });
             }
           }
-          if (last && keep && !keep(joined)) continue;
+          if (keep) {
+            const first = index === 0 ? right.children : firstParts.get(left.children);
+            firstParts.set(joined.children, first);
+            if (last && !keep(joined, first, right.children)) continue;
+          }
           addResult(next, joined, tokens, this.settling);
         }
       }
@@ -3003,8 +3021,8 @@ export class Executor {
     // A result whose right operand is of one part waits for the others: it
     // stands only when no result of the expression ends before that operand.
     const pending = [];
-    const valid = (result) => {
-      const verdict = allowed(result);
+    const valid = (result, first = null, last = null) => {
+      const verdict = allowed(result, first, last);
       if (verdict === LONE) pending.push(result);
       if (verdict === true) return true;
       if (verdict === false) this.fail(result.end, 'precedence');
@@ -3015,6 +3033,9 @@ export class Executor {
       if (child.type !== 'node' || !child.precedence) return false;
       const order = comparePrecedence(child.precedence, tag, orders);
       if (order > 0 || (order === 0 && associativity === side)) return false;
+      // Regrouping requires the nested operator to fit the opposite operand.
+      const opposite = this.operandKinds(expression)[side === 'left' ? 'right' : 'left'];
+      if (order === 0 && child.rule === tag.rule && opposite !== null && !opposite.has(child.kind)) return false;
       if (side === 'right' && this.shiftsBelow(expression, child, orders)) return false;
       if (side === 'right' && this.lexedShift(child.rule)) return false;
       if (!this.reachesOwner(expression, wrapper.rule, side)) return false;
@@ -3029,10 +3050,12 @@ export class Executor {
       const edge = side === 'left' ? facing[facing.length - 1] : facing[0];
       return edge !== undefined && kinds.has(edge.kind);
     };
-    const allowed = (result) => {
+    const allowed = (result, first, last) => {
       const meaningful = result.children.filter((child) => !isTrivia(child));
-      if (meaningful.length < 2 || conflicts(meaningful[0], 'left', meaningful[1])) return meaningful.length < 2;
-      const right = conflicts(meaningful[meaningful.length - 1], 'right');
+      const leftParts = Array.isArray(first) ? first.filter((child) => !isTrivia(child)) : null;
+      const rightParts = Array.isArray(last) ? last.filter((child) => !isTrivia(child)) : null;
+      if (meaningful.length < 2 || ((!leftParts || leftParts.length === 1) && conflicts(meaningful[0], 'left', meaningful[1]))) return meaningful.length < 2;
+      const right = !rightParts || rightParts.length === 1 ? conflicts(meaningful[meaningful.length - 1], 'right') : false;
       return right === LONE ? LONE : !right;
     };
     let results = inToken

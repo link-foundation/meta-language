@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 export const R_SCANNERS = [{
   family: 'scoped-layout', name: 'scoped_layout', startToken: 'start',
   newlineToken: 'newline', separatorToken: 'semicolon', continuationToken: 'external_else',
-  recoveryToken: 'error_sentinel',
+  recoveryToken: 'error_sentinel', triviaToken: 'scoped_whitespace',
   pairs: [
     { opening: '(', closing: ')', openToken: 'external_open_parenthesis', closeToken: 'external_close_parenthesis', ignoreNewlines: true, allowContinuation: false },
     { opening: '{', closing: '}', openToken: 'external_open_brace', closeToken: 'external_close_brace', ignoreNewlines: false, allowContinuation: true },
