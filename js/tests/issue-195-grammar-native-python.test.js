@@ -95,6 +95,16 @@ test('native Python resolves parenthesized print calls as independent-oracle exp
   }
 });
 
+test('native Python interpolation retains expression lists and splatted pattern lists', () => {
+  for (const source of ['f"{a,b}"\n', 'f"{a,b,}"\n', 'f"{*a,b}"\n']) {
+    const outcome = parser.parseTree(source);
+    assert.equal(outcome.ok, true, JSON.stringify(source));
+    assert.deepEqual(outcome.ambiguities, [], JSON.stringify(source));
+    assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'Python'), JSON.stringify(source));
+    assert.equal(text(outcome.tree), source);
+  }
+});
+
 // CI executes the upstream corpus; local checks select the focused tests.
 test('native Python matches the independent oracle on every pinned upstream corpus input', (context) => {
   const file = 'parity/fixtures/native-grammars/python-corpus.json';

@@ -1589,7 +1589,7 @@
     "planned:repository-directive:i195-grammar-native-python": {
       "path": "parity/fixtures/native-grammars/python.json",
       "selector": "docs/vision.md#native-merged-grammars: generated native Python grammar and pinned independent source corpus",
-      "sha256": "f5208e0dbbd12805fb6dd3d89e9ebfd6f3a79ed192802d928c0c590e5df987d2"
+      "sha256": "973198a94cbad76f8ed7fea6e115e49b4e732efcc0edb6b25edf0a45227fee2a"
     },
     "planned:repository-directive:i195-grammar-native-cmake": {
       "path": "parity/fixtures/native-grammars/cmake.json",
@@ -1809,7 +1809,7 @@
     "planned:repository-directive:i195-grammar-native-go": {
       "path": "parity/fixtures/native-grammars/go.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Go grammar imported from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "3db74d13da31ceebc90273de087af2d4db3d2fb0ade7858a1170663387b7c5ca"
+      "sha256": "86da76fa5cc65e92f70e8f868d3ea9efafd26c8b4b9cca7a76d3afefd6d7e950"
     },
     "planned:repository-directive:i195-grammar-native-regex": {
       "path": "parity/fixtures/native-grammars/regex.json",
@@ -1949,7 +1949,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "5e7811dce6d9c3f85f3c6379851854f4c2c9552bbd289c18494ee4128d97bd38"
+      "sha256": "1fbcda8fa32c90f58b9d253a8881e14b78dd7c502fa716fa0c909c17698807c4"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
       "path": "parity/grammars/reconcile/pairs.json",

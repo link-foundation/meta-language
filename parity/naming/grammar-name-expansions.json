@@ -3559,6 +3559,15 @@
           "associativity": "left",
           "value": 23,
           "reason": "The pinned parser reduces the collection splat pattern before attribute, subscript and call suffixes; preserve ordinary splat patterns outside the collection context."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "_f_expression",
+          "variants": [
+            "expression_list",
+            "pattern_list"
+          ],
+          "reason": "Formatted string interpolation reduces an ordinary comma-separated value as an expression list before the overlapping assignment pattern list, as the pinned parser does. Keep the pattern-list fallback for splatted patterns and preserve every source alternative."
         }
       ],
       "concepts": {
