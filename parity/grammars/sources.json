@@ -1128,6 +1128,44 @@
         "sha256": "02a6df6f728870ed27419f9d1aac6d9e6f89daaaa3e4e15619cf9ee08e0f6f6b"
       },
       "oracle": "html"
+    },
+    {
+      "id": "tree-sitter-agda",
+      "language": "agda",
+      "native": "native-agda",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-agda 1.3.3",
+      "repository": "https://github.com/tree-sitter/tree-sitter-agda",
+      "revision": "47802091de0cb8ac2533d67ac37e65692c5902c4",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-agda-1.3.3.grammar.json.gz",
+      "sha256": "72933f8f5a8039b852b1f22e818514012cb435a454d24dffb0f80bcc62d643ec",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-agda-1.3.3.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/agda.lino",
+        "sha256": "c0a88e1b29005643d2625de1133555a89a6d870082bdcd1b4eca093086d7f4c8",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "2f8cf5eba1412dcbe69bf3b392e7ca0c9664ff7f340c9848885c929a12a223ae"
+        },
+        "generator": "js/experiments/build-agda-scanner.mjs",
+        "immediate": [
+          "_newline",
+          "_indent",
+          "_dedent"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-agda-1.3.3.corpus.json.gz",
+        "sha256": "b9e78578004d31c846b3acd8d43a22cd038dcbda02fbb6bb359cab1822d09ab0"
+      },
+      "oracle": "agda",
+      "oracleIsolation": {
+        "mode": "process",
+        "reason": "The pinned scanner changes the circular token queue modulus during growth without relocating queued entries; fresh-process snapshots isolate its allocator-dependent missing-dedent diagnostics. The oracle source and assertions remain unchanged."
+      }
     }
   ]
 }

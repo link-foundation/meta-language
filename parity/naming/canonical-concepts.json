@@ -1174,6 +1174,10 @@
           "name": "выражение"
         },
         {
+          "source": "native:agda",
+          "name": "expression"
+        },
+        {
           "source": "native:c",
           "name": "expression"
         },
@@ -1476,6 +1480,10 @@
           "name": "идентификатор"
         },
         {
+          "source": "native:agda",
+          "name": "identifier"
+        },
+        {
           "source": "native:c",
           "name": "identifier"
         },
@@ -1600,6 +1608,10 @@
         {
           "source": "Russian grammar surface",
           "name": "оператор"
+        },
+        {
+          "source": "native:agda",
+          "name": "statement"
         },
         {
           "source": "native:c",
@@ -1967,6 +1979,10 @@
           "name": "строка"
         },
         {
+          "source": "native:agda",
+          "name": "string"
+        },
+        {
           "source": "native:c",
           "name": "string"
         },
@@ -2313,6 +2329,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:agda",
+          "name": "comment"
+        },
+        {
           "source": "native:c",
           "name": "comment"
         },
@@ -2473,7 +2493,7 @@
       "role": "concept",
       "definition": "A rule for a CSV field that holds a whole number.",
       "constraints": [
-        "Only the native CSV grammar defines this construct."
+        "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
         {
@@ -5034,6 +5054,10 @@
           "name": "@[attribute]"
         },
         {
+          "source": "native:agda",
+          "name": "attribute"
+        },
+        {
           "source": "native:c",
           "name": "attribute"
         },
@@ -6734,6 +6758,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:agda",
+          "name": "function_definition"
+        },
+        {
           "source": "native:c",
           "name": "function_definition"
         },
@@ -6799,6 +6827,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "declaration"
+        },
         {
           "source": "native:c",
           "name": "declaration"
@@ -8869,6 +8901,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:agda",
+          "name": "do_statement"
+        },
+        {
           "source": "native:c",
           "name": "do_statement"
         },
@@ -10838,6 +10874,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:agda",
+          "name": "word_characters"
+        },
+        {
           "source": "native:c",
           "name": "word_characters"
         },
@@ -10942,6 +10982,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "source_file"
+        },
         {
           "source": "native:cmake",
           "name": "source_file"
@@ -11565,6 +11609,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "where_clause"
+        },
         {
           "source": "native:odin",
           "name": "where_clause"
@@ -13693,6 +13741,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:agda",
+          "name": "pattern"
+        },
+        {
           "source": "native:dart",
           "name": "pattern"
         },
@@ -13985,6 +14037,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:agda",
+          "name": "literal"
+        },
+        {
           "source": "native:dart",
           "name": "literal"
         },
@@ -14071,6 +14127,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "integer_literal"
+        },
         {
           "source": "native:cmake",
           "name": "integer_literal"
@@ -14645,6 +14705,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "import"
+        },
         {
           "source": "native:javascript",
           "name": "import"
@@ -17971,6 +18035,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:agda",
+          "name": "module"
+        },
+        {
           "source": "native:erlang",
           "name": "module"
         },
@@ -19509,10 +19577,14 @@
       "role": "concept",
       "definition": "A rule for a syntax, the construct the upstream grammar names syntax.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "syntax"
+        },
         {
           "source": "native:lean",
           "name": "syntax"
@@ -19577,10 +19649,14 @@
       "role": "concept",
       "definition": "A rule for an open, the construct the upstream grammar names open.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "open"
+        },
         {
           "source": "native:lean",
           "name": "open"
@@ -19773,6 +19849,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:agda",
+          "name": "attribute_list"
+        },
+        {
           "source": "native:lean",
           "name": "attributes"
         },
@@ -19864,6 +19944,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "instance_declaration"
+        },
         {
           "source": "native:lean",
           "name": "instance_declaration"
@@ -20232,6 +20316,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:agda",
+          "name": "atom"
+        },
+        {
           "source": "native:erlang",
           "name": "atom"
         },
@@ -20315,10 +20403,14 @@
       "role": "concept",
       "definition": "A rule for an arrow, the construct the upstream grammar names arrow.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "arrow"
+        },
         {
           "source": "native:lean",
           "name": "arrow"
@@ -20659,10 +20751,14 @@
       "role": "concept",
       "definition": "A rule for a let, the construct the upstream grammar names let.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "let"
+        },
         {
           "source": "native:lean",
           "name": "let"
@@ -20773,10 +20869,14 @@
       "role": "concept",
       "definition": "A rule for a do, the construct the upstream grammar names do.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "do"
+        },
         {
           "source": "native:lean",
           "name": "do"
@@ -21244,10 +21344,14 @@
       "role": "concept",
       "definition": "A rule for a field assignment, the construct the upstream grammar names field_assignment.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "field_assignment"
+        },
         {
           "source": "native:lean",
           "name": "field_assignment"
@@ -21494,6 +21598,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "ellipsis"
+        },
         {
           "source": "native:erlang",
           "name": "ellipsis"
@@ -28331,10 +28439,14 @@
       "role": "concept",
       "definition": "A rule for a field name list, the construct the upstream grammar names field_name_list.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "field_name_list"
+        },
         {
           "source": "native:go",
           "name": "field_name_list"
@@ -32518,10 +32630,14 @@
       "role": "concept",
       "definition": "A rule for an import directive, the construct the upstream grammar names import_directive.",
       "constraints": [
-        "Only the native Solidity grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "import_directive"
+        },
         {
           "source": "native:solidity",
           "name": "import_directive"
@@ -34841,10 +34957,14 @@
       "role": "concept",
       "definition": "A rule for a field list, the construct the upstream grammar names _field_list.",
       "constraints": [
-        "Only the native Lua grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "field_list"
+        },
         {
           "source": "native:lua",
           "name": "field_list"
@@ -36355,10 +36475,14 @@
       "role": "concept",
       "definition": "A rule for a module name, the construct the upstream grammar names moduleName.",
       "constraints": [
-        "Only the native pascal (Delphi/Object Pascal) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "module_name"
+        },
         {
           "source": "native:pascal",
           "name": "module_name"
@@ -37047,6 +37171,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "lambda"
+        },
         {
           "source": "native:pascal",
           "name": "lambda"
@@ -43964,10 +44092,14 @@
       "role": "concept",
       "definition": "A rule for a data name, the construct the upstream grammar names data_name.",
       "constraints": [
-        "Only the native PowerShell grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "data_name"
+        },
         {
           "source": "native:powershell",
           "name": "data_name"
@@ -45982,10 +46114,14 @@
       "role": "concept",
       "definition": "A rule for a type signature, the construct the upstream grammar names type_sig.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "type_signature"
+        },
         {
           "source": "native:erlang",
           "name": "type_signature"
@@ -61904,10 +62040,14 @@
       "role": "concept",
       "definition": "A rule for an identifier list, the construct the upstream grammar names identifier_list.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "identifier_list"
+        },
         {
           "source": "native:dart",
           "name": "identifier_list"
@@ -69433,6 +69573,1468 @@
         {
           "source": "native:html",
           "name": "element_attribute_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.universal-quantifier-keyword",
+      "phrase": "universal quantifier keyword",
+      "role": "concept",
+      "definition": "A rule for an universal quantifier keyword, the construct the upstream grammar names _FORALL.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "universal_quantifier_keyword"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-keyword",
+      "phrase": "lambda keyword",
+      "role": "concept",
+      "definition": "A rule for a lambda keyword, the construct the upstream grammar names _LAMBDA.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "lambda_keyword"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-block",
+      "phrase": "declaration block",
+      "role": "concept",
+      "definition": "A rule for a declaration block, the construct the upstream grammar names _declaration_block.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "declaration_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.signature-block",
+      "phrase": "signature block",
+      "role": "concept",
+      "definition": "A rule for a signature block, the construct the upstream grammar names _signature_block.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "signature_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.signature",
+      "phrase": "signature",
+      "role": "concept",
+      "definition": "A rule for a signature, the construct the upstream grammar names signature.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "signature"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.modal-argument-ids",
+      "phrase": "modal argument ids",
+      "role": "concept",
+      "definition": "A rule for a modal argument ids, the construct the upstream grammar names _modal_arg_ids.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "modal_argument_ids"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.left-hand-side-declaration",
+      "phrase": "left hand side declaration",
+      "role": "concept",
+      "definition": "A rule for a left hand side declaration, the construct the upstream grammar names lhs_decl.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "left_hand_side_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.left-hand-side-definition",
+      "phrase": "left hand side definition",
+      "role": "concept",
+      "definition": "A rule for a left hand side definition, the construct the upstream grammar names lhs_defn.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "left_hand_side_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.right-hand-side-declaration",
+      "phrase": "right hand side declaration",
+      "role": "concept",
+      "definition": "A rule for a right hand side declaration, the construct the upstream grammar names rhs_decl.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "right_hand_side_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.right-hand-side-definition",
+      "phrase": "right hand side definition",
+      "role": "concept",
+      "definition": "A rule for a right hand side definition, the construct the upstream grammar names rhs_defn.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "right_hand_side_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.rewrite-equations",
+      "phrase": "rewrite equations",
+      "role": "concept",
+      "definition": "A rule for a rewrite equations, the construct the upstream grammar names rewrite_equations.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "rewrite_equations"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.data",
+      "phrase": "data",
+      "role": "concept",
+      "definition": "A rule for a data, the construct the upstream grammar names data.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "data"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.data-signature",
+      "phrase": "data signature",
+      "role": "concept",
+      "definition": "A rule for a data signature, the construct the upstream grammar names data_signature.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "data_signature"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record",
+      "phrase": "record",
+      "role": "concept",
+      "definition": "A rule for a record, the construct the upstream grammar names record.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-declarations-block",
+      "phrase": "record declarations block",
+      "role": "concept",
+      "definition": "A rule for a record declarations block, the construct the upstream grammar names record_declarations_block.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_declarations_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-directive",
+      "phrase": "record directive",
+      "role": "concept",
+      "definition": "A rule for a record directive, the construct the upstream grammar names _record_directive.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-constructor",
+      "phrase": "record constructor",
+      "role": "concept",
+      "definition": "A rule for a record constructor, the construct the upstream grammar names record_constructor.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_constructor"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-constructor-instance",
+      "phrase": "record constructor instance",
+      "role": "concept",
+      "definition": "A rule for a record constructor instance, the construct the upstream grammar names record_constructor_instance.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_constructor_instance"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-induction",
+      "phrase": "record induction",
+      "role": "concept",
+      "definition": "A rule for a record induction, the construct the upstream grammar names record_induction.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_induction"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-eta",
+      "phrase": "record eta",
+      "role": "concept",
+      "definition": "A rule for a record eta, the construct the upstream grammar names record_eta.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_eta"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-signature",
+      "phrase": "record signature",
+      "role": "concept",
+      "definition": "A rule for a record signature, the construct the upstream grammar names record_signature.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_signature"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.infix-declaration",
+      "phrase": "infix declaration",
+      "role": "concept",
+      "definition": "A rule for an infix declaration, the construct the upstream grammar names infix.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "infix_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generalization-declaration",
+      "phrase": "generalization declaration",
+      "role": "concept",
+      "definition": "A rule for a generalization declaration, the construct the upstream grammar names generalize.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "generalization_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.abstract",
+      "phrase": "abstract",
+      "role": "concept",
+      "definition": "A rule for an abstract, the construct the upstream grammar names abstract.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "abstract"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.private",
+      "phrase": "private",
+      "role": "concept",
+      "definition": "A rule for a private, the construct the upstream grammar names private.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "private"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.macro",
+      "phrase": "macro",
+      "role": "concept",
+      "definition": "A rule for a macro, the construct the upstream grammar names macro.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "macro"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postulate",
+      "phrase": "postulate",
+      "role": "concept",
+      "definition": "A rule for a postulate, the construct the upstream grammar names postulate.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "postulate"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.primitive",
+      "phrase": "primitive",
+      "role": "concept",
+      "definition": "A rule for a primitive, the construct the upstream grammar names primitive.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "primitive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-signature-block",
+      "phrase": "type signature block",
+      "role": "concept",
+      "definition": "A rule for a type signature block, the construct the upstream grammar names _type_signature_block.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "type_signature_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.comma-import-names",
+      "phrase": "comma import names",
+      "role": "concept",
+      "definition": "A rule for a comma import names, the construct the upstream grammar names _comma_import_names.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "comma_import_names"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-name",
+      "phrase": "import name",
+      "role": "concept",
+      "definition": "A rule for an import name, the construct the upstream grammar names _import_name.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "import_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.module-macro",
+      "phrase": "module macro",
+      "role": "concept",
+      "definition": "A rule for a module macro, the construct the upstream grammar names module_macro.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "module_macro"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.module-application",
+      "phrase": "module application",
+      "role": "concept",
+      "definition": "A rule for a module application, the construct the upstream grammar names module_application.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "module_application"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pragma",
+      "phrase": "pragma",
+      "role": "concept",
+      "definition": "A rule for a pragma, the construct the upstream grammar names pragma.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "pragma"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.catchall-pragma",
+      "phrase": "catchall pragma",
+      "role": "concept",
+      "definition": "A rule for a catchall pragma, the construct the upstream grammar names catchall_pragma.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "catchall_pragma"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.hole-name",
+      "phrase": "hole name",
+      "role": "concept",
+      "definition": "A rule for a hole name, the construct the upstream grammar names hole_name.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "hole_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.simple-top-hole",
+      "phrase": "simple top hole",
+      "role": "concept",
+      "definition": "A rule for a simple top hole, the construct the upstream grammar names _simple_top_hole.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "simple_top_hole"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.simple-hole",
+      "phrase": "simple hole",
+      "role": "concept",
+      "definition": "A rule for a simple hole, the construct the upstream grammar names _simple_hole.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "simple_hole"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unquote-declaration",
+      "phrase": "unquote declaration",
+      "role": "concept",
+      "definition": "A rule for an unquote declaration, the construct the upstream grammar names unquote_decl.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "unquote_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.binding-identifier",
+      "phrase": "binding identifier",
+      "role": "concept",
+      "definition": "A rule for a binding identifier, the construct the upstream grammar names bid.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "binding_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-name-identifier",
+      "phrase": "field name identifier",
+      "role": "concept",
+      "definition": "A rule for a field name identifier, the construct the upstream grammar names _field_name.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "field_name_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.binding-ids-and-absurds",
+      "phrase": "binding ids and absurds",
+      "role": "concept",
+      "definition": "A rule for a binding ids and absurds, the construct the upstream grammar names _binding_ids_and_absurds.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "binding_ids_and_absurds"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-or-attribute",
+      "phrase": "expression or attribute",
+      "role": "concept",
+      "definition": "A rule for an expression or attribute, the construct the upstream grammar names _expr_or_attr.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "expression_or_attribute"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.let-in-do",
+      "phrase": "let in do",
+      "role": "concept",
+      "definition": "A rule for a let in do, the construct the upstream grammar names let_in_do.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "let_in_do"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.let-body",
+      "phrase": "let body",
+      "role": "concept",
+      "definition": "A rule for a let body, the construct the upstream grammar names _let_body.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "let_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-bindings",
+      "phrase": "lambda bindings",
+      "role": "concept",
+      "definition": "A rule for a lambda bindings, the construct the upstream grammar names _lambda_bindings.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "lambda_bindings"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-extended-or-absurd",
+      "phrase": "lambda extended or absurd",
+      "role": "concept",
+      "definition": "A rule for a lambda extended or absurd, the construct the upstream grammar names lambda_extended_or_absurd.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "lambda_extended_or_absurd"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-clause-maybe-absurd",
+      "phrase": "lambda clause maybe absurd",
+      "role": "concept",
+      "definition": "A rule for a lambda clause maybe absurd, the construct the upstream grammar names _lambda_clause_maybe_absurd.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "lambda_clause_maybe_absurd"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-clause-absurd",
+      "phrase": "lambda clause absurd",
+      "role": "concept",
+      "definition": "A rule for a lambda clause absurd, the construct the upstream grammar names lambda_clause_absurd.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "lambda_clause_absurd"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-clause",
+      "phrase": "lambda clause",
+      "role": "concept",
+      "definition": "A rule for a lambda clause, the construct the upstream grammar names lambda_clause.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "lambda_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-assignment-list",
+      "phrase": "record assignment list",
+      "role": "concept",
+      "definition": "A rule for a record assignment list, the construct the upstream grammar names _record_assignments.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_assignment_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-assignment-list",
+      "phrase": "field assignment list",
+      "role": "concept",
+      "definition": "A rule for a field assignment list, the construct the upstream grammar names _field_assignments.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "field_assignment_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-assignment",
+      "phrase": "record assignment",
+      "role": "concept",
+      "definition": "A rule for a record assignment, the construct the upstream grammar names _record_assignment.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_assignment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.module-assignment",
+      "phrase": "module assignment",
+      "role": "concept",
+      "definition": "A rule for a module assignment, the construct the upstream grammar names module_assignment.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "module_assignment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.typed-binding",
+      "phrase": "typed binding",
+      "role": "concept",
+      "definition": "A rule for a typed binding, the construct the upstream grammar names typed_binding.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "typed_binding"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.set-universe",
+      "phrase": "set universe",
+      "role": "concept",
+      "definition": "A rule for a set universe, the construct the upstream grammar names SetN.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "set_universe"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.proposition-universe",
+      "phrase": "proposition universe",
+      "role": "concept",
+      "definition": "A rule for a proposition universe, the construct the upstream grammar names PropN.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "proposition_universe"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.with-expression-list",
+      "phrase": "with expression list",
+      "role": "concept",
+      "definition": "A rule for a with expression list, the construct the upstream grammar names with_expressions.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "with_expression_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.mutual-definition-block",
+      "phrase": "mutual definition block",
+      "role": "concept",
+      "definition": "A rule for a mutual definition block, the construct the upstream grammar names mutual.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "mutual_definition_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.renaming-clause",
+      "phrase": "renaming clause",
+      "role": "concept",
+      "definition": "A rule for a renaming clause, the construct the upstream grammar names renaming.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "renaming_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.hole-name-list",
+      "phrase": "hole name list",
+      "role": "concept",
+      "definition": "A rule for a hole name list, the construct the upstream grammar names hole_names.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "hole_name_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.universal-quantification",
+      "phrase": "universal quantification",
+      "role": "concept",
+      "definition": "A rule for an universal quantification, the construct the upstream grammar names forall.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "universal_quantification"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.do-where-clause",
+      "phrase": "do where clause",
+      "role": "concept",
+      "definition": "A rule for a do where clause, the construct the upstream grammar names do_where.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "do_where_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-assignment-list-body",
+      "phrase": "record assignment list body",
+      "role": "concept",
+      "definition": "A rule for a record assignment list body, the construct the upstream grammar names _record_assignments.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "record_assignment_list_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-assignment-list-body",
+      "phrase": "field assignment list body",
+      "role": "concept",
+      "definition": "A rule for a field assignment list body, the construct the upstream grammar names _field_assignments.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "field_assignment_list_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.binding-without-type",
+      "phrase": "binding without type",
+      "role": "concept",
+      "definition": "A rule for a binding without type, the construct the upstream grammar names untyped_binding.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "binding_without_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-directive-list",
+      "phrase": "import directive list",
+      "role": "concept",
+      "definition": "A rule for an import directive list, the construct the upstream grammar names _import_directives.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "import_directive_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.optional-dotted-identifier",
+      "phrase": "optional dotted identifier",
+      "role": "concept",
+      "definition": "A rule for an optional dotted identifier, the construct the upstream grammar names _maybe_dotted_id.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "optional_dotted_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.optional-dotted-identifier-list",
+      "phrase": "optional dotted identifier list",
+      "role": "concept",
+      "definition": "A rule for an optional dotted identifier list, the construct the upstream grammar names _maybe_dotted_ids.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "optional_dotted_identifier_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.argument-identifier-list",
+      "phrase": "argument identifier list",
+      "role": "concept",
+      "definition": "A rule for an argument identifier list, the construct the upstream grammar names _arg_ids.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "argument_identifier_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.argument-identifier",
+      "phrase": "argument identifier",
+      "role": "concept",
+      "definition": "A rule for an argument identifier, the construct the upstream grammar names _arg_id.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "argument_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.with-expression-list-body",
+      "phrase": "with expression list body",
+      "role": "concept",
+      "definition": "A rule for a with expression list body, the construct the upstream grammar names _with_exprs.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "with_expression_list_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.with-expression-list-statement",
+      "phrase": "with expression list statement",
+      "role": "concept",
+      "definition": "A rule for a with expression list statement, the construct the upstream grammar names _with_exprs_stmt.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "with_expression_list_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.application-body",
+      "phrase": "application body",
+      "role": "concept",
+      "definition": "A rule for an application body, the construct the upstream grammar names _application.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "application_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.application-statement",
+      "phrase": "application statement",
+      "role": "concept",
+      "definition": "A rule for an application statement, the construct the upstream grammar names _application_stmt.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "application_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.application-expression-without-let",
+      "phrase": "application expression without let",
+      "role": "concept",
+      "definition": "A rule for an application expression without let, the construct the upstream grammar names _expr2_without_let.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "application_expression_without_let"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.application-expression-body",
+      "phrase": "application expression body",
+      "role": "concept",
+      "definition": "A rule for an application expression body, the construct the upstream grammar names _expr2.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "application_expression_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.application-expression-statement",
+      "phrase": "application expression statement",
+      "role": "concept",
+      "definition": "A rule for an application expression statement, the construct the upstream grammar names _expr2_stmt.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "application_expression_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.atom-list",
+      "phrase": "atom list",
+      "role": "concept",
+      "definition": "A rule for an atom list, the construct the upstream grammar names _atoms.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "atom_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.braced-atom",
+      "phrase": "braced atom",
+      "role": "concept",
+      "definition": "A rule for a braced atom, the construct the upstream grammar names _atom_curly.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "braced_atom"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unbraced-atom",
+      "phrase": "unbraced atom",
+      "role": "concept",
+      "definition": "A rule for an unbraced atom, the construct the upstream grammar names _atom_no_curly.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "unbraced_atom"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-clause-list",
+      "phrase": "lambda clause list",
+      "role": "concept",
+      "definition": "A rule for a lambda clause list, the construct the upstream grammar names _lambda_clauses.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "lambda_clause_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.typed-binding-list",
+      "phrase": "typed binding list",
+      "role": "concept",
+      "definition": "A rule for a typed binding list, the construct the upstream grammar names _typed_bindings.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "typed_binding_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.optional-type-binding-list",
+      "phrase": "optional type binding list",
+      "role": "concept",
+      "definition": "A rule for an optional type binding list, the construct the upstream grammar names _typed_untyped_bindings.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "optional_type_binding_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.optional-type-binding",
+      "phrase": "optional type binding",
+      "role": "concept",
+      "definition": "A rule for an optional type binding, the construct the upstream grammar names _typed_untyped_binding.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "optional_type_binding"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.qualified-identifier-body",
+      "phrase": "qualified identifier body",
+      "role": "concept",
+      "definition": "A rule for a qualified identifier body, the construct the upstream grammar names _qid.",
+      "constraints": [
+        "Only the native Agda grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:agda",
+          "name": "qualified_identifier_body"
         }
       ],
       "formerNames": []

@@ -331,7 +331,6 @@ pub fn grammar_names(id: &str) -> Option<GrammarNames> {
 /// their ids return `None`.
 pub fn grammar_by_id(id: &str) -> Option<Language> {
     Some(match id {
-        "agda" => tree_sitter_agda::LANGUAGE.into(),
         "bash" => tree_sitter_bash::LANGUAGE.into(),
         "csharp" => tree_sitter_c_sharp::LANGUAGE.into(),
         "elixir" => tree_sitter_elixir::LANGUAGE.into(),

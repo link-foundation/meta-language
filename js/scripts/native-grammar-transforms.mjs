@@ -70,7 +70,7 @@ export function transformNativeSource(source, transformations = []) {
         if (!node || typeof node !== 'object') return node;
         if (node.type === (decision.family === 'pattern-prefix-exclusion' ? 'PATTERN' : 'STRING') && node.value === pattern) {
           changes += 1;
-          return { type: 'NATIVE_PREFIX_EXCLUSION', content: node, prefixes: { type: 'PATTERN', value: excludedPattern } };
+          return { type: 'NATIVE_PREFIX_EXCLUSION', content: node, prefixes: { type: 'PATTERN', value: excludedPattern }, ...(decision.preserveLexicalIdentity === true ? { preserveLexicalIdentity: true } : {}) };
         }
         return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
       };
@@ -351,6 +351,23 @@ export function transformNativeSource(source, transformations = []) {
         }] } : body;
       });
       grammar.rules[rule] = { type: 'CHOICE', members };
+      continue;
+    }
+    if (decision.family === 'alias-choice-alternatives') {
+      const { rule, alias, count = 1 } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || typeof alias !== 'string' || !alias || !Number.isSafeInteger(count) || count <= 0) throw new TypeError('distributed aliases need an existing rule, alias and positive production count');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'ALIAS' && node.named && node.value === alias && node.content?.type === 'CHOICE') {
+          changes += 1;
+          return { type: 'CHOICE', members: node.content.members.map(content => ({ ...node, content })) };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== count) throw new TypeError('distributed aliases must match the recorded production count');
       continue;
     }
     if (decision.family === 'alias-choice-rule') {

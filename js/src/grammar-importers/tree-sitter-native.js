@@ -657,8 +657,8 @@ export function importTreeSitterNative(source, options = {}) {
     if (index === 0) return false;
     const around = [];
     let node = grammar.rules[name];
-    while (node.type.startsWith('PREC')) {
-      around.push(node);
+    while (node.type.startsWith('PREC') || (node.type === 'NATIVE_PREFIX_EXCLUSION' && node.preserveLexicalIdentity === true)) {
+      if (node.type.startsWith('PREC')) around.push(node);
       node = node.content;
     }
     if (!['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN', 'NATIVE_WORD_BOUNDARY'].includes(node.type)) return false;

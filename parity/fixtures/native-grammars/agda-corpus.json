@@ -1,0 +1,381 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "b9e78578004d31c846b3acd8d43a22cd038dcbda02fbb6bb359cab1822d09ab0",
+  "cases": [
+    {
+      "file": "agda-stdlib/Algebra.txt",
+      "title": "module imports",
+      "source": "\nmodule Algebra where\n\nopen import Relation.Binary\nopen import Algebra.FunctionProperties\nopen import Algebra.Structures\nopen import Function\nopen import Level\n"
+    },
+    {
+      "file": "agda-stdlib/Algebra.txt",
+      "title": "semigroups",
+      "source": "\n-- Semigroups, (commutative) monoids and (abelian) groups\nrecord Semigroup c ℓ : Set (suc (c ⊔ ℓ)) where\n  infixl 7 _∙_\n  infix  4 _≈_\n  field\n    Carrier     : Set c\n    _≈_         : Rel Carrier ℓ\n    _∙_         : Op₂ Carrier\n    isSemigroup : IsSemigroup _≈_ _∙_\n\n  open IsSemigroup isSemigroup public\n"
+    },
+    {
+      "file": "agda-stdlib/IO/Primitive.txt",
+      "title": "IO monad",
+      "source": "\nopen import Agda.Builtin.IO public using (IO)\n\ninfixl 1 _>>=_\n\npostulate\n  return : ∀ {a} {A : Set a} → A → IO A\n  _>>=_  : ∀ {a b} {A : Set a} {B : Set b} → IO A → (A → IO B) → IO B\n\n{-# COMPILE GHC return = \\_ _ -> return    #-}\n{-# COMPILE GHC _>>=_  = \\_ _ _ _ -> (>>=) #-}\n{-# COMPILE UHC return = \\_ _ x -> UHC.Agda.Builtins.primReturn x #-}\n{-# COMPILE UHC _>>=_  = \\_ _ _ _ x y -> UHC.Agda.Builtins.primBind x y #-}\n"
+    },
+    {
+      "file": "agda-stdlib/Level.txt",
+      "title": "module",
+      "source": "\nmodule Level where\n\n-- Levels.\n\nopen import Agda.Primitive public\n  using    (Level; _⊔_)\n  renaming (lzero to zero; lsuc to suc)\n\n-- Lifting.\n\nrecord Lift {a ℓ} (A : Set a) : Set (a ⊔ ℓ) where\n  constructor lift\n  field lower : A\n\n\nopen Lift public\n"
+    },
+    {
+      "file": "agda-stdlib/Size.txt",
+      "title": "open import",
+      "source": "\nmodule Size where\n\nopen import Agda.Builtin.Size public\n  renaming ( SizeU to SizeUniv ) --  sort SizeUniv\n  using    ( Size                --  Size   : SizeUniv\n           ; Size<_              --  Size<_ : Size → SizeUniv\n           ; ↑_ )                --  ↑_     : Size → Size\n  renaming ( ω to ∞ )           --  ∞      : Size\n"
+    },
+    {
+      "file": "agda-stdlib/Strict.txt",
+      "title": "module",
+      "source": "\nmodule Strict where\n\nopen import Level\nopen import Agda.Builtin.Equality\n\nopen import Agda.Builtin.Strict\n     renaming ( primForce to force\n              ; primForceLemma to force-≡) public\n\n-- Derived combinators\nmodule _ {ℓ ℓ′ : Level} {A : Set ℓ} {B : Set ℓ′} where\n\n  force′ : A → (A → B) → B\n  force′ = force\n\n  force′-≡ : (a : A) (f : A → B) → force′ a f ≡ f a\n  force′-≡ = force-≡\n\n  seq : A → B → B\n  seq a b = force a (λ _ → b)\n\n  seq-≡ : (a : A) (b : B) → seq a b ≡ b\n  seq-≡ a b = force-≡ a (λ _ → b)\n"
+    },
+    {
+      "file": "declaration/abstract.txt",
+      "title": "Abstract",
+      "source": "\nabstract\n  f : A g\n  f = f g\n"
+    },
+    {
+      "file": "declaration/comment.txt",
+      "title": "Line comment",
+      "source": "\n-- this is a line comment\n--this is a line comment\n--- this is a line comment\n----this is a line comment\n----------------------------------------------------------this is a line comment\n"
+    },
+    {
+      "file": "declaration/comment.txt",
+      "title": "Block comment",
+      "source": "\n{- this is a block comment -}\n{-# TERMINATING #-}\n{- this is a\n    block comment\n-}\n{- this is a\n    block comment -}\n{--}\n"
+    },
+    {
+      "file": "declaration/data-signature.txt",
+      "title": "Simple",
+      "source": "\ndata Nat : Set\n"
+    },
+    {
+      "file": "declaration/data.txt",
+      "title": "Simple",
+      "source": "\ndata Nat : Set where\n    zero : Nat\n    succ : Nat -> Nat\n"
+    },
+    {
+      "file": "declaration/data.txt",
+      "title": "Without body",
+      "source": "\ndata Nat : Set where\n\ndata Nat : Set where\n"
+    },
+    {
+      "file": "declaration/field.txt",
+      "title": "Field",
+      "source": "\nfield\n    a : A\n    a : A\n"
+    },
+    {
+      "file": "declaration/field.txt",
+      "title": "Field (same line)",
+      "source": "\nfield a : A\n"
+    },
+    {
+      "file": "declaration/field.txt",
+      "title": "Field (same line + block)",
+      "source": "\nfield a : A\n      b : B\n"
+    },
+    {
+      "file": "declaration/function.txt",
+      "title": "Body only",
+      "source": "\nid = a\n"
+    },
+    {
+      "file": "declaration/function.txt",
+      "title": "Body with type signature",
+      "source": "\nid : A -> A -> A\nid A a = a\n"
+    },
+    {
+      "file": "declaration/function.txt",
+      "title": "Body with where clause",
+      "source": "\nid = a\n  where a = b\n"
+    },
+    {
+      "file": "declaration/function.txt",
+      "title": "Typed bindings",
+      "source": "\nf : (A : Set) (B : Set) (C : Set) -> A\ng : (A B _ ? : Set) -> A\n"
+    },
+    {
+      "file": "declaration/function.txt",
+      "title": "type signature with forall bindings",
+      "source": "\nf : forall {A B C} -> A -> A\ng : {A : Set} -> A\n"
+    },
+    {
+      "file": "declaration/function.txt",
+      "title": "With-expressions",
+      "source": "\nf a with g a\n... | b = _\n"
+    },
+    {
+      "file": "declaration/function.txt",
+      "title": "Idiom brackets",
+      "source": "\nx : _\nx = (| if a then b else c |)\n"
+    },
+    {
+      "file": "declaration/function.txt",
+      "title": "Idiom brackets (Unicode)",
+      "source": "\nx : _\nx = ⦇ if a then b else c ⦈\n"
+    },
+    {
+      "file": "declaration/generialize.txt",
+      "title": "Generialize",
+      "source": "\nvariable\n  δ σ γ : Sub Γ Δ\n"
+    },
+    {
+      "file": "declaration/infix.txt",
+      "title": "Infix",
+      "source": "\ninfix 3 _+_\ninfixl 4 _*_\ninfixr 5 _-_ _-_\n"
+    },
+    {
+      "file": "declaration/instance.txt",
+      "title": "Instance",
+      "source": "\ninstance\n  f : A g\n  f = f g\n"
+    },
+    {
+      "file": "declaration/macro.txt",
+      "title": "Macro",
+      "source": "\nmacro\n  f : A g\n"
+    },
+    {
+      "file": "declaration/module.txt",
+      "title": "Simple",
+      "source": "\nmodule Test.Simple where\n    module _ where\n"
+    },
+    {
+      "file": "declaration/module.txt",
+      "title": "Parameterized",
+      "source": "\nmodule Test.Simple (A : Set) {B : _} where\n"
+    },
+    {
+      "file": "declaration/module.txt",
+      "title": "Open as",
+      "source": "\nopen A as B\n"
+    },
+    {
+      "file": "declaration/module.txt",
+      "title": "Open with directives",
+      "source": "\nopen import A b c public using (a; module C) hiding (xs) renaming (module ys to zs; vs to ws)\n    using () hiding () renaming ()\n"
+    },
+    {
+      "file": "declaration/module.txt",
+      "title": "Module macros",
+      "source": "\nmodule Sort.Nat (A : Set) = Sort Nat\n\nopen module Nat (A : Set) = Sort {{ ... }}\n"
+    },
+    {
+      "file": "declaration/module.txt",
+      "title": "Module macros (Unicode)",
+      "source": "\nmodule Sort.Nat (A : Set) = Sort ℕ\n\nopen module Nat (A : Set) = Sort ⦃ … ⦄\n"
+    },
+    {
+      "file": "declaration/mutual.txt",
+      "title": "Mutual",
+      "source": "\nmutual\n  f : A g\n  f = f g\n\n  g : B f\n  g = f g\n"
+    },
+    {
+      "file": "declaration/pattern.txt",
+      "title": "Pattern Synonyms",
+      "source": "\npattern z    = zero\npattern ss x = suc (suc x)\n"
+    },
+    {
+      "file": "declaration/postulate.txt",
+      "title": "Postulate",
+      "source": "\npostulate\n  f : A g\n"
+    },
+    {
+      "file": "declaration/pragma.txt",
+      "title": "Pragmas",
+      "source": "\n{-# NON_TERMINATING #-}\n{-# OPTIONS --type-in-type #-}\n{-# IMPORT \"something\" #-}\n{-# CATCHALL #-}\n{-# NO_POSITIVITY_CHECK #-}\n"
+    },
+    {
+      "file": "declaration/primitive.txt",
+      "title": "Primitive",
+      "source": "\nprimitive\n  primWord64ToNat : Word64 → Nat\n"
+    },
+    {
+      "file": "declaration/private.txt",
+      "title": "Private",
+      "source": "\nprivate\n  f : A g\n  f = f g\n"
+    },
+    {
+      "file": "declaration/record-signature.txt",
+      "title": "Simple",
+      "source": "\nrecord Pair (A B : Set) : Set\n"
+    },
+    {
+      "file": "declaration/record.txt",
+      "title": "Directives only",
+      "source": "\nrecord Pair (A B : Set) : Set where\n    constructor _,_\n    inductive\n    eta-equality\n"
+    },
+    {
+      "file": "declaration/record.txt",
+      "title": "Directives with declarations I",
+      "source": "\nrecord Pair (A B : Set) : Set where\n    constructor _,_\n    inductive\n    eta-equality\n    instance\n        a : b\n    field\n        fst : A\n        snd : B\n"
+    },
+    {
+      "file": "declaration/record.txt",
+      "title": "Directives with declarations II",
+      "source": "\nrecord Pair (A B : Set) : Set where\n    -- part of the directives\n    instance\n        constructor _,_\n    -- NOT part of the directives\n    instance\n        a = b\n"
+    },
+    {
+      "file": "declaration/syntax.txt",
+      "title": "Syntax",
+      "source": "\nsyntax bind e₁ (λ x → e₂) = x ← e₁ , e₂\n"
+    },
+    {
+      "file": "expression/do.txt",
+      "title": "Simple bind",
+      "source": "\nf = do\n    x ← m\n    m'"
+    },
+    {
+      "file": "expression/do.txt",
+      "title": "Pattern bind",
+      "source": "\nf = do\n    p ← m\n        where pᵢ → mᵢ\n    m'"
+    },
+    {
+      "file": "expression/do.txt",
+      "title": "Non-binding statement",
+      "source": "f = do m\n       m'"
+    },
+    {
+      "file": "expression/do.txt",
+      "title": "Nested",
+      "source": "f = do\n    a\n    do\n        c\n        d\n    b"
+    },
+    {
+      "file": "expression/do.txt",
+      "title": "Let binding (Single line)",
+      "source": "f = do\n    let m = m\n    m'"
+    },
+    {
+      "file": "expression/do.txt",
+      "title": "Let binding (Multiline)",
+      "source": "f = do\n    let\n        m = m\n        b = c\n    m'"
+    },
+    {
+      "file": "expression/lambda.txt",
+      "title": "Simple",
+      "source": "\nf = λ (a : Set) b () -> a\n"
+    },
+    {
+      "file": "expression/lambda.txt",
+      "title": "Simple (empty)",
+      "source": "\nf = λ () -> a\nf = λ {} -> a\nf = λ {{}} -> a\nf = λ ⦃ ⦄ -> a\n"
+    },
+    {
+      "file": "expression/lambda.txt",
+      "title": "Clauses in braces",
+      "source": "f = \\ { a -> b\n      ; b -> c\n      ; ()\n      }"
+    },
+    {
+      "file": "expression/lambda.txt",
+      "title": "Clauses in where",
+      "source": "f = \\ where\n      b -> c\n    ; ()\n    ; b -> c\n    ; b -> c\n"
+    },
+    {
+      "file": "expression/lambda.txt",
+      "title": "Absurd Lambda Bindings",
+      "source": "f = \\ (A : Set) b ()\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Simple line (indent and dedent)",
+      "source": "\nf x = let\n        y = x\n      in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Simple line (indent only)",
+      "source": "\nf x = let\n        y = x in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Simple line (dedent only)",
+      "source": "\nf x = let y = x\n        in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Single line (on the same line)",
+      "source": "\nf x = let y = x in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Single line (dangling tail)",
+      "source": "\nf x = let y = x in\n    y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Multiline (indent and dedent)",
+      "source": "\nf x = let\n          y = x\n          y = x\n      in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Multiline (indent only)",
+      "source": "\nf x = let\n          y = x\n          y = x in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Multiline (dedent only)",
+      "source": "\nf x = let y = x\n          y = x\n      in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Multiline (dangling tail)",
+      "source": "\nf x = let y = x\n          y = x in\n    y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Telescope single line I",
+      "source": "\nf x = let y = x in let y = x in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Telescope single line II",
+      "source": "\nf x = let y = x in\n        let y = x in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Telescope multi line I",
+      "source": "\nf x = let y = x\n          y = x in\n     let y = x in y\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Single line without body",
+      "source": "\nf x = do\n  let y = x\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Single line without body (indent)",
+      "source": "\nf x = do\n  let\n    y = x\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Multiline without body",
+      "source": "\nf x = do let y = x\n             y = x\n"
+    },
+    {
+      "file": "expression/let.txt",
+      "title": "Multiline without body (indent)",
+      "source": "\nf x = do\n        let\n          y = x\n          y = x\n"
+    },
+    {
+      "file": "expression/record.txt",
+      "title": "Field Assignment",
+      "source": "\nf = record { fst = 2; snd = 3 }\n"
+    },
+    {
+      "file": "expression/record.txt",
+      "title": "Building records from modules",
+      "source": "\nr = record { M hiding (y); M2 a renaming (w to y) }\n"
+    },
+    {
+      "file": "expression/record.txt",
+      "title": "Record update",
+      "source": "\na = record old { a = 0; c = 5 }\n"
+    },
+    {
+      "file": "expression/record.txt",
+      "title": "Record update in fields",
+      "source": "\na = record { MyRecord old; a = 0; c = 5}\n"
+    }
+  ]
+}

@@ -13,7 +13,8 @@
       "version": "1.3.3",
       "parserSha256": "ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980",
       "wasmSha256": "9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a",
-      "license": "agda.LICENSE"
+      "license": "agda.LICENSE",
+      "oracle": true
     },
     "bash": {
       "id": "bash",

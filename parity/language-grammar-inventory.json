@@ -803,6 +803,23 @@
       "extras": [
         "comment"
       ]
+    },
+    "native-agda": {
+      "version": "1.0.0",
+      "grammar": "parity/grammars/native/agda.lino",
+      "hidden": [
+        "newline",
+        "indent",
+        "dedent"
+      ],
+      "anonymous": [
+        "unnamed_token",
+        "whitespace"
+      ],
+      "extras": [
+        "comment",
+        "pragma"
+      ]
     }
   },
   "languages": [
@@ -1520,12 +1537,13 @@
       "recoverySource": "module Demo where\nf : Nat → (Nat\n",
       "javascript": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-agda"
+        "backend": "native Links Notation Agda grammar and shared layout scanner data"
       },
       "rust": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-agda"
-      }
+        "backend": "native Links Notation Agda grammar and shared layout scanner data"
+      },
+      "nativeGrammar": "native-agda"
     },
     {
       "name": "CMake",

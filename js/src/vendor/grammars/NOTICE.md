@@ -15,7 +15,6 @@ repository).
 
 | File | Source | parser.c SHA-256 | wasm SHA-256 | License |
 | --- | --- | --- | --- | --- |
-| `agda.wasm.gz` | crate `tree-sitter-agda` 1.3.3 | `ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980` | `9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a` | [`agda.LICENSE`](agda.LICENSE) |
 | `bash.wasm.gz` | crate `tree-sitter-bash` 0.25.1 | `5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f` | `f0270796c32f9acfc180e6068d6bef6614b983107b679a247fb63b200c6346e7` | [`bash.LICENSE`](bash.LICENSE) |
 | `csharp.wasm.gz` | crate `tree-sitter-c-sharp` 0.23.5 | `0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427` | `a4b053f6fdedfc9c94876b415441ea953c0046ef83d45e0cbc4d9b8938ae6cbc` | [`csharp.LICENSE`](csharp.LICENSE) |
 | `elixir.wasm.gz` | crate `tree-sitter-elixir` 0.3.5 | `d1c2000b477e873e44e485f55809e3af7e2bfce83fa4d58cfa3a9f83660e7d79` | `33f71c86131d02eab80841e4142005ccaa54bcc06bcc3a7e8dc6a9a8a0ca5e94` | [`elixir.LICENSE`](elixir.LICENSE) |

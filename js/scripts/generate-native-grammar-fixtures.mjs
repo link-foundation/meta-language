@@ -1382,7 +1382,7 @@ export function buildNativeEmbeddedFixtures(only = null) {
     };
     if (native) fixtures[label] = entry;
   }
-  return fixtures;
+  return Object.fromEntries(Object.entries(fixtures).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
 }
 
 const ROW_KEYS = new Set(['rows', 'positive', 'recovery']);

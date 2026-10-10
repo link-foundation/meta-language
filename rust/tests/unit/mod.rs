@@ -71,6 +71,7 @@ mod issue_195_grammar_declared_settling;
 mod issue_195_grammar_feature_union;
 mod issue_195_grammar_feature_union_interchange;
 mod issue_195_grammar_importers;
+mod issue_195_grammar_native_agda;
 mod issue_195_grammar_native_c;
 mod issue_195_grammar_native_csv;
 mod issue_195_grammar_native_diff;

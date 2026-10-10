@@ -1,0 +1,446 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "agda",
+  "native": "native-agda",
+  "sources": [
+    {
+      "id": "tree-sitter-agda",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-agda 1.3.3",
+      "repository": "https://github.com/tree-sitter/tree-sitter-agda",
+      "revision": "47802091de0cb8ac2533d67ac37e65692c5902c4",
+      "path": "src/grammar.json",
+      "sha256": "72933f8f5a8039b852b1f22e818514012cb435a454d24dffb0f80bcc62d643ec",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/agda.lino",
+    "sha256": "c0a88e1b29005643d2625de1133555a89a6d870082bdcd1b4eca093086d7f4c8",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "2f8cf5eba1412dcbe69bf3b392e7ca0c9664ff7f340c9848885c929a12a223ae"
+    },
+    "scanners": [
+      {
+        "name": "agda_layout",
+        "tokens": [
+          "newline",
+          "indent",
+          "dedent"
+        ]
+      }
+    ],
+    "immediate": [
+      "_newline",
+      "_indent",
+      "_dedent"
+    ]
+  },
+  "rules": 121,
+  "keywords": [
+    "Prop",
+    "Set",
+    "abstract",
+    "codata",
+    "coinductive",
+    "data",
+    "do",
+    "eta-equality",
+    "field",
+    "forall",
+    "import",
+    "inductive",
+    "infix",
+    "infixl",
+    "infixr",
+    "instance",
+    "macro",
+    "mutual",
+    "no-eta-equality",
+    "overlap",
+    "pattern",
+    "postulate",
+    "primitive",
+    "private",
+    "propN",
+    "quote",
+    "quoteContext",
+    "quoteGoal",
+    "quoteTerm",
+    "record",
+    "syntax",
+    "tactic",
+    "unquote",
+    "unquoteDecl",
+    "unquoteDef",
+    "variable"
+  ],
+  "renamed": [
+    {
+      "source": "_FORALL",
+      "native": "universal_quantifier_keyword"
+    },
+    {
+      "source": "_ARROW",
+      "native": "arrow"
+    },
+    {
+      "source": "_LAMBDA",
+      "native": "lambda_keyword"
+    },
+    {
+      "source": "_ELLIPSIS",
+      "native": "ellipsis"
+    },
+    {
+      "source": "_declaration_block",
+      "native": "declaration_block"
+    },
+    {
+      "source": "_declaration",
+      "native": "declaration"
+    },
+    {
+      "source": "fields",
+      "native": "field_list"
+    },
+    {
+      "source": "_signature_block",
+      "native": "signature_block"
+    },
+    {
+      "source": "_modal_arg_ids",
+      "native": "modal_argument_ids"
+    },
+    {
+      "source": "function",
+      "native": "function_definition"
+    },
+    {
+      "source": "lhs_decl",
+      "native": "left_hand_side_declaration"
+    },
+    {
+      "source": "lhs_defn",
+      "native": "left_hand_side_definition"
+    },
+    {
+      "source": "rhs_decl",
+      "native": "right_hand_side_declaration"
+    },
+    {
+      "source": "rhs_defn",
+      "native": "right_hand_side_definition"
+    },
+    {
+      "source": "with_expressions",
+      "native": "with_expression_list"
+    },
+    {
+      "source": "where",
+      "native": "where_clause"
+    },
+    {
+      "source": "_record_directive",
+      "native": "record_directive"
+    },
+    {
+      "source": "infix",
+      "native": "infix_declaration"
+    },
+    {
+      "source": "generalize",
+      "native": "generalization_declaration"
+    },
+    {
+      "source": "mutual",
+      "native": "mutual_definition_block"
+    },
+    {
+      "source": "instance",
+      "native": "instance_declaration"
+    },
+    {
+      "source": "_type_signature_block",
+      "native": "type_signature_block"
+    },
+    {
+      "source": "_import_directives",
+      "native": "import_directive_list"
+    },
+    {
+      "source": "_comma_import_names",
+      "native": "comma_import_names"
+    },
+    {
+      "source": "renaming",
+      "native": "renaming_clause"
+    },
+    {
+      "source": "_import_name",
+      "native": "import_name"
+    },
+    {
+      "source": "hole_names",
+      "native": "hole_name_list"
+    },
+    {
+      "source": "_simple_top_hole",
+      "native": "simple_top_hole"
+    },
+    {
+      "source": "_simple_hole",
+      "native": "simple_hole"
+    },
+    {
+      "source": "unquote_decl",
+      "native": "unquote_declaration"
+    },
+    {
+      "source": "id",
+      "native": "identifier"
+    },
+    {
+      "source": "_qid",
+      "native": "qualified_identifier_body"
+    },
+    {
+      "source": "bid",
+      "native": "binding_identifier"
+    },
+    {
+      "source": "_ids",
+      "native": "identifier_list"
+    },
+    {
+      "source": "_field_name",
+      "native": "field_name_identifier"
+    },
+    {
+      "source": "_field_names",
+      "native": "field_name_list"
+    },
+    {
+      "source": "_maybe_dotted_id",
+      "native": "optional_dotted_identifier"
+    },
+    {
+      "source": "_maybe_dotted_ids",
+      "native": "optional_dotted_identifier_list"
+    },
+    {
+      "source": "_arg_ids",
+      "native": "argument_identifier_list"
+    },
+    {
+      "source": "_arg_id",
+      "native": "argument_identifier"
+    },
+    {
+      "source": "_binding_ids_and_absurds",
+      "native": "binding_ids_and_absurds"
+    },
+    {
+      "source": "attributes",
+      "native": "attribute_list"
+    },
+    {
+      "source": "expr",
+      "native": "expression"
+    },
+    {
+      "source": "stmt",
+      "native": "statement"
+    },
+    {
+      "source": "_with_exprs",
+      "native": "with_expression_list_body"
+    },
+    {
+      "source": "_with_exprs_stmt",
+      "native": "with_expression_list_statement"
+    },
+    {
+      "source": "_expr_or_attr",
+      "native": "expression_or_attribute"
+    },
+    {
+      "source": "_application",
+      "native": "application_body"
+    },
+    {
+      "source": "_application_stmt",
+      "native": "application_statement"
+    },
+    {
+      "source": "_expr2_without_let",
+      "native": "application_expression_without_let"
+    },
+    {
+      "source": "_expr2",
+      "native": "application_expression_body"
+    },
+    {
+      "source": "_expr2_stmt",
+      "native": "application_expression_statement"
+    },
+    {
+      "source": "_atoms",
+      "native": "atom_list"
+    },
+    {
+      "source": "_atom_curly",
+      "native": "braced_atom"
+    },
+    {
+      "source": "_atom_no_curly",
+      "native": "unbraced_atom"
+    },
+    {
+      "source": "forall",
+      "native": "universal_quantification"
+    },
+    {
+      "source": "_let_body",
+      "native": "let_body"
+    },
+    {
+      "source": "_lambda_bindings",
+      "native": "lambda_bindings"
+    },
+    {
+      "source": "_lambda_clauses",
+      "native": "lambda_clause_list"
+    },
+    {
+      "source": "_lambda_clause_maybe_absurd",
+      "native": "lambda_clause_maybe_absurd"
+    },
+    {
+      "source": "_do_stmt",
+      "native": "do_statement"
+    },
+    {
+      "source": "do_where",
+      "native": "do_where_clause"
+    },
+    {
+      "source": "record_assignments",
+      "native": "record_assignment_list"
+    },
+    {
+      "source": "field_assignments",
+      "native": "field_assignment_list"
+    },
+    {
+      "source": "_record_assignments",
+      "native": "record_assignment_list_body"
+    },
+    {
+      "source": "_field_assignments",
+      "native": "field_assignment_list_body"
+    },
+    {
+      "source": "_record_assignment",
+      "native": "record_assignment"
+    },
+    {
+      "source": "_typed_bindings",
+      "native": "typed_binding_list"
+    },
+    {
+      "source": "_typed_untyped_bindings",
+      "native": "optional_type_binding_list"
+    },
+    {
+      "source": "_typed_untyped_binding",
+      "native": "optional_type_binding"
+    },
+    {
+      "source": "untyped_binding",
+      "native": "binding_without_type"
+    },
+    {
+      "source": "integer",
+      "native": "integer_literal"
+    },
+    {
+      "source": "SetN",
+      "native": "set_universe"
+    },
+    {
+      "source": "PropN",
+      "native": "proposition_universe"
+    }
+  ],
+  "expandedWords": [
+    "arg",
+    "attr",
+    "decl",
+    "expr",
+    "lhs"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "attribute",
+        "concept": "program.attributes"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 115
+  },
+  "sourceTransforms": [
+    {
+      "family": "alias-choice-alternatives",
+      "rule": "module",
+      "alias": "module_name",
+      "count": 1,
+      "reason": "Distribute the named alias over the pinned choice so its hidden qualified-name branch retains the nested identifier node while its underscore literal remains a named leaf."
+    },
+    {
+      "family": "pattern-prefix-exclusion",
+      "rule": "id",
+      "pattern": "([^\\s\\\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
+      "excludedPattern": "[:=](?![^\\s;.\"(){}@])",
+      "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
+      "preserveLexicalIdentity": true
+    },
+    {
+      "family": "pattern-prefix-exclusion",
+      "rule": "_qid",
+      "pattern": "(([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*\\.)*([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
+      "excludedPattern": "[:=](?![^\\s;.\"(){}@])",
+      "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
+      "preserveLexicalIdentity": true
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "lambda",
+      "value": 1,
+      "reason": "Preserve the pinned parser shift at an arrow: prefer the full lambda body over reducing bare absurd-lambda bindings and treating the same arrow as an outer function type."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

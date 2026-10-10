@@ -4,6 +4,149 @@
     "script": "js/scripts/generate-native-grammar-fixtures.mjs"
   },
   "languages": {
+    "Agda": {
+      "grammars": {
+        "native-agda": {
+          "version": "1.0.0",
+          "parserSha256": "2b355f6e449f78c617cec5bdba64f364306e8054b8a0f8b8487b4e2c37262754"
+        }
+      },
+      "oracleGrammars": {
+        "agda": {
+          "version": "1.3.3",
+          "parserSha256": "ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980"
+        }
+      },
+      "sourceSha256": "808eb53d5ccc5633534a3cca4bfc838bbfd15a51851e8e049aae59f91e6a97c5",
+      "recoverySourceSha256": "5691d1de622484904c6a20eb05177093f2229a467fd52f31b830c7f704bc7133",
+      "positive": [
+        [0,null,"source_file",1,0,156,""],
+        [1,null,"comment",1,0,8,"X"],
+        [1,null,"module",1,9,26,""],
+        [2,null,"module",0,9,15,""],
+        [2,null,"module_name",1,16,20,""],
+        [3,null,"qid",1,16,20,""],
+        [2,null,"where",0,21,26,""],
+        [1,null,"data",1,28,84,""],
+        [2,null,"data",0,28,32,""],
+        [2,null,"data_name",1,33,36,""],
+        [3,null,"data_name",0,33,36,""],
+        [2,null,":",0,37,38,""],
+        [2,null,"expr",1,39,42,""],
+        [3,null,"atom",1,39,42,""],
+        [4,null,"SetN",1,39,42,""],
+        [5,null,"Set",0,39,42,""],
+        [2,null,"where",0,43,48,""],
+        [2,null,"function",1,51,61,""],
+        [3,null,"lhs",1,51,55,""],
+        [4,null,"function_name",1,51,55,""],
+        [5,null,"atom",1,51,55,""],
+        [6,null,"qid",1,51,55,""],
+        [3,null,"rhs",1,56,61,""],
+        [4,null,":",0,56,57,""],
+        [4,null,"expr",1,58,61,""],
+        [5,null,"atom",1,58,61,""],
+        [6,null,"qid",1,58,61,""],
+        [2,null,"function",1,64,82,""],
+        [3,null,"lhs",1,64,67,""],
+        [4,null,"function_name",1,64,67,""],
+        [5,null,"atom",1,64,67,""],
+        [6,null,"qid",1,64,67,""],
+        [3,null,"rhs",1,69,82,""],
+        [4,null,":",0,69,70,""],
+        [4,null,"expr",1,71,82,""],
+        [5,null,"atom",1,71,74,""],
+        [6,null,"qid",1,71,74,""],
+        [5,null,"→",0,75,78,""],
+        [5,null,"expr",1,79,82,""],
+        [6,null,"atom",1,79,82,""],
+        [7,null,"qid",1,79,82,""],
+        [1,null,"function",1,84,109,""],
+        [2,null,"lhs",1,84,87,""],
+        [3,null,"function_name",1,84,87,""],
+        [4,null,"atom",1,84,87,""],
+        [5,null,"qid",1,84,87,""],
+        [2,null,"rhs",1,88,109,""],
+        [3,null,":",0,88,89,""],
+        [3,null,"expr",1,90,109,""],
+        [4,null,"atom",1,90,93,""],
+        [5,null,"qid",1,90,93,""],
+        [4,null,"→",0,94,97,""],
+        [4,null,"expr",1,98,109,""],
+        [5,null,"atom",1,98,101,""],
+        [6,null,"qid",1,98,101,""],
+        [5,null,"→",0,102,105,""],
+        [5,null,"expr",1,106,109,""],
+        [6,null,"atom",1,106,109,""],
+        [7,null,"qid",1,106,109,""],
+        [1,null,"function",1,110,122,""],
+        [2,null,"lhs",1,110,118,""],
+        [3,null,"atom",1,110,114,""],
+        [4,null,"qid",1,110,114,""],
+        [3,null,"atom",1,115,116,""],
+        [4,null,"qid",1,115,116,""],
+        [3,null,"atom",1,117,118,""],
+        [4,null,"qid",1,117,118,""],
+        [2,null,"rhs",1,119,122,""],
+        [3,null,"=",0,119,120,""],
+        [3,null,"expr",1,121,122,""],
+        [4,null,"atom",1,121,122,""],
+        [5,null,"qid",1,121,122,""],
+        [1,null,"function",1,123,146,""],
+        [2,null,"lhs",1,123,132,""],
+        [3,null,"atom",1,123,126,""],
+        [4,null,"qid",1,123,126,""],
+        [3,null,"atom",1,127,128,""],
+        [4,null,"qid",1,127,128,""],
+        [3,null,"atom",1,129,130,""],
+        [4,null,"qid",1,129,130,""],
+        [3,null,"atom",1,131,132,""],
+        [4,null,"qid",1,131,132,""],
+        [2,null,"rhs",1,133,146,""],
+        [3,null,"=",0,133,134,""],
+        [3,null,"expr",1,135,146,""],
+        [4,null,"atom",1,135,138,""],
+        [5,null,"qid",1,135,138,""],
+        [4,null,"atom",1,139,146,""],
+        [5,null,"(",0,139,140,""],
+        [5,null,"expr",1,140,145,""],
+        [6,null,"atom",1,140,141,""],
+        [7,null,"qid",1,140,141,""],
+        [6,null,"atom",1,142,143,""],
+        [7,null,"qid",1,142,143,""],
+        [6,null,"atom",1,144,145,""],
+        [7,null,"qid",1,144,145,""],
+        [5,null,")",0,145,146,""],
+        [1,null,"comment",1,147,155,"X"]
+      ],
+      "recovery": [
+        [0,null,"source_file",1,0,35,""],
+        [1,null,"module",1,0,17,""],
+        [2,null,"module",0,0,6,""],
+        [2,null,"module_name",1,7,11,""],
+        [3,null,"qid",1,7,11,""],
+        [2,null,"where",0,12,17,""],
+        [1,null,"function",1,18,34,""],
+        [2,null,"lhs",1,18,19,""],
+        [3,null,"function_name",1,18,19,""],
+        [4,null,"atom",1,18,19,""],
+        [5,null,"qid",1,18,19,""],
+        [2,null,"rhs",1,20,34,""],
+        [3,null,":",0,20,21,""],
+        [3,null,"expr",1,22,34,""],
+        [4,null,"atom",1,22,25,""],
+        [5,null,"qid",1,22,25,""],
+        [4,null,"→",0,26,29,""],
+        [4,null,"expr",1,30,34,""],
+        [5,null,"atom",1,30,34,""],
+        [6,null,"(",0,30,31,""],
+        [6,null,"expr",1,31,34,""],
+        [7,null,"atom",1,31,34,""],
+        [8,null,"qid",1,31,34,""],
+        [6,null,")",0,34,34,"M"]
+      ],
+      "embedded": []
+    },
     "HTML": {
       "grammars": {
         "native-html": {
@@ -4398,6 +4541,269 @@
     }
   },
   "embeddedFixtures": {
+    "CSS style attribute -> CSS": {
+      "positive": {
+        "sourceSha256": "830f3300f4fba98141d6d712c289cd53a1f2eadbfed3d9152fd4de6c65197fe5",
+        "embedded": [
+          {
+            "path": "CSS style attribute",
+            "language": "CSS",
+            "startByte": 10,
+            "endByte": 21,
+            "rows": [
+              [0,null,"stylesheet",1,0,11,""],
+              [1,null,"declaration",1,0,11,""],
+              [2,null,"property_name",1,0,5,""],
+              [2,null,":",0,5,6,""],
+              [2,null,"plain_value",1,7,11,""]
+            ]
+          }
+        ]
+      },
+      "recovery": {
+        "sourceSha256": "e93aecc56971940e26b363174ffbe201ea956e4d98127f98164937bf7240af57",
+        "embedded": [
+          {
+            "path": "CSS style attribute",
+            "language": "CSS",
+            "startByte": 10,
+            "endByte": 23,
+            "rows": [
+              [0,null,"stylesheet",1,0,13,""],
+              [1,null,"rule_set",1,0,13,""],
+              [2,null,"selectors",1,0,11,""],
+              [3,null,"pseudo_class_selector",1,0,11,""],
+              [4,null,"tag_name",1,0,5,""],
+              [4,null,":",0,5,6,""],
+              [4,null,"class_name",1,7,11,""],
+              [5,null,"identifier",1,7,11,""],
+              [2,null,"block",1,12,13,""],
+              [3,null,"{",0,12,13,""],
+              [3,null,"}",0,13,13,"M"]
+            ]
+          }
+        ]
+      },
+      "spellings": [
+        {
+          "sourceSha256": "c3a0adab58576e4c8363eee8b6e0d5f3878c8a2219ffa34b20f2e0c4ac74f83c",
+          "embedded": [
+            {
+              "path": "CSS style attribute",
+              "language": "CSS",
+              "startByte": 10,
+              "endByte": 21,
+              "rows": [
+                [0,null,"stylesheet",1,0,11,""],
+                [1,null,"declaration",1,0,11,""],
+                [2,null,"property_name",1,0,5,""],
+                [2,null,":",0,5,6,""],
+                [2,null,"plain_value",1,7,11,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "41cea563ca27dc19df25c68fa1186be3b0857201b0fdbcf6bdf45e654caffb00",
+          "embedded": [
+            {
+              "path": "CSS style attribute",
+              "language": "CSS",
+              "startByte": 10,
+              "endByte": 21,
+              "rows": [
+                [0,null,"stylesheet",1,0,11,""],
+                [1,null,"declaration",1,0,11,""],
+                [2,null,"property_name",1,0,5,""],
+                [2,null,":",0,5,6,""],
+                [2,null,"plain_value",1,7,11,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "d28a2d51cfe4807c18d4e58b53e38f86a4249babfd796ff7aee5a1faf5879323",
+          "embedded": [
+            {
+              "path": "CSS style attribute",
+              "language": "CSS",
+              "startByte": 9,
+              "endByte": 19,
+              "rows": [
+                [0,null,"stylesheet",1,0,10,""],
+                [1,null,"declaration",1,0,10,""],
+                [2,null,"property_name",1,0,5,""],
+                [2,null,":",0,5,6,""],
+                [2,null,"plain_value",1,6,10,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "07df2f83a92ec2ab6091f78a8df5b671e275e2b91e74cd67acd0ffb27cf7b948",
+          "embedded": [
+            {
+              "path": "CSS style attribute",
+              "language": "CSS",
+              "startByte": 10,
+              "endByte": 22,
+              "rows": [
+                [0,null,"stylesheet",1,0,12,""],
+                [1,null,"declaration",1,0,12,""],
+                [2,null,"property_name",1,0,5,""],
+                [2,null,":",0,5,6,""],
+                [2,null,"plain_value",1,7,11,""],
+                [2,null,";",0,11,12,""]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "HTML -> CSS": {
+      "positive": {
+        "sourceSha256": "a5c4e0055546af01eb90207c552e511758078d6ce0c213e7d0e0a6b4e2f862c0",
+        "embedded": [
+          {
+            "path": "HTML style element",
+            "language": "CSS",
+            "startByte": 7,
+            "endByte": 32,
+            "rows": [
+              [0,null,"stylesheet",1,0,25,""],
+              [1,null,"rule_set",1,0,25,""],
+              [2,null,"selectors",1,0,7,""],
+              [3,null,"class_selector",1,0,7,""],
+              [4,null,".",0,0,1,""],
+              [4,null,"class_name",1,1,7,""],
+              [5,null,"identifier",1,1,7,""],
+              [2,null,"block",1,8,25,""],
+              [3,null,"{",0,8,9,""],
+              [3,null,"declaration",1,10,23,""],
+              [4,null,"property_name",1,10,15,""],
+              [4,null,":",0,15,16,""],
+              [4,null,"plain_value",1,17,22,""],
+              [4,null,";",0,22,23,""],
+              [3,null,"}",0,24,25,""]
+            ]
+          }
+        ]
+      },
+      "recovery": {
+        "sourceSha256": "22e2926a22278c91600d14dbdc69b77ebbec2a11a513fd2622894d3f97f89e24",
+        "embedded": [
+          {
+            "path": "HTML style element",
+            "language": "CSS",
+            "startByte": 7,
+            "endByte": 31,
+            "rows": [
+              [0,null,"stylesheet",1,0,24,""],
+              [1,null,"rule_set",1,0,23,""],
+              [2,null,"selectors",1,0,7,""],
+              [3,null,"class_selector",1,0,7,""],
+              [4,null,".",0,0,1,""],
+              [4,null,"class_name",1,1,7,""],
+              [5,null,"identifier",1,1,7,""],
+              [2,null,"block",1,8,23,""],
+              [3,null,"{",0,8,9,""],
+              [3,null,"declaration",1,10,23,""],
+              [4,null,"property_name",1,10,15,""],
+              [4,null,":",0,15,16,""],
+              [4,null,"plain_value",1,17,22,""],
+              [4,null,";",0,22,23,""],
+              [3,null,"}",0,23,23,"M"]
+            ]
+          }
+        ]
+      },
+      "spellings": [
+        {
+          "sourceSha256": "310dbd9e2f6eef4fafed91cfbcdffe7bebe896ff9b919d164a7de2a622dd2d59",
+          "embedded": [
+            {
+              "path": "HTML style element",
+              "language": "CSS",
+              "startByte": 23,
+              "endByte": 48,
+              "rows": [
+                [0,null,"stylesheet",1,0,25,""],
+                [1,null,"rule_set",1,0,25,""],
+                [2,null,"selectors",1,0,7,""],
+                [3,null,"class_selector",1,0,7,""],
+                [4,null,".",0,0,1,""],
+                [4,null,"class_name",1,1,7,""],
+                [5,null,"identifier",1,1,7,""],
+                [2,null,"block",1,8,25,""],
+                [3,null,"{",0,8,9,""],
+                [3,null,"declaration",1,10,23,""],
+                [4,null,"property_name",1,10,15,""],
+                [4,null,":",0,15,16,""],
+                [4,null,"plain_value",1,17,22,""],
+                [4,null,";",0,22,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "809e795b5c105385ddf059cb435a1c408b65dd0c90106c0ff05db075c43802a3",
+          "embedded": [
+            {
+              "path": "HTML style element",
+              "language": "CSS",
+              "startByte": 38,
+              "endByte": 63,
+              "rows": [
+                [0,null,"stylesheet",1,0,25,""],
+                [1,null,"rule_set",1,0,25,""],
+                [2,null,"selectors",1,0,7,""],
+                [3,null,"class_selector",1,0,7,""],
+                [4,null,".",0,0,1,""],
+                [4,null,"class_name",1,1,7,""],
+                [5,null,"identifier",1,1,7,""],
+                [2,null,"block",1,8,25,""],
+                [3,null,"{",0,8,9,""],
+                [3,null,"declaration",1,10,23,""],
+                [4,null,"property_name",1,10,15,""],
+                [4,null,":",0,15,16,""],
+                [4,null,"plain_value",1,17,22,""],
+                [4,null,";",0,22,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "76a354b2bafc36c4542947f5aa188a6ffb000061eac6b0b97ad0618ee0448325",
+          "embedded": [
+            {
+              "path": "HTML style element",
+              "language": "CSS",
+              "startByte": 7,
+              "endByte": 32,
+              "rows": [
+                [0,null,"stylesheet",1,0,25,""],
+                [1,null,"rule_set",1,0,25,""],
+                [2,null,"selectors",1,0,7,""],
+                [3,null,"class_selector",1,0,7,""],
+                [4,null,".",0,0,1,""],
+                [4,null,"class_name",1,1,7,""],
+                [5,null,"identifier",1,1,7,""],
+                [2,null,"block",1,8,25,""],
+                [3,null,"{",0,8,9,""],
+                [3,null,"declaration",1,10,23,""],
+                [4,null,"property_name",1,10,15,""],
+                [4,null,":",0,15,16,""],
+                [4,null,"plain_value",1,17,22,""],
+                [4,null,";",0,22,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        }
+      ]
+    },
     "HTML -> JavaScript": {
       "positive": {
         "sourceSha256": "4f8bbd00ac4444d8237443fd2e8a5232a51309da440857e4b908b77ffe2d63c9",
@@ -4864,144 +5270,148 @@
         }
       ]
     },
-    "HTML -> CSS": {
+    "Markdown -> HTML": {
       "positive": {
-        "sourceSha256": "a5c4e0055546af01eb90207c552e511758078d6ce0c213e7d0e0a6b4e2f862c0",
+        "sourceSha256": "6331328c980475fc17ba771ef28577622371434336a240552b95296f0b11bed9",
         "embedded": [
           {
-            "path": "HTML style element",
-            "language": "CSS",
+            "path": "Markdown HTML block",
+            "language": "HTML",
             "startByte": 7,
-            "endByte": 32,
+            "endByte": 50,
             "rows": [
-              [0,null,"stylesheet",1,0,25,""],
-              [1,null,"rule_set",1,0,25,""],
-              [2,null,"selectors",1,0,7,""],
-              [3,null,"class_selector",1,0,7,""],
-              [4,null,".",0,0,1,""],
-              [4,null,"class_name",1,1,7,""],
-              [5,null,"identifier",1,1,7,""],
-              [2,null,"block",1,8,25,""],
-              [3,null,"{",0,8,9,""],
-              [3,null,"declaration",1,10,23,""],
-              [4,null,"property_name",1,10,15,""],
-              [4,null,":",0,15,16,""],
-              [4,null,"plain_value",1,17,22,""],
-              [4,null,";",0,22,23,""],
-              [3,null,"}",0,24,25,""]
+              [0,null,"document",1,0,43,""],
+              [1,null,"element",1,0,42,""],
+              [2,null,"start_tag",1,0,9,""],
+              [3,null,"<",0,0,1,""],
+              [3,null,"tag_name",1,1,8,""],
+              [3,null,">",0,8,9,""],
+              [2,null,"element",1,9,32,""],
+              [3,null,"start_tag",1,9,17,""],
+              [4,null,"<",0,9,10,""],
+              [4,null,"tag_name",1,10,16,""],
+              [4,null,">",0,16,17,""],
+              [3,null,"text",1,17,23,""],
+              [3,null,"end_tag",1,23,32,""],
+              [4,null,"</",0,23,25,""],
+              [4,null,"tag_name",1,25,31,""],
+              [4,null,">",0,31,32,""],
+              [2,null,"end_tag",1,32,42,""],
+              [3,null,"</",0,32,34,""],
+              [3,null,"tag_name",1,34,41,""],
+              [3,null,">",0,41,42,""]
             ]
           }
         ]
       },
       "recovery": {
-        "sourceSha256": "22e2926a22278c91600d14dbdc69b77ebbec2a11a513fd2622894d3f97f89e24",
+        "sourceSha256": "6e7f143a5cf7393f0b70c1225afd49cde6b83bbc8eac9ed9c7f1738914c6496f",
         "embedded": [
           {
-            "path": "HTML style element",
-            "language": "CSS",
+            "path": "Markdown HTML block",
+            "language": "HTML",
             "startByte": 7,
-            "endByte": 31,
+            "endByte": 56,
             "rows": [
-              [0,null,"stylesheet",1,0,24,""],
-              [1,null,"rule_set",1,0,23,""],
-              [2,null,"selectors",1,0,7,""],
-              [3,null,"class_selector",1,0,7,""],
-              [4,null,".",0,0,1,""],
-              [4,null,"class_name",1,1,7,""],
-              [5,null,"identifier",1,1,7,""],
-              [2,null,"block",1,8,23,""],
-              [3,null,"{",0,8,9,""],
-              [3,null,"declaration",1,10,23,""],
-              [4,null,"property_name",1,10,15,""],
-              [4,null,":",0,15,16,""],
-              [4,null,"plain_value",1,17,22,""],
-              [4,null,";",0,22,23,""],
-              [3,null,"}",0,23,23,"M"]
+              [0,null,"document",1,0,49,""],
+              [1,null,"element",1,0,42,""],
+              [2,null,"start_tag",1,0,9,""],
+              [3,null,"<",0,0,1,""],
+              [3,null,"tag_name",1,1,8,""],
+              [3,null,">",0,8,9,""],
+              [2,null,"element",1,9,32,""],
+              [3,null,"start_tag",1,9,17,""],
+              [4,null,"<",0,9,10,""],
+              [4,null,"tag_name",1,10,16,""],
+              [4,null,">",0,16,17,""],
+              [3,null,"text",1,17,23,""],
+              [3,null,"end_tag",1,23,32,""],
+              [4,null,"</",0,23,25,""],
+              [4,null,"tag_name",1,25,31,""],
+              [4,null,">",0,31,32,""],
+              [2,null,"end_tag",1,32,42,""],
+              [3,null,"</",0,32,34,""],
+              [3,null,"tag_name",1,34,41,""],
+              [3,null,">",0,41,42,""],
+              [1,null,"erroneous_end_tag",1,42,44,""],
+              [2,null,"</",0,42,44,""],
+              [2,null,"erroneous_end_tag_name",1,44,44,"M"],
+              [2,null,">",0,44,44,"M"],
+              [1,null,"text",1,44,47,""],
+              [1,null,"ERROR",1,47,48,"E"]
             ]
           }
         ]
       },
       "spellings": [
         {
-          "sourceSha256": "310dbd9e2f6eef4fafed91cfbcdffe7bebe896ff9b919d164a7de2a622dd2d59",
+          "sourceSha256": "d88919cdb0bd0181490229ae0306a668fa2631dd06c3196980b0208c9bf29e4f",
           "embedded": [
             {
-              "path": "HTML style element",
-              "language": "CSS",
-              "startByte": 23,
-              "endByte": 48,
-              "rows": [
-                [0,null,"stylesheet",1,0,25,""],
-                [1,null,"rule_set",1,0,25,""],
-                [2,null,"selectors",1,0,7,""],
-                [3,null,"class_selector",1,0,7,""],
-                [4,null,".",0,0,1,""],
-                [4,null,"class_name",1,1,7,""],
-                [5,null,"identifier",1,1,7,""],
-                [2,null,"block",1,8,25,""],
-                [3,null,"{",0,8,9,""],
-                [3,null,"declaration",1,10,23,""],
-                [4,null,"property_name",1,10,15,""],
-                [4,null,":",0,15,16,""],
-                [4,null,"plain_value",1,17,22,""],
-                [4,null,";",0,22,23,""],
-                [3,null,"}",0,24,25,""]
-              ]
-            }
-          ]
-        },
-        {
-          "sourceSha256": "809e795b5c105385ddf059cb435a1c408b65dd0c90106c0ff05db075c43802a3",
-          "embedded": [
-            {
-              "path": "HTML style element",
-              "language": "CSS",
-              "startByte": 38,
-              "endByte": 63,
-              "rows": [
-                [0,null,"stylesheet",1,0,25,""],
-                [1,null,"rule_set",1,0,25,""],
-                [2,null,"selectors",1,0,7,""],
-                [3,null,"class_selector",1,0,7,""],
-                [4,null,".",0,0,1,""],
-                [4,null,"class_name",1,1,7,""],
-                [5,null,"identifier",1,1,7,""],
-                [2,null,"block",1,8,25,""],
-                [3,null,"{",0,8,9,""],
-                [3,null,"declaration",1,10,23,""],
-                [4,null,"property_name",1,10,15,""],
-                [4,null,":",0,15,16,""],
-                [4,null,"plain_value",1,17,22,""],
-                [4,null,";",0,22,23,""],
-                [3,null,"}",0,24,25,""]
-              ]
-            }
-          ]
-        },
-        {
-          "sourceSha256": "76a354b2bafc36c4542947f5aa188a6ffb000061eac6b0b97ad0618ee0448325",
-          "embedded": [
-            {
-              "path": "HTML style element",
-              "language": "CSS",
+              "path": "Markdown HTML block",
+              "language": "HTML",
               "startByte": 7,
-              "endByte": 32,
+              "endByte": 44,
               "rows": [
-                [0,null,"stylesheet",1,0,25,""],
-                [1,null,"rule_set",1,0,25,""],
-                [2,null,"selectors",1,0,7,""],
-                [3,null,"class_selector",1,0,7,""],
-                [4,null,".",0,0,1,""],
-                [4,null,"class_name",1,1,7,""],
-                [5,null,"identifier",1,1,7,""],
-                [2,null,"block",1,8,25,""],
-                [3,null,"{",0,8,9,""],
-                [3,null,"declaration",1,10,23,""],
-                [4,null,"property_name",1,10,15,""],
-                [4,null,":",0,15,16,""],
-                [4,null,"plain_value",1,17,22,""],
-                [4,null,";",0,22,23,""],
-                [3,null,"}",0,24,25,""]
+                [0,null,"document",1,0,37,""],
+                [1,null,"element",1,0,36,""],
+                [2,null,"start_tag",1,0,5,""],
+                [3,null,"<",0,0,1,""],
+                [3,null,"tag_name",1,1,4,""],
+                [3,null,">",0,4,5,""],
+                [2,null,"element",1,6,29,""],
+                [3,null,"start_tag",1,6,14,""],
+                [4,null,"<",0,6,7,""],
+                [4,null,"tag_name",1,7,13,""],
+                [4,null,">",0,13,14,""],
+                [3,null,"text",1,14,20,""],
+                [3,null,"end_tag",1,20,29,""],
+                [4,null,"</",0,20,22,""],
+                [4,null,"tag_name",1,22,28,""],
+                [4,null,">",0,28,29,""],
+                [2,null,"end_tag",1,30,36,""],
+                [3,null,"</",0,30,32,""],
+                [3,null,"tag_name",1,32,35,""],
+                [3,null,">",0,35,36,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "3640c5cb4fbb3cca9adae2a1c9a2ee65a74442451cfc7bedd686bb890f20dfdb",
+          "embedded": [
+            {
+              "path": "Markdown HTML block",
+              "language": "HTML",
+              "startByte": 7,
+              "endByte": 23,
+              "rows": [
+                [0,null,"document",1,0,16,""],
+                [1,null,"comment",1,0,15,"X"]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "36f6f8ea3d7e847313664623cc736850a186227c5bb0f6e6ff6955e5c525a5fc",
+          "embedded": [
+            {
+              "path": "Markdown inline HTML",
+              "language": "HTML",
+              "startByte": 5,
+              "endByte": 28,
+              "rows": [
+                [0,null,"document",1,0,23,""],
+                [1,null,"element",1,0,23,""],
+                [2,null,"start_tag",1,0,8,""],
+                [3,null,"<",0,0,1,""],
+                [3,null,"tag_name",1,1,7,""],
+                [3,null,">",0,7,8,""],
+                [2,null,"text",1,8,14,""],
+                [2,null,"end_tag",1,14,23,""],
+                [3,null,"</",0,14,16,""],
+                [3,null,"tag_name",1,16,22,""],
+                [3,null,">",0,22,23,""]
               ]
             }
           ]
@@ -5162,273 +5572,6 @@
                 [3,null,"{",0,19,20,""],
                 [3,null,"integer_literal",1,21,23,""],
                 [3,null,"}",0,24,25,""]
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "CSS style attribute -> CSS": {
-      "positive": {
-        "sourceSha256": "830f3300f4fba98141d6d712c289cd53a1f2eadbfed3d9152fd4de6c65197fe5",
-        "embedded": [
-          {
-            "path": "CSS style attribute",
-            "language": "CSS",
-            "startByte": 10,
-            "endByte": 21,
-            "rows": [
-              [0,null,"stylesheet",1,0,11,""],
-              [1,null,"declaration",1,0,11,""],
-              [2,null,"property_name",1,0,5,""],
-              [2,null,":",0,5,6,""],
-              [2,null,"plain_value",1,7,11,""]
-            ]
-          }
-        ]
-      },
-      "recovery": {
-        "sourceSha256": "e93aecc56971940e26b363174ffbe201ea956e4d98127f98164937bf7240af57",
-        "embedded": [
-          {
-            "path": "CSS style attribute",
-            "language": "CSS",
-            "startByte": 10,
-            "endByte": 23,
-            "rows": [
-              [0,null,"stylesheet",1,0,13,""],
-              [1,null,"rule_set",1,0,13,""],
-              [2,null,"selectors",1,0,11,""],
-              [3,null,"pseudo_class_selector",1,0,11,""],
-              [4,null,"tag_name",1,0,5,""],
-              [4,null,":",0,5,6,""],
-              [4,null,"class_name",1,7,11,""],
-              [5,null,"identifier",1,7,11,""],
-              [2,null,"block",1,12,13,""],
-              [3,null,"{",0,12,13,""],
-              [3,null,"}",0,13,13,"M"]
-            ]
-          }
-        ]
-      },
-      "spellings": [
-        {
-          "sourceSha256": "c3a0adab58576e4c8363eee8b6e0d5f3878c8a2219ffa34b20f2e0c4ac74f83c",
-          "embedded": [
-            {
-              "path": "CSS style attribute",
-              "language": "CSS",
-              "startByte": 10,
-              "endByte": 21,
-              "rows": [
-                [0,null,"stylesheet",1,0,11,""],
-                [1,null,"declaration",1,0,11,""],
-                [2,null,"property_name",1,0,5,""],
-                [2,null,":",0,5,6,""],
-                [2,null,"plain_value",1,7,11,""]
-              ]
-            }
-          ]
-        },
-        {
-          "sourceSha256": "41cea563ca27dc19df25c68fa1186be3b0857201b0fdbcf6bdf45e654caffb00",
-          "embedded": [
-            {
-              "path": "CSS style attribute",
-              "language": "CSS",
-              "startByte": 10,
-              "endByte": 21,
-              "rows": [
-                [0,null,"stylesheet",1,0,11,""],
-                [1,null,"declaration",1,0,11,""],
-                [2,null,"property_name",1,0,5,""],
-                [2,null,":",0,5,6,""],
-                [2,null,"plain_value",1,7,11,""]
-              ]
-            }
-          ]
-        },
-        {
-          "sourceSha256": "d28a2d51cfe4807c18d4e58b53e38f86a4249babfd796ff7aee5a1faf5879323",
-          "embedded": [
-            {
-              "path": "CSS style attribute",
-              "language": "CSS",
-              "startByte": 9,
-              "endByte": 19,
-              "rows": [
-                [0,null,"stylesheet",1,0,10,""],
-                [1,null,"declaration",1,0,10,""],
-                [2,null,"property_name",1,0,5,""],
-                [2,null,":",0,5,6,""],
-                [2,null,"plain_value",1,6,10,""]
-              ]
-            }
-          ]
-        },
-        {
-          "sourceSha256": "07df2f83a92ec2ab6091f78a8df5b671e275e2b91e74cd67acd0ffb27cf7b948",
-          "embedded": [
-            {
-              "path": "CSS style attribute",
-              "language": "CSS",
-              "startByte": 10,
-              "endByte": 22,
-              "rows": [
-                [0,null,"stylesheet",1,0,12,""],
-                [1,null,"declaration",1,0,12,""],
-                [2,null,"property_name",1,0,5,""],
-                [2,null,":",0,5,6,""],
-                [2,null,"plain_value",1,7,11,""],
-                [2,null,";",0,11,12,""]
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "Markdown -> HTML": {
-      "positive": {
-        "sourceSha256": "6331328c980475fc17ba771ef28577622371434336a240552b95296f0b11bed9",
-        "embedded": [
-          {
-            "path": "Markdown HTML block",
-            "language": "HTML",
-            "startByte": 7,
-            "endByte": 50,
-            "rows": [
-              [0,null,"document",1,0,43,""],
-              [1,null,"element",1,0,42,""],
-              [2,null,"start_tag",1,0,9,""],
-              [3,null,"<",0,0,1,""],
-              [3,null,"tag_name",1,1,8,""],
-              [3,null,">",0,8,9,""],
-              [2,null,"element",1,9,32,""],
-              [3,null,"start_tag",1,9,17,""],
-              [4,null,"<",0,9,10,""],
-              [4,null,"tag_name",1,10,16,""],
-              [4,null,">",0,16,17,""],
-              [3,null,"text",1,17,23,""],
-              [3,null,"end_tag",1,23,32,""],
-              [4,null,"</",0,23,25,""],
-              [4,null,"tag_name",1,25,31,""],
-              [4,null,">",0,31,32,""],
-              [2,null,"end_tag",1,32,42,""],
-              [3,null,"</",0,32,34,""],
-              [3,null,"tag_name",1,34,41,""],
-              [3,null,">",0,41,42,""]
-            ]
-          }
-        ]
-      },
-      "recovery": {
-        "sourceSha256": "6e7f143a5cf7393f0b70c1225afd49cde6b83bbc8eac9ed9c7f1738914c6496f",
-        "embedded": [
-          {
-            "path": "Markdown HTML block",
-            "language": "HTML",
-            "startByte": 7,
-            "endByte": 56,
-            "rows": [
-              [0,null,"document",1,0,49,""],
-              [1,null,"element",1,0,42,""],
-              [2,null,"start_tag",1,0,9,""],
-              [3,null,"<",0,0,1,""],
-              [3,null,"tag_name",1,1,8,""],
-              [3,null,">",0,8,9,""],
-              [2,null,"element",1,9,32,""],
-              [3,null,"start_tag",1,9,17,""],
-              [4,null,"<",0,9,10,""],
-              [4,null,"tag_name",1,10,16,""],
-              [4,null,">",0,16,17,""],
-              [3,null,"text",1,17,23,""],
-              [3,null,"end_tag",1,23,32,""],
-              [4,null,"</",0,23,25,""],
-              [4,null,"tag_name",1,25,31,""],
-              [4,null,">",0,31,32,""],
-              [2,null,"end_tag",1,32,42,""],
-              [3,null,"</",0,32,34,""],
-              [3,null,"tag_name",1,34,41,""],
-              [3,null,">",0,41,42,""],
-              [1,null,"erroneous_end_tag",1,42,44,""],
-              [2,null,"</",0,42,44,""],
-              [2,null,"erroneous_end_tag_name",1,44,44,"M"],
-              [2,null,">",0,44,44,"M"],
-              [1,null,"text",1,44,47,""],
-              [1,null,"ERROR",1,47,48,"E"]
-            ]
-          }
-        ]
-      },
-      "spellings": [
-        {
-          "sourceSha256": "d88919cdb0bd0181490229ae0306a668fa2631dd06c3196980b0208c9bf29e4f",
-          "embedded": [
-            {
-              "path": "Markdown HTML block",
-              "language": "HTML",
-              "startByte": 7,
-              "endByte": 44,
-              "rows": [
-                [0,null,"document",1,0,37,""],
-                [1,null,"element",1,0,36,""],
-                [2,null,"start_tag",1,0,5,""],
-                [3,null,"<",0,0,1,""],
-                [3,null,"tag_name",1,1,4,""],
-                [3,null,">",0,4,5,""],
-                [2,null,"element",1,6,29,""],
-                [3,null,"start_tag",1,6,14,""],
-                [4,null,"<",0,6,7,""],
-                [4,null,"tag_name",1,7,13,""],
-                [4,null,">",0,13,14,""],
-                [3,null,"text",1,14,20,""],
-                [3,null,"end_tag",1,20,29,""],
-                [4,null,"</",0,20,22,""],
-                [4,null,"tag_name",1,22,28,""],
-                [4,null,">",0,28,29,""],
-                [2,null,"end_tag",1,30,36,""],
-                [3,null,"</",0,30,32,""],
-                [3,null,"tag_name",1,32,35,""],
-                [3,null,">",0,35,36,""]
-              ]
-            }
-          ]
-        },
-        {
-          "sourceSha256": "3640c5cb4fbb3cca9adae2a1c9a2ee65a74442451cfc7bedd686bb890f20dfdb",
-          "embedded": [
-            {
-              "path": "Markdown HTML block",
-              "language": "HTML",
-              "startByte": 7,
-              "endByte": 23,
-              "rows": [
-                [0,null,"document",1,0,16,""],
-                [1,null,"comment",1,0,15,"X"]
-              ]
-            }
-          ]
-        },
-        {
-          "sourceSha256": "36f6f8ea3d7e847313664623cc736850a186227c5bb0f6e6ff6955e5c525a5fc",
-          "embedded": [
-            {
-              "path": "Markdown inline HTML",
-              "language": "HTML",
-              "startByte": 5,
-              "endByte": 28,
-              "rows": [
-                [0,null,"document",1,0,23,""],
-                [1,null,"element",1,0,23,""],
-                [2,null,"start_tag",1,0,8,""],
-                [3,null,"<",0,0,1,""],
-                [3,null,"tag_name",1,1,7,""],
-                [3,null,">",0,7,8,""],
-                [2,null,"text",1,8,14,""],
-                [2,null,"end_tag",1,14,23,""],
-                [3,null,"</",0,14,16,""],
-                [3,null,"tag_name",1,16,22,""],
-                [3,null,">",0,22,23,""]
               ]
             }
           ]

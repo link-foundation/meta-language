@@ -15,6 +15,7 @@ listed patch, if any).
 
 | File | Source | parser.c SHA-256 | wasm SHA-256 | License |
 | --- | --- | --- | --- | --- |
+| `agda.wasm.gz` | crate `tree-sitter-agda` 1.3.3 | `ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980` | `9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a` | [`agda.LICENSE`](agda.LICENSE) |
 | `c.wasm.gz` | crate `tree-sitter-c` 0.24.2 | `f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2` | `2030a766fa6c6fe18039524008e52fd4a4995bdd9ed07fc4a73ec892450d2f4a` | [`c.LICENSE`](c.LICENSE) |
 | `cmake.wasm.gz` | `uyha/tree-sitter-cmake` v0.7.5 with [`scanner-state.patch`](../../../rust/vendor/tree-sitter-cmake/scanner-state.patch) (vendored in `rust/vendor/tree-sitter-cmake`) | `ece92c2e3fbf15634fb90fab91d0af749348c069d27208eeb10dcdd4e77fe5a2` | `5925d5f08a726ebb9024ccae1e12165a56c35630c53d9dd7fc3eeb87434849c2` | [`cmake.LICENSE`](cmake.LICENSE) |
 | `cpp.wasm.gz` | crate `tree-sitter-cpp` 0.23.4 | `2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814` | `f5ff3ba7af054af846f37dfd2525bdfede95530d5747a8fe30df87d070ece607` | [`cpp.LICENSE`](cpp.LICENSE) |

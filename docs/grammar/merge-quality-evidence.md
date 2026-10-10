@@ -29,6 +29,7 @@ grammar builds. The sources are the specifications and grammars merged.
 
 | Grammar | Oracle | Corpus | Sources |
 | --- | --- | --- | --- |
+| `native-agda` | crates.io tree-sitter-agda 1.3.3 | [upstream](https://github.com/tree-sitter/tree-sitter-agda/tree/47802091de0cb8ac2533d67ac37e65692c5902c4/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-agda/tree/47802091de0cb8ac2533d67ac37e65692c5902c4) [2](https://github.com/tree-sitter/tree-sitter-agda/tree/47802091de0cb8ac2533d67ac37e65692c5902c4/test/corpus) |
 | `native-c` | tree-sitter-c 0.24.2 | [upstream](https://github.com/tree-sitter/tree-sitter-c/tree/b780e47fc780ddc8da13afa35a3f4ed5c157823d/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-c/blob/b780e47fc780ddc8da13afa35a3f4ed5c157823d/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-c/tree/b780e47fc780ddc8da13afa35a3f4ed5c157823d/test/corpus) |
 | `native-cmake` | vendored tree-sitter-cmake 0.7.5 | [upstream](https://github.com/uyha/tree-sitter-cmake/tree/e997bd0b275ca525ce9befecedf5299031183661/test/corpus) | [1](https://github.com/uyha/tree-sitter-cmake/tree/e997bd0b275ca525ce9befecedf5299031183661) [2](https://github.com/uyha/tree-sitter-cmake/tree/e997bd0b275ca525ce9befecedf5299031183661/test/corpus) |
 | `native-cpp` | crates.io tree-sitter-cpp 0.23.4 | [upstream](https://github.com/tree-sitter/tree-sitter-cpp/tree/f41e1a044c8a84ea9fa8577fdd2eab92ec96de02/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-cpp/tree/f41e1a044c8a84ea9fa8577fdd2eab92ec96de02) [2](https://github.com/tree-sitter/tree-sitter-cpp/tree/f41e1a044c8a84ea9fa8577fdd2eab92ec96de02/test/corpus) |
@@ -82,6 +83,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 
 | Grammar | Matches | Rows | Bytes | Divergences | Rejections |
 | --- | ---: | ---: | ---: | ---: | ---: |
+| `native-agda` | 37 | 464 | 782 | 4 | 7 |
 | `native-c` | 100 | 5348 | 12987 | 0 | 33 |
 | `native-cmake` | 35 | 524 | 870 | 0 | 6 |
 | `native-cpp` | 77 | 1732 | 2272 | 0 | 9 |
@@ -124,7 +126,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-xml` | 31 | 495 | 837 | 0 | 7 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 4055 | 93967 | 205268 | 101 | 667 |
+| all | 4092 | 94431 | 206050 | 105 | 674 |
 
 ## Coverage
 
@@ -138,6 +140,7 @@ language specification and checked against the oracle.
 
 | Grammar | Normal | Atomic | Silent | Token | Exercised visible rules | Checked kinds | Checked fields | Renamed | Expanded words | Approximations | Unsupported |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `native-agda` | 70 | 0 | 46 | 5 | 30 of 70 (43%) | 37 | 0 | 74 | 5 | 0 | 0 |
 | `native-c` | 137 | 0 | 32 | 14 | 103 of 137 (75%) | 121 | 38 | 93 | 24 | 0 | 0 |
 | `native-cmake` | 36 | 0 | 8 | 18 | 36 of 36 (100%) | 58 | 0 | 45 | 5 | 0 | 0 |
 | `native-cpp` | 231 | 0 | 57 | 17 | 80 of 231 (35%) | 96 | 26 | 131 | 27 | 0 | 0 |
@@ -191,16 +194,17 @@ rules name a concept another native grammar names
 
 | Grammar | Scanners | Conflicts | Precedences | Extras | Kinds | Shared rules | Language-specific rules |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `native-agda` | 1 | 0 | 0 | 3 | 6 | 35 | 86 |
 | `native-c` | 0 | 17 | 0 | 2 | 0 | 183 | 0 |
 | `native-cmake` | 2 | 0 | 0 | 0 | 4 | 14 | 48 |
 | `native-cpp` | 1 | 33 | 2 | 2 | 0 | 201 | 104 |
 | `native-css` | 3 | 0 | 0 | 3 | 5 | 16 | 50 |
 | `native-csv` | 0 | 0 | 0 | 0 | 0 | 3 | 5 |
-| `native-dart` | 7 | 127 | 1 | 2 | 5 | 96 | 188 |
+| `native-dart` | 7 | 127 | 1 | 2 | 5 | 97 | 187 |
 | `native-diff` | 0 | 0 | 0 | 1 | 0 | 2 | 22 |
 | `native-dtd` | 2 | 1 | 0 | 0 | 3 | 43 | 4 |
-| `native-erlang` | 3 | 14 | 0 | 2 | 2 | 49 | 147 |
-| `native-go` | 0 | 8 | 0 | 2 | 0 | 73 | 44 |
+| `native-erlang` | 3 | 14 | 0 | 2 | 2 | 50 | 146 |
+| `native-go` | 0 | 8 | 0 | 2 | 0 | 74 | 43 |
 | `native-graphql` | 0 | 0 | 0 | 3 | 0 | 28 | 46 |
 | `native-groovy` | 0 | 33 | 0 | 3 | 1 | 171 | 12 |
 | `native-hcl` | 1 | 0 | 0 | 2 | 2 | 19 | 46 |
@@ -210,13 +214,13 @@ rules name a concept another native grammar names
 | `native-javascript` | 5 | 18 | 9 | 3 | 3 | 143 | 0 |
 | `native-json` | 0 | 0 | 0 | 2 | 0 | 11 | 0 |
 | `native-json5` | 0 | 0 | 0 | 2 | 0 | 11 | 1 |
-| `native-lean` | 1 | 11 | 0 | 2 | 5 | 54 | 93 |
-| `native-lua` | 2 | 0 | 0 | 2 | 6 | 41 | 32 |
+| `native-lean` | 1 | 11 | 0 | 2 | 5 | 60 | 87 |
+| `native-lua` | 2 | 0 | 0 | 2 | 6 | 42 | 31 |
 | `native-make` | 0 | 0 | 0 | 3 | 0 | 16 | 49 |
 | `native-nix` | 2 | 0 | 0 | 2 | 1 | 16 | 40 |
 | `native-odin` | 2 | 2 | 0 | 5 | 5 | 74 | 44 |
-| `native-pascal` | 0 | 10 | 0 | 3 | 0 | 73 | 243 |
-| `native-powershell` | 1 | 5 | 0 | 5 | 1 | 51 | 116 |
+| `native-pascal` | 0 | 10 | 0 | 3 | 0 | 74 | 242 |
+| `native-powershell` | 1 | 5 | 0 | 5 | 1 | 52 | 115 |
 | `native-proto` | 0 | 0 | 0 | 2 | 0 | 22 | 33 |
 | `native-python` | 2 | 9 | 0 | 3 | 4 | 77 | 82 |
 | `native-r` | 2 | 0 | 0 | 3 | 17 | 33 | 34 |
@@ -225,7 +229,7 @@ rules name a concept another native grammar names
 | `native-rocq` | 0 | 16 | 2 | 2 | 0 | 44 | 221 |
 | `native-rust` | 6 | 9 | 0 | 3 | 10 | 78 | 106 |
 | `native-scheme` | 0 | 0 | 0 | 0 | 0 | 23 | 5 |
-| `native-solidity` | 0 | 11 | 0 | 2 | 1 | 70 | 97 |
+| `native-solidity` | 0 | 11 | 0 | 2 | 1 | 71 | 96 |
 | `native-sql` | 2 | 5 | 1 | 4 | 0 | 76 | 546 |
 | `native-toml` | 3 | 0 | 0 | 2 | 5 | 10 | 17 |
 | `native-tsx` | 7 | 49 | 44 | 3 | 5 | 230 | 0 |
@@ -243,6 +247,7 @@ generative cases with the oracle and gives each difference a category.
 
 | Grammar | Rejections | Repaired | ERROR nodes | MISSING nodes | Recovery records by category |
 | --- | ---: | ---: | ---: | ---: | --- |
+| `native-agda` | 7 | 7 | 1 | 6 | none |
 | `native-c` | 33 | 33 | 7 | 41 | none |
 | `native-cmake` | 6 | 6 | 0 | 10 | none |
 | `native-cpp` | 9 | 9 | 2 | 17 | none |
@@ -287,6 +292,8 @@ generative cases with the oracle and gives each difference a category.
 | `native-zig` | 5 | 5 | 0 | 8 | none |
 
 ## Time and memory
+
+The `native-agda` measurements use linux x64, INTEL(R) XEON(R) PLATINUM 8573C, Node.js 24.19.0, and unoptimized test profile, no default features, one crate codegen unit.
 
 The `native-cmake` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0; --no-default-features, profile.dev.package.meta-language.codegen-units=1.
 
@@ -341,6 +348,7 @@ loads the same modules and parses nothing.
 
 | Grammar | Native parse | Oracle parse | Ratio | Native recover | Oracle recover | Native peak MiB | Oracle peak MiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `native-agda` | 177.4 | 7.9 | 22.3× | 129.8 | 1.3 | 75.9 | 15.2 |
 | `native-c` | 3026.7 | 20.4 | 148.3× | 824.6 | 2.8 | 129.1 | 13.7 |
 | `native-cmake` | 63.5 | 0.8 | 77.2× | 22.9 | 0.3 | 40.2 | 3.6 |
 | `native-cpp` | 760.4 | 2.9 | 260.1× | 284.0 | 0.5 | 158.5 | 20.8 |
@@ -394,6 +402,7 @@ without optimization, as the tests run them.
 
 | Grammar | Native parse | Oracle parse | Ratio | Native recover | Oracle recover | Native peak heap MiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `native-agda` | 341.9 | 0.6 | 559.6× | 201.7 | 1.8 | 1.8 |
 | `native-c` | 8804.5 | 9.2 | 958.2× | 2322.9 | 1.9 | 7.3 |
 | `native-cmake` | 124.3 | 0.7 | 172.9× | 43.2 | 0.1 | 1.3 |
 | `native-cpp` | 2589.1 | 3.0 | 861.0× | 900.4 | 0.3 | 7.5 |

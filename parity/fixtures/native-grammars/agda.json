@@ -1,0 +1,917 @@
+{
+  "schemaVersion": 1,
+  "id": "agda",
+  "language": "Agda",
+  "grammar": "parity/grammars/native/agda.lino",
+  "oracle": "crates.io tree-sitter-agda 1.3.3",
+  "sources": [
+    "https://github.com/tree-sitter/tree-sitter-agda/tree/47802091de0cb8ac2533d67ac37e65692c5902c4",
+    "https://github.com/tree-sitter/tree-sitter-agda/tree/47802091de0cb8ac2533d67ac37e65692c5902c4/test/corpus"
+  ],
+  "corpus": {
+    "path": "test/corpus",
+    "file": "parity/grammars/sources/tree-sitter-agda-1.3.3.corpus.json.gz",
+    "sha256": "b9e78578004d31c846b3acd8d43a22cd038dcbda02fbb6bb359cab1822d09ab0",
+    "url": "https://github.com/tree-sitter/tree-sitter-agda/tree/47802091de0cb8ac2533d67ac37e65692c5902c4/test/corpus"
+  },
+  "hidden": [
+    "newline",
+    "indent",
+    "dedent"
+  ],
+  "anonymous": [
+    "unnamed_token",
+    "whitespace"
+  ],
+  "extras": [
+    "comment",
+    "pragma"
+  ],
+  "oracleKinds": {
+    "universal_quantifier_keyword": "_FORALL",
+    "arrow": "_ARROW",
+    "lambda_keyword": "_LAMBDA",
+    "ellipsis": "_ELLIPSIS",
+    "declaration_block": "_declaration_block",
+    "declaration": "_declaration",
+    "field_list": "fields",
+    "signature_block": "_signature_block",
+    "modal_argument_ids": "_modal_arg_ids",
+    "function_definition": "function",
+    "left_hand_side_declaration": "lhs_decl",
+    "left_hand_side_definition": "lhs_defn",
+    "right_hand_side_declaration": "rhs_decl",
+    "right_hand_side_definition": "rhs_defn",
+    "with_expression_list": "with_expressions",
+    "where_clause": "where",
+    "record_directive": "_record_directive",
+    "infix_declaration": "infix",
+    "generalization_declaration": "generalize",
+    "mutual_definition_block": "mutual",
+    "instance_declaration": "instance",
+    "type_signature_block": "_type_signature_block",
+    "import_directive_list": "_import_directives",
+    "comma_import_names": "_comma_import_names",
+    "renaming_clause": "renaming",
+    "import_name": "_import_name",
+    "hole_name_list": "hole_names",
+    "simple_top_hole": "_simple_top_hole",
+    "simple_hole": "_simple_hole",
+    "unquote_declaration": "unquote_decl",
+    "identifier": "id",
+    "qualified_identifier_body": "_qid",
+    "binding_identifier": "bid",
+    "identifier_list": "_ids",
+    "field_name_identifier": "_field_name",
+    "field_name_list": "_field_names",
+    "optional_dotted_identifier": "_maybe_dotted_id",
+    "optional_dotted_identifier_list": "_maybe_dotted_ids",
+    "argument_identifier_list": "_arg_ids",
+    "argument_identifier": "_arg_id",
+    "binding_ids_and_absurds": "_binding_ids_and_absurds",
+    "attribute_list": "attributes",
+    "expression": "expr",
+    "statement": "stmt",
+    "with_expression_list_body": "_with_exprs",
+    "with_expression_list_statement": "_with_exprs_stmt",
+    "expression_or_attribute": "_expr_or_attr",
+    "application_body": "_application",
+    "application_statement": "_application_stmt",
+    "application_expression_without_let": "_expr2_without_let",
+    "application_expression_body": "_expr2",
+    "application_expression_statement": "_expr2_stmt",
+    "atom_list": "_atoms",
+    "braced_atom": "_atom_curly",
+    "unbraced_atom": "_atom_no_curly",
+    "universal_quantification": "forall",
+    "let_body": "_let_body",
+    "lambda_bindings": "_lambda_bindings",
+    "lambda_clause_list": "_lambda_clauses",
+    "lambda_clause_maybe_absurd": "_lambda_clause_maybe_absurd",
+    "do_statement": "_do_stmt",
+    "do_where_clause": "do_where",
+    "record_assignment_list": "record_assignments",
+    "field_assignment_list": "field_assignments",
+    "record_assignment_list_body": "_record_assignments",
+    "field_assignment_list_body": "_field_assignments",
+    "record_assignment": "_record_assignment",
+    "typed_binding_list": "_typed_bindings",
+    "optional_type_binding_list": "_typed_untyped_bindings",
+    "optional_type_binding": "_typed_untyped_binding",
+    "binding_without_type": "untyped_binding",
+    "integer_literal": "integer",
+    "set_universe": "SetN",
+    "proposition_universe": "PropN",
+    "left_hand_side": "lhs",
+    "right_hand_side": "rhs",
+    "qualified_identifier": "qid",
+    "newline": "_newline",
+    "indent": "_indent",
+    "dedent": "_dedent"
+  },
+  "matches": [
+    {
+      "source": "",
+      "rows": [
+        [0,null,"source_file",1,0,0,""]
+      ]
+    },
+    {
+      "source": "-- grove\n",
+      "rows": [
+        [0,null,"source_file",1,0,9,""],
+        [1,null,"comment",1,0,8,"X"]
+      ]
+    },
+    {
+      "source": "{- orchard -}\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,null,"comment",1,0,13,"X"]
+      ]
+    },
+    {
+      "source": "{-# OPTIONS --safe #-}\n",
+      "rows": [
+        [0,null,"source_file",1,0,23,""],
+        [1,null,"pragma",1,0,22,""]
+      ]
+    },
+    {
+      "source": "import Grove\n",
+      "rows": [
+        [0,null,"source_file",1,0,13,""],
+        [1,null,"import",1,0,12,""],
+        [2,null,"import",0,0,6,""],
+        [2,null,"module_name",1,7,12,""],
+        [3,null,"qid",1,7,12,""]
+      ]
+    },
+    {
+      "source": "open Grove\n",
+      "rows": [
+        [0,null,"source_file",1,0,11,""],
+        [1,null,"open",1,0,10,""],
+        [2,null,"open",0,0,4,""],
+        [2,null,"module_name",1,5,10,""],
+        [3,null,"qid",1,5,10,""]
+      ]
+    },
+    {
+      "source": "open import Grove\n",
+      "rows": [
+        [0,null,"source_file",1,0,18,""],
+        [1,null,"open",1,0,17,""],
+        [2,null,"open",0,0,4,""],
+        [2,null,"import",1,5,17,""],
+        [3,null,"import",0,5,11,""],
+        [3,null,"module_name",1,12,17,""],
+        [4,null,"qid",1,12,17,""]
+      ]
+    },
+    {
+      "source": "open import Grove using (leaf; seed)\n",
+      "rows": [
+        [0,null,"source_file",1,0,37,""],
+        [1,null,"open",1,0,36,""],
+        [2,null,"open",0,0,4,""],
+        [2,null,"import",1,5,17,""],
+        [3,null,"import",0,5,11,""],
+        [3,null,"module_name",1,12,17,""],
+        [4,null,"qid",1,12,17,""],
+        [2,null,"import_directive",1,18,36,""],
+        [3,null,"using",0,18,23,""],
+        [3,null,"(",0,24,25,""],
+        [3,null,"id",1,25,29,""],
+        [3,null,";",0,29,30,""],
+        [3,null,"id",1,31,35,""],
+        [3,null,")",0,35,36,""]
+      ]
+    },
+    {
+      "source": "open import Grove hiding (root)\n",
+      "rows": [
+        [0,null,"source_file",1,0,32,""],
+        [1,null,"open",1,0,31,""],
+        [2,null,"open",0,0,4,""],
+        [2,null,"import",1,5,17,""],
+        [3,null,"import",0,5,11,""],
+        [3,null,"module_name",1,12,17,""],
+        [4,null,"qid",1,12,17,""],
+        [2,null,"import_directive",1,18,31,""],
+        [3,null,"hiding",0,18,24,""],
+        [3,null,"(",0,25,26,""],
+        [3,null,"id",1,26,30,""],
+        [3,null,")",0,30,31,""]
+      ]
+    },
+    {
+      "source": "open import Grove renaming (leaf to seed)\n",
+      "rows": [
+        [0,null,"source_file",1,0,42,""],
+        [1,null,"open",1,0,41,""],
+        [2,null,"open",0,0,4,""],
+        [2,null,"import",1,5,17,""],
+        [3,null,"import",0,5,11,""],
+        [3,null,"module_name",1,12,17,""],
+        [4,null,"qid",1,12,17,""],
+        [2,null,"import_directive",1,18,41,""],
+        [3,null,"renaming",0,18,26,""],
+        [3,null,"(",0,27,28,""],
+        [3,null,"renaming",1,28,40,""],
+        [4,null,"id",1,28,32,""],
+        [4,null,"to",0,33,35,""],
+        [4,null,"id",1,36,40,""],
+        [3,null,")",0,40,41,""]
+      ]
+    },
+    {
+      "source": "module Grove where\n",
+      "rows": [
+        [0,null,"source_file",1,0,19,""],
+        [1,null,"module",1,0,18,""],
+        [2,null,"module",0,0,6,""],
+        [2,null,"module_name",1,7,12,""],
+        [3,null,"qid",1,7,12,""],
+        [2,null,"where",0,13,18,""]
+      ]
+    },
+    {
+      "source": "module Grove (A : Set) where\n",
+      "rows": [
+        [0,null,"source_file",1,0,29,""],
+        [1,null,"module",1,0,28,""],
+        [2,null,"module",0,0,6,""],
+        [2,null,"module_name",1,7,12,""],
+        [3,null,"qid",1,7,12,""],
+        [2,null,"typed_binding",1,13,22,""],
+        [3,null,"(",0,13,14,""],
+        [3,null,"atom",1,14,15,""],
+        [4,null,"qid",1,14,15,""],
+        [3,null,":",0,16,17,""],
+        [3,null,"expr",1,18,21,""],
+        [4,null,"atom",1,18,21,""],
+        [5,null,"SetN",1,18,21,""],
+        [6,null,"Set",0,18,21,""],
+        [3,null,")",0,21,22,""],
+        [2,null,"where",0,23,28,""]
+      ]
+    },
+    {
+      "source": "module Grove = Forest\n",
+      "rows": [
+        [0,null,"source_file",1,0,22,""],
+        [1,null,"module_macro",1,0,21,""],
+        [2,null,"module",0,0,6,""],
+        [2,null,"module_name",1,7,12,""],
+        [3,null,"qid",1,7,12,""],
+        [2,null,"=",0,13,14,""],
+        [2,null,"module_application",1,15,21,""],
+        [3,null,"module_name",1,15,21,""],
+        [4,null,"qid",1,15,21,""]
+      ]
+    },
+    {
+      "source": "postulate\n  seed : Set\n",
+      "rows": [
+        [0,null,"source_file",1,0,23,""],
+        [1,null,"postulate",1,0,23,""],
+        [2,null,"postulate",0,0,9,""],
+        [2,null,"function",1,12,22,""],
+        [3,null,"lhs",1,12,16,""],
+        [4,null,"function_name",1,12,16,""],
+        [5,null,"atom",1,12,16,""],
+        [6,null,"qid",1,12,16,""],
+        [3,null,"rhs",1,17,22,""],
+        [4,null,":",0,17,18,""],
+        [4,null,"expr",1,19,22,""],
+        [5,null,"atom",1,19,22,""],
+        [6,null,"SetN",1,19,22,""],
+        [7,null,"Set",0,19,22,""]
+      ]
+    },
+    {
+      "source": "leaf : Set\n",
+      "rows": [
+        [0,null,"source_file",1,0,11,""],
+        [1,null,"function",1,0,10,""],
+        [2,null,"lhs",1,0,4,""],
+        [3,null,"function_name",1,0,4,""],
+        [4,null,"atom",1,0,4,""],
+        [5,null,"qid",1,0,4,""],
+        [2,null,"rhs",1,5,10,""],
+        [3,null,":",0,5,6,""],
+        [3,null,"expr",1,7,10,""],
+        [4,null,"atom",1,7,10,""],
+        [5,null,"SetN",1,7,10,""],
+        [6,null,"Set",0,7,10,""]
+      ]
+    },
+    {
+      "source": "identity : Set -> Set\n",
+      "rows": [
+        [0,null,"source_file",1,0,22,""],
+        [1,null,"function",1,0,21,""],
+        [2,null,"lhs",1,0,8,""],
+        [3,null,"function_name",1,0,8,""],
+        [4,null,"atom",1,0,8,""],
+        [5,null,"qid",1,0,8,""],
+        [2,null,"rhs",1,9,21,""],
+        [3,null,":",0,9,10,""],
+        [3,null,"expr",1,11,21,""],
+        [4,null,"atom",1,11,14,""],
+        [5,null,"SetN",1,11,14,""],
+        [6,null,"Set",0,11,14,""],
+        [4,null,"->",0,15,17,""],
+        [4,null,"expr",1,18,21,""],
+        [5,null,"atom",1,18,21,""],
+        [6,null,"SetN",1,18,21,""],
+        [7,null,"Set",0,18,21,""]
+      ]
+    },
+    {
+      "source": "identity A = A\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,null,"function",1,0,14,""],
+        [2,null,"lhs",1,0,10,""],
+        [3,null,"atom",1,0,8,""],
+        [4,null,"qid",1,0,8,""],
+        [3,null,"atom",1,9,10,""],
+        [4,null,"qid",1,9,10,""],
+        [2,null,"rhs",1,11,14,""],
+        [3,null,"=",0,11,12,""],
+        [3,null,"expr",1,13,14,""],
+        [4,null,"atom",1,13,14,""],
+        [5,null,"qid",1,13,14,""]
+      ]
+    },
+    {
+      "source": "identity = \\ A -> A\n",
+      "rows": [
+        [0,null,"source_file",1,0,20,""],
+        [1,null,"function",1,0,19,""],
+        [2,null,"lhs",1,0,8,""],
+        [3,null,"atom",1,0,8,""],
+        [4,null,"qid",1,0,8,""],
+        [2,null,"rhs",1,9,19,""],
+        [3,null,"=",0,9,10,""],
+        [3,null,"expr",1,11,19,""],
+        [4,null,"lambda",1,11,19,""],
+        [5,null,"\\",0,11,12,""],
+        [5,null,"untyped_binding",1,13,14,""],
+        [6,null,"bid",1,13,14,""],
+        [7,null,"bid",0,13,14,""],
+        [5,null,"->",0,15,17,""],
+        [5,null,"expr",1,18,19,""],
+        [6,null,"atom",1,18,19,""],
+        [7,null,"qid",1,18,19,""]
+      ]
+    },
+    {
+      "source": "identity = λ A → A\n",
+      "rows": [
+        [0,null,"source_file",1,0,22,""],
+        [1,null,"function",1,0,21,""],
+        [2,null,"lhs",1,0,8,""],
+        [3,null,"atom",1,0,8,""],
+        [4,null,"qid",1,0,8,""],
+        [2,null,"rhs",1,9,21,""],
+        [3,null,"=",0,9,10,""],
+        [3,null,"expr",1,11,21,""],
+        [4,null,"lambda",1,11,21,""],
+        [5,null,"λ",0,11,13,""],
+        [5,null,"untyped_binding",1,14,15,""],
+        [6,null,"bid",1,14,15,""],
+        [7,null,"bid",0,14,15,""],
+        [5,null,"→",0,16,19,""],
+        [5,null,"expr",1,20,21,""],
+        [6,null,"atom",1,20,21,""],
+        [7,null,"qid",1,20,21,""]
+      ]
+    },
+    {
+      "source": "leaf : Set₁\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,null,"function",1,0,13,""],
+        [2,null,"lhs",1,0,4,""],
+        [3,null,"function_name",1,0,4,""],
+        [4,null,"atom",1,0,4,""],
+        [5,null,"qid",1,0,4,""],
+        [2,null,"rhs",1,5,13,""],
+        [3,null,":",0,5,6,""],
+        [3,null,"expr",1,7,13,""],
+        [4,null,"atom",1,7,13,""],
+        [5,null,"qid",1,7,13,""]
+      ]
+    },
+    {
+      "source": "truth : Prop\n",
+      "rows": [
+        [0,null,"source_file",1,0,13,""],
+        [1,null,"function",1,0,12,""],
+        [2,null,"lhs",1,0,5,""],
+        [3,null,"function_name",1,0,5,""],
+        [4,null,"atom",1,0,5,""],
+        [5,null,"qid",1,0,5,""],
+        [2,null,"rhs",1,6,12,""],
+        [3,null,":",0,6,7,""],
+        [3,null,"expr",1,8,12,""],
+        [4,null,"atom",1,8,12,""],
+        [5,null,"Prop",0,8,12,""]
+      ]
+    },
+    {
+      "source": "data Leaf : Set where\n  seed : Leaf\n",
+      "rows": [
+        [0,null,"source_file",1,0,36,""],
+        [1,null,"data",1,0,36,""],
+        [2,null,"data",0,0,4,""],
+        [2,null,"data_name",1,5,9,""],
+        [3,null,"data_name",0,5,9,""],
+        [2,null,":",0,10,11,""],
+        [2,null,"expr",1,12,15,""],
+        [3,null,"atom",1,12,15,""],
+        [4,null,"SetN",1,12,15,""],
+        [5,null,"Set",0,12,15,""],
+        [2,null,"where",0,16,21,""],
+        [2,null,"function",1,24,35,""],
+        [3,null,"lhs",1,24,28,""],
+        [4,null,"function_name",1,24,28,""],
+        [5,null,"atom",1,24,28,""],
+        [6,null,"qid",1,24,28,""],
+        [3,null,"rhs",1,29,35,""],
+        [4,null,":",0,29,30,""],
+        [4,null,"expr",1,31,35,""],
+        [5,null,"atom",1,31,35,""],
+        [6,null,"qid",1,31,35,""]
+      ]
+    },
+    {
+      "source": "private\n  leaf : Set\n",
+      "rows": [
+        [0,null,"source_file",1,0,21,""],
+        [1,null,"private",1,0,21,""],
+        [2,null,"private",0,0,7,""],
+        [2,null,"function",1,10,20,""],
+        [3,null,"lhs",1,10,14,""],
+        [4,null,"function_name",1,10,14,""],
+        [5,null,"atom",1,10,14,""],
+        [6,null,"qid",1,10,14,""],
+        [3,null,"rhs",1,15,20,""],
+        [4,null,":",0,15,16,""],
+        [4,null,"expr",1,17,20,""],
+        [5,null,"atom",1,17,20,""],
+        [6,null,"SetN",1,17,20,""],
+        [7,null,"Set",0,17,20,""]
+      ]
+    },
+    {
+      "source": "abstract\n  leaf : Set\n",
+      "rows": [
+        [0,null,"source_file",1,0,22,""],
+        [1,null,"abstract",1,0,22,""],
+        [2,null,"abstract",0,0,8,""],
+        [2,null,"function",1,11,21,""],
+        [3,null,"lhs",1,11,15,""],
+        [4,null,"function_name",1,11,15,""],
+        [5,null,"atom",1,11,15,""],
+        [6,null,"qid",1,11,15,""],
+        [3,null,"rhs",1,16,21,""],
+        [4,null,":",0,16,17,""],
+        [4,null,"expr",1,18,21,""],
+        [5,null,"atom",1,18,21,""],
+        [6,null,"SetN",1,18,21,""],
+        [7,null,"Set",0,18,21,""]
+      ]
+    },
+    {
+      "source": "instance\n  leaf : Set\n",
+      "rows": [
+        [0,null,"source_file",1,0,22,""],
+        [1,null,"instance",1,0,22,""],
+        [2,null,"instance",0,0,8,""],
+        [2,null,"function",1,11,21,""],
+        [3,null,"lhs",1,11,15,""],
+        [4,null,"function_name",1,11,15,""],
+        [5,null,"atom",1,11,15,""],
+        [6,null,"qid",1,11,15,""],
+        [3,null,"rhs",1,16,21,""],
+        [4,null,":",0,16,17,""],
+        [4,null,"expr",1,18,21,""],
+        [5,null,"atom",1,18,21,""],
+        [6,null,"SetN",1,18,21,""],
+        [7,null,"Set",0,18,21,""]
+      ]
+    },
+    {
+      "source": "macro\n  leaf : Set\n",
+      "rows": [
+        [0,null,"source_file",1,0,19,""],
+        [1,null,"macro",1,0,19,""],
+        [2,null,"macro",0,0,5,""],
+        [2,null,"function",1,8,18,""],
+        [3,null,"lhs",1,8,12,""],
+        [4,null,"function_name",1,8,12,""],
+        [5,null,"atom",1,8,12,""],
+        [6,null,"qid",1,8,12,""],
+        [3,null,"rhs",1,13,18,""],
+        [4,null,":",0,13,14,""],
+        [4,null,"expr",1,15,18,""],
+        [5,null,"atom",1,15,18,""],
+        [6,null,"SetN",1,15,18,""],
+        [7,null,"Set",0,15,18,""]
+      ]
+    },
+    {
+      "source": "infixl 7 _grove_\n",
+      "rows": [
+        [0,null,"source_file",1,0,17,""],
+        [1,null,"infix",1,0,16,""],
+        [2,null,"infixl",0,0,6,""],
+        [2,null,"integer",1,7,8,""],
+        [2,null,"bid",1,9,16,""],
+        [3,null,"bid",0,9,16,""]
+      ]
+    },
+    {
+      "source": "pattern grove = seed\n",
+      "rows": [
+        [0,null,"source_file",1,0,21,""],
+        [1,null,"pattern",1,0,20,""],
+        [2,null,"pattern",0,0,7,""],
+        [2,null,"id",1,8,13,""],
+        [2,null,"=",0,14,15,""],
+        [2,null,"expr",1,16,20,""],
+        [3,null,"atom",1,16,20,""],
+        [4,null,"qid",1,16,20,""]
+      ]
+    },
+    {
+      "source": "id : {A : Set} -> A -> A\nid x = x\n",
+      "rows": [
+        [0,null,"source_file",1,0,34,""],
+        [1,null,"function",1,0,24,""],
+        [2,null,"lhs",1,0,2,""],
+        [3,null,"function_name",1,0,2,""],
+        [4,null,"atom",1,0,2,""],
+        [5,null,"qid",1,0,2,""],
+        [2,null,"rhs",1,3,24,""],
+        [3,null,":",0,3,4,""],
+        [3,null,"expr",1,5,24,""],
+        [4,null,"typed_binding",1,5,14,""],
+        [5,null,"{",0,5,6,""],
+        [5,null,"atom",1,6,7,""],
+        [6,null,"qid",1,6,7,""],
+        [5,null,":",0,8,9,""],
+        [5,null,"expr",1,10,13,""],
+        [6,null,"atom",1,10,13,""],
+        [7,null,"SetN",1,10,13,""],
+        [8,null,"Set",0,10,13,""],
+        [5,null,"}",0,13,14,""],
+        [4,null,"->",0,15,17,""],
+        [4,null,"expr",1,18,24,""],
+        [5,null,"atom",1,18,19,""],
+        [6,null,"qid",1,18,19,""],
+        [5,null,"->",0,20,22,""],
+        [5,null,"expr",1,23,24,""],
+        [6,null,"atom",1,23,24,""],
+        [7,null,"qid",1,23,24,""],
+        [1,null,"function",1,25,33,""],
+        [2,null,"lhs",1,25,29,""],
+        [3,null,"atom",1,25,27,""],
+        [4,null,"qid",1,25,27,""],
+        [3,null,"atom",1,28,29,""],
+        [4,null,"qid",1,28,29,""],
+        [2,null,"rhs",1,30,33,""],
+        [3,null,"=",0,30,31,""],
+        [3,null,"expr",1,32,33,""],
+        [4,null,"atom",1,32,33,""],
+        [5,null,"qid",1,32,33,""]
+      ]
+    },
+    {
+      "source": "pair = (seed , leaf)\n",
+      "rows": [
+        [0,null,"source_file",1,0,21,""],
+        [1,null,"function",1,0,20,""],
+        [2,null,"lhs",1,0,4,""],
+        [3,null,"atom",1,0,4,""],
+        [4,null,"qid",1,0,4,""],
+        [2,null,"rhs",1,5,20,""],
+        [3,null,"=",0,5,6,""],
+        [3,null,"expr",1,7,20,""],
+        [4,null,"atom",1,7,20,""],
+        [5,null,"(",0,7,8,""],
+        [5,null,"expr",1,8,19,""],
+        [6,null,"atom",1,8,12,""],
+        [7,null,"qid",1,8,12,""],
+        [6,null,"atom",1,13,14,""],
+        [7,null,"qid",1,13,14,""],
+        [6,null,"atom",1,15,19,""],
+        [7,null,"qid",1,15,19,""],
+        [5,null,")",0,19,20,""]
+      ]
+    },
+    {
+      "source": "placeholder = ?\n",
+      "rows": [
+        [0,null,"source_file",1,0,16,""],
+        [1,null,"function",1,0,15,""],
+        [2,null,"lhs",1,0,11,""],
+        [3,null,"atom",1,0,11,""],
+        [4,null,"qid",1,0,11,""],
+        [2,null,"rhs",1,12,15,""],
+        [3,null,"=",0,12,13,""],
+        [3,null,"expr",1,14,15,""],
+        [4,null,"atom",1,14,15,""],
+        [5,null,"qid",1,14,15,""]
+      ]
+    },
+    {
+      "source": "unfinished = {! grove !}\n",
+      "rows": [
+        [0,null,"source_file",1,0,25,""],
+        [1,null,"function",1,0,24,""],
+        [2,null,"lhs",1,0,10,""],
+        [3,null,"atom",1,0,10,""],
+        [4,null,"qid",1,0,10,""],
+        [2,null,"rhs",1,11,24,""],
+        [3,null,"=",0,11,12,""],
+        [3,null,"expr",1,13,24,""],
+        [4,null,"atom",1,13,24,""],
+        [5,null,"{",0,13,14,""],
+        [5,null,"expr",1,14,23,""],
+        [6,null,"atom",1,14,15,""],
+        [7,null,"qid",1,14,15,""],
+        [6,null,"atom",1,16,21,""],
+        [7,null,"qid",1,16,21,""],
+        [6,null,"atom",1,22,23,""],
+        [7,null,"qid",1,22,23,""],
+        [5,null,"}",0,23,24,""]
+      ]
+    },
+    {
+      "source": "apply = let leaf = seed in leaf\n",
+      "rows": [
+        [0,null,"source_file",1,0,32,""],
+        [1,null,"function",1,0,31,""],
+        [2,null,"lhs",1,0,5,""],
+        [3,null,"atom",1,0,5,""],
+        [4,null,"qid",1,0,5,""],
+        [2,null,"rhs",1,6,31,""],
+        [3,null,"=",0,6,7,""],
+        [3,null,"expr",1,8,31,""],
+        [4,null,"let",1,8,31,""],
+        [5,null,"let",0,8,11,""],
+        [5,null,"function",1,12,23,""],
+        [6,null,"lhs",1,12,16,""],
+        [7,null,"atom",1,12,16,""],
+        [8,null,"qid",1,12,16,""],
+        [6,null,"rhs",1,17,23,""],
+        [7,null,"=",0,17,18,""],
+        [7,null,"expr",1,19,23,""],
+        [8,null,"atom",1,19,23,""],
+        [9,null,"qid",1,19,23,""],
+        [5,null,"in",0,24,26,""],
+        [5,null,"expr",1,27,31,""],
+        [6,null,"atom",1,27,31,""],
+        [7,null,"qid",1,27,31,""]
+      ]
+    },
+    {
+      "source": "universal : ∀ (A : Set) → Set\n",
+      "rows": [
+        [0,null,"source_file",1,0,34,""],
+        [1,null,"function",1,0,33,""],
+        [2,null,"lhs",1,0,9,""],
+        [3,null,"function_name",1,0,9,""],
+        [4,null,"atom",1,0,9,""],
+        [5,null,"qid",1,0,9,""],
+        [2,null,"rhs",1,10,33,""],
+        [3,null,":",0,10,11,""],
+        [3,null,"expr",1,12,33,""],
+        [4,null,"forall",1,12,33,""],
+        [5,null,"∀",0,12,15,""],
+        [5,null,"typed_binding",1,16,25,""],
+        [6,null,"(",0,16,17,""],
+        [6,null,"atom",1,17,18,""],
+        [7,null,"qid",1,17,18,""],
+        [6,null,":",0,19,20,""],
+        [6,null,"expr",1,21,24,""],
+        [7,null,"atom",1,21,24,""],
+        [8,null,"SetN",1,21,24,""],
+        [9,null,"Set",0,21,24,""],
+        [6,null,")",0,24,25,""],
+        [5,null,"→",0,26,29,""],
+        [5,null,"expr",1,30,33,""],
+        [6,null,"atom",1,30,33,""],
+        [7,null,"SetN",1,30,33,""],
+        [8,null,"Set",0,30,33,""]
+      ]
+    },
+    {
+      "source": "unicode = \"café\"\n",
+      "rows": [
+        [0,null,"source_file",1,0,18,""],
+        [1,null,"function",1,0,17,""],
+        [2,null,"lhs",1,0,7,""],
+        [3,null,"atom",1,0,7,""],
+        [4,null,"qid",1,0,7,""],
+        [2,null,"rhs",1,8,17,""],
+        [3,null,"=",0,8,9,""],
+        [3,null,"expr",1,10,17,""],
+        [4,null,"atom",1,10,17,""],
+        [5,null,"literal",1,10,17,""]
+      ]
+    },
+    {
+      "source": "number = 73\n",
+      "rows": [
+        [0,null,"source_file",1,0,12,""],
+        [1,null,"function",1,0,11,""],
+        [2,null,"lhs",1,0,6,""],
+        [3,null,"atom",1,0,6,""],
+        [4,null,"qid",1,0,6,""],
+        [2,null,"rhs",1,7,11,""],
+        [3,null,"=",0,7,8,""],
+        [3,null,"expr",1,9,11,""],
+        [4,null,"atom",1,9,11,""],
+        [5,null,"qid",1,9,11,""]
+      ]
+    },
+    {
+      "source": "\n  -- grove\nleaf : Set\n",
+      "rows": [
+        [0,null,"source_file",1,3,23,""],
+        [1,null,"comment",1,3,11,"X"],
+        [1,null,"function",1,12,22,""],
+        [2,null,"lhs",1,12,16,""],
+        [3,null,"function_name",1,12,16,""],
+        [4,null,"atom",1,12,16,""],
+        [5,null,"qid",1,12,16,""],
+        [2,null,"rhs",1,17,22,""],
+        [3,null,":",0,17,18,""],
+        [3,null,"expr",1,19,22,""],
+        [4,null,"atom",1,19,22,""],
+        [5,null,"SetN",1,19,22,""],
+        [6,null,"Set",0,19,22,""]
+      ]
+    }
+  ],
+  "divergences": [
+    {
+      "source": "postulate\n  seed : Set\n  leaf : Set\n",
+      "reason": "The pinned grammar permits this declaration block, but the independent oracle inserts a hidden missing dedent at end of input. The native scanner retains its complete pending layout queue as shared Links state and accepts the block losslessly.",
+      "rows": [
+        [0,null,"source_file",1,0,36,""],
+        [1,null,"postulate",1,0,36,""],
+        [2,null,"postulate",0,0,9,""],
+        [2,null,"function",1,12,22,""],
+        [3,null,"lhs",1,12,16,""],
+        [4,null,"function_name",1,12,16,""],
+        [5,null,"atom",1,12,16,""],
+        [6,null,"qid",1,12,16,""],
+        [3,null,"rhs",1,17,22,""],
+        [4,null,":",0,17,18,""],
+        [4,null,"expr",1,19,22,""],
+        [5,null,"atom",1,19,22,""],
+        [6,null,"SetN",1,19,22,""],
+        [7,null,"Set",0,19,22,""],
+        [2,null,"function",1,25,35,""],
+        [3,null,"lhs",1,25,29,""],
+        [4,null,"function_name",1,25,29,""],
+        [5,null,"atom",1,25,29,""],
+        [6,null,"qid",1,25,29,""],
+        [3,null,"rhs",1,30,35,""],
+        [4,null,":",0,30,31,""],
+        [4,null,"expr",1,32,35,""],
+        [5,null,"atom",1,32,35,""],
+        [6,null,"SetN",1,32,35,""],
+        [7,null,"Set",0,32,35,""]
+      ]
+    },
+    {
+      "source": "record Grove : Set where\n  field\n    leaf : Set\n",
+      "reason": "The pinned grammar permits this declaration block, but the independent oracle inserts a hidden missing dedent at end of input. The native scanner retains its complete pending layout queue as shared Links state and accepts the block losslessly.",
+      "rows": [
+        [0,null,"source_file",1,0,48,""],
+        [1,null,"record",1,0,48,""],
+        [2,null,"record",0,0,6,""],
+        [2,null,"record_name",1,7,12,""],
+        [3,null,"qid",1,7,12,""],
+        [2,null,":",0,13,14,""],
+        [2,null,"expr",1,15,18,""],
+        [3,null,"atom",1,15,18,""],
+        [4,null,"SetN",1,15,18,""],
+        [5,null,"Set",0,15,18,""],
+        [2,null,"record_declarations_block",1,19,48,""],
+        [3,null,"where",0,19,24,""],
+        [3,null,"fields",1,27,48,""],
+        [4,null,"field",0,27,32,""],
+        [4,null,"signature",1,37,47,""],
+        [5,null,"field_name",1,37,41,""],
+        [5,null,":",0,42,43,""],
+        [5,null,"expr",1,44,47,""],
+        [6,null,"atom",1,44,47,""],
+        [7,null,"SetN",1,44,47,""],
+        [8,null,"Set",0,44,47,""]
+      ]
+    },
+    {
+      "source": "module Grove where\n  leaf : Set\n  leaf = Set\n",
+      "reason": "The pinned grammar permits this declaration block, but the independent oracle inserts a hidden missing dedent at end of input. The native scanner retains its complete pending layout queue as shared Links state and accepts the block losslessly.",
+      "rows": [
+        [0,null,"source_file",1,0,45,""],
+        [1,null,"module",1,0,45,""],
+        [2,null,"module",0,0,6,""],
+        [2,null,"module_name",1,7,12,""],
+        [3,null,"qid",1,7,12,""],
+        [2,null,"where",0,13,18,""],
+        [2,null,"function",1,21,31,""],
+        [3,null,"lhs",1,21,25,""],
+        [4,null,"function_name",1,21,25,""],
+        [5,null,"atom",1,21,25,""],
+        [6,null,"qid",1,21,25,""],
+        [3,null,"rhs",1,26,31,""],
+        [4,null,":",0,26,27,""],
+        [4,null,"expr",1,28,31,""],
+        [5,null,"atom",1,28,31,""],
+        [6,null,"SetN",1,28,31,""],
+        [7,null,"Set",0,28,31,""],
+        [2,null,"function",1,34,44,""],
+        [3,null,"lhs",1,34,38,""],
+        [4,null,"atom",1,34,38,""],
+        [5,null,"qid",1,34,38,""],
+        [3,null,"rhs",1,39,44,""],
+        [4,null,"=",0,39,40,""],
+        [4,null,"expr",1,41,44,""],
+        [5,null,"atom",1,41,44,""],
+        [6,null,"SetN",1,41,44,""],
+        [7,null,"Set",0,41,44,""]
+      ]
+    },
+    {
+      "source": "mutual\n  leaf : Set\n  seed : Set\n",
+      "reason": "The pinned oracle can insert a hidden missing dedent for this declaration block, and its pending token queue is not part of its serialized scanner state. The native scanner keeps the entire pending layout state and accepts the block losslessly.",
+      "rows": [
+        [0,null,"source_file",1,0,33,""],
+        [1,null,"mutual",1,0,33,""],
+        [2,null,"mutual",0,0,6,""],
+        [2,null,"function",1,9,19,""],
+        [3,null,"lhs",1,9,13,""],
+        [4,null,"function_name",1,9,13,""],
+        [5,null,"atom",1,9,13,""],
+        [6,null,"qid",1,9,13,""],
+        [3,null,"rhs",1,14,19,""],
+        [4,null,":",0,14,15,""],
+        [4,null,"expr",1,16,19,""],
+        [5,null,"atom",1,16,19,""],
+        [6,null,"SetN",1,16,19,""],
+        [7,null,"Set",0,16,19,""],
+        [2,null,"function",1,22,32,""],
+        [3,null,"lhs",1,22,26,""],
+        [4,null,"function_name",1,22,26,""],
+        [5,null,"atom",1,22,26,""],
+        [6,null,"qid",1,22,26,""],
+        [3,null,"rhs",1,27,32,""],
+        [4,null,":",0,27,28,""],
+        [4,null,"expr",1,29,32,""],
+        [5,null,"atom",1,29,32,""],
+        [6,null,"SetN",1,29,32,""],
+        [7,null,"Set",0,29,32,""]
+      ]
+    }
+  ],
+  "rejections": [
+    {
+      "source": "leaf : (Set\n",
+      "recovered": "(source_file (function_definition (left_hand_side (function_name (atom (qualified_identifier \"leaf\")))) (right_hand_side ~\" \" \":\" (expression (atom ~\" \" \"(\" (expression (atom (set_universe \"Set\"))) (MISSING@11 \")\") ~\"\\n\")))) (unnamed_token \"\"))"
+    },
+    {
+      "source": "leaf = \"grove\n",
+      "recovered": "(source_file (function_definition (left_hand_side (atom (qualified_identifier \"leaf\"))) (right_hand_side ~\" \" \"=\" (expression (atom (qualified_identifier ~\" \" (ERROR@7..8 \"\\\"\") \"grove\"))))) (unnamed_token \"\\n\"))"
+    },
+    {
+      "source": "leaf = (seed\n",
+      "recovered": "(source_file (function_definition (left_hand_side (atom (qualified_identifier \"leaf\"))) (right_hand_side ~\" \" \"=\" (expression (atom ~\" \" \"(\" (expression (atom (qualified_identifier \"seed\"))) (MISSING@12 \")\") ~\"\\n\")))) (unnamed_token \"\"))"
+    },
+    {
+      "source": "module Grove (\n",
+      "recovered": "(source_file (function_definition (left_hand_side (atom (qualified_identifier \"module\")) (atom ~\" \" (qualified_identifier \"Grove\")) (atom ~\" \" \"(\" (MISSING@14 \")\") ~\"\\n\"))) (unnamed_token \"\"))"
+    },
+    {
+      "source": "postulate\n  leaf : (Set\n",
+      "recovered": "(source_file (postulate \"postulate\" (unnamed_token \"\\n  \") (function_definition (left_hand_side (function_name (atom (qualified_identifier \"leaf\")))) (right_hand_side ~\" \" \":\" (expression (atom ~\" \" \"(\" (expression (atom (set_universe \"Set\"))) (MISSING@23 \")\") ~\"\\n\")))) (unnamed_token \"\") (unnamed_token \"\")) (unnamed_token \"\"))"
+    },
+    {
+      "source": "leaf :\n",
+      "recovered": "(source_file (function_definition (left_hand_side (function_name (atom (qualified_identifier \"leaf\")))) (right_hand_side ~\" \" \":\" (expression (atom (MISSING@6 \"_\") ~\"\\n\")))) (unnamed_token \"\"))"
+    },
+    {
+      "source": "leaf =\n",
+      "recovered": "(source_file (function_definition (left_hand_side (atom (qualified_identifier \"leaf\"))) (right_hand_side ~\" \" \"=\" (expression (atom (MISSING@6 \"_\") ~\"\\n\")))) (unnamed_token \"\"))"
+    }
+  ]
+}

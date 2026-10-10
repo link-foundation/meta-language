@@ -36,6 +36,10 @@
         [
           "native-r",
           "function_definition"
+        ],
+        [
+          "native-agda",
+          "function_definition"
         ]
       ]
     },
@@ -185,6 +189,10 @@
         ],
         [
           "native-r",
+          "string"
+        ],
+        [
+          "native-agda",
           "string"
         ]
       ]
@@ -423,6 +431,10 @@
         ],
         [
           "native-r",
+          "comment"
+        ],
+        [
+          "native-agda",
           "comment"
         ]
       ]
@@ -1126,6 +1138,10 @@
         [
           "native-r",
           "identifier"
+        ],
+        [
+          "native-agda",
+          "identifier"
         ]
       ]
     },
@@ -1240,6 +1256,10 @@
         [
           "native-r",
           "expression"
+        ],
+        [
+          "native-agda",
+          "expression"
         ]
       ]
     },
@@ -1321,6 +1341,10 @@
         ],
         [
           "native-odin",
+          "statement"
+        ],
+        [
+          "native-agda",
           "statement"
         ]
       ]
@@ -2008,6 +2032,10 @@
         [
           "native-xml",
           "word_characters"
+        ],
+        [
+          "native-agda",
+          "word_characters"
         ]
       ]
     },
@@ -2159,6 +2187,10 @@
         ],
         [
           "native-cpp",
+          "attribute"
+        ],
+        [
+          "native-agda",
           "attribute"
         ]
       ]
@@ -2638,6 +2670,10 @@
         [
           "native-odin",
           "declaration"
+        ],
+        [
+          "native-agda",
+          "declaration"
         ]
       ]
     },
@@ -2767,6 +2803,10 @@
         ],
         [
           "native-dart",
+          "do_statement"
+        ],
+        [
+          "native-agda",
           "do_statement"
         ]
       ]
@@ -3643,6 +3683,10 @@
         ],
         [
           "native-lean",
+          "import"
+        ],
+        [
+          "native-agda",
           "import"
         ]
       ]
@@ -4571,6 +4615,10 @@
         ],
         [
           "native-groovy",
+          "pattern"
+        ],
+        [
+          "native-agda",
           "pattern"
         ]
       ]
@@ -6168,6 +6216,10 @@
         [
           "native-odin",
           "source_file"
+        ],
+        [
+          "native-agda",
+          "source_file"
         ]
       ]
     },
@@ -6229,6 +6281,10 @@
         ],
         [
           "native-r",
+          "integer_literal"
+        ],
+        [
+          "native-agda",
           "integer_literal"
         ]
       ]
@@ -6341,6 +6397,10 @@
         ],
         [
           "native-odin",
+          "literal"
+        ],
+        [
+          "native-agda",
           "literal"
         ]
       ]
@@ -6875,6 +6935,10 @@
         ],
         [
           "native-python",
+          "module"
+        ],
+        [
+          "native-agda",
           "module"
         ]
       ]
@@ -8174,6 +8238,10 @@
         [
           "native-hcl",
           "ellipsis"
+        ],
+        [
+          "native-agda",
+          "ellipsis"
         ]
       ]
     },
@@ -8500,6 +8568,10 @@
         [
           "native-rocq",
           "attributes"
+        ],
+        [
+          "native-agda",
+          "attribute_list"
         ]
       ]
     },

@@ -748,3 +748,38 @@ test('complete alternative preferences keep the original fallback and every prod
   assert.equal(parser.parseTree('y').ok, false);
   for (const change of [{ symbol: 'missing' }, { rule: 'missing' }, { symbol: null }]) assert.throws(() => transformNativeSource(source, [{ ...decision, ...change }]), TypeError);
 });
+
+test('distributed choice aliases preserve hidden nodes and named literal leaves', () => {
+  const source = { name: 'aliases', rules: {
+    document: { type: 'ALIAS', named: true, value: 'target', content: { type: 'CHOICE', members: [{ type: 'SYMBOL', name: '_name' }, { type: 'STRING', value: '_' }] } },
+    _name: { type: 'ALIAS', named: true, value: 'qualified_name', content: { type: 'PATTERN', value: '[a-z]+' } },
+  } };
+  const decision = { family: 'alias-choice-alternatives', rule: 'document', alias: 'target', count: 1 };
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformNativeSource(source, [decision])))));
+  const named = parser.parseTree('grove');
+  assert.equal(named.ok, true);
+  assert.equal(named.tree.children[0].kind, 'target');
+  assert.equal(named.tree.children[0].children[0].kind, 'qualified_name');
+  const literal = parser.parseTree('_');
+  assert.equal(literal.ok, true);
+  assert.equal(literal.tree.children[0].type, 'token');
+  assert.equal(literal.tree.children[0].kind, 'target');
+  assert.throws(() => transformNativeSource(source, [{ ...decision, count: 2 }]), /production count/);
+});
+
+test('reviewed lexical prefix guards keep the original named token identity', () => {
+  const source = { name: 'guarded_words', rules: {
+    document: { type: 'SYMBOL', name: 'identifier' },
+    identifier: { type: 'PATTERN', value: '[a-z]+' },
+  } };
+  const decision = { family: 'pattern-prefix-exclusion', rule: 'identifier', pattern: '[a-z]+', excludedPattern: 'if(?![a-z])', preserveLexicalIdentity: true };
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformNativeSource(source, [decision])))));
+  assert.equal(parser.parseTree('if').ok, false);
+  for (const word of ['grove', 'iffy']) {
+    const result = parser.parseTree(word);
+    assert.equal(result.ok, true);
+    assert.equal(result.tree.children[0].type, 'token');
+    assert.equal(result.tree.children[0].kind, 'identifier');
+    assert.equal(result.tree.children[0].text, word);
+  }
+});

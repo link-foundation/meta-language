@@ -1129,7 +1129,11 @@
           "parity/fixtures/native-grammars/html.json",
           "parity/fixtures/native-grammars/html-corpus.json",
           "parity/grammars/native/html.lino",
-          "parity/fixtures/scanner-state-semantics.json"
+          "parity/fixtures/scanner-state-semantics.json",
+          "parity/grammars/native/agda.lino",
+          "parity/fixtures/native-grammars/agda.json",
+          "parity/fixtures/native-grammars/agda-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_agda.rs"
         ]
       },
       "javascript": {
@@ -1230,7 +1234,11 @@
           "parity/fixtures/native-grammars/html.json",
           "parity/fixtures/native-grammars/html-corpus.json",
           "parity/grammars/native/html.lino",
-          "parity/fixtures/scanner-state-semantics.json"
+          "parity/fixtures/scanner-state-semantics.json",
+          "parity/grammars/native/agda.lino",
+          "parity/fixtures/native-grammars/agda.json",
+          "parity/fixtures/native-grammars/agda-corpus.json",
+          "js/tests/issue-195-grammar-native-agda.test.js"
         ]
       }
     },

@@ -3868,6 +3868,111 @@
           "reason": "The pinned HTML scanner pops its tag context at the anonymous self-closing delimiter; the generated external rule retains that state transition and anonymous leaf."
         }
       ]
+    },
+    "agda": {
+      "names": {
+        "_newline": "newline",
+        "_indent": "indent",
+        "_dedent": "dedent",
+        "_FORALL": "universal_quantifier_keyword",
+        "_ARROW": "arrow",
+        "_LAMBDA": "lambda_keyword",
+        "_ELLIPSIS": "ellipsis",
+        "function": "function_definition",
+        "lhs": "left_hand_side",
+        "rhs": "right_hand_side",
+        "lhs_decl": "left_hand_side_declaration",
+        "lhs_defn": "left_hand_side_definition",
+        "rhs_decl": "right_hand_side_declaration",
+        "rhs_defn": "right_hand_side_definition",
+        "id": "identifier",
+        "_qid": "qualified_identifier_body",
+        "bid": "binding_identifier",
+        "_ids": "identifier_list",
+        "expr": "expression",
+        "stmt": "statement",
+        "SetN": "set_universe",
+        "PropN": "proposition_universe",
+        "infix": "infix_declaration",
+        "generalize": "generalization_declaration",
+        "unquote_decl": "unquote_declaration",
+        "_field_name": "field_name_identifier",
+        "_record_assignments": "record_assignment_list_body",
+        "_field_assignments": "field_assignment_list_body",
+        "where": "where_clause",
+        "mutual": "mutual_definition_block",
+        "renaming": "renaming_clause",
+        "argument_id": "argument_identifier",
+        "argument_ids": "argument_identifier_list",
+        "with_expressions": "with_expression_list",
+        "forall": "universal_quantification",
+        "do_where": "do_where_clause",
+        "untyped_binding": "binding_without_type",
+        "fields": "field_list",
+        "hole_names": "hole_name_list",
+        "attributes": "attribute_list",
+        "field_assignments": "field_assignment_list",
+        "record_assignments": "record_assignment_list",
+        "instance": "instance_declaration",
+        "_maybe_dotted_id": "optional_dotted_identifier",
+        "_maybe_dotted_ids": "optional_dotted_identifier_list",
+        "_with_exprs": "with_expression_list_body",
+        "_with_exprs_stmt": "with_expression_list_statement",
+        "_application_stmt": "application_statement",
+        "_expr2_without_let": "application_expression_without_let",
+        "_expr2": "application_expression_body",
+        "_expr2_stmt": "application_expression_statement",
+        "_atom_curly": "braced_atom",
+        "_atom_no_curly": "unbraced_atom",
+        "_do_stmt": "do_statement",
+        "_typed_untyped_bindings": "optional_type_binding_list",
+        "_typed_untyped_binding": "optional_type_binding",
+        "_import_directives": "import_directive_list",
+        "_atoms": "atom_list",
+        "_lambda_clauses": "lambda_clause_list",
+        "_typed_bindings": "typed_binding_list",
+        "_arg_id": "argument_identifier",
+        "_arg_ids": "argument_identifier_list",
+        "_application": "application_body",
+        "_field_names": "field_name_list",
+        "qid": "qualified_identifier",
+        "integer": "integer_literal"
+      },
+      "sourceTransforms": [
+        {
+          "family": "alias-choice-alternatives",
+          "rule": "module",
+          "alias": "module_name",
+          "count": 1,
+          "reason": "Distribute the named alias over the pinned choice so its hidden qualified-name branch retains the nested identifier node while its underscore literal remains a named leaf."
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "id",
+          "pattern": "([^\\s\\\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
+          "excludedPattern": "[:=](?![^\\s;.\"(){}@])",
+          "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
+          "preserveLexicalIdentity": true
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_qid",
+          "pattern": "(([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*\\.)*([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
+          "excludedPattern": "[:=](?![^\\s;.\"(){}@])",
+          "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
+          "preserveLexicalIdentity": true
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "lambda",
+          "value": 1,
+          "reason": "Preserve the pinned parser shift at an arrow: prefer the full lambda body over reducing bare absurd-lambda bindings and treating the same arrow as an outer function type."
+        }
+      ],
+      "concepts": {
+        "application": "application",
+        "attribute": "program.attributes"
+      }
     }
   },
   "concepts": {

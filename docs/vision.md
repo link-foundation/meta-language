@@ -1007,3 +1007,15 @@ handling. Generated tag context settles required implicit parent closures
 before accepting a child that the pinned containment table excludes. Native
 host CST expectations retain the independently pinned embedded-region spans;
 their source hashes must still match the inventory source.
+
+The generated Agda layout scanner stores both its indentation stack and its
+pending dedent/newline queue in shared Links state. Its reviewed source import
+retains lexical token identities under prefix guards and distributes named
+aliases over alternatives without erasing a hidden qualified-name child. A
+recorded preference preserves the pinned parser's lambda-arrow choice. The
+pinned development oracle's circular queue changes its modulus during growth
+without relocating queued entries. Its source record selects fresh-process
+oracle snapshots to isolate allocator history while retaining the original
+parser, source hashes and oracle assertions. Production parsing uses the
+shared native grammar directly. Focused layout discrepancies remain explicit;
+complete grammar unions and the remaining delivery requirements remain open.
