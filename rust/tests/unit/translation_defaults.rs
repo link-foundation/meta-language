@@ -184,6 +184,24 @@ fn lexical_boundaries_keep_regular_expression_bodies_and_division_distinct() {
         assert_eq!(error.kind, ErrorKind::Syntax);
         assert!(error.reason.contains("unterminated regular expression"));
     }
+    let count = fixtures["repeatedRegex"]["count"].as_u64().unwrap();
+    let literal = fixtures["repeatedRegex"]["literal"].as_str().unwrap();
+    let source = (0..count)
+        .map(|index| format!("const r{index} = {literal};"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let encoded = meta_language::translation::lexer::Source::new(&source);
+    let tokens = tokenize(&source, Language::JavaScript).unwrap();
+    let literals: Vec<_> = tokens
+        .tokens
+        .iter()
+        .filter(|token| token.kind == TokenKind::RegularExpression)
+        .collect();
+    assert_eq!(u64::try_from(literals.len()).unwrap(), count);
+    for token in literals {
+        assert_eq!(token.raw, literal);
+        assert_eq!(encoded.slice(token.start, token.end), literal);
+    }
     let source = fixtures["templateProgram"].as_str().unwrap();
     emit_javascript(&check_program(&parse_javascript(source).unwrap()).unwrap()).unwrap();
     assert!(

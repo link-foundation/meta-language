@@ -28,6 +28,9 @@ export function tokenize(source, language) {
   const comments = COMMENTS[language];
   const tokens = [];
   const commentList = [];
+  // Encode once, on the first regular expression. Copying each remaining
+  // suffix makes a module with many literals take quadratic time and space.
+  let units = null;
   let index = 0;
   while (index < source.length) {
     const char = source[index];
@@ -50,10 +53,9 @@ export function tokenize(source, language) {
     }
     const start = index;
     if (language === 'JavaScript' && char === '/' && startRegularExpression(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '')) {
-      const units = Array.from({ length: source.length - index }, (_, offset) => source.charCodeAt(index + offset));
-      const length = regularExpressionEnd(units, 0);
-      if (length < 0) throw new TranslationError('syntax', 'unterminated regular expression literal', { start, end: source.length });
-      const end = index + length;
+      units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const end = regularExpressionEnd(units, index);
+      if (end < 0) throw new TranslationError('syntax', 'unterminated regular expression literal', { start, end: source.length });
       tokens.push({ kind: 'regex', value: '/', raw: source.slice(index, end), start, end });
       index = end;
       continue;

@@ -335,6 +335,9 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
     let comments = comment_syntax(language);
     let mut tokens: Vec<Token> = Vec::new();
     let mut comment_list = Vec::new();
+    // Encode lazily once; copying each suffix is quadratic in modules with
+    // many regular-expression literals. The shared rule uses absolute offsets.
+    let mut units: Option<Vec<f64>> = None;
     let mut index = 0;
     while index < source.len() {
         let unit = source.units[index];
@@ -375,19 +378,19 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
             });
             let value = previous.map_or("", |token| token.value.as_str());
             if start_regular_expression(kind, value) {
-                let units: Vec<f64> = source.units()[index..]
-                    .iter()
-                    .map(|unit| f64::from(*unit))
-                    .collect();
-                let length = regular_expression_end(&units, 0.0);
-                if length < 0.0 {
+                let units = units.get_or_insert_with(|| {
+                    source.units().iter().map(|unit| f64::from(*unit)).collect()
+                });
+                #[allow(clippy::cast_precision_loss)]
+                let end = regular_expression_end(units, index as f64);
+                if end < 0.0 {
                     return Err(TranslationError::syntax(
                         "unterminated regular expression literal",
                         Some(span(start, source.len())),
                     ));
                 }
                 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                let end = index + length as usize;
+                let end = end as usize;
                 tokens.push(Token::new(
                     TokenKind::RegularExpression,
                     "/".to_owned(),

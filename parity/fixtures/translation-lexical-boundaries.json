@@ -17,5 +17,6 @@
     "return /first\nsecond/",
     "return /first\u2028second/"
   ],
-  "templateProgram": "function terminated(name) { return `${name}\\0`; }"
+  "templateProgram": "function terminated(name) { return `${name}\\0`; }",
+  "repeatedRegex": { "count": 200, "literal": "/[é😀/]/u" }
 }

@@ -30,3 +30,24 @@ test('NUL template escapes translate while legacy octal escapes are rejected', (
   assert.doesNotThrow(() => emitJavaScript(checkProgram(parseJavaScript(source))));
   assert.throws(() => tokenize('`\\01`', 'JavaScript'), /octal/u);
 });
+
+test('many regex literals encode the source only once and keep absolute Unicode offsets', () => {
+  const { count, literal: raw } = fixtures.repeatedRegex;
+  const source = Array.from({ length: count }, (_, index) => `const r${index} = ${raw};`).join('\n');
+  const original = String.prototype.charCodeAt;
+  let calls = 0;
+  let result;
+  try {
+    String.prototype.charCodeAt = function (index) { calls += 1; return original.call(this, index); };
+    result = tokenize(source, 'JavaScript');
+  } finally {
+    String.prototype.charCodeAt = original;
+  }
+  assert.equal(calls, source.length);
+  const literals = result.tokens.filter(({ kind }) => kind === 'regex');
+  assert.equal(literals.length, count);
+  for (const literal of literals) {
+    assert.equal(literal.raw, raw);
+    assert.equal(source.slice(literal.start, literal.end), literal.raw);
+  }
+});
