@@ -3,6 +3,31 @@ use super::issue_195_observations::{Observation, record};
 use meta_language::{FeatureParseOptions, compile_feature_grammar, parse_grammar_links};
 use serde_json::Value;
 
+#[test]
+fn external_extras_keep_skipped_prefixes_outside_their_named_token_span() {
+    let listing = "(grammar (start source))\n(extra (ref annotation))\n(scanner annotations (tokens annotation) (operations (while (next (class plain (char %20) (char %0A))) (do (skip (class plain (char %20) (char %0A))))) (consume (literal %23)) (while (all (not atEnd) (not (next (literal %0A)))) (do advance)) (emit annotation)))\n(rule source normal (repeat0 (literal x)))";
+    let input = "x \n#note";
+    let grammar = parse_grammar_links(listing).unwrap();
+    let parser = compile_feature_grammar(&grammar, None, FeatureParseOptions::default()).unwrap();
+    let outcome = parser
+        .parse_tree(input.as_bytes(), &FeatureParseOptions::default())
+        .unwrap();
+    assert!(outcome.ok);
+    let tree = outcome.tree.as_ref().unwrap();
+    let leaves = super::issue_195_native_grammar_rows::leaves(tree);
+    let annotation = leaves.iter().find(|child| matches!(child, meta_language::SyntaxTree::Token { kind: Some(kind), .. } if kind == "annotation")).unwrap();
+    let meta_language::SyntaxTree::Token {
+        start, end, text, ..
+    } = annotation
+    else {
+        panic!("annotation is a token")
+    };
+    assert_eq!(*start, 3);
+    assert_eq!(*end, 8);
+    assert_eq!(super::issue_195_native_grammar_rows::text(text), "#note");
+    assert_eq!(super::issue_195_native_grammar_rows::rebuilt(tree), input);
+}
+
 fn check_cases(text: &str) {
     let fixtures: Value = serde_json::from_str(text).unwrap();
     for fixture in fixtures.as_array().unwrap() {

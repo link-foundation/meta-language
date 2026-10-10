@@ -89,6 +89,10 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
         include_str!("native-grammars/nix.lino"),
     ),
     (
+        "native-grammars/odin.lino",
+        include_str!("native-grammars/odin.lino"),
+    ),
+    (
         "native-grammars/pascal.lino",
         include_str!("native-grammars/pascal.lino"),
     ),

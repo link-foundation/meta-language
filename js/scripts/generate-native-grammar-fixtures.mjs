@@ -1141,9 +1141,6 @@ export const NATIVE_GRAMMARS = Object.freeze([
     ...nativeGrammar('native-solidity'),
     get matches() { return [
       ...solidityCorpus(false),
-      "contract Plant {function build() public { target = new Seed{value: 7}(4); }}\n",
-      "contract Math {function sum() public returns(int) {return 9+4-2;}}\n",
-      "contract Math {function sum() public returns(int) {return 9-4+2;}}\n",
 
   '', 'pragma solidity ^0.8.0;\n', 'contract C {}\n', 'contract C { uint x; }\n', 'contract C { uint256 public x = 1; }\n',
   'contract C { function f() public {} }\n', 'contract C { function f(uint a) external pure returns (uint) { return a + 1; } }\n',
@@ -1162,6 +1159,9 @@ export const NATIVE_GRAMMARS = Object.freeze([
   'contract C { function f() public { x = new D{value: 1}(2); } }\n', 'contract C { function f() public { x = a[1:2]; delete a; } }\n',
   'contract C { string s = unicode"é"; bytes b = hex"00ff"; }\n', 'contract C { uint x = 1 ether + 2 gwei; }\n', '// é\n/* é */\n',
   '/// @notice é\ncontract C {}\n', 'contract C { function f() public virtual override(A, B) {} }\n',
+      "contract Plant {function build() public { target = new Seed{value: 7}(4); }}\n",
+      "contract Math {function sum() public returns(int) {return 9+4-2;}}\n",
+      "contract Math {function sum() public returns(int) {return 9-4+2;}}\n",
     ]; },
     divergences: [],
     get rejections() { return [
@@ -1396,7 +1396,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   let stale = 0;
   const outputs = [
     ...NATIVE_GRAMMARS.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
-    ...['xml', 'dtd', 'r', 'python', 'dart', 'nix', 'cmake', 'lua', 'toml', 'zig', 'pascal', 'vb', 'css', 'powershell', 'erlang', 'groovy'].map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
+    ...['odin', 'xml', 'dtd', 'r', 'python', 'dart', 'nix', 'cmake', 'lua', 'toml', 'zig', 'pascal', 'vb', 'css', 'powershell', 'erlang', 'groovy'].map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
     [DEFAULT_CST_PATH, buildNativeDefaultCstExpected],
   ];
   for (const [relative, build] of outputs) {

@@ -4626,7 +4626,7 @@
       },
       "role": "direct",
       "requirement": "=1.3.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "1.3.0",
       "evidence": "crates.io, tree-sitter-odin"
     },
@@ -7612,9 +7612,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/odin.wasm.gz@1.3.0",
+      "id": "vendored-grammar js/oracles/grammars/odin.wasm.gz@1.3.0",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/odin.wasm.gz",
+      "name": "js/oracles/grammars/odin.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],

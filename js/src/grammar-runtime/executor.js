@@ -1930,12 +1930,16 @@ function reducedBefore(short, progress, grammar) {
     const last = meaningful[meaningful.length - 1];
     if (!last) break;
     if (sameTree(last, first)) {
-      if (last.type === 'token' && last.reduced) return last.reduced;
+      if (last.reduced && (last.type === 'token'
+        || (grammar?.rules.get(last.reduced.rule)?.kind === 'silent'
+          && !samePrecedence(last.reduced, first.reduced)))) return last.reduced;
       // A token a silent rule reduced alone where the shift takes it as the
       // first part of its node (Lean's `c` in `fun x c s`, a `_pattern` of
       // level 0 in one parse and the constructor of `c s`, of level 80, in
       // the other) is that rule's reduction, not the node's it ends.
-      if (last.type === 'token' && last.alone && !first.alone) return last.precedence ?? unranked();
+      if (last.type === 'token' && last.alone && (!first.alone
+        || (last.precedence && grammar?.rules.get(last.precedence.rule)?.kind === 'silent'
+          && !samePrecedence(last.precedence, first.precedence)))) return last.precedence ?? unranked();
       return reduction(node);
     }
     node = last;
@@ -2319,7 +2323,15 @@ export class Executor {
       if (best === cursor) break;
       const extra = this.extraNode(bestKind, cursor, best, state);
       if (extra === NO_EXTRA) break;
-      leaves.push(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true });
+      // An external extra may skip a prefix before its named token. Keep the
+      // prefix as separate whitespace, as scannerToken does for syntax tokens.
+      const scanned = extra === null && this.program.externalTokens.has(bestKind)
+        ? this.runScanner(bestKind, cursor, state, position) : null;
+      if (scanned?.end === best) {
+        leaves.push(...scanned.skipped, { type: 'token', kind: bestKind, start: scanned.tokenStart, end: best, trivia: true });
+      } else {
+        leaves.push(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true });
+      }
       cursor = extra?.end ?? best;
     }
     } finally {

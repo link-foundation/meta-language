@@ -953,6 +953,7 @@ export async function buildIssue195Manifest(root) {
         'I195-GRAMMAR-NATIVE-LUA': ISSUE_195_SOURCES.remainingScope,
         'I195-GRAMMAR-NATIVE-HCL': ISSUE_195_SOURCES.remainingScope,
         'I195-GRAMMAR-NATIVE-R': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-ODIN': ISSUE_195_SOURCES.remainingScope,
         'I195-GRAMMAR-NATIVE-XML': ISSUE_195_SOURCES.remainingScope,
         'I195-GRAMMAR-NATIVE-DTD': ISSUE_195_SOURCES.remainingScope,
         'I195-GRAMMAR-NATIVE-PYTHON': ISSUE_195_SOURCES.remainingScope,

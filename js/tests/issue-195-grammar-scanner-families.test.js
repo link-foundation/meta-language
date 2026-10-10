@@ -17,6 +17,21 @@ const fixtureGroups = [
 ];
 const fixtures = fixtureGroups.flatMap(([fixtureFile, requirementId]) => JSON.parse(readFileSync(new URL(`../../${fixtureFile}`, import.meta.url), 'utf8')).map((item) => ({ ...item, fixtureFile, requirementId })));
 
+test('external extras keep skipped prefixes outside their named token span', () => {
+  const listing = `(grammar (start source))
+(extra (ref annotation))
+(scanner annotations (tokens annotation) (operations (while (next (class plain (char %20) (char %0A))) (do (skip (class plain (char %20) (char %0A))))) (consume (literal %23)) (while (all (not atEnd) (not (next (literal %0A)))) (do advance)) (emit annotation)))
+(rule source normal (repeat0 (literal x)))`;
+  const input = 'x \n#note';
+  const outcome = compileGrammar(parseGrammarLinks(listing)).parseTree(input);
+  assert.equal(outcome.ok, true);
+  const annotation = outcome.tree.children.find(({ kind }) => kind === 'annotation');
+  assert.equal(annotation.start, 3);
+  assert.equal(annotation.end, 8);
+  assert.equal(annotation.text, '#note');
+  assert.equal(outcome.tree.children.map(({ text }) => text).join(''), input);
+});
+
 test('wrapped scanner tokens retain skipped trivia and read consumed text past a mark', () => {
   const cases = JSON.parse(readFileSync(new URL('../../parity/fixtures/scanner-token-spans.json', import.meta.url), 'utf8'));
   for (const fixture of cases) {

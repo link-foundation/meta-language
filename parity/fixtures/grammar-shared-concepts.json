@@ -28,6 +28,14 @@
         [
           "native-python",
           "function_definition"
+        ],
+        [
+          "native-cmake",
+          "function_definition"
+        ],
+        [
+          "native-r",
+          "function_definition"
         ]
       ]
     },
@@ -170,6 +178,14 @@
         [
           "native-python",
           "string"
+        ],
+        [
+          "native-odin",
+          "string"
+        ],
+        [
+          "native-r",
+          "string"
         ]
       ]
     },
@@ -220,6 +236,10 @@
         [
           "native-lua",
           "number"
+        ],
+        [
+          "native-odin",
+          "number"
         ]
       ]
     },
@@ -258,6 +278,10 @@
         [
           "native-zig",
           "boolean"
+        ],
+        [
+          "native-odin",
+          "boolean_value"
         ]
       ]
     },
@@ -380,6 +404,26 @@
         [
           "native-python",
           "comment"
+        ],
+        [
+          "native-dart",
+          "comment"
+        ],
+        [
+          "native-hcl",
+          "comment"
+        ],
+        [
+          "native-nix",
+          "comment"
+        ],
+        [
+          "native-odin",
+          "comment"
+        ],
+        [
+          "native-r",
+          "comment"
         ]
       ]
     },
@@ -413,6 +457,10 @@
         ],
         [
           "native-toml",
+          "document"
+        ],
+        [
+          "native-xml",
           "document"
         ]
       ]
@@ -490,6 +538,10 @@
         [
           "native-graphql",
           "object_value"
+        ],
+        [
+          "native-hcl",
+          "object"
         ]
       ]
     },
@@ -553,6 +605,10 @@
         ],
         [
           "native-cpp",
+          "null"
+        ],
+        [
+          "native-r",
           "null"
         ]
       ]
@@ -684,6 +740,10 @@
         [
           "native-cpp",
           "false_value"
+        ],
+        [
+          "native-r",
+          "false_value"
         ]
       ]
     },
@@ -766,6 +826,26 @@
         [
           "native-python",
           "escape_sequence"
+        ],
+        [
+          "native-cmake",
+          "escape_sequence"
+        ],
+        [
+          "native-dart",
+          "escape_sequence"
+        ],
+        [
+          "native-nix",
+          "escape_sequence"
+        ],
+        [
+          "native-odin",
+          "escape_sequence"
+        ],
+        [
+          "native-r",
+          "escape_sequence"
         ]
       ]
     },
@@ -819,6 +899,10 @@
         ],
         [
           "native-cpp",
+          "character_literal"
+        ],
+        [
+          "native-odin",
           "character_literal"
         ]
       ]
@@ -924,6 +1008,10 @@
         [
           "native-sql",
           "program"
+        ],
+        [
+          "native-r",
+          "program"
         ]
       ]
     },
@@ -1009,6 +1097,30 @@
         ],
         [
           "native-python",
+          "identifier"
+        ],
+        [
+          "native-cmake",
+          "identifier"
+        ],
+        [
+          "native-dart",
+          "identifier"
+        ],
+        [
+          "native-hcl",
+          "identifier"
+        ],
+        [
+          "native-nix",
+          "identifier"
+        ],
+        [
+          "native-odin",
+          "identifier"
+        ],
+        [
+          "native-r",
           "identifier"
         ]
       ]
@@ -1100,6 +1212,30 @@
         [
           "native-python",
           "exception_expression"
+        ],
+        [
+          "native-dart",
+          "expression"
+        ],
+        [
+          "native-hcl",
+          "expression"
+        ],
+        [
+          "native-nix",
+          "expression"
+        ],
+        [
+          "native-odin",
+          "expression"
+        ],
+        [
+          "native-python",
+          "collection_expression"
+        ],
+        [
+          "native-r",
+          "expression"
         ]
       ]
     },
@@ -1174,6 +1310,14 @@
         [
           "native-python",
           "statement"
+        ],
+        [
+          "native-dart",
+          "statement"
+        ],
+        [
+          "native-odin",
+          "statement"
         ]
       ]
     },
@@ -1227,6 +1371,10 @@
         ],
         [
           "native-python",
+          "expression_statement"
+        ],
+        [
+          "native-dart",
           "expression_statement"
         ]
       ]
@@ -1310,6 +1458,22 @@
         [
           "native-python",
           "parenthesized_expression"
+        ],
+        [
+          "native-dart",
+          "parenthesized_expression"
+        ],
+        [
+          "native-nix",
+          "parenthesized_expression"
+        ],
+        [
+          "native-odin",
+          "parenthesized_expression"
+        ],
+        [
+          "native-r",
+          "parenthesized_expression"
         ]
       ]
     },
@@ -1359,6 +1523,14 @@
         ],
         [
           "native-cpp",
+          "assignment_expression"
+        ],
+        [
+          "native-dart",
+          "assignment_expression"
+        ],
+        [
+          "native-groovy",
           "assignment_expression"
         ]
       ]
@@ -1430,6 +1602,26 @@
         [
           "native-sql",
           "binary_expression"
+        ],
+        [
+          "native-groovy",
+          "binary_expression"
+        ],
+        [
+          "native-nix",
+          "binary_expression"
+        ],
+        [
+          "native-odin",
+          "binary_expression"
+        ],
+        [
+          "native-python",
+          "binary_operator"
+        ],
+        [
+          "native-r",
+          "binary_operator"
         ]
       ]
     },
@@ -1504,6 +1696,22 @@
         [
           "native-sql",
           "unary_expression"
+        ],
+        [
+          "native-dart",
+          "unary_expression"
+        ],
+        [
+          "native-groovy",
+          "unary_expression"
+        ],
+        [
+          "native-nix",
+          "unary_expression"
+        ],
+        [
+          "native-odin",
+          "unary_expression"
         ]
       ]
     },
@@ -1553,6 +1761,14 @@
         ],
         [
           "native-cpp",
+          "call_expression"
+        ],
+        [
+          "native-dart",
+          "call_expression"
+        ],
+        [
+          "native-odin",
           "call_expression"
         ]
       ]
@@ -1624,6 +1840,18 @@
         [
           "native-python",
           "argument_list"
+        ],
+        [
+          "native-cmake",
+          "argument_list"
+        ],
+        [
+          "native-dart",
+          "argument_list"
+        ],
+        [
+          "native-groovy",
+          "argument_list"
         ]
       ]
     },
@@ -1673,6 +1901,10 @@
         ],
         [
           "native-python",
+          "else_clause"
+        ],
+        [
+          "native-odin",
           "else_clause"
         ]
       ]
@@ -1743,6 +1975,34 @@
         ],
         [
           "native-python",
+          "word_characters"
+        ],
+        [
+          "native-dart",
+          "word_characters"
+        ],
+        [
+          "native-dtd",
+          "word_characters"
+        ],
+        [
+          "native-groovy",
+          "word_characters"
+        ],
+        [
+          "native-nix",
+          "word_characters"
+        ],
+        [
+          "native-odin",
+          "word_characters"
+        ],
+        [
+          "native-r",
+          "word_characters"
+        ],
+        [
+          "native-xml",
           "word_characters"
         ]
       ]
@@ -1829,6 +2089,14 @@
         ],
         [
           "native-zig",
+          "array_type"
+        ],
+        [
+          "native-groovy",
+          "array_type"
+        ],
+        [
+          "native-odin",
           "array_type"
         ]
       ]
@@ -1958,6 +2226,10 @@
         [
           "native-python",
           "await_expression"
+        ],
+        [
+          "native-dart",
+          "await_expression"
         ]
       ]
     },
@@ -2007,6 +2279,14 @@
         ],
         [
           "native-python",
+          "break_statement"
+        ],
+        [
+          "native-dart",
+          "break_statement"
+        ],
+        [
+          "native-odin",
           "break_statement"
         ]
       ]
@@ -2064,6 +2344,14 @@
         [
           "native-cpp",
           "catch_clause"
+        ],
+        [
+          "native-dart",
+          "catch_clause"
+        ],
+        [
+          "native-groovy",
+          "catch_clause"
         ]
       ]
     },
@@ -2108,6 +2396,10 @@
         [
           "native-groovy",
           "class_body"
+        ],
+        [
+          "native-dart",
+          "class_body"
         ]
       ]
     },
@@ -2137,6 +2429,10 @@
         ],
         [
           "native-cpp",
+          "class_declaration"
+        ],
+        [
+          "native-dart",
           "class_declaration"
         ]
       ]
@@ -2246,6 +2542,18 @@
         [
           "native-python",
           "continue_statement"
+        ],
+        [
+          "native-dart",
+          "continue_statement"
+        ],
+        [
+          "native-odin",
+          "continue_statement"
+        ],
+        [
+          "native-r",
+          "continue_statement"
         ]
       ]
     },
@@ -2317,6 +2625,14 @@
         ],
         [
           "native-cpp",
+          "declaration"
+        ],
+        [
+          "native-dart",
+          "declaration"
+        ],
+        [
+          "native-odin",
           "declaration"
         ]
       ]
@@ -2444,6 +2760,10 @@
         [
           "native-cpp",
           "do_statement"
+        ],
+        [
+          "native-dart",
+          "do_statement"
         ]
       ]
     },
@@ -2486,6 +2806,10 @@
         [
           "native-vb",
           "empty_statement"
+        ],
+        [
+          "native-dart",
+          "empty_statement"
         ]
       ]
     },
@@ -2515,6 +2839,10 @@
         ],
         [
           "native-groovy",
+          "enumeration_body"
+        ],
+        [
+          "native-dart",
           "enumeration_body"
         ]
       ]
@@ -2549,6 +2877,14 @@
         ],
         [
           "native-groovy",
+          "enumeration_declaration"
+        ],
+        [
+          "native-dart",
+          "enumeration_declaration"
+        ],
+        [
+          "native-odin",
           "enumeration_declaration"
         ]
       ]
@@ -2660,6 +2996,10 @@
         [
           "native-cpp",
           "field_declaration"
+        ],
+        [
+          "native-groovy",
+          "field_declaration"
         ]
       ]
     },
@@ -2715,6 +3055,14 @@
         ],
         [
           "native-python",
+          "finally_clause"
+        ],
+        [
+          "native-dart",
+          "finally_clause"
+        ],
+        [
+          "native-groovy",
           "finally_clause"
         ]
       ]
@@ -2814,6 +3162,22 @@
         [
           "native-python",
           "for_statement"
+        ],
+        [
+          "native-dart",
+          "for_statement"
+        ],
+        [
+          "native-groovy",
+          "for_statement"
+        ],
+        [
+          "native-odin",
+          "for_statement"
+        ],
+        [
+          "native-r",
+          "for_statement"
         ]
       ]
     },
@@ -2835,6 +3199,22 @@
         ],
         [
           "native-java",
+          "formal_parameter"
+        ],
+        [
+          "native-dart",
+          "formal_parameter"
+        ],
+        [
+          "native-groovy",
+          "formal_parameter"
+        ],
+        [
+          "native-nix",
+          "formal_parameter"
+        ],
+        [
+          "native-odin",
           "formal_parameter"
         ]
       ]
@@ -2861,6 +3241,18 @@
         ],
         [
           "native-pascal",
+          "formal_parameter_list"
+        ],
+        [
+          "native-dart",
+          "formal_parameter_list"
+        ],
+        [
+          "native-groovy",
+          "formal_parameters"
+        ],
+        [
+          "native-nix",
           "formal_parameter_list"
         ]
       ]
@@ -2918,6 +3310,14 @@
         [
           "native-sql",
           "function_declaration"
+        ],
+        [
+          "native-dart",
+          "function_declaration"
+        ],
+        [
+          "native-odin",
+          "function_declaration"
         ]
       ]
     },
@@ -2935,6 +3335,14 @@
         ],
         [
           "native-typescript",
+          "function_expression"
+        ],
+        [
+          "native-dart",
+          "function_expression"
+        ],
+        [
+          "native-odin",
           "function_expression"
         ]
       ]
@@ -2961,6 +3369,10 @@
         ],
         [
           "native-solidity",
+          "function_type"
+        ],
+        [
+          "native-dart",
           "function_type"
         ]
       ]
@@ -3031,6 +3443,10 @@
         ],
         [
           "native-python",
+          "generic_type"
+        ],
+        [
+          "native-groovy",
           "generic_type"
         ]
       ]
@@ -3116,6 +3532,10 @@
         [
           "native-zig",
           "if_expression"
+        ],
+        [
+          "native-nix",
+          "if_expression"
         ]
       ]
     },
@@ -3185,6 +3605,18 @@
         ],
         [
           "native-python",
+          "if_statement"
+        ],
+        [
+          "native-dart",
+          "if_statement"
+        ],
+        [
+          "native-odin",
+          "if_statement"
+        ],
+        [
+          "native-r",
           "if_statement"
         ]
       ]
@@ -3347,6 +3779,10 @@
         ],
         [
           "native-solidity",
+          "interface_declaration"
+        ],
+        [
+          "native-groovy",
           "interface_declaration"
         ]
       ]
@@ -3678,6 +4114,14 @@
         [
           "native-cpp",
           "labeled_statement"
+        ],
+        [
+          "native-dart",
+          "labeled_statement"
+        ],
+        [
+          "native-groovy",
+          "labeled_statement"
         ]
       ]
     },
@@ -3757,6 +4201,14 @@
         ],
         [
           "native-solidity",
+          "member_expression"
+        ],
+        [
+          "native-dart",
+          "member_expression"
+        ],
+        [
+          "native-odin",
           "member_expression"
         ]
       ]
@@ -3841,6 +4293,18 @@
         ],
         [
           "native-graphql",
+          "name"
+        ],
+        [
+          "native-dtd",
+          "name"
+        ],
+        [
+          "native-groovy",
+          "name"
+        ],
+        [
+          "native-xml",
           "name"
         ]
       ]
@@ -3944,6 +4408,10 @@
         [
           "native-cpp",
           "new_expression"
+        ],
+        [
+          "native-dart",
+          "new_expression"
         ]
       ]
     },
@@ -3979,6 +4447,10 @@
         ],
         [
           "native-typescript",
+          "object_pattern"
+        ],
+        [
+          "native-dart",
           "object_pattern"
         ]
       ]
@@ -4023,6 +4495,10 @@
         ],
         [
           "native-python",
+          "pair"
+        ],
+        [
+          "native-dart",
           "pair"
         ]
       ]
@@ -4084,6 +4560,14 @@
         [
           "native-python",
           "pattern"
+        ],
+        [
+          "native-dart",
+          "pattern"
+        ],
+        [
+          "native-groovy",
+          "pattern"
         ]
       ]
     },
@@ -4118,6 +4602,14 @@
         [
           "native-python",
           "primary_expression"
+        ],
+        [
+          "native-groovy",
+          "primary_expression"
+        ],
+        [
+          "native-python",
+          "collection_primary_expression"
         ]
       ]
     },
@@ -4191,6 +4683,22 @@
         ],
         [
           "native-cpp",
+          "string_literal"
+        ],
+        [
+          "native-dart",
+          "string_literal"
+        ],
+        [
+          "native-groovy",
+          "string_literal"
+        ],
+        [
+          "native-hcl",
+          "string_literal"
+        ],
+        [
+          "native-odin",
           "string_literal"
         ]
       ]
@@ -4276,6 +4784,10 @@
         [
           "native-zig",
           "reserved_identifier"
+        ],
+        [
+          "native-groovy",
+          "reserved_identifier"
         ]
       ]
     },
@@ -4293,6 +4805,10 @@
         ],
         [
           "native-typescript",
+          "rest_pattern"
+        ],
+        [
+          "native-dart",
           "rest_pattern"
         ]
       ]
@@ -4347,6 +4863,14 @@
         ],
         [
           "native-python",
+          "return_statement"
+        ],
+        [
+          "native-dart",
+          "return_statement"
+        ],
+        [
+          "native-odin",
           "return_statement"
         ]
       ]
@@ -4405,6 +4929,10 @@
         ],
         [
           "native-typescript",
+          "spread_element"
+        ],
+        [
+          "native-dart",
           "spread_element"
         ]
       ]
@@ -4480,6 +5008,10 @@
         [
           "native-java",
           "super"
+        ],
+        [
+          "native-groovy",
+          "super"
         ]
       ]
     },
@@ -4523,6 +5055,10 @@
         ],
         [
           "native-zig",
+          "switch_case"
+        ],
+        [
+          "native-odin",
           "switch_case"
         ]
       ]
@@ -4572,6 +5108,14 @@
         [
           "native-cpp",
           "switch_statement"
+        ],
+        [
+          "native-dart",
+          "switch_statement"
+        ],
+        [
+          "native-odin",
+          "switch_statement"
         ]
       ]
     },
@@ -4616,6 +5160,10 @@
         [
           "native-lean",
           "interpolation"
+        ],
+        [
+          "native-dart",
+          "template_substitution"
         ]
       ]
     },
@@ -4646,6 +5194,14 @@
         [
           "native-vb",
           "ternary_expression"
+        ],
+        [
+          "native-groovy",
+          "ternary_expression"
+        ],
+        [
+          "native-odin",
+          "ternary_expression"
         ]
       ]
     },
@@ -4671,6 +5227,10 @@
         ],
         [
           "native-cpp",
+          "this"
+        ],
+        [
+          "native-groovy",
           "this"
         ]
       ]
@@ -4701,6 +5261,10 @@
         ],
         [
           "native-cpp",
+          "throw_statement"
+        ],
+        [
+          "native-groovy",
           "throw_statement"
         ]
       ]
@@ -4744,6 +5308,14 @@
         [
           "native-python",
           "try_statement"
+        ],
+        [
+          "native-dart",
+          "try_statement"
+        ],
+        [
+          "native-groovy",
+          "try_statement"
         ]
       ]
     },
@@ -4761,6 +5333,10 @@
         ],
         [
           "native-typescript",
+          "tuple_type"
+        ],
+        [
+          "native-odin",
           "tuple_type"
         ]
       ]
@@ -4816,6 +5392,18 @@
         [
           "native-python",
           "type"
+        ],
+        [
+          "native-dart",
+          "type"
+        ],
+        [
+          "native-groovy",
+          "type"
+        ],
+        [
+          "native-odin",
+          "type"
         ]
       ]
     },
@@ -4846,6 +5434,14 @@
         [
           "native-vb",
           "type_argument_list"
+        ],
+        [
+          "native-dart",
+          "type_argument_list"
+        ],
+        [
+          "native-groovy",
+          "type_arguments"
         ]
       ]
     },
@@ -4902,6 +5498,14 @@
         [
           "native-python",
           "type_parameter"
+        ],
+        [
+          "native-dart",
+          "type_parameter"
+        ],
+        [
+          "native-groovy",
+          "type_parameter"
         ]
       ]
     },
@@ -4932,6 +5536,14 @@
         [
           "native-vb",
           "type_parameter_list"
+        ],
+        [
+          "native-dart",
+          "type_parameter_list"
+        ],
+        [
+          "native-groovy",
+          "type_parameters"
         ]
       ]
     },
@@ -5056,6 +5668,10 @@
         [
           "native-cpp",
           "update_expression"
+        ],
+        [
+          "native-groovy",
+          "update_expression"
         ]
       ]
     },
@@ -5090,6 +5706,10 @@
         [
           "native-zig",
           "variable_declaration"
+        ],
+        [
+          "native-odin",
+          "variable_declaration"
         ]
       ]
     },
@@ -5115,6 +5735,10 @@
         ],
         [
           "native-vb",
+          "variable_declarator"
+        ],
+        [
+          "native-groovy",
           "variable_declarator"
         ]
       ]
@@ -5173,6 +5797,14 @@
         ],
         [
           "native-python",
+          "while_statement"
+        ],
+        [
+          "native-dart",
+          "while_statement"
+        ],
+        [
+          "native-r",
           "while_statement"
         ]
       ]
@@ -5264,6 +5896,22 @@
         [
           "native-python",
           "block"
+        ],
+        [
+          "native-dart",
+          "block"
+        ],
+        [
+          "native-groovy",
+          "block"
+        ],
+        [
+          "native-hcl",
+          "block"
+        ],
+        [
+          "native-odin",
+          "block"
         ]
       ]
     },
@@ -5308,6 +5956,10 @@
         [
           "native-proto",
           "float_literal"
+        ],
+        [
+          "native-r",
+          "float_literal"
         ]
       ]
     },
@@ -5329,6 +5981,14 @@
         ],
         [
           "native-solidity",
+          "import_declaration"
+        ],
+        [
+          "native-groovy",
+          "import_declaration"
+        ],
+        [
+          "native-odin",
           "import_declaration"
         ]
       ]
@@ -5424,6 +6084,14 @@
         [
           "native-python",
           "parameter_list"
+        ],
+        [
+          "native-odin",
+          "parameter_list"
+        ],
+        [
+          "native-r",
+          "parameter_list"
         ]
       ]
     },
@@ -5484,6 +6152,18 @@
         [
           "native-zig",
           "source_file"
+        ],
+        [
+          "native-cmake",
+          "source_file"
+        ],
+        [
+          "native-dart",
+          "source_file"
+        ],
+        [
+          "native-odin",
+          "source_file"
         ]
       ]
     },
@@ -5538,6 +6218,14 @@
         [
           "native-python",
           "integer_literal"
+        ],
+        [
+          "native-cmake",
+          "integer_literal"
+        ],
+        [
+          "native-r",
+          "integer_literal"
         ]
       ]
     },
@@ -5563,6 +6251,10 @@
         ],
         [
           "native-powershell",
+          "variable"
+        ],
+        [
+          "native-cmake",
           "variable"
         ]
       ]
@@ -5634,6 +6326,18 @@
         [
           "native-sql",
           "literal"
+        ],
+        [
+          "native-dart",
+          "literal"
+        ],
+        [
+          "native-groovy",
+          "literal"
+        ],
+        [
+          "native-odin",
+          "literal"
         ]
       ]
     },
@@ -5670,6 +6374,10 @@
         [
           "native-vb",
           "assignment_statement"
+        ],
+        [
+          "native-odin",
+          "assignment_statement"
         ]
       ]
     },
@@ -5688,6 +6396,10 @@
         [
           "native-vb",
           "boolean_literal"
+        ],
+        [
+          "native-hcl",
+          "boolean_literal"
         ]
       ]
     },
@@ -5705,6 +6417,14 @@
         ],
         [
           "native-vb",
+          "constant_declaration"
+        ],
+        [
+          "native-groovy",
+          "constant_declaration"
+        ],
+        [
+          "native-odin",
           "constant_declaration"
         ]
       ]
@@ -5745,6 +6465,10 @@
         ],
         [
           "native-pascal",
+          "default_value"
+        ],
+        [
+          "native-groovy",
           "default_value"
         ]
       ]
@@ -5820,6 +6544,10 @@
         [
           "native-python",
           "float"
+        ],
+        [
+          "native-r",
+          "float"
         ]
       ]
     },
@@ -5856,6 +6584,14 @@
         [
           "native-zig",
           "index_expression"
+        ],
+        [
+          "native-dart",
+          "index_expression"
+        ],
+        [
+          "native-odin",
+          "index_expression"
         ]
       ]
     },
@@ -5873,6 +6609,14 @@
         ],
         [
           "native-vb",
+          "method_declaration"
+        ],
+        [
+          "native-dart",
+          "method_declaration"
+        ],
+        [
+          "native-groovy",
           "method_declaration"
         ]
       ]
@@ -5940,6 +6684,10 @@
         [
           "native-zig",
           "pointer_type"
+        ],
+        [
+          "native-odin",
+          "pointer_type"
         ]
       ]
     },
@@ -6002,6 +6750,14 @@
         [
           "native-cpp",
           "cast_expression"
+        ],
+        [
+          "native-groovy",
+          "cast_expression"
+        ],
+        [
+          "native-odin",
+          "cast_expression"
         ]
       ]
     },
@@ -6020,6 +6776,14 @@
         [
           "native-proto",
           "decimal_literal"
+        ],
+        [
+          "native-dart",
+          "decimal_integer_literal"
+        ],
+        [
+          "native-groovy",
+          "decimal_integer_literal"
         ]
       ]
     },
@@ -6056,6 +6820,14 @@
         [
           "native-proto",
           "hex_literal"
+        ],
+        [
+          "native-dart",
+          "hex_integer_literal"
+        ],
+        [
+          "native-groovy",
+          "hex_integer_literal"
         ]
       ]
     },
@@ -6073,6 +6845,10 @@
         ],
         [
           "native-rust",
+          "label"
+        ],
+        [
+          "native-dart",
           "label"
         ]
       ]
@@ -6140,6 +6916,14 @@
         [
           "native-zig",
           "iteration_range_expression"
+        ],
+        [
+          "native-groovy",
+          "range_expression"
+        ],
+        [
+          "native-odin",
+          "range_expression"
         ]
       ]
     },
@@ -6215,6 +6999,10 @@
         ],
         [
           "native-solidity",
+          "type_name"
+        ],
+        [
+          "native-dart",
           "type_name"
         ]
       ]
@@ -6364,6 +7152,10 @@
         [
           "native-rust",
           "line_comment"
+        ],
+        [
+          "native-cmake",
+          "line_comment"
         ]
       ]
     },
@@ -6508,6 +7300,10 @@
         [
           "native-zig",
           "switch_expression"
+        ],
+        [
+          "native-dart",
+          "switch_expression"
         ]
       ]
     },
@@ -6525,6 +7321,10 @@
         ],
         [
           "native-pascal",
+          "template_expression"
+        ],
+        [
+          "native-hcl",
           "template_expression"
         ]
       ]
@@ -6656,6 +7456,10 @@
         [
           "native-zig",
           "initializer_list"
+        ],
+        [
+          "native-dart",
+          "initializer_list"
         ]
       ]
     },
@@ -6673,6 +7477,10 @@
         ],
         [
           "native-solidity",
+          "number_literal"
+        ],
+        [
+          "native-r",
           "number_literal"
         ]
       ]
@@ -6710,6 +7518,10 @@
         [
           "native-zig",
           "field_initializer"
+        ],
+        [
+          "native-dart",
+          "field_initializer"
         ]
       ]
     },
@@ -6745,6 +7557,10 @@
         ],
         [
           "native-rust",
+          "raw_string_literal"
+        ],
+        [
+          "native-odin",
           "raw_string_literal"
         ]
       ]
@@ -6782,6 +7598,10 @@
         [
           "native-sql",
           "field"
+        ],
+        [
+          "native-odin",
+          "field"
         ]
       ]
     },
@@ -6799,6 +7619,10 @@
         ],
         [
           "native-sql",
+          "function_body"
+        ],
+        [
+          "native-dart",
           "function_body"
         ]
       ]
@@ -6915,6 +7739,10 @@
         ],
         [
           "native-python",
+          "conditional_expression"
+        ],
+        [
+          "native-hcl",
           "conditional_expression"
         ]
       ]
@@ -7117,6 +7945,10 @@
         ],
         [
           "native-java",
+          "null_literal"
+        ],
+        [
+          "native-hcl",
           "null_literal"
         ]
       ]
@@ -7334,6 +8166,10 @@
         [
           "native-python",
           "ellipsis"
+        ],
+        [
+          "native-hcl",
+          "ellipsis"
         ]
       ]
     },
@@ -7351,6 +8187,10 @@
         ],
         [
           "native-vb",
+          "else_if_clause"
+        ],
+        [
+          "native-odin",
           "else_if_clause"
         ]
       ]
@@ -7406,6 +8246,10 @@
         [
           "native-python",
           "string_content"
+        ],
+        [
+          "native-odin",
+          "string_content"
         ]
       ]
     },
@@ -7424,6 +8268,10 @@
         [
           "native-sql",
           "subscript"
+        ],
+        [
+          "native-python",
+          "collection_subscript"
         ]
       ]
     },
@@ -7459,6 +8307,10 @@
         ],
         [
           "native-typescript",
+          "union_type"
+        ],
+        [
+          "native-odin",
           "union_type"
         ]
       ]
@@ -7626,6 +8478,222 @@
         [
           "native-solidity",
           "parameter"
+        ]
+      ]
+    },
+    {
+      "construct": "attribute list",
+      "concept": "grammar.attribute-list",
+      "rules": [
+        [
+          "native-lean",
+          "attributes"
+        ],
+        [
+          "native-odin",
+          "attribute_list"
+        ],
+        [
+          "native-rocq",
+          "attributes"
+        ]
+      ]
+    },
+    {
+      "construct": "attribute value",
+      "concept": "grammar.attribute-value",
+      "rules": [
+        [
+          "native-dtd",
+          "attribute_value"
+        ],
+        [
+          "native-rocq",
+          "attribute_value"
+        ],
+        [
+          "native-xml",
+          "attribute_value"
+        ]
+      ]
+    },
+    {
+      "construct": "conditional type",
+      "concept": "grammar.conditional-type",
+      "rules": [
+        [
+          "native-odin",
+          "conditional_type"
+        ],
+        [
+          "native-tsx",
+          "conditional_type"
+        ],
+        [
+          "native-typescript",
+          "conditional_type"
+        ]
+      ]
+    },
+    {
+      "construct": "default type",
+      "concept": "grammar.default-type",
+      "rules": [
+        [
+          "native-odin",
+          "default_type"
+        ],
+        [
+          "native-tsx",
+          "default_type"
+        ],
+        [
+          "native-typescript",
+          "default_type"
+        ]
+      ]
+    },
+    {
+      "construct": "defer statement",
+      "concept": "grammar.defer-statement",
+      "rules": [
+        [
+          "native-go",
+          "defer_statement"
+        ],
+        [
+          "native-odin",
+          "defer_statement"
+        ],
+        [
+          "native-zig",
+          "defer_statement"
+        ]
+      ]
+    },
+    {
+      "construct": "enumeration",
+      "concept": "grammar.enumeration",
+      "rules": [
+        [
+          "native-dtd",
+          "enumeration"
+        ],
+        [
+          "native-sql",
+          "enumeration"
+        ],
+        [
+          "native-xml",
+          "enumeration"
+        ]
+      ]
+    },
+    {
+      "construct": "label statement",
+      "concept": "grammar.label-statement",
+      "rules": [
+        [
+          "native-lua",
+          "label_statement"
+        ],
+        [
+          "native-odin",
+          "label_statement"
+        ],
+        [
+          "native-vb",
+          "label_statement"
+        ]
+      ]
+    },
+    {
+      "construct": "map type",
+      "concept": "grammar.map-type",
+      "rules": [
+        [
+          "native-go",
+          "map_type"
+        ],
+        [
+          "native-odin",
+          "map_type"
+        ],
+        [
+          "native-solidity",
+          "mapping"
+        ]
+      ]
+    },
+    {
+      "construct": "notation declaration",
+      "concept": "grammar.notation-declaration",
+      "rules": [
+        [
+          "native-dtd",
+          "notation_declaration"
+        ],
+        [
+          "native-rocq",
+          "notation_declaration"
+        ],
+        [
+          "native-xml",
+          "notation_declaration"
+        ]
+      ]
+    },
+    {
+      "construct": "package declaration",
+      "concept": "grammar.package-declaration",
+      "rules": [
+        [
+          "native-groovy",
+          "package_declaration"
+        ],
+        [
+          "native-java",
+          "package_declaration"
+        ],
+        [
+          "native-odin",
+          "package_declaration"
+        ]
+      ]
+    },
+    {
+      "construct": "structure declaration",
+      "concept": "grammar.structure-declaration",
+      "rules": [
+        [
+          "native-odin",
+          "structure_declaration"
+        ],
+        [
+          "native-solidity",
+          "structure_declaration"
+        ],
+        [
+          "native-zig",
+          "structure_declaration"
+        ]
+      ]
+    },
+    {
+      "construct": "whitespace",
+      "concept": "grammar.whitespace",
+      "rules": [
+        [
+          "native-dtd",
+          "whitespace"
+        ],
+        [
+          "native-hcl",
+          "whitespace"
+        ],
+        [
+          "native-xml",
+          "whitespace"
         ]
       ]
     }

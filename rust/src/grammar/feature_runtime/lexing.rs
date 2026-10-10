@@ -161,7 +161,25 @@ impl Executor<'_> {
                     cursor = end;
                 }
                 Extra::Leaf => {
-                    leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
+                    // Match scannerToken's separation of skipped whitespace
+                    // from the named external token, including for extras.
+                    let scanned = if let Some(kind) = &best_kind
+                        && self.program.external.contains_key(&**kind)
+                    {
+                        self.run_scanner(kind, cursor, position, state)?
+                    } else {
+                        None
+                    };
+                    if let Some(scanned) = scanned.filter(|scanned| scanned.end == best) {
+                        leaves.extend(scanned.skipped);
+                        leaves.push(Rc::new(Tree::trivia_leaf(
+                            best_kind,
+                            scanned.token_start,
+                            best,
+                        )));
+                    } else {
+                        leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
+                    }
                     cursor = best;
                 }
                 Extra::None => break,

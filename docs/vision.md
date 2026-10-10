@@ -981,3 +981,14 @@ The pinned Unicode 17 identifier properties compile to shared numeric ranges,
 including the additional identifier characters and normalization exclusions
 that general Unicode categories cannot represent. These imports retain the
 pinned sources' language; the complete multi-source union remains unverified.
+
+The native Odin grammar is generated from pinned tree-sitter-odin 1.3.0 sources.
+Its generated Links scanners retain contextual statement line feeds, comma
+lookahead, nested comments and the pinned numeric exponent rules. External
+extras keep skipped whitespace outside their named token spans. The shared
+executor compares the precedence of silent reductions before a member operand
+continues as a call, including repeated calls. Both runtimes select the native
+Odin grammar, while the original parser remains a development oracle. Focused
+authored sources and the inventory example run locally; CI checks the complete
+pinned corpus. This import does not complete the multi-source grammar union or
+the remaining catalog and delivery requirements.

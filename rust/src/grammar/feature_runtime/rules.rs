@@ -601,7 +601,7 @@ impl Executor<'_> {
         )])
     }
 
-    fn run_scanner(
+    pub(super) fn run_scanner(
         &mut self,
         name: &Name,
         start: usize,

@@ -789,8 +789,10 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree, grammar: &GrammarFacts) -> 
                 break;
             };
             if same_tree(&last, &first) {
-                if last.ty == TreeType::Token
-                    && let Some(reduced) = &last.reduced
+                if let Some(reduced) = &last.reduced
+                    && (last.ty == TreeType::Token
+                        || (grammar.is_silent(reduced.rule.as_ref())
+                            && !PrecedenceTag::same(Some(reduced), first.reduced.as_ref())))
                 {
                     return reduced.clone();
                 }
@@ -799,7 +801,18 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree, grammar: &GrammarFacts) -> 
                 // s`, a `_pattern` of level 0 in one parse and the
                 // constructor of `c s`, of level 80, in the other) is that
                 // rule's reduction, not the node's it ends.
-                if last.ty == TreeType::Token && last.alone && !first.alone {
+                if last.ty == TreeType::Token
+                    && last.alone
+                    && (!first.alone
+                        || (last
+                            .precedence
+                            .as_ref()
+                            .is_some_and(|tag| grammar.is_silent(tag.rule.as_ref()))
+                            && !PrecedenceTag::same(
+                                last.precedence.as_ref(),
+                                first.precedence.as_ref(),
+                            )))
+                {
                     return last
                         .precedence
                         .clone()

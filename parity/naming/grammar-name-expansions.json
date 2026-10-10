@@ -3806,6 +3806,46 @@
         "element": "markup_element",
         "content": "element_content"
       }
+    },
+    "odin": {
+      "names": {
+        "float": "floating_point_number",
+        "_nl_comma": "newline_comma",
+        "_param_header": "parameter_header",
+        "_param_type": "parameter_type",
+        "var_declaration": "typed_variable_declaration",
+        "_procedure_type": "procedure_type_expression",
+        "_escape_sequence": "escaped_character",
+        "_contextual_whitespace": "contextual_whitespace",
+        "boolean": "boolean_value",
+        "when_statement": "compile_time_conditional_statement",
+        "else_when_clause": "alternative_compile_time_conditional_clause",
+        "uninitialized": "unassigned_value",
+        "attributes": "attribute_list",
+        "attribute": "declaration_attribute",
+        "parameters": "parameter_list",
+        "parameter": "formal_parameter",
+        "_struct_members": "structure_member_list",
+        "character": "character_literal",
+        "nil": "null_value",
+        "procedure_declaration": "function_declaration",
+        "procedure": "function_expression",
+        "map": "dictionary_literal"
+      },
+      "sourceTransforms": [
+        {
+          "family": "contextual-newline-extras",
+          "pattern": "\\s",
+          "token": "_contextual_whitespace",
+          "reason": "The pinned scanner decides which line feeds are statement boundaries and which continue a declaration; contextual whitespace preserves both paths without erasing separators."
+        },
+        {
+          "family": "lexical-literal-rule",
+          "rule": "nil",
+          "literal": "nil",
+          "reason": "The pinned CST retains nil as one named leaf; a lower precedence keyword_identifier repeats its text without adding a literal child to this rule."
+        }
+      ]
     }
   },
   "concepts": {
@@ -3894,7 +3934,7 @@
       "grammar.syntax-quotation": [
         {
           "id": "grammar.syntax-quote",
-          "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
+          "reason": "A Lean syntax quotation `(\u2026) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
         }
       ],
       "grammar.yield-statement": [

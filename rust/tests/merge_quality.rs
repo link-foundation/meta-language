@@ -111,6 +111,11 @@ macro_rules! native {
 fn natives() -> Vec<Native> {
     vec![
         native!(
+            "native-odin",
+            "odin",
+            Some(|| tree_sitter_odin::LANGUAGE.into())
+        ),
+        native!(
             "native-xml",
             "xml",
             Some(|| tree_sitter_xml::LANGUAGE_XML.into())

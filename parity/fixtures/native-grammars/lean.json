@@ -6483,11 +6483,12 @@
         [4,null,"identifier",1,23,28,""],
         [3,"arguments","identifier",1,29,31,""],
         [1,null,"hash_command",1,32,55,""],
-        [2,null,"explicit",1,39,45,""],
-        [3,null,"@",0,39,40,""],
-        [3,null,"identifier",1,40,45,""],
-        [2,null,"application",1,46,55,""],
-        [3,"name","identifier",1,46,50,""],
+        [2,null,"application",1,39,55,""],
+        [3,"name","application",1,39,50,""],
+        [4,"name","explicit",1,39,45,""],
+        [5,null,"@",0,39,40,""],
+        [5,null,"identifier",1,40,45,""],
+        [4,"arguments","identifier",1,46,50,""],
         [3,"arguments","true",1,51,55,""],
         [4,null,"true",0,51,55,""],
         [1,null,"hash_command",1,56,71,""],
@@ -6535,7 +6536,7 @@
     },
     {
       "source": "\n@[foo.bar baz.quux] def f := 12\n",
-      "recovered": "(module (explicit ~\"\\n\" \"@\" (list \"[\" (projection term:(application name:(projection term:(identifier \"foo\") \".\" name:(identifier \"bar\")) ~\" \" arguments:(identifier \"baz\")) \".\" name:(identifier \"quux\")) \"]\")) (tactic_apply ~\" \" tactic:(identifier \"def\") arg:(binary_expression ~\" \" left:(identifier \"f\") ~\" \" (ERROR@27..28 \":\") operator:\"=\" right:(number ~\" \" (unnamed_token \"12\")))) ~\"\\n\")"
+      "recovered": "(module (binary_expression left:(application name:(application name:(explicit ~\"\\n\" \"@\" (list \"[\" (projection term:(application name:(projection term:(identifier \"foo\") \".\" name:(identifier \"bar\")) ~\" \" arguments:(identifier \"baz\")) \".\" name:(identifier \"quux\")) \"]\")) ~\" \" arguments:(identifier \"def\")) ~\" \" arguments:(identifier \"f\")) ~\" \" (ERROR@27..28 \":\") operator:\"=\" right:(number ~\" \" (unnamed_token \"12\"))) ~\"\\n\")"
     },
     {
       "source": "\n@[] def f := 12\n",

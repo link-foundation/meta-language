@@ -772,6 +772,23 @@
       "rootIncludesLeadingTrivia": true,
       "version": "1.0.0",
       "grammar": "parity/grammars/native/dtd.lino"
+    },
+    "native-odin": {
+      "hidden": [
+        "backslash",
+        "contextual_whitespace"
+      ],
+      "anonymous": [
+        "unnamed_token",
+        "whitespace"
+      ],
+      "extras": [
+        "comment",
+        "block_comment"
+      ],
+      "rootIncludesLeadingTrivia": true,
+      "version": "1.0.0",
+      "grammar": "parity/grammars/native/odin.lino"
     }
   },
   "languages": [
@@ -802,7 +819,7 @@
       ],
       "family": "document",
       "builtinGrammar": "plain-text",
-      "source": "Plain text (with notes).\nSecond line: café.\n",
+      "source": "Plain text (with notes).\nSecond line: caf\u00e9.\n",
       "recoverySource": "Plain \u0000 text (open\n",
       "javascript": {
         "status": "grammar-cst",
@@ -824,7 +841,7 @@
         "markdown",
         "markdown_inline"
       ],
-      "source": "# Title *x*\n\n> Quote with `code`\n> and [link](https://example.com) *em\n> ph* é.\n\n| a | b |\n|---|---|\n| *c* | d |\n\n```js\nconst value = 1;\n```\n\n<div>café</div>\n\n- item é <kbd>Ctrl</kbd>\n",
+      "source": "# Title *x*\n\n> Quote with `code`\n> and [link](https://example.com) *em\n> ph* \u00e9.\n\n| a | b |\n|---|---|\n| *c* | d |\n\n```js\nconst value = 1;\n```\n\n<div>caf\u00e9</div>\n\n- item \u00e9 <kbd>Ctrl</kbd>\n",
       "recoverySource": "# Title\n\nText \u0000 here.\n",
       "javascript": {
         "status": "grammar-cst",
@@ -862,7 +879,7 @@
       "grammars": [
         "xml"
       ],
-      "source": "<w:document xmlns:w=\"urn:w\"><w:body><w:p><w:r><w:t>café</w:t></w:r></w:p></w:body></w:document>\n",
+      "source": "<w:document xmlns:w=\"urn:w\"><w:body><w:p><w:r><w:t>caf\u00e9</w:t></w:r></w:p></w:body></w:document>\n",
       "recoverySource": "<w:document><w:body></w:document>\n",
       "javascript": {
         "status": "grammar-cst",
@@ -886,7 +903,7 @@
         "javascript"
       ],
       "nativeGrammar": "native-javascript",
-      "source": "// Greeting module — café\nimport { readFile } from 'node:fs';\n/* block comment */\nexport const greet = (name = \"wörld\") => `Hello, ${name}!`;\nclass Counter { #count = 0; increment() { return ++this.#count; } }\n",
+      "source": "// Greeting module \u2014 caf\u00e9\nimport { readFile } from 'node:fs';\n/* block comment */\nexport const greet = (name = \"w\u00f6rld\") => `Hello, ${name}!`;\nclass Counter { #count = 0; increment() { return ++this.#count; } }\n",
       "recoverySource": "const = 1;\nif (ready { go(); }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -908,7 +925,7 @@
         "rust"
       ],
       "nativeGrammar": "native-rust",
-      "source": "//! Crate docs — café\n/// A point.\n#[derive(Debug)]\nstruct Point { x: i32, y: i32 }\nfn main() {\n    let p = Point { x: 1, y: 2 }; /* note */\n    println!(\"{} é\", p.x + p.y);\n}\n",
+      "source": "//! Crate docs \u2014 caf\u00e9\n/// A point.\n#[derive(Debug)]\nstruct Point { x: i32, y: i32 }\nfn main() {\n    let p = Point { x: 1, y: 2 }; /* note */\n    println!(\"{} \u00e9\", p.x + p.y);\n}\n",
       "recoverySource": "fn main( {\n    let x = ;\n}\n",
       "javascript": {
         "status": "grammar-cst",
@@ -930,7 +947,7 @@
         "lean"
       ],
       "nativeGrammar": "native-lean",
-      "source": "-- Identity — λ\n/-- Returns its argument. -/\ndef ident (x : Nat) : Nat := x\ntheorem ident_eq (n : Nat) : ident n = n := rfl\n#eval ident 1\n",
+      "source": "-- Identity \u2014 \u03bb\n/-- Returns its argument. -/\ndef ident (x : Nat) : Nat := x\ntheorem ident_eq (n : Nat) : ident n = n := rfl\n#eval ident 1\n",
       "recoverySource": "def f (x : Nat : Nat := x\n",
       "javascript": {
         "status": "grammar-cst",
@@ -952,7 +969,7 @@
         "rocq"
       ],
       "nativeGrammar": "native-rocq",
-      "source": "(* Identity — λ *)\nDefinition ident (x : nat) : nat := x.\nLemma ident_eq : forall n, ident n = n.\nProof. intros n. reflexivity. Qed.\n",
+      "source": "(* Identity \u2014 \u03bb *)\nDefinition ident (x : nat) : nat := x.\nLemma ident_eq : forall n, ident n = n.\nProof. intros n. reflexivity. Qed.\n",
       "recoverySource": "Definition f (x : nat : nat := x.\n",
       "javascript": {
         "status": "grammar-cst",
@@ -973,7 +990,7 @@
       "grammars": [
         "python"
       ],
-      "source": "# Greeting — café\ndef greet(name: str = \"wörld\") -> str:\n    \"\"\"Return a greeting.\"\"\"\n    return f\"Hello, {name}!\"\n\n\nclass Point:\n    x: int = 0\n",
+      "source": "# Greeting \u2014 caf\u00e9\ndef greet(name: str = \"w\u00f6rld\") -> str:\n    \"\"\"Return a greeting.\"\"\"\n    return f\"Hello, {name}!\"\n\n\nclass Point:\n    x: int = 0\n",
       "recoverySource": "def f(x:\n    return x +\n",
       "javascript": {
         "status": "grammar-cst",
@@ -995,7 +1012,7 @@
         "c"
       ],
       "nativeGrammar": "native-c",
-      "source": "/* Point — é */\n#include <stdio.h>\n// entry\nstruct point { int x; int y; };\nint main(void) { printf(\"%d é\\n\", 1 + 2); return 0; }\n",
+      "source": "/* Point \u2014 \u00e9 */\n#include <stdio.h>\n// entry\nstruct point { int x; int y; };\nint main(void) { printf(\"%d \u00e9\\n\", 1 + 2); return 0; }\n",
       "recoverySource": "int main(void) { return 0\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1016,7 +1033,7 @@
       "grammars": [
         "cpp"
       ],
-      "source": "// café\n#include <vector>\nnamespace demo { template <typename T> T id(T x) { return x; } }\nint main() { std::vector<int> v{1, 2}; return demo::id(0); } /* end */\n",
+      "source": "// caf\u00e9\n#include <vector>\nnamespace demo { template <typename T> T id(T x) { return x; } }\nint main() { std::vector<int> v{1, 2}; return demo::id(0); } /* end */\n",
       "recoverySource": "int main() { return 0\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1038,7 +1055,7 @@
       "grammars": [
         "csharp"
       ],
-      "source": "// café\nusing System;\n/// <summary>Demo</summary>\nclass C { static void Main() { var s = $\"é {1 + 2}\"; Console.WriteLine(s); } }\n",
+      "source": "// caf\u00e9\nusing System;\n/// <summary>Demo</summary>\nclass C { static void Main() { var s = $\"\u00e9 {1 + 2}\"; Console.WriteLine(s); } }\n",
       "recoverySource": "class C { void M( { } }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1059,7 +1076,7 @@
         "java"
       ],
       "nativeGrammar": "native-java",
-      "source": "// café\nimport java.util.List;\n/** Main class. */\nclass Main { public static void main(String[] args) { String s = \"é\"; System.out.println(s + 1); } }\n",
+      "source": "// caf\u00e9\nimport java.util.List;\n/** Main class. */\nclass Main { public static void main(String[] args) { String s = \"\u00e9\"; System.out.println(s + 1); } }\n",
       "recoverySource": "class Main { void f( { } }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1081,7 +1098,7 @@
         "typescript"
       ],
       "nativeGrammar": "native-typescript",
-      "source": "// café\ninterface Point { x: number; y?: string }\nexport function id<T>(value: T): T { return value; } /* é */\ntype Pair = [number, string];\n",
+      "source": "// caf\u00e9\ninterface Point { x: number; y?: string }\nexport function id<T>(value: T): T { return value; } /* \u00e9 */\ntype Pair = [number, string];\n",
       "recoverySource": "const value: = 1;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1102,7 +1119,7 @@
         "tsx"
       ],
       "nativeGrammar": "native-tsx",
-      "source": "// café\nconst view = <div className=\"é\">{items.map((i: number) => <span key={i}>{i}</span>)}</div>;\n",
+      "source": "// caf\u00e9\nconst view = <div className=\"\u00e9\">{items.map((i: number) => <span key={i}>{i}</span>)}</div>;\n",
       "recoverySource": "const view = <div>;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1125,7 +1142,7 @@
       "grammars": [
         "vb"
       ],
-      "source": "' café\nModule Program\n    Sub Main()\n        Dim s As String = \"é\"\n        Console.WriteLine(s)\n    End Sub\nEnd Module\n",
+      "source": "' caf\u00e9\nModule Program\n    Sub Main()\n        Dim s As String = \"\u00e9\"\n        Console.WriteLine(s)\n    End Sub\nEnd Module\n",
       "recoverySource": "Module Program\n    Sub Main(\nEnd Module\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1149,7 +1166,7 @@
       "grammars": [
         "pascal"
       ],
-      "source": "{ café }\nprogram Demo;\n// comment\nvar x: Integer;\nbegin\n  x := 1 + 2;\n  WriteLn('é', x);\nend.\n",
+      "source": "{ caf\u00e9 }\nprogram Demo;\n// comment\nvar x: Integer;\nbegin\n  x := 1 + 2;\n  WriteLn('\u00e9', x);\nend.\n",
       "recoverySource": "program Demo; begin x := ; end.\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1172,7 +1189,7 @@
         "go"
       ],
       "nativeGrammar": "native-go",
-      "source": "// Package main — café\npackage main\n\nimport \"fmt\"\n\n/* entry */\nfunc main() { s := \"é\"; fmt.Println(s, 1+2) }\n",
+      "source": "// Package main \u2014 caf\u00e9\npackage main\n\nimport \"fmt\"\n\n/* entry */\nfunc main() { s := \"\u00e9\"; fmt.Println(s, 1+2) }\n",
       "recoverySource": "package main\nfunc main( {}\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1192,7 +1209,7 @@
       "grammars": [
         "r"
       ],
-      "source": "# café\nsquare <- function(x) x^2\nvalues <- c(1, 2, 3)\nprint(sapply(values, square)) # é\n",
+      "source": "# caf\u00e9\nsquare <- function(x) x^2\nvalues <- c(1, 2, 3)\nprint(sapply(values, square)) # \u00e9\n",
       "recoverySource": "value <- c(1, 2\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1214,7 +1231,7 @@
       "grammars": [
         "ruby"
       ],
-      "source": "# café\nclass Greeter\n  def greet(name = \"é\")\n    \"Hello, #{name}!\"\n  end\nend\n",
+      "source": "# caf\u00e9\nclass Greeter\n  def greet(name = \"\u00e9\")\n    \"Hello, #{name}!\"\n  end\nend\n",
       "recoverySource": "def f(x\n  x\nend\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1234,7 +1251,7 @@
       "grammars": [
         "php"
       ],
-      "source": "<p>café</p>\n<?php\n// comment\nfunction f($x) { return \"é{$x}\"; }\necho f(1);\n",
+      "source": "<p>caf\u00e9</p>\n<?php\n// comment\nfunction f($x) { return \"\u00e9{$x}\"; }\necho f(1);\n",
       "recoverySource": "<?php function f($x { return $x; }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1254,7 +1271,7 @@
       "grammars": [
         "swift"
       ],
-      "source": "// café\nstruct Point { let x: Int }\nfunc f(_ x: Int) -> Int { x } /* é */\nlet s = \"é \\(f(1))\"\n",
+      "source": "// caf\u00e9\nstruct Point { let x: Int }\nfunc f(_ x: Int) -> Int { x } /* \u00e9 */\nlet s = \"\u00e9 \\(f(1))\"\n",
       "recoverySource": "func f(_ x: Int -> Int { x }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1275,7 +1292,7 @@
       "grammars": [
         "kotlin"
       ],
-      "source": "// café\ndata class Point(val x: Int)\nfun f(x: Int): Int = x /* é */\nval s = \"é ${f(1)}\"\n",
+      "source": "// caf\u00e9\ndata class Point(val x: Int)\nfun f(x: Int): Int = x /* \u00e9 */\nval s = \"\u00e9 ${f(1)}\"\n",
       "recoverySource": "fun f(x: Int: Int = x\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1295,7 +1312,7 @@
       "grammars": [
         "scala"
       ],
-      "source": "// café\ncase class Point(x: Int)\nobject Demo { def f(x: Int): Int = x /* é */ ; val s = s\"é ${f(1)}\" }\n",
+      "source": "// caf\u00e9\ncase class Point(x: Int)\nobject Demo { def f(x: Int): Int = x /* \u00e9 */ ; val s = s\"\u00e9 ${f(1)}\" }\n",
       "recoverySource": "object Demo { def f(x: Int: Int = x }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1316,7 +1333,7 @@
         "lua"
       ],
       "nativeGrammar": "native-lua",
-      "source": "-- café\nlocal function f(x) return x .. \"é\" end\n--[[ block ]]\nlocal t = { a = 1, [2] = \"b\" }\n",
+      "source": "-- caf\u00e9\nlocal function f(x) return x .. \"\u00e9\" end\n--[[ block ]]\nlocal t = { a = 1, [2] = \"b\" }\n",
       "recoverySource": "local function f(x return x end\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1337,7 +1354,7 @@
       "grammars": [
         "perl"
       ],
-      "source": "# café\nsub f { my ($x) = @_; return \"é$x\"; }\nmy @list = (1, 2);\nprint f($list[0]), \"\\n\";\n",
+      "source": "# caf\u00e9\nsub f { my ($x) = @_; return \"\u00e9$x\"; }\nmy @list = (1, 2);\nprint f($list[0]), \"\\n\";\n",
       "recoverySource": "sub f { my ($x = @_; }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1358,7 +1375,7 @@
       "grammars": [
         "haskell"
       ],
-      "source": "-- café\nmodule Demo where\n\ndata Point = Point { x :: Int }\n\nf :: Int -> String\nf n = \"é\" ++ show (n + 1) {- é -}\n",
+      "source": "-- caf\u00e9\nmodule Demo where\n\ndata Point = Point { x :: Int }\n\nf :: Int -> String\nf n = \"\u00e9\" ++ show (n + 1) {- \u00e9 -}\n",
       "recoverySource": "module Demo where\nf x = (x +\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1379,7 +1396,7 @@
       "grammars": [
         "ocaml"
       ],
-      "source": "(* café *)\ntype point = { x : int }\nlet f x = x + 1 (* é *)\nlet s = \"é\" ^ string_of_int (f 1)\n",
+      "source": "(* caf\u00e9 *)\ntype point = { x : int }\nlet f x = x + 1 (* \u00e9 *)\nlet s = \"\u00e9\" ^ string_of_int (f 1)\n",
       "recoverySource": "let f x = (x +\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1401,7 +1418,7 @@
       "grammars": [
         "ocaml_interface"
       ],
-      "source": "(* café *)\ntype point = { x : int }\nval f : int -> string (* é *)\n",
+      "source": "(* caf\u00e9 *)\ntype point = { x : int }\nval f : int -> string (* \u00e9 *)\n",
       "recoverySource": "val f : (int\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1421,7 +1438,7 @@
       "grammars": [
         "zig"
       ],
-      "source": "// café\nconst std = @import(\"std\");\npub fn f(x: i32) i32 {\n    return x + 1; // é\n}\nconst s = \"é\";\n",
+      "source": "// caf\u00e9\nconst std = @import(\"std\");\npub fn f(x: i32) i32 {\n    return x + 1; // \u00e9\n}\nconst s = \"\u00e9\";\n",
       "recoverySource": "pub fn f(x: i32 i32 {\n    return x;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1444,7 +1461,7 @@
       "grammars": [
         "bash"
       ],
-      "source": "# café\nf() { echo \"é $1\"; }\nfor x in a b; do f \"$x\" | tr a b; done\n",
+      "source": "# caf\u00e9\nf() { echo \"\u00e9 $1\"; }\nfor x in a b; do f \"$x\" | tr a b; done\n",
       "recoverySource": "f() { echo x\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1464,7 +1481,7 @@
       "grammars": [
         "dart"
       ],
-      "source": "// café\nclass Point { final int x; Point(this.x); }\nString f(int x) => 'é ${x + 1}'; /* é */\n",
+      "source": "// caf\u00e9\nclass Point { final int x; Point(this.x); }\nString f(int x) => '\u00e9 ${x + 1}'; /* \u00e9 */\n",
       "recoverySource": "String f(int x => x;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1485,8 +1502,8 @@
       "grammars": [
         "agda"
       ],
-      "source": "-- café\nmodule Demo where\n\ndata Nat : Set where\n  zero : Nat\n  suc  : Nat → Nat\n\n_+_ : Nat → Nat → Nat\nzero + m = m\nsuc n + m = suc (n + m) {- é -}\n",
-      "recoverySource": "module Demo where\nf : Nat → (Nat\n",
+      "source": "-- caf\u00e9\nmodule Demo where\n\ndata Nat : Set where\n  zero : Nat\n  suc  : Nat \u2192 Nat\n\n_+_ : Nat \u2192 Nat \u2192 Nat\nzero + m = m\nsuc n + m = suc (n + m) {- \u00e9 -}\n",
+      "recoverySource": "module Demo where\nf : Nat \u2192 (Nat\n",
       "javascript": {
         "status": "grammar-cst",
         "backend": "tree-sitter-agda"
@@ -1505,7 +1522,7 @@
       "grammars": [
         "cmake"
       ],
-      "source": "# café\ncmake_minimum_required(VERSION 3.20)\nproject(Demo LANGUAGES C)\nset(NAME \"é\")\nif(WIN32)\n  add_executable(demo main.c)\nendif()\n",
+      "source": "# caf\u00e9\ncmake_minimum_required(VERSION 3.20)\nproject(Demo LANGUAGES C)\nset(NAME \"\u00e9\")\nif(WIN32)\n  add_executable(demo main.c)\nendif()\n",
       "recoverySource": "project(Demo\nset(X 1)\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1528,7 +1545,7 @@
         "diff"
       ],
       "nativeGrammar": "native-diff",
-      "source": "diff --git a/f.txt b/f.txt\nindex 1234567..89abcde 100644\n--- a/f.txt\n+++ b/f.txt\n@@ -1,2 +1,2 @@\n café\n-old é\n+new é\n",
+      "source": "diff --git a/f.txt b/f.txt\nindex 1234567..89abcde 100644\n--- a/f.txt\n+++ b/f.txt\n@@ -1,2 +1,2 @@\n caf\u00e9\n-old \u00e9\n+new \u00e9\n",
       "recoverySource": "@@ -1,2 +1,2\n-old\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1550,7 +1567,7 @@
       "grammars": [
         "elixir"
       ],
-      "source": "# café\ndefmodule Demo do\n  def f(x), do: x + 1\n  def s, do: \"é #{f(1)}\"\nend\n",
+      "source": "# caf\u00e9\ndefmodule Demo do\n  def f(x), do: x + 1\n  def s, do: \"\u00e9 #{f(1)}\"\nend\n",
       "recoverySource": "defmodule Demo do\n  def f(x, do: x\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1570,7 +1587,7 @@
       "grammars": [
         "elm"
       ],
-      "source": "module Demo exposing (f)\n\n-- café\nf : Int -> String\nf x =\n    \"é\" ++ String.fromInt (x + 1) {- é -}\n",
+      "source": "module Demo exposing (f)\n\n-- caf\u00e9\nf : Int -> String\nf x =\n    \"\u00e9\" ++ String.fromInt (x + 1) {- \u00e9 -}\n",
       "recoverySource": "module Demo exposing (f)\nf x = (x +\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1591,7 +1608,7 @@
       "grammars": [
         "erlang"
       ],
-      "source": "%% café\n-module(demo).\n-export([f/1]).\nf(X) -> [X + 1, \"é\"].\n",
+      "source": "%% caf\u00e9\n-module(demo).\n-export([f/1]).\nf(X) -> [X + 1, \"\u00e9\"].\n",
       "recoverySource": "-module(demo).\nf(X -> X.\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1613,7 +1630,7 @@
       "grammars": [
         "groovy"
       ],
-      "source": "// café\nclass Point { int x; }\ndef f(int x) { return \"é ${x + 1}\"; } /* é */\nprintln(f(1));\n",
+      "source": "// caf\u00e9\nclass Point { int x; }\ndef f(int x) { return \"\u00e9 ${x + 1}\"; } /* \u00e9 */\nprintln(f(1));\n",
       "recoverySource": "def f(int x { return x }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1635,7 +1652,7 @@
       "grammars": [
         "hcl"
       ],
-      "source": "# café\nresource \"aws_instance\" \"web\" {\n  ami   = \"é\"\n  count = 2\n  tags  = { Name = \"demo\" }\n}\n",
+      "source": "# caf\u00e9\nresource \"aws_instance\" \"web\" {\n  ami   = \"\u00e9\"\n  count = 2\n  tags  = { Name = \"demo\" }\n}\n",
       "recoverySource": "resource \"x\" {\n  a = (1 +\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1658,7 +1675,7 @@
         "make"
       ],
       "nativeGrammar": "native-make",
-      "source": "# café\nCC ?= cc\nNAME := é\n\nall: demo\n\ndemo: main.c\n\t$(CC) -o $@ $<\n\n.PHONY: all\n",
+      "source": "# caf\u00e9\nCC ?= cc\nNAME := \u00e9\n\nall: demo\n\ndemo: main.c\n\t$(CC) -o $@ $<\n\n.PHONY: all\n",
       "recoverySource": "all: demo\nifeq (a,b\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1678,7 +1695,7 @@
       "grammars": [
         "matlab"
       ],
-      "source": "% café\nfunction y = f(x)\n  y = x + 1; % é\nend\ns = 'é';\n",
+      "source": "% caf\u00e9\nfunction y = f(x)\n  y = x + 1; % \u00e9\nend\ns = '\u00e9';\n",
       "recoverySource": "function y = f(x\n  y = (x + 1;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1698,7 +1715,7 @@
       "grammars": [
         "nix"
       ],
-      "source": "# café\n{ pkgs ? import <nixpkgs> {} }:\nlet name = \"é\"; in\npkgs.mkShell { buildInputs = [ pkgs.hello ]; shellHook = \"echo ${name}\"; }\n",
+      "source": "# caf\u00e9\n{ pkgs ? import <nixpkgs> {} }:\nlet name = \"\u00e9\"; in\npkgs.mkShell { buildInputs = [ pkgs.hello ]; shellHook = \"echo ${name}\"; }\n",
       "recoverySource": "let x = 1; in { a = x\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1719,16 +1736,17 @@
       "grammars": [
         "odin"
       ],
-      "source": "// café\npackage demo\n\nimport \"core:fmt\"\n\nf :: proc(x: int) -> int {\n\treturn x + 1 // é\n}\n\nmain :: proc() {\n\tfmt.println(\"é\", f(1))\n}\n",
+      "source": "// caf\u00e9\npackage demo\n\nimport \"core:fmt\"\n\nf :: proc(x: int) -> int {\n\treturn x + 1 // \u00e9\n}\n\nmain :: proc() {\n\tfmt.println(\"\u00e9\", f(1))\n}\n",
       "recoverySource": "package demo\nf :: proc(x: int -> int {\n",
       "javascript": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-odin"
+        "backend": "native Links Notation Odin"
       },
       "rust": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-odin"
-      }
+        "backend": "native Links Notation Odin"
+      },
+      "nativeGrammar": "native-odin"
     },
     {
       "name": "PowerShell",
@@ -1741,7 +1759,7 @@
       "grammars": [
         "powershell"
       ],
-      "source": "# café\nfunction Get-Demo([int]$x) {\n  return \"é $($x + 1)\"\n}\nGet-Demo 1 | Write-Output\n",
+      "source": "# caf\u00e9\nfunction Get-Demo([int]$x) {\n  return \"\u00e9 $($x + 1)\"\n}\nGet-Demo 1 | Write-Output\n",
       "recoverySource": "function Get-Demo([int]$x {\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1764,7 +1782,7 @@
         "racket"
       ],
       "nativeGrammar": "native-racket",
-      "source": "#lang racket\n; café\n(define (f x) (+ x 1))\n(displayln (string-append \"é\" (number->string (f 1))))\n",
+      "source": "#lang racket\n; caf\u00e9\n(define (f x) (+ x 1))\n(displayln (string-append \"\u00e9\" (number->string (f 1))))\n",
       "recoverySource": "#lang racket\n(define (f x) (+ x 1)\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1786,7 +1804,7 @@
         "regex"
       ],
       "nativeGrammar": "native-regex",
-      "source": "^(?<word>[a-zé]+)\\s*(\\d{2,4})?$|caf[eé]",
+      "source": "^(?<word>[a-z\u00e9]+)\\s*(\\d{2,4})?$|caf[e\u00e9]",
       "recoverySource": "(ab[c",
       "javascript": {
         "status": "grammar-cst",
@@ -1808,7 +1826,7 @@
         "scheme"
       ],
       "nativeGrammar": "native-scheme",
-      "source": "; café\n(define (f x) (+ x 1))\n(display (string-append \"é\" (number->string (f 1))))\n",
+      "source": "; caf\u00e9\n(define (f x) (+ x 1))\n(display (string-append \"\u00e9\" (number->string (f 1))))\n",
       "recoverySource": "(define (f x) (+ x 1)\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1830,7 +1848,7 @@
         "solidity"
       ],
       "nativeGrammar": "native-solidity",
-      "source": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n// café\ncontract Demo {\n    uint256 public x;\n    function f(uint256 y) public pure returns (uint256) { return y + 1; }\n    string s = unicode\"é\";\n}\n",
+      "source": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n// caf\u00e9\ncontract Demo {\n    uint256 public x;\n    function f(uint256 y) public pure returns (uint256) { return y + 1; }\n    string s = unicode\"\u00e9\";\n}\n",
       "recoverySource": "contract Demo {\n    function f(uint256 y public {}\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1851,7 +1869,7 @@
       "grammars": [
         "sql"
       ],
-      "source": "-- café\nSELECT u.id, COUNT(*) AS total\nFROM users AS u /* é */\nWHERE u.name = 'é'\nGROUP BY u.id;\n",
+      "source": "-- caf\u00e9\nSELECT u.id, COUNT(*) AS total\nFROM users AS u /* \u00e9 */\nWHERE u.name = '\u00e9'\nGROUP BY u.id;\n",
       "recoverySource": "SELECT id FROM users WHERE;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1873,7 +1891,7 @@
       "grammars": [
         "sql"
       ],
-      "source": "-- café\nSELECT id::text, data->>'name' FROM users\nWHERE name ILIKE 'é%' AND id = ANY(ARRAY[1, 2]);\n",
+      "source": "-- caf\u00e9\nSELECT id::text, data->>'name' FROM users\nWHERE name ILIKE '\u00e9%' AND id = ANY(ARRAY[1, 2]);\n",
       "recoverySource": "SELECT (id::text FROM users;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1895,7 +1913,7 @@
       "grammars": [
         "sql"
       ],
-      "source": "-- café\nCREATE TEMPORARY TABLE t (id INT AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB;\nSELECT `id`, IFNULL(name, 'é') FROM `users` LIMIT 10 OFFSET 1;\n",
+      "source": "-- caf\u00e9\nCREATE TEMPORARY TABLE t (id INT AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB;\nSELECT `id`, IFNULL(name, '\u00e9') FROM `users` LIMIT 10 OFFSET 1;\n",
       "recoverySource": "SELECT `id FROM users;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1917,7 +1935,7 @@
       "grammars": [
         "sql"
       ],
-      "source": "-- café\nCREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT DEFAULT 'é');\nSELECT IFNULL(name, 'x') FROM t LIMIT 5;\n",
+      "source": "-- caf\u00e9\nCREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT DEFAULT '\u00e9');\nSELECT IFNULL(name, 'x') FROM t LIMIT 5;\n",
       "recoverySource": "CREATE TABLE t (id INTEGER,;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1939,7 +1957,7 @@
       "grammars": [
         "sql"
       ],
-      "source": "-- café\nSELECT id INTO #tmp FROM users WHERE name = N'é';\nSELECT GETDATE() AS now, ISNULL(name, 'x') FROM users;\n",
+      "source": "-- caf\u00e9\nSELECT id INTO #tmp FROM users WHERE name = N'\u00e9';\nSELECT GETDATE() AS now, ISNULL(name, 'x') FROM users;\n",
       "recoverySource": "SELECT ISNULL(name FROM users;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1961,7 +1979,7 @@
       "grammars": [
         "sql"
       ],
-      "source": "-- café\nSELECT sysdate, NVL(name, 'é') FROM dual WHERE ROWNUM <= 5;\n",
+      "source": "-- caf\u00e9\nSELECT sysdate, NVL(name, '\u00e9') FROM dual WHERE ROWNUM <= 5;\n",
       "recoverySource": "SELECT NVL(name FROM dual;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -1983,7 +2001,7 @@
       "grammars": [
         "sql"
       ],
-      "source": "-- café\nSELECT STRUCT(1 AS a) AS s, ARRAY_AGG(name) FROM `users` GROUP BY s;\n",
+      "source": "-- caf\u00e9\nSELECT STRUCT(1 AS a) AS s, ARRAY_AGG(name) FROM `users` GROUP BY s;\n",
       "recoverySource": "SELECT STRUCT(1 AS FROM users;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2005,7 +2023,7 @@
       "grammars": [
         "sql"
       ],
-      "source": "-- café\nSELECT PARSE_JSON('{}') AS v, IFF(id > 1, 'a', 'é') FROM users;\n",
+      "source": "-- caf\u00e9\nSELECT PARSE_JSON('{}') AS v, IFF(id > 1, 'a', '\u00e9') FROM users;\n",
       "recoverySource": "SELECT IFF(id > 1, 'a' FROM users;\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2026,7 +2044,7 @@
       "grammars": [
         "html"
       ],
-      "source": "<!-- café -->\n<p class=\"x\" style=\"color: red\">Héllo</p>\n<script>const value = 1;</script>\n<style>.x { color: blue; }</style>\n",
+      "source": "<!-- caf\u00e9 -->\n<p class=\"x\" style=\"color: red\">H\u00e9llo</p>\n<script>const value = 1;</script>\n<style>.x { color: blue; }</style>\n",
       "recoverySource": "<p class=\"x>text</p>\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2046,7 +2064,7 @@
       "grammars": [
         "css"
       ],
-      "source": "/* café */\n@media (min-width: 10px) { .x > a:hover { color: #fff; content: \"é\"; } }\n",
+      "source": "/* caf\u00e9 */\n@media (min-width: 10px) { .x > a:hover { color: #fff; content: \"\u00e9\"; } }\n",
       "recoverySource": ".x { color: red\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2068,7 +2086,7 @@
         "json"
       ],
       "nativeGrammar": "native-json",
-      "source": "{\"name\": \"café\", \"values\": [1, 2.5, true, null],\n \"nested\": {\"é\": false}}\n",
+      "source": "{\"name\": \"caf\u00e9\", \"values\": [1, 2.5, true, null],\n \"nested\": {\"\u00e9\": false}}\n",
       "recoverySource": "{\"value\": 1,\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2089,7 +2107,7 @@
       "grammars": [
         "yaml"
       ],
-      "source": "# café\nname: \"é\"\nitems:\n  - 1\n  - two\n",
+      "source": "# caf\u00e9\nname: \"\u00e9\"\nitems:\n  - 1\n  - two\n",
       "recoverySource": "name: [1, 2\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2109,7 +2127,7 @@
       "grammars": [
         "toml"
       ],
-      "source": "# café\ntitle = \"é\"\n[owner]\ndob = 1979-05-27T07:32:00Z\nlist = [1, 2]\n",
+      "source": "# caf\u00e9\ntitle = \"\u00e9\"\n[owner]\ndob = 1979-05-27T07:32:00Z\nlist = [1, 2]\n",
       "recoverySource": "title = \n[owner\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2130,7 +2148,7 @@
       "grammars": [
         "xml"
       ],
-      "source": "<?xml version=\"1.0\"?>\n<!-- café -->\n<note lang=\"fr\"><to>é</to><![CDATA[x < y]]></note>\n",
+      "source": "<?xml version=\"1.0\"?>\n<!-- caf\u00e9 -->\n<note lang=\"fr\"><to>\u00e9</to><![CDATA[x < y]]></note>\n",
       "recoverySource": "<note><to>text</note>\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2151,7 +2169,7 @@
       "grammars": [
         "dtd"
       ],
-      "source": "<!-- café -->\n<!ELEMENT note (to, body)>\n<!ATTLIST note lang CDATA #IMPLIED>\n",
+      "source": "<!-- caf\u00e9 -->\n<!ELEMENT note (to, body)>\n<!ATTLIST note lang CDATA #IMPLIED>\n",
       "recoverySource": "<!ELEMENT note (to, body>\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2173,7 +2191,7 @@
         "ini"
       ],
       "nativeGrammar": "native-ini",
-      "source": "; café\n[owner]\nname = é\n",
+      "source": "; caf\u00e9\n[owner]\nname = \u00e9\n",
       "recoverySource": "[owner\nname = value\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2196,7 +2214,7 @@
         "proto"
       ],
       "nativeGrammar": "native-proto",
-      "source": "// café\nsyntax = \"proto3\";\nmessage Item { string name = 1; repeated int32 ids = 2; }\n",
+      "source": "// caf\u00e9\nsyntax = \"proto3\";\nmessage Item { string name = 1; repeated int32 ids = 2; }\n",
       "recoverySource": "syntax = \"proto3\";\nmessage Item { string name = ; }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2218,7 +2236,7 @@
         "graphql"
       ],
       "nativeGrammar": "native-graphql",
-      "source": "# café\ntype Item { id: ID!\n  name(lang: String = \"é\"): String }\n",
+      "source": "# caf\u00e9\ntype Item { id: ID!\n  name(lang: String = \"\u00e9\"): String }\n",
       "recoverySource": "type Item { id: }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2239,7 +2257,7 @@
         "csv"
       ],
       "nativeGrammar": "native-csv",
-      "source": "name,value\n\"café, é\",1\n\"quote \"\"x\"\"\",2\n",
+      "source": "name,value\n\"caf\u00e9, \u00e9\",1\n\"quote \"\"x\"\"\",2\n",
       "recoverySource": "name,value\n\"open,1\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2260,7 +2278,7 @@
         "json5"
       ],
       "nativeGrammar": "native-json5",
-      "source": "// café\n{value: 1, 'é': [0x10, +Infinity,],}\n",
+      "source": "// caf\u00e9\n{value: 1, '\u00e9': [0x10, +Infinity,],}\n",
       "recoverySource": "{value: }\n",
       "javascript": {
         "status": "grammar-cst",
@@ -2299,8 +2317,8 @@
       ],
       "family": "natural",
       "builtinGrammar": "natural-language",
-      "source": "你好。\n",
-      "recoverySource": "你好\u0000。\n",
+      "source": "\u4f60\u597d\u3002\n",
+      "recoverySource": "\u4f60\u597d\u0000\u3002\n",
       "javascript": {
         "status": "grammar-cst",
         "backend": "built-in Unicode sentence grammar"
@@ -2318,8 +2336,8 @@
       ],
       "family": "natural",
       "builtinGrammar": "natural-language",
-      "source": "नमस्ते।\n",
-      "recoverySource": "नमस्\u0000ते।\n",
+      "source": "\u0928\u092e\u0938\u094d\u0924\u0947\u0964\n",
+      "recoverySource": "\u0928\u092e\u0938\u094d\u0000\u0924\u0947\u0964\n",
       "javascript": {
         "status": "grammar-cst",
         "backend": "built-in Unicode sentence grammar"
@@ -2357,8 +2375,8 @@
       ],
       "family": "natural",
       "builtinGrammar": "natural-language",
-      "source": "مرحبا.\n",
-      "recoverySource": "مرح\u0000با.\n",
+      "source": "\u0645\u0631\u062d\u0628\u0627.\n",
+      "recoverySource": "\u0645\u0631\u062d\u0000\u0628\u0627.\n",
       "javascript": {
         "status": "grammar-cst",
         "backend": "built-in Unicode sentence grammar"
@@ -2395,8 +2413,8 @@
       ],
       "family": "natural",
       "builtinGrammar": "natural-language",
-      "source": "নমস্কার।\n",
-      "recoverySource": "নমস্\u0000কার।\n",
+      "source": "\u09a8\u09ae\u09b8\u09cd\u0995\u09be\u09b0\u0964\n",
+      "recoverySource": "\u09a8\u09ae\u09b8\u09cd\u0000\u0995\u09be\u09b0\u0964\n",
       "javascript": {
         "status": "grammar-cst",
         "backend": "built-in Unicode sentence grammar"
@@ -2433,8 +2451,8 @@
       ],
       "family": "natural",
       "builtinGrammar": "natural-language",
-      "source": "Гавайи это штат.\n",
-      "recoverySource": "Гавайи\u0000 это штат.\n",
+      "source": "\u0413\u0430\u0432\u0430\u0439\u0438 \u044d\u0442\u043e \u0448\u0442\u0430\u0442.\n",
+      "recoverySource": "\u0413\u0430\u0432\u0430\u0439\u0438\u0000 \u044d\u0442\u043e \u0448\u0442\u0430\u0442.\n",
       "javascript": {
         "status": "grammar-cst",
         "backend": "built-in Unicode sentence grammar"
@@ -2452,8 +2470,8 @@
       ],
       "family": "natural",
       "builtinGrammar": "natural-language",
-      "source": "سلام۔\n",
-      "recoverySource": "سلا\u0000م۔\n",
+      "source": "\u0633\u0644\u0627\u0645\u06d4\n",
+      "recoverySource": "\u0633\u0644\u0627\u0000\u0645\u06d4\n",
       "javascript": {
         "status": "grammar-cst",
         "backend": "built-in Unicode sentence grammar"

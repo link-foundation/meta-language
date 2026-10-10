@@ -3,6 +3,18 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'lexical-literal-rule') {
+      const { rule, literal } = decision;
+      if (typeof rule !== 'string' || !Object.hasOwn(grammar.rules, rule)
+        || typeof literal !== 'string' || !literal
+        || grammar.rules[rule].type !== 'STRING' || grammar.rules[rule].value !== literal) {
+        throw new TypeError('lexical literal rules need an existing rule containing exactly the recorded literal');
+      }
+      // Neutral lexical precedence keeps this named token's extraction key
+      // distinct from anonymous occurrences without changing its priority.
+      grammar.rules[rule] = { type: 'TOKEN', content: { type: 'PREC', value: 0, content: grammar.rules[rule] } };
+      continue;
+    }
     if (decision.family === 'external-literal-token') {
       const { literal, token, count } = decision;
       if (typeof literal !== 'string' || !literal || typeof token !== 'string' || !/^_[A-Za-z_]+$/u.test(token) || !Number.isSafeInteger(count) || count <= 0

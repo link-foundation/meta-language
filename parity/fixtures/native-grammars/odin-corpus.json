@@ -1,0 +1,16 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "5e8029d1a36bdc1a7fb3d08e5633373d50378283bbe21a96509f9c6b15f642f5",
+  "cases": [
+    {
+      "file": "declarations.txt",
+      "title": "Bit field type",
+      "source": "\nFoo :: bit_field u16 { // backing type must be an integer or array of integers\n    x: i32     | 3, // signed integers will be signed extended on use\n    y: u16     | 2 + 3, // general expressions\n    z: My_Enum | foo.SOME_CONSTANT, // ability to define the bit-width elsewhere\n    w: bool    | foo.SOME_CONSTANT > 10 ? 2 : 1,\n}\n\nHandle :: bit_field u32 {\n    slot:       u32  | 16,\n    generation: u32  | 15,\n    in_use:     bool |  1,\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Build Tags",
+      "source": "\n#+build darwin, linux\n"
+    }
+  ]
+}

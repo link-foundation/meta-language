@@ -1222,6 +1222,10 @@
           "name": "expression"
         },
         {
+          "source": "native:odin",
+          "name": "expression"
+        },
+        {
           "source": "native:pascal",
           "name": "expression"
         },
@@ -1375,6 +1379,10 @@
           "name": "number"
         },
         {
+          "source": "native:odin",
+          "name": "number"
+        },
+        {
           "source": "native:racket",
           "name": "number"
         },
@@ -1520,6 +1528,10 @@
           "name": "identifier"
         },
         {
+          "source": "native:odin",
+          "name": "identifier"
+        },
+        {
           "source": "native:pascal",
           "name": "identifier"
         },
@@ -1619,6 +1631,10 @@
         },
         {
           "source": "native:lua",
+          "name": "statement"
+        },
+        {
+          "source": "native:odin",
           "name": "statement"
         },
         {
@@ -1995,6 +2011,10 @@
           "name": "string"
         },
         {
+          "source": "native:odin",
+          "name": "string"
+        },
+        {
           "source": "native:proto",
           "name": "string"
         },
@@ -2071,6 +2091,10 @@
         {
           "source": "native:lean",
           "name": "boolean"
+        },
+        {
+          "source": "native:odin",
+          "name": "boolean_value"
         },
         {
           "source": "native:proto",
@@ -2249,6 +2273,10 @@
           "name": "character"
         },
         {
+          "source": "native:odin",
+          "name": "character_literal"
+        },
+        {
           "source": "native:pascal",
           "name": "character_literal"
         },
@@ -2350,6 +2378,10 @@
         },
         {
           "source": "native:nix",
+          "name": "comment"
+        },
+        {
+          "source": "native:odin",
           "name": "comment"
         },
         {
@@ -2938,6 +2970,10 @@
         },
         {
           "source": "native:nix",
+          "name": "escape_sequence"
+        },
+        {
+          "source": "native:odin",
           "name": "escape_sequence"
         },
         {
@@ -6800,6 +6836,10 @@
           "name": "declaration"
         },
         {
+          "source": "native:odin",
+          "name": "declaration"
+        },
+        {
           "source": "native:solidity",
           "name": "declaration"
         },
@@ -8215,6 +8255,10 @@
           "name": "parameter_list"
         },
         {
+          "source": "native:odin",
+          "name": "parameter_list"
+        },
+        {
           "source": "native:powershell",
           "name": "parameter_list"
         },
@@ -8564,6 +8608,10 @@
           "name": "conditional"
         },
         {
+          "source": "native:odin",
+          "name": "if_statement"
+        },
+        {
           "source": "native:pascal",
           "name": "if_statement"
         },
@@ -8629,6 +8677,10 @@
           "name": "else_directive"
         },
         {
+          "source": "native:odin",
+          "name": "else_clause"
+        },
+        {
           "source": "native:powershell",
           "name": "else_clause"
         },
@@ -8683,6 +8735,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "switch_statement"
+        },
+        {
+          "source": "native:odin",
           "name": "switch_statement"
         },
         {
@@ -8898,6 +8954,10 @@
           "name": "for_statement"
         },
         {
+          "source": "native:odin",
+          "name": "for_statement"
+        },
+        {
           "source": "native:pascal",
           "name": "for_statement"
         },
@@ -9000,6 +9060,10 @@
           "name": "return_statement"
         },
         {
+          "source": "native:odin",
+          "name": "return_statement"
+        },
+        {
           "source": "native:python",
           "name": "return_statement"
         },
@@ -9065,6 +9129,10 @@
           "name": "break_statement"
         },
         {
+          "source": "native:odin",
+          "name": "break_statement"
+        },
+        {
           "source": "native:python",
           "name": "break_statement"
         },
@@ -9119,6 +9187,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "continue_statement"
+        },
+        {
+          "source": "native:odin",
           "name": "continue_statement"
         },
         {
@@ -9502,6 +9574,10 @@
           "name": "unary_expression"
         },
         {
+          "source": "native:odin",
+          "name": "unary_expression"
+        },
+        {
           "source": "native:pascal",
           "name": "unary_expression"
         },
@@ -9592,6 +9668,10 @@
         },
         {
           "source": "native:nix",
+          "name": "binary_expression"
+        },
+        {
+          "source": "native:odin",
           "name": "binary_expression"
         },
         {
@@ -9706,6 +9786,10 @@
         },
         {
           "source": "native:java",
+          "name": "cast_expression"
+        },
+        {
+          "source": "native:odin",
           "name": "cast_expression"
         },
         {
@@ -9890,6 +9974,10 @@
         {
           "source": "native:make",
           "name": "function_call"
+        },
+        {
+          "source": "native:odin",
+          "name": "call_expression"
         },
         {
           "source": "native:rust",
@@ -10307,6 +10395,10 @@
           "name": "parenthesized_expression"
         },
         {
+          "source": "native:odin",
+          "name": "parenthesized_expression"
+        },
+        {
           "source": "native:pascal",
           "name": "parenthesized_expression"
         },
@@ -10559,6 +10651,10 @@
           "name": "string_literal"
         },
         {
+          "source": "native:odin",
+          "name": "string_literal"
+        },
+        {
           "source": "native:powershell",
           "name": "string_literal"
         },
@@ -10790,6 +10886,10 @@
           "name": "word_characters"
         },
         {
+          "source": "native:odin",
+          "name": "word_characters"
+        },
+        {
           "source": "native:python",
           "name": "word_characters"
         },
@@ -10856,6 +10956,10 @@
         },
         {
           "source": "native:graphql",
+          "name": "source_file"
+        },
+        {
+          "source": "native:odin",
           "name": "source_file"
         },
         {
@@ -11453,10 +11557,14 @@
       "role": "concept",
       "definition": "A rule for a where clause, the construct the upstream grammar names where_clause.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "where_clause"
+        },
         {
           "source": "native:rust",
           "name": "where_clause"
@@ -11904,6 +12012,10 @@
           "name": "type"
         },
         {
+          "source": "native:odin",
+          "name": "type"
+        },
+        {
           "source": "native:pascal",
           "name": "type"
         },
@@ -12026,6 +12138,10 @@
           "name": "array_type"
         },
         {
+          "source": "native:odin",
+          "name": "array_type"
+        },
+        {
           "source": "native:rust",
           "name": "array_type"
         },
@@ -12116,6 +12232,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "tuple_type"
+        },
         {
           "source": "native:rust",
           "name": "tuple_type"
@@ -12358,6 +12478,10 @@
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "pointer_type"
+        },
+        {
+          "source": "native:odin",
           "name": "pointer_type"
         },
         {
@@ -12620,6 +12744,10 @@
       "sourceAliases": [
         {
           "source": "native:groovy",
+          "name": "range_expression"
+        },
+        {
+          "source": "native:odin",
           "name": "range_expression"
         },
         {
@@ -13370,6 +13498,10 @@
           "name": "index_expression"
         },
         {
+          "source": "native:odin",
+          "name": "index_expression"
+        },
+        {
           "source": "native:rust",
           "name": "index_expression"
         },
@@ -13521,6 +13653,10 @@
         },
         {
           "source": "native:java",
+          "name": "block"
+        },
+        {
+          "source": "native:odin",
           "name": "block"
         },
         {
@@ -13857,6 +13993,10 @@
           "name": "literal"
         },
         {
+          "source": "native:odin",
+          "name": "literal"
+        },
+        {
           "source": "native:pascal",
           "name": "literal"
         },
@@ -14002,6 +14142,10 @@
         },
         {
           "source": "native:go",
+          "name": "raw_string_literal"
+        },
+        {
+          "source": "native:odin",
           "name": "raw_string_literal"
         },
         {
@@ -14742,6 +14886,10 @@
           "name": "variable_declaration"
         },
         {
+          "source": "native:odin",
+          "name": "variable_declaration"
+        },
+        {
           "source": "native:solidity",
           "name": "variable_declaration"
         },
@@ -15123,6 +15271,10 @@
       "sourceAliases": [
         {
           "source": "native:javascript",
+          "name": "switch_case"
+        },
+        {
+          "source": "native:odin",
           "name": "switch_case"
         },
         {
@@ -16092,6 +16244,10 @@
           "name": "function_expression"
         },
         {
+          "source": "native:odin",
+          "name": "function_expression"
+        },
+        {
           "source": "native:tsx",
           "name": "function_expression"
         },
@@ -16126,6 +16282,10 @@
         },
         {
           "source": "native:lua",
+          "name": "function_declaration"
+        },
+        {
+          "source": "native:odin",
           "name": "function_declaration"
         },
         {
@@ -16284,6 +16444,10 @@
           "name": "formal_parameter"
         },
         {
+          "source": "native:odin",
+          "name": "formal_parameter"
+        },
+        {
           "source": "native:tsx",
           "name": "formal_parameter"
         },
@@ -16376,6 +16540,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "member_expression"
+        },
+        {
+          "source": "native:odin",
           "name": "member_expression"
         },
         {
@@ -16579,6 +16747,10 @@
         },
         {
           "source": "native:javascript",
+          "name": "ternary_expression"
+        },
+        {
+          "source": "native:odin",
           "name": "ternary_expression"
         },
         {
@@ -17978,6 +18150,10 @@
           "name": "enumeration_declaration"
         },
         {
+          "source": "native:odin",
+          "name": "enumeration_declaration"
+        },
+        {
           "source": "native:proto",
           "name": "enumeration"
         },
@@ -18589,6 +18765,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:odin",
+          "name": "conditional_type"
+        },
+        {
           "source": "native:tsx",
           "name": "conditional_type"
         },
@@ -18992,6 +19172,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:odin",
+          "name": "default_type"
+        },
+        {
           "source": "native:tsx",
           "name": "default_type"
         },
@@ -19100,6 +19284,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "union_type"
+        },
         {
           "source": "native:python",
           "name": "union_type"
@@ -19585,6 +19773,10 @@
           "name": "attributes"
         },
         {
+          "source": "native:odin",
+          "name": "attribute_list"
+        },
+        {
           "source": "native:rocq",
           "name": "attributes"
         }
@@ -19757,12 +19949,16 @@
       "role": "concept",
       "definition": "A rule for a structure, the construct the upstream grammar names structure.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:lean",
+          "name": "structure"
+        },
+        {
+          "source": "native:odin",
           "name": "structure"
         }
       ],
@@ -19774,12 +19970,16 @@
       "role": "concept",
       "definition": "A rule for a structure field, the construct the upstream grammar names structure_field.",
       "constraints": [
-        "Only the native Lean grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:lean",
+          "name": "structure_field"
+        },
+        {
+          "source": "native:odin",
           "name": "structure_field"
         }
       ],
@@ -21159,6 +21359,10 @@
         },
         {
           "source": "native:make",
+          "name": "string_content"
+        },
+        {
+          "source": "native:odin",
           "name": "string_content"
         },
         {
@@ -26857,6 +27061,10 @@
         {
           "source": "native:java",
           "name": "package_declaration"
+        },
+        {
+          "source": "native:odin",
+          "name": "package_declaration"
         }
       ],
       "formerNames": []
@@ -26881,6 +27089,10 @@
         },
         {
           "source": "native:java",
+          "name": "import_declaration"
+        },
+        {
+          "source": "native:odin",
           "name": "import_declaration"
         },
         {
@@ -27404,6 +27616,10 @@
         },
         {
           "source": "native:java",
+          "name": "constant_declaration"
+        },
+        {
+          "source": "native:odin",
           "name": "constant_declaration"
         },
         {
@@ -28187,12 +28403,16 @@
       "role": "concept",
       "definition": "A rule for a structure type, the construct the upstream grammar names struct_type.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "structure_type"
+        },
+        {
+          "source": "native:odin",
           "name": "structure_type"
         }
       ],
@@ -28295,6 +28515,10 @@
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "map_type"
+        },
+        {
+          "source": "native:odin",
           "name": "map_type"
         },
         {
@@ -28466,6 +28690,10 @@
           "name": "assignment_statement"
         },
         {
+          "source": "native:odin",
+          "name": "assignment_statement"
+        },
+        {
           "source": "native:vb",
           "name": "assignment_statement"
         }
@@ -28512,12 +28740,16 @@
       "role": "concept",
       "definition": "A rule for a fall through statement, the construct the upstream grammar names fallthrough_statement.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "fall_through_statement"
+        },
+        {
+          "source": "native:odin",
           "name": "fall_through_statement"
         }
       ],
@@ -28552,6 +28784,10 @@
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "defer_statement"
+        },
+        {
+          "source": "native:odin",
           "name": "defer_statement"
         },
         {
@@ -28808,12 +29044,16 @@
       "role": "concept",
       "definition": "A rule for a slice expression, the construct the upstream grammar names slice_expression.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "slice_expression"
+        },
+        {
+          "source": "native:odin",
           "name": "slice_expression"
         }
       ],
@@ -30222,6 +30462,10 @@
           "name": "field"
         },
         {
+          "source": "native:odin",
+          "name": "field"
+        },
+        {
           "source": "native:sql",
           "name": "field"
         }
@@ -30517,12 +30761,16 @@
       "role": "concept",
       "definition": "A rule for a named type, the construct the upstream grammar names named_type.",
       "constraints": [
-        "Only the native GraphQL grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:graphql",
+          "name": "named_type"
+        },
+        {
+          "source": "native:odin",
           "name": "named_type"
         }
       ],
@@ -32488,6 +32736,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:odin",
+          "name": "structure_declaration"
+        },
+        {
           "source": "native:solidity",
           "name": "structure_declaration"
         },
@@ -32504,10 +32756,14 @@
       "role": "concept",
       "definition": "A rule for a structure member, the construct the upstream grammar names struct_member.",
       "constraints": [
-        "Only the native Solidity grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "structure_member"
+        },
         {
           "source": "native:solidity",
           "name": "structure_member"
@@ -34044,6 +34300,10 @@
           "name": "label_statement"
         },
         {
+          "source": "native:odin",
+          "name": "label_statement"
+        },
+        {
           "source": "native:vb",
           "name": "label_statement"
         }
@@ -34429,12 +34689,16 @@
       "role": "concept",
       "definition": "A rule for a variadic expression, the construct the upstream grammar names vararg_expression.",
       "constraints": [
-        "Only the native Lua grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:lua",
+          "name": "variadic_expression"
+        },
+        {
+          "source": "native:odin",
           "name": "variadic_expression"
         }
       ],
@@ -35104,10 +35368,14 @@
       "role": "concept",
       "definition": "A rule for an union declaration, the construct the upstream grammar names union_declaration.",
       "constraints": [
-        "Only the native Zig grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "union_declaration"
+        },
         {
           "source": "native:zig",
           "name": "union_declaration"
@@ -35380,10 +35648,14 @@
       "role": "concept",
       "definition": "A rule for a calling convention, the construct the upstream grammar names calling_convention.",
       "constraints": [
-        "Only the native Zig grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "calling_convention"
+        },
         {
           "source": "native:zig",
           "name": "calling_convention"
@@ -41403,6 +41675,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:odin",
+          "name": "else_if_clause"
+        },
+        {
           "source": "native:powershell",
           "name": "else_if_clause"
         },
@@ -41550,10 +41826,14 @@
       "role": "concept",
       "definition": "A rule for an using statement, the construct the upstream grammar names using_statement.",
       "constraints": [
-        "Only the native vb (Visual Basic) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "using_statement"
+        },
         {
           "source": "native:vb",
           "name": "using_statement"
@@ -46721,12 +47001,16 @@
       "role": "concept",
       "definition": "A rule for a field type, the construct the upstream grammar names field_type.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:erlang",
+          "name": "field_type"
+        },
+        {
+          "source": "native:odin",
           "name": "field_type"
         }
       ],
@@ -57850,10 +58134,14 @@
       "role": "concept",
       "definition": "A rule for an update statement, the construct the upstream grammar names _update_statement.",
       "constraints": [
-        "Only the native sql grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "update_statement"
+        },
         {
           "source": "native:sql",
           "name": "update_statement"
@@ -64744,10 +65032,14 @@
       "role": "concept",
       "definition": "A rule for a default parameter, the construct the upstream grammar names default_parameter.",
       "constraints": [
-        "Only the native Python grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "default_parameter"
+        },
         {
           "source": "native:python",
           "name": "default_parameter"
@@ -65334,10 +65626,14 @@
       "role": "concept",
       "definition": "A rule for a keyword identifier, the construct the upstream grammar names keyword_identifier.",
       "constraints": [
-        "Only the native Python grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "keyword_identifier"
+        },
         {
           "source": "native:python",
           "name": "keyword_identifier"
@@ -68170,6 +68466,754 @@
         {
           "source": "native:xml",
           "name": "self_closing_tag_end"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tagged-block",
+      "phrase": "tagged block",
+      "role": "concept",
+      "definition": "A rule for a tagged block, the construct the upstream grammar names tagged_block.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "tagged_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.build-tag",
+      "phrase": "build tag",
+      "role": "concept",
+      "definition": "A rule for a build tag, the construct the upstream grammar names build_tag.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "build_tag"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.overloaded-procedure-declaration",
+      "phrase": "overloaded procedure declaration",
+      "role": "concept",
+      "definition": "A rule for an overloaded procedure declaration, the construct the upstream grammar names overloaded_procedure_declaration.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "overloaded_procedure_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bit-field-declaration",
+      "phrase": "bit field declaration",
+      "role": "concept",
+      "definition": "A rule for a bit field declaration, the construct the upstream grammar names bit_field_declaration.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "bit_field_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constant-type-declaration",
+      "phrase": "constant type declaration",
+      "role": "concept",
+      "definition": "A rule for a constant type declaration, the construct the upstream grammar names const_type_declaration.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "constant_type_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.foreign-block",
+      "phrase": "foreign block",
+      "role": "concept",
+      "definition": "A rule for a foreign block, the construct the upstream grammar names foreign_block.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "foreign_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-header",
+      "phrase": "parameter header",
+      "role": "concept",
+      "definition": "A rule for a parameter header, the construct the upstream grammar names _param_header.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "parameter_header"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-type",
+      "phrase": "parameter type",
+      "role": "concept",
+      "definition": "A rule for a parameter type, the construct the upstream grammar names _param_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "parameter_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.polymorphic-parameters",
+      "phrase": "polymorphic parameters",
+      "role": "concept",
+      "definition": "A rule for a polymorphic parameters, the construct the upstream grammar names polymorphic_parameters.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "polymorphic_parameters"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-in-expression",
+      "phrase": "for in expression",
+      "role": "concept",
+      "definition": "A rule for a for in expression, the construct the upstream grammar names _for_in_expression.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "for_in_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.simple-assignment-statement",
+      "phrase": "simple assignment statement",
+      "role": "concept",
+      "definition": "A rule for a simple assignment statement, the construct the upstream grammar names _simple_assignment_statement.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "simple_assignment_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.typed-variable-declaration",
+      "phrase": "typed variable declaration",
+      "role": "concept",
+      "definition": "A rule for a typed variable declaration, the construct the upstream grammar names var_declaration.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "typed_variable_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-no-tag",
+      "phrase": "expression no tag",
+      "role": "concept",
+      "definition": "A rule for an expression no tag, the construct the upstream grammar names _expression_no_tag.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "expression_no_tag"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.selector-call-expression",
+      "phrase": "selector call expression",
+      "role": "concept",
+      "definition": "A rule for a selector call expression, the construct the upstream grammar names selector_call_expression.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "selector_call_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.in-expression",
+      "phrase": "in expression",
+      "role": "concept",
+      "definition": "A rule for an in expression, the construct the upstream grammar names in_expression.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "in_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.or-return-expression",
+      "phrase": "or return expression",
+      "role": "concept",
+      "definition": "A rule for an or return expression, the construct the upstream grammar names or_return_expression.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "or_return_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.or-continue-expression",
+      "phrase": "or continue expression",
+      "role": "concept",
+      "definition": "A rule for an or continue expression, the construct the upstream grammar names or_continue_expression.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "or_continue_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.or-break-expression",
+      "phrase": "or break expression",
+      "role": "concept",
+      "definition": "A rule for an or break expression, the construct the upstream grammar names or_break_expression.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "or_break_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.address",
+      "phrase": "address",
+      "role": "concept",
+      "definition": "A rule for an address, the construct the upstream grammar names address.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "address"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variadic-type",
+      "phrase": "variadic type",
+      "role": "concept",
+      "definition": "A rule for a variadic type, the construct the upstream grammar names variadic_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "variadic_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bit-set-type",
+      "phrase": "bit set type",
+      "role": "concept",
+      "definition": "A rule for a bit set type, the construct the upstream grammar names bit_set_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "bit_set_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.matrix-type",
+      "phrase": "matrix type",
+      "role": "concept",
+      "definition": "A rule for a matrix type, the construct the upstream grammar names matrix_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "matrix_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-type",
+      "phrase": "enumeration type",
+      "role": "concept",
+      "definition": "A rule for an enumeration type, the construct the upstream grammar names enum_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "enumeration_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bit-field-type",
+      "phrase": "bit field type",
+      "role": "concept",
+      "definition": "A rule for a bit field type, the construct the upstream grammar names bit_field_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "bit_field_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constant-type",
+      "phrase": "constant type",
+      "role": "concept",
+      "definition": "A rule for a constant type, the construct the upstream grammar names constant_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "constant_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.specialized-type",
+      "phrase": "specialized type",
+      "role": "concept",
+      "definition": "A rule for a specialized type, the construct the upstream grammar names specialized_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "specialized_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.procedure-type-expression",
+      "phrase": "procedure type expression",
+      "role": "concept",
+      "definition": "A rule for a procedure type expression, the construct the upstream grammar names _procedure_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "procedure_type_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.distinct-type",
+      "phrase": "distinct type",
+      "role": "concept",
+      "definition": "A rule for a distinct type, the construct the upstream grammar names distinct_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "distinct_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.empty-type",
+      "phrase": "empty type",
+      "role": "concept",
+      "definition": "A rule for an empty type, the construct the upstream grammar names empty_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "empty_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.polymorphic-type",
+      "phrase": "polymorphic type",
+      "role": "concept",
+      "definition": "A rule for a polymorphic type, the construct the upstream grammar names polymorphic_type.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "polymorphic_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bit-set",
+      "phrase": "bit set",
+      "role": "concept",
+      "definition": "A rule for a bit set, the construct the upstream grammar names bit_set.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "bit_set"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.matrix",
+      "phrase": "matrix",
+      "role": "concept",
+      "definition": "A rule for a matrix, the construct the upstream grammar names matrix.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "matrix"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.raw-string-content",
+      "phrase": "raw string content",
+      "role": "concept",
+      "definition": "A rule for a raw string content, the construct the upstream grammar names _raw_string_content.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "raw_string_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.escaped-character",
+      "phrase": "escaped character",
+      "role": "concept",
+      "definition": "A rule for an escaped character, the construct the upstream grammar names _escape_sequence.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "escaped_character"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tag",
+      "phrase": "tag",
+      "role": "concept",
+      "definition": "A rule for a tag, the construct the upstream grammar names tag.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "tag"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-identifier",
+      "phrase": "field identifier",
+      "role": "concept",
+      "definition": "A rule for a field identifier, the construct the upstream grammar names field_identifier.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "field_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.separator",
+      "phrase": "separator",
+      "role": "concept",
+      "definition": "A rule for a separator, the construct the upstream grammar names _separator.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "separator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-attribute",
+      "phrase": "declaration attribute",
+      "role": "concept",
+      "definition": "A rule for a declaration attribute, the construct the upstream grammar names attribute.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "declaration_attribute"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.compile-time-conditional-statement",
+      "phrase": "compile time conditional statement",
+      "role": "concept",
+      "definition": "A rule for a compile time conditional statement, the construct the upstream grammar names when_statement.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "compile_time_conditional_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.alternative-compile-time-conditional-clause",
+      "phrase": "alternative compile time conditional clause",
+      "role": "concept",
+      "definition": "A rule for an alternative compile time conditional clause, the construct the upstream grammar names else_when_clause.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "alternative_compile_time_conditional_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structure-member-list",
+      "phrase": "structure member list",
+      "role": "concept",
+      "definition": "A rule for a structure member list, the construct the upstream grammar names _struct_members.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "structure_member_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.null-value",
+      "phrase": "null value",
+      "role": "concept",
+      "definition": "A rule for a null value, the construct the upstream grammar names nil.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "null_value"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unassigned-value",
+      "phrase": "unassigned value",
+      "role": "concept",
+      "definition": "A rule for an unassigned value, the construct the upstream grammar names uninitialized.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "unassigned_value"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dictionary-literal",
+      "phrase": "dictionary literal",
+      "role": "concept",
+      "definition": "A rule for a dictionary literal, the construct the upstream grammar names map.",
+      "constraints": [
+        "Only the native Odin grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:odin",
+          "name": "dictionary_literal"
         }
       ],
       "formerNames": []

@@ -344,7 +344,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "matlab" => tree_sitter_matlab::LANGUAGE.into(),
         "ocaml" => tree_sitter_ocaml::LANGUAGE_OCAML.into(),
         "ocaml_interface" => tree_sitter_ocaml::LANGUAGE_OCAML_INTERFACE.into(),
-        "odin" => tree_sitter_odin::LANGUAGE.into(),
         "perl" => ts_parser_perl::LANGUAGE.into(),
         "php" => tree_sitter_php::LANGUAGE_PHP.into(),
         "ruby" => tree_sitter_ruby::LANGUAGE.into(),

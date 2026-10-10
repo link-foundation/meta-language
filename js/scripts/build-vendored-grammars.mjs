@@ -105,7 +105,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   nix: { crate: 'tree-sitter-nix', dir: '.', oracle: true },
   ocaml: { crate: 'tree-sitter-ocaml', dir: 'grammars/ocaml' },
   ocaml_interface: { crate: 'tree-sitter-ocaml', dir: 'grammars/interface' },
-  odin: { crate: 'tree-sitter-odin', dir: '.' },
+  odin: { crate: 'tree-sitter-odin', dir: '.', oracle: true },
   pascal: { crate: 'tree-sitter-pascal', dir: '.', oracle: true },
   perl: { crate: 'ts-parser-perl', dir: '.' },
   php: { crate: 'tree-sitter-php', dir: 'php' },
