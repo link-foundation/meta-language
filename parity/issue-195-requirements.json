@@ -1619,7 +1619,7 @@
     "planned:repository-directive:i195-grammar-native-html": {
       "path": "parity/fixtures/native-grammars/html.json",
       "selector": "docs/vision.md#native-merged-grammars: generated native HTML grammar and pinned independent source corpus",
-      "sha256": "1b619fcd1e6800614ad2971203e1e12eab45d4892f5feb1c9074e42b1967d760"
+      "sha256": "e2ee8d046facafa569546a4b8ffc9cd97206b88474e0b60983818efe9afb049f"
     },
     "planned:repository-directive:i195-grammar-native-odin": {
       "path": "parity/fixtures/native-grammars/odin.json",
@@ -1704,7 +1704,7 @@
     "planned:repository-directive:i195-vision-specification": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: one authoritative vision and architecture specification",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
@@ -1714,7 +1714,7 @@
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: traceability from each atomic requirement to its evidence chain",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-vision-contradiction-audit": {
       "path": "parity/documentation/claim-fixtures.json",
@@ -1734,7 +1734,7 @@
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
       "selector": "#dependencies: external parser engines removed from the production packages",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
@@ -1899,7 +1899,7 @@
     "planned:repository-directive:i195-grammar-shared-concepts": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
       "selector": "docs/vision.md#grammar-feature-union: a canonical concept record for every rule of every native grammar",
-      "sha256": "256d1390a5d9b242d008e21be6ca06696f3a9fd13c1e2133d60ff69b7550fc90"
+      "sha256": "bc89ea07d95e215dd6dd16fe8c46400ba6ea8b4850cd0681267893ecde420d15"
     },
     "planned:repository-directive:i195-grammar-concept-reuse-report": {
       "path": "parity/fixtures/native-grammar-concept-reuse.json",
@@ -1909,7 +1909,7 @@
     "planned:repository-directive:i195-grammar-concept-translation": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
       "selector": "docs/vision.md#grammar-feature-union: translation of shared constructs between native grammars through their concepts",
-      "sha256": "256d1390a5d9b242d008e21be6ca06696f3a9fd13c1e2133d60ff69b7550fc90"
+      "sha256": "bc89ea07d95e215dd6dd16fe8c46400ba6ea8b4850cd0681267893ecde420d15"
     },
     "planned:repository-directive:i195-grammar-lossless-trees": {
       "path": "parity/language-grammar-inventory.json",
@@ -1919,7 +1919,7 @@
     "planned:repository-directive:i195-grammar-dependency-boundary": {
       "path": "docs/vision.md",
       "selector": "#native-merged-grammars: native dependency boundary of the installed packages",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-interchange-api-cli": {
       "path": "parity/fixtures/grammar-importers.json",
@@ -1984,7 +1984,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "f95bcd30e716f6bdb5b4e4cf6eb32a5b7e8aee3f8c91cb64ed687fa6eaef5b2c"
+      "sha256": "dad3e8088b9e6d27c188cb02a59b3ea7fdcc3669dbd6f2ec910dfb3a7e3753ff"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
       "path": "parity/grammars/reconcile/pairs.json",
@@ -2054,7 +2054,7 @@
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
       "selector": "#packages-and-publication: formal-ai consuming the published packages",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-acceptance-independent-oracles": {
       "path": "parity/language-grammar-inventory.json",
@@ -2064,127 +2064,127 @@
     "planned:repository-directive:i195-acceptance-gate-mutations": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: gate-mutation tests for the directive obligations",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-acceptance-required-merge-check": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: enforced full requirements merge check on the default branch",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-acceptance-pr-checks-passable": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: pull request checks that can all pass before merge",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-acceptance-finite-claims-documented": {
       "path": "docs/vision.md",
       "selector": "#what-finite-tests-establish: documented limits of finite test evidence",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-ci-compile-gate": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: fast compile gate ahead of every compiling CI job",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-ci-test-matrix": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: test execution split into bounded matrix jobs",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-ci-evidence-stages": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: checkpoint evidence produced by separate stage jobs",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-ci-concurrency": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: superseded workflow runs cancelled",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-agent-rules": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: targeted local checks and resource rules for agents and contributors",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-bounded-sequential-evidence": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: evidence suites run one at a time with bounded build parallelism",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-lazy-grammars": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: WebAssembly grammars loaded on first use",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-bounded-memory-regressions": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: bounded-heap and peak-RSS regressions for the parser and evidence memory fixes",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-grammar-tiering-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: grammar code kept off the optimizing compiler",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-inline-parser-reuse": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: one Markdown inline parser for every inline region",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-source-boundaries": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: source offset index with interval checkpoints",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-parity-digests": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: runtime parity evidence as entry digests",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-cache-cleanup-wrapper": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: cache cleanup wrapper as the documented way to run long local commands",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-native-output-cleanup": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: native compiler outputs deleted once each cell is recorded",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-ci-rust-after-javascript": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: Rust jobs gated on every JavaScript job",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-ci-acceptance-stage-order": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: Rust acceptance stages after the JavaScript stages",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-ci-report-every-failure": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: every failure of a job reported in one run",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-ci-acceptance-after-javascript": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: acceptance stages started only after every JavaScript job passed",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-ci-skipped-stage-one-gate-error": {
       "path": "docs/vision.md",
       "selector": "#continuous-integration: a stage skipped because JavaScript failed is one gate error",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-resource-parse-memory-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: a hard memory budget for every parse",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-development-rules-documented": {
       "path": "docs/vision.md",
       "selector": "#javascript-first-and-self-translation: JavaScript-first development rules",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-self-translation-tool": {
       "path": "parity/self-translation/cases.lino",
@@ -2214,7 +2214,7 @@
     "planned:repository-directive:i195-parity-feature-completeness": {
       "path": "docs/vision.md",
       "selector": "#javascript-first-and-self-translation: every public JavaScript feature listed and present in Rust",
-      "sha256": "82dcc45ee02e7a88b3f1f6049c3d6caaae40494d0d9241d19c553a076d2592f7"
+      "sha256": "53b77af8b682f9be02eb67fb970fbc0f511c761cc933abbc892462c86607f0fe"
     },
     "planned:repository-directive:i195-grammar-bulk-pipeline": {
       "path": "docs/grammar/bulk-pipeline.md",

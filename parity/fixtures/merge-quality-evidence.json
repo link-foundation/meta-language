@@ -252,7 +252,7 @@
       "mergeReport": "parity/grammars/merge-reports/html.json",
       "coverage": {"rules": {"normal": 13, "atomic": 0, "silent": 1, "token": 5}, "visibleRules": 13, "exercisedRules": 10, "checkedKinds": 17, "checkedFields": 0, "renamed": 7, "expandedWords": 0, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 1, "conflict": 0, "precedences": 0, "extra": 2, "kind": 6},
-      "correctness": {"matches": 38, "rows": 582, "bytes": 929, "divergences": 0, "rejections": 9},
+      "correctness": {"matches": 42, "rows": 692, "bytes": 1112, "divergences": 0, "rejections": 9},
       "recovery": {"repaired": 9, "errorNodes": 3, "missingNodes": 18, "categories": {}},
       "reuse": {"shared": 8, "specific": 11}
     },

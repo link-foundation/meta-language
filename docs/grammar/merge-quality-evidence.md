@@ -95,7 +95,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-graphql` | 53 | 1809 | 3211 | 0 | 29 |
 | `native-groovy` | 61 | 857 | 1314 | 0 | 11 |
 | `native-hcl` | 46 | 897 | 799 | 0 | 10 |
-| `native-html` | 38 | 582 | 929 | 0 | 9 |
+| `native-html` | 42 | 692 | 1112 | 0 | 9 |
 | `native-ini` | 55 | 444 | 710 | 9 | 15 |
 | `native-java` | 146 | 4848 | 11744 | 0 | 11 |
 | `native-javascript` | 146 | 5816 | 12130 | 0 | 24 |
@@ -124,7 +124,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-xml` | 31 | 495 | 837 | 0 | 7 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 4051 | 93857 | 205085 | 101 | 667 |
+| all | 4055 | 93967 | 205268 | 101 | 667 |
 
 ## Coverage
 
@@ -354,7 +354,7 @@ loads the same modules and parses nothing.
 | `native-graphql` | 193.7 | 5.0 | 38.9× | 192.0 | 0.8 | 81.6 | 7.5 |
 | `native-groovy` | 386.9 | 1.6 | 237.4× | 666.3 | 0.7 | 238.8 | 10.5 |
 | `native-hcl` | 143.7 | 1.2 | 122.3× | 95.0 | 0.4 | 92.6 | 7.1 |
-| `native-html` | 126.3 | 1.2 | 101.7× | 18.8 | 0.2 | 38.7 | 5.1 |
+| `native-html` | 137.7 | 1.5 | 92.8× | 30.8 | 0.2 | 39.9 | 4.6 |
 | `native-ini` | 18.5 | 1.5 | 12.3× | 14.9 | 0.4 | 15.7 | 3.9 |
 | `native-java` | 2078.1 | 10.0 | 207.0× | 397.1 | 0.8 | 124.3 | 12.0 |
 | `native-javascript` | 7646.4 | 14.9 | 513.3× | 2214.6 | 1.1 | 131.9 | 12.6 |
@@ -407,7 +407,7 @@ without optimization, as the tests run them.
 | `native-graphql` | 665.5 | 2.0 | 326.6× | 458.1 | 0.8 | 1.6 |
 | `native-groovy` | 1666.0 | 1.1 | 1514.5× | 1932.5 | 0.7 | 10.8 |
 | `native-hcl` | 298.9 | 1.4 | 220.6× | 224.0 | 1.1 | 2.4 |
-| `native-html` | 390.4 | 0.5 | 729.7× | 47.5 | 0.1 | 3.8 |
+| `native-html` | 963.2 | 0.8 | 1170.4× | 311.3 | 0.1 | 5.5 |
 | `native-ini` | 148.8 | 3.5 | 42.7× | 54.6 | 0.5 | 0.1 |
 | `native-java` | 9722.4 | 7.9 | 1226.8× | 1413.3 | 0.6 | 5.6 |
 | `native-javascript` | 24702.9 | 24.3 | 1015.6× | 6176.5 | 1.3 | 5.4 |

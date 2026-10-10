@@ -46,7 +46,9 @@ export function htmlScanner() {
  ]);
  const implicit=`${branch(`(next ${literal('/')})`,`advance ${deeper}`)} ${branch(`(all ${present} ${member(top,voidNames)})`,closes)} ${branch(`(all ${present} (some ${notContained} (all ${member(top,['HTML','HEAD','BODY'])} (next (optional ${namePattern})) atEnd)))`,closes)} fail`;
  const readName=`(consume ${namePattern}) (set html_name (uppercase (matched)))`;
- const start=`${readName} (push html_tags (variable html_name)) ${branch(equal('(variable html_name)',text('SCRIPT')),'(emit script_start_tag_name)')} ${branch(equal('(variable html_name)',text('STYLE')),'(emit style_start_tag_name)')} (emit start_tag_name)`;
+ // A forbidden child follows the pinned scanner's mandatory implicit close;
+ // do not keep a speculative branch that nests it inside the old parent.
+ const start=`${branch(`(all ${present} (some ${member(top,voidNames)} ${notContained}))`,'fail')} ${readName} (push html_tags (variable html_name)) ${branch(equal('(variable html_name)',text('SCRIPT')),'(emit script_start_tag_name)')} ${branch(equal('(variable html_name)',text('STYLE')),'(emit style_start_tag_name)')} (emit start_tag_name)`;
  const end=`${readName} ${branch(`(all ${present} ${equal('(variable html_name)',top)})`,'(pop html_tags) (emit end_tag_name)','(emit erroneous_end_tag_name)')}`;
  const rawLoop = delimiter => {
   const cases=[...delimiter].map((character,index)=>branch(equal('(variable html_index)',`(integer ${index})`),branch(`(next ${pattern(/[A-Z]/u.test(character)?`[${character}${character.toLowerCase()}]`:character.replace(/[\\^$.*+?()[\]{}|]/gu,'\\$&'))})`,`(set html_index (integer ${index+1})) ${index===delimiter.length-1?'(emit raw_text)':'advance'}`,'(set html_index (integer 0)) advance mark'))).join(' ');

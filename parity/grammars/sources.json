@@ -1106,7 +1106,7 @@
       "licenseFile": "parity/grammars/sources/tree-sitter-html-0.23.2.LICENSE",
       "scanner": {
         "file": "parity/grammars/scanners/html.lino",
-        "sha256": "695bb5190f92f45d7b5d51255a1187be746f1f3a75bd63df41ad451f5f8ee767",
+        "sha256": "ce0caa0efc5b8c42ada6af9738c3ac712e1b19923a67f1c398d93fdbf409d646",
         "ports": {
           "path": "src/scanner.c",
           "sha256": "5c0a0567e010277b81fe63be0acd04f6b44c3ef3063ac01429b910c1d22f0dca",
@@ -1118,7 +1118,9 @@
           ]
         },
         "generator": "js/experiments/build-html-scanner.mjs",
-        "immediate": []
+        "immediate": [
+          "raw_text"
+        ]
       },
       "corpus": {
         "path": "test/corpus",

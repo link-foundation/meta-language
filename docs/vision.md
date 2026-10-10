@@ -1001,3 +1001,9 @@ a failed run discards them. Shared authored fixtures verify scalar uppercase
 conversion and state-dependent predicates in both executors. HTML selects its
 native grammar, with the original parser kept as a development oracle. The
 remaining source unions, catalog imports and delivery requirements stay open.
+
+HTML raw-text tokens read their complete input region before generic trivia
+handling. Generated tag context settles required implicit parent closures
+before accepting a child that the pinned containment table excludes. Native
+host CST expectations retain the independently pinned embedded-region spans;
+their source hashes must still match the inventory source.

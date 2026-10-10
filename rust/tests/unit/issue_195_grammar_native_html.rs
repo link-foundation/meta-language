@@ -4,8 +4,8 @@ use super::issue_195_native_grammar_rows::{
 };
 use super::issue_195_observations::{Observation, record};
 use meta_language::{
-    FeatureParseOptions, LinkNetwork, ParseConfiguration, SyntaxTree, parse_grammar_links,
-    render_grammar_links,
+    FeatureParseOptions, LinkNetwork, LinkType, ParseConfiguration, SyntaxTree,
+    parse_grammar_links, render_grammar_links,
 };
 use serde_json::Value;
 
@@ -152,4 +152,39 @@ fn native_html_upstream_corpus_matches_the_independent_oracle() {
         &["nativeHtmlUpstreamCorpusMatchesOracle"],
         "native_html_upstream_corpus_matches_the_independent_oracle",
     );
+}
+
+#[test]
+fn native_html_focused_embedded_raw_text_preserves_leading_whitespace() {
+    for (tag, language, body) in [
+        ("script", "JavaScript", "\n  let leaf=7;\n"),
+        ("style", "CSS", "\n  p {color:green}\n"),
+    ] {
+        let source = format!("<{tag}>{body}</{tag}>");
+        let network = LinkNetwork::parse(&source, "HTML", ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), source);
+        let mut embedded = network
+            .links()
+            .filter(|link| {
+                link.metadata().link_type() == Some(LinkType::Token)
+                    && link.metadata().language() == Some(language)
+            })
+            .filter_map(|link| {
+                link.metadata().span().map(|span| {
+                    (
+                        span.byte_range().start(),
+                        link.metadata().term().unwrap_or_default(),
+                    )
+                })
+            })
+            .collect::<Vec<_>>();
+        embedded.sort_unstable();
+        assert_eq!(
+            embedded
+                .into_iter()
+                .map(|(_, term)| term)
+                .collect::<String>(),
+            body
+        );
+    }
 }

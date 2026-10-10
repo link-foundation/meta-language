@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { LinkNetwork, compileGrammar, parseGrammarLinks, renderGrammarLinks, renderSyntaxTree } from '../src/index.js';
+import { LinkNetwork, LinkType, compileGrammar, parseGrammarLinks, renderGrammarLinks, renderSyntaxTree } from '../src/index.js';
 import { NATIVE_GRAMMARS, buildNativeGrammarCorpusSources, buildNativeGrammarFixture, fixturePath, renderFixture } from '../scripts/generate-native-grammar-fixtures.mjs';
 import { nativeRows, oracleRows, oracleRecovers, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
@@ -74,4 +74,25 @@ test('native HTML matches the independent oracle on every pinned upstream corpus
   }
   assert.deepEqual(failures, []);
   observe(['nativeHtmlUpstreamCorpusMatchesOracle'], context.name);
+});
+
+test('native HTML focused embedded raw text preserves leading whitespace', () => {
+  for (const [tag, language, body] of [['script', 'JavaScript', '\n  let leaf=7;\n'], ['style', 'CSS', '\n  p {color:green}\n']]) {
+    const source = `<${tag}>${body}</${tag}>`;
+    const network = LinkNetwork.parse(source, 'HTML');
+    assert.equal(network.reconstructText(), source);
+    const embedded = network.links().filter(link => link.metadata().linkType === LinkType.SourceToken && link.metadata().language === language);
+    assert.equal(embedded.map(link => link.metadata().term).join(''), body, language);
+  }
+});
+
+test('native HTML focused default CST retains independent embedded boundaries', () => {
+  const inventory = JSON.parse(read('parity/language-grammar-inventory.json'));
+  const source = inventory.languages.find(entry => entry.name === 'HTML').source;
+  const oracle = JSON.parse(read('parity/fixtures/default-cst-expected.json')).languages.HTML;
+  const expected = JSON.parse(read('parity/fixtures/native-default-cst-expected.json')).languages.HTML;
+  assert.deepEqual(expected.embedded, oracle.embedded);
+  const network = LinkNetwork.parse(source, 'HTML');
+  const regions = network.links().filter(link => link.metadata().linkType === LinkType.Region && link.metadata().language !== 'HTML');
+  assert.deepEqual(regions.map(region => [region.metadata().language, region.metadata().span.byteRange.start, region.metadata().span.byteRange.end]), expected.embedded.map(region => [region.language, region.startByte, region.endByte]));
 });

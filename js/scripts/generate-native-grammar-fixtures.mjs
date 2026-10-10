@@ -1302,6 +1302,10 @@ export function buildNativeDefaultLanguageExpected(entry) {
   const repaired = parser.parseTree(language.recoverySource, { errorRecovery: true, recovery: 'accept' });
   const recovery = nativeRows(repaired.tree, language.recoverySource, entry);
   if (!hasRecovery(recovery)) throw new Error(`${entry.grammar} repairs the ${entry.language} recovery source without an ERROR or MISSING node`);
+  // Keep independent host-region boundaries while native rows replace the
+  // host parser. Their source identity must still match the inventory source.
+  const oracle = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/default-cst-expected.json'), 'utf8')).languages[entry.language];
+  if (oracle?.embedded?.length && oracle.sourceSha256 !== sha256(language.source)) throw new Error(`the independent embedded-region source of ${entry.language} is stale`);
   const versions = (grammars) => Object.fromEntries(grammars.map(({ id, version, parserSha256 }) => [id, { version, parserSha256 }]));
   return {
     grammars: versions(catalog.grammars),
@@ -1310,7 +1314,7 @@ export function buildNativeDefaultLanguageExpected(entry) {
     recoverySourceSha256: sha256(language.recoverySource),
     positive: rows,
     recovery,
-    embedded: [],
+    embedded: oracle?.embedded ?? [],
   };
 }
 
