@@ -42,6 +42,7 @@ grammar builds. The sources are the specifications and grammars merged.
 | `native-graphql` | tree-sitter-graphql 0.3.0 | [upstream](https://github.com/joowani/tree-sitter-graphql/tree/b1d368c339806d971818a4ca2099763a6c561f56/test/corpus) | [1](https://github.com/joowani/tree-sitter-graphql/blob/b1d368c339806d971818a4ca2099763a6c561f56/grammar.js) [2](https://github.com/joowani/tree-sitter-graphql/tree/b1d368c339806d971818a4ca2099763a6c561f56/test/corpus) |
 | `native-groovy` | crates.io tree-sitter-groovy 0.1.2 | [upstream](https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf/test/corpus) | [1](https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf) [2](https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf/test/corpus) |
 | `native-hcl` | crates.io tree-sitter-hcl 1.1.0 | [upstream](https://github.com/tree-sitter-grammars/tree-sitter-hcl/tree/009def4ae38ec30e5b40beeae26efe93484ab286/test/corpus) | [1](https://github.com/tree-sitter-grammars/tree-sitter-hcl/tree/009def4ae38ec30e5b40beeae26efe93484ab286) [2](https://github.com/tree-sitter-grammars/tree-sitter-hcl/tree/009def4ae38ec30e5b40beeae26efe93484ab286/test/corpus) |
+| `native-html` | crates.io tree-sitter-html 0.23.2 | [upstream](https://github.com/tree-sitter/tree-sitter-html/tree/5a5ca8551a179998360b4a4ca2c0f366a35acc03/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-html/tree/5a5ca8551a179998360b4a4ca2c0f366a35acc03) [2](https://github.com/tree-sitter/tree-sitter-html/tree/5a5ca8551a179998360b4a4ca2c0f366a35acc03/test/corpus) |
 | `native-ini` | tree-sitter-ini 1.4.0 | curated | [1](https://github.com/justinmk/tree-sitter-ini/blob/v1.4.0/grammar.js) [2](https://docs.python.org/3/library/configparser.html#supported-ini-file-structure) |
 | `native-java` | tree-sitter-java 0.23.5 | [upstream](https://github.com/tree-sitter/tree-sitter-java/tree/94703d5a6bed02b98e438d7cad1136c01a60ba2c/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-java/blob/94703d5a6bed02b98e438d7cad1136c01a60ba2c/grammar.js) [2](https://github.com/tree-sitter/tree-sitter-java/tree/94703d5a6bed02b98e438d7cad1136c01a60ba2c/test/corpus) |
 | `native-javascript` | tree-sitter-javascript 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-javascript/tree/44c892e0be055ac465d5eeddae6d3e194424e7de/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-javascript/blob/44c892e0be055ac465d5eeddae6d3e194424e7de/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-javascript/tree/44c892e0be055ac465d5eeddae6d3e194424e7de/test/corpus) |
@@ -94,6 +95,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-graphql` | 53 | 1809 | 3211 | 0 | 29 |
 | `native-groovy` | 61 | 857 | 1314 | 0 | 11 |
 | `native-hcl` | 46 | 897 | 799 | 0 | 10 |
+| `native-html` | 38 | 582 | 929 | 0 | 9 |
 | `native-ini` | 55 | 444 | 710 | 9 | 15 |
 | `native-java` | 146 | 4848 | 11744 | 0 | 11 |
 | `native-javascript` | 146 | 5816 | 12130 | 0 | 24 |
@@ -103,7 +105,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-lua` | 35 | 614 | 1661 | 0 | 9 |
 | `native-make` | 168 | 1985 | 4084 | 0 | 27 |
 | `native-nix` | 45 | 386 | 441 | 0 | 6 |
-| `native-odin` | 49 | 670 | 1680 | 0 | 8 |
+| `native-odin` | 52 | 681 | 1728 | 0 | 8 |
 | `native-pascal` | 45 | 920 | 1817 | 0 | 4 |
 | `native-powershell` | 48 | 1710 | 813 | 0 | 7 |
 | `native-proto` | 79 | 6291 | 26218 | 0 | 20 |
@@ -122,7 +124,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-xml` | 31 | 495 | 837 | 0 | 7 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 4010 | 93264 | 204108 | 101 | 658 |
+| all | 4051 | 93857 | 205085 | 101 | 667 |
 
 ## Coverage
 
@@ -149,6 +151,7 @@ language specification and checked against the oracle.
 | `native-graphql` | 67 | 0 | 0 | 7 | 67 of 67 (100%) | 74 | 0 | 6 | 2 | 0 | 0 |
 | `native-groovy` | 127 | 0 | 36 | 20 | 64 of 127 (50%) | 78 | 24 | 36 | 5 | 0 | 0 |
 | `native-hcl` | 52 | 0 | 7 | 6 | 50 of 52 (96%) | 62 | 2 | 31 | 8 | 0 | 0 |
+| `native-html` | 13 | 0 | 1 | 5 | 10 of 13 (77%) | 17 | 0 | 7 | 0 | 0 | 0 |
 | `native-ini` | 5 | 0 | 0 | 0 | 5 of 5 (100%) | 8 | 0 | n/a | n/a | n/a | n/a |
 | `native-java` | 120 | 0 | 30 | 19 | 111 of 120 (93%) | 133 | 36 | 29 | 4 | 0 | 0 |
 | `native-javascript` | 94 | 0 | 34 | 15 | 90 of 94 (96%) | 113 | 36 | 25 | 2 | 0 | 0 |
@@ -158,7 +161,7 @@ language specification and checked against the oracle.
 | `native-lua` | 31 | 0 | 33 | 9 | 30 of 31 (97%) | 43 | 21 | 36 | 2 | 0 | 0 |
 | `native-make` | 36 | 0 | 25 | 4 | 35 of 36 (97%) | 44 | 24 | 36 | 12 | 0 | 0 |
 | `native-nix` | 30 | 0 | 10 | 16 | 28 of 30 (93%) | 37 | 22 | 28 | 4 | 0 | 0 |
-| `native-odin` | 92 | 0 | 18 | 8 | 37 of 92 (40%) | 44 | 10 | 36 | 6 | 0 | 0 |
+| `native-odin` | 92 | 0 | 18 | 8 | 38 of 92 (41%) | 45 | 10 | 36 | 6 | 0 | 0 |
 | `native-pascal` | 127 | 0 | 27 | 162 | 50 of 127 (39%) | 97 | 19 | 297 | 9 | 0 | 0 |
 | `native-powershell` | 139 | 0 | 13 | 15 | 90 of 139 (65%) | 98 | 12 | 54 | 12 | 0 | 0 |
 | `native-proto` | 43 | 0 | 3 | 9 | 43 of 43 (100%) | 52 | 5 | 20 | 7 | 0 | 0 |
@@ -201,6 +204,7 @@ rules name a concept another native grammar names
 | `native-graphql` | 0 | 0 | 0 | 3 | 0 | 28 | 46 |
 | `native-groovy` | 0 | 33 | 0 | 3 | 1 | 171 | 12 |
 | `native-hcl` | 1 | 0 | 0 | 2 | 2 | 19 | 46 |
+| `native-html` | 1 | 0 | 0 | 2 | 6 | 8 | 11 |
 | `native-ini` | 0 | 0 | 0 | 2 | 0 | 2 | 3 |
 | `native-java` | 0 | 13 | 0 | 3 | 1 | 164 | 5 |
 | `native-javascript` | 5 | 18 | 9 | 3 | 3 | 143 | 0 |
@@ -227,7 +231,7 @@ rules name a concept another native grammar names
 | `native-tsx` | 7 | 49 | 44 | 3 | 5 | 230 | 0 |
 | `native-typescript` | 7 | 48 | 44 | 3 | 5 | 230 | 0 |
 | `native-vb` | 0 | 16 | 0 | 3 | 0 | 66 | 45 |
-| `native-xml` | 4 | 1 | 0 | 0 | 6 | 44 | 23 |
+| `native-xml` | 4 | 1 | 0 | 0 | 6 | 50 | 17 |
 | `native-zig` | 0 | 6 | 1 | 2 | 0 | 63 | 53 |
 
 ## Recovery
@@ -252,6 +256,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-graphql` | 29 | 29 | 8 | 40 | none |
 | `native-groovy` | 11 | 11 | 3 | 14 | none |
 | `native-hcl` | 10 | 10 | 6 | 9 | none |
+| `native-html` | 9 | 9 | 3 | 18 | none |
 | `native-ini` | 15 | 15 | 10 | 9 | none |
 | `native-java` | 11 | 11 | 4 | 15 | none |
 | `native-javascript` | 24 | 24 | 6 | 31 | native-skips-more 13, oracle-skips-more 35, same-repair-sites 13, same-skipped-bytes 1 |
@@ -298,6 +303,8 @@ The `native-erlang` measurements use linux x64, AMD EPYC 9V74 80-Core Processor,
 The `native-groovy` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, without optional dictionary features.
 
 The `native-hcl` measurements use linux x64, INTEL(R) XEON(R) PLATINUM 8573C, Node.js 24.19.0, and unoptimized test profile, no default features, one crate codegen unit.
+
+The `native-html` measurements use linux x64, INTEL(R) XEON(R) PLATINUM 8573C, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0; --no-default-features, profile.dev.package.meta-language.codegen-units=1.
 
 The `native-lua` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
 
@@ -347,6 +354,7 @@ loads the same modules and parses nothing.
 | `native-graphql` | 193.7 | 5.0 | 38.9× | 192.0 | 0.8 | 81.6 | 7.5 |
 | `native-groovy` | 386.9 | 1.6 | 237.4× | 666.3 | 0.7 | 238.8 | 10.5 |
 | `native-hcl` | 143.7 | 1.2 | 122.3× | 95.0 | 0.4 | 92.6 | 7.1 |
+| `native-html` | 126.3 | 1.2 | 101.7× | 18.8 | 0.2 | 38.7 | 5.1 |
 | `native-ini` | 18.5 | 1.5 | 12.3× | 14.9 | 0.4 | 15.7 | 3.9 |
 | `native-java` | 2078.1 | 10.0 | 207.0× | 397.1 | 0.8 | 124.3 | 12.0 |
 | `native-javascript` | 7646.4 | 14.9 | 513.3× | 2214.6 | 1.1 | 131.9 | 12.6 |
@@ -356,7 +364,7 @@ loads the same modules and parses nothing.
 | `native-lua` | 100.5 | 1.0 | 96.3× | 53.7 | 0.4 | 48.3 | 5.9 |
 | `native-make` | 966.8 | 4.4 | 220.4× | 432.3 | 1.5 | 119.7 | 4.8 |
 | `native-nix` | 63.2 | 0.7 | 92.3× | 26.3 | 0.2 | 37.2 | 2.9 |
-| `native-odin` | 875.6 | 1.9 | 456.1× | 592.9 | 0.5 | 224.8 | 16.8 |
+| `native-odin` | 860.3 | 1.4 | 610.6× | 591.1 | 0.4 | 225.9 | 14.6 |
 | `native-pascal` | 191.5 | 1.4 | 141.6× | 45.4 | 0.3 | 74.3 | 7.8 |
 | `native-powershell` | 167.6 | 1.8 | 95.7× | 486.1 | 0.7 | 188.0 | 16.2 |
 | `native-proto` | 644.6 | 10.2 | 63.2× | 98.9 | 1.7 | 104.6 | 8.7 |
@@ -399,6 +407,7 @@ without optimization, as the tests run them.
 | `native-graphql` | 665.5 | 2.0 | 326.6× | 458.1 | 0.8 | 1.6 |
 | `native-groovy` | 1666.0 | 1.1 | 1514.5× | 1932.5 | 0.7 | 10.8 |
 | `native-hcl` | 298.9 | 1.4 | 220.6× | 224.0 | 1.1 | 2.4 |
+| `native-html` | 390.4 | 0.5 | 729.7× | 47.5 | 0.1 | 3.8 |
 | `native-ini` | 148.8 | 3.5 | 42.7× | 54.6 | 0.5 | 0.1 |
 | `native-java` | 9722.4 | 7.9 | 1226.8× | 1413.3 | 0.6 | 5.6 |
 | `native-javascript` | 24702.9 | 24.3 | 1015.6× | 6176.5 | 1.3 | 5.4 |
@@ -408,7 +417,7 @@ without optimization, as the tests run them.
 | `native-lua` | 178.9 | 0.6 | 280.8× | 124.4 | 0.2 | 1.4 |
 | `native-make` | 3320.8 | 3.2 | 1039.7× | 1308.5 | 1.1 | 1.6 |
 | `native-nix` | 212.9 | 0.5 | 463.7× | 76.9 | 0.2 | 0.8 |
-| `native-odin` | 5274.6 | 0.9 | 5933.2× | 1559.3 | 0.3 | 5.2 |
+| `native-odin` | 2538.8 | 1.0 | 2620.0× | 1747.5 | 0.3 | 5.2 |
 | `native-pascal` | 719.8 | 1.4 | 520.5× | 188.3 | 0.3 | 5.1 |
 | `native-powershell` | 462.6 | 1.2 | 394.7× | 1286.6 | 0.5 | 11.6 |
 | `native-proto` | 2063.4 | 10.2 | 203.2× | 325.5 | 0.6 | 15.5 |

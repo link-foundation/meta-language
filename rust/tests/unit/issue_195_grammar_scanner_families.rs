@@ -3,6 +3,71 @@ use super::issue_195_observations::{Observation, record};
 use meta_language::{FeatureParseOptions, compile_feature_grammar, parse_grammar_links};
 use serde_json::Value;
 
+fn observe_scanner_state(assertions: &[&str], test_name: &str) {
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-SCANNER-STATE-SEMANTICS",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-grammar-scanner-state-semantics",
+        fixture_file: "parity/fixtures/scanner-state-semantics.json",
+        assertions,
+        test_name,
+    });
+}
+
+#[test]
+fn scanner_values_normalize_single_uppercase_scalars_without_expanding_names() {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/scanner-state-semantics.json"
+    ))
+    .unwrap();
+    let listing = fixture[0]["listing"].as_str().unwrap();
+    let parser = super::issue_195_native_grammar_rows::parser(listing);
+    for input in ["Tree:TREE", "ÉléMent:ÉLÉMENT", "ſ:S", "ß:ß"] {
+        let tree = super::issue_195_native_grammar_rows::parse(&parser, input).unwrap();
+        assert_eq!(super::issue_195_native_grammar_rows::rebuilt(&tree), input);
+    }
+    for input in ["Tree:TREAT", "ß:SS"] {
+        assert!(
+            parser
+                .parse_tree(input.as_bytes(), &FeatureParseOptions::default())
+                .unwrap()
+                .tree
+                .is_none(),
+            "{input}"
+        );
+    }
+    observe_scanner_state(
+        &["scannerCaseConversionUsesSingleScalars"],
+        "scanner_values_normalize_single_uppercase_scalars_without_expanding_names",
+    );
+}
+
+#[test]
+fn scanner_lookahead_predicates_observe_preceding_state_mutations() {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/scanner-state-semantics.json"
+    ))
+    .unwrap();
+    let listing = fixture[1]["listing"].as_str().unwrap();
+    let parser = super::issue_195_native_grammar_rows::parser(listing);
+    for input in ["x", "y", "x"] {
+        let outcome = parser
+            .parse_tree(input.as_bytes(), &FeatureParseOptions::default())
+            .unwrap();
+        assert_eq!(outcome.ok, input == "x");
+        if let Some(tree) = outcome.tree {
+            assert_eq!(super::issue_195_native_grammar_rows::rebuilt(&tree), input);
+        }
+    }
+    observe_scanner_state(
+        &[
+            "scannerPredicatesSeeCurrentState",
+            "scannerStateFailuresRemainIsolated",
+        ],
+        "scanner_lookahead_predicates_observe_preceding_state_mutations",
+    );
+}
+
 #[test]
 fn external_extras_keep_skipped_prefixes_outside_their_named_token_span() {
     let listing = "(grammar (start source))\n(extra (ref annotation))\n(scanner annotations (tokens annotation) (operations (while (next (class plain (char %20) (char %0A))) (do (skip (class plain (char %20) (char %0A))))) (consume (literal %23)) (while (all (not atEnd) (not (next (literal %0A)))) (do advance)) (emit annotation)))\n(rule source normal (repeat0 (literal x)))";

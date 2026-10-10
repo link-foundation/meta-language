@@ -4,6 +4,86 @@
     "script": "js/scripts/generate-native-grammar-fixtures.mjs"
   },
   "languages": {
+    "HTML": {
+      "grammars": {
+        "native-html": {
+          "version": "1.0.0",
+          "parserSha256": "ef9fd1d743102ad248e1c2398877ab31f1c996aee92c1feb7998f89b03579049"
+        }
+      },
+      "oracleGrammars": {
+        "html": {
+          "version": "0.23.2",
+          "parserSha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1"
+        }
+      },
+      "sourceSha256": "e275722e3dda255400f21aa3e0b2bf7ad8b55e48ca3ea3d96a2b1fb74c908e72",
+      "recoverySourceSha256": "a6ce4da99557a82a23275c4f7ea2a298884cfb31140928c9a2bae04edffcf859",
+      "positive": [
+        [0,null,"document",1,0,127,""],
+        [1,null,"comment",1,0,14,"X"],
+        [1,null,"element",1,15,57,""],
+        [2,null,"start_tag",1,15,47,""],
+        [3,null,"<",0,15,16,""],
+        [3,null,"tag_name",1,16,17,""],
+        [3,null,"attribute",1,18,27,""],
+        [4,null,"attribute_name",1,18,23,""],
+        [4,null,"=",0,23,24,""],
+        [4,null,"quoted_attribute_value",1,24,27,""],
+        [5,null,"\"",0,24,25,""],
+        [5,null,"attribute_value",1,25,26,""],
+        [5,null,"\"",0,26,27,""],
+        [3,null,"attribute",1,28,46,""],
+        [4,null,"attribute_name",1,28,33,""],
+        [4,null,"=",0,33,34,""],
+        [4,null,"quoted_attribute_value",1,34,46,""],
+        [5,null,"\"",0,34,35,""],
+        [5,null,"attribute_value",1,35,45,""],
+        [5,null,"\"",0,45,46,""],
+        [3,null,">",0,46,47,""],
+        [2,null,"text",1,47,53,""],
+        [2,null,"end_tag",1,53,57,""],
+        [3,null,"</",0,53,55,""],
+        [3,null,"tag_name",1,55,56,""],
+        [3,null,">",0,56,57,""],
+        [1,null,"script_element",1,58,91,""],
+        [2,null,"start_tag",1,58,66,""],
+        [3,null,"<",0,58,59,""],
+        [3,null,"tag_name",1,59,65,""],
+        [3,null,">",0,65,66,""],
+        [2,null,"raw_text",1,66,82,""],
+        [2,null,"end_tag",1,82,91,""],
+        [3,null,"</",0,82,84,""],
+        [3,null,"tag_name",1,84,90,""],
+        [3,null,">",0,90,91,""],
+        [1,null,"style_element",1,92,126,""],
+        [2,null,"start_tag",1,92,99,""],
+        [3,null,"<",0,92,93,""],
+        [3,null,"tag_name",1,93,98,""],
+        [3,null,">",0,98,99,""],
+        [2,null,"raw_text",1,99,118,""],
+        [2,null,"end_tag",1,118,126,""],
+        [3,null,"</",0,118,120,""],
+        [3,null,"tag_name",1,120,125,""],
+        [3,null,">",0,125,126,""]
+      ],
+      "recovery": [
+        [0,null,"document",1,0,21,""],
+        [1,null,"element",1,0,21,""],
+        [2,null,"self_closing_tag",1,0,21,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,2,""],
+        [3,null,"attribute",1,3,21,""],
+        [4,null,"attribute_name",1,3,8,""],
+        [4,null,"=",0,8,9,""],
+        [4,null,"quoted_attribute_value",1,9,21,""],
+        [5,null,"\"",0,9,10,""],
+        [5,null,"attribute_value",1,10,21,""],
+        [5,null,"\"",0,21,21,"M"],
+        [3,null,"/>",0,21,21,"M"]
+      ],
+      "embedded": []
+    },
     "Odin": {
       "grammars": {
         "native-odin": {
@@ -5148,6 +5228,154 @@
                 [2,null,":",0,5,6,""],
                 [2,null,"plain_value",1,7,11,""],
                 [2,null,";",0,11,12,""]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Markdown -> HTML": {
+      "positive": {
+        "sourceSha256": "6331328c980475fc17ba771ef28577622371434336a240552b95296f0b11bed9",
+        "embedded": [
+          {
+            "path": "Markdown HTML block",
+            "language": "HTML",
+            "startByte": 7,
+            "endByte": 50,
+            "rows": [
+              [0,null,"document",1,0,43,""],
+              [1,null,"element",1,0,42,""],
+              [2,null,"start_tag",1,0,9,""],
+              [3,null,"<",0,0,1,""],
+              [3,null,"tag_name",1,1,8,""],
+              [3,null,">",0,8,9,""],
+              [2,null,"element",1,9,32,""],
+              [3,null,"start_tag",1,9,17,""],
+              [4,null,"<",0,9,10,""],
+              [4,null,"tag_name",1,10,16,""],
+              [4,null,">",0,16,17,""],
+              [3,null,"text",1,17,23,""],
+              [3,null,"end_tag",1,23,32,""],
+              [4,null,"</",0,23,25,""],
+              [4,null,"tag_name",1,25,31,""],
+              [4,null,">",0,31,32,""],
+              [2,null,"end_tag",1,32,42,""],
+              [3,null,"</",0,32,34,""],
+              [3,null,"tag_name",1,34,41,""],
+              [3,null,">",0,41,42,""]
+            ]
+          }
+        ]
+      },
+      "recovery": {
+        "sourceSha256": "6e7f143a5cf7393f0b70c1225afd49cde6b83bbc8eac9ed9c7f1738914c6496f",
+        "embedded": [
+          {
+            "path": "Markdown HTML block",
+            "language": "HTML",
+            "startByte": 7,
+            "endByte": 56,
+            "rows": [
+              [0,null,"document",1,0,49,""],
+              [1,null,"element",1,0,42,""],
+              [2,null,"start_tag",1,0,9,""],
+              [3,null,"<",0,0,1,""],
+              [3,null,"tag_name",1,1,8,""],
+              [3,null,">",0,8,9,""],
+              [2,null,"element",1,9,32,""],
+              [3,null,"start_tag",1,9,17,""],
+              [4,null,"<",0,9,10,""],
+              [4,null,"tag_name",1,10,16,""],
+              [4,null,">",0,16,17,""],
+              [3,null,"text",1,17,23,""],
+              [3,null,"end_tag",1,23,32,""],
+              [4,null,"</",0,23,25,""],
+              [4,null,"tag_name",1,25,31,""],
+              [4,null,">",0,31,32,""],
+              [2,null,"end_tag",1,32,42,""],
+              [3,null,"</",0,32,34,""],
+              [3,null,"tag_name",1,34,41,""],
+              [3,null,">",0,41,42,""],
+              [1,null,"erroneous_end_tag",1,42,44,""],
+              [2,null,"</",0,42,44,""],
+              [2,null,"erroneous_end_tag_name",1,44,44,"M"],
+              [2,null,">",0,44,44,"M"],
+              [1,null,"text",1,44,47,""],
+              [1,null,"ERROR",1,47,48,"E"]
+            ]
+          }
+        ]
+      },
+      "spellings": [
+        {
+          "sourceSha256": "d88919cdb0bd0181490229ae0306a668fa2631dd06c3196980b0208c9bf29e4f",
+          "embedded": [
+            {
+              "path": "Markdown HTML block",
+              "language": "HTML",
+              "startByte": 7,
+              "endByte": 44,
+              "rows": [
+                [0,null,"document",1,0,37,""],
+                [1,null,"element",1,0,36,""],
+                [2,null,"start_tag",1,0,5,""],
+                [3,null,"<",0,0,1,""],
+                [3,null,"tag_name",1,1,4,""],
+                [3,null,">",0,4,5,""],
+                [2,null,"element",1,6,29,""],
+                [3,null,"start_tag",1,6,14,""],
+                [4,null,"<",0,6,7,""],
+                [4,null,"tag_name",1,7,13,""],
+                [4,null,">",0,13,14,""],
+                [3,null,"text",1,14,20,""],
+                [3,null,"end_tag",1,20,29,""],
+                [4,null,"</",0,20,22,""],
+                [4,null,"tag_name",1,22,28,""],
+                [4,null,">",0,28,29,""],
+                [2,null,"end_tag",1,30,36,""],
+                [3,null,"</",0,30,32,""],
+                [3,null,"tag_name",1,32,35,""],
+                [3,null,">",0,35,36,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "3640c5cb4fbb3cca9adae2a1c9a2ee65a74442451cfc7bedd686bb890f20dfdb",
+          "embedded": [
+            {
+              "path": "Markdown HTML block",
+              "language": "HTML",
+              "startByte": 7,
+              "endByte": 23,
+              "rows": [
+                [0,null,"document",1,0,16,""],
+                [1,null,"comment",1,0,15,"X"]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "36f6f8ea3d7e847313664623cc736850a186227c5bb0f6e6ff6955e5c525a5fc",
+          "embedded": [
+            {
+              "path": "Markdown inline HTML",
+              "language": "HTML",
+              "startByte": 5,
+              "endByte": 28,
+              "rows": [
+                [0,null,"document",1,0,23,""],
+                [1,null,"element",1,0,23,""],
+                [2,null,"start_tag",1,0,8,""],
+                [3,null,"<",0,0,1,""],
+                [3,null,"tag_name",1,1,7,""],
+                [3,null,">",0,7,8,""],
+                [2,null,"text",1,8,14,""],
+                [2,null,"end_tag",1,14,23,""],
+                [3,null,"</",0,14,16,""],
+                [3,null,"tag_name",1,16,22,""],
+                [3,null,">",0,22,23,""]
               ]
             }
           ]

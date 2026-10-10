@@ -6,6 +6,33 @@ import { compileGrammar, parseGrammarLinks, renderSyntaxTree } from '../src/inde
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
+const observeScannerState = (assertions, testName) => recordIssue195Observations({
+  requirementId: 'I195-GRAMMAR-SCANNER-STATE-SEMANTICS', suffix: 'behavior',
+  fixtureId: 'planned:repository-directive:i195-grammar-scanner-state-semantics',
+  fixtureFile: 'parity/fixtures/scanner-state-semantics.json', assertions, testName,
+});
+
+test('scanner values normalize single uppercase scalars without expanding names', (context) => {
+  const { listing, accept, reject } = JSON.parse(readFileSync(new URL('../../parity/fixtures/scanner-state-semantics.json', import.meta.url), 'utf8'))[0];
+  const parser = compileGrammar(parseGrammarLinks(listing));
+  for (const input of accept) {
+    assert.equal(parser.parseTree(input).ok, true, input);
+  }
+  for (const input of reject) assert.equal(parser.parseTree(input).ok, false, input);
+  observeScannerState(['scannerCaseConversionUsesSingleScalars'], context.name);
+});
+
+test('scanner lookahead predicates observe preceding state mutations', (context) => {
+  const { listing } = JSON.parse(readFileSync(new URL('../../parity/fixtures/scanner-state-semantics.json', import.meta.url), 'utf8'))[1];
+  const parser = compileGrammar(parseGrammarLinks(listing));
+  const outcome = parser.parseTree('x');
+  assert.equal(outcome.ok, true);
+  assert.equal(outcome.tree.children[0].text, 'x');
+  assert.equal(parser.parseTree('y').ok, false);
+  assert.equal(parser.parseTree('x').ok, true);
+  observeScannerState(['scannerPredicatesSeeCurrentState', 'scannerStateFailuresRemainIsolated'], context.name);
+});
+
 const fixtureGroups = [
   ['parity/fixtures/scanner-fragments.json', 'I195-GRAMMAR-SCANNER-FRAGMENTS'],
   ['parity/fixtures/scanner-remembered-content.json', 'I195-GRAMMAR-SCANNER-REMEMBERED-CONTENT'],

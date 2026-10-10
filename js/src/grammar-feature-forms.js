@@ -69,6 +69,7 @@ export const OPERATION_FORMS = Object.freeze({
   sumOf: ['value', [['field', 'name'], ['attribute', 'name']]],
   fieldText: ['value', [['field', 'name']]],
   length: ['value', [['value', 'value']]],
+  uppercase: ['value', [['value', 'value']]],
   number: ['value', [['value', 'value']]],
   add: ['value', [['left', 'value'], ['right', 'value']]],
   subtract: ['value', [['left', 'value'], ['right', 'value']]],

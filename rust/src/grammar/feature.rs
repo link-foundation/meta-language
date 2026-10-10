@@ -219,6 +219,7 @@ pub const OPERATION_FORMS: &[(&str, OperationCategory, FormFields)] = &[
     ),
     ("fieldText", VALUE, &[("field", FieldType::Name)]),
     ("length", VALUE, &[("value", FieldType::Value)]),
+    ("uppercase", VALUE, &[("value", FieldType::Value)]),
     ("number", VALUE, &[("value", FieldType::Value)]),
     ("add", VALUE, TWO_VALUES),
     ("subtract", VALUE, TWO_VALUES),

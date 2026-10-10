@@ -199,7 +199,8 @@
       "version": "0.23.2",
       "parserSha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1",
       "wasmSha256": "11960fcc4fe3a01930de6bbae9b2c5c4d0a6c16012a5d20cc2069fa5b78d3bbd",
-      "license": "html.LICENSE"
+      "license": "html.LICENSE",
+      "oracle": true
     },
     "ini": {
       "id": "ini",

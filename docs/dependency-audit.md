@@ -318,7 +318,7 @@ they are.
 | `tree-sitter-groovy` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.2` | direct, development | `=0.1.2` | 0.1.2 (crates.io, tree-sitter-groovy) | version | current |  |
 | `tree-sitter-haskell` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.1` | direct, runtime | `=0.24.1` | 0.24.1 (crates.io, tree-sitter-haskell) | version | current |  |
 | `tree-sitter-hcl` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.0` | direct, development | `=1.1.0` | 1.1.0 (crates.io, tree-sitter-hcl) | version | current |  |
-| `tree-sitter-html` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.2` | direct, runtime | `=0.23.2` | 0.23.2 (crates.io, tree-sitter-html) | version | current |  |
+| `tree-sitter-html` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.2` | direct, development | `=0.23.2` | 0.23.2 (crates.io, tree-sitter-html) | version | current |  |
 | `tree-sitter-ini` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.4.0` | direct, development | `=1.4.0` | 1.4.0 (crates.io, tree-sitter-ini) | version | current |  |
 | `tree-sitter-java` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.5` | direct, development | `=0.23.5` | 0.23.5 (crates.io, tree-sitter-java) | version | current |  |
 | `tree-sitter-javascript` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-javascript) | version | current |  |
@@ -503,7 +503,7 @@ they are.
 | `js/src/vendor/grammars/elixir.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.5` |  | derived | current |  |
 | `js/src/vendor/grammars/elm.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `5.9.4` |  | derived | current |  |
 | `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.1` |  | derived | current |  |
-| `js/src/vendor/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
+| `js/oracles/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
 | `js/src/vendor/grammars/kotlin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.0` |  | derived | current |  |
 | `js/src/vendor/grammars/markdown_inline.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.6` |  | derived | current |  |
 | `js/src/vendor/grammars/markdown.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.6` |  | derived | current |  |

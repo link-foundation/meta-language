@@ -79,7 +79,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   groovy: { crate: 'tree-sitter-groovy', dir: '.', oracle: true },
   haskell: { crate: 'tree-sitter-haskell', dir: '.' },
   hcl: { crate: 'tree-sitter-hcl', dir: '.', oracle: true },
-  html: { crate: 'tree-sitter-html', dir: '.' },
+  html: { crate: 'tree-sitter-html', dir: '.', oracle: true },
   ini: { crate: 'tree-sitter-ini', dir: '.', oracle: true },
   java: { crate: 'tree-sitter-java', dir: '.', oracle: true },
   javascript: { crate: 'tree-sitter-javascript', dir: '.', oracle: true },

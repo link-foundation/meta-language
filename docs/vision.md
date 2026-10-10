@@ -992,3 +992,12 @@ Odin grammar, while the original parser remains a development oracle. Focused
 authored sources and the inventory example run locally; CI checks the complete
 pinned corpus. This import does not complete the multi-source grammar union or
 the remaining catalog and delivery requirements.
+
+The native HTML import retains the pinned tag stack, case conversion, void and
+implicit closing rules, comments and script/style raw text as generated Links
+operations. Tag classifications come from the pinned source header rather than
+host conditionals. Scanner lookahead predicates see preceding state mutations;
+a failed run discards them. Shared authored fixtures verify scalar uppercase
+conversion and state-dependent predicates in both executors. HTML selects its
+native grammar, with the original parser kept as a development oracle. The
+remaining source unions, catalog imports and delivery requirements stay open.

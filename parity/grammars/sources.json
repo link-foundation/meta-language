@@ -1090,6 +1090,42 @@
         "sha256": "5e8029d1a36bdc1a7fb3d08e5633373d50378283bbe21a96509f9c6b15f642f5"
       },
       "oracle": "odin"
+    },
+    {
+      "id": "tree-sitter-html",
+      "language": "html",
+      "native": "native-html",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-html 0.23.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-html",
+      "revision": "5a5ca8551a179998360b4a4ca2c0f366a35acc03",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-html-0.23.2.grammar.json.gz",
+      "sha256": "242c55ee874835b2d47288859878a0cf5dba50ffaae861a81d19fef6d010e227",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-html-0.23.2.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/html.lino",
+        "sha256": "695bb5190f92f45d7b5d51255a1187be746f1f3a75bd63df41ad451f5f8ee767",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "5c0a0567e010277b81fe63be0acd04f6b44c3ef3063ac01429b910c1d22f0dca",
+          "includes": [
+            {
+              "path": "src/tag.h",
+              "sha256": "aaf1a10c8a2f685ef51a4aa6c01a2cbe166bff67eeccf6b9501a625b71f9ab70"
+            }
+          ]
+        },
+        "generator": "js/experiments/build-html-scanner.mjs",
+        "immediate": []
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-html-0.23.2.corpus.json.gz",
+        "sha256": "02a6df6f728870ed27419f9d1aac6d9e6f89daaaa3e4e15619cf9ee08e0f6f6b"
+      },
+      "oracle": "html"
     }
   ]
 }

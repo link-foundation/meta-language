@@ -614,7 +614,6 @@ impl Executor<'_> {
             executor: self,
             requested: name.clone(),
             context,
-            state,
             working: state.working(),
             cursor: start,
             token_start: start,
@@ -867,12 +866,11 @@ impl Machine for ActionMachine<'_, '_, '_> {
 }
 
 /// The machine an external scanner runs on.
-struct ScannerMachine<'e, 'c, 's> {
+struct ScannerMachine<'e, 'c> {
     executor: &'e mut Executor<'c>,
     requested: Name,
     /// The offset the scanner answers `expected` for.
     context: usize,
-    state: &'s State,
     working: Working,
     cursor: usize,
     token_start: usize,
@@ -880,20 +878,20 @@ struct ScannerMachine<'e, 'c, 's> {
     skipped: Vec<Rc<Tree>>,
 }
 
-impl ScannerMachine<'_, '_, '_> {
+impl ScannerMachine<'_, '_> {
     // The end of the longest match of `item` at the cursor, in the state the
-    // scanner started in.
+    // preceding operations leave it in.
     fn match_at(&mut self, item: &Expr) -> OpResult<Option<usize>> {
         let cursor = self.cursor;
-        let state = self.state;
+        let state = self.working.clone().settle();
         let results = self
             .executor
-            .quietly(|this| this.evaluate(item, cursor, state, true))?;
+            .quietly(|this| this.evaluate(item, cursor, &state, true))?;
         Ok(longest_result(results).map(|result| result.end))
     }
 }
 
-impl Machine for ScannerMachine<'_, '_, '_> {
+impl Machine for ScannerMachine<'_, '_> {
     fn state(&mut self) -> &mut Working {
         &mut self.working
     }

@@ -3846,6 +3846,28 @@
           "reason": "The pinned CST retains nil as one named leaf; a lower precedence keyword_identifier repeats its text without adding a literal child to this rule."
         }
       ]
+    },
+    "html": {
+      "names": {
+        "doctype": "document_type_declaration",
+        "_doctype": "document_type_keyword",
+        "_self_closing_tag_delimiter": "self_closing_tag_end",
+        "script_element": "script_element",
+        "style_element": "style_element",
+        "text": "character_data",
+        "element": "markup_element",
+        "attribute": "element_attribute",
+        "attribute_name": "element_attribute_name"
+      },
+      "sourceTransforms": [
+        {
+          "family": "external-literal-token",
+          "literal": "/>",
+          "token": "_self_closing_tag_delimiter",
+          "count": 1,
+          "reason": "The pinned HTML scanner pops its tag context at the anonymous self-closing delimiter; the generated external rule retains that state transition and anonymous leaf."
+        }
+      ]
     }
   },
   "concepts": {
@@ -3934,7 +3956,7 @@
       "grammar.syntax-quotation": [
         {
           "id": "grammar.syntax-quote",
-          "reason": "A Lean syntax quotation `(\u2026) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
+          "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
         }
       ],
       "grammar.yield-statement": [

@@ -29,6 +29,7 @@ when only its own grammar names the concept.
 | `native-graphql` | 74 | 28 | 46 | 38% |
 | `native-groovy` | 183 | 171 | 12 | 93% |
 | `native-hcl` | 65 | 19 | 46 | 29% |
+| `native-html` | 19 | 8 | 11 | 42% |
 | `native-ini` | 5 | 2 | 3 | 40% |
 | `native-java` | 169 | 164 | 5 | 97% |
 | `native-javascript` | 143 | 143 | 0 | 100% |
@@ -55,9 +56,9 @@ when only its own grammar names the concept.
 | `native-tsx` | 230 | 230 | 0 | 100% |
 | `native-typescript` | 230 | 230 | 0 | 100% |
 | `native-vb` | 111 | 66 | 45 | 59% |
-| `native-xml` | 67 | 44 | 23 | 66% |
+| `native-xml` | 67 | 50 | 17 | 75% |
 | `native-zig` | 116 | 63 | 53 | 54% |
-| all | 5303 | 2645 | 2658 | 50% |
+| all | 5322 | 2659 | 2663 | 50% |
 
 ### `native-c`
 
@@ -123,6 +124,11 @@ when only its own grammar names the concept.
 
 - Shared: `body` → `grammar.body`, `block` → `grammar.block`, `identifier` → `grammar.identifier`, `expression` → `grammar.expression`, `literal_value` → `grammar.literal-value`, `boolean_literal` → `grammar.boolean-literal`, `null_literal` → `grammar.null-literal`, `string_literal` → `grammar.string-literal`, `comma` → `grammar.comma`, `tuple` → `grammar.tuple`, `object` → `grammar.object`, `variable_expression` → `grammar.variable-expression`, `function_call` → `grammar.function-call`, `function_argument_list` → `grammar.function-argument-list`, `ellipsis` → `grammar.ellipsis`, `conditional_expression` → `grammar.conditional-expression`, `template_expression` → `grammar.template-expression`, `comment` → `grammar.comment`, `whitespace` → `grammar.whitespace`.
 - Language-specific: `configuration_file` → `grammar.configuration-file`, `configuration_attribute` → `grammar.configuration-attribute`, `block_start` → `grammar.block-start`, `block_end` → `grammar.block-end`, `expression_term` → `grammar.expression-term`, `numeric_literal` → `grammar.numeric-literal`, `collection_value` → `grammar.collection-value`, `tuple_start` → `grammar.tuple-start`, `tuple_end` → `grammar.tuple-end`, `tuple_element_list` → `grammar.tuple-element-list`, `object_start` → `grammar.object-start`, `object_end` → `grammar.object-end`, `object_element_list` → `grammar.object-element-list`, `object_element` → `grammar.object-element`, `index` → `grammar.index`, `new_index` → `grammar.new-index`, `legacy_index` → `grammar.legacy-index`, `get_attribute` → `grammar.get-attribute`, `path_expansion` → `grammar.path-expansion`, `attribute_expansion` → `grammar.attribute-expansion`, `complete_expansion` → `grammar.complete-expansion`, `for_expression` → `grammar.collection-comprehension`, `for_tuple_expression` → `grammar.for-tuple-expression`, `for_object_expression` → `grammar.for-object-expression`, `for_intro` → `grammar.for-intro`, `iteration_condition` → `grammar.iteration-condition`, `function_call_start` → `grammar.function-call-start`, `function_call_end` → `grammar.function-call-end`, `operation` → `grammar.operation`, `unary_operation` → `grammar.unary-operation`, `binary_operation` → `grammar.binary-operation`, `quoted_template` → `grammar.quoted-template`, `here_document_template` → `grammar.here-document-template`, `here_document_start` → `grammar.here-document-start`, `strip_marker` → `grammar.strip-marker`, `template` → `grammar.template`, `template_literal` → `grammar.template-literal`, `template_interpolation` → `grammar.template-interpolation`, `template_directive` → `grammar.template-directive`, `iteration_template` → `grammar.iteration-template`, `template_for_start` → `grammar.template-for-start`, `template_for_end` → `grammar.template-for-end`, `conditional_template` → `grammar.conditional-template`, `template_if_intro` → `grammar.template-if-intro`, `template_else_intro` → `grammar.template-else-intro`, `template_if_end` → `grammar.template-if-end`.
+
+### `native-html`
+
+- Shared: `document` → `grammar.document`, `document_type_declaration` → `grammar.document-type-declaration`, `markup_element` → `grammar.markup-element`, `start_tag` → `grammar.start-tag`, `end_tag` → `grammar.end-tag`, `erroneous_end_tag` → `grammar.erroneous-end-tag`, `element_attribute` → `grammar.element-attribute`, `attribute_value` → `grammar.attribute-value`.
+- Language-specific: `document_type_keyword` → `grammar.document-type-keyword`, `node` → `grammar.node`, `script_element` → `grammar.script-element`, `style_element` → `grammar.style-element`, `script_start_tag` → `grammar.script-start-tag`, `style_start_tag` → `grammar.style-start-tag`, `self_closing_tag` → `grammar.self-closing-tag`, `element_attribute_name` → `grammar.element-attribute-name`, `entity` → `grammar.entity`, `quoted_attribute_value` → `grammar.quoted-attribute-value`, `character_data` → `grammar.character-data`.
 
 ### `native-ini`
 
@@ -256,8 +262,8 @@ when only its own grammar names the concept.
 
 ### `native-xml`
 
-- Shared: `document` → `grammar.document`, `markup_declaration` → `grammar.markup-declaration`, `declaration_separator` → `grammar.declaration-separator`, `element_declaration` → `grammar.element-declaration`, `content_specification` → `grammar.content-specification`, `mixed_content` → `grammar.mixed-content`, `child_content` → `grammar.child-content`, `content_particle` → `grammar.content-particle`, `choice` → `grammar.choice`, `attribute_list_declaration` → `grammar.attribute-list-declaration`, `attribute_definition` → `grammar.attribute-definition`, `attribute_type` → `grammar.attribute-type`, `string_type` → `grammar.string-type`, `token_sequence_type` → `grammar.token-sequence-type`, `enumerated_type` → `grammar.enumerated-type`, `notation_type` → `grammar.notation-type`, `enumeration` → `grammar.enumeration`, `default_declaration` → `grammar.default-declaration`, `entity_declaration` → `grammar.entity-declaration`, `general_entity_declaration` → `grammar.general-entity-declaration`, `parameter_entity_declaration` → `grammar.parameter-entity-declaration`, `entity_value` → `grammar.entity-value`, `notation_data_declaration` → `grammar.notation-data-declaration`, `notation_declaration` → `grammar.notation-declaration`, `parameter_entity_reference` → `grammar.parameter-entity-reference`, `whitespace` → `grammar.whitespace`, `name` → `grammar.name`, `name_token` → `grammar.name-token`, `entity_or_character_reference` → `grammar.entity-or-character-reference`, `entity_reference` → `grammar.entity-reference`, `character_code_reference` → `grammar.character-code-reference`, `attribute_value` → `grammar.attribute-value`, `external_resource_identifier` → `grammar.external-resource-identifier`, `public_identifier` → `grammar.public-identifier`, `system_literal` → `grammar.system-literal`, `public_identifier_literal` → `grammar.public-identifier-literal`, `version_information` → `grammar.version-information`, `version_number` → `grammar.version-number`, `encoding_declaration` → `grammar.encoding-declaration`, `encoding_name` → `grammar.encoding-name`, `processing_instruction` → `grammar.processing-instruction`, `equals_sign` → `grammar.equals-sign`, `word_characters` → `grammar.word-characters`, `processing_instruction_target` → `grammar.processing-instruction-target`.
-- Language-specific: `prolog` → `grammar.prolog`, `miscellaneous_item` → `grammar.miscellaneous-item`, `extensible_markup_language_declaration` → `grammar.extensible-markup-language-declaration`, `independent_document_declaration` → `grammar.independent-document-declaration`, `document_type_declaration` → `grammar.document-type-declaration`, `internal_subset` → `grammar.internal-subset`, `markup_element` → `grammar.markup-element`, `empty_element_tag` → `grammar.empty-element-tag`, `element_attribute` → `grammar.element-attribute`, `start_tag` → `grammar.start-tag`, `end_tag` → `grammar.end-tag`, `erroneous_end_tag` → `grammar.erroneous-end-tag`, `element_content` → `grammar.element-content`, `character_data_section_expression` → `grammar.character-data-section-expression`, `character_data_section_start` → `grammar.character-data-section-start`, `style_sheet_processing_instruction` → `grammar.style-sheet-processing-instruction`, `extensible_markup_language_model_processing_instruction` → `grammar.extensible-markup-language-model-processing-instruction`, `pseudo_attribute` → `grammar.pseudo-attribute`, `pseudo_attribute_value` → `grammar.pseudo-attribute-value`, `start_tag_name` → `grammar.start-tag-name`, `end_tag_name` → `grammar.end-tag-name`, `self_closing_tag_end` → `grammar.self-closing-tag-end`, `erroneous_end_name` → `grammar.erroneous-end-name`.
+- Shared: `document` → `grammar.document`, `document_type_declaration` → `grammar.document-type-declaration`, `markup_element` → `grammar.markup-element`, `element_attribute` → `grammar.element-attribute`, `start_tag` → `grammar.start-tag`, `end_tag` → `grammar.end-tag`, `erroneous_end_tag` → `grammar.erroneous-end-tag`, `markup_declaration` → `grammar.markup-declaration`, `declaration_separator` → `grammar.declaration-separator`, `element_declaration` → `grammar.element-declaration`, `content_specification` → `grammar.content-specification`, `mixed_content` → `grammar.mixed-content`, `child_content` → `grammar.child-content`, `content_particle` → `grammar.content-particle`, `choice` → `grammar.choice`, `attribute_list_declaration` → `grammar.attribute-list-declaration`, `attribute_definition` → `grammar.attribute-definition`, `attribute_type` → `grammar.attribute-type`, `string_type` → `grammar.string-type`, `token_sequence_type` → `grammar.token-sequence-type`, `enumerated_type` → `grammar.enumerated-type`, `notation_type` → `grammar.notation-type`, `enumeration` → `grammar.enumeration`, `default_declaration` → `grammar.default-declaration`, `entity_declaration` → `grammar.entity-declaration`, `general_entity_declaration` → `grammar.general-entity-declaration`, `parameter_entity_declaration` → `grammar.parameter-entity-declaration`, `entity_value` → `grammar.entity-value`, `notation_data_declaration` → `grammar.notation-data-declaration`, `notation_declaration` → `grammar.notation-declaration`, `parameter_entity_reference` → `grammar.parameter-entity-reference`, `whitespace` → `grammar.whitespace`, `name` → `grammar.name`, `name_token` → `grammar.name-token`, `entity_or_character_reference` → `grammar.entity-or-character-reference`, `entity_reference` → `grammar.entity-reference`, `character_code_reference` → `grammar.character-code-reference`, `attribute_value` → `grammar.attribute-value`, `external_resource_identifier` → `grammar.external-resource-identifier`, `public_identifier` → `grammar.public-identifier`, `system_literal` → `grammar.system-literal`, `public_identifier_literal` → `grammar.public-identifier-literal`, `version_information` → `grammar.version-information`, `version_number` → `grammar.version-number`, `encoding_declaration` → `grammar.encoding-declaration`, `encoding_name` → `grammar.encoding-name`, `processing_instruction` → `grammar.processing-instruction`, `equals_sign` → `grammar.equals-sign`, `word_characters` → `grammar.word-characters`, `processing_instruction_target` → `grammar.processing-instruction-target`.
+- Language-specific: `prolog` → `grammar.prolog`, `miscellaneous_item` → `grammar.miscellaneous-item`, `extensible_markup_language_declaration` → `grammar.extensible-markup-language-declaration`, `independent_document_declaration` → `grammar.independent-document-declaration`, `internal_subset` → `grammar.internal-subset`, `empty_element_tag` → `grammar.empty-element-tag`, `element_content` → `grammar.element-content`, `character_data_section_expression` → `grammar.character-data-section-expression`, `character_data_section_start` → `grammar.character-data-section-start`, `style_sheet_processing_instruction` → `grammar.style-sheet-processing-instruction`, `extensible_markup_language_model_processing_instruction` → `grammar.extensible-markup-language-model-processing-instruction`, `pseudo_attribute` → `grammar.pseudo-attribute`, `pseudo_attribute_value` → `grammar.pseudo-attribute-value`, `start_tag_name` → `grammar.start-tag-name`, `end_tag_name` → `grammar.end-tag-name`, `self_closing_tag_end` → `grammar.self-closing-tag-end`, `erroneous_end_name` → `grammar.erroneous-end-name`.
 
 ### `native-zig`
 
@@ -329,7 +335,7 @@ when only its own grammar names the concept.
 | `grammar.attribute-list-declaration` | dtd, xml |
 | `grammar.attribute-specifier` | c, cpp |
 | `grammar.attribute-type` | dtd, xml |
-| `grammar.attribute-value` | dtd, rocq, xml |
+| `grammar.attribute-value` | dtd, html, rocq, xml |
 | `grammar.attributed-declarator` | c, cpp |
 | `grammar.attributed-field-declarator` | c, cpp |
 | `grammar.attributed-statement` | c, cpp |
@@ -439,8 +445,10 @@ when only its own grammar names the concept.
 | `grammar.directive` | graphql, make |
 | `grammar.do-keyword` | pascal, sql |
 | `grammar.do-statement` | c, cpp, dart, groovy, java, javascript, lua, powershell, tsx, typescript, vb |
-| `grammar.document` | csv, diff, graphql, ini, json, json5, toml, xml |
+| `grammar.document` | csv, diff, graphql, html, ini, json, json5, toml, xml |
+| `grammar.document-type-declaration` | html, xml |
 | `grammar.element-access` | powershell, vb |
+| `grammar.element-attribute` | html, xml |
 | `grammar.element-declaration` | dtd, xml |
 | `grammar.element-value` | groovy, java |
 | `grammar.element-value-array-initializer` | groovy, java |
@@ -455,6 +463,7 @@ when only its own grammar names the concept.
 | `grammar.encoding-name` | dtd, xml |
 | `grammar.end-command` | lean, rocq |
 | `grammar.end-keyword` | pascal, sql |
+| `grammar.end-tag` | html, xml |
 | `grammar.enhanced-for-statement` | groovy, java |
 | `grammar.entity-declaration` | dtd, xml |
 | `grammar.entity-or-character-reference` | dtd, xml |
@@ -472,6 +481,7 @@ when only its own grammar names the concept.
 | `grammar.enumerator` | c, cpp |
 | `grammar.enumerator-list` | c, cpp |
 | `grammar.equals-sign` | dtd, xml |
+| `grammar.erroneous-end-tag` | html, xml |
 | `grammar.escape-sequence` | c, cmake, cpp, css, dart, go, groovy, java, javascript, lean, lua, nix, odin, proto, python, r, racket, rust, scheme, solidity, toml, tsx, typescript, zig |
 | `grammar.except-keyword` | pascal, sql |
 | `grammar.exception-catch-expression` | erlang, zig |
@@ -658,6 +668,7 @@ when only its own grammar names the concept.
 | `grammar.mapped-type-clause` | tsx, typescript |
 | `grammar.marker-annotation` | groovy, java |
 | `grammar.markup-declaration` | dtd, xml |
+| `grammar.markup-element` | html, xml |
 | `grammar.match-arm` | lean, rust |
 | `grammar.match-block` | python, rust |
 | `grammar.match-expression` | erlang, lean, rocq, rust |
@@ -863,6 +874,7 @@ when only its own grammar names the concept.
 | `grammar.source-file` | cmake, dart, erlang, go, graphql, odin, proto, rocq, rust, solidity, vb, zig |
 | `grammar.spread-element` | dart, javascript, tsx, typescript |
 | `grammar.spread-parameter` | groovy, java |
+| `grammar.start-tag` | html, xml |
 | `grammar.statement` | c, cpp, dart, go, groovy, java, javascript, lua, odin, pascal, powershell, python, rust, solidity, sql, tsx, typescript, vb, zig |
 | `grammar.statement-block` | javascript, powershell, tsx, typescript |
 | `grammar.statement-identifier-alias` | c, cpp |

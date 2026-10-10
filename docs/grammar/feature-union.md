@@ -288,13 +288,19 @@ Values: `integer`, `text`, `variable(name)` (0 when unset), `top(stack)` (0
 when empty), `depth(stack)`, `column` (0-based, in code points since the last
 line feed), `matched` (the matched text), `mode` (the current mode),
 `attribute(field, attribute)`, `sumOf(field, attribute)`, `fieldText(field)`,
-`length(value)` (code points of a text), `number(value)` (a text of at most 15
+`length(value)` (code points of a text), `uppercase(value)` (one Unicode
+uppercase scalar per input scalar, retaining characters whose uppercase spelling
+would expand), `number(value)` (a text of at most 15
 digits with an optional `-`), `add`, `subtract`, `multiply`. Arithmetic on a
 non-integer, or a result outside the safe integer range, fails.
 
 A failing operation (`fail`, a failed `advance`, `consume`, `skip` or `pop`, a
 type error, a missing attribute) fails the scanner run, the action or the
 predicate; it never throws to the caller.
+
+Scanner expression predicates read the working state after preceding scanner
+operations. A failed scanner still discards that state, and lookahead does not
+consume the input or commit its own state changes.
 
 Each context admits a subset (`OPERATION_CONTEXTS` in
 [`operations.js`](../../js/src/grammar-runtime/operations.js)); loading rejects

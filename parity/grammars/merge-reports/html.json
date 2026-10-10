@@ -1,0 +1,101 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "html",
+  "native": "native-html",
+  "sources": [
+    {
+      "id": "tree-sitter-html",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-html 0.23.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-html",
+      "revision": "5a5ca8551a179998360b4a4ca2c0f366a35acc03",
+      "path": "src/grammar.json",
+      "sha256": "242c55ee874835b2d47288859878a0cf5dba50ffaae861a81d19fef6d010e227",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/html.lino",
+    "sha256": "695bb5190f92f45d7b5d51255a1187be746f1f3a75bd63df41ad451f5f8ee767",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "5c0a0567e010277b81fe63be0acd04f6b44c3ef3063ac01429b910c1d22f0dca",
+      "includes": [
+        {
+          "path": "src/tag.h",
+          "sha256": "aaf1a10c8a2f685ef51a4aa6c01a2cbe166bff67eeccf6b9501a625b71f9ab70"
+        }
+      ]
+    },
+    "scanners": [
+      {
+        "name": "html_tag_context",
+        "tokens": [
+          "start_tag_name",
+          "script_start_tag_name",
+          "style_start_tag_name",
+          "end_tag_name",
+          "erroneous_end_tag_name",
+          "self_closing_tag_end",
+          "implicit_end_tag",
+          "raw_text",
+          "comment"
+        ]
+      }
+    ],
+    "immediate": []
+  },
+  "rules": 19,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "doctype",
+      "native": "document_type_declaration"
+    },
+    {
+      "source": "_doctype",
+      "native": "document_type_keyword"
+    },
+    {
+      "source": "_node",
+      "native": "node"
+    },
+    {
+      "source": "element",
+      "native": "markup_element"
+    },
+    {
+      "source": "attribute",
+      "native": "element_attribute"
+    },
+    {
+      "source": "attribute_name",
+      "native": "element_attribute_name"
+    },
+    {
+      "source": "text",
+      "native": "character_data"
+    }
+  ],
+  "expandedWords": [],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "document",
+        "concept": "grammar.document"
+      }
+    ],
+    "generated": 18
+  },
+  "sourceTransforms": [
+    {
+      "family": "external-literal-token",
+      "literal": "/>",
+      "token": "_self_closing_tag_delimiter",
+      "count": 1,
+      "reason": "The pinned HTML scanner pops its tag context at the anonymous self-closing delimiter; the generated external rule retains that state transition and anonymous leaf."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

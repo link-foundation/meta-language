@@ -69,7 +69,6 @@
     "floating_point_number": "float",
     "contextual_whitespace": "_contextual_whitespace"
   },
-  "rootIncludesLeadingTrivia": true,
   "matches": [
     {
       "source": "",
@@ -984,6 +983,32 @@
         [6,null,")",0,44,45,""],
         [4,null,";",0,45,46,""],
         [4,null,"}",0,46,47,""]
+      ]
+    },
+    {
+      "source": "\npackage grove\n",
+      "rows": [
+        [0,null,"source_file",1,1,15,""],
+        [1,null,"package_declaration",1,1,14,""],
+        [2,null,"package",0,1,8,""],
+        [2,null,"identifier",1,9,14,""]
+      ]
+    },
+    {
+      "source": " \npackage grove\n",
+      "rows": [
+        [0,null,"source_file",1,2,16,""],
+        [1,null,"package_declaration",1,2,15,""],
+        [2,null,"package",0,2,9,""],
+        [2,null,"identifier",1,10,15,""]
+      ]
+    },
+    {
+      "source": "\n#+build orchard\n",
+      "rows": [
+        [0,null,"source_file",1,1,17,""],
+        [1,null,"build_tag",1,1,16,""],
+        [2,null,"#+",0,1,3,""]
       ]
     }
   ],

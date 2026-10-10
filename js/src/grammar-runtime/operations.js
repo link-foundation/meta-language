@@ -88,6 +88,16 @@ export function evaluateValue(value, machine) {
     case 'sumOf':
       return machine.attributes(value.field, value.attribute).reduce((sum, item) => checked(sum + integer(item)), 0);
     case 'fieldText': return machine.fieldText(value.field);
+    case 'uppercase': {
+      const text = evaluateValue(value.value, machine);
+      if (typeof text !== 'string') failOperation();
+      // Wide-character scanner case conversion maps one scalar to one scalar.
+      // Keep a character whose full uppercase spelling would expand it.
+      return [...text].map((character) => {
+        const upper = character.toUpperCase();
+        return [...upper].length === 1 ? upper : character;
+      }).join('');
+    }
     case 'length': {
       const text = evaluateValue(value.value, machine);
       if (typeof text !== 'string') failOperation();
@@ -195,15 +205,15 @@ export const OPERATION_CONTEXTS = Object.freeze({
   scanner: new Set([
     'advance', 'consume', 'skip', 'mark', 'emit', 'fail', 'if', 'while', 'push', 'pop', 'set', 'pushMode', 'popMode',
     'setMode', 'valid', 'expected', 'next', 'atEnd', 'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable',
-    'top', 'depth', 'column', 'matched', 'mode', 'length', 'number', 'add', 'subtract', 'multiply',
+    'top', 'depth', 'column', 'matched', 'mode', 'length', 'uppercase', 'number', 'add', 'subtract', 'multiply',
   ]),
   action: new Set([
     'fail', 'if', 'while', 'push', 'pop', 'set', 'pushMode', 'popMode', 'setMode', 'setAttribute', 'buildNode', 'atEnd',
     'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable', 'top', 'depth', 'column', 'matched',
-    'mode', 'attribute', 'sumOf', 'fieldText', 'length', 'number', 'add', 'subtract', 'multiply',
+    'mode', 'attribute', 'sumOf', 'fieldText', 'length', 'uppercase', 'number', 'add', 'subtract', 'multiply',
   ]),
   predicate: new Set([
     'atEnd', 'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable', 'top', 'depth', 'column',
-    'matched', 'mode', 'length', 'number', 'add', 'subtract', 'multiply',
+    'matched', 'mode', 'length', 'uppercase', 'number', 'add', 'subtract', 'multiply',
   ]),
 });

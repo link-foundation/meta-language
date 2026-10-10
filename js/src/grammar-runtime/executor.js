@@ -3774,7 +3774,9 @@ export class Executor {
     let cursor = start;
     let tokenStart = start;
     let markPosition = null;
-    const match = (expression) => this.quietly(() => longestResult(this.evaluate(expression, cursor, state, true))?.end ?? -1);
+    // Predicates read the state after preceding scanner operations, including
+    // temporary stack traversal and restoration.
+    const match = (expression) => this.quietly(() => longestResult(this.evaluate(expression, cursor, settleState(working), true))?.end ?? -1);
     const machine = {
       state: working,
       requested: name,

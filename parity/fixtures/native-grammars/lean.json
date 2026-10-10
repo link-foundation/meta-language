@@ -6540,7 +6540,7 @@
     },
     {
       "source": "\n@[] def f := 12\n",
-      "recovered": "(module (explicit ~\"\\n\" \"@\" (list \"[\" \"]\")) (tactic_apply ~\" \" tactic:(identifier \"def\") arg:(binary_expression ~\" \" left:(identifier \"f\") ~\" \" (ERROR@11..12 \":\") operator:\"=\" right:(number ~\" \" (unnamed_token \"12\")))) ~\"\\n\")"
+      "recovered": "(module (binary_expression left:(application name:(application name:(explicit ~\"\\n\" \"@\" (list \"[\" \"]\")) ~\" \" arguments:(identifier \"def\")) ~\" \" arguments:(identifier \"f\")) ~\" \" (ERROR@11..12 \":\") operator:\"=\" right:(number ~\" \" (unnamed_token \"12\"))) ~\"\\n\")"
     },
     {
       "source": "\nattribute [-reducible] f\nattribute [simp, -inline, -reducible] Foo\n",
@@ -6612,7 +6612,7 @@
     },
     {
       "source": "\nelab \"foo\" x:term : term <= bar => Lean.Elab.Term.elabTerm x none\n",
-      "recovered": "(module (notation ~\"\\n\" \"elab\" (string ~\" \" \"\\\"\" (unnamed_token \"foo\") \"\\\"\") (binary_expression ~\" \" left:(identifier \"x\") (ERROR@13..25 \":term : term\") ~\" \" operator:\"<=\" ~\" \" right:(identifier \"bar\")) ~\" \" \"=>\" (application name:(application name:(projection term:(projection term:(projection ~\" \" term:(identifier \"Lean\") \".\" name:(identifier \"Elab\")) \".\" name:(identifier \"Term\")) \".\" name:(identifier \"elabTerm\")) ~\" \" arguments:(identifier \"x\")) ~\" \" arguments:(identifier \"none\"))) ~\"\\n\")"
+      "recovered": "(module (notation ~\"\\n\" \"elab\" (binary_expression left:(application name:(string ~\" \" \"\\\"\" (unnamed_token \"foo\") \"\\\"\") ~\" \" arguments:(identifier \"x\")) (ERROR@13..25 \":term : term\") ~\" \" operator:\"<=\" ~\" \" right:(identifier \"bar\")) ~\" \" \"=>\" (application name:(application name:(projection term:(projection term:(projection ~\" \" term:(identifier \"Lean\") \".\" name:(identifier \"Elab\")) \".\" name:(identifier \"Term\")) \".\" name:(identifier \"elabTerm\")) ~\" \" arguments:(identifier \"x\")) ~\" \" arguments:(identifier \"none\"))) ~\"\\n\")"
     },
     {
       "source": "\nprefix:max \"↑\" => coe\ninfix:max \"↑\" => coe\ninfixl:max \"↑\" => coe\ninfixr:max \"↑\" => coe\npostfix:max \"↑\" => coe\n",

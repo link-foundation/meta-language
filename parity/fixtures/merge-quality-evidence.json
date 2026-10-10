@@ -239,6 +239,24 @@
       "reuse": {"shared": 19, "specific": 46}
     },
     {
+      "grammar": "native-html",
+      "language": "HTML",
+      "links": "parity/grammars/native/html.lino",
+      "fixture": "parity/fixtures/native-grammars/html.json",
+      "oracle": "crates.io tree-sitter-html 0.23.2",
+      "sources": [
+        "https://github.com/tree-sitter/tree-sitter-html/tree/5a5ca8551a179998360b4a4ca2c0f366a35acc03",
+        "https://github.com/tree-sitter/tree-sitter-html/tree/5a5ca8551a179998360b4a4ca2c0f366a35acc03/test/corpus"
+      ],
+      "corpus": "https://github.com/tree-sitter/tree-sitter-html/tree/5a5ca8551a179998360b4a4ca2c0f366a35acc03/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/html.json",
+      "coverage": {"rules": {"normal": 13, "atomic": 0, "silent": 1, "token": 5}, "visibleRules": 13, "exercisedRules": 10, "checkedKinds": 17, "checkedFields": 0, "renamed": 7, "expandedWords": 0, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 1, "conflict": 0, "precedences": 0, "extra": 2, "kind": 6},
+      "correctness": {"matches": 38, "rows": 582, "bytes": 929, "divergences": 0, "rejections": 9},
+      "recovery": {"repaired": 9, "errorNodes": 3, "missingNodes": 18, "categories": {}},
+      "reuse": {"shared": 8, "specific": 11}
+    },
+    {
       "grammar": "native-ini",
       "language": "INI",
       "links": "parity/grammars/native/ini.lino",
@@ -413,9 +431,9 @@
       ],
       "corpus": "https://github.com/tree-sitter-grammars/tree-sitter-odin/tree/e8adc739b78409a99f8c31313f0bb54cc538cf73/test/corpus",
       "mergeReport": "parity/grammars/merge-reports/odin.json",
-      "coverage": {"rules": {"normal": 92, "atomic": 0, "silent": 18, "token": 8}, "visibleRules": 92, "exercisedRules": 37, "checkedKinds": 44, "checkedFields": 10, "renamed": 36, "expandedWords": 6, "approximations": 0, "unsupported": 0},
+      "coverage": {"rules": {"normal": 92, "atomic": 0, "silent": 18, "token": 8}, "visibleRules": 92, "exercisedRules": 38, "checkedKinds": 45, "checkedFields": 10, "renamed": 36, "expandedWords": 6, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 2, "conflict": 2, "precedences": 0, "extra": 5, "kind": 5},
-      "correctness": {"matches": 49, "rows": 670, "bytes": 1680, "divergences": 0, "rejections": 8},
+      "correctness": {"matches": 52, "rows": 681, "bytes": 1728, "divergences": 0, "rejections": 8},
       "recovery": {"repaired": 8, "errorNodes": 4, "missingNodes": 8, "categories": {}},
       "reuse": {"shared": 74, "specific": 44}
     },
@@ -723,7 +741,7 @@
       "features": {"scanner": 4, "conflict": 1, "precedences": 0, "extra": 0, "kind": 6},
       "correctness": {"matches": 31, "rows": 495, "bytes": 837, "divergences": 0, "rejections": 7},
       "recovery": {"repaired": 7, "errorNodes": 2, "missingNodes": 11, "categories": {}},
-      "reuse": {"shared": 44, "specific": 23}
+      "reuse": {"shared": 50, "specific": 17}
     },
     {
       "grammar": "native-zig",

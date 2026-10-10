@@ -53,6 +53,10 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
         include_str!("native-grammars/hcl.lino"),
     ),
     (
+        "native-grammars/html.lino",
+        include_str!("native-grammars/html.lino"),
+    ),
+    (
         "native-grammars/ini.lino",
         include_str!("native-grammars/ini.lino"),
     ),

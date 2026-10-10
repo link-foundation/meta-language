@@ -4330,7 +4330,7 @@
       },
       "role": "direct",
       "requirement": "=0.23.2",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.23.2",
       "evidence": "crates.io, tree-sitter-html"
     },
@@ -7493,9 +7493,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/html.wasm.gz@0.23.2",
+      "id": "vendored-grammar js/oracles/grammars/html.wasm.gz@0.23.2",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/html.wasm.gz",
+      "name": "js/oracles/grammars/html.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],

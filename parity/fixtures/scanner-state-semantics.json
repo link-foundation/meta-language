@@ -1,0 +1,27 @@
+[
+  {
+    "name": "uppercase",
+    "listing": "(grammar (start start))\n(rule start normal (seq (ref opening) (literal %3A) (ref closing)))\n(rule opening token (repeat1 (class plain (category L))) (action (push names (uppercase (matched)))))\n(rule closing token (predicate (repeat1 (class plain (category L))) (equal (uppercase (matched)) (top names))))\n",
+    "accept": [
+      "Tree:TREE",
+      "ÉléMent:ÉLÉMENT",
+      "ſ:S",
+      "ß:ß"
+    ],
+    "reject": [
+      "Tree:TREAT",
+      "ß:SS"
+    ]
+  },
+  {
+    "name": "state_mutations",
+    "listing": "(grammar (start source))\n(scanner token_state (tokens label) (operations (set pending (text ready)) (push labels (text old)) (push labels (text ready)) (pop labels) (consume (predicate (literal x) (all (equal (variable pending) (text ready)) (equal (top labels) (text old))))) (emit label)))\n(rule source normal (ref label))\n",
+    "accept": [
+      "x",
+      "x"
+    ],
+    "reject": [
+      "y"
+    ]
+  }
+]

@@ -462,6 +462,10 @@
         [
           "native-xml",
           "document"
+        ],
+        [
+          "native-html",
+          "document"
         ]
       ]
     },
@@ -8513,6 +8517,10 @@
         ],
         [
           "native-xml",
+          "attribute_value"
+        ],
+        [
+          "native-html",
           "attribute_value"
         ]
       ]

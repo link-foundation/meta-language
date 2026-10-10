@@ -2893,6 +2893,10 @@
           "name": "document"
         },
         {
+          "source": "native:html",
+          "name": "document"
+        },
+        {
           "source": "native:ini",
           "name": "document"
         },
@@ -21623,6 +21627,10 @@
       "sourceAliases": [
         {
           "source": "native:dtd",
+          "name": "attribute_value"
+        },
+        {
+          "source": "native:html",
           "name": "attribute_value"
         },
         {
@@ -67295,10 +67303,14 @@
       "role": "concept",
       "definition": "A rule for a document type declaration, the construct the upstream grammar names doctypedecl.",
       "constraints": [
-        "Only the native XML grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "document_type_declaration"
+        },
         {
           "source": "native:xml",
           "name": "document_type_declaration"
@@ -67346,10 +67358,14 @@
       "role": "concept",
       "definition": "A rule for a start tag, the construct the upstream grammar names STag.",
       "constraints": [
-        "Only the native XML grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "start_tag"
+        },
         {
           "source": "native:xml",
           "name": "start_tag"
@@ -67363,10 +67379,14 @@
       "role": "concept",
       "definition": "A rule for an end tag, the construct the upstream grammar names ETag.",
       "constraints": [
-        "Only the native XML grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "end_tag"
+        },
         {
           "source": "native:xml",
           "name": "end_tag"
@@ -67380,10 +67400,14 @@
       "role": "concept",
       "definition": "A rule for an erroneous end tag, the construct the upstream grammar names _ErroneousETag.",
       "constraints": [
-        "Only the native XML grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "erroneous_end_tag"
+        },
         {
           "source": "native:xml",
           "name": "erroneous_end_tag"
@@ -68282,10 +68306,14 @@
       "role": "concept",
       "definition": "A rule for a markup element, the construct the upstream grammar names element.",
       "constraints": [
-        "Only the native XML grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "markup_element"
+        },
         {
           "source": "native:xml",
           "name": "markup_element"
@@ -68299,10 +68327,14 @@
       "role": "concept",
       "definition": "A rule for an element attribute, the construct the upstream grammar names Attribute.",
       "constraints": [
-        "Only the native XML grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "element_attribute"
+        },
         {
           "source": "native:xml",
           "name": "element_attribute"
@@ -69214,6 +69246,193 @@
         {
           "source": "native:odin",
           "name": "dictionary_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.document-type-keyword",
+      "phrase": "document type keyword",
+      "role": "concept",
+      "definition": "A rule for a document type keyword, the construct the upstream grammar names _doctype.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "document_type_keyword"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.node",
+      "phrase": "node",
+      "role": "concept",
+      "definition": "A rule for a node, the construct the upstream grammar names _node.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "node"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.script-element",
+      "phrase": "script element",
+      "role": "concept",
+      "definition": "A rule for a script element, the construct the upstream grammar names script_element.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "script_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.style-element",
+      "phrase": "style element",
+      "role": "concept",
+      "definition": "A rule for a style element, the construct the upstream grammar names style_element.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "style_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.script-start-tag",
+      "phrase": "script start tag",
+      "role": "concept",
+      "definition": "A rule for a script start tag, the construct the upstream grammar names script_start_tag.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "script_start_tag"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.style-start-tag",
+      "phrase": "style start tag",
+      "role": "concept",
+      "definition": "A rule for a style start tag, the construct the upstream grammar names style_start_tag.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "style_start_tag"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.self-closing-tag",
+      "phrase": "self closing tag",
+      "role": "concept",
+      "definition": "A rule for a self closing tag, the construct the upstream grammar names self_closing_tag.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "self_closing_tag"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.entity",
+      "phrase": "entity",
+      "role": "concept",
+      "definition": "A rule for an entity, the construct the upstream grammar names entity.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "entity"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.quoted-attribute-value",
+      "phrase": "quoted attribute value",
+      "role": "concept",
+      "definition": "A rule for a quoted attribute value, the construct the upstream grammar names quoted_attribute_value.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "quoted_attribute_value"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.character-data",
+      "phrase": "character data",
+      "role": "concept",
+      "definition": "A rule for a character data, the construct the upstream grammar names text.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "character_data"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.element-attribute-name",
+      "phrase": "element attribute name",
+      "role": "concept",
+      "definition": "A rule for an element attribute name, the construct the upstream grammar names attribute_name.",
+      "constraints": [
+        "Only the native HTML grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:html",
+          "name": "element_attribute_name"
         }
       ],
       "formerNames": []
