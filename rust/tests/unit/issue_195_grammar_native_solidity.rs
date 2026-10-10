@@ -237,3 +237,24 @@ fn native_solidity_trees_keep_every_byte() {
         "native Solidity trees keep every byte",
     );
 }
+
+#[test]
+fn native_solidity_authored_grouping_regressions_match_oracle() {
+    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let parser = super::issue_195_native_grammar_rows::parser(GRAMMAR);
+    let rows = Rows::new(&fixture);
+    for source in [
+        "contract Plant {function build() public { target = new Seed{value: 7}(4); }}\n",
+        "contract Math {function sum() public returns(int) {return 9+4-2;}}\n",
+        "contract Math {function sum() public returns(int) {return 9-4+2;}}\n",
+    ] {
+        let tree = parse(&parser, source).unwrap();
+        let (expected, errors) = super::issue_195_native_grammar_rows::oracle_rows(
+            &tree_sitter_solidity::LANGUAGE.into(),
+            source,
+        );
+        assert!(!errors);
+        assert_eq!(rows.rows(&tree, source), expected);
+        assert_eq!(rebuilt(&tree), source);
+    }
+}

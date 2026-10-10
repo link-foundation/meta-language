@@ -34,6 +34,18 @@ export function rememberedDelimiterScanner({ name, startToken, contentToken, end
     + `(rule ${endToken} token ${closing} (action (pop ${labels})))\n`;
 }
 
+/** Nested opening names are remembered until their matching close or empty close. */
+export function pairedNameScanner({ name, startToken, endToken, emptyToken, namePattern, emptyClosing }) {
+  for (const value of [name, startToken, endToken, emptyToken]) identifier(value);
+  if (new Set([startToken, endToken, emptyToken]).size !== 3 || typeof namePattern !== 'string' || !namePattern || new RegExp(`^(?:${namePattern})$`, 'u').test('')) throw new TypeError('paired names need distinct tokens and a consuming name pattern');
+  const pattern = renderTreeSitterPattern(parseTreeSitterPattern(namePattern));
+  const stack = `${name}_names`;
+  const present = `(greater (depth ${stack}) (integer 0))`;
+  return `(rule ${startToken} token ${pattern} (action (push ${stack} (matched))))\n`
+    + `(rule ${endToken} token (predicate ${pattern} (all ${present} (equal (matched) (top ${stack})))) (action (pop ${stack})))\n`
+    + `(rule ${emptyToken} token (predicate ${delimiter(emptyClosing)} ${present}) (action (pop ${stack})))\n`;
+}
+
 /** A whole tagged literal, with separate helper rules for remembered labels. */
 export function rememberedLiteralScanner({ name, token, startToken, contentToken, endToken, tagPattern, excludedLabels = null }) {
   identifier(token);
@@ -65,7 +77,8 @@ export function rememberedContentScanner({ name, delimiterToken, contentToken, d
 }
 
 /** A complete delimiter token, optionally nesting and escaping its delimiters. */
-export function delimitedScanner({ name, token, opening, closing, nested = false, escape = null, openingLookahead = null, rejectOpeningLookahead = false, rejected = [] }) {
+export function delimitedScanner({ name, token, opening, closing, nested = false, escape = null, openingLookahead = null, rejectOpeningLookahead = false, rejected = [], closingSuffix = '' }) {
+  if (typeof closingSuffix !== 'string') throw new TypeError('closing suffix must be text');
   identifier(name);
   identifier(token);
   const open = delimiter(opening);
@@ -77,7 +90,7 @@ export function delimitedScanner({ name, token, opening, closing, nested = false
   const escaped = escape === null ? '' : `(if (next ${delimiter(escape)}) (then (consume ${literal(escape)}) advance) (else `;
   const nesting = nested ? `(if (next ${open}) (then (consume ${open}) (push levels (integer 1))) (else advance))` : 'advance';
   const body = `(if (next ${close}) (then (consume ${close}) (pop levels)) (else ${nesting}))`;
-  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) (consume ${open}) ${guard}(push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) ${reject}${escaped}${body}${escaped ? '))' : ''})) (emit ${token})))\n`;
+  return `(scanner ${name} (tokens ${token}) (operations (if (not (valid ${token})) (then fail)) (consume ${open}) ${guard}(push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) ${reject}${escaped}${body}${escaped ? '))' : ''})) ${closingSuffix ? `(consume ${delimiter(closingSuffix)}) ` : ''}(emit ${token})))\n`;
 }
 
 /** A nonempty fragment with paired prefix characters and explicit invalid boundaries. */
@@ -99,18 +112,20 @@ export function fragmentScanner({ name, token, stops, rejected = ['\0'], pairedP
 }
 
 /** An external lexical rule with optional following context, expressed entirely in grammar data. */
-export function patternTokenScanner({ name, token, pattern, before = null, excludedBefore = null, excludedAtStart = null }) {
+export function patternTokenScanner({ name, token, pattern, before = null, excludedBefore = null, excludedAtStart = null, excludedTexts = [] }) {
   identifier(name);
   identifier(token);
   if (typeof pattern !== 'string' || !pattern || new RegExp(`^(?:${pattern})$`, 'u').test('')) throw new TypeError('lexical tokens need a consuming pattern');
-  const body = renderTreeSitterPattern(parseTreeSitterPattern(pattern));
+  if (!Array.isArray(excludedTexts) || excludedTexts.some((text) => typeof text !== 'string' || !text)) throw new TypeError('excluded token texts must be nonempty strings');
+  const lexical = renderTreeSitterPattern(parseTreeSitterPattern(pattern));
+  const body = excludedTexts.length ? `(predicate ${lexical} (not (some ${excludedTexts.map((text) => `(equal (matched) (text ${encode(text)}))`).join(' ')})))` : lexical;
   const context = [before === null ? '' : `(and ${renderTreeSitterPattern(parseTreeSitterPattern(before))})`, excludedBefore === null ? '' : `(not ${renderTreeSitterPattern(parseTreeSitterPattern(excludedBefore))})`].filter(Boolean);
   const prefix = excludedAtStart === null ? '' : `(not ${renderTreeSitterPattern(parseTreeSitterPattern(excludedAtStart))}) `;
   return `(rule ${token} token ${context.length || prefix ? `(seq ${prefix}${body}${context.length ? ` ${context.join(' ')}` : ''})` : body})\n`;
 }
 
 /** Content between grammar-owned delimiters, including escaped code points. */
-export function contentScanner({ name, token, closing, escape = null, stops = [], closeToken = null, allowEnd = true }) {
+export function contentScanner({ name, token, closing, escape = null, stops = [], closeToken = null, allowEnd = true, allowEmpty = false, closingContext = null, rejected = [], allowedOpening = [] }) {
   identifier(name);
   identifier(token);
   if (closeToken !== null) identifier(closeToken);
@@ -118,7 +133,12 @@ export function contentScanner({ name, token, closing, escape = null, stops = []
   const stop = `(some atEnd ${endings.join(' ')})`;
   const body = escape === null ? 'advance'
     : `(if (next ${delimiter(escape)}) (then (consume ${literal(escape)}) advance) (else advance))`;
-  const content = `(if (valid ${token}) (then (if ${stop} (then fail)) (while (not ${stop}) (do ${body}))${allowEnd ? '' : ' (if atEnd (then fail))'} (emit ${token})))`;
+  if (typeof allowEmpty !== 'boolean' || (closingContext !== null && (typeof closingContext !== 'string' || !closingContext))) throw new TypeError('content emptiness and closing context must be valid');
+  const context = closingContext === null ? '' : ` (if (not (next ${renderTreeSitterPattern(parseTreeSitterPattern(closingContext))})) (then fail))`;
+  if (!Array.isArray(rejected) || !Array.isArray(allowedOpening)) throw new TypeError('content rejection and opening policies need text lists');
+  const opening = allowedOpening.length ? ` ${allowedOpening.map((text) => `(if (next ${delimiter(text)}) (then (consume ${delimiter(text)})))`).join(' ')}` : '';
+  const reject = rejected.length ? `(if (some ${rejected.map((text) => `(next ${delimiter(text)})`).join(' ')}) (then fail)) ` : '';
+  const content = `(if (valid ${token}) (then ${allowEmpty ? '' : `(if ${stop} (then fail))`}${opening} (while (not ${stop}) (do ${reject}${body}))${allowEnd ? '' : ' (if atEnd (then fail))'}${context} (emit ${token})))`;
   const close = closeToken === null ? '' : ` (if (valid ${closeToken}) (then (consume ${literal(closing)}) (emit ${closeToken})))`;
   return `(scanner ${name} (tokens ${token}${closeToken === null ? '' : ` ${closeToken}`}) (operations ${content}${close} fail))\n`;
 }
@@ -324,7 +344,8 @@ export function scannerFamilies(descriptors) {
   const names = new Set();
   const tokens = new Set();
   const generated = descriptors.map(({ family, ...options }) => {
-    const declared = family === 'scoped-layout' ? [options.startToken, options.newlineToken, options.separatorToken, options.continuationToken, ...options.pairs.flatMap(({ openToken, closeToken }) => [openToken, closeToken]), ...(options.recoveryToken ? [options.recoveryToken] : [])]
+    const declared = family === 'paired-name' ? [options.startToken, options.endToken, options.emptyToken]
+      : family === 'scoped-layout' ? [options.startToken, options.newlineToken, options.separatorToken, options.continuationToken, ...options.pairs.flatMap(({ openToken, closeToken }) => [openToken, closeToken]), ...(options.recoveryToken ? [options.recoveryToken] : []), ...(options.triviaToken ? [options.triviaToken] : [])]
       : family === 'template-context' ? [options.quotedStartToken, options.quotedEndToken, options.contentToken, options.interpolationStartToken, options.interpolationEndToken, options.directiveStartToken, options.directiveEndToken, options.delimiterToken]
       : family === 'prefixed-quoted' ? [options.startToken, options.contentToken, options.endToken, options.interpolationEscapeToken]
       : family === 'indentation' ? [options.newlineToken, options.indentToken, options.dedentToken]
@@ -336,6 +357,7 @@ export function scannerFamilies(descriptors) {
     if (names.has(options.name) || new Set(declared).size !== declared.length || declared.some((token) => tokens.has(token))) throw new TypeError('duplicate scanner name or token');
     names.add(options.name);
     for (const token of declared) tokens.add(token);
+    if (family === 'paired-name') return pairedNameScanner(options);
     if (family === 'scoped-layout') return scopedLayoutScanner(options);
     if (family === 'quoted-counted') return quotedCountedScanner(options);
     if (family === 'template-context') return templateContextScanner(options);

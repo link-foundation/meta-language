@@ -54,5 +54,6 @@ export function scopedLayoutScanner({ name, startToken, newlineToken, separatorT
     + branch(`(all (valid ${continuationToken}) ${anyScope('allowContinuation')} (next ${literal('\n')}))`,
       `(while (next ${space}) (do (skip ${space}) mark)) (if (next ${literal(commentPrefix)}) (then fail)) `
       + branch(`(next ${literal(continuation)})`, scanContinuation) + ` (emit ${newlineToken})`) + ' '
+    + branch(`(all (valid ${newlineToken}) ${anyScope('allowContinuation')} (expected (ref ${continuationToken})) (next (seq (repeat1 ${space}) ${literal(continuation)} (not ${following}))))`, 'fail') + ' '
     + branch(`(all (valid ${newlineToken}) (next ${literal('\n')}))`, `(consume ${literal('\n')}) (emit ${newlineToken})`) + ' fail))\n';
 }

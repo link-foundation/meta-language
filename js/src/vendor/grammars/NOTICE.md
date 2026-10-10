@@ -18,7 +18,6 @@ repository).
 | `agda.wasm.gz` | crate `tree-sitter-agda` 1.3.3 | `ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980` | `9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a` | [`agda.LICENSE`](agda.LICENSE) |
 | `bash.wasm.gz` | crate `tree-sitter-bash` 0.25.1 | `5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f` | `f0270796c32f9acfc180e6068d6bef6614b983107b679a247fb63b200c6346e7` | [`bash.LICENSE`](bash.LICENSE) |
 | `csharp.wasm.gz` | crate `tree-sitter-c-sharp` 0.23.5 | `0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427` | `a4b053f6fdedfc9c94876b415441ea953c0046ef83d45e0cbc4d9b8938ae6cbc` | [`csharp.LICENSE`](csharp.LICENSE) |
-| `dtd.wasm.gz` | crate `tree-sitter-xml` 0.7.0 (`dtd`) | `79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932` | `2534944fea9484174b791535509c09a25fcd1c4099da9392056b009311dcfe81` | [`dtd.LICENSE`](dtd.LICENSE) |
 | `elixir.wasm.gz` | crate `tree-sitter-elixir` 0.3.5 | `d1c2000b477e873e44e485f55809e3af7e2bfce83fa4d58cfa3a9f83660e7d79` | `33f71c86131d02eab80841e4142005ccaa54bcc06bcc3a7e8dc6a9a8a0ca5e94` | [`elixir.LICENSE`](elixir.LICENSE) |
 | `elm.wasm.gz` | crate `tree-sitter-elm` 5.9.4 | `7c993bdabb63c6c6424fc0b433073c9000446a0e3de189d8a2ab93b33636369d` | `30e2708c30704223fa0351428d4e81aef32acd9121a7ea35606ddc9fa45bc319` | [`elm.LICENSE`](elm.LICENSE) |
 | `haskell.wasm.gz` | crate `tree-sitter-haskell` 0.24.1 | `a136b31118c6767f3a9fbbb245adc559370eabd914b72b90438395542327a089` | `ea89cb1199b1ca2102e273b27239e795baff17248128a9bcd3c3825ac17d8cc0` | [`haskell.LICENSE`](haskell.LICENSE) |
@@ -35,7 +34,6 @@ repository).
 | `ruby.wasm.gz` | crate `tree-sitter-ruby` 0.23.1 | `4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15` | `2a06cd2fa165a2913f6598b92c9d3d3132ecfbf3fa7ffa8ca93b31efb2bfb58d` | [`ruby.LICENSE`](ruby.LICENSE) |
 | `scala.wasm.gz` | crate `tree-sitter-scala` 0.26.2 | `9f6d03fa6c63d2d855b6f9e0368046a58568587eefc38b5e38bdb001e8ec68db` | `c2d92c43913a24efa76528c6aff75c97c0964798c4d360c7dc1951b04058fe52` | [`scala.LICENSE`](scala.LICENSE) |
 | `swift.wasm.gz` | crate `tree-sitter-swift` 0.7.4 with [`tree-sitter-swift-wasm.patch`](../../../../js/scripts/grammar-patches/tree-sitter-swift-wasm.patch) | `1d332e60ec28e6b398db36e06bf05414061dfbbd3e981b33ff1edfd5159e3e08` | `5b54286c25842ea5c60a659f4f3276af7419d877f8946ef4b8d26b86849f1708` | [`swift.LICENSE`](swift.LICENSE) |
-| `xml.wasm.gz` | crate `tree-sitter-xml` 0.7.0 (`xml`) | `e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844` | `2edd39d0ef194dc70878fe99b277180547fabf252f85b58e537db5a11e3027fa` | [`xml.LICENSE`](xml.LICENSE) |
 | `yaml.wasm.gz` | crate `tree-sitter-yaml` 0.7.2 | `8a3baaab33fb63cf9a89f97ec61dbb3ab0d4ef69be9f0f229092c79d129617c9` | `f89cf2a8ccd4f29292e502f1c37efb4f1dead281246605e0a890c697d4db88c7` | [`yaml.LICENSE`](yaml.LICENSE) |
 
 Every grammar is distributed under its upstream license (MIT unless the

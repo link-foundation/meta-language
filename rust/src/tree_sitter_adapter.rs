@@ -334,7 +334,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "agda" => tree_sitter_agda::LANGUAGE.into(),
         "bash" => tree_sitter_bash::LANGUAGE.into(),
         "csharp" => tree_sitter_c_sharp::LANGUAGE.into(),
-        "dtd" => tree_sitter_xml::LANGUAGE_DTD.into(),
         "elixir" => tree_sitter_elixir::LANGUAGE.into(),
         "elm" => tree_sitter_elm::LANGUAGE.into(),
         "haskell" => tree_sitter_haskell::LANGUAGE.into(),
@@ -351,7 +350,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "ruby" => tree_sitter_ruby::LANGUAGE.into(),
         "scala" => tree_sitter_scala::LANGUAGE.into(),
         "swift" => tree_sitter_swift::LANGUAGE.into(),
-        "xml" => tree_sitter_xml::LANGUAGE_XML.into(),
         "yaml" => tree_sitter_yaml::LANGUAGE.into(),
         _ => return None,
     })

@@ -457,7 +457,10 @@ function wrapped(node) {
   let current = node;
   while (current.type === 'node' && current.precedence) {
     const meaningful = current.children.filter((child) => !isTrivia(child));
-    if (meaningful.length !== 1 || meaningful[0].type !== 'node' || !samePrecedence(meaningful[0].precedence, current.precedence)) break;
+    const child = meaningful[0];
+    // A wrapper does not replace its operand's associativity at the same rank.
+    if (meaningful.length !== 1 || child.type !== 'node' || !child.precedence
+      || child.precedence.level !== current.precedence.level || child.precedence.name !== current.precedence.name) break;
     current = meaningful[0];
   }
   return current;
@@ -1293,8 +1296,9 @@ function extraReduction(a, b, stack, orders, owner = null, grammar = null) {
     // its term), it reduced `b` where `a`'s result shifted on in `parent`:
     // the shift's precedence against the reduction's decides, as in
     // `shiftPreferred`.
+    // The separate following expression may extend beyond this reduction.
     const [mine, theirs] = [own[1], next[1]];
-    if (!mine || !theirs || theirs.type !== 'node' || sameTree(mine, theirs) || firstLeafStart(mine) !== firstLeafStart(theirs) || theirs.end !== parent.end) return 0;
+    if (!mine || !theirs || theirs.type !== 'node' || sameTree(mine, theirs) || firstLeafStart(mine) !== firstLeafStart(theirs) || theirs.end < parent.end) return 0;
     // Unless the other builds the rest of `parent` as one node, the same
     // tokens by another name (Solidity's `revert Error();`, whose `()` the
     // silent `call_arguments` of a call takes where the other parse aliases
@@ -1833,7 +1837,11 @@ function shiftPreferred(long, short, orders, grammar, lookahead = null) {
   for (;;) {
     const inner = progress.children.find((child) => child.type === 'node' && child.start < short.end && child.end > short.end);
     if (!inner) break;
-    if (firstLeafStart(inner) === begin && inner.rule !== short.rule) {
+    // A call may wrap the same incomplete operator. Descend to that operator;
+    // a one-part expression wrapper alone does not establish this relationship.
+    const continues = leftmostChain(inner).some((node) => node.rule === short.rule
+      && node.children.filter((child) => !isTrivia(child)).length > 1);
+    if (firstLeafStart(inner) === begin && inner.rule !== short.rule && !continues) {
       return -comparePrecedence(reduction(short), unranked(), orders);
     }
     progress = inner;
@@ -3035,7 +3043,7 @@ export class Executor {
       if (order > 0 || (order === 0 && associativity === side)) return false;
       // Regrouping requires the nested operator to fit the opposite operand.
       const opposite = this.operandKinds(expression)[side === 'left' ? 'right' : 'left'];
-      if (order === 0 && child.rule === tag.rule && opposite !== null && !opposite.has(child.kind)) return false;
+      if (order === 0 && child.rule === tag.rule && opposite !== null && !opposite.has(wrapper.kind)) return false;
       if (side === 'right' && this.shiftsBelow(expression, child, orders)) return false;
       if (side === 'right' && this.lexedShift(child.rule)) return false;
       if (!this.reachesOwner(expression, wrapper.rule, side)) return false;

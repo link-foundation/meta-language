@@ -935,7 +935,7 @@
       "licenseFile": "parity/grammars/sources/tree-sitter-r-1.3.0.LICENSE",
       "scanner": {
         "file": "parity/grammars/scanners/r.lino",
-        "sha256": "d461c8e0646b254b9e41a223bdbda283272e306db274674da4742615cd354be9",
+        "sha256": "34dd10f47be5d10d6c1f1f9e31d43a7b83ce46f4ff3dd6bddb2f20fbf392d7a2",
         "ports": {
           "path": "src/scanner.c",
           "sha256": "e99e003ab8b0463dee975432b6f9f7e39cd75eb0047989f064fdf57927fa8e9d"
@@ -966,6 +966,100 @@
         "sha256": "b19de54975832d4203d63cecdbd6b49e06fa72cc6d09e8f9dddf450c25536d98"
       },
       "oracle": "r"
+    },
+    {
+      "id": "tree-sitter-xml",
+      "language": "xml",
+      "native": "native-xml",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-xml 0.7.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-xml",
+      "revision": "4b64dd3a03ec002258d6268d712fd93716d6ab57",
+      "path": "xml/src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-xml-0.7.0.grammar.json.gz",
+      "sha256": "99e650457a7228ef521f1909bf231b43d4846b2a1010e79b91b418226a2be2a4",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-xml-0.7.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/xml.lino",
+        "sha256": "730568db9553f40d6c3e10918b6ab1cc31b46567ae6d16f13c65e5bc29ed51c9",
+        "ports": {
+          "path": "xml/src/scanner.c",
+          "sha256": "e7f401b138bbb0bd3f736c196dddcb74ff627fef2427e333bc4a7a629c0ad3b0",
+          "includes": [
+            {
+              "path": "common/scanner.h",
+              "sha256": "ce5082af60b1808035a43c3df129df9b811c9c69949fdb664a351f7aae340409"
+            }
+          ]
+        },
+        "generator": "js/experiments/build-xml-scanner.mjs",
+        "arguments": [
+          "--xml"
+        ],
+        "immediate": [
+          "PITarget",
+          "_pi_content",
+          "Comment",
+          "CharData",
+          "CData",
+          "_start_tag_name",
+          "_end_tag_name",
+          "_erroneous_end_name",
+          "_self_closing_tag_delimiter"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-xml-0.7.0.corpus.json.gz",
+        "sha256": "3472a2c90e5baa591153747f1f4ff606d90d98f7332ae1e80bfa573f65808092",
+        "language": "xml"
+      },
+      "oracle": "xml"
+    },
+    {
+      "id": "tree-sitter-dtd",
+      "language": "dtd",
+      "native": "native-dtd",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-xml 0.7.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-xml",
+      "revision": "4b64dd3a03ec002258d6268d712fd93716d6ab57",
+      "path": "dtd/src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-dtd-0.7.0.grammar.json.gz",
+      "sha256": "44d3d915ed635a45181206d1d05352f6a7060fff6be07906c9f3aa8f809f5786",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-xml-0.7.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/dtd.lino",
+        "sha256": "0549278f5ea21f378db870a91dde16e01eeb031530b6c38fe1f38a5b2528b03f",
+        "ports": {
+          "path": "dtd/src/scanner.c",
+          "sha256": "cdb323ea613368705ade3c6904523848f262db38ee01f5722e2f16e0751bd71c",
+          "includes": [
+            {
+              "path": "common/scanner.h",
+              "sha256": "ce5082af60b1808035a43c3df129df9b811c9c69949fdb664a351f7aae340409"
+            }
+          ]
+        },
+        "generator": "js/experiments/build-xml-scanner.mjs",
+        "arguments": [
+          "--dtd"
+        ],
+        "immediate": [
+          "PITarget",
+          "_pi_content",
+          "Comment"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-xml-0.7.0.corpus.json.gz",
+        "sha256": "3472a2c90e5baa591153747f1f4ff606d90d98f7332ae1e80bfa573f65808092",
+        "language": "dtd"
+      },
+      "oracle": "dtd"
     }
   ]
 }

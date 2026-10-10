@@ -971,3 +971,13 @@ The executor retains silent operand boundaries when settling precedence, and
 compares optional member-name shifts within the same recursive production. R
 and Python binary-expression rules share their expression concept; Dart
 operator tokens retain a distinct operator concept and every source alias.
+
+The generated XML and DTD grammars use pinned tree-sitter-xml 0.7.0 sources
+and shared scanner data for paired element names, comments, processing
+instructions and character data. XML, DTD and the DOCX document part select
+native grammars; the original XML/DTD parser and WebAssembly modules are
+independent development oracles. DOCX retains its additive document semantics.
+The pinned Unicode 17 identifier properties compile to shared numeric ranges,
+including the additional identifier characters and normalization exclusions
+that general Unicode categories cannot represent. These imports retain the
+pinned sources' language; the complete multi-source union remains unverified.

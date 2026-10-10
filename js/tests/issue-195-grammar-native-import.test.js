@@ -154,6 +154,13 @@ test('of equally long lines of dashes, the last divides, and a case without one 
   ]);
 });
 
+test('corpus language and error attributes survive blank lines in the header', () => {
+  const corpus = [rule('='), 'Malformed markup', '', ':error', ':language(xml)', '', rule('='), '<r>', rule('-'), '(document)', ''].join('\n');
+  assert.deepEqual(corpusFileCases(corpus), [
+    { title: 'Malformed markup', source: '<r>', language: 'xml', attributes: ['error'] },
+  ]);
+});
+
 test('an upstream rule named like an object member is named from its words', () => {
   // tree-sitter-lean has a rule `constructor`; only reviewed decisions rename it.
   const decisions = { names: { _declaration: 'declaration_choice' } };

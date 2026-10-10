@@ -718,7 +718,12 @@ pub(super) fn shift_preferred(
     while let Some(inner) = items(&progress.children).find(|child| {
         child.ty == TreeType::Node && child.start < short.end && child.end > short.end
     }) {
-        if first_leaf_start(&inner) == begin && inner.rule != short.rule {
+        if first_leaf_start(&inner) == begin
+            && inner.rule != short.rule
+            && !leftmost_chain(&inner)
+                .iter()
+                .any(|node| node.rule == short.rule && meaningful(&node.children).len() > 1)
+        {
             return compare_precedence(&reduction(short), &PrecedenceTag::unranked(None), orders)
                 .reverse();
         }

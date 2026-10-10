@@ -16,7 +16,7 @@
   ],
   "scanner": {
     "file": "parity/grammars/scanners/r.lino",
-    "sha256": "d461c8e0646b254b9e41a223bdbda283272e306db274674da4742615cd354be9",
+    "sha256": "34dd10f47be5d10d6c1f1f9e31d43a7b83ce46f4ff3dd6bddb2f20fbf392d7a2",
     "ports": {
       "path": "src/scanner.c",
       "sha256": "e99e003ab8b0463dee975432b6f9f7e39cd75eb0047989f064fdf57927fa8e9d"
@@ -302,9 +302,9 @@
     {
       "family": "rule-prefix-exclusion",
       "rule": "identifier",
-      "pattern": "else|if|for|while|repeat|function|next|break|TRUE|FALSE|NULL|Inf|NaN|NA_integer_|NA_real_|NA_complex_|NA_character_|NA",
+      "pattern": "if|for|while|repeat|function|next|break|TRUE|FALSE|NULL|Inf|NaN|NA_integer_|NA_real_|NA_complex_|NA_character_|NA",
       "continuationPattern": "[A-Za-z0-9_.\\u0080-\\u{10ffff}]",
-      "reason": "Reserved words retain lexical identity even when their syntax is incomplete, while identifier continuations remain identifiers."
+      "reason": "Reserved literal words retain lexical identity even when their syntax is incomplete. The contextual external else token remains an identifier when that continuation is unavailable."
     },
     {
       "family": "rule-dynamic-precedence",

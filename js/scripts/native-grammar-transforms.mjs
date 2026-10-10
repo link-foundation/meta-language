@@ -3,6 +3,29 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'external-literal-token') {
+      const { literal, token, count } = decision;
+      if (typeof literal !== 'string' || !literal || typeof token !== 'string' || !/^_[A-Za-z_]+$/u.test(token) || !Number.isSafeInteger(count) || count <= 0
+        || Object.hasOwn(grammar.rules, token) || (grammar.externals ?? []).some((external) => external.name === token)) throw new TypeError('external literal tokens need a literal, a unique hidden token and a positive production count');
+      let declarations = 0, changes = 0;
+      grammar.externals = (grammar.externals ?? []).map((external) => {
+        if (external.type !== 'STRING' || external.value !== literal) return external;
+        declarations += 1;
+        return { type: 'SYMBOL', name: token };
+      });
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'STRING' && node.value === literal) {
+          changes += 1;
+          return { type: 'ALIAS', named: false, value: literal, content: { type: 'SYMBOL', name: token } };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules = rewrite(grammar.rules);
+      if (declarations !== 1 || changes !== count) throw new TypeError('external literal tokens must select exactly the recorded external and productions');
+      continue;
+    }
     if (decision.family === 'contextual-newline-extras') {
       const { pattern, token } = decision;
       if (typeof pattern !== 'string' || !pattern || typeof token !== 'string' || !/^_[A-Za-z_]+$/u.test(token)

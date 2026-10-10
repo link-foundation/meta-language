@@ -1,0 +1,104 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "3472a2c90e5baa591153747f1f4ff606d90d98f7332ae1e80bfa573f65808092",
+  "cases": [
+    {
+      "file": "errors.txt",
+      "title": "Invalid comment",
+      "source": "\n<error>\n<!-- invalid -- -->\n</error>\n",
+      "attributes": [
+        "error"
+      ]
+    },
+    {
+      "file": "errors.txt",
+      "title": "Invalid XML declaration",
+      "source": "\n<?xml is invalid?>\n<error/>\n",
+      "attributes": [
+        "error"
+      ]
+    },
+    {
+      "file": "errors.txt",
+      "title": "Invalid processing instruction",
+      "source": "\n<error>\n<?bar is ?> invalid?>\n</error>\n",
+      "attributes": [
+        "error"
+      ]
+    },
+    {
+      "file": "errors.txt",
+      "title": "Invalid character data (raw)",
+      "source": "\n<raw>\nThis is not valid: ]]>\n</raw>\n",
+      "attributes": [
+        "error"
+      ]
+    },
+    {
+      "file": "errors.txt",
+      "title": "Invalid character data (CDATA)",
+      "source": "\n<cdata>\n<![CDATA[ ]]> is invalid ]]>\n</cdata>\n",
+      "attributes": [
+        "error"
+      ]
+    },
+    {
+      "file": "errors.txt",
+      "title": "Mismatched tag name",
+      "source": "\n<From>Jani</from>\n",
+      "attributes": [
+        "error"
+      ]
+    },
+    {
+      "file": "examples.txt",
+      "title": "note.xml",
+      "source": "\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE note [\n<!ELEMENT note (to,from,heading,body,footer?)>\n<!ELEMENT to (#PCDATA)>\n<!ELEMENT from (#PCDATA)>\n<!ELEMENT heading (#PCDATA)>\n<!ELEMENT body (#PCDATA)>\n<!ELEMENT footer (#PCDATA)>\n<!ENTITY nbsp \"&#xA0;\">\n<!ENTITY writer \"Writer: Donald Duck.\">\n<!ENTITY copyright \"Copyright: W3Schools.\">\n]>\n<note>\n  <to>Tove</to>\n  <from>Jani</from>\n  <heading>Reminder</heading>\n  <body>Don't forget me this weekend!</body>\n  <footer>&writer;&nbsp;&copyright;</footer>\n</note>\n"
+    },
+    {
+      "file": "examples.txt",
+      "title": "address.xml",
+      "source": "\n<?xml version = \"1.0\" encoding = \"UTF-8\" standalone = \"no\" ?>\n<!DOCTYPE address SYSTEM \"address.dtd\">\n<address>\n  <name>Tanmay Patil</name>\n  <company>TutorialsPoint</company>\n  <phone>(011) 123-4567</phone>\n</address>\n"
+    },
+    {
+      "file": "extra.txt",
+      "title": "XML Model",
+      "source": "\n<?xml version=\"1.0\"?>\n<?xml-model href=\"http://www.docbook.org/xml/5.0/rng/docbook.rng\"?>\n<?xml-model href=\"http://www.docbook.org/xml/5.0/xsd/docbook.xsd\"?>\n<book xmlns=\"http://docbook.org/ns/docbook\">\n …\n</book>\n"
+    },
+    {
+      "file": "extra.txt",
+      "title": "XML Stylesheet",
+      "source": "\n<?xml-stylesheet href=\"common.css\"?>\n<?xml-stylesheet href=\"default.css\" title=\"Default style\"?>\n<?xml-stylesheet alternate=\"yes\" href=\"alt.css\" title=\"Alternative style\"?>\n<?xml-stylesheet href=\"single-col.css\" media=\"all and (max-width: 30em)\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n <head>\n  <title>Example with xml-stylesheet processing instructions</title>\n </head>\n <body>\n  ...\n </body>\n</html>\n"
+    },
+    {
+      "file": "issues.txt",
+      "title": "Empty CDATA (#7)",
+      "source": "\n<field name=\"foo\" type=\"text\"><![CDATA[]]></field>\n"
+    },
+    {
+      "file": "issues.txt",
+      "title": "Closing bracket in CharData (#22)",
+      "source": "\n<test>]</test>\n"
+    },
+    {
+      "file": "standard.txt",
+      "title": "Prolog and Document Type",
+      "source": "\n<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n<!DOCTYPE greeting [\n  <!ELEMENT greeting (#PCDATA)>\n]>\n<greeting>Hello, world!</greeting>\n"
+    },
+    {
+      "file": "standard.txt",
+      "title": "Comment",
+      "source": "\n<!-- declarations for <head> & <body> -->\n<greeting/>\n"
+    },
+    {
+      "file": "standard.txt",
+      "title": "CDATA Section",
+      "source": "\n<greeting>\n<![CDATA[<greeting>Hello, world!</greeting>]]>\n</greeting>\n"
+    },
+    {
+      "file": "standard.txt",
+      "title": "Element Tags",
+      "source": "\n<termdef id=\"dt-dog\" term=\"dog\">\n<IMG align=\"left\"\n src=\"http://www.w3.org/Icons/WWW/w3c_home\" />\n<br></br>\n<br/>\n</termdef>\n"
+    }
+  ]
+}

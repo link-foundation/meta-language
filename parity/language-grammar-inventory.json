@@ -750,6 +750,28 @@
         "scoped_whitespace"
       ],
       "rootIncludesLeadingTrivia": true
+    },
+    "native-xml": {
+      "hidden": [],
+      "anonymous": [
+        "unnamed_token",
+        "whitespace"
+      ],
+      "extras": [],
+      "rootIncludesLeadingTrivia": true,
+      "version": "1.0.0",
+      "grammar": "parity/grammars/native/xml.lino"
+    },
+    "native-dtd": {
+      "hidden": [],
+      "anonymous": [
+        "unnamed_token",
+        "whitespace"
+      ],
+      "extras": [],
+      "rootIncludesLeadingTrivia": true,
+      "version": "1.0.0",
+      "grammar": "parity/grammars/native/dtd.lino"
     }
   },
   "languages": [
@@ -844,12 +866,13 @@
       "recoverySource": "<w:document><w:body></w:document>\n",
       "javascript": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-xml over OOXML document part"
+        "backend": "native Links Notation XML over OOXML document part"
       },
       "rust": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-xml over OOXML document part + docx_parser semantics"
-      }
+        "backend": "native Links Notation XML over OOXML document part + docx_parser semantics"
+      },
+      "nativeGrammar": "native-xml"
     },
     {
       "name": "JavaScript",
@@ -2111,12 +2134,13 @@
       "recoverySource": "<note><to>text</note>\n",
       "javascript": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-xml"
+        "backend": "native Links Notation XML"
       },
       "rust": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-xml"
-      }
+        "backend": "native Links Notation XML"
+      },
+      "nativeGrammar": "native-xml"
     },
     {
       "name": "DTD",
@@ -2131,12 +2155,13 @@
       "recoverySource": "<!ELEMENT note (to, body>\n",
       "javascript": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-dtd"
+        "backend": "native Links Notation DTD"
       },
       "rust": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-xml DTD"
-      }
+        "backend": "native Links Notation DTD"
+      },
+      "nativeGrammar": "native-dtd"
     },
     {
       "name": "INI",

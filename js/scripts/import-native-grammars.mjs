@@ -80,14 +80,14 @@ export function corpusFileCases(corpus) {
   const headerEnd = (index) => {
     if (!/^={3,}/u.test(lines[index] ?? '') || index + 1 >= lines.length) return -1;
     let close = index + 2;
-    while (/^:/u.test(lines[close] ?? '')) close += 1;
+    while (close < lines.length && (/^:/u.test(lines[close]) || /^\s*$/u.test(lines[close]))) close += 1;
     return /^={3,}/u.test(lines[close] ?? '') ? close + 1 : -1;
   };
   const cases = [];
   for (let index = 0; index < lines.length; index += 1) {
     const start = headerEnd(index);
     if (start < 0) continue;
-    const attributes = lines.slice(index + 2, start - 1).map((line) => line.slice(1).trim());
+    const attributes = lines.slice(index + 2, start - 1).filter((line) => /^:/u.test(line)).map((line) => line.slice(1).trim());
     let next = start;
     while (next < lines.length && headerEnd(next) < 0) next += 1;
     let divider = -1;

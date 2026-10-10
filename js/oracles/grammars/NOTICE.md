@@ -22,6 +22,7 @@ listed patch, if any).
 | `csv.wasm.gz` | `tree-sitter-grammars/tree-sitter-csv` f6bf6e35eb0b95fbadea4bb39cb9709507fcb181 with [`rfc4180-quotes.patch`](../../../rust/vendor/tree-sitter-csv/rfc4180-quotes.patch) (vendored in `rust/vendor/tree-sitter-csv`) | `6a7ede804cb8ced3f9466cecf38872d175e6179e8ea951956a195b2d55add8bc` | `926e300e68fca1881734251e2b0b3a51cc56625c1afd3471f3102ce5274a1cd9` | [`csv.LICENSE`](csv.LICENSE) |
 | `dart.wasm.gz` | crate `tree-sitter-dart` 0.2.0 | `1894ef57f8e0ceb483ccf6d548429517dc42b0d983293ebdb5ff9ff9c612c4a9` | `e700b38561a3f1e641340fac8232dfca493dbc024d142d338a5075feca3e9efc` | [`dart.LICENSE`](dart.LICENSE) |
 | `diff.wasm.gz` | crate `tree-sitter-diff` 0.1.0 | `4c9e3e545073a7d93088f7d90b0ee89e56fb43ca751f25fa440c4a1906ecb3e6` | `8c32b60b7900e18ad10e2223e6311f4f1aff29b4d12226862a2a889a99596f29` | [`diff.LICENSE`](diff.LICENSE) |
+| `dtd.wasm.gz` | crate `tree-sitter-xml` 0.7.0 (`dtd`) | `79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932` | `2534944fea9484174b791535509c09a25fcd1c4099da9392056b009311dcfe81` | [`dtd.LICENSE`](dtd.LICENSE) |
 | `erlang.wasm.gz` | crate `tree-sitter-erlang` 0.20.0 | `c8c83443d536875c2f28f12ae4f0242f477cac82115073f4d9506c2bb188dbcc` | `345a2693219c24236afdbacf3af1082aaa59eef6c21c06371845690505ee3af3` | [`erlang.LICENSE`](erlang.LICENSE) |
 | `go.wasm.gz` | crate `tree-sitter-go` 0.25.0 | `3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85` | `058a4f6c7cb7156c599c2ca07af9645f03b3f655b84bced9c72816e755c7030b` | [`go.LICENSE`](go.LICENSE) |
 | `graphql.wasm.gz` | crate `tree-sitter-graphql` 0.3.0 | `8b7ebff40dc5b802df9ec03b1570fd53d234300ac4705899643ae61dda77dc57` | `a9239652fcc467ec3bf9dbe7d5271ff3511c40c7dc9bba440667599dcfb608bc` | [`graphql.LICENSE`](graphql.LICENSE) |
@@ -52,6 +53,7 @@ listed patch, if any).
 | `tsx.wasm.gz` | crate `tree-sitter-typescript` 0.23.2 (`tsx`) | `1902cb53fa7ff5179df89b2eea863165e84c8cc866226419dc26921d8c055885` | `3c6cb1c86cecc6d8c99b3a7dfc0aba8b838e2adf036bb23f384d6d8be395ae30` | [`tsx.LICENSE`](tsx.LICENSE) |
 | `typescript.wasm.gz` | crate `tree-sitter-typescript` 0.23.2 (`typescript`) | `74fe453edd70f4eae9af0a1050cbd7943d8971d59165b6aaebbaa0a0b716d1aa` | `d24392183c75c103feafb827c9c086de00c30198e27f362cc971fbca6e91a87f` | [`typescript.LICENSE`](typescript.LICENSE) |
 | `vb.wasm.gz` | crate `tree-sitter-vb-dotnet` 0.1.0 | `7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8` | `4bc68c0fb1cbc42a44eb3199affe54173b6519f52ffdd173e31c9dc87b9099f8` | [`vb.LICENSE`](vb.LICENSE) |
+| `xml.wasm.gz` | crate `tree-sitter-xml` 0.7.0 (`xml`) | `e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844` | `2edd39d0ef194dc70878fe99b277180547fabf252f85b58e537db5a11e3027fa` | [`xml.LICENSE`](xml.LICENSE) |
 | `zig.wasm.gz` | crate `tree-sitter-zig` 1.1.2 | `5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63` | `cc95fa4d69178617b19fe50b070dc871e315aea55107fcd1bcd238ae77811edd` | [`zig.LICENSE`](zig.LICENSE) |
 
 Every grammar is distributed under its upstream license (MIT unless the

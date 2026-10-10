@@ -1,0 +1,276 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "dtd",
+  "native": "native-dtd",
+  "sources": [
+    {
+      "id": "tree-sitter-dtd",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-xml 0.7.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-xml",
+      "revision": "4b64dd3a03ec002258d6268d712fd93716d6ab57",
+      "path": "dtd/src/grammar.json",
+      "sha256": "44d3d915ed635a45181206d1d05352f6a7060fff6be07906c9f3aa8f809f5786",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/dtd.lino",
+    "sha256": "0549278f5ea21f378db870a91dde16e01eeb031530b6c38fe1f38a5b2528b03f",
+    "ports": {
+      "path": "dtd/src/scanner.c",
+      "sha256": "cdb323ea613368705ade3c6904523848f262db38ee01f5722e2f16e0751bd71c",
+      "includes": [
+        {
+          "path": "common/scanner.h",
+          "sha256": "ce5082af60b1808035a43c3df129df9b811c9c69949fdb664a351f7aae340409"
+        }
+      ]
+    },
+    "scanners": [
+      {
+        "name": "processing_instruction_content",
+        "tokens": [
+          "processing_instruction_content"
+        ]
+      },
+      {
+        "name": "comment",
+        "tokens": [
+          "comment"
+        ]
+      }
+    ],
+    "immediate": [
+      "PITarget",
+      "_pi_content",
+      "Comment"
+    ]
+  },
+  "rules": 47,
+  "keywords": [
+    "ANY",
+    "ATTLIST",
+    "CDATA",
+    "ELEMENT",
+    "EMPTY",
+    "ENTITIES",
+    "ENTITY",
+    "ID",
+    "IDREF",
+    "IDREFS",
+    "IGNORE",
+    "INCLUDE",
+    "NDATA",
+    "NMTOKEN",
+    "NMTOKENS",
+    "NOTATION",
+    "PUBLIC",
+    "SYSTEM",
+    "encoding",
+    "version",
+    "xml"
+  ],
+  "renamed": [
+    {
+      "source": "extSubset",
+      "native": "external_subset"
+    },
+    {
+      "source": "TextDecl",
+      "native": "text_declaration"
+    },
+    {
+      "source": "_extSubsetDecl",
+      "native": "external_subset_declaration"
+    },
+    {
+      "source": "conditionalSect",
+      "native": "conditional_section"
+    },
+    {
+      "source": "_markupdecl",
+      "native": "markup_declaration"
+    },
+    {
+      "source": "_DeclSep",
+      "native": "declaration_separator"
+    },
+    {
+      "source": "elementdecl",
+      "native": "element_declaration"
+    },
+    {
+      "source": "contentspec",
+      "native": "content_specification"
+    },
+    {
+      "source": "Mixed",
+      "native": "mixed_content"
+    },
+    {
+      "source": "children",
+      "native": "child_content"
+    },
+    {
+      "source": "_cp",
+      "native": "content_particle"
+    },
+    {
+      "source": "_choice",
+      "native": "choice"
+    },
+    {
+      "source": "AttlistDecl",
+      "native": "attribute_list_declaration"
+    },
+    {
+      "source": "AttDef",
+      "native": "attribute_definition"
+    },
+    {
+      "source": "_AttType",
+      "native": "attribute_type"
+    },
+    {
+      "source": "StringType",
+      "native": "string_type"
+    },
+    {
+      "source": "TokenizedType",
+      "native": "token_sequence_type"
+    },
+    {
+      "source": "_EnumeratedType",
+      "native": "enumerated_type"
+    },
+    {
+      "source": "NotationType",
+      "native": "notation_type"
+    },
+    {
+      "source": "Enumeration",
+      "native": "enumeration"
+    },
+    {
+      "source": "DefaultDecl",
+      "native": "default_declaration"
+    },
+    {
+      "source": "_EntityDecl",
+      "native": "entity_declaration"
+    },
+    {
+      "source": "GEDecl",
+      "native": "general_entity_declaration"
+    },
+    {
+      "source": "PEDecl",
+      "native": "parameter_entity_declaration"
+    },
+    {
+      "source": "EntityValue",
+      "native": "entity_value"
+    },
+    {
+      "source": "NDataDecl",
+      "native": "notation_data_declaration"
+    },
+    {
+      "source": "NotationDecl",
+      "native": "notation_declaration"
+    },
+    {
+      "source": "PEReference",
+      "native": "parameter_entity_reference"
+    },
+    {
+      "source": "_S",
+      "native": "whitespace"
+    },
+    {
+      "source": "Name",
+      "native": "name"
+    },
+    {
+      "source": "Nmtoken",
+      "native": "name_token"
+    },
+    {
+      "source": "_Reference",
+      "native": "entity_or_character_reference"
+    },
+    {
+      "source": "EntityRef",
+      "native": "entity_reference"
+    },
+    {
+      "source": "CharRef",
+      "native": "character_code_reference"
+    },
+    {
+      "source": "AttValue",
+      "native": "attribute_value"
+    },
+    {
+      "source": "ExternalID",
+      "native": "external_resource_identifier"
+    },
+    {
+      "source": "PublicID",
+      "native": "public_identifier"
+    },
+    {
+      "source": "SystemLiteral",
+      "native": "system_literal"
+    },
+    {
+      "source": "PubidLiteral",
+      "native": "public_identifier_literal"
+    },
+    {
+      "source": "_VersionInfo",
+      "native": "version_information"
+    },
+    {
+      "source": "VersionNum",
+      "native": "version_number"
+    },
+    {
+      "source": "_EncodingDecl",
+      "native": "encoding_declaration"
+    },
+    {
+      "source": "EncName",
+      "native": "encoding_name"
+    },
+    {
+      "source": "PI",
+      "native": "processing_instruction"
+    },
+    {
+      "source": "_Eq",
+      "native": "equals_sign"
+    },
+    {
+      "source": "PITarget",
+      "native": "processing_instruction_target"
+    }
+  ],
+  "expandedWords": [],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "choice",
+        "concept": "grammar.choice"
+      },
+      {
+        "rule": "name",
+        "concept": "grammar.name"
+      }
+    ],
+    "generated": 45
+  },
+  "approximations": [],
+  "unsupported": []
+}

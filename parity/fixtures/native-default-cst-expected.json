@@ -8,7 +8,7 @@
       "grammars": {
         "native-python": {
           "version": "1.0.0",
-          "parserSha256": "6302ad2ff1b12870ce25932b54a5bae09a117efb4eb9798fafdb183922253ed1"
+          "parserSha256": "6c639c53ec4f1ea95d9a3033563e5142075fcb6d24bca47a06db6f50cf7437e6"
         }
       },
       "oracleGrammars": {
@@ -401,7 +401,7 @@
       "grammars": {
         "native-cpp": {
           "version": "1.0.0",
-          "parserSha256": "b2e4d0b010ff2d8f881a6f1e29a5054662880b9786f60bd1cb0c1b3bb78d5600"
+          "parserSha256": "cd67e8dcc6f2dca0b713bb72a4891e3368cfa6605b08cfde88055be7fe1ffc0a"
         }
       },
       "oracleGrammars": {
@@ -1226,7 +1226,7 @@
       "grammars": {
         "native-groovy": {
           "version": "1.0.0",
-          "parserSha256": "df1939409c681e54643e5b1effac4910290c961842b78534cb1478ac9dcb27e8"
+          "parserSha256": "0c21cba02ceb5e8b9e85edd041277f085bc2807d01b3f8bbd734b8e34b1cb0ac"
         }
       },
       "oracleGrammars": {
@@ -2406,7 +2406,7 @@
       "grammars": {
         "native-c": {
           "version": "1.0.0",
-          "parserSha256": "072a86132b93eaf09b43b6176e5e2b7dfb53897bbdf020c46da6b19b797cf6e3"
+          "parserSha256": "a17fe14e05eafc9cf23e7b5a16a5beb0c58b824b8ee7cb9a4a1aa07fe5309e89"
         }
       },
       "oracleGrammars": {
@@ -2498,7 +2498,7 @@
       "grammars": {
         "native-rust": {
           "version": "1.0.0",
-          "parserSha256": "338e3a1efacf4b7c718854aab3a9fa64d321bda36fd9a4ffb1ecdaf42b109e3a"
+          "parserSha256": "829afcb5435b90255d3dfc11a096747a378ef17dca5c2b198d0744b0f6a152ce"
         }
       },
       "oracleGrammars": {
@@ -3106,7 +3106,7 @@
       "grammars": {
         "native-java": {
           "version": "1.0.0",
-          "parserSha256": "0132f86a290c49c4c0b6350c7b8ca787b19da35d6b3470042f80423bbc48be0f"
+          "parserSha256": "aa2f41f2b804c22f1f3965996a37bb90aa803512335b321e60e28011c142fb55"
         }
       },
       "oracleGrammars": {
@@ -3207,7 +3207,7 @@
       "grammars": {
         "native-go": {
           "version": "1.0.0",
-          "parserSha256": "f4aac3f302af5129c9b3d4dc399d8b2cc1d01a5941f5a43ccbda2923d6abd17c"
+          "parserSha256": "591d631cd119a6dfcd8c84b879212eec1efb9153552fdd9bd90feae55c74cb1b"
         }
       },
       "oracleGrammars": {
@@ -3724,7 +3724,7 @@
       "grammars": {
         "native-hcl": {
           "version": "1.0.0",
-          "parserSha256": "08c7adf30d5fcb65c3eada6e3bebc3c7b2eb89591bf8420a05d589202f2faa44"
+          "parserSha256": "a2fb600b09778cfa624436facc3551d3f52e3383a42965e61c3ec9c66f08e9aa"
         }
       },
       "oracleGrammars": {
@@ -3826,7 +3826,7 @@
       "grammars": {
         "native-r": {
           "version": "1.0.0",
-          "parserSha256": "912564796117a24f79e6185e4ebfb97c95bbc1161eadc47b7c1d855398c7746c"
+          "parserSha256": "1fbc6325135108d36e8f3450996f48720683146e4274209559760abdc3a90995"
         }
       },
       "oracleGrammars": {
@@ -3905,6 +3905,254 @@
         [6,"lhs","float",1,14,15,""],
         [6,null,"$",0,16,16,"M"],
         [4,null,")",0,16,16,"M"]
+      ],
+      "embedded": []
+    },
+    "DOCX": {
+      "grammars": {
+        "native-xml": {
+          "version": "1.0.0",
+          "parserSha256": "837bff5f823d58c87d18f5837a5287dbfb0f6521495e4b6ed0433859133462ab"
+        }
+      },
+      "oracleGrammars": {
+        "xml": {
+          "version": "0.7.0",
+          "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844"
+        }
+      },
+      "sourceSha256": "eba929e8d01405e4fadb6e3e0b0731a2f701c32277d4538556bd984a7efe5f14",
+      "recoverySourceSha256": "f4b0fc4b416928945b3fbb36e13023b062f7320ff9c4d4f6a154d4973df6b93b",
+      "positive": [
+        [0,null,"document",1,0,97,""],
+        [1,"root","element",1,0,96,""],
+        [2,null,"STag",1,0,28,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"Name",1,1,11,""],
+        [3,null,"Attribute",1,12,27,""],
+        [4,null,"Name",1,12,19,""],
+        [4,null,"=",0,19,20,""],
+        [4,null,"AttValue",1,20,27,""],
+        [5,null,"\"",0,20,21,""],
+        [5,null,"\"",0,26,27,""],
+        [3,null,">",0,27,28,""],
+        [2,null,"content",1,28,83,""],
+        [3,null,"element",1,28,83,""],
+        [4,null,"STag",1,28,36,""],
+        [5,null,"<",0,28,29,""],
+        [5,null,"Name",1,29,35,""],
+        [5,null,">",0,35,36,""],
+        [4,null,"content",1,36,74,""],
+        [5,null,"element",1,36,74,""],
+        [6,null,"STag",1,36,41,""],
+        [7,null,"<",0,36,37,""],
+        [7,null,"Name",1,37,40,""],
+        [7,null,">",0,40,41,""],
+        [6,null,"content",1,41,68,""],
+        [7,null,"element",1,41,68,""],
+        [8,null,"STag",1,41,46,""],
+        [9,null,"<",0,41,42,""],
+        [9,null,"Name",1,42,45,""],
+        [9,null,">",0,45,46,""],
+        [8,null,"content",1,46,62,""],
+        [9,null,"element",1,46,62,""],
+        [10,null,"STag",1,46,51,""],
+        [11,null,"<",0,46,47,""],
+        [11,null,"Name",1,47,50,""],
+        [11,null,">",0,50,51,""],
+        [10,null,"content",1,51,56,""],
+        [11,null,"CharData",1,51,56,""],
+        [10,null,"ETag",1,56,62,""],
+        [11,null,"</",0,56,58,""],
+        [11,null,"Name",1,58,61,""],
+        [11,null,">",0,61,62,""],
+        [8,null,"ETag",1,62,68,""],
+        [9,null,"</",0,62,64,""],
+        [9,null,"Name",1,64,67,""],
+        [9,null,">",0,67,68,""],
+        [6,null,"ETag",1,68,74,""],
+        [7,null,"</",0,68,70,""],
+        [7,null,"Name",1,70,73,""],
+        [7,null,">",0,73,74,""],
+        [4,null,"ETag",1,74,83,""],
+        [5,null,"</",0,74,76,""],
+        [5,null,"Name",1,76,82,""],
+        [5,null,">",0,82,83,""],
+        [2,null,"ETag",1,83,96,""],
+        [3,null,"</",0,83,85,""],
+        [3,null,"Name",1,85,95,""],
+        [3,null,">",0,95,96,""]
+      ],
+      "recovery": [
+        [0,null,"document",1,0,34,""],
+        [1,"root","element",1,0,22,""],
+        [2,null,"STag",1,0,12,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"Name",1,1,11,""],
+        [3,null,">",0,11,12,""],
+        [2,null,"content",1,12,22,""],
+        [3,null,"element",1,12,22,""],
+        [4,null,"STag",1,12,20,""],
+        [5,null,"<",0,12,13,""],
+        [5,null,"Name",1,13,19,""],
+        [5,null,">",0,19,20,""],
+        [4,null,"ETag",1,20,22,""],
+        [5,null,"</",0,20,22,""],
+        [5,null,"Name",1,22,22,"M"],
+        [5,null,">",0,22,22,"M"],
+        [2,null,"ETag",1,22,22,""],
+        [3,null,"</",0,22,22,"M"],
+        [3,null,"Name",1,22,22,"M"],
+        [3,null,">",0,22,22,"M"],
+        [1,null,"ERROR",1,22,33,"E"]
+      ],
+      "embedded": []
+    },
+    "XML": {
+      "grammars": {
+        "native-xml": {
+          "version": "1.0.0",
+          "parserSha256": "837bff5f823d58c87d18f5837a5287dbfb0f6521495e4b6ed0433859133462ab"
+        }
+      },
+      "oracleGrammars": {
+        "xml": {
+          "version": "0.7.0",
+          "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844"
+        }
+      },
+      "sourceSha256": "c25621cbf5fb33f63daa4df1a80f68763f6806d7b9c6689c87ef15a9a4a68522",
+      "recoverySourceSha256": "0fd0e1649a4775385d7e6f5578173b73d7ad1741ba6a99057e2e18ee6dbefd37",
+      "positive": [
+        [0,null,"document",1,0,89,""],
+        [1,null,"prolog",1,0,37,""],
+        [2,null,"XMLDecl",1,0,21,""],
+        [3,null,"<?",0,0,2,""],
+        [3,null,"xml",0,2,5,""],
+        [3,null,"version",0,6,13,""],
+        [3,null,"=",0,13,14,""],
+        [3,null,"\"",0,14,15,""],
+        [3,null,"VersionNum",1,15,18,""],
+        [3,null,"\"",0,18,19,""],
+        [3,null,"?>",0,19,21,""],
+        [2,null,"Comment",1,22,36,""],
+        [1,"root","element",1,37,88,""],
+        [2,null,"STag",1,37,53,""],
+        [3,null,"<",0,37,38,""],
+        [3,null,"Name",1,38,42,""],
+        [3,null,"Attribute",1,43,52,""],
+        [4,null,"Name",1,43,47,""],
+        [4,null,"=",0,47,48,""],
+        [4,null,"AttValue",1,48,52,""],
+        [5,null,"\"",0,48,49,""],
+        [5,null,"\"",0,51,52,""],
+        [3,null,">",0,52,53,""],
+        [2,null,"content",1,53,81,""],
+        [3,null,"element",1,53,64,""],
+        [4,null,"STag",1,53,57,""],
+        [5,null,"<",0,53,54,""],
+        [5,null,"Name",1,54,56,""],
+        [5,null,">",0,56,57,""],
+        [4,null,"content",1,57,59,""],
+        [5,null,"CharData",1,57,59,""],
+        [4,null,"ETag",1,59,64,""],
+        [5,null,"</",0,59,61,""],
+        [5,null,"Name",1,61,63,""],
+        [5,null,">",0,63,64,""],
+        [3,null,"CDSect",1,64,81,""],
+        [4,null,"CDStart",1,64,73,""],
+        [5,null,"<![",0,64,67,""],
+        [5,null,"CDATA",0,67,72,""],
+        [5,null,"[",0,72,73,""],
+        [4,null,"CData",1,73,78,""],
+        [4,null,"]]>",0,78,81,""],
+        [2,null,"ETag",1,81,88,""],
+        [3,null,"</",0,81,83,""],
+        [3,null,"Name",1,83,87,""],
+        [3,null,">",0,87,88,""]
+      ],
+      "recovery": [
+        [0,null,"document",1,0,22,""],
+        [1,"root","element",1,0,16,""],
+        [2,null,"STag",1,0,6,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"Name",1,1,5,""],
+        [3,null,">",0,5,6,""],
+        [2,null,"content",1,6,16,""],
+        [3,null,"element",1,6,16,""],
+        [4,null,"STag",1,6,10,""],
+        [5,null,"<",0,6,7,""],
+        [5,null,"Name",1,7,9,""],
+        [5,null,">",0,9,10,""],
+        [4,null,"content",1,10,14,""],
+        [5,null,"CharData",1,10,14,""],
+        [4,null,"ETag",1,14,16,""],
+        [5,null,"</",0,14,16,""],
+        [5,null,"Name",1,16,16,"M"],
+        [5,null,">",0,16,16,"M"],
+        [2,null,"ETag",1,16,16,""],
+        [3,null,"</",0,16,16,"M"],
+        [3,null,"Name",1,16,16,"M"],
+        [3,null,">",0,16,16,"M"],
+        [1,null,"ERROR",1,16,21,"E"]
+      ],
+      "embedded": []
+    },
+    "DTD": {
+      "grammars": {
+        "native-dtd": {
+          "version": "1.0.0",
+          "parserSha256": "e399616f2dcfc34c98a7768fdf7072fd3dd072611de3a8823cc80f32e4ba85e7"
+        }
+      },
+      "oracleGrammars": {
+        "dtd": {
+          "version": "0.7.0",
+          "parserSha256": "79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932"
+        }
+      },
+      "sourceSha256": "74f3a0eaf6cf827e08b7d6ab00aa18c6c518e092b7c6d1d80378f4a83f066299",
+      "recoverySourceSha256": "6c0e5c9c5cc06d2bde2ab56d63a247f5447ab6119e2860e45bb1884507af6e87",
+      "positive": [
+        [0,null,"extSubset",1,0,78,""],
+        [1,null,"Comment",1,0,14,""],
+        [1,null,"elementdecl",1,15,41,""],
+        [2,null,"<!",0,15,17,""],
+        [2,null,"ELEMENT",0,17,24,""],
+        [2,null,"Name",1,25,29,""],
+        [2,null,"contentspec",1,30,40,""],
+        [3,null,"children",1,30,40,""],
+        [4,null,"(",0,30,31,""],
+        [4,null,"Name",1,31,33,""],
+        [4,null,",",0,33,34,""],
+        [4,null,"Name",1,35,39,""],
+        [4,null,")",0,39,40,""],
+        [2,null,">",0,40,41,""],
+        [1,null,"AttlistDecl",1,42,77,""],
+        [2,null,"<!",0,42,44,""],
+        [2,null,"ATTLIST",0,44,51,""],
+        [2,null,"Name",1,52,56,""],
+        [2,null,"AttDef",1,56,76,""],
+        [3,null,"Name",1,57,61,""],
+        [3,null,"StringType",1,62,67,""],
+        [3,null,"DefaultDecl",1,68,76,""],
+        [4,null,"#IMPLIED",0,68,76,""],
+        [2,null,">",0,76,77,""]
+      ],
+      "recovery": [
+        [0,null,"extSubset",1,0,26,""],
+        [1,null,"elementdecl",1,0,25,""],
+        [2,null,"<!",0,0,2,""],
+        [2,null,"ELEMENT",0,2,9,""],
+        [2,null,"Name",1,10,14,""],
+        [2,null,"contentspec",1,15,24,""],
+        [3,null,"children",1,15,24,""],
+        [4,null,"(",0,15,16,""],
+        [4,null,"Name",1,16,18,""],
+        [4,null,",",0,18,19,""],
+        [4,null,"Name",1,20,24,""],
+        [4,null,")",0,24,24,"M"],
+        [2,null,">",0,24,25,""]
       ],
       "embedded": []
     }

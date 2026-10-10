@@ -188,7 +188,7 @@
         {"rule":"empty_declaration","concept":"grammar.empty-declaration","languages":["c","cpp"]},
         {"rule":"macro_type_specifier","concept":"grammar.macro-type-specifier","languages":["c","cpp"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": []
     },
@@ -468,7 +468,7 @@
         {"rule":"qualified_identifier","concept":"grammar.qualified-identifier","languages":["cpp","proto","rocq"]},
         {"rule":"operator_name","concept":"grammar.operator-name","languages":["cpp","pascal"]},
         {"rule":"this","concept":"grammar.this","languages":["cpp","groovy","java","javascript","tsx","typescript"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"placeholder_type_specifier","concept":"grammar.placeholder-type-specifier"},
@@ -657,7 +657,7 @@
       "language": "csv",
       "rules": 8,
       "shared": [
-        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml"]},
+        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml","xml"]},
         {"rule":"boolean","concept":"grammar.boolean-value","languages":["csv","graphql","lean","proto","racket","scheme","toml","zig"]},
         {"rule":"quoted","concept":"grammar.string","languages":["c","cpp","csv","erlang","graphql","javascript","json","json5","lean","lua","make","proto","python","r","racket","rocq","scheme","solidity","toml","tsx","typescript","zig"]}
       ],
@@ -769,7 +769,7 @@
         {"rule":"built_in_identifier","concept":"grammar.built-in-identifier","languages":["dart","zig"]},
         {"rule":"identifier","concept":"grammar.identifier","languages":["c","cmake","cpp","css","dart","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","proto","python","r","rocq","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"top_level_definition","concept":"grammar.top-level-definition"},
@@ -967,7 +967,7 @@
       "language": "diff",
       "rules": 24,
       "shared": [
-        {"rule":"source","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml"]},
+        {"rule":"source","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml","xml"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]}
       ],
       "specific": [
@@ -993,6 +993,62 @@
         {"rule":"commit","concept":"grammar.diff.commit-hash"},
         {"rule":"mode","concept":"grammar.diff.file-mode"},
         {"rule":"line_range","concept":"grammar.diff.line-range"}
+      ]
+    },
+    {
+      "grammar": "native-dtd",
+      "language": "dtd",
+      "rules": 47,
+      "shared": [
+        {"rule":"markup_declaration","concept":"grammar.markup-declaration","languages":["dtd","xml"]},
+        {"rule":"declaration_separator","concept":"grammar.declaration-separator","languages":["dtd","xml"]},
+        {"rule":"element_declaration","concept":"grammar.element-declaration","languages":["dtd","xml"]},
+        {"rule":"content_specification","concept":"grammar.content-specification","languages":["dtd","xml"]},
+        {"rule":"mixed_content","concept":"grammar.mixed-content","languages":["dtd","xml"]},
+        {"rule":"child_content","concept":"grammar.child-content","languages":["dtd","xml"]},
+        {"rule":"content_particle","concept":"grammar.content-particle","languages":["dtd","xml"]},
+        {"rule":"choice","concept":"grammar.choice","languages":["dtd","xml"]},
+        {"rule":"attribute_list_declaration","concept":"grammar.attribute-list-declaration","languages":["dtd","xml"]},
+        {"rule":"attribute_definition","concept":"grammar.attribute-definition","languages":["dtd","xml"]},
+        {"rule":"attribute_type","concept":"grammar.attribute-type","languages":["dtd","xml"]},
+        {"rule":"string_type","concept":"grammar.string-type","languages":["dtd","xml"]},
+        {"rule":"token_sequence_type","concept":"grammar.token-sequence-type","languages":["dtd","xml"]},
+        {"rule":"enumerated_type","concept":"grammar.enumerated-type","languages":["dtd","xml"]},
+        {"rule":"notation_type","concept":"grammar.notation-type","languages":["dtd","xml"]},
+        {"rule":"enumeration","concept":"grammar.enumeration","languages":["dtd","sql","xml"]},
+        {"rule":"default_declaration","concept":"grammar.default-declaration","languages":["dtd","xml"]},
+        {"rule":"entity_declaration","concept":"grammar.entity-declaration","languages":["dtd","xml"]},
+        {"rule":"general_entity_declaration","concept":"grammar.general-entity-declaration","languages":["dtd","xml"]},
+        {"rule":"parameter_entity_declaration","concept":"grammar.parameter-entity-declaration","languages":["dtd","xml"]},
+        {"rule":"entity_value","concept":"grammar.entity-value","languages":["dtd","xml"]},
+        {"rule":"notation_data_declaration","concept":"grammar.notation-data-declaration","languages":["dtd","xml"]},
+        {"rule":"notation_declaration","concept":"grammar.notation-declaration","languages":["dtd","rocq","xml"]},
+        {"rule":"parameter_entity_reference","concept":"grammar.parameter-entity-reference","languages":["dtd","xml"]},
+        {"rule":"whitespace","concept":"grammar.whitespace","languages":["dtd","hcl","xml"]},
+        {"rule":"name","concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"]},
+        {"rule":"name_token","concept":"grammar.name-token","languages":["dtd","xml"]},
+        {"rule":"entity_or_character_reference","concept":"grammar.entity-or-character-reference","languages":["dtd","xml"]},
+        {"rule":"entity_reference","concept":"grammar.entity-reference","languages":["dtd","xml"]},
+        {"rule":"character_code_reference","concept":"grammar.character-code-reference","languages":["dtd","xml"]},
+        {"rule":"attribute_value","concept":"grammar.attribute-value","languages":["dtd","rocq","xml"]},
+        {"rule":"external_resource_identifier","concept":"grammar.external-resource-identifier","languages":["dtd","xml"]},
+        {"rule":"public_identifier","concept":"grammar.public-identifier","languages":["dtd","xml"]},
+        {"rule":"system_literal","concept":"grammar.system-literal","languages":["dtd","xml"]},
+        {"rule":"public_identifier_literal","concept":"grammar.public-identifier-literal","languages":["dtd","xml"]},
+        {"rule":"version_information","concept":"grammar.version-information","languages":["dtd","xml"]},
+        {"rule":"version_number","concept":"grammar.version-number","languages":["dtd","xml"]},
+        {"rule":"encoding_declaration","concept":"grammar.encoding-declaration","languages":["dtd","xml"]},
+        {"rule":"encoding_name","concept":"grammar.encoding-name","languages":["dtd","xml"]},
+        {"rule":"processing_instruction","concept":"grammar.processing-instruction","languages":["dtd","xml"]},
+        {"rule":"equals_sign","concept":"grammar.equals-sign","languages":["dtd","xml"]},
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]},
+        {"rule":"processing_instruction_target","concept":"grammar.processing-instruction-target","languages":["dtd","xml"]}
+      ],
+      "specific": [
+        {"rule":"external_subset","concept":"grammar.external-subset"},
+        {"rule":"text_declaration","concept":"grammar.text-declaration"},
+        {"rule":"external_subset_declaration","concept":"grammar.external-subset-declaration"},
+        {"rule":"conditional_section","concept":"grammar.conditional-section"}
       ]
     },
     {
@@ -1031,7 +1087,7 @@
         {"rule":"call","concept":"grammar.call","languages":["erlang","python","r"]},
         {"rule":"if_expression","concept":"grammar.if-expression","languages":["erlang","lean","nix","rocq","rust","zig"]},
         {"rule":"if_clause","concept":"grammar.if-clause","languages":["erlang","python"]},
-        {"rule":"name","concept":"grammar.name","languages":["erlang","graphql","groovy","java","lean","make","rocq"]},
+        {"rule":"name","concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"]},
         {"rule":"try_expression","concept":"grammar.try-expression","languages":["erlang","rust","zig"]},
         {"rule":"catch_clause_list","concept":"grammar.catch-clause-list","languages":["erlang","powershell"]},
         {"rule":"catch_clause","concept":"grammar.catch-clause","languages":["cpp","dart","erlang","groovy","java","javascript","powershell","solidity","tsx","typescript"]},
@@ -1047,7 +1103,7 @@
         {"rule":"character_literal","concept":"grammar.character-literal","languages":["c","cpp","erlang","groovy","java","lean","pascal","racket","rust","scheme","vb","zig"]},
         {"rule":"atom","concept":"grammar.atom","languages":["erlang","lean"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"structural_search_rule_definition","concept":"grammar.structural-search-rule-definition"},
@@ -1274,7 +1330,7 @@
         {"rule":"true","concept":"grammar.true-value","languages":["c","cpp","go","groovy","java","javascript","json","json5","lua","proto","solidity","tsx","typescript"]},
         {"rule":"false","concept":"grammar.false-value","languages":["c","cpp","go","groovy","java","javascript","json","json5","lua","proto","r","solidity","tsx","typescript"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"dot","concept":"grammar.dot"},
@@ -1332,7 +1388,7 @@
       "rules": 74,
       "shared": [
         {"rule":"source_file","concept":"grammar.source-file","languages":["cmake","dart","erlang","go","graphql","proto","rocq","rust","solidity","vb","zig"]},
-        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml"]},
+        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml","xml"]},
         {"rule":"definition","concept":"grammar.definition","languages":["graphql","lean","pascal"]},
         {"rule":"field_definition","concept":"grammar.field-definition","languages":["graphql","javascript","rocq","tsx","typescript"]},
         {"rule":"default_value","concept":"grammar.default-value","languages":["graphql","groovy","java","pascal"]},
@@ -1354,7 +1410,7 @@
         {"rule":"object_field","concept":"grammar.member","languages":["graphql","json","json5"]},
         {"rule":"directive","concept":"grammar.directive","languages":["graphql","make"]},
         {"rule":"type","concept":"grammar.type","languages":["dart","go","graphql","groovy","java","pascal","proto","python","rocq","rust","sql","tsx","typescript","vb"]},
-        {"rule":"name","concept":"grammar.name","languages":["erlang","graphql","groovy","java","lean","make","rocq"]},
+        {"rule":"name","concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
         {"rule":"comma","concept":"grammar.comma","languages":["graphql","hcl","r"]},
         {"rule":"description","concept":"grammar.description","languages":["erlang","graphql"]}
@@ -1533,7 +1589,7 @@
         {"rule":"constructor_declarator","concept":"grammar.constructor-declarator","languages":["groovy","java"]},
         {"rule":"constructor_body","concept":"grammar.constructor-body","languages":["groovy","java"]},
         {"rule":"explicit_constructor_invocation","concept":"grammar.explicit-constructor-invocation","languages":["groovy","java"]},
-        {"rule":"name","concept":"grammar.name","languages":["erlang","graphql","groovy","java","lean","make","rocq"]},
+        {"rule":"name","concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"]},
         {"rule":"scoped_identifier","concept":"grammar.scoped-identifier","languages":["groovy","java","rust"]},
         {"rule":"field_declaration","concept":"grammar.field-declaration","languages":["c","cpp","go","groovy","java","proto","rust","vb"]},
         {"rule":"record_declaration","concept":"grammar.record-declaration","languages":["erlang","groovy","java"]},
@@ -1584,7 +1640,7 @@
         {"rule":"range_expression","concept":"grammar.range-expression","languages":["groovy","powershell","rust","zig"]},
         {"rule":"array_literal","concept":"grammar.array-literal","languages":["groovy","vb"]},
         {"rule":"map_literal","concept":"grammar.dictionary-expression","languages":["erlang","groovy"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"string_literal_content","concept":"grammar.string-literal-content"},
@@ -1623,7 +1679,8 @@
         {"rule":"ellipsis","concept":"grammar.ellipsis","languages":["erlang","hcl","lean","python"]},
         {"rule":"conditional_expression","concept":"grammar.conditional-expression","languages":["c","cpp","dart","hcl","python"]},
         {"rule":"template_expression","concept":"grammar.template-expression","languages":["groovy","hcl","java","pascal"]},
-        {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]}
+        {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
+        {"rule":"whitespace","concept":"grammar.whitespace","languages":["dtd","hcl","xml"]}
       ],
       "specific": [
         {"rule":"configuration_file","concept":"grammar.configuration-file"},
@@ -1671,8 +1728,7 @@
         {"rule":"conditional_template","concept":"grammar.conditional-template"},
         {"rule":"template_if_intro","concept":"grammar.template-if-intro"},
         {"rule":"template_else_intro","concept":"grammar.template-else-intro"},
-        {"rule":"template_if_end","concept":"grammar.template-if-end"},
-        {"rule":"whitespace","concept":"grammar.whitespace"}
+        {"rule":"template_if_end","concept":"grammar.template-if-end"}
       ]
     },
     {
@@ -1680,7 +1736,7 @@
       "language": "ini",
       "rules": 5,
       "shared": [
-        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml"]},
+        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml","xml"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]}
       ],
       "specific": [
@@ -1813,7 +1869,7 @@
         {"rule":"constructor_declarator","concept":"grammar.constructor-declarator","languages":["groovy","java"]},
         {"rule":"constructor_body","concept":"grammar.constructor-body","languages":["groovy","java"]},
         {"rule":"explicit_constructor_invocation","concept":"grammar.explicit-constructor-invocation","languages":["groovy","java"]},
-        {"rule":"name","concept":"grammar.name","languages":["erlang","graphql","groovy","java","lean","make","rocq"]},
+        {"rule":"name","concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"]},
         {"rule":"scoped_identifier","concept":"grammar.scoped-identifier","languages":["groovy","java","rust"]},
         {"rule":"field_declaration","concept":"grammar.field-declaration","languages":["c","cpp","go","groovy","java","proto","rust","vb"]},
         {"rule":"record_declaration","concept":"grammar.record-declaration","languages":["erlang","groovy","java"]},
@@ -1857,7 +1913,7 @@
         {"rule":"identifier","concept":"grammar.identifier","languages":["c","cmake","cpp","css","dart","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","proto","python","r","rocq","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"line_comment","concept":"grammar.line-comment","languages":["cmake","groovy","java","rust"]},
         {"rule":"block_comment","concept":"grammar.block-comment","languages":["groovy","java","racket","rust","scheme"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"single_line_string_literal","concept":"grammar.single-line-string-literal"},
@@ -2014,7 +2070,7 @@
         {"rule":"computed_property_name","concept":"grammar.computed-property-name","languages":["javascript","tsx","typescript"]},
         {"rule":"reserved_identifier","concept":"grammar.reserved-identifier","languages":["groovy","java","javascript","rust","tsx","typescript","zig"]},
         {"rule":"semicolon","concept":"grammar.semicolon","languages":["javascript","solidity","tsx","typescript"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": []
     },
@@ -2023,7 +2079,7 @@
       "language": "json",
       "rules": 11,
       "shared": [
-        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml"]},
+        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml","xml"]},
         {"rule":"value","concept":"grammar.value","languages":["css","graphql","json","json5","powershell"]},
         {"rule":"object","concept":"grammar.object","languages":["graphql","hcl","javascript","json","json5","tsx","typescript"]},
         {"rule":"pair","concept":"grammar.member","languages":["graphql","json","json5"]},
@@ -2042,7 +2098,7 @@
       "language": "json5",
       "rules": 12,
       "shared": [
-        {"rule":"file","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml"]},
+        {"rule":"file","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml","xml"]},
         {"rule":"value","concept":"grammar.value","languages":["css","graphql","json","json5","powershell"]},
         {"rule":"object","concept":"grammar.object","languages":["graphql","hcl","javascript","json","json5","tsx","typescript"]},
         {"rule":"member","concept":"grammar.member","languages":["graphql","json","json5"]},
@@ -2086,7 +2142,7 @@
         {"rule":"atom","concept":"grammar.atom","languages":["erlang","lean"]},
         {"rule":"application","concept":"grammar.function-application","languages":["lean","rocq"]},
         {"rule":"subscript","concept":"grammar.subscript","languages":["lean","python","sql"]},
-        {"rule":"name","concept":"grammar.name","languages":["erlang","graphql","groovy","java","lean","make","rocq"]},
+        {"rule":"name","concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"]},
         {"rule":"binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"tactic_sequence","concept":"grammar.tactic-sequence","languages":["lean","rocq"]},
@@ -2114,7 +2170,7 @@
         {"rule":"ellipsis","concept":"grammar.ellipsis","languages":["erlang","hcl","lean","python"]},
         {"rule":"boolean","concept":"grammar.boolean-value","languages":["csv","graphql","lean","proto","racket","scheme","toml","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"module_header","concept":"grammar.module-header"},
@@ -2258,7 +2314,7 @@
         {"rule":"unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"identifier","concept":"grammar.identifier","languages":["c","cmake","cpp","css","dart","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","proto","python","r","rocq","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"chunk","concept":"grammar.chunk"},
@@ -2312,11 +2368,11 @@
         {"rule":"arguments","concept":"grammar.argument-list","languages":["c","cmake","cpp","css","dart","go","graphql","groovy","java","javascript","lua","make","powershell","python","rust","tsx","typescript","vb","zig"]},
         {"rule":"list","concept":"grammar.list","languages":["erlang","graphql","json","json5","lean","make","python","racket","scheme","sql"]},
         {"rule":"primary","concept":"grammar.primary","languages":["dart","make"]},
-        {"rule":"name","concept":"grammar.name","languages":["erlang","graphql","groovy","java","lean","make","rocq"]},
+        {"rule":"name","concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"]},
         {"rule":"string","concept":"grammar.string","languages":["c","cpp","csv","erlang","graphql","javascript","json","json5","lean","lua","make","proto","python","r","racket","rocq","scheme","solidity","toml","tsx","typescript","zig"]},
         {"rule":"string_content","concept":"grammar.string-content","languages":["lean","make","python"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"makefile","concept":"grammar.makefile"},
@@ -2390,7 +2446,7 @@
         {"rule":"escape_sequence","concept":"grammar.escape-sequence","languages":["c","cmake","cpp","css","dart","go","groovy","java","javascript","lean","lua","nix","proto","python","r","racket","rust","scheme","solidity","toml","tsx","typescript","zig"]},
         {"rule":"interpolation","concept":"grammar.interpolation","languages":["nix","python","vb"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"source_code","concept":"grammar.source-code"},
@@ -3079,7 +3135,7 @@
         {"rule":"collection_primary_expression","concept":"grammar.primary-expression","languages":["groovy","java","javascript","powershell","python","solidity","tsx","typescript"]},
         {"rule":"collection_subscript","concept":"grammar.subscript","languages":["lean","python","sql"]},
         {"rule":"collection_call","concept":"grammar.call","languages":["erlang","python","r"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"simple_statement_sequence","concept":"grammar.simple-statement-sequence"},
@@ -3205,7 +3261,7 @@
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
         {"rule":"comma","concept":"grammar.comma","languages":["graphql","hcl","r"]},
         {"rule":"else_keyword","concept":"grammar.else-keyword","languages":["pascal","r","sql"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"parameter_with_default","concept":"grammar.parameter-with-default"},
@@ -3349,6 +3405,7 @@
         {"rule":"source_file","concept":"grammar.source-file","languages":["cmake","dart","erlang","go","graphql","proto","rocq","rust","solidity","vb","zig"]},
         {"rule":"attributes","concept":"grammar.attribute-list","languages":["lean","rocq"]},
         {"rule":"attribute","concept":"program.attributes","languages":["c","cpp","rocq","rust"]},
+        {"rule":"attribute_value","concept":"grammar.attribute-value","languages":["dtd","rocq","xml"]},
         {"rule":"selector","concept":"grammar.selector","languages":["css","rocq"]},
         {"rule":"import_command","concept":"grammar.import-statement","languages":["css","javascript","python","rocq","tsx","typescript","vb"]},
         {"rule":"export_command","concept":"grammar.export-statement","languages":["javascript","rocq","tsx","typescript"]},
@@ -3360,6 +3417,7 @@
         {"rule":"field_definition","concept":"grammar.field-definition","languages":["graphql","javascript","rocq","tsx","typescript"]},
         {"rule":"record_field","concept":"grammar.record-field","languages":["dart","erlang","rocq"]},
         {"rule":"end_command","concept":"grammar.end-command","languages":["lean","rocq"]},
+        {"rule":"notation_declaration","concept":"grammar.notation-declaration","languages":["dtd","rocq","xml"]},
         {"rule":"term","concept":"grammar.term","languages":["regex","rocq","sql"]},
         {"rule":"list_literal","concept":"grammar.list-literal","languages":["dart","rocq"]},
         {"rule":"application","concept":"grammar.function-application","languages":["lean","rocq"]},
@@ -3372,7 +3430,7 @@
         {"rule":"list_pattern","concept":"grammar.list-pattern","languages":["dart","lean","python","rocq"]},
         {"rule":"destructuring_pattern","concept":"grammar.destructuring-pattern","languages":["javascript","rocq","tsx","typescript"]},
         {"rule":"type","concept":"grammar.type","languages":["dart","go","graphql","groovy","java","pascal","proto","python","rocq","rust","sql","tsx","typescript","vb"]},
-        {"rule":"name","concept":"grammar.name","languages":["erlang","graphql","groovy","java","lean","make","rocq"]},
+        {"rule":"name","concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"]},
         {"rule":"implicit_binders","concept":"grammar.implicit-binder","languages":["lean","rocq"]},
         {"rule":"tactic_sequence","concept":"grammar.tactic-sequence","languages":["lean","rocq"]},
         {"rule":"match_pattern","concept":"grammar.match-pattern","languages":["rocq","rust"]},
@@ -3387,13 +3445,12 @@
         {"rule":"big_integer","concept":"grammar.big-integer","languages":["rocq","sql"]},
         {"rule":"hexadecimal_digit","concept":"grammar.hexadecimal-digit","languages":["rocq","solidity"]},
         {"rule":"string","concept":"grammar.string","languages":["c","cpp","csv","erlang","graphql","javascript","json","json5","lean","lua","make","proto","python","r","racket","rocq","scheme","solidity","toml","tsx","typescript","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"sentence","concept":"grammar.sentence"},
         {"rule":"fail_prefix","concept":"grammar.fail-prefix"},
         {"rule":"modern_attribute_block","concept":"grammar.modern-attribute-block"},
-        {"rule":"attribute_value","concept":"grammar.attribute-value"},
         {"rule":"legacy_attribute","concept":"grammar.legacy-attribute"},
         {"rule":"goal_selector","concept":"grammar.goal-selector"},
         {"rule":"range_selector","concept":"grammar.range-selector"},
@@ -3472,7 +3529,6 @@
         {"rule":"notation_command","concept":"grammar.notation-command"},
         {"rule":"infix_command","concept":"grammar.infix-command"},
         {"rule":"abbreviation_command","concept":"grammar.abbreviation-command"},
-        {"rule":"notation_declaration","concept":"grammar.notation-declaration"},
         {"rule":"notation_scope","concept":"grammar.notation-scope"},
         {"rule":"syntax_modifier_list","concept":"grammar.syntax-modifier-list"},
         {"rule":"syntax_modifier","concept":"grammar.syntax-modifier"},
@@ -3696,7 +3752,7 @@
         {"rule":"field_identifier_alias","concept":"grammar.field-identifier-alias","languages":["c","cpp","go","rust"]},
         {"rule":"super","concept":"grammar.super","languages":["groovy","java","javascript","rust","tsx","typescript"]},
         {"rule":"metavariable","concept":"grammar.metavariable","languages":["rocq","rust"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"declaration_statement","concept":"grammar.declaration-statement"},
@@ -3918,7 +3974,7 @@
         {"rule":"escape_sequence","concept":"grammar.escape-sequence","languages":["c","cmake","cpp","css","dart","go","groovy","java","javascript","lean","lua","nix","proto","python","r","racket","rust","scheme","solidity","toml","tsx","typescript","zig"]},
         {"rule":"string","concept":"grammar.string","languages":["c","cpp","csv","erlang","graphql","javascript","json","json5","lean","lua","make","proto","python","r","racket","rocq","scheme","solidity","toml","tsx","typescript","zig"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"source_unit","concept":"grammar.source-unit"},
@@ -4070,6 +4126,7 @@
         {"rule":"bit_type","concept":"grammar.bit-type","languages":["erlang","sql"]},
         {"rule":"binary","concept":"grammar.binary","languages":["erlang","sql"]},
         {"rule":"float","concept":"grammar.float","languages":["erlang","lean","python","r","sql","toml","zig"]},
+        {"rule":"enumeration","concept":"grammar.enumeration","languages":["dtd","sql","xml"]},
         {"rule":"array","concept":"grammar.array","languages":["javascript","lean","sql","toml","tsx","typescript"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
         {"rule":"block","concept":"grammar.block","languages":["css","dart","go","groovy","hcl","java","pascal","python","rust","sql"]},
@@ -4459,7 +4516,6 @@
         {"rule":"time_type","concept":"grammar.time-type"},
         {"rule":"time_stamp","concept":"grammar.time-stamp"},
         {"rule":"time_stamp_with_time_zone","concept":"grammar.time-stamp-with-time-zone"},
-        {"rule":"enumeration","concept":"grammar.enumeration"},
         {"rule":"marginalia","concept":"grammar.marginalia"},
         {"rule":"transaction","concept":"grammar.transaction"},
         {"rule":"transaction_commit_statement","concept":"grammar.transaction-commit-statement"},
@@ -4657,7 +4713,7 @@
       "language": "toml",
       "rules": 27,
       "shared": [
-        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml"]},
+        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml","xml"]},
         {"rule":"comment","concept":"grammar.comment","languages":["c","cpp","css","dart","diff","erlang","go","graphql","hcl","ini","javascript","json","json5","lean","lua","make","nix","pascal","powershell","proto","python","r","racket","rocq","rust","scheme","solidity","sql","toml","tsx","typescript","vb","zig"]},
         {"rule":"pair","concept":"grammar.pair","languages":["dart","javascript","python","toml","tsx","typescript"]},
         {"rule":"string","concept":"grammar.string","languages":["c","cpp","csv","erlang","graphql","javascript","json","json5","lean","lua","make","proto","python","r","racket","rocq","scheme","solidity","toml","tsx","typescript","zig"]},
@@ -4922,7 +4978,7 @@
         {"rule":"intersection_type","concept":"grammar.intersection-type","languages":["tsx","typescript"]},
         {"rule":"function_type","concept":"grammar.function-type","languages":["dart","go","rust","solidity","tsx","typescript"]},
         {"rule":"type_identifier_alias","concept":"grammar.type-identifier-alias","languages":["c","cpp","go","rust","tsx","typescript"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": []
     },
@@ -5160,7 +5216,7 @@
         {"rule":"intersection_type","concept":"grammar.intersection-type","languages":["tsx","typescript"]},
         {"rule":"function_type","concept":"grammar.function-type","languages":["dart","go","rust","solidity","tsx","typescript"]},
         {"rule":"type_identifier_alias","concept":"grammar.type-identifier-alias","languages":["c","cpp","go","rust","tsx","typescript"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": []
     },
@@ -5285,6 +5341,82 @@
       ]
     },
     {
+      "grammar": "native-xml",
+      "language": "xml",
+      "rules": 67,
+      "shared": [
+        {"rule":"document","concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml","xml"]},
+        {"rule":"markup_declaration","concept":"grammar.markup-declaration","languages":["dtd","xml"]},
+        {"rule":"declaration_separator","concept":"grammar.declaration-separator","languages":["dtd","xml"]},
+        {"rule":"element_declaration","concept":"grammar.element-declaration","languages":["dtd","xml"]},
+        {"rule":"content_specification","concept":"grammar.content-specification","languages":["dtd","xml"]},
+        {"rule":"mixed_content","concept":"grammar.mixed-content","languages":["dtd","xml"]},
+        {"rule":"child_content","concept":"grammar.child-content","languages":["dtd","xml"]},
+        {"rule":"content_particle","concept":"grammar.content-particle","languages":["dtd","xml"]},
+        {"rule":"choice","concept":"grammar.choice","languages":["dtd","xml"]},
+        {"rule":"attribute_list_declaration","concept":"grammar.attribute-list-declaration","languages":["dtd","xml"]},
+        {"rule":"attribute_definition","concept":"grammar.attribute-definition","languages":["dtd","xml"]},
+        {"rule":"attribute_type","concept":"grammar.attribute-type","languages":["dtd","xml"]},
+        {"rule":"string_type","concept":"grammar.string-type","languages":["dtd","xml"]},
+        {"rule":"token_sequence_type","concept":"grammar.token-sequence-type","languages":["dtd","xml"]},
+        {"rule":"enumerated_type","concept":"grammar.enumerated-type","languages":["dtd","xml"]},
+        {"rule":"notation_type","concept":"grammar.notation-type","languages":["dtd","xml"]},
+        {"rule":"enumeration","concept":"grammar.enumeration","languages":["dtd","sql","xml"]},
+        {"rule":"default_declaration","concept":"grammar.default-declaration","languages":["dtd","xml"]},
+        {"rule":"entity_declaration","concept":"grammar.entity-declaration","languages":["dtd","xml"]},
+        {"rule":"general_entity_declaration","concept":"grammar.general-entity-declaration","languages":["dtd","xml"]},
+        {"rule":"parameter_entity_declaration","concept":"grammar.parameter-entity-declaration","languages":["dtd","xml"]},
+        {"rule":"entity_value","concept":"grammar.entity-value","languages":["dtd","xml"]},
+        {"rule":"notation_data_declaration","concept":"grammar.notation-data-declaration","languages":["dtd","xml"]},
+        {"rule":"notation_declaration","concept":"grammar.notation-declaration","languages":["dtd","rocq","xml"]},
+        {"rule":"parameter_entity_reference","concept":"grammar.parameter-entity-reference","languages":["dtd","xml"]},
+        {"rule":"whitespace","concept":"grammar.whitespace","languages":["dtd","hcl","xml"]},
+        {"rule":"name","concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"]},
+        {"rule":"name_token","concept":"grammar.name-token","languages":["dtd","xml"]},
+        {"rule":"entity_or_character_reference","concept":"grammar.entity-or-character-reference","languages":["dtd","xml"]},
+        {"rule":"entity_reference","concept":"grammar.entity-reference","languages":["dtd","xml"]},
+        {"rule":"character_code_reference","concept":"grammar.character-code-reference","languages":["dtd","xml"]},
+        {"rule":"attribute_value","concept":"grammar.attribute-value","languages":["dtd","rocq","xml"]},
+        {"rule":"external_resource_identifier","concept":"grammar.external-resource-identifier","languages":["dtd","xml"]},
+        {"rule":"public_identifier","concept":"grammar.public-identifier","languages":["dtd","xml"]},
+        {"rule":"system_literal","concept":"grammar.system-literal","languages":["dtd","xml"]},
+        {"rule":"public_identifier_literal","concept":"grammar.public-identifier-literal","languages":["dtd","xml"]},
+        {"rule":"version_information","concept":"grammar.version-information","languages":["dtd","xml"]},
+        {"rule":"version_number","concept":"grammar.version-number","languages":["dtd","xml"]},
+        {"rule":"encoding_declaration","concept":"grammar.encoding-declaration","languages":["dtd","xml"]},
+        {"rule":"encoding_name","concept":"grammar.encoding-name","languages":["dtd","xml"]},
+        {"rule":"processing_instruction","concept":"grammar.processing-instruction","languages":["dtd","xml"]},
+        {"rule":"equals_sign","concept":"grammar.equals-sign","languages":["dtd","xml"]},
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]},
+        {"rule":"processing_instruction_target","concept":"grammar.processing-instruction-target","languages":["dtd","xml"]}
+      ],
+      "specific": [
+        {"rule":"prolog","concept":"grammar.prolog"},
+        {"rule":"miscellaneous_item","concept":"grammar.miscellaneous-item"},
+        {"rule":"extensible_markup_language_declaration","concept":"grammar.extensible-markup-language-declaration"},
+        {"rule":"independent_document_declaration","concept":"grammar.independent-document-declaration"},
+        {"rule":"document_type_declaration","concept":"grammar.document-type-declaration"},
+        {"rule":"internal_subset","concept":"grammar.internal-subset"},
+        {"rule":"markup_element","concept":"grammar.markup-element"},
+        {"rule":"empty_element_tag","concept":"grammar.empty-element-tag"},
+        {"rule":"element_attribute","concept":"grammar.element-attribute"},
+        {"rule":"start_tag","concept":"grammar.start-tag"},
+        {"rule":"end_tag","concept":"grammar.end-tag"},
+        {"rule":"erroneous_end_tag","concept":"grammar.erroneous-end-tag"},
+        {"rule":"element_content","concept":"grammar.element-content"},
+        {"rule":"character_data_section_expression","concept":"grammar.character-data-section-expression"},
+        {"rule":"character_data_section_start","concept":"grammar.character-data-section-start"},
+        {"rule":"style_sheet_processing_instruction","concept":"grammar.style-sheet-processing-instruction"},
+        {"rule":"extensible_markup_language_model_processing_instruction","concept":"grammar.extensible-markup-language-model-processing-instruction"},
+        {"rule":"pseudo_attribute","concept":"grammar.pseudo-attribute"},
+        {"rule":"pseudo_attribute_value","concept":"grammar.pseudo-attribute-value"},
+        {"rule":"start_tag_name","concept":"grammar.start-tag-name"},
+        {"rule":"end_tag_name","concept":"grammar.end-tag-name"},
+        {"rule":"self_closing_tag_end","concept":"grammar.self-closing-tag-end"},
+        {"rule":"erroneous_end_name","concept":"grammar.erroneous-end-name"}
+      ]
+    },
+    {
       "grammar": "native-zig",
       "language": "zig",
       "rules": 116,
@@ -5349,7 +5481,7 @@
         {"rule":"iteration_expression","concept":"grammar.expression","languages":["c","cpp","dart","erlang","go","groovy","hcl","java","javascript","lean","lua","nix","pascal","powershell","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"iteration_binary_expression","concept":"grammar.binary-expression","languages":["c","cpp","css","go","groovy","java","javascript","lean","lua","nix","python","r","rust","solidity","sql","tsx","typescript","vb","zig"]},
         {"rule":"iteration_unary_expression","concept":"grammar.unary-expression","languages":["c","cpp","dart","go","groovy","java","javascript","lean","lua","nix","pascal","powershell","rust","solidity","sql","tsx","typescript","vb","zig"]},
-        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"]}
+        {"rule":"word_characters","concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"]}
       ],
       "specific": [
         {"rule":"container_members","concept":"grammar.container-members"},
@@ -5609,6 +5741,7 @@
     {"concept":"grammar.attribute-body","languages":["lua"],"shared":false},
     {"concept":"grammar.attribute-command","languages":["lean"],"shared":false},
     {"concept":"grammar.attribute-declaration","languages":["c","cpp"],"shared":true},
+    {"concept":"grammar.attribute-definition","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.attribute-entry","languages":["lean"],"shared":false},
     {"concept":"grammar.attribute-expansion","languages":["hcl"],"shared":false},
     {"concept":"grammar.attribute-inheritance-clause","languages":["nix"],"shared":false},
@@ -5616,11 +5749,13 @@
     {"concept":"grammar.attribute-item","languages":["rust"],"shared":false},
     {"concept":"grammar.attribute-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.attribute-list","languages":["lean","rocq"],"shared":true},
+    {"concept":"grammar.attribute-list-declaration","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.attribute-path","languages":["nix"],"shared":false},
     {"concept":"grammar.attribute-selector","languages":["css"],"shared":false},
     {"concept":"grammar.attribute-set-expression","languages":["nix"],"shared":false},
     {"concept":"grammar.attribute-specifier","languages":["c","cpp"],"shared":true},
-    {"concept":"grammar.attribute-value","languages":["rocq"],"shared":false},
+    {"concept":"grammar.attribute-type","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.attribute-value","languages":["dtd","rocq","xml"],"shared":true},
     {"concept":"grammar.attributed-declarator","languages":["c","cpp"],"shared":true},
     {"concept":"grammar.attributed-field-declarator","languages":["c","cpp"],"shared":true},
     {"concept":"grammar.attributed-name-list","languages":["lua"],"shared":false},
@@ -5795,6 +5930,9 @@
     {"concept":"grammar.channel-type","languages":["go"],"shared":false},
     {"concept":"grammar.character-class","languages":["regex"],"shared":false},
     {"concept":"grammar.character-class-escape","languages":["regex"],"shared":false},
+    {"concept":"grammar.character-code-reference","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.character-data-section-expression","languages":["xml"],"shared":false},
+    {"concept":"grammar.character-data-section-start","languages":["xml"],"shared":false},
     {"concept":"grammar.character-escape","languages":["regex"],"shared":false},
     {"concept":"grammar.character-literal","languages":["c","cpp","erlang","groovy","java","lean","pascal","racket","rust","scheme","vb","zig"],"shared":true},
     {"concept":"grammar.character-set-statement","languages":["css"],"shared":false},
@@ -5804,7 +5942,9 @@
     {"concept":"grammar.check-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.check-option","languages":["sql"],"shared":false},
     {"concept":"grammar.chevron","languages":["python"],"shared":false},
+    {"concept":"grammar.child-content","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.child-selector","languages":["css"],"shared":false},
+    {"concept":"grammar.choice","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.chunk","languages":["lua"],"shared":false},
     {"concept":"grammar.class","languages":["javascript","tsx","typescript"],"shared":true},
     {"concept":"grammar.class-atom","languages":["regex"],"shared":false},
@@ -5940,6 +6080,7 @@
     {"concept":"grammar.conditional-match-expression","languages":["erlang"],"shared":false},
     {"concept":"grammar.conditional-opening-command","languages":["cmake"],"shared":false},
     {"concept":"grammar.conditional-resource-identifier","languages":["dart"],"shared":false},
+    {"concept":"grammar.conditional-section","languages":["dtd"],"shared":false},
     {"concept":"grammar.conditional-template","languages":["hcl"],"shared":false},
     {"concept":"grammar.conditional-type","languages":["tsx","typescript"],"shared":true},
     {"concept":"grammar.configuration-attribute","languages":["hcl"],"shared":false},
@@ -5992,6 +6133,8 @@
     {"concept":"grammar.constructor-type","languages":["tsx","typescript"],"shared":true},
     {"concept":"grammar.container-field","languages":["zig"],"shared":false},
     {"concept":"grammar.container-members","languages":["zig"],"shared":false},
+    {"concept":"grammar.content-particle","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.content-specification","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.context-command","languages":["rocq"],"shared":false},
     {"concept":"grammar.contextual-keyword","languages":["lua"],"shared":false},
     {"concept":"grammar.continue-expression","languages":["rust","zig"],"shared":true},
@@ -6091,6 +6234,7 @@
     {"concept":"grammar.declaration-prop","languages":["pascal"],"shared":false},
     {"concept":"grammar.declaration-prop-arguments","languages":["pascal"],"shared":false},
     {"concept":"grammar.declaration-section","languages":["pascal"],"shared":false},
+    {"concept":"grammar.declaration-separator","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.declaration-set","languages":["pascal"],"shared":false},
     {"concept":"grammar.declaration-specifiers","languages":["c","cpp"],"shared":true},
     {"concept":"grammar.declaration-statement","languages":["rust"],"shared":false},
@@ -6114,6 +6258,7 @@
     {"concept":"grammar.decorator-member-expression","languages":["javascript","tsx","typescript"],"shared":true},
     {"concept":"grammar.decorator-parenthesized-expression","languages":["tsx","typescript"],"shared":true},
     {"concept":"grammar.default-case","languages":["go"],"shared":false},
+    {"concept":"grammar.default-declaration","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.default-expression","languages":["sql"],"shared":false},
     {"concept":"grammar.default-formal-parameter","languages":["dart"],"shared":false},
     {"concept":"grammar.default-keyword","languages":["pascal","sql"],"shared":true},
@@ -6228,7 +6373,8 @@
     {"concept":"grammar.do-unless-statement","languages":["lean"],"shared":false},
     {"concept":"grammar.do-while","languages":["lean"],"shared":false},
     {"concept":"grammar.do-while-statement","languages":["solidity"],"shared":false},
-    {"concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml"],"shared":true},
+    {"concept":"grammar.document","languages":["csv","diff","graphql","ini","json","json5","toml","xml"],"shared":true},
+    {"concept":"grammar.document-type-declaration","languages":["xml"],"shared":false},
     {"concept":"grammar.dollar-escape","languages":["nix"],"shared":false},
     {"concept":"grammar.dollar-escaped-identifier","languages":["dart"],"shared":false},
     {"concept":"grammar.dollar-literal-closing-tag","languages":["sql"],"shared":false},
@@ -6276,6 +6422,9 @@
     {"concept":"grammar.each-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.edition","languages":["proto"],"shared":false},
     {"concept":"grammar.element-access","languages":["powershell","vb"],"shared":true},
+    {"concept":"grammar.element-attribute","languages":["xml"],"shared":false},
+    {"concept":"grammar.element-content","languages":["xml"],"shared":false},
+    {"concept":"grammar.element-declaration","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.element-subset","languages":["r"],"shared":false},
     {"concept":"grammar.element-subset-arguments","languages":["r"],"shared":false},
     {"concept":"grammar.element-value","languages":["groovy","java"],"shared":true},
@@ -6293,11 +6442,14 @@
     {"concept":"grammar.else-statement","languages":["lua"],"shared":false},
     {"concept":"grammar.emit-statement","languages":["solidity"],"shared":false},
     {"concept":"grammar.empty-declaration","languages":["c","cpp"],"shared":true},
+    {"concept":"grammar.empty-element-tag","languages":["xml"],"shared":false},
     {"concept":"grammar.empty-labeled-statement","languages":["go"],"shared":false},
     {"concept":"grammar.empty-result-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.empty-statement","languages":["dart","go","javascript","lua","powershell","proto","rust","tsx","typescript","vb"],"shared":true},
     {"concept":"grammar.encoded-escape-sequence","languages":["cmake"],"shared":false},
+    {"concept":"grammar.encoding-declaration","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.encoding-keyword","languages":["sql"],"shared":false},
+    {"concept":"grammar.encoding-name","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.encrypted-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.end-assertion","languages":["regex"],"shared":false},
     {"concept":"grammar.end-command","languages":["lean","rocq"],"shared":true},
@@ -6306,9 +6458,16 @@
     {"concept":"grammar.end-if-command","languages":["cmake"],"shared":false},
     {"concept":"grammar.end-if-keyword","languages":["pascal"],"shared":false},
     {"concept":"grammar.end-keyword","languages":["pascal","sql"],"shared":true},
+    {"concept":"grammar.end-tag","languages":["xml"],"shared":false},
+    {"concept":"grammar.end-tag-name","languages":["xml"],"shared":false},
     {"concept":"grammar.engine-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.enhanced-for-statement","languages":["groovy","java"],"shared":true},
-    {"concept":"grammar.enumeration","languages":["sql"],"shared":false},
+    {"concept":"grammar.entity-declaration","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.entity-or-character-reference","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.entity-reference","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.entity-value","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.enumerated-type","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.enumeration","languages":["dtd","sql","xml"],"shared":true},
     {"concept":"grammar.enumeration-assignment","languages":["tsx","typescript"],"shared":true},
     {"concept":"grammar.enumeration-base-clause","languages":["cpp"],"shared":false},
     {"concept":"grammar.enumeration-block","languages":["vb"],"shared":false},
@@ -6337,7 +6496,10 @@
     {"concept":"grammar.environment-variable","languages":["cmake"],"shared":false},
     {"concept":"grammar.equal-keyword","languages":["pascal"],"shared":false},
     {"concept":"grammar.equality-expression","languages":["dart"],"shared":false},
+    {"concept":"grammar.equals-sign","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.equation-clause","languages":["rocq"],"shared":false},
+    {"concept":"grammar.erroneous-end-name","languages":["xml"],"shared":false},
+    {"concept":"grammar.erroneous-end-tag","languages":["xml"],"shared":false},
     {"concept":"grammar.error-declaration","languages":["solidity"],"shared":false},
     {"concept":"grammar.error-defer-statement","languages":["zig"],"shared":false},
     {"concept":"grammar.error-parameter","languages":["solidity"],"shared":false},
@@ -6444,6 +6606,8 @@
     {"concept":"grammar.extends-clause-single","languages":["tsx","typescript"],"shared":true},
     {"concept":"grammar.extends-interfaces","languages":["groovy","java"],"shared":true},
     {"concept":"grammar.extends-type-clause","languages":["tsx","typescript"],"shared":true},
+    {"concept":"grammar.extensible-markup-language-declaration","languages":["xml"],"shared":false},
+    {"concept":"grammar.extensible-markup-language-model-processing-instruction","languages":["xml"],"shared":false},
     {"concept":"grammar.extension-body","languages":["dart"],"shared":false},
     {"concept":"grammar.extension-declaration","languages":["dart"],"shared":false},
     {"concept":"grammar.extension-expression","languages":["c","cpp"],"shared":true},
@@ -6461,7 +6625,10 @@
     {"concept":"grammar.external-function-declaration","languages":["dart"],"shared":false},
     {"concept":"grammar.external-keyword","languages":["pascal","sql"],"shared":true},
     {"concept":"grammar.external-property-reader-declaration","languages":["dart"],"shared":false},
+    {"concept":"grammar.external-resource-identifier","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.external-setter-declaration","languages":["dart"],"shared":false},
+    {"concept":"grammar.external-subset","languages":["dtd"],"shared":false},
+    {"concept":"grammar.external-subset-declaration","languages":["dtd"],"shared":false},
     {"concept":"grammar.external-variable-declaration","languages":["dart"],"shared":false},
     {"concept":"grammar.extract-command","languages":["rocq"],"shared":false},
     {"concept":"grammar.extract-operator","languages":["r"],"shared":false},
@@ -6660,6 +6827,7 @@
     {"concept":"grammar.function-type-tails","languages":["dart"],"shared":false},
     {"concept":"grammar.function-volatility","languages":["sql"],"shared":false},
     {"concept":"grammar.future-import-statement","languages":["python"],"shared":false},
+    {"concept":"grammar.general-entity-declaration","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.generalizable-command","languages":["rocq"],"shared":false},
     {"concept":"grammar.generalized-binder","languages":["rocq"],"shared":false},
     {"concept":"grammar.generated-keyword","languages":["sql"],"shared":false},
@@ -6847,6 +7015,7 @@
     {"concept":"grammar.indented-dollar-escape","languages":["nix"],"shared":false},
     {"concept":"grammar.indented-escape-sequence","languages":["nix"],"shared":false},
     {"concept":"grammar.indented-string-expression","languages":["nix"],"shared":false},
+    {"concept":"grammar.independent-document-declaration","languages":["xml"],"shared":false},
     {"concept":"grammar.index","languages":["hcl"],"shared":false},
     {"concept":"grammar.index-expression","languages":["dart","go","rust","zig"],"shared":true},
     {"concept":"grammar.index-field","languages":["sql"],"shared":false},
@@ -6938,6 +7107,7 @@
     {"concept":"grammar.interface-type-extension","languages":["graphql"],"shared":false},
     {"concept":"grammar.internal-fun","languages":["erlang"],"shared":false},
     {"concept":"grammar.internal-module","languages":["tsx","typescript"],"shared":true},
+    {"concept":"grammar.internal-subset","languages":["xml"],"shared":false},
     {"concept":"grammar.internet-address-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.interpolated-string-literal","languages":["vb"],"shared":false},
     {"concept":"grammar.interpolation","languages":["nix","python","vb"],"shared":true},
@@ -7157,6 +7327,8 @@
     {"concept":"grammar.mapping-key","languages":["solidity"],"shared":false},
     {"concept":"grammar.marginalia","languages":["sql"],"shared":false},
     {"concept":"grammar.marker-annotation","languages":["groovy","java"],"shared":true},
+    {"concept":"grammar.markup-declaration","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.markup-element","languages":["xml"],"shared":false},
     {"concept":"grammar.markup-language-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.match-arm","languages":["lean","rust"],"shared":true},
     {"concept":"grammar.match-block","languages":["python","rust"],"shared":true},
@@ -7233,8 +7405,10 @@
     {"concept":"grammar.microsoft-unaligned-pointer-modifier","languages":["c","cpp"],"shared":true},
     {"concept":"grammar.microsoft-unsigned-pointer-modifier","languages":["c","cpp"],"shared":true},
     {"concept":"grammar.minimum-value-keyword","languages":["sql"],"shared":false},
+    {"concept":"grammar.miscellaneous-item","languages":["xml"],"shared":false},
     {"concept":"grammar.missing-implementation-keyword","languages":["pascal"],"shared":false},
     {"concept":"grammar.missing-value-literal","languages":["r"],"shared":false},
+    {"concept":"grammar.mixed-content","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.modern-attribute-block","languages":["rocq"],"shared":false},
     {"concept":"grammar.modifier","languages":["lean","vb"],"shared":true},
     {"concept":"grammar.modifier-definition","languages":["solidity"],"shared":false},
@@ -7276,10 +7450,11 @@
     {"concept":"grammar.mutable-let-binding","languages":["lean"],"shared":false},
     {"concept":"grammar.mutable-pattern","languages":["rust"],"shared":false},
     {"concept":"grammar.mutable-specifier","languages":["rust"],"shared":false},
-    {"concept":"grammar.name","languages":["erlang","graphql","groovy","java","lean","make","rocq"],"shared":true},
+    {"concept":"grammar.name","languages":["dtd","erlang","graphql","groovy","java","lean","make","rocq","xml"],"shared":true},
     {"concept":"grammar.name-keyword","languages":["pascal","sql"],"shared":true},
     {"concept":"grammar.name-list","languages":["lua"],"shared":false},
     {"concept":"grammar.name-list-keyword","languages":["sql"],"shared":false},
+    {"concept":"grammar.name-token","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.named-argument","languages":["dart","lean","r"],"shared":true},
     {"concept":"grammar.named-block","languages":["powershell"],"shared":false},
     {"concept":"grammar.named-block-list","languages":["powershell"],"shared":false},
@@ -7375,8 +7550,10 @@
     {"concept":"grammar.not-operator","languages":["python"],"shared":false},
     {"concept":"grammar.notation","languages":["lean"],"shared":false},
     {"concept":"grammar.notation-command","languages":["rocq"],"shared":false},
-    {"concept":"grammar.notation-declaration","languages":["rocq"],"shared":false},
+    {"concept":"grammar.notation-data-declaration","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.notation-declaration","languages":["dtd","rocq","xml"],"shared":true},
     {"concept":"grammar.notation-scope","languages":["rocq"],"shared":false},
+    {"concept":"grammar.notation-type","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.nth-child-pseudo-class-selector","languages":["css"],"shared":false},
     {"concept":"grammar.nth-functional-notation","languages":["css"],"shared":false},
     {"concept":"grammar.null","languages":["c","cpp","go","graphql","javascript","json","json5","lua","r","tsx","typescript"],"shared":true},
@@ -7540,6 +7717,8 @@
     {"concept":"grammar.parameter-binders","languages":["lean"],"shared":false},
     {"concept":"grammar.parameter-block","languages":["powershell"],"shared":false},
     {"concept":"grammar.parameter-declaration","languages":["c","cpp","go","python","vb","zig"],"shared":true},
+    {"concept":"grammar.parameter-entity-declaration","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.parameter-entity-reference","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.parameter-list","languages":["c","cpp","go","lua","powershell","python","r","rust","solidity","vb","zig"],"shared":true},
     {"concept":"grammar.parameter-list-body","languages":["lua"],"shared":false},
     {"concept":"grammar.parameter-name","languages":["r","tsx","typescript"],"shared":true},
@@ -7701,12 +7880,15 @@
     {"concept":"grammar.procedure-external","languages":["pascal"],"shared":false},
     {"concept":"grammar.procedure-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.procedure-reference-declaration","languages":["pascal"],"shared":false},
+    {"concept":"grammar.processing-instruction","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.processing-instruction-target","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.program","languages":["groovy","java","javascript","lean","pascal","powershell","r","racket","scheme","sql","tsx","typescript"],"shared":true},
     {"concept":"grammar.program-element","languages":["racket","scheme"],"shared":true},
     {"concept":"grammar.program-header-keyword","languages":["pascal"],"shared":false},
     {"concept":"grammar.program-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.projection","languages":["lean"],"shared":false},
     {"concept":"grammar.projection-term","languages":["rocq"],"shared":false},
+    {"concept":"grammar.prolog","languages":["xml"],"shared":false},
     {"concept":"grammar.proof-block","languages":["rocq"],"shared":false},
     {"concept":"grammar.proof-command","languages":["rocq"],"shared":false},
     {"concept":"grammar.property-keyword","languages":["pascal"],"shared":false},
@@ -7716,6 +7898,8 @@
     {"concept":"grammar.property-signature","languages":["tsx","typescript"],"shared":true},
     {"concept":"grammar.protected-keyword","languages":["pascal"],"shared":false},
     {"concept":"grammar.provides-module-directive","languages":["groovy","java"],"shared":true},
+    {"concept":"grammar.pseudo-attribute","languages":["xml"],"shared":false},
+    {"concept":"grammar.pseudo-attribute-value","languages":["xml"],"shared":false},
     {"concept":"grammar.pseudo-class-arguments","languages":["css"],"shared":false},
     {"concept":"grammar.pseudo-class-nth-child-arguments","languages":["css"],"shared":false},
     {"concept":"grammar.pseudo-class-selector","languages":["css"],"shared":false},
@@ -7723,6 +7907,8 @@
     {"concept":"grammar.pseudo-element-arguments","languages":["css"],"shared":false},
     {"concept":"grammar.pseudo-element-selector","languages":["css"],"shared":false},
     {"concept":"grammar.public-field-definition","languages":["tsx","typescript"],"shared":true},
+    {"concept":"grammar.public-identifier","languages":["dtd","xml"],"shared":true},
+    {"concept":"grammar.public-identifier-literal","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.public-keyword","languages":["pascal"],"shared":false},
     {"concept":"grammar.published-keyword","languages":["pascal"],"shared":false},
     {"concept":"grammar.pure-virtual-clause","languages":["cpp"],"shared":false},
@@ -8010,6 +8196,7 @@
     {"concept":"grammar.selector-list","languages":["css"],"shared":false},
     {"concept":"grammar.selector-query","languages":["css"],"shared":false},
     {"concept":"grammar.self","languages":["rust"],"shared":false},
+    {"concept":"grammar.self-closing-tag-end","languages":["xml"],"shared":false},
     {"concept":"grammar.self-parameter","languages":["rust"],"shared":false},
     {"concept":"grammar.semicolon","languages":["javascript","solidity","tsx","typescript"],"shared":true},
     {"concept":"grammar.send-statement","languages":["go"],"shared":false},
@@ -8118,6 +8305,8 @@
     {"concept":"grammar.standard-input-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.start-assertion","languages":["regex"],"shared":false},
     {"concept":"grammar.start-keyword","languages":["sql"],"shared":false},
+    {"concept":"grammar.start-tag","languages":["xml"],"shared":false},
+    {"concept":"grammar.start-tag-name","languages":["xml"],"shared":false},
     {"concept":"grammar.state-location","languages":["solidity"],"shared":false},
     {"concept":"grammar.state-mutability","languages":["solidity"],"shared":false},
     {"concept":"grammar.state-variable-declaration","languages":["solidity"],"shared":false},
@@ -8164,6 +8353,7 @@
     {"concept":"grammar.string-literal-single-quotes","languages":["dart"],"shared":false},
     {"concept":"grammar.string-literal-single-quotes-multiple","languages":["dart"],"shared":false},
     {"concept":"grammar.string-or-identifier","languages":["r"],"shared":false},
+    {"concept":"grammar.string-type","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.string-value","languages":["css"],"shared":false},
     {"concept":"grammar.strip-marker","languages":["hcl"],"shared":false},
     {"concept":"grammar.structural-search-condition-clause","languages":["erlang"],"shared":false},
@@ -8189,6 +8379,7 @@
     {"concept":"grammar.structured-exception-handling-leave-statement","languages":["c","cpp"],"shared":true},
     {"concept":"grammar.structured-exception-handling-try-statement","languages":["c","cpp"],"shared":true},
     {"concept":"grammar.style-sheet","languages":["css"],"shared":false},
+    {"concept":"grammar.style-sheet-processing-instruction","languages":["xml"],"shared":false},
     {"concept":"grammar.subordinate-expression","languages":["powershell"],"shared":false},
     {"concept":"grammar.subscript","languages":["lean","python","sql"],"shared":true},
     {"concept":"grammar.subscript-argument-list","languages":["cpp"],"shared":false},
@@ -8247,6 +8438,7 @@
     {"concept":"grammar.system-five-application-binary-interface-c-declaration-keyword","languages":["pascal"],"shared":false},
     {"concept":"grammar.system-five-application-binary-interface-default-keyword","languages":["pascal"],"shared":false},
     {"concept":"grammar.system-library-string","languages":["c","cpp"],"shared":true},
+    {"concept":"grammar.system-literal","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.table-array-element","languages":["toml"],"shared":false},
     {"concept":"grammar.table-constructor","languages":["lua"],"shared":false},
     {"concept":"grammar.table-declaration","languages":["toml"],"shared":false},
@@ -8319,6 +8511,7 @@
     {"concept":"grammar.text","languages":["make"],"shared":false},
     {"concept":"grammar.text-block","languages":["java"],"shared":false},
     {"concept":"grammar.text-block-fragment-choice","languages":["java"],"shared":false},
+    {"concept":"grammar.text-declaration","languages":["dtd"],"shared":false},
     {"concept":"grammar.text-file-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.text-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.then-else-branches","languages":["lean"],"shared":false},
@@ -8345,6 +8538,7 @@
     {"concept":"grammar.token-pattern","languages":["rust"],"shared":false},
     {"concept":"grammar.token-repetition","languages":["rust"],"shared":false},
     {"concept":"grammar.token-repetition-pattern","languages":["rust"],"shared":false},
+    {"concept":"grammar.token-sequence-type","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.token-tree","languages":["rust"],"shared":false},
     {"concept":"grammar.token-tree-pattern","languages":["rust"],"shared":false},
     {"concept":"grammar.tokens","languages":["rust"],"shared":false},
@@ -8637,7 +8831,9 @@
     {"concept":"grammar.verbatim-string-characters","languages":["powershell"],"shared":false},
     {"concept":"grammar.verbose-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.vernacular-command","languages":["rocq"],"shared":false},
+    {"concept":"grammar.version-information","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.version-keyword","languages":["sql"],"shared":false},
+    {"concept":"grammar.version-number","languages":["dtd","xml"],"shared":true},
     {"concept":"grammar.view-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.virtual-keyword","languages":["pascal","solidity","sql"],"shared":true},
     {"concept":"grammar.virtual-specifier","languages":["cpp"],"shared":false},
@@ -8660,7 +8856,7 @@
     {"concept":"grammar.while-loop-keyword","languages":["cmake"],"shared":false},
     {"concept":"grammar.while-prefix","languages":["zig"],"shared":false},
     {"concept":"grammar.while-statement","languages":["c","cpp","dart","groovy","java","javascript","lua","powershell","python","r","solidity","tsx","typescript","vb","zig"],"shared":true},
-    {"concept":"grammar.whitespace","languages":["hcl"],"shared":false},
+    {"concept":"grammar.whitespace","languages":["dtd","hcl","xml"],"shared":true},
     {"concept":"grammar.wild-attribute","languages":["erlang"],"shared":false},
     {"concept":"grammar.wildcard","languages":["rocq"],"shared":false},
     {"concept":"grammar.wildcard-bounds","languages":["groovy","java"],"shared":true},
@@ -8681,7 +8877,7 @@
     {"concept":"grammar.with-statement","languages":["javascript","pascal","python","tsx","typescript","vb"],"shared":true},
     {"concept":"grammar.without-keyword","languages":["sql"],"shared":false},
     {"concept":"grammar.word","languages":["make"],"shared":false},
-    {"concept":"grammar.word-characters","languages":["c","cpp","dart","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","zig"],"shared":true},
+    {"concept":"grammar.word-characters","languages":["c","cpp","dart","dtd","erlang","go","groovy","java","javascript","lean","lua","make","nix","python","r","rocq","rust","solidity","tsx","typescript","xml","zig"],"shared":true},
     {"concept":"grammar.write-keyword","languages":["pascal","sql"],"shared":true},
     {"concept":"grammar.yield-each-statement","languages":["dart"],"shared":false},
     {"concept":"grammar.yield-expression","languages":["javascript","python","rust","tsx","typescript"],"shared":true},

@@ -70,7 +70,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   css: { crate: 'tree-sitter-css', dir: '.', oracle: true },
   dart: { crate: 'tree-sitter-dart', dir: '.', oracle: true },
   diff: { crate: 'tree-sitter-diff', dir: '.', oracle: true },
-  dtd: { crate: 'tree-sitter-xml', dir: 'dtd' },
+  dtd: { crate: 'tree-sitter-xml', dir: 'dtd', oracle: true },
   elixir: { crate: 'tree-sitter-elixir', dir: '.' },
   elm: { crate: 'tree-sitter-elm', dir: '.' },
   erlang: { crate: 'tree-sitter-erlang', dir: '.', oracle: true },
@@ -154,7 +154,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   tsx: { crate: 'tree-sitter-typescript', dir: 'tsx', oracle: true },
   typescript: { crate: 'tree-sitter-typescript', dir: 'typescript', oracle: true },
   vb: { crate: 'tree-sitter-vb-dotnet', dir: '.', oracle: true },
-  xml: { crate: 'tree-sitter-xml', dir: 'xml' },
+  xml: { crate: 'tree-sitter-xml', dir: 'xml', oracle: true },
   yaml: { crate: 'tree-sitter-yaml', dir: '.' },
   zig: { crate: 'tree-sitter-zig', dir: '.', oracle: true },
 });

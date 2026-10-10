@@ -492,7 +492,7 @@ pub(super) fn shifted_past(
     if theirs.ty != TreeType::Node
         || same_tree(mine, theirs)
         || first_leaf_start(mine) != first_leaf_start(theirs)
-        || theirs.end != parent.end
+        || theirs.end < parent.end
     {
         return Ordering::Equal;
     }

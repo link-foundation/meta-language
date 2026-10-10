@@ -91,7 +91,13 @@ fn wrapped(node: &Rc<Tree>) -> Rc<Tree> {
             .collect();
         if parts.len() != 1
             || parts[0].ty != TreeType::Node
-            || !PrecedenceTag::same(parts[0].precedence.as_ref(), current.precedence.as_ref())
+            || !parts[0]
+                .precedence
+                .as_ref()
+                .zip(current.precedence.as_ref())
+                .is_some_and(|(child, parent)| {
+                    child.level == parent.level && child.name == parent.name
+                })
         {
             break;
         }
@@ -212,7 +218,7 @@ impl Executor<'_> {
         if order == std::cmp::Ordering::Equal
             && child.rule == keep.tag.rule
             && opposite.as_ref().is_some_and(|kinds| {
-                child
+                wrapper
                     .kind
                     .as_ref()
                     .is_some_and(|kind| !kinds.contains(kind))

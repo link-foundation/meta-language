@@ -29,6 +29,10 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
         include_str!("native-grammars/diff.lino"),
     ),
     (
+        "native-grammars/dtd.lino",
+        include_str!("native-grammars/dtd.lino"),
+    ),
+    (
         "native-grammars/erlang.lino",
         include_str!("native-grammars/erlang.lino"),
     ),
@@ -147,6 +151,10 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
     (
         "native-grammars/vb.lino",
         include_str!("native-grammars/vb.lino"),
+    ),
+    (
+        "native-grammars/xml.lino",
+        include_str!("native-grammars/xml.lino"),
     ),
     (
         "native-grammars/zig.lino",

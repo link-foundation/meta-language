@@ -38,6 +38,7 @@
 //                one with the token tree-sitter's lexer prefers first wins:
 //                the higher lexical precedence, the longer, a literal over a
 //                pattern, the earlier
+import { readFileSync } from 'node:fs';
 import { compileGrammar } from '../grammar.js';
 import { parseGrammarLinks, renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from '../grammar-links.js';
 import { grammarDeclarations } from '../grammar-feature-forms.js';
@@ -59,10 +60,9 @@ export class UnsupportedTreeSitterPattern extends Error {}
 
 // tree-sitter patterns are JavaScript regular expression sources. The parser
 // below reads the subset grammars use into {alt|seq|repeat|class|char|and|not}.
+const IDENTIFIER_PROPERTIES = JSON.parse(readFileSync(new URL('../data/unicode-identifier-properties.json', import.meta.url), 'utf8')).properties;
 const ID_START = ['Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl'];
-const ID_CONTINUE = [...ID_START, 'Mn', 'Mc', 'Nd', 'Pc'];
 const PROPERTY_CATEGORIES = {
-  XID_Start: ID_START, ID_Start: ID_START, XID_Continue: ID_CONTINUE, ID_Continue: ID_CONTINUE,
   Alphabetic: [...ID_START], Letter: ['L'], L: ['L'], Lu: ['Lu'], Ll: ['Ll'], Lt: ['Lt'], Lm: ['Lm'], Lo: ['Lo'],
   Uppercase_Letter: ['Lu'], Lowercase_Letter: ['Ll'], Titlecase_Letter: ['Lt'], Modifier_Letter: ['Lm'], Other_Letter: ['Lo'],
   Uppercase: ['Lu'], Lowercase: ['Ll'],
@@ -132,7 +132,10 @@ export function parseTreeSitterPattern(source, flags = '') {
     name = name.replace(/^(?:General_Category|gc)=/u, '');
     const scriptName = name.replace(/^(?:Script|sc|Script_Extensions|scx)=/u, '');
     let items;
-    if (SCRIPTS.has(scriptName)) items = [{ kind: 'script', value: scriptName }];
+    if (Object.hasOwn(IDENTIFIER_PROPERTIES, name)) items = IDENTIFIER_PROPERTIES[name].map(([start, end]) => start === end
+      ? { kind: 'char', value: String.fromCodePoint(start) }
+      : { kind: 'range', start: String.fromCodePoint(start), end: String.fromCodePoint(end) });
+    else if (SCRIPTS.has(scriptName)) items = [{ kind: 'script', value: scriptName }];
     else if (PROPERTY_CATEGORIES[name]) items = PROPERTY_CATEGORIES[name].map((value) => ({ kind: 'category', value }));
     else fail(`unknown property ${name}`);
     items.push(...[...(PROPERTY_CHARACTERS[name] ?? '')].map((value) => ({ kind: 'char', value })));

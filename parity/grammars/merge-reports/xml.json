@@ -1,0 +1,383 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "xml",
+  "native": "native-xml",
+  "sources": [
+    {
+      "id": "tree-sitter-xml",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-xml 0.7.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-xml",
+      "revision": "4b64dd3a03ec002258d6268d712fd93716d6ab57",
+      "path": "xml/src/grammar.json",
+      "sha256": "99e650457a7228ef521f1909bf231b43d4846b2a1010e79b91b418226a2be2a4",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/xml.lino",
+    "sha256": "730568db9553f40d6c3e10918b6ab1cc31b46567ae6d16f13c65e5bc29ed51c9",
+    "ports": {
+      "path": "xml/src/scanner.c",
+      "sha256": "e7f401b138bbb0bd3f736c196dddcb74ff627fef2427e333bc4a7a629c0ad3b0",
+      "includes": [
+        {
+          "path": "common/scanner.h",
+          "sha256": "ce5082af60b1808035a43c3df129df9b811c9c69949fdb664a351f7aae340409"
+        }
+      ]
+    },
+    "scanners": [
+      {
+        "name": "processing_instruction_content",
+        "tokens": [
+          "processing_instruction_content"
+        ]
+      },
+      {
+        "name": "comment",
+        "tokens": [
+          "comment"
+        ]
+      },
+      {
+        "name": "character_data",
+        "tokens": [
+          "character_data"
+        ]
+      },
+      {
+        "name": "character_data_section",
+        "tokens": [
+          "character_data_section"
+        ]
+      }
+    ],
+    "immediate": [
+      "PITarget",
+      "_pi_content",
+      "Comment",
+      "CharData",
+      "CData",
+      "_start_tag_name",
+      "_end_tag_name",
+      "_erroneous_end_name",
+      "_self_closing_tag_delimiter"
+    ]
+  },
+  "rules": 67,
+  "keywords": [
+    "ANY",
+    "ATTLIST",
+    "CDATA",
+    "DOCTYPE",
+    "ELEMENT",
+    "EMPTY",
+    "ENTITIES",
+    "ENTITY",
+    "ID",
+    "IDREF",
+    "IDREFS",
+    "NDATA",
+    "NMTOKEN",
+    "NMTOKENS",
+    "NOTATION",
+    "PUBLIC",
+    "SYSTEM",
+    "encoding",
+    "no",
+    "standalone",
+    "version",
+    "xml",
+    "xml-model",
+    "xml-stylesheet",
+    "yes"
+  ],
+  "renamed": [
+    {
+      "source": "_Misc",
+      "native": "miscellaneous_item"
+    },
+    {
+      "source": "XMLDecl",
+      "native": "extensible_markup_language_declaration"
+    },
+    {
+      "source": "_SDDecl",
+      "native": "independent_document_declaration"
+    },
+    {
+      "source": "doctypedecl",
+      "native": "document_type_declaration"
+    },
+    {
+      "source": "_intSubset",
+      "native": "internal_subset"
+    },
+    {
+      "source": "element",
+      "native": "markup_element"
+    },
+    {
+      "source": "EmptyElemTag",
+      "native": "empty_element_tag"
+    },
+    {
+      "source": "Attribute",
+      "native": "element_attribute"
+    },
+    {
+      "source": "STag",
+      "native": "start_tag"
+    },
+    {
+      "source": "ETag",
+      "native": "end_tag"
+    },
+    {
+      "source": "_ErroneousETag",
+      "native": "erroneous_end_tag"
+    },
+    {
+      "source": "content",
+      "native": "element_content"
+    },
+    {
+      "source": "CDSect",
+      "native": "character_data_section_expression"
+    },
+    {
+      "source": "CDStart",
+      "native": "character_data_section_start"
+    },
+    {
+      "source": "StyleSheetPI",
+      "native": "style_sheet_processing_instruction"
+    },
+    {
+      "source": "XmlModelPI",
+      "native": "extensible_markup_language_model_processing_instruction"
+    },
+    {
+      "source": "PseudoAtt",
+      "native": "pseudo_attribute"
+    },
+    {
+      "source": "PseudoAttValue",
+      "native": "pseudo_attribute_value"
+    },
+    {
+      "source": "_markupdecl",
+      "native": "markup_declaration"
+    },
+    {
+      "source": "_DeclSep",
+      "native": "declaration_separator"
+    },
+    {
+      "source": "elementdecl",
+      "native": "element_declaration"
+    },
+    {
+      "source": "contentspec",
+      "native": "content_specification"
+    },
+    {
+      "source": "Mixed",
+      "native": "mixed_content"
+    },
+    {
+      "source": "children",
+      "native": "child_content"
+    },
+    {
+      "source": "_cp",
+      "native": "content_particle"
+    },
+    {
+      "source": "_choice",
+      "native": "choice"
+    },
+    {
+      "source": "AttlistDecl",
+      "native": "attribute_list_declaration"
+    },
+    {
+      "source": "AttDef",
+      "native": "attribute_definition"
+    },
+    {
+      "source": "_AttType",
+      "native": "attribute_type"
+    },
+    {
+      "source": "StringType",
+      "native": "string_type"
+    },
+    {
+      "source": "TokenizedType",
+      "native": "token_sequence_type"
+    },
+    {
+      "source": "_EnumeratedType",
+      "native": "enumerated_type"
+    },
+    {
+      "source": "NotationType",
+      "native": "notation_type"
+    },
+    {
+      "source": "Enumeration",
+      "native": "enumeration"
+    },
+    {
+      "source": "DefaultDecl",
+      "native": "default_declaration"
+    },
+    {
+      "source": "_EntityDecl",
+      "native": "entity_declaration"
+    },
+    {
+      "source": "GEDecl",
+      "native": "general_entity_declaration"
+    },
+    {
+      "source": "PEDecl",
+      "native": "parameter_entity_declaration"
+    },
+    {
+      "source": "EntityValue",
+      "native": "entity_value"
+    },
+    {
+      "source": "NDataDecl",
+      "native": "notation_data_declaration"
+    },
+    {
+      "source": "NotationDecl",
+      "native": "notation_declaration"
+    },
+    {
+      "source": "PEReference",
+      "native": "parameter_entity_reference"
+    },
+    {
+      "source": "_S",
+      "native": "whitespace"
+    },
+    {
+      "source": "Name",
+      "native": "name"
+    },
+    {
+      "source": "Nmtoken",
+      "native": "name_token"
+    },
+    {
+      "source": "_Reference",
+      "native": "entity_or_character_reference"
+    },
+    {
+      "source": "EntityRef",
+      "native": "entity_reference"
+    },
+    {
+      "source": "CharRef",
+      "native": "character_code_reference"
+    },
+    {
+      "source": "AttValue",
+      "native": "attribute_value"
+    },
+    {
+      "source": "ExternalID",
+      "native": "external_resource_identifier"
+    },
+    {
+      "source": "PublicID",
+      "native": "public_identifier"
+    },
+    {
+      "source": "SystemLiteral",
+      "native": "system_literal"
+    },
+    {
+      "source": "PubidLiteral",
+      "native": "public_identifier_literal"
+    },
+    {
+      "source": "_VersionInfo",
+      "native": "version_information"
+    },
+    {
+      "source": "VersionNum",
+      "native": "version_number"
+    },
+    {
+      "source": "_EncodingDecl",
+      "native": "encoding_declaration"
+    },
+    {
+      "source": "EncName",
+      "native": "encoding_name"
+    },
+    {
+      "source": "PI",
+      "native": "processing_instruction"
+    },
+    {
+      "source": "_Eq",
+      "native": "equals_sign"
+    },
+    {
+      "source": "PITarget",
+      "native": "processing_instruction_target"
+    },
+    {
+      "source": "_start_tag_name",
+      "native": "start_tag_name"
+    },
+    {
+      "source": "_end_tag_name",
+      "native": "end_tag_name"
+    },
+    {
+      "source": "_self_closing_tag_delimiter",
+      "native": "self_closing_tag_end"
+    },
+    {
+      "source": "_erroneous_end_name",
+      "native": "erroneous_end_name"
+    }
+  ],
+  "expandedWords": [],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "document",
+        "concept": "grammar.document"
+      },
+      {
+        "rule": "choice",
+        "concept": "grammar.choice"
+      },
+      {
+        "rule": "name",
+        "concept": "grammar.name"
+      }
+    ],
+    "generated": 64
+  },
+  "sourceTransforms": [
+    {
+      "family": "external-literal-token",
+      "literal": "/>",
+      "token": "_self_closing_tag_delimiter",
+      "count": 1,
+      "reason": "The pinned scanner pops the element name stack at the anonymous self-closing delimiter; a generated scanner rule retains that state action and the original anonymous leaf."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

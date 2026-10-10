@@ -112,7 +112,8 @@
       "version": "0.7.0",
       "parserSha256": "79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932",
       "wasmSha256": "2534944fea9484174b791535509c09a25fcd1c4099da9392056b009311dcfe81",
-      "license": "dtd.LICENSE"
+      "license": "dtd.LICENSE",
+      "oracle": true
     },
     "elixir": {
       "id": "elixir",
@@ -568,7 +569,8 @@
       "version": "0.7.0",
       "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844",
       "wasmSha256": "2edd39d0ef194dc70878fe99b277180547fabf252f85b58e537db5a11e3027fa",
-      "license": "xml.LICENSE"
+      "license": "xml.LICENSE",
+      "oracle": true
     },
     "yaml": {
       "id": "yaml",
