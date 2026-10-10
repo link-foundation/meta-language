@@ -15,8 +15,27 @@
   "malformedRegex": [
     "return /[unterminated",
     "return /first\nsecond/",
-    "return /first\u2028second/"
+    "return /first second/"
   ],
   "templateProgram": "function terminated(name) { return `${name}\\0`; }",
-  "repeatedRegex": { "count": 200, "literal": "/[é😀/]/u" }
+  "repeatedRegex": {
+    "count": 200,
+    "literal": "/[é😀/]/u"
+  },
+  "controlRegexPrograms": [
+    "if (value) /9A/.test(text);",
+    "if ((value)) /* retain context */ /[\\\"9A]/u.test(text);",
+    "while (ready()) /9A/.exec(text);",
+    "for (; ready; ) /9A/.test(text);",
+    "with (context) /9A/.test(text);",
+    "switch (value) { case 1: /9A/.test(text); }",
+    "if (value) action(); else /9A/.test(text);",
+    "do /9A/.test(text); while (false);"
+  ],
+  "qualifiedDivisionPrograms": [
+    "function f(x) { return obj.if(x) / 2; }",
+    "function f(x) { return obj?.while(x) / 2; }",
+    "function f(x) { return obj.return / 2; }",
+    "function f(x) { return obj?.do / 2; }"
+  ]
 }

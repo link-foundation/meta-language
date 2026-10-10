@@ -219,29 +219,45 @@ pub fn find_default_parameter_reference(
     }
 }
 
-pub fn start_regular_expression(kind: &str, value: &str) -> bool {
-    if (kind.is_empty()) {
+pub fn start_regular_expression(kind: String, value: String) -> bool {
+    if (kind == "") {
         true
-    } else if (kind == "identifier") {
-        ((((((((((value == "return") || (value == "throw")) || (value == "case"))
-            || (value == "delete"))
-            || (value == "void"))
-            || (value == "typeof"))
-            || (value == "yield"))
-            || (value == "await"))
-            || (value == "in"))
-            || (value == "of"))
-    } else if kind == "punct" {
-        (((((((value != ")") && (value != "]")) && (value != "}")) && (value != "."))
-            && (value != "?."))
-            && (value != "++"))
-            && (value != "--"))
     } else {
-        false
+        if (kind == "identifier") {
+            ((((((((((((value == "return") || (value == "throw")) || (value == "case"))
+                || (value == "delete"))
+                || (value == "void"))
+                || (value == "typeof"))
+                || (value == "yield"))
+                || (value == "await"))
+                || (value == "in"))
+                || (value == "of"))
+                || (value == "else"))
+                || (value == "do"))
+        } else {
+            if (kind != "punct") {
+                false
+            } else {
+                (((((((value != ")") && (value != "]")) && (value != "}")) && (value != "."))
+                    && (value != "?."))
+                    && (value != "++"))
+                    && (value != "--"))
+            }
+        }
     }
 }
 
-pub fn regular_expression_end(units: &[f64], start: f64) -> f64 {
+pub fn accept_control_parenthesis(kind: String, value: String, qualified: bool) -> bool {
+    if (qualified || (kind != "identifier")) {
+        false
+    } else {
+        ((((((value == "if") || (value == "while")) || (value == "for")) || (value == "with"))
+            || (value == "switch"))
+            || (value == "catch"))
+    }
+}
+
+pub fn regular_expression_end(units: Vec<f64>, start: f64) -> f64 {
     {
         let index = (start + 1f64);
         {

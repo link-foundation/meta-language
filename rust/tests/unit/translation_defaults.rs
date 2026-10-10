@@ -184,6 +184,26 @@ fn lexical_boundaries_keep_regular_expression_bodies_and_division_distinct() {
         assert_eq!(error.kind, ErrorKind::Syntax);
         assert!(error.reason.contains("unterminated regular expression"));
     }
+    for source in fixtures["controlRegexPrograms"].as_array().unwrap() {
+        let tokens = tokenize(source.as_str().unwrap(), Language::JavaScript).unwrap();
+        assert_eq!(
+            tokens
+                .tokens
+                .iter()
+                .filter(|token| token.kind == TokenKind::RegularExpression)
+                .count(),
+            1
+        );
+    }
+    for source in fixtures["qualifiedDivisionPrograms"].as_array().unwrap() {
+        let tokens = tokenize(source.as_str().unwrap(), Language::JavaScript).unwrap();
+        assert!(
+            !tokens
+                .tokens
+                .iter()
+                .any(|token| token.kind == TokenKind::RegularExpression)
+        );
+    }
     let count = fixtures["repeatedRegex"]["count"].as_u64().unwrap();
     let literal = fixtures["repeatedRegex"]["literal"].as_str().unwrap();
     let source = (0..count)

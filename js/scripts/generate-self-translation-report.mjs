@@ -30,7 +30,8 @@ import { fileURLToPath } from 'node:url';
 
 import { DecoratorSet } from '../src/decorators.js';
 import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
-import { selfTranslate } from '../src/self-translation.js';
+import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
+import { tokenize } from '../src/translation/lexer.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -155,11 +156,63 @@ function checkedCoverage(source, translation) {
   return coverage;
 }
 
-function measure(module, decorators) {
+/**
+ * Resolve actual translated exports before measuring their importers. A
+ * signature is supplied only when the provider's translation checked it;
+ * missing exports and cycles keep the ordinary carried-item diagnostic.
+ * Source paths are relative to js/src, independent of the report shard.
+ */
+export function createModuleContext(readSource) {
+  const sources = new Map();
+  const read = (module) => {
+    if (!sources.has(module)) sources.set(module, readSource(module));
+    return sources.get(module);
+  };
+  const contexts = new Map();
+  const signatures = new Map();
+  const visiting = new Set();
+  const context = (module) => {
+    if (contexts.has(module)) return contexts.get(module);
+    const directory = posix.dirname(module);
+    const moduleDirectory = directory === '.' ? [] : directory.split('/');
+    const imports = {};
+    const result = { moduleDirectory, imports };
+    const source = read(module);
+    if (source === null || visiting.has(module)) return result;
+    visiting.add(module);
+    try {
+      const bytes = Buffer.from(source, 'utf8');
+      const tree = parseProgrammingLanguage(source, 'JavaScript')?.tree;
+      for (const item of tree?.children ?? []) {
+        if (item.term !== 'import_statement') continue;
+        const name = item.children.find((child) => child.field === 'source');
+        if (!name) continue;
+        const text = bytes.subarray(name.span.byteRange.start, name.span.byteRange.end).toString('utf8');
+        const specifier = tokenize(text, 'JavaScript').tokens[0]?.value;
+        if (!specifier || !/^\.\.?\//u.test(specifier)) continue;
+        const target = posix.normalize(posix.join(directory, specifier));
+        if (target === '..' || target.startsWith('../') || visiting.has(target)) continue;
+        if (!signatures.has(target)) {
+          const provider = read(target);
+          if (provider === null) continue;
+          signatures.set(target, selfTranslationSignatures(provider, 'JavaScript', context(target)));
+        }
+        imports[specifier] = signatures.get(target);
+      }
+      contexts.set(module, result);
+      return result;
+    } finally {
+      visiting.delete(module);
+    }
+  };
+  return context;
+}
+
+function measure(module, decorators, context) {
   const rust = counterpart(module);
   const source = readFileSync(join(root, module), 'utf8');
   const started = performance.now();
-  const translation = selfTranslate(source, 'JavaScript', 'Rust');
+  const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
   const coverage = checkedCoverage(source, translation);
   const items = Object.fromEntries(STATUSES.map((status) => [status, translation.items.filter((item) => item.status === status).length]));
   const milliseconds = Math.round(performance.now() - started);
@@ -167,7 +220,7 @@ function measure(module, decorators) {
   const generic = compareRustDefinitions(translation.code, handWritten);
   let decorated = { ...generic, coverage };
   if (decorators.size > 0) {
-    const translation = selfTranslate(source, 'JavaScript', 'Rust', { decorators });
+    const translation = selfTranslate(source, 'JavaScript', 'Rust', { ...context, decorators });
     decorated = { ...compareRustDefinitions(translation.code, handWritten), coverage: checkedCoverage(source, translation) };
   }
   const sha256 = (file) => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
@@ -297,9 +350,13 @@ function main() {
   const decorators = DecoratorSet.fromLino(readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8'));
   const rows = [];
   const failures = [];
+  const context = createModuleContext((module) => {
+    const file = join(root, 'js/src', module);
+    return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
+  });
   for (const module of selectedModules()) {
     try {
-      rows.push(measure(module, decorators));
+      rows.push(measure(module, decorators, context(posix.relative('js/src', module))));
     } catch (error) {
       failures.push({ module, error: String(error?.message ?? error) });
     }

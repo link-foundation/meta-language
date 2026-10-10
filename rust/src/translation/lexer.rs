@@ -13,7 +13,8 @@ use regex::Regex;
 use super::decimal::Decimal;
 use super::diagnostics::{ErrorKind, Result, TranslationError};
 use super::frontend_rules::{
-    UnicodeEscape, decode_unicode_escape, regular_expression_end, start_regular_expression,
+    UnicodeEscape, accept_control_parenthesis, decode_unicode_escape, regular_expression_end,
+    start_regular_expression,
 };
 use super::js_number::js_number_literal;
 use super::{Language, Span};
@@ -338,6 +339,8 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
     // Encode lazily once; copying each suffix is quadratic in modules with
     // many regular-expression literals. The shared rule uses absolute offsets.
     let mut units: Option<Vec<f64>> = None;
+    let mut scopes = Vec::new();
+    let mut closed = false;
     let mut index = 0;
     while index < source.len() {
         let unit = source.units[index];
@@ -376,8 +379,18 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
                 TokenKind::Punct => "punct",
                 _ => "other",
             });
+            let kind = if tokens
+                .iter()
+                .rev()
+                .nth(1)
+                .is_some_and(|token| token.value == "." || token.value == "?.")
+            {
+                "member"
+            } else {
+                kind
+            };
             let value = previous.map_or("", |token| token.value.as_str());
-            if start_regular_expression(kind, value) {
+            if closed || start_regular_expression(kind, value) {
                 let units = units.get_or_insert_with(|| {
                     source.units().iter().map(|unit| f64::from(*unit)).collect()
                 });
@@ -399,9 +412,11 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
                     end,
                 ));
                 index = end;
+                closed = false;
                 continue;
             }
         }
+        closed = false;
         if language == Language::JavaScript && ch == Some('`') {
             let token = template_token(source, index)?;
             index = token.end;
@@ -520,6 +535,26 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
                 |operator| (*operator).to_owned(),
             );
         let length = text.encode_utf16().count();
+        if language == Language::JavaScript {
+            if text == "(" {
+                let qualified = tokens
+                    .iter()
+                    .rev()
+                    .nth(1)
+                    .is_some_and(|token| token.value == "." || token.value == "?.");
+                scopes.push(tokens.last().is_some_and(|token| {
+                    let kind = if token.kind == TokenKind::Identifier {
+                        "identifier"
+                    } else {
+                        "other"
+                    };
+                    accept_control_parenthesis(kind, &token.value, qualified)
+                }));
+            }
+            if text == ")" {
+                closed = scopes.pop().unwrap_or(false);
+            }
+        }
         tokens.push(Token::new(
             TokenKind::Punct,
             text.clone(),

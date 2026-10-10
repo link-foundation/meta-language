@@ -136,6 +136,12 @@ report assertion. Verification rejects missing or duplicate modules, stale
 sources, failed translations, inconsistent measurements and missing Markdown
 rows without translating the whole corpus again.
 
+The report resolves relative named imports against the source tree and passes
+the providers' checked translated-export signatures and each module's directory
+to both measurements. It caches source reads, signatures and dependency contexts
+within a shard. Missing providers, unsupported exports and unresolved cycles
+retain the translator's carried-item diagnostics.
+
 Decorators edit emitted lines; they cannot add what the translator carries
 untranslated (imports, classes, exports the emitters do not cover), so for
 most modules the report shows the difference that is left honestly rather

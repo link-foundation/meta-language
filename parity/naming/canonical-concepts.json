@@ -65217,6 +65217,28 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "translation.accept-control-parenthesis",
+      "phrase": "accept control parenthesis",
+      "role": "operation",
+      "definition": "Determine whether an opening parenthesis belongs to a JavaScript control statement rather than a value expression.",
+      "constraints": [
+        "A qualified property name does not open a control statement.",
+        "Closing the control condition permits a regular expression statement.",
+        "The JavaScript and Rust frontends use the same translated decision."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptControlParenthesis"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_control_parenthesis"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

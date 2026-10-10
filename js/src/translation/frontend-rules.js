@@ -114,11 +114,19 @@ export function startRegularExpression(kind, value) {
   if (kind === 'identifier') {
     return value === 'return' || value === 'throw' || value === 'case'
       || value === 'delete' || value === 'void' || value === 'typeof'
-      || value === 'yield' || value === 'await' || value === 'in' || value === 'of';
+      || value === 'yield' || value === 'await' || value === 'in' || value === 'of'
+      || value === 'else' || value === 'do';
   }
   if (kind !== 'punct') return false;
   return value !== ')' && value !== ']' && value !== '}' && value !== '.'
     && value !== '?.' && value !== '++' && value !== '--';
+}
+
+/** @param {string} kind @param {string} value @param {boolean} qualified @returns {boolean} */
+export function acceptControlParenthesis(kind, value, qualified) {
+  if (qualified || kind !== 'identifier') return false;
+  return value === 'if' || value === 'while' || value === 'for'
+    || value === 'with' || value === 'switch' || value === 'catch';
 }
 
 /**

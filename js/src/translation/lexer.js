@@ -4,7 +4,7 @@
 // part of the JavaScript frontend's input.
 
 import { TranslationError } from './diagnostics.js';
-import { decodeUnicodeEscape, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
+import { acceptControlParenthesis, decodeUnicodeEscape, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -31,6 +31,8 @@ export function tokenize(source, language) {
   // Encode once, on the first regular expression. Copying each remaining
   // suffix makes a module with many literals take quadratic time and space.
   let units = null;
+  const scopes = [];
+  let closed = false;
   let index = 0;
   while (index < source.length) {
     const char = source[index];
@@ -52,14 +54,16 @@ export function tokenize(source, language) {
       continue;
     }
     const start = index;
-    if (language === 'JavaScript' && char === '/' && startRegularExpression(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '')) {
+    if (language === 'JavaScript' && char === '/' && (closed || startRegularExpression(['.', '?.'].includes(tokens.at(-2)?.value) ? 'member' : tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? ''))) {
       units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
       const end = regularExpressionEnd(units, index);
       if (end < 0) throw new TranslationError('syntax', 'unterminated regular expression literal', { start, end: source.length });
       tokens.push({ kind: 'regex', value: '/', raw: source.slice(index, end), start, end });
       index = end;
+      closed = false;
       continue;
     }
+    closed = false;
     if (language === 'JavaScript' && char === '`') {
       tokens.push(templateToken(source, index));
       index = tokens.at(-1).end;
@@ -120,6 +124,10 @@ export function tokenize(source, language) {
     }
     const operator = operators.find((candidate) => source.startsWith(candidate, index));
     const text = operator ?? String.fromCodePoint(source.codePointAt(index));
+    if (language === 'JavaScript') {
+      if (text === '(') scopes.push(acceptControlParenthesis(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '', ['.', '?.'].includes(tokens.at(-2)?.value)));
+      if (text === ')') closed = scopes.pop() ?? false;
+    }
     tokens.push({ kind: 'punct', value: text, start, end: start + text.length, raw: text });
     index += text.length;
   }

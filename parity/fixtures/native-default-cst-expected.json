@@ -8,7 +8,7 @@
       "grammars": {
         "native-python": {
           "version": "1.0.0",
-          "parserSha256": "014928394d47d06fd987eeba051344397359c038090eb50fb0a2b758f5b44058"
+          "parserSha256": "ff42f64e1c0620d99a962bb575edf3dd2bab05ab6f341816d8878f9fae772252"
         }
       },
       "oracleGrammars": {

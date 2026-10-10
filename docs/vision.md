@@ -701,6 +701,10 @@ literals, including escaped delimiters and character classes, before reporting
 unsupported regular expression semantics. Lexical boundaries and division
 disambiguation use shared JavaScript decisions translated into Rust; lexical
 recognition alone does not establish executable regular expression support.
+Control-statement parentheses retain their lexical context through nested
+expressions and comments, while qualified method calls retain value-expression
+context. Each tokenizer lazily encodes its source once and reuses the encoding
+across regular-expression literals, with absolute UTF-16 token offsets.
 
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,

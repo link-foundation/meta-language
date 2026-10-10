@@ -25,6 +25,17 @@ test('division and division assignment stay separate from regex literals', () =>
   for (const source of fixtures.malformedRegex) assert.throws(() => tokenize(source, 'JavaScript'), /unterminated regular expression/u);
 });
 
+test('regex literals after control parentheses stay indivisible through nested expressions and comments', () => {
+  for (const source of fixtures.controlRegexPrograms) {
+    const tokens = tokenize(source, 'JavaScript').tokens;
+    assert.equal(tokens.filter(({ kind }) => kind === 'regex').length, 1, source);
+    assert.ok(tokens.some(({ raw }) => raw.includes('9A')), source);
+  }
+  for (const source of fixtures.qualifiedDivisionPrograms) {
+    assert.equal(tokenize(source, 'JavaScript').tokens.filter(({ kind }) => kind === 'regex').length, 0, source);
+  }
+});
+
 test('NUL template escapes translate while legacy octal escapes are rejected', () => {
   const source = fixtures.templateProgram;
   assert.doesNotThrow(() => emitJavaScript(checkProgram(parseJavaScript(source))));
