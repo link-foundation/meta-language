@@ -16,6 +16,29 @@ const fixtureGroups = [
   ['parity/fixtures/scanner-counted-delimiters.json', 'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS'],
 ];
 const fixtures = fixtureGroups.flatMap(([fixtureFile, requirementId]) => JSON.parse(readFileSync(new URL(`../../${fixtureFile}`, import.meta.url), 'utf8')).map((item) => ({ ...item, fixtureFile, requirementId })));
+
+test('wrapped scanner tokens retain skipped trivia and read consumed text past a mark', () => {
+  const cases = JSON.parse(readFileSync(new URL('../../parity/fixtures/scanner-token-spans.json', import.meta.url), 'utf8'));
+  for (const fixture of cases) {
+    const parser = compileGrammar(parseGrammarLinks(fixture.listing));
+    for (const input of fixture.accept) {
+      const outcome = parser.parseTree(input);
+      assert.equal(outcome.ok, true, `${fixture.name}: ${input}`);
+      assert.equal(renderSyntaxTree(outcome.tree), fixture.trees[input]);
+      const leaf = outcome.tree.children.find(({ kind }) => kind === 'label');
+      const start = input === 'é😀' ? 0 : 2;
+      assert.equal(leaf.start, start);
+      assert.equal(leaf.end, start + 2);
+      assert.equal(outcome.tree.end, Buffer.byteLength(input));
+    }
+    for (const input of fixture.reject) assert.equal(parser.parseTree(input).ok, false, input);
+  }
+});
+
+test('template context descriptors reject conflicting tokens, empty labels and malformed escapes', () => {
+  const descriptor = { family: 'template-context', name: 'templates', quotedStartToken: 'quoted_start', quotedEndToken: 'quoted_end', contentToken: 'content', interpolationStartToken: 'interpolation_start', interpolationEndToken: 'interpolation_end', directiveStartToken: 'directive_start', directiveEndToken: 'directive_end', delimiterToken: 'label', labelPattern: '[a-z]+' };
+  for (const change of [{ delimiterToken: 'content' }, { labelPattern: '' }, { labelPattern: 'a*' }, { name: ') fail (' }, { escapeCharacters: ['ab'] }, { hexadecimalEscapes: [{ prefix: 'u', digits: 0 }] }, { hexadecimalEscapes: [{ prefix: 'n', digits: 4 }] }]) assert.throws(() => scannerFamilies([{ ...descriptor, ...change }]), TypeError);
+});
 for (const fixture of fixtures) {
   test(`scanner family ${fixture.name} preserves text and rejects truncated delimiters`, () => {
     assert.equal(scannerFamilies(fixture.scanners), fixture.generated);

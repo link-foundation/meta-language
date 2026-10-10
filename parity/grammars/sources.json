@@ -880,6 +880,45 @@
         "sha256": "ff26117b53813be29d5978f1ef04dc8c8fe83b590634f6a92216be8d2dccee8c"
       },
       "oracle": "python"
+    },
+    {
+      "id": "tree-sitter-hcl",
+      "language": "hcl",
+      "native": "native-hcl",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-hcl 1.1.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-hcl",
+      "revision": "009def4ae38ec30e5b40beeae26efe93484ab286",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-hcl-1.1.0.grammar.json.gz",
+      "sha256": "058d12ff07abbbc27ff368e84249254b2aeacdf7d4830a0a7132fb7437f7f7bc",
+      "license": "Apache-2.0",
+      "licenseFile": "parity/grammars/sources/tree-sitter-hcl-1.1.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/hcl.lino",
+        "sha256": "92fce22208d45d60b453785e5f4f65e5e12a65b88b3cda0ce907a8e5f6adebb6",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "846b6e63d4b352c6cf9de1255ca100100e52b1a3f8a7b9805c501bbc83d41966"
+        },
+        "generator": "js/experiments/build-hcl-scanner.mjs",
+        "immediate": [
+          "quoted_template_start",
+          "quoted_template_end",
+          "_template_literal_chunk",
+          "template_interpolation_start",
+          "template_interpolation_end",
+          "template_directive_start",
+          "template_directive_end",
+          "heredoc_identifier"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-hcl-1.1.0.corpus.json.gz",
+        "sha256": "ec5b63cc16d14f248472716939215f3703c6937ce0d81372e0f5a88567f2155c"
+      },
+      "oracle": "hcl"
     }
   ]
 }

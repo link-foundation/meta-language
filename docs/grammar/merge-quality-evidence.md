@@ -40,6 +40,7 @@ grammar builds. The sources are the specifications and grammars merged.
 | `native-go` | tree-sitter-go 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-go/tree/1547678a9da59885853f5f5cc8a99cc203fa2e2c/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-go/blob/1547678a9da59885853f5f5cc8a99cc203fa2e2c/grammar.js) [2](https://github.com/tree-sitter/tree-sitter-go/tree/1547678a9da59885853f5f5cc8a99cc203fa2e2c/test/corpus) |
 | `native-graphql` | tree-sitter-graphql 0.3.0 | [upstream](https://github.com/joowani/tree-sitter-graphql/tree/b1d368c339806d971818a4ca2099763a6c561f56/test/corpus) | [1](https://github.com/joowani/tree-sitter-graphql/blob/b1d368c339806d971818a4ca2099763a6c561f56/grammar.js) [2](https://github.com/joowani/tree-sitter-graphql/tree/b1d368c339806d971818a4ca2099763a6c561f56/test/corpus) |
 | `native-groovy` | crates.io tree-sitter-groovy 0.1.2 | [upstream](https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf/test/corpus) | [1](https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf) [2](https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf/test/corpus) |
+| `native-hcl` | crates.io tree-sitter-hcl 1.1.0 | [upstream](https://github.com/tree-sitter-grammars/tree-sitter-hcl/tree/009def4ae38ec30e5b40beeae26efe93484ab286/test/corpus) | [1](https://github.com/tree-sitter-grammars/tree-sitter-hcl/tree/009def4ae38ec30e5b40beeae26efe93484ab286) [2](https://github.com/tree-sitter-grammars/tree-sitter-hcl/tree/009def4ae38ec30e5b40beeae26efe93484ab286/test/corpus) |
 | `native-ini` | tree-sitter-ini 1.4.0 | curated | [1](https://github.com/justinmk/tree-sitter-ini/blob/v1.4.0/grammar.js) [2](https://docs.python.org/3/library/configparser.html#supported-ini-file-structure) |
 | `native-java` | tree-sitter-java 0.23.5 | [upstream](https://github.com/tree-sitter/tree-sitter-java/tree/94703d5a6bed02b98e438d7cad1136c01a60ba2c/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-java/blob/94703d5a6bed02b98e438d7cad1136c01a60ba2c/grammar.js) [2](https://github.com/tree-sitter/tree-sitter-java/tree/94703d5a6bed02b98e438d7cad1136c01a60ba2c/test/corpus) |
 | `native-javascript` | tree-sitter-javascript 0.25.0 | [upstream](https://github.com/tree-sitter/tree-sitter-javascript/tree/44c892e0be055ac465d5eeddae6d3e194424e7de/test/corpus) | [1](https://github.com/tree-sitter/tree-sitter-javascript/blob/44c892e0be055ac465d5eeddae6d3e194424e7de/src/grammar.json) [2](https://github.com/tree-sitter/tree-sitter-javascript/tree/44c892e0be055ac465d5eeddae6d3e194424e7de/test/corpus) |
@@ -87,6 +88,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-go` | 106 | 4369 | 9101 | 0 | 13 |
 | `native-graphql` | 53 | 1809 | 3211 | 0 | 29 |
 | `native-groovy` | 61 | 857 | 1314 | 0 | 11 |
+| `native-hcl` | 37 | 645 | 610 | 0 | 10 |
 | `native-ini` | 55 | 444 | 710 | 9 | 15 |
 | `native-java` | 146 | 4848 | 11744 | 0 | 11 |
 | `native-javascript` | 146 | 5816 | 12130 | 0 | 24 |
@@ -112,7 +114,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-typescript` | 155 | 6447 | 13513 | 0 | 15 |
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 3801 | 90195 | 198304 | 101 | 614 |
+| all | 3838 | 90840 | 198914 | 101 | 624 |
 
 ## Coverage
 
@@ -137,6 +139,7 @@ language specification and checked against the oracle.
 | `native-go` | 91 | 0 | 14 | 12 | 87 of 91 (96%) | 104 | 35 | 29 | 9 | 0 | 0 |
 | `native-graphql` | 67 | 0 | 0 | 7 | 67 of 67 (100%) | 74 | 0 | 6 | 2 | 0 | 0 |
 | `native-groovy` | 127 | 0 | 36 | 20 | 64 of 127 (50%) | 78 | 24 | 36 | 5 | 0 | 0 |
+| `native-hcl` | 52 | 0 | 7 | 6 | 50 of 52 (96%) | 62 | 2 | 31 | 8 | 0 | 0 |
 | `native-ini` | 5 | 0 | 0 | 0 | 5 of 5 (100%) | 8 | 0 | n/a | n/a | n/a | n/a |
 | `native-java` | 120 | 0 | 30 | 19 | 111 of 120 (93%) | 133 | 36 | 29 | 4 | 0 | 0 |
 | `native-javascript` | 94 | 0 | 34 | 15 | 90 of 94 (96%) | 113 | 36 | 25 | 2 | 0 | 0 |
@@ -174,25 +177,26 @@ rules name a concept another native grammar names
 | Grammar | Scanners | Conflicts | Precedences | Extras | Kinds | Shared rules | Language-specific rules |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `native-c` | 0 | 17 | 0 | 2 | 0 | 183 | 0 |
-| `native-cmake` | 2 | 0 | 0 | 0 | 4 | 13 | 49 |
+| `native-cmake` | 2 | 0 | 0 | 0 | 4 | 14 | 48 |
 | `native-cpp` | 1 | 33 | 2 | 2 | 0 | 201 | 104 |
 | `native-css` | 3 | 0 | 0 | 3 | 5 | 16 | 50 |
 | `native-csv` | 0 | 0 | 0 | 0 | 0 | 3 | 5 |
 | `native-dart` | 7 | 127 | 1 | 2 | 5 | 97 | 187 |
 | `native-diff` | 0 | 0 | 0 | 1 | 0 | 2 | 22 |
 | `native-erlang` | 3 | 14 | 0 | 2 | 2 | 48 | 148 |
-| `native-go` | 0 | 8 | 0 | 2 | 0 | 68 | 49 |
-| `native-graphql` | 0 | 0 | 0 | 3 | 0 | 26 | 48 |
+| `native-go` | 0 | 8 | 0 | 2 | 0 | 69 | 48 |
+| `native-graphql` | 0 | 0 | 0 | 3 | 0 | 27 | 47 |
 | `native-groovy` | 0 | 33 | 0 | 3 | 1 | 171 | 12 |
+| `native-hcl` | 1 | 0 | 0 | 2 | 2 | 19 | 46 |
 | `native-ini` | 0 | 0 | 0 | 2 | 0 | 2 | 3 |
 | `native-java` | 0 | 13 | 0 | 3 | 1 | 164 | 5 |
 | `native-javascript` | 5 | 18 | 9 | 3 | 3 | 143 | 0 |
 | `native-json` | 0 | 0 | 0 | 2 | 0 | 11 | 0 |
 | `native-json5` | 0 | 0 | 0 | 2 | 0 | 11 | 1 |
 | `native-lean` | 1 | 11 | 0 | 2 | 5 | 52 | 95 |
-| `native-lua` | 2 | 0 | 0 | 2 | 6 | 38 | 35 |
+| `native-lua` | 2 | 0 | 0 | 2 | 6 | 39 | 34 |
 | `native-make` | 0 | 0 | 0 | 3 | 0 | 16 | 49 |
-| `native-nix` | 2 | 0 | 0 | 2 | 1 | 15 | 41 |
+| `native-nix` | 2 | 0 | 0 | 2 | 1 | 16 | 40 |
 | `native-pascal` | 0 | 10 | 0 | 3 | 0 | 73 | 243 |
 | `native-powershell` | 1 | 5 | 0 | 5 | 1 | 51 | 116 |
 | `native-proto` | 0 | 0 | 0 | 2 | 0 | 22 | 33 |
@@ -203,7 +207,7 @@ rules name a concept another native grammar names
 | `native-rust` | 6 | 9 | 0 | 3 | 10 | 77 | 107 |
 | `native-scheme` | 0 | 0 | 0 | 0 | 0 | 23 | 5 |
 | `native-solidity` | 0 | 11 | 0 | 2 | 1 | 68 | 99 |
-| `native-sql` | 2 | 5 | 1 | 4 | 0 | 73 | 549 |
+| `native-sql` | 2 | 5 | 1 | 4 | 0 | 74 | 548 |
 | `native-toml` | 3 | 0 | 0 | 2 | 5 | 10 | 17 |
 | `native-tsx` | 7 | 49 | 44 | 3 | 5 | 230 | 0 |
 | `native-typescript` | 7 | 48 | 44 | 3 | 5 | 230 | 0 |
@@ -230,6 +234,7 @@ generative cases with the oracle and gives each difference a category.
 | `native-go` | 13 | 13 | 5 | 15 | none |
 | `native-graphql` | 29 | 29 | 8 | 40 | none |
 | `native-groovy` | 11 | 11 | 3 | 14 | none |
+| `native-hcl` | 10 | 10 | 4 | 11 | none |
 | `native-ini` | 15 | 15 | 10 | 9 | none |
 | `native-java` | 11 | 11 | 4 | 15 | none |
 | `native-javascript` | 24 | 24 | 6 | 31 | native-skips-more 13, oracle-skips-more 35, same-repair-sites 13, same-skipped-bytes 1 |
@@ -269,6 +274,8 @@ The `native-dart` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, N
 The `native-erlang` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, without optional dictionary features.
 
 The `native-groovy` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, without optional dictionary features.
+
+The `native-hcl` measurements use linux x64, INTEL(R) XEON(R) PLATINUM 8573C, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0; --no-default-features.
 
 The `native-lua` measurements use linux x64, AMD EPYC 9V74 80-Core Processor, Node.js 24.19.0, and unoptimized test profile of rustc 1.99.0, --no-default-features, meta-language codegen-units=1.
 
@@ -310,6 +317,7 @@ loads the same modules and parses nothing.
 | `native-go` | 2295.7 | 9.9 | 231.2× | 553.3 | 1.6 | 128.2 | 11.1 |
 | `native-graphql` | 193.7 | 5.0 | 38.9× | 192.0 | 0.8 | 81.6 | 7.5 |
 | `native-groovy` | 386.9 | 1.6 | 237.4× | 666.3 | 0.7 | 238.8 | 10.5 |
+| `native-hcl` | 65.4 | 1.9 | 34.9× | 68.3 | 1.0 | 41.5 | 6.3 |
 | `native-ini` | 18.5 | 1.5 | 12.3× | 14.9 | 0.4 | 15.7 | 3.9 |
 | `native-java` | 2078.1 | 10.0 | 207.0× | 397.1 | 0.8 | 124.3 | 12.0 |
 | `native-javascript` | 7646.4 | 14.9 | 513.3× | 2214.6 | 1.1 | 131.9 | 12.6 |
@@ -357,6 +365,7 @@ without optimization, as the tests run them.
 | `native-go` | 7025.9 | 10.9 | 642.6× | 1412.4 | 1.0 | 5.5 |
 | `native-graphql` | 665.5 | 2.0 | 326.6× | 458.1 | 0.8 | 1.6 |
 | `native-groovy` | 1666.0 | 1.1 | 1514.5× | 1932.5 | 0.7 | 10.8 |
+| `native-hcl` | 216.4 | 1.3 | 171.2× | 183.9 | 0.6 | 2.1 |
 | `native-ini` | 148.8 | 3.5 | 42.7× | 54.6 | 0.5 | 0.1 |
 | `native-java` | 9722.4 | 7.9 | 1226.8× | 1413.3 | 0.6 | 5.6 |
 | `native-javascript` | 24702.9 | 24.3 | 1015.6× | 6176.5 | 1.3 | 5.4 |

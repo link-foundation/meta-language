@@ -111,6 +111,11 @@ macro_rules! native {
 fn natives() -> Vec<Native> {
     vec![
         native!(
+            "native-hcl",
+            "hcl",
+            Some(|| tree_sitter_hcl::LANGUAGE.into())
+        ),
+        native!(
             "native-dart",
             "dart",
             Some(|| tree_sitter_dart::LANGUAGE.into())

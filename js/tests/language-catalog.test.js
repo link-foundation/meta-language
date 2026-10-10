@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import {
   buildLanguageCatalog,
   formatLanguageCatalog,
+  nativeGrammarRustSource,
 } from '../scripts/build-language-catalog.mjs';
 import { GRAMMAR_LOCK } from '../src/programming-language-parser.js';
 import {
@@ -21,6 +22,14 @@ import {
 const inventory = JSON.parse(
   await readFile(new URL('../../parity/language-grammar-inventory.json', import.meta.url), 'utf8'),
 );
+
+test('the Rust native grammar embedding is generated for every inventory entry', async () => {
+  const generated = nativeGrammarRustSource(inventory);
+  assert.equal(await readFile(new URL('../../rust/src/data/native-grammar-texts.rs', import.meta.url), 'utf8'), generated);
+  const files = [...generated.matchAll(/include_str!\("([^"]+)"\)/gu)].map(([, file]) => file);
+  assert.deepEqual(files, Object.values(inventory.nativeGrammars).map(({ grammar }) => `native-grammars/${grammar.split('/').pop()}`).sort());
+  assert.throws(() => nativeGrammarRustSource({ nativeGrammars: { one: { grammar: 'one/a.lino' }, two: { grammar: 'two/a.lino' } } }), /unique/u);
+});
 
 test('language catalog is generated from the inventory and shipped identically to Rust', async () => {
   const generated = formatLanguageCatalog(buildLanguageCatalog(inventory, GRAMMAR_LOCK));

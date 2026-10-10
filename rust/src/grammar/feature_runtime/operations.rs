@@ -436,6 +436,7 @@ pub(super) fn allowed_in(context: &str, operation: &str) -> bool {
     ];
     const SCANNER: &[&str] = &[
         "advance", "consume", "skip", "mark", "emit", "fail", "valid", "expected", "next",
+        "matched",
     ];
     const ACTION: &[&str] = &[
         "fail",

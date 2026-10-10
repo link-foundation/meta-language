@@ -42,6 +42,13 @@ fn check_cases(text: &str) {
 }
 
 #[test]
+fn wrapped_scanner_tokens_keep_trivia_and_consumed_text_after_a_mark() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-token-spans.json"
+    ));
+}
+
+#[test]
 fn remembered_delimiter_text_matches_shared_trees_and_clears_state() {
     check_cases(include_str!(
         "../../../parity/fixtures/scanner-remembered-delimiters.json"

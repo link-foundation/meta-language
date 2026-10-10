@@ -107,7 +107,7 @@ impl Checker {
             SNode::App { func, args } => self.application(func, args, env, path, expected, span),
             SNode::Field { field, object } => {
                 if field == "length"
-                    && let Some(length) = self.length_field(object, span, env, path)?
+                    && let Some(length) = self.length_field(object, env, path)?
                 {
                     return Ok(length);
                 }

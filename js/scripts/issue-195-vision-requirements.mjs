@@ -214,6 +214,17 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_lua.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-HCL',
+    area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/hcl.json',
+    construct: 'generated native HCL grammar with shared template context and here-document scanner data',
+    expectedBehavior:
+      'The automatic import pipeline generates the canonical native HCL grammar from pinned tree-sitter-hcl 1.1.0 sources and records its naming decisions and scanner provenance. Both executors match the independent oracle on the focused fixture and every input in the pinned upstream corpus, preserve every accepted source byte, and reject and losslessly recover invalid sources. The ordinary HCL and Terraform parses use the shipped native grammar in both packages; the Rust oracle crate is a development dependency. Quoted strings, interpolation, directives and here-documents share generated scanner operations, context stacks and remembered label text, including nested expressions, escapes, Unicode content, indentation, delimiter lookalikes, closing-line boundaries and state reset.',
+    assertions: ['nativeHclCatalogDispatch', 'nativeHclGrammarIsCanonicalLinks', 'nativeHclTreesMatchOracle', 'nativeHclTreesLossless', 'nativeHclRejectsInvalidInput', 'nativeHclUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-native-hcl.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_hcl.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

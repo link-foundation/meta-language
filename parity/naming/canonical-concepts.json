@@ -1189,6 +1189,10 @@
           "name": "expression"
         },
         {
+          "source": "native:hcl",
+          "name": "expression"
+        },
+        {
           "source": "native:java",
           "name": "expression"
         },
@@ -1476,6 +1480,10 @@
         },
         {
           "source": "native:groovy",
+          "name": "identifier"
+        },
+        {
+          "source": "native:hcl",
           "name": "identifier"
         },
         {
@@ -1836,6 +1844,10 @@
         {
           "source": "native:graphql",
           "name": "object_value"
+        },
+        {
+          "source": "native:hcl",
+          "name": "object"
         },
         {
           "source": "native:javascript",
@@ -2269,6 +2281,10 @@
         },
         {
           "source": "native:graphql",
+          "name": "comment"
+        },
+        {
+          "source": "native:hcl",
           "name": "comment"
         },
         {
@@ -9233,6 +9249,10 @@
           "name": "conditional_expression"
         },
         {
+          "source": "native:hcl",
+          "name": "conditional_expression"
+        },
+        {
           "source": "native:python",
           "name": "conditional_expression"
         }
@@ -10427,6 +10447,10 @@
         },
         {
           "source": "native:groovy",
+          "name": "string_literal"
+        },
+        {
+          "source": "native:hcl",
           "name": "string_literal"
         },
         {
@@ -13078,6 +13102,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:hcl",
+          "name": "for_expression"
+        },
+        {
           "source": "native:rust",
           "name": "for_expression"
         },
@@ -13376,6 +13404,10 @@
         },
         {
           "source": "native:groovy",
+          "name": "block"
+        },
+        {
+          "source": "native:hcl",
           "name": "block"
         },
         {
@@ -13876,6 +13908,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "boolean_literal"
+        },
         {
           "source": "native:rust",
           "name": "boolean_literal"
@@ -21130,6 +21166,10 @@
           "name": "ellipsis"
         },
         {
+          "source": "native:hcl",
+          "name": "ellipsis"
+        },
+        {
           "source": "native:lean",
           "name": "ellipsis"
         },
@@ -25491,6 +25531,10 @@
           "name": "null_literal"
         },
         {
+          "source": "native:hcl",
+          "name": "null_literal"
+        },
+        {
           "source": "native:java",
           "name": "null_literal"
         }
@@ -25706,6 +25750,10 @@
       "sourceAliases": [
         {
           "source": "native:groovy",
+          "name": "template_expression"
+        },
+        {
+          "source": "native:hcl",
           "name": "template_expression"
         },
         {
@@ -28700,12 +28748,16 @@
       "role": "concept",
       "definition": "A rule for a literal value, the construct the upstream grammar names literal_value.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "literal_value"
+        },
+        {
+          "source": "native:hcl",
           "name": "literal_value"
         }
       ],
@@ -30367,12 +30419,16 @@
       "role": "concept",
       "definition": "A rule for a comma, the construct the upstream grammar names comma.",
       "constraints": [
-        "Only the native GraphQL grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:graphql",
+          "name": "comma"
+        },
+        {
+          "source": "native:hcl",
           "name": "comma"
         }
       ],
@@ -34297,10 +34353,14 @@
       "role": "concept",
       "definition": "A rule for a function call, the construct the upstream grammar names function_call.",
       "constraints": [
-        "Only the native Lua grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "function_call"
+        },
         {
           "source": "native:lua",
           "name": "function_call"
@@ -46119,6 +46179,10 @@
           "name": "tuple"
         },
         {
+          "source": "native:hcl",
+          "name": "tuple"
+        },
+        {
           "source": "native:python",
           "name": "tuple"
         }
@@ -55953,10 +56017,14 @@
       "role": "concept",
       "definition": "A rule for a function argument list, the construct the upstream grammar names function_arguments.",
       "constraints": [
-        "Only the native sql grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "function_argument_list"
+        },
         {
           "source": "native:sql",
           "name": "function_argument_list"
@@ -62230,10 +62298,14 @@
       "role": "concept",
       "definition": "A rule for a variable expression, the construct the upstream grammar names variable_expression.",
       "constraints": [
-        "Only the native Nix grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "variable_expression"
+        },
         {
           "source": "native:nix",
           "name": "variable_expression"
@@ -63165,12 +63237,16 @@
       "role": "concept",
       "definition": "A rule for a body, the construct the upstream grammar names body.",
       "constraints": [
-        "Only the native CMake grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:cmake",
+          "name": "body"
+        },
+        {
+          "source": "native:hcl",
           "name": "body"
         }
       ],
@@ -65236,6 +65312,824 @@
         {
           "source": "Rust frontend decisions",
           "name": "accept_control_parenthesis"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.configuration-file",
+      "phrase": "configuration file",
+      "role": "concept",
+      "definition": "A rule for a configuration file, the construct the upstream grammar names config_file.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "configuration_file"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.block-start",
+      "phrase": "block start",
+      "role": "concept",
+      "definition": "A rule for a block start, the construct the upstream grammar names block_start.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "block_start"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.block-end",
+      "phrase": "block end",
+      "role": "concept",
+      "definition": "A rule for a block end, the construct the upstream grammar names block_end.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "block_end"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-term",
+      "phrase": "expression term",
+      "role": "concept",
+      "definition": "A rule for an expression term, the construct the upstream grammar names _expr_term.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "expression_term"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.numeric-literal",
+      "phrase": "numeric literal",
+      "role": "concept",
+      "definition": "A rule for a numeric literal, the construct the upstream grammar names numeric_lit.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "numeric_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.collection-value",
+      "phrase": "collection value",
+      "role": "concept",
+      "definition": "A rule for a collection value, the construct the upstream grammar names collection_value.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "collection_value"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tuple-start",
+      "phrase": "tuple start",
+      "role": "concept",
+      "definition": "A rule for a tuple start, the construct the upstream grammar names tuple_start.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "tuple_start"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tuple-end",
+      "phrase": "tuple end",
+      "role": "concept",
+      "definition": "A rule for a tuple end, the construct the upstream grammar names tuple_end.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "tuple_end"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object-start",
+      "phrase": "object start",
+      "role": "concept",
+      "definition": "A rule for an object start, the construct the upstream grammar names object_start.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "object_start"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object-end",
+      "phrase": "object end",
+      "role": "concept",
+      "definition": "A rule for an object end, the construct the upstream grammar names object_end.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "object_end"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object-element",
+      "phrase": "object element",
+      "role": "concept",
+      "definition": "A rule for an object element, the construct the upstream grammar names object_elem.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "object_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.index",
+      "phrase": "index",
+      "role": "concept",
+      "definition": "A rule for an index, the construct the upstream grammar names index.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "index"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.new-index",
+      "phrase": "new index",
+      "role": "concept",
+      "definition": "A rule for a new index, the construct the upstream grammar names new_index.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "new_index"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.legacy-index",
+      "phrase": "legacy index",
+      "role": "concept",
+      "definition": "A rule for a legacy index, the construct the upstream grammar names legacy_index.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "legacy_index"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.get-attribute",
+      "phrase": "get attribute",
+      "role": "concept",
+      "definition": "A rule for a get attribute, the construct the upstream grammar names get_attr.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "get_attribute"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.path-expansion",
+      "phrase": "path expansion",
+      "role": "concept",
+      "definition": "A rule for a path expansion, the construct the upstream grammar names splat.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "path_expansion"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-expansion",
+      "phrase": "attribute expansion",
+      "role": "concept",
+      "definition": "A rule for an attribute expansion, the construct the upstream grammar names attr_splat.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "attribute_expansion"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.complete-expansion",
+      "phrase": "complete expansion",
+      "role": "concept",
+      "definition": "A rule for a complete expansion, the construct the upstream grammar names full_splat.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "complete_expansion"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-tuple-expression",
+      "phrase": "for tuple expression",
+      "role": "concept",
+      "definition": "A rule for a for tuple expression, the construct the upstream grammar names for_tuple_expr.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "for_tuple_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-object-expression",
+      "phrase": "for object expression",
+      "role": "concept",
+      "definition": "A rule for a for object expression, the construct the upstream grammar names for_object_expr.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "for_object_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-intro",
+      "phrase": "for intro",
+      "role": "concept",
+      "definition": "A rule for a for intro, the construct the upstream grammar names for_intro.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "for_intro"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-call-start",
+      "phrase": "function call start",
+      "role": "concept",
+      "definition": "A rule for a function call start, the construct the upstream grammar names _function_call_start.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "function_call_start"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-call-end",
+      "phrase": "function call end",
+      "role": "concept",
+      "definition": "A rule for a function call end, the construct the upstream grammar names _function_call_end.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "function_call_end"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.operation",
+      "phrase": "operation",
+      "role": "concept",
+      "definition": "A rule for an operation, the construct the upstream grammar names operation.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "operation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unary-operation",
+      "phrase": "unary operation",
+      "role": "concept",
+      "definition": "A rule for an unary operation, the construct the upstream grammar names unary_operation.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "unary_operation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.binary-operation",
+      "phrase": "binary operation",
+      "role": "concept",
+      "definition": "A rule for a binary operation, the construct the upstream grammar names binary_operation.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "binary_operation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.quoted-template",
+      "phrase": "quoted template",
+      "role": "concept",
+      "definition": "A rule for a quoted template, the construct the upstream grammar names quoted_template.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "quoted_template"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.here-document-template",
+      "phrase": "here document template",
+      "role": "concept",
+      "definition": "A rule for a here document template, the construct the upstream grammar names heredoc_template.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "here_document_template"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.here-document-start",
+      "phrase": "here document start",
+      "role": "concept",
+      "definition": "A rule for a here document start, the construct the upstream grammar names heredoc_start.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "here_document_start"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.strip-marker",
+      "phrase": "strip marker",
+      "role": "concept",
+      "definition": "A rule for a strip marker, the construct the upstream grammar names strip_marker.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "strip_marker"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template",
+      "phrase": "template",
+      "role": "concept",
+      "definition": "A rule for a template, the construct the upstream grammar names _template.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "template"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-literal",
+      "phrase": "template literal",
+      "role": "concept",
+      "definition": "A rule for a template literal, the construct the upstream grammar names template_literal.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "template_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-interpolation",
+      "phrase": "template interpolation",
+      "role": "concept",
+      "definition": "A rule for a template interpolation, the construct the upstream grammar names template_interpolation.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "template_interpolation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-directive",
+      "phrase": "template directive",
+      "role": "concept",
+      "definition": "A rule for a template directive, the construct the upstream grammar names template_directive.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "template_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-for-start",
+      "phrase": "template for start",
+      "role": "concept",
+      "definition": "A rule for a template for start, the construct the upstream grammar names template_for_start.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "template_for_start"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-for-end",
+      "phrase": "template for end",
+      "role": "concept",
+      "definition": "A rule for a template for end, the construct the upstream grammar names template_for_end.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "template_for_end"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-if-intro",
+      "phrase": "template if intro",
+      "role": "concept",
+      "definition": "A rule for a template if intro, the construct the upstream grammar names template_if_intro.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "template_if_intro"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-else-intro",
+      "phrase": "template else intro",
+      "role": "concept",
+      "definition": "A rule for a template else intro, the construct the upstream grammar names template_else_intro.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "template_else_intro"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-if-end",
+      "phrase": "template if end",
+      "role": "concept",
+      "definition": "A rule for a template if end, the construct the upstream grammar names template_if_end.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "template_if_end"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.whitespace",
+      "phrase": "whitespace",
+      "role": "concept",
+      "definition": "A rule for a whitespace, the construct the upstream grammar names _whitespace.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "whitespace"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generate-template-context-scanner",
+      "phrase": "generate template context scanner",
+      "role": "operation",
+      "definition": "Generate executable scanner data for quoted templates, nested interpolation and directives, and remembered line-tagged here-documents.",
+      "constraints": [
+        "Separate context and label stacks keep nested templates independent.",
+        "Skipped whitespace remains trivia; matched text is measured from the scanner token start to its current cursor.",
+        "Both runtime executors consume the same generated Links Notation scanner operations."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript scanner family generators",
+          "name": "templateContextScanner"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.configuration-attribute",
+      "phrase": "configuration attribute",
+      "role": "concept",
+      "definition": "A rule for a configuration attribute, the construct the upstream grammar names attribute.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "configuration_attribute"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tuple-element-list",
+      "phrase": "tuple element list",
+      "role": "concept",
+      "definition": "A rule for a tuple element list, the construct the upstream grammar names _tuple_elems.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "tuple_element_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object-element-list",
+      "phrase": "object element list",
+      "role": "concept",
+      "definition": "A rule for an object element list, the construct the upstream grammar names _object_elems.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "object_element_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.iteration-condition",
+      "phrase": "iteration condition",
+      "role": "concept",
+      "definition": "A rule for an iteration condition, the construct the upstream grammar names for_cond.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "iteration_condition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.iteration-template",
+      "phrase": "iteration template",
+      "role": "concept",
+      "definition": "A rule for an iteration template, the construct the upstream grammar names template_for.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "iteration_template"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.conditional-template",
+      "phrase": "conditional template",
+      "role": "concept",
+      "definition": "A rule for a conditional template, the construct the upstream grammar names template_if.",
+      "constraints": [
+        "Only the native HCL grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:hcl",
+          "name": "conditional_template"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generate-native-grammar-source",
+      "phrase": "generate native grammar source",
+      "role": "operation",
+      "definition": "Generate the Rust source table that embeds every native grammar file declared by the shared inventory.",
+      "constraints": [
+        "Every declared native grammar has exactly one embedded file.",
+        "Duplicate file names are rejected.",
+        "The catalog drift check verifies the generated source table along with the grammar copies."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript catalog generators",
+          "name": "nativeGrammarRustSource"
         }
       ],
       "formerNames": []

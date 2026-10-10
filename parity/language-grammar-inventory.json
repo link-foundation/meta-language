@@ -716,6 +716,20 @@
       "extras": [
         "comment"
       ]
+    },
+    "native-hcl": {
+      "version": "1.0.0",
+      "grammar": "parity/grammars/native/hcl.lino",
+      "hidden": [
+        "whitespace"
+      ],
+      "anonymous": [
+        "unnamed_token"
+      ],
+      "extras": [
+        "comment",
+        "whitespace"
+      ]
     }
   },
   "languages": [
@@ -1581,12 +1595,13 @@
       "recoverySource": "resource \"x\" {\n  a = (1 +\n",
       "javascript": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-hcl"
+        "backend": "native-hcl"
       },
       "rust": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-hcl"
-      }
+        "backend": "native-hcl"
+      },
+      "nativeGrammar": "native-hcl"
     },
     {
       "name": "Make",

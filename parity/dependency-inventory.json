@@ -4309,7 +4309,7 @@
       },
       "role": "direct",
       "requirement": "=1.1.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "1.1.0",
       "evidence": "crates.io, tree-sitter-hcl"
     },
@@ -7442,9 +7442,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/hcl.wasm.gz@1.1.0",
+      "id": "vendored-grammar js/oracles/grammars/hcl.wasm.gz@1.1.0",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/hcl.wasm.gz",
+      "name": "js/oracles/grammars/hcl.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -7940,6 +7940,22 @@
         "type": "none"
       },
       "dependsOn": []
+    },
+    {
+      "id": "generator js/scripts/generate-frontend-rule-styles.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/generate-frontend-rule-styles.mjs",
+      "declaredIn": [
+        "js/scripts/generate-frontend-rule-styles.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "action dtolnay/rust-toolchain@stable"
+      ]
     },
     {
       "id": "generator js/scripts/generate-frontend-rules.mjs@script",

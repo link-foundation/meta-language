@@ -11,8 +11,8 @@ use super::forking::Lead;
 use super::operations::State;
 use super::program::{Expr, InExtra, Matcher, Name, Program, Rule, Target};
 use super::results::{
-    Entry, Res, Skipped, Tree, TreeType, children_of, is_separator, longest_result, no_children,
-    preferred_tokens, with_leaf,
+    Entry, Res, Skipped, Tree, TreeType, children_of, concat, is_separator, longest_result,
+    no_children, preferred_tokens, with_leaf,
 };
 use crate::grammar::RuleKind;
 
@@ -668,6 +668,27 @@ impl Executor<'_> {
         in_token: bool,
     ) -> Run<Vec<Res>> {
         let start = skipped.end;
+        // A wrapped scanner keeps its skipped trivia outside its token.
+        if !in_token && let Expr::Ref(Target::External(name)) = item {
+            let mut results = self.scanner_token(name, start, state, false, true)?;
+            for result in &mut results {
+                let children: Vec<_> = result
+                    .children
+                    .iter()
+                    .map(|child| {
+                        if child.scanned {
+                            let mut leaf = (**child).clone();
+                            leaf.kind = None;
+                            Rc::new(leaf)
+                        } else {
+                            Rc::clone(child)
+                        }
+                    })
+                    .collect();
+                result.children = concat(&skipped.leaves, &children);
+            }
+            return Ok(results);
+        }
         let Some(best) = longest_result(self.evaluate(item, start, state, true)?) else {
             return Ok(Vec::new());
         };

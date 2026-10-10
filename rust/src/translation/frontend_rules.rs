@@ -444,7 +444,7 @@ pub fn render_constant_binding(form: &str, name: &str, type_: &str, value: &str)
     }
 }
 
-pub fn accept_module_binding_scope(terms: Vec<String>, carried: bool) -> bool {
+pub fn accept_module_binding_scope(terms: &[String], carried: bool) -> bool {
     if carried {
         {
             let declarations = 0f64;
@@ -453,7 +453,7 @@ pub fn accept_module_binding_scope(terms: Vec<String>, carried: bool) -> bool {
                 {
                     let ml_s12 =
                         crate::translation::frontend_rules::ml_accept_module_binding_scope_loop16(
-                            terms,
+                            terms.to_vec(),
                             declarations,
                             index,
                         );

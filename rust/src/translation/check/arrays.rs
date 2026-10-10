@@ -162,7 +162,6 @@ impl Checker {
     pub(super) fn length_field(
         &mut self,
         object: &SExpr,
-        span: Option<Span>,
         env: &Env,
         path: &[String],
     ) -> Result<Option<Expr>> {

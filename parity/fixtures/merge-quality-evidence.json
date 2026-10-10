@@ -35,7 +35,7 @@
       "features": {"scanner": 2, "conflict": 0, "precedences": 0, "extra": 0, "kind": 4},
       "correctness": {"matches": 35, "rows": 524, "bytes": 870, "divergences": 0, "rejections": 6},
       "recovery": {"repaired": 6, "errorNodes": 0, "missingNodes": 10, "categories": {}},
-      "reuse": {"shared": 13, "specific": 49}
+      "reuse": {"shared": 14, "specific": 48}
     },
     {
       "grammar": "native-cpp",
@@ -164,7 +164,7 @@
       "features": {"scanner": 0, "conflict": 8, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 106, "rows": 4369, "bytes": 9101, "divergences": 0, "rejections": 13},
       "recovery": {"repaired": 13, "errorNodes": 5, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 68, "specific": 49}
+      "reuse": {"shared": 69, "specific": 48}
     },
     {
       "grammar": "native-graphql",
@@ -182,7 +182,7 @@
       "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 3, "kind": 0},
       "correctness": {"matches": 53, "rows": 1809, "bytes": 3211, "divergences": 0, "rejections": 29},
       "recovery": {"repaired": 29, "errorNodes": 8, "missingNodes": 40, "categories": {}},
-      "reuse": {"shared": 26, "specific": 48}
+      "reuse": {"shared": 27, "specific": 47}
     },
     {
       "grammar": "native-groovy",
@@ -201,6 +201,24 @@
       "correctness": {"matches": 61, "rows": 857, "bytes": 1314, "divergences": 0, "rejections": 11},
       "recovery": {"repaired": 11, "errorNodes": 3, "missingNodes": 14, "categories": {}},
       "reuse": {"shared": 171, "specific": 12}
+    },
+    {
+      "grammar": "native-hcl",
+      "language": "HCL",
+      "links": "parity/grammars/native/hcl.lino",
+      "fixture": "parity/fixtures/native-grammars/hcl.json",
+      "oracle": "crates.io tree-sitter-hcl 1.1.0",
+      "sources": [
+        "https://github.com/tree-sitter-grammars/tree-sitter-hcl/tree/009def4ae38ec30e5b40beeae26efe93484ab286",
+        "https://github.com/tree-sitter-grammars/tree-sitter-hcl/tree/009def4ae38ec30e5b40beeae26efe93484ab286/test/corpus"
+      ],
+      "corpus": "https://github.com/tree-sitter-grammars/tree-sitter-hcl/tree/009def4ae38ec30e5b40beeae26efe93484ab286/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/hcl.json",
+      "coverage": {"rules": {"normal": 52, "atomic": 0, "silent": 7, "token": 6}, "visibleRules": 52, "exercisedRules": 50, "checkedKinds": 62, "checkedFields": 2, "renamed": 31, "expandedWords": 8, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 1, "conflict": 0, "precedences": 0, "extra": 2, "kind": 2},
+      "correctness": {"matches": 37, "rows": 645, "bytes": 610, "divergences": 0, "rejections": 10},
+      "recovery": {"repaired": 10, "errorNodes": 4, "missingNodes": 11, "categories": {}},
+      "reuse": {"shared": 19, "specific": 46}
     },
     {
       "grammar": "native-ini",
@@ -327,7 +345,7 @@
       "features": {"scanner": 2, "conflict": 0, "precedences": 0, "extra": 2, "kind": 6},
       "correctness": {"matches": 35, "rows": 614, "bytes": 1661, "divergences": 0, "rejections": 9},
       "recovery": {"repaired": 9, "errorNodes": 5, "missingNodes": 15, "categories": {}},
-      "reuse": {"shared": 38, "specific": 35}
+      "reuse": {"shared": 39, "specific": 34}
     },
     {
       "grammar": "native-make",
@@ -363,7 +381,7 @@
       "features": {"scanner": 2, "conflict": 0, "precedences": 0, "extra": 2, "kind": 1},
       "correctness": {"matches": 45, "rows": 386, "bytes": 441, "divergences": 0, "rejections": 6},
       "recovery": {"repaired": 6, "errorNodes": 0, "missingNodes": 6, "categories": {}},
-      "reuse": {"shared": 15, "specific": 41}
+      "reuse": {"shared": 16, "specific": 40}
     },
     {
       "grammar": "native-pascal",
@@ -561,7 +579,7 @@
       "features": {"scanner": 2, "conflict": 5, "precedences": 1, "extra": 4, "kind": 0},
       "correctness": {"matches": 45, "rows": 743, "bytes": 1305, "divergences": 0, "rejections": 13},
       "recovery": {"repaired": 13, "errorNodes": 8, "missingNodes": 12, "categories": {}},
-      "reuse": {"shared": 73, "specific": 549}
+      "reuse": {"shared": 74, "specific": 548}
     },
     {
       "grammar": "native-toml",

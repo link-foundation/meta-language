@@ -282,6 +282,11 @@
       "reason": "An abbreviation of element, as in the interface elements, method elements and type elements of a Go interface type (The Go Programming Language Specification, Interface types)."
     },
     {
+      "word": "elems",
+      "replacement": "elements",
+      "reason": "The pinned HCL grammar abbreviates the elements of a tuple or object as elems."
+    },
+    {
       "word": "elif",
       "replacement": "else_if",
       "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if."
@@ -3579,6 +3584,24 @@
         "_collection_attribute": "grammar.attribute-access",
         "_collection_subscript": "grammar.subscript",
         "_collection_call": "grammar.call"
+      }
+    },
+    "hcl": {
+      "names": {
+        "heredoc_template": "here_document_template",
+        "heredoc_start": "here_document_start",
+        "heredoc_identifier": "here_document_identifier",
+        "splat": "path_expansion",
+        "attr_splat": "attribute_expansion",
+        "full_splat": "complete_expansion",
+        "attribute": "configuration_attribute",
+        "function_arguments": "function_argument_list",
+        "_object_elems": "object_element_list",
+        "_tuple_elems": "tuple_element_list",
+        "for_cond": "iteration_condition",
+        "conditional": "conditional_expression",
+        "template_for": "iteration_template",
+        "template_if": "conditional_template"
       }
     }
   },

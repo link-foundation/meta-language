@@ -188,7 +188,8 @@
       "version": "1.1.0",
       "parserSha256": "0c821e2979f54f8f460201eafe9464d5d3dae0076c5bdd51567a798fb7add543",
       "wasmSha256": "c7fa4ff3cecbd8c9eba1b9643b511a5b226b47d29eb5ec38656a5bc7a216bfc5",
-      "license": "hcl.LICENSE"
+      "license": "hcl.LICENSE",
+      "oracle": true
     },
     "html": {
       "id": "html",

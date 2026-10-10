@@ -301,7 +301,9 @@ Each context admits a subset (`OPERATION_CONTEXTS` in
 any other operation with reason `operation`:
 
 - scanner: every statement except `setAttribute` and `buildNode`; every
-  condition; every value except `matched`, `attribute`, `sumOf` and `fieldText`;
+  condition; every value except `attribute`, `sumOf` and `fieldText`. In a
+  scanner, `matched` reads the text consumed since the last `skip`, up to the
+  current cursor; `mark` does not change that text;
 - action: every statement except `advance`, `consume`, `skip`, `mark` and
   `emit`; every condition except `valid`, `next` and `expected`; every value;
 - predicate: conditions except `valid`, `next` and `expected`, and values except

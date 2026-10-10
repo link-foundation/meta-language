@@ -1,6 +1,7 @@
 // Generate external scanners as executable Links Notation data. Delimiters
 // and token names are parameters; the executors need no language callbacks.
 import { parseTreeSitterPattern, renderTreeSitterPattern } from '../src/grammar-importers/tree-sitter-native.js';
+import { templateContextScanner } from './template-context-scanner.mjs';
 const encode = (text) => [...Buffer.from(text)].map((byte) => (
   (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122)
   || (byte >= 48 && byte <= 57) || [45, 46, 95].includes(byte)
@@ -321,7 +322,8 @@ export function scannerFamilies(descriptors) {
   const names = new Set();
   const tokens = new Set();
   const generated = descriptors.map(({ family, ...options }) => {
-    const declared = family === 'prefixed-quoted' ? [options.startToken, options.contentToken, options.endToken, options.interpolationEscapeToken]
+    const declared = family === 'template-context' ? [options.quotedStartToken, options.quotedEndToken, options.contentToken, options.interpolationStartToken, options.interpolationEndToken, options.directiveStartToken, options.directiveEndToken, options.delimiterToken]
+      : family === 'prefixed-quoted' ? [options.startToken, options.contentToken, options.endToken, options.interpolationEscapeToken]
       : family === 'indentation' ? [options.newlineToken, options.indentToken, options.dedentToken]
       : family === 'remembered-content' ? [options.delimiterToken, options.contentToken]
       : family === 'remembered-literal' ? [options.token, options.startToken, options.contentToken, options.endToken]
@@ -331,6 +333,7 @@ export function scannerFamilies(descriptors) {
     if (names.has(options.name) || new Set(declared).size !== declared.length || declared.some((token) => tokens.has(token))) throw new TypeError('duplicate scanner name or token');
     names.add(options.name);
     for (const token of declared) tokens.add(token);
+    if (family === 'template-context') return templateContextScanner(options);
     if (family === 'remembered-delimiter') return rememberedDelimiterScanner(options);
     if (family === 'remembered-literal') return rememberedLiteralScanner(options);
     if (family === 'remembered-content') return rememberedContentScanner(options);

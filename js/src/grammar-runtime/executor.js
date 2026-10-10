@@ -2650,6 +2650,13 @@ export class Executor {
   // A token under a lexical precedence keeps its level on the leaf, as the
   // token's rank where it is matched (see `tokenRank`).
   tokenLeaf(item, start, leaves, state, inToken, kind) {
+    // A scanner owns its token start after skip(). Wrapping that token must
+    // retain the skipped trivia, rather than turn it into token content.
+    if (!inToken && item.kind === 'ref' && this.program.externalTokens.has(item.name)) {
+      return this.scannerToken(item.name, start, state, false, true).map((result) => copyResult(result, {
+        children: [...leaves, ...result.children.map((child) => (child.scanned ? { ...child, kind } : child))],
+      }));
+    }
     const best = longestResult(this.evaluate(item, start, state, true));
     if (!best) return [];
     const joined = inToken ? { start, leaves } : this.joinedStart(start, leaves);
@@ -3687,10 +3694,10 @@ export class Executor {
 
   // An external scanner run for one requested token: a cursor over the
   // input, a token start that `skip` moves, and an optional end `mark`.
-  scannerToken(name, position, state, inToken) {
-    const { end: start, leaves } = this.terminalStart(position, state, inToken);
+  scannerToken(name, position, state, inToken, rawStart = false) {
+    const { end: start, leaves } = rawStart ? { end: position, leaves: NO_CHILDREN } : this.terminalStart(position, state, inToken);
     const scanner = this.program.scanners.get(name);
-    const context = inToken ? (this.scanContext ?? start) : position;
+    const context = inToken || rawStart ? (this.scanContext ?? start) : position;
     const key = scanner.consults ? `${name}|${start}|${context}|${state.key}` : `${name}|${start}|${state.key}`;
     let scanned = this.scannerMemo.get(key);
     if (scanned === undefined) {
@@ -3725,6 +3732,7 @@ export class Executor {
       state: working,
       requested: name,
       step: () => this.step(),
+      matched: () => this.text(tokenStart, cursor),
       column: () => columnOf(this.bytes, cursor, this.begin),
       atEnd: () => cursor >= this.end,
       expected: (item) => this.expectations.holds(context, this.program.expectedItems.get(item)),

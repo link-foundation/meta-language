@@ -1,0 +1,501 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "ec5b63cc16d14f248472716939215f3703c6937ce0d81372e0f5a88567f2155c",
+  "cases": [
+    {
+      "file": "attributes.txt",
+      "title": "attribute with literal",
+      "source": "\nfoo = \"bar\"\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "attribute with variable",
+      "source": "\nfoo = bar\n"
+    },
+    {
+      "file": "blocks.txt",
+      "title": "basic block",
+      "source": "\nblock_1 {\n}\n"
+    },
+    {
+      "file": "blocks.txt",
+      "title": "basic block on one line",
+      "source": "\nblock_1 {}\n"
+    },
+    {
+      "file": "blocks.txt",
+      "title": "basic block with empty type",
+      "source": "\nblock_1 \"\" {\n}\n"
+    },
+    {
+      "file": "blocks.txt",
+      "title": "block with attribute",
+      "source": "\nblock_1 \"strlit1\" \"strlit2\" {\n    attr1 = \"val1\"\n}\n"
+    },
+    {
+      "file": "blocks.txt",
+      "title": "nested block",
+      "source": "\nblock_1 {\n  block_2 {\n  }\n}\n"
+    },
+    {
+      "file": "blocks.txt",
+      "title": "nested block on one line",
+      "source": "\nblock_1 {\n  block_2 {}\n}\n"
+    },
+    {
+      "file": "blocks.txt",
+      "title": "nested blocks",
+      "source": "\nblock_1 {\n  block_2 {}\n  block_3 {}\n}\n"
+    },
+    {
+      "file": "blocks.txt",
+      "title": "one line block",
+      "source": "\nlocals { timestamp = regex_replace(timestamp(), \"[- TZ:]\", \"\") }\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "simple tuple",
+      "source": "\nfoo = [1, 2, \"foo\"]\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "multiline tuple",
+      "source": "\nfoo = [\n  1,\n  2,\n  \"foo\"\n]\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "empty tuple",
+      "source": "\nfoo = []\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "multiline empty tuple",
+      "source": "\nfoo = [\n]\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "object",
+      "source": "\nfoo = {1: 2, \"foo\"=\"bar\"}\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "multiline object",
+      "source": "\nfoo = {\n  1: 2,\n  \"foo\"=\"bar\"\n}\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "empty object",
+      "source": "\nfoo = { }\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "multiline empty object",
+      "source": "\nfoo = {\n}\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "multiline object weird newlines",
+      "source": "\nfoo = { 1: 2,\n  \"foo\"=\"bar\"\n\n}\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "complex object",
+      "source": "\nfoo = {\n  a = \"1\",\n  b = \"2\"\n}\n"
+    },
+    {
+      "file": "collections.txt",
+      "title": "complex from real world",
+      "source": "\nworker_groups = [\n    {\n      name                          = \"jasonb-test-group-1\"\n      instance_type                 = \"t2.small\"\n      asg_desired_capacity          = 2\n      additional_security_group_ids = [aws_security_group.external_connection.id]\n    },\n    {\n      name                          = \"jasonb-test-group-2\"\n      instance_type                 = \"t2.medium\"\n      additional_security_group_ids = [aws_security_group.external_connection.id]\n      asg_desired_capacity          = 1\n    },\n  ]\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "comment in empty block body",
+      "source": "\nblock {\n  # foo\n}\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "multiline comment in empty block body",
+      "source": "\nblock {\n  /*\n    foo\n  */\n}\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "multiline comment above attribute in block body",
+      "source": "\nblock {\n  /*\n    foo\n  */\n  foo = bar\n}\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "comment above first attribute in block body",
+      "source": "\nblock {\n  # foo\n  foo = bar\n}\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "comment after last attribute in block body",
+      "source": "\nblock {\n  foo = bar\n  # foo\n}\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "comment between attributes in block body",
+      "source": "\nblock {\n  foo = bar\n  # foo\n  baz = quz\n}\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "comment at end of file",
+      "source": "\n# foo"
+    },
+    {
+      "file": "conditionals.txt",
+      "title": "simple conditional expression",
+      "source": "\nfoo = predicate() ? 1 : 2\n"
+    },
+    {
+      "file": "conditionals.txt",
+      "title": "nested conditional expression expression",
+      "source": "\nfoo = ( true ? false : true ) ? \"yes\" : \"no\"\n"
+    },
+    {
+      "file": "conditionals.txt",
+      "title": "nested conditional expression expression without parentheses",
+      "source": "\nfoo =  true ? false : true  ? \"yes\" : \"no\"\n"
+    },
+    {
+      "file": "for_expressions.txt",
+      "title": "for tuple expression",
+      "source": "\nfoo = [for v in [\"a\", \"b\"]: v]\n"
+    },
+    {
+      "file": "for_expressions.txt",
+      "title": "for tuple expression with index",
+      "source": "\nfoo = [for i, v in [\"a\", \"b\"]: i]\n"
+    },
+    {
+      "file": "for_expressions.txt",
+      "title": "for tuple expression with predicate",
+      "source": "\nfoo = [for i, v in [\"a\", \"b\", \"c\"]: v if pred(i)]\n"
+    },
+    {
+      "file": "for_expressions.txt",
+      "title": "for object expression",
+      "source": "\nfoo = {for i, v in [\"a\", \"b\"]: v => i}\n"
+    },
+    {
+      "file": "for_expressions.txt",
+      "title": "for object expression 2",
+      "source": "\nfoo = {for i, v in [\"a\", \"b\"]: v => i...}\n"
+    },
+    {
+      "file": "function_calls.txt",
+      "title": "nonary function call",
+      "source": "\nfoo = bar()\n"
+    },
+    {
+      "file": "function_calls.txt",
+      "title": "unary function call",
+      "source": "\nfoo = bar(\"foo\")\n"
+    },
+    {
+      "file": "function_calls.txt",
+      "title": "variadic function call",
+      "source": "\nfoo = bar(x...)\n"
+    },
+    {
+      "file": "function_calls.txt",
+      "title": "multiline function call",
+      "source": "\nfoo = bar(\n  \"a\",\n  \"b\",\n  \"c\"\n)\n"
+    },
+    {
+      "file": "function_calls.txt",
+      "title": "namespaced function call",
+      "source": "\nfoo = provider::time::rfc3339_parse(\"2023-07-25T23:43:16Z\")\n"
+    },
+    {
+      "file": "json.txt",
+      "title": "top level object",
+      "source": "\n{\n  \"foo\": \"bar\"\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "numeric literal hex 1",
+      "source": "\npi = 0x314F\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "numeric literal scientific notation 1",
+      "source": "\npi = 3\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "numeric literal scientific notation 2",
+      "source": "\npi = 3.14\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "numeric literal scientific notation 3",
+      "source": "\nbig_pi = 3.14e+10\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "numeric literal scientific notation 4",
+      "source": "\nbig_pi = 3.14E+10\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "numeric literal scientific notation 5",
+      "source": "\nsmall_pi = 3.14e-10\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "numeric literal scientific notation 6",
+      "source": "\nsmall_pi = 3.14E-10\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "bool literal true",
+      "source": "\nfoo = true\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "bool literal false",
+      "source": "\nfoo = false\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "null literal",
+      "source": "\nfoo = null\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "unary operator -",
+      "source": "\nfoo = -3\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "unary operator !",
+      "source": "\nfoo = !true\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "binary operators +",
+      "source": "\nfoo = 1+2\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "precedence in binary operators",
+      "source": "\nfoo = a != b && c == d\n"
+    },
+    {
+      "file": "real_world.txt",
+      "title": "example 1",
+      "source": "\nprovider \"kubernetes\" {\n  host                   = data.aws_eks_cluster.cluster.endpoint\n  token                  = data.aws_eks_cluster_auth.cluster.token\n  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)\n}\n"
+    },
+    {
+      "file": "real_world.txt",
+      "title": "example 2",
+      "source": "\nlocals {\n  storage_account_container_name           = var.storage_account_container_name == \"\" ? azurerm_storage_container.storage_account_container[0].name : var.storage_account_container_name\n  bootstrap_storage_account_container_name = var.bootstrap_storage_account_container_name == \"\" ? azurerm_storage_container.bootstrap_storage_account_container[0].name : var.bootstrap_storage_account_container_name\n}\n\nresource \"azurerm_storage_container\" \"storage_account_container\" {\n  count = var.storage_account_container_name == \"\" ? 1 : 0\n\n  name                  = var.storage_account_name\n  storage_account_name  = var.storage_account_name\n  container_access_type = \"private\"\n}\n\nresource \"azurerm_storage_container\" \"bootstrap_storage_account_container\" {\n  count = var.bootstrap_storage_account_container_name == \"\" ? 1 : 0\n\n  name                  = var.bootstrap_storage_account_name\n  storage_account_name  = var.bootstrap_storage_account_name\n  container_access_type = \"private\"\n}\n\nresource \"azurerm_storage_blob\" \"bootstrap_license\" {\n  count = var.bootstrap_storage_account_container_name == \"\" ? 1 : 0\n\n  source                 = var.tfe_license_filepath\n  name                   = var.tfe_license_name\n  storage_account_name   = var.bootstrap_storage_account_name\n  storage_container_name = azurerm_storage_container.bootstrap_storage_account_container[0].name\n  type                   = \"Page\"\n}\n\nresource \"azurerm_storage_blob\" \"proxy_cert\" {\n  count = var.proxy_cert_name != \"\" && var.bootstrap_storage_account_container_name == \"\" ? 1 : 0\n\n  source                 = var.proxy_cert_path\n  name                   = var.proxy_cert_name\n  storage_account_name   = var.bootstrap_storage_account_name\n  storage_container_name = azurerm_storage_container.bootstrap_storage_account_container[0].name\n  type                   = \"Block\"\n}"
+    },
+    {
+      "file": "real_world.txt",
+      "title": "example 3",
+      "source": "\nprivate_key_pem = element(tls_private_key.server.*.private_key_pem, count.index)\n"
+    },
+    {
+      "file": "real_world.txt",
+      "title": "example 4",
+      "source": "\nlocals {\n  bootstrapping_host = \"${var.tectonic_azure_private_cluster ?\n    module.vnet.master_private_ip_addresses[0] :\n    module.vnet.api_fqdn}\"\n}\n"
+    },
+    {
+      "file": "splat.txt",
+      "title": "get attr",
+      "source": "\nfoo = bar.baz\n"
+    },
+    {
+      "file": "splat.txt",
+      "title": "get index",
+      "source": "\nfoo = bar[1]\n"
+    },
+    {
+      "file": "splat.txt",
+      "title": "attr splat",
+      "source": "\nfoo = bar.*.foo\n"
+    },
+    {
+      "file": "splat.txt",
+      "title": "full splat",
+      "source": "\nfoo = bar[*].foo\n"
+    },
+    {
+      "file": "splat.txt",
+      "title": "full splat repeated",
+      "source": "\nfoo = bar[*][*].a.b.c[d]\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "empty string",
+      "source": "\nfoo = \"\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "unescaped tab",
+      "source": "\nfoo = \"foo\tbar\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "escaped backslash at end",
+      "source": "\nfoo = \"foo\\\\\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "string literal escaped template interpolation",
+      "source": "\nfoo = \"$${foo.bar}\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "template chars but no template 1",
+      "source": "\nfoo = \"$$$\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "template chars but no template 2",
+      "source": "\nfoo = \"100%\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "template chars but no template 3",
+      "source": "\nfoo = \"%\\n\\t\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "template chars but no template 4",
+      "source": "\nfoo = \"%%\\n\\t\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "template chars but no template 5",
+      "source": "\nfoo = \"$$\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "template chars but no template 6",
+      "source": "\nfoo = \"%%{\\n\\t\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "escaped template",
+      "source": "\nfoo = \"$${ var.bar }\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "simple quoted template expression",
+      "source": "\nfoo = \"${ var.bar }\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "empty template interpolation",
+      "source": "\nfoo = \"${}\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template for expression in quoted template",
+      "source": "\nfoo = \"%{ for a in b } prefix-${a} %{ endfor }\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "escaped template for directive",
+      "source": "\nfoo = \"%{ for a in b } %%{ endfor } %{ endfor }\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "escaped template for directive 2",
+      "source": "\nfoo = \"%%{ for a in b } %%{ endfor }\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template for directive with weird whitespace",
+      "source": "\nfoo = \"%{     for a in b   } %{      endfor    }\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template for expression in heredoc template",
+      "source": "\nfoo = <<EOF\n%{ for a in b ~}\n\nprefix-${a}\n\n%{~ endfor }\nEOF\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "empty heredoc template",
+      "source": "\nfoo = <<END\nEND\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "heredoc with fake ending",
+      "source": "\nfoo = <<END\n  END    not!\nEND\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "quoted template expression with escaped strings and fake strip marker",
+      "source": "\nfoo = \"${ \" ~ \" }\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "quoted template with nested quoted template",
+      "source": "\nfoo = \"p-${ foo(\"v-${a.b}\") }\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "quoted template interpolation with strip markers",
+      "source": "\nfoo = \"hello ${~ \"world\" ~} hello\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "quoted template object expression in template",
+      "source": "\nfoo = \"${ {a=b}[a] }\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "escaped template interpolation start",
+      "source": "\nfoo = \"hello $${ world\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "tricky heredoc",
+      "source": "\nfoo = <<END\n    contains fake endings\n    END (ineligible) END\nEND\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "heredoc with identifier that does not fit into the serialization buffer (should not crash)",
+      "source": "\nfoo = <<XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template if directive in quoted template",
+      "source": "\nfoo = \"%{if cond} foo %{else} bar %{endif}\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template nested for directives with interlaced chunks",
+      "source": "\nfoo = \"%{for a in b} x %{for c in a} ${c} %{endfor} %{endfor}\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template nested if directives with interlaced chunks",
+      "source": "\nfoo = \"%{if a} %{if b} y %{else} x %{endif} %{endif}\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template empty if else statement",
+      "source": "\nfoo = \"%{if a} %{else} %{endif}\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template empty for statement",
+      "source": "\nfoo = \"%{for a in b} %{endfor}\"\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template parenthesis in heredoc for directive with nested if 1",
+      "source": "\ntpl6 = <<-EOF\n  %{ for a in f(b) ~}\n    ( %{~if a~} \"true\" %{~else~} \"false\" %{~endif~} )\n  %{ endfor ~}\nEOF\n"
+    },
+    {
+      "file": "templates.txt",
+      "title": "template parenthesis in heredoc for directive with nested if 2",
+      "source": "\ntpl6 = <<-EOF\n  %{ for a in f(b) ~}\n    (\"foo\")\n    %{~if a~} \"true\" %{~else~} \"false\" %{~endif~}\n  %{ endfor ~}\nEOF\n"
+    }
+  ]
+}

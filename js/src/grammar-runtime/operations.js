@@ -195,7 +195,7 @@ export const OPERATION_CONTEXTS = Object.freeze({
   scanner: new Set([
     'advance', 'consume', 'skip', 'mark', 'emit', 'fail', 'if', 'while', 'push', 'pop', 'set', 'pushMode', 'popMode',
     'setMode', 'valid', 'expected', 'next', 'atEnd', 'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable',
-    'top', 'depth', 'column', 'mode', 'length', 'number', 'add', 'subtract', 'multiply',
+    'top', 'depth', 'column', 'matched', 'mode', 'length', 'number', 'add', 'subtract', 'multiply',
   ]),
   action: new Set([
     'fail', 'if', 'while', 'push', 'pop', 'set', 'pushMode', 'popMode', 'setMode', 'setAttribute', 'buildNode', 'atEnd',

@@ -15,8 +15,9 @@ use super::operations::{
 };
 use super::program::{Expr, Name, PrecedenceTag, Rule, Target};
 use super::results::{
-    Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, children_of, complete_order,
-    concat, content_start, longest_result, no_children, reduced_alone, same_children, with_leaf,
+    Children, Entry, Outcome, Res, ResultSet, Scanned, Skipped, Tree, TreeType, children_of,
+    complete_order, concat, content_start, longest_result, no_children, reduced_alone,
+    same_children, with_leaf,
 };
 use super::text::{column_of, decode_at};
 use super::walk::first_meaningful;
@@ -66,7 +67,9 @@ impl Executor<'_> {
             }
         }
         let index = match target {
-            Target::External(name) => return self.scanner_token(name, position, state, in_token),
+            Target::External(name) => {
+                return self.scanner_token(name, position, state, in_token, false);
+            }
             Target::Rule(index) => *index,
         };
         let rule = &program.rules[index];
@@ -525,19 +528,27 @@ impl Executor<'_> {
 
     // An external scanner run for one requested token: a cursor over the
     // input, a token start that `skip` moves, and an optional end `mark`.
-    fn scanner_token(
+    pub(super) fn scanner_token(
         &mut self,
         name: &Name,
         position: usize,
         state: &State,
         in_token: bool,
+        raw_start: bool,
     ) -> Run<Vec<Res>> {
-        let skipped = self.terminal_start(position, state, in_token)?;
+        let skipped = if raw_start {
+            Rc::new(Skipped {
+                end: position,
+                leaves: no_children(),
+            })
+        } else {
+            self.terminal_start(position, state, in_token)?
+        };
         let start = skipped.end;
         let program = self.program;
         let consults = program.scanners[program.external[&**name]].consults;
         // Where the scanner answers `expected` for (see `Expectations`).
-        let context = if in_token {
+        let context = if in_token || raw_start {
             self.scan_context.unwrap_or(start)
         } else {
             position
@@ -906,6 +917,10 @@ impl Machine for ScannerMachine<'_, '_, '_> {
 
     fn column(&mut self) -> usize {
         column_of(self.executor.bytes, self.cursor, self.executor.begin)
+    }
+
+    fn matched(&mut self) -> OpResult<String> {
+        Ok(self.executor.text(self.token_start, self.cursor))
     }
 
     fn at_end(&mut self) -> bool {

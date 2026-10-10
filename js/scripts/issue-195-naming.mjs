@@ -547,6 +547,20 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `grammar.generate-${name}`,
   },
   {
+    inventory: 'template context scanner generator',
+    files: ['js/scripts/template-context-scanner.mjs'],
+    extract: (text) => captures(text, /^export function (templateContextScanner)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.generate-${name}`,
+  },
+  {
+    inventory: 'native grammar embedding generator',
+    files: ['js/scripts/build-language-catalog.mjs'],
+    extract: (text) => captures(text, /^export function (nativeGrammarRustSource)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: () => 'grammar.generate-native-grammar-source',
+  },
+  {
     inventory: 'frontend decision result concepts',
     files: ['js/src/translation/frontend-rules.js', 'rust/src/translation/frontend_rules.rs'],
     extract: (text) => captures(text, /(?:\} |^pub enum )(UnicodeEscape)(?: \*\/| \{)/gmu).map(() => 'unicode-escape'),

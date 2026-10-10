@@ -338,7 +338,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "elixir" => tree_sitter_elixir::LANGUAGE.into(),
         "elm" => tree_sitter_elm::LANGUAGE.into(),
         "haskell" => tree_sitter_haskell::LANGUAGE.into(),
-        "hcl" => tree_sitter_hcl::LANGUAGE.into(),
         "html" => tree_sitter_html::LANGUAGE.into(),
         "kotlin" => tree_sitter_kotlin_ng::LANGUAGE.into(),
         "markdown" => tree_sitter_md_025::LANGUAGE.into(),

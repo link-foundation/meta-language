@@ -202,6 +202,19 @@ trees for nested formatted strings, escapes, layout and exception aliases.
 The pinned upstream corpus remains a separate CI check; this implementation
 does not yet constitute the required multi source union of Python grammars.
 
+The template context family retains nested quoted, interpolation, directive
+and here-document contexts, with closing labels on a separate text stack.
+The generated HCL grammar uses that family in both packages; Tree-sitter HCL
+is a development oracle. Scanner `matched` reads from the token start through
+the current cursor, independently of a marked token end. Wrapping a scanner
+token retains its skipped trivia outside the token span. Focused fixtures
+check nested templates, Unicode escapes, closing-line boundaries and label
+reset; CI checks the pinned upstream corpus. This single pinned HCL source
+does not yet constitute the required multi source grammar union.
+The language catalog generator also derives Rust's embedded grammar table
+from the shared inventory, so every declared native grammar is available to
+ordinary parsing without a separate host registration.
+
 The grammar representation and its executor cover the complete union of the
 grammar features that the inventoried sources use:
 

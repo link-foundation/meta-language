@@ -1,0 +1,36 @@
+[
+  {
+    "name": "token scanner trivia and consumed text",
+    "listing": "(grammar (start source))\n(scanner labels (tokens label) (operations (while (next (class plain (char %20) (char %09))) (do (skip (class plain (char %20) (char %09))))) (consume (literal %C3%A9)) mark (consume (literal %F0%9F%98%80)) (set captured matched) (emit label)))\n(rule source normal (seq (alias label (token (ref label))) (predicate (literal %F0%9F%98%80) (equal (variable captured) (text %C3%A9%F0%9F%98%80)))))\n",
+    "accept": [
+      "é😀",
+      " \té😀"
+    ],
+    "reject": [
+      "é",
+      " \téx",
+      " \té😀x"
+    ],
+    "trees": {
+      "é😀": "(source (label \"é\") \"😀\")",
+      " \té😀": "(source ~\" \" ~\"\\t\" (label \"é\") \"😀\")"
+    }
+  },
+  {
+    "name": "immediateToken scanner trivia and consumed text",
+    "listing": "(grammar (start source))\n(scanner labels (tokens label) (operations (while (next (class plain (char %20) (char %09))) (do (skip (class plain (char %20) (char %09))))) (consume (literal %C3%A9)) mark (consume (literal %F0%9F%98%80)) (set captured matched) (emit label)))\n(rule source normal (seq (alias label (immediateToken (ref label))) (predicate (literal %F0%9F%98%80) (equal (variable captured) (text %C3%A9%F0%9F%98%80)))))\n",
+    "accept": [
+      "é😀",
+      " \té😀"
+    ],
+    "reject": [
+      "é",
+      " \téx",
+      " \té😀x"
+    ],
+    "trees": {
+      "é😀": "(source (label \"é\") \"😀\")",
+      " \té😀": "(source ~\" \" ~\"\\t\" (label \"é\") \"😀\")"
+    }
+  }
+]
