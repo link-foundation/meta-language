@@ -1,0 +1,317 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "cmake",
+  "native": "native-cmake",
+  "sources": [
+    {
+      "id": "tree-sitter-cmake",
+      "format": "tree-sitter grammar.json",
+      "package": "vendored tree-sitter-cmake 0.7.5",
+      "repository": "https://github.com/uyha/tree-sitter-cmake",
+      "revision": "e997bd0b275ca525ce9befecedf5299031183661",
+      "path": "src/grammar.json",
+      "sha256": "c449fc074b4bbc42dd681edf83259974acbf4b4e74461e69d2f8149a36eff723",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/cmake.lino",
+    "sha256": "c21218be72569a652096701b47bf484f1de0e3ed0202fa8a15f760c6adb7a715",
+    "ports": {
+      "path": "src/scanner.c",
+      "file": "parity/grammars/sources/tree-sitter-cmake-0.7.5.scanner.c.gz",
+      "sha256": "10e6fb30e7df09585f115ba385951e22b8179bc7f830478f57d42d82c7c79ce3",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-cmake-0.7.5.LICENSE"
+    },
+    "scanners": [
+      {
+        "name": "bracket_argument",
+        "tokens": [
+          "bracket_argument_opening",
+          "bracket_argument_content",
+          "bracket_argument_closing"
+        ]
+      },
+      {
+        "name": "bracket_comment",
+        "tokens": [
+          "bracket_comment_opening",
+          "bracket_comment_content",
+          "bracket_comment_closing"
+        ]
+      }
+    ],
+    "immediate": []
+  },
+  "rules": 62,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "_escape_identity",
+      "native": "escape_identity"
+    },
+    {
+      "source": "_escape_encoded",
+      "native": "encoded_escape_sequence"
+    },
+    {
+      "source": "_escape_semicolon",
+      "native": "escape_semicolon"
+    },
+    {
+      "source": "variable_ref",
+      "native": "variable_reference"
+    },
+    {
+      "source": "normal_var",
+      "native": "normal_variable"
+    },
+    {
+      "source": "env_var",
+      "native": "environment_variable"
+    },
+    {
+      "source": "cache_var",
+      "native": "cache_variable"
+    },
+    {
+      "source": "argument",
+      "native": "command_argument_value"
+    },
+    {
+      "source": "_untrimmed_argument",
+      "native": "untrimmed_argument"
+    },
+    {
+      "source": "_paren_argument",
+      "native": "parenthesized_argument"
+    },
+    {
+      "source": "_quoted_text",
+      "native": "quoted_text"
+    },
+    {
+      "source": "_unquoted_text",
+      "native": "unquoted_argument_text"
+    },
+    {
+      "source": "if_command",
+      "native": "conditional_opening_command"
+    },
+    {
+      "source": "elseif_command",
+      "native": "alternative_condition_opening_command"
+    },
+    {
+      "source": "else_command",
+      "native": "alternative_opening_command"
+    },
+    {
+      "source": "endif_command",
+      "native": "end_if_command"
+    },
+    {
+      "source": "foreach_command",
+      "native": "iteration_opening_command"
+    },
+    {
+      "source": "endforeach_command",
+      "native": "iteration_closing_command"
+    },
+    {
+      "source": "foreach_loop",
+      "native": "for_each_loop"
+    },
+    {
+      "source": "while_command",
+      "native": "repetition_opening_command"
+    },
+    {
+      "source": "endwhile_command",
+      "native": "repetition_closing_command"
+    },
+    {
+      "source": "endfunction_command",
+      "native": "function_closing_command"
+    },
+    {
+      "source": "function_def",
+      "native": "function_definition"
+    },
+    {
+      "source": "endmacro_command",
+      "native": "macro_closing_command"
+    },
+    {
+      "source": "macro_def",
+      "native": "macro_definition"
+    },
+    {
+      "source": "block_command",
+      "native": "scope_opening_command"
+    },
+    {
+      "source": "endblock_command",
+      "native": "scope_closing_command"
+    },
+    {
+      "source": "block_def",
+      "native": "block_definition"
+    },
+    {
+      "source": "_command_invocation",
+      "native": "command_invocation"
+    },
+    {
+      "source": "_untrimmed_command_invocation",
+      "native": "untrimmed_command_invocation"
+    },
+    {
+      "source": "if",
+      "native": "conditional_keyword"
+    },
+    {
+      "source": "elseif",
+      "native": "alternative_condition_keyword"
+    },
+    {
+      "source": "else",
+      "native": "else_branch_keyword"
+    },
+    {
+      "source": "endif",
+      "native": "conditional_closing_keyword"
+    },
+    {
+      "source": "foreach",
+      "native": "iteration_keyword"
+    },
+    {
+      "source": "endforeach",
+      "native": "iteration_closing_keyword"
+    },
+    {
+      "source": "while",
+      "native": "while_loop_keyword"
+    },
+    {
+      "source": "endwhile",
+      "native": "repetition_closing_keyword"
+    },
+    {
+      "source": "function",
+      "native": "function_keyword"
+    },
+    {
+      "source": "endfunction",
+      "native": "function_closing_keyword"
+    },
+    {
+      "source": "macro",
+      "native": "macro_keyword"
+    },
+    {
+      "source": "endmacro",
+      "native": "macro_closing_keyword"
+    },
+    {
+      "source": "block",
+      "native": "block_scope_keyword"
+    },
+    {
+      "source": "endblock",
+      "native": "scope_closing_keyword"
+    },
+    {
+      "source": "integer",
+      "native": "integer_literal"
+    }
+  ],
+  "expandedWords": [
+    "def",
+    "elseif",
+    "endif",
+    "foreach",
+    "var"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      }
+    ],
+    "generated": 60
+  },
+  "sourceTransforms": [
+    {
+      "family": "pattern-prefix-exclusion",
+      "rule": "_unquoted_text",
+      "pattern": "[^()#\"\\\\]",
+      "excludedPattern": "\\s",
+      "reason": "The source lexer selects whitespace as the argument separator before a competing unquoted text character. Preserve the complete character production with that lexical priority boundary."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "unquoted_argument",
+      "pattern": "\\[=*\\[",
+      "reason": "A complete bracket opening commits the source lexer to bracket arguments. Unterminated bracket input cannot fall back to unquoted text."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "unquoted_argument",
+      "associativity": "right",
+      "value": 1,
+      "reason": "Adjacent unquoted characters remain a single argument before argument_list repeats; whitespace remains its separate source token."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "normal_command",
+      "pattern": "([iI][fF]|[eE][lL][sS][eE][iI][fF]|[eE][lL][sS][eE]|[eE][nN][dD][iI][fF]|[fF][oO][rR][eE][aA][cC][hH]|[eE][nN][dD][fF][oO][rR][eE][aA][cC][hH]|[wW][hH][iI][lL][eE]|[eE][nN][dD][wW][hH][iI][lL][eE]|[fF][uU][nN][cC][tT][iI][oO][nN]|[eE][nN][dD][fF][uU][nN][cC][tT][iI][oO][nN]|[mM][aA][cC][rR][oO]|[eE][nN][dD][mM][aA][cC][rR][oO]|[bB][lL][oO][cC][kK]|[eE][nN][dD][bB][lL][oO][cC][kK])",
+      "continuationPattern": "[0-9A-Za-z_]",
+      "reason": "Case-insensitive control command tokens take source lexer priority over identifier commands, with a word continuation boundary. Preserve identifiers with longer keyword prefixes and every control construct."
+    },
+    {
+      "family": "literal-prefix-exclusion",
+      "rule": "_quoted_text",
+      "pattern": "$",
+      "excludedPattern": "\\$(ENV|CACHE)?\\{",
+      "reason": "A source variable opening commits to its complete closing brace rather than falling back to literal dollar text after a malformed reference."
+    },
+    {
+      "family": "pattern-prefix-exclusion",
+      "rule": "_quoted_text",
+      "pattern": "[^\\\\\"]",
+      "excludedPattern": "\\$(ENV|CACHE)?\\{",
+      "reason": "The source variable token takes lexical priority over the overlapping character token at a variable opening, retaining other literal dollar characters."
+    },
+    {
+      "family": "literal-prefix-exclusion",
+      "rule": "_unquoted_text",
+      "pattern": "$",
+      "excludedPattern": "\\$(ENV|CACHE)?\\{",
+      "reason": "A source variable opening commits to its complete closing brace rather than falling back to literal dollar text after a malformed reference."
+    },
+    {
+      "family": "pattern-prefix-exclusion",
+      "rule": "_unquoted_text",
+      "pattern": "[^()#\"\\\\]",
+      "excludedPattern": "\\$(ENV|CACHE)?\\{",
+      "reason": "The source variable token takes lexical priority over the overlapping character token at a variable opening, retaining other literal dollar characters."
+    },
+    {
+      "family": "pattern-prefix-exclusion",
+      "rule": "_untrimmed_argument",
+      "pattern": "\\s",
+      "excludedPattern": "\\s*\\[=*\\[",
+      "reason": "The external bracket scanner skips leading whitespace before marking the opening token. Retain whitespace tokens elsewhere, but let the scanner own its skipped prefix at a bracket argument opening."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

@@ -11,7 +11,12 @@
 //!
 //! Mirrors `js/src/self-translation.js`.
 
+use crate::translation::frontend_rules::{
+    accept_source_envelope_restoration, accept_source_prefix_restoration,
+};
+use crate::translation::surface::SExpr;
 use std::collections::BTreeMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::fmt::Write as _;
 use std::sync::LazyLock;
@@ -24,16 +29,19 @@ use crate::grammar::decorate_emitted;
 use crate::translation::check::check_program;
 use crate::translation::diagnostics::TranslationError;
 use crate::translation::emit_common::Emitted;
-use crate::translation::javascript::{ModuleContext, parse_javascript_in};
+use crate::translation::javascript::ModuleContext;
 use crate::translation::surface::External;
 use crate::translation::{
     emit_javascript::emit_javascript,
     emit_rust::{emit_rust, emit_rust_constants},
+    javascript::parse_javascript_bound_in,
     rust::parse_rust,
 };
 use crate::{LinkNetwork, ParseConfiguration};
 
 mod binding;
+mod scope;
+use scope::translate_binding_groups;
 
 use self::binding::{Binder, declared_signatures};
 
@@ -318,19 +326,24 @@ fn translate_module(
             .collect();
         (outs, Vec::new())
     };
-    let signatures: Vec<SelfTranslationSignature> = outs
+    let results = translate_binding_groups(&groups, source, from, to, decorators, &outs);
+    let exported_names: HashSet<&str> = scans
         .iter()
-        .enumerate()
-        .filter(|(index, out)| {
-            out.status == "translated"
-                && scans
-                    .get(*index)
-                    .and_then(Option::as_ref)
-                    .is_some_and(|scan| scan.exported)
-        })
-        .flat_map(|(_, out)| out.signatures.iter().cloned())
+        .flatten()
+        .filter(|scan| scan.exported)
+        .filter_map(|scan| scan.declares.as_deref())
         .collect();
-    for (group, out) in groups.iter().zip(outs) {
+    let signatures: Vec<SelfTranslationSignature> = results
+        .iter()
+        .filter(|(_, out)| out.status == "translated")
+        .flat_map(|(_, out)| {
+            out.signatures
+                .iter()
+                .filter(|signature| exported_names.contains(signature.name()))
+                .cloned()
+        })
+        .collect();
+    for (group, out) in results {
         for prelude in out.preludes {
             if !preludes.contains(&prelude) {
                 preludes.push(prelude);
@@ -375,6 +388,64 @@ fn translate_module(
         };
         return Ok((translation, signatures));
     }
+    if let Some(header) = header {
+        static SOURCE_ENVELOPE: LazyLock<Regex> = LazyLock::new(|| {
+            Regex::new(r" envelope-sha256=([a-f0-9]{64}) original=(.*)$").unwrap()
+        });
+        if let Some(envelope) = SOURCE_ENVELOPE.captures(header.text)
+            && let Ok(original) = serde_json::from_str::<String>(&envelope[2])
+            && accept_source_envelope_restoration(
+                header.text.contains(&format!(" source={to} ")),
+                sha256(&source[header.end..]) == envelope[1],
+                header.text.split_ascii_whitespace().find_map(|field| {
+                    field
+                        .strip_prefix("bytes=")
+                        .and_then(|value| value.parse::<usize>().ok())
+                }) == Some(original.len())
+                    && header
+                        .text
+                        .contains(&format!(" sha256={} ", sha256(&original))),
+            )
+        {
+            return Ok((
+                SelfTranslation {
+                    source_language: from,
+                    target_language: to,
+                    code: original,
+                    items: recorded,
+                },
+                signatures,
+            ));
+        }
+        let original_length = header.text.split_ascii_whitespace().find_map(|field| {
+            field
+                .strip_prefix("bytes=")
+                .and_then(|value| value.parse::<usize>().ok())
+        });
+        if let Some(length) = original_length
+            && let Some(original) = body.get(..length)
+            && let Some(layout) = body.get(length..)
+            && accept_source_prefix_restoration(
+                header.text.contains(&format!(" source={to} ")),
+                header
+                    .text
+                    .contains(&format!(" sha256={} ", sha256(original))),
+                layout
+                    .encode_utf16()
+                    .all(crate::translation::lexer::is_js_space),
+            )
+        {
+            return Ok((
+                SelfTranslation {
+                    source_language: from,
+                    target_language: to,
+                    code: original.to_owned(),
+                    items: recorded,
+                },
+                signatures,
+            ));
+        }
+    }
     if family(to) == "Rust" && recorded.iter().any(|item| item.status == "translated") {
         preludes.insert(0, RUST_ALLOW.to_owned());
     }
@@ -396,6 +467,19 @@ fn translate_module(
         }
         lines.push(PRELUDE_END.to_owned());
         lines.push(String::new());
+    }
+    if source.contains('\r') {
+        let tail = format!("\n{}\n{body}", lines[1..].join("\n"));
+        let original = serde_json::to_string(source)
+            .expect("source text serializes")
+            .replace('\u{2028}', "\\u2028")
+            .replace('\u{2029}', "\\u2029");
+        write!(
+            lines[0],
+            " envelope-sha256={} original={original}",
+            sha256(&tail)
+        )
+        .expect("writing a string succeeds");
     }
     let translation = SelfTranslation {
         source_language: from,
@@ -466,7 +550,7 @@ fn is_marker(item: &Item<'_>) -> bool {
             .any(|marker| item.text.starts_with(marker))
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum GroupKind {
     Provenance,
     Carried {
@@ -483,6 +567,7 @@ enum GroupKind {
     },
 }
 
+#[derive(Clone)]
 struct Group<'a> {
     kind: GroupKind,
     items: Vec<Item<'a>>,
@@ -613,6 +698,7 @@ fn first_word(text: &str) -> String {
     text.split(' ').next().unwrap_or_default().to_owned()
 }
 
+#[derive(Clone)]
 struct Translated {
     code: Option<String>,
     preludes: Vec<String>,
@@ -628,6 +714,17 @@ fn translate_group(
     to: &str,
     decorators: &DecoratorSet,
     context: &ModuleContext,
+) -> Translated {
+    translate_group_bound(group, from, to, decorators, context, &HashMap::new())
+}
+
+fn translate_group_bound(
+    group: &Group<'_>,
+    from: &str,
+    to: &str,
+    decorators: &DecoratorSet,
+    context: &ModuleContext,
+    literal_bindings: &HashMap<String, SExpr>,
 ) -> Translated {
     let done = |code: String, status: &'static str| Translated {
         code: Some(code),
@@ -670,7 +767,10 @@ fn translate_group(
         }
         GroupKind::Item { text, term } => (text, term),
     };
-    let (emitted, signatures) = match emit_item(text, from, to, context) {
+    if term == "ERROR" {
+        return carry(text, term, from, "syntax");
+    }
+    let (emitted, signatures) = match emit_item(text, from, to, context, literal_bindings) {
         Ok(Some(emitted)) => emitted,
         Ok(None) => return carry(text, term, from, "top-level statement"),
         Err(error) => return carry(text, term, from, error.kind.as_str()),
@@ -700,9 +800,10 @@ fn translate_group(
     if code.trim().is_empty() {
         return carry(text, term, from, "dropped by a decorator");
     }
+    let count = emitted.definitions.len();
     let marker = format!(
         "{TRANSLATED}{from} {term} items={} sha256={}",
-        emitted.definitions.len(),
+        count,
         sha256(&code)
     );
     let mut lines = vec![marker];
@@ -724,6 +825,7 @@ fn emit_item(
     from: &str,
     to: &str,
     context: &ModuleContext,
+    literal_bindings: &HashMap<String, SExpr>,
 ) -> Result<Option<(Emitted, Vec<External>)>, TranslationError> {
     let surface = if family(from) == "Rust" {
         // The Rust frontend reads a program, so an item alone gets an empty main.
@@ -733,7 +835,7 @@ fn emit_item(
             parse_rust(&format!("{text}\nfn main() {{}}\n"))?
         }
     } else {
-        parse_javascript_in(text, context)?
+        parse_javascript_bound_in(text, context, literal_bindings)?
     };
     let program = check_program(&surface)?;
     // A top-level constant is a Rust constant; other top-level statements run

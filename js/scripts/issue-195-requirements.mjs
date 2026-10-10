@@ -11,6 +11,7 @@ export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
 export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
+  remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
   acceptanceGate:
@@ -47,7 +48,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6024489303',
   bulkDeliveryRepost:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025209380',
-  bulkDeliverySecondRepost:
+  bulkDeliveryFinalRepost:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025369792',
 });
 
@@ -946,6 +947,19 @@ export async function buildIssue195Manifest(root) {
         'I195-NAMING-NATIVE-GRAMMARS': ISSUE_195_SOURCES.greenPathAudit,
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'resource-limits')
           .map(({ id }) => [id, ISSUE_195_SOURCES.resourceAudit])),
+        'I195-RESOURCE-BOUNDED-MEMORY-REGRESSIONS': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-LUA': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-HCL': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-R': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-ODIN': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-AGDA': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-HTML': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-SCANNER-STATE-SEMANTICS': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-XML': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-DTD': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-PYTHON': ISSUE_195_SOURCES.remainingScope,
         // The next-phase audit asks for JavaScript first, self-translation, decorators and bulk
         // grammar work; the audit of fe9b6ff1 makes the CI order and declared settling binding.
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'javascript-first')

@@ -4,7 +4,7 @@
 // part of the JavaScript frontend's input.
 
 import { TranslationError } from './diagnostics.js';
-import { decodeUnicodeEscape } from './frontend-rules.js';
+import { acceptControlParenthesis, decodeUnicodeEscape, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -24,13 +24,25 @@ const COMMENTS = {
 };
 
 export function tokenize(source, language) {
+  return tokenizeRegion(source, language, 0, false, { units: null });
+}
+
+// Reuse the ordinary lexical decisions when finding a template substitution.
+// Opaque string, comment, regex and nested-template tokens cannot close it.
+function tokenizeRegion(source, language, startIndex, braced, encoding) {
   const operators = [...OPERATORS[language]].sort((left, right) => right.length - left.length);
   const comments = COMMENTS[language];
   const tokens = [];
   const commentList = [];
-  let index = 0;
+  // Encode once, on the first regular expression. Copying each remaining
+  // suffix makes a module with many literals take quadratic time and space.
+  const scopes = [];
+  let closed = false;
+  let depth = 0;
+  let index = startIndex;
   while (index < source.length) {
     const char = source[index];
+    if (braced && char === '}' && depth === 0) break;
     if (/\s/u.test(char)) {
       index += 1;
       continue;
@@ -49,8 +61,18 @@ export function tokenize(source, language) {
       continue;
     }
     const start = index;
+    if (language === 'JavaScript' && char === '/' && (closed || startRegularExpression(['.', '?.'].includes(tokens.at(-2)?.value) ? 'member' : tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? ''))) {
+      encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const end = regularExpressionEnd(encoding.units, index);
+      if (end < 0) throw new TranslationError('syntax', 'unterminated regular expression literal', { start, end: source.length });
+      tokens.push({ kind: 'regex', value: '/', raw: source.slice(index, end), start, end });
+      index = end;
+      closed = false;
+      continue;
+    }
+    closed = false;
     if (language === 'JavaScript' && char === '`') {
-      tokens.push(templateToken(source, index));
+      tokens.push(templateToken(source, index, encoding));
       index = tokens.at(-1).end;
       continue;
     }
@@ -109,10 +131,16 @@ export function tokenize(source, language) {
     }
     const operator = operators.find((candidate) => source.startsWith(candidate, index));
     const text = operator ?? String.fromCodePoint(source.codePointAt(index));
+    if (braced && text === '{') depth += 1;
+    if (braced && text === '}') depth -= 1;
+    if (language === 'JavaScript') {
+      if (text === '(') scopes.push(acceptControlParenthesis(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '', ['.', '?.'].includes(tokens.at(-2)?.value)));
+      if (text === ')') closed = scopes.pop() ?? false;
+    }
     tokens.push({ kind: 'punct', value: text, start, end: start + text.length, raw: text });
     index += text.length;
   }
-  tokens.push({ kind: 'eof', value: '', start: source.length, end: source.length, raw: '' });
+  tokens.push({ kind: 'eof', value: '', start: index, end: index, raw: '' });
   return { tokens, comments: commentList };
 }
 
@@ -198,28 +226,35 @@ function stringToken(source, index, language) {
     }
     if (char === '\\' && language !== 'Rocq') {
       const escaped = source[cursor + 1];
-      const simple = { n: '\n', t: '\t', r: '\r', '\\': '\\', '"': '"', "'": "'", 0: '\0', '{': '\\{' };
-      if (escaped === 'u') {
+      if (language === 'JavaScript' && (/[1-9]/u.test(escaped ?? '') || (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? '')))) {
+        throw new TranslationError('syntax', 'legacy octal string escape', { start: cursor, end: cursor + 2 });
+      }
+      if (language === 'JavaScript' && ['\n', '\r', '\u2028', '\u2029'].includes(escaped)) {
+        cursor += escaped === '\r' && source[cursor + 2] === '\n' ? 3 : 2;
+        continue;
+      }
+      const simple = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', '\\': '\\', '"': '"', "'": "'", 0: '\0', '{': language === 'JavaScript' ? '{' : '\\{' };
+      if (escaped === 'u' || (language === 'JavaScript' && escaped === 'x')) {
         const escape = unicodeEscape(source, cursor, language);
         value += escape.text;
         cursor = escape.end;
         continue;
       }
-      if (!(escaped in simple)) {
+      if (!(escaped in simple) && (language !== 'JavaScript' || escaped === undefined)) {
         throw new TranslationError('syntax', `unsupported string escape \\${escaped}`, { start: cursor, end: cursor + 2 });
       }
-      value += simple[escaped];
+      value += simple[escaped] ?? escaped;
       cursor += 2;
       continue;
     }
-    if (char === '\n' && language === 'JavaScript') break;
+    if ((char === '\n' || char === '\r') && language === 'JavaScript') break;
     value += char;
     cursor += 1;
   }
   throw new TranslationError('syntax', 'unterminated string literal', { start: index, end: source.length });
 }
 
-function templateToken(source, index) {
+function templateToken(source, index, encoding) {
   const parts = [];
   let cursor = index + 1;
   let text = '';
@@ -231,16 +266,34 @@ function templateToken(source, index) {
     }
     if (char === '\\') {
       const escaped = source[cursor + 1];
-      const simple = { n: '\n', t: '\t', '\\': '\\', '`': '`', $: '$' };
-      if (!(escaped in simple)) {
+      if (['\n', '\r', '\u2028', '\u2029'].includes(escaped)) {
+        cursor += escaped === '\r' && source[cursor + 2] === '\n' ? 3 : 2;
+        continue;
+      }
+      const simple = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', 0: '\0', '\\': '\\', '`': '`', $: '$' };
+      if (escaped === 'u' || escaped === 'x') {
+        const escape = unicodeEscape(source, cursor, 'JavaScript');
+        text += escape.text;
+        cursor = escape.end;
+        continue;
+      }
+      if (/[1-9]/u.test(escaped ?? '') || (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? ''))) {
+        throw new TranslationError('syntax', 'legacy octal template escape', { start: cursor, end: cursor + 3 });
+      }
+      if (escaped === undefined) {
         throw new TranslationError('syntax', `unsupported template escape \\${escaped}`, { start: cursor, end: cursor + 2 });
       }
-      text += simple[escaped];
+      text += simple[escaped] ?? escaped;
       cursor += 2;
       continue;
     }
+    if (char === '\r') {
+      text += '\n';
+      cursor += source[cursor + 1] === '\n' ? 2 : 1;
+      continue;
+    }
     if (source.startsWith('${', cursor)) {
-      const close = matchingBrace(source, cursor + 1);
+      const close = matchingBrace(source, cursor + 1, encoding);
       parts.push({ text, expression: { source: source.slice(cursor + 2, close), offset: cursor + 2 } });
       text = '';
       cursor = close + 1;
@@ -252,15 +305,9 @@ function templateToken(source, index) {
   throw new TranslationError('syntax', 'unterminated template literal', { start: index, end: source.length });
 }
 
-export function matchingBrace(source, open) {
-  let depth = 0;
-  for (let cursor = open; cursor < source.length; cursor += 1) {
-    if (source[cursor] === '{') depth += 1;
-    if (source[cursor] === '}') {
-      depth -= 1;
-      if (depth === 0) return cursor;
-    }
-  }
+export function matchingBrace(source, open, encoding = { units: null }) {
+  const close = tokenizeRegion(source, 'JavaScript', open + 1, true, encoding).tokens.at(-1).end;
+  if (close < source.length) return close;
   throw new TranslationError('syntax', 'unbalanced braces', { start: open, end: source.length });
 }
 

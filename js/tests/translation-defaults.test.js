@@ -67,3 +67,16 @@ test('self-translation writes top-level constants as Rust constants and restores
   // A top-level let and a statement with effects still run as a program.
   assert.equal(selfTranslate('let count = 1;\n', 'JavaScript', 'Rust').items[0].status, 'carried');
 });
+
+
+test('optional JSDoc names preserve declared types without supplying runtime defaults', () => {
+  const source = "/** @param {number} [value=99] @returns {number} */\nfunction add(value = 2) { return value + 1; }\nconsole.log(add(), add(7));\n";
+  const rust = translateProgram(source, 'JavaScript', 'Rust');
+  assert.equal(rust.diagnostic, null);
+  assert.ok(rust.code.includes('crate::add(2f64)'), rust.code);
+  assert.ok(rust.code.includes('crate::add(7f64)'), rust.code);
+  const identity = parseJavaScript('/** @param {string} [value] @returns {string} */\nfunction identity(value) { return value; }\n');
+  assert.equal(identity.items[0].params[0].type.kind, 'string');
+  assert.match(refusal('/** @param {number} [value=99] @returns {number} */\nfunction add(value) { return value + 1; }\nconsole.log(add());\n'), /argument/u);
+  assert.match(refusal('/** @param {number} [other] */\nfunction identity(value) { return value; }\n'), /other is not a parameter/u);
+});

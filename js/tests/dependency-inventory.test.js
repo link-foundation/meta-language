@@ -172,3 +172,18 @@ test('the registry client retries dropped connections and transient answers, and
   await assert.rejects(registryHttp({ fetch: offline.fetch, sleep })('https://registry.example/b'), { message: 'https://registry.example/b: fetch failed (ECONNRESET)' });
   assert.equal(offline.calls.length, 4, 'the client gives up after its attempts');
 });
+
+test('private oracle manifests and their shared lock dependencies are inventoried', () => {
+  const collected = collectDependencies(root);
+  const manifest = 'rust/oracles/cmake-source-oracle/Cargo.toml';
+  const local = collected.find(({ name, scope }) => name === 'cmake-source-oracle' && scope === 'rust/Cargo.toml');
+  assert.equal(local.kind, 'development');
+  assert.equal(local.pinned, 'oracles/cmake-source-oracle');
+  assert.equal(local.source.type, 'none');
+  for (const name of ['cc', 'flate2', 'tree-sitter-language']) {
+    const item = collected.find((entry) => entry.category === 'crate' && entry.scope === 'rust/Cargo.lock' && entry.name === name);
+    assert.ok(item.declaredIn.includes(manifest), name);
+    assert.equal(item.source.type, 'crate');
+    assert.ok(item.requirement, name);
+  }
+});

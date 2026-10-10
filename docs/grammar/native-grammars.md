@@ -14,15 +14,12 @@ grammar is checked against the pinned tree-sitter grammar it replaced as its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: twelve catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme, Racket,
-C, Rust, JavaScript, TypeScript and TSX, have a native merged grammar, and it is their default parser in
-both runtimes; see [default parse](#default-parse). The C grammar is the first
-that the [automatic import pipeline](#imported-grammars) writes, and the Rust
-grammar the first with a ported native scanner. tree-sitter-json,
-tree-sitter-ini, tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard,
-tree-sitter-scheme, tree-sitter-racket, tree-sitter-c, tree-sitter-rust,
-tree-sitter-javascript and tree-sitter-typescript remain as pinned oracles; see
-[current limits](#current-limits).
+The inventory selects 35 native grammars for 42 catalog languages in both
+runtimes, including the eight SQL catalog entries that share one grammar.
+Their canonical grammar text, exact source pins, licenses and concrete tree
+fixtures are recorded in the inventory, source register and merge reports.
+The replaced parsers are independent development oracles; see
+[default parse](#default-parse) and [imported grammars](#imported-grammars).
 
 ## Format
 
@@ -538,7 +535,7 @@ recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
 - The C grammar has one source, tree-sitter-c; inputs the C standard and
   tree-sitter-c read differently are outside the corpus until the standard
   is merged.
-- No other catalog language has a native merged grammar yet. The open rows are
-  `I195-GRAMMAR-NATIVE-MERGED`, `I195-GRAMMAR-LANGUAGE-CATALOG` and
-  `I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED` in the
-  [ledger](../issue-195-requirement-ledger.md).
+The language inventory records which grammar ordinary parsing selects for each
+catalog entry. The source and merge reports record the inputs of each generated
+native grammar; the multi-source union contract is defined in the authoritative
+[vision](../vision.md#native-merged-grammars).

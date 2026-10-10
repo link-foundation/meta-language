@@ -50,7 +50,12 @@
     "string_content": "_string_content",
     "character": "char",
     "centered_dot": "cdot",
-    "boolean": "_boolean"
+    "boolean": "_boolean",
+    "layout_start": "_layout_start",
+    "layout_semicolon": "_layout_semicolon",
+    "layout_end": "_layout_end",
+    "match_body_start": "_match_body_start",
+    "syntax_quotation_body": "_syntax_quotation_body"
   },
   "matches": [
     {
@@ -6478,11 +6483,12 @@
         [4,null,"identifier",1,23,28,""],
         [3,"arguments","identifier",1,29,31,""],
         [1,null,"hash_command",1,32,55,""],
-        [2,null,"explicit",1,39,45,""],
-        [3,null,"@",0,39,40,""],
-        [3,null,"identifier",1,40,45,""],
-        [2,null,"application",1,46,55,""],
-        [3,"name","identifier",1,46,50,""],
+        [2,null,"application",1,39,55,""],
+        [3,"name","application",1,39,50,""],
+        [4,"name","explicit",1,39,45,""],
+        [5,null,"@",0,39,40,""],
+        [5,null,"identifier",1,40,45,""],
+        [4,"arguments","identifier",1,46,50,""],
         [3,"arguments","true",1,51,55,""],
         [4,null,"true",0,51,55,""],
         [1,null,"hash_command",1,56,71,""],
@@ -6530,11 +6536,11 @@
     },
     {
       "source": "\n@[foo.bar baz.quux] def f := 12\n",
-      "recovered": "(module (explicit ~\"\\n\" \"@\" (list \"[\" (projection term:(application name:(projection term:(identifier \"foo\") \".\" name:(identifier \"bar\")) ~\" \" arguments:(identifier \"baz\")) \".\" name:(identifier \"quux\")) \"]\")) (tactic_apply ~\" \" tactic:(identifier \"def\") arg:(binary_expression ~\" \" left:(identifier \"f\") ~\" \" (ERROR@27..28 \":\") operator:\"=\" right:(number ~\" \" (unnamed_token \"12\")))) ~\"\\n\")"
+      "recovered": "(module (binary_expression left:(application name:(application name:(explicit ~\"\\n\" \"@\" (list \"[\" (projection term:(application name:(projection term:(identifier \"foo\") \".\" name:(identifier \"bar\")) ~\" \" arguments:(identifier \"baz\")) \".\" name:(identifier \"quux\")) \"]\")) ~\" \" arguments:(identifier \"def\")) ~\" \" arguments:(identifier \"f\")) ~\" \" (ERROR@27..28 \":\") operator:\"=\" right:(number ~\" \" (unnamed_token \"12\"))) ~\"\\n\")"
     },
     {
       "source": "\n@[] def f := 12\n",
-      "recovered": "(module (explicit ~\"\\n\" \"@\" (list \"[\" \"]\")) (tactic_apply ~\" \" tactic:(identifier \"def\") arg:(binary_expression ~\" \" left:(identifier \"f\") ~\" \" (ERROR@11..12 \":\") operator:\"=\" right:(number ~\" \" (unnamed_token \"12\")))) ~\"\\n\")"
+      "recovered": "(module (binary_expression left:(application name:(application name:(explicit ~\"\\n\" \"@\" (list \"[\" \"]\")) ~\" \" arguments:(identifier \"def\")) ~\" \" arguments:(identifier \"f\")) ~\" \" (ERROR@11..12 \":\") operator:\"=\" right:(number ~\" \" (unnamed_token \"12\"))) ~\"\\n\")"
     },
     {
       "source": "\nattribute [-reducible] f\nattribute [simp, -inline, -reducible] Foo\n",
@@ -6606,7 +6612,7 @@
     },
     {
       "source": "\nelab \"foo\" x:term : term <= bar => Lean.Elab.Term.elabTerm x none\n",
-      "recovered": "(module (notation ~\"\\n\" \"elab\" (string ~\" \" \"\\\"\" (unnamed_token \"foo\") \"\\\"\") (binary_expression ~\" \" left:(identifier \"x\") (ERROR@13..25 \":term : term\") ~\" \" operator:\"<=\" ~\" \" right:(identifier \"bar\")) ~\" \" \"=>\" (application name:(application name:(projection term:(projection term:(projection ~\" \" term:(identifier \"Lean\") \".\" name:(identifier \"Elab\")) \".\" name:(identifier \"Term\")) \".\" name:(identifier \"elabTerm\")) ~\" \" arguments:(identifier \"x\")) ~\" \" arguments:(identifier \"none\"))) ~\"\\n\")"
+      "recovered": "(module (notation ~\"\\n\" \"elab\" (binary_expression left:(application name:(string ~\" \" \"\\\"\" (unnamed_token \"foo\") \"\\\"\") ~\" \" arguments:(identifier \"x\")) (ERROR@13..25 \":term : term\") ~\" \" operator:\"<=\" ~\" \" right:(identifier \"bar\")) ~\" \" \"=>\" (application name:(application name:(projection term:(projection term:(projection ~\" \" term:(identifier \"Lean\") \".\" name:(identifier \"Elab\")) \".\" name:(identifier \"Term\")) \".\" name:(identifier \"elabTerm\")) ~\" \" arguments:(identifier \"x\")) ~\" \" arguments:(identifier \"none\"))) ~\"\\n\")"
     },
     {
       "source": "\nprefix:max \"↑\" => coe\ninfix:max \"↑\" => coe\ninfixl:max \"↑\" => coe\ninfixr:max \"↑\" => coe\npostfix:max \"↑\" => coe\n",

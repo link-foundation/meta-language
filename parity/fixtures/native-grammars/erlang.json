@@ -1,0 +1,1951 @@
+{
+  "schemaVersion": 1,
+  "id": "erlang",
+  "language": "Erlang",
+  "grammar": "parity/grammars/native/erlang.lino",
+  "oracle": "crates.io tree-sitter-erlang 0.20.0",
+  "sources": [
+    "https://github.com/WhatsApp/tree-sitter-erlang/tree/67e7f7f05baf492ca2a7c0d9538761b242d33d95",
+    "https://github.com/WhatsApp/tree-sitter-erlang/tree/67e7f7f05baf492ca2a7c0d9538761b242d33d95/test/corpus"
+  ],
+  "corpus": {
+    "path": "test/corpus",
+    "file": "parity/grammars/sources/tree-sitter-erlang-0.20.0.corpus.json.gz",
+    "sha256": "f8171460dc7ead91bd4cae76057102391aab0427452400fe0026118d2645bbb6",
+    "url": "https://github.com/WhatsApp/tree-sitter-erlang/tree/67e7f7f05baf492ca2a7c0d9538761b242d33d95/test/corpus"
+  },
+  "hidden": [],
+  "anonymous": [
+    "unnamed_token",
+    "quoted_string_token",
+    "prefixed_string_literal_body",
+    "prefixed_verbatim_string_literal_body"
+  ],
+  "extras": [
+    "comment"
+  ],
+  "oracleKinds": {
+    "top_level_declaration": "_form",
+    "structural_search_rule_definition": "ssr_definition",
+    "structural_search_rule_replacement": "ssr_replacement",
+    "structural_search_condition_clause": "ssr_where",
+    "preprocessor_directive": "_preprocessor_directive",
+    "preprocessor_include_directive": "pp_include",
+    "preprocessor_library_include_directive": "pp_include_lib",
+    "preprocessor_removal_directive": "pp_undef",
+    "preprocessor_defined_condition_directive": "pp_ifdef",
+    "preprocessor_undefined_condition_directive": "pp_ifndef",
+    "preprocessor_else_directive": "pp_else",
+    "preprocessor_end_directive": "pp_endif",
+    "preprocessor_if_directive": "pp_if",
+    "preprocessor_else_if_directive": "pp_elif",
+    "preprocessor_definition_directive": "pp_define",
+    "include_detail": "_include_detail",
+    "deprecated_details": "_deprecated_details",
+    "deprecated_function_arity_list": "deprecated_fas",
+    "deprecated_function_arity": "deprecated_fa",
+    "deprecation_description": "deprecation_desc",
+    "description": "_desc",
+    "string_concatenation": "multi_string",
+    "string_like": "_string_like",
+    "deprecated_fun_arity": "_deprecated_fun_arity",
+    "opaque_type_declaration": "opaque",
+    "type_definition": "_type_def",
+    "record_declaration": "record_decl",
+    "specification": "spec",
+    "specification_definition": "_spec_def",
+    "specification_fun": "_spec_fun",
+    "module_attribute_name": "attr_name",
+    "fun_declaration": "fun_decl",
+    "fun_clause_separator": "_fun_clause_separator",
+    "type_signature": "type_sig",
+    "annotated_type": "ann_type",
+    "annotated_variable": "ann_var",
+    "function_type_signature": "fun_type_sig",
+    "function_or_macro_clause": "_function_or_macro_clause",
+    "function_definition_clause": "function_clause",
+    "clause_guard": "_clause_guard",
+    "expression": "_expr",
+    "ellipsis": "dotdotdot",
+    "exception_catch_expression": "catch_expr",
+    "match_expression": "match_expr",
+    "conditional_match_expression": "cond_match_expr",
+    "binary_operator_expression": "binary_op_expr",
+    "unary_operator_expression": "unary_op_expr",
+    "primary_expression_body": "_expr_max",
+    "parenthesized_expression": "paren_expr",
+    "scope_block_expression": "block_expr",
+    "bit_size_expression": "bit_size_expr",
+    "bit_expression": "_bit_expr",
+    "primary_unary_operator_expression": "unary_op_expr_max",
+    "primary_binary_operator_expression": "binary_op_expr_max",
+    "bit_type": "_bit_type",
+    "comprehension_qualifier_expression_list": "lc_exprs",
+    "comprehension_zip_or_filter_expression": "lc_or_zc_expr",
+    "comprehension_qualifier_expression": "_lc_expr",
+    "generator_operator": "_generator_op",
+    "binary_generator_operator": "_b_generator_op",
+    "map_expression_body": "_map_expr",
+    "map_expression_update": "map_expr_update",
+    "dictionary_expression": "map_expr",
+    "map_expression_base": "_map_expr_base",
+    "map_field_operator": "_map_field_op",
+    "record_expression_body": "_record_expr",
+    "record_index_expression": "record_index_expr",
+    "record_field_expression": "record_field_expr",
+    "record_update_expression": "record_update_expr",
+    "record_expression": "record_expr",
+    "qualified_record_expression": "qualified_record_expr",
+    "qualified_record_update_expression": "qualified_record_update_expr",
+    "qualified_record_field_expression": "qualified_record_field_expr",
+    "anon_record_expression": "anon_record_expr",
+    "anon_record_update_expression": "anon_record_update_expr",
+    "anon_record_field_expression": "anon_record_field_expr",
+    "record_expression_base": "_record_expr_base",
+    "record_tuple": "_record_tuple",
+    "field_expression": "field_expr",
+    "if_expression": "if_expr",
+    "case_selection_expression": "case_expr",
+    "message_or_case_clause_list": "_cr_clauses",
+    "message_or_case_clause_or_macro": "_cr_clause_or_macro",
+    "message_or_case_clause": "cr_clause",
+    "receive_expression": "receive_expr",
+    "receive_time_limit_clause": "receive_after",
+    "fun_expression": "_fun_expr",
+    "macro_name": "_macro_name",
+    "name": "_name",
+    "arity_value": "_arity_value",
+    "anonymous_function_clause_list": "fun_clauses",
+    "anonymous_function_clause": "fun_clause",
+    "try_expression": "try_expr",
+    "try_catch": "_try_catch",
+    "exception_cleanup_clause": "try_after",
+    "catch_clause_list": "_catch_clauses",
+    "exception_pattern": "_catch_pat",
+    "match_catch_pattern": "match_catch_pat",
+    "binary_operator_exception_pattern": "binary_op_catch_pat",
+    "maybe_expression": "maybe_expr",
+    "maybe_else_clause": "_maybe_else_clause",
+    "macro_definition_replacement": "_macro_def_replacement",
+    "replacement_disjunction_guard": "replacement_guard_or",
+    "replacement_conjunction_guard": "replacement_guard_and",
+    "replacement_expression_guard": "replacement_expr_guard",
+    "replacement_parenthesized_expression": "replacement_parens",
+    "macro_left_hand_side": "macro_lhs",
+    "macro_body_expression": "_macro_body_expr",
+    "macro_call_expression": "macro_call_expr",
+    "macro_call_arguments": "macro_call_args",
+    "macro_expression": "macro_expr",
+    "expression_list": "_exprs",
+    "expression_argument_list": "expr_args",
+    "variable_arguments": "var_args",
+    "concatenation_operand_list": "concatables",
+    "concatenation_operand": "_concatable",
+    "prefix_operator": "_prefix_op",
+    "multiplication_operator": "_mult_op",
+    "addition_operator": "_add_op",
+    "list_operator": "_list_op",
+    "comparison_operator": "_comp_op",
+    "variable": "var",
+    "integer_literal": "integer",
+    "quoted_string_token": "_sq_string",
+    "prefixed_verbatim_string_literal_body": "_sigil_verbatim_string",
+    "prefixed_string_literal_body": "_sigil_string",
+    "character_literal": "char",
+    "multiple_quote_string": "_tq_string",
+    "multiple_quote_sigil_string": "_tq_sigil_string"
+  },
+  "matches": [
+    {
+      "source": "",
+      "rows": [
+        [0,null,"source_file",1,0,0,""]
+      ]
+    },
+    {
+      "source": "%% café\n",
+      "rows": [
+        [0,null,"source_file",1,0,9,""],
+        [1,null,"comment",1,0,8,"X"]
+      ]
+    },
+    {
+      "source": "-module(demo).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","module_attribute",1,0,14,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"module",0,1,7,""],
+        [2,null,"(",0,7,8,""],
+        [2,"name","atom",1,8,12,""],
+        [2,null,")",0,12,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "-export([f/1]).\n",
+      "rows": [
+        [0,null,"source_file",1,0,16,""],
+        [1,"forms_only","export_attribute",1,0,15,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"export",0,1,7,""],
+        [2,null,"(",0,7,8,""],
+        [2,null,"[",0,8,9,""],
+        [2,"funs","fa",1,9,12,""],
+        [3,"fun","atom",1,9,10,""],
+        [3,"arity","arity",1,10,12,""],
+        [4,null,"/",0,10,11,""],
+        [4,"value","integer",1,11,12,""],
+        [2,null,"]",0,12,13,""],
+        [2,null,")",0,13,14,""],
+        [2,null,".",0,14,15,""]
+      ]
+    },
+    {
+      "source": "f() -> ok.\n",
+      "rows": [
+        [0,null,"source_file",1,0,11,""],
+        [1,"forms_only","fun_decl",1,0,10,""],
+        [2,"clause","function_clause",1,0,9,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,9,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","atom",1,7,9,""],
+        [2,null,".",0,9,10,""]
+      ]
+    },
+    {
+      "source": "f(X) -> X.\n",
+      "rows": [
+        [0,null,"source_file",1,0,11,""],
+        [1,"forms_only","fun_decl",1,0,10,""],
+        [2,"clause","function_clause",1,0,9,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,4,""],
+        [4,null,"(",0,1,2,""],
+        [4,"args","var",1,2,3,""],
+        [4,null,")",0,3,4,""],
+        [3,"body","clause_body",1,5,9,""],
+        [4,null,"->",0,5,7,""],
+        [4,"exprs","var",1,8,9,""],
+        [2,null,".",0,9,10,""]
+      ]
+    },
+    {
+      "source": "f() -> 1.\n",
+      "rows": [
+        [0,null,"source_file",1,0,10,""],
+        [1,"forms_only","fun_decl",1,0,9,""],
+        [2,"clause","function_clause",1,0,8,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,8,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","integer",1,7,8,""],
+        [2,null,".",0,8,9,""]
+      ]
+    },
+    {
+      "source": "f() -> -1.\n",
+      "rows": [
+        [0,null,"source_file",1,0,11,""],
+        [1,"forms_only","fun_decl",1,0,10,""],
+        [2,"clause","function_clause",1,0,9,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,9,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","unary_op_expr",1,7,9,""],
+        [5,null,"-",0,7,8,""],
+        [5,"operand","integer",1,8,9,""],
+        [2,null,".",0,9,10,""]
+      ]
+    },
+    {
+      "source": "f() -> 1.5.\n",
+      "rows": [
+        [0,null,"source_file",1,0,12,""],
+        [1,"forms_only","fun_decl",1,0,11,""],
+        [2,"clause","function_clause",1,0,10,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,10,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","float",1,7,10,""],
+        [2,null,".",0,10,11,""]
+      ]
+    },
+    {
+      "source": "f() -> 16#ff.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","integer",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> 'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,13,""],
+        [1,"forms_only","fun_decl",1,0,12,""],
+        [2,"clause","function_clause",1,0,11,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,11,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","atom",1,7,11,""],
+        [2,null,".",0,11,12,""]
+      ]
+    },
+    {
+      "source": "f() -> \"é😀\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,17,""],
+        [1,"forms_only","fun_decl",1,0,16,""],
+        [2,"clause","function_clause",1,0,15,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,15,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,15,""],
+        [2,null,".",0,15,16,""]
+      ]
+    },
+    {
+      "source": "f() -> $a.\n",
+      "rows": [
+        [0,null,"source_file",1,0,11,""],
+        [1,"forms_only","fun_decl",1,0,10,""],
+        [2,"clause","function_clause",1,0,9,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,9,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","char",1,7,9,""],
+        [2,null,".",0,9,10,""]
+      ]
+    },
+    {
+      "source": "f() -> [1,2].\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","list",1,7,12,""],
+        [5,null,"[",0,7,8,""],
+        [5,"exprs","integer",1,8,9,""],
+        [5,null,",",0,9,10,""],
+        [5,"exprs","integer",1,10,11,""],
+        [5,null,"]",0,11,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> [1|Tail].\n",
+      "rows": [
+        [0,null,"source_file",1,0,17,""],
+        [1,"forms_only","fun_decl",1,0,16,""],
+        [2,"clause","function_clause",1,0,15,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,15,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","list",1,7,15,""],
+        [5,null,"[",0,7,8,""],
+        [5,"exprs","pipe",1,8,14,""],
+        [6,"lhs","integer",1,8,9,""],
+        [6,null,"|",0,9,10,""],
+        [6,"rhs","var",1,10,14,""],
+        [5,null,"]",0,14,15,""],
+        [2,null,".",0,15,16,""]
+      ]
+    },
+    {
+      "source": "f() -> {a,1}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","tuple",1,7,12,""],
+        [5,null,"{",0,7,8,""],
+        [5,"expr","atom",1,8,9,""],
+        [5,null,",",0,9,10,""],
+        [5,"expr","integer",1,10,11,""],
+        [5,null,"}",0,11,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> #{a=>1}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,16,""],
+        [1,"forms_only","fun_decl",1,0,15,""],
+        [2,"clause","function_clause",1,0,14,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,14,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","map_expr",1,7,14,""],
+        [5,null,"#",0,7,8,""],
+        [5,null,"{",0,8,9,""],
+        [5,"fields","map_field",1,9,13,""],
+        [6,"key","atom",1,9,10,""],
+        [6,null,"=>",0,10,12,""],
+        [6,"value","integer",1,12,13,""],
+        [5,null,"}",0,13,14,""],
+        [2,null,".",0,14,15,""]
+      ]
+    },
+    {
+      "source": "f(M) -> M#{a:=1}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,18,""],
+        [1,"forms_only","fun_decl",1,0,17,""],
+        [2,"clause","function_clause",1,0,16,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,4,""],
+        [4,null,"(",0,1,2,""],
+        [4,"args","var",1,2,3,""],
+        [4,null,")",0,3,4,""],
+        [3,"body","clause_body",1,5,16,""],
+        [4,null,"->",0,5,7,""],
+        [4,"exprs","map_expr_update",1,8,16,""],
+        [5,"expr","var",1,8,9,""],
+        [5,null,"#",0,9,10,""],
+        [5,null,"{",0,10,11,""],
+        [5,"fields","map_field",1,11,15,""],
+        [6,"key","atom",1,11,12,""],
+        [6,null,":=",0,12,14,""],
+        [6,"value","integer",1,14,15,""],
+        [5,null,"}",0,15,16,""],
+        [2,null,".",0,16,17,""]
+      ]
+    },
+    {
+      "source": "f() -> <<1,2:8>>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,18,""],
+        [1,"forms_only","fun_decl",1,0,17,""],
+        [2,"clause","function_clause",1,0,16,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,16,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","binary",1,7,16,""],
+        [5,null,"<<",0,7,9,""],
+        [5,"elements","bin_element",1,9,10,""],
+        [6,"element","integer",1,9,10,""],
+        [5,null,",",0,10,11,""],
+        [5,"elements","bin_element",1,11,14,""],
+        [6,"element","integer",1,11,12,""],
+        [6,"size","bit_size_expr",1,12,14,""],
+        [7,null,":",0,12,13,""],
+        [7,"size","integer",1,13,14,""],
+        [5,null,">>",0,14,16,""],
+        [2,null,".",0,16,17,""]
+      ]
+    },
+    {
+      "source": "f(X) -> X + 1 * 2.\n",
+      "rows": [
+        [0,null,"source_file",1,0,19,""],
+        [1,"forms_only","fun_decl",1,0,18,""],
+        [2,"clause","function_clause",1,0,17,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,4,""],
+        [4,null,"(",0,1,2,""],
+        [4,"args","var",1,2,3,""],
+        [4,null,")",0,3,4,""],
+        [3,"body","clause_body",1,5,17,""],
+        [4,null,"->",0,5,7,""],
+        [4,"exprs","binary_op_expr",1,8,17,""],
+        [5,"lhs","var",1,8,9,""],
+        [5,null,"+",0,10,11,""],
+        [5,"rhs","binary_op_expr",1,12,17,""],
+        [6,"lhs","integer",1,12,13,""],
+        [6,null,"*",0,14,15,""],
+        [6,"rhs","integer",1,16,17,""],
+        [2,null,".",0,17,18,""]
+      ]
+    },
+    {
+      "source": "f() -> m:g(1).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","remote",1,7,13,""],
+        [5,"module","remote_module",1,7,9,""],
+        [6,"module","atom",1,7,8,""],
+        [6,null,":",0,8,9,""],
+        [5,"fun","call",1,9,13,""],
+        [6,"expr","atom",1,9,10,""],
+        [6,"args","expr_args",1,10,13,""],
+        [7,null,"(",0,10,11,""],
+        [7,"args","integer",1,11,12,""],
+        [7,null,")",0,12,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f(X) -> case X of a -> 1; _ -> 2 end.\n",
+      "rows": [
+        [0,null,"source_file",1,0,38,""],
+        [1,"forms_only","fun_decl",1,0,37,""],
+        [2,"clause","function_clause",1,0,36,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,4,""],
+        [4,null,"(",0,1,2,""],
+        [4,"args","var",1,2,3,""],
+        [4,null,")",0,3,4,""],
+        [3,"body","clause_body",1,5,36,""],
+        [4,null,"->",0,5,7,""],
+        [4,"exprs","case_expr",1,8,36,""],
+        [5,null,"case",0,8,12,""],
+        [5,"expr","var",1,13,14,""],
+        [5,null,"of",0,15,17,""],
+        [5,"clauses","cr_clause",1,18,24,""],
+        [6,"pat","atom",1,18,19,""],
+        [6,"body","clause_body",1,20,24,""],
+        [7,null,"->",0,20,22,""],
+        [7,"exprs","integer",1,23,24,""],
+        [5,null,";",0,24,25,""],
+        [5,"clauses","cr_clause",1,26,32,""],
+        [6,"pat","var",1,26,27,""],
+        [6,"body","clause_body",1,28,32,""],
+        [7,null,"->",0,28,30,""],
+        [7,"exprs","integer",1,31,32,""],
+        [5,null,"end",0,33,36,""],
+        [2,null,".",0,36,37,""]
+      ]
+    },
+    {
+      "source": "f(X) -> if X > 0 -> yes; true -> no end.\n",
+      "rows": [
+        [0,null,"source_file",1,0,41,""],
+        [1,"forms_only","fun_decl",1,0,40,""],
+        [2,"clause","function_clause",1,0,39,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,4,""],
+        [4,null,"(",0,1,2,""],
+        [4,"args","var",1,2,3,""],
+        [4,null,")",0,3,4,""],
+        [3,"body","clause_body",1,5,39,""],
+        [4,null,"->",0,5,7,""],
+        [4,"exprs","if_expr",1,8,39,""],
+        [5,null,"if",0,8,10,""],
+        [5,"clauses","if_clause",1,11,23,""],
+        [6,"guard","guard",1,11,16,""],
+        [7,"clauses","guard_clause",1,11,16,""],
+        [8,"exprs","binary_op_expr",1,11,16,""],
+        [9,"lhs","var",1,11,12,""],
+        [9,null,">",0,13,14,""],
+        [9,"rhs","integer",1,15,16,""],
+        [6,"body","clause_body",1,17,23,""],
+        [7,null,"->",0,17,19,""],
+        [7,"exprs","atom",1,20,23,""],
+        [5,null,";",0,23,24,""],
+        [5,"clauses","if_clause",1,25,35,""],
+        [6,"guard","guard",1,25,29,""],
+        [7,"clauses","guard_clause",1,25,29,""],
+        [8,"exprs","atom",1,25,29,""],
+        [6,"body","clause_body",1,30,35,""],
+        [7,null,"->",0,30,32,""],
+        [7,"exprs","atom",1,33,35,""],
+        [5,null,"end",0,36,39,""],
+        [2,null,".",0,39,40,""]
+      ]
+    },
+    {
+      "source": "f() -> receive X -> X after 10 -> timeout end.\n",
+      "rows": [
+        [0,null,"source_file",1,0,47,""],
+        [1,"forms_only","fun_decl",1,0,46,""],
+        [2,"clause","function_clause",1,0,45,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,45,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","receive_expr",1,7,45,""],
+        [5,null,"receive",0,7,14,""],
+        [5,"clauses","cr_clause",1,15,21,""],
+        [6,"pat","var",1,15,16,""],
+        [6,"body","clause_body",1,17,21,""],
+        [7,null,"->",0,17,19,""],
+        [7,"exprs","var",1,20,21,""],
+        [5,"after","receive_after",1,22,41,""],
+        [6,null,"after",0,22,27,""],
+        [6,"expr","integer",1,28,30,""],
+        [6,"body","clause_body",1,31,41,""],
+        [7,null,"->",0,31,33,""],
+        [7,"exprs","atom",1,34,41,""],
+        [5,null,"end",0,42,45,""],
+        [2,null,".",0,45,46,""]
+      ]
+    },
+    {
+      "source": "f() -> fun(X) -> X+1 end.\n",
+      "rows": [
+        [0,null,"source_file",1,0,26,""],
+        [1,"forms_only","fun_decl",1,0,25,""],
+        [2,"clause","function_clause",1,0,24,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,24,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","anonymous_fun",1,7,24,""],
+        [5,null,"fun",0,7,10,""],
+        [5,"clauses","fun_clause",1,10,20,""],
+        [6,"args","expr_args",1,10,13,""],
+        [7,null,"(",0,10,11,""],
+        [7,"args","var",1,11,12,""],
+        [7,null,")",0,12,13,""],
+        [6,"body","clause_body",1,14,20,""],
+        [7,null,"->",0,14,16,""],
+        [7,"exprs","binary_op_expr",1,17,20,""],
+        [8,"lhs","var",1,17,18,""],
+        [8,null,"+",0,18,19,""],
+        [8,"rhs","integer",1,19,20,""],
+        [5,null,"end",0,21,24,""],
+        [2,null,".",0,24,25,""]
+      ]
+    },
+    {
+      "source": "f() -> fun g/1.\n",
+      "rows": [
+        [0,null,"source_file",1,0,16,""],
+        [1,"forms_only","fun_decl",1,0,15,""],
+        [2,"clause","function_clause",1,0,14,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,14,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","internal_fun",1,7,14,""],
+        [5,null,"fun",0,7,10,""],
+        [5,"fun","atom",1,11,12,""],
+        [5,"arity","arity",1,12,14,""],
+        [6,null,"/",0,12,13,""],
+        [6,"value","integer",1,13,14,""],
+        [2,null,".",0,14,15,""]
+      ]
+    },
+    {
+      "source": "f(Xs) -> [X+1 || X <- Xs].\n",
+      "rows": [
+        [0,null,"source_file",1,0,27,""],
+        [1,"forms_only","fun_decl",1,0,26,""],
+        [2,"clause","function_clause",1,0,25,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,5,""],
+        [4,null,"(",0,1,2,""],
+        [4,"args","var",1,2,4,""],
+        [4,null,")",0,4,5,""],
+        [3,"body","clause_body",1,6,25,""],
+        [4,null,"->",0,6,8,""],
+        [4,"exprs","list_comprehension",1,9,25,""],
+        [5,null,"[",0,9,10,""],
+        [5,"exprs","binary_op_expr",1,10,13,""],
+        [6,"lhs","var",1,10,11,""],
+        [6,null,"+",0,11,12,""],
+        [6,"rhs","integer",1,12,13,""],
+        [5,"lc_exprs","lc_exprs",1,14,24,""],
+        [6,null,"||",0,14,16,""],
+        [6,"exprs","lc_or_zc_expr",1,17,24,""],
+        [7,"exprs","generator",1,17,24,""],
+        [8,"lhs","var",1,17,18,""],
+        [8,null,"<-",0,19,21,""],
+        [8,"rhs","var",1,22,24,""],
+        [5,null,"]",0,24,25,""],
+        [2,null,".",0,25,26,""]
+      ]
+    },
+    {
+      "source": "f() -> begin a,b end.\n",
+      "rows": [
+        [0,null,"source_file",1,0,22,""],
+        [1,"forms_only","fun_decl",1,0,21,""],
+        [2,"clause","function_clause",1,0,20,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,20,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","block_expr",1,7,20,""],
+        [5,null,"begin",0,7,12,""],
+        [5,"exprs","atom",1,13,14,""],
+        [5,null,",",0,14,15,""],
+        [5,"exprs","atom",1,15,16,""],
+        [5,null,"end",0,17,20,""],
+        [2,null,".",0,20,21,""]
+      ]
+    },
+    {
+      "source": "f() -> try g() catch _:X -> X end.\n",
+      "rows": [
+        [0,null,"source_file",1,0,35,""],
+        [1,"forms_only","fun_decl",1,0,34,""],
+        [2,"clause","function_clause",1,0,33,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,33,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","try_expr",1,7,33,""],
+        [5,null,"try",0,7,10,""],
+        [5,"exprs","call",1,11,14,""],
+        [6,"expr","atom",1,11,12,""],
+        [6,"args","expr_args",1,12,14,""],
+        [7,null,"(",0,12,13,""],
+        [7,null,")",0,13,14,""],
+        [5,null,"catch",0,15,20,""],
+        [5,"catch","catch_clause",1,21,29,""],
+        [6,"class","try_class",1,21,23,""],
+        [7,"class","var",1,21,22,""],
+        [7,null,":",0,22,23,""],
+        [6,"pat","var",1,23,24,""],
+        [6,"body","clause_body",1,25,29,""],
+        [7,null,"->",0,25,27,""],
+        [7,"exprs","var",1,28,29,""],
+        [5,null,"end",0,30,33,""],
+        [2,null,".",0,33,34,""]
+      ]
+    },
+    {
+      "source": "f(a) -> 1; f(_) -> 2.\n",
+      "rows": [
+        [0,null,"source_file",1,0,22,""],
+        [1,"forms_only","fun_decl",1,0,10,""],
+        [2,"clause","function_clause",1,0,9,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,4,""],
+        [4,null,"(",0,1,2,""],
+        [4,"args","atom",1,2,3,""],
+        [4,null,")",0,3,4,""],
+        [3,"body","clause_body",1,5,9,""],
+        [4,null,"->",0,5,7,""],
+        [4,"exprs","integer",1,8,9,""],
+        [2,null,";",0,9,10,""],
+        [1,"forms_only","fun_decl",1,11,21,""],
+        [2,"clause","function_clause",1,11,20,""],
+        [3,"name","atom",1,11,12,""],
+        [3,"args","expr_args",1,12,15,""],
+        [4,null,"(",0,12,13,""],
+        [4,"args","var",1,13,14,""],
+        [4,null,")",0,14,15,""],
+        [3,"body","clause_body",1,16,20,""],
+        [4,null,"->",0,16,18,""],
+        [4,"exprs","integer",1,19,20,""],
+        [2,null,".",0,20,21,""]
+      ]
+    },
+    {
+      "source": "-record(r,{x=1}).\n",
+      "rows": [
+        [0,null,"source_file",1,0,18,""],
+        [1,"forms_only","record_decl",1,0,17,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"record",0,1,7,""],
+        [2,null,"(",0,7,8,""],
+        [2,"name","atom",1,8,9,""],
+        [2,null,",",0,9,10,""],
+        [2,null,"{",0,10,11,""],
+        [2,"fields","record_field",1,11,14,""],
+        [3,"name","atom",1,11,12,""],
+        [3,"expr","field_expr",1,12,14,""],
+        [4,null,"=",0,12,13,""],
+        [4,"expr","integer",1,13,14,""],
+        [2,null,"}",0,14,15,""],
+        [2,null,")",0,15,16,""],
+        [2,null,".",0,16,17,""]
+      ]
+    },
+    {
+      "source": "f() -> #r{x=2}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,16,""],
+        [1,"forms_only","fun_decl",1,0,15,""],
+        [2,"clause","function_clause",1,0,14,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,14,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","record_expr",1,7,14,""],
+        [5,"name","record_name",1,7,9,""],
+        [6,null,"#",0,7,8,""],
+        [6,"name","atom",1,8,9,""],
+        [5,null,"{",0,9,10,""],
+        [5,"fields","record_field",1,10,13,""],
+        [6,"name","atom",1,10,11,""],
+        [6,"expr","field_expr",1,11,13,""],
+        [7,null,"=",0,11,12,""],
+        [7,"expr","integer",1,12,13,""],
+        [5,null,"}",0,13,14,""],
+        [2,null,".",0,14,15,""]
+      ]
+    },
+    {
+      "source": "f(R) -> R#r.x.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,4,""],
+        [4,null,"(",0,1,2,""],
+        [4,"args","var",1,2,3,""],
+        [4,null,")",0,3,4,""],
+        [3,"body","clause_body",1,5,13,""],
+        [4,null,"->",0,5,7,""],
+        [4,"exprs","record_field_expr",1,8,13,""],
+        [5,"expr","var",1,8,9,""],
+        [5,"name","record_name",1,9,11,""],
+        [6,null,"#",0,9,10,""],
+        [6,"name","atom",1,10,11,""],
+        [5,"field","record_field_name",1,11,13,""],
+        [6,null,".",0,11,12,""],
+        [6,"name","atom",1,12,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "-define(X,1).\nf() -> ?X.\n",
+      "rows": [
+        [0,null,"source_file",1,0,25,""],
+        [1,"forms_only","pp_define",1,0,13,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"define",0,1,7,""],
+        [2,null,"(",0,7,8,""],
+        [2,"lhs","macro_lhs",1,8,9,""],
+        [3,"name","var",1,8,9,""],
+        [2,null,",",0,9,10,""],
+        [2,"replacement","integer",1,10,11,""],
+        [2,null,")",0,11,12,""],
+        [2,null,".",0,12,13,""],
+        [1,"forms_only","fun_decl",1,14,24,""],
+        [2,"clause","function_clause",1,14,23,""],
+        [3,"name","atom",1,14,15,""],
+        [3,"args","expr_args",1,15,17,""],
+        [4,null,"(",0,15,16,""],
+        [4,null,")",0,16,17,""],
+        [3,"body","clause_body",1,18,23,""],
+        [4,null,"->",0,18,20,""],
+        [4,"exprs","macro_call_expr",1,21,23,""],
+        [5,null,"?",0,21,22,""],
+        [5,"name","var",1,22,23,""],
+        [2,null,".",0,23,24,""]
+      ]
+    },
+    {
+      "source": "-type t() :: integer().\n",
+      "rows": [
+        [0,null,"source_file",1,0,24,""],
+        [1,"forms_only","type_alias",1,0,23,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"type",0,1,5,""],
+        [2,"name","type_name",1,6,9,""],
+        [3,"name","atom",1,6,7,""],
+        [3,"args","var_args",1,7,9,""],
+        [4,null,"(",0,7,8,""],
+        [4,null,")",0,8,9,""],
+        [2,null,"::",0,10,12,""],
+        [2,"ty","call",1,13,22,""],
+        [3,"expr","atom",1,13,20,""],
+        [3,"args","expr_args",1,20,22,""],
+        [4,null,"(",0,20,21,""],
+        [4,null,")",0,21,22,""],
+        [2,null,".",0,22,23,""]
+      ]
+    },
+    {
+      "source": "-spec f(integer()) -> integer().\n",
+      "rows": [
+        [0,null,"source_file",1,0,33,""],
+        [1,"forms_only","spec",1,0,32,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"spec",0,1,5,""],
+        [2,"fun","atom",1,6,7,""],
+        [2,"sigs","type_sig",1,7,31,""],
+        [3,"args","expr_args",1,7,18,""],
+        [4,null,"(",0,7,8,""],
+        [4,"args","call",1,8,17,""],
+        [5,"expr","atom",1,8,15,""],
+        [5,"args","expr_args",1,15,17,""],
+        [6,null,"(",0,15,16,""],
+        [6,null,")",0,16,17,""],
+        [4,null,")",0,17,18,""],
+        [3,null,"->",0,19,21,""],
+        [3,"ty","call",1,22,31,""],
+        [4,"expr","atom",1,22,29,""],
+        [4,"args","expr_args",1,29,31,""],
+        [5,null,"(",0,29,30,""],
+        [5,null,")",0,30,31,""],
+        [2,null,".",0,31,32,""]
+      ]
+    },
+    {
+      "source": "f() -> \"\"\"\n café\n \"\"\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,24,""],
+        [1,"forms_only","fun_decl",1,0,23,""],
+        [2,"clause","function_clause",1,0,22,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,22,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,22,""],
+        [2,null,".",0,22,23,""]
+      ]
+    },
+    {
+      "source": "f() -> \"\"\"\"\n é😀\n \"\"\"\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,27,""],
+        [1,"forms_only","fun_decl",1,0,26,""],
+        [2,"clause","function_clause",1,0,25,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,25,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,25,""],
+        [2,null,".",0,25,26,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s\"\"\"\n café\n \"\"\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,26,""],
+        [1,"forms_only","fun_decl",1,0,25,""],
+        [2,"clause","function_clause",1,0,24,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,24,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,24,""],
+        [2,null,".",0,24,25,""]
+      ]
+    },
+    {
+      "source": "f() -> \"\"\"\n a\"\"b\n \"\"\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,23,""],
+        [1,"forms_only","fun_decl",1,0,22,""],
+        [2,"clause","function_clause",1,0,21,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,21,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,21,""],
+        [2,null,".",0,21,22,""]
+      ]
+    },
+    {
+      "source": "f() -> \"x\".\r\n",
+      "rows": [
+        [0,null,"source_file",1,0,13,""],
+        [1,"forms_only","fun_decl",1,0,11,""],
+        [2,"clause","function_clause",1,0,10,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,10,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,10,""],
+        [2,null,".",0,10,11,""]
+      ]
+    },
+    {
+      "source": "-custom hello.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","wild_attribute",1,0,14,""],
+        [2,"name","attr_name",1,0,7,""],
+        [3,null,"-",0,0,1,""],
+        [3,"name","atom",1,1,7,""],
+        [2,"value","atom",1,8,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "-custom {a,1}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","wild_attribute",1,0,14,""],
+        [2,"name","attr_name",1,0,7,""],
+        [3,null,"-",0,0,1,""],
+        [3,"name","atom",1,1,7,""],
+        [2,"value","tuple",1,8,13,""],
+        [3,null,"{",0,8,9,""],
+        [3,"expr","atom",1,9,10,""],
+        [3,null,",",0,10,11,""],
+        [3,"expr","integer",1,11,12,""],
+        [3,null,"}",0,12,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "\n-custom(value).\n",
+      "rows": [
+        [0,null,"source_file",1,1,17,""],
+        [1,"forms_only","wild_attribute",1,1,16,""],
+        [2,"name","attr_name",1,1,8,""],
+        [3,null,"-",0,1,2,""],
+        [3,"name","atom",1,2,8,""],
+        [2,"value","paren_expr",1,8,15,""],
+        [3,null,"(",0,8,9,""],
+        [3,"expr","atom",1,9,14,""],
+        [3,null,")",0,14,15,""],
+        [2,null,".",0,15,16,""]
+      ]
+    },
+    {
+      "source": "\n-extra(\"x\").\n",
+      "rows": [
+        [0,null,"source_file",1,1,14,""],
+        [1,"forms_only","wild_attribute",1,1,13,""],
+        [2,"name","attr_name",1,1,7,""],
+        [3,null,"-",0,1,2,""],
+        [3,"name","atom",1,2,7,""],
+        [2,"value","paren_expr",1,7,12,""],
+        [3,null,"(",0,7,8,""],
+        [3,"expr","string",1,8,11,""],
+        [3,null,")",0,11,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "-define(T, atom() | integer()).\n",
+      "rows": [
+        [0,null,"source_file",1,0,32,""],
+        [1,"forms_only","pp_define",1,0,31,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"define",0,1,7,""],
+        [2,null,"(",0,7,8,""],
+        [2,"lhs","macro_lhs",1,8,9,""],
+        [3,"name","var",1,8,9,""],
+        [2,null,",",0,9,10,""],
+        [2,"replacement","pipe",1,11,29,""],
+        [3,"lhs","call",1,11,17,""],
+        [4,"expr","atom",1,11,15,""],
+        [4,"args","expr_args",1,15,17,""],
+        [5,null,"(",0,15,16,""],
+        [5,null,")",0,16,17,""],
+        [3,null,"|",0,18,19,""],
+        [3,"rhs","call",1,20,29,""],
+        [4,"expr","atom",1,20,27,""],
+        [4,"args","expr_args",1,27,29,""],
+        [5,null,"(",0,27,28,""],
+        [5,null,")",0,28,29,""],
+        [2,null,")",0,29,30,""],
+        [2,null,".",0,30,31,""]
+      ]
+    },
+    {
+      "source": "-define(T, ?OTHER(X)).\n",
+      "rows": [
+        [0,null,"source_file",1,0,23,""],
+        [1,"forms_only","pp_define",1,0,22,""],
+        [2,null,"-",0,0,1,""],
+        [2,null,"define",0,1,7,""],
+        [2,null,"(",0,7,8,""],
+        [2,"lhs","macro_lhs",1,8,9,""],
+        [3,"name","var",1,8,9,""],
+        [2,null,",",0,9,10,""],
+        [2,"replacement","macro_call_expr",1,11,20,""],
+        [3,null,"?",0,11,12,""],
+        [3,"name","var",1,12,17,""],
+        [3,"args","macro_call_args",1,17,20,""],
+        [4,null,"(",0,17,18,""],
+        [4,"args","macro_expr",1,18,19,""],
+        [5,"expr","var",1,18,19,""],
+        [4,null,")",0,19,20,""],
+        [2,null,")",0,20,21,""],
+        [2,null,".",0,21,22,""]
+      ]
+    },
+    {
+      "source": "f() -> ~(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B(é).\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B[é].\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B{é}.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B<é>.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B/é/.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B|é|.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B'é'.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B\"é\".\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B`é`.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,14,""],
+        [1,"forms_only","fun_decl",1,0,13,""],
+        [2,"clause","function_clause",1,0,12,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,12,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,12,""],
+        [2,null,".",0,12,13,""]
+      ]
+    },
+    {
+      "source": "f() -> ~s#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~S#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~b#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    },
+    {
+      "source": "f() -> ~B#é#.\n",
+      "rows": [
+        [0,null,"source_file",1,0,15,""],
+        [1,"forms_only","fun_decl",1,0,14,""],
+        [2,"clause","function_clause",1,0,13,""],
+        [3,"name","atom",1,0,1,""],
+        [3,"args","expr_args",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [3,"body","clause_body",1,4,13,""],
+        [4,null,"->",0,4,6,""],
+        [4,"exprs","string",1,7,13,""],
+        [2,null,".",0,13,14,""]
+      ]
+    }
+  ],
+  "divergences": [],
+  "rejections": [
+    {
+      "source": "f() -> .",
+      "recovered": "(source_file forms_only:(fun_declaration clause:(function_definition_clause name:(atom \"f\") args:(expression_argument_list \"(\" \")\") body:(clause_body ~\" \" \"->\" (MISSING@6 ellipsis) ~\" \")) \".\"))"
+    },
+    {
+      "source": "f( -> ok.",
+      "recovered": "(source_file forms_only:(fun_declaration clause:(function_definition_clause name:(atom \"f\") args:(expression_argument_list \"(\" args:(unary_operator_expression ~\" \" \"-\" (MISSING@4 ellipsis)) (MISSING@4 \")\")) body:(clause_body (MISSING@4 \"->\") (MISSING@4 ellipsis))) (ERROR@4..8 \"> ok\") \".\"))"
+    },
+    {
+      "source": "f() -> \"unterminated.",
+      "recovered": "(source_file forms_only:(fun_declaration clause:(function_definition_clause name:(atom \"f\") args:(expression_argument_list \"(\" \")\") body:(clause_body ~\" \" \"->\" ~\" \" (ERROR@7..8 \"\\\"\") exprs:(atom \"unterminated\"))) \".\"))"
+    },
+    {
+      "source": "f() -> \"\"\"\nno close.",
+      "recovered": "(source_file forms_only:(fun_declaration clause:(function_definition_clause name:(atom \"f\") args:(expression_argument_list \"(\" \")\") body:(clause_body ~\" \" \"->\" exprs:(string ~\" \" (quoted_string_token \"\\\"\\\"\")))) (ERROR@9..19 \"\\\"\\nno close\") \".\"))"
+    }
+  ]
+}

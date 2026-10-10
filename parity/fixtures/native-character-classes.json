@@ -1,32 +1,573 @@
 {
   "schemaVersion": 1,
   "cases": [
-    { "id": "intersection", "pattern": "[a-z&&[def]]", "asciiAccepts": "def", "accepts": ["d", "f"], "rejects": ["a", "1", "", "dd"] },
-    { "id": "difference", "pattern": "[a-z--aeiou]", "asciiAccepts": "bcdfghjklmnpqrstvwxyz", "accepts": ["b", "z"], "rejects": ["a", "e", "1", "", "bb"] },
-    { "id": "symmetric-difference", "pattern": "[a-g~~b-h]", "asciiAccepts": "ah", "accepts": ["a", "h"], "rejects": ["b", "g", "", "ah"] },
-    { "id": "union-precedence", "pattern": "[ab&&bc]", "asciiAccepts": "b", "accepts": ["b"], "rejects": ["a", "c", "", "bb"] },
-    { "id": "left-associative-intersection", "pattern": "[a-c~~b-d&&c-e]", "asciiAccepts": "d", "accepts": ["d"], "rejects": ["a", "b", "c", "e", ""] },
-    { "id": "left-associative-difference", "pattern": "[a-c--b-d~~c-e]", "asciiAccepts": "acde", "accepts": ["a", "c", "d", "e"], "rejects": ["b", "f", ""] },
-    { "id": "outer-negation", "pattern": "[^a-z&&b]", "asciiExcludes": "b", "accepts": ["a", "c", "1", "\n", "😀"], "rejects": ["b", "", "aa"] },
-    { "id": "nested-union", "pattern": "[x[a-c&&b-d]y]", "asciiAccepts": "bcxy", "accepts": ["b", "c", "x", "y"], "rejects": ["a", "d", "", "xy"] },
-    { "id": "nested-negation", "pattern": "[a-z&&[^aeiou]]", "asciiAccepts": "bcdfghjklmnpqrstvwxyz", "accepts": ["b", "z"], "rejects": ["a", "1", "", "bb"] },
-    { "id": "negative-difference-operand", "pattern": "[a-z--[^aeiou]]", "asciiAccepts": "aeiou", "accepts": ["a", "u"], "rejects": ["b", "z", "", "aa"] },
-    { "id": "negative-intersection-complement", "pattern": "[^a-c&&[^b-d]]", "asciiExcludes": "a", "accepts": ["b", "d", "1", "😀"], "rejects": ["a", "", "bb"] },
-    { "id": "mixed-operators", "pattern": "[a-z&&[a-m]--[d-f]]", "asciiAccepts": "abcghijklm", "accepts": ["a", "g", "m"], "rejects": ["d", "n", "", "am"] },
-    { "id": "literal-operator-characters", "pattern": "[&~-]", "asciiAccepts": "&~-", "accepts": ["&", "~", "-"], "rejects": ["a", "", "&&"] },
-    { "id": "escaped-operators", "pattern": "[a\\&\\&b\\-\\-c\\~\\~]", "asciiAccepts": "abc&-~", "accepts": ["a", "&", "-", "~"], "rejects": ["d", "", "--"] },
-    { "id": "unicode-intersection", "pattern": "[\\p{L}&&\\p{Greek}]", "asciiAccepts": "", "accepts": ["Α", "β", "ω"], "rejects": ["a", "1", "😀", "", "ββ"] },
-    { "id": "unicode-difference", "pattern": "[\\p{L}--\\p{Greek}]", "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", "accepts": ["a", "é", "漢", "𐐀"], "rejects": ["β", "1", "😀", "", "éé"] },
-    { "id": "unicode-symmetric-difference", "pattern": "[\\p{Greek}~~\\p{L}]", "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", "accepts": ["a", "é", "漢", "𐐀"], "rejects": ["β", "ω", "1", "😀", ""] },
-    { "id": "astral-range-intersection", "pattern": "[\\u{10000}-\\u{10FFFF}&&[^\\u{1F600}-\\u{1F64F}]]", "asciiAccepts": "", "accepts": ["𐐀", "𝔘"], "rejects": ["😀", "a", "", "𐐀𐐀"] },
-    { "id": "repeated-intersection", "pattern": "[a-z&&[^aeiou]]+", "asciiAccepts": "bcdfghjklmnpqrstvwxyz", "accepts": ["b", "bcxyz"], "rejects": ["", "a", "bcax", "bc1"] },
-    { "id": "bounded-symmetric-difference", "pattern": "[a-g~~b-h]{2,3}", "asciiAccepts": "", "accepts": ["ah", "haa", "aaa"], "rejects": ["", "a", "aaaa", "hab"] },
-    { "id": "empty-intersection", "pattern": "[a&&b]", "asciiAccepts": "", "accepts": [], "rejects": ["", "a", "b", "😀", "ab"] },
-    { "id": "complement-of-empty-intersection", "pattern": "[^a&&b]", "asciiExcludes": "", "accepts": ["a", "b", "\n", "😀"], "rejects": ["", "aa", "😀😀"] },
-    { "id": "identifier-intersection", "pattern": "[_\\p{L}&&[^0-9#*]]+", "asciiAccepts": "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", "accepts": ["_", "漢_", "𐐀é"], "rejects": ["", "9", "#", "*", "a9"] },
-    { "id": "hexadecimal-escape-forms", "pattern": "(\\x{1F600}|\\u{1F600}|\\U{1F600}|\\U0001F600|\\x41|\\u0041|\\U00000041|\\x{41}|\\u{41}|\\U{41})", "asciiAccepts": "A", "accepts": ["A", "😀"], "rejects": ["", "a", "AA", "😀😀"] },
-    { "id": "braced-hexadecimal-class", "pattern": "[\\x{10000}-\\x{10FFFF}--[\\x{1F600}-\\x{1F64F}]]", "asciiAccepts": "", "accepts": ["𐐀", "𝔘"], "rejects": ["", "a", "😀", "𐐀𐐀"] },
-    { "id": "swift-identifier-pattern", "pattern": "[_\\p{XID_Start}\\p{Emoji}&&[^0-9#*]](\\p{EMod}|\\x{FE0F}\\x{20E3}?)?([_\\p{XID_Continue}\\p{Emoji}\\x{200D}](\\p{EMod}|\\x{FE0F}\\x{20E3}?)?)*", "asciiAccepts": "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", "accepts": ["_", "alpha", "漢字", "😀", "a9", "a*", "a#", "😀️", "😀️⃣", "😀‍😀"], "rejects": ["", "9", "#", "*", "a!"] },
-    { "id": "ascii-emoji-intersection", "pattern": "[\\p{Emoji}&&[\\x{00}-\\x{7F}]]", "asciiAccepts": "0123456789#*", "accepts": ["0", "9", "#", "*"], "rejects": ["", "a", "😀", "00"] }
+    {
+      "id": "double-hyphen",
+      "pattern": "[--]",
+      "rustOraclePattern": "[\\-\\-]",
+      "asciiAccepts": "-",
+      "accepts": [
+        "-"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "--"
+      ]
+    },
+    {
+      "id": "double-ampersand",
+      "pattern": "[&&]",
+      "rustOraclePattern": "[\\&\\&]",
+      "asciiAccepts": "&",
+      "accepts": [
+        "&"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "&&"
+      ]
+    },
+    {
+      "id": "double-tilde",
+      "pattern": "[~~]",
+      "rustOraclePattern": "[\\~\\~]",
+      "asciiAccepts": "~",
+      "accepts": [
+        "~"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "~~"
+      ]
+    },
+    {
+      "id": "intersection",
+      "pattern": "[a-z&&[def]]",
+      "asciiAccepts": "def",
+      "accepts": [
+        "d",
+        "f"
+      ],
+      "rejects": [
+        "a",
+        "1",
+        "",
+        "dd"
+      ]
+    },
+    {
+      "id": "difference",
+      "pattern": "[a-z--aeiou]",
+      "asciiAccepts": "bcdfghjklmnpqrstvwxyz",
+      "accepts": [
+        "b",
+        "z"
+      ],
+      "rejects": [
+        "a",
+        "e",
+        "1",
+        "",
+        "bb"
+      ]
+    },
+    {
+      "id": "symmetric-difference",
+      "pattern": "[a-g~~b-h]",
+      "asciiAccepts": "ah",
+      "accepts": [
+        "a",
+        "h"
+      ],
+      "rejects": [
+        "b",
+        "g",
+        "",
+        "ah"
+      ]
+    },
+    {
+      "id": "union-precedence",
+      "pattern": "[ab&&bc]",
+      "asciiAccepts": "b",
+      "accepts": [
+        "b"
+      ],
+      "rejects": [
+        "a",
+        "c",
+        "",
+        "bb"
+      ]
+    },
+    {
+      "id": "left-associative-intersection",
+      "pattern": "[a-c~~b-d&&c-e]",
+      "asciiAccepts": "d",
+      "accepts": [
+        "d"
+      ],
+      "rejects": [
+        "a",
+        "b",
+        "c",
+        "e",
+        ""
+      ]
+    },
+    {
+      "id": "left-associative-difference",
+      "pattern": "[a-c--b-d~~c-e]",
+      "asciiAccepts": "acde",
+      "accepts": [
+        "a",
+        "c",
+        "d",
+        "e"
+      ],
+      "rejects": [
+        "b",
+        "f",
+        ""
+      ]
+    },
+    {
+      "id": "outer-negation",
+      "pattern": "[^a-z&&b]",
+      "asciiExcludes": "b",
+      "accepts": [
+        "a",
+        "c",
+        "1",
+        "\n",
+        "😀"
+      ],
+      "rejects": [
+        "b",
+        "",
+        "aa"
+      ]
+    },
+    {
+      "id": "nested-union",
+      "pattern": "[x[a-c&&b-d]y]",
+      "asciiAccepts": "bcxy",
+      "accepts": [
+        "b",
+        "c",
+        "x",
+        "y"
+      ],
+      "rejects": [
+        "a",
+        "d",
+        "",
+        "xy"
+      ]
+    },
+    {
+      "id": "nested-negation",
+      "pattern": "[a-z&&[^aeiou]]",
+      "asciiAccepts": "bcdfghjklmnpqrstvwxyz",
+      "accepts": [
+        "b",
+        "z"
+      ],
+      "rejects": [
+        "a",
+        "1",
+        "",
+        "bb"
+      ]
+    },
+    {
+      "id": "negative-difference-operand",
+      "pattern": "[a-z--[^aeiou]]",
+      "asciiAccepts": "aeiou",
+      "accepts": [
+        "a",
+        "u"
+      ],
+      "rejects": [
+        "b",
+        "z",
+        "",
+        "aa"
+      ]
+    },
+    {
+      "id": "negative-intersection-complement",
+      "pattern": "[^a-c&&[^b-d]]",
+      "asciiExcludes": "a",
+      "accepts": [
+        "b",
+        "d",
+        "1",
+        "😀"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "bb"
+      ]
+    },
+    {
+      "id": "mixed-operators",
+      "pattern": "[a-z&&[a-m]--[d-f]]",
+      "asciiAccepts": "abcghijklm",
+      "accepts": [
+        "a",
+        "g",
+        "m"
+      ],
+      "rejects": [
+        "d",
+        "n",
+        "",
+        "am"
+      ]
+    },
+    {
+      "id": "literal-operator-characters",
+      "pattern": "[&~-]",
+      "asciiAccepts": "&~-",
+      "accepts": [
+        "&",
+        "~",
+        "-"
+      ],
+      "rejects": [
+        "a",
+        "",
+        "&&"
+      ]
+    },
+    {
+      "id": "escaped-operators",
+      "pattern": "[a\\&\\&b\\-\\-c\\~\\~]",
+      "asciiAccepts": "abc&-~",
+      "accepts": [
+        "a",
+        "&",
+        "-",
+        "~"
+      ],
+      "rejects": [
+        "d",
+        "",
+        "--"
+      ]
+    },
+    {
+      "id": "unicode-intersection",
+      "pattern": "[\\p{L}&&\\p{Greek}]",
+      "asciiAccepts": "",
+      "accepts": [
+        "Α",
+        "β",
+        "ω"
+      ],
+      "rejects": [
+        "a",
+        "1",
+        "😀",
+        "",
+        "ββ"
+      ]
+    },
+    {
+      "id": "unicode-difference",
+      "pattern": "[\\p{L}--\\p{Greek}]",
+      "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "a",
+        "é",
+        "漢",
+        "𐐀"
+      ],
+      "rejects": [
+        "β",
+        "1",
+        "😀",
+        "",
+        "éé"
+      ]
+    },
+    {
+      "id": "unicode-symmetric-difference",
+      "pattern": "[\\p{Greek}~~\\p{L}]",
+      "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "a",
+        "é",
+        "漢",
+        "𐐀"
+      ],
+      "rejects": [
+        "β",
+        "ω",
+        "1",
+        "😀",
+        ""
+      ]
+    },
+    {
+      "id": "astral-range-intersection",
+      "pattern": "[\\u{10000}-\\u{10FFFF}&&[^\\u{1F600}-\\u{1F64F}]]",
+      "asciiAccepts": "",
+      "accepts": [
+        "𐐀",
+        "𝔘"
+      ],
+      "rejects": [
+        "😀",
+        "a",
+        "",
+        "𐐀𐐀"
+      ]
+    },
+    {
+      "id": "repeated-intersection",
+      "pattern": "[a-z&&[^aeiou]]+",
+      "asciiAccepts": "bcdfghjklmnpqrstvwxyz",
+      "accepts": [
+        "b",
+        "bcxyz"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "bcax",
+        "bc1"
+      ]
+    },
+    {
+      "id": "bounded-symmetric-difference",
+      "pattern": "[a-g~~b-h]{2,3}",
+      "asciiAccepts": "",
+      "accepts": [
+        "ah",
+        "haa",
+        "aaa"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "aaaa",
+        "hab"
+      ]
+    },
+    {
+      "id": "empty-intersection",
+      "pattern": "[a&&b]",
+      "asciiAccepts": "",
+      "accepts": [],
+      "rejects": [
+        "",
+        "a",
+        "b",
+        "😀",
+        "ab"
+      ]
+    },
+    {
+      "id": "complement-of-empty-intersection",
+      "pattern": "[^a&&b]",
+      "asciiExcludes": "",
+      "accepts": [
+        "a",
+        "b",
+        "\n",
+        "😀"
+      ],
+      "rejects": [
+        "",
+        "aa",
+        "😀😀"
+      ]
+    },
+    {
+      "id": "identifier-intersection",
+      "pattern": "[_\\p{L}&&[^0-9#*]]+",
+      "asciiAccepts": "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "_",
+        "漢_",
+        "𐐀é"
+      ],
+      "rejects": [
+        "",
+        "9",
+        "#",
+        "*",
+        "a9"
+      ]
+    },
+    {
+      "id": "hexadecimal-escape-forms",
+      "pattern": "(\\x{1F600}|\\u{1F600}|\\U{1F600}|\\U0001F600|\\x41|\\u0041|\\U00000041|\\x{41}|\\u{41}|\\U{41})",
+      "asciiAccepts": "A",
+      "accepts": [
+        "A",
+        "😀"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "AA",
+        "😀😀"
+      ]
+    },
+    {
+      "id": "braced-hexadecimal-class",
+      "pattern": "[\\x{10000}-\\x{10FFFF}--[\\x{1F600}-\\x{1F64F}]]",
+      "asciiAccepts": "",
+      "accepts": [
+        "𐐀",
+        "𝔘"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "😀",
+        "𐐀𐐀"
+      ]
+    },
+    {
+      "id": "swift-identifier-pattern",
+      "pattern": "[_\\p{XID_Start}\\p{Emoji}&&[^0-9#*]](\\p{EMod}|\\x{FE0F}\\x{20E3}?)?([_\\p{XID_Continue}\\p{Emoji}\\x{200D}](\\p{EMod}|\\x{FE0F}\\x{20E3}?)?)*",
+      "asciiAccepts": "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "_",
+        "alpha",
+        "漢字",
+        "😀",
+        "a9",
+        "a*",
+        "a#",
+        "😀️",
+        "😀️⃣",
+        "😀‍😀"
+      ],
+      "rejects": [
+        "",
+        "9",
+        "#",
+        "*",
+        "a!"
+      ]
+    },
+    {
+      "id": "ascii-emoji-intersection",
+      "pattern": "[\\p{Emoji}&&[\\x{00}-\\x{7F}]]",
+      "asciiAccepts": "0123456789#*",
+      "accepts": [
+        "0",
+        "9",
+        "#",
+        "*"
+      ],
+      "rejects": [
+        "",
+        "a",
+        "😀",
+        "00"
+      ]
+    },
+    {
+      "id": "unicode-id-start",
+      "pattern": "\\p{ID_Start}",
+      "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "a",
+        "é",
+        "𐐀",
+        "℘",
+        "℮",
+        "゛",
+        "ͺ"
+      ],
+      "rejects": [
+        "",
+        "😀",
+        "aa",
+        "_",
+        "9",
+        "·",
+        "·"
+      ]
+    },
+    {
+      "id": "unicode-id-continue",
+      "pattern": "\\p{ID_Continue}",
+      "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_",
+      "accepts": [
+        "a",
+        "é",
+        "𐐀",
+        "℘",
+        "℮",
+        "_",
+        "9",
+        "·",
+        "·",
+        "゛",
+        "ͺ"
+      ],
+      "rejects": [
+        "",
+        "😀",
+        "aa"
+      ]
+    },
+    {
+      "id": "unicode-xid-start",
+      "pattern": "\\p{XID_Start}",
+      "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "accepts": [
+        "a",
+        "é",
+        "𐐀",
+        "℘",
+        "℮"
+      ],
+      "rejects": [
+        "",
+        "😀",
+        "aa",
+        "_",
+        "9",
+        "·",
+        "·",
+        "゛",
+        "ͺ"
+      ]
+    },
+    {
+      "id": "unicode-xid-continue",
+      "pattern": "\\p{XID_Continue}",
+      "asciiAccepts": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_",
+      "accepts": [
+        "a",
+        "é",
+        "𐐀",
+        "℘",
+        "℮",
+        "_",
+        "9",
+        "·",
+        "·"
+      ],
+      "rejects": [
+        "",
+        "😀",
+        "aa",
+        "゛",
+        "ͺ"
+      ]
+    }
   ]
 }

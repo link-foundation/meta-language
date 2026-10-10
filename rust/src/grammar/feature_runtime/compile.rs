@@ -632,6 +632,7 @@ impl<'a> Compiler<'a> {
             "sumOf" => ValueOp::SumOf(text("field"), text("attribute")),
             "fieldText" => ValueOp::FieldText(text("field")),
             "length" => ValueOp::Length(boxed_value(self, "value")?),
+            "uppercase" => ValueOp::Uppercase(boxed_value(self, "value")?),
             "number" => ValueOp::Number(boxed_value(self, "value")?),
             "add" => ValueOp::Add(boxed_value(self, "left")?, boxed_value(self, "right")?),
             "subtract" => {

@@ -1,0 +1,413 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "powershell",
+  "native": "native-powershell",
+  "sources": [
+    {
+      "id": "tree-sitter-powershell",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-powershell 0.26.4",
+      "repository": "https://github.com/airbus-cert/tree-sitter-powershell",
+      "revision": "d398441825243b00e317e87e1829b9d6a3e54ce0",
+      "path": "src/grammar.json",
+      "sha256": "8d3b7b851a037064f08f350c0eed45324db644641424c71396a976e746549211",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/powershell.lino",
+    "sha256": "f08f6532c8c52b344499b9d6e5e573cd78e69a9d5ac1972ff54354741c973a58",
+    "ports": {
+      "path": "src/scanner.c",
+      "file": "parity/grammars/sources/tree-sitter-powershell-0.26.4.scanner.c.gz",
+      "sha256": "cf366b70e258a0ac1eb264ac0f4165c8f0c1b943d1a6e9db9d291c6cf178221f",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-powershell-0.26.4.LICENSE"
+    },
+    "scanners": [
+      {
+        "name": "statement_boundary",
+        "tokens": [
+          "statement_terminator"
+        ]
+      }
+    ],
+    "immediate": [
+      "_statement_terminator"
+    ]
+  },
+  "rules": 167,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "_literal",
+      "native": "literal"
+    },
+    {
+      "source": "assignement_operator",
+      "native": "assignment_operator"
+    },
+    {
+      "source": "file_redirection_operator",
+      "native": "file_output_destination_operator"
+    },
+    {
+      "source": "merging_redirection_operator",
+      "native": "merged_output_destination_operator"
+    },
+    {
+      "source": "_command_token",
+      "native": "command_token"
+    },
+    {
+      "source": "_verbatim_command_argument_chars",
+      "native": "verbatim_command_argument_characters"
+    },
+    {
+      "source": "param_block",
+      "native": "parameter_block"
+    },
+    {
+      "source": "_statement",
+      "native": "statement"
+    },
+    {
+      "source": "elseif_clauses",
+      "native": "else_if_clause_list"
+    },
+    {
+      "source": "elseif_clause",
+      "native": "else_if_clause"
+    },
+    {
+      "source": "_labeled_statement",
+      "native": "labeled_statement"
+    },
+    {
+      "source": "switch_parameters",
+      "native": "switch_parameter_list"
+    },
+    {
+      "source": "switch_clauses",
+      "native": "switch_clause_list"
+    },
+    {
+      "source": "foreach_statement",
+      "native": "for_each_statement"
+    },
+    {
+      "source": "foreach_parameter",
+      "native": "for_each_parameter"
+    },
+    {
+      "source": "for_iterator",
+      "native": "loop_iteration_expression"
+    },
+    {
+      "source": "function_statement",
+      "native": "function_definition_statement"
+    },
+    {
+      "source": "catch_clauses",
+      "native": "catch_clause_list"
+    },
+    {
+      "source": "data_commands_allowed",
+      "native": "allowable_data_command_list"
+    },
+    {
+      "source": "data_command",
+      "native": "data_command_name"
+    },
+    {
+      "source": "inlinescript_statement",
+      "native": "inline_script_statement"
+    },
+    {
+      "source": "pipeline_chain",
+      "native": "command_pipeline_sequence"
+    },
+    {
+      "source": "_pipeline_tail",
+      "native": "pipeline_tail"
+    },
+    {
+      "source": "command_invokation_operator",
+      "native": "command_invocation_operator"
+    },
+    {
+      "source": "_expandable_string_literal_immediate",
+      "native": "immediate_expandable_string_literal_body"
+    },
+    {
+      "source": "_string_literal_immediate",
+      "native": "immediate_string_literal_body"
+    },
+    {
+      "source": "command_name_expr",
+      "native": "command_name_expression"
+    },
+    {
+      "source": "command_elements",
+      "native": "command_element_list"
+    },
+    {
+      "source": "_command_element",
+      "native": "command_element"
+    },
+    {
+      "source": "stop_parsing",
+      "native": "verbatim_argument_marker"
+    },
+    {
+      "source": "_command_argument",
+      "native": "command_argument_value"
+    },
+    {
+      "source": "redirections",
+      "native": "output_destination_list"
+    },
+    {
+      "source": "redirection",
+      "native": "output_destination"
+    },
+    {
+      "source": "enum_statement",
+      "native": "enumeration_statement"
+    },
+    {
+      "source": "enum_member",
+      "native": "enumeration_member"
+    },
+    {
+      "source": "_expression",
+      "native": "expression"
+    },
+    {
+      "source": "bitwise_expression",
+      "native": "bit_level_expression"
+    },
+    {
+      "source": "pre_increment_expression",
+      "native": "prefix_increment_expression"
+    },
+    {
+      "source": "pre_decrement_expression",
+      "native": "prefix_decrement_expression"
+    },
+    {
+      "source": "_primary_expression",
+      "native": "primary_expression"
+    },
+    {
+      "source": "_value",
+      "native": "value"
+    },
+    {
+      "source": "sub_expression",
+      "native": "subordinate_expression"
+    },
+    {
+      "source": "invokation_expression",
+      "native": "invocation_expression"
+    },
+    {
+      "source": "invokation_foreach_expression",
+      "native": "invocation_for_each_expression"
+    },
+    {
+      "source": "bitwise_argument_expression",
+      "native": "bit_level_argument_expression"
+    },
+    {
+      "source": "type_literal",
+      "native": "type_reference_literal"
+    },
+    {
+      "source": "type_spec",
+      "native": "type_specification"
+    },
+    {
+      "source": "dimension",
+      "native": "array_dimension_specifier"
+    },
+    {
+      "source": "attribute_list",
+      "native": "metadata_attribute_list"
+    },
+    {
+      "source": "attribute",
+      "native": "metadata_attribute"
+    },
+    {
+      "source": "attribute_name",
+      "native": "metadata_attribute_name"
+    },
+    {
+      "source": "attribute_arguments",
+      "native": "metadata_attribute_argument_list"
+    },
+    {
+      "source": "attribute_argument",
+      "native": "metadata_attribute_argument"
+    },
+    {
+      "source": "_argument_attachment_command_argument",
+      "native": "argument_attachment_command_argument"
+    }
+  ],
+  "expandedWords": [
+    "assignement",
+    "bitwise",
+    "chars",
+    "elseif",
+    "enum",
+    "expr",
+    "foreach",
+    "inlinescript",
+    "invokation",
+    "param",
+    "pre",
+    "spec"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "program",
+        "concept": "grammar.program"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      },
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "value",
+        "concept": "grammar.value"
+      }
+    ],
+    "generated": 162
+  },
+  "sourceTransforms": [
+    {
+      "family": "lift-token-aliases",
+      "rules": [
+        "class_statement",
+        "enum_statement"
+      ],
+      "reason": "An anonymous keyword alias names the complete lexical token. Lift it outside the token wrapper so it retains the pinned parser's keyword kind and lexical priority."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "function_statement",
+      "value": 1,
+      "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "class_statement",
+      "value": 1,
+      "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "enum_statement",
+      "value": 1,
+      "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "flow_control_statement",
+      "value": 1,
+      "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "try_statement",
+      "value": 1,
+      "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "else_clause",
+      "value": 1,
+      "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "array_literal_expression",
+      "associativity": "none",
+      "value": 0,
+      "reason": "The fixed comma-list production retains source order without a recursive associativity conflict; all elements remain in the same concrete array node."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "while_statement",
+      "value": 1,
+      "reason": "Prefer complete control statements and attached clauses over the overlapping command productions, preserving every source alternative."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "catch_clause",
+      "value": 1,
+      "reason": "Prefer complete control statements and attached clauses over the overlapping command productions, preserving every source alternative."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "finally_clause",
+      "value": 1,
+      "reason": "Prefer complete control statements and attached clauses over the overlapping command productions, preserving every source alternative."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "if_statement",
+      "associativity": "none",
+      "value": 0,
+      "reason": "Keep optional else clauses inside their completed conditional statement instead of reducing an incomplete prefix before else."
+    },
+    {
+      "family": "symbol-keyword-exclusion",
+      "rule": "_statement",
+      "symbol": "pipeline",
+      "keywordRules": [
+        "switch_statement",
+        "flow_control_statement",
+        "function_statement",
+        "class_statement",
+        "enum_statement",
+        "if_statement",
+        "while_statement",
+        "for_statement",
+        "foreach_statement",
+        "do_statement",
+        "trap_statement",
+        "try_statement",
+        "data_statement",
+        "inlinescript_statement",
+        "parallel_statement",
+        "sequence_statement"
+      ],
+      "wordRule": "_command_token",
+      "reason": "The statement parse state reserves initial keyword tokens even when the keyword production fails later. A contextual negative lookahead retains every pipeline alternative, command prefixes and explicit invocation forms without enumerating case variants."
+    },
+    {
+      "family": "optional-suffix-context",
+      "rule": "_command_element",
+      "prefix": "_command_argument",
+      "suffix": "argument_list",
+      "value": 1,
+      "reason": "An argument-list attachment requires the value of an optional generic-token prefix. Keep the original argument alternative, including a separator alone and parenthesized expressions, without the attachment preference.",
+      "helper": "_argument_attachment_command_argument",
+      "requiredSymbol": "generic_token"
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

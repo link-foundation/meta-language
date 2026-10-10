@@ -48,24 +48,30 @@ function leafText(tree, source) {
 
 test('every native grammar repairs each fixture rejection into its recorded tree', (context) => {
   let repaired = 0;
+  const failures = [];
   for (const { entry, fixture, parser } of grammars) {
     assert.ok(fixture.rejections.length > 0, entry.id);
     for (const { source, recovered } of fixture.rejections) {
       const label = `${entry.id} ${JSON.stringify(source)}`;
-      const plain = parser.parseTree(source);
-      assert.equal(plain.ok, false, label);
-      assert.equal(plain.tree, null, label);
-      const outcome = parser.parseTree(source, RECOVER);
-      assert.equal(outcome.ok, false, label);
-      assert.equal(outcome.rejection.reason, 'recovered', label);
-      assert.equal(renderSyntaxTree(outcome.tree), recovered, label);
-      assert.equal(leafText(outcome.tree, source), source, label);
-      const accepted = parser.parseTree(source, { ...RECOVER, recovery: 'accept' });
-      assert.equal(accepted.ok, true, label);
-      assert.equal(renderSyntaxTree(accepted.tree), recovered, label);
-      repaired += 1;
+      try {
+        const plain = parser.parseTree(source);
+        assert.equal(plain.ok, false, label);
+        assert.equal(plain.tree, null, label);
+        const outcome = parser.parseTree(source, RECOVER);
+        assert.equal(outcome.ok, false, label);
+        assert.equal(outcome.rejection.reason, 'recovered', label);
+        assert.equal(renderSyntaxTree(outcome.tree), recovered, label);
+        assert.equal(leafText(outcome.tree, source), source, label);
+        const accepted = parser.parseTree(source, { ...RECOVER, recovery: 'accept' });
+        assert.equal(accepted.ok, true, label);
+        assert.equal(renderSyntaxTree(accepted.tree), recovered, label);
+        repaired += 1;
+      } catch (error) {
+        failures.push({ label, message: error.message, actual: error.actual, expected: error.expected });
+      }
     }
   }
+  assert.deepEqual(failures, [], JSON.stringify(failures));
   assert.ok(repaired >= 200, `${repaired} repaired rejections`);
   observe(['nativeRecoveryTreesMatchFixtures', 'nativeRecoveryTreesLossless', 'nativeRecoveryReportedAsRecovered'], context.name);
 });

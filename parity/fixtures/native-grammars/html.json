@@ -1,0 +1,985 @@
+{
+  "schemaVersion": 1,
+  "id": "html",
+  "language": "HTML",
+  "grammar": "parity/grammars/native/html.lino",
+  "oracle": "crates.io tree-sitter-html 0.23.2",
+  "sources": [
+    "https://github.com/tree-sitter/tree-sitter-html/tree/5a5ca8551a179998360b4a4ca2c0f366a35acc03",
+    "https://github.com/tree-sitter/tree-sitter-html/tree/5a5ca8551a179998360b4a4ca2c0f366a35acc03/test/corpus"
+  ],
+  "corpus": {
+    "path": "test/corpus",
+    "file": "parity/grammars/sources/tree-sitter-html-0.23.2.corpus.json.gz",
+    "sha256": "02a6df6f728870ed27419f9d1aac6d9e6f89daaaa3e4e15619cf9ee08e0f6f6b",
+    "url": "https://github.com/tree-sitter/tree-sitter-html/tree/5a5ca8551a179998360b4a4ca2c0f366a35acc03/test/corpus"
+  },
+  "hidden": [
+    "implicit_end_tag"
+  ],
+  "anonymous": [
+    "unnamed_token",
+    "whitespace"
+  ],
+  "extras": [
+    "comment"
+  ],
+  "oracleKinds": {
+    "document_type_declaration": "doctype",
+    "document_type_keyword": "_doctype",
+    "node": "_node",
+    "markup_element": "element",
+    "element_attribute": "attribute",
+    "element_attribute_name": "attribute_name",
+    "character_data": "text",
+    "start_tag_name": "_start_tag_name",
+    "script_start_tag_name": "_script_start_tag_name",
+    "style_start_tag_name": "_style_start_tag_name",
+    "end_tag_name": "_end_tag_name",
+    "self_closing_tag_end": "_self_closing_tag_delimiter",
+    "implicit_end_tag": "_implicit_end_tag"
+  },
+  "matches": [
+    {
+      "source": "",
+      "rows": [
+        [0,null,"document",1,0,0,""]
+      ]
+    },
+    {
+      "source": "grove",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"text",1,0,5,""]
+      ]
+    },
+    {
+      "source": "<tree></tree>",
+      "rows": [
+        [0,null,"document",1,0,13,""],
+        [1,null,"element",1,0,13,""],
+        [2,null,"start_tag",1,0,6,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,5,""],
+        [3,null,">",0,5,6,""],
+        [2,null,"end_tag",1,6,13,""],
+        [3,null,"</",0,6,8,""],
+        [3,null,"tag_name",1,8,12,""],
+        [3,null,">",0,12,13,""]
+      ]
+    },
+    {
+      "source": "<tree/>",
+      "rows": [
+        [0,null,"document",1,0,7,""],
+        [1,null,"element",1,0,7,""],
+        [2,null,"self_closing_tag",1,0,7,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,5,""],
+        [3,null,"/>",0,5,7,""]
+      ]
+    },
+    {
+      "source": "<p>seed</p>",
+      "rows": [
+        [0,null,"document",1,0,11,""],
+        [1,null,"element",1,0,11,""],
+        [2,null,"start_tag",1,0,3,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,2,""],
+        [3,null,">",0,2,3,""],
+        [2,null,"text",1,3,7,""],
+        [2,null,"end_tag",1,7,11,""],
+        [3,null,"</",0,7,9,""],
+        [3,null,"tag_name",1,9,10,""],
+        [3,null,">",0,10,11,""]
+      ]
+    },
+    {
+      "source": "<p>é😀</p>",
+      "rows": [
+        [0,null,"document",1,0,13,""],
+        [1,null,"element",1,0,13,""],
+        [2,null,"start_tag",1,0,3,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,2,""],
+        [3,null,">",0,2,3,""],
+        [2,null,"text",1,3,9,""],
+        [2,null,"end_tag",1,9,13,""],
+        [3,null,"</",0,9,11,""],
+        [3,null,"tag_name",1,11,12,""],
+        [3,null,">",0,12,13,""]
+      ]
+    },
+    {
+      "source": "<!-- grove -->",
+      "rows": [
+        [0,null,"document",1,0,14,""],
+        [1,null,"comment",1,0,14,"X"]
+      ]
+    },
+    {
+      "source": "<!-- grove --->",
+      "rows": [
+        [0,null,"document",1,0,15,""],
+        [1,null,"comment",1,0,15,"X"]
+      ]
+    },
+    {
+      "source": "<br>",
+      "rows": [
+        [0,null,"document",1,0,4,""],
+        [1,null,"element",1,0,4,""],
+        [2,null,"start_tag",1,0,4,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,3,""],
+        [3,null,">",0,3,4,""]
+      ]
+    },
+    {
+      "source": "<br/>",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"element",1,0,5,""],
+        [2,null,"self_closing_tag",1,0,5,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,3,""],
+        [3,null,"/>",0,3,5,""]
+      ]
+    },
+    {
+      "source": "<img src=\"tree.png\">",
+      "rows": [
+        [0,null,"document",1,0,20,""],
+        [1,null,"element",1,0,20,""],
+        [2,null,"start_tag",1,0,20,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,4,""],
+        [3,null,"attribute",1,5,19,""],
+        [4,null,"attribute_name",1,5,8,""],
+        [4,null,"=",0,8,9,""],
+        [4,null,"quoted_attribute_value",1,9,19,""],
+        [5,null,"\"",0,9,10,""],
+        [5,null,"attribute_value",1,10,18,""],
+        [5,null,"\"",0,18,19,""],
+        [3,null,">",0,19,20,""]
+      ]
+    },
+    {
+      "source": "<div class=\"grove\">leaf</div>",
+      "rows": [
+        [0,null,"document",1,0,29,""],
+        [1,null,"element",1,0,29,""],
+        [2,null,"start_tag",1,0,19,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,4,""],
+        [3,null,"attribute",1,5,18,""],
+        [4,null,"attribute_name",1,5,10,""],
+        [4,null,"=",0,10,11,""],
+        [4,null,"quoted_attribute_value",1,11,18,""],
+        [5,null,"\"",0,11,12,""],
+        [5,null,"attribute_value",1,12,17,""],
+        [5,null,"\"",0,17,18,""],
+        [3,null,">",0,18,19,""],
+        [2,null,"text",1,19,23,""],
+        [2,null,"end_tag",1,23,29,""],
+        [3,null,"</",0,23,25,""],
+        [3,null,"tag_name",1,25,28,""],
+        [3,null,">",0,28,29,""]
+      ]
+    },
+    {
+      "source": "<div data-count='7'>leaf</div>",
+      "rows": [
+        [0,null,"document",1,0,30,""],
+        [1,null,"element",1,0,30,""],
+        [2,null,"start_tag",1,0,20,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,4,""],
+        [3,null,"attribute",1,5,19,""],
+        [4,null,"attribute_name",1,5,15,""],
+        [4,null,"=",0,15,16,""],
+        [4,null,"quoted_attribute_value",1,16,19,""],
+        [5,null,"'",0,16,17,""],
+        [5,null,"attribute_value",1,17,18,""],
+        [5,null,"'",0,18,19,""],
+        [3,null,">",0,19,20,""],
+        [2,null,"text",1,20,24,""],
+        [2,null,"end_tag",1,24,30,""],
+        [3,null,"</",0,24,26,""],
+        [3,null,"tag_name",1,26,29,""],
+        [3,null,">",0,29,30,""]
+      ]
+    },
+    {
+      "source": "<a href=/grove>tree</a>",
+      "rows": [
+        [0,null,"document",1,0,23,""],
+        [1,null,"element",1,0,23,""],
+        [2,null,"start_tag",1,0,15,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,2,""],
+        [3,null,"attribute",1,3,14,""],
+        [4,null,"attribute_name",1,3,7,""],
+        [4,null,"=",0,7,8,""],
+        [4,null,"attribute_value",1,8,14,""],
+        [3,null,">",0,14,15,""],
+        [2,null,"text",1,15,19,""],
+        [2,null,"end_tag",1,19,23,""],
+        [3,null,"</",0,19,21,""],
+        [3,null,"tag_name",1,21,22,""],
+        [3,null,">",0,22,23,""]
+      ]
+    },
+    {
+      "source": "<ul><li>one<li>two</ul>",
+      "rows": [
+        [0,null,"document",1,0,23,""],
+        [1,null,"element",1,0,23,""],
+        [2,null,"start_tag",1,0,4,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,3,""],
+        [3,null,">",0,3,4,""],
+        [2,null,"element",1,4,11,""],
+        [3,null,"start_tag",1,4,8,""],
+        [4,null,"<",0,4,5,""],
+        [4,null,"tag_name",1,5,7,""],
+        [4,null,">",0,7,8,""],
+        [3,null,"text",1,8,11,""],
+        [2,null,"element",1,11,18,""],
+        [3,null,"start_tag",1,11,15,""],
+        [4,null,"<",0,11,12,""],
+        [4,null,"tag_name",1,12,14,""],
+        [4,null,">",0,14,15,""],
+        [3,null,"text",1,15,18,""],
+        [2,null,"end_tag",1,18,23,""],
+        [3,null,"</",0,18,20,""],
+        [3,null,"tag_name",1,20,22,""],
+        [3,null,">",0,22,23,""]
+      ]
+    },
+    {
+      "source": "<dl><dt>tree<dd>grove</dl>",
+      "rows": [
+        [0,null,"document",1,0,26,""],
+        [1,null,"element",1,0,26,""],
+        [2,null,"start_tag",1,0,4,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,3,""],
+        [3,null,">",0,3,4,""],
+        [2,null,"element",1,4,12,""],
+        [3,null,"start_tag",1,4,8,""],
+        [4,null,"<",0,4,5,""],
+        [4,null,"tag_name",1,5,7,""],
+        [4,null,">",0,7,8,""],
+        [3,null,"text",1,8,12,""],
+        [2,null,"element",1,12,21,""],
+        [3,null,"start_tag",1,12,16,""],
+        [4,null,"<",0,12,13,""],
+        [4,null,"tag_name",1,13,15,""],
+        [4,null,">",0,15,16,""],
+        [3,null,"text",1,16,21,""],
+        [2,null,"end_tag",1,21,26,""],
+        [3,null,"</",0,21,23,""],
+        [3,null,"tag_name",1,23,25,""],
+        [3,null,">",0,25,26,""]
+      ]
+    },
+    {
+      "source": "<p>leaf<div>root</div>",
+      "rows": [
+        [0,null,"document",1,0,22,""],
+        [1,null,"element",1,0,7,""],
+        [2,null,"start_tag",1,0,3,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,2,""],
+        [3,null,">",0,2,3,""],
+        [2,null,"text",1,3,7,""],
+        [1,null,"element",1,7,22,""],
+        [2,null,"start_tag",1,7,12,""],
+        [3,null,"<",0,7,8,""],
+        [3,null,"tag_name",1,8,11,""],
+        [3,null,">",0,11,12,""],
+        [2,null,"text",1,12,16,""],
+        [2,null,"end_tag",1,16,22,""],
+        [3,null,"</",0,16,18,""],
+        [3,null,"tag_name",1,18,21,""],
+        [3,null,">",0,21,22,""]
+      ]
+    },
+    {
+      "source": "<html><head><title>grove</title></head><body>leaf</body></html>",
+      "rows": [
+        [0,null,"document",1,0,63,""],
+        [1,null,"element",1,0,63,""],
+        [2,null,"start_tag",1,0,6,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,5,""],
+        [3,null,">",0,5,6,""],
+        [2,null,"element",1,6,39,""],
+        [3,null,"start_tag",1,6,12,""],
+        [4,null,"<",0,6,7,""],
+        [4,null,"tag_name",1,7,11,""],
+        [4,null,">",0,11,12,""],
+        [3,null,"element",1,12,32,""],
+        [4,null,"start_tag",1,12,19,""],
+        [5,null,"<",0,12,13,""],
+        [5,null,"tag_name",1,13,18,""],
+        [5,null,">",0,18,19,""],
+        [4,null,"text",1,19,24,""],
+        [4,null,"end_tag",1,24,32,""],
+        [5,null,"</",0,24,26,""],
+        [5,null,"tag_name",1,26,31,""],
+        [5,null,">",0,31,32,""],
+        [3,null,"end_tag",1,32,39,""],
+        [4,null,"</",0,32,34,""],
+        [4,null,"tag_name",1,34,38,""],
+        [4,null,">",0,38,39,""],
+        [2,null,"element",1,39,56,""],
+        [3,null,"start_tag",1,39,45,""],
+        [4,null,"<",0,39,40,""],
+        [4,null,"tag_name",1,40,44,""],
+        [4,null,">",0,44,45,""],
+        [3,null,"text",1,45,49,""],
+        [3,null,"end_tag",1,49,56,""],
+        [4,null,"</",0,49,51,""],
+        [4,null,"tag_name",1,51,55,""],
+        [4,null,">",0,55,56,""],
+        [2,null,"end_tag",1,56,63,""],
+        [3,null,"</",0,56,58,""],
+        [3,null,"tag_name",1,58,62,""],
+        [3,null,">",0,62,63,""]
+      ]
+    },
+    {
+      "source": "<html><head></head><body>leaf",
+      "rows": [
+        [0,null,"document",1,0,29,""],
+        [1,null,"element",1,0,29,""],
+        [2,null,"start_tag",1,0,6,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,5,""],
+        [3,null,">",0,5,6,""],
+        [2,null,"element",1,6,19,""],
+        [3,null,"start_tag",1,6,12,""],
+        [4,null,"<",0,6,7,""],
+        [4,null,"tag_name",1,7,11,""],
+        [4,null,">",0,11,12,""],
+        [3,null,"end_tag",1,12,19,""],
+        [4,null,"</",0,12,14,""],
+        [4,null,"tag_name",1,14,18,""],
+        [4,null,">",0,18,19,""],
+        [2,null,"element",1,19,29,""],
+        [3,null,"start_tag",1,19,25,""],
+        [4,null,"<",0,19,20,""],
+        [4,null,"tag_name",1,20,24,""],
+        [4,null,">",0,24,25,""],
+        [3,null,"text",1,25,29,""]
+      ]
+    },
+    {
+      "source": "<script>let grove=1;</script>",
+      "rows": [
+        [0,null,"document",1,0,29,""],
+        [1,null,"script_element",1,0,29,""],
+        [2,null,"start_tag",1,0,8,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,7,""],
+        [3,null,">",0,7,8,""],
+        [2,null,"raw_text",1,8,20,""],
+        [2,null,"end_tag",1,20,29,""],
+        [3,null,"</",0,20,22,""],
+        [3,null,"tag_name",1,22,28,""],
+        [3,null,">",0,28,29,""]
+      ]
+    },
+    {
+      "source": "<style>p {color:green}</style>",
+      "rows": [
+        [0,null,"document",1,0,30,""],
+        [1,null,"style_element",1,0,30,""],
+        [2,null,"start_tag",1,0,7,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,6,""],
+        [3,null,">",0,6,7,""],
+        [2,null,"raw_text",1,7,22,""],
+        [2,null,"end_tag",1,22,30,""],
+        [3,null,"</",0,22,24,""],
+        [3,null,"tag_name",1,24,29,""],
+        [3,null,">",0,29,30,""]
+      ]
+    },
+    {
+      "source": "<script></script>",
+      "rows": [
+        [0,null,"document",1,0,17,""],
+        [1,null,"script_element",1,0,17,""],
+        [2,null,"start_tag",1,0,8,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,7,""],
+        [3,null,">",0,7,8,""],
+        [2,null,"raw_text",1,8,8,""],
+        [2,null,"end_tag",1,8,17,""],
+        [3,null,"</",0,8,10,""],
+        [3,null,"tag_name",1,10,16,""],
+        [3,null,">",0,16,17,""]
+      ]
+    },
+    {
+      "source": "<style></style>",
+      "rows": [
+        [0,null,"document",1,0,15,""],
+        [1,null,"style_element",1,0,15,""],
+        [2,null,"start_tag",1,0,7,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,6,""],
+        [3,null,">",0,6,7,""],
+        [2,null,"raw_text",1,7,7,""],
+        [2,null,"end_tag",1,7,15,""],
+        [3,null,"</",0,7,9,""],
+        [3,null,"tag_name",1,9,14,""],
+        [3,null,">",0,14,15,""]
+      ]
+    },
+    {
+      "source": "<SCRIPT>if(a<b) grow()</sCrIpT>",
+      "rows": [
+        [0,null,"document",1,0,31,""],
+        [1,null,"script_element",1,0,31,""],
+        [2,null,"start_tag",1,0,8,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,7,""],
+        [3,null,">",0,7,8,""],
+        [2,null,"raw_text",1,8,22,""],
+        [2,null,"end_tag",1,22,31,""],
+        [3,null,"</",0,22,24,""],
+        [3,null,"tag_name",1,24,30,""],
+        [3,null,">",0,30,31,""]
+      ]
+    },
+    {
+      "source": "<StYlE>p>b {display:block}</STYLE>",
+      "rows": [
+        [0,null,"document",1,0,34,""],
+        [1,null,"style_element",1,0,34,""],
+        [2,null,"start_tag",1,0,7,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,6,""],
+        [3,null,">",0,6,7,""],
+        [2,null,"raw_text",1,7,26,""],
+        [2,null,"end_tag",1,26,34,""],
+        [3,null,"</",0,26,28,""],
+        [3,null,"tag_name",1,28,33,""],
+        [3,null,">",0,33,34,""]
+      ]
+    },
+    {
+      "source": "<TREE>leaf</tree>",
+      "rows": [
+        [0,null,"document",1,0,17,""],
+        [1,null,"element",1,0,17,""],
+        [2,null,"start_tag",1,0,6,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,5,""],
+        [3,null,">",0,5,6,""],
+        [2,null,"text",1,6,10,""],
+        [2,null,"end_tag",1,10,17,""],
+        [3,null,"</",0,10,12,""],
+        [3,null,"tag_name",1,12,16,""],
+        [3,null,">",0,16,17,""]
+      ]
+    },
+    {
+      "source": "<svg><path d=\"M0 1\"/></svg>",
+      "rows": [
+        [0,null,"document",1,0,27,""],
+        [1,null,"element",1,0,27,""],
+        [2,null,"start_tag",1,0,5,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,4,""],
+        [3,null,">",0,4,5,""],
+        [2,null,"element",1,5,21,""],
+        [3,null,"self_closing_tag",1,5,21,""],
+        [4,null,"<",0,5,6,""],
+        [4,null,"tag_name",1,6,10,""],
+        [4,null,"attribute",1,11,19,""],
+        [5,null,"attribute_name",1,11,12,""],
+        [5,null,"=",0,12,13,""],
+        [5,null,"quoted_attribute_value",1,13,19,""],
+        [6,null,"\"",0,13,14,""],
+        [6,null,"attribute_value",1,14,18,""],
+        [6,null,"\"",0,18,19,""],
+        [4,null,"/>",0,19,21,""],
+        [2,null,"end_tag",1,21,27,""],
+        [3,null,"</",0,21,23,""],
+        [3,null,"tag_name",1,23,26,""],
+        [3,null,">",0,26,27,""]
+      ]
+    },
+    {
+      "source": "<!doctype html><p>leaf</p>",
+      "rows": [
+        [0,null,"document",1,0,26,""],
+        [1,null,"doctype",1,0,15,""],
+        [2,null,"<!",0,0,2,""],
+        [2,null,"doctype",0,2,9,""],
+        [2,null,">",0,14,15,""],
+        [1,null,"element",1,15,26,""],
+        [2,null,"start_tag",1,15,18,""],
+        [3,null,"<",0,15,16,""],
+        [3,null,"tag_name",1,16,17,""],
+        [3,null,">",0,17,18,""],
+        [2,null,"text",1,18,22,""],
+        [2,null,"end_tag",1,22,26,""],
+        [3,null,"</",0,22,24,""],
+        [3,null,"tag_name",1,24,25,""],
+        [3,null,">",0,25,26,""]
+      ]
+    },
+    {
+      "source": "<p>&amp; &#65; &#x41;</p>",
+      "rows": [
+        [0,null,"document",1,0,25,""],
+        [1,null,"element",1,0,25,""],
+        [2,null,"start_tag",1,0,3,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,2,""],
+        [3,null,">",0,2,3,""],
+        [2,null,"entity",1,3,8,""],
+        [2,null,"entity",1,9,14,""],
+        [2,null,"entity",1,15,21,""],
+        [2,null,"end_tag",1,21,25,""],
+        [3,null,"</",0,21,23,""],
+        [3,null,"tag_name",1,23,24,""],
+        [3,null,">",0,24,25,""]
+      ]
+    },
+    {
+      "source": "<p><b>leaf</b><i>tree</i></p>",
+      "rows": [
+        [0,null,"document",1,0,29,""],
+        [1,null,"element",1,0,29,""],
+        [2,null,"start_tag",1,0,3,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,2,""],
+        [3,null,">",0,2,3,""],
+        [2,null,"element",1,3,14,""],
+        [3,null,"start_tag",1,3,6,""],
+        [4,null,"<",0,3,4,""],
+        [4,null,"tag_name",1,4,5,""],
+        [4,null,">",0,5,6,""],
+        [3,null,"text",1,6,10,""],
+        [3,null,"end_tag",1,10,14,""],
+        [4,null,"</",0,10,12,""],
+        [4,null,"tag_name",1,12,13,""],
+        [4,null,">",0,13,14,""],
+        [2,null,"element",1,14,25,""],
+        [3,null,"start_tag",1,14,17,""],
+        [4,null,"<",0,14,15,""],
+        [4,null,"tag_name",1,15,16,""],
+        [4,null,">",0,16,17,""],
+        [3,null,"text",1,17,21,""],
+        [3,null,"end_tag",1,21,25,""],
+        [4,null,"</",0,21,23,""],
+        [4,null,"tag_name",1,23,24,""],
+        [4,null,">",0,24,25,""],
+        [2,null,"end_tag",1,25,29,""],
+        [3,null,"</",0,25,27,""],
+        [3,null,"tag_name",1,27,28,""],
+        [3,null,">",0,28,29,""]
+      ]
+    },
+    {
+      "source": "\n <p>leaf</p>\n",
+      "rows": [
+        [0,null,"document",1,2,14,""],
+        [1,null,"element",1,2,13,""],
+        [2,null,"start_tag",1,2,5,""],
+        [3,null,"<",0,2,3,""],
+        [3,null,"tag_name",1,3,4,""],
+        [3,null,">",0,4,5,""],
+        [2,null,"text",1,5,9,""],
+        [2,null,"end_tag",1,9,13,""],
+        [3,null,"</",0,9,11,""],
+        [3,null,"tag_name",1,11,12,""],
+        [3,null,">",0,12,13,""]
+      ]
+    },
+    {
+      "source": "<table><tr><td>seed<td>leaf</table>",
+      "rows": [
+        [0,null,"document",1,0,35,""],
+        [1,null,"element",1,0,35,""],
+        [2,null,"start_tag",1,0,7,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,6,""],
+        [3,null,">",0,6,7,""],
+        [2,null,"element",1,7,27,""],
+        [3,null,"start_tag",1,7,11,""],
+        [4,null,"<",0,7,8,""],
+        [4,null,"tag_name",1,8,10,""],
+        [4,null,">",0,10,11,""],
+        [3,null,"element",1,11,19,""],
+        [4,null,"start_tag",1,11,15,""],
+        [5,null,"<",0,11,12,""],
+        [5,null,"tag_name",1,12,14,""],
+        [5,null,">",0,14,15,""],
+        [4,null,"text",1,15,19,""],
+        [3,null,"element",1,19,27,""],
+        [4,null,"start_tag",1,19,23,""],
+        [5,null,"<",0,19,20,""],
+        [5,null,"tag_name",1,20,22,""],
+        [5,null,">",0,22,23,""],
+        [4,null,"text",1,23,27,""],
+        [2,null,"end_tag",1,27,35,""],
+        [3,null,"</",0,27,29,""],
+        [3,null,"tag_name",1,29,34,""],
+        [3,null,">",0,34,35,""]
+      ]
+    },
+    {
+      "source": "<ruby><rb>grove<rt>tree<rp>leaf</ruby>",
+      "rows": [
+        [0,null,"document",1,0,38,""],
+        [1,null,"element",1,0,38,""],
+        [2,null,"start_tag",1,0,6,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,5,""],
+        [3,null,">",0,5,6,""],
+        [2,null,"element",1,6,15,""],
+        [3,null,"start_tag",1,6,10,""],
+        [4,null,"<",0,6,7,""],
+        [4,null,"tag_name",1,7,9,""],
+        [4,null,">",0,9,10,""],
+        [3,null,"text",1,10,15,""],
+        [2,null,"element",1,15,23,""],
+        [3,null,"start_tag",1,15,19,""],
+        [4,null,"<",0,15,16,""],
+        [4,null,"tag_name",1,16,18,""],
+        [4,null,">",0,18,19,""],
+        [3,null,"text",1,19,23,""],
+        [2,null,"element",1,23,31,""],
+        [3,null,"start_tag",1,23,27,""],
+        [4,null,"<",0,23,24,""],
+        [4,null,"tag_name",1,24,26,""],
+        [4,null,">",0,26,27,""],
+        [3,null,"text",1,27,31,""],
+        [2,null,"end_tag",1,31,38,""],
+        [3,null,"</",0,31,33,""],
+        [3,null,"tag_name",1,33,37,""],
+        [3,null,">",0,37,38,""]
+      ]
+    },
+    {
+      "source": "<select><optgroup label=grove><option>leaf<optgroup label=tree><option>root</select>",
+      "rows": [
+        [0,null,"document",1,0,84,""],
+        [1,null,"element",1,0,84,""],
+        [2,null,"start_tag",1,0,8,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,7,""],
+        [3,null,">",0,7,8,""],
+        [2,null,"element",1,8,75,""],
+        [3,null,"start_tag",1,8,30,""],
+        [4,null,"<",0,8,9,""],
+        [4,null,"tag_name",1,9,17,""],
+        [4,null,"attribute",1,18,29,""],
+        [5,null,"attribute_name",1,18,23,""],
+        [5,null,"=",0,23,24,""],
+        [5,null,"attribute_value",1,24,29,""],
+        [4,null,">",0,29,30,""],
+        [3,null,"element",1,30,75,""],
+        [4,null,"start_tag",1,30,38,""],
+        [5,null,"<",0,30,31,""],
+        [5,null,"tag_name",1,31,37,""],
+        [5,null,">",0,37,38,""],
+        [4,null,"text",1,38,42,""],
+        [4,null,"element",1,42,75,""],
+        [5,null,"start_tag",1,42,63,""],
+        [6,null,"<",0,42,43,""],
+        [6,null,"tag_name",1,43,51,""],
+        [6,null,"attribute",1,52,62,""],
+        [7,null,"attribute_name",1,52,57,""],
+        [7,null,"=",0,57,58,""],
+        [7,null,"attribute_value",1,58,62,""],
+        [6,null,">",0,62,63,""],
+        [5,null,"element",1,63,75,""],
+        [6,null,"start_tag",1,63,71,""],
+        [7,null,"<",0,63,64,""],
+        [7,null,"tag_name",1,64,70,""],
+        [7,null,">",0,70,71,""],
+        [6,null,"text",1,71,75,""],
+        [2,null,"end_tag",1,75,84,""],
+        [3,null,"</",0,75,77,""],
+        [3,null,"tag_name",1,77,83,""],
+        [3,null,">",0,83,84,""]
+      ]
+    },
+    {
+      "source": "<div disabled></div>",
+      "rows": [
+        [0,null,"document",1,0,20,""],
+        [1,null,"element",1,0,20,""],
+        [2,null,"start_tag",1,0,14,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,4,""],
+        [3,null,"attribute",1,5,13,""],
+        [4,null,"attribute_name",1,5,13,""],
+        [3,null,">",0,13,14,""],
+        [2,null,"end_tag",1,14,20,""],
+        [3,null,"</",0,14,16,""],
+        [3,null,"tag_name",1,16,19,""],
+        [3,null,">",0,19,20,""]
+      ]
+    },
+    {
+      "source": "<div name=seed data-root='grove' id=\"tree\"></div>",
+      "rows": [
+        [0,null,"document",1,0,49,""],
+        [1,null,"element",1,0,49,""],
+        [2,null,"start_tag",1,0,43,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,4,""],
+        [3,null,"attribute",1,5,14,""],
+        [4,null,"attribute_name",1,5,9,""],
+        [4,null,"=",0,9,10,""],
+        [4,null,"attribute_value",1,10,14,""],
+        [3,null,"attribute",1,15,32,""],
+        [4,null,"attribute_name",1,15,24,""],
+        [4,null,"=",0,24,25,""],
+        [4,null,"quoted_attribute_value",1,25,32,""],
+        [5,null,"'",0,25,26,""],
+        [5,null,"attribute_value",1,26,31,""],
+        [5,null,"'",0,31,32,""],
+        [3,null,"attribute",1,33,42,""],
+        [4,null,"attribute_name",1,33,35,""],
+        [4,null,"=",0,35,36,""],
+        [4,null,"quoted_attribute_value",1,36,42,""],
+        [5,null,"\"",0,36,37,""],
+        [5,null,"attribute_value",1,37,41,""],
+        [5,null,"\"",0,41,42,""],
+        [3,null,">",0,42,43,""],
+        [2,null,"end_tag",1,43,49,""],
+        [3,null,"</",0,43,45,""],
+        [3,null,"tag_name",1,45,48,""],
+        [3,null,">",0,48,49,""]
+      ]
+    },
+    {
+      "source": "<p><!-- café --><br>leaf</p>",
+      "rows": [
+        [0,null,"document",1,0,29,""],
+        [1,null,"element",1,0,29,""],
+        [2,null,"start_tag",1,0,3,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,2,""],
+        [3,null,">",0,2,3,""],
+        [2,null,"comment",1,3,17,"X"],
+        [2,null,"element",1,17,25,""],
+        [3,null,"start_tag",1,17,21,""],
+        [4,null,"<",0,17,18,""],
+        [4,null,"tag_name",1,18,20,""],
+        [4,null,">",0,20,21,""],
+        [3,null,"text",1,21,25,""],
+        [2,null,"end_tag",1,25,29,""],
+        [3,null,"</",0,25,27,""],
+        [3,null,"tag_name",1,27,28,""],
+        [3,null,">",0,28,29,""]
+      ]
+    },
+    {
+      "source": "<div><tree>leaf</tree></div>",
+      "rows": [
+        [0,null,"document",1,0,28,""],
+        [1,null,"element",1,0,28,""],
+        [2,null,"start_tag",1,0,5,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,4,""],
+        [3,null,">",0,4,5,""],
+        [2,null,"element",1,5,22,""],
+        [3,null,"start_tag",1,5,11,""],
+        [4,null,"<",0,5,6,""],
+        [4,null,"tag_name",1,6,10,""],
+        [4,null,">",0,10,11,""],
+        [3,null,"text",1,11,15,""],
+        [3,null,"end_tag",1,15,22,""],
+        [4,null,"</",0,15,17,""],
+        [4,null,"tag_name",1,17,21,""],
+        [4,null,">",0,21,22,""],
+        [2,null,"end_tag",1,22,28,""],
+        [3,null,"</",0,22,24,""],
+        [3,null,"tag_name",1,24,27,""],
+        [3,null,">",0,27,28,""]
+      ]
+    },
+    {
+      "source": "<script>\n  let leaf=7;\n</script>",
+      "rows": [
+        [0,null,"document",1,0,32,""],
+        [1,null,"script_element",1,0,32,""],
+        [2,null,"start_tag",1,0,8,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,7,""],
+        [3,null,">",0,7,8,""],
+        [2,null,"raw_text",1,8,23,""],
+        [2,null,"end_tag",1,23,32,""],
+        [3,null,"</",0,23,25,""],
+        [3,null,"tag_name",1,25,31,""],
+        [3,null,">",0,31,32,""]
+      ]
+    },
+    {
+      "source": "<style>\n  p {color:green}\n</style>",
+      "rows": [
+        [0,null,"document",1,0,34,""],
+        [1,null,"style_element",1,0,34,""],
+        [2,null,"start_tag",1,0,7,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,6,""],
+        [3,null,">",0,6,7,""],
+        [2,null,"raw_text",1,7,26,""],
+        [2,null,"end_tag",1,26,34,""],
+        [3,null,"</",0,26,28,""],
+        [3,null,"tag_name",1,28,33,""],
+        [3,null,">",0,33,34,""]
+      ]
+    },
+    {
+      "source": "<table><tr><th>seed<th>leaf<tr><td>grove<td>root</table>",
+      "rows": [
+        [0,null,"document",1,0,56,""],
+        [1,null,"element",1,0,56,""],
+        [2,null,"start_tag",1,0,7,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,6,""],
+        [3,null,">",0,6,7,""],
+        [2,null,"element",1,7,27,""],
+        [3,null,"start_tag",1,7,11,""],
+        [4,null,"<",0,7,8,""],
+        [4,null,"tag_name",1,8,10,""],
+        [4,null,">",0,10,11,""],
+        [3,null,"element",1,11,19,""],
+        [4,null,"start_tag",1,11,15,""],
+        [5,null,"<",0,11,12,""],
+        [5,null,"tag_name",1,12,14,""],
+        [5,null,">",0,14,15,""],
+        [4,null,"text",1,15,19,""],
+        [3,null,"element",1,19,27,""],
+        [4,null,"start_tag",1,19,23,""],
+        [5,null,"<",0,19,20,""],
+        [5,null,"tag_name",1,20,22,""],
+        [5,null,">",0,22,23,""],
+        [4,null,"text",1,23,27,""],
+        [2,null,"element",1,27,48,""],
+        [3,null,"start_tag",1,27,31,""],
+        [4,null,"<",0,27,28,""],
+        [4,null,"tag_name",1,28,30,""],
+        [4,null,">",0,30,31,""],
+        [3,null,"element",1,31,40,""],
+        [4,null,"start_tag",1,31,35,""],
+        [5,null,"<",0,31,32,""],
+        [5,null,"tag_name",1,32,34,""],
+        [5,null,">",0,34,35,""],
+        [4,null,"text",1,35,40,""],
+        [3,null,"element",1,40,48,""],
+        [4,null,"start_tag",1,40,44,""],
+        [5,null,"<",0,40,41,""],
+        [5,null,"tag_name",1,41,43,""],
+        [5,null,">",0,43,44,""],
+        [4,null,"text",1,44,48,""],
+        [2,null,"end_tag",1,48,56,""],
+        [3,null,"</",0,48,50,""],
+        [3,null,"tag_name",1,50,55,""],
+        [3,null,">",0,55,56,""]
+      ]
+    },
+    {
+      "source": "<table>\n<tr><th>seed\n<th>leaf\n<tr><td>grove\n<td>root\n</table>",
+      "rows": [
+        [0,null,"document",1,0,61,""],
+        [1,null,"element",1,0,61,""],
+        [2,null,"start_tag",1,0,7,""],
+        [3,null,"<",0,0,1,""],
+        [3,null,"tag_name",1,1,6,""],
+        [3,null,">",0,6,7,""],
+        [2,null,"element",1,8,30,""],
+        [3,null,"start_tag",1,8,12,""],
+        [4,null,"<",0,8,9,""],
+        [4,null,"tag_name",1,9,11,""],
+        [4,null,">",0,11,12,""],
+        [3,null,"element",1,12,21,""],
+        [4,null,"start_tag",1,12,16,""],
+        [5,null,"<",0,12,13,""],
+        [5,null,"tag_name",1,13,15,""],
+        [5,null,">",0,15,16,""],
+        [4,null,"text",1,16,20,""],
+        [3,null,"element",1,21,30,""],
+        [4,null,"start_tag",1,21,25,""],
+        [5,null,"<",0,21,22,""],
+        [5,null,"tag_name",1,22,24,""],
+        [5,null,">",0,24,25,""],
+        [4,null,"text",1,25,29,""],
+        [2,null,"element",1,30,53,""],
+        [3,null,"start_tag",1,30,34,""],
+        [4,null,"<",0,30,31,""],
+        [4,null,"tag_name",1,31,33,""],
+        [4,null,">",0,33,34,""],
+        [3,null,"element",1,34,44,""],
+        [4,null,"start_tag",1,34,38,""],
+        [5,null,"<",0,34,35,""],
+        [5,null,"tag_name",1,35,37,""],
+        [5,null,">",0,37,38,""],
+        [4,null,"text",1,38,43,""],
+        [3,null,"element",1,44,53,""],
+        [4,null,"start_tag",1,44,48,""],
+        [5,null,"<",0,44,45,""],
+        [5,null,"tag_name",1,45,47,""],
+        [5,null,">",0,47,48,""],
+        [4,null,"text",1,48,52,""],
+        [2,null,"end_tag",1,53,61,""],
+        [3,null,"</",0,53,55,""],
+        [3,null,"tag_name",1,55,60,""],
+        [3,null,">",0,60,61,""]
+      ]
+    }
+  ],
+  "divergences": [],
+  "rejections": [
+    {
+      "source": "<p>one<li>two</li>",
+      "recovered": "(document (markup_element (start_tag \"<\" (tag_name \"p\") \">\") (character_data \"one\") (markup_element (start_tag \"<\" (tag_name \"li\") \">\") (character_data \"two\") (end_tag \"</\" (tag_name \"li\") \">\")) (MISSING@18 unnamed_token)))"
+    },
+    {
+      "source": "<script>one</scripture>two</script>",
+      "recovered": "(document (script_element (start_tag \"<\" (tag_name \"script\") \">\") (raw_text \"one\") (end_tag \"</\" (MISSING@13 tag_name) (MISSING@13 \">\"))) (script_element (start_tag (MISSING@13 \"<\") (MISSING@13 tag_name) (MISSING@13 \">\")) (end_tag (ERROR@13..26 \"scripture>two\") \"</\" (tag_name \"script\") \">\")))"
+    },
+    {
+      "source": "<tree>",
+      "recovered": "(document (markup_element (start_tag \"<\" (tag_name \"tree\") \">\") (MISSING@6 unnamed_token)))"
+    },
+    {
+      "source": "<tree name=\"leaf></tree>",
+      "recovered": "(document (markup_element (self_closing_tag \"<\" (tag_name \"tree\") (element_attribute ~\" \" (element_attribute_name \"name\") \"=\" (quoted_attribute_value \"\\\"\" (attribute_value \"leaf></tree>\") (MISSING@24 \"\\\"\"))) (MISSING@24 \"'/>\"))))"
+    },
+    {
+      "source": "<!-- grove",
+      "recovered": "(document (ERROR@0..1 \"<\") (character_data \"!-- grove\"))"
+    },
+    {
+      "source": "<script>let seed=7;",
+      "recovered": "(document (script_element (start_tag \"<\" (tag_name \"script\") \">\") (raw_text \"let seed=7;\") (end_tag (MISSING@19 \"</\") (MISSING@19 tag_name) (MISSING@19 \">\"))))"
+    },
+    {
+      "source": "<div><",
+      "recovered": "(document (markup_element (start_tag \"<\" (tag_name \"div\") \">\") (markup_element (self_closing_tag \"<\" (MISSING@6 tag_name) (MISSING@6 \"'/>\"))) (MISSING@6 unnamed_token)))"
+    },
+    {
+      "source": "<tree/",
+      "recovered": "(document (markup_element (self_closing_tag \"<\" (tag_name \"tree\") (MISSING@5 \"'/>\"))) (character_data \"/\"))"
+    },
+    {
+      "source": "<grove></grove></seed>\n",
+      "recovered": "(document (markup_element (start_tag \"<\" (tag_name \"grove\") \">\") (end_tag \"</\" (tag_name \"grove\") \">\")) (erroneous_end_tag \"</\" (MISSING@17 erroneous_end_tag_name) (MISSING@17 \">\")) (character_data \"seed\") (ERROR@21..22 \">\") ~\"\\n\")"
+    }
+  ]
+}

@@ -144,6 +144,8 @@ pub struct NativeGrammarEntry {
     pub anonymous: Vec<String>,
     /// Node kinds the oracle marks as extras.
     pub extras: Vec<String>,
+    /// Whether the root span includes trivia before its first token.
+    pub root_includes_leading_trivia: bool,
     /// The tree-sitter kind of each rule renamed from it, by rule name.
     pub oracle_kinds: BTreeMap<String, String>,
 }
@@ -164,6 +166,9 @@ pub fn native_grammars() -> &'static [NativeGrammarEntry] {
                         hidden: strings(&grammar["hidden"]),
                         anonymous: strings(&grammar["anonymous"]),
                         extras: strings(&grammar["extras"]),
+                        root_includes_leading_trivia: grammar["rootIncludesLeadingTrivia"]
+                            .as_bool()
+                            .unwrap_or(false),
                         oracle_kinds: grammar["oracleKinds"]
                             .as_object()
                             .map(|kinds| {

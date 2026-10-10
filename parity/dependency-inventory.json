@@ -433,6 +433,38 @@
       "evidence": "cargo metadata, the highest rust-version of the resolved crates (meta-language 0.58.2, tree-sitter 0.27.0, tree-sitter-graphql 0.3.0)"
     },
     {
+      "current": "2024",
+      "evidence": "Rust editions, the newest stable edition",
+      "category": "setting",
+      "scope": "rust/oracles/cmake-source-oracle/Cargo.toml",
+      "name": "edition",
+      "declaredIn": [
+        "rust/oracles/cmake-source-oracle/Cargo.toml"
+      ],
+      "pinned": "2024",
+      "compare": "version",
+      "source": {
+        "type": "rust-edition"
+      },
+      "id": "setting rust/oracles/cmake-source-oracle/Cargo.toml edition@2024"
+    },
+    {
+      "id": "setting rust/oracles/native-source-oracles/Cargo.toml edition@2024",
+      "category": "setting",
+      "scope": "rust/oracles/native-source-oracles/Cargo.toml",
+      "name": "edition",
+      "declaredIn": [
+        "rust/oracles/native-source-oracles/Cargo.toml"
+      ],
+      "pinned": "2024",
+      "compare": "version",
+      "source": {
+        "type": "rust-edition"
+      },
+      "current": "2024",
+      "evidence": "Rust editions, the newest stable edition"
+    },
+    {
       "id": "setting rust/web/Cargo.toml edition@2024",
       "category": "setting",
       "scope": "rust/web/Cargo.toml",
@@ -824,7 +856,8 @@
       "name": "cc",
       "declaredIn": [
         "rust/Cargo.lock",
-        "rust/Cargo.toml"
+        "rust/oracles/cmake-source-oracle/Cargo.toml",
+        "rust/oracles/native-source-oracles/Cargo.toml"
       ],
       "pinned": "1.2.67",
       "compare": "version",
@@ -833,7 +866,7 @@
         "crate": "cc"
       },
       "role": "direct",
-      "requirement": "1.2",
+      "requirement": "1; 1.2",
       "kind": "build",
       "current": "1.6.0",
       "evidence": "crates.io, cc",
@@ -1418,7 +1451,8 @@
       "name": "flate2",
       "declaredIn": [
         "rust/Cargo.lock",
-        "rust/Cargo.toml"
+        "rust/oracles/cmake-source-oracle/Cargo.toml",
+        "rust/oracles/native-source-oracles/Cargo.toml"
       ],
       "pinned": "1.1.10",
       "compare": "version",
@@ -3960,7 +3994,7 @@
       },
       "role": "direct",
       "requirement": "=1.3.3",
-      "kind": "runtime",
+      "kind": "development",
       "current": "1.3.3",
       "evidence": "crates.io, tree-sitter-agda"
     },
@@ -4044,7 +4078,7 @@
       },
       "role": "direct",
       "requirement": "=0.23.4",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.23.4",
       "evidence": "crates.io, tree-sitter-cpp"
     },
@@ -4065,7 +4099,7 @@
       },
       "role": "direct",
       "requirement": "=0.25.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.25.0",
       "evidence": "crates.io, tree-sitter-css"
     },
@@ -4086,7 +4120,7 @@
       },
       "role": "direct",
       "requirement": "=0.2.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.2.0",
       "evidence": "crates.io, tree-sitter-dart"
     },
@@ -4170,7 +4204,7 @@
       },
       "role": "direct",
       "requirement": "=0.20.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.20.0",
       "evidence": "crates.io, tree-sitter-erlang"
     },
@@ -4233,7 +4267,7 @@
       },
       "role": "direct",
       "requirement": "=0.1.2",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.1.2",
       "evidence": "crates.io, tree-sitter-groovy"
     },
@@ -4275,7 +4309,7 @@
       },
       "role": "direct",
       "requirement": "=1.1.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "1.1.0",
       "evidence": "crates.io, tree-sitter-hcl"
     },
@@ -4296,7 +4330,7 @@
       },
       "role": "direct",
       "requirement": "=0.23.2",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.23.2",
       "evidence": "crates.io, tree-sitter-html"
     },
@@ -4433,7 +4467,9 @@
       "name": "tree-sitter-language",
       "declaredIn": [
         "rust/Cargo.lock",
-        "rust/Cargo.toml"
+        "rust/Cargo.toml",
+        "rust/oracles/cmake-source-oracle/Cargo.toml",
+        "rust/oracles/native-source-oracles/Cargo.toml"
       ],
       "pinned": "0.1.8",
       "compare": "version",
@@ -4464,7 +4500,7 @@
       },
       "role": "direct",
       "requirement": "=0.5.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.5.0",
       "evidence": "crates.io, tree-sitter-lua"
     },
@@ -4548,7 +4584,7 @@
       },
       "role": "direct",
       "requirement": "=0.3.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.3.0",
       "evidence": "crates.io, tree-sitter-nix"
     },
@@ -4590,7 +4626,7 @@
       },
       "role": "direct",
       "requirement": "=1.3.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "1.3.0",
       "evidence": "crates.io, tree-sitter-odin"
     },
@@ -4611,7 +4647,7 @@
       },
       "role": "direct",
       "requirement": "=0.10.2",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.10.2",
       "evidence": "crates.io, tree-sitter-pascal"
     },
@@ -4653,7 +4689,7 @@
       },
       "role": "direct",
       "requirement": "=0.26.4",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.26.4",
       "evidence": "crates.io, tree-sitter-powershell"
     },
@@ -4695,7 +4731,7 @@
       },
       "role": "direct",
       "requirement": "=0.25.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.25.0",
       "evidence": "crates.io, tree-sitter-python"
     },
@@ -4716,7 +4752,7 @@
       },
       "role": "direct",
       "requirement": "=1.3.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "1.3.0",
       "evidence": "crates.io, tree-sitter-r"
     },
@@ -4842,7 +4878,7 @@
       },
       "role": "direct",
       "requirement": "=0.3.11",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.3.11",
       "evidence": "crates.io, tree-sitter-sequel"
     },
@@ -4905,7 +4941,7 @@
       },
       "role": "direct",
       "requirement": "=0.7.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.7.0",
       "evidence": "crates.io, tree-sitter-toml-ng"
     },
@@ -4947,7 +4983,7 @@
       },
       "role": "direct",
       "requirement": "=0.1.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.1.0",
       "evidence": "crates.io, tree-sitter-vb-dotnet"
     },
@@ -4968,7 +5004,7 @@
       },
       "role": "direct",
       "requirement": "=0.7.0",
-      "kind": "runtime",
+      "kind": "development",
       "current": "0.7.0",
       "evidence": "crates.io, tree-sitter-xml"
     },
@@ -5010,7 +5046,7 @@
       },
       "role": "direct",
       "requirement": "=1.1.2",
-      "kind": "runtime",
+      "kind": "development",
       "current": "1.1.2",
       "evidence": "crates.io, tree-sitter-zig"
     },
@@ -6030,6 +6066,39 @@
       "evidence": "crates.io, zmij"
     },
     {
+      "id": "crate rust/Cargo.toml cmake-source-oracle@oracles/cmake-source-oracle",
+      "category": "crate",
+      "scope": "rust/Cargo.toml",
+      "name": "cmake-source-oracle",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "oracles/cmake-source-oracle",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "role": "direct",
+      "kind": "development",
+      "evidence": "Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json."
+    },
+    {
+      "category": "crate",
+      "name": "native-source-oracles",
+      "scope": "rust/Cargo.toml",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "oracles/native-source-oracles",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "role": "direct",
+      "kind": "development",
+      "id": "crate rust/Cargo.toml native-source-oracles@oracles/native-source-oracles"
+    },
+    {
       "id": "crate rust/web/Cargo.lock bumpalo@3.20.3",
       "category": "crate",
       "scope": "rust/web/Cargo.lock",
@@ -6656,6 +6725,58 @@
       ]
     },
     {
+      "id": "vendored-grammar js/oracles/grammars/cmake.wasm.gz@v0.7.5",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/cmake.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "v0.7.5",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "vendored-parser rust/vendor/tree-sitter-cmake@v0.7.5",
+        "toolchain tree-sitter-cli@0.27.0"
+      ],
+      "evidence": "Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json."
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/cpp.wasm.gz@0.23.4",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/cpp.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.23.4",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-cpp@0.23.4",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/css.wasm.gz@0.25.0",
+      "name": "js/oracles/grammars/css.wasm.gz",
+      "category": "vendored-grammar",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.25.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-css@0.25.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
       "id": "vendored-grammar js/oracles/grammars/csv.wasm.gz@f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/csv.wasm.gz",
@@ -6673,6 +6794,24 @@
       ]
     },
     {
+      "id": "vendored-grammar js/oracles/grammars/dart.wasm.gz@0.2.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/dart.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.2.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-dart@0.2.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ],
+      "evidence": "Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json."
+    },
+    {
       "id": "vendored-grammar js/oracles/grammars/diff.wasm.gz@0.1.0",
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/diff.wasm.gz",
@@ -6686,6 +6825,40 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-diff@0.1.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/dtd.wasm.gz@0.7.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/dtd.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.7.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-xml@0.7.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/erlang.wasm.gz@0.20.0",
+      "name": "js/oracles/grammars/erlang.wasm.gz",
+      "category": "vendored-grammar",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.20.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-erlang@0.20.0",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -6720,6 +6893,40 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-graphql@0.3.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/groovy.wasm.gz@0.1.2",
+      "name": "js/oracles/grammars/groovy.wasm.gz",
+      "category": "vendored-grammar",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.1.2",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-groovy@0.1.2",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/hcl.wasm.gz@1.1.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/hcl.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "1.1.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-hcl@1.1.0",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -6809,6 +7016,40 @@
       ]
     },
     {
+      "id": "vendored-grammar js/oracles/grammars/lean.wasm.gz@bd942cd2795016239be02b3b3d5ef635645ddd38",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/lean.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "bd942cd2795016239be02b3b3d5ef635645ddd38",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "vendored-parser rust/vendor/tree-sitter-lean@bd942cd2795016239be02b3b3d5ef635645ddd38",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/lua.wasm.gz@0.5.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/lua.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.5.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-lua@0.5.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
       "id": "vendored-grammar js/oracles/grammars/make.wasm.gz@1.1.1",
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/make.wasm.gz",
@@ -6826,6 +7067,58 @@
       ]
     },
     {
+      "id": "vendored-grammar js/oracles/grammars/nix.wasm.gz@0.3.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/nix.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.3.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-nix@0.3.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ],
+      "evidence": "Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json."
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/pascal.wasm.gz@0.10.2",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/pascal.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.10.2",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-pascal@0.10.2",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/powershell.wasm.gz@0.26.4",
+      "name": "js/oracles/grammars/powershell.wasm.gz",
+      "category": "vendored-grammar",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.26.4",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-powershell@0.26.4",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
       "id": "vendored-grammar js/oracles/grammars/proto.wasm.gz@0.6.0",
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/proto.wasm.gz",
@@ -6839,6 +7132,40 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-proto@0.6.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/python.wasm.gz@0.25.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/python.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.25.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-python@0.25.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/r.wasm.gz@1.3.0",
+      "name": "js/oracles/grammars/r.wasm.gz",
+      "category": "vendored-grammar",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "1.3.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-r@1.3.0",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -6873,6 +7200,23 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-regex@0.25.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/rocq.wasm.gz@300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/rocq.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "vendored-parser rust/vendor/tree-sitter-rocq@300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -6928,6 +7272,40 @@
       ]
     },
     {
+      "id": "vendored-grammar js/oracles/grammars/sql.wasm.gz@0.3.11",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/sql.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.3.11",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-sequel@0.3.11",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/toml.wasm.gz@0.7.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/toml.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.7.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-toml-ng@0.7.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
       "id": "vendored-grammar js/oracles/grammars/tsx.wasm.gz@0.23.2",
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/tsx.wasm.gz",
@@ -6962,9 +7340,60 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/agda.wasm.gz@1.3.3",
+      "id": "vendored-grammar js/oracles/grammars/vb.wasm.gz@0.1.0",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/agda.wasm.gz",
+      "name": "js/oracles/grammars/vb.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.1.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-vb-dotnet@0.1.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/xml.wasm.gz@0.7.0",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/xml.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "0.7.0",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-xml@0.7.0",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/zig.wasm.gz@1.1.2",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/zig.wasm.gz",
+      "declaredIn": [
+        "js/src/vendor/grammars/grammar-lock.json"
+      ],
+      "pinned": "1.1.2",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "crate rust/Cargo.lock tree-sitter-zig@1.1.2",
+        "toolchain tree-sitter-cli@0.27.0"
+      ]
+    },
+    {
+      "id": "vendored-grammar js/oracles/grammars/agda.wasm.gz@1.3.3",
+      "category": "vendored-grammar",
+      "name": "js/oracles/grammars/agda.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -6996,40 +7425,6 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/cmake.wasm.gz@v0.7.5",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/cmake.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "v0.7.5",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "vendored-parser rust/vendor/tree-sitter-cmake@v0.7.5",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/cpp.wasm.gz@0.23.4",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/cpp.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.23.4",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-cpp@0.23.4",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
       "id": "vendored-grammar js/src/vendor/grammars/csharp.wasm.gz@0.23.5",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/csharp.wasm.gz",
@@ -7043,57 +7438,6 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-c-sharp@0.23.5",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/css.wasm.gz@0.25.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/css.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.25.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-css@0.25.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/dart.wasm.gz@0.2.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/dart.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.2.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-dart@0.2.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/dtd.wasm.gz@0.7.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/dtd.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.7.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-xml@0.7.0",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -7132,40 +7476,6 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/erlang.wasm.gz@0.20.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/erlang.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.20.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-erlang@0.20.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/groovy.wasm.gz@0.1.2",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/groovy.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.1.2",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-groovy@0.1.2",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
       "id": "vendored-grammar js/src/vendor/grammars/haskell.wasm.gz@0.24.1",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/haskell.wasm.gz",
@@ -7183,26 +7493,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/hcl.wasm.gz@1.1.0",
+      "id": "vendored-grammar js/oracles/grammars/html.wasm.gz@0.23.2",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/hcl.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "1.1.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-hcl@1.1.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/html.wasm.gz@0.23.2",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/html.wasm.gz",
+      "name": "js/oracles/grammars/html.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -7230,40 +7523,6 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-kotlin-ng@1.1.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/lean.wasm.gz@bd942cd2795016239be02b3b3d5ef635645ddd38",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/lean.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "bd942cd2795016239be02b3b3d5ef635645ddd38",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "vendored-parser rust/vendor/tree-sitter-lean@bd942cd2795016239be02b3b3d5ef635645ddd38",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/lua.wasm.gz@0.5.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/lua.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.5.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-lua@0.5.0",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -7319,23 +7578,6 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/nix.wasm.gz@0.3.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/nix.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.3.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-nix@0.3.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
       "id": "vendored-grammar js/src/vendor/grammars/ocaml_interface.wasm.gz@0.26.0",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/ocaml_interface.wasm.gz",
@@ -7370,9 +7612,9 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/odin.wasm.gz@1.3.0",
+      "id": "vendored-grammar js/oracles/grammars/odin.wasm.gz@1.3.0",
       "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/odin.wasm.gz",
+      "name": "js/oracles/grammars/odin.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -7383,23 +7625,6 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-odin@1.3.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/pascal.wasm.gz@0.10.2",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/pascal.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.10.2",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-pascal@0.10.2",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -7438,74 +7663,6 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/powershell.wasm.gz@0.26.4",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/powershell.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.26.4",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-powershell@0.26.4",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/python.wasm.gz@0.25.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/python.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.25.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-python@0.25.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/r.wasm.gz@1.3.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/r.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "1.3.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-r@1.3.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/rocq.wasm.gz@300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/rocq.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "vendored-parser rust/vendor/tree-sitter-rocq@300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
       "id": "vendored-grammar js/src/vendor/grammars/ruby.wasm.gz@0.23.1",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/ruby.wasm.gz",
@@ -7540,23 +7697,6 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/sql.wasm.gz@0.3.11",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/sql.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.3.11",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-sequel@0.3.11",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
       "id": "vendored-grammar js/src/vendor/grammars/swift.wasm.gz@0.7.4",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/swift.wasm.gz",
@@ -7574,57 +7714,6 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/toml.wasm.gz@0.7.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/toml.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.7.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-toml-ng@0.7.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/vb.wasm.gz@0.1.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/vb.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.1.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-vb-dotnet@0.1.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/xml.wasm.gz@0.7.0",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/xml.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "0.7.0",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-xml@0.7.0",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
       "id": "vendored-grammar js/src/vendor/grammars/yaml.wasm.gz@0.7.2",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/yaml.wasm.gz",
@@ -7638,23 +7727,6 @@
       },
       "dependsOn": [
         "crate rust/Cargo.lock tree-sitter-yaml@0.7.2",
-        "toolchain tree-sitter-cli@0.27.0"
-      ]
-    },
-    {
-      "id": "vendored-grammar js/src/vendor/grammars/zig.wasm.gz@1.1.2",
-      "category": "vendored-grammar",
-      "name": "js/src/vendor/grammars/zig.wasm.gz",
-      "declaredIn": [
-        "js/src/vendor/grammars/grammar-lock.json"
-      ],
-      "pinned": "1.1.2",
-      "compare": "derived",
-      "source": {
-        "type": "none"
-      },
-      "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-zig@1.1.2",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -7789,6 +7861,22 @@
       "dependsOn": []
     },
     {
+      "id": "generator js/scripts/build-unicode-identifier-properties.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/build-unicode-identifier-properties.mjs",
+      "declaredIn": [
+        "js/scripts/build-unicode-identifier-properties.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "engine node@>=22"
+      ]
+    },
+    {
       "id": "generator js/scripts/build-vendored-grammars.mjs@script",
       "category": "generator",
       "name": "js/scripts/build-vendored-grammars.mjs",
@@ -7868,6 +7956,22 @@
         "type": "none"
       },
       "dependsOn": []
+    },
+    {
+      "id": "generator js/scripts/generate-frontend-rule-styles.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/generate-frontend-rule-styles.mjs",
+      "declaredIn": [
+        "js/scripts/generate-frontend-rule-styles.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "action dtolnay/rust-toolchain@stable"
+      ]
     },
     {
       "id": "generator js/scripts/generate-frontend-rules.mjs@script",
@@ -8849,48 +8953,6 @@
       "category": "published",
       "scope": "crate",
       "name": "src/data/semantic-lexicon.json",
-      "declaredIn": [
-        "rust/Cargo.toml"
-      ],
-      "pinned": "include",
-      "compare": "unversioned",
-      "source": {
-        "type": "none"
-      }
-    },
-    {
-      "id": "published crate vendor/tree-sitter-cmake/**@include",
-      "category": "published",
-      "scope": "crate",
-      "name": "vendor/tree-sitter-cmake/**",
-      "declaredIn": [
-        "rust/Cargo.toml"
-      ],
-      "pinned": "include",
-      "compare": "unversioned",
-      "source": {
-        "type": "none"
-      }
-    },
-    {
-      "id": "published crate vendor/tree-sitter-lean/**@include",
-      "category": "published",
-      "scope": "crate",
-      "name": "vendor/tree-sitter-lean/**",
-      "declaredIn": [
-        "rust/Cargo.toml"
-      ],
-      "pinned": "include",
-      "compare": "unversioned",
-      "source": {
-        "type": "none"
-      }
-    },
-    {
-      "id": "published crate vendor/tree-sitter-rocq/**@include",
-      "category": "published",
-      "scope": "crate",
-      "name": "vendor/tree-sitter-rocq/**",
       "declaredIn": [
         "rust/Cargo.toml"
       ],

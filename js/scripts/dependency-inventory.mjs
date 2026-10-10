@@ -71,7 +71,14 @@ function makeItem(fields) {
 function addItem(items, fields) {
   const item = makeItem(fields);
   const existing = items.get(item.id);
-  if (existing) existing.declaredIn = unique([...existing.declaredIn, ...item.declaredIn]);
+  if (existing) {
+    existing.declaredIn = unique([...existing.declaredIn, ...item.declaredIn]);
+    if (item.category === 'crate' && item.requirement) {
+      existing.requirement = unique([existing.requirement, item.requirement].filter(Boolean).flatMap((value) => value.split('; '))).join('; ');
+      existing.kind = unique([existing.kind, item.kind].filter(Boolean).flatMap((value) => value.split(', '))).join(', ');
+      existing.role = 'direct';
+    }
+  }
   else items.set(item.id, item);
   return item;
 }
@@ -116,7 +123,8 @@ export function parseCargoManifest(text) {
       const requirement = value.match(/^"([^"]+)"/u)?.[1] ?? value.match(/version\s*=\s*"([^"]+)"/u)?.[1] ?? null;
       const renamed = value.match(/package\s*=\s*"([^"]+)"/u)?.[1];
       const kind = section.endsWith('dev-dependencies') ? 'development' : section.endsWith('build-dependencies') ? 'build' : 'runtime';
-      dependencies.push({ name: renamed ?? key, requirement, kind, optional: /optional\s*=\s*true/u.test(value) });
+      const localPath = value.match(/path\s*=\s*"([^"]+)"/u)?.[1];
+      dependencies.push({ name: renamed ?? key, requirement, kind, optional: /optional\s*=\s*true/u.test(value), ...(localPath ? { path: localPath } : {}) });
     }
   }
   return { settings, dependencies };
@@ -189,9 +197,15 @@ function collectNpm(root, items) {
   }
 }
 
-function collectCargo(root, items, manifestFile) {
-  const lockFile = manifestFile.replace(/Cargo\.toml$/u, 'Cargo.lock');
+function collectCargo(root, items, manifestFile, lockFile = manifestFile.replace(/Cargo\.toml$/u, 'Cargo.lock')) {
   const { settings, dependencies } = parseCargoManifest(readText(root, manifestFile));
+  for (const dependency of dependencies.filter(({ path: localPath }) => localPath)) {
+    addItem(items, {
+      category: 'crate', scope: manifestFile, name: dependency.name,
+      declaredIn: manifestFile, pinned: dependency.path, compare: 'unversioned',
+      source: { type: 'none' }, role: 'direct', kind: dependency.kind,
+    });
+  }
   for (const setting of ['edition', 'rust-version']) {
     if (!settings[setting]) continue;
     addItem(items, {
@@ -477,6 +491,7 @@ export function collectDependencies(root) {
   collectNpm(root, items);
   collectCargo(root, items, 'rust/Cargo.toml');
   collectCargo(root, items, 'rust/web/Cargo.toml');
+  for (const manifest of trackedFiles(root, 'rust/oracles', /^Cargo\.toml$/u)) collectCargo(root, items, manifest, 'rust/Cargo.lock');
   collectExperiments(root, items);
   collectLeanToolchains(root, items);
   collectVendored(root, items);

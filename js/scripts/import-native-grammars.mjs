@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
+import { transformNativeSource } from './native-grammar-transforms.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const GRAMMAR_SOURCES = 'parity/grammars/sources.json';
@@ -79,14 +80,14 @@ export function corpusFileCases(corpus) {
   const headerEnd = (index) => {
     if (!/^={3,}/u.test(lines[index] ?? '') || index + 1 >= lines.length) return -1;
     let close = index + 2;
-    while (/^:/u.test(lines[close] ?? '')) close += 1;
+    while (close < lines.length && (/^:/u.test(lines[close]) || /^\s*$/u.test(lines[close]))) close += 1;
     return /^={3,}/u.test(lines[close] ?? '') ? close + 1 : -1;
   };
   const cases = [];
   for (let index = 0; index < lines.length; index += 1) {
     const start = headerEnd(index);
     if (start < 0) continue;
-    const attributes = lines.slice(index + 2, start - 1).map((line) => line.slice(1).trim());
+    const attributes = lines.slice(index + 2, start - 1).filter((line) => /^:/u.test(line)).map((line) => line.slice(1).trim());
     let next = start;
     while (next < lines.length && headerEnd(next) < 0) next += 1;
     let divider = -1;
@@ -111,6 +112,7 @@ export function corpusFileCases(corpus) {
  */
 export function corpusCases(entry) {
   const { files } = JSON.parse(sourceText(entry.corpus));
+  if (entry.corpus.format === 'source-files') return Object.entries(files).map(([file, source]) => ({ file, title: file, source }));
   const wanted = entry.corpus.language;
   return Object.entries(files).flatMap(([file, corpus]) => corpusFileCases(corpus)
     .filter((item) => item.language === undefined || item.language === wanted)
@@ -144,7 +146,7 @@ export function ruleConcept(rule, decisions = {}) {
 
 /** Imports one source: the native grammar text, its rules with their concepts, and its report. */
 export function importSource(entry, expansions, decisions = {}) {
-  const grammar = JSON.parse(sourceText(entry));
+  const grammar = transformNativeSource(JSON.parse(sourceText(entry)), decisions.sourceTransforms);
   const imported = importTreeSitterNative(grammar, {
     nameOf: (name) => nativeName(name, expansions, decisions),
     wordRule: WORD_RULE,
@@ -195,9 +197,12 @@ function languageName(entry) {
  */
 export function mergeConcepts(register, imports, decisions = {}) {
   const sources = new Set(imports.map(({ entry }) => nativeSource(entry)));
+  // Keep existing identities and their stable order while rebuilding imported
+  // aliases. A temporarily empty generated record may be used again below:
+  // dropping it here would append it at the end on every regeneration, making
+  // an unchanged committed register fail --check whenever later records exist.
   const concepts = register.concepts
-    .map((record) => ({ ...record, sourceAliases: record.sourceAliases.filter(({ source }) => !sources.has(source)) }))
-    .filter((record) => !(record.constraints.includes(GENERATED) && record.sourceAliases.length === 0));
+    .map((record) => ({ ...record, sourceAliases: record.sourceAliases.filter(({ source }) => !sources.has(source)) }));
   const byId = new Map(concepts.map((record) => [record.id, record]));
   const former = new Map(concepts.flatMap((record) => record.formerNames.map((name) => [name, record.id])));
   for (const { entry, rules } of imports) {
@@ -221,22 +226,27 @@ export function mergeConcepts(register, imports, decisions = {}) {
           sourceAliases: [],
           formerNames: [],
         };
-        const distinct = decisions.distinctFrom?.[rule.concept];
-        if (distinct) record.distinctFrom = distinct;
         concepts.push(record);
         byId.set(record.id, record);
       }
+      if (Object.hasOwn(decisions.definitions ?? {}, rule.concept)) record.definition = decisions.definitions[rule.concept];
+      if (Object.hasOwn(decisions.distinctFrom ?? {}, rule.concept)) record.distinctFrom = decisions.distinctFrom[rule.concept];
       record.sourceAliases = sortAliases([...record.sourceAliases, alias]);
     }
   }
-  const names = new Map(imports.map(({ entry }) => [nativeSource(entry), languageName(entry)]));
+  const names = new Map(imports.map(({ entry }) => [nativeSource(entry), entry.language.toLowerCase() === languageName(entry).toLowerCase() ? languageName(entry) : `${entry.language} (${languageName(entry)})`]));
   for (const record of concepts) {
     const native = new Set(record.sourceAliases.map(({ source }) => source).filter((source) => source.startsWith('native:')));
     if (![...native].some((source) => sources.has(source))) continue;
     const usage = native.size > 1 ? SHARED : `Only the native ${names.get([...native][0])} grammar defines this construct.`;
     record.constraints = [usage, ...record.constraints.filter((text) => text !== SHARED && !ONLY.test(text))];
   }
-  return { ...register, concepts };
+  // Prune only genuinely unreferenced generated records after all sources
+  // were re-imported; authored concepts and former names remain intact.
+  return {
+    ...register,
+    concepts: concepts.filter((record) => !(record.constraints.includes(GENERATED) && record.sourceAliases.length === 0)),
+  };
 }
 
 /** The merge report of one imported language. */
@@ -272,6 +282,7 @@ export function mergeReport(result, register, words) {
       generated: rules.filter((rule) => generated.has(rule.concept)).length,
     },
     ...(result.decisions?.conflicts?.length ? { decidedConflicts: result.decisions.conflicts } : {}),
+    ...(result.decisions?.sourceTransforms?.length ? { sourceTransforms: result.decisions.sourceTransforms } : {}),
     approximations: imported.report.approximations,
     unsupported: imported.report.unsupported,
   };

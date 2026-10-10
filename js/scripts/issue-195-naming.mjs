@@ -421,15 +421,14 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'required concept distinctions',
-    files: ['rust/src/concept_distinctions.rs'],
+    files: ['rust/src/data/required-concept-distinctions.rs'],
     extract: (text) =>
-      [...block(text, 'pub const REQUIRED_CONCEPT_DISTINCTIONS', '\n];').matchAll(/concepts: \[([^\]]*)\]/gu)].flatMap(([, pair]) => captures(pair, /"([^"]+)"/gu)),
+      [...text.matchAll(/concepts: \[([^\]]*)\]/gu)].flatMap(([, pair]) => captures(pair, /"([^"]+)"/gu)),
   },
   {
     inventory: 'required concept distinctions',
-    files: ['js/src/concept-distinctions.js'],
-    extract: (text) =>
-      [...block(text, 'export const REQUIRED_CONCEPT_DISTINCTIONS', '\n].map').matchAll(/concepts: \[([^\]]*)\]/gu)].flatMap(([, pair]) => captures(pair, /'([^']+)'/gu)),
+    files: ['js/src/data/required-concept-distinctions.json'],
+    extract: (text) => JSON.parse(text).flatMap(({ concepts }) => concepts),
   },
   {
     inventory: 'structural programming concepts',
@@ -512,6 +511,7 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'native grammar concept references',
+    occurrences: true,
     files: NATIVE_GRAMMAR_FILES,
     extract: (text) => nativeRuleConcepts(text).map(({ concept }) => concept),
     describe: (text, file) =>
@@ -534,10 +534,38 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'frontend decision operations',
     files: ['js/src/translation/frontend-rules.js', 'rust/src/translation/frontend_rules.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
       .filter((name) => !name.startsWith('ml_'))
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'indentation scanner generator',
+    files: ['js/scripts/scanner-families.mjs'],
+    extract: (text) => captures(text, /^export function (indentationScanner|prefixedQuotedScanner)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.generate-${name}`,
+  },
+  {
+    inventory: 'template context scanner generator',
+    files: ['js/scripts/template-context-scanner.mjs'],
+    extract: (text) => captures(text, /^export function (templateContextScanner)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.generate-${name}`,
+  },
+  {
+    inventory: 'contextual bracket and raw literal scanner generators',
+    files: ['js/scripts/scoped-layout-scanner.mjs', 'js/scripts/quoted-counted-scanner.mjs'],
+    extract: (text) => captures(text, /^export function (scopedLayoutScanner|quotedCountedScanner)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.generate-${name}`,
+  },
+  {
+    inventory: 'native grammar embedding generator',
+    files: ['js/scripts/build-language-catalog.mjs'],
+    extract: (text) => captures(text, /^export function (nativeGrammarRustSource)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: () => 'grammar.generate-native-grammar-source',
   },
   {
     inventory: 'frontend decision result concepts',
@@ -604,10 +632,10 @@ export const FORMER_NAME_TABLES = Object.freeze([
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
   const names = [];
-  for (const { inventory, files, extract, recordOf = (name) => name, words = false } of inventories) {
+  for (const { inventory, files, extract, recordOf = (name) => name, words = false, occurrences = false } of inventories) {
     for (const file of files) {
       const text = existsSync(path.join(root, file)) ? readFileSync(path.join(root, file), 'utf8') : '';
-      for (const name of new Set(extract(text, file))) names.push({ inventory, file, name, record: words ? null : recordOf(name) });
+      for (const name of occurrences ? extract(text, file) : new Set(extract(text, file))) names.push({ inventory, file, name, record: words ? null : recordOf(name) });
     }
   }
   return names;

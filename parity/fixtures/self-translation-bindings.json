@@ -1,0 +1,246 @@
+{
+  "cases": [
+    {
+      "name": "sibling-call",
+      "source": "/** @param {number} x @returns {number} */\nfunction square(x) { return x * x; }\n\n/** @param {number} x @returns {number} */\nexport function cappedSquare(x) { return Math.min(square(x), 3); }\n",
+      "call": "cappedSquare(2)",
+      "rustCall": "capped_square(2.0)",
+      "expected": "3\n"
+    },
+    {
+      "name": "forward-call",
+      "source": "/** @param {number} x @returns {number} */\nexport function twice(x) { return double(x); }\n\n/** @param {number} x @returns {number} */\nfunction double(x) { return x * 2; }\n",
+      "call": "twice(4)",
+      "rustCall": "twice(4.0)",
+      "expected": "8\n"
+    },
+    {
+      "name": "arrow-bound-sibling",
+      "source": "/** @param {number} x @returns {number} */\nconst square = (x) => x * x;\n\n/** @param {number} x @returns {number} */\nexport function cappedSquare(x) { return Math.min(square(x), 3); }\n",
+      "call": "cappedSquare(2)",
+      "rustCall": "capped_square(2.0)",
+      "expected": "3\n"
+    },
+    {
+      "name": "constant-and-siblings",
+      "source": "const LIMIT = 3;\n\n/** @param {number} x @returns {number} */\nfunction square(x) { return x * x; }\n\n/** @param {number} x @returns {number} */\nexport function cappedSquare(x) { return Math.min(square(x), LIMIT); }\n",
+      "call": "cappedSquare(2)",
+      "rustCall": "capped_square(2.0)",
+      "expected": "3\n"
+    },
+    {
+      "name": "shadowed-constant",
+      "source": "const LIMIT = 3;\n\n/** @param {number} LIMIT @returns {number} */\nexport function shadow(LIMIT) { return LIMIT; }\n",
+      "call": "shadow(9)",
+      "rustCall": "shadow(9.0)",
+      "expected": "9\n"
+    },
+    {
+      "name": "string-and-boolean-constants",
+      "source": "const LABEL = 'ready';\nconst ENABLED = true;\n\n/** @returns {string} */\nexport function label() { if (ENABLED) return LABEL; return 'disabled'; }\n",
+      "call": "label()",
+      "rustCall": "label()",
+      "expected": "ready\n"
+    },
+    {
+      "name": "module-type-and-function-scope",
+      "source": "/** @typedef {{ $: 'value', value: number } | { $: 'none' }} Choice */\n\n/** @param {number} x @returns {Choice} */\nexport function makeChoice(x) { return { $: 'value', value: x }; }\n\n/** @param {Choice} choice @returns {number} */\nexport function readChoice(choice) { switch (choice.$) { case 'value': return choice.value; case 'none': return 0; } }\n",
+      "call": "readChoice(makeChoice(7))",
+      "rustCall": "read_choice(make_choice(7.0))",
+      "expected": "7\n"
+    },
+    {
+      "name": "complete-frontend-decision-module",
+      "module": "js/src/translation/frontend-rules.js",
+      "call": "acceptArgumentCount([false, true], 1)",
+      "rustCall": "accept_argument_count(vec![false, true], 1.0)",
+      "expected": "true\n"
+    },
+    {
+      "name": "documented-optional-runtime-default",
+      "source": "/** @param {number} [value=99] @returns {number} */\nexport function add(value = 2) { return value + 1; }\n\n/** @returns {number} */\nexport function callAdd() { return add(); }\n",
+      "call": "callAdd()",
+      "rustCall": "call_add()",
+      "expected": "3\n"
+    },
+    {
+      "name": "documented-optional-string",
+      "source": "/** @param {string} [value] @returns {string} */\nexport function identity(value) { return value; }\n",
+      "call": "identity('ready')",
+      "rustCall": "identity(String::from(\"ready\"))",
+      "expected": "ready\n"
+    },
+    {
+      "name": "type-query-number",
+      "source": "/** @param {number} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType(7)",
+      "rustCall": "read_type(7.0)",
+      "expected": "number\n"
+    },
+    {
+      "name": "type-query-bigint",
+      "source": "/** @param {bigint} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType(7n)",
+      "rustCall": "read_type(ml::Big::from_i128(7))",
+      "expected": "bigint\n"
+    },
+    {
+      "name": "type-query-boolean",
+      "source": "/** @param {boolean} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType(false)",
+      "rustCall": "read_type(false)",
+      "expected": "boolean\n"
+    },
+    {
+      "name": "type-query-string",
+      "source": "/** @param {string} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType('ready')",
+      "rustCall": "read_type(String::from(\"ready\"))",
+      "expected": "string\n"
+    },
+    {
+      "name": "type-query-array",
+      "source": "/** @param {number[]} value @returns {string} */\nexport function readType(value) { return typeof value; }\n",
+      "call": "readType([1])",
+      "rustCall": "read_type(vec![1.0])",
+      "expected": "object\n"
+    },
+    {
+      "name": "ordered-array-concatenation",
+      "source": "/** @param {number[]} left @param {number[]} right @returns {number} */\nexport function combinedOrder(left, right) { let order = 0; for (const value of left.concat(right, [])) order = order * 10 + value; return order; }\n",
+      "call": "combinedOrder([1, 2], [3])",
+      "rustCall": "combined_order(vec![1.0, 2.0], vec![3.0])",
+      "expected": "123\n"
+    },
+    {
+      "name": "nested-array-concatenation",
+      "source": "/** @param {number[][]} left @param {number[][]} right @returns {number} */\nexport function nestedSize(left, right) { return left.concat(right).length; }\n",
+      "call": "nestedSize([[1, 2]], [[3]])",
+      "rustCall": "nested_size(vec![vec![1.0, 2.0]], vec![vec![3.0]])",
+      "expected": "2\n"
+    },
+    {
+      "name": "array-copy-concatenation",
+      "source": "/** @param {number[]} values @returns {number} */\nexport function copySize(values) { return values.concat().length; }\n",
+      "call": "copySize([1, 2])",
+      "rustCall": "copy_size(vec![1.0, 2.0])",
+      "expected": "2\n"
+    },
+    {
+      "name": "unicode-string-predicates",
+      "source": "/** @param {string} value @returns {boolean} */\nexport function allTests(value) { return value.startsWith('👋') && value.endsWith('.js') && value.includes('é'); }\n",
+      "call": "allTests('👋 café.js')",
+      "rustCall": "all_tests(String::from(\"👋 café.js\"))",
+      "expected": "true\n"
+    },
+    {
+      "name": "empty-string-predicates",
+      "source": "/** @param {string} value @returns {boolean} */\nexport function emptySearch(value) { return value.startsWith('') && value.endsWith('') && value.includes(''); }\n",
+      "call": "emptySearch('你好')",
+      "rustCall": "empty_search(String::from(\"你好\"))",
+      "expected": "true\n"
+    },
+    {
+      "name": "missing-string-predicates",
+      "source": "/** @param {string} value @returns {boolean} */\nexport function missingSearch(value) { return value.includes('absent') || value.startsWith('absent') || value.endsWith('absent'); }\n",
+      "call": "missingSearch('abc')",
+      "rustCall": "missing_search(String::from(\"abc\"))",
+      "expected": "false\n"
+    },
+    {
+      "name": "unicode-case-mapping",
+      "source": "/** @param {string} value @returns {string} */\nexport function caseForms(value) { return value.toUpperCase() + '|' + value.toLowerCase(); }\n",
+      "call": "caseForms(\"Grüße ΣΑΣ İ\")",
+      "rustCall": "case_forms(String::from(\"Grüße ΣΑΣ İ\"))",
+      "expected": "GRÜSSE ΣΑΣ İ|grüße σας i̇\n"
+    },
+    {
+      "name": "javascript-whitespace-trimming",
+      "source": "/** @param {string} value @returns {string} */\nexport function trimForms(value) { return '[' + value.trim() + '|' + value.trimStart() + '|' + value.trimEnd() + ']'; }\n",
+      "call": "trimForms(\"﻿ a b　\\n\")",
+      "rustCall": "trim_forms(String::from(\"﻿ a b　\\n\"))",
+      "expected": "[a b|a b　\n|﻿ a b]\n"
+    },
+    {
+      "name": "non-javascript-whitespace-retained",
+      "source": "/** @param {string} value @returns {string} */\nexport function trimForms(value) { return '[' + value.trim() + '|' + value.trimStart() + '|' + value.trimEnd() + ']'; }\n",
+      "call": "trimForms(\"﻿ a b　\\n\")",
+      "rustCall": "trim_forms(String::from(\"﻿ a b　\\n\"))",
+      "expected": "[﻿ a b|﻿ a b　\n|﻿ a b]\n"
+    },
+    {
+      "name": "captured-string-type-query",
+      "source": "const LABEL = 'ready';\n/** @returns {string} */\nexport function readType() { return typeof LABEL; }\n",
+      "call": "readType()",
+      "rustCall": "read_type()",
+      "expected": "string\n"
+    },
+    {
+      "name": "captured-boolean-type-query",
+      "source": "const LABEL = true;\n/** @returns {string} */\nexport function readType() { return typeof LABEL; }\n",
+      "call": "readType()",
+      "rustCall": "read_type()",
+      "expected": "boolean\n"
+    },
+    {
+      "name": "captured-number-type-query",
+      "source": "const LABEL = 7;\n/** @returns {string} */\nexport function readType() { return typeof LABEL; }\n",
+      "call": "readType()",
+      "rustCall": "read_type()",
+      "expected": "number\n"
+    },
+    {
+      "name": "captured-bigint-type-query",
+      "source": "const LABEL = 7n;\n/** @returns {string} */\nexport function readType() { return typeof LABEL; }\n",
+      "call": "readType()",
+      "rustCall": "read_type()",
+      "expected": "bigint\n"
+    },
+    {
+      "name": "array-slice-copy",
+      "source": "/** @param {number[]} values @returns {number} */\nexport function copyOrder(values) { let order = 0; for (const value of values.slice()) order = order * 10 + value; return order; }\n",
+      "call": "copyOrder([1, 2, 3])",
+      "rustCall": "copy_order(vec![1.0, 2.0, 3.0])",
+      "expected": "123\n"
+    },
+    {
+      "name": "array-from-copy",
+      "source": "/** @param {number[]} values @returns {number} */\nexport function fromOrder(values) { let order = 0; for (const value of Array.from(values)) order = order * 10 + value; return order; }\n",
+      "call": "fromOrder([1, 2, 3])",
+      "rustCall": "from_order(vec![1.0, 2.0, 3.0])",
+      "expected": "123\n"
+    },
+    {
+      "name": "array-of-construction",
+      "source": "/** @param {number} left @param {number} right @returns {number} */\nexport function constructOrder(left, right) { let order = 0; for (const value of Array.of(left, right)) order = order * 10 + value; return order; }\n",
+      "call": "constructOrder(2, 3)",
+      "rustCall": "construct_order(2.0, 3.0)",
+      "expected": "23\n"
+    },
+    {
+      "name": "utf16-string-length",
+      "source": "/** @param {string} value @returns {number} */\nexport function codeUnits(value) { return value.length; }\n",
+      "call": "codeUnits('aé中😀𝄞e\\u0301\\u0000')",
+      "rustCall": "code_units(String::from(\"aé中😀𝄞e\\u{301}\\u{0}\"))",
+      "expected": "10\n"
+    }
+  ],
+  "refusals": [
+    {
+      "name": "mutable-global",
+      "source": "let LIMIT = 3;\n\n/** @returns {number} */\nexport function capture() { return LIMIT; }\n"
+    },
+    {
+      "name": "nonliteral-global",
+      "source": "const LIMIT = 1 + 2;\n\n/** @returns {number} */\nexport function capture() { return LIMIT; }\n"
+    },
+    {
+      "name": "local-temporal-dead-zone",
+      "source": "const LIMIT = 3;\n\n/** @returns {number} */\nexport function capture() { const x = LIMIT; const LIMIT = 9; return x; }\n"
+    },
+    {
+      "name": "carried-constant",
+      "source": "const main = 3;\n\n/** @returns {number} */\nexport function capture() { return main; }\n"
+    }
+  ]
+}

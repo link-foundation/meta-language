@@ -1,0 +1,14 @@
+[package]
+name = "cmake-source-oracle"
+version = "0.7.5"
+edition = "2024"
+publish = false
+license = "MIT"
+description = "Development oracle for the pinned vendored CMake grammar"
+
+[dependencies]
+tree-sitter-language = "0.1.8"
+
+[build-dependencies]
+cc = "1"
+flate2 = "1"

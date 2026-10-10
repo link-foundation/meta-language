@@ -1,0 +1,442 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "zig",
+  "native": "native-zig",
+  "sources": [
+    {
+      "id": "tree-sitter-zig",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-zig 1.1.2",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-zig",
+      "revision": "b670c8df85a1568f498aa5c8cae42f51a90473c0",
+      "path": "src/grammar.json",
+      "sha256": "83b0b4f6a58d5803aa4be2fdc4eeeecab8cbd5724543239e23ad06fc9abfafde",
+      "license": "MIT"
+    }
+  ],
+  "rules": 116,
+  "keywords": [
+    "addrspace",
+    "align",
+    "allowzero",
+    "and",
+    "anyerror",
+    "anyframe",
+    "anyopaque",
+    "anytype",
+    "asm",
+    "async",
+    "await",
+    "bool",
+    "break",
+    "c",
+    "c_int",
+    "c_long",
+    "c_longdouble",
+    "c_longlong",
+    "c_short",
+    "c_uint",
+    "c_ulong",
+    "c_ulonglong",
+    "c_ushort",
+    "callconv",
+    "catch",
+    "comptime",
+    "comptime_float",
+    "comptime_int",
+    "const",
+    "continue",
+    "defer",
+    "else",
+    "enum",
+    "errdefer",
+    "error",
+    "export",
+    "extern",
+    "f128",
+    "f16",
+    "f32",
+    "f64",
+    "false",
+    "fn",
+    "for",
+    "if",
+    "inline",
+    "isize",
+    "linksection",
+    "noalias",
+    "noinline",
+    "noreturn",
+    "nosuspend",
+    "null",
+    "opaque",
+    "or",
+    "orelse",
+    "packed",
+    "pub",
+    "resume",
+    "return",
+    "struct",
+    "suspend",
+    "switch",
+    "test",
+    "threadlocal",
+    "true",
+    "try",
+    "type",
+    "undefined",
+    "union",
+    "unreachable",
+    "usingnamespace",
+    "usize",
+    "var",
+    "void",
+    "volatile",
+    "while"
+  ],
+  "renamed": [
+    {
+      "source": "_container_members",
+      "native": "container_members"
+    },
+    {
+      "source": "comptime_declaration",
+      "native": "compile_time_declaration"
+    },
+    {
+      "source": "_variable_declaration_expression_statement",
+      "native": "variable_declaration_expression_statement"
+    },
+    {
+      "source": "_variable_declaration_header",
+      "native": "variable_declaration_header"
+    },
+    {
+      "source": "_function_prototype",
+      "native": "function_prototype"
+    },
+    {
+      "source": "parameters",
+      "native": "parameter_list"
+    },
+    {
+      "source": "parameter",
+      "native": "parameter_declaration"
+    },
+    {
+      "source": "block",
+      "native": "scope_block"
+    },
+    {
+      "source": "struct_declaration",
+      "native": "structure_declaration"
+    },
+    {
+      "source": "enum_declaration",
+      "native": "enumeration_declaration"
+    },
+    {
+      "source": "comptime_statement",
+      "native": "compile_time_statement"
+    },
+    {
+      "source": "nosuspend_statement",
+      "native": "no_suspension_statement"
+    },
+    {
+      "source": "errdefer_statement",
+      "native": "error_defer_statement"
+    },
+    {
+      "source": "_block_expr_statement",
+      "native": "block_expression_statement"
+    },
+    {
+      "source": "block_expression",
+      "native": "scope_block_expression"
+    },
+    {
+      "source": "_if_prefix",
+      "native": "if_prefix"
+    },
+    {
+      "source": "_for_prefix",
+      "native": "for_prefix"
+    },
+    {
+      "source": "_while_prefix",
+      "native": "while_prefix"
+    },
+    {
+      "source": "_conditional_body",
+      "native": "conditional_body"
+    },
+    {
+      "source": "asm_expression",
+      "native": "assembly_expression"
+    },
+    {
+      "source": "asm_output",
+      "native": "assembly_output"
+    },
+    {
+      "source": "asm_output_item",
+      "native": "assembly_output_item"
+    },
+    {
+      "source": "asm_input",
+      "native": "assembly_input"
+    },
+    {
+      "source": "asm_input_item",
+      "native": "assembly_input_item"
+    },
+    {
+      "source": "asm_clobbers",
+      "native": "assembly_clobbers"
+    },
+    {
+      "source": "comptime_expression",
+      "native": "compile_time_expression"
+    },
+    {
+      "source": "async_expression",
+      "native": "asynchronous_expression"
+    },
+    {
+      "source": "nosuspend_expression",
+      "native": "no_suspension_expression"
+    },
+    {
+      "source": "catch_expression",
+      "native": "exception_catch_expression"
+    },
+    {
+      "source": "_switch_case_exp",
+      "native": "switch_case_expression"
+    },
+    {
+      "source": "nullable_type",
+      "native": "optional_type"
+    },
+    {
+      "source": "anyframe_type",
+      "native": "any_frame_type"
+    },
+    {
+      "source": "dereference_expression",
+      "native": "referent_expression"
+    },
+    {
+      "source": "anonymous_struct_initializer",
+      "native": "anonymous_structure_initializer"
+    },
+    {
+      "source": "struct_initializer",
+      "native": "structure_initializer"
+    },
+    {
+      "source": "comptime_type_expression",
+      "native": "compile_time_type_expression"
+    },
+    {
+      "source": "arguments",
+      "native": "argument_list"
+    },
+    {
+      "source": "builtin_function",
+      "native": "built_in_function"
+    },
+    {
+      "source": "multiline_string",
+      "native": "multiple_line_string"
+    },
+    {
+      "source": "character",
+      "native": "character_literal"
+    },
+    {
+      "source": "integer",
+      "native": "integer_literal"
+    },
+    {
+      "source": "builtin_type",
+      "native": "built_in_type"
+    },
+    {
+      "source": "builtin_identifier",
+      "native": "built_in_identifier"
+    },
+    {
+      "source": "_identifier",
+      "native": "identifier_body"
+    },
+    {
+      "source": "_reserved_identifier",
+      "native": "reserved_identifier"
+    },
+    {
+      "source": "_iteration_range_expression",
+      "native": "iteration_range_expression"
+    },
+    {
+      "source": "_iteration_primary_type_expression",
+      "native": "iteration_primary_type_expression"
+    },
+    {
+      "source": "_iteration_type_expression",
+      "native": "iteration_type_expression"
+    },
+    {
+      "source": "_iteration_expression",
+      "native": "iteration_expression"
+    },
+    {
+      "source": "_iteration_binary_expression",
+      "native": "iteration_binary_expression"
+    },
+    {
+      "source": "_iteration_unary_expression",
+      "native": "iteration_unary_expression"
+    },
+    {
+      "source": "_iteration_error_union_type",
+      "native": "iteration_error_union_type"
+    }
+  ],
+  "expandedWords": [
+    "anyframe",
+    "asm",
+    "async",
+    "builtin",
+    "comptime",
+    "dereference",
+    "enum",
+    "errdefer",
+    "exp",
+    "expr",
+    "multiline",
+    "nosuspend",
+    "nullable",
+    "struct"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "character_literal",
+        "concept": "grammar.character-literal"
+      },
+      {
+        "rule": "boolean",
+        "concept": "grammar.boolean-value"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      },
+      {
+        "rule": "iteration_expression",
+        "concept": "grammar.expression"
+      }
+    ],
+    "generated": 107
+  },
+  "sourceTransforms": [
+    {
+      "family": "ordered-variants",
+      "rule": "statement",
+      "variants": [
+        "alias:variable_declaration",
+        "expression_statement"
+      ],
+      "reason": "On complete assignment statements the pinned parser chooses the variable-declaration alias before the equivalent expression-statement form; both alternatives remain operational."
+    },
+    {
+      "family": "prefer-optional-literal",
+      "rule": "container_field",
+      "literal": "comptime",
+      "value": 1,
+      "reason": "The pinned parser consumes the field modifier instead of grouping it inside an unnamed compile-time type expression. Keep both productions and prefer the complete parse that consumes the modifier."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "nullable_type",
+      "associativity": "none",
+      "value": 11,
+      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "pointer_type",
+      "associativity": "right",
+      "value": 11,
+      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "slice_type",
+      "associativity": "right",
+      "value": 11,
+      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "array_type",
+      "associativity": "right",
+      "value": 11,
+      "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "error_union_type",
+      "associativity": "right",
+      "value": 12,
+      "reason": "The pinned parser reduces error unions before member suffixes while retaining them inside optional and pointer type prefixes; their level must exceed both suffix and enclosing prefix levels."
+    },
+    {
+      "family": "context-rule-variants",
+      "rules": [
+        "range_expression",
+        "primary_type_expression",
+        "type_expression",
+        "expression",
+        "binary_expression",
+        "unary_expression",
+        "error_union_type"
+      ],
+      "insertInto": [
+        "_for_prefix"
+      ],
+      "prefix": "_iteration_",
+      "opaqueRules": [
+        "unary_expression",
+        "binary_expression",
+        "range_expression",
+        "error_union_type"
+      ],
+      "reason": "The pinned parser resolves the overlapping for-prefix range syntax within its iteration context. Preserve every original production, concept and concrete kind in contextual variants; unary, binary, range and error-union operands retain the ordinary expression context."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

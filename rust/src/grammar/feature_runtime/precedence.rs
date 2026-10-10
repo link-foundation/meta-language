@@ -91,7 +91,13 @@ fn wrapped(node: &Rc<Tree>) -> Rc<Tree> {
             .collect();
         if parts.len() != 1
             || parts[0].ty != TreeType::Node
-            || !PrecedenceTag::same(parts[0].precedence.as_ref(), current.precedence.as_ref())
+            || !parts[0]
+                .precedence
+                .as_ref()
+                .zip(current.precedence.as_ref())
+                .is_some_and(|(child, parent)| {
+                    child.level == parent.level && child.name == parent.name
+                })
         {
             break;
         }
@@ -107,6 +113,16 @@ impl Executor<'_> {
     // when it conflicts, that is when its own child facing the operator could
     // have been the operand instead (`-a->t` but not `f(a)->t`).
     pub(super) fn precedence_valid(&mut self, keep: &Keep, result: &Res) -> bool {
+        self.precedence_valid_edges(keep, result, true, true)
+    }
+
+    pub(super) fn precedence_valid_edges(
+        &mut self,
+        keep: &Keep,
+        result: &Res,
+        left_single: bool,
+        right_single: bool,
+    ) -> bool {
         let meaningful: Vec<Rc<Tree>> = result
             .children
             .iter()
@@ -115,10 +131,13 @@ impl Executor<'_> {
             .collect();
         let verdict = if meaningful.len() < 2 {
             Conflict::No
-        } else if self.conflicts(keep, &meaningful[0], Associativity::Left, meaningful.get(1))
-            == Conflict::Yes
+        } else if left_single
+            && self.conflicts(keep, &meaningful[0], Associativity::Left, meaningful.get(1))
+                == Conflict::Yes
         {
             Conflict::Yes
+        } else if !right_single {
+            Conflict::No
         } else {
             self.conflicts(
                 keep,
@@ -187,6 +206,23 @@ impl Executor<'_> {
         let order = compare_precedence(inner, &keep.tag, &self.program.precedence_orders);
         if order == std::cmp::Ordering::Greater
             || (order == std::cmp::Ordering::Equal && keep.tag.associativity == side)
+        {
+            return Conflict::No;
+        }
+        // Regrouping requires the nested operator to fit the opposite operand.
+        let opposite = if side == Associativity::Left {
+            &keep.operands.right
+        } else {
+            &keep.operands.left
+        };
+        if order == std::cmp::Ordering::Equal
+            && child.rule == keep.tag.rule
+            && opposite.as_ref().is_some_and(|kinds| {
+                wrapper
+                    .kind
+                    .as_ref()
+                    .is_some_and(|kind| !kinds.contains(kind))
+            })
         {
             return Conflict::No;
         }

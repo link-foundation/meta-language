@@ -8,7 +8,6 @@
 //
 //   node js/scripts/generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js]
 //     [--decorators parity/self-translation/decorators.lino] [--shard K/N] [--list]
-//   node js/scripts/generate-self-translation-report.mjs --verify-reports <dir> --commit <sha>
 //
 // The whole tree takes over an hour on one runner, so CI splits it: `--shard
 // K/N` measures the K-th of N shards, which hold about the same number of
@@ -25,13 +24,14 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { dirname, join, posix, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 import { DecoratorSet } from '../src/decorators.js';
 import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
-import { selfTranslate } from '../src/self-translation.js';
+import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
+import { tokenize } from '../src/translation/lexer.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -92,13 +92,16 @@ function counterpart(module) {
 }
 
 /** The top-level Rust functions of `text`, by name, with their text. */
-function functions(text) {
+export function rustFunctionDefinitions(text) {
   const tree = parseProgrammingLanguage(text, 'Rust')?.tree;
+  const bytes = Buffer.from(text, 'utf8');
   const found = new Map();
   for (const child of tree?.children ?? []) {
     if (child.term !== 'function_item') continue;
-    const code = Buffer.from(text, 'utf8').subarray(child.start, child.end).toString('utf8');
-    const name = /\bfn\s+([A-Za-z_][A-Za-z0-9_]*)/u.exec(code)?.[1];
+    const { start, end } = child.span.byteRange;
+    const code = bytes.subarray(start, end).toString('utf8');
+    const identifier = child.children.find((node) => node.field === 'name');
+    const name = identifier && bytes.subarray(identifier.span.byteRange.start, identifier.span.byteRange.end).toString('utf8');
     if (name && !found.has(name)) found.set(name, code);
   }
   return found;
@@ -114,18 +117,166 @@ function translatedCode(code) {
   return end === -1 ? code : code.slice(end);
 }
 
-function measure(module, decorators) {
+/** Account for every UTF-8 source byte independently of the emitted code. */
+export function sourceCoverage(source, items) {
+  const bytes = Buffer.from(source, 'utf8');
+  const coverage = { sourceBytes: bytes.length, itemBytes: 0, layoutBytes: 0, unrepresentedBytes: 0, unrepresentedRanges: [], bytesByStatus: {} };
+  let cursor = 0;
+  const gap = (end) => {
+    if (end === cursor) return;
+    const text = bytes.subarray(cursor, end).toString('utf8');
+    if (/^\s*$/u.test(text)) coverage.layoutBytes += end - cursor;
+    else {
+      coverage.unrepresentedBytes += end - cursor;
+      coverage.unrepresentedRanges.push({ start: cursor, end });
+    }
+  };
+  const boundary = (offset) => offset === bytes.length || (bytes[offset] & 0xc0) !== 0x80;
+  for (const { start, end, status } of items) {
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < cursor || end <= start || end > bytes.length || !boundary(start) || !boundary(end)) {
+      throw new Error(`invalid self-translation source range ${start}..${end} after ${cursor} of ${bytes.length} bytes`);
+    }
+    if (!['translated', 'carried', 'comment', 'kept', 'restored', 'provenance'].includes(status)) {
+      throw new Error(`unknown self-translation item status ${status}`);
+    }
+    gap(start);
+    coverage.itemBytes += end - start;
+    coverage.bytesByStatus[status] = (coverage.bytesByStatus[status] ?? 0) + end - start;
+    cursor = end;
+  }
+  gap(bytes.length);
+  return coverage;
+}
+
+function checkedCoverage(source, translation) {
+  const coverage = sourceCoverage(source, translation.items);
+  if (coverage.unrepresentedBytes !== 0) {
+    throw new Error(`self-translation omitted ${coverage.unrepresentedBytes} source bytes at ${coverage.unrepresentedRanges.map(({ start, end }) => `${start}..${end}`).join(', ')}`);
+  }
+  return coverage;
+}
+
+/**
+ * Resolve actual translated exports before measuring their importers. A
+ * signature is supplied only when the provider's translation checked it;
+ * missing exports and cycles keep the ordinary carried-item diagnostic.
+ * Source paths are relative to js/src, independent of the report shard.
+ */
+export function createModuleContext(readSource) {
+  const sources = new Map();
+  const read = (module) => {
+    if (!sources.has(module)) sources.set(module, readSource(module));
+    return sources.get(module);
+  };
+  const contexts = new Map();
+  const signatures = new Map();
+  const visiting = new Set();
+  const context = (module) => {
+    if (contexts.has(module)) return contexts.get(module);
+    const directory = posix.dirname(module);
+    const moduleDirectory = directory === '.' ? [] : directory.split('/');
+    const imports = {};
+    const result = { moduleDirectory, imports };
+    const source = read(module);
+    if (source === null || visiting.has(module)) return result;
+    visiting.add(module);
+    try {
+      const bytes = Buffer.from(source, 'utf8');
+      const tree = parseProgrammingLanguage(source, 'JavaScript')?.tree;
+      for (const item of tree?.children ?? []) {
+        if (item.term !== 'import_statement') continue;
+        const name = item.children.find((child) => child.field === 'source');
+        if (!name) continue;
+        const text = bytes.subarray(name.span.byteRange.start, name.span.byteRange.end).toString('utf8');
+        const specifier = tokenize(text, 'JavaScript').tokens[0]?.value;
+        if (!specifier || !/^\.\.?\//u.test(specifier)) continue;
+        const target = posix.normalize(posix.join(directory, specifier));
+        if (target === '..' || target.startsWith('../') || visiting.has(target)) continue;
+        if (!signatures.has(target)) {
+          const provider = read(target);
+          if (provider === null) continue;
+          signatures.set(target, selfTranslationSignatures(provider, 'JavaScript', context(target)));
+        }
+        imports[specifier] = signatures.get(target);
+      }
+      contexts.set(module, result);
+      return result;
+    } finally {
+      visiting.delete(module);
+    }
+  };
+  return context;
+}
+
+function measure(module, decorators, context) {
   const rust = counterpart(module);
   const source = readFileSync(join(root, module), 'utf8');
   const started = performance.now();
-  const translation = selfTranslate(source, 'JavaScript', 'Rust');
+  const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
+  const coverage = checkedCoverage(source, translation);
   const items = Object.fromEntries(STATUSES.map((status) => [status, translation.items.filter((item) => item.status === status).length]));
   const milliseconds = Math.round(performance.now() - started);
   const handWritten = rust ? readFileSync(join(root, rust), 'utf8') : null;
-  const generic = compare(translation.code, handWritten);
-  const decorated = decorators.size > 0 ? compare(selfTranslate(source, 'JavaScript', 'Rust', { decorators }).code, handWritten) : generic;
-  return { module, rust, sourceSha256: hash(source), rustSha256: handWritten === null ? null : hash(handWritten), items, milliseconds, ...generic, decorated };
+  const generic = compareRustDefinitions(translation.code, handWritten);
+  let decorated = { ...generic, coverage };
+  if (decorators.size > 0) {
+    const translation = selfTranslate(source, 'JavaScript', 'Rust', { ...context, decorators });
+    decorated = { ...compareRustDefinitions(translation.code, handWritten), coverage: checkedCoverage(source, translation) };
+  }
+  const sha256 = (file) => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
+  return { module, rust, sourceSha256: sha256(module), rustSha256: rust ? sha256(rust) : null, items, coverage, milliseconds, ...generic, decorated };
 }
+
+/** How the Rust a translation writes compares with the hand-written Rust, or with none. */
+export function compareRustDefinitions(translated, handWritten) {
+  const code = translatedCode(translated);
+  const written = rustFunctionDefinitions(code);
+  const row = { functions: written.size };
+  if (handWritten === null) return { ...row, matched: 0, identical: 0, codeLines: codeLines(code).length, sharedLines: 0, handWrittenLines: 0 };
+  const existing = rustFunctionDefinitions(handWritten);
+  let matched = 0;
+  let identical = 0;
+  for (const [name, text] of written) {
+    if (!existing.has(name)) continue;
+    matched += 1;
+    if (normalized(existing.get(name)) === normalized(text)) identical += 1;
+  }
+  const available = new Map();
+  for (const line of codeLines(handWritten)) available.set(line, (available.get(line) ?? 0) + 1);
+  let sharedLines = 0;
+  const lines = codeLines(code);
+  for (const line of lines) {
+    if ((available.get(line) ?? 0) === 0) continue;
+    available.set(line, available.get(line) - 1);
+    sharedLines += 1;
+  }
+  return { ...row, matched, identical, codeLines: lines.length, sharedLines, handWrittenLines: codeLines(handWritten).length };
+}
+
+function markdown(rows) {
+  const total = (field) => rows.reduce((sum, row) => sum + row[field], 0);
+  const items = (status) => rows.reduce((sum, row) => sum + row.items[status], 0);
+  const decorated = (field) => rows.reduce((sum, row) => sum + row.decorated[field], 0);
+  const lines = [
+    '# Self-translation of JavaScript modules against hand-written Rust',
+    '',
+    `${rows.length} modules; ${items('translated')} items translated, ${items('carried')} carried, ${items('comment')} comment groups copied.`,
+    `${rows.reduce((sum, row) => sum + row.coverage.sourceBytes, 0)} source bytes accounted for by item ranges and whitespace layout; modules with omitted code are refused.`,
+    `${total('functions')} Rust functions written, ${total('matched')} named as in the hand-written Rust, ${total('identical')} identical to it up to whitespace;`,
+    `${total('sharedLines')} of ${total('codeLines')} translated code lines appear in the hand-written Rust (${total('handWrittenLines')} code lines).`,
+    `With the shared decorators: ${decorated('identical')} functions identical, ${decorated('sharedLines')} of ${decorated('codeLines')} translated code lines shared.`,
+    '',
+    '| JavaScript module | Rust module | translated | carried | functions | same name | identical | identical, decorated | shared / translated lines | shared, decorated | hand-written lines |',
+    '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+    ...rows.map((row) => `| ${row.module} | ${row.rust ?? '—'} | ${row.items.translated} | ${row.items.carried} | ${row.functions} | ${row.matched} | ${row.identical} | ${row.decorated.identical} | ${row.sharedLines} / ${row.codeLines} | ${row.decorated.sharedLines} / ${row.decorated.codeLines} | ${row.handWrittenLines} |`),
+    '',
+    '| JavaScript module | source bytes | translated bytes | carried bytes | comment bytes | other item bytes | layout bytes |',
+    '| --- | ---: | ---: | ---: | ---: | ---: | ---: |',
+    ...rows.map(({ module, coverage: c }) => `| ${module} | ${c.sourceBytes} | ${c.bytesByStatus.translated ?? 0} | ${c.bytesByStatus.carried ?? 0} | ${c.bytesByStatus.comment ?? 0} | ${c.itemBytes - (c.bytesByStatus.translated ?? 0) - (c.bytesByStatus.carried ?? 0) - (c.bytesByStatus.comment ?? 0)} | ${c.layoutBytes} |`),
+  ];
+  return `${lines.join('\n')}\n`;
+}
+
 
 const hash = (text) => createHash('sha256').update(text).digest('hex');
 
@@ -176,78 +327,46 @@ function verifyPublishedReports(directory, commit) {
   console.log(`verified ${seen.size} modules at ${commit}`);
 }
 
-/** How the Rust a translation writes compares with the hand-written Rust, or with none. */
-function compare(translated, handWritten) {
-  const code = translatedCode(translated);
-  const written = functions(code);
-  const row = { functions: written.size };
-  if (handWritten === null) return { ...row, matched: 0, identical: 0, codeLines: codeLines(code).length, sharedLines: 0, handWrittenLines: 0 };
-  const existing = functions(handWritten);
-  let matched = 0;
-  let identical = 0;
-  for (const [name, text] of written) {
-    if (!existing.has(name)) continue;
-    matched += 1;
-    if (normalized(existing.get(name)) === normalized(text)) identical += 1;
+
+function main() {
+  if (process.argv.includes('--verify-reports')) {
+    try {
+      verifyPublishedReports(option('--verify-reports'), option('--commit'));
+    } catch (error) {
+      console.error(String(error.message ?? error));
+      process.exitCode = 1;
+    }
+    return;
   }
-  const available = new Map();
-  for (const line of codeLines(handWritten)) available.set(line, (available.get(line) ?? 0) + 1);
-  let sharedLines = 0;
-  const lines = codeLines(code);
-  for (const line of lines) {
-    if ((available.get(line) ?? 0) === 0) continue;
-    available.set(line, available.get(line) - 1);
-    sharedLines += 1;
+  if (process.argv.includes('--list')) {
+    console.log(selectedModules().join('\n'));
+    process.exit(0);
   }
-  return { ...row, matched, identical, codeLines: lines.length, sharedLines, handWrittenLines: codeLines(handWritten).length };
+  const outDir = option('--out-dir');
+  if (!outDir) {
+    console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js] [--decorators file.lino] [--shard K/N] [--list]');
+    process.exit(2);
+  }
+  const decorators = DecoratorSet.fromLino(readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8'));
+  const rows = [];
+  const failures = [];
+  const context = createModuleContext((module) => {
+    const file = join(root, 'js/src', module);
+    return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
+  });
+  for (const module of selectedModules()) {
+    try {
+      rows.push(measure(module, decorators, context(posix.relative('js/src', module))));
+    } catch (error) {
+      failures.push({ module, error: String(error?.message ?? error) });
+    }
+  }
+  mkdirSync(outDir, { recursive: true });
+  const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '');
+  writeFileSync(join(outDir, 'self-translation-report.md'), report);
+  writeFileSync(join(outDir, 'self-translation-report.json'), `${JSON.stringify({ schemaVersion: 1, commit: process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), decorators: decorators.ids(), modules: rows, failures }, null, 2)}\n`);
+  // Refused modules are listed in the report; the tests hold self-translation to its contract.
+  console.log(report);
 }
 
-function markdown(rows) {
-  const total = (field) => rows.reduce((sum, row) => sum + row[field], 0);
-  const items = (status) => rows.reduce((sum, row) => sum + row.items[status], 0);
-  const decorated = (field) => rows.reduce((sum, row) => sum + row.decorated[field], 0);
-  const lines = [
-    '# Self-translation of JavaScript modules against hand-written Rust',
-    '',
-    `${rows.length} modules; ${items('translated')} items translated, ${items('carried')} carried, ${items('comment')} comment groups copied.`,
-    `${total('functions')} Rust functions written, ${total('matched')} named as in the hand-written Rust, ${total('identical')} identical to it up to whitespace;`,
-    `${total('sharedLines')} of ${total('codeLines')} translated code lines appear in the hand-written Rust (${total('handWrittenLines')} code lines).`,
-    `With the shared decorators: ${decorated('identical')} functions identical, ${decorated('sharedLines')} of ${decorated('codeLines')} translated code lines shared.`,
-    '',
-    '| JavaScript module | Rust module | translated | carried | functions | same name | identical | identical, decorated | shared / translated lines | shared, decorated | hand-written lines |',
-    '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
-    ...rows.map((row) => `| ${row.module} | ${row.rust ?? '—'} | ${row.items.translated} | ${row.items.carried} | ${row.functions} | ${row.matched} | ${row.identical} | ${row.decorated.identical} | ${row.sharedLines} / ${row.codeLines} | ${row.decorated.sharedLines} / ${row.decorated.codeLines} | ${row.handWrittenLines} |`),
-  ];
-  return `${lines.join('\n')}\n`;
-}
-
-if (process.argv.includes('--verify-reports')) {
-  verifyPublishedReports(option('--verify-reports'), option('--commit'));
-  process.exit(0);
-}
-if (process.argv.includes('--list')) {
-  console.log(selectedModules().join('\n'));
-  process.exit(0);
-}
-const outDir = option('--out-dir');
-if (!outDir) {
-  console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js] [--decorators file.lino] [--shard K/N] [--list]');
-  process.exit(2);
-}
-const decorators = DecoratorSet.fromLino(readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8'));
-const rows = [];
-const failures = [];
-for (const module of selectedModules()) {
-  try {
-    rows.push(measure(module, decorators));
-  } catch (error) {
-    failures.push({ module, error: String(error?.message ?? error) });
-  }
-}
-mkdirSync(outDir, { recursive: true });
-const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '');
-writeFileSync(join(outDir, 'self-translation-report.md'), report);
-const commit = process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
-writeFileSync(join(outDir, 'self-translation-report.json'), `${JSON.stringify({ schemaVersion: 1, commit, decorators: decorators.ids(), modules: rows, failures }, null, 2)}\n`);
-// Refused modules are listed in the report; the tests hold self-translation to its contract.
-console.log(report);
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

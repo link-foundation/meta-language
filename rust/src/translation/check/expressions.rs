@@ -107,7 +107,7 @@ impl Checker {
             SNode::App { func, args } => self.application(func, args, env, path, expected, span),
             SNode::Field { field, object } => {
                 if field == "length"
-                    && let Some(length) = self.length_field(object, span, env, path)?
+                    && let Some(length) = self.length_field(object, env, path)?
                 {
                     return Ok(length);
                 }
@@ -117,6 +117,7 @@ impl Checker {
                     span,
                 ))
             }
+            SNode::TypeOf { arg } => self.type_query(arg, env, path, span),
             SNode::Unary {
                 op: UnaryOp::Not,
                 arg,
@@ -280,6 +281,8 @@ impl Checker {
             SNode::Match1 { scrutinee, cases } => {
                 self.match_cases(scrutinee, cases, span, env, path, expected)
             }
+            SNode::StringMap { .. } => self.string_map(node, env, path),
+            SNode::StringTest { .. } => self.string_test(node, env, path),
             SNode::ToString { arg } => {
                 let arg = self.expr(arg, env, path, None, false)?;
                 if arg.ty == Type::String {

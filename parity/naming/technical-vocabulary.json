@@ -5,6 +5,7 @@
     "words": ["a", "an", "and", "as", "at", "by", "for", "from", "if", "in", "into", "of", "on", "or", "the", "to", "unless", "with", "without"]
   },
   "terms": [
+    {"word": "metrowerks", "partsOfSpeech": ["noun", "adjective"], "definition": "The Metrowerks compiler vendor whose Pascal calling convention the Free Pascal compiler recognizes as MWPascal.", "source": "Free Pascal Reference Guide, chapter Procedures and functions, section Calling conventions"},
     {
       "word": "pragma",
       "partsOfSpeech": ["noun"],

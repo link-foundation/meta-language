@@ -317,8 +317,33 @@ fn method_call(
             ))
         }
     };
+    let mapping =
+        crate::translation::frontend_rules::read_string_map_operation("Rust", &method.value);
+    if !mapping.is_empty() {
+        expect(0)?;
+        return Ok(SExpr::new(
+            SNode::StringMap {
+                op: mapping,
+                object: Box::new(receiver),
+            },
+            range,
+        ));
+    }
+    let operation =
+        crate::translation::frontend_rules::read_string_test_operation("Rust", &method.value);
+    if !operation.is_empty() {
+        expect(1)?;
+        return Ok(SExpr::new(
+            SNode::StringTest {
+                op: operation,
+                object: Box::new(receiver),
+                search: Box::new(args.into_iter().next().expect("one search argument")),
+            },
+            range,
+        ));
+    }
     match method.value.as_str() {
-        "clone" | "to_owned" => {
+        "clone" | "to_owned" | "as_str" => {
             expect(0)?;
             Ok(receiver)
         }

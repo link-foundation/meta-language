@@ -1,0 +1,211 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "hcl",
+  "native": "native-hcl",
+  "sources": [
+    {
+      "id": "tree-sitter-hcl",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-hcl 1.1.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-hcl",
+      "revision": "009def4ae38ec30e5b40beeae26efe93484ab286",
+      "path": "src/grammar.json",
+      "sha256": "058d12ff07abbbc27ff368e84249254b2aeacdf7d4830a0a7132fb7437f7f7bc",
+      "license": "Apache-2.0"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/hcl.lino",
+    "sha256": "92fce22208d45d60b453785e5f4f65e5e12a65b88b3cda0ce907a8e5f6adebb6",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "846b6e63d4b352c6cf9de1255ca100100e52b1a3f8a7b9805c501bbc83d41966"
+    },
+    "scanners": [
+      {
+        "name": "templates",
+        "tokens": [
+          "quoted_template_start",
+          "quoted_template_end",
+          "template_literal_chunk",
+          "template_interpolation_start",
+          "template_interpolation_end",
+          "template_directive_start",
+          "template_directive_end",
+          "here_document_identifier"
+        ]
+      }
+    ],
+    "immediate": [
+      "quoted_template_start",
+      "quoted_template_end",
+      "_template_literal_chunk",
+      "template_interpolation_start",
+      "template_interpolation_end",
+      "template_directive_start",
+      "template_directive_end",
+      "heredoc_identifier"
+    ]
+  },
+  "rules": 65,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "config_file",
+      "native": "configuration_file"
+    },
+    {
+      "source": "attribute",
+      "native": "configuration_attribute"
+    },
+    {
+      "source": "_expr_term",
+      "native": "expression_term"
+    },
+    {
+      "source": "numeric_lit",
+      "native": "numeric_literal"
+    },
+    {
+      "source": "bool_lit",
+      "native": "boolean_literal"
+    },
+    {
+      "source": "null_lit",
+      "native": "null_literal"
+    },
+    {
+      "source": "string_lit",
+      "native": "string_literal"
+    },
+    {
+      "source": "_comma",
+      "native": "comma"
+    },
+    {
+      "source": "_tuple_elems",
+      "native": "tuple_element_list"
+    },
+    {
+      "source": "_object_elems",
+      "native": "object_element_list"
+    },
+    {
+      "source": "object_elem",
+      "native": "object_element"
+    },
+    {
+      "source": "get_attr",
+      "native": "get_attribute"
+    },
+    {
+      "source": "splat",
+      "native": "path_expansion"
+    },
+    {
+      "source": "attr_splat",
+      "native": "attribute_expansion"
+    },
+    {
+      "source": "full_splat",
+      "native": "complete_expansion"
+    },
+    {
+      "source": "for_expr",
+      "native": "for_expression"
+    },
+    {
+      "source": "for_tuple_expr",
+      "native": "for_tuple_expression"
+    },
+    {
+      "source": "for_object_expr",
+      "native": "for_object_expression"
+    },
+    {
+      "source": "for_cond",
+      "native": "iteration_condition"
+    },
+    {
+      "source": "variable_expr",
+      "native": "variable_expression"
+    },
+    {
+      "source": "_function_call_start",
+      "native": "function_call_start"
+    },
+    {
+      "source": "_function_call_end",
+      "native": "function_call_end"
+    },
+    {
+      "source": "function_arguments",
+      "native": "function_argument_list"
+    },
+    {
+      "source": "conditional",
+      "native": "conditional_expression"
+    },
+    {
+      "source": "template_expr",
+      "native": "template_expression"
+    },
+    {
+      "source": "heredoc_template",
+      "native": "here_document_template"
+    },
+    {
+      "source": "heredoc_start",
+      "native": "here_document_start"
+    },
+    {
+      "source": "_template",
+      "native": "template"
+    },
+    {
+      "source": "template_for",
+      "native": "iteration_template"
+    },
+    {
+      "source": "template_if",
+      "native": "conditional_template"
+    },
+    {
+      "source": "_whitespace",
+      "native": "whitespace"
+    }
+  ],
+  "expandedWords": [
+    "attr",
+    "bool",
+    "cond",
+    "config",
+    "elem",
+    "elems",
+    "expr",
+    "lit"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "object",
+        "concept": "grammar.object"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 61
+  },
+  "approximations": [],
+  "unsupported": []
+}

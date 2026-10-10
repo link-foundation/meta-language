@@ -1,0 +1,701 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "527fd214092ae8db880dec945ddb20c1471c6fe157cd5bd8a942a2d51c9629b5",
+  "cases": [
+    {
+      "file": "branch.txt",
+      "title": "If branch 1",
+      "source": "\nif ($a -gt 2) {\n    Write-Host \"The value $a is greater than 2.\"\n}\n"
+    },
+    {
+      "file": "branch.txt",
+      "title": "If else",
+      "source": "\nif ($a -gt 2) {\n    Write-Host \"The value $a is greater than 2.\"\n}\nelse {\n    Write-Host (\"The value $a is less than or equal to 2,\" +\n        \" is not created or is not initialized.\")\n}\n"
+    },
+    {
+      "file": "branch.txt",
+      "title": "If elseif else",
+      "source": "\nif ($a -gt 2) {\n    Write-Host \"The value $a is greater than 2.\"\n}\nelseif ($a -eq 2) {\n    Write-Host \"The value $a is equal to 2.\"\n}\nelse {\n    Write-Host (\"The value $a is less than 2 or\" +\n        \" was not created or initialized.\")\n}\n"
+    },
+    {
+      "file": "branch.txt",
+      "title": "Switch Test 1",
+      "source": "\nswitch (3)\n{\n    1 {\"It is one.\"}\n    2 {\"It is two.\"}\n    3 {\"It is three.\"}\n    4 {\"It is four.\"}\n}\n"
+    },
+    {
+      "file": "branch.txt",
+      "title": "Switch Test 2",
+      "source": "\nswitch (4, 2)\n{\n    1 {\"It is one.\"; Break}\n    2 {\"It is two.\" ; Break }\n    3 {\"It is three.\" ; Break }\n    4 {\"It is four.\" ; Break }\n    3 {\"Three again.\"}\n}\n"
+    },
+    {
+      "file": "branch.txt",
+      "title": "Switch Test 3",
+      "source": "\nswitch ($fontstyle) {\n\tnormal { $font = $fontnormal }\n\titalic { $font = $fontoblique }\n\tbold { $font = $fontbold }\n\tbolditalic { $font = $fontboldobl }\n}"
+    },
+    {
+      "file": "branch.txt",
+      "title": "Switch Test 4",
+      "source": "\nswitch ($fontstyle) {\n\tnormal { $font = $fontnormal };\n\titalic { $font = $fontoblique };\n\tbold { $font = $fontbold };\n\tbolditalic { $font = $fontboldobl };\n}"
+    },
+    {
+      "file": "classes.txt",
+      "title": "Class : empty declaration",
+      "source": "\nclass MyClass {}\n"
+    },
+    {
+      "file": "classes.txt",
+      "title": "Class : string property",
+      "source": "\nclass MyClass\n{\n    [string]$Name\n}\n"
+    },
+    {
+      "file": "classes.txt",
+      "title": "Class : string property with attributes",
+      "source": "\nclass MyClass\n{\n    static hidden [string]$Name\n}\n"
+    },
+    {
+      "file": "classes.txt",
+      "title": "Class : method declaration",
+      "source": "\nclass MyClass\n{\n    [void]SayHi()\n    {\n        Write-Host \"Hi\"\n    }\n}\n"
+    },
+    {
+      "file": "classes.txt",
+      "title": "Class : method declaration with parameters",
+      "source": "\nclass MyClass\n{\n    hidden static [void]SayHi($Greeting, $Title)\n    {\n        Write-Host \"$Greeting, $Title\"\n    }\n}\n"
+    },
+    {
+      "file": "classes.txt",
+      "title": "Class : mix method and properties declaration",
+      "source": "\nclass MyClass\n{\n    static [string]$Word\n\n    static [void]AnotherMethod()\n    {\n        Write-Host \"Nothing\"\n    }\n\n    [int]$Number\n\n    [void]SayHi($Greeting, $Title)\n    {\n        Write-Host \"$Greeting, $Title\"\n    }\n\n    MyClass() {\n\n    }\n}\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Normal cmdlet",
+      "source": "\nWrite-Host \"CERT\"\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Cmdlet that start with a number",
+      "source": "\n555Write-Host 4+7+8\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Cmdlet with mixed string",
+      "source": "\n555Write-\"${message}\" 4+7+8\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Plain cmdlet",
+      "source": "\nNew-DynamicParam -Name Plugins -type string[] -ValidateSet $(((gci .\\plugins\\*.pl).name) -replace \"\\.pl\",\"\") -DPDictionary $Dictionary\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Quoted CmdLet",
+      "source": "\ni''ex \"pwd\"\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Double Quoted CmdLet",
+      "source": "\ni\"\"ex \"pwd\"\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Obfuscated cmdlet and string",
+      "source": "\nie\"\"x'' \"p`\"`\"w''d`\"`\"\"\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Native command",
+      "source": "\nnet.exe\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Unix-like native command",
+      "source": "\ngit clone -b this_branch --single-branch https://github.com/PowerShell/PowerShell\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Windows-style native command",
+      "source": "\nnet use e: \\\\usrsvr002\\smithmark Ue345Ii /user:pdc01\\msmith2 /savecred /p:yes\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Foreach statement without token separator",
+      "source": "\n%{ ( [char][int] $_)}\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "multiline command line",
+      "source": "\nWrite-Debug `\n\t\"debug\"\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "command with argument set by :",
+      "source": "\nNew-Item $profileDir -ItemType Directory -Force -Verbose:$VerbosePreference > $null\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Diff between argument and array literal",
+      "source": "\n$rih2ymeurlleflu = & \"New-Object\" \"System.Net.Sockets.TCPClient\"(\"127.0.0.1\", 4444)\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Cmdlet that start with a keyword",
+      "source": "\ndownload toto\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Cmdlet with parenthesized_expression as parameter without any white space",
+      "source": "\niex(\"calc.exe\")\n"
+    },
+    {
+      "file": "commands.txt",
+      "title": "Cmdlet that start with a keyword 2",
+      "source": "\nExit-test toto\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Single inline comment",
+      "source": "\n$x = 3\n\n# This is a comment\n\nGet-ChildItem .\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Single line block comment",
+      "source": "\n$x = 3\n\n<# Block comment #>\n\nGet-ChildItem .\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Multi-line block comment",
+      "source": "\n$x = 3\n\n<#\n\nHere\n\nis a\n\nlonger\n\ncomment           #>\n\nGet-ChildItem .\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Pathological block comment #1",
+      "source": "\n<##>\n$a\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "Pathological block comment #2",
+      "source": "\n<###>\n$a\n"
+    },
+    {
+      "file": "enum.txt",
+      "title": "Enum : Simple enum",
+      "source": "\nenum MyEnum\n{\n    One\n}\n"
+    },
+    {
+      "file": "enum.txt",
+      "title": "More complex enum",
+      "source": "\nenum Enum2\n{\n    Part1; Two\n\n    Three\n\n\n\n    Four\n}\n"
+    },
+    {
+      "file": "enum.txt",
+      "title": "Enum : Complex enum",
+      "source": "\nenum MyEnum\n{\n    One\n    Two = 2; Three = 3\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Basic hashtable",
+      "source": "\n@{\n    Hi = \"There\"\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Multi-key hashtable",
+      "source": "\n@{\n    Key1 = \"Hi\"; Key2 = \"There\"\n\n    \"Key3\" = 'Friend'\n\n\n    'Key4' = 'Thing'; $key5 = $result\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Sub-expression",
+      "source": "\n$(Get-ChildItem)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Sub-expression with pipeline",
+      "source": "\n$(Get-ChildItem . | Measure-Object)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Access object attribute from var",
+      "source": "\n$test.count\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Access object attribute from subexpression",
+      "source": "\n$(Get-ChildItem . | Measure-Object).count\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Access object attribute from subexpression",
+      "source": "\nGet-ChildItem (Join-Path $PSScriptRoot *.ps1) | ForEach-Object { . $_.FullName}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Format expression",
+      "source": "\n\"{0}\" -f \"test\"\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Call object expression with multi type as parameters",
+      "source": "\n[Runtime.InteropServices.Marshal].GetMethod('SizeOf', [Type[]] @([Type]))\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Priority with composed expression",
+      "source": "\n$FP8DpgPcK0IovuDHPZ4p2 = $FP8DpgPcK0IovuDHPZ4p + \"P\"  + \"S\"  + \" \"  + (Get-Location).Path\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Priority with indexed expression add post increment affected var",
+      "source": "\n$upgrade += [char]($title[3] -bxor $update[$i])\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Reverse array",
+      "source": "\n$foo[-1..-$foo.Length]\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Invoke from Path",
+      "source": "\n. $PSScriptRoot\\ConsoleMode.ps1\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Basic parameter",
+      "source": "\nfunction Test\n{\n    param(\n        $Name\n    )\n}\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Basic parameter with type",
+      "source": "\nfunction Test\n{\n    param(\n        [String]\n        $Name\n    )\n}\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Basic parameter with type and default value",
+      "source": "\nfunction Test\n{\n    param(\n        [String]\n        $Name = \"\"\n    )\n}\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Basic parameter with output type",
+      "source": "\nfunction Test\n{\n    [OutputType([Hashtable])]\n    param(\n        [String]\n        $Name\n    )\n}\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Basic parameter with ValidateNotNull",
+      "source": "\nfunction Test\n{\n    [OutputType([Hashtable])]\n    param(\n        [ValidateNotNull()]\n        [String]\n        $Name\n    )\n}\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Basic parameter with ValidateScript",
+      "source": "\nfunction Test\n{\n    [OutputType([Hashtable])]\n    param(\n        [ValidateScript({($_ -is [Reflection.Emit.ModuleBuilder]) -or ($_ -is [Reflection.Assembly])})]\n        [String]\n        $Name\n    )\n}\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Basic parameter with Parameter with many paramters",
+      "source": "\nfunction Test\n{\n    [OutputType([Hashtable])]\n    param(\n        [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $True)]\n        [String]\n        $Name\n    )\n}\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Named scriptblock_expression",
+      "source": "\nfunction Test\n{\n    begin\n    {\n\n    }\n    process\n    {\n\n    }\n}\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "A complex but valid function name",
+      "source": "\nfunction 1+1{\n    param(\n        $Name\n    )\n}\n"
+    },
+    {
+      "file": "functions.txt",
+      "title": "Function name as keyword",
+      "source": "\nfunction while {}\n"
+    },
+    {
+      "file": "loops.txt",
+      "title": "For loop : Comma separated assignment expressions enclosed in parenthesis",
+      "source": "\nfor (($i = 0), ($j = 0); $i -lt 10; $i++)\n{\n    \"$i:$i\"\n    \"$j:$j\"\n}\n"
+    },
+    {
+      "file": "loops.txt",
+      "title": "For loop : Sub-expression using the semicolon to separate statements",
+      "source": "\nfor ($($i = 0;$j = 0); $i -lt 10; $i++)\n{\n    \"`$i:$i\"\n    \"`$j:$j\"\n}\n"
+    },
+    {
+      "file": "loops.txt",
+      "title": "For loop : Minimum",
+      "source": "\n$i = 1\nfor (;;)\n{\n    Write-Host $i\n}\n"
+    },
+    {
+      "file": "loops.txt",
+      "title": "For loop : Increment",
+      "source": "\n$i=1\nfor (;;$i++)\n{\n    Write-Host $i\n}\n"
+    },
+    {
+      "file": "loops.txt",
+      "title": "For loop : Increment and condition",
+      "source": "\n$i=1\nfor(;$i -le 10;$i++)\n{\n    Write-Host $i\n}\n"
+    },
+    {
+      "file": "loops.txt",
+      "title": "For loop : all",
+      "source": "\nfor($i=1; $i -le 10; $i++){Write-Host $i}\n"
+    },
+    {
+      "file": "loops.txt",
+      "title": "For loop : all without ; as statement terminator",
+      "source": "\nfor ($i = 0\n  $i -lt 10\n  $i++){\n  $i\n}\n"
+    },
+    {
+      "file": "number.txt",
+      "title": "Integer",
+      "source": "\n239\n"
+    },
+    {
+      "file": "number.txt",
+      "title": "Float",
+      "source": "\n12.9191008\n"
+    },
+    {
+      "file": "number.txt",
+      "title": "Scientific notation",
+      "source": "\n6.022e23\n\n.12e4\n"
+    },
+    {
+      "file": "number.txt",
+      "title": "Byte size suffix",
+      "source": "\n12mb\n\n12gb\n"
+    },
+    {
+      "file": "number.txt",
+      "title": "Integer operation",
+      "source": "\n4 + 4 - 8\n"
+    },
+    {
+      "file": "number.txt",
+      "title": "Integer operation with negative",
+      "source": "\n4 + 4 - -8\n"
+    },
+    {
+      "file": "number.txt",
+      "title": "Cast with composed expression",
+      "source": "\n[char]84 + [char]8\n"
+    },
+    {
+      "file": "obfuscated.txt",
+      "title": "Obfuscated command with eval and format",
+      "source": "\n${vjOj`Q`gX} = $(&(\"{0}{1}{2}\"-f'w','h','oami'))\n"
+    },
+    {
+      "file": "obfuscated.txt",
+      "title": "Obfuscated decoded using base64 native method",
+      "source": "\nInvoke-Expression ([System.Text.Encoding]::Unicode.GetString(([convert]::FromBase64String('VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAiAFQAcgB5ACAASABhAHIAZABlAHIAIgA='))))\n"
+    },
+    {
+      "file": "obfuscated.txt",
+      "title": "Obfuscated command",
+      "source": "\n&(Get-Command i????e-rest*)\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 1",
+      "source": "\n$a -eq $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 2",
+      "source": "\n$a -ne $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 3",
+      "source": "\n$a -ge $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 4",
+      "source": "\n$a -gt $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 5",
+      "source": "\n$a -lt $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 6",
+      "source": "\n$a -le $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 7",
+      "source": "\n$a -like $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 8",
+      "source": "\n$a -notlike $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 9",
+      "source": "\n$a -match $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 10",
+      "source": "\n$a -notmatch $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 11",
+      "source": "\n$a -replace $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 12",
+      "source": "\n$a -contains $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 13",
+      "source": "\n$a -notcontains $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 14",
+      "source": "\n$a -in $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 15",
+      "source": "\n$a -notin $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 16",
+      "source": "\n$a -split $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 17",
+      "source": "\n$a -join $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 18",
+      "source": "\n$a -is $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 19",
+      "source": "\n$a -isnot $a\n"
+    },
+    {
+      "file": "operators.txt",
+      "title": "Simple binary operator 20",
+      "source": "\n$a -as $a\n"
+    },
+    {
+      "file": "pipeline_chains.txt",
+      "title": "Pipeline chain #1: &&",
+      "source": "\necho toto && echo tata\n"
+    },
+    {
+      "file": "pipeline_chains.txt",
+      "title": "Pipeline chain #2: ||",
+      "source": "\necho toto || echo tata\n"
+    },
+    {
+      "file": "pipeline_chains.txt",
+      "title": "Pipeline chain #3: Priority over redirection and pipe",
+      "source": "\necho toto > tmp1 && 1+1 | write-output > tmp2\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : expandable",
+      "source": "\n\"foo\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : empty expandable",
+      "source": "\n\"\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : expandle with braced variable",
+      "source": "\n\"foo ${toto}\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : expandle with subexpression",
+      "source": "\n\"foo $(iex)\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : verbatim",
+      "source": "\n'foo'\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : verbatim empty",
+      "source": "\n''\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : verbatim here string",
+      "source": "\n@'\ntoto\n'@\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : verbatim here string empty",
+      "source": "\n@'\n\n'@\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : expandle here string",
+      "source": "\n@\"\n`$toto\n\"@\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : expandle here string with var",
+      "source": "\n@\"\n$toto\n\"@\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : expandle here string empty",
+      "source": "\n@\"\n\n\"@\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : escape variable and print dollar",
+      "source": "\n\"`$w$ is valid\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : concat var content and dollar",
+      "source": "\n\"$w$ is valid\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : Single-quoted string",
+      "source": "\n'Hello, &!@#(&)!I_@U!JJ!EN@!'\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : Double-quoted string",
+      "source": "\n\"Hello friend! !@!_(@FK@L!:D<!LQ!W(EK!_#(KQ!(%*(@!)\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : Variable substituted string",
+      "source": "\n\"Hi $person\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : Brace-variable substituted string",
+      "source": "\n\"He was ${adjective}able\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : Escaped variable in double quoted string",
+      "source": "\n\"In the `$money\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : Escaped brace variable in double quoted string",
+      "source": "\n\"In the `${money}\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : Regexp",
+      "source": "\n\".*\\$.*$\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : Avoid comments",
+      "source": "\n\"# #\"\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "Strings : Avoid comments 2",
+      "source": "\n\"# $foo #\"\n"
+    },
+    {
+      "file": "type.txt",
+      "title": "Simple type expression #1",
+      "source": "\n[string]\n"
+    },
+    {
+      "file": "type.txt",
+      "title": "Simple type expression #2",
+      "source": "\n[System.Collections.ArrayList]\n"
+    },
+    {
+      "file": "type.txt",
+      "title": "Array type expression #1",
+      "source": "\n[int[]]\n"
+    },
+    {
+      "file": "type.txt",
+      "title": "Array type expression #1",
+      "source": "\n[System.DateTime[]]\n"
+    },
+    {
+      "file": "type.txt",
+      "title": "Generic type expression #1",
+      "source": "\n[MyType[psobject]]\n"
+    },
+    {
+      "file": "type.txt",
+      "title": "Generic type expression #2",
+      "source": "\n[System.Collections.Generic.Dictionary[string, System.IO.FileInfo]]\n"
+    },
+    {
+      "file": "type.txt",
+      "title": "Complex type expression",
+      "source": "\n[System.Collections.Generic.Dictionary[int[], System.Collections.Generic.List[string[]]]]\n"
+    },
+    {
+      "file": "type.txt",
+      "title": "Type-attributed variable",
+      "source": "\n[string]$str\n"
+    },
+    {
+      "file": "variables.txt",
+      "title": "Variable : Direct assignment",
+      "source": "\n$MyVariable = 1, 2, 3\n\n$Path = \"C:\\Windows\\System32\"\n"
+    },
+    {
+      "file": "variables.txt",
+      "title": "Variable : Command results",
+      "source": "\n$Processes = Get-Process\n\n$Today = (Get-Date).DateTime\n"
+    },
+    {
+      "file": "variables.txt",
+      "title": "Variable : Multi assignment",
+      "source": "\n$a = $b = $c = 0\n"
+    },
+    {
+      "file": "variables.txt",
+      "title": "Variable : Multi variables, Multi assignment",
+      "source": "\n$i,$j,$k = 10, \"red\", $true\n$i,$j = 10, \"red\", $true\n"
+    },
+    {
+      "file": "variables.txt",
+      "title": "Variable : Typed variables",
+      "source": "\n[string]$words = \"Hello\"\n$words = 2\n$words += 10\n"
+    },
+    {
+      "file": "variables.txt",
+      "title": "Variable : Simple variable",
+      "source": "\n$aSimpleVariable001\n\n$91\n\n$__Z\n\n$env:PROGRAM_LOCATION\n"
+    },
+    {
+      "file": "variables.txt",
+      "title": "Variable : Special variables",
+      "source": "\n$$\n\n$^\n\n$?\n"
+    },
+    {
+      "file": "variables.txt",
+      "title": "Variable : Brace variable",
+      "source": "\n${Simple}\n\n${More-interestin'}\n\n${\n    Really &&\n    quite ^\n    unusual???\n}\n"
+    }
+  ]
+}

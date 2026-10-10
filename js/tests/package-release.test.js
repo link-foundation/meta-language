@@ -74,7 +74,7 @@ test('the tree-sitter oracles of the native languages are development files only
   const oracles = Object.values(lock.grammars).filter((grammar) => grammar.oracle);
   assert.deepEqual(
     oracles.map(({ id }) => id),
-    ['c', 'csv', 'diff', 'go', 'graphql', 'ini', 'java', 'javascript', 'json', 'json5', 'make', 'proto', 'racket', 'regex', 'rust', 'scheme', 'solidity', 'tsx', 'typescript'],
+    ['agda', 'c', 'cmake', 'cpp', 'css', 'csv', 'dart', 'diff', 'dtd', 'erlang', 'go', 'graphql', 'groovy', 'hcl', 'html', 'ini', 'java', 'javascript', 'json', 'json5', 'lean', 'lua', 'make', 'nix', 'odin', 'pascal', 'powershell', 'proto', 'python', 'r', 'racket', 'regex', 'rocq', 'rust', 'scheme', 'solidity', 'sql', 'toml', 'tsx', 'typescript', 'vb', 'xml', 'zig'],
   );
   assert.ok(packageJson.files.every((entry) => !entry.startsWith('oracles')));
   for (const grammar of oracles) {
@@ -88,7 +88,7 @@ test('the tree-sitter oracles of the native languages are development files only
       const declared = dependencies.filter(({ name }) => name === grammar.crate);
       assert.deepEqual(declared.map(({ kind }) => kind), ['development'], grammar.crate);
     } else {
-      // A vendored oracle parser is neither compiled nor published.
+      // A vendored oracle parser is neither compiled by production nor published.
       assert.ok(!include.includes(grammar.vendored.replace(/^rust\//u, '')), grammar.vendored);
       assert.ok(!build.includes(`"${grammar.id}"`), grammar.id);
     }
@@ -105,7 +105,7 @@ test('npm lockfile carries no native or network-downloaded grammar packages', as
 });
 
 test('Rust delivery closes each decompressed vendored parser before compiling it', async () => {
-  const buildScript = await readFile(new URL('../../rust/build.rs', import.meta.url), 'utf8');
+  const buildScript = await readFile(new URL('../../rust/oracles/native-source-oracles/build.rs', import.meta.url), 'utf8');
 
   assert.match(buildScript, /fn decompress_parser\([^]*?\n}/);
   assert.match(

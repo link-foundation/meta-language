@@ -10,6 +10,7 @@
 // rust/tests/unit/issue_195_merge_quality_evidence.rs, with the measurement
 // in rust/tests/merge_quality.rs.
 import assert from 'node:assert/strict';
+import { sourceText } from '../scripts/import-native-grammars.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
@@ -42,14 +43,23 @@ test('merge quality evidence: the JavaScript report equals the published report'
   const report = mergeQualityReport();
   assert.equal(formatMergeQuality(report), read(MERGE_QUALITY_FIXTURE));
   assert.deepEqual(report.grammars.map(({ grammar }) => grammar), nativeGrammarEntries().map(([id]) => id));
-  assert.equal(report.grammars.length, 21);
+  assert.equal(report.grammars.length, 43);
   for (const { grammar, sources, corpus, mergeReport, coverage, correctness, recovery } of report.grammars) {
     // Every grammar names the sources it merges: a URL, or a vendored copy.
     assert.ok(sources.length > 0, grammar);
     for (const source of sources) assert.ok(source.startsWith('https://') || existsSync(new URL(`../../${source}`, import.meta.url)), source);
     // A grammar the importer merges is checked on the upstream test corpus of
     // its source grammar at the pinned revision.
-    if (mergeReport !== null) assert.match(corpus, /^https:\/\/github\.com\/.+\/tree\/[0-9a-f]{40}\/.*corpus$/u, grammar);
+    if (mergeReport !== null) {
+      const fixture = JSON.parse(read(report.grammars.find((entry) => entry.grammar === grammar).fixture));
+      if (fixture.corpus?.format === 'source-files') {
+        assert.match(corpus, /^https:\/\/github\.com\/.+\/tree\/[0-9a-f]{40}\/.+$/u, grammar);
+        assert.equal(corpus, fixture.corpus.url);
+        const { files } = JSON.parse(sourceText(fixture.corpus));
+        assert.ok(Object.keys(files).length > 0, grammar);
+        assert.ok(Object.values(files).every((source) => typeof source === 'string'), grammar);
+      } else assert.match(corpus, /^https:\/\/github\.com\/.+\/tree\/[0-9a-f]{40}\/.*corpus$/u, grammar);
+    }
     assert.ok(coverage.exercisedRules > 0 && coverage.checkedKinds > 0, grammar);
     assert.ok(correctness.matches >= 30 && correctness.rows > correctness.matches, grammar);
     // Every rejection the oracle recovers from is repaired natively.

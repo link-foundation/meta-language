@@ -52,116 +52,157 @@ pub fn decode_unicode_escape(
     units: Vec<f64>,
     allow_fixed: bool,
 ) -> crate::translation::frontend_rules::UnicodeEscape {
+    if ((((units.len() as f64) < (2f64))
+        || ((crate::translation::frontend_rules::ml_array::at(
+            &units,
+            crate::translation::frontend_rules::ml_array::number_index(0f64),
+        )) != (92f64)))
+        || (((crate::translation::frontend_rules::ml_array::at(
+            &units,
+            crate::translation::frontend_rules::ml_array::number_index(1f64),
+        )) != (117f64))
+            && ((crate::translation::frontend_rules::ml_array::at(
+                &units,
+                crate::translation::frontend_rules::ml_array::number_index(1f64),
+            )) != (120f64))))
     {
-        let index = 2f64;
+        crate::translation::frontend_rules::UnicodeEscape::Malformed
+    } else {
         {
-            let code = 0f64;
+            let fixed = 4f64;
             {
-                let digits = 0f64;
+                let ml_s1 = if ((crate::translation::frontend_rules::ml_array::at(
+                    &units,
+                    crate::translation::frontend_rules::ml_array::number_index(1f64),
+                )) == (120f64))
                 {
-                    let braced = false;
-                    {
-                        let ml_s1 = if (((units.len() as f64) > (2f64))
-                            && ((crate::translation::frontend_rules::ml_array::at(
-                                &units,
-                                crate::translation::frontend_rules::ml_array::number_index(2f64),
-                            )) == (123f64)))
+                    if allow_fixed {
                         {
+                            let fixed_2 = 2f64;
+                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(fixed_2)
+                        }
+                    } else {
+                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
+                    }
+                } else {
+                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(fixed)
+                };
+                match ml_s1 {
+                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(fixed_3) => {
+                        {
+                            let index = 2f64;
                             {
-                                let braced_2 = true;
+                                let code = 0f64;
                                 {
-                                    let index_2 = 3f64;
-                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(index_2, braced_2)
-                                }
-                            }
-                        } else if allow_fixed {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(index, braced)
-                        } else {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
-                        };
-                        match ml_s1 {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(index_3, braced_3) => {
-                                {
-                                    let ml_s2 = crate::translation::frontend_rules::ml_decode_unicode_escape_loop2(units.clone(), index_3, code, digits, braced_3);
-                                    match ml_s2 {
-                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop2Result::MlDecodeUnicodeEscapeLoop2Done(index_4, code_2, digits_2) => {
-                                            {
-                                                let ml_s3 = if braced_3 {
-                                                    if (((digits_2 == (0f64)) || (index_4 >= (units.len() as f64))) || ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_4))) != (125f64))) {
-                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
-                                                    } else {
-                                                        {
-                                                            let index_5 = (index_4 + 1f64);
-                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Next(index_5)
-                                                        }
+                                    let digits = 0f64;
+                                    {
+                                        let braced = false;
+                                        {
+                                            let ml_s2 = if (((fixed_3 == (4f64)) && ((units.len() as f64) > (2f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(2f64))) == (123f64))) {
+                                                {
+                                                    let braced_2 = true;
+                                                    {
+                                                        let index_2 = 3f64;
+                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Next(index_2, braced_2)
                                                     }
-                                                } else {
-                                                    if digits_2 == (4f64) {
-                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Next(index_4)
-                                                    } else {
-                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
-                                                    }
-                                                };
-                                                match ml_s3 {
-                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Next(index_6) => {
-                                                        {
-                                                            let escape_length = index_6;
-                                                            {
-                                                                let ml_s5 = if (((((!braced_3 && (code_2 >= (55296f64))) && (code_2 <= (56319f64))) && ((units.len() as f64) >= (index_6 + 6f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_6))) == (92f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_6 + 1f64))) == (117f64))) {
-                                                                    {
-                                                                        let low = 0f64;
-                                                                        {
-                                                                            let offset = 2f64;
+                                                }
+                                            } else if allow_fixed {
+                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Next(index, braced)
+                                            } else {
+                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
+                                            };
+                                            match ml_s2 {
+                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Next(index_3, braced_3) => {
+                                                    {
+                                                        let ml_s3 = crate::translation::frontend_rules::ml_decode_unicode_escape_loop3(units.clone(), fixed_3, index_3, code, digits, braced_3);
+                                                        match ml_s3 {
+                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop3Result::MlDecodeUnicodeEscapeLoop3Done(index_4, code_2, digits_2) => {
+                                                                {
+                                                                    let ml_s4 = if braced_3 {
+                                                                        if (((digits_2 == (0f64)) || (index_4 >= (units.len() as f64))) || ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_4))) != (125f64))) {
+                                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
+                                                                        } else {
                                                                             {
-                                                                                let ml_s6 = crate::translation::frontend_rules::ml_decode_unicode_escape_loop5(units, index_6, low, offset);
-                                                                                match ml_s6 {
-                                                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop5Result::MlDecodeUnicodeEscapeLoop5Done(low_2, offset_2) => {
-                                                                                        if (((offset_2 == (6f64)) && (low_2 >= (56320f64))) && (low_2 <= (57343f64))) {
+                                                                                let index_5 = (index_4 + 1f64);
+                                                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_5)
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        if digits_2 == fixed_3 {
+                                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_4)
+                                                                        } else {
+                                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(Box::new(crate::translation::frontend_rules::UnicodeEscape::Malformed))
+                                                                        }
+                                                                    };
+                                                                    match ml_s4 {
+                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_6) => {
+                                                                            {
+                                                                                let escape_length = index_6;
+                                                                                {
+                                                                                    let ml_s6 = if (((((!braced_3 && (code_2 >= (55296f64))) && (code_2 <= (56319f64))) && ((units.len() as f64) >= (index_6 + 6f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_6))) == (92f64))) && ((crate::translation::frontend_rules::ml_array::at(&units, crate::translation::frontend_rules::ml_array::number_index(index_6 + 1f64))) == (117f64))) {
+                                                                                        {
+                                                                                            let low = 0f64;
                                                                                             {
-                                                                                                let code_3 = (((65536f64 + ((code_2 - 55296f64) * 1024f64)) + low_2) - 56320f64);
+                                                                                                let offset = 2f64;
                                                                                                 {
-                                                                                                    let index_7 = (index_6 + 6f64);
-                                                                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_7, code_3)
+                                                                                                    let ml_s7 = crate::translation::frontend_rules::ml_decode_unicode_escape_loop6(units, index_6, low, offset);
+                                                                                                    match ml_s7 {
+                                                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop6Result::MlDecodeUnicodeEscapeLoop6Done(low_2, offset_2) => {
+                                                                                                            if (((offset_2 == (6f64)) && (low_2 >= (56320f64))) && (low_2 <= (57343f64))) {
+                                                                                                                {
+                                                                                                                    let code_3 = (((65536f64 + ((code_2 - 55296f64) * 1024f64)) + low_2) - 56320f64);
+                                                                                                                    {
+                                                                                                                        let index_7 = (index_6 + 6f64);
+                                                                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_7, code_3)
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            } else {
+                                                                                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_6, code_2)
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
                                                                                                 }
                                                                                             }
-                                                                                        } else {
-                                                                                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_6, code_2)
+                                                                                        }
+                                                                                    } else {
+                                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_6, code_2)
+                                                                                    };
+                                                                                    match ml_s6 {
+                                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_8, code_4) => {
+                                                                                            if ((code_4 > (1_114_111_f64)) || (55296f64..=57343f64).contains(&code_4)) {
+                                                                                                crate::translation::frontend_rules::UnicodeEscape::Unsupported(index_8, escape_length)
+                                                                                            } else {
+                                                                                                crate::translation::frontend_rules::UnicodeEscape::Scalar(code_4, index_8)
+                                                                                            }
                                                                                         }
                                                                                     }
                                                                                 }
                                                                             }
                                                                         }
-                                                                    }
-                                                                } else {
-                                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_6, code_2)
-                                                                };
-                                                                match ml_s5 {
-                                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_8, code_4) => {
-                                                                        if ((code_4 > (1_114_111_f64)) || (55296f64..=57343f64).contains(&code_4)) {
-                                                                            crate::translation::frontend_rules::UnicodeEscape::Unsupported(index_8, escape_length)
-                                                                        } else {
-                                                                            crate::translation::frontend_rules::UnicodeEscape::Scalar(code_4, index_8)
+                                                                        crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(ml_result6) => {
+
+                                                                            *ml_result6
                                                                         }
                                                                     }
                                                                 }
                                                             }
                                                         }
                                                     }
-                                                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin3::MlDecodeUnicodeEscapeJoin3Return(ml_result5) => {
+                                                }
+                                                crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Return(ml_result6_2) => {
 
-                                                        *ml_result5
-                                                    }
+                                                    *ml_result6_2
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(ml_result5_2) => {
-
-                                *ml_result5_2
-                            }
                         }
+                    }
+                    crate::translation::frontend_rules::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(ml_result6_3) => {
+
+                        *ml_result6_3
                     }
                 }
             }
@@ -176,15 +217,15 @@ pub fn accept_argument_count(defaults: Vec<bool>, count: f64) -> bool {
         {
             let index = count;
             {
-                let ml_s7 = crate::translation::frontend_rules::ml_accept_argument_count_loop6(
+                let ml_s8 = crate::translation::frontend_rules::ml_accept_argument_count_loop7(
                     defaults, index,
                 );
-                match ml_s7 {
-                    crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result::MlAcceptArgumentCountLoop6Done => {
+                match ml_s8 {
+                    crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result::MlAcceptArgumentCountLoop7Done => {
                         true
                     }
-                    crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result::MlAcceptArgumentCountLoop6Return(ml_result6) => {
-                        ml_result6
+                    crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result::MlAcceptArgumentCountLoop7Return(ml_result7) => {
+                        ml_result7
                     }
                 }
             }
@@ -202,16 +243,16 @@ pub fn find_default_parameter_reference(
         {
             let depth = 0f64;
             {
-                let ml_s8 =
-                    crate::translation::frontend_rules::ml_find_default_parameter_reference_loop7(
+                let ml_s9 =
+                    crate::translation::frontend_rules::ml_find_default_parameter_reference_loop8(
                         kinds, values, parameters, at, depth,
                     );
-                match ml_s8 {
-                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result::MlFindDefaultParameterReferenceLoop7Done => {
+                match ml_s9 {
+                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop8Result::MlFindDefaultParameterReferenceLoop8Done => {
                         (-1f64)
                     }
-                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result::MlFindDefaultParameterReferenceLoop7Return(ml_result7) => {
-                        ml_result7
+                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop8Result::MlFindDefaultParameterReferenceLoop8Return(ml_result8) => {
+                        ml_result8
                     }
                 }
             }
@@ -219,114 +260,280 @@ pub fn find_default_parameter_reference(
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeUnicodeEscapeJoin4 {
-    MlDecodeUnicodeEscapeJoin4Next(f64, f64),
+pub fn start_regular_expression(kind: &str, value: &str) -> bool {
+    if (kind.is_empty()) {
+        true
+    } else if (kind == "identifier") {
+        ((((((((((((value == "return") || (value == "throw")) || (value == "case"))
+            || (value == "delete"))
+            || (value == "void"))
+            || (value == "typeof"))
+            || (value == "yield"))
+            || (value == "await"))
+            || (value == "in"))
+            || (value == "of"))
+            || (value == "else"))
+            || (value == "do"))
+    } else if kind == "punct" {
+        (((((((value != ")") && (value != "]")) && (value != "}")) && (value != "."))
+            && (value != "?."))
+            && (value != "++"))
+            && (value != "--"))
+    } else {
+        false
+    }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeUnicodeEscapeLoop5Result {
-    MlDecodeUnicodeEscapeLoop5Done(f64, f64),
+pub fn accept_control_parenthesis(kind: &str, value: &str, qualified: bool) -> bool {
+    if (qualified || (kind != "identifier")) {
+        false
+    } else {
+        ((((((value == "if") || (value == "while")) || (value == "for")) || (value == "with"))
+            || (value == "switch"))
+            || (value == "catch"))
+    }
 }
 
-pub fn ml_decode_unicode_escape_loop5(
-    mut units: Vec<f64>,
-    mut index: f64,
-    mut low: f64,
-    mut offset: f64,
-) -> crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop5Result {
-    loop {
-        return if (offset < (6f64)) {
+pub fn regular_expression_end(units: &[f64], start: f64) -> f64 {
+    {
+        let index = (start + 1f64);
+        {
+            let escaped = false;
             {
-                let unit = crate::translation::frontend_rules::ml_array::at(
-                    &units,
-                    crate::translation::frontend_rules::ml_array::number_index(index + offset),
-                );
+                let character_class = false;
                 {
-                    let digit = (-1f64);
-                    {
-                        let digit_5 = if (48f64..=57f64).contains(&unit) {
-                            { (unit - 48f64) }
-                        } else if (65f64..=70f64).contains(&unit) {
-                            { (unit - 55f64) }
-                        } else if (97f64..=102f64).contains(&unit) {
-                            { (unit - 87f64) }
-                        } else {
-                            digit
-                        };
-                        if (digit_5 < (0f64)) {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop5Result::MlDecodeUnicodeEscapeLoop5Done(low, offset)
-                        } else {
-                            {
-                                let low_2 = ((low * 16f64) + digit_5);
-                                {
-                                    let offset_2 = (offset + 1f64);
-                                    {
-                                        (low, offset) = (low_2, offset_2);
-                                        continue;
-                                    }
-                                }
-                            }
+                    let ml_s10 =
+                        crate::translation::frontend_rules::ml_regular_expression_end_loop11(
+                            units.to_vec(),
+                            index,
+                            escaped,
+                            character_class,
+                        );
+                    match ml_s10 {
+                        crate::translation::frontend_rules::MlRegularExpressionEndLoop11Result::MlRegularExpressionEndLoop11Done => {
+                            (-1f64)
+                        }
+                        crate::translation::frontend_rules::MlRegularExpressionEndLoop11Result::MlRegularExpressionEndLoop11Return(ml_result11) => {
+                            ml_result11
                         }
                     }
                 }
             }
-        } else {
-            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop5Result::MlDecodeUnicodeEscapeLoop5Done(low, offset)
-        };
+        }
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeUnicodeEscapeJoin3 {
-    MlDecodeUnicodeEscapeJoin3Next(f64),
-    MlDecodeUnicodeEscapeJoin3Return(Box<crate::translation::frontend_rules::UnicodeEscape>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeUnicodeEscapeLoop2Result {
-    MlDecodeUnicodeEscapeLoop2Done(f64, f64, f64),
-}
-
-pub fn ml_decode_unicode_escape_loop2(
-    mut units: Vec<f64>,
-    mut index: f64,
-    mut code: f64,
-    mut digits: f64,
-    mut braced: bool,
-) -> crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop2Result {
-    loop {
-        return if ((index < (units.len() as f64)) && (digits < (if braced { 6f64 } else { 4f64 })))
+pub fn find_binding_run_end(terms: &[String], start: f64) -> f64 {
+    {
+        let end = start;
         {
+            let end_2 = crate::translation::frontend_rules::ml_find_binding_run_end_loop14(
+                terms.to_vec(),
+                end,
+            );
+            if (end_2 == start) {
+                (start + 1f64)
+            } else {
+                end_2
+            }
+        }
+    }
+}
+
+pub fn accept_binding_scope(statuses: &[String], reasons: &[String]) -> bool {
+    if ((statuses.len() as f64) < (2f64)) {
+        false
+    } else {
+        {
+            let index = 0f64;
             {
-                let unit = crate::translation::frontend_rules::ml_array::at(
-                    &units,
-                    crate::translation::frontend_rules::ml_array::number_index(index),
+                let ml_s11 = crate::translation::frontend_rules::ml_accept_binding_scope_loop15(
+                    statuses.to_vec(),
+                    reasons.to_vec(),
+                    index,
                 );
+                match ml_s11 {
+                    crate::translation::frontend_rules::MlAcceptBindingScopeLoop15Result::MlAcceptBindingScopeLoop15Done => {
+                        false
+                    }
+                    crate::translation::frontend_rules::MlAcceptBindingScopeLoop15Result::MlAcceptBindingScopeLoop15Return(ml_result15) => {
+                        ml_result15
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn accept_literal_binding(
+    value_kind: &str,
+    constant: bool,
+    effect_count: f64,
+    declaration_count: f64,
+) -> bool {
+    (((constant && (effect_count == (1f64))) && (declaration_count == (0f64)))
+        && (((value_kind == "num") || (value_kind == "bool")) || (value_kind == "str")))
+}
+
+pub fn constant_binding_form(value_kind: &str, type_kind: &str) -> String {
+    if ((value_kind == "lit")
+        && (((type_kind == "float") || (type_kind == "bool")) || (type_kind == "fixed")))
+    {
+        String::from("scalar")
+    } else if ((value_kind == "lit") && (type_kind == "string")) {
+        String::from("string")
+    } else {
+        String::from("lazy")
+    }
+}
+
+pub fn accept_constant_emission(
+    constant: bool,
+    effects: f64,
+    declarations: f64,
+    legal_name: bool,
+) -> bool {
+    (((constant && (effects == (1f64))) && (declarations == (0f64))) && legal_name)
+}
+
+pub fn render_constant_binding(form: &str, name: &str, type_: &str, value: &str) -> String {
+    if (form == "lazy") {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (format!(
+                            "{}{}",
+                            (format!("{}{}", (String::from("pub static ")), name)),
+                            (String::from(": std::sync::LazyLock<"))
+                        )),
+                        type_
+                    )),
+                    (String::from("> = std::sync::LazyLock::new(|| "))
+                )),
+                value
+            )),
+            (String::from(");"))
+        )
+    } else {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (format!(
+                            "{}{}",
+                            (format!("{}{}", (String::from("pub const ")), name)),
+                            (String::from(": "))
+                        )),
+                        type_
+                    )),
+                    (String::from(" = "))
+                )),
+                value
+            )),
+            (String::from(";"))
+        )
+    }
+}
+
+pub fn accept_module_binding_scope(terms: &[String], carried: bool) -> bool {
+    if carried {
+        {
+            let declarations = 0f64;
+            {
+                let index = 0f64;
                 {
-                    let digit = (-1f64);
+                    let ml_s12 =
+                        crate::translation::frontend_rules::ml_accept_module_binding_scope_loop16(
+                            terms.to_vec(),
+                            declarations,
+                            index,
+                        );
+                    match ml_s12 {
+                        crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop16Result::MlAcceptModuleBindingScopeLoop16Done(declarations_2) => {
+                            (declarations_2 > (0f64))
+                        }
+                        crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop16Result::MlAcceptModuleBindingScopeLoop16Return(ml_result16) => {
+                            ml_result16
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        false
+    }
+}
+
+pub fn find_documentation_parameter_range(units: &[f64]) -> Vec<f64> {
+    {
+        let start = 0f64;
+        {
+            let start_2 =
+                crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop17(
+                    units.to_vec(),
+                    start,
+                );
+            {
+                let optional = false;
+                {
+                    let ml_s13 = if ((start_2 < (units.len() as f64))
+                        && ((crate::translation::frontend_rules::ml_array::at(
+                            units,
+                            crate::translation::frontend_rules::ml_array::number_index(start_2),
+                        )) == (91f64)))
                     {
-                        let digit_5 = if (48f64..=57f64).contains(&unit) {
-                            { (unit - 48f64) }
-                        } else if (65f64..=70f64).contains(&unit) {
-                            { (unit - 55f64) }
-                        } else if (97f64..=102f64).contains(&unit) {
-                            { (unit - 87f64) }
-                        } else {
-                            digit
-                        };
-                        if (digit_5 < (0f64)) {
-                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop2Result::MlDecodeUnicodeEscapeLoop2Done(index, code, digits)
-                        } else {
+                        {
+                            let optional_2 = true;
                             {
-                                let code_2 = ((code * 16f64) + digit_5);
+                                let start_3 = (start_2 + 1f64);
+                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin18::MlFindDocumentationParameterRangeJoin18Next(start_3, optional_2)
+                            }
+                        }
+                    } else {
+                        crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin18::MlFindDocumentationParameterRangeJoin18Next(start_2, optional)
+                    };
+                    match ml_s13 {
+                        crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin18::MlFindDocumentationParameterRangeJoin18Next(start_4, optional_3) => {
+                            {
+                                let end = start_4;
                                 {
-                                    let digits_2 = (digits + 1f64);
-                                    {
-                                        let index_2 = (index + 1f64);
+                                    let end_2 = crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop19(units.to_vec(), start_4, end);
+                                    if (end_2 == start_4) {
+                                        Vec::<f64>::new()
+                                    } else {
                                         {
-                                            (index, code, digits) = (index_2, code_2, digits_2);
-                                            continue;
+                                            let ml_s14 = if optional_3 {
+                                                {
+                                                    let after = end_2;
+                                                    {
+                                                        let after_2 = crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop21(units.to_vec(), after);
+                                                        if ((after_2 >= (units.len() as f64)) || (((crate::translation::frontend_rules::ml_array::at(units, crate::translation::frontend_rules::ml_array::number_index(after_2))) != (93f64)) && ((crate::translation::frontend_rules::ml_array::at(units, crate::translation::frontend_rules::ml_array::number_index(after_2))) != (61f64)))) {
+                                                            crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Return(Vec::<f64>::new())
+                                                        } else {
+                                                            crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Next
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Next
+                                            };
+                                            match ml_s14 {
+                                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Next => {
+                                                    vec![start_4, end_2]
+                                                }
+                                                crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Return(ml_result20) => {
+                                                    ml_result20
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -335,200 +542,454 @@ pub fn ml_decode_unicode_escape_loop2(
                     }
                 }
             }
-        } else {
-            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop2Result::MlDecodeUnicodeEscapeLoop2Done(index, code, digits)
-        };
+        }
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeUnicodeEscapeJoin1 {
-    MlDecodeUnicodeEscapeJoin1Next(f64, bool),
-    MlDecodeUnicodeEscapeJoin1Return(Box<crate::translation::frontend_rules::UnicodeEscape>),
+pub fn accept_type_query_operand(kind: &str) -> bool {
+    ((((((kind == "var") || (kind == "lit")) || (kind == "name")) || (kind == "num"))
+        || (kind == "bool"))
+        || (kind == "str"))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptArgumentCountLoop6Result {
-    MlAcceptArgumentCountLoop6Done,
-    MlAcceptArgumentCountLoop6Return(bool),
-}
-
-pub fn ml_accept_argument_count_loop6(
-    mut defaults: Vec<bool>,
-    mut index: f64,
-) -> crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result {
-    loop {
-        return if (index < (defaults.len() as f64)) {
-            if (crate::translation::frontend_rules::ml_array::at(
-                &defaults,
-                crate::translation::frontend_rules::ml_array::number_index(index),
-            )) {
-                {
-                    let index_2 = (index + 1f64);
-                    {
-                        index = index_2;
-                        continue;
-                    }
-                }
-            }
-            crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result::MlAcceptArgumentCountLoop6Return(false)
-        } else {
-            crate::translation::frontend_rules::MlAcceptArgumentCountLoop6Result::MlAcceptArgumentCountLoop6Done
-        };
+pub fn read_type_query_result(kind: &str) -> String {
+    if kind == "float" {
+        String::from("number")
+    } else if kind == "nat" || kind == "int" {
+        String::from("bigint")
+    } else if kind == "bool" {
+        String::from("boolean")
+    } else if kind == "string" {
+        String::from("string")
+    } else if kind == "array" || kind == "data" {
+        String::from("object")
+    } else {
+        String::new()
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlFindDefaultParameterReferenceLoop7Result {
-    MlFindDefaultParameterReferenceLoop7Done,
-    MlFindDefaultParameterReferenceLoop7Return(f64),
+pub fn read_array_method_form(method: &str) -> String {
+    if method == "concat" {
+        String::from("concatenate")
+    } else if method == "slice" {
+        String::from("copy")
+    } else if method == "Array.from" {
+        String::from("copy-from")
+    } else if method == "Array.of" {
+        String::from("construct")
+    } else {
+        String::new()
+    }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlFindDefaultParameterReferenceJoin8 {
-    MlFindDefaultParameterReferenceJoin8Next,
-    MlFindDefaultParameterReferenceJoin8Return(f64),
+pub fn accept_root_syntax_item(term: &str, has_children: bool, has_content: bool) -> bool {
+    term == "ERROR" && !has_children && has_content
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlFindDefaultParameterReferenceLoop9Result {
-    MlFindDefaultParameterReferenceLoop9Done,
-    MlFindDefaultParameterReferenceLoop9Return(f64),
+pub const fn accept_source_prefix_restoration(
+    source_matches: bool,
+    body_matches: bool,
+    layout_only: bool,
+) -> bool {
+    source_matches && body_matches && layout_only
 }
 
-pub fn ml_find_default_parameter_reference_loop9(
-    mut parameters: Vec<String>,
-    mut at: f64,
-    mut value: String,
-    mut parameter_index: f64,
-) -> crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result {
-    loop {
-        return if (parameter_index < (parameters.len() as f64)) {
-            if ((crate::translation::frontend_rules::ml_array::at(
-                &parameters,
-                crate::translation::frontend_rules::ml_array::number_index(parameter_index),
-            )) == value)
-            {
-                crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Return(at)
+pub const fn accept_declaration_signature(constant: bool, literal: bool) -> bool {
+    (!constant || literal)
+}
+
+pub fn read_string_test_operation(language: &str, method: &str) -> String {
+    if (language == "JavaScript") {
+        if (((method == "startsWith") || (method == "endsWith")) || (method == "includes")) {
+            method.to_owned()
+        } else {
+            String::new()
+        }
+    } else {
+        if (language == "Rust") {
+            if (method == "starts_with") {
+                String::from("startsWith")
+            } else if (method == "ends_with") {
+                String::from("endsWith")
+            } else if (method == "contains") {
+                String::from("includes")
             } else {
-                {
-                    let parameter_index_2 = (parameter_index + 1f64);
-                    {
-                        parameter_index = parameter_index_2;
-                        continue;
-                    }
-                }
+                String::new()
             }
         } else {
-            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Done
-        };
+            String::new()
+        }
     }
 }
 
-pub fn ml_find_default_parameter_reference_loop7(
-    mut kinds: Vec<String>,
-    mut values: Vec<String>,
-    mut parameters: Vec<String>,
-    mut at: f64,
-    mut depth: f64,
-) -> crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result {
-    loop {
-        return if (((at < (values.len() as f64))
-            && ((crate::translation::frontend_rules::ml_array::at(
-                &kinds,
-                crate::translation::frontend_rules::ml_array::number_index(at),
-            )) != "eof"))
-            && ((depth > (0f64))
-                || (((crate::translation::frontend_rules::ml_array::at(
-                    &values,
-                    crate::translation::frontend_rules::ml_array::number_index(at),
-                )) != ",")
-                    && ((crate::translation::frontend_rules::ml_array::at(
-                        &values,
-                        crate::translation::frontend_rules::ml_array::number_index(at),
-                    )) != ")"))))
+pub fn render_string_test_expression(
+    target: &str,
+    operation: &str,
+    object: &str,
+    search: &str,
+) -> String {
+    if (target == "JavaScript") {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (format!("{}{}", object, (String::from(".")))),
+                        operation
+                    )),
+                    (String::from("("))
+                )),
+                search
+            )),
+            (String::from(")"))
+        )
+    } else if (target == "Rust") {
         {
+            let method = String::new();
             {
-                let value = crate::translation::frontend_rules::ml_array::at(
-                    &values,
-                    crate::translation::frontend_rules::ml_array::number_index(at),
-                );
+                let method_3 = if (operation == "startsWith") {
+                    { String::from("starts_with") }
+                } else {
+                    method
+                };
                 {
-                    let depth_3 = if (((value == "(") || (value == "[")) || (value == "{")) {
-                        { (depth + 1f64) }
+                    let method_5 = if (operation == "endsWith") {
+                        { String::from("ends_with") }
                     } else {
-                        depth
+                        method_3
                     };
                     {
-                        let depth_5 = if (((value == ")") || (value == "]")) || (value == "}")) {
-                            { (depth_3 - 1f64) }
+                        let method_7 = if (operation == "includes") {
+                            { String::from("contains") }
                         } else {
-                            depth_3
+                            method_5
                         };
-                        {
-                            let ml_s10 = if (((crate::translation::frontend_rules::ml_array::at(
-                                &kinds,
-                                crate::translation::frontend_rules::ml_array::number_index(at),
-                            )) == "identifier")
-                                && !((at > (0f64))
-                                    && ((crate::translation::frontend_rules::ml_array::at(
-                                        &values,
-                                        crate::translation::frontend_rules::ml_array::number_index(
-                                            (at - 1f64),
-                                        ),
-                                    )) == ".")))
-                            {
-                                {
-                                    let parameter_index = 0f64;
-                                    {
-                                        let ml_s11 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop9(parameters.clone(), at, value.clone(), parameter_index);
-                                        match ml_s11.clone() {
-                                            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Done => {
-                                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next
-                                            }
-                                            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop9Result::MlFindDefaultParameterReferenceLoop9Return(ml_result9) => {
-                                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Return(ml_result9)
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next
-                            };
-                            match ml_s10.clone() {
-                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Next => {
-                                    {
-                                        let at_2 = (at + 1f64);
-                                        {
-                                            (at, depth) = (at_2, depth_5);
-                                            continue;
-                                        }
-                                    }
-                                }
-                                crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin8::MlFindDefaultParameterReferenceJoin8Return(ml_result8) => {
-                                    crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result::MlFindDefaultParameterReferenceLoop7Return(ml_result8)
-                                }
-                            }
-                        }
+                        format!(
+                            "{}{}",
+                            (format!(
+                                "{}{}",
+                                (format!(
+                                    "{}{}",
+                                    (format!(
+                                        "{}{}",
+                                        (format!("{}{}", object, (String::from(".")))),
+                                        method_7
+                                    )),
+                                    (String::from("("))
+                                )),
+                                search
+                            )),
+                            (String::from(")"))
+                        )
                     }
                 }
             }
+        }
+    } else if (target == "Lean") {
+        if (operation == "includes") {
+            format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (format!("{}{}", (String::from("(ml_string_includes ")), object)),
+                        (String::from(" "))
+                    )),
+                    search
+                )),
+                (String::from(")"))
+            )
         } else {
-            crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop7Result::MlFindDefaultParameterReferenceLoop7Done
-        };
+            format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (format!(
+                            "{}{}",
+                            (format!(
+                                "{}{}",
+                                (format!("{}{}", (String::from("(String.")), operation)),
+                                (String::from(" "))
+                            )),
+                            object
+                        )),
+                        (String::from(" "))
+                    )),
+                    search
+                )),
+                (String::from(")"))
+            )
+        }
+    } else {
+        {
+            let helper = String::new();
+            {
+                let helper_3 = if (operation == "startsWith") {
+                    { String::from("ml_string_starts_with") }
+                } else {
+                    helper
+                };
+                {
+                    let helper_5 = if (operation == "endsWith") {
+                        { String::from("ml_string_ends_with") }
+                    } else {
+                        helper_3
+                    };
+                    {
+                        let helper_7 = if (operation == "includes") {
+                            { String::from("ml_string_includes") }
+                        } else {
+                            helper_5
+                        };
+                        format!(
+                            "{}{}",
+                            (format!(
+                                "{}{}",
+                                (format!(
+                                    "{}{}",
+                                    (format!(
+                                        "{}{}",
+                                        (format!(
+                                            "{}{}",
+                                            (format!("{}{}", (String::from("(")), helper_7)),
+                                            (String::from(" "))
+                                        )),
+                                        object
+                                    )),
+                                    (String::from(" "))
+                                )),
+                                search
+                            )),
+                            (String::from(")"))
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
-const fn ml_main() {}
-
-// Deep recursion in the source is not bounded by a small native stack.
-fn main() {
-    let check = std::env::args().any(|argument| argument == "--ml-check-theorems");
-    let worker = std::thread::Builder::new()
-        .stack_size(1 << 28)
-        .spawn(ml_main)
-        .expect("spawn the program thread");
-    if worker.join().is_err() {
-        std::process::exit(101);
+pub fn read_string_test_helper(target: &str, operation: &str) -> String {
+    if (target == "Lean") {
+        if (operation == "includes") {
+            String::from("stringIncludes")
+        } else {
+            String::new()
+        }
+    } else {
+        if (target == "Rocq") {
+            if (operation == "startsWith") {
+                String::from("stringStartsWith")
+            } else if (operation == "endsWith") {
+                String::from("stringEndsWith")
+            } else if (operation == "includes") {
+                String::from("stringIncludes")
+            } else {
+                String::new()
+            }
+        } else {
+            String::new()
+        }
     }
 }
+
+pub fn read_string_test_support(target: &str, operation: &str) -> String {
+    if ((target == "Lean") && (operation == "includes")) {
+        String::from(
+            "/-- String.prototype.includes: the search occurs at some position of the string. -/\ndef ml_string_includes (string search : String) : Bool :=\n  (List.range (string.length + 1)).any fun index => (string.drop index).startsWith search",
+        )
+    } else if ((target == "Rocq") && (operation == "startsWith")) {
+        String::from(
+            "(* String.prototype.startsWith: the string begins with the search. *)\nDefinition ml_string_starts_with (string search : string) : bool := String.prefix search string.",
+        )
+    } else if ((target == "Rocq") && (operation == "endsWith")) {
+        String::from(
+            "(* String.prototype.endsWith: the string ends with the search. *)\nDefinition ml_string_ends_with (string search : string) : bool :=\n  Nat.leb (String.length search) (String.length string) &&\n  String.eqb (String.substring (String.length string - String.length search) (String.length search) string) search.",
+        )
+    } else if ((target == "Rocq") && (operation == "includes")) {
+        String::from(
+            "(* String.prototype.includes: the search occurs at some position of the string. *)\nDefinition ml_string_includes (string search : string) : bool :=\n  match String.index 0 search string with Some _ => true | None => false end.",
+        )
+    } else {
+        String::new()
+    }
+}
+
+pub fn read_string_map_operation(language: &str, method: &str) -> String {
+    if (language == "JavaScript") {
+        if (((((method == "toLowerCase") || (method == "toUpperCase")) || (method == "trim"))
+            || (method == "trimStart"))
+            || (method == "trimEnd"))
+        {
+            method.to_owned()
+        } else {
+            String::new()
+        }
+    } else {
+        if (language == "Rust") {
+            if (method == "to_lowercase") {
+                String::from("toLowerCase")
+            } else if (method == "to_uppercase") {
+                String::from("toUpperCase")
+            } else {
+                String::new()
+            }
+        } else {
+            String::new()
+        }
+    }
+}
+
+pub fn render_string_map_expression(target: &str, operation: &str, object: &str) -> String {
+    if (target == "JavaScript") {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!("{}{}", object, (String::from(".")))),
+                operation
+            )),
+            (String::from("()"))
+        )
+    } else if (operation == "toLowerCase") {
+        format!("{}{}", object, (String::from(".to_lowercase()")))
+    } else if (operation == "toUpperCase") {
+        format!("{}{}", object, (String::from(".to_uppercase()")))
+    } else {
+        {
+            let method = String::new();
+            {
+                let method_3 = if (operation == "trim") {
+                    { String::from("trim_matches") }
+                } else {
+                    method
+                };
+                {
+                    let method_5 = if (operation == "trimStart") {
+                        { String::from("trim_start_matches") }
+                    } else {
+                        method_3
+                    };
+                    {
+                        let method_7 = if (operation == "trimEnd") {
+                            { String::from("trim_end_matches") }
+                        } else {
+                            method_5
+                        };
+                        format!(
+                            "{}{}",
+                            (format!(
+                                "{}{}",
+                                (format!("{}{}", object, (String::from(".")))),
+                                method_7
+                            )),
+                            (String::from(
+                                "(|c: char| (c.is_whitespace() && c != '\\u{85}') || c == '\\u{feff}').to_string()"
+                            ))
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn read_string_map_refusal(target: &str, operation: &str) -> String {
+    if (((operation == "trim") || (operation == "trimStart")) || (operation == "trimEnd")) {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (String::from("JavaScript whitespace trimming has no ")),
+                        target
+                    )),
+                    (String::from(" library counterpart; "))
+                )),
+                target
+            )),
+            (String::from(" trims ASCII whitespace only"))
+        )
+    } else {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (String::from("Unicode case mapping has no ")),
+                        target
+                    )),
+                    (String::from(" library counterpart; "))
+                )),
+                target
+            )),
+            (String::from(" maps ASCII letters only"))
+        )
+    }
+}
+
+pub fn accept_checked_type_query_operand(kind: &str, constant_reference: bool) -> bool {
+    (crate::translation::frontend_rules::accept_type_query_operand(kind)
+        || ((kind == "call") && constant_reference))
+}
+
+pub const fn read_scanner_continuation_action(
+    widthless: bool,
+    starts_after: bool,
+    ends_after: bool,
+) -> f64 {
+    if widthless {
+        0f64
+    } else if starts_after && ends_after {
+        1f64
+    } else {
+        -1f64
+    }
+}
+
+pub const fn accept_source_envelope_restoration(
+    source_matches: bool,
+    body_matches: bool,
+    original_matches: bool,
+) -> bool {
+    source_matches && body_matches && original_matches
+}
+
+pub fn accept_array_method_arguments(
+    form: &str,
+    has_arguments: bool,
+    has_single_argument: bool,
+) -> bool {
+    form == "concatenate"
+        || form == "construct"
+        || (form == "copy" && !has_arguments)
+        || (form == "copy-from" && has_single_argument)
+}
+
+pub fn render_string_length_expression(target: &str, object: &str) -> String {
+    match target {
+        "JavaScript" => format!("{object}.length"),
+        "Rust" => format!("({object}.encode_utf16().count() as f64)"),
+        "Lean" => format!(
+            "(Float.ofNat (String.foldl (fun (count : Nat) c => count + (if c.toNat > 65535 then 2 else 1)) 0 {object}))"
+        ),
+        _ => format!(
+            "(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat ((fix ml_utf16_length (s : string) : nat := match s with EmptyString => 0%nat | String c rest => ((if Nat.ltb (Ascii.nat_of_ascii c) 128 then 1 else if Nat.ltb (Ascii.nat_of_ascii c) 192 then 0 else if Nat.ltb (Ascii.nat_of_ascii c) 240 then 1 else 2) + ml_utf16_length rest)%nat end) {object}))))"
+        ),
+    }
+}
+
+mod continuations;
+pub use continuations::*;

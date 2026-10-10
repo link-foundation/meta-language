@@ -777,6 +777,31 @@
       }
     },
     {
+      "name": "corpus/string-length.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/string-length.mjs",
+      "parse": {
+        "sha256": "c91e5d8f0cdedfd92bb367e7eb919cb7a41df2de55913030a65930adf1ecd6c1"
+      },
+      "check": {
+        "sha256": "e2fed32dd5a4e19c9d4246a40849ad882bb3505ddc283eff2df10940c84d808d"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "1551cc98d94224e6da2fadc3e6266e4d8d1c1245b50df5a55f0cd46a7b4edc54"
+        },
+        "rust": {
+          "sha256": "7d020359a45a1d8bbff71c6ca287e4ebddb74f29a84b8ebbdd52e0f65c14194f"
+        },
+        "lean": {
+          "sha256": "56fbc0076ab156a5d626a73e6e1822334c902de26767ace12b28cd2ed9cb1166"
+        },
+        "rocq": {
+          "sha256": "fec26d0b7293f17a2d38d35952045ad80a3bea05fe6a58b2a84f6b055d26390f"
+        }
+      }
+    },
+    {
       "name": "corpus/top-level-statements.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/top-level-statements.mjs",
@@ -16814,9 +16839,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return typeof n === 'bigint' ? n : 0n;\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "typeof operator: outside the portable core at 75..81"
+        "sha256": "fb7dfcdf936a7f6ff5e8b3bc1c543edaea66a1a1165bb4995726f8dd9370cf5b"
+      },
+      "check": {
+        "sha256": "5240aebd74a214c4c2d78fe9f560d103423ee86dfb89878163fc36200258e754"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "54d80ed3a3f9577a81f92c03d415f2c2e0586579101bad8399dcfd15fd2f6b66"
+        },
+        "rust": {
+          "sha256": "0ac799f62db72c3b64301984ce05121425f6df0af78b282db002a4e7801a6622"
+        },
+        "lean": {
+          "sha256": "ff10d89184974ab702a5f1eed066fd16cc936eadbdae647ebb386d26b23e15db"
+        },
+        "rocq": {
+          "sha256": "038c502ffa5c522a2832a24f5bffff113c0ec7c2f936eda6216e7810d59cbb03"
         }
       }
     },
@@ -16871,7 +16910,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "method call .slice(): methods of values are outside the portable core at 76..82"
+          "message": ".slice() with arguments: array copying takes no index arguments until their bounds are modeled at 76..86"
         }
       }
     },
@@ -16954,7 +16993,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "regular expression: outside the portable core at 75..76"
+          "message": "regular expression: outside the portable core at 75..78"
         }
       }
     },

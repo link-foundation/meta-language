@@ -6,7 +6,7 @@
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
-import { acceptArgumentCount } from './frontend-rules.js';
+import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, isFloat, isNatural, isNumeric, sameType, typeKey,
@@ -380,10 +380,7 @@ class Checker {
       case 'field': {
         if (node.field === 'length') {
           const object = this.expr(node.object, env, path, undefined);
-          if (object.type.kind === 'array') return { k: 'length', array: object, type: FLOAT };
-          if (object.type.kind === 'string') {
-            throw unsupported('length of a string', 'String.prototype.length counts UTF-16 code units, which the portable string types do not keep', node.span);
-          }
+          if (object.type.kind === 'array' || object.type.kind === 'string') return { k: 'length', array: object, type: FLOAT };
         }
         throw unsupported('field access', `field ${node.field} is only portable inside a constructor match`, node.span);
       }
@@ -406,6 +403,15 @@ class Checker {
           throw typeError(`array index of type ${typeKey(index.type)}; an index is a Number or a BigInt`, node.index.span ?? node.span);
         }
         return { k: 'index', array: object, index, type: object.type.element };
+      }
+      case 'typeOf': {
+        if (!acceptTypeQueryOperand(node.arg.k)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
+        const arg = this.expr(node.arg, env, path, undefined);
+        const constantReference = arg.k === 'call' && this.externals.get(arg.fn)?.k === 'const';
+        if (!acceptCheckedTypeQueryOperand(arg.k, constantReference)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
+        const value = readTypeQueryResult(arg.type.kind);
+        if (!value) throw unsupported(`typeof ${typeKey(arg.type)}`, 'type queries require a known JavaScript value type', node.span);
+        return literal(STRING, value);
       }
       case 'unary': {
         if (node.op === 'not') {

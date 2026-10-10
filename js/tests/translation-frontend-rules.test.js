@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { acceptArgumentCount, decodeUnicodeEscape, findDefaultParameterReference } from '../src/translation/frontend-rules.js';
+import { acceptArgumentCount, decodeUnicodeEscape, findDocumentationParameterRange, findDefaultParameterReference } from '../src/translation/frontend-rules.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
@@ -14,6 +14,13 @@ test('Unicode escape decisions include fixed, braced, surrogate-pair and rejecte
     ['\\u00e9', true, { $: 'scalar', code: 233, end: 6 }],
     ['\\u{1F600}', false, { $: 'scalar', code: 128512, end: 9 }],
     ['\\ud83d\\uDE00', true, { $: 'scalar', code: 128512, end: 12 }],
+    ['\\xE9', true, { $: 'scalar', code: 233, end: 4 }],
+    ['\\x00', true, { $: 'scalar', code: 0, end: 4 }],
+    ['\\xE9', false, { $: 'malformed' }],
+    ['\\xA', true, { $: 'malformed' }],
+    ['\\x{A}', true, { $: 'malformed' }],
+    ['\\xGG', true, { $: 'malformed' }],
+    ['xx00e9', true, { $: 'malformed' }],
     ['\\u0000', true, { $: 'scalar', code: 0, end: 6 }],
     ['\\u{10ffff}', false, { $: 'scalar', code: 1114111, end: 10 }],
     ['\\ud83d', true, { $: 'unsupported', end: 6, escapeLength: 6 }],
@@ -46,7 +53,16 @@ test('default references distinguish member names and nested delimiters', () => 
 test('the complete frontend decision module translates through meta-language', () => {
   const source = readFileSync(new URL('../src/translation/frontend-rules.js', import.meta.url), 'utf8');
   const emitted = emitRust(checkProgram(parseJavaScript(source)));
-  for (const name of ['decode_unicode_escape', 'accept_argument_count', 'find_default_parameter_reference']) {
+  for (const name of ['decode_unicode_escape', 'accept_argument_count', 'find_default_parameter_reference', 'start_regular_expression', 'regular_expression_end', 'find_binding_run_end', 'accept_binding_scope', 'accept_literal_binding', 'constant_binding_form', 'accept_constant_emission', 'render_constant_binding', 'accept_module_binding_scope', 'find_documentation_parameter_range', 'accept_type_query_operand', 'read_type_query_result', 'read_array_method_form', 'accept_root_syntax_item', 'accept_source_prefix_restoration', 'accept_declaration_signature', 'read_string_test_operation', 'render_string_test_expression', 'read_string_test_helper', 'read_string_test_support', 'read_string_map_operation', 'render_string_map_expression', 'render_string_length_expression', 'read_string_map_refusal', 'accept_checked_type_query_operand', 'read_scanner_continuation_action', 'accept_source_envelope_restoration', 'accept_array_method_arguments']) {
     assert.ok(emitted.text.includes(`pub fn ${name}(`), name);
   }
+});
+
+
+test('documentation names support optional brackets and metadata defaults', () => {
+  for (const [text, expected] of [
+    [' value description', [1, 6]], ['\t[value]', [2, 7]],
+    ['[value = 99]', [1, 6]], ['[$value2=anything]', [1, 8]],
+    ['[9value]', []], ['[]', []], ['[value', []], ['[value description]', []],
+  ]) assert.deepEqual(findDocumentationParameterRange(units(text)), expected, text);
 });

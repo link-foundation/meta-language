@@ -107,6 +107,10 @@ only when all of the following hold.
 Concurrent cleanups of one worktree are serialized by
 `.git/meta-language-cache/cleanup.lock`. A second run reports `busy` and
 removes nothing. Stale leases and locks of exited processes are dropped.
+On Linux, new leases, locks and scratch markers record the PID visible in
+the mounted `/proc`, the process start time and the boot identity. This keeps
+PID namespaces and PID reuse from transferring ownership to another process.
+Numeric-only markers from older versions retain the conservative PID check.
 Nothing global is ever purged: no `cargo cache`, no `npm cache clean`, no
 `docker system prune`. Missing git, docker or flock is tolerated, and the
 report says what was skipped.

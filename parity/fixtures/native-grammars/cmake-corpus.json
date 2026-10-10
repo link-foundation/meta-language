@@ -1,0 +1,342 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "068194999223242a059d0fc286c1853f0d73dd8392a5f78461933b3f78b78eea",
+  "cases": [
+    {
+      "file": "block_commands.txt",
+      "title": "Function definition with no arguments [block_commands]",
+      "source": "\nfunction(fn)\nendfunction()\n"
+    },
+    {
+      "file": "block_commands.txt",
+      "title": "Function definition with many arguments [block_commands]",
+      "source": "\nfunction(fn arg1 arg2 arg3)\nendfunction()\n"
+    },
+    {
+      "file": "block_commands.txt",
+      "title": "Macro definition with no arguments [block_commands]",
+      "source": "\nmacro(fn)\nendmacro()\n"
+    },
+    {
+      "file": "block_commands.txt",
+      "title": "macro definition with many arguments [block_commands]",
+      "source": "\nmacro(fn arg1 arg2 arg3)\nendmacro()\n"
+    },
+    {
+      "file": "block_commands.txt",
+      "title": "Block scope [block_commands]",
+      "source": "\nblock(SCOPE_FOR POLICIES VARIABLES PROPAGATE var)\nendblock()\n"
+    },
+    {
+      "file": "block_commands.txt",
+      "title": "Block with no arguments [block_commands]",
+      "source": "\nblock()\nendblock()\n"
+    },
+    {
+      "file": "block_commands.txt",
+      "title": "Nested function [block_commands]",
+      "source": "function(a)\n  function(b)\n  endfunction()\nendfunction()\n"
+    },
+    {
+      "file": "bracket_argument.txt",
+      "title": "Empty bracket argument [bracket_argument]",
+      "source": "\nmessage([[]])\n"
+    },
+    {
+      "file": "bracket_argument.txt",
+      "title": "One bracket argument [bracket_argument]",
+      "source": "\nmessage([[an argument]])\n"
+    },
+    {
+      "file": "bracket_argument.txt",
+      "title": "Two bracket arguments [bracket_argument]",
+      "source": "\nmessage([[first argument]] [[second argument]])\n"
+    },
+    {
+      "file": "bracket_argument.txt",
+      "title": "Two bracket with two equals arguments [bracket_argument]",
+      "source": "\nmessage(\n  [====[first argument]====]\n  [====[second argument]====]\n)\n"
+    },
+    {
+      "file": "bracket_argument.txt",
+      "title": "Bracket argument with line break [bracket_argument]",
+      "source": "\nmessage([[an argument\nwith line break\n]])\n"
+    },
+    {
+      "file": "bracket_argument.txt",
+      "title": "Bracket argument with embedded brackets and equal signs line break [bracket_argument]",
+      "source": "\nmessage([===[an argument\nwith line break ]==]\n]===])\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Bracket comment [comment]",
+      "source": "#[[Some comment]]\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Command invocation with embedded bracket comment [comment]",
+      "source": "message(STATUS #[[Some comment]] \"comment is next\" #[[Some comment]])\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Line comment [comment]",
+      "source": "# [[Some comment]] \"comment is next\" #[[Some comment]]\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "Message with Line comment [comment]",
+      "source": "message(STATUS #Some line comment\n\nSecond #Some other line comment\n)\n"
+    },
+    {
+      "file": "condition.txt",
+      "title": "Empty if [condition]",
+      "source": "if ( cond )\nendif()\n"
+    },
+    {
+      "file": "condition.txt",
+      "title": "Empty if elseif [condition]",
+      "source": "if(cond)\nelseif(cond)\nendif()\n"
+    },
+    {
+      "file": "condition.txt",
+      "title": "Empty if elseif else [condition]",
+      "source": "if(cond)\nelseif(cond)\nelse()\nendif()\n"
+    },
+    {
+      "file": "condition.txt",
+      "title": "If with many command invocations [condition]",
+      "source": "if(cond)\n  message(STATUS)\n  message(STATUS)\nendif()\n"
+    },
+    {
+      "file": "condition.txt",
+      "title": "If, elseof, and else with many command invocations [condition]",
+      "source": "if(cond)\n  message(STATUS)\n  message(STATUS)\nelseif(cond)\n  message(STATUS)\n  message(STATUS)\nelse(cond)\n  message(STATUS)\n  message(STATUS)\nendif()\n"
+    },
+    {
+      "file": "condition.txt",
+      "title": "Condition with parentheses [condition]",
+      "source": "if((A AND B) OR C)\nendif()"
+    },
+    {
+      "file": "condition.txt",
+      "title": "Condition with not and parentheses [condition]",
+      "source": "if(NOT (A AND B) OR C)\nelse(NOT (A AND B) OR C)\nendif(NOT (A AND B) OR C)"
+    },
+    {
+      "file": "condition.txt",
+      "title": "Nested condition [condition]",
+      "source": "if(A)\n  if(A)\n  endif()\nendif()\n"
+    },
+    {
+      "file": "condition.txt",
+      "title": "Regex",
+      "source": "\nif(\";${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION};$ENV{UCRTVersion};$ENV{WindowsSDKVersion};\"\n   MATCHES [=[;(10\\.[0-9.]+)[;\\]]=])\nendif()\n"
+    },
+    {
+      "file": "escape_sequence.txt",
+      "title": "Escape sequence of \"\\;\" [escape_sequence]",
+      "source": "\nset(var \"It is \\; and \\\"\")\n"
+    },
+    {
+      "file": "foreach.txt",
+      "title": "Empty foreach loop [foreach]",
+      "source": "\nforeach(var)\nendforeach()\n"
+    },
+    {
+      "file": "foreach.txt",
+      "title": "Empty foreach loop with one argument endforeach [foreach]",
+      "source": "\nforeach(var)\nendforeach(var)\n"
+    },
+    {
+      "file": "foreach.txt",
+      "title": "Uppercase foreach [foreach]",
+      "source": "\nFOREACH(var)\nENDFOREACH()\n"
+    },
+    {
+      "file": "foreach.txt",
+      "title": "Mixed case foreach [foreach]",
+      "source": "\nforEach(var)\nendForEach()\n"
+    },
+    {
+      "file": "foreach.txt",
+      "title": "Empty IN [foreach]",
+      "source": "\nforeach(var IN)\nendforeach()\n"
+    },
+    {
+      "file": "foreach.txt",
+      "title": "Empty RANGE [foreach]",
+      "source": "\nforeach(var RANGE)\nendforeach()\n"
+    },
+    {
+      "file": "function_calls.txt",
+      "title": "add_custom_target without new line [function_calls]",
+      "source": "\nadd_custom_target(OUTPUT somefile)\n"
+    },
+    {
+      "file": "function_calls.txt",
+      "title": "add_custom_target with new line [function_calls]",
+      "source": "\nadd_custom_target(\n  OUTPUT somefile)\n"
+    },
+    {
+      "file": "message.txt",
+      "title": "No argument [message]",
+      "source": "\nmessage()\n"
+    },
+    {
+      "file": "message.txt",
+      "title": "No argument with spaces [message]",
+      "source": "\nmessage( )\n"
+    },
+    {
+      "file": "message.txt",
+      "title": "Message without argument with newline [message]",
+      "source": "\nmessage(\n\n)\n"
+    },
+    {
+      "file": "message.txt",
+      "title": "Message with STATUS and bracket argument [message]",
+      "source": "\nmessage(STATUS [=[Some argument ]==] ]=] )\n"
+    },
+    {
+      "file": "message.txt",
+      "title": "Message with STATUS and bracket argument and newline [message]",
+      "source": "\nmessage(STATUS\n[=[Some argument\n]==] ]=] )\n"
+    },
+    {
+      "file": "message.txt",
+      "title": "Message with STATUS and an unquoted argument [message]",
+      "source": "\nmessage(STATUS argument)\n"
+    },
+    {
+      "file": "parentheses.txt",
+      "title": "Parentheses inside command invocation [parentheses]",
+      "source": "message(STATUS (TEST))"
+    },
+    {
+      "file": "parentheses.txt",
+      "title": "Missing parentheses inside command invocation [parentheses]",
+      "source": "message(STATUS (TEST)",
+      "attributes": [
+        "error"
+      ]
+    },
+    {
+      "file": "parentheses.txt",
+      "title": "Nested missing parentheses inside command invocation [parentheses]",
+      "source": "message(STATUS ((TEST))",
+      "attributes": [
+        "error"
+      ]
+    },
+    {
+      "file": "parentheses.txt",
+      "title": "Many arguments inside parentheses [parentheses]",
+      "source": "message(STATUS (TEST SECOND_TEST))"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "One empty quoted argument [quoted_argument]",
+      "source": "\nmessage(\"\")\n"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "One quoted argument [quoted_argument]",
+      "source": "\nmessage(\"An argument\")\n"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "Two quoted arguments [quoted_argument]",
+      "source": "\nmessage(\"First argument\" \"Second argument\")\n"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "A quoted argument with line break [quoted_argument]",
+      "source": "\nmessage(\"An argument\nwith line break\")\n"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "One variable reference [quoted_argument]",
+      "source": "\nmessage(\"${var}\")\n"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "Two Variable references [quoted_argument]",
+      "source": "\nmessage(\"${var} ${var}\")\n"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "Variable reference inside another variable reference [quoted_argument]",
+      "source": "\nmessage(\"${var_${var}}\")\n"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "Lookalike bracket comment inside quoted argument [quoted_argument]",
+      "source": "\nmessage(\"${var_${var}} #[[comment]]\")\n"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "Lookalike line comment inside quoted argument [quoted_argument]",
+      "source": "\nmessage(\"${var_${var}} #comment\")\n"
+    },
+    {
+      "file": "quoted_argument.txt",
+      "title": "Lookalike variable inside quoted argument [quoted_argument]",
+      "source": "\nmessage(\"$var\")\n"
+    },
+    {
+      "file": "regression.txt",
+      "title": "OpenCV",
+      "source": "\nif(dep MATCHES \"^\\\\$<LINK_ONLY:([^>]+)>$\")\n       set(dep \"${CMAKE_MATCH_1}\")\n endif()\nif(dep MATCHES \"^\\\\$<\")\n       message(WARNING \"Unexpected CMake generator expression: ${dep}\")\nendif()\n"
+    },
+    {
+      "file": "unquoted_argument.txt",
+      "title": "Command invocation with one argument [unquoted_argument]",
+      "source": "\nmessage(STATUS)\n"
+    },
+    {
+      "file": "unquoted_argument.txt",
+      "title": "Command invocation with two arguments [unquoted_argument]",
+      "source": "\nmessage(STATUS Hello)\n"
+    },
+    {
+      "file": "unquoted_argument.txt",
+      "title": "Command invocations with leading seperation [unquoted_argument]",
+      "source": "\nmessage( STATUS)\nmessage(\nSTATUS)"
+    },
+    {
+      "file": "unquoted_argument.txt",
+      "title": "Command invocations with escape sequence [unquoted_argument]",
+      "source": "\n  message( STATUS)\nmessage(\nSTATUS)"
+    },
+    {
+      "file": "unquoted_argument.txt",
+      "title": "Variable referencing [unquoted_argument]",
+      "source": "message(${var_ref})"
+    },
+    {
+      "file": "unquoted_argument.txt",
+      "title": "Variable referencing inside variable referencing [unquoted_argument]",
+      "source": "message(${var_${var_ref}})"
+    },
+    {
+      "file": "unquoted_argument.txt",
+      "title": "Lookalike variable inside unquoted argument [unquoted_argument]",
+      "source": "\nmessage($var)\n"
+    },
+    {
+      "file": "unquoted_argument.txt",
+      "title": "Single quote in unquoted_argument [unquoted_argument]",
+      "source": "\nmessage(hello'world)\n"
+    },
+    {
+      "file": "while.txt",
+      "title": "Empty while [while]",
+      "source": "\nwhile(cond)\nendwhile()\n"
+    },
+    {
+      "file": "while.txt",
+      "title": "Empty while with argument in endwhile[while]",
+      "source": "\nwhile(cond)\nendwhile(cond)\n"
+    }
+  ]
+}

@@ -18,6 +18,24 @@ use serde_json::{Value, json};
 use super::issue_195_native_grammar_rows::{Rows, cases, leaves, parse, rebuilt, source, text};
 use super::issue_195_observations::{Observation, record};
 
+#[test]
+fn native_lean_explicit_application_arguments_are_left_associated() {
+    let source = "#check @plant Tree rain\n";
+    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let parser = super::issue_195_native_grammar_rows::parser(GRAMMAR);
+    let tree = parse(&parser, source).unwrap();
+    let rows = Rows::new(&fixture).rows(&tree, source);
+    let spans = |kind: &str| {
+        rows.iter()
+            .filter(|row| row[2] == kind)
+            .map(|row| json!([row[4], row[5]]))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(spans("application"), vec![json!([7, 23]), json!([7, 18])]);
+    assert_eq!(spans("explicit"), vec![json!([7, 13])]);
+    assert_eq!(rebuilt(&tree), source);
+}
+
 const FIXTURE_FILE: &str = "parity/fixtures/native-grammars/lean.json";
 const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/lean.json");
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/lean.lino");

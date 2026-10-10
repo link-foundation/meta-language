@@ -46,6 +46,15 @@ Each top-level item of the source then becomes one block:
   syntax fits both languages. A comment directly before an item travels with
   that item.
 
+An isolated JavaScript declaration that fails type resolution is retried with
+its contiguous declaration run in one checked scope when targeting Rust. A
+successful run has one provenance block covering all of its source items;
+forward calls and arrow-bound siblings use their actual checked declarations.
+A failed run retains the original per-item decisions, so a carried sibling
+never acquires a placeholder signature or implementation. Captures of mutable
+or non-literal globals and bindings across intervening imports or statements remain separate
+translation obligations.
+
 The definitions the translated code needs (helpers and, for Rust, an
 `#![allow(...)]` line) sit once between `// meta-language:prelude begin` and
 `// meta-language:prelude end`.
@@ -98,6 +107,14 @@ result as `rust/src/translation/frontend_rules.rs`. The adapters supply UTF-16
 code units and token records to these generated decisions. CI runs
 `npm run check:frontend-rules` to reject stale generated code.
 
+`node js/scripts/generate-frontend-rule-styles.mjs` derives style decorators
+from machine-applicable Clippy suggestions on temporary copies of the generated
+module. It records line context around each replacement, then regeneration
+applies formatting and decorators to a fixed point. Run the frontend generator
+again after deriving styles. CI also runs `npm run check:frontend-rule-styles`
+to compile these generated modules with the crate's lint groups and warnings
+denied, without downloading or building the crate's dependencies.
+
 ## Translated against hand-written Rust
 
 `js/scripts/generate-self-translation-report.mjs` translates every module of
@@ -105,7 +122,12 @@ code units and token records to these generated decisions. CI runs
 (`rust/src/<module>.rs` or `rust/src/<module>/mod.rs`): the items by status,
 the Rust functions written, how many the hand-written Rust defines under the
 same name and how many are identical up to whitespace, and how many translated
-code lines the hand-written Rust holds too. Each module is measured twice: by
+code lines the hand-written Rust holds too. The report also accounts for every
+UTF-8 source byte using the item ranges and whitespace between them, and lists
+translated, carried, comment and layout byte counts. It rejects overlapping,
+out-of-bounds or split UTF-8 ranges. A module with code outside those ranges is
+listed as refused, including when a parser fallback returned no items, so zero
+carried items cannot conceal omitted source. Each module is measured twice: by
 the generic translation and by the translation with the shared emitter
 [decorators](decorators.md) of `parity/self-translation/decorators.lino`
 (`--decorators` names another set), so the report shows how much of the
@@ -121,6 +143,12 @@ its Rust counterpart. Both acceptance suites download all eight shards and run
 report assertion. Verification rejects missing or duplicate modules, stale
 sources, failed translations, inconsistent measurements and missing Markdown
 rows without translating the whole corpus again.
+
+The report resolves relative named imports against the source tree and passes
+the providers' checked translated-export signatures and each module's directory
+to both measurements. It caches source reads, signatures and dependency contexts
+within a shard. Missing providers, unsupported exports and unresolved cycles
+retain the translator's carried-item diagnostics.
 
 Decorators edit emitted lines; they cannot add what the translator carries
 untranslated (imports, classes, exports the emitters do not cover), so for
@@ -138,6 +166,49 @@ the decorated translation still translates back to its source. The corpus case
 `hand-written/arithmetic.rs`; removing the decorators gives the generic
 translation again.
 
+Sibling functions can also read immutable number, string and boolean literal
+constants from their module. Local declarations and parameters take precedence
+over those bindings, including a local declaration in its temporal dead zone.
+This does not bind mutable values, array or object identities, or imported values.
+Rust constant storage decisions and declaration rendering are generated from
+the same JavaScript rules.
+
+A declaration-only module with carried groups is also retried as one checked
+scope, so JSDoc data types can bind across declarations. A failed retry keeps
+its earlier decisions. Imports, executable statements and stored provenance
+blocks are excluded. The frontend decision module itself is checked for zero
+carried items, generated Rust execution and exact restoration in both runtimes.
+Provenance records definitions, including attributes and documentation that
+accompany a declaration. The provenance reader consumes attributes together
+with the definition they annotate.
+
+Bracketed JSDoc parameter names (`[value]` and `[value=99]`) now bind the
+same declared type as an ordinary `value` parameter. Their default text is
+documentation metadata: only the JavaScript function's actual default supplies
+an omitted argument. The shared frontend decision is generated into Rust;
+checks cover mismatched names, required arguments, execution and restoration.
+This does not implement nullable values, tuple or record types, or Map types.
+
+JavaScript `typeof` now translates for typed bindings and primitive literals,
+with the JavaScript names `number`, `bigint`, `boolean`, `string` and `object`.
+Both runtimes use generated decisions for eligible operands and type names.
+Calls, field reads and other operand expressions remain refused: a type query
+must not discard their evaluation, effects or exceptions. This is a bounded
+extension of #212, not support for dynamic type unions or unbound names.
+
+Homogeneous array `concat` calls lower to the existing checked array spread
+representation. Checks cover argument order, one-level spreading for nested
+arrays and a zero-argument copy. Scalar arguments and non-array receivers
+retain diagnostics; this does not complete the remaining array operations.
+
+A nonempty, childless parser `ERROR` root is retained as a carried syntax item
+with its entire byte span. Parser budgets remain unchanged. Reverse translation
+can restore an original source prefix when the header's byte length, language
+and SHA-256 digest match and only formatting whitespace follows it. Appended
+executable code prevents that restoration. Targeted checks cover the repository's
+executor module and a source without a final newline. These changes preserve
+source coverage; carrying a syntax error is not a semantic translation.
+
 ## Items that use other items
 
 From JavaScript or TypeScript into Rust, a module is one scope. Each item is
@@ -149,8 +220,7 @@ Rust calls the function by the name its own translation gives it (`square(x)`,
 for a `static`). A name whose item is carried, or that a cycle of items leaves
 untranslated, stays unbound, so its callers are carried with the checker's
 diagnostic. The corpus case `siblings-to-rust` runs such calls in both
-runtimes. The Rust package does not translate top-level constants into Rust
-yet, so there only functions are bound.
+runtimes. Both packages translate top-level constants into Rust.
 
 A relative named import of another module of the crate,
 `import { a, b as c } from './m.mjs'`, becomes `use crate::m::{a, b as c};`.
@@ -181,3 +251,45 @@ translation names it. Without signatures the import still translates and the
 items that use its names are carried. Default and namespace imports, Node.js
 built-in modules and packages are refused with their own diagnostics; the
 corpus case `imports-to-rust` lists them.
+
+The dependency binder runs before the declaration-scope retry. Signatures from
+successful retries are returned for the module's eligible exported functions;
+imported aliases use the same signature lookup. Cross-module signatures still
+exclude algebraic data types and guarded natural-number parameters. Nonliteral
+constant captures stay unbound: lazy initialization does not establish eager
+JavaScript initialization order or effects. The shared generated eligibility
+rule is used by both binders.
+
+Whole-string `startsWith`, `endsWith` and `includes` predicates use shared
+generated decisions in both translators. Focused checks cover Unicode text,
+empty searches, missing matches, four-target emission parity and Rust method
+spellings (`starts_with`, `ends_with`, `contains`). Positional search arguments
+and non-string operands remain explicit refusals. These checks do not establish
+complete JavaScript string support or the full native execution matrix.
+
+The Rust translator also handles Unicode lower/upper case mapping and
+JavaScript `trim`, `trimStart` and `trimEnd`. Shared generated render decisions
+retain U+0085 and trim U+FEFF. The shared binding examples check expanded case
+mappings and both whitespace cases against JavaScript execution. Lean and Rocq
+keep explicit refusals for these Unicode transformations.
+
+Type queries also accept reads of eligible captured primitive literal constants.
+The checked reference is identified from its external constant signature; source
+calls and unsafe captures keep their existing refusals.
+
+Sources containing carriage returns also retain an escaped JSON source envelope
+in the translation header. Restoring that envelope requires matching the source
+language, UTF-8 byte length and source digest, and the digest of the complete
+translated body, including preludes and layout. This preserves CRLF, mixed line
+endings, leading and trailing whitespace and Unicode separators when the
+translation is unedited. An edited body or damaged envelope falls back to the
+ordinary per-item provenance rules; it cannot restore the stale envelope.
+The restoration decision is generated from the JavaScript frontend module.
+
+Dense immutable arrays also support zero-argument `slice()`, one-array
+`Array.from()` without a mapper, and homogeneous `Array.of()` construction.
+Their frontend forms and argument decisions are generated from JavaScript into
+Rust, then bound to the existing checked array and spread representation. Both
+runtimes test order, nested arrays, empty arrays, strings, booleans and a receiver
+that prints once. Indexed slicing, non-array iterators, array-like objects and
+mapping functions remain explicit diagnostics until their behavior is modeled.

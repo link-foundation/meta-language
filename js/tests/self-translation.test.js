@@ -49,6 +49,7 @@ function expectedItems(file) {
 
 test('every shared case translates to its expected output and items', () => {
   for (const entry of cases) {
+    console.log(`checking self-translation fixture ${entry.id}`);
     const translation = selfTranslate(read(entry.source), entry.from, entry.to, { decorators: decoratorsOf.get(entry.id) });
     assert.equal(translation.sourceLanguage, entry.from);
     assert.equal(translation.targetLanguage, entry.to);
@@ -85,9 +86,12 @@ test('meta-language\'s own modules round-trip byte for byte', () => {
     ['rust/src/link_flags.rs', 'Rust', 'TypeScript'],
     ['rust/src/binary_format.rs', 'Rust', 'TypeScript'],
   ]) {
+    console.log(`checking self-translation round trip ${file}`);
     const source = readFileSync(path.join(root, file), 'utf8');
     assert.equal(selfTranslate(source, language, language).code, source, file);
+    console.log(`checked same-language source graph ${file}`);
     const there = selfTranslate(source, language, other);
+    console.log(`checked cross-language definitions ${file}`);
     translated += there.items.filter(({ status }) => status === 'translated').length;
     assert.equal(selfTranslate(there.code, other, language).code, source, file);
   }
@@ -349,6 +353,7 @@ test('languages are named by name or extension, and others are refused', () => {
 test('the report measures each translated module against its hand-written Rust', () => {
   const outDir = mkdtempSync(path.join(tmpdir(), 'self-translation-report-'));
   try {
+    console.log('checking self-translation report module dependency contexts');
     execFileSync(process.execPath, [path.join(root, 'js/scripts/generate-self-translation-report.mjs'), '--out-dir', outDir, '--modules', 'language-support.js,self-translation.js'], { encoding: 'utf8' });
     const { schemaVersion, commit, decorators, modules, failures } = JSON.parse(readFileSync(path.join(outDir, 'self-translation-report.json'), 'utf8'));
     assert.equal(schemaVersion, 1);
@@ -360,6 +365,10 @@ test('the report measures each translated module against its hand-written Rust',
       ['js/src/self-translation.js', 'rust/src/self_translation.rs'],
     ]);
     for (const row of modules) {
+      assert.equal(row.coverage.sourceBytes, readFileSync(path.join(root, row.module)).length, row.module);
+      assert.equal(row.coverage.itemBytes + row.coverage.layoutBytes, row.coverage.sourceBytes, row.module);
+      assert.equal(row.coverage.unrepresentedBytes, 0, row.module);
+      assert.deepEqual(row.decorated.coverage, row.coverage, row.module);
       for (const [file, field] of [[row.module, 'sourceSha256'], [row.rust, 'rustSha256']]) {
         assert.equal(row[field], createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex'));
       }

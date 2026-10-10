@@ -1,92 +1,926 @@
 {
   "description": "How the import pipeline (js/scripts/import-native-grammars.mjs) turns the rule names of an upstream grammar into readable English native rule names and concept records: the abbreviations and run-together keywords upstream names use with the words that replace them, and per grammar the names and concepts a reviewer decided by hand. Every entry is a reviewed merge decision; the merge report of each language lists where it applied.",
   "words": [
-    { "word": "alignas", "replacement": "align_as", "reason": "The C keyword _Alignas (ISO/IEC 9899:2018 section 6.7.5) run together." },
-    { "word": "alignof", "replacement": "alignment_of", "reason": "The C operator _Alignof (ISO/IEC 9899:2018 section 6.5.3.4) gives the alignment of a type." },
-    { "word": "apos", "replacement": "apostrophe", "reason": "An abbreviation of apostrophe, the quote that opens a Rocq destructuring let (`let 'pattern := term in term`, Rocq Reference Manual, section Extended pattern matching)." },
-    { "word": "arg", "replacement": "argument", "reason": "An abbreviation of argument." },
-    { "word": "args", "replacement": "arguments", "reason": "An abbreviation of arguments." },
-    { "word": "asm", "replacement": "assembly", "reason": "The asm keyword introduces inline assembly." },
-    { "word": "assumpt", "replacement": "assumption", "reason": "An abbreviation of assumption, a Rocq Parameter, Axiom or Variable declaration (Rocq Reference Manual, section Assumptions)." },
-    { "word": "async", "replacement": "asynchronous", "reason": "The Rust keyword async marks an asynchronous function or block (The Rust Reference, Async blocks)." },
-    { "word": "attr", "replacement": "attribute", "reason": "An abbreviation of attribute." },
-    { "word": "bigint", "replacement": "big_integer", "reason": "The Rocq notation entry bigint, an integer of any size (Rocq Reference Manual, section Notations, syntax of notation entries)." },
-    { "word": "bignat", "replacement": "big_natural_number", "reason": "Rocq's natural number of any size (Rocq Reference Manual, section Lexical conventions, numbers)." },
-    { "word": "bitfield", "replacement": "bit_field", "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)." },
-    { "word": "bool", "replacement": "boolean", "reason": "An abbreviation of boolean; the Protocol Buffers bool type holds true or false (Protocol Buffers Language Specification, Boolean)." },
-    { "word": "calc", "replacement": "calculation", "reason": "The Lean calc keyword opens a calculation, a chain of relations proved step by step (Theorem Proving in Lean 4, section Calculational Proofs)." },
-    { "word": "char", "replacement": "character", "reason": "An abbreviation of character; the C type char holds a character." },
-    { "word": "chars", "replacement": "characters", "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string." },
-    { "word": "cmp", "replacement": "comparison", "reason": "An abbreviation of comparison: the parenthesized or quoted pair of arguments an ifeq or ifneq conditional of GNU make compares (GNU make manual, section 7.2 Syntax of Conditionals)." },
-    { "word": "config", "replacement": "configuration", "reason": "An abbreviation of configuration." },
-    { "word": "const", "replacement": "constant", "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)." },
-    { "word": "db", "replacement": "database", "reason": "An abbreviation of database, as in a Rocq hint database (Rocq Reference Manual, section Hint databases)." },
-    { "word": "dbg", "replacement": "debug", "reason": "The Lean dbg_trace keyword prints a debugging message." },
-    { "word": "decl", "replacement": "declaration", "reason": "An abbreviation of declaration." },
-    { "word": "declarators", "replacement": "declarator_list", "reason": "A comma-separated list of declarators." },
-    { "word": "declspec", "replacement": "declaration_specifier", "reason": "The Microsoft __declspec keyword run together." },
-    { "word": "decnat", "replacement": "decimal_natural_number", "reason": "Rocq's natural number written in decimal digits (Rocq Reference Manual, section Lexical conventions, numbers)." },
-    { "word": "def", "replacement": "definition", "reason": "An abbreviation of definition." },
-    { "word": "delim", "replacement": "delimited", "reason": "An abbreviation of delimited; a delimited token tree is enclosed in parentheses, brackets or braces (The Rust Reference, Macros, DelimTokenTree)." },
-    { "word": "doc", "replacement": "documentation", "reason": "An abbreviation of documentation; a doc comment is a documentation comment (The Rust Reference, Doc comments)." },
-    { "word": "elem", "replacement": "element", "reason": "An abbreviation of element, as in the interface elements, method elements and type elements of a Go interface type (The Go Programming Language Specification, Interface types)." },
-    { "word": "elif", "replacement": "else_if", "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if." },
-    { "word": "elifdef", "replacement": "else_if_defined", "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined." },
-    { "word": "elsif", "replacement": "else_if", "reason": "The else branch of a GNU make conditional that holds another conditional, `else ifeq ...` (GNU make manual, section 7.2 Syntax of Conditionals)." },
-    { "word": "elt", "replacement": "element", "reason": "An abbreviation of element; tree-sitter-solidity scans the characters between the quotes of a Solidity string literal with _string_immediate_elt_inside_quote." },
-    { "word": "enum", "replacement": "enumeration", "reason": "An abbreviation of enumeration." },
-    { "word": "eqn", "replacement": "equation", "reason": "An abbreviation of equation, as in the Rocq clause eqn:ident that names the equation of a case analysis (Rocq Reference Manual, section Tactics, destruct)." },
-    { "word": "eval", "replacement": "evaluation", "reason": "An abbreviation of evaluation." },
-    { "word": "expr", "replacement": "expression", "reason": "An abbreviation of expression." },
-    { "word": "fallthrough", "replacement": "fall_through", "reason": "The Go keyword fallthrough (The Go Programming Language Specification, Fallthrough statements) run together." },
-    { "word": "func", "replacement": "function", "reason": "The Go keyword func declares a function; a func literal is a function literal (The Go Programming Language Specification, Function literals)." },
-    { "word": "gen", "replacement": "generator", "reason": "The Rust 2024 keyword gen opens a generator block that yields the items of an iterator (RFC 3513, gen blocks)." },
-    { "word": "goto", "replacement": "go_to", "reason": "The goto keyword run together." },
-    { "word": "hexdigit", "replacement": "hexadecimal_digit", "reason": "A hexadecimal digit run together." },
-    { "word": "hexnat", "replacement": "hexadecimal_natural_number", "reason": "Rocq's natural number written in hexadecimal digits after 0x (Rocq Reference Manual, section Lexical conventions, numbers)." },
-    { "word": "hintdb", "replacement": "hint_database", "reason": "A Rocq hint database run together (Rocq Reference Manual, section Hint databases, Create HintDb)." },
-    { "word": "hyp", "replacement": "hypothesis", "reason": "An abbreviation of hypothesis, a local assumption of a Rocq proof goal." },
-    { "word": "ident", "replacement": "identifier", "reason": "An abbreviation of identifier." },
-    { "word": "ifdef", "replacement": "if_defined", "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined." },
-    { "word": "ifeq", "replacement": "if_equal", "reason": "The GNU make conditional directive ifeq expands two arguments and tests that they are equal (GNU make manual, section 7.2 Syntax of Conditionals)." },
-    { "word": "ifndef", "replacement": "if_not_defined", "reason": "The GNU make conditional directive ifndef tests that a variable has an empty value (GNU make manual, section 7.2 Syntax of Conditionals); the preprocessing directive #ifndef (ISO/IEC 9899:2018 section 6.10.1) is if not defined." },
-    { "word": "ifneq", "replacement": "if_not_equal", "reason": "The GNU make conditional directive ifneq expands two arguments and tests that they differ (GNU make manual, section 7.2 Syntax of Conditionals)." },
-    { "word": "impl", "replacement": "implementation", "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)." },
-    { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
-    { "word": "inst", "replacement": "instance", "reason": "An abbreviation of instance." },
-    { "word": "instanceof", "replacement": "instance_of", "reason": "The Java operator instanceof (The Java Language Specification, section 15.20.2) run together." },
-    { "word": "int", "replacement": "integer", "reason": "An abbreviation of integer; a Go int literal is an integer literal (The Go Programming Language Specification, Integer literals)." },
-    { "word": "interp", "replacement": "interpretation", "reason": "An abbreviation of interpretation." },
-    { "word": "lhs", "replacement": "left_hand_side", "reason": "An abbreviation of left-hand side, the target of a JavaScript assignment or for-in head." },
-    { "word": "lib", "replacement": "library", "reason": "An abbreviation of library." },
-    { "word": "lit", "replacement": "literal", "reason": "An abbreviation of literal, as in the Protocol Buffers intLit, floatLit and boolLit (Protocol Buffers Language Specification, Integer literals)." },
-    { "word": "mod", "replacement": "module", "reason": "The Rust keyword mod declares a module (The Rust Reference, Modules)." },
-    { "word": "ms", "replacement": "microsoft", "reason": "Microsoft-specific syntax." },
-    { "word": "mut", "replacement": "mutable", "reason": "The Rust keyword mut makes a binding mutable (The Rust Reference, Identifier patterns)." },
-    { "word": "num", "replacement": "number", "reason": "An abbreviation of number." },
-    { "word": "offsetof", "replacement": "offset_of", "reason": "The offsetof macro (ISO/IEC 9899:2018 section 7.19) run together." },
-    { "word": "oneof", "replacement": "one_of", "reason": "The Protocol Buffers keyword oneof run together: at most one field of a oneof is set at a time (Protocol Buffers Language Guide, Oneof)." },
-    { "word": "params", "replacement": "parameters", "reason": "An abbreviation of parameters." },
-    { "word": "preproc", "replacement": "preprocessor", "reason": "An abbreviation of preprocessor." },
-    { "word": "ptr", "replacement": "pointer", "reason": "An abbreviation of pointer." },
-    { "word": "qmark", "replacement": "question_mark", "reason": "An abbreviation of question mark; JavaScript's _ternary_qmark scans the ? of a conditional expression." },
-    { "word": "qualid", "replacement": "qualified_identifier", "reason": "Rocq's qualified identifier, a dotted path to a global name (Rocq Reference Manual, section Qualified identifiers)." },
-    { "word": "rawline", "replacement": "raw_line", "reason": "A line of a GNU make define directive taken verbatim, as the value of the variable it defines (GNU make manual, section 6.8 Defining Multi-Line Variables)." },
-    { "word": "recipeprefix", "replacement": "recipe_prefix", "reason": "The GNU make variable .RECIPEPREFIX names the character that starts a recipe line instead of a tab (GNU make manual, section 6.14 Other Special Variables)." },
-    { "word": "regex", "replacement": "regular_expression", "reason": "An abbreviation of regular expression, JavaScript's regex literal and its pattern and flags." },
-    { "word": "rew", "replacement": "rewrite", "reason": "An abbreviation of rewrite, as in Rocq's rewriting notation rew [P] H in t." },
-    { "word": "rpc", "replacement": "remote_procedure_call", "reason": "The Protocol Buffers keyword rpc declares a remote procedure call of a service (Protocol Buffers Language Specification, Service definition)." },
-    { "word": "seh", "replacement": "structured_exception_handling", "reason": "Microsoft structured exception handling." },
-    { "word": "seq", "replacement": "sequence", "reason": "An abbreviation of sequence." },
-    { "word": "sizeof", "replacement": "size_of", "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together." },
-    { "word": "spec", "replacement": "specification", "reason": "An abbreviation of specification." },
-    { "word": "struct", "replacement": "structure", "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)." },
-    { "word": "tryif", "replacement": "try_if", "reason": "The Rocq tactical tryif run together (Rocq Reference Manual, section Ltac, tryif)." },
-    { "word": "typeclasses", "replacement": "type_classes", "reason": "Rocq's type classes run together, as in Typeclasses Transparent (Rocq Reference Manual, section Typeclasses)." },
-    { "word": "undefine", "replacement": "remove_definition", "reason": "The GNU make undefine directive removes the definition of a variable (GNU make manual, section 6.9 Undefining Variables)." },
-    { "word": "unexport", "replacement": "remove_export", "reason": "The GNU make unexport directive stops passing a variable to the environment of sub-make and recipe commands (GNU make manual, section 5.7.2 Communicating Variables to a Sub-make)." },
-    { "word": "var", "replacement": "variable", "reason": "An abbreviation of variable." },
-    { "word": "vpath", "replacement": "search_path", "reason": "The GNU make VPATH variable and vpath directive name the directories to search for prerequisites (GNU make manual, sections 4.5.1 VPATH: Search Path for All Prerequisites and 4.5.2 The vpath Directive)." }
+    {
+      "word": "abi",
+      "replacement": "application_binary_interface",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses abi for application binary interface."
+    },
+    {
+      "word": "accessor",
+      "replacement": "access_method",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses accessor for access method."
+    },
+    {
+      "word": "alignas",
+      "replacement": "align_as",
+      "reason": "The C keyword _Alignas (ISO/IEC 9899:2018 section 6.7.5) run together."
+    },
+    {
+      "word": "alignof",
+      "replacement": "alignment_of",
+      "reason": "The C operator _Alignof (ISO/IEC 9899:2018 section 6.5.3.4) gives the alignment of a type."
+    },
+    {
+      "word": "ann",
+      "replacement": "annotated",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses ann for annotated."
+    },
+    {
+      "word": "anyframe",
+      "replacement": "any_frame",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses anyframe for any frame."
+    },
+    {
+      "word": "apos",
+      "replacement": "apostrophe",
+      "reason": "An abbreviation of apostrophe, the quote that opens a Rocq destructuring let (`let 'pattern := term in term`, Rocq Reference Manual, section Extended pattern matching)."
+    },
+    {
+      "word": "arg",
+      "replacement": "argument",
+      "reason": "An abbreviation of argument."
+    },
+    {
+      "word": "args",
+      "replacement": "arguments",
+      "reason": "An abbreviation of arguments."
+    },
+    {
+      "word": "arr",
+      "replacement": "array",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses arr for array."
+    },
+    {
+      "word": "asm",
+      "replacement": "assembly",
+      "reason": "The asm keyword introduces inline assembly."
+    },
+    {
+      "word": "assignement",
+      "replacement": "assignment",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses assignement for assignment."
+    },
+    {
+      "word": "assumpt",
+      "replacement": "assumption",
+      "reason": "An abbreviation of assumption, a Rocq Parameter, Axiom or Variable declaration (Rocq Reference Manual, section Assumptions)."
+    },
+    {
+      "word": "async",
+      "replacement": "asynchronous",
+      "reason": "The Rust keyword async marks an asynchronous function or block (The Rust Reference, Async blocks)."
+    },
+    {
+      "word": "attr",
+      "replacement": "attribute",
+      "reason": "An abbreviation of attribute."
+    },
+    {
+      "word": "bigint",
+      "replacement": "big_integer",
+      "reason": "The Rocq notation entry bigint, an integer of any size (Rocq Reference Manual, section Notations, syntax of notation entries)."
+    },
+    {
+      "word": "bignat",
+      "replacement": "big_natural_number",
+      "reason": "Rocq's natural number of any size (Rocq Reference Manual, section Lexical conventions, numbers)."
+    },
+    {
+      "word": "bitfield",
+      "replacement": "bit_field",
+      "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)."
+    },
+    {
+      "word": "bitwise",
+      "replacement": "bit_level",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses bitwise for bit level."
+    },
+    {
+      "word": "bool",
+      "replacement": "boolean",
+      "reason": "An abbreviation of boolean; the Protocol Buffers bool type holds true or false (Protocol Buffers Language Specification, Boolean)."
+    },
+    {
+      "word": "builtin",
+      "replacement": "built_in",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses builtin for built in."
+    },
+    {
+      "word": "calc",
+      "replacement": "calculation",
+      "reason": "The Lean calc keyword opens a calculation, a chain of relations proved step by step (Theorem Proving in Lean 4, section Calculational Proofs)."
+    },
+    {
+      "word": "cdecl",
+      "replacement": "c_declaration",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses cdecl for c declaration."
+    },
+    {
+      "word": "char",
+      "replacement": "character",
+      "reason": "An abbreviation of character; the C type char holds a character."
+    },
+    {
+      "word": "chars",
+      "replacement": "characters",
+      "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string."
+    },
+    {
+      "word": "charset",
+      "replacement": "character_set",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses charset for character set."
+    },
+    {
+      "word": "cmp",
+      "replacement": "comparison",
+      "reason": "An abbreviation of comparison: the parenthesized or quoted pair of arguments an ifeq or ifneq conditional of GNU make compares (GNU make manual, section 7.2 Syntax of Conditionals)."
+    },
+    {
+      "word": "comp",
+      "replacement": "comparison",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses comp for comparison."
+    },
+    {
+      "word": "comptime",
+      "replacement": "compile_time",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses comptime for compile time."
+    },
+    {
+      "word": "cond",
+      "replacement": "conditional",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses cond for conditional."
+    },
+    {
+      "word": "config",
+      "replacement": "configuration",
+      "reason": "An abbreviation of configuration."
+    },
+    {
+      "word": "const",
+      "replacement": "constant",
+      "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)."
+    },
+    {
+      "word": "constref",
+      "replacement": "constant_reference",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses constref for constant reference."
+    },
+    {
+      "word": "consts",
+      "replacement": "constants",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses consts for constants."
+    },
+    {
+      "word": "cppdecl",
+      "replacement": "c_plus_plus_declaration",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses cppdecl for c plus plus declaration."
+    },
+    {
+      "word": "cte",
+      "replacement": "common_table_expression",
+      "reason": "The pinned SQL grammar uses cte for common table expression."
+    },
+    {
+      "word": "cvar",
+      "replacement": "c_variable",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses cvar for c variable."
+    },
+    {
+      "word": "db",
+      "replacement": "database",
+      "reason": "An abbreviation of database, as in a Rocq hint database (Rocq Reference Manual, section Hint databases)."
+    },
+    {
+      "word": "dbg",
+      "replacement": "debug",
+      "reason": "The Lean dbg_trace keyword prints a debugging message."
+    },
+    {
+      "word": "dcl",
+      "replacement": "data_control_language",
+      "reason": "The pinned SQL grammar uses dcl for data control language."
+    },
+    {
+      "word": "ddl",
+      "replacement": "data_definition_language",
+      "reason": "The pinned SQL grammar uses ddl for data definition language."
+    },
+    {
+      "word": "decl",
+      "replacement": "declaration",
+      "reason": "An abbreviation of declaration."
+    },
+    {
+      "word": "declarators",
+      "replacement": "declarator_list",
+      "reason": "A comma-separated list of declarators."
+    },
+    {
+      "word": "declspec",
+      "replacement": "declaration_specifier",
+      "reason": "The Microsoft __declspec keyword run together."
+    },
+    {
+      "word": "decnat",
+      "replacement": "decimal_natural_number",
+      "reason": "Rocq's natural number written in decimal digits (Rocq Reference Manual, section Lexical conventions, numbers)."
+    },
+    {
+      "word": "def",
+      "replacement": "definition",
+      "reason": "An abbreviation of definition."
+    },
+    {
+      "word": "delim",
+      "replacement": "delimited",
+      "reason": "An abbreviation of delimited; a delimited token tree is enclosed in parentheses, brackets or braces (The Rust Reference, Macros, DelimTokenTree)."
+    },
+    {
+      "word": "deref",
+      "replacement": "dereferencing",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses deref for dereferencing."
+    },
+    {
+      "word": "dereference",
+      "replacement": "dereferencing",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses dereference for dereferencing."
+    },
+    {
+      "word": "destructor",
+      "replacement": "destruction_method",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses destructor for destruction method."
+    },
+    {
+      "word": "disp",
+      "replacement": "dispatch",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses disp for dispatch."
+    },
+    {
+      "word": "div",
+      "replacement": "division",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses div for division."
+    },
+    {
+      "word": "dml",
+      "replacement": "data_manipulation_language",
+      "reason": "The pinned SQL grammar uses dml for data manipulation language."
+    },
+    {
+      "word": "doc",
+      "replacement": "documentation",
+      "reason": "An abbreviation of documentation; a doc comment is a documentation comment (The Rust Reference, Doc comments)."
+    },
+    {
+      "word": "downto",
+      "replacement": "down_to",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses downto for down to."
+    },
+    {
+      "word": "elem",
+      "replacement": "element",
+      "reason": "An abbreviation of element, as in the interface elements, method elements and type elements of a Go interface type (The Go Programming Language Specification, Interface types)."
+    },
+    {
+      "word": "elems",
+      "replacement": "elements",
+      "reason": "The pinned HCL grammar abbreviates the elements of a tuple or object as elems."
+    },
+    {
+      "word": "elif",
+      "replacement": "else_if",
+      "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if."
+    },
+    {
+      "word": "elifdef",
+      "replacement": "else_if_defined",
+      "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined."
+    },
+    {
+      "word": "elseif",
+      "replacement": "else_if",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses elseif for else if."
+    },
+    {
+      "word": "elsif",
+      "replacement": "else_if",
+      "reason": "The else branch of a GNU make conditional that holds another conditional, `else ifeq ...` (GNU make manual, section 7.2 Syntax of Conditionals)."
+    },
+    {
+      "word": "elt",
+      "replacement": "element",
+      "reason": "An abbreviation of element; tree-sitter-solidity scans the characters between the quotes of a Solidity string literal with _string_immediate_elt_inside_quote."
+    },
+    {
+      "word": "endif",
+      "replacement": "end_if",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses endif for end if."
+    },
+    {
+      "word": "enum",
+      "replacement": "enumeration",
+      "reason": "An abbreviation of enumeration."
+    },
+    {
+      "word": "eqn",
+      "replacement": "equation",
+      "reason": "An abbreviation of equation, as in the Rocq clause eqn:ident that names the equation of a case analysis (Rocq Reference Manual, section Tactics, destruct)."
+    },
+    {
+      "word": "errdefer",
+      "replacement": "error_defer",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses errdefer for error defer."
+    },
+    {
+      "word": "eval",
+      "replacement": "evaluation",
+      "reason": "An abbreviation of evaluation."
+    },
+    {
+      "word": "exp",
+      "replacement": "expression",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses exp for expression."
+    },
+    {
+      "word": "expr",
+      "replacement": "expression",
+      "reason": "An abbreviation of expression."
+    },
+    {
+      "word": "ext",
+      "replacement": "external",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses ext for external."
+    },
+    {
+      "word": "fallthrough",
+      "replacement": "fall_through",
+      "reason": "The Go keyword fallthrough (The Go Programming Language Specification, Fallthrough statements) run together."
+    },
+    {
+      "word": "fdiv",
+      "replacement": "floating_division",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses fdiv for floating division."
+    },
+    {
+      "word": "foreach",
+      "replacement": "for_each",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses foreach for for each."
+    },
+    {
+      "word": "func",
+      "replacement": "function",
+      "reason": "The Go keyword func declares a function; a func literal is a function literal (The Go Programming Language Specification, Function literals)."
+    },
+    {
+      "word": "fwd",
+      "replacement": "forward",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses fwd for forward."
+    },
+    {
+      "word": "gen",
+      "replacement": "generator",
+      "reason": "The Rust 2024 keyword gen opens a generator block that yields the items of an iterator (RFC 3513, gen blocks)."
+    },
+    {
+      "word": "goto",
+      "replacement": "go_to",
+      "reason": "The goto keyword run together."
+    },
+    {
+      "word": "gt",
+      "replacement": "greater_than",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses gt for greater than."
+    },
+    {
+      "word": "gte",
+      "replacement": "greater_than_or_equal",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses gte for greater than or equal."
+    },
+    {
+      "word": "guid",
+      "replacement": "globally_unique_identifier",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses guid for globally unique identifier."
+    },
+    {
+      "word": "hardfloat",
+      "replacement": "hardware_float",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses hardfloat for hardware float."
+    },
+    {
+      "word": "hexdigit",
+      "replacement": "hexadecimal_digit",
+      "reason": "A hexadecimal digit run together."
+    },
+    {
+      "word": "hexnat",
+      "replacement": "hexadecimal_natural_number",
+      "reason": "Rocq's natural number written in hexadecimal digits after 0x (Rocq Reference Manual, section Lexical conventions, numbers)."
+    },
+    {
+      "word": "hintdb",
+      "replacement": "hint_database",
+      "reason": "A Rocq hint database run together (Rocq Reference Manual, section Hint databases, Create HintDb)."
+    },
+    {
+      "word": "hyp",
+      "replacement": "hypothesis",
+      "reason": "An abbreviation of hypothesis, a local assumption of a Rocq proof goal."
+    },
+    {
+      "word": "ident",
+      "replacement": "identifier",
+      "reason": "An abbreviation of identifier."
+    },
+    {
+      "word": "ifdef",
+      "replacement": "if_defined",
+      "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined."
+    },
+    {
+      "word": "ifeq",
+      "replacement": "if_equal",
+      "reason": "The GNU make conditional directive ifeq expands two arguments and tests that they are equal (GNU make manual, section 7.2 Syntax of Conditionals)."
+    },
+    {
+      "word": "ifndef",
+      "replacement": "if_not_defined",
+      "reason": "The GNU make conditional directive ifndef tests that a variable has an empty value (GNU make manual, section 7.2 Syntax of Conditionals); the preprocessing directive #ifndef (ISO/IEC 9899:2018 section 6.10.1) is if not defined."
+    },
+    {
+      "word": "ifneq",
+      "replacement": "if_not_equal",
+      "reason": "The GNU make conditional directive ifneq expands two arguments and tests that they differ (GNU make manual, section 7.2 Syntax of Conditionals)."
+    },
+    {
+      "word": "impl",
+      "replacement": "implementation",
+      "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)."
+    },
+    {
+      "word": "init",
+      "replacement": "initialized",
+      "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer."
+    },
+    {
+      "word": "initializers",
+      "replacement": "initializer_list",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses initializers for initializer list."
+    },
+    {
+      "word": "inlinescript",
+      "replacement": "inline_script",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses inlinescript for inline script."
+    },
+    {
+      "word": "inst",
+      "replacement": "instance",
+      "reason": "An abbreviation of instance."
+    },
+    {
+      "word": "instanceof",
+      "replacement": "instance_of",
+      "reason": "The Java operator instanceof (The Java Language Specification, section 15.20.2) run together."
+    },
+    {
+      "word": "int",
+      "replacement": "integer",
+      "reason": "An abbreviation of integer; a Go int literal is an integer literal (The Go Programming Language Specification, Integer literals)."
+    },
+    {
+      "word": "interp",
+      "replacement": "interpretation",
+      "reason": "An abbreviation of interpretation."
+    },
+    {
+      "word": "intf",
+      "replacement": "interface",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses intf for interface."
+    },
+    {
+      "word": "invokation",
+      "replacement": "invocation",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses invokation for invocation."
+    },
+    {
+      "word": "iocheck",
+      "replacement": "input_output_check",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses iocheck for input output check."
+    },
+    {
+      "word": "juxt",
+      "replacement": "juxtaposed",
+      "reason": "The pinned Groovy grammar abbreviates juxtaposed function calls as juxt."
+    },
+    {
+      "word": "keyframe",
+      "replacement": "key_frame",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses keyframe for key frame."
+    },
+    {
+      "word": "keyframes",
+      "replacement": "key_frames",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses keyframes for key frames."
+    },
+    {
+      "word": "lhs",
+      "replacement": "left_hand_side",
+      "reason": "An abbreviation of left-hand side, the target of a JavaScript assignment or for-in head."
+    },
+    {
+      "word": "lib",
+      "replacement": "library",
+      "reason": "An abbreviation of library."
+    },
+    {
+      "word": "lit",
+      "replacement": "literal",
+      "reason": "An abbreviation of literal, as in the Protocol Buffers intLit, floatLit and boolLit (Protocol Buffers Language Specification, Integer literals)."
+    },
+    {
+      "word": "lt",
+      "replacement": "less_than",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses lt for less than."
+    },
+    {
+      "word": "lte",
+      "replacement": "less_than_or_equal",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses lte for less than or equal."
+    },
+    {
+      "word": "media",
+      "replacement": "medium",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses media for medium."
+    },
+    {
+      "word": "mod",
+      "replacement": "module",
+      "reason": "The Rust keyword mod declares a module (The Rust Reference, Modules)."
+    },
+    {
+      "word": "ms",
+      "replacement": "microsoft",
+      "reason": "Microsoft-specific syntax."
+    },
+    {
+      "word": "mul",
+      "replacement": "multiplication",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses mul for multiplication."
+    },
+    {
+      "word": "mult",
+      "replacement": "multiplication",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses mult for multiplication."
+    },
+    {
+      "word": "multi",
+      "replacement": "multiple",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses multi for multiple."
+    },
+    {
+      "word": "multiline",
+      "replacement": "multiple_line",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses multiline for multiple line."
+    },
+    {
+      "word": "mut",
+      "replacement": "mutable",
+      "reason": "The Rust keyword mut makes a binding mutable (The Rust Reference, Identifier patterns)."
+    },
+    {
+      "word": "mwpascal",
+      "replacement": "metrowerks_pascal",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses mwpascal for metrowerks pascal."
+    },
+    {
+      "word": "neq",
+      "replacement": "not_equal",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses neq for not equal."
+    },
+    {
+      "word": "nodefault",
+      "replacement": "no_default",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses nodefault for no default."
+    },
+    {
+      "word": "noreturn",
+      "replacement": "no_return",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses noreturn for no return."
+    },
+    {
+      "word": "nostackframe",
+      "replacement": "no_stack_frame",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses nostackframe for no stack frame."
+    },
+    {
+      "word": "nosuspend",
+      "replacement": "no_suspension",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses nosuspend for no suspension."
+    },
+    {
+      "word": "nullable",
+      "replacement": "null_admitting",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses nullable for null admitting."
+    },
+    {
+      "word": "num",
+      "replacement": "number",
+      "reason": "An abbreviation of number."
+    },
+    {
+      "word": "objccategory",
+      "replacement": "objective_c_category",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses objccategory for objective c category."
+    },
+    {
+      "word": "objcclass",
+      "replacement": "objective_c_class",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses objcclass for objective c class."
+    },
+    {
+      "word": "objcprotocol",
+      "replacement": "objective_c_protocol",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses objcprotocol for objective c protocol."
+    },
+    {
+      "word": "offsetof",
+      "replacement": "offset_of",
+      "reason": "The offsetof macro (ISO/IEC 9899:2018 section 7.19) run together."
+    },
+    {
+      "word": "oneof",
+      "replacement": "one_of",
+      "reason": "The Protocol Buffers keyword oneof run together: at most one field of a oneof is set at a time (Protocol Buffers Language Guide, Oneof)."
+    },
+    {
+      "word": "op",
+      "replacement": "operator",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses op for operator."
+    },
+    {
+      "word": "param",
+      "replacement": "parameter",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses param for parameter."
+    },
+    {
+      "word": "params",
+      "replacement": "parameters",
+      "reason": "An abbreviation of parameters."
+    },
+    {
+      "word": "parens",
+      "replacement": "parentheses",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses parens for parentheses."
+    },
+    {
+      "word": "pat",
+      "replacement": "pattern",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses pat for pattern."
+    },
+    {
+      "word": "pp",
+      "replacement": "preprocessor",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses pp for preprocessor."
+    },
+    {
+      "word": "pre",
+      "replacement": "prefix",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses pre for prefix."
+    },
+    {
+      "word": "preproc",
+      "replacement": "preprocessor",
+      "reason": "An abbreviation of preprocessor."
+    },
+    {
+      "word": "proc",
+      "replacement": "procedure",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses proc for procedure."
+    },
+    {
+      "word": "ptr",
+      "replacement": "pointer",
+      "reason": "An abbreviation of pointer."
+    },
+    {
+      "word": "qmark",
+      "replacement": "question_mark",
+      "reason": "An abbreviation of question mark; JavaScript's _ternary_qmark scans the ? of a conditional expression."
+    },
+    {
+      "word": "qualid",
+      "replacement": "qualified_identifier",
+      "reason": "Rocq's qualified identifier, a dotted path to a global name (Rocq Reference Manual, section Qualified identifiers)."
+    },
+    {
+      "word": "rawline",
+      "replacement": "raw_line",
+      "reason": "A line of a GNU make define directive taken verbatim, as the value of the variable it defines (GNU make manual, section 6.8 Defining Multi-Line Variables)."
+    },
+    {
+      "word": "rec",
+      "replacement": "record",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses rec for record."
+    },
+    {
+      "word": "recipeprefix",
+      "replacement": "recipe_prefix",
+      "reason": "The GNU make variable .RECIPEPREFIX names the character that starts a recipe line instead of a tab (GNU make manual, section 6.14 Other Special Variables)."
+    },
+    {
+      "word": "redim",
+      "replacement": "dimension_change",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses redim for dimension change."
+    },
+    {
+      "word": "regex",
+      "replacement": "regular_expression",
+      "reason": "An abbreviation of regular expression, JavaScript's regex literal and its pattern and flags."
+    },
+    {
+      "word": "resourcestring",
+      "replacement": "resource_string",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses resourcestring for resource string."
+    },
+    {
+      "word": "rew",
+      "replacement": "rewrite",
+      "reason": "An abbreviation of rewrite, as in Rocq's rewriting notation rew [P] H in t."
+    },
+    {
+      "word": "rpc",
+      "replacement": "remote_procedure_call",
+      "reason": "The Protocol Buffers keyword rpc declares a remote procedure call of a service (Protocol Buffers Language Specification, Service definition)."
+    },
+    {
+      "word": "rtti",
+      "replacement": "runtime_type_information",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses rtti for runtime type information."
+    },
+    {
+      "word": "safecall",
+      "replacement": "safe_call",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses safecall for safe call."
+    },
+    {
+      "word": "saveregisters",
+      "replacement": "save_registers",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses saveregisters for save registers."
+    },
+    {
+      "word": "seh",
+      "replacement": "structured_exception_handling",
+      "reason": "Microsoft structured exception handling."
+    },
+    {
+      "word": "seq",
+      "replacement": "sequence",
+      "reason": "An abbreviation of sequence."
+    },
+    {
+      "word": "shl",
+      "replacement": "shift_left",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses shl for shift left."
+    },
+    {
+      "word": "shr",
+      "replacement": "shift_right",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses shr for shift right."
+    },
+    {
+      "word": "sig",
+      "replacement": "signature",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses sig for signature."
+    },
+    {
+      "word": "sigil",
+      "replacement": "modifier",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses sigil for modifier."
+    },
+    {
+      "word": "sizeof",
+      "replacement": "size_of",
+      "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together."
+    },
+    {
+      "word": "softfloat",
+      "replacement": "software_float",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses softfloat for software float."
+    },
+    {
+      "word": "spec",
+      "replacement": "specification",
+      "reason": "An abbreviation of specification."
+    },
+    {
+      "word": "sq",
+      "replacement": "quoted",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses sq for quoted."
+    },
+    {
+      "word": "stdcall",
+      "replacement": "standard_call",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses stdcall for standard call."
+    },
+    {
+      "word": "struct",
+      "replacement": "structure",
+      "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)."
+    },
+    {
+      "word": "stylesheet",
+      "replacement": "style_sheet",
+      "reason": "The pinned CSS, PowerShell or Erlang source uses stylesheet for style sheet."
+    },
+    {
+      "word": "sysv",
+      "replacement": "system_five",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses sysv for system five."
+    },
+    {
+      "word": "threadvar",
+      "replacement": "thread_variable",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses threadvar for thread variable."
+    },
+    {
+      "word": "tpl",
+      "replacement": "template",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses tpl for template."
+    },
+    {
+      "word": "tr",
+      "replacement": "trailing",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses tr for trailing."
+    },
+    {
+      "word": "tryif",
+      "replacement": "try_if",
+      "reason": "The Rocq tactical tryif run together (Rocq Reference Manual, section Ltac, tryif)."
+    },
+    {
+      "word": "tsquery",
+      "replacement": "text_search_query",
+      "reason": "The pinned SQL grammar uses tsquery for text search query."
+    },
+    {
+      "word": "tsvector",
+      "replacement": "text_search_vector",
+      "reason": "The pinned SQL grammar uses tsvector for text search vector."
+    },
+    {
+      "word": "typeclasses",
+      "replacement": "type_classes",
+      "reason": "Rocq's type classes run together, as in Typeclasses Transparent (Rocq Reference Manual, section Typeclasses)."
+    },
+    {
+      "word": "typeref",
+      "replacement": "type_reference",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses typeref for type reference."
+    },
+    {
+      "word": "undefine",
+      "replacement": "remove_definition",
+      "reason": "The GNU make undefine directive removes the definition of a variable (GNU make manual, section 6.9 Undefining Variables)."
+    },
+    {
+      "word": "unexport",
+      "replacement": "remove_export",
+      "reason": "The GNU make unexport directive stops passing a variable to the environment of sub-make and recipe commands (GNU make manual, section 5.7.2 Communicating Variables to a Sub-make)."
+    },
+    {
+      "word": "unimplemented",
+      "replacement": "missing_implementation",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses unimplemented for missing implementation."
+    },
+    {
+      "word": "var",
+      "replacement": "variable",
+      "reason": "An abbreviation of variable."
+    },
+    {
+      "word": "varargs",
+      "replacement": "variable_arguments",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses varargs for variable arguments."
+    },
+    {
+      "word": "vectorcall",
+      "replacement": "vector_call",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses vectorcall for vector call."
+    },
+    {
+      "word": "vpath",
+      "replacement": "search_path",
+      "reason": "The GNU make VPATH variable and vpath directive name the directories to search for prerequisites (GNU make manual, sections 4.5.1 VPATH: Search Path for All Prerequisites and 4.5.2 The vpath Directive)."
+    },
+    {
+      "word": "winapi",
+      "replacement": "windows_application_programming_interface",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses winapi for windows application programming interface."
+    },
+    {
+      "word": "xor",
+      "replacement": "exclusive_or",
+      "reason": "The pinned Pascal, Zig, TOML or Visual Basic grammar uses xor for exclusive or."
+    }
   ],
   "grammars": {
     "c": {
@@ -236,7 +1070,10 @@
       },
       "conflicts": [
         {
-          "rules": ["hash_command", "explicit"],
+          "rules": [
+            "hash_command",
+            "explicit"
+          ],
           "reason": "Theorem Proving in Lean 4 section 2.9 (Implicit Arguments) checks `@foo`, the function with all its arguments made explicit (`#check @ident`, `#check @List.cons`); tree-sitter-lean4 0.3.0 reduces the command before an `@`, which may open the attributes of a next declaration (`@[simp] def`), and recovers from it. The merged grammar keeps both parses there: the attributes need the `[` that follows, the explicit term does not."
         }
       ]
@@ -408,32 +1245,3090 @@
         "yul_boolean": "grammar.yul-boolean-literal",
         "yul_continue": "grammar.yul-continue-statement"
       }
+    },
+    "lua": {
+      "names": {
+        "_block": "statement_block_body",
+        "_expression_list": "expression_list_body",
+        "_att_name_list": "attributed_name_list",
+        "_attrib": "attribute_body",
+        "_variable_assignment_varlist": "variable_assignment_list",
+        "_variable_assignment_explist": "assigned_expression_list",
+        "vararg_expression": "variadic_expression",
+        "_vararg_parameter": "variadic_parameter",
+        "elseif_statement": "else_if_statement",
+        "nil": "null_value",
+        "false": "false_value",
+        "true": "true_value",
+        "parameters": "parameter_list",
+        "_parameter_list": "parameter_list_body",
+        "arguments": "argument_list",
+        "_doublequote_string_content": "double_quote_string_content",
+        "_singlequote_string_content": "single_quote_string_content"
+      },
+      "concepts": {
+        "nil": "grammar.null",
+        "false": "grammar.false-value",
+        "true": "grammar.true-value",
+        "parameters": "grammar.parameter-list",
+        "arguments": "grammar.argument-list"
+      },
+      "sourceTransforms": [
+        {
+          "family": "nullable-pattern-extras",
+          "rule": "comment",
+          "pattern": "[^\\r\\n]*",
+          "extraAlternative": 1,
+          "helper": "_block_comment_extra",
+          "whitespace": "[ \\t\\r\\n\\f\\v]*",
+          "reason": "The upstream external scanner recognizes block-comment extras before an empty line-comment content token. An ordinary following line comment instead ends that token at the line break."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "function_call",
+          "associativity": "left",
+          "value": 1,
+          "reason": "Successive Lua argument lists bind to the preceding call across line breaks; the native executor must prefer that call chain to separate call statements beginning with parenthesized expressions."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "statement",
+          "associativity": "none",
+          "value": -1,
+          "reason": "A completed call statement has lower reduction precedence than a following argument list, so call chaining wins over splitting the chain into statements."
+        }
+      ]
+    },
+    "toml": {
+      "names": {
+        "_line_ending_or_eof": "line_ending_or_end_of_file",
+        "table": "table_declaration",
+        "integer": "integer_literal"
+      },
+      "concepts": {
+        "boolean": "grammar.boolean-value"
+      }
+    },
+    "zig": {
+      "names": {
+        "_identifier": "identifier_body",
+        "integer": "integer_literal",
+        "parameters": "parameter_list",
+        "parameter": "parameter_declaration",
+        "arguments": "argument_list",
+        "character": "character_literal",
+        "nullable_type": "optional_type",
+        "dereference_expression": "referent_expression",
+        "catch_expression": "exception_catch_expression",
+        "block": "scope_block",
+        "block_expr_statement": "scope_block_expression_statement",
+        "block_expression": "scope_block_expression"
+      },
+      "concepts": {
+        "boolean": "grammar.boolean-value",
+        "_iteration_range_expression": "grammar.range-expression",
+        "_iteration_primary_type_expression": "grammar.primary-type-expression",
+        "_iteration_type_expression": "grammar.type-expression",
+        "_iteration_expression": "grammar.expression",
+        "_iteration_binary_expression": "grammar.binary-expression",
+        "_iteration_unary_expression": "grammar.unary-expression",
+        "_iteration_error_union_type": "grammar.error-union-type"
+      },
+      "sourceTransforms": [
+        {
+          "family": "ordered-variants",
+          "rule": "statement",
+          "variants": [
+            "alias:variable_declaration",
+            "expression_statement"
+          ],
+          "reason": "On complete assignment statements the pinned parser chooses the variable-declaration alias before the equivalent expression-statement form; both alternatives remain operational."
+        },
+        {
+          "family": "prefer-optional-literal",
+          "rule": "container_field",
+          "literal": "comptime",
+          "value": 1,
+          "reason": "The pinned parser consumes the field modifier instead of grouping it inside an unnamed compile-time type expression. Keep both productions and prefer the complete parse that consumes the modifier."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "nullable_type",
+          "associativity": "none",
+          "value": 11,
+          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "pointer_type",
+          "associativity": "right",
+          "value": 11,
+          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "slice_type",
+          "associativity": "right",
+          "value": 11,
+          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "array_type",
+          "associativity": "right",
+          "value": 11,
+          "reason": "The pinned parser reduces this type prefix before a following member or index suffix. Preserve the original associativity and let the suffix become the outer concrete node."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "error_union_type",
+          "associativity": "right",
+          "value": 12,
+          "reason": "The pinned parser reduces error unions before member suffixes while retaining them inside optional and pointer type prefixes; their level must exceed both suffix and enclosing prefix levels."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "range_expression",
+            "primary_type_expression",
+            "type_expression",
+            "expression",
+            "binary_expression",
+            "unary_expression",
+            "error_union_type"
+          ],
+          "insertInto": [
+            "_for_prefix"
+          ],
+          "prefix": "_iteration_",
+          "opaqueRules": [
+            "unary_expression",
+            "binary_expression",
+            "range_expression",
+            "error_union_type"
+          ],
+          "reason": "The pinned parser resolves the overlapping for-prefix range syntax within its iteration context. Preserve every original production, concept and concrete kind in contextual variants; unary, binary, range and error-union operands retain the ordinary expression context."
+        }
+      ]
+    },
+    "pascal": {
+      "names": {
+        "_statement": "statement_body",
+        "_statementTr": "trailing_statement_body",
+        "_statements": "statement_list_body",
+        "_statementsTr": "trailing_statement_list_body",
+        "_typeref": "type_reference_body",
+        "_literalString": "literal_string_body",
+        "_declProc": "declaration_procedure_body",
+        "_declClass": "declaration_class_body",
+        "_operatorName": "operator_name_body",
+        "_procAttribute": "procedure_attribute_body",
+        "ifTr": "trailing_if_statement",
+        "nestedIfTr": "trailing_nested_if_statement",
+        "ifElseTr": "trailing_if_else_statement",
+        "whileTr": "trailing_while",
+        "repeatTr": "trailing_repeat",
+        "forTr": "trailing_for_statement",
+        "foreachTr": "trailing_for_each_statement",
+        "exceptionHandlerTr": "trailing_exception_handler",
+        "exceptionElseTr": "trailing_exception_else_clause",
+        "_exceptionHandlersTr": "trailing_exception_handler_list",
+        "tryTr": "trailing_try",
+        "caseCaseTr": "trailing_case_case",
+        "caseTr": "trailing_case",
+        "blockTr": "trailing_block",
+        "asmTr": "trailing_assembly",
+        "withTr": "trailing_with_statement",
+        "raiseTr": "trailing_raise",
+        "statementTr": "trailing_statement",
+        "gotoTr": "trailing_go_to_statement",
+        "statementsTr": "trailing_statement_list",
+        "kProgram": "program_header_keyword",
+        "kLibrary": "library_keyword",
+        "kUnit": "unit_keyword",
+        "kUses": "module_import_keyword",
+        "kInterface": "interface_keyword",
+        "kDispInterface": "dispatch_interface_keyword",
+        "kImplementation": "implementation_keyword",
+        "kInitialization": "initialization_keyword",
+        "kFinalization": "finalization_keyword",
+        "kEndDot": "end_dot_keyword",
+        "kBegin": "begin_keyword",
+        "kEnd": "end_keyword",
+        "kAsm": "assembly_keyword",
+        "kVar": "variable_keyword",
+        "kThreadvar": "thread_variable_keyword",
+        "kConst": "constant_keyword",
+        "kConstref": "constant_reference_keyword",
+        "kResourcestring": "resource_string_keyword",
+        "kOut": "out_keyword",
+        "kType": "type_declaration_keyword",
+        "kLabel": "label_keyword",
+        "kExports": "exports_list_keyword",
+        "kAbsolute": "absolute_keyword",
+        "kProperty": "property_keyword",
+        "kRead": "read_keyword",
+        "kWrite": "write_keyword",
+        "kImplements": "implements_keyword",
+        "kDefault": "default_keyword",
+        "kNodefault": "no_default_keyword",
+        "kStored": "stored_keyword",
+        "kIndex": "index_keyword",
+        "kDispId": "dispatch_identifier_keyword",
+        "kClass": "class_keyword",
+        "kObject": "object_keyword",
+        "kRecord": "record_keyword",
+        "kObjcclass": "objective_c_class_keyword",
+        "kObjccategory": "objective_c_extension_keyword",
+        "kObjcprotocol": "objective_c_protocol_keyword",
+        "kArray": "array_keyword",
+        "kFile": "file_keyword",
+        "kString": "string_keyword",
+        "kSet": "set_keyword",
+        "kOf": "of_keyword",
+        "kHelper": "helper_keyword",
+        "kPacked": "packed_keyword",
+        "kGeneric": "generic_keyword",
+        "kSpecialize": "specialize_keyword",
+        "kDot": "dot_keyword",
+        "kLt": "less_comparison_keyword",
+        "kEq": "equal_keyword",
+        "kNeq": "not_equal_keyword",
+        "kGt": "greater_comparison_keyword",
+        "kLte": "less_or_equal_comparison_keyword",
+        "kGte": "greater_or_equal_comparison_keyword",
+        "kAdd": "add_keyword",
+        "kSub": "subtraction_keyword",
+        "kMul": "multiplication_keyword",
+        "kFdiv": "floating_division_keyword",
+        "kAt": "at_keyword",
+        "kHat": "hat_keyword",
+        "kAssign": "assign_keyword",
+        "kAssignAdd": "assign_add_keyword",
+        "kAssignSub": "subtraction_assignment_keyword",
+        "kAssignMul": "assign_multiplication_keyword",
+        "kAssignDiv": "assign_division_keyword",
+        "kOr": "or_keyword",
+        "kXor": "exclusive_or_keyword",
+        "kDiv": "division_operator_keyword",
+        "kMod": "module_keyword",
+        "kAnd": "and_keyword",
+        "kShl": "shift_left_keyword",
+        "kShr": "shift_right_keyword",
+        "kNot": "not_keyword",
+        "kIs": "is_keyword",
+        "kAs": "as_keyword",
+        "kIn": "in_keyword",
+        "kFor": "for_keyword",
+        "kTo": "to_keyword",
+        "kDownto": "down_to_keyword",
+        "kIf": "if_keyword",
+        "kThen": "then_keyword",
+        "kElse": "else_keyword",
+        "kDo": "do_keyword",
+        "kWhile": "while_keyword",
+        "kRepeat": "repeat_keyword",
+        "kUntil": "termination_condition_keyword",
+        "kTry": "try_keyword",
+        "kExcept": "except_keyword",
+        "kFinally": "finally_keyword",
+        "kRaise": "raise_keyword",
+        "kOn": "on_keyword",
+        "kCase": "case_selection_keyword",
+        "kWith": "with_keyword",
+        "kGoto": "go_to_keyword",
+        "kFunction": "value_routine_keyword",
+        "kProcedure": "void_routine_keyword",
+        "kConstructor": "constructor_keyword",
+        "kDestructor": "destruction_method_keyword",
+        "kOperator": "operator_keyword",
+        "kReference": "reference_keyword",
+        "kPublished": "published_keyword",
+        "kPublic": "public_keyword",
+        "kProtected": "protected_keyword",
+        "kPrivate": "private_keyword",
+        "kStrict": "strict_keyword",
+        "kRequired": "required_keyword",
+        "kOptional": "optional_keyword",
+        "kForward": "forward_keyword",
+        "kStatic": "static_keyword",
+        "kVirtual": "virtual_keyword",
+        "kAbstract": "abstract_keyword",
+        "kSealed": "sealed_keyword",
+        "kDynamic": "dynamic_keyword",
+        "kOverride": "override_keyword",
+        "kOverload": "overload_keyword",
+        "kReintroduce": "reintroduce_keyword",
+        "kInherited": "inherited_keyword",
+        "kInline": "inline_keyword",
+        "kStdcall": "standard_call_keyword",
+        "kCdecl": "c_declaration_keyword",
+        "kCppdecl": "c_plus_plus_declaration_keyword",
+        "kPascal": "pascal_keyword",
+        "kRegister": "register_keyword",
+        "kMwpascal": "metrowerks_pascal_keyword",
+        "kExternal": "external_keyword",
+        "kName": "name_keyword",
+        "kMessage": "message_keyword",
+        "kDeprecated": "deprecated_keyword",
+        "kExperimental": "experimental_keyword",
+        "kPlatform": "compiler_platform_keyword",
+        "kUnimplemented": "missing_implementation_keyword",
+        "kCvar": "c_variable_keyword",
+        "kExport": "export_keyword",
+        "kFar": "far_keyword",
+        "kNear": "near_keyword",
+        "kSafecall": "safe_call_keyword",
+        "kAssembler": "assembler_keyword",
+        "kNostackframe": "no_stack_frame_keyword",
+        "kInterrupt": "interrupt_keyword",
+        "kNoreturn": "no_return_keyword",
+        "kIocheck": "input_output_check_keyword",
+        "kLocal": "local_keyword",
+        "kHardfloat": "hardware_float_keyword",
+        "kSoftfloat": "software_float_keyword",
+        "kMs_abi_default": "microsoft_application_binary_interface_default_keyword",
+        "kMs_abi_cdecl": "microsoft_application_binary_interface_c_declaration_keyword",
+        "kSaveregisters": "save_registers_keyword",
+        "kSysv_abi_default": "system_five_application_binary_interface_default_keyword",
+        "kSysv_abi_cdecl": "system_five_application_binary_interface_c_declaration_keyword",
+        "kVectorcall": "vector_call_keyword",
+        "kVarargs": "variable_arguments_keyword",
+        "kWinapi": "windows_application_programming_interface_keyword",
+        "kAlias": "alias_keyword",
+        "kDelayed": "delayed_keyword",
+        "kNil": "nil_keyword",
+        "kTrue": "true_keyword",
+        "kFalse": "false_keyword",
+        "kIfdef": "if_defined_keyword",
+        "kIfndef": "if_not_defined_keyword",
+        "kEndif": "end_if_keyword",
+        "if": "if_statement",
+        "nestedIf": "nested_if_statement",
+        "ifElse": "if_else_statement",
+        "for": "for_statement",
+        "foreach": "for_each_statement",
+        "exceptionElse": "exception_else_clause",
+        "with": "with_statement",
+        "goto": "go_to_statement",
+        "inherited": "inherited_expression",
+        "exprAs": "conversion_expression",
+        "exprTpl": "template_expression",
+        "exprUnary": "unary_expression",
+        "exprParens": "parenthesized_expression",
+        "typerefTpl": "template_type_reference",
+        "genericTpl": "generic_template",
+        "procAttributeNoExt": "procedure_attribute_without_external_specification",
+        "_ref": "expression_reference",
+        "exprDeref": "referent_expression",
+        "declProcRef": "procedure_reference_declaration",
+        "kDispid": "dispatch_identifier_keyword",
+        "_exceptionHandlers": "exception_handler_list",
+        "assignment": "assignment_expression",
+        "statements": "statement_list",
+        "_definitions": "definition_list",
+        "_declarations": "declaration_list",
+        "_classDeclarations": "class_declaration_list",
+        "case": "case_statement",
+        "caseCase": "case_arm",
+        "typeref": "type_name_reference",
+        "exprArgs": "call_argument_list",
+        "declArgs": "formal_parameter_list",
+        "declArg": "formal_parameter_declaration",
+        "genericArgs": "generic_argument_list",
+        "kObjcCategory": "objective_c_extension_keyword",
+        "literalChar": "character_literal",
+        "literalCharacter": "character_literal",
+        "range": "ordinal_range",
+        "declExports": "export_declaration_list",
+        "declTypes": "type_declaration_list",
+        "declConsts": "constant_declaration_list",
+        "declLabels": "label_declaration_list",
+        "_declFields": "field_declaration_list"
+      },
+      "concepts": {},
+      "sourceTransforms": [
+        {
+          "family": "alias-pattern-precedence",
+          "rules": [
+            "type",
+            "defProc"
+          ],
+          "alias": "pp",
+          "value": 1,
+          "reason": "A conditional branch directive consumes its own token before the generic preprocessor extra can skip it. Preserve the directive kind and all conditional alternatives."
+        },
+        {
+          "family": "rule-variant-precedence",
+          "rule": "exprBinary",
+          "fields": {
+            "operator": "kLt",
+            "lhs": "_ref"
+          },
+          "associativity": "right",
+          "value": 1,
+          "dynamic": 1,
+          "reason": "The pinned parser chooses the less-than variant with a reference left operand and a recursively grouped right operand, while other comparison operators retain their source associativity."
+        }
+      ]
+    },
+    "vb": {
+      "names": {
+        "option_statements": "option_statement_list",
+        "imports_statement": "import_statement",
+        "type_parameters": "type_parameter_list",
+        "type_parameter": "type_parameter_declaration",
+        "parameter": "parameter_declaration",
+        "attribute": "annotation_attribute",
+        "modifiers": "modifier_list",
+        "argument": "argument_expression",
+        "catch_block": "exception_catch_block",
+        "call_statement": "expression_call_statement",
+        "property_declaration": "member_property_declaration"
+      },
+      "concepts": {},
+      "sourceTransforms": [
+        {
+          "family": "field-choice-variant",
+          "rule": "invocation",
+          "helper": "_member_invocation",
+          "field": "target",
+          "symbol": "member_access",
+          "alias": "invocation",
+          "insertInto": "expression",
+          "reason": "The pinned parser chooses invocation for member targets while retaining element access for bare identifier targets."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "expression",
+          "variants": [
+            "alias:invocation",
+            "element_access",
+            "invocation"
+          ],
+          "reason": "Resolve only the overlapping invocation and element-access alternatives after retaining all other expression alternatives."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "statement",
+          "variants": [
+            "call_statement",
+            "assignment_statement"
+          ],
+          "reason": "The pinned parser chooses the binary-equality call statement on overlapping complete statements; retain assignment as the fallback."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "type",
+          "variants": [
+            "array_type",
+            "primitive_type"
+          ],
+          "reason": "Shift the rank specifier into an array type before reducing a primitive type in object construction."
+        }
+      ]
+    },
+    "css": {
+      "names": {
+        "from": "initial_key_frame",
+        "to": "final_key_frame",
+        "postcss_statement": "post_processing_style_statement",
+        "id_selector": "identifier_selector",
+        "important": "importance_modifier",
+        "selectors": "selector_list",
+        "arguments": "argument_list",
+        "_query": "selection_query",
+        "id_name": "identifier_name"
+      },
+      "sourceTransforms": [
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "call_expression",
+          "value": 1,
+          "reason": "The pinned parser binds a function name and following arguments into one call instead of separate declaration values."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "pseudo_class_arguments",
+            "pseudo_element_arguments"
+          ],
+          "symbol": "_selector",
+          "value": 1,
+          "reason": "Preserve selector and value alternatives; choose the selector tree where an argument also parses as a value, matching the pinned oracle."
+        }
+      ]
+    },
+    "powershell": {
+      "names": {
+        "file_redirection_operator": "file_output_destination_operator",
+        "merging_redirection_operator": "merged_output_destination_operator",
+        "for_iterator": "loop_iteration_expression",
+        "data_commands_allowed": "allowable_data_command_list",
+        "_expandable_string_literal_immediate": "immediate_expandable_string_literal_body",
+        "_string_literal_immediate": "immediate_string_literal_body",
+        "stop_parsing": "verbatim_argument_marker",
+        "redirections": "output_destination_list",
+        "redirection": "output_destination",
+        "sub_expression": "subordinate_expression",
+        "pipeline_chain": "command_pipeline_sequence",
+        "dimension": "array_dimension_specifier",
+        "function_statement": "function_definition_statement",
+        "_command_argument": "command_argument_value",
+        "data_command": "data_command_name",
+        "elseif_clauses": "else_if_clause_list",
+        "switch_parameters": "switch_parameter_list",
+        "switch_clauses": "switch_clause_list",
+        "catch_clauses": "catch_clause_list",
+        "command_elements": "command_element_list",
+        "attribute": "metadata_attribute",
+        "attribute_name": "metadata_attribute_name",
+        "attribute_arguments": "metadata_attribute_argument_list",
+        "attribute_argument": "metadata_attribute_argument",
+        "attribute_list": "metadata_attribute_list",
+        "type_literal": "type_reference_literal"
+      },
+      "sourceTransforms": [
+        {
+          "family": "lift-token-aliases",
+          "rules": [
+            "class_statement",
+            "enum_statement"
+          ],
+          "reason": "An anonymous keyword alias names the complete lexical token. Lift it outside the token wrapper so it retains the pinned parser's keyword kind and lexical priority."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "function_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "class_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "enum_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "flow_control_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "try_statement",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "else_clause",
+          "value": 1,
+          "reason": "Prefer the pinned parser's reserved statement production over reading its keyword as a command; retain both language alternatives."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "array_literal_expression",
+          "associativity": "none",
+          "value": 0,
+          "reason": "The fixed comma-list production retains source order without a recursive associativity conflict; all elements remain in the same concrete array node."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "while_statement",
+          "value": 1,
+          "reason": "Prefer complete control statements and attached clauses over the overlapping command productions, preserving every source alternative."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "catch_clause",
+          "value": 1,
+          "reason": "Prefer complete control statements and attached clauses over the overlapping command productions, preserving every source alternative."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "finally_clause",
+          "value": 1,
+          "reason": "Prefer complete control statements and attached clauses over the overlapping command productions, preserving every source alternative."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "if_statement",
+          "associativity": "none",
+          "value": 0,
+          "reason": "Keep optional else clauses inside their completed conditional statement instead of reducing an incomplete prefix before else."
+        },
+        {
+          "family": "symbol-keyword-exclusion",
+          "rule": "_statement",
+          "symbol": "pipeline",
+          "keywordRules": [
+            "switch_statement",
+            "flow_control_statement",
+            "function_statement",
+            "class_statement",
+            "enum_statement",
+            "if_statement",
+            "while_statement",
+            "for_statement",
+            "foreach_statement",
+            "do_statement",
+            "trap_statement",
+            "try_statement",
+            "data_statement",
+            "inlinescript_statement",
+            "parallel_statement",
+            "sequence_statement"
+          ],
+          "wordRule": "_command_token",
+          "reason": "The statement parse state reserves initial keyword tokens even when the keyword production fails later. A contextual negative lookahead retains every pipeline alternative, command prefixes and explicit invocation forms without enumerating case variants."
+        },
+        {
+          "family": "optional-suffix-context",
+          "rule": "_command_element",
+          "prefix": "_command_argument",
+          "suffix": "argument_list",
+          "value": 1,
+          "reason": "An argument-list attachment requires the value of an optional generic-token prefix. Keep the original argument alternative, including a separator alone and parenthesized expressions, without the attachment preference.",
+          "helper": "_argument_attachment_command_argument",
+          "requiredSymbol": "generic_token"
+        }
+      ],
+      "concepts": {
+        "hexadecimal_integer_literal": "grammar.hex-integer-literal"
+      }
+    },
+    "erlang": {
+      "names": {
+        "_tq_string": "multiple_quote_string",
+        "_tq_sigil_string": "multiple_quote_sigil_string",
+        "_map_expr": "map_expression_body",
+        "_record_expr": "record_expression_body",
+        "ssr_definition": "structural_search_rule_definition",
+        "ssr_replacement": "structural_search_rule_replacement",
+        "ssr_where": "structural_search_condition_clause",
+        "pp_include": "preprocessor_include_directive",
+        "pp_include_lib": "preprocessor_library_include_directive",
+        "pp_undef": "preprocessor_removal_directive",
+        "pp_ifdef": "preprocessor_defined_condition_directive",
+        "pp_ifndef": "preprocessor_undefined_condition_directive",
+        "pp_else": "preprocessor_else_directive",
+        "pp_endif": "preprocessor_end_directive",
+        "pp_if": "preprocessor_if_directive",
+        "pp_elif": "preprocessor_else_if_directive",
+        "pp_define": "preprocessor_definition_directive",
+        "deprecation_desc": "deprecation_description",
+        "_desc": "description",
+        "multi_string": "string_concatenation",
+        "opaque": "opaque_type_declaration",
+        "type_sig": "type_signature",
+        "ann_type": "annotated_type",
+        "ann_var": "annotated_variable",
+        "fun_type_sig": "function_type_signature",
+        "dotdotdot": "ellipsis",
+        "_expr_max": "primary_expression_body",
+        "paren_expr": "parenthesized_expression",
+        "unary_op_expr_max": "primary_unary_operator_expression",
+        "binary_op_expr_max": "primary_binary_operator_expression",
+        "lc_exprs": "comprehension_qualifier_expression_list",
+        "lc_or_zc_expr": "comprehension_zip_or_filter_expression",
+        "_lc_expr": "comprehension_qualifier_expression",
+        "_generator_op": "generator_operator",
+        "_b_generator_op": "binary_generator_operator",
+        "_map_field_op": "map_field_operator",
+        "receive_after": "receive_time_limit_clause",
+        "try_after": "exception_cleanup_clause",
+        "binary_op_catch_pat": "binary_operator_exception_pattern",
+        "replacement_guard_or": "replacement_disjunction_guard",
+        "replacement_guard_and": "replacement_conjunction_guard",
+        "replacement_parens": "replacement_parenthesized_expression",
+        "_exprs": "expression_list",
+        "concatables": "concatenation_operand_list",
+        "_concatable": "concatenation_operand",
+        "_prefix_op": "prefix_operator",
+        "_mult_op": "multiplication_operator",
+        "_add_op": "addition_operator",
+        "_list_op": "list_operator",
+        "_comp_op": "comparison_operator",
+        "_sq_string": "quoted_string_token",
+        "_sigil_verbatim_string": "prefixed_verbatim_string_literal_body",
+        "_sigil_string": "prefixed_string_literal_body",
+        "deprecated_fas": "deprecated_function_arity_list",
+        "deprecated_fa": "deprecated_function_arity",
+        "_cr_clauses": "message_or_case_clause_list",
+        "_cr_clause_or_macro": "message_or_case_clause_or_macro",
+        "cr_clause": "message_or_case_clause",
+        "fun_clauses": "anonymous_function_clause_list",
+        "fun_clause": "anonymous_function_clause",
+        "integer": "integer_literal",
+        "char": "character_literal",
+        "expr_args": "expression_argument_list",
+        "function_clause": "function_definition_clause",
+        "catch_expr": "exception_catch_expression",
+        "block_expr": "scope_block_expression",
+        "_form": "top_level_declaration",
+        "map_expr": "dictionary_expression",
+        "attr_name": "module_attribute_name",
+        "case_expr": "case_selection_expression",
+        "_catch_clauses": "catch_clause_list",
+        "_catch_pat": "exception_pattern"
+      },
+      "sourceTransforms": [
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "wild_attribute",
+          "value": 1,
+          "reason": "Prefer a complete dotted attribute over the source-file expression alternative where both fit."
+        },
+        {
+          "family": "complete-context-variant",
+          "rule": "_macro_def_replacement",
+          "symbol": "_expr",
+          "boundary": ")",
+          "reason": "Keep a complete expression at the macro closing boundary; preserve every guard and clause alternative when the expression does not span the replacement."
+        },
+        {
+          "family": "complete-context-variant",
+          "rule": "source_file",
+          "field": "forms_only",
+          "boundary": null,
+          "reason": "Prefer a declaration sequence when it spans the input including trailing extras; preserve expression sequences otherwise."
+        }
+      ]
+    },
+    "groovy": {
+      "names": {
+        "_string_literal": "string_literal_content",
+        "_multiline_string_fragment": "multiple_line_string_fragment_content",
+        "_escape_sequence": "escape_sequence_content",
+        "_annotation": "annotation_variant",
+        "_toplevel_statement": "top_level_statement",
+        "_variable_declarator_id": "variable_declarator_identifier",
+        "_class__method_header": "class_method_header"
+      },
+      "sourceTransforms": [
+        {
+          "family": "literal-end-boundary",
+          "rule": "expression_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "do_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "break_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "continue_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "return_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "yield_statement",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "import_declaration",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "local_variable_declaration",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "literal-end-boundary",
+          "rule": "method_declaration",
+          "literal": "\u0000",
+          "alias": "",
+          "reason": "The pinned parser uses a NUL sentinel at end of input. Preserve the original alternative and its empty native symbol name while representing the actual zero-width boundary."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "statement",
+          "variants": [
+            "switch_expression",
+            "block",
+            "expression_statement"
+          ],
+          "reason": "Prefer direct switches and statement blocks while consequence expressions retain their field-local order."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "method_declaration",
+            "_method_header"
+          ],
+          "insertInto": [
+            "_class_body_declaration"
+          ],
+          "prefix": "_class_",
+          "reason": "A class method has a contextual def type spelling; clone only its header and declaration, preserving the ordinary top-level productions."
+        },
+        {
+          "family": "field-literal-alternative",
+          "rule": "_class__method_header",
+          "field": "type",
+          "literal": "def",
+          "alias": "type_identifier",
+          "reason": "Permit the source contextual def method type only inside a class declaration."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "_class_body_declaration",
+          "variants": [
+            "alias:method_declaration",
+            "field_declaration"
+          ],
+          "reason": "Keep a complete method before an overlapping field prefix inside a class, retaining the field production when no method fits."
+        },
+        {
+          "family": "field-ordered-variants",
+          "rule": "if_statement",
+          "field": "consequence",
+          "variants": [
+            "expression",
+            "statement"
+          ],
+          "reason": "Prefer the direct consequence expression where it fits; retain statements with their explicit terminators."
+        },
+        {
+          "family": "complete-context-variant",
+          "rule": "_toplevel_statement",
+          "symbol": "method_declaration",
+          "boundary": null,
+          "excludedKeywords": [
+            "def"
+          ],
+          "wordRule": "identifier",
+          "reason": "Prefer complete typed method declarations at the input boundary, preserving def functions and all original alternatives."
+        },
+        {
+          "family": "pattern-trivia-run",
+          "rule": "local_variable_declaration",
+          "pattern": "\\n",
+          "reason": "Keep the full run of existing newline extras in the declaration terminator span; a single newline remains the same production."
+        },
+        {
+          "family": "complete-context-variant",
+          "rule": "_toplevel_statement",
+          "symbol": "statement",
+          "boundary": null,
+          "includedKeywords": [
+            "if"
+          ],
+          "wordRule": "identifier",
+          "reason": "A complete conditional statement retains its direct consequence at the input boundary; the contextual keyword guard preserves unrelated literal and declaration choices."
+        },
+        {
+          "family": "symbol-keyword-exclusion",
+          "rule": "_method_header",
+          "symbol": "_unannotated_type",
+          "keywords": [
+            "def"
+          ],
+          "wordRule": "identifier",
+          "reason": "The def spelling starts a top-level function; reserve it at the method header type position, after annotations, while the separately cloned class header keeps its contextual alternative."
+        }
+      ],
+      "concepts": {
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "modifiers": "grammar.modifier-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "type_parameters": "grammar.type-parameter-list",
+        "type_arguments": "grammar.type-argument-list",
+        "dimensions": "grammar.array-dimensions",
+        "wildcard": "grammar.wildcard-type-argument",
+        "closure": "grammar.closure-expression",
+        "map_literal": "grammar.dictionary-expression",
+        "map_item": "grammar.key-value-pair"
+      }
+    },
+    "cpp": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_statement_identifier": "statement_identifier_alias",
+        "_namespace_identifier": "namespace_identifier_alias",
+        "decltype_auto": "inferred_expression_type_specifier",
+        "decltype": "expression_type_specifier",
+        "ref_qualifier": "reference_qualifier",
+        "noexcept": "exception_exclusion_specification",
+        "raw_string_delimiter": "raw_string_boundary_marker",
+        "false": "false_value",
+        "auto": "inferred_type_keyword",
+        "_dependent_type": "dependent_type_body",
+        "dependent_type": "dependent_type_specifier",
+        "dependent_identifier": "dependent_identifier_expression"
+      },
+      "sourceTransforms": [
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "qualified_field_identifier",
+            "field_expression"
+          ],
+          "symbol": "_field_identifier",
+          "value": 1,
+          "reason": "A plain field name retains its reduction before relational expressions compete with a template method containing a logical argument. Preserve template methods and their typed and numeric arguments as complete alternatives."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "dependent_type_identifier",
+          "associativity": "right",
+          "value": 23,
+          "reason": "A dependent type segment retains its complete nested template arguments before following scope segments are considered as a relational or shift operand."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "new_declarator",
+          "associativity": "right",
+          "value": 18,
+          "reason": "Array dimensions inside a new expression bind to its declarator before a competing subscript expression consumes the same bracket suffix."
+        },
+        {
+          "family": "field-present-precedence",
+          "rule": "new_expression",
+          "field": "arguments",
+          "value": 1,
+          "reason": "Prefer arguments attached to the complete new expression over a call whose function is a shorter new expression, retaining the absent argument branch."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "case_statement"
+          ],
+          "symbol": "_non_case_statement",
+          "value": 1,
+          "reason": "A case owns following non-case statements rather than competing with a shorter case and sibling statement, preserving all repeated statement alternatives."
+        },
+        {
+          "family": "literal-continuation-exclusion",
+          "rules": [
+            "template_argument_list",
+            "binary_expression"
+          ],
+          "literal": ">",
+          "continuationPattern": "=",
+          "reason": "The source lexer reads adjacent greater-than and equals signs as a single comparison operator. A template closing marker cannot split that operator into a template delimiter and an assignment."
+        },
+        {
+          "family": "field-dynamic-precedence",
+          "rule": "sizeof_expression",
+          "field": "value",
+          "symbol": "expression",
+          "value": 1,
+          "reason": "Prefer the parenthesized expression operand of sizeof to an indistinguishable type operand, retaining both complete productions."
+        },
+        {
+          "family": "field-absent-boundary",
+          "rule": "optional_parameter_declaration",
+          "field": "declarator",
+          "boundary": "=",
+          "reason": "When the complete type is immediately followed by a default assignment, prefer the absent declarator over competing splits of a qualified dependent type."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "template_declaration"
+          ],
+          "symbol": "_empty_declaration",
+          "value": 1,
+          "reason": "Prefer the complete standalone type declaration in a template specialization to a duplicate declaration path; retain every alternative and its original concrete kinds."
+        },
+        {
+          "family": "keyword-context-variant",
+          "rule": "_block_item",
+          "symbol": "declaration",
+          "includedKeywords": [
+            "void"
+          ],
+          "wordRule": "identifier",
+          "reason": "Prefer the complete declaration introduced by this type keyword before an overlapping expression or constructor path; retain the original choice as fallback."
+        },
+        {
+          "family": "keyword-context-variant",
+          "rule": "_top_level_item",
+          "symbol": "_empty_declaration",
+          "includedKeywords": [
+            "enum"
+          ],
+          "wordRule": "identifier",
+          "reason": "Prefer the complete declaration introduced by this type keyword before an overlapping expression or constructor path; retain the original choice as fallback."
+        },
+        {
+          "family": "pattern-context-variant",
+          "rule": "_block_item",
+          "symbol": "statement",
+          "pattern": "(::)?([A-Za-z_][A-Za-z0-9_]*::)+([A-Za-z_][A-Za-z0-9_]*[ \\t]*=|template[ \\t]+[A-Za-z_][A-Za-z0-9_]*<[^;{}]+>[ \\t]*\\()",
+          "reason": "Prefer complete scoped assignments and dependent template calls over a declaration that splits the scope prefix into a type and declarator, retaining the original choice as fallback."
+        },
+        {
+          "family": "pattern-context-variant",
+          "rule": "_top_level_item",
+          "symbol": "_top_level_statement",
+          "pattern": "(::)?([A-Za-z_][A-Za-z0-9_]*::)+([A-Za-z_][A-Za-z0-9_]*[ \\t]*=|template[ \\t]+[A-Za-z_][A-Za-z0-9_]*<[^;{}]+>[ \\t]*\\()",
+          "reason": "Prefer complete scoped assignments and dependent template calls over a declaration that splits the scope prefix into a type and declarator, retaining the original choice as fallback."
+        },
+        {
+          "family": "pattern-context-variant",
+          "rule": "_block_item",
+          "symbol": "statement",
+          "pattern": "[A-Za-z_][A-Za-z0-9_]*[ \\t]*\\*[ \\t]*[A-Za-z_][A-Za-z0-9_]*[ \\t]*\\([ \\t]*[0-9]",
+          "reason": "A multiplied call with an initial numeric argument is an expression statement; retain pointer declarations with typed parameter lists and the original choice as fallback."
+        },
+        {
+          "family": "pattern-context-variant",
+          "rule": "_block_item",
+          "symbol": "statement",
+          "pattern": "(::)?([A-Za-z_][A-Za-z0-9_]*::)+[A-Za-z_][A-Za-z0-9_]*[ \t]*\\(",
+          "reason": "Prefer a complete scoped expression statement before a declaration that splits its namespace into a type and a globally scoped declarator. Retain the original choice as fallback, including qualified type declarations and unqualified declarations."
+        },
+        {
+          "family": "pattern-context-variant",
+          "rule": "_top_level_item",
+          "symbol": "_top_level_statement",
+          "pattern": "(::)?([A-Za-z_][A-Za-z0-9_]*::)+[A-Za-z_][A-Za-z0-9_]*[ \t]*\\(",
+          "reason": "Prefer a complete scoped expression statement before a declaration that splits its namespace into a type and a globally scoped declarator. Retain the original choice as fallback, including qualified type declarations and unqualified declarations."
+        },
+        {
+          "family": "symbol-prefix-exclusion",
+          "rule": "concatenated_string",
+          "symbol": "identifier",
+          "prefixRule": "raw_string_literal",
+          "reason": "Commit the source lexer to an adjacent raw string prefix rather than accepting a failed raw string as an identifier followed by an ordinary quoted string. Preserve all identifier concatenations with other prefixes or intervening whitespace."
+        }
+      ],
+      "concepts": {
+        "preproc_include": "grammar.preprocessor-include-directive",
+        "preproc_if": "grammar.preprocessor-if-directive",
+        "preproc_ifdef": "grammar.preprocessor-if-defined-directive",
+        "preproc_else": "grammar.preprocessor-else-branch",
+        "preproc_elif": "grammar.preprocessor-else-if-branch",
+        "preproc_elifdef": "grammar.preprocessor-else-if-defined-branch",
+        "preproc_defined": "grammar.preprocessor-defined-operator",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "attribute": "program.attributes"
+      }
+    },
+    "sql": {
+      "names": {
+        "_array_size_definition": "array_size_definition_body",
+        "_cte": "common_table_expression_body",
+        "_identifier": "identifier_body",
+        "_dollar_quoted_string_start_tag": "dollar_quote_opening_tag",
+        "_dollar_quoted_string_end_tag": "dollar_quote_closing_tag",
+        "_dollar_quoted_string": "dollar_quoted_string",
+        "_column": "column_body",
+        "int": "integer_type",
+        "_integer": "integer_literal",
+        "keyword_char": "abbreviated_character_type_keyword",
+        "keyword_select": "select_keyword",
+        "keyword_delete": "delete_keyword",
+        "keyword_insert": "insert_keyword",
+        "keyword_replace": "replace_keyword",
+        "keyword_update": "update_keyword",
+        "keyword_truncate": "truncate_keyword",
+        "keyword_merge": "merge_keyword",
+        "keyword_show": "show_keyword",
+        "keyword_unload": "unload_keyword",
+        "keyword_into": "into_keyword",
+        "keyword_overwrite": "overwrite_keyword",
+        "keyword_values": "value_list_keyword",
+        "keyword_value": "value_keyword",
+        "keyword_matched": "matched_keyword",
+        "keyword_set": "set_keyword",
+        "keyword_from": "from_keyword",
+        "keyword_left": "left_keyword",
+        "keyword_right": "right_keyword",
+        "keyword_inner": "inner_keyword",
+        "keyword_full": "full_keyword",
+        "keyword_outer": "outer_keyword",
+        "keyword_cross": "cross_keyword",
+        "keyword_join": "join_keyword",
+        "keyword_lateral": "lateral_keyword",
+        "keyword_natural": "natural_keyword",
+        "keyword_on": "on_keyword",
+        "keyword_off": "off_keyword",
+        "keyword_where": "where_keyword",
+        "keyword_order": "order_keyword",
+        "keyword_group": "group_keyword",
+        "keyword_partition": "partition_keyword",
+        "keyword_by": "by_keyword",
+        "keyword_having": "having_keyword",
+        "keyword_desc": "descending_keyword",
+        "keyword_asc": "ascending_keyword",
+        "keyword_limit": "limit_keyword",
+        "keyword_offset": "offset_keyword",
+        "keyword_primary": "primary_keyword",
+        "keyword_create": "create_keyword",
+        "keyword_alter": "alter_keyword",
+        "keyword_change": "change_keyword",
+        "keyword_analyze": "analyze_keyword",
+        "keyword_explain": "explain_keyword",
+        "keyword_verbose": "verbose_keyword",
+        "keyword_modify": "modify_keyword",
+        "keyword_drop": "drop_keyword",
+        "keyword_add": "add_keyword",
+        "keyword_table": "table_keyword",
+        "keyword_tables": "table_list_keyword",
+        "keyword_view": "view_keyword",
+        "keyword_column": "column_keyword",
+        "keyword_columns": "column_list_keyword",
+        "keyword_materialized": "materialized_keyword",
+        "keyword_tablespace": "table_space_keyword",
+        "keyword_sequence": "sequence_keyword",
+        "keyword_increment": "increment_keyword",
+        "keyword_minvalue": "minimum_value_keyword",
+        "keyword_maxvalue": "maximum_value_keyword",
+        "keyword_none": "none_keyword",
+        "keyword_owned": "owned_keyword",
+        "keyword_start": "start_keyword",
+        "keyword_restart": "restart_keyword",
+        "keyword_key": "key_keyword",
+        "keyword_duplicate": "duplicate_keyword",
+        "keyword_as": "as_keyword",
+        "keyword_distinct": "distinct_keyword",
+        "keyword_constraint": "constraint_keyword",
+        "keyword_filter": "filter_keyword",
+        "keyword_cast": "cast_keyword",
+        "keyword_separator": "separator_keyword",
+        "keyword_case": "case_keyword",
+        "keyword_when": "condition_keyword",
+        "keyword_then": "then_keyword",
+        "keyword_else": "else_keyword",
+        "keyword_end": "end_keyword",
+        "keyword_in": "in_keyword",
+        "keyword_and": "and_keyword",
+        "keyword_or": "or_keyword",
+        "keyword_is": "is_keyword",
+        "keyword_not": "not_keyword",
+        "keyword_force": "force_keyword",
+        "keyword_ignore": "ignore_keyword",
+        "keyword_using": "using_keyword",
+        "keyword_use": "use_keyword",
+        "keyword_index": "index_keyword",
+        "keyword_for": "for_keyword",
+        "keyword_if": "if_keyword",
+        "keyword_exists": "exists_keyword",
+        "keyword_auto_increment": "auto_increment_keyword",
+        "keyword_generated": "generated_keyword",
+        "keyword_always": "always_keyword",
+        "keyword_collate": "collate_keyword",
+        "keyword_character": "character_keyword",
+        "keyword_engine": "engine_keyword",
+        "keyword_default": "default_keyword",
+        "keyword_cascade": "cascade_keyword",
+        "keyword_restrict": "restrict_keyword",
+        "keyword_with": "with_keyword",
+        "keyword_without": "without_keyword",
+        "keyword_no": "no_keyword",
+        "keyword_data": "data_keyword",
+        "keyword_type": "type_keyword",
+        "keyword_rename": "rename_keyword",
+        "keyword_to": "to_keyword",
+        "keyword_database": "database_keyword",
+        "keyword_schema": "schema_keyword",
+        "keyword_owner": "owner_keyword",
+        "keyword_user": "user_keyword",
+        "keyword_admin": "administration_keyword",
+        "keyword_password": "password_keyword",
+        "keyword_encrypted": "encrypted_keyword",
+        "keyword_valid": "valid_keyword",
+        "keyword_until": "end_condition_keyword",
+        "keyword_connection": "connection_keyword",
+        "keyword_role": "role_keyword",
+        "keyword_reset": "reset_keyword",
+        "keyword_temp": "abbreviated_temporary_keyword",
+        "keyword_temporary": "temporary_keyword",
+        "keyword_unlogged": "unrecorded_keyword",
+        "keyword_logged": "recorded_keyword",
+        "keyword_cycle": "cycle_keyword",
+        "keyword_union": "union_keyword",
+        "keyword_all": "all_keyword",
+        "keyword_any": "any_keyword",
+        "keyword_some": "some_keyword",
+        "keyword_except": "except_keyword",
+        "keyword_intersect": "intersect_keyword",
+        "keyword_returning": "returning_keyword",
+        "keyword_begin": "begin_keyword",
+        "keyword_commit": "commit_keyword",
+        "keyword_rollback": "rollback_keyword",
+        "keyword_transaction": "transaction_keyword",
+        "keyword_over": "over_keyword",
+        "keyword_nulls": "null_ordering_keyword",
+        "keyword_first": "first_keyword",
+        "keyword_after": "after_keyword",
+        "keyword_before": "before_keyword",
+        "keyword_last": "last_keyword",
+        "keyword_window": "window_keyword",
+        "keyword_range": "range_keyword",
+        "keyword_rows": "row_list_keyword",
+        "keyword_groups": "group_list_keyword",
+        "keyword_between": "between_keyword",
+        "keyword_unbounded": "unbounded_keyword",
+        "keyword_preceding": "preceding_keyword",
+        "keyword_following": "following_keyword",
+        "keyword_exclude": "exclude_keyword",
+        "keyword_current": "current_keyword",
+        "keyword_row": "row_keyword",
+        "keyword_ties": "ties_keyword",
+        "keyword_others": "other_values_keyword",
+        "keyword_only": "only_keyword",
+        "keyword_unique": "unique_keyword",
+        "keyword_foreign": "foreign_keyword",
+        "keyword_references": "reference_list_keyword",
+        "keyword_concurrently": "concurrently_keyword",
+        "keyword_btree": "balanced_tree_keyword",
+        "keyword_hash": "hash_keyword",
+        "keyword_gist": "gist_keyword",
+        "keyword_spgist": "space_partitioned_generalized_search_tree_keyword",
+        "keyword_gin": "gin_keyword",
+        "keyword_brin": "block_range_index_keyword",
+        "keyword_like": "like_keyword",
+        "keyword_similar": "similar_keyword",
+        "keyword_unsigned": "unsigned_keyword",
+        "keyword_zerofill": "zero_padding_keyword",
+        "keyword_conflict": "conflict_keyword",
+        "keyword_do": "do_keyword",
+        "keyword_nothing": "empty_result_keyword",
+        "keyword_high_priority": "high_priority_keyword",
+        "keyword_low_priority": "low_priority_keyword",
+        "keyword_delayed": "delayed_keyword",
+        "keyword_recursive": "recursive_keyword",
+        "keyword_cascaded": "cascaded_keyword",
+        "keyword_local": "local_keyword",
+        "keyword_current_timestamp": "current_time_stamp_keyword",
+        "keyword_check": "check_keyword",
+        "keyword_option": "option_keyword",
+        "keyword_vacuum": "vacuum_keyword",
+        "keyword_wait": "wait_keyword",
+        "keyword_nowait": "wait_bypass_keyword",
+        "keyword_attribute": "attribute_keyword",
+        "keyword_authorization": "authorization_keyword",
+        "keyword_action": "action_keyword",
+        "keyword_extension": "extension_keyword",
+        "keyword_copy": "copy_keyword",
+        "keyword_stdin": "standard_input_keyword",
+        "keyword_freeze": "freeze_keyword",
+        "keyword_escape": "escape_keyword",
+        "keyword_encoding": "encoding_keyword",
+        "keyword_force_quote": "force_quote_keyword",
+        "keyword_quote": "quote_keyword",
+        "keyword_force_null": "force_null_keyword",
+        "keyword_force_not_null": "force_not_null_keyword",
+        "keyword_header": "header_keyword",
+        "keyword_match": "match_keyword",
+        "keyword_program": "program_keyword",
+        "keyword_plain": "plain_keyword",
+        "keyword_extended": "extended_keyword",
+        "keyword_main": "main_keyword",
+        "keyword_storage": "storage_keyword",
+        "keyword_compression": "compression_keyword",
+        "keyword_trigger": "trigger_keyword",
+        "keyword_function": "function_keyword",
+        "keyword_returns": "return_list_keyword",
+        "keyword_return": "return_keyword",
+        "keyword_setof": "set_type_keyword",
+        "keyword_atomic": "atomic_keyword",
+        "keyword_declare": "declare_keyword",
+        "keyword_language": "language_keyword",
+        "keyword_immutable": "immutable_keyword",
+        "keyword_stable": "stable_keyword",
+        "keyword_volatile": "volatile_keyword",
+        "keyword_leakproof": "leakproof_keyword",
+        "keyword_parallel": "parallel_keyword",
+        "keyword_safe": "safe_keyword",
+        "keyword_unsafe": "unsafe_keyword",
+        "keyword_restricted": "restricted_keyword",
+        "keyword_called": "called_keyword",
+        "keyword_input": "input_keyword",
+        "keyword_strict": "strict_keyword",
+        "keyword_cost": "cost_keyword",
+        "keyword_support": "support_keyword",
+        "keyword_definer": "creator_keyword",
+        "keyword_invoker": "caller_keyword",
+        "keyword_security": "security_keyword",
+        "keyword_version": "version_keyword",
+        "keyword_out": "out_keyword",
+        "keyword_inout": "input_output_keyword",
+        "keyword_variadic": "variadic_keyword",
+        "keyword_ordinality": "ordinal_number_keyword",
+        "keyword_session": "session_keyword",
+        "keyword_isolation": "isolation_keyword",
+        "keyword_level": "level_keyword",
+        "keyword_serializable": "serial_execution_keyword",
+        "keyword_repeatable": "repeatable_keyword",
+        "keyword_read": "read_keyword",
+        "keyword_write": "write_keyword",
+        "keyword_committed": "committed_keyword",
+        "keyword_uncommitted": "uncommitted_keyword",
+        "keyword_deferrable": "postponement_keyword",
+        "keyword_names": "name_list_keyword",
+        "keyword_zone": "zone_keyword",
+        "keyword_immediate": "immediate_keyword",
+        "keyword_deferred": "postponed_keyword",
+        "keyword_constraints": "constraint_list_keyword",
+        "keyword_snapshot": "snapshot_keyword",
+        "keyword_characteristics": "characteristics_keyword",
+        "keyword_follows": "follows_keyword",
+        "keyword_precedes": "precedes_keyword",
+        "keyword_each": "each_keyword",
+        "keyword_instead": "instead_keyword",
+        "keyword_of": "of_keyword",
+        "keyword_initially": "initially_keyword",
+        "keyword_old": "old_keyword",
+        "keyword_new": "new_keyword",
+        "keyword_referencing": "referencing_keyword",
+        "keyword_statement": "statement_keyword",
+        "keyword_execute": "execute_keyword",
+        "keyword_procedure": "procedure_keyword",
+        "keyword_object_id": "object_identifier_keyword",
+        "keyword_external": "external_keyword",
+        "keyword_stored": "stored_keyword",
+        "keyword_virtual": "virtual_keyword",
+        "keyword_cached": "cached_keyword",
+        "keyword_uncached": "cache_bypass_keyword",
+        "keyword_replication": "replication_keyword",
+        "keyword_tblproperties": "table_properties_keyword",
+        "keyword_compute": "compute_keyword",
+        "keyword_stats": "abbreviated_statistics_keyword",
+        "keyword_statistics": "statistics_keyword",
+        "keyword_optimize": "optimize_keyword",
+        "keyword_rewrite": "rewrite_keyword",
+        "keyword_bin_pack": "bin_pack_keyword",
+        "keyword_incremental": "incremental_keyword",
+        "keyword_location": "location_keyword",
+        "keyword_partitioned": "partitioned_keyword",
+        "keyword_comment": "comment_keyword",
+        "keyword_sort": "sort_keyword",
+        "keyword_format": "format_keyword",
+        "keyword_delimited": "delimited_keyword",
+        "keyword_delimiter": "boundary_marker_keyword",
+        "keyword_fields": "fields_keyword",
+        "keyword_terminated": "terminated_keyword",
+        "keyword_escaped": "escaped_keyword",
+        "keyword_lines": "lines_keyword",
+        "keyword_cache": "cache_keyword",
+        "keyword_metadata": "metadata_keyword",
+        "keyword_noscan": "scan_bypass_keyword",
+        "keyword_parquet": "parquet_keyword",
+        "keyword_rcfile": "record_columnar_file_keyword",
+        "keyword_csv": "csv_keyword",
+        "keyword_textfile": "text_file_keyword",
+        "keyword_avro": "record_serialization_format_keyword",
+        "keyword_sequencefile": "sequence_file_keyword",
+        "keyword_orc": "optimized_row_columnar_format_keyword",
+        "keyword_jsonfile": "object_notation_file_keyword",
+        "_exclude_no_others": "exclude_no_other_values",
+        "keyword_null": "null_keyword",
+        "keyword_true": "true_keyword",
+        "keyword_false": "false_keyword",
+        "keyword_boolean": "boolean_keyword",
+        "keyword_bit": "bit_keyword",
+        "keyword_binary": "binary_keyword",
+        "keyword_varbinary": "variable_binary_keyword",
+        "keyword_image": "image_keyword",
+        "keyword_smallserial": "small_automatic_number_keyword",
+        "keyword_serial": "serial_keyword",
+        "keyword_bigserial": "large_automatic_number_keyword",
+        "keyword_tinyint": "tiny_integer_keyword",
+        "keyword_smallint": "small_integer_keyword",
+        "keyword_mediumint": "medium_integer_keyword",
+        "keyword_int": "integer_keyword",
+        "keyword_bigint": "big_integer_keyword",
+        "keyword_decimal": "decimal_keyword",
+        "keyword_numeric": "numeric_keyword",
+        "keyword_real": "real_keyword",
+        "keyword_float": "float_keyword",
+        "keyword_double": "double_keyword",
+        "keyword_precision": "precision_keyword",
+        "keyword_inet": "internet_address_keyword",
+        "keyword_money": "money_keyword",
+        "keyword_smallmoney": "small_monetary_value_keyword",
+        "keyword_varying": "varying_keyword",
+        "keyword_nchar": "national_character_keyword",
+        "keyword_varchar": "variable_character_keyword",
+        "keyword_nvarchar": "national_variable_character_keyword",
+        "keyword_text": "text_keyword",
+        "keyword_string": "string_keyword",
+        "keyword_uuid": "universally_unique_identifier_keyword",
+        "keyword_json": "object_notation_keyword",
+        "keyword_jsonb": "binary_object_notation_keyword",
+        "keyword_xml": "markup_language_keyword",
+        "keyword_bytea": "byte_array_keyword",
+        "keyword_enum": "enumeration_keyword",
+        "keyword_date": "date_keyword",
+        "keyword_datetime": "date_time_keyword",
+        "keyword_datetime2": "extended_date_time_keyword",
+        "keyword_smalldatetime": "small_date_time_keyword",
+        "keyword_datetimeoffset": "date_time_offset_keyword",
+        "keyword_time": "time_keyword",
+        "keyword_timestamp": "time_stamp_keyword",
+        "keyword_timestamptz": "time_stamp_with_time_zone_keyword",
+        "keyword_interval": "interval_keyword",
+        "keyword_geometry": "geometry_keyword",
+        "keyword_geography": "geography_keyword",
+        "keyword_box2d": "planar_box_keyword",
+        "keyword_box3d": "spatial_box_keyword",
+        "keyword_oid": "abbreviated_object_identifier_keyword",
+        "keyword_oids": "object_identifier_list_keyword",
+        "keyword_name": "name_keyword",
+        "keyword_regclass": "registered_relation_keyword",
+        "keyword_regnamespace": "registered_namespace_keyword",
+        "keyword_regproc": "registered_procedure_keyword",
+        "keyword_regtype": "registered_type_keyword",
+        "keyword_array": "array_keyword",
+        "tinyint": "tiny_integer",
+        "smallint": "small_integer",
+        "mediumint": "medium_integer",
+        "bigint": "big_integer",
+        "varbinary": "variable_binary",
+        "char": "character_type",
+        "varchar": "variable_character_type",
+        "nchar": "national_character",
+        "nvarchar": "national_variable_character",
+        "datetimeoffset": "date_time_offset",
+        "timestamp": "time_stamp",
+        "timestamptz": "time_stamp_with_time_zone",
+        "enum": "enumeration",
+        "_ddl_statement": "data_definition_language_statement",
+        "_dml_write": "data_manipulation_statement",
+        "_dml_read": "data_manipulation_language_read",
+        "cte": "common_table_expression",
+        "_argmode": "argument_mode",
+        "_user_access_role_config": "user_access_role_configuration",
+        "enum_elements": "enumeration_elements",
+        "when_clause": "condition_clause",
+        "_compute_stats": "compute_statistics",
+        "_partition_spec": "partition_specification",
+        "_mysql_update_statement": "relational_database_update_statement",
+        "_postgres_update_statement": "object_relational_database_update_statement",
+        "op_other": "additional_operator",
+        "op_unary_other": "additional_unary_operator",
+        "subquery": "nested_query",
+        "_postgres_escape_string": "object_relational_database_escape_string",
+        "_tsql_parameter": "transaction_query_language_parameter",
+        "object_id": "object_identifier",
+        "is_not": "negative_identity_operator",
+        "similar_to": "similarity_operator",
+        "not_similar_to": "negative_similarity_operator",
+        "distinct_from": "distinctness_operator",
+        "not_distinct_from": "negative_distinctness_operator",
+        "if_exists": "existence_condition",
+        "if_not_exists": "absence_condition",
+        "or_replace": "replacement_option",
+        "numeric": "numeric_type",
+        "commit": "transaction_commit_statement",
+        "show_create": "creation_display_statement",
+        "select": "selection_clause",
+        "delete_from": "deletion_source_clause",
+        "delete": "deletion_clause",
+        "function_leakproof": "function_information_security_attribute",
+        "stored_as": "storage_format_clause",
+        "exists": "existence_predicate",
+        "partition_by": "partition_key_clause",
+        "from": "source_clause",
+        "where": "filter_clause",
+        "group_by": "grouping_clause",
+        "having": "group_filter_clause",
+        "order_by": "ordering_clause",
+        "returning": "return_value_clause",
+        "_operator_other": "additional_operator",
+        "_operator_unary_other": "additional_unary_operator",
+        "not_in": "negative_membership_operator",
+        "character": "character_type",
+        "function_arguments": "function_argument_list",
+        "index_fields": "index_field_list",
+        "assignment": "column_assignment",
+        "column_definitions": "column_definition_list",
+        "constraints": "constraint_list",
+        "ordered_columns": "ordered_column_list",
+        "parameter": "query_parameter",
+        "values": "value_list",
+        "_natural_number": "natural_number_literal",
+        "case": "case_expression",
+        "bit": "bit_type",
+        "offset": "offset_clause",
+        "double": "double_precision_type",
+        "time": "time_type",
+        "set_statement": "configuration_statement",
+        "keyword_reference": "reference_keyword",
+        "keyword_object_identifier": "object_identifier_keyword",
+        "keyword_object_identifiers": "object_identifier_list_keyword",
+        "_if_exists": "existence_condition",
+        "_if_not_exists": "absence_condition",
+        "_or_replace": "replacement_option",
+        "_commit": "transaction_commit_statement",
+        "_show_create": "creation_display_statement",
+        "_delete_from": "deletion_source_clause",
+        "_having": "group_filter_clause"
+      },
+      "sourceTransforms": [
+        {
+          "family": "rule-word-boundary",
+          "rules": [
+            "keyword_select",
+            "keyword_delete",
+            "keyword_insert",
+            "keyword_replace",
+            "keyword_update",
+            "keyword_truncate",
+            "keyword_merge",
+            "keyword_show",
+            "keyword_unload",
+            "keyword_into",
+            "keyword_overwrite",
+            "keyword_values",
+            "keyword_value",
+            "keyword_matched",
+            "keyword_set",
+            "keyword_from",
+            "keyword_left",
+            "keyword_right",
+            "keyword_inner",
+            "keyword_full",
+            "keyword_outer",
+            "keyword_cross",
+            "keyword_join",
+            "keyword_lateral",
+            "keyword_natural",
+            "keyword_on",
+            "keyword_off",
+            "keyword_where",
+            "keyword_order",
+            "keyword_group",
+            "keyword_partition",
+            "keyword_by",
+            "keyword_having",
+            "keyword_desc",
+            "keyword_asc",
+            "keyword_limit",
+            "keyword_offset",
+            "keyword_primary",
+            "keyword_create",
+            "keyword_alter",
+            "keyword_change",
+            "keyword_analyze",
+            "keyword_explain",
+            "keyword_verbose",
+            "keyword_modify",
+            "keyword_drop",
+            "keyword_add",
+            "keyword_table",
+            "keyword_tables",
+            "keyword_view",
+            "keyword_column",
+            "keyword_columns",
+            "keyword_materialized",
+            "keyword_tablespace",
+            "keyword_sequence",
+            "keyword_increment",
+            "keyword_minvalue",
+            "keyword_maxvalue",
+            "keyword_none",
+            "keyword_owned",
+            "keyword_start",
+            "keyword_restart",
+            "keyword_key",
+            "keyword_duplicate",
+            "keyword_as",
+            "keyword_distinct",
+            "keyword_constraint",
+            "keyword_filter",
+            "keyword_cast",
+            "keyword_separator",
+            "keyword_case",
+            "keyword_when",
+            "keyword_then",
+            "keyword_else",
+            "keyword_end",
+            "keyword_in",
+            "keyword_and",
+            "keyword_or",
+            "keyword_is",
+            "keyword_not",
+            "keyword_force",
+            "keyword_ignore",
+            "keyword_using",
+            "keyword_use",
+            "keyword_index",
+            "keyword_for",
+            "keyword_if",
+            "keyword_exists",
+            "keyword_auto_increment",
+            "keyword_generated",
+            "keyword_always",
+            "keyword_collate",
+            "keyword_character",
+            "keyword_engine",
+            "keyword_default",
+            "keyword_cascade",
+            "keyword_restrict",
+            "keyword_with",
+            "keyword_without",
+            "keyword_no",
+            "keyword_data",
+            "keyword_type",
+            "keyword_rename",
+            "keyword_to",
+            "keyword_database",
+            "keyword_schema",
+            "keyword_owner",
+            "keyword_user",
+            "keyword_admin",
+            "keyword_password",
+            "keyword_encrypted",
+            "keyword_valid",
+            "keyword_until",
+            "keyword_connection",
+            "keyword_role",
+            "keyword_reset",
+            "keyword_temp",
+            "keyword_temporary",
+            "keyword_unlogged",
+            "keyword_logged",
+            "keyword_cycle",
+            "keyword_union",
+            "keyword_all",
+            "keyword_any",
+            "keyword_some",
+            "keyword_except",
+            "keyword_intersect",
+            "keyword_returning",
+            "keyword_begin",
+            "keyword_commit",
+            "keyword_rollback",
+            "keyword_transaction",
+            "keyword_over",
+            "keyword_nulls",
+            "keyword_first",
+            "keyword_after",
+            "keyword_before",
+            "keyword_last",
+            "keyword_window",
+            "keyword_range",
+            "keyword_rows",
+            "keyword_groups",
+            "keyword_between",
+            "keyword_unbounded",
+            "keyword_preceding",
+            "keyword_following",
+            "keyword_exclude",
+            "keyword_current",
+            "keyword_row",
+            "keyword_ties",
+            "keyword_others",
+            "keyword_only",
+            "keyword_unique",
+            "keyword_foreign",
+            "keyword_references",
+            "keyword_concurrently",
+            "keyword_btree",
+            "keyword_hash",
+            "keyword_gist",
+            "keyword_spgist",
+            "keyword_gin",
+            "keyword_brin",
+            "keyword_similar",
+            "keyword_unsigned",
+            "keyword_zerofill",
+            "keyword_conflict",
+            "keyword_do",
+            "keyword_nothing",
+            "keyword_high_priority",
+            "keyword_low_priority",
+            "keyword_delayed",
+            "keyword_recursive",
+            "keyword_cascaded",
+            "keyword_local",
+            "keyword_current_timestamp",
+            "keyword_check",
+            "keyword_option",
+            "keyword_vacuum",
+            "keyword_wait",
+            "keyword_nowait",
+            "keyword_attribute",
+            "keyword_authorization",
+            "keyword_action",
+            "keyword_extension",
+            "keyword_copy",
+            "keyword_stdin",
+            "keyword_freeze",
+            "keyword_escape",
+            "keyword_encoding",
+            "keyword_force_quote",
+            "keyword_quote",
+            "keyword_force_null",
+            "keyword_force_not_null",
+            "keyword_header",
+            "keyword_match",
+            "keyword_program",
+            "keyword_plain",
+            "keyword_extended",
+            "keyword_main",
+            "keyword_storage",
+            "keyword_compression",
+            "keyword_trigger",
+            "keyword_function",
+            "keyword_returns",
+            "keyword_return",
+            "keyword_setof",
+            "keyword_atomic",
+            "keyword_declare",
+            "keyword_language",
+            "keyword_immutable",
+            "keyword_stable",
+            "keyword_volatile",
+            "keyword_leakproof",
+            "keyword_parallel",
+            "keyword_safe",
+            "keyword_unsafe",
+            "keyword_restricted",
+            "keyword_called",
+            "keyword_input",
+            "keyword_strict",
+            "keyword_cost",
+            "keyword_support",
+            "keyword_definer",
+            "keyword_invoker",
+            "keyword_security",
+            "keyword_version",
+            "keyword_out",
+            "keyword_inout",
+            "keyword_variadic",
+            "keyword_ordinality",
+            "keyword_session",
+            "keyword_isolation",
+            "keyword_level",
+            "keyword_serializable",
+            "keyword_repeatable",
+            "keyword_read",
+            "keyword_write",
+            "keyword_committed",
+            "keyword_uncommitted",
+            "keyword_deferrable",
+            "keyword_names",
+            "keyword_zone",
+            "keyword_immediate",
+            "keyword_deferred",
+            "keyword_constraints",
+            "keyword_snapshot",
+            "keyword_characteristics",
+            "keyword_follows",
+            "keyword_precedes",
+            "keyword_each",
+            "keyword_instead",
+            "keyword_of",
+            "keyword_initially",
+            "keyword_old",
+            "keyword_new",
+            "keyword_referencing",
+            "keyword_statement",
+            "keyword_execute",
+            "keyword_procedure",
+            "keyword_object_id",
+            "keyword_external",
+            "keyword_stored",
+            "keyword_virtual",
+            "keyword_cached",
+            "keyword_uncached",
+            "keyword_replication",
+            "keyword_tblproperties",
+            "keyword_compute",
+            "keyword_stats",
+            "keyword_statistics",
+            "keyword_optimize",
+            "keyword_rewrite",
+            "keyword_bin_pack",
+            "keyword_incremental",
+            "keyword_location",
+            "keyword_partitioned",
+            "keyword_comment",
+            "keyword_sort",
+            "keyword_format",
+            "keyword_delimited",
+            "keyword_delimiter",
+            "keyword_fields",
+            "keyword_terminated",
+            "keyword_escaped",
+            "keyword_lines",
+            "keyword_cache",
+            "keyword_metadata",
+            "keyword_noscan",
+            "keyword_parquet",
+            "keyword_rcfile",
+            "keyword_csv",
+            "keyword_textfile",
+            "keyword_avro",
+            "keyword_sequencefile",
+            "keyword_orc",
+            "keyword_jsonfile",
+            "keyword_null",
+            "keyword_true",
+            "keyword_false",
+            "keyword_boolean",
+            "keyword_bit",
+            "keyword_binary",
+            "keyword_varbinary",
+            "keyword_image",
+            "keyword_decimal",
+            "keyword_numeric",
+            "keyword_float",
+            "keyword_double",
+            "keyword_precision",
+            "keyword_inet",
+            "keyword_money",
+            "keyword_smallmoney",
+            "keyword_varying",
+            "keyword_nchar",
+            "keyword_nvarchar",
+            "keyword_text",
+            "keyword_string",
+            "keyword_uuid",
+            "keyword_json",
+            "keyword_jsonb",
+            "keyword_xml",
+            "keyword_bytea",
+            "keyword_enum",
+            "keyword_date",
+            "keyword_datetime",
+            "keyword_datetime2",
+            "keyword_smalldatetime",
+            "keyword_datetimeoffset",
+            "keyword_time",
+            "keyword_timestamp",
+            "keyword_timestamptz",
+            "keyword_interval",
+            "keyword_geometry",
+            "keyword_geography",
+            "keyword_box2d",
+            "keyword_box3d",
+            "keyword_oid",
+            "keyword_oids",
+            "keyword_name",
+            "keyword_regclass",
+            "keyword_regnamespace",
+            "keyword_regproc",
+            "keyword_regtype",
+            "keyword_array"
+          ],
+          "wordRule": "_identifier",
+          "continuationPattern": "[0-9A-Za-z_\\u00C0-\\u017F]",
+          "reason": "Case-insensitive keyword tokens end before identifier continuation characters, matching the source word lexer rather than consuming a prefix of a longer identifier."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "binary_expression"
+          ],
+          "symbol": "is_not",
+          "value": 1,
+          "reason": "Prefer the complete IS NOT operator to IS with a negated right operand, preserving both operator productions and their fields."
+        },
+        {
+          "family": "alias-choice-rule",
+          "rule": "cte",
+          "alias": "statement",
+          "helper": "_cte_statement",
+          "reason": "The named statement alias surrounds the complete read or write production in a common table expression, retaining its selected clause as a child."
+        },
+        {
+          "family": "symbol-keyword-exclusion",
+          "rule": "_alias",
+          "symbol": "identifier",
+          "keywordRules": [
+            "keyword_from",
+            "keyword_where",
+            "keyword_group",
+            "keyword_having",
+            "keyword_order",
+            "keyword_limit",
+            "keyword_offset",
+            "keyword_union",
+            "keyword_except",
+            "keyword_intersect",
+            "keyword_join",
+            "keyword_left",
+            "keyword_right",
+            "keyword_full",
+            "keyword_inner",
+            "keyword_cross",
+            "keyword_on",
+            "keyword_using",
+            "keyword_window"
+          ],
+          "wordRule": "_identifier",
+          "reason": "Source, filter, grouping, ordering, set-operation and join keywords begin their following clauses instead of becoming an optional implicit alias. Quoted identifiers and longer words retain their original alternatives.",
+          "keywordPatterns": true
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "literal"
+          ],
+          "symbol": "keyword_null",
+          "value": 1,
+          "reason": "When a literal is absent, prefer the named NULL recovery marker over an anonymous regular-expression token; every accepted literal production and its concrete kind remains available."
+        }
+      ],
+      "concepts": {
+        "keyword_char": "grammar.keyword-character",
+        "keyword_character": "grammar.keyword-character",
+        "keyword_stats": "grammar.statistics-keyword",
+        "keyword_statistics": "grammar.statistics-keyword",
+        "keyword_oid": "grammar.object-identifier-keyword",
+        "keyword_object_id": "grammar.object-identifier-keyword",
+        "keyword_temp": "grammar.temporary-keyword",
+        "keyword_temporary": "grammar.temporary-keyword"
+      }
+    },
+    "dart": {
+      "names": {
+        "template_chars_single": "template_single_quote_characters",
+        "template_chars_double": "template_double_quote_characters",
+        "template_chars_single_single": "template_single_quote_line_characters",
+        "template_chars_double_single": "template_double_quote_line_characters",
+        "template_chars_raw_slash": "raw_template_characters",
+        "annotation_open_paren": "annotation_opening_parenthesis",
+        "_annotation": "annotation_body",
+        "_unary_expression": "unary_expression_body",
+        "_postfix_expression": "postfix_expression_body",
+        "_declaration": "declaration_body",
+        "_name": "identifier_characters",
+        "uri": "uniform_resource_identifier",
+        "configurable_uri": "conditional_resource_identifier",
+        "configuration_uri": "configuration_resource_identifier",
+        "uri_test": "resource_identifier_test",
+        "combinator": "import_name_filter",
+        "qualified": "qualified_name",
+        "false": "false_literal",
+        "identifier_dollar_escaped": "dollar_escaped_identifier",
+        "constructor_tearoff": "constructor_function_reference",
+        "rethrow_statement": "exception_propagation_statement",
+        "getter_signature": "property_reader_signature",
+        "redirection": "constructor_target_clause",
+        "mixins": "trait_list",
+        "mixin_application_class": "trait_application_class",
+        "mixin_application": "trait_application",
+        "mixin_declaration": "trait_declaration",
+        "getter_declaration": "property_reader_declaration",
+        "external_getter_declaration": "external_property_reader_declaration",
+        "_identifier_or_new": "identifier_or_creation_keyword",
+        "_function_type_tail": "function_type_suffix",
+        "named_parameter_types": "named_parameter_type_list",
+        "type_parameters": "type_parameter_list",
+        "arguments": "argument_list",
+        "interfaces": "interface_list",
+        "_element": "collection_element",
+        "assertion": "assertion_expression",
+        "type_arguments": "type_argument_list",
+        "shift_expression": "bit_shift_expression",
+        "function_expression_body": "anonymous_function_body",
+        "_argument_list": "call_argument_sequence",
+        "_sub_string_test": "substring_test",
+        "_mixin_class_modifiers": "trait_class_modifier_list",
+        "_normal_formal_parameters": "normal_formal_parameter_list"
+      },
+      "sourceTransforms": [
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "declaration",
+            "method_signature"
+          ],
+          "symbol": "constructor_signature",
+          "value": 1,
+          "reason": "Preserve the source constructor signature reduction before an identical function signature without a return type, retaining the complete function production."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "declaration",
+            "method_signature"
+          ],
+          "symbol": "setter_signature",
+          "value": 1,
+          "reason": "The source setter keyword retains its complete setter signature before an overlapping function whose return type and name split the same input."
+        },
+        {
+          "family": "alias-choice-branches",
+          "rule": "_type_not_function",
+          "alias": "type",
+          "helpers": [
+            "_ordinary_type_body",
+            "_ordinary_function_keyword_body",
+            "_ordinary_record_type_body",
+            "_ordinary_void_type_body"
+          ],
+          "suffix": "?",
+          "reason": "Preserve the nested type identifier of each aliased choice branch and the separate nullable suffix reduction, without adding or removing source alternatives."
+        },
+        {
+          "family": "alias-choice-branches",
+          "rule": "_type_not_void",
+          "alias": "type",
+          "helpers": [
+            "_non_void_function_type_body",
+            "_non_void_record_type_body",
+            "_non_void_named_type_body",
+            "_non_void_function_keyword_body"
+          ],
+          "suffix": "?",
+          "reason": "Preserve the nested type identifier of each aliased choice branch and the separate nullable suffix reduction, without adding or removing source alternatives."
+        },
+        {
+          "family": "alias-choice-branches",
+          "rule": "_type_not_void_not_function",
+          "alias": "type",
+          "helpers": [
+            "_non_void_non_function_named_type_body",
+            "_non_void_non_function_keyword_body"
+          ],
+          "suffix": "?",
+          "reason": "Preserve the nested type identifier of each aliased choice branch and the separate nullable suffix reduction, without adding or removing source alternatives."
+        }
+      ]
+    },
+    "nix": {
+      "names": {
+        "_hpath_start": "home_path_initial_fragment",
+        "hpath_expression": "home_path_expression",
+        "spath_expression": "search_path_expression",
+        "uri_expression": "resource_identifier_expression",
+        "attrset_expression": "attribute_set_expression",
+        "let_attrset_expression": "local_attribute_set_expression",
+        "rec_attrset_expression": "recursive_attribute_set_expression",
+        "inherit": "attribute_inheritance_clause",
+        "inherit_from": "attribute_inheritance_source_clause",
+        "attrpath": "attribute_path",
+        "inherited_attrs": "inherited_attribute_list",
+        "formals": "formal_parameter_list",
+        "formal": "formal_parameter",
+        "binding": "attribute_binding",
+        "function_expression": "anonymous_function_expression",
+        "integer_expression": "integer_literal_expression",
+        "_path_start": "path_initial_fragment",
+        "_expr_if": "conditional_expression_body"
+      },
+      "sourceTransforms": [
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "path_expression",
+            "hpath_expression"
+          ],
+          "symbol": "path_fragment",
+          "value": 1,
+          "reason": "An immediately adjacent path fragment continues the source path before a competing path-start token can form a function application; whitespace still separates paths through the immediate external token boundary."
+        }
+      ]
+    },
+    "cmake": {
+      "names": {
+        "bracket_argument_open": "bracket_argument_opening",
+        "bracket_argument_close": "bracket_argument_closing",
+        "bracket_comment_open": "bracket_comment_opening",
+        "bracket_comment_close": "bracket_comment_closing",
+        "_escape_encoded": "encoded_escape_sequence",
+        "variable_ref": "variable_reference",
+        "env_var": "environment_variable",
+        "_paren_argument": "parenthesized_argument",
+        "endforeach_command": "iteration_closing_command",
+        "endwhile_command": "repetition_closing_command",
+        "endfunction_command": "function_closing_command",
+        "endmacro_command": "macro_closing_command",
+        "endblock_command": "scope_closing_command",
+        "if": "conditional_keyword",
+        "elseif": "alternative_condition_keyword",
+        "else": "else_branch_keyword",
+        "endif": "conditional_closing_keyword",
+        "foreach": "iteration_keyword",
+        "endforeach": "iteration_closing_keyword",
+        "while": "while_loop_keyword",
+        "endwhile": "repetition_closing_keyword",
+        "function": "function_keyword",
+        "endfunction": "function_closing_keyword",
+        "macro": "macro_keyword",
+        "endmacro": "macro_closing_keyword",
+        "block": "block_scope_keyword",
+        "endblock": "scope_closing_keyword",
+        "argument": "command_argument_value",
+        "_unquoted_text": "unquoted_argument_text",
+        "integer": "integer_literal",
+        "if_command": "conditional_opening_command",
+        "elseif_command": "alternative_condition_opening_command",
+        "else_command": "alternative_opening_command",
+        "while_command": "repetition_opening_command",
+        "block_command": "scope_opening_command",
+        "foreach_command": "iteration_opening_command"
+      },
+      "sourceTransforms": [
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_unquoted_text",
+          "pattern": "[^()#\"\\\\]",
+          "excludedPattern": "\\s",
+          "reason": "The source lexer selects whitespace as the argument separator before a competing unquoted text character. Preserve the complete character production with that lexical priority boundary."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "unquoted_argument",
+          "pattern": "\\[=*\\[",
+          "reason": "A complete bracket opening commits the source lexer to bracket arguments. Unterminated bracket input cannot fall back to unquoted text."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "unquoted_argument",
+          "associativity": "right",
+          "value": 1,
+          "reason": "Adjacent unquoted characters remain a single argument before argument_list repeats; whitespace remains its separate source token."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "normal_command",
+          "pattern": "([iI][fF]|[eE][lL][sS][eE][iI][fF]|[eE][lL][sS][eE]|[eE][nN][dD][iI][fF]|[fF][oO][rR][eE][aA][cC][hH]|[eE][nN][dD][fF][oO][rR][eE][aA][cC][hH]|[wW][hH][iI][lL][eE]|[eE][nN][dD][wW][hH][iI][lL][eE]|[fF][uU][nN][cC][tT][iI][oO][nN]|[eE][nN][dD][fF][uU][nN][cC][tT][iI][oO][nN]|[mM][aA][cC][rR][oO]|[eE][nN][dD][mM][aA][cC][rR][oO]|[bB][lL][oO][cC][kK]|[eE][nN][dD][bB][lL][oO][cC][kK])",
+          "continuationPattern": "[0-9A-Za-z_]",
+          "reason": "Case-insensitive control command tokens take source lexer priority over identifier commands, with a word continuation boundary. Preserve identifiers with longer keyword prefixes and every control construct."
+        },
+        {
+          "family": "literal-prefix-exclusion",
+          "rule": "_quoted_text",
+          "pattern": "$",
+          "excludedPattern": "\\$(ENV|CACHE)?\\{",
+          "reason": "A source variable opening commits to its complete closing brace rather than falling back to literal dollar text after a malformed reference."
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_quoted_text",
+          "pattern": "[^\\\\\"]",
+          "excludedPattern": "\\$(ENV|CACHE)?\\{",
+          "reason": "The source variable token takes lexical priority over the overlapping character token at a variable opening, retaining other literal dollar characters."
+        },
+        {
+          "family": "literal-prefix-exclusion",
+          "rule": "_unquoted_text",
+          "pattern": "$",
+          "excludedPattern": "\\$(ENV|CACHE)?\\{",
+          "reason": "A source variable opening commits to its complete closing brace rather than falling back to literal dollar text after a malformed reference."
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_unquoted_text",
+          "pattern": "[^()#\"\\\\]",
+          "excludedPattern": "\\$(ENV|CACHE)?\\{",
+          "reason": "The source variable token takes lexical priority over the overlapping character token at a variable opening, retaining other literal dollar characters."
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_untrimmed_argument",
+          "pattern": "\\s",
+          "excludedPattern": "\\s*\\[=*\\[",
+          "reason": "The external bracket scanner skips leading whitespace before marking the opening token. Retain whitespace tokens elsewhere, but let the scanner own its skipped prefix at a bracket argument opening."
+        }
+      ],
+      "concepts": {
+        "integer": "grammar.integer-literal"
+      }
+    },
+    "python": {
+      "names": {
+        "_string_content": "string_fragment",
+        "_parameters": "parameter_sequence",
+        "_as_pattern": "as_pattern_content",
+        "_list_pattern": "list_pattern_content",
+        "_tuple_pattern": "tuple_pattern_content",
+        "aliased_import": "import_with_alias",
+        "nonlocal_statement": "non_local_statement",
+        "dict_pattern": "dictionary_pattern",
+        "not in": "non_membership_operator",
+        "is not": "identity_inequality_operator",
+        "false": "false_literal",
+        "await": "await_expression",
+        "_simple_statements": "simple_statement_sequence",
+        "_expressions": "expression_sequence",
+        "parameters": "parameter_list",
+        "lambda_parameters": "lambda_parameter_list",
+        "_patterns": "pattern_sequence",
+        "parameter": "parameter_declaration",
+        "assignment": "value_assignment",
+        "attribute": "attribute_access",
+        "_collection_elements": "collection_element_sequence",
+        "integer": "integer_literal",
+        "yield": "yield_expression",
+        "case_pattern": "match_case_pattern",
+        "pass_statement": "pass_keyword_statement",
+        "_not_in": "non_membership_operator",
+        "_is_not": "identity_inequality_operator"
+      },
+      "sourceTransforms": [
+        {
+          "family": "alias-choice-rule",
+          "rule": "as_pattern",
+          "alias": "as_pattern_target",
+          "helper": "_as_pattern_target_content",
+          "reason": "Retain the identifier or expression subtree beneath an as pattern target alias when the source alias references the expression supertype."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "expression",
+            "as_pattern"
+          ],
+          "insertInto": [
+            "except_clause"
+          ],
+          "prefix": "_exception_",
+          "reason": "The pinned parser retains the complete as pattern in an exception value before the overlapping separate alias field, without changing either source alternative."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "_exception_as_pattern",
+          "value": 1,
+          "reason": "Prefer the complete exception value as pattern reduction that the pinned parser uses; retain the separate exception alias alternative."
+        },
+        {
+          "family": "complete-alternative-preference",
+          "rule": "_suite",
+          "symbol": "_indent",
+          "reason": "The source external scanner selects an indentation token before an overlapping inline suite whose first token follows a line break. Prefer the complete indented block and retain all original alternatives as fallback."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "print_statement",
+          "pattern": "print\\s*\\(",
+          "reason": "Parenthesized print(...) is a Python call expression in the pinned tree-sitter corpus, while unparenthesized Python 2 print remains a print statement; preserve the source alternatives and exclude the call prefix only from print_statement."
+        },
+        {
+          "family": "prefer-optional-literal",
+          "rule": "except_clause",
+          "literal": "*",
+          "value": 2,
+          "reason": "The exception-group marker belongs to the except clause before its value. Retain the absent marker and splat-expression alternatives while preferring the present marker as the pinned parser does."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "expression",
+            "primary_expression",
+            "list_splat_pattern",
+            "attribute",
+            "subscript",
+            "call"
+          ],
+          "insertInto": [
+            "_collection_elements"
+          ],
+          "prefix": "_collection_",
+          "reason": "Collection elements need a splat-pattern reduction before suffixes without changing exception-value or assignment-pattern contexts. Retain every original alternative and use variants with the same concrete kinds and concepts."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "_collection_list_splat_pattern",
+          "associativity": "left",
+          "value": 23,
+          "reason": "The pinned parser reduces the collection splat pattern before attribute, subscript and call suffixes; preserve ordinary splat patterns outside the collection context."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "_f_expression",
+          "variants": [
+            "expression_list",
+            "pattern_list"
+          ],
+          "reason": "Formatted string interpolation reduces an ordinary comma-separated value as an expression list before the overlapping assignment pattern list, as the pinned parser does. Keep the pattern-list fallback for splatted patterns and preserve every source alternative."
+        }
+      ],
+      "concepts": {
+        "_exception_expression": "grammar.expression",
+        "_exception_as_pattern": "grammar.as-pattern",
+        "_collection_expression": "grammar.expression",
+        "_collection_primary_expression": "grammar.primary-expression",
+        "_collection_list_splat_pattern": "grammar.list-splat-pattern",
+        "_collection_attribute": "grammar.attribute-access",
+        "_collection_subscript": "grammar.subscript",
+        "_collection_call": "grammar.call",
+        "binary_operator": "grammar.binary-expression"
+      }
+    },
+    "hcl": {
+      "names": {
+        "heredoc_template": "here_document_template",
+        "heredoc_start": "here_document_start",
+        "heredoc_identifier": "here_document_identifier",
+        "splat": "path_expansion",
+        "attr_splat": "attribute_expansion",
+        "full_splat": "complete_expansion",
+        "attribute": "configuration_attribute",
+        "function_arguments": "function_argument_list",
+        "_object_elems": "object_element_list",
+        "_tuple_elems": "tuple_element_list",
+        "for_cond": "iteration_condition",
+        "conditional": "conditional_expression",
+        "template_for": "iteration_template",
+        "template_if": "conditional_template"
+      },
+      "concepts": {
+        "for_expr": "grammar.collection-comprehension"
+      }
+    },
+    "r": {
+      "names": {
+        "subset2": "element_subset",
+        "subset2_arguments": "element_subset_arguments",
+        "_external_open_bracket2": "external_open_double_bracket",
+        "_external_close_bracket2": "external_close_double_bracket",
+        "dot_dot_i": "indexed_dots",
+        "_identifier": "identifier_form",
+        "_open_bracket2": "open_double_bracket",
+        "_close_bracket2": "close_double_bracket",
+        "_argument_named": "named_argument",
+        "_argument_unnamed": "unnamed_argument",
+        "next": "continue_statement",
+        "false": "false_value",
+        "inf": "infinity_literal",
+        "nan": "not_a_number_literal",
+        "na": "missing_value_literal",
+        "_else": "else_keyword",
+        "dots": "variadic_argument",
+        "parameters": "parameter_list",
+        "integer": "integer_literal"
+      },
+      "sourceTransforms": [
+        {
+          "family": "contextual-newline-extras",
+          "pattern": "\\s",
+          "token": "_scoped_whitespace",
+          "reason": "Line feeds belong to the contextual scanner: outside continuation brackets they are statement separators, while inside parentheses or brackets they are trivia."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "identifier",
+          "pattern": "if|for|while|repeat|function|next|break|TRUE|FALSE|NULL|Inf|NaN|NA_integer_|NA_real_|NA_complex_|NA_character_|NA",
+          "continuationPattern": "[A-Za-z0-9_.\\u0080-\\u{10ffff}]",
+          "reason": "Reserved literal words retain lexical identity even when their syntax is incomplete. The contextual external else token remains an identifier when that continuation is unavailable."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "binary_operator",
+          "value": 1,
+          "reason": "A continued infix expression stays one expression instead of splitting into an identifier and a following unary expression in a repeated body."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "argument",
+          "variants": [
+            "_argument_named",
+            "_argument_unnamed"
+          ],
+          "reason": "A named argument binds its argument name instead of parsing its assignment as an unnamed argument expression."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "identifier",
+          "pattern": "[rR][\"']",
+          "reason": "A raw-literal opening is one lexical token even when its matching closing delimiter is missing; it cannot become an identifier followed by a separate ordinary string."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "extract_operator",
+          "value": 1,
+          "reason": "A complete chained extraction stays one expression instead of splitting after the optional missing right-hand name."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "extract_operator"
+          ],
+          "symbol": "_string_or_identifier",
+          "value": 1,
+          "reason": "A present extraction member name outranks the recovery alternative that omits it and starts a separate expression."
+        }
+      ],
+      "concepts": {
+        "parameter": "parameter",
+        "argument": "argument",
+        "binary_operator": "grammar.binary-expression"
+      }
+    },
+    "xml": {
+      "names": {
+        "_S": "whitespace",
+        "PITarget": "processing_instruction_target",
+        "_pi_content": "processing_instruction_content",
+        "Comment": "comment",
+        "_markupdecl": "markup_declaration",
+        "_DeclSep": "declaration_separator",
+        "elementdecl": "element_declaration",
+        "contentspec": "content_specification",
+        "_cp": "content_particle",
+        "AttlistDecl": "attribute_list_declaration",
+        "AttDef": "attribute_definition",
+        "_AttType": "attribute_type",
+        "_EnumeratedType": "enumerated_type",
+        "DefaultDecl": "default_declaration",
+        "_EntityDecl": "entity_declaration",
+        "GEDecl": "general_entity_declaration",
+        "PEDecl": "parameter_entity_declaration",
+        "NDataDecl": "notation_data_declaration",
+        "PEReference": "parameter_entity_reference",
+        "Nmtoken": "name_token",
+        "EntityRef": "entity_reference",
+        "CharRef": "character_code_reference",
+        "AttValue": "attribute_value",
+        "ExternalID": "external_resource_identifier",
+        "PublicID": "public_identifier",
+        "PubidLiteral": "public_identifier_literal",
+        "_VersionInfo": "version_information",
+        "VersionNum": "version_number",
+        "_EncodingDecl": "encoding_declaration",
+        "EncName": "encoding_name",
+        "PI": "processing_instruction",
+        "_Eq": "equals_sign",
+        "URI": "uniform_resource_identifier",
+        "XMLDecl": "extensible_markup_language_declaration",
+        "_SDDecl": "independent_document_declaration",
+        "doctypedecl": "document_type_declaration",
+        "_intSubset": "internal_subset",
+        "EmptyElemTag": "empty_element_tag",
+        "STag": "start_tag",
+        "ETag": "end_tag",
+        "_ErroneousETag": "erroneous_end_tag",
+        "CDSect": "character_data_section_expression",
+        "CDStart": "character_data_section_start",
+        "StyleSheetPI": "style_sheet_processing_instruction",
+        "XmlModelPI": "extensible_markup_language_model_processing_instruction",
+        "PseudoAtt": "pseudo_attribute",
+        "PseudoAttValue": "pseudo_attribute_value",
+        "CharData": "character_data",
+        "CData": "character_data_section",
+        "_self_closing_tag_delimiter": "self_closing_tag_end",
+        "_Misc": "miscellaneous_item",
+        "Mixed": "mixed_content",
+        "children": "child_content",
+        "TokenizedType": "token_sequence_type",
+        "Attribute": "element_attribute",
+        "_Reference": "entity_or_character_reference",
+        "element": "markup_element",
+        "content": "element_content"
+      },
+      "sourceTransforms": [
+        {
+          "family": "external-literal-token",
+          "literal": "/>",
+          "token": "_self_closing_tag_delimiter",
+          "count": 1,
+          "reason": "The pinned scanner pops the element name stack at the anonymous self-closing delimiter; a generated scanner rule retains that state action and the original anonymous leaf."
+        }
+      ]
+    },
+    "dtd": {
+      "names": {
+        "_S": "whitespace",
+        "PITarget": "processing_instruction_target",
+        "_pi_content": "processing_instruction_content",
+        "Comment": "comment",
+        "_markupdecl": "markup_declaration",
+        "_DeclSep": "declaration_separator",
+        "elementdecl": "element_declaration",
+        "contentspec": "content_specification",
+        "_cp": "content_particle",
+        "AttlistDecl": "attribute_list_declaration",
+        "AttDef": "attribute_definition",
+        "_AttType": "attribute_type",
+        "_EnumeratedType": "enumerated_type",
+        "DefaultDecl": "default_declaration",
+        "_EntityDecl": "entity_declaration",
+        "GEDecl": "general_entity_declaration",
+        "PEDecl": "parameter_entity_declaration",
+        "NDataDecl": "notation_data_declaration",
+        "PEReference": "parameter_entity_reference",
+        "Nmtoken": "name_token",
+        "EntityRef": "entity_reference",
+        "CharRef": "character_code_reference",
+        "AttValue": "attribute_value",
+        "ExternalID": "external_resource_identifier",
+        "PublicID": "public_identifier",
+        "PubidLiteral": "public_identifier_literal",
+        "_VersionInfo": "version_information",
+        "VersionNum": "version_number",
+        "_EncodingDecl": "encoding_declaration",
+        "EncName": "encoding_name",
+        "PI": "processing_instruction",
+        "_Eq": "equals_sign",
+        "URI": "uniform_resource_identifier",
+        "extSubset": "external_subset",
+        "TextDecl": "text_declaration",
+        "_extSubsetDecl": "external_subset_declaration",
+        "conditionalSect": "conditional_section",
+        "_Misc": "miscellaneous_item",
+        "Mixed": "mixed_content",
+        "children": "child_content",
+        "TokenizedType": "token_sequence_type",
+        "Attribute": "element_attribute",
+        "_Reference": "entity_or_character_reference",
+        "element": "markup_element",
+        "content": "element_content"
+      }
+    },
+    "odin": {
+      "names": {
+        "float": "floating_point_number",
+        "_nl_comma": "newline_comma",
+        "_param_header": "parameter_header",
+        "_param_type": "parameter_type",
+        "var_declaration": "typed_variable_declaration",
+        "_procedure_type": "procedure_type_expression",
+        "_escape_sequence": "escaped_character",
+        "_contextual_whitespace": "contextual_whitespace",
+        "boolean": "boolean_value",
+        "when_statement": "compile_time_conditional_statement",
+        "else_when_clause": "alternative_compile_time_conditional_clause",
+        "uninitialized": "unassigned_value",
+        "attributes": "attribute_list",
+        "attribute": "declaration_attribute",
+        "parameters": "parameter_list",
+        "parameter": "formal_parameter",
+        "_struct_members": "structure_member_list",
+        "character": "character_literal",
+        "nil": "null_value",
+        "procedure_declaration": "function_declaration",
+        "procedure": "function_expression",
+        "map": "dictionary_literal"
+      },
+      "sourceTransforms": [
+        {
+          "family": "contextual-newline-extras",
+          "pattern": "\\s",
+          "token": "_contextual_whitespace",
+          "reason": "The pinned scanner decides which line feeds are statement boundaries and which continue a declaration; contextual whitespace preserves both paths without erasing separators."
+        },
+        {
+          "family": "lexical-literal-rule",
+          "rule": "nil",
+          "literal": "nil",
+          "reason": "The pinned CST retains nil as one named leaf; a lower precedence keyword_identifier repeats its text without adding a literal child to this rule."
+        }
+      ]
+    },
+    "html": {
+      "names": {
+        "doctype": "document_type_declaration",
+        "_doctype": "document_type_keyword",
+        "_self_closing_tag_delimiter": "self_closing_tag_end",
+        "script_element": "script_element",
+        "style_element": "style_element",
+        "text": "character_data",
+        "element": "markup_element",
+        "attribute": "element_attribute",
+        "attribute_name": "element_attribute_name"
+      },
+      "sourceTransforms": [
+        {
+          "family": "external-literal-token",
+          "literal": "/>",
+          "token": "_self_closing_tag_delimiter",
+          "count": 1,
+          "reason": "The pinned HTML scanner pops its tag context at the anonymous self-closing delimiter; the generated external rule retains that state transition and anonymous leaf."
+        }
+      ]
+    },
+    "agda": {
+      "names": {
+        "_newline": "newline",
+        "_indent": "indent",
+        "_dedent": "dedent",
+        "_FORALL": "universal_quantifier_keyword",
+        "_ARROW": "arrow",
+        "_LAMBDA": "lambda_keyword",
+        "_ELLIPSIS": "ellipsis",
+        "function": "function_definition",
+        "lhs": "left_hand_side",
+        "rhs": "right_hand_side",
+        "lhs_decl": "left_hand_side_declaration",
+        "lhs_defn": "left_hand_side_definition",
+        "rhs_decl": "right_hand_side_declaration",
+        "rhs_defn": "right_hand_side_definition",
+        "id": "identifier",
+        "_qid": "qualified_identifier_body",
+        "bid": "binding_identifier",
+        "_ids": "identifier_list",
+        "expr": "expression",
+        "stmt": "statement",
+        "SetN": "set_universe",
+        "PropN": "proposition_universe",
+        "infix": "infix_declaration",
+        "generalize": "generalization_declaration",
+        "unquote_decl": "unquote_declaration",
+        "_field_name": "field_name_identifier",
+        "_record_assignments": "record_assignment_list_body",
+        "_field_assignments": "field_assignment_list_body",
+        "where": "where_clause",
+        "mutual": "mutual_definition_block",
+        "renaming": "renaming_clause",
+        "argument_id": "argument_identifier",
+        "argument_ids": "argument_identifier_list",
+        "with_expressions": "with_expression_list",
+        "forall": "universal_quantification",
+        "do_where": "do_where_clause",
+        "untyped_binding": "binding_without_type",
+        "fields": "field_list",
+        "hole_names": "hole_name_list",
+        "attributes": "attribute_list",
+        "field_assignments": "field_assignment_list",
+        "record_assignments": "record_assignment_list",
+        "instance": "instance_declaration",
+        "_maybe_dotted_id": "optional_dotted_identifier",
+        "_maybe_dotted_ids": "optional_dotted_identifier_list",
+        "_with_exprs": "with_expression_list_body",
+        "_with_exprs_stmt": "with_expression_list_statement",
+        "_application_stmt": "application_statement",
+        "_expr2_without_let": "application_expression_without_let",
+        "_expr2": "application_expression_body",
+        "_expr2_stmt": "application_expression_statement",
+        "_atom_curly": "braced_atom",
+        "_atom_no_curly": "unbraced_atom",
+        "_do_stmt": "do_statement",
+        "_typed_untyped_bindings": "optional_type_binding_list",
+        "_typed_untyped_binding": "optional_type_binding",
+        "_import_directives": "import_directive_list",
+        "_atoms": "atom_list",
+        "_lambda_clauses": "lambda_clause_list",
+        "_typed_bindings": "typed_binding_list",
+        "_arg_id": "argument_identifier",
+        "_arg_ids": "argument_identifier_list",
+        "_application": "application_body",
+        "_field_names": "field_name_list",
+        "qid": "qualified_identifier",
+        "integer": "integer_literal"
+      },
+      "sourceTransforms": [
+        {
+          "family": "alias-choice-alternatives",
+          "rule": "module",
+          "alias": "module_name",
+          "count": 1,
+          "reason": "Distribute the named alias over the pinned choice so its hidden qualified-name branch retains the nested identifier node while its underscore literal remains a named leaf."
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "id",
+          "pattern": "([^\\s\\\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
+          "excludedPattern": "[:=](?![^\\s;.\"(){}@])",
+          "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
+          "preserveLexicalIdentity": true
+        },
+        {
+          "family": "pattern-prefix-exclusion",
+          "rule": "_qid",
+          "pattern": "(([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*\\.)*([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
+          "excludedPattern": "[:=](?![^\\s;.\"(){}@])",
+          "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
+          "preserveLexicalIdentity": true
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "lambda",
+          "value": 1,
+          "reason": "Preserve the pinned parser shift at an arrow: prefer the full lambda body over reducing bare absurd-lambda bindings and treating the same arrow as an outer function type."
+        }
+      ],
+      "concepts": {
+        "application": "application",
+        "attribute": "program.attributes"
+      }
     }
   },
   "concepts": {
-    "definitions": {},
+    "definitions": {
+      "grammar.collection-comprehension": "An expression that constructs a collection by mapping and optionally filtering the elements of another collection."
+    },
     "distinctFrom": {
-      "grammar.type-assertion": [{ "id": "grammar.case-statement", "reason": "A type assertion <T>x tells the type checker to treat an expression as a type, while a case statement is one branch of a switch statement." }],
-      "grammar.function-declaration": [{ "id": "grammar.use-declaration", "reason": "A function declaration binds a name to a function, while a use declaration brings the paths of another module into scope." }],
-      "grammar.preprocessor-argument": [{ "id": "grammar.preprocessor-parameters", "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares." }],
-      "grammar.argument-list": [{ "id": "grammar.parameter-list", "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes." }],
-      "grammar.condition": [{ "id": "grammar.term", "reason": "A condition is the expression an if or while expression tests, while a term is an operand of addition or subtraction." }],
-      "grammar.pattern": [{ "id": "grammar.rule", "reason": "A pattern matches and destructures a value in a program, while a grammar rule binds a non-terminal to an expression." }],
-      "grammar.reference-expression": [{ "id": "grammar.extension-expression", "reason": "A reference expression borrows a place with & or &mut, while an extension expression marks a GNU C extension with __extension__." }],
-      "grammar.token-pattern": [{ "id": "grammar.token-rule", "reason": "A token pattern is the matcher of a macro rule, while a token rule is a grammar rule matched as one lexical token." }],
-      "grammar.tokens": [{ "id": "grammar.item", "reason": "Tokens are the token trees a macro rule expands to, while an item is one element of a list." }],
-      "grammar.type": [{ "id": "grammar.value.character", "reason": "A type classifies the values of an expression, while a character is one Unicode scalar value." }],
-      "grammar.yield-expression": [{ "id": "grammar.return-expression", "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function." }],
-      "grammar.type-argument-list": [{ "id": "grammar.type-parameter-list", "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes." }],
-      "grammar.command": [{ "id": "grammar.statement", "reason": "A Lean command is one top-level declaration or directive of a module, which the elaborator reads in order, while a statement is one step of a block that runs in order." }],
-      "grammar.syntax-quotation": [{ "id": "grammar.syntax-quote", "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form." }],
-      "grammar.yield-statement": [{ "id": "grammar.return-statement", "reason": "A Java yield statement gives the value of the switch expression it ends, while a return statement ends a function and gives its result." }],
-      "grammar.annotation": [{ "id": "grammar.notation", "reason": "A Java annotation attaches metadata to a declaration or a type (The Java Language Specification, section 9.7), while a notation declares new syntax for terms." }],
-      "grammar.catch-type": [{ "id": "grammar.match-case", "reason": "A Java catch type names the exception types a catch clause handles, while a match case is one branch of a match expression." }],
-      "grammar.variadic-argument": [{ "id": "grammar.variadic-parameter", "reason": "A Go variadic argument xs... passes the elements of a slice as the final arguments of a call, while a variadic parameter declares the final parameter that takes any number of them." }],
-      "grammar.statement-list": [{ "id": "grammar.argument-list", "reason": "A Go statement list is the statements of a block or a case clause in order, while an argument list gives the values a call passes." }],
-      "grammar.map-type": [{ "id": "grammar.function-type", "reason": "A Go map type map[K]V is the type of the hash tables from keys of K to values of V, while a function type is the type of the functions with given parameters and results." }],
-      "grammar.default-case": [{ "id": "grammar.default-type", "reason": "A Go default case is the branch of a switch or select statement taken when no other case matches, while a default type is the type a TypeScript type parameter takes when none is given." }]
+      "grammar.type-assertion": [
+        {
+          "id": "grammar.case-statement",
+          "reason": "A type assertion <T>x tells the type checker to treat an expression as a type, while a case statement is one branch of a switch statement."
+        }
+      ],
+      "grammar.function-declaration": [
+        {
+          "id": "grammar.use-declaration",
+          "reason": "A function declaration binds a name to a function, while a use declaration brings the paths of another module into scope."
+        }
+      ],
+      "grammar.preprocessor-argument": [
+        {
+          "id": "grammar.preprocessor-parameters",
+          "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares."
+        }
+      ],
+      "grammar.argument-list": [
+        {
+          "id": "grammar.parameter-list",
+          "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes."
+        }
+      ],
+      "grammar.condition": [
+        {
+          "id": "grammar.term",
+          "reason": "A condition is the expression an if or while expression tests, while a term is an operand of addition or subtraction."
+        }
+      ],
+      "grammar.pattern": [
+        {
+          "id": "grammar.rule",
+          "reason": "A pattern matches and destructures a value in a program, while a grammar rule binds a non-terminal to an expression."
+        }
+      ],
+      "grammar.reference-expression": [
+        {
+          "id": "grammar.extension-expression",
+          "reason": "A reference expression borrows a place with & or &mut, while an extension expression marks a GNU C extension with __extension__."
+        }
+      ],
+      "grammar.token-pattern": [
+        {
+          "id": "grammar.token-rule",
+          "reason": "A token pattern is the matcher of a macro rule, while a token rule is a grammar rule matched as one lexical token."
+        }
+      ],
+      "grammar.tokens": [
+        {
+          "id": "grammar.item",
+          "reason": "Tokens are the token trees a macro rule expands to, while an item is one element of a list."
+        }
+      ],
+      "grammar.type": [
+        {
+          "id": "grammar.value.character",
+          "reason": "A type classifies the values of an expression, while a character is one Unicode scalar value."
+        }
+      ],
+      "grammar.yield-expression": [
+        {
+          "id": "grammar.return-expression",
+          "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function."
+        }
+      ],
+      "grammar.type-argument-list": [
+        {
+          "id": "grammar.type-parameter-list",
+          "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes."
+        }
+      ],
+      "grammar.command": [
+        {
+          "id": "grammar.statement",
+          "reason": "A Lean command is one top-level declaration or directive of a module, which the elaborator reads in order, while a statement is one step of a block that runs in order."
+        }
+      ],
+      "grammar.syntax-quotation": [
+        {
+          "id": "grammar.syntax-quote",
+          "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
+        }
+      ],
+      "grammar.yield-statement": [
+        {
+          "id": "grammar.return-statement",
+          "reason": "A Java yield statement gives the value of the switch expression it ends, while a return statement ends a function and gives its result."
+        }
+      ],
+      "grammar.annotation": [
+        {
+          "id": "grammar.notation",
+          "reason": "A Java annotation attaches metadata to a declaration or a type (The Java Language Specification, section 9.7), while a notation declares new syntax for terms."
+        }
+      ],
+      "grammar.catch-type": [
+        {
+          "id": "grammar.match-case",
+          "reason": "A Java catch type names the exception types a catch clause handles, while a match case is one branch of a match expression."
+        }
+      ],
+      "grammar.variadic-argument": [
+        {
+          "id": "grammar.variadic-parameter",
+          "reason": "A Go variadic argument xs... passes the elements of a slice as the final arguments of a call, while a variadic parameter declares the final parameter that takes any number of them."
+        }
+      ],
+      "grammar.statement-list": [
+        {
+          "id": "grammar.argument-list",
+          "reason": "A Go statement list is the statements of a block or a case clause in order, while an argument list gives the values a call passes."
+        }
+      ],
+      "grammar.map-type": [
+        {
+          "id": "grammar.function-type",
+          "reason": "A Go map type map[K]V is the type of the hash tables from keys of K to values of V, while a function type is the type of the functions with given parameters and results."
+        }
+      ],
+      "grammar.default-case": [
+        {
+          "id": "grammar.default-type",
+          "reason": "A Go default case is the branch of a switch or select statement taken when no other case matches, while a default type is the type a TypeScript type parameter takes when none is given."
+        }
+      ],
+      "grammar.dependent-type": [
+        {
+          "id": "grammar.qualified-type",
+          "reason": "The pinned source grammar defines dependent type and qualified type as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.dependent-identifier": [
+        {
+          "id": "grammar.qualified-identifier",
+          "reason": "The pinned source grammar defines dependent identifier and qualified identifier as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.last-keyword": [
+        {
+          "id": "grammar.end-keyword",
+          "reason": "The pinned source grammar defines last keyword and end keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.varying-keyword": [
+        {
+          "id": "grammar.variable-keyword",
+          "reason": "The pinned source grammar defines varying keyword and variable keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.outer-keyword": [
+        {
+          "id": "grammar.out-keyword",
+          "reason": "The pinned source grammar defines outer keyword and out keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.attribute-keyword": [
+        {
+          "id": "grammar.property-keyword",
+          "reason": "The pinned source grammar defines attribute keyword and property keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.match-keyword": [
+        {
+          "id": "grammar.equal-keyword",
+          "reason": "The pinned source grammar defines match keyword and equal keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.extension-keyword": [
+        {
+          "id": "grammar.reference-keyword",
+          "reason": "The pinned source grammar defines extension keyword and reference keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.stable-keyword": [
+        {
+          "id": "grammar.static-keyword",
+          "reason": "The pinned source grammar defines stable keyword and static keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.template-argument-list": [
+        {
+          "id": "grammar.template-parameter-list",
+          "reason": "The pinned source grammar defines template argument list and template parameter list as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.co-yield-statement": [
+        {
+          "id": "grammar.co-return-statement",
+          "reason": "The pinned source grammar defines co yield statement and co return statement as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.qualified-field-identifier": [
+        {
+          "id": "grammar.dependent-field-identifier",
+          "reason": "The pinned source grammar defines qualified field identifier and dependent field identifier as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.qualified-type-identifier": [
+        {
+          "id": "grammar.dependent-type-identifier",
+          "reason": "The pinned source grammar defines qualified type identifier and dependent type identifier as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.union-keyword": [
+        {
+          "id": "grammar.join-keyword",
+          "reason": "The pinned source grammar defines union keyword and join keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.start-keyword": [
+        {
+          "id": "grammar.offset-keyword",
+          "reason": "The pinned source grammar defines start keyword and offset keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.first-keyword": [
+        {
+          "id": "grammar.offset-keyword",
+          "reason": "The pinned source grammar defines first keyword and offset keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        },
+        {
+          "id": "grammar.start-keyword",
+          "reason": "The pinned source grammar defines first keyword and start keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.main-keyword": [
+        {
+          "id": "grammar.primary-keyword",
+          "reason": "The pinned source grammar defines main keyword and primary keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.type-keyword": [
+        {
+          "id": "grammar.case-keyword",
+          "reason": "The pinned source grammar defines type keyword and case keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.role-keyword": [
+        {
+          "id": "grammar.use-keyword",
+          "reason": "The pinned source grammar defines role keyword and use keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.function-keyword": [
+        {
+          "id": "grammar.use-keyword",
+          "reason": "The pinned source grammar defines function keyword and use keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        },
+        {
+          "id": "grammar.role-keyword",
+          "reason": "The pinned source grammar defines function keyword and role keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.terminated-keyword": [
+        {
+          "id": "grammar.over-keyword",
+          "reason": "The pinned source grammar defines terminated keyword and over keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.image-keyword": [
+        {
+          "id": "grammar.range-keyword",
+          "reason": "The pinned source grammar defines image keyword and range keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.similar-keyword": [
+        {
+          "id": "grammar.like-keyword",
+          "reason": "The pinned source grammar defines similar keyword and like keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.postponement-keyword": [
+        {
+          "id": "grammar.wait-keyword",
+          "reason": "The pinned source grammar defines postponement keyword and wait keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.fields-keyword": [
+        {
+          "id": "grammar.plain-keyword",
+          "reason": "The pinned source grammar defines fields keyword and plain keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.procedure-keyword": [
+        {
+          "id": "grammar.function-keyword",
+          "reason": "The pinned source grammar defines procedure keyword and function keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.replication-keyword": [
+        {
+          "id": "grammar.return-keyword",
+          "reason": "The pinned source grammar defines replication keyword and return keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.comment-keyword": [
+        {
+          "id": "grammar.input-keyword",
+          "reason": "The pinned source grammar defines comment keyword and input keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.double-keyword": [
+        {
+          "id": "grammar.image-keyword",
+          "reason": "The pinned source grammar defines double keyword and image keyword as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.create-role": [
+        {
+          "id": "grammar.create-function",
+          "reason": "The pinned source grammar defines create role and create function as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.drop-function": [
+        {
+          "id": "grammar.drop-role",
+          "reason": "The pinned source grammar defines drop function and drop role as separate productions with distinct literal spellings or contexts. Their grammar meanings retain those source distinctions; the WordNet synonym uses a different lexical sense."
+        }
+      ],
+      "grammar.case-expression": [
+        {
+          "id": "grammar.type-expression",
+          "reason": "A SQL CASE expression selects a result by conditions; a type expression denotes a type. The WordNet case/type synonym uses a classification sense, rather than the conditional grammar construct."
+        }
+      ],
+      "grammar.null-keyword": [
+        {
+          "id": "grammar.nil-keyword",
+          "reason": "SQL NULL denotes an absent or unknown database value with three-valued comparisons; Pascal nil denotes a null pointer. Their lexical synonym does not establish the same language semantics."
+        }
+      ],
+      "grammar.character-type": [
+        {
+          "id": "grammar.reference-type",
+          "reason": "The SQL character type stores character strings; a reference type denotes a reference to another value. The lexical character/reference synonym uses a testimonial sense."
+        },
+        {
+          "id": "grammar.type-case",
+          "reason": "The SQL character type stores strings; a type case is a branch selected by a value type. The lexical character/case synonym does not equate these grammar constructs."
+        }
+      ],
+      "grammar.collection-comprehension": [],
+      "grammar.unnamed-argument": [
+        {
+          "reason": "An unnamed argument supplies a concrete call input without a name; a nameless parameter declares an input slot without a binding name.",
+          "id": "grammar.nameless-parameter"
+        }
+      ]
     }
   }
 }

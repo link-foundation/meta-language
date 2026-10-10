@@ -1,0 +1,211 @@
+[
+  {
+    "name": "paired fragment prefixes",
+    "assertion": "pairedFragmentPrefixes",
+    "scanners": [
+      {
+        "family": "fragment",
+        "name": "fragment",
+        "token": "fragment",
+        "stops": [
+          "\"",
+          "${"
+        ],
+        "pairedPrefixes": [
+          {
+            "prefix": "$",
+            "except": [
+              "\"",
+              "{"
+            ]
+          }
+        ]
+      }
+    ],
+    "accept": [
+      "\"é😀\"",
+      "\"$${x}\"",
+      "\"$$$$\"",
+      "\"a$b\""
+    ],
+    "reject": [
+      "\"$$${x}\"",
+      "\"${x}\"",
+      "\"unterminated",
+      "\"a\u0000b\""
+    ],
+    "generated": "(scanner fragment (tokens fragment) (operations (if (not (valid fragment)) (then fail)) (if (some atEnd (next (literal %22)) (next (literal %24%7B))) (then fail)) (while (not (some atEnd (next (literal %22)) (next (literal %24%7B)))) (do (if (some (next (literal %00))) (then fail)) (if (next (literal %24)) (then (consume (literal %24)) (if (not (some atEnd (next (literal %22)) (next (literal %7B)))) (then advance))) (else advance)))) (if atEnd (then fail)) (emit fragment)))\n",
+    "listing": "(grammar (start source))\n(scanner fragment (tokens fragment) (operations (if (not (valid fragment)) (then fail)) (if (some atEnd (next (literal %22)) (next (literal %24%7B))) (then fail)) (while (not (some atEnd (next (literal %22)) (next (literal %24%7B)))) (do (if (some (next (literal %00))) (then fail)) (if (next (literal %24)) (then (consume (literal %24)) (if (not (some atEnd (next (literal %22)) (next (literal %7B)))) (then advance))) (else advance)))) (if atEnd (then fail)) (emit fragment)))\n(rule source normal (seq (literal %22) (ref fragment) (literal %22)))\n",
+    "trees": {
+      "\"é😀\"": "(source \"\\\"\" (fragment \"é😀\") \"\\\"\")",
+      "\"$${x}\"": "(source \"\\\"\" (fragment \"$${x}\") \"\\\"\")",
+      "\"$$$$\"": "(source \"\\\"\" (fragment \"$$$$\") \"\\\"\")",
+      "\"a$b\"": "(source \"\\\"\" (fragment \"a$b\") \"\\\"\")"
+    }
+  },
+  {
+    "name": "required fragment marker",
+    "assertion": "requiredFragmentMarker",
+    "scanners": [
+      {
+        "family": "fragment",
+        "name": "raw",
+        "token": "raw",
+        "stops": [
+          "\""
+        ],
+        "requiredMarker": "\\"
+      }
+    ],
+    "accept": [
+      "\"a\\b\"",
+      "\"\\\"",
+      "\"é\\😀\""
+    ],
+    "reject": [
+      "\"plain\"",
+      "\"\"",
+      "\"a\\b"
+    ],
+    "generated": "(scanner raw (tokens raw) (operations (if (not (valid raw)) (then fail)) (if (some atEnd (next (literal %22))) (then fail)) (while (not (some atEnd (next (literal %22)))) (do (if (some (next (literal %00))) (then fail)) (if (next (literal %5C)) (then (push encountered (integer 1)))) advance)) (if atEnd (then fail)) (if (equal (depth encountered) (integer 0)) (then fail)) (while (greater (depth encountered) (integer 0)) (do (pop encountered))) (emit raw)))\n",
+    "listing": "(grammar (start source))\n(scanner raw (tokens raw) (operations (if (not (valid raw)) (then fail)) (if (some atEnd (next (literal %22))) (then fail)) (while (not (some atEnd (next (literal %22)))) (do (if (some (next (literal %00))) (then fail)) (if (next (literal %5C)) (then (push encountered (integer 1)))) advance)) (if atEnd (then fail)) (if (equal (depth encountered) (integer 0)) (then fail)) (while (greater (depth encountered) (integer 0)) (do (pop encountered))) (emit raw)))\n(rule source normal (seq (literal %22) (ref raw) (literal %22)))\n",
+    "trees": {
+      "\"a\\b\"": "(source \"\\\"\" (raw \"a\\\\b\") \"\\\"\")",
+      "\"\\\"": "(source \"\\\"\" (raw \"\\\\\") \"\\\"\")",
+      "\"é\\😀\"": "(source \"\\\"\" (raw \"é\\\\😀\") \"\\\"\")"
+    }
+  },
+  {
+    "name": "documentation opening lookahead",
+    "assertion": "delimiterOpeningLookahead",
+    "scanners": [
+      {
+        "family": "delimited",
+        "name": "documentation",
+        "token": "documentation",
+        "opening": "/*",
+        "closing": "*/",
+        "nested": true,
+        "openingLookahead": "*",
+        "rejected": [
+          "\u0000"
+        ]
+      }
+    ],
+    "accept": [
+      "/**/",
+      "/** nested /*x*/ tail */",
+      "/** é😀 */"
+    ],
+    "reject": [
+      "/* plain */",
+      "/** unclosed",
+      "/** a\u0000b */"
+    ],
+    "generated": "(scanner documentation (tokens documentation) (operations (if (not (valid documentation)) (then fail)) (consume (literal %2F%2A)) (if (not (next (literal %2A))) (then fail)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (some (next (literal %00))) (then fail)) (if (next (literal %2A%2F)) (then (consume (literal %2A%2F)) (pop levels)) (else (if (next (literal %2F%2A)) (then (consume (literal %2F%2A)) (push levels (integer 1))) (else advance)))))) (emit documentation)))\n",
+    "listing": "(grammar (start source))\n(scanner documentation (tokens documentation) (operations (if (not (valid documentation)) (then fail)) (consume (literal %2F%2A)) (if (not (next (literal %2A))) (then fail)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (some (next (literal %00))) (then fail)) (if (next (literal %2A%2F)) (then (consume (literal %2A%2F)) (pop levels)) (else (if (next (literal %2F%2A)) (then (consume (literal %2F%2A)) (push levels (integer 1))) (else advance)))))) (emit documentation)))\n(rule source normal (ref documentation))\n",
+    "trees": {
+      "/**/": "(source (documentation \"/**/\"))",
+      "/** nested /*x*/ tail */": "(source (documentation \"/** nested /*x*/ tail */\"))",
+      "/** é😀 */": "(source (documentation \"/** é😀 */\"))"
+    }
+  },
+  {
+    "name": "ordinary opening exclusion",
+    "assertion": "delimiterOpeningLookahead",
+    "scanners": [
+      {
+        "family": "delimited",
+        "name": "ordinary",
+        "token": "ordinary",
+        "opening": "/*",
+        "closing": "*/",
+        "nested": true,
+        "openingLookahead": "*",
+        "rejectOpeningLookahead": true
+      }
+    ],
+    "accept": [
+      "/* */",
+      "/* nested /**/ tail */"
+    ],
+    "reject": [
+      "/**/",
+      "/** documentation */"
+    ],
+    "generated": "(scanner ordinary (tokens ordinary) (operations (if (not (valid ordinary)) (then fail)) (consume (literal %2F%2A)) (if (next (literal %2A)) (then fail)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (next (literal %2A%2F)) (then (consume (literal %2A%2F)) (pop levels)) (else (if (next (literal %2F%2A)) (then (consume (literal %2F%2A)) (push levels (integer 1))) (else advance)))))) (emit ordinary)))\n",
+    "listing": "(grammar (start source))\n(scanner ordinary (tokens ordinary) (operations (if (not (valid ordinary)) (then fail)) (consume (literal %2F%2A)) (if (next (literal %2A)) (then fail)) (push levels (integer 1)) (while (greater (depth levels) (integer 0)) (do (if atEnd (then fail)) (if (next (literal %2A%2F)) (then (consume (literal %2A%2F)) (pop levels)) (else (if (next (literal %2F%2A)) (then (consume (literal %2F%2A)) (push levels (integer 1))) (else advance)))))) (emit ordinary)))\n(rule source normal (ref ordinary))\n",
+    "trees": {
+      "/* */": "(source (ordinary \"/* */\"))",
+      "/* nested /**/ tail */": "(source (ordinary \"/* nested /**/ tail */\"))"
+    }
+  },
+  {
+    "name": "lexical token context",
+    "assertion": "lexicalTokenContext",
+    "scanners": [
+      {
+        "family": "pattern-token",
+        "name": "prefix",
+        "token": "prefix",
+        "pattern": "[a-z]+",
+        "before": ":",
+        "excludedAtStart": "reserved"
+      }
+    ],
+    "accept": [
+      "hello:",
+      "a:"
+    ],
+    "reject": [
+      "hello",
+      "reserved:",
+      "reservedlong:"
+    ],
+    "generated": "(rule prefix token (seq (not (literal reserved)) (repeat1 (class plain (range a z))) (and (literal %3A))))\n",
+    "listing": "(grammar (start source))\n(rule prefix token (seq (not (literal reserved)) (repeat1 (class plain (range a z))) (and (literal %3A))))\n(rule source normal (seq (ref prefix) (literal %3A)))\n",
+    "trees": {
+      "hello:": "(source (prefix \"hello\") \":\")",
+      "a:": "(source (prefix \"a\") \":\")"
+    }
+  },
+  {
+    "name": "counted content whitespace and end policies",
+    "assertion": "countedContentPolicies",
+    "scanners": [
+      {
+        "family": "split-counted-delimiter",
+        "name": "brackets",
+        "startToken": "opening",
+        "contentToken": "content",
+        "endToken": "closing",
+        "prefix": "[",
+        "marker": "=",
+        "opening": "[",
+        "closing": "]",
+        "suffix": "]",
+        "skipWhitespace": true,
+        "skipContentWhitespace": true,
+        "allowEnd": true
+      }
+    ],
+    "accept": [
+      "[=[ body ]=]",
+      "[==[ é😀 ]=] body ]==]",
+      "[=[body",
+      "[[]]"
+    ],
+    "reject": [
+      "[=x",
+      "[x"
+    ],
+    "generated": "(scanner brackets (tokens opening content closing) (operations (if (valid opening) (then (while (next (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))))) (consume (literal %5B)) (while (next (literal %3D)) (do (consume (literal %3D)) (push delimiters (integer 1)))) (consume (literal %5B)) (emit opening))) (if (valid content) (then (while (next (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))))) (while (not atEnd) (do (if (next (literal %5D)) (then mark (consume (literal %5D)) (while (next (literal %3D)) (do (consume (literal %3D)) (push candidate (integer 1)))) (if (all (equal (depth candidate) (depth delimiters)) (next (literal %5D))) (then (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (emit content))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) mark (emit content))) (if (valid closing) (then (consume (literal %5D)) (while (next (literal %3D)) (do (consume (literal %3D)) (push candidate (integer 1)))) (if (not (equal (depth candidate) (depth delimiters))) (then fail)) (consume (literal %5D)) (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit closing))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner brackets (tokens opening content closing) (operations (if (valid opening) (then (while (next (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))))) (consume (literal %5B)) (while (next (literal %3D)) (do (consume (literal %3D)) (push delimiters (integer 1)))) (consume (literal %5B)) (emit opening))) (if (valid content) (then (while (next (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))) (do (skip (class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))))) (while (not atEnd) (do (if (next (literal %5D)) (then mark (consume (literal %5D)) (while (next (literal %3D)) (do (consume (literal %3D)) (push candidate (integer 1)))) (if (all (equal (depth candidate) (depth delimiters)) (next (literal %5D))) (then (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (emit content))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) mark (emit content))) (if (valid closing) (then (consume (literal %5D)) (while (next (literal %3D)) (do (consume (literal %3D)) (push candidate (integer 1)))) (if (not (equal (depth candidate) (depth delimiters))) (then fail)) (consume (literal %5D)) (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit closing))) fail))\n(rule source normal (seq (ref opening) (ref content) (optional (ref closing))))\n",
+    "trees": {
+      "[=[ body ]=]": "(source (opening \"[=[\") ~\" \" (content \"body \") (closing \"]=]\"))",
+      "[==[ é😀 ]=] body ]==]": "(source (opening \"[==[\") ~\" \" (content \"é😀 ]=] body \") (closing \"]==]\"))",
+      "[=[body": "(source (opening \"[=[\") (content \"body\"))",
+      "[[]]": "(source (opening \"[[\") (content \"\") (closing \"]]\"))"
+    }
+  }
+]

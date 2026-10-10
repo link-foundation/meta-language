@@ -186,7 +186,7 @@
         "revision": "bd942cd2795016239be02b3b3d5ef635645ddd38",
         "tag": "tree-sitter-lean4 0.3.0 (crates.io)",
         "parserSha256": "d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b",
-        "license": "js/src/vendor/grammars/lean.LICENSE"
+        "license": "js/oracles/grammars/lean.LICENSE"
       },
       "corpus": {
         "directory": "lean/corpus",
@@ -383,7 +383,7 @@
         "revision": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
         "patch": "rust/vendor/tree-sitter-rocq/meta-language.patch",
         "parserSha256": "4f0807b15d47e4335c28ccb7be5eb8d01851baaab4843dfa24b2d8fb1966ecd2",
-        "license": "js/src/vendor/grammars/rocq.LICENSE"
+        "license": "js/oracles/grammars/rocq.LICENSE"
       },
       "corpus": {
         "directory": "rocq/corpus",

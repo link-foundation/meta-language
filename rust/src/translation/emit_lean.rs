@@ -251,7 +251,11 @@ impl LeanEmitter<'_> {
         ];
         for (name, text) in HELPERS {
             if self.helpers.contains(name) {
-                lines.push(text.to_owned());
+                lines.push(if name == "stringIncludes" {
+                    crate::translation::frontend_rules::read_string_test_support("Lean", "includes")
+                } else {
+                    text.to_owned()
+                });
                 lines.push(String::new());
             }
         }
@@ -600,6 +604,25 @@ impl LeanEmitter<'_> {
                 )
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
+            Node::StringMap { op, .. } => {
+                return Err(crate::translation::diagnostics::unsupported(
+                    &format!(".{op}()"),
+                    &crate::translation::frontend_rules::read_string_map_refusal("Lean", op),
+                    e.span,
+                ));
+            }
+            Node::StringTest { op, string, search } => {
+                let helper =
+                    crate::translation::frontend_rules::read_string_test_helper("Lean", op);
+                if helper == "stringIncludes" {
+                    self.helpers.insert("stringIncludes");
+                }
+                let object = self.expr(string, depth)?;
+                let search = self.expr(search, depth)?;
+                crate::translation::frontend_rules::render_string_test_expression(
+                    "Lean", op, &object, &search,
+                )
+            }
             Node::ToString { arg, console } => {
                 if arg.ty == Type::String {
                     self.expr(arg, depth)?

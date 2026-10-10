@@ -41,6 +41,7 @@ mod grammar_merge;
 mod grammar_parsing;
 mod grammar_render;
 mod grammar_runtime;
+mod grammar_scanner_indentation;
 mod grammar_surface;
 mod grammar_token_over_extra;
 mod grammar_translate;
@@ -70,19 +71,27 @@ mod issue_195_grammar_declared_settling;
 mod issue_195_grammar_feature_union;
 mod issue_195_grammar_feature_union_interchange;
 mod issue_195_grammar_importers;
+mod issue_195_grammar_native_agda;
 mod issue_195_grammar_native_c;
 mod issue_195_grammar_native_csv;
 mod issue_195_grammar_native_diff;
+mod issue_195_grammar_native_dtd;
 mod issue_195_grammar_native_go;
 mod issue_195_grammar_native_graphql;
+mod issue_195_grammar_native_hcl;
+mod issue_195_grammar_native_html;
 mod issue_195_grammar_native_ini;
 mod issue_195_grammar_native_java;
 mod issue_195_grammar_native_javascript;
 mod issue_195_grammar_native_json;
 mod issue_195_grammar_native_json5;
 mod issue_195_grammar_native_lean;
+mod issue_195_grammar_native_lua;
 mod issue_195_grammar_native_make;
+mod issue_195_grammar_native_odin;
 mod issue_195_grammar_native_proto;
+mod issue_195_grammar_native_python;
+mod issue_195_grammar_native_r;
 mod issue_195_grammar_native_racket;
 mod issue_195_grammar_native_recovery;
 mod issue_195_grammar_native_regex;
@@ -92,6 +101,8 @@ mod issue_195_grammar_native_scheme;
 mod issue_195_grammar_native_solidity;
 mod issue_195_grammar_native_tsx;
 mod issue_195_grammar_native_typescript;
+mod issue_195_grammar_native_xml;
+mod issue_195_grammar_scanner_families;
 mod issue_195_grammar_shared_concepts;
 mod issue_195_interchange_api_cli;
 mod issue_195_interchange_faithful_lowering;
@@ -134,6 +145,7 @@ mod query_transform;
 mod rust_codec;
 mod self_description;
 mod self_translation;
+mod self_translation_scope;
 mod source_generation;
 mod source_points;
 mod storage;
@@ -165,3 +177,36 @@ mod ci_cd;
 
 #[path = "../../examples/grammar_pipeline_support/mod.rs"]
 mod grammar_pipeline_support;
+
+mod issue_195_grammar_native_toml;
+
+mod issue_195_grammar_native_zig;
+
+mod issue_195_grammar_native_pascal;
+
+mod issue_195_grammar_native_vb;
+
+mod issue_195_grammar_native_cpp;
+mod issue_195_grammar_native_css;
+mod issue_195_grammar_native_groovy;
+mod issue_195_grammar_native_sql;
+
+mod issue_195_grammar_native_powershell;
+
+mod issue_195_grammar_native_erlang;
+
+mod issue_195_grammar_native_dart;
+
+mod issue_195_grammar_native_nix;
+
+mod issue_195_grammar_native_cmake;
+
+mod translation_string_length;
+mod translation_string_predicates;
+
+mod translation_string_maps;
+
+mod self_translation_line_endings;
+
+mod native_development_oracles;
+mod translation_array_construction;

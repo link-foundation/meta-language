@@ -1,0 +1,459 @@
+{
+  "schemaVersion": 1,
+  "id": "toml",
+  "language": "TOML",
+  "grammar": "parity/grammars/native/toml.lino",
+  "oracle": "crates.io tree-sitter-toml-ng 0.7.0",
+  "sources": [
+    "https://github.com/tree-sitter-grammars/tree-sitter-toml/tree/64b56832c2cffe41758f28e05c756a3a98d16f41",
+    "https://github.com/tree-sitter-grammars/tree-sitter-toml/tree/64b56832c2cffe41758f28e05c756a3a98d16f41/test/corpus"
+  ],
+  "corpus": {
+    "path": "test/corpus",
+    "file": "parity/grammars/sources/tree-sitter-toml-ng-0.7.0.corpus.json.gz",
+    "sha256": "dfafc21d672b82b4736f9c00727585d23797a49c6bcc87e3a71493d0bb5e6836",
+    "url": "https://github.com/tree-sitter-grammars/tree-sitter-toml/tree/64b56832c2cffe41758f28e05c756a3a98d16f41/test/corpus"
+  },
+  "hidden": [],
+  "anonymous": [
+    "unnamed_token"
+  ],
+  "extras": [
+    "comment"
+  ],
+  "oracleKinds": {
+    "table_declaration": "table",
+    "inline_pair": "_inline_pair",
+    "key": "_key",
+    "inline_value": "_inline_value",
+    "basic_string": "_basic_string",
+    "multiple_line_basic_string": "_multiline_basic_string",
+    "escape_line_ending": "_escape_line_ending",
+    "literal_string": "_literal_string",
+    "multiple_line_literal_string": "_multiline_literal_string",
+    "integer_literal": "integer",
+    "line_ending_or_end_of_file": "_line_ending_or_eof",
+    "multiple_line_basic_string_content": "_multiline_basic_string_content",
+    "multiple_line_basic_string_end": "_multiline_basic_string_end",
+    "multiple_line_literal_string_content": "_multiline_literal_string_content",
+    "multiple_line_literal_string_end": "_multiline_literal_string_end"
+  },
+  "matches": [
+    {
+      "source": "",
+      "rows": [
+        [0,null,"document",1,0,0,""]
+      ]
+    },
+    {
+      "source": "# café\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"comment",1,0,7,"X"]
+      ]
+    },
+    {
+      "source": "x = 1",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"pair",1,0,5,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"integer",1,4,5,""]
+      ]
+    },
+    {
+      "source": "x = -1\n",
+      "rows": [
+        [0,null,"document",1,0,7,""],
+        [1,null,"pair",1,0,6,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"integer",1,4,6,""]
+      ]
+    },
+    {
+      "source": "x = +1\n",
+      "rows": [
+        [0,null,"document",1,0,7,""],
+        [1,null,"pair",1,0,6,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"integer",1,4,6,""]
+      ]
+    },
+    {
+      "source": "x = 0xFF\n",
+      "rows": [
+        [0,null,"document",1,0,9,""],
+        [1,null,"pair",1,0,8,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"integer",1,4,8,""]
+      ]
+    },
+    {
+      "source": "x = 0o77\n",
+      "rows": [
+        [0,null,"document",1,0,9,""],
+        [1,null,"pair",1,0,8,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"integer",1,4,8,""]
+      ]
+    },
+    {
+      "source": "x = 0b11\n",
+      "rows": [
+        [0,null,"document",1,0,9,""],
+        [1,null,"pair",1,0,8,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"integer",1,4,8,""]
+      ]
+    },
+    {
+      "source": "x = 1.5e+2\n",
+      "rows": [
+        [0,null,"document",1,0,11,""],
+        [1,null,"pair",1,0,10,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"float",1,4,10,""]
+      ]
+    },
+    {
+      "source": "x = inf\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"pair",1,0,7,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"float",1,4,7,""]
+      ]
+    },
+    {
+      "source": "x = -nan\n",
+      "rows": [
+        [0,null,"document",1,0,9,""],
+        [1,null,"pair",1,0,8,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"float",1,4,8,""]
+      ]
+    },
+    {
+      "source": "x = true\n",
+      "rows": [
+        [0,null,"document",1,0,9,""],
+        [1,null,"pair",1,0,8,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"boolean",1,4,8,""]
+      ]
+    },
+    {
+      "source": "x = false\n",
+      "rows": [
+        [0,null,"document",1,0,10,""],
+        [1,null,"pair",1,0,9,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"boolean",1,4,9,""]
+      ]
+    },
+    {
+      "source": "x = \"é😀\"\n",
+      "rows": [
+        [0,null,"document",1,0,13,""],
+        [1,null,"pair",1,0,12,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"string",1,4,12,""],
+        [3,null,"\"",0,4,5,""],
+        [3,null,"\"",0,11,12,""]
+      ]
+    },
+    {
+      "source": "x = 'literal\\text'\n",
+      "rows": [
+        [0,null,"document",1,0,19,""],
+        [1,null,"pair",1,0,18,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"string",1,4,18,""],
+        [3,null,"'",0,4,5,""],
+        [3,null,"'",0,17,18,""]
+      ]
+    },
+    {
+      "source": "x = \"a\\nb\\u00E9\"\n",
+      "rows": [
+        [0,null,"document",1,0,17,""],
+        [1,null,"pair",1,0,16,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"string",1,4,16,""],
+        [3,null,"\"",0,4,5,""],
+        [3,null,"escape_sequence",1,6,8,""],
+        [3,null,"escape_sequence",1,9,15,""],
+        [3,null,"\"",0,15,16,""]
+      ]
+    },
+    {
+      "source": "x = \"\"\"line\nnext\"\"\"\n",
+      "rows": [
+        [0,null,"document",1,0,20,""],
+        [1,null,"pair",1,0,19,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"string",1,4,19,""],
+        [3,null,"\"\"\"",0,4,7,""]
+      ]
+    },
+    {
+      "source": "x = '''line\nnext'''\n",
+      "rows": [
+        [0,null,"document",1,0,20,""],
+        [1,null,"pair",1,0,19,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"string",1,4,19,""],
+        [3,null,"'''",0,4,7,""]
+      ]
+    },
+    {
+      "source": "x = \"\"\"a\"b\"\"c\"\"\"\n",
+      "rows": [
+        [0,null,"document",1,0,17,""],
+        [1,null,"pair",1,0,16,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"string",1,4,16,""],
+        [3,null,"\"\"\"",0,4,7,""]
+      ]
+    },
+    {
+      "source": "x = \"\"\"a\"\"\"\"\n",
+      "rows": [
+        [0,null,"document",1,0,13,""],
+        [1,null,"pair",1,0,12,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"string",1,4,12,""],
+        [3,null,"\"\"\"",0,4,7,""]
+      ]
+    },
+    {
+      "source": "x = \"\"\"a\"\"\"\"\"\n",
+      "rows": [
+        [0,null,"document",1,0,14,""],
+        [1,null,"pair",1,0,13,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"string",1,4,13,""],
+        [3,null,"\"\"\"",0,4,7,""]
+      ]
+    },
+    {
+      "source": "x = '''a'''''\n",
+      "rows": [
+        [0,null,"document",1,0,14,""],
+        [1,null,"pair",1,0,13,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"string",1,4,13,""],
+        [3,null,"'''",0,4,7,""]
+      ]
+    },
+    {
+      "source": "x = [1, 2,]\n",
+      "rows": [
+        [0,null,"document",1,0,12,""],
+        [1,null,"pair",1,0,11,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"array",1,4,11,""],
+        [3,null,"[",0,4,5,""],
+        [3,null,"integer",1,5,6,""],
+        [3,null,",",0,6,7,""],
+        [3,null,"integer",1,8,9,""],
+        [3,null,",",0,9,10,""],
+        [3,null,"]",0,10,11,""]
+      ]
+    },
+    {
+      "source": "x = [[1], [2]]\n",
+      "rows": [
+        [0,null,"document",1,0,15,""],
+        [1,null,"pair",1,0,14,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"array",1,4,14,""],
+        [3,null,"[",0,4,5,""],
+        [3,null,"array",1,5,8,""],
+        [4,null,"[",0,5,6,""],
+        [4,null,"integer",1,6,7,""],
+        [4,null,"]",0,7,8,""],
+        [3,null,",",0,8,9,""],
+        [3,null,"array",1,10,13,""],
+        [4,null,"[",0,10,11,""],
+        [4,null,"integer",1,11,12,""],
+        [4,null,"]",0,12,13,""],
+        [3,null,"]",0,13,14,""]
+      ]
+    },
+    {
+      "source": "x = {a = 1, b = true}\n",
+      "rows": [
+        [0,null,"document",1,0,22,""],
+        [1,null,"pair",1,0,21,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"inline_table",1,4,21,""],
+        [3,null,"{",0,4,5,""],
+        [3,null,"pair",1,5,10,""],
+        [4,null,"bare_key",1,5,6,""],
+        [4,null,"=",0,7,8,""],
+        [4,null,"integer",1,9,10,""],
+        [3,null,",",0,10,11,""],
+        [3,null,"pair",1,12,20,""],
+        [4,null,"bare_key",1,12,13,""],
+        [4,null,"=",0,14,15,""],
+        [4,null,"boolean",1,16,20,""],
+        [3,null,"}",0,20,21,""]
+      ]
+    },
+    {
+      "source": "\"quoted key\" = 1\n",
+      "rows": [
+        [0,null,"document",1,0,17,""],
+        [1,null,"pair",1,0,16,""],
+        [2,null,"quoted_key",1,0,12,""],
+        [3,null,"\"",0,0,1,""],
+        [3,null,"\"",0,11,12,""],
+        [2,null,"=",0,13,14,""],
+        [2,null,"integer",1,15,16,""]
+      ]
+    },
+    {
+      "source": "a.b = 1\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"pair",1,0,7,""],
+        [2,null,"dotted_key",1,0,3,""],
+        [3,null,"bare_key",1,0,1,""],
+        [3,null,".",0,1,2,""],
+        [3,null,"bare_key",1,2,3,""],
+        [2,null,"=",0,4,5,""],
+        [2,null,"integer",1,6,7,""]
+      ]
+    },
+    {
+      "source": "[owner]\nname = \"Ada\"\n",
+      "rows": [
+        [0,null,"document",1,0,21,""],
+        [1,null,"table",1,0,21,""],
+        [2,null,"[",0,0,1,""],
+        [2,null,"bare_key",1,1,6,""],
+        [2,null,"]",0,6,7,""],
+        [2,null,"pair",1,8,20,""],
+        [3,null,"bare_key",1,8,12,""],
+        [3,null,"=",0,13,14,""],
+        [3,null,"string",1,15,20,""],
+        [4,null,"\"",0,15,16,""],
+        [4,null,"\"",0,19,20,""]
+      ]
+    },
+    {
+      "source": "[[product]]\nx = 1\n[[product]]\nx = 2\n",
+      "rows": [
+        [0,null,"document",1,0,36,""],
+        [1,null,"table_array_element",1,0,18,""],
+        [2,null,"[[",0,0,2,""],
+        [2,null,"bare_key",1,2,9,""],
+        [2,null,"]]",0,9,11,""],
+        [2,null,"pair",1,12,17,""],
+        [3,null,"bare_key",1,12,13,""],
+        [3,null,"=",0,14,15,""],
+        [3,null,"integer",1,16,17,""],
+        [1,null,"table_array_element",1,18,36,""],
+        [2,null,"[[",0,18,20,""],
+        [2,null,"bare_key",1,20,27,""],
+        [2,null,"]]",0,27,29,""],
+        [2,null,"pair",1,30,35,""],
+        [3,null,"bare_key",1,30,31,""],
+        [3,null,"=",0,32,33,""],
+        [3,null,"integer",1,34,35,""]
+      ]
+    },
+    {
+      "source": "x = 1979-05-27T07:32:00Z\n",
+      "rows": [
+        [0,null,"document",1,0,25,""],
+        [1,null,"pair",1,0,24,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"offset_date_time",1,4,24,""]
+      ]
+    },
+    {
+      "source": "x = 1979-05-27\n",
+      "rows": [
+        [0,null,"document",1,0,15,""],
+        [1,null,"pair",1,0,14,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"local_date",1,4,14,""]
+      ]
+    },
+    {
+      "source": "x = 07:32:00\n",
+      "rows": [
+        [0,null,"document",1,0,13,""],
+        [1,null,"pair",1,0,12,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"local_time",1,4,12,""]
+      ]
+    },
+    {
+      "source": "x = 1  # tail\r\n",
+      "rows": [
+        [0,null,"document",1,0,15,""],
+        [1,null,"pair",1,0,14,""],
+        [2,null,"bare_key",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"integer",1,4,5,""],
+        [2,null,"comment",1,7,13,"X"]
+      ]
+    }
+  ],
+  "divergences": [],
+  "rejections": [
+    {
+      "source": "x =",
+      "recovered": "(document (pair (bare_key \"x\") ~\" \" \"=\" (integer_literal (MISSING@3 unnamed_token)) (unnamed_token \"\")))"
+    },
+    {
+      "source": "[owner",
+      "recovered": "(document (table_declaration \"[\" (bare_key \"owner\") (MISSING@6 \"]\") (unnamed_token \"\")))"
+    },
+    {
+      "source": "x = \"unterminated",
+      "recovered": "(document (pair (bare_key \"x\") ~\" \" \"=\" (string ~\" \" \"\\\"\" (unnamed_token \"unterminated\") (MISSING@17 \"\\\"\")) (unnamed_token \"\")))"
+    },
+    {
+      "source": "x = [1",
+      "recovered": "(document (pair (bare_key \"x\") ~\" \" \"=\" (array ~\" \" \"[\" (integer_literal (unnamed_token \"1\")) (MISSING@6 \"]\")) (unnamed_token \"\")))"
+    },
+    {
+      "source": "x = 01\n",
+      "recovered": "(document (pair (bare_key \"x\") ~\" \" \"=\" (integer_literal ~\" \" (unnamed_token \"0\")) (MISSING@5 unnamed_token)) (unnamed_token (ERROR@5..6 \"1\") \"\\n\"))"
+    },
+    {
+      "source": "x = \"a\nb\"\n",
+      "recovered": "(document (pair (bare_key \"x\") ~\" \" \"=\" (string ~\" \" \"\\\"\" (unnamed_token \"a\") (unnamed_token (ERROR@6..7 \"\\n\") \"b\") \"\\\"\") (unnamed_token \"\")) (unnamed_token \"\\n\"))"
+    }
+  ]
+}

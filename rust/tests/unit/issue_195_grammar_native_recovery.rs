@@ -17,7 +17,7 @@ use super::cst_sexpression::{normalize, render_network};
 use super::issue_195_native_grammar_rows::{cases, parser, source};
 use super::issue_195_observations::{Observation, record};
 
-const GRAMMARS: [(&str, &str, &str); 21] = [
+const GRAMMARS: [(&str, &str, &str); 26] = [
     (
         "json",
         include_str!("../../../parity/grammars/native/json.lino"),
@@ -122,6 +122,31 @@ const GRAMMARS: [(&str, &str, &str); 21] = [
         "solidity",
         include_str!("../../../parity/grammars/native/solidity.lino"),
         include_str!("../../../parity/fixtures/native-grammars/solidity.json"),
+    ),
+    (
+        "toml",
+        include_str!("../../../parity/grammars/native/toml.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/toml.json"),
+    ),
+    (
+        "zig",
+        include_str!("../../../parity/grammars/native/zig.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/zig.json"),
+    ),
+    (
+        "pascal",
+        include_str!("../../../parity/grammars/native/pascal.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/pascal.json"),
+    ),
+    (
+        "vb",
+        include_str!("../../../parity/grammars/native/vb.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/vb.json"),
+    ),
+    (
+        "lua",
+        include_str!("../../../parity/grammars/native/lua.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/lua.json"),
     ),
 ];
 

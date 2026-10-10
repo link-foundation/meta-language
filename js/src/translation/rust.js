@@ -1,3 +1,4 @@
+import { readStringMapOperation, readStringTestOperation } from './frontend-rules.js';
 // Rust frontend for the portable core. It reads the subset of Rust the core
 // can represent faithfully: modules with `use` of crate items, enums with
 // unit and tuple variants (`Box<T>` fields are the recursive occurrences of
@@ -607,11 +608,11 @@ class RustParser {
       case 'ends_with':
       case 'contains':
         expect(1);
-        return { k: 'stringTest', op: { starts_with: 'startsWith', ends_with: 'endsWith', contains: 'includes' }[method.value], object: receiver, search: args[0], span: range };
+        return { k: 'stringTest', op: readStringTestOperation('Rust', method.value), object: receiver, search: args[0], span: range };
       case 'to_lowercase':
       case 'to_uppercase':
         expect(0);
-        return { k: 'stringMap', op: method.value === 'to_lowercase' ? 'toLowerCase' : 'toUpperCase', object: receiver, span: range };
+        return { k: 'stringMap', op: readStringMapOperation('Rust', method.value), object: receiver, span: range };
       case 'clone':
       case 'to_owned':
       case 'as_str':

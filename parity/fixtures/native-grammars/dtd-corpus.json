@@ -1,0 +1,36 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "3472a2c90e5baa591153747f1f4ff606d90d98f7332ae1e80bfa573f65808092",
+  "cases": [
+    {
+      "file": "examples.txt",
+      "title": "BookStore.dtd",
+      "source": "\n<!ELEMENT bookstore (book*)>\n<!ELEMENT book (title,author,genre?)>\n<!ELEMENT title (#PCDATA)>\n<!ELEMENT author (first-name, last-name)>\n<!ELEMENT genre (#PCDATA)>\n<!ELEMENT first-name (#PCDATA)>\n<!ELEMENT last-name (#PCDATA)>\n<!ATTLIST book price CDATA #REQUIRED>\n<!ATTLIST book publicationdate CDATA>\n<!ATTLIST book IBSN CDATA>\n"
+    },
+    {
+      "file": "issues.txt",
+      "title": "Parameter-entity references (#10)",
+      "source": "\n<!-- svg.dtd -->\n\n<!ELEMENT svg (desc|title|metadata|defs|\n                   path|text|rect|circle|ellipse|line|polyline|polygon|\n                   use|image|svg|g|view|switch|a|altGlyphDef|\n                   script|style|symbol|marker|clipPath|mask|\n                   linearGradient|radialGradient|pattern|filter|cursor|font|\n                   animate|set|animateMotion|animateColor|animateTransform|\n                   color-profile|font-face\n                   %ceExt;%svgExt;)* >\n\n<!ATTLIST svg\n  xmlns CDATA #FIXED \"http://www.w3.org/2000/svg\"\n  xmlns:xlink CDATA #FIXED \"http://www.w3.org/1999/xlink\"\n  %stdAttrs;\n  %testAttrs;\n  %langSpaceAttrs;\n  class %ClassList; #IMPLIED\n  style %StyleSheet; #IMPLIED\n  %PresentationAttributes-All;\n  preserveAspectRatio %PreserveAspectRatioSpec; 'xMidYMid meet'\n  zoomAndPan (disable | magnify) 'magnify'\n  %graphicsElementEvents;\n  %documentEvents;\n  version %Number; #FIXED \"1.0\"\n  x %Coordinate; #IMPLIED\n  y %Coordinate; #IMPLIED\n  width %Length; #IMPLIED\n  height %Length; #IMPLIED\n  contentScriptType %ContentType; \"text/ecmascript\"\n  contentStyleType %ContentType; \"text/css\" >\n\n<!ELEMENT desc (#PCDATA %descExt;)* >\n\n<!ELEMENT view (%descTitleMetadata;%viewExt;) >\n\n<!-- catalog.dtd -->\n\n<!ELEMENT %catalog; (%public;|%system;|%uri;\n                     |%rewriteSystem;|%rewriteURI;\n                     |%delegatePublic;|%delegateSystem;|%delegateURI;\n                     |%nextCatalog;|%group; %local.catalog.mix;)+>\n\n<!ATTLIST %catalog;\n  %nsdecl;  %uriReference;    #FIXED\n    'urn:oasis:names:tc:entity:xmlns:xml:catalog'\n  prefer    %systemOrPublic;  #IMPLIED\n  xml:base  %uriReference;    #IMPLIED\n  %local.catalog.attribs;\n>\n"
+    },
+    {
+      "file": "standard.txt",
+      "title": "Element Declarations",
+      "source": "\n<!ELEMENT br EMPTY>\n<!ELEMENT p (#PCDATA|emph)* >\n<!ELEMENT %name.para; %content.para; >\n<!ELEMENT container ANY>\n\n<!ELEMENT spec (front, body, back?)>\n<!ELEMENT div1 (head, (p | list | note)*, div2*)>\n<!ELEMENT dictionary-body (%div.mix; | %dict.mix;)*>\n\n<!ELEMENT p (#PCDATA|a|ul|b|i|em)*>\n<!ELEMENT p (#PCDATA | %font; | %phrase; | %special; | %form;)* >\n<!ELEMENT b (#PCDATA)>\n"
+    },
+    {
+      "file": "standard.txt",
+      "title": "Attribute-List Declarations",
+      "source": "\n<!ATTLIST termdef\n          id      ID      #REQUIRED\n          name    CDATA   #IMPLIED>\n<!ATTLIST list\n          type    (bullets|ordered|glossary)  \"ordered\">\n<!ATTLIST form\n          method  CDATA   #FIXED \"POST\">\n"
+    },
+    {
+      "file": "standard.txt",
+      "title": "Entity Declarations",
+      "source": "\n<!ENTITY Pub-Status \"This is a pre-release of the\n  specification.\">\n\n<!ENTITY open-hatch\n         SYSTEM \"http://www.textuality.com/boilerplate/OpenHatch.xml\">\n<!ENTITY open-hatch\n         PUBLIC \"-//Textuality//TEXT Standard open-hatch boilerplate//EN\"\n         \"http://www.textuality.com/boilerplate/OpenHatch.xml\">\n<!ENTITY hatch-pic\n         SYSTEM \"../grafix/OpenHatch.gif\"\n         NDATA gif >\n"
+    },
+    {
+      "file": "standard.txt",
+      "title": "Conditional Sections",
+      "source": "\n<!ENTITY % draft 'INCLUDE' >\n<!ENTITY % final 'IGNORE' >\n<![%draft;[\n<!ELEMENT book (comments*, title, body, supplements?)>\n]]>\n<![%final;[\n<!ELEMENT book (title, body, supplements?)>\n]]>\n"
+    }
+  ]
+}

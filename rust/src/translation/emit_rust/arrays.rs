@@ -65,6 +65,14 @@ impl RustEmitter<'_> {
                 ))
             }
             Node::Length { array } => {
+                if array.ty == super::Type::String {
+                    return Ok(
+                        crate::translation::frontend_rules::render_string_length_expression(
+                            "Rust",
+                            &self.receiver(array)?,
+                        ),
+                    );
+                }
                 if e.ty.is_float() {
                     return Ok(format!("({}.len() as f64)", self.receiver(array)?));
                 }

@@ -21,7 +21,11 @@ fn character_class_sets_match_fixtures_and_independent_regex_oracle() {
         let options = FeatureParseOptions::default();
         let parser = compile_feature_grammar(&grammar, None, options.clone())
             .expect("native character-class grammar compiles");
-        let pattern = entry["pattern"].as_str().expect("source pattern");
+        // Explicit escapes preserve the source dialect's literal doubled
+        // punctuation where the Rust oracle instead recognises set operators.
+        let pattern = entry["rustOraclePattern"]
+            .as_str()
+            .unwrap_or_else(|| entry["pattern"].as_str().expect("source pattern"));
         let oracle = Regex::new(&format!(r"\A(?:{pattern})\z"))
             .unwrap_or_else(|error| panic!("{id}: oracle pattern compiles: {error}"));
         for scalar in 0..128_u8 {

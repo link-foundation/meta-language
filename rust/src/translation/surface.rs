@@ -227,6 +227,9 @@ pub enum SNode {
         object: Box<SExpr>,
         field: String,
     },
+    TypeOf {
+        arg: Box<SExpr>,
+    },
     Unary {
         op: UnaryOp,
         arg: Box<SExpr>,
@@ -259,6 +262,15 @@ pub enum SNode {
     Match1 {
         scrutinee: Box<SExpr>,
         cases: Vec<SCase>,
+    },
+    StringMap {
+        op: String,
+        object: Box<SExpr>,
+    },
+    StringTest {
+        op: String,
+        object: Box<SExpr>,
+        search: Box<SExpr>,
     },
     ToString {
         arg: Box<SExpr>,
@@ -341,12 +353,15 @@ impl SNode {
             Self::DotCtor { .. } => "dotCtor",
             Self::App { .. } => "app",
             Self::Field { .. } => "field",
+            Self::TypeOf { .. } => "typeOf",
             Self::Unary { .. } => "unary",
             Self::Binary { .. } => "binary",
             Self::If { .. } => "if",
             Self::Let { .. } => "let",
             Self::Match { .. } => "match",
             Self::Match1 { .. } => "match1",
+            Self::StringMap { .. } => "stringMap",
+            Self::StringTest { .. } => "stringTest",
             Self::ToString { .. } => "toString",
             Self::Show { .. } => "show",
             Self::Cast { .. } => "cast",

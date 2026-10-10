@@ -60,7 +60,12 @@
     "type_query_call_expression": "_type_query_call_expression",
     "type_query_instantiation_expression": "_type_query_instantiation_expression",
     "signed_number": "_number",
-    "type_identifier_alias": "_type_identifier"
+    "type_identifier_alias": "_type_identifier",
+    "automatic_semicolon": "_automatic_semicolon",
+    "template_characters": "_template_chars",
+    "ternary_question_mark": "_ternary_qmark",
+    "function_signature_automatic_semicolon": "_function_signature_automatic_semicolon",
+    "error_recovery": "__error_recovery"
   },
   "matches": [
     {

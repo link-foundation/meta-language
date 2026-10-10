@@ -1,0 +1,420 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "python",
+  "native": "native-python",
+  "sources": [
+    {
+      "id": "tree-sitter-python",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-python 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-python",
+      "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+      "path": "src/grammar.json",
+      "sha256": "2adc15e78f4dae293e85de1517c45bcee2f8b075fa30a083c658925b944afec4",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/python.lino",
+    "sha256": "6a80b04646d502fbb96d66fcc8a2278d1d839460c6dab0ee242d3f26f18b804e",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "6db82134ac2d4c90a1a1475487a625cface02662ebda9b7478cad9c7147e9afe"
+    },
+    "scanners": [
+      {
+        "name": "layout",
+        "tokens": [
+          "newline",
+          "indent",
+          "dedent"
+        ]
+      },
+      {
+        "name": "strings",
+        "tokens": [
+          "string_start",
+          "string_fragment",
+          "string_end",
+          "escape_interpolation"
+        ]
+      }
+    ],
+    "immediate": [
+      "_newline",
+      "_indent",
+      "_dedent",
+      "_string_content",
+      "string_end",
+      "escape_interpolation"
+    ]
+  },
+  "rules": 159,
+  "keywords": [
+    "False",
+    "None",
+    "True",
+    "_",
+    "__future__",
+    "and",
+    "as",
+    "assert",
+    "async",
+    "await",
+    "break",
+    "case",
+    "class",
+    "continue",
+    "def",
+    "del",
+    "elif",
+    "else",
+    "except",
+    "exec",
+    "finally",
+    "for",
+    "from",
+    "global",
+    "if",
+    "import",
+    "in",
+    "is",
+    "lambda",
+    "match",
+    "nonlocal",
+    "not",
+    "or",
+    "pass",
+    "print",
+    "raise",
+    "return",
+    "try",
+    "type",
+    "while",
+    "with",
+    "yield"
+  ],
+  "renamed": [
+    {
+      "source": "_statement",
+      "native": "statement"
+    },
+    {
+      "source": "_simple_statements",
+      "native": "simple_statement_sequence"
+    },
+    {
+      "source": "_simple_statement",
+      "native": "simple_statement"
+    },
+    {
+      "source": "_import_list",
+      "native": "import_list"
+    },
+    {
+      "source": "aliased_import",
+      "native": "import_with_alias"
+    },
+    {
+      "source": "_named_expression_lhs",
+      "native": "named_expression_left_hand_side"
+    },
+    {
+      "source": "_expressions",
+      "native": "expression_sequence"
+    },
+    {
+      "source": "pass_statement",
+      "native": "pass_keyword_statement"
+    },
+    {
+      "source": "_compound_statement",
+      "native": "compound_statement"
+    },
+    {
+      "source": "elif_clause",
+      "native": "else_if_clause"
+    },
+    {
+      "source": "_match_block",
+      "native": "match_block"
+    },
+    {
+      "source": "parameters",
+      "native": "parameter_list"
+    },
+    {
+      "source": "lambda_parameters",
+      "native": "lambda_parameter_list"
+    },
+    {
+      "source": "nonlocal_statement",
+      "native": "non_local_statement"
+    },
+    {
+      "source": "_suite",
+      "native": "suite"
+    },
+    {
+      "source": "case_pattern",
+      "native": "match_case_pattern"
+    },
+    {
+      "source": "_simple_pattern",
+      "native": "simple_pattern"
+    },
+    {
+      "source": "_as_pattern",
+      "native": "as_pattern_content"
+    },
+    {
+      "source": "_list_pattern",
+      "native": "list_pattern_content"
+    },
+    {
+      "source": "_tuple_pattern",
+      "native": "tuple_pattern_content"
+    },
+    {
+      "source": "dict_pattern",
+      "native": "dictionary_pattern"
+    },
+    {
+      "source": "_key_value_pattern",
+      "native": "key_value_pattern"
+    },
+    {
+      "source": "_parameters",
+      "native": "parameter_sequence"
+    },
+    {
+      "source": "_patterns",
+      "native": "pattern_sequence"
+    },
+    {
+      "source": "parameter",
+      "native": "parameter_declaration"
+    },
+    {
+      "source": "_expression_within_for_in_clause",
+      "native": "expression_within_for_in_clause"
+    },
+    {
+      "source": "_not_in",
+      "native": "non_membership_operator"
+    },
+    {
+      "source": "_is_not",
+      "native": "identity_inequality_operator"
+    },
+    {
+      "source": "assignment",
+      "native": "value_assignment"
+    },
+    {
+      "source": "_left_hand_side",
+      "native": "left_hand_side"
+    },
+    {
+      "source": "_right_hand_side",
+      "native": "right_hand_side"
+    },
+    {
+      "source": "yield",
+      "native": "yield_expression"
+    },
+    {
+      "source": "attribute",
+      "native": "attribute_access"
+    },
+    {
+      "source": "_comprehension_clauses",
+      "native": "comprehension_clauses"
+    },
+    {
+      "source": "_collection_elements",
+      "native": "collection_element_sequence"
+    },
+    {
+      "source": "_f_expression",
+      "native": "f_expression"
+    },
+    {
+      "source": "_not_escape_sequence",
+      "native": "not_escape_sequence"
+    },
+    {
+      "source": "integer",
+      "native": "integer_literal"
+    },
+    {
+      "source": "false",
+      "native": "false_literal"
+    },
+    {
+      "source": "await",
+      "native": "await_expression"
+    },
+    {
+      "source": "_as_pattern_target_content",
+      "native": "as_pattern_target_content"
+    },
+    {
+      "source": "_exception_expression",
+      "native": "exception_expression"
+    },
+    {
+      "source": "_exception_as_pattern",
+      "native": "exception_as_pattern"
+    },
+    {
+      "source": "_collection_expression",
+      "native": "collection_expression"
+    },
+    {
+      "source": "_collection_primary_expression",
+      "native": "collection_primary_expression"
+    },
+    {
+      "source": "_collection_list_splat_pattern",
+      "native": "collection_list_splat_pattern"
+    },
+    {
+      "source": "_collection_attribute",
+      "native": "collection_attribute"
+    },
+    {
+      "source": "_collection_subscript",
+      "native": "collection_subscript"
+    },
+    {
+      "source": "_collection_call",
+      "native": "collection_call"
+    }
+  ],
+  "expandedWords": [
+    "elif",
+    "lhs"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "list",
+        "concept": "grammar.list"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      },
+      {
+        "rule": "exception_expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "collection_expression",
+        "concept": "grammar.expression"
+      }
+    ],
+    "generated": 150
+  },
+  "sourceTransforms": [
+    {
+      "family": "alias-choice-rule",
+      "rule": "as_pattern",
+      "alias": "as_pattern_target",
+      "helper": "_as_pattern_target_content",
+      "reason": "Retain the identifier or expression subtree beneath an as pattern target alias when the source alias references the expression supertype."
+    },
+    {
+      "family": "context-rule-variants",
+      "rules": [
+        "expression",
+        "as_pattern"
+      ],
+      "insertInto": [
+        "except_clause"
+      ],
+      "prefix": "_exception_",
+      "reason": "The pinned parser retains the complete as pattern in an exception value before the overlapping separate alias field, without changing either source alternative."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "_exception_as_pattern",
+      "value": 1,
+      "reason": "Prefer the complete exception value as pattern reduction that the pinned parser uses; retain the separate exception alias alternative."
+    },
+    {
+      "family": "complete-alternative-preference",
+      "rule": "_suite",
+      "symbol": "_indent",
+      "reason": "The source external scanner selects an indentation token before an overlapping inline suite whose first token follows a line break. Prefer the complete indented block and retain all original alternatives as fallback."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "print_statement",
+      "pattern": "print\\s*\\(",
+      "reason": "Parenthesized print(...) is a Python call expression in the pinned tree-sitter corpus, while unparenthesized Python 2 print remains a print statement; preserve the source alternatives and exclude the call prefix only from print_statement."
+    },
+    {
+      "family": "prefer-optional-literal",
+      "rule": "except_clause",
+      "literal": "*",
+      "value": 2,
+      "reason": "The exception-group marker belongs to the except clause before its value. Retain the absent marker and splat-expression alternatives while preferring the present marker as the pinned parser does."
+    },
+    {
+      "family": "context-rule-variants",
+      "rules": [
+        "expression",
+        "primary_expression",
+        "list_splat_pattern",
+        "attribute",
+        "subscript",
+        "call"
+      ],
+      "insertInto": [
+        "_collection_elements"
+      ],
+      "prefix": "_collection_",
+      "reason": "Collection elements need a splat-pattern reduction before suffixes without changing exception-value or assignment-pattern contexts. Retain every original alternative and use variants with the same concrete kinds and concepts."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "_collection_list_splat_pattern",
+      "associativity": "left",
+      "value": 23,
+      "reason": "The pinned parser reduces the collection splat pattern before attribute, subscript and call suffixes; preserve ordinary splat patterns outside the collection context."
+    },
+    {
+      "family": "ordered-variants",
+      "rule": "_f_expression",
+      "variants": [
+        "expression_list",
+        "pattern_list"
+      ],
+      "reason": "Formatted string interpolation reduces an ordinary comma-separated value as an expression list before the overlapping assignment pattern list, as the pinned parser does. Keep the pattern-list fallback for splatted patterns and preserve every source alternative."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

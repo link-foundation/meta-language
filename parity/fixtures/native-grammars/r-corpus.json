@@ -1,0 +1,451 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "b19de54975832d4203d63cecdbd6b49e06fa72cc6d09e8f9dddf450c25536d98",
+  "cases": [
+    {
+      "file": "expressions-errors.txt",
+      "title": "Function No Body With Assignment",
+      "source": "\nx <- function(x, y)\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Function No Body Inside Another Function",
+      "source": "\nfunction(x = function()) {}\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Not A Call, Subset, Or Subset2",
+      "source": "\nf\n(x)\n\nfoo\n[bar]\n\nfoo\n[[x]]\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Not A Call, Subset, Or Subset2 Due To Sequential Arguments",
+      "source": "\nf(x y)\nfoo[x y]\nfoo[[x y]]\n\nf(x, y z)\nfoo[x, y z]\nfoo[[x, y z]]\n\nf(, x y)\nfoo[, x y]\nfoo[[, x y]]\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Not A Parenthesized Expression 1",
+      "source": "\n()\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Not A Parenthesized Expression 2",
+      "source": "\n(\n  1\n  2\n)\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Not A Parenthesized Expression 3",
+      "source": "\n(1; 2)\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Dollar, At, Namespace, Namespace Internal With `if` RHS",
+      "source": "# The RHS's of these nodes are restricted to strings and identifiers, and the RHS\n# is optional. This ends up trying to match to an `if_statement` node, leaving the RHS\n# empty, and then the `if_statement` node errors because it doesn't have a `(`. This\n# is actually pretty decent behavior.\nfoo$if\nfoo@if\nfoo::if\nfoo:::if\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Dollar, At, Namespace, Namespace Internal With Newline Before Operator",
+      "source": "\n# Newlines are not allowed before the operator, so none of these are valid\nx\n$y\n\nx\n@y\n\nx\n::y\n\nx\n:::y\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Closing Brace",
+      "source": "\n}\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Closing Parenthesis",
+      "source": "\n)\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Closing Bracket",
+      "source": "\n]\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Opening Brace, Closing Parenthesis",
+      "source": "\n# Parenthesis is \"not valid\" so it isn't matched by the external scanner\n{)\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Opening Parenthesis, Closing Brace",
+      "source": "\n(}\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Opening Parenthesis, Closing Bracket",
+      "source": "\n(]\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Opening Bracket2, Unmatched Closing Bracket",
+      "source": "\nx[[2]\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Opening Bracket and Bracket2, Unmatched Closing Bracket",
+      "source": "\nx[y[[2]\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Opening Bracket2 and Bracket, Matched Closing Bracket",
+      "source": "\nx[[y[2]\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Opening Bracket2 and Bracket, Unmatched Closing Bracket",
+      "source": "\nx[[y[2]]\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Calls With NA As Argument Name",
+      "source": "\n# Unlike `NULL`, other keywords like `NA` aren't allowed here\nfn(NA = )\n"
+    },
+    {
+      "file": "expressions-errors.txt",
+      "title": "Unsupported Subset2 With `]]` Over Multiple Lines (#177)",
+      "source": "\nx[[\"a\"]\n]\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Functions",
+      "source": "function() 1\nfunction() {}\nfunction(arg1, arg2) {\n  arg2\n}\n\nfunction(arg1, arg2 = 2) {}\n\nfunction(x,\n         y,\n         z = 3) {\n\n}\n\nfunction()\n\n\n  1\n\nfunction\n() 1 + 1\n\nfunction\n\n() 1 + 1\n\nfunction\n\n# this important comment\n\n() 1 + 1\n\nfunction() function() {}\n\nfunction(x = function() {}) {}\n\n# With no intermediate `{` scope\nfunction() for(i in 1:5) i\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Functions With `return` As Parameter Name",
+      "source": "\n# `return` is not a reserved word in R (it's not in `?Reserved`), so it is\n# allowed as a parameter name (#189).\n\nfunction(return) return\nfunction(return = 1) return\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Function Dots And Dot Dot I",
+      "source": "\n# Dots as parameter without default\nfunction(...) { list(...) }\n\n# Dots as parameter with default\nfunction(... = 1) { get(\"...\") }\n\n# `..i` as parameter without default\nfunction(..1) { get(\"..1\") }\n\n# `..i` as parameter with default\nfunction(..1 = 1) { get(\"..1\") }\n\n# Miscellaneous\nfunction(x, ...) f(...)\nfunction(x, ...) ..1 + ..2\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Function No Body",
+      "source": "\nfunction(x, y)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Lambda Function",
+      "source": "\na <- \\(arg) arg\nb <- \\(arg1, arg2) paste0(arg1, arg2)\nc <- \\(fun, ...) fun(...)\n1:3 |> {\\(x, y = 1) x + y}() |> {\\(x) sum(x)}()\n{\\(a = 1) a + 1}()\n\\() 1 + 2\n\\()\n\n  1 + 2\n\n# Not currently allowed by the parser, but we think it will be and is just an oversight.\n# `'\\\\'` would need to be included alongside `FUNCTION` here https://github.com/wch/r-source/blob/802121c877837926a6bc2a930b3da749b537258b/src/main/gram.y#L3898-L3901.\n\\\n() 1 + 1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Relational",
+      "source": "\na == b\na > b\na < b\na >= b\na <= b\na != b\n\na ==\n  b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Arithmetic Operator",
+      "source": "\na + b\na - b\na * b\na / b\na ^ b\na ** b\n\na +\n  b\n\na *\n  b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Not An Arithmetic Operator",
+      "source": "\na\n  + b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Unary Operators",
+      "source": "\n!a\n+a\n-a\nfoo(!a, +b)\nfoo(-a, bar)\n\n!\n  a\n-  b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Operator precedence",
+      "source": "\n2+a*2\n2+a+2\n!a + !b\na <= 2 && 2 >= d\na[1] <- foo || bar\na && b(c) && d\nval <- foo %>% bar(1) %>% baz()\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Specials",
+      "source": "\nx %% y\nx %/% y\nx %+% y\nx %>% y\nx %>% 2 %>% z\nx %some text% y\nx %//% y\n\n# Not specials, but hard to test errors `%\\%`, `%%%`\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Pipe",
+      "source": "\nx |> print()\n\nx |> foo() %>% bar() |> baz()\n\nx |> foo() |> bar() + baz()\n\nx |> {function(x) x}()\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Pipe Placeholder",
+      "source": "\nfoo |> bar(x, y = _)\nfoo |> bar() |> baz(data = _)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Subset",
+      "source": "\nfoo[]\nfoo[,]\nfoo[,,]\nfoo[x,]\nfoo[x,,]\nfoo[,x]\nfoo[,,x]\nfoo[x,,y]\nfoo[,,x,,y,,]\n\nfoo[bar]\nfoo[1, 2]\nfoo[x=1,,y=3,4]\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Subset2",
+      "source": "\nfoo[[]]\nfoo[[,]]\nfoo[[,,]]\nfoo[[x,]]\nfoo[[x,,]]\nfoo[[,x]]\nfoo[[,,x]]\nfoo[[x,,y]]\nfoo[[,,x,,y,,]]\n\nfoo[[x]]\nfoo[[x, y]]\nfoo[[1, 2]]\nfoo[[x=1,,y=3,4]]\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Subset and Subset2 Precedence",
+      "source": "\na[[b[1]]]\na[b[[1]]]\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "If",
+      "source": "\nif (x)\n  log(y)\n\nif (a.b) {\n  log(c)\n  d\n}\n\nif (\n  x <\n  y\n) {\n  z\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "If-else",
+      "source": "\nif (x)\n  y else if (a)\n  b\n\nif (x)\n  y else if (a)\n  b else d\n\nif (a) {\n  c\n  d\n} else {\n  e\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Complex If Expression",
+      "source": "\n# Invalid at top level due to newline before `else`, so not a real if statement\nif (TRUE) {\n  1\n}\nelse {\n  2\n}\n\n# Invalid for same reason as above\nif (TRUE)\n  1\nelse\n  2\n\n# Valid inside `{` only due to special `else` handling with newlines\n{\n  if (TRUE) {\n    1\n  }\n  else {\n    2\n  }\n}\n\n# Valid with comments in special newline territory\n{\n  if (TRUE) {\n    1\n  }\n  # hi there\n\n  # another one!\n\n  else {\n    2\n  }\n}\n\n# Valid. This test ensures we handle the newline after `1 + 1` correctly (#125).\n{\n  if (TRUE)\n\n    1 + 1\n}\n\n# Valid. Newlines are allowed between the `else` and the `alternative`, even at top level (#141).\nif (TRUE) {\n  1\n} else\n{\n  2\n}\n\n# Valid. Same as above but in `{ }` so it is valid no matter where the newlines are.\n{\n  if (TRUE) {\n    1\n  } else\n  {\n    2\n  }\n}\n\n# Valid. Newlines and comments are allowed between the `else` and the `alternative`, even at top level.\nif (TRUE) {\n  1\n} else\n\n# do this alternative\n{\n  2\n}\n\n# Valid. Newlines are allowed between the `else` and the `alternative`, even at top level.\nif (TRUE) 1 else\n  2\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Identifiers starting with `else` that are not the `else` keyword (#200)",
+      "source": "\n# ASCII letter\n{\n  if (TRUE) 1\n  elseidx <- 1\n}\n\n# ASCII number\n{\n  if (TRUE) 1\n  else1idx <- 1\n}\n\n# ASCII `_`\n{\n  if (TRUE) 1\n  else_idx <- 1\n}\n\n# ASCII `.`\n{\n  if (TRUE) 1\n  else.idx <- 1\n}\n\n# Non-ASCII, but considered `iswalnum()` in R with UTF-8 locale.\n# Not considered `iswalnum()` in our scanner with C locale, but\n# our overapproximation with `>= 128` allows this and aligns with R.\n{\n  if (TRUE) 1\n  elseμ <- 1\n}\n\n# Non-ASCII (U+00B7), rejected by R as syntax error since `iswalnum()` returns false.\n# Our overapproximation with `>= 128` allows this, but that's ok since the R\n# side behavior is a syntax error.\n{\n  if (TRUE) 1\n  else· <- 1\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Identifiers starting with `else` that are not the `else` keyword - 2 (#200)",
+      "source": "\n# Correctly treats `else.x` as a single identifier, not as `else` followed by `.x`,\n# but should really be a syntax error. See https://github.com/r-lib/tree-sitter-r/issues/194.\nif (TRUE) {\n  1\n} else.x\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "For",
+      "source": "\nfor (x in y)\n  f\n\nfor (x in 5:6) {\n  for (y in ys) {\n    z\n  }\n}\n\nfor (x in y) for (y in z) x + y\n\nfor (x in y\n\n) 1 + 1\n\n# `...` as the `variable`\nfor (... in 1:2) print(get(\"...\"))\n\n# `..i` as the `variable`\nfor (..1 in 1:2) print(get(\"..1\"))\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "For No Body",
+      "source": "\nfor (i in 1:5)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "While",
+      "source": "while(TRUE)\n  bar\n\nwhile(x > 0)\n  x <- x - 1\n\nwhile(TRUE)\n  break\n\nwhile(TRUE)\n  next\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "While No Body",
+      "source": "\nwhile (a < b)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Repeat",
+      "source": "\nrepeat 1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Repeat No Body",
+      "source": "\nrepeat\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Switch",
+      "source": "\nswitch(foo,\n  x = 1,\n  \"y\" = 2,\n  z = ,\n  3\n)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Dollar",
+      "source": "\nfoo$bar\nfoo$bar$baz\nfoo$bar@baz\nfoo$bar()\nfoo$\"bar\"\nfoo$bar()$baz[[1]]$bam\nfoo$...\nfoo$..1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Dollar No RHS",
+      "source": "foo$\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Slot",
+      "source": "\nfoo@bar\nfoo@bar$baz\nfoo@bar()\nfoo@\"bar\"\nfoo@...\nfoo@..1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Slot No RHS",
+      "source": "foo@\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Namespace get",
+      "source": "\nfoo::\nfoo::bar\nfoo::bar(1)\nfoo::...\nfoo::..1\n...::foo\n..1::foo\n...::...\n..1::..1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Namespace get internal",
+      "source": "\nfoo:::\nfoo:::bar\nfoo:::bar(1)\nfoo:::...\nfoo:::..1\n...:::foo\n..1:::foo\n...:::...\n..1:::..1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Namespace With Missing RHS",
+      "source": "# It's nice that `::` allows an optional RHS and enforces that it can only be a\n# string or identifier, so this gives us a pretty clean tree even though it is\n# invalid R code.\n# https://github.com/r-lib/tree-sitter-r/issues/65\nlibrary(dplyr::)\n\nlibrary()\n\n1\n2\n3\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Dollar, At, Namespace, Namespace Internal With Expression RHS",
+      "source": "# These nodes allows an optional RHS, and the RHS must be a string/identifier,\n# so we nicely get a true node here alongside the braces. Even if that's not\n# parsable R code, it's useful for completions and highlighting.\nfoo${bar}\nfoo@{bar}\nfoo::{bar}\nfoo:::{bar}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Assignment",
+      "source": "\nx <- 1\nx = 1\nx := 1\nx <<- 1\n1 ->> x\n1 -> x\nx <- y(1)\ny(1) -> x\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Calls",
+      "source": "\nf()\nf(,)\nf(,,)\nf(x,)\nf(x,,)\nf(,x)\nf(,,x)\nf(x,,y)\nf(,,x,,y,,)\nf(x=,)\nf(\"x\"=,)\nf(,y=)\n\nf(x)\nf(1+1)\nf(1 ~ 1)\nf(x, y)\nf(x, y = 2)\nf(x = 1 + 1)\nf(x, y =)\nf(f2(x, y))\n\n# Dots as unnamed and named argument\nf(...)\nf(, ..., 1)\nf(... = 1)\nf(... = ,)\nf(... = ...)\n\n# `..i` as unnamed and named argument\nf(..1)\nf(, ..1, 1)\nf(..1 = 1)\nf(..1 = ,)\nf(..1 = ..1)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Calls With NULL As Argument Name",
+      "source": "\nfn(NULL =)\nfn(NULL =,)\nfn(NULL = 1)\n\n# This was likely added to R to support this case for `switch()`\nswitch(typeof(x), NULL = this, integer = that)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Calls With `return` As Argument Name",
+      "source": "\n# `return` is not a reserved word in R (it's not in `?Reserved`), so it is\n# allowed as an argument name (#189).\n\nfn(return = TRUE)\nfn(return = )\n\n# One specific example from #189\nswitch(\n  x,\n  return = ,\n)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "`return` Is Just An Identifier",
+      "source": "\n# `return` is a regular symbol in R, not a keyword (#189). A `return()`\n# call is parsed the same as any other call, with `return` as the\n# identifier. A bare `return` is also parsed as an identifier.\n\nfunction(x) return(x)\nreturn(x)\nreturn\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Braced Expression",
+      "source": "\n{}\n\n{1}\n\n{1; 2}\n\n{1;\n2}\n\n{1\n2\n}\n\n{\n1\n2\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Parenthesized Expression",
+      "source": "\n(1)\n((1))\n(1 + 1)\n(fn(a, b))\nfn((a), (b))\n(function() {\n  body\n})\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Colon",
+      "source": "\n1:2\n(1 + 1):-5\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Formulas",
+      "source": "\n~x\ny~x\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Help Operator",
+      "source": "a ? b\na ? b <- 1\n?a\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Complex Expressions",
+      "source": "repeat if (1) TRUE else repeat 42\nif (TRUE) if (FALSE) 2 else NULL\na::b$c[[d]] <- e\nTRUE ~ FALSE ~ NULL ? NA ? NaN\nif (TRUE) FALSE\nelse NA\n(if (TRUE) FALSE\nelse NA)\na = TRUE ? FALSE\nTRUE <- FALSE = NA\nTRUE <- FALSE ? NA\nTRUE = FALSE ? NA\nTRUE ? FALSE = NA\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence Tests",
+      "source": "A$\"B\"^NA\na::b$c\na$b?c\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Newlines",
+      "source": "\napple\n(banana)\n\n{\n  apple\n  (banana)\n}\n\n(\n  apple\n  (banana)\n)\n"
+    },
+    {
+      "file": "literals-errors.txt",
+      "title": "Unclosed Double Quote",
+      "source": "\"\\\"\n"
+    },
+    {
+      "file": "literals-errors.txt",
+      "title": "Unclosed Single Quote",
+      "source": "'\\'\n"
+    },
+    {
+      "file": "literals-errors.txt",
+      "title": "Unclosed Backtick",
+      "source": "`\\`\n"
+    },
+    {
+      "file": "literals-errors.txt",
+      "title": "Unclosed Raw String",
+      "source": "r\"(\n\"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Identifiers",
+      "source": "\nfoo\nfoo2\nfoo.bar\n.foo.bar\n.__NAMESPACE__.\n.\n..\n._\n._.\nfoo_bar\n`_foo`\n`a \"literal\"`\n`another\nliteral \\` foo`\n`backslash followed by newline \\\n`\n`\\``\n# Pipe placeholder\n_\n# Recognized as a single `_foo` identifier, even if invalid R code (#71).\n_foo\n__foo\n_foo_\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Unicode Identifiers",
+      "source": "\n你好\n.你.好.\n.你_好.\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Invalid Identifiers",
+      "source": "\n# R does not allow identifiers to start with a `.` followed by a digit, as this\n# would cause ambiguity with `.1L` and `.1i`. R itself rejects this as a syntax\n# error, we currently parse this as `.1` followed by `foo`, just like we do with\n# `1foo` (#190).\n.1foo\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Strings",
+      "source": "\n\"foo\"\n\"foo\nbar\"\n\"#\"\n\",\"\n\"}\"\n'foo'\n'foo\nbar'\n'#'\n','\n'}'\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Strings Without Content",
+      "source": "\n\"\"\n''\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Strings With Escape Sequences",
+      "source": "\n\"\\\\\"\n\"\\ \"\n\"\\n\"\n\"\\t\"\n\"\\r\"\n\n\"\\0\"\n\"\\1\"\n\"\\7\"\n\"\\12\"\n\"\\123\"\n\"\\1234\"\n\n\"\\x1\"\n\"\\x01\"\n\"\\x012\"\n\n\"\\u1\"\n\"\\u01\"\n\"\\u001\"\n\"\\u0001\"\n\"\\u00011\"\n\n\"\\u{1}\"\n\"\\u{01}\"\n\"\\u{001}\"\n\"\\u{0001}\"\n\n\"\\U{1}\"\n\"\\U{01}\"\n\"\\U{001}\"\n\"\\U{0001}\"\n\"\\U{00001}\"\n\"\\U{000001}\"\n\"\\U{0000001}\"\n\"\\U{00000001}\"\n\n\"\\U1\"\n\"\\U01\"\n\"\\U001\"\n\"\\U0001\"\n\"\\U00001\"\n\"\\U000001\"\n\"\\U0000001\"\n\"\\U00000001\"\n\"\\U000000011\"\n\n\"foo\\\"bar\"\n\"foo\\ \"\n\"foo\\\n\"\n\"\\\"\"\n'\\''\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Raw Strings",
+      "source": "r\"(raw string)\"\nR\"{another raw string}\"\nR\"--[yet another ]- raw string]--\"\n\nr\"(\")\"\nr\"(\"\")\"\nr\"(')\"\nr\"('')\"\n\nr\"-(-)-\"\nr\"-()-)-\"\nr\"--()-\")--\"\n\nr\"( () )\"\nr\"(())\"\nr\"( ())\"\nr\"(() )\"\nr\"-())-\"\nr\"-(())-)-\"\n\nr\"(raw\nstring\n)\"\n\n# Empty strings with no `string_content` node\nr\"()\"\nr'()'\nR\"{}\"\nr\"--[]--\"\n\n# Leading whitespace and newlines after open\nr\"(  hello)\"\nr\"(\\nhello)\"\nr\"(\nhello\n)\"\nf(r\"(\\nhello\\n)\")\nf(r\"(\nhello\n)\")\n\n# Single quoted raw strings\nr'(a)'\nr'(')'\nr'(\")'\n\nr()\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Comments",
+      "source": "\n# a comment'\n\n'# not a comment'\n\n\n'\n# still not a comment'\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Constants",
+      "source": "\nTRUE\nFALSE\nNULL\nInf\nNaN\nNA\nNA_real_\nNA_character_\nNA_complex_\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Integers",
+      "source": "\n12332L\n0L\n12L\n1e1L\n# Technically, R parses these as floats with a warning, but for our purposes this is good enough\n0.1L\n.1L\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Floats",
+      "source": "\n.66\n.11\n123.4123\n.1234\nx <- -.66\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Hexadecimal",
+      "source": "\n# `x` vs `X`\n0x123\n0X123\n\n# Numbers and letters\n0xDEAD\n0XDEAD\n0x1f2F3\n0X1f2F3\n\n# `p` vs `P`\n0x0p0\n0x0P0\n0x0p123\n0x0P123\n\n# `+` and `-`\n0x0p+0\n0x0p-0\n0x0p+123\n0x0p-123\n\n# Decimal point\n0x.\n0x1.\n0x.1\n0x1.1\n\n# Decimal point with exponent\n0x.p1\n0x1.p1\n0x.1p1\n0x1.1p1\n\n# As integers\n0x123L\n0X123L\n0xDEADL\n0XDEADL\n0x0p0L\n0x0P0L\n0x0p+0L\n0x0p-0L\n0x.L\n0x1.L\n0x.1L\n0x1.1L\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Scientific Notation Floats",
+      "source": "\n1e322\n1e-3\n1e+3\n1.8e10\n1.e10\n1e10\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Complex",
+      "source": "\n1i\n0i\n1.1i\n.1i\n1e10i\n.1e10i\n0x1i\n0x.1i\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Dot Dot I",
+      "source": "\n..1\n..10\n"
+    }
+  ]
+}

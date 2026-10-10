@@ -120,11 +120,18 @@ pub(super) fn ends_missing(children: &Children) -> bool {
 fn lexed_past(children: &Children, last: &Tree) -> bool {
     let mut after: Option<Rc<Tree>> = None;
     leaves_backward(children, &mut |leaf| {
-        if leaf.start >= last.end && (leaf.end > last.end || widthless(leaf)) {
+        let action = crate::translation::frontend_rules::read_scanner_continuation_action(
+            widthless(leaf),
+            leaf.start >= last.end,
+            leaf.end > last.end,
+        );
+        if action > 0.0 {
             after = Some(leaf.clone());
             None
+        } else if action < 0.0 {
+            Some(after.is_some() && one_leaf(leaf, last))
         } else {
-            Some(after.as_ref().is_some_and(|after| !widthless(after)) && one_leaf(leaf, last))
+            None
         }
     })
     .unwrap_or(false)
@@ -485,7 +492,7 @@ pub(super) fn shifted_past(
     if theirs.ty != TreeType::Node
         || same_tree(mine, theirs)
         || first_leaf_start(mine) != first_leaf_start(theirs)
-        || theirs.end != parent.end
+        || theirs.end < parent.end
     {
         return Ordering::Equal;
     }

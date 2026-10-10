@@ -11,8 +11,8 @@ use super::forking::Lead;
 use super::operations::State;
 use super::program::{Expr, InExtra, Matcher, Name, Program, Rule, Target};
 use super::results::{
-    Entry, Res, Skipped, Tree, TreeType, children_of, is_separator, longest_result, no_children,
-    preferred_tokens, with_leaf,
+    Entry, Res, Skipped, Tree, TreeType, children_of, concat, is_separator, longest_result,
+    no_children, preferred_tokens, with_leaf,
 };
 use crate::grammar::RuleKind;
 
@@ -161,7 +161,25 @@ impl Executor<'_> {
                     cursor = end;
                 }
                 Extra::Leaf => {
-                    leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
+                    // Match scannerToken's separation of skipped whitespace
+                    // from the named external token, including for extras.
+                    let scanned = if let Some(kind) = &best_kind
+                        && self.program.external.contains_key(&**kind)
+                    {
+                        self.run_scanner(kind, cursor, position, state)?
+                    } else {
+                        None
+                    };
+                    if let Some(scanned) = scanned.filter(|scanned| scanned.end == best) {
+                        leaves.extend(scanned.skipped);
+                        leaves.push(Rc::new(Tree::trivia_leaf(
+                            best_kind,
+                            scanned.token_start,
+                            best,
+                        )));
+                    } else {
+                        leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
+                    }
                     cursor = best;
                 }
                 Extra::None => break,
@@ -594,8 +612,8 @@ impl Executor<'_> {
     /// matches, at least as far, and without the trivia from it on (CSV's row
     /// ends with a `\n` token where `\s` is trivia); otherwise `skipped`. An
     /// extra that is a token rule is taken over too where the token wins the
-    /// lexical conflict with it, lexing longer at no lower precedence or as
-    /// far at a higher one: Make's `raw_line` of a define directive,
+    /// lexical conflict with it, lexing longer at no lower precedence or matching a
+    /// nonempty token at a higher one: Make's `raw_line` of a define directive,
     /// `#comment\n`, is no comment of a lower precedence.
     pub(super) fn token_before_extra(
         &mut self,
@@ -625,7 +643,7 @@ impl Executor<'_> {
             let takes = match (plain, other, reach) {
                 (true, _, Some(reach)) => reach >= leaf.end,
                 (false, Some(other), Some(reach)) => {
-                    (reach > leaf.end && level >= other) || (reach == leaf.end && level > other)
+                    (reach > leaf.end && level >= other) || (reach > leaf.start && level > other)
                 }
                 _ => false,
             };
@@ -668,6 +686,35 @@ impl Executor<'_> {
         in_token: bool,
     ) -> Run<Vec<Res>> {
         let start = skipped.end;
+        // A wrapped scanner keeps its skipped trivia outside its token.
+        if !in_token && let Expr::Ref(Target::External(name)) = item {
+            let mut results = self.scanner_token(name, start, state, false, true)?;
+            // Layout tokens of no width keep their grammar-owned padding span.
+            if results.iter().all(|result| {
+                result
+                    .children
+                    .iter()
+                    .any(|child| child.scanned && child.end > child.start)
+            }) {
+                for result in &mut results {
+                    let children: Vec<_> = result
+                        .children
+                        .iter()
+                        .map(|child| {
+                            if child.scanned {
+                                let mut leaf = (**child).clone();
+                                leaf.kind = None;
+                                Rc::new(leaf)
+                            } else {
+                                Rc::clone(child)
+                            }
+                        })
+                        .collect();
+                    result.children = concat(&skipped.leaves, &children);
+                }
+                return Ok(results);
+            }
+        }
         let Some(best) = longest_result(self.evaluate(item, start, state, true)?) else {
             return Ok(Vec::new());
         };

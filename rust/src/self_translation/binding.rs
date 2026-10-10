@@ -26,7 +26,7 @@ struct ImportScan {
 /// What a JavaScript item declares and names, read from its tokens.
 #[derive(Clone)]
 pub(super) struct Scan {
-    declares: Option<String>,
+    pub(super) declares: Option<String>,
     pub(super) exported: bool,
     is_async: bool,
     mentions: Vec<String>,
@@ -243,7 +243,7 @@ impl Binder<'_, '_> {
             for (imported, local) in &imports.names {
                 if let Some(signature) = provided
                     .iter()
-                    .find(|candidate| candidate.name() == imported)
+                    .find(|candidate| candidate.name() == imported && accept_signature(candidate))
                 {
                     externals.push(signature.renamed(local));
                 }
@@ -270,7 +270,7 @@ impl Binder<'_, '_> {
                 if let Some(signature) = out
                     .signatures
                     .iter()
-                    .find(|candidate| candidate.name() == name)
+                    .find(|candidate| candidate.name() == name && accept_signature(candidate))
                 {
                     externals.push(signature.clone());
                 }
@@ -297,4 +297,12 @@ struct Visit {
     owners: HashMap<String, usize>,
     outs: Vec<Option<Translated>>,
     visiting: HashSet<usize>,
+}
+
+const fn accept_signature(signature: &External) -> bool {
+    let (constant, literal) = match signature {
+        External::Constant { literal, .. } => (true, *literal),
+        External::Function { .. } => (false, false),
+    };
+    crate::translation::frontend_rules::accept_declaration_signature(constant, literal)
 }

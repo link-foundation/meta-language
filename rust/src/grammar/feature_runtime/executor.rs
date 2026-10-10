@@ -682,6 +682,7 @@ impl<'c> Executor<'c> {
         // could have been reduced (see `reduction_facts`), by the result's
         // children.
         let mut boundaries: HashMap<*const ChildList, usize> = HashMap::new();
+        let mut first_parts: HashMap<*const ChildList, bool> = HashMap::new();
         let mut current = vec![Res::new(position, state.clone(), no_children(), 0)];
         for (index, item) in items.iter().enumerate() {
             let mut next =
@@ -707,7 +708,20 @@ impl<'c> Executor<'c> {
                     if left.open && right.end > left.end {
                         continue;
                     }
+                    let right_single = keep.is_none()
+                        || right.children.iter().filter(|child| !child.trivia).count() == 1;
+                    let left_single = if index == 0 {
+                        right_single
+                    } else {
+                        first_parts
+                            .get(&Rc::as_ptr(&left.children))
+                            .copied()
+                            .unwrap_or(true)
+                    };
                     let mut joined = Res::join(left, right, in_token);
+                    if keep.is_some() {
+                        first_parts.insert(Rc::as_ptr(&joined.children), left_single);
+                    }
                     if let Some(split) = split
                         && index >= split.optional_from
                     {
@@ -733,7 +747,7 @@ impl<'c> Executor<'c> {
                     }
                     if last
                         && let Some(keep) = keep
-                        && !self.precedence_valid(keep, &joined)
+                        && !self.precedence_valid_edges(keep, &joined, left_single, right_single)
                     {
                         continue;
                     }

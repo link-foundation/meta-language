@@ -1,7 +1,9 @@
 {
   "schemaVersion": 1,
   "issue": 163,
-  "relatedIssues": [195],
+  "relatedIssues": [
+    195
+  ],
   "updated": "2026-09-29",
   "operationFamilies": [
     "parse",
@@ -15,55 +17,142 @@
   ],
   "rustModulesDoc": "Every `pub mod` in rust/src/lib.rs MUST appear here so the public Rust surface can never silently grow past the JavaScript port (the gap that let issue #166 slip). `parity: ported` rows name the feature row that proves JavaScript carries the module; `parity: rust-only` rows must justify why the module is intentionally Rust-only. The check (js/scripts/check-js-rust-parity.mjs) and the Rust test (rust/tests/unit/parity_manifest.rs) both fail when lib.rs and this map drift apart.",
   "rustModules": {
-    "access": { "parity": "ported", "feature": "read-only-access" },
-    "api_styles": { "parity": "ported", "feature": "api-style-registry" },
+    "access": {
+      "parity": "ported",
+      "feature": "read-only-access"
+    },
+    "api_styles": {
+      "parity": "ported",
+      "feature": "api-style-registry"
+    },
     "benchmark": {
       "parity": "rust-only",
       "reason": "Criterion micro-benchmark harness for the Rust crate; measurement tooling, not a library capability to mirror."
     },
-    "configuration": { "parity": "ported", "feature": "parse-configuration" },
-    "decorators": { "parity": "ported", "feature": "pipeline-decorators" },
+    "configuration": {
+      "parity": "ported",
+      "feature": "parse-configuration"
+    },
+    "decorators": {
+      "parity": "ported",
+      "feature": "pipeline-decorators"
+    },
     "document_formatting": {
       "parity": "rust-only",
       "reason": "DOCX/PDF/markup document import and rendering built on Rust-only binary format parsers (docx_parser, pdf_parser); out of scope for the JavaScript links-network core."
     },
-    "grammar": { "parity": "ported", "feature": "grammar-peggy-emitter" },
-    "graphql_adapter": { "parity": "ported", "feature": "graphql-query-plan" },
-    "language_catalog": { "parity": "ported", "feature": "language-catalog-dispatch" },
-    "language_parser": { "parity": "ported", "feature": "four-language-structured-frontends" },
-    "language_profile": { "parity": "ported", "feature": "language-profile" },
-    "language_support": { "parity": "ported", "feature": "language-capability-contracts" },
-    "link_flags": { "parity": "ported", "feature": "link-flags" },
-    "link_network": { "parity": "ported", "feature": "link-network-core" },
-    "lino_serialization": { "parity": "ported", "feature": "lino-serialization" },
-    "mixed_regions": { "parity": "ported", "feature": "embedded-regions" },
+    "grammar": {
+      "parity": "ported",
+      "feature": "grammar-peggy-emitter"
+    },
+    "graphql_adapter": {
+      "parity": "ported",
+      "feature": "graphql-query-plan"
+    },
+    "language_catalog": {
+      "parity": "ported",
+      "feature": "language-catalog-dispatch"
+    },
+    "language_parser": {
+      "parity": "ported",
+      "feature": "four-language-structured-frontends"
+    },
+    "language_profile": {
+      "parity": "ported",
+      "feature": "language-profile"
+    },
+    "language_support": {
+      "parity": "ported",
+      "feature": "language-capability-contracts"
+    },
+    "link_flags": {
+      "parity": "ported",
+      "feature": "link-flags"
+    },
+    "link_network": {
+      "parity": "ported",
+      "feature": "link-network-core"
+    },
+    "lino_serialization": {
+      "parity": "ported",
+      "feature": "lino-serialization"
+    },
+    "mixed_regions": {
+      "parity": "ported",
+      "feature": "embedded-regions"
+    },
     "parity": {
       "parity": "rust-only",
       "reason": "Rust-side parity fixtures and language-target registry used to drive the crate's own conformance tests; this shared manifest plus the JavaScript checker is the cross-language equivalent."
     },
-    "parser_registry": { "parity": "ported", "feature": "parser-extension-registry" },
-    "program_representation": { "parity": "ported", "feature": "four-language-program-representation" },
-    "program_translation": { "parity": "ported", "feature": "four-language-portable-translation" },
-    "translation": { "parity": "ported", "feature": "four-language-portable-translation" },
-    "query": { "parity": "ported", "feature": "sexpression-query" },
-    "query_algebra": { "parity": "ported", "feature": "link-rule-algebra" },
-    "query_plan": { "parity": "ported", "feature": "graphql-query-plan" },
+    "parser_registry": {
+      "parity": "ported",
+      "feature": "parser-extension-registry"
+    },
+    "program_representation": {
+      "parity": "ported",
+      "feature": "four-language-program-representation"
+    },
+    "program_translation": {
+      "parity": "ported",
+      "feature": "four-language-portable-translation"
+    },
+    "translation": {
+      "parity": "ported",
+      "feature": "four-language-portable-translation"
+    },
+    "query": {
+      "parity": "ported",
+      "feature": "sexpression-query"
+    },
+    "query_algebra": {
+      "parity": "ported",
+      "feature": "link-rule-algebra"
+    },
+    "query_plan": {
+      "parity": "ported",
+      "feature": "graphql-query-plan"
+    },
     "rust_codec": {
       "parity": "rust-only",
       "reason": "Derives a links encoding from native Rust type shapes (Rust reflection/derive); inherently Rust-specific with no JavaScript analogue."
     },
-    "semantics": { "parity": "ported", "feature": "truth-value-semantics" },
-    "snapshots": { "parity": "ported", "feature": "snapshots" },
-    "source": { "parity": "ported", "feature": "lossless-text-parse-reconstruct" },
-    "sql_adapter": { "parity": "ported", "feature": "sql-query-plan" },
+    "semantics": {
+      "parity": "ported",
+      "feature": "truth-value-semantics"
+    },
+    "snapshots": {
+      "parity": "ported",
+      "feature": "snapshots"
+    },
+    "source": {
+      "parity": "ported",
+      "feature": "lossless-text-parse-reconstruct"
+    },
+    "sql_adapter": {
+      "parity": "ported",
+      "feature": "sql-query-plan"
+    },
     "storage": {
       "parity": "rust-only",
       "reason": "Pluggable link-store backends including the optional doublets engine; persistence layer outside the in-memory JavaScript links-network core."
     },
-    "substitution": { "parity": "ported", "feature": "structural-substitution" },
-    "transform": { "parity": "ported", "feature": "query-transform" },
-    "translation_rules": { "parity": "ported", "feature": "translation-rules" },
-    "verification": { "parity": "ported", "feature": "verification" }
+    "substitution": {
+      "parity": "ported",
+      "feature": "structural-substitution"
+    },
+    "transform": {
+      "parity": "ported",
+      "feature": "query-transform"
+    },
+    "translation_rules": {
+      "parity": "ported",
+      "feature": "translation-rules"
+    },
+    "verification": {
+      "parity": "ported",
+      "feature": "verification"
+    }
   },
   "javascriptExportsDoc": "Generated by js/scripts/generate-export-parity.mjs: every public export of js/src/index.js with the public Rust item that carries the same feature. rust/tests/unit/javascript_export_parity.rs references every item so the Rust build fails when one disappears, and parity/fixtures/export-parity/cases.lino compares the observable output of both runtimes.",
   "javascriptExports": {
@@ -404,11 +493,32 @@
           "rust/src/language_support.rs",
           "rust/tests/unit/four_language_conformance.rs",
           "parity/fixtures/four-language-conformance.json",
-          "rust/tests/unit/translation_stages.rs",
           "rust/tests/unit/translation_defaults.rs",
+          "rust/tests/unit/translation_stages.rs",
           "rust/tests/unit/translation_foundation.rs",
           "rust/src/translation/javascript/infer/arrays.rs",
-          "rust/tests/unit/self_translation.rs"
+          "rust/tests/unit/self_translation.rs",
+          "parity/fixtures/translation-lexical-boundaries.json",
+          "parity/fixtures/self-translation-bindings.json",
+          "rust/src/translation/frontend_rules.rs",
+          "rust/src/translation/lexer.rs",
+          "rust/src/translation/surface.rs",
+          "rust/src/tree_sitter_adapter.rs",
+          "rust/src/self_translation/binding.rs",
+          "rust/src/self_translation/scope.rs",
+          "rust/tests/unit/self_translation_scope.rs",
+          "rust/tests/unit/translation_string_predicates.rs",
+          "rust/src/translation/emit_rocq/expressions.rs",
+          "rust/src/translation/check/strings.rs",
+          "rust/tests/unit/translation_string_maps.rs",
+          "rust/src/translation/check/type_queries.rs",
+          "rust/tests/unit/self_translation_line_endings.rs",
+          "rust/tests/unit/translation_array_construction.rs",
+          "rust/src/translation/javascript/array_methods.rs",
+          "parity/fixtures/translation-array-construction.json",
+          "parity/fixtures/self-translation-line-endings.json",
+          "parity/fixtures/translation-corpus/string-length.mjs",
+          "rust/tests/unit/translation_string_length.rs"
         ]
       },
       "javascript": {
@@ -419,10 +529,28 @@
           "js/tests/four-language-conformance.test.js",
           "parity/fixtures/four-language-conformance.json",
           "js/tests/translation-defaults.test.js",
+          "js/tests/translation-strings.test.js",
           "js/tests/translation-frontend-rules.test.js",
           "js/tests/self-translation.test.js",
           "js/tests/translation-rust-compilation.test.js",
-          "js/tests/translation-self-report.test.js"
+          "js/tests/translation-self-report.test.js",
+          "js/tests/translation-regex-tokenization.test.js",
+          "parity/fixtures/translation-lexical-boundaries.json",
+          "parity/fixtures/self-translation-bindings.json",
+          "js/tests/translation-self-bindings.test.js",
+          "js/src/translation/frontend-rules.js",
+          "js/src/translation/lexer.js",
+          "js/tests/translation-type-queries.test.js",
+          "js/tests/translation-array-concatenation.test.js",
+          "js/tests/translation-self-root-error.test.js",
+          "js/tests/translation-self-module-signatures.test.js",
+          "js/tests/translation-string-predicates-parity.test.js",
+          "js/tests/translation-self-line-endings.test.js",
+          "js/tests/translation-array-concatenation.test.js",
+          "parity/fixtures/translation-array-construction.json",
+          "parity/fixtures/self-translation-line-endings.json",
+          "parity/fixtures/translation-corpus/string-length.mjs",
+          "js/tests/translation-string-length.test.js"
         ]
       }
     },
@@ -474,7 +602,8 @@
         "evidence": [
           "rust/src/language_catalog.rs",
           "rust/src/data/language-catalog.json",
-          "rust/tests/unit/language_catalog.rs"
+          "rust/tests/unit/language_catalog.rs",
+          "rust/src/data/native-grammar-texts.rs"
         ]
       },
       "javascript": {
@@ -482,7 +611,8 @@
         "evidence": [
           "js/src/language-catalog.js",
           "js/src/data/language-catalog.json",
-          "js/tests/language-catalog.test.js"
+          "js/tests/language-catalog.test.js",
+          "js/scripts/build-language-catalog.mjs"
         ]
       }
     },
@@ -882,7 +1012,10 @@
           "rust/src/grammar/interchange/lowering/encoding.rs",
           "rust/src/grammar/interchange/lowering/metadata.rs",
           "rust/tests/unit/issue_195_interchange_faithful_lowering.rs",
-          "parity/fixtures/grammar-importers.json"
+          "parity/fixtures/grammar-importers.json",
+          "rust/src/grammar/import/antlr/lexer.rs",
+          "rust/tests/unit/grammar_import_antlr.rs",
+          "rust/tests/fixtures/grammar/antlr/braced-unicode.g4"
         ]
       },
       "javascript": {
@@ -890,7 +1023,10 @@
         "evidence": [
           "js/src/grammar-lowering.js",
           "js/tests/issue-195-interchange-faithful-lowering.test.js",
-          "parity/fixtures/grammar-importers.json"
+          "parity/fixtures/grammar-importers.json",
+          "js/src/grammar-importers/antlr-lexer.js",
+          "js/tests/grammar-antlr.test.js",
+          "rust/tests/fixtures/grammar/antlr/braced-unicode.g4"
         ]
       }
     },
@@ -905,9 +1041,99 @@
           "rust/src/grammar/merge/declarations.rs",
           "rust/tests/unit/issue_195_grammar_feature_union.rs",
           "rust/tests/unit/issue_195_grammar_feature_union_interchange.rs",
+          "rust/tests/unit/native_development_oracles.rs",
+          "rust/oracles/native-source-oracles/build.rs",
+          "rust/oracles/native-source-oracles/src/lib.rs",
+          "parity/fixtures/grammar-feature-union.json",
+          "rust/tests/unit/issue_195_grammar_scanner_families.rs",
+          "parity/fixtures/scanner-families.json",
+          "parity/fixtures/scanner-counted-delimiters.json",
+          "parity/fixtures/scanner-remembered-delimiters.json",
+          "rust/tests/unit/issue_195_grammar_native_lua.rs",
+          "parity/grammars/native/lua.lino",
+          "parity/fixtures/native-grammars/lua.json",
+          "parity/fixtures/native-grammars/lua-corpus.json",
+          "parity/fixtures/scanner-delimiter-runs.json",
+          "parity/fixtures/native-grammars/toml.json",
+          "parity/fixtures/native-grammars/toml-corpus.json",
+          "parity/fixtures/native-grammars/zig.json",
+          "parity/fixtures/native-grammars/zig-corpus.json",
+          "parity/fixtures/native-grammars/pascal.json",
+          "parity/fixtures/native-grammars/pascal-corpus.json",
+          "parity/fixtures/native-grammars/vb.json",
+          "parity/fixtures/native-grammars/vb-corpus.json",
+          "parity/grammars/native/css.lino",
+          "parity/fixtures/native-grammars/css.json",
+          "parity/fixtures/native-grammars/css-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_css.rs",
+          "parity/grammars/native/powershell.lino",
+          "parity/fixtures/native-grammars/powershell.json",
+          "parity/fixtures/native-grammars/powershell-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_powershell.rs",
+          "parity/grammars/native/erlang.lino",
+          "parity/fixtures/native-grammars/erlang.json",
+          "parity/fixtures/native-grammars/erlang-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_erlang.rs",
+          "parity/grammars/native/groovy.lino",
+          "parity/fixtures/native-grammars/groovy.json",
+          "parity/fixtures/native-grammars/groovy-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_groovy.rs",
+          "parity/fixtures/scanner-context-tokens.json",
+          "parity/fixtures/scanner-remembered-content.json",
+          "parity/grammars/native/cpp.lino",
+          "parity/fixtures/native-grammars/cpp.json",
+          "parity/fixtures/native-grammars/cpp-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_cpp.rs",
+          "parity/grammars/native/sql.lino",
+          "parity/fixtures/native-grammars/sql.json",
+          "parity/fixtures/native-grammars/sql-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_sql.rs",
+          "parity/grammars/native/dart.lino",
+          "parity/fixtures/native-grammars/dart.json",
+          "parity/fixtures/native-grammars/dart-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_dart.rs",
+          "parity/grammars/native/nix.lino",
+          "parity/fixtures/native-grammars/nix.json",
+          "parity/fixtures/native-grammars/nix-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_nix.rs",
+          "parity/grammars/native/cmake.lino",
+          "parity/fixtures/native-grammars/cmake.json",
+          "parity/fixtures/native-grammars/cmake-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_cmake.rs",
           "rust/tests/unit/issue_195_grammar_character_classes.rs",
           "parity/fixtures/native-character-class-grammars.json",
-          "parity/fixtures/grammar-feature-union.json"
+          "rust/tests/unit/grammar_scanner_indentation.rs",
+          "rust/src/grammar/feature_runtime/parting.rs",
+          "parity/fixtures/scanner-indentation.json",
+          "rust/src/translation/frontend_rules.rs",
+          "rust/tests/unit/issue_195_grammar_native_python.rs",
+          "rust/src/native_grammar_parser.rs",
+          "parity/grammars/native/python.lino",
+          "parity/fixtures/native-grammars/python.json",
+          "parity/fixtures/native-grammars/python-corpus.json",
+          "parity/grammars/native/hcl.lino",
+          "parity/fixtures/native-grammars/hcl.json",
+          "parity/fixtures/native-grammars/hcl-corpus.json",
+          "parity/fixtures/scanner-token-spans.json",
+          "rust/tests/unit/issue_195_grammar_native_hcl.rs",
+          "parity/grammars/native/r.lino",
+          "parity/fixtures/native-grammars/r.json",
+          "parity/fixtures/native-grammars/r-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_r.rs",
+          "parity/grammars/native/odin.lino",
+          "parity/fixtures/native-grammars/odin.json",
+          "parity/fixtures/native-grammars/odin-corpus.json",
+          "rust/src/grammar/feature_runtime/lexing.rs",
+          "rust/tests/unit/issue_195_grammar_native_odin.rs",
+          "rust/tests/unit/issue_195_grammar_native_html.rs",
+          "parity/fixtures/native-grammars/html.json",
+          "parity/fixtures/native-grammars/html-corpus.json",
+          "parity/grammars/native/html.lino",
+          "parity/fixtures/scanner-state-semantics.json",
+          "parity/grammars/native/agda.lino",
+          "parity/fixtures/native-grammars/agda.json",
+          "parity/fixtures/native-grammars/agda-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_agda.rs"
         ]
       },
       "javascript": {
@@ -916,9 +1142,103 @@
           "js/src/grammar-feature-forms.js",
           "js/src/grammar-runtime.js",
           "js/tests/issue-195-grammar-feature-union.test.js",
+          "js/tests/native-development-oracles.test.js",
+          "js/tests/package-release.test.js",
+          "parity/fixtures/grammar-feature-union.json",
+          "js/scripts/scanner-families.mjs",
+          "js/tests/issue-195-grammar-scanner-families.test.js",
+          "parity/fixtures/scanner-families.json",
+          "parity/fixtures/scanner-counted-delimiters.json",
+          "parity/fixtures/scanner-remembered-delimiters.json",
+          "js/tests/issue-195-grammar-native-lua.test.js",
+          "parity/grammars/native/lua.lino",
+          "parity/fixtures/native-grammars/lua.json",
+          "parity/fixtures/native-grammars/lua-corpus.json",
+          "parity/fixtures/scanner-delimiter-runs.json",
+          "parity/fixtures/native-grammars/toml.json",
+          "parity/fixtures/native-grammars/toml-corpus.json",
+          "parity/fixtures/native-grammars/zig.json",
+          "parity/fixtures/native-grammars/zig-corpus.json",
+          "parity/fixtures/native-grammars/pascal.json",
+          "parity/fixtures/native-grammars/pascal-corpus.json",
+          "parity/fixtures/native-grammars/vb.json",
+          "parity/fixtures/native-grammars/vb-corpus.json",
+          "parity/grammars/native/css.lino",
+          "parity/fixtures/native-grammars/css.json",
+          "parity/fixtures/native-grammars/css-corpus.json",
+          "js/tests/issue-195-grammar-native-css.test.js",
+          "parity/grammars/native/powershell.lino",
+          "parity/fixtures/native-grammars/powershell.json",
+          "parity/fixtures/native-grammars/powershell-corpus.json",
+          "js/tests/issue-195-grammar-native-powershell.test.js",
+          "parity/grammars/native/erlang.lino",
+          "parity/fixtures/native-grammars/erlang.json",
+          "parity/fixtures/native-grammars/erlang-corpus.json",
+          "js/tests/issue-195-grammar-native-erlang.test.js",
+          "parity/grammars/native/groovy.lino",
+          "parity/fixtures/native-grammars/groovy.json",
+          "parity/fixtures/native-grammars/groovy-corpus.json",
+          "js/tests/issue-195-grammar-native-groovy.test.js",
+          "parity/fixtures/scanner-context-tokens.json",
+          "parity/fixtures/scanner-remembered-content.json",
+          "parity/grammars/native/cpp.lino",
+          "parity/fixtures/native-grammars/cpp.json",
+          "parity/fixtures/native-grammars/cpp-corpus.json",
+          "js/tests/issue-195-grammar-native-cpp.test.js",
+          "parity/grammars/native/sql.lino",
+          "parity/fixtures/native-grammars/sql.json",
+          "parity/fixtures/native-grammars/sql-corpus.json",
+          "js/tests/issue-195-grammar-native-sql.test.js",
+          "parity/grammars/native/dart.lino",
+          "parity/fixtures/native-grammars/dart.json",
+          "parity/fixtures/native-grammars/dart-corpus.json",
+          "js/tests/issue-195-grammar-native-dart.test.js",
+          "parity/grammars/native/nix.lino",
+          "parity/fixtures/native-grammars/nix.json",
+          "parity/fixtures/native-grammars/nix-corpus.json",
+          "js/tests/issue-195-grammar-native-nix.test.js",
+          "parity/grammars/native/cmake.lino",
+          "parity/fixtures/native-grammars/cmake.json",
+          "parity/fixtures/native-grammars/cmake-corpus.json",
+          "js/tests/issue-195-grammar-native-cmake.test.js",
           "js/tests/grammar-character-classes.test.js",
           "parity/fixtures/native-character-class-grammars.json",
-          "parity/fixtures/grammar-feature-union.json"
+          "js/tests/grammar-scanner-indentation.test.js",
+          "js/experiments/build-indentation-scanner-fixtures.mjs",
+          "parity/fixtures/scanner-indentation.json",
+          "js/src/translation/frontend-rules.js",
+          "js/tests/issue-195-grammar-native-python.test.js",
+          "js/experiments/build-python-scanner.mjs",
+          "parity/grammars/native/python.lino",
+          "parity/fixtures/native-grammars/python.json",
+          "parity/fixtures/native-grammars/python-corpus.json",
+          "parity/grammars/native/hcl.lino",
+          "parity/fixtures/native-grammars/hcl.json",
+          "parity/fixtures/native-grammars/hcl-corpus.json",
+          "parity/fixtures/scanner-token-spans.json",
+          "js/scripts/template-context-scanner.mjs",
+          "js/experiments/build-hcl-scanner.mjs",
+          "js/tests/issue-195-grammar-native-hcl.test.js",
+          "parity/grammars/native/r.lino",
+          "parity/fixtures/native-grammars/r.json",
+          "parity/fixtures/native-grammars/r-corpus.json",
+          "js/experiments/build-r-scanner.mjs",
+          "js/tests/issue-195-grammar-native-r.test.js",
+          "parity/grammars/native/odin.lino",
+          "parity/fixtures/native-grammars/odin.json",
+          "parity/fixtures/native-grammars/odin-corpus.json",
+          "js/src/grammar-runtime/executor.js",
+          "js/tests/issue-195-grammar-native-odin.test.js",
+          "js/experiments/build-html-scanner.mjs",
+          "js/tests/issue-195-grammar-native-html.test.js",
+          "parity/fixtures/native-grammars/html.json",
+          "parity/fixtures/native-grammars/html-corpus.json",
+          "parity/grammars/native/html.lino",
+          "parity/fixtures/scanner-state-semantics.json",
+          "parity/grammars/native/agda.lino",
+          "parity/fixtures/native-grammars/agda.json",
+          "parity/fixtures/native-grammars/agda-corpus.json",
+          "js/tests/issue-195-grammar-native-agda.test.js"
         ]
       }
     },
@@ -1213,7 +1533,9 @@
         "evidence": [
           "rust/src/concept_distinctions.rs",
           "rust/tests/unit/concept_distinctions.rs",
-          "parity/fixtures/concept-distinctions.json"
+          "parity/fixtures/concept-distinctions.json",
+          "parity/required-concept-distinctions.json",
+          "rust/src/data/concept-records.json"
         ]
       },
       "javascript": {
@@ -1221,7 +1543,9 @@
         "evidence": [
           "js/src/concept-distinctions.js",
           "js/tests/concept-distinctions.test.js",
-          "parity/fixtures/concept-distinctions.json"
+          "parity/fixtures/concept-distinctions.json",
+          "parity/required-concept-distinctions.json",
+          "js/scripts/build-concept-records.mjs"
         ]
       }
     }

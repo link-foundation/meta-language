@@ -1,0 +1,183 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "css",
+  "native": "native-css",
+  "sources": [
+    {
+      "id": "tree-sitter-css",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-css 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-css",
+      "revision": "dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f",
+      "path": "src/grammar.json",
+      "sha256": "1a170e0c93009b5b592a611c663d4af4d625ddb97ebff1550c3e7f32fd045292",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/css.lino",
+    "sha256": "5ea4e10130d970d4778267f5984a38f2ce558363d5166f0f63bf53543d55e6c1",
+    "ports": {
+      "path": "src/scanner.c",
+      "file": "parity/grammars/sources/tree-sitter-css-0.25.0.scanner.c.gz",
+      "sha256": "18dae8c8c4f515f28a3dc7ffb5bda259b06013a752921dc411a2fad8ecf78988",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-css-0.25.0.LICENSE"
+    },
+    "scanners": [
+      {
+        "name": "descendant_selection",
+        "tokens": [
+          "descendant_operator"
+        ]
+      },
+      {
+        "name": "pseudo_class_selection",
+        "tokens": [
+          "pseudo_class_selector_colon"
+        ]
+      },
+      {
+        "name": "rejection_guard",
+        "tokens": [
+          "error_recovery"
+        ]
+      }
+    ],
+    "immediate": [
+      "_descendant_operator"
+    ]
+  },
+  "rules": 66,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "stylesheet",
+      "native": "style_sheet"
+    },
+    {
+      "source": "_top_level_item",
+      "native": "top_level_item"
+    },
+    {
+      "source": "media_statement",
+      "native": "medium_statement"
+    },
+    {
+      "source": "charset_statement",
+      "native": "character_set_statement"
+    },
+    {
+      "source": "keyframes_statement",
+      "native": "key_frames_statement"
+    },
+    {
+      "source": "keyframe_block_list",
+      "native": "key_frame_block_list"
+    },
+    {
+      "source": "keyframe_block",
+      "native": "key_frame_block"
+    },
+    {
+      "source": "from",
+      "native": "initial_key_frame"
+    },
+    {
+      "source": "to",
+      "native": "final_key_frame"
+    },
+    {
+      "source": "postcss_statement",
+      "native": "post_processing_style_statement"
+    },
+    {
+      "source": "selectors",
+      "native": "selector_list"
+    },
+    {
+      "source": "_block_item",
+      "native": "block_item"
+    },
+    {
+      "source": "_selector",
+      "native": "selector"
+    },
+    {
+      "source": "_nth_child_pseudo_class_selector",
+      "native": "nth_child_pseudo_class_selector"
+    },
+    {
+      "source": "id_selector",
+      "native": "identifier_selector"
+    },
+    {
+      "source": "_nth_functional_notation",
+      "native": "nth_functional_notation"
+    },
+    {
+      "source": "important",
+      "native": "importance_modifier"
+    },
+    {
+      "source": "_query",
+      "native": "selection_query"
+    },
+    {
+      "source": "_value",
+      "native": "value"
+    },
+    {
+      "source": "arguments",
+      "native": "argument_list"
+    }
+  ],
+  "expandedWords": [
+    "charset",
+    "keyframe",
+    "keyframes",
+    "media",
+    "stylesheet"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "value",
+        "concept": "grammar.value"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 62
+  },
+  "sourceTransforms": [
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "call_expression",
+      "value": 1,
+      "reason": "The pinned parser binds a function name and following arguments into one call instead of separate declaration values."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "pseudo_class_arguments",
+        "pseudo_element_arguments"
+      ],
+      "symbol": "_selector",
+      "value": 1,
+      "reason": "Preserve selector and value alternatives; choose the selector tree where an argument also parses as a value, matching the pinned oracle."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

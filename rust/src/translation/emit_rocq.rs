@@ -226,6 +226,9 @@ enum Helper {
     FloatSame,
     FloatRem,
     Math,
+    StringStartsWith,
+    StringEndsWith,
+    StringIncludes,
     ListAt,
     FloatIndex,
     Fix,
@@ -235,7 +238,7 @@ enum Helper {
 }
 
 impl Helper {
-    const ALL: [Self; 15] = [
+    const ALL: [Self; 18] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -245,6 +248,9 @@ impl Helper {
         Self::FloatSame,
         Self::FloatRem,
         Self::Math,
+        Self::StringStartsWith,
+        Self::StringEndsWith,
+        Self::StringIncludes,
         Self::ListAt,
         Self::FloatIndex,
         Self::Fix,
@@ -252,6 +258,21 @@ impl Helper {
         Self::Decide,
         Self::Emit,
     ];
+
+    fn render_definition(self) -> String {
+        match self {
+            Self::StringStartsWith => {
+                crate::translation::frontend_rules::read_string_test_support("Rocq", "startsWith")
+            }
+            Self::StringEndsWith => {
+                crate::translation::frontend_rules::read_string_test_support("Rocq", "endsWith")
+            }
+            Self::StringIncludes => {
+                crate::translation::frontend_rules::read_string_test_support("Rocq", "includes")
+            }
+            _ => self.text().to_owned(),
+        }
+    }
 
     const fn text(self) -> &'static str {
         match self {
@@ -263,6 +284,7 @@ impl Helper {
             Self::JsConsole => JS_CONSOLE,
             Self::FloatSame => FLOAT_SAME,
             Self::FloatRem => FLOAT_REM,
+            Self::StringStartsWith | Self::StringEndsWith | Self::StringIncludes => "",
             Self::Math => MATH,
             Self::ListAt => LIST_AT,
             Self::FloatIndex => FLOAT_INDEX,
@@ -413,7 +435,7 @@ impl RocqEmitter<'_> {
         lines.extend(prelude.iter().map(|line| (*line).to_owned()));
         lines.push(String::new());
         for helper in helper_text {
-            lines.push(helper.text().to_owned());
+            lines.push(helper.render_definition());
             lines.push(String::new());
         }
         for block in blocks {

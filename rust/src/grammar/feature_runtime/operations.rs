@@ -125,6 +125,7 @@ pub(super) enum ValueOp {
     SumOf(String, String),
     FieldText(String),
     Length(Box<Self>),
+    Uppercase(Box<Self>),
     Number(Box<Self>),
     Add(Box<Self>, Box<Self>),
     Subtract(Box<Self>, Box<Self>),
@@ -288,6 +289,22 @@ pub(super) fn evaluate_value(
             sum
         }
         ValueOp::FieldText(field) => OperationValue::Text(machine.field_text(field)?),
+        ValueOp::Uppercase(inner) => match evaluate_value(inner, machine)? {
+            OperationValue::Text(text) => OperationValue::Text(
+                text.chars()
+                    .map(|character| {
+                        let mut upper = character.to_uppercase();
+                        let first = upper.next().unwrap_or(character);
+                        if upper.next().is_none() {
+                            first
+                        } else {
+                            character
+                        }
+                    })
+                    .collect(),
+            ),
+            OperationValue::Integer(_) => return Err(OpError::Failed),
+        },
         ValueOp::Length(inner) => match evaluate_value(inner, machine)? {
             OperationValue::Text(text) => to_integer(text.chars().count()),
             OperationValue::Integer(_) => return Err(OpError::Failed),
@@ -430,12 +447,38 @@ pub(super) fn run_statements(
 /// The operations each context may use; loading rejects any other.
 pub(super) fn allowed_in(context: &str, operation: &str) -> bool {
     const COMMON: &[&str] = &[
-        "if", "while", "push", "pop", "set", "pushMode", "popMode", "setMode", "atEnd", "equal",
-        "less", "greater", "all", "some", "not", "integer", "text", "variable", "top", "depth",
-        "column", "mode", "length", "number", "add", "subtract", "multiply",
+        "if",
+        "while",
+        "push",
+        "pop",
+        "set",
+        "pushMode",
+        "popMode",
+        "setMode",
+        "atEnd",
+        "equal",
+        "less",
+        "greater",
+        "all",
+        "some",
+        "not",
+        "integer",
+        "text",
+        "variable",
+        "top",
+        "depth",
+        "column",
+        "mode",
+        "length",
+        "uppercase",
+        "number",
+        "add",
+        "subtract",
+        "multiply",
     ];
     const SCANNER: &[&str] = &[
         "advance", "consume", "skip", "mark", "emit", "fail", "valid", "expected", "next",
+        "matched",
     ];
     const ACTION: &[&str] = &[
         "fail",
@@ -447,8 +490,26 @@ pub(super) fn allowed_in(context: &str, operation: &str) -> bool {
         "fieldText",
     ];
     const PREDICATE: &[&str] = &[
-        "atEnd", "equal", "less", "greater", "all", "some", "not", "integer", "text", "variable",
-        "top", "depth", "column", "matched", "mode", "length", "number", "add", "subtract",
+        "atEnd",
+        "equal",
+        "less",
+        "greater",
+        "all",
+        "some",
+        "not",
+        "integer",
+        "text",
+        "variable",
+        "top",
+        "depth",
+        "column",
+        "matched",
+        "mode",
+        "length",
+        "uppercase",
+        "number",
+        "add",
+        "subtract",
         "multiply",
     ];
     match context {

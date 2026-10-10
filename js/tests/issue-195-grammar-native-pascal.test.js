@@ -1,0 +1,77 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+import { LinkNetwork, compileGrammar, parseGrammarLinks, renderGrammarLinks, renderSyntaxTree } from '../src/index.js';
+import { NATIVE_GRAMMARS, buildNativeGrammarCorpusSources, buildNativeGrammarFixture, fixturePath, renderFixture } from '../scripts/generate-native-grammar-fixtures.mjs';
+import { nativeRows, oracleRows, oracleRecovers, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
+
+const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const entry = NATIVE_GRAMMARS.find(({ id }) => id === 'pascal');
+const fixture = JSON.parse(read(fixturePath(entry)));
+const listing = read(entry.grammar);
+const parser = compileGrammar(parseGrammarLinks(listing));
+const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
+const observe = (assertions, testName) => recordIssue195Observations({
+  requirementId: 'I195-GRAMMAR-NATIVE-PASCAL', suffix: 'behavior',
+  fixtureId: 'planned:repository-directive:i195-grammar-native-pascal',
+  fixtureFile: fixturePath(entry), assertions, testName,
+});
+
+test('native Pascal grammar and scanners are canonical generated Links Notation', (context) => {
+  assert.equal(renderGrammarLinks(parseGrammarLinks(listing)), listing);
+  assert.deepEqual(fixture, buildNativeGrammarFixture(entry));
+  observe(['nativePascalGrammarIsCanonicalLinks'], context.name);
+});
+
+test('native Pascal focused trees match the independent oracle and preserve every byte', (context) => {
+  for (const { source, rows } of fixture.matches) {
+    assert.equal(oracleRecovers(source, 'Pascal'), false, JSON.stringify(source));
+    assert.deepEqual(oracleRows(source, 'Pascal'), rows);
+    const outcome = parser.parseTree(source);
+    assert.equal(outcome.ok, true, JSON.stringify(source));
+    assert.deepEqual(outcome.ambiguities, []);
+    assert.deepEqual(nativeRows(outcome.tree, source, fixture), rows, JSON.stringify(source));
+    assert.equal(text(outcome.tree), source);
+    const network = LinkNetwork.parse(source, entry.language);
+    assert.equal(network.reconstructText(), source);
+    assert.ok(network.parseGrammars().some(({ id }) => id === `native-${entry.id}`));
+  }
+  observe(['nativePascalTreesMatchOracle', 'nativePascalTreesLossless'], context.name);
+});
+
+test('native Pascal rejects and losslessly recovers invalid focused sources', (context) => {
+  for (const { source, recovered } of fixture.rejections) {
+    assert.equal(oracleRecovers(source, 'Pascal'), true, JSON.stringify(source));
+    assert.equal(parser.parseTree(source).ok, false, JSON.stringify(source));
+    const outcome = parser.parseTree(source, { errorRecovery: true });
+    assert.equal(outcome.rejection.reason, 'recovered');
+    assert.equal(renderSyntaxTree(outcome.tree), recovered);
+    assert.equal(text(outcome.tree), source);
+  }
+  observe(['nativePascalRejectsInvalidInput'], context.name);
+});
+
+// CI executes the upstream corpus; local checks select the focused tests.
+test('native Pascal matches the independent oracle on every pinned upstream corpus input', (context) => {
+  const file = 'parity/fixtures/native-grammars/pascal-corpus.json';
+  assert.equal(read(file), renderFixture(buildNativeGrammarCorpusSources('pascal')));
+  const { cases } = JSON.parse(read(file));
+  assert.ok(cases.length > 0);
+  const failures = [];
+  for (const { file: sourceFile, title, source } of cases) {
+    const label = `${sourceFile}: ${title}`;
+    try {
+      const outcome = parser.parseTree(source);
+      if (oracleRecovers(source, 'Pascal')) assert.equal(outcome.ok, false, label);
+      else {
+        assert.equal(outcome.ok, true, label);
+        assert.deepEqual(outcome.ambiguities, [], label);
+        assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'Pascal'), label);
+        assert.equal(text(outcome.tree), source, label);
+      }
+    } catch (error) { failures.push(nativeCorpusFailure(label, error)); }
+  }
+  assert.deepEqual(failures, []);
+  observe(['nativePascalUpstreamCorpusMatchesOracle'], context.name);
+});

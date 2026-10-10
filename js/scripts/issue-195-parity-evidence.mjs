@@ -14,6 +14,8 @@
 // entry, sections are compared entry by entry, and the kept evidence is one
 // digest per entry with the full entries only where the runtimes differ.
 import { createHash } from 'node:crypto';
+import { mkdir, open } from 'node:fs/promises';
+import path from 'node:path';
 
 export const PARITY_SECTIONS = Object.freeze([
   'schemaVersion',
@@ -102,6 +104,15 @@ function entryDigest(value) {
 export function parityDigests(observations) {
   const digests = [];
   const differences = [];
+  for (const { digest, difference } of parityDigestRecords(observations)) {
+    digests.push(digest);
+    if (difference) differences.push(difference);
+  }
+  return { digests, differences };
+}
+
+/** Yields one digest and optional difference at a time, without accumulating artifact contents. */
+export function* parityDigestRecords(observations) {
   for (const section of PARITY_SECTIONS) {
     const values = Object.fromEntries(Object.entries(observations).map(([runtime, observation]) =>
       [runtime, observation[section]]));
@@ -116,14 +127,33 @@ export function parityDigests(observations) {
         ...Object.fromEntries(Object.entries(entries).map(([runtime, entry]) =>
           [runtime, entry === undefined ? null : entryDigest(entry)])),
       };
-      digests.push(record);
+      let difference;
       if (new Set(Object.keys(entries).map((runtime) => record[runtime])).size > 1) {
-        differences.push({ section, index: record.index, ...Object.fromEntries(
-          Object.entries(entries).map(([runtime, entry]) => [runtime, entry ?? null])) });
+        difference = { section, index: record.index, ...Object.fromEntries(
+          Object.entries(entries).map(([runtime, entry]) => [runtime, entry ?? null])) };
       }
+      yield { digest: record, difference };
     }
   }
-  return { digests, differences };
+}
+
+/** Writes NDJSON evidence with backpressure; even an all-different corpus keeps only one encoded entry. */
+export async function writeParityDigestArtifacts(directory, observations) {
+  await mkdir(directory, { recursive: true });
+  const digests = await open(path.join(directory, PARITY_ARTIFACT_FILES.digests), 'w');
+  try {
+    const differences = await open(path.join(directory, PARITY_ARTIFACT_FILES.differences), 'w');
+    try {
+      for (const { digest, difference } of parityDigestRecords(observations)) {
+        await digests.writeFile(`${JSON.stringify(digest)}\n`);
+        if (difference) await differences.writeFile(`${JSON.stringify(difference)}\n`);
+      }
+    } finally {
+      await differences.close();
+    }
+  } finally {
+    await digests.close();
+  }
 }
 
 /** The runtime-parity artifacts: entry digests, differing entries, and each runtime's translations for the native stages. */

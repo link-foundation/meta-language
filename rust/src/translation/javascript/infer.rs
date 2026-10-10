@@ -456,7 +456,7 @@ impl Inference {
     fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
         let name = match self.resolve(&constraint.object) {
             Term::Known(Type::Data { name }) => name,
-            Term::Array(_) if constraint.field == "length" => {
+            Term::Array(_) | Term::Known(Type::String) if constraint.field == "length" => {
                 self.unify(&constraint.result, &Term::Known(FLOAT), constraint.place)?;
                 return Ok(true);
             }
@@ -620,7 +620,19 @@ impl Inference {
                 }
                 Ok(result.unwrap_or_else(|| self.fresh(false)))
             }
-            SNode::ToString { arg } | SNode::Show { arg, .. } => {
+            SNode::StringMap { object, .. } => {
+                let value = self.expr(object, env)?;
+                self.unify(&value, &Term::Known(STRING), object.span)?;
+                Ok(Term::Known(STRING))
+            }
+            SNode::StringTest { object, search, .. } => {
+                let object_type = self.expr(object, env)?;
+                self.unify(&object_type, &Term::Known(STRING), expr.span)?;
+                let search_type = self.expr(search, env)?;
+                self.unify(&search_type, &Term::Known(STRING), expr.span)?;
+                Ok(Term::Known(BOOL))
+            }
+            SNode::TypeOf { arg } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
                 self.expr(arg, env)?;
                 Ok(Term::Known(STRING))
             }

@@ -158,29 +158,21 @@ impl Checker {
         ))
     }
 
-    /// `xs.length`, and the refusal of `s.length` of a string; `None` for other fields.
+    /// Array sizes and UTF-16 string lengths; `None` for other fields.
     pub(super) fn length_field(
         &mut self,
         object: &SExpr,
-        span: Option<Span>,
         env: &Env,
         path: &[String],
     ) -> Result<Option<Expr>> {
         let array = self.expr(object, env, path, None, false)?;
-        if array.ty.element().is_some() {
+        if array.ty.element().is_some() || array.ty == Type::String {
             return Ok(Some(Expr::new(
                 Node::Length {
                     array: Box::new(array),
                 },
                 FLOAT,
             )));
-        }
-        if array.ty == Type::String {
-            return Err(unsupported(
-                "length of a string",
-                "String.prototype.length counts UTF-16 code units, which the portable string types do not keep",
-                span,
-            ));
         }
         Ok(None)
     }

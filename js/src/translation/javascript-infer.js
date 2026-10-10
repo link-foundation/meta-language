@@ -203,7 +203,7 @@ class Inference {
 
   fieldStep({ object, field, result, where }) {
     const type = this.resolve(object);
-    if (type.kind === 'array' && field === 'length') {
+    if ((type.kind === 'array' || type.kind === 'string') && field === 'length') {
       this.unify(result, FLOAT, where);
       return true;
     }
@@ -261,6 +261,9 @@ class Inference {
         this.fields.push({ object: this.expr(node.object, env), field: node.field, result, where: node.span });
         return result;
       }
+      case 'typeOf':
+        this.expr(node.arg, env);
+        return STRING;
       case 'unary': {
         const arg = this.expr(node.arg, env);
         if (node.op === 'not') {

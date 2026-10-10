@@ -55,6 +55,15 @@ impl RocqEmitter<'_> {
                 ))
             }
             Node::Length { array } => {
+                if array.ty == super::Type::String {
+                    self.floats();
+                    return Ok(
+                        crate::translation::frontend_rules::render_string_length_expression(
+                            "Rocq",
+                            &self.expr(array)?,
+                        ),
+                    );
+                }
                 let length = format!("(Z.of_nat (List.length {}))", self.expr(array)?);
                 if !e.ty.is_float() {
                     return Ok(length);

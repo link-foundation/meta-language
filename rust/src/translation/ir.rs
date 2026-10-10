@@ -127,10 +127,16 @@ impl Expr {
             | Node::Array { items: args }
             | Node::Math { args, .. } => args.iter().collect(),
             Node::Unary { arg, .. }
+            | Node::StringMap { string: arg, .. }
             | Node::ToString { arg, .. }
             | Node::Cast { arg, .. }
             | Node::Length { array: arg } => vec![arg],
-            Node::Binary { left, right, .. }
+            Node::StringTest {
+                string: left,
+                search: right,
+                ..
+            }
+            | Node::Binary { left, right, .. }
             | Node::Append { left, right }
             | Node::Index {
                 array: left,
@@ -204,6 +210,15 @@ impl Expr {
                 op: *op,
                 arg: Box::new(visit(arg)),
                 semantics: *semantics,
+            },
+            Node::StringMap { op, string } => Node::StringMap {
+                op: op.clone(),
+                string: Box::new(visit(string)),
+            },
+            Node::StringTest { op, string, search } => Node::StringTest {
+                op: op.clone(),
+                string: Box::new(visit(string)),
+                search: Box::new(visit(search)),
             },
             Node::ToString { arg, console } => Node::ToString {
                 arg: Box::new(visit(arg)),
@@ -343,6 +358,15 @@ pub enum Node {
         scrutinee: Box<Expr>,
         cases: Vec<Case>,
     },
+    StringMap {
+        op: String,
+        string: Box<Expr>,
+    },
+    StringTest {
+        op: String,
+        string: Box<Expr>,
+        search: Box<Expr>,
+    },
     ToString {
         arg: Box<Expr>,
         /// `console.log` of a Number, which prints -0 as "-0" where `String(-0)` is "0".
@@ -417,6 +441,8 @@ impl Node {
             Self::If { .. } => "if",
             Self::Let { .. } => "let",
             Self::Match { .. } => "match",
+            Self::StringMap { .. } => "stringMap",
+            Self::StringTest { .. } => "stringTest",
             Self::ToString { .. } => "toString",
             Self::Cast { .. } => "cast",
             Self::Abort { .. } => "abort",

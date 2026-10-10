@@ -20,6 +20,8 @@ The scope below comes from
 [issue #195](https://github.com/link-foundation/meta-language/issues/195) and
 every requirement-bearing comment on
 [pull request #196](https://github.com/link-foundation/meta-language/pull/196).
+After that pull request merged, [issue #199](https://github.com/link-foundation/meta-language/issues/199)
+carries its remaining scope and adds release and memory-regression obligations.
 Four files keep it honest:
 
 | File | Role |
@@ -145,6 +147,77 @@ native linked grammar rule changes the output of the public parse path, without
 an unrelated host-code patch.
 
 ## Grammar feature union
+
+Reusable scanner family descriptors generate executable Links Notation data
+through `js/scripts/scanner-families.mjs`. Delimiter parameters cover nested
+comments, escaped strings and content that stops at interpolation boundaries.
+Both executors consume the generated operations in
+`parity/fixtures/scanner-families.json` and compare complete concrete trees,
+including Unicode text and rejections of truncated delimiters.
+Repeated delimiter counts use the same operation language. The raw-string and
+long-bracket cases in `parity/fixtures/scanner-counted-delimiters.json` verify
+matching marker counts, shorter closing candidates inside content, Unicode
+bytes and independent state for successive tokens in both executors.
+The split counted-delimiter family retains the opening count across separate
+opening, content and closing tokens. The generated Lua scanner uses it for
+long strings and block comments, with empty content and NUL rejection, and
+reproduces the pinned upstream scanner's eight-bit counts. The native Lua
+grammar and its corpus inputs are pinned alongside the other source grammars;
+CI compares both executors with their independent Lua oracles.
+The delimiter-run family shares configurable quote-run content and closing
+operations; the line-boundary family emits a zero-width boundary before a
+newline or the end of input. TOML uses both families, and
+`parity/fixtures/scanner-delimiter-runs.json` checks several delimiter lengths
+and line endings with both executors.
+The generated TOML, Zig, Pascal and Visual Basic grammars record reviewed
+precedence, overlapping-choice and field-variant reconciliations in the import
+pipeline. Contextual rule variants keep original concrete kinds and concept
+identities while isolating overlapping loop-prefix expressions; opaque operand
+rules retain their ordinary expression context. Optional literal preferences
+retain the absent branch and consume the pinned parser's field modifier.
+Alias-pattern priorities distinguish explicit conditional directives from generic
+preprocessor extras. Field-selected associativity preserves each source alternative
+while reproducing reference-led chained comparisons. Error-union priorities retain
+optional and pointer type prefixes around their complete operand.
+The CSS, PowerShell and Erlang imports use shared marked-lookahead, contextual
+token and line-counted delimiter scanner families. Contextual keyword exclusions
+retain every source production and reserve initial statement keywords while
+preserving command prefixes, pipeline tails and explicit invocations. The pinned
+Erlang scanner license accompanies its source separately from the grammar license.
+CI reads immutable pinned corpus inputs, including Zig compiler
+source cases and Visual Basic project sources, and compares every input with
+its independent oracle in both runtimes.
+
+The indentation family generates zero width newline, indent and dedent tokens
+with descriptor owned widths, bounded counts, comments, continuation and reset
+characters. The shared `parity/fixtures/scanner-indentation.json` examples check
+independently specified nested block structures and exact source preservation.
+The executor retains actual lexed continuations across intervening virtual
+tokens when deciding whether a pending layout token preempts a longer parse.
+The prefixed quoted family stores raw, bytes and interpolation flags with each
+quote delimiter and its triple quote policy. Python uses the indentation and
+prefixed quoted families in its generated native grammar; ordinary parsing
+selects that grammar in both packages. Focused examples retain complete oracle
+trees for nested formatted strings, escapes, layout and exception aliases.
+The pinned upstream corpus remains a separate CI check; this implementation
+does not yet constitute the required multi source union of Python grammars.
+
+The template context family retains nested quoted, interpolation, directive
+and here-document contexts, with closing labels on a separate text stack.
+The generated HCL grammar uses that family in both packages; Tree-sitter HCL
+is a development oracle. Scanner `matched` reads from the token start through
+the current cursor, independently of a marked token end. Wrapping a scanner
+token retains its skipped trivia outside the token span; zero-width layout
+tokens keep their grammar-owned padding. The shared catalog also records
+whether a language's root includes leading trivia, so HCL retains its input
+start while its child nodes keep their actual token boundaries. HCL collection
+comprehensions are distinct from imperative loop expressions. Focused fixtures
+check nested templates, Unicode escapes, closing-line boundaries and label
+reset; CI checks the pinned upstream corpus. This single pinned HCL source
+does not yet constitute the required multi source grammar union.
+The language catalog generator also derives Rust's embedded grammar table
+from the shared inventory, so every declared native grammar is available to
+ordinary parsing without a separate host registration.
 
 The grammar representation and its executor cover the complete union of the
 grammar features that the inventoried sources use:
@@ -640,6 +713,20 @@ corpus:
 the round trips, the shared corpus and the per-module report against the
 hand-written Rust.
 
+The portable frontend tokenizes JavaScript regular expression bodies as whole
+literals, including escaped delimiters and character classes, before reporting
+unsupported regular expression semantics. Lexical boundaries and division
+disambiguation use shared JavaScript decisions translated into Rust; lexical
+recognition alone does not establish executable regular expression support.
+Control-statement parentheses retain their lexical context through nested
+expressions and comments, while qualified method calls retain value-expression
+context. Each tokenizer lazily encodes its source once and reuses the encoding
+across regular-expression literals, with absolute UTF-16 token offsets.
+Template substitutions reuse these lexical decisions and the same encoding:
+braces inside strings, comments, regex bodies and nested templates cannot end
+a substitution. String and template escapes use the shared scalar decoder;
+template cooking preserves line continuations and normalizes line endings.
+
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
 CST → AST, transformations, emitters and translation rules. Decorators compose
@@ -652,6 +739,52 @@ data-driven rules, never hand edits of generated grammars. Tree-sitter is only
 a test oracle. Changes are drafted and debugged as a batch and pushed once;
 nobody waits idle on CI.
 
+The pinned Groovy grammar runs through this same native pipeline, with its
+original parser confined to independent test oracles. Reviewed source rules
+reconcile literal end sentinels with the actual input boundary, prefer complete
+expressions at a context boundary, and require an argument value before
+preferring an optional call attachment. These decisions retain the original
+productions and generate shared executable Links Notation for both runtimes.
+Context guards and preferred copies retain the source lexer token identities;
+they do not create duplicate source token occurrences. Field-local ordering,
+contextual keyword spellings and newline runs keep their decisions in grammar
+data, with input-boundary lookahead that skips extras and emits no CST leaf.
+The C++ and SQL imports use remembered-content and remembered-literal scanner
+families. Grammar-owned raw-string punctuation surrounds an exactly matched
+opening label; a whole dollar-quoted literal composes opening, content and
+closing rules. SQL function bodies retain their separate surrounding grammar
+and prevent a closing function label from starting an inner literal. Every
+catalog SQL dialect has its own default-source expectation for the shared
+grammar. Named choice aliases retain a complete boundary and the selected
+production beneath it. Contextual clause exclusions preserve quoted identifiers
+and longer words. A named NULL marker keeps absent-literal recovery visible.
+Pattern-guarded context preferences retain their original fallback choices.
+C++ scoped calls and assignments, dependent type segments and array allocation
+dimensions are reconciled through these grammar rules and field preferences.
+SQL pattern keywords keep named token identities while excluding identifier
+continuations; a complete IS NOT operator retains its own concrete kind.
+Dart, Nix and CMake scanner policies are generated through the shared fragment,
+lexical token, nested delimiter and counted delimiter families. Fragments retain
+paired-prefix parity, reject configured invalid boundaries and can require a
+marker. Delimiter opening lookahead distinguishes documentation comments without
+consuming a closing star. Lexical external rules retain following context, and
+counted content records explicit whitespace and end policies. Scanner-only token
+renames retain their original concrete kinds. A source variable or bracket opening
+commits to its complete production before overlapping literal text can fall back;
+case-insensitive command keywords retain word continuation boundaries. Adjacent
+Nix path fragments continue one path, while whitespace separates applications.
+These policies are grammar data executed identically by both runtimes. Dart and
+Nix parser crates and the separate vendored CMake oracle crate are development
+dependencies. The published runtime uses the generated native grammar text.
+Required concept distinctions are shared data in
+`parity/required-concept-distinctions.json`; the record generator emits the
+JavaScript JSON and Rust constant data from the same pairs and reasons. SQL
+unknown values and Pascal null pointers keep separate concept identities.
+Remembered textual delimiters use grammar actions to store opening tags and
+predicates to compare closing tags exactly. The generated content scanner
+preserves other tags inside the body and supports successive distinct tags
+through the same shared state model.
+
 ## Continuous integration
 
 CI follows the same order as development. One workflow
@@ -661,6 +794,12 @@ before every JavaScript job passed, and the Rust jobs show as skipped when
 JavaScript fails. Inside the acceptance workflow, the Rust evidence stages,
 the Rust native translations and the Rust consumers likewise need the
 JavaScript stages.
+
+The JavaScript package checks also compile the generated shared frontend rules
+as a standalone Rust module with the crate's Clippy lint groups and warnings
+denied. This checks the generated interface without building the crate's
+dependencies. Compiler style fixes remain decorator data applied to a fixed
+point by the generator.
 
 Every job reports all of its failures in one run, not only the first: `cargo
 test` runs with `--no-fail-fast`, every check step after the first runs unless
@@ -701,6 +840,13 @@ keeps every run within that bound instead of relying on a larger machine:
 - The runtime parity check streams the Rust observation as NDJSON, compares
   the runtimes entry by entry, and keeps one digest per entry plus the full
   entries only where the runtimes differ.
+- Bounded-heap and peak-RSS tests in `js/tests/issue-195-evidence-memory.test.js`
+  cover lazy grammar loading, Markdown inline parser reuse, multi-megabyte
+  Unicode offset maps and parity artifacts larger than the heap. Artifact
+  writing awaits each record instead of constructing the entire NDJSON string.
+  `js/tests/issue-195-parse-memory-budget.test.js` retains the formal-ai
+  regression: native TypeScript parsing accumulated memo cells until heap
+  exhaustion; the shared parse budget now returns a diagnostic before that.
 - A native validation stage deletes the compiler outputs no verification cell
   cites.
 - `AGENTS.md` and `CONTRIBUTING.md` tell agents and contributors to run only
@@ -791,3 +937,85 @@ gaps against the target above:
   open.
 - **Unpublished release.** The npm and crates.io releases that carry this work
   have not been published, and formal-ai does not consume them yet.
+
+Self-translation preserves carriage-return sources through a serialized source
+envelope guarded by the original byte length and digest and the complete emitted
+body digest. The shared JavaScript decision is generated into Rust; each host
+only adapts JSON serialization, byte offsets and hashing. Edits invalidate the
+envelope and use the existing per-item translation and provenance behavior.
+
+The Python Tree-sitter crate is a development oracle, with no production grammar
+dispatch entry. Ordinary Python parsing selects the shipped native Links grammar
+in both packages. The other remaining parser dependencies still require their
+native replacements before the complete production dependency boundary passes.
+
+The pinned Lean and Rocq parser sources are built only by the development oracle
+crate. Production Rust builds do not compile or package those foreign parsers;
+the JavaScript package also excludes their oracle WebAssembly assets. Both
+ordinary parse paths retain the native Links grammars. Independent development
+parsers keep the original source revisions and the MSVC UTF-8 and stream-close
+build guarantees for oracle comparisons.
+
+The native R grammar is generated from pinned tree-sitter-r 1.3.0 sources.
+Shared `scoped-layout` scanner data records bracket-dependent line endings and
+continuation keywords; `quoted-counted` scanner data remembers raw-literal
+quotes, brackets and bounded marker counts. Both runtimes execute these Links
+operations, and the original parser remains a development oracle. Focused
+fixtures run locally; CI checks every pinned upstream corpus input. This
+single-source import does not complete the required multi-source grammar union.
+
+R line feeds remain statement boundaries outside continuation brackets, including
+before extraction and namespace operators. Contextual trivia preserves line
+feeds inside brackets and comments before a brace-scoped continuation keyword.
+The executor retains silent operand boundaries when settling precedence, and
+compares optional member-name shifts within the same recursive production. R
+and Python binary-expression rules share their expression concept; Dart
+operator tokens retain a distinct operator concept and every source alias.
+
+The generated XML and DTD grammars use pinned tree-sitter-xml 0.7.0 sources
+and shared scanner data for paired element names, comments, processing
+instructions and character data. XML, DTD and the DOCX document part select
+native grammars; the original XML/DTD parser and WebAssembly modules are
+independent development oracles. DOCX retains its additive document semantics.
+The pinned Unicode 17 identifier properties compile to shared numeric ranges,
+including the additional identifier characters and normalization exclusions
+that general Unicode categories cannot represent. These imports retain the
+pinned sources' language; the complete multi-source union remains unverified.
+
+The native Odin grammar is generated from pinned tree-sitter-odin 1.3.0 sources.
+Its generated Links scanners retain contextual statement line feeds, comma
+lookahead, nested comments and the pinned numeric exponent rules. External
+extras keep skipped whitespace outside their named token spans. The shared
+executor compares the precedence of silent reductions before a member operand
+continues as a call, including repeated calls. Both runtimes select the native
+Odin grammar, while the original parser remains a development oracle. Focused
+authored sources and the inventory example run locally; CI checks the complete
+pinned corpus. This import does not complete the multi-source grammar union or
+the remaining catalog and delivery requirements.
+
+The native HTML import retains the pinned tag stack, case conversion, void and
+implicit closing rules, comments and script/style raw text as generated Links
+operations. Tag classifications come from the pinned source header rather than
+host conditionals. Scanner lookahead predicates see preceding state mutations;
+a failed run discards them. Shared authored fixtures verify scalar uppercase
+conversion and state-dependent predicates in both executors. HTML selects its
+native grammar, with the original parser kept as a development oracle. The
+remaining source unions, catalog imports and delivery requirements stay open.
+
+HTML raw-text tokens read their complete input region before generic trivia
+handling. Generated tag context settles required implicit parent closures
+before accepting a child that the pinned containment table excludes. Native
+host CST expectations retain the independently pinned embedded-region spans;
+their source hashes must still match the inventory source.
+
+The generated Agda layout scanner stores both its indentation stack and its
+pending dedent/newline queue in shared Links state. Its reviewed source import
+retains lexical token identities under prefix guards and distributes named
+aliases over alternatives without erasing a hidden qualified-name child. A
+recorded preference preserves the pinned parser's lambda-arrow choice. The
+pinned development oracle's circular queue changes its modulus during growth
+without relocating queued entries. Its source record selects fresh-process
+oracle snapshots to isolate allocator history while retaining the original
+parser, source hashes and oracle assertions. Production parsing uses the
+shared native grammar directly. Focused layout discrepancies remain explicit;
+complete grammar unions and the remaining delivery requirements remain open.

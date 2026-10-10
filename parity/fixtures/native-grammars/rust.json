@@ -64,7 +64,14 @@
     "field_identifier_alias": "_field_identifier",
     "documentation_comment": "doc_comment",
     "outer_documentation_comment_marker": "outer_doc_comment_marker",
-    "inner_documentation_comment_marker": "inner_doc_comment_marker"
+    "inner_documentation_comment_marker": "inner_doc_comment_marker",
+    "raw_string_literal_start": "_raw_string_literal_start",
+    "raw_string_literal_end": "_raw_string_literal_end",
+    "outer_block_documentation_comment_marker": "_outer_block_doc_comment_marker",
+    "inner_block_documentation_comment_marker": "_inner_block_doc_comment_marker",
+    "block_comment_content": "_block_comment_content",
+    "line_documentation_content": "_line_doc_content",
+    "error_sentinel": "_error_sentinel"
   },
   "matches": [
     {

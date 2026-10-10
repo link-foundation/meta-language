@@ -1,0 +1,106 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "02a6df6f728870ed27419f9d1aac6d9e6f89daaaa3e4e15619cf9ee08e0f6f6b",
+  "cases": [
+    {
+      "file": "main.txt",
+      "title": "Tags",
+      "source": "<span>Hello</span>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Tags with attributes",
+      "source": "<input value=yes class=\"a\" data-💩></input>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Nested tags",
+      "source": "<div>\n  <span>a</span>\n  b\n  <b>c</b>\n  Multi-line\n  text\n</div>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Void tags",
+      "source": "<form><img src=\"something.png\"><br><input type=submit value=Ok /></form>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Void tags at EOF",
+      "source": "<img src=\"something.png\">"
+    },
+    {
+      "file": "main.txt",
+      "title": "Custom tags",
+      "source": "<something:different>\n  <atom-text-editor mini>\n    Hello\n  </atom-text-editor>\n</something:different>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Comments",
+      "source": "<!-- hello -->\n<!-- world ->-> -- > ->->->-- -> still comment -->\n<div>\n  <!-- <span>something</span> -->\n</div>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Raw text elements",
+      "source": "<script>\n  </s\n  </sc\n  </scr\n  </scri\n  </scrip\n</script>\n\n<style>\n  </ </s </st </sty </styl\n</style>\n\n<script>\n</SCRIPT>\n"
+    },
+    {
+      "file": "main.txt",
+      "title": "All-caps doctype",
+      "source": "<!DOCTYPE html PUBLIC\n  \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n  \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">"
+    },
+    {
+      "file": "main.txt",
+      "title": "Lowercase doctype",
+      "source": "<!doctype html>"
+    },
+    {
+      "file": "main.txt",
+      "title": "LI elements without close tags",
+      "source": "<ul>\n  <li>One\n  <li>Two\n</ul>"
+    },
+    {
+      "file": "main.txt",
+      "title": "DT and DL elements without close tags",
+      "source": "<dl>\n  <dt>Coffee\n  <dt>Café\n  <dd>Black hot drink\n  <dt>Milk\n  <dd>White cold drink\n</dl>"
+    },
+    {
+      "file": "main.txt",
+      "title": "P elements without close tags",
+      "source": "<p>One\n<div>Two</div>\n<p>Three\n<p>Four\n<h1>Five</h1>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Ruby annotation elements without close tags",
+      "source": "<ruby>東<rb>京<rt>とう<rt>きょう</ruby>"
+    },
+    {
+      "file": "main.txt",
+      "title": "COLGROUP elements without end tags",
+      "source": "<table>\n  <colgroup>\n    <col style=\"background-color: #0f0\">\n    <col span=\"2\">\n  <tr>\n    <th>Lime</th>\n    <th>Lemon</th>\n    <th>Orange</th>\n  </tr>\n</table>"
+    },
+    {
+      "file": "main.txt",
+      "title": "TR, TD, and TH elements without end tags",
+      "source": "<table>\n  <tr>\n    <th>One\n    <th>Two\n  <tr>\n    <td>Three\n    <td>Four\n</table>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Named entities in tag contents",
+      "source": "\n<p>Lorem ipsum &nbsp; dolor sit &copy; amet.</p>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Numeric entities in tag contents",
+      "source": "\n<p>Lorem ipsum &#160; dolor sit &#8212; amet.</p>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Multiple entities in tag contents",
+      "source": "\n<p>Lorem ipsum &#xA0; dolor &#xa0; sit &nbsp; amet.</p>"
+    },
+    {
+      "file": "main.txt",
+      "title": "Omitted end tags for html and head",
+      "source": "\n<!doctype html><html><head>\n"
+    }
+  ]
+}

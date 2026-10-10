@@ -19,6 +19,9 @@ use super::Language;
 use super::decimal::Decimal;
 use super::diagnostics::{Result, unsupported};
 use super::emit_common::{CtorStyle, EmitOptions, EmitState, Emitted};
+use super::frontend_rules::{
+    accept_constant_emission, constant_binding_form, render_constant_binding,
+};
 use super::ir::{
     Binder, ByZero, Decl, Effect, Expr, LitValue, Node, Pattern, Program, Prop, Semantics,
     rename_function, rename_main, rename_theorem, tail_loop,
@@ -514,87 +517,6 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
     rust_emitter(program).file()
 }
 
-/// Emits a module whose only statement declares a top-level constant as a
-/// Rust constant, or `None` for any other program (mirrors
-/// `emitRustConstants`).
-///
-/// A literal number or boolean is a `const` of its type, a literal string a
-/// `&str` constant, and any other value a lazily computed `static`.
-///
-/// # Errors
-/// On a constant value the target cannot express faithfully.
-pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
-    let Some(main) = &program.main else {
-        return Ok(None);
-    };
-    let [
-        Effect::Let {
-            name,
-            value,
-            constant: true,
-            ..
-        },
-    ] = main.effects.as_slice()
-    else {
-        return Ok(None);
-    };
-    let identifier = name
-        .chars()
-        .next()
-        .is_some_and(|first| first.is_ascii_alphabetic() || first == '_')
-        && name
-            .chars()
-            .all(|character| character.is_ascii_alphanumeric() || character == '_');
-    if !program.declarations.is_empty()
-        || name.starts_with("ml_")
-        || KEYWORDS.contains(&name.as_str())
-        || !identifier
-    {
-        return Ok(None);
-    }
-    let mut emitter = rust_emitter(program);
-    let literal = match &value.node {
-        Node::Lit { value } => Some(value),
-        _ => None,
-    };
-    let scalar = matches!(value.ty, Type::Float | Type::Bool | Type::Fixed { .. });
-    let definition = match literal {
-        Some(_) if scalar => {
-            let ty = emitter.ty(&value.ty);
-            format!("pub const {name}: {ty} = {};", emitter.expr(value)?)
-        }
-        Some(text) if value.ty == Type::String => {
-            format!("pub const {name}: &str = {};", rust_string(&text.text()))
-        }
-        _ => {
-            let ty = emitter.ty(&value.ty);
-            format!(
-                "pub static {name}: std::sync::LazyLock<{ty}> = std::sync::LazyLock::new(|| {});",
-                emitter.expr(value)?
-            )
-        }
-    };
-    let preludes: Vec<String> = emitter
-        .preludes
-        .iter()
-        .map(|prelude| {
-            match prelude {
-                Prelude::Big => PRELUDE,
-                Prelude::Number => NUMBER_PRELUDE,
-                Prelude::Math => MATH_PRELUDE,
-                Prelude::Array => ARRAY_PRELUDE,
-            }
-            .to_owned()
-        })
-        .collect();
-    let mut text = preludes.clone();
-    text.push(definition.clone());
-    let mut result = emitter.state.finish(text.join("\n\n"), None);
-    result.preludes = preludes;
-    result.definitions = vec![definition];
-    Ok(Some(result))
-}
-
 /// The Rust emitter of `program`, with every name of the module's other items
 /// reserved.
 fn rust_emitter(program: &Program) -> RustEmitter<'_> {
@@ -626,6 +548,84 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         preludes: BTreeSet::new(),
         loop_params: None,
     }
+}
+
+/// Emits a top-level constant with the JavaScript-generated eligibility,
+/// binding form and rendering decisions, or `None` for other programs.
+///
+/// # Errors
+/// On a constant value the target cannot express faithfully.
+pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
+    let Some(main) = &program.main else {
+        return Ok(None);
+    };
+    let Some(Effect::Let {
+        name,
+        value,
+        constant,
+        ..
+    }) = main.effects.first()
+    else {
+        return Ok(None);
+    };
+    let legal_name = !name.starts_with("ml_")
+        && !KEYWORDS.contains(&name.as_str())
+        && name.bytes().enumerate().all(|(index, byte)| {
+            byte.is_ascii_alphabetic() || byte == b'_' || (index > 0 && byte.is_ascii_digit())
+        })
+        && !name.is_empty();
+    #[allow(clippy::cast_precision_loss)]
+    if !accept_constant_emission(
+        *constant,
+        main.effects.len() as f64,
+        program.declarations.len() as f64,
+        legal_name,
+    ) {
+        return Ok(None);
+    }
+    let mut emitter = rust_emitter(program);
+    let form = constant_binding_form(
+        if matches!(value.node, Node::Lit { .. }) {
+            "lit"
+        } else {
+            ""
+        },
+        value.ty.kind(),
+    );
+    let (ty, expression) = if form == "string" {
+        let Node::Lit { value } = &value.node else {
+            unreachable!("the generated string form requires a literal");
+        };
+        ("&str".to_owned(), rust_string(&value.text()))
+    } else {
+        (emitter.ty(&value.ty), emitter.expr(value)?)
+    };
+    let definition = render_constant_binding(&form, name, &ty, &expression);
+    let preludes: Vec<String> = emitter
+        .preludes
+        .iter()
+        .map(|prelude| {
+            match prelude {
+                Prelude::Big => PRELUDE,
+                Prelude::Number => NUMBER_PRELUDE,
+                Prelude::Math => MATH_PRELUDE,
+                Prelude::Array => ARRAY_PRELUDE,
+            }
+            .to_owned()
+        })
+        .collect();
+    let mut output = emitter.state.finish(
+        preludes
+            .iter()
+            .chain(std::iter::once(&definition))
+            .cloned()
+            .collect::<Vec<_>>()
+            .join("\n\n"),
+        None,
+    );
+    output.preludes = preludes;
+    output.definitions = vec![definition];
+    Ok(Some(output))
 }
 
 /// Declarations grouped by source module, in declaration order.

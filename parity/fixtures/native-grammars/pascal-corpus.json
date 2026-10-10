@@ -1,0 +1,451 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "c0863d2c42668f2da11060b011e925e1d819ab3e993d8dffd3f5b2a692f02221",
+  "cases": [
+    {
+      "file": "attributes.txt",
+      "title": "Declaration hints",
+      "source": "\nprocedure a; cdecl; forward;\nprocedure a; pascal; forward;\nprocedure a; stdcall; forward;\nprocedure a; register; forward;\nprocedure a; external b;\nprocedure a; cdecl; external b;\nprocedure a; external name b;\nprocedure a; external index b;\nprocedure a; external b name c;\nprocedure a; public name b; forward;\nprocedure a; inline; forward;\n\nvar\n  a: b; cvar; external c;\n\ntype\n  a = class\n    procedure b; message c;\n    procedure b; virtual; abstract;\n    procedure b; override;\n    procedure b; stdcall;\n    property b[i: integer]: c read getb; default;\n  end;\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "FPC-style declaration hints",
+      "source": "\nprocedure a; [public; alias: b; cdecl]; forward;\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "Extended RTTI",
+      "source": "\ntype\n  [TMyAttribute]\n  TTestClass = class\n    [TMyAttribute('Test')]\n    property Test: LongInt read fTest;\n    [TMyAttribute()]\n    [TMyAttribute(1), TMyAttribute(2)]\n    procedure a;\n  end;\n\n  [TMyAttribute(1234)]\n  [TMy('Hello World')]\n  TTestEnum = (teOne, teTwo);\n\n  [TMyAttribute(IInterface), TMy(42)]\n  TLongInt = type LongInt;\n\n  TMyIntf = interface\n    ['eff222cf-7d8d-481f-9fc4-d60e128983ab']\n    [TMyAttribute(1234)]\n    procedure foo;\n  end;\n\nvar\n  [TMyAttribute]\n  a: integer;\n\n[TMyAttribute]\nprocedure foo;\nbegin\nend;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Variables",
+      "source": "\nvar\n  a: b;\n  a, b: c;\n  a: b = c;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Constants",
+      "source": "\nconst\n  a = b;\n  a: b = c;\n\nresourcestring\n  a = b;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Typedefs",
+      "source": "\ntype\n  a = b;\n  a = (b, c);\n  a = array of b;\n  a = array [0..1] of b;\n  a = set of b;\n  a = set of (b, c);\n  a = string[1];\n  a = class;\n  a = class(b);\n  a = class of b;\n  a = interface;\n  a = interface(b);\n  a = file;\n  a = file of b;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Procedure references",
+      "source": "\ntype\n  a = procedure;\n  a = procedure(b: c);\n  a = function: b;\n  a = function(b: c): d;\n\n  a = procedure of object;\n  a = procedure(b:c) of object;\n  a = function: b of object;\n  a = function(b: c): d of object;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Forward declarations",
+      "source": "\nprocedure a; forward;\nprocedure a(b: c); forward;\nprocedure a(b, c: d; e: f); forward;\n\nfunction a: b; forward;\nfunction a(b: c): d; forward;\nfunction a(b, c: d; e: f): g; forward;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Structures",
+      "source": "\ntype\n  a = class\n  end;\n\n  a = record\n  end;\n\n  a = object\n  end;\n\n  a = interface\n  end;\n\n  a = interface\n    ['3d298d62-6d73-46a9-8267-24e4b3176cec']\n  end;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Inheritance",
+      "source": "\ntype\n  a = class(a,b)\n  end;\n\n  a = interface(a,b)\n  end;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Members",
+      "source": "\ntype\n  a = class\n    b, c: d;\n    e: f;\n    constructor d;\n    destructor e;\n    procedure f;\n    function g: h;\n  end;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Visibility",
+      "source": "\ntype\n  a = class\n    c: d;\n    procedure e;\n  private\n    f: g;\n    procedure h;\n  protected\n    i: j;\n    procedure k;\n  public\n    l: m;\n    procedure n;\n  published\n    o: p;\n    procedure q;\n  end;\n\n  a = class\n  strict private\n  private\n  strict protected\n  protected\n  public\n  published\n  end;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Nested declarations",
+      "source": "\ntype\n  a = class\n  type\n    b = class\n    end;\n    c = d;\n  var\n    e: f;\n  const\n    g = h;\n  public\n    constructor i;\n  end;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Class members",
+      "source": "\ntype\n  a = class\n    class procedure b;\n    class var\n      c: d;\n      e: f;\n  end;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Properties",
+      "source": "\ntype\n  a = class\n    property b: c read d write f;\n    property b: c read d;\n    property b: c write d;\n\n    property b: c read d write f default g;\n    property b: c read d write f index g;\n    property b: c read d write f stored g;\n\n    property b[c, d: e; f: g]: h read i write j;\n    property b[c: d]: e read f write g; default;\n  end;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Variant Records",
+      "source": "\ntype\n  a = record\n    b: c;\n    case d of\n    0: (e: f);\n    1: (g, h: i; j: k);\n  end;\n\n  a = record\n    b: c;\n    case d: e of\n    0: (f: g);\n    1: (h: i);\n  end;\n\n  a = record\n    b: c;\n    case d of\n    0: (e: f;\n      case g of\n      0: (h: i);\n      1: (j: k);\n    );\n    1: (case l of\n      0: (m: n);\n      1: (o: p);\n    );\n  end;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Operator overloads",
+      "source": "\ntype\n  a = record\n    operator +(b, c: a): a;\n    operator Subtract(b, c: a): a;\n  end;\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Inline type declarations",
+      "source": "\nvar\n  a: array of b;\n  a: string[b];\n  a: file of b;\n  a: file;\n  a: set of b;\n  a: set of (b, c);\n\nprocedure a(b: array of c; d: array of const; var e: string[4]);\nbegin\nend;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Comparison",
+      "source": "\nprocedure Main;\nbegin\n  a = b = c;\n  a <> b <> c;\n  a < b < c;\n  a > b > c;\n  a <= b <= b;\n  a >= b >= b;\nend;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Arithmetic",
+      "source": "\nprocedure Main;\nbegin\n  a + b + c;\n  a - b - c;\n  a * b * c;\n  a / b / c;\n  a div b div c;\n  a mod b mod c;\n\n  ++a;\n  --a;\nend;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Logical",
+      "source": "\nprocedure Main;\nbegin\n  a or b or c;\n  a xor b xor c;\n  a and b and c;\n\n  a shl b shl c;\n  a shr b shr c;\n\n  not not a;\nend;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Other",
+      "source": "\nprocedure Main;\nbegin\n  a in b;\n  a is b;\n  a as b;\n\n  @@a;\n  a^^;\nend;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Parentheses",
+      "source": "\nprocedure Main;\nbegin\n  (a);\nend;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Brackets/Sets",
+      "source": "\nprocedure Main;\nbegin\n  [a];\n  [a,b];\n  [a..b];\n  [a..b,c];\nend;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Calls",
+      "source": "\nprocedure Main;\nbegin\n  a(b);\n  a(b,c);\n  a(b)(c);\nend;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Subscripts",
+      "source": "\nprocedure Main;\nbegin\n  a[b];\n  a[b,c];\n  a[b][c];\nend;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence",
+      "source": "\nprocedure Main;\nbegin\n  not (a or b and c) and d;\n  - (a + b * c) * d;\n  a = b or c = d;\n  @a.b;\n  a.b^;\n  a.b(c);\nend;\n"
+    },
+    {
+      "file": "generics-delphi.txt",
+      "title": "Generic Type Declaration",
+      "source": "\ntype\n  a<b> = x;\n  a<b: constraint> = x;\n  a<b,c> = x;\n  a<b,c: constraint> = x;\n  a<b; c: constraint> = x;\n  a<b, c: constraint; d,e: constraint> = x;\n"
+    },
+    {
+      "file": "generics-delphi.txt",
+      "title": "Generic Specialization",
+      "source": "\ntype\n  a = b<c>;\n  a = b<c,d>;\n  a = b<c, d<e, f> >;\n\nvar\n  a: b<c>;\n  a: b<c,d>;\n  a: b<c, d<e, f> >;\n"
+    },
+    {
+      "file": "generics-delphi.txt",
+      "title": "Generic Routines",
+      "source": "\nprocedure a<b>(c: b); forward;\n\nprocedure a<b,c>.d<e>.Main<f>;\nbegin\nend;\n"
+    },
+    {
+      "file": "generics-delphi.txt",
+      "title": "Generic Expressions",
+      "source": "\nprocedure a;\nbegin\n  if b<c>(d) < e<f,g> then\n    ;\nend;\n"
+    },
+    {
+      "file": "generics-fpc.txt",
+      "title": "Generic Type Declaration",
+      "source": "\ntype\n  generic a<b> = x;\n  generic a<b: constraint> = x;\n  generic a<b,c> = x;\n  generic a<b,c: constraint> = x;\n  generic a<b; c: constraint> = x;\n  generic a<b, c: constraint; d,e: constraint> = x;\n"
+    },
+    {
+      "file": "generics-fpc.txt",
+      "title": "Generic Specialization",
+      "source": "\ntype\n  a = specialize b<c>;\n  a = specialize b<c,d>;\n  a = specialize b<c, d<e, f> >;\n\nvar\n  a: specialize b<c>;\n  a: specialize b<c,d>;\n  a: specialize b<c, d<e, f> >;\n"
+    },
+    {
+      "file": "generics-fpc.txt",
+      "title": "Generic Routines",
+      "source": "\ngeneric procedure a<b>(c: b); forward;\n\ngeneric procedure a<b,c>.d<e>.Main<f>;\nbegin\nend;\n"
+    },
+    {
+      "file": "generics-fpc.txt",
+      "title": "Generic Expressions",
+      "source": "\nprocedure a;\nbegin\n  if specialize b<c>(d) < specialize e<f,g> then\n    ;\nend;\n"
+    },
+    {
+      "file": "generics-fpc.txt",
+      "title": "\"specialize\" as an identifier",
+      "source": "\nprocedure specialize;\nbegin\n  specialize();\nend;\n"
+    },
+    {
+      "file": "inlinevar.txt",
+      "title": "Inline Variables",
+      "source": "procedure Test;\nbegin\n  var a : string;\n  var b : integer := 20;\nend;"
+    },
+    {
+      "file": "inlinevar.txt",
+      "title": "Inline Auto Variables",
+      "source": "procedure Test;\nbegin\n  var a := 10;\nend;"
+    },
+    {
+      "file": "inlinevar.txt",
+      "title": "Inline For loop Variables",
+      "source": "procedure Test;\nbegin\n  for var a := 0 to 10 do\n  begin\n  end;\n  for var b : integer := 0 to 10 do\n  begin\n  end;\nend;"
+    },
+    {
+      "file": "inlinevar.txt",
+      "title": "Inline Variables and Anonymous function",
+      "source": "procedure Test;\nbegin\n  var proc := procedure\n    begin\n    end;\nend;"
+    },
+    {
+      "file": "lambdas.txt",
+      "title": "Anonymous functions",
+      "source": "\nprocedure Main;\nbegin\n  a := \n    procedure\n    begin\n    end;\n\n  b := \n    function(a,b:c): d\n    begin\n      Result := 42;\n    end;\n\n  c := \n    (\n      function(a:b): b\n      begin\n        Result := a;\n      end\n    )(42);\nend;\n"
+    },
+    {
+      "file": "lambdas.txt",
+      "title": "Reference to",
+      "source": "\ntype\n  a = reference to procedure;\n  a = reference to procedure(b, c: d);\n  a = reference to function: b;\n  a = reference to function(b: c): d;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Integers",
+      "source": "\nconst\n  a = 1234567890;\n  b = +123;\n  c = -123;\n  d = $123abc;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Floating point numbers",
+      "source": "\nconst\n  a = 1.234567890;\n  b = 1234567890.0;\n  c = -1.2;\n  d = +1.2;\n  e = 1.2e3;\n  f = 1.2e-3;\n  g = .123;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Strings",
+      "source": "\nconst\n  a = 'Hello World';\n  b = #123;\n  c = #13#10;\n  d = 'Hello'#13#10'World';\n  e = 'Hello'#$0c#$0a'World'#13#10;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Array initializer",
+      "source": "\nconst\n  a: array of integer = (1, 2, 3, 4, 5);\n  a: array[0..2, 0..2] of integer = \n    (\n      (1, 2, 3),\n      (4, 5, 6),\n      (7, 8, 9)\n    );\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Record initializer",
+      "source": "\nconst\n  a: TMyRec = (a: 1; b: 2; c: (d: 3; e: 4); 567);\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Sets",
+      "source": "\nconst\n  a = [0..9, 'a'..'f', 'A'..'F'];\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Constant expression",
+      "source": "\nconst\n  a = +1.2 + 3.4;\n  a = +1.2 + +3.4;\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Program 1 - Empty",
+      "source": "\nprogram a;\nbegin\nend.\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Program 2 - Variables",
+      "source": "\nprogram a;\nvar\n  b: c;\nbegin\nend.\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Program 3 - Subroutines",
+      "source": "\nprogram a;\nvar\n  b: c;\n\nprocedure d;\nbegin\nend;\n\nbegin\n  d;\nend.\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Library 1 - Empty",
+      "source": "\nlibrary a;\nend.\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Library 2 - Main Function",
+      "source": "\nlibrary a;\nbegin\nend.\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Unit 1 - Empty",
+      "source": "\nunit a;\ninterface\nimplementation\nend.\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Unit 2 - All sections",
+      "source": "\nunit a;\ninterface\nimplementation\ninitialization\nfinalization\nend.\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Unit 3 - Routines",
+      "source": "\nunit a;\n\ninterface\n\n  procedure a;\n  function b: c;\n\nimplementation\n\n  procedure d; forward;\n\n  procedure a;\n  begin\n    d;\n  end;\n\n  function b: c;\n  begin\n  end;\n\n  procedure d;\n  begin\n  end;\n\nend.\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Unit 4 - Namespaces",
+      "source": "\nunit a.b.c;\n\ninterface\n\nuses\n  d.e.f, g, h;\n\nimplementation\n\nuses\n  i, j.h;\n\nend.\n"
+    },
+    {
+      "file": "modules.txt",
+      "title": "Unit 5 - Classes",
+      "source": "\nunit a;\n\ninterface\n\ntype\n  b = class\n    procedure c;\n    class procedure d;\n  end;\n\nimplementation\n\nprocedure b.c;\nbegin\nend;\n\nclass procedure b.d;\nbegin\nend;\n\nend.\n"
+    },
+    {
+      "file": "pascocoa.txt",
+      "title": "objcclass",
+      "source": "\ntype\n\nNSView = objcclass external (NSResponder)\nprivate\n  _subview  : id;\npublic\n  function initWithFrame(rect : NSRect): id; message 'initWithFrame:';\n  procedure addSubview(aview: NSView); message 'addSubview:';\n  procedure setAutoresizingMask(mask: NSUInteger); message 'setAutoresizingMask:';\n  procedure setAutoresizesSubviews(flag: LongBool); message 'setAutoresizesSubviews:';\n  procedure drawRect(dirtyRect: NSRect); message 'drawRect:';\nend;\n\nMyView = objcclass(MSView)\npublic\n  data : Integer;\n  procedure customMessage(dirtyRect: NSRect); message 'customMessage';\n  procedure drawRect(dirtyRect: NSRect); override;\nend;\n"
+    },
+    {
+      "file": "pascocoa.txt",
+      "title": "objcprotocol",
+      "source": "\ntype\n  MyProtocol = objcprotocol\n    procedure aRequiredMethod; message 'aRequiredMethod';\n  optional\n    procedure anOptionalMethodWithPara(para: longint); message 'anOptionalMethodWithPara:';\n    procedure anotherOptionalMethod; message 'anotherOptionalMethod';\n  required\n    function aSecondRequiredMethod: longint; message 'aSecondRequiredMethod';\n  end;\n\n  MyClassImplementingProtocol = objcclass(NSObject,MyProtocol)\n    procedure aRequiredMethod;\n    procedure anOptionalMethodWithPara(para: longint);\n    function aSecondRequiredMethod: longint;\n  end;\n"
+    },
+    {
+      "file": "pascocoa.txt",
+      "title": "objccategory",
+      "source": "\ntype\n  MyCategory = objccategory(NSObject,MyProtocol)\n   function hash: cuint; reintroduce;\n   procedure protocolmethod;\n   class procedure newmethod; message 'newmethod';\n  end;\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Line Comments",
+      "source": "\n// Hello\n// World\nvar\n  i: integer; // Hello\n  j: integer;\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Block Comments 1",
+      "source": "\n{ Hello\n  World }\nvar\n  i: { hello }integer; { World }\n  j: integer;\n\n{ { { { {{ { { { {{{\n\n {  { { \n// { {{ { {{ {e/{ {/ /{}\n  k: integer;\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Block Comments 2",
+      "source": "\n(* Hello\n  World *)\nvar\n  i: (* hello *)integer; (* World *)\n  j: integer;\n(* * * * * *  ** * * * ** (* (* (* (* * )\n) ) { * ****)\n  k: integer;\n\n  (**)\n  l: integer;\n\n  {(**)}\n  n: integer;\n  {(*)}\n  m: integer;\n  (*{}*)\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Preprocessor directives 1",
+      "source": "\n{$mode delphi}\n{$define foo}\n{$ifdef foo}\n{$m+}\n{$I source.inc}\n{$endif}\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Preprocessor directives 2",
+      "source": "\nprocedure foo(a: integer{$if 1}; b: float{$endif});\nbegin\nend;\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Preprocessor directives 3",
+      "source": "\nprocedure foo(a: {$if 1}integer{$else}float{$endif});\nbegin\nend;\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Preprocessor directives 4",
+      "source": "\nprocedure a;\nbegin\n  {$if 1}\n  if true then\n    WriteLn('Hello');\n  {$elseif 1}\n  while true do\n    WriteLn('World');\n  {$else}\n  WriteLn('Foo');\n  {$endif}\nend;\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Preprocessor directives 5",
+      "source": "\nprocedure a; \n{$ifdef WIN32}\nbegin\nend;\n{$else}\nbegin\nend;\n{$endif}\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Preprocessor directives 6",
+      "source": "\nvar\n  a: {$if 1}b{$else}c{$endif};\n\ntype\n  a = {$if 1}b{$else}c{$endif};\n"
+    },
+    {
+      "file": "routines.txt",
+      "title": "Arguments",
+      "source": "\nprocedure a;\nbegin\nend;\n\nprocedure a(b: c);\nbegin\nend;\n\nprocedure a(b, c: d);\nbegin\nend;\n\nprocedure a(b, c: d; e, f: g);\nbegin\nend;\n\nprocedure a(var b: c; const d: e; out f: g);\nbegin\nend;\n\nprocedure a(var b; const b; out c);\nbegin\nend;\n\nprocedure a(var b, c: d; const e, f);\nbegin\nend;\n\nfunction a: b;\nbegin\nend;\n\nfunction a(b: c): d;\nbegin\nend;\n"
+    },
+    {
+      "file": "routines.txt",
+      "title": "Methods",
+      "source": "\nprocedure a.b;\nbegin\nend;\n\nprocedure a.b(c: d);\nbegin\nend;\n\nprocedure a.b.c;\nbegin\nend;\n\nconstructor a.b;\nbegin\nend;\n\ndestructor a.b;\nbegin\nend;\n"
+    },
+    {
+      "file": "routines.txt",
+      "title": "Operators",
+      "source": "\noperator a.+(b, c: d): e;\nbegin\nend;\n\noperator a.sub(b, c: d): e;\nbegin\nend;\n\noperator a.b.c.+(d, e: f): g;\nbegin\nend;\n"
+    },
+    {
+      "file": "routines.txt",
+      "title": "Locals",
+      "source": "\nprocedure a;\ntype\n  b = c;\nvar\n  d: e;\nconst\n  f = g;\nbegin\nend;\n"
+    },
+    {
+      "file": "routines.txt",
+      "title": "Nested routines",
+      "source": "\nprocedure a;\n  function b: c;\n    procedure d;\n    begin\n    end;\n  begin\n  end;\nbegin\nend;\n\nfunction a: b;\n  var c: d;\n  procedure e;\n  var\n    f: g;\n  begin\n  end;\nbegin\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "if",
+      "source": "\nprocedure Main;\nbegin\n  if a then\n    b;\n\n  if a then\n    b\n  else\n    c;\n\n  if a then\n  begin\n  end;\n\n  if a then\n  begin\n    b;\n  end\n  else\n  begin\n    c;\n  end;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "nested if",
+      "source": "\nprocedure Main;\nbegin\n  if a then\n    if b then\n      c\n    else\n      d;\n\n  if a then\n    if b then\n      c;\n  else\n    d;\n\n  if a then\n    b\n  else if c then\n    d\n  else\n    e;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "while loop",
+      "source": "\nprocedure Main;\nbegin\n  while a do\n    b;\n\n  while a do\n  begin\n    b;\n  end;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "repeat loop",
+      "source": "\nprocedure Main;\nbegin\n  repeat\n    a;\n  until b;\n\n  repeat\n    a;\n    b;\n  until c;\n\n  repeat\n  until b;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "for loop",
+      "source": "\nprocedure Main;\nbegin\n  for i := a to b do\n    c;\n\n  for i := a to b do\n  begin\n    c;\n  end;\n\n  for i := a downto b do\n    c;\n\n  for i := a downto b do\n  begin\n    c;\n  end;\n\n  for i in a do\n    c;\n\n  for i in a  do\n  begin\n    c;\n  end;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "case of",
+      "source": "\nprocedure Main;\nbegin\n  case a of\n    b: c;\n  end;\n\n  case a of\n    b: c;\n    c: d;\n    else\n      e;\n  end;\n\n  case a of\n    b, c: d;\n  end;\n\n  case a of\n    b .. c: d;\n  end;\n\n  case a of\n    b .. c, d: e;\n  end;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "try",
+      "source": "\nprocedure Main;\nbegin\n\n  try\n    a;\n  finally\n    b;\n  end;\n\n  try\n    a;\n  except\n    b;\n  end;\n\n  try\n    a;\n  except\n    on b: c do\n      d;\n    on e: f do\n      g;\n    else\n      h;\n  end;\n\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "with",
+      "source": "\nprocedure Main;\nbegin\n  with a do\n    b;\n\n  with a do\n  begin\n    b;\n  end;\n\n  with a, b do\n    c;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "asm",
+      "source": "\nprocedure Main;\nbegin\n  asm\n  end;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "raise",
+      "source": "\nprocedure Main;\nbegin\n  raise a;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "goto + label",
+      "source": "\nprocedure Main;\nbegin\n  a:;\n  goto a;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "assignment",
+      "source": "\nprocedure Main;\nbegin\n  a := b;\nend;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "trailing",
+      "source": "\nprocedure Main();\nbegin\n  begin\n    a;\n    b\n  end;\n\n  begin\n    begin\n    end\n  end;\n\n  begin\n    if a then\n      b\n  end;\n\n  begin\n    if a then\n      if b then\n        c\n  end;\n\n  begin\n    if a then\n    begin\n      b\n    end\n  end;\n\n  begin\n    if a then\n      b\n    else\n      c\n  end;\n\n  begin\n    if a then\n    begin\n      b\n    end\n    else\n    begin\n      c\n    end\n  end;\n\n  begin\n    while a do\n      b\n  end;\n\n  begin\n    repeat\n      a\n    until b\n  end;\n\n  begin\n    for a := b to c do\n      a\n  end;\n\n  begin\n    for a := b to c do\n    begin\n      a\n    end\n  end;\n\n  begin\n    case a of\n      b: c;\n      d: e\n    end\n  end;\n\n  begin\n    case a of\n      b: c;\n      else\n        d\n    end\n  end;\n\n  begin\n    try\n      a\n    finally\n      b\n    end\n  end;\n\n  begin\n    try\n      a\n    except\n      b\n    end\n  end;\n\n  begin\n    with a do\n      b\n  end;\n\n  begin\n    a := b\n  end;\n\n  begin\n    goto a\n  end;\n\nend;\n"
+    }
+  ]
+}

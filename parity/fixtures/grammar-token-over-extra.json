@@ -36,6 +36,16 @@
           "tree": "(doc (line ~\"\\n\" \"ab\" \"\\n\"))"
         }
       ]
+    },
+    {
+      "name": "higher precedence shorter than comment",
+      "grammar": "start doc\nmatching longest\nextra ref(comment)\nrule doc = normal seq(token(lexicalPrecedence(1, seq(literal(\"#\"), repeat1(range(\"a\", \"z\"))))), literal(\"}\"))\nrule comment = token seq(literal(\"#\"), repeat0(any))\n",
+      "parses": [
+        {
+          "input": "#value}",
+          "tree": "(doc \"#value\" \"}\")"
+        }
+      ]
     }
   ]
 }

@@ -33,6 +33,8 @@ mod items;
 mod matches;
 mod math;
 mod recursion;
+mod strings;
+mod type_queries;
 pub use self::recursion::*;
 
 /// Checks a surface program into the portable core.

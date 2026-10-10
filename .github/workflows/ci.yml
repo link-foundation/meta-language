@@ -775,6 +775,11 @@ jobs:
           --results-dir issue-195-results
           --stage "$TARGET"
 
+      - name: Verify Unicode string length execution
+        run: >-
+          node js/scripts/check-translation-corpus-native.mjs
+          --target "${{ matrix.target }}" --fixture string-length
+
       # The record, execution records, logs and artifacts are uploaded even when
       # the stage fails: the aggregate reports the failure as one gate error.
       - name: Upload the stage outputs

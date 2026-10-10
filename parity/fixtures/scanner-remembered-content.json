@@ -1,0 +1,72 @@
+[
+  {
+    "name": "whole tagged literals",
+    "assertion": "rememberedLiteralText",
+    "scanners": [
+      {
+        "family": "remembered-literal",
+        "name": "tags",
+        "token": "literal",
+        "startToken": "opening",
+        "contentToken": "body",
+        "endToken": "closing",
+        "tagPattern": "\\$[^$\\s]*\\$"
+      }
+    ],
+    "accept": [
+      "$$$$",
+      "$tag$é😀$tag$",
+      "$a$x$b$y$a$",
+      "$a$x$a$$b$y$b$"
+    ],
+    "reject": [
+      "$a$x$b$",
+      "$a$x$a",
+      "$ a$x$ a$"
+    ],
+    "generated": "(scanner tags (tokens body) (operations (if (not (valid body)) (then fail)) (if (equal (depth tags_labels) (integer 0)) (then fail)) (while (not atEnd) (do (if (next (predicate (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (equal (matched) (top tags_labels)))) (then mark (emit body))) advance)) fail))\n(rule opening token (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (action (push tags_labels (matched))))\n(rule closing token (predicate (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (equal (matched) (top tags_labels))) (action (pop tags_labels)))\n(rule literal token (seq (ref opening) (ref body) (ref closing)))\n",
+    "listing": "(grammar (start document))\n(scanner tags (tokens body) (operations (if (not (valid body)) (then fail)) (if (equal (depth tags_labels) (integer 0)) (then fail)) (while (not atEnd) (do (if (next (predicate (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (equal (matched) (top tags_labels)))) (then mark (emit body))) advance)) fail))\n(rule opening token (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (action (push tags_labels (matched))))\n(rule closing token (predicate (seq (literal %24) (repeat0 (class negated (char %24) (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B))) (literal %24)) (equal (matched) (top tags_labels))) (action (pop tags_labels)))\n(rule literal token (seq (ref opening) (ref body) (ref closing)))\n(rule document normal (repeat1 (ref literal)))\n",
+    "trees": {
+      "$$$$": "(document (literal \"$$$$\"))",
+      "$tag$é😀$tag$": "(document (literal \"$tag$é😀$tag$\"))",
+      "$a$x$b$y$a$": "(document (literal \"$a$x$b$y$a$\"))",
+      "$a$x$a$$b$y$b$": "(document (literal \"$a$x$a$\") (literal \"$b$y$b$\"))"
+    }
+  },
+  {
+    "name": "grammar surrounded remembered content",
+    "assertion": "rememberedContentText",
+    "scanners": [
+      {
+        "family": "remembered-content",
+        "name": "tags",
+        "delimiterToken": "marker",
+        "contentToken": "body",
+        "delimiterPattern": "[a-z]{1,4}",
+        "closingPrefix": ")",
+        "closingSuffix": "\"",
+        "allowEmpty": true
+      }
+    ],
+    "accept": [
+      "R\"()\"",
+      "R\"tag(é😀)tag\"",
+      "R\"a(x)b\"y)a\"",
+      "R\"a(x)a\"R\"b(y)b\""
+    ],
+    "reject": [
+      "R\"a(x)b\"",
+      "R\"abcde(x)abcde\"",
+      "R\"a(x)a",
+      "R\"a(x"
+    ],
+    "generated": "(scanner tags (tokens body) (operations (if (not (valid body)) (then fail)) (while (not atEnd) (do (if (next (choice unordered (seq (literal %29) (predicate (repeat 1 4 (class plain (range a z))) (all (greater (depth tags_labels) (integer 0)) (equal (matched) (top tags_labels)))) (literal %22)) (predicate (seq (literal %29) (literal %22)) (equal (depth tags_labels) (integer 0))))) (then mark (emit body))) advance)) fail))\n(rule marker token (choice ordered (predicate (repeat 1 4 (class plain (range a z))) (all (greater (depth tags_labels) (integer 0)) (equal (matched) (top tags_labels)))) (predicate (repeat 1 4 (class plain (range a z))) (equal (depth tags_labels) (integer 0)))) (action (if (equal (depth tags_labels) (integer 0)) (then (push tags_labels (matched))) (else (pop tags_labels)))))\n",
+    "listing": "(grammar (start document))\n(scanner tags (tokens body) (operations (if (not (valid body)) (then fail)) (while (not atEnd) (do (if (next (choice unordered (seq (literal %29) (predicate (repeat 1 4 (class plain (range a z))) (all (greater (depth tags_labels) (integer 0)) (equal (matched) (top tags_labels)))) (literal %22)) (predicate (seq (literal %29) (literal %22)) (equal (depth tags_labels) (integer 0))))) (then mark (emit body))) advance)) fail))\n(rule marker token (choice ordered (predicate (repeat 1 4 (class plain (range a z))) (all (greater (depth tags_labels) (integer 0)) (equal (matched) (top tags_labels)))) (predicate (repeat 1 4 (class plain (range a z))) (equal (depth tags_labels) (integer 0)))) (action (if (equal (depth tags_labels) (integer 0)) (then (push tags_labels (matched))) (else (pop tags_labels)))))\n(rule document normal (repeat1 (seq (literal R%22) (optional (ref marker)) (literal %28) (ref body) (literal %29) (optional (ref marker)) (literal %22))))\n",
+    "trees": {
+      "R\"()\"": "(document \"R\\\"\" \"(\" (body \"\") \")\" \"\\\"\")",
+      "R\"tag(é😀)tag\"": "(document \"R\\\"\" (marker \"tag\") \"(\" (body \"é😀\") \")\" (marker \"tag\") \"\\\"\")",
+      "R\"a(x)b\"y)a\"": "(document \"R\\\"\" (marker \"a\") \"(\" (body \"x)b\\\"y\") \")\" (marker \"a\") \"\\\"\")",
+      "R\"a(x)a\"R\"b(y)b\"": "(document \"R\\\"\" (marker \"a\") \"(\" (body \"x\") \")\" (marker \"a\") \"\\\"\" \"R\\\"\" (marker \"b\") \"(\" (body \"y\") \")\" (marker \"b\") \"\\\"\")"
+    }
+  }
+]

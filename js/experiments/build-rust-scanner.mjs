@@ -10,8 +10,9 @@
 // never matches, as in C, where it marks error recovery.
 //
 //   node js/experiments/build-rust-scanner.mjs > parity/grammars/scanners/rust.lino
+import { contentScanner } from '../scripts/scanner-families.mjs';
+
 const DQ = '(literal %22)';
-const BS = '(literal %5C)';
 const WS = '(class plain (char %20) (char %09) (char %0A) (char %0B) (char %0C) (char %0D))';
 const DIGIT = '(class plain (range 0 9))';
 const NUM = '(class plain (range 0 9) (char _))';
@@ -21,11 +22,6 @@ const lit = (t) => `(literal ${t})`;
 const clear = (s) => `(while (greater (depth ${s}) (integer 0)) (do (pop ${s})))`;
 const skipWs = `(while (next ${WS}) (do (skip ${WS})))`;
 const scanners = [
-  ['strings', ['string_content', 'string_close'], [
-    `(if (valid string_content) (then (if (some (next ${DQ}) (next ${BS}) atEnd) (then fail)) (while (not (some (next ${DQ}) (next ${BS}))) (do advance)) (emit string_content)))`,
-    `(if (valid string_close) (then (consume ${DQ}) (emit string_close)))`,
-    'fail',
-  ]],
   ['raw_strings', ['raw_string_literal_start', 'raw_string_literal_content', 'raw_string_literal_end'], [
     `(if (valid raw_string_literal_start) (then ${skipWs} (if (some (next ${lit('b')}) (next ${lit('c')})) (then advance)) (consume ${lit('r')}) (while (next ${HASH}) (do advance (push hashes (integer 1)))) (consume ${DQ}) (emit raw_string_literal_start)))`,
     `(if (valid raw_string_literal_content) (then ${skipWs} (while (not atEnd) (do (if (next ${DQ}) (then mark advance (while (all (next ${HASH}) (less (depth seen) (depth hashes))) (do advance (push seen (integer 1)))) (if (equal (depth seen) (depth hashes)) (then ${clear('seen')} (emit raw_string_literal_content))) ${clear('seen')}) (else advance)))) fail))`,
@@ -62,5 +58,6 @@ const scanners = [
   ]],
   ['error_sentinel', ['error_sentinel'], ['fail']],
 ];
-const text = scanners.map(([name, tokens, ops]) => `(scanner ${name} (tokens ${tokens.join(' ')}) (operations ${ops.join(' ')}))`).join('\n') + '\n';
+const strings = contentScanner({ name: 'strings', token: 'string_content', closeToken: 'string_close', closing: '"', stops: ['\\'], allowEnd: false });
+const text = strings + scanners.map(([name, tokens, ops]) => `(scanner ${name} (tokens ${tokens.join(' ')}) (operations ${ops.join(' ')}))`).join('\n') + '\n';
 process.stdout.write(text);

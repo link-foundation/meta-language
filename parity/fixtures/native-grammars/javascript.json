@@ -41,7 +41,10 @@
     "identifier_choice": "_identifier",
     "property_name": "_property_name",
     "reserved_identifier": "_reserved_identifier",
-    "semicolon": "_semicolon"
+    "semicolon": "_semicolon",
+    "automatic_semicolon": "_automatic_semicolon",
+    "template_characters": "_template_chars",
+    "ternary_question_mark": "_ternary_qmark"
   },
   "matches": [
     {

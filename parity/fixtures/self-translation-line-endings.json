@@ -1,0 +1,46 @@
+{
+  "cases": [
+    {
+      "name": "carried-crlf-class",
+      "language": "JavaScript",
+      "target": "Rust",
+      "source": "class Record {\r\n  constructor(value) { this.value = value; }\r\n}\r\n",
+      "status": "carried"
+    },
+    {
+      "name": "translated-crlf-function",
+      "language": "JavaScript",
+      "target": "Rust",
+      "source": "/** @returns {number} */\r\nexport function value() {\r\n  return 2;\r\n}\r\n",
+      "status": "translated"
+    },
+    {
+      "name": "mixed-leading-and-trailing-layout",
+      "language": "JavaScript",
+      "target": "Rust",
+      "source": " \t\r\nclass First {}\r\n\nclass Second {}\n\r\n \t",
+      "status": "carried"
+    },
+    {
+      "name": "typescript-crlf-interface",
+      "language": "TypeScript",
+      "target": "Rust",
+      "source": "interface Record {\r\n  value: string;\r\n}\r\n",
+      "status": "carried"
+    },
+    {
+      "name": "rust-crlf-trait",
+      "language": "Rust",
+      "target": "JavaScript",
+      "source": "pub trait Read {\r\n    fn read(&self) -> String;\r\n}\r\n",
+      "status": "carried"
+    },
+    {
+      "name": "unicode-line-separators",
+      "language": "JavaScript",
+      "target": "Rust",
+      "source": "class Record {\r\n  value = \"café 😀  \";\r\n}\r\n",
+      "status": "carried"
+    }
+  ]
+}

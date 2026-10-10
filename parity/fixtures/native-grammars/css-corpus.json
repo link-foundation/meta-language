@@ -1,0 +1,206 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "6ab73d342bb85cce25a277231d8a6bae3690456994d9e586098d0f019a4ad524",
+  "cases": [
+    {
+      "file": "declarations.txt",
+      "title": "Function calls",
+      "source": "\na {\n  color: rgba(0, 255, 0, 0.5);\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Calls where each argument has multiple values",
+      "source": "\ndiv {\n  background: repeating-linear-gradient(red, orange 50px);\n  clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Color literals",
+      "source": "\na {\n  b: #fafd04;\n  c: #fafd0401;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Numbers",
+      "source": "\na {\n  b: 0.5%;\n  c: 5em;\n  margin: 10E3px;\n  margin: -456.8px;\n  margin: -5px;\n  margin: -0.0px;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Binary arithmetic operators",
+      "source": "\na {\n  width: calc(100% - 80px);\n  aspect-ratio: 1/2;\n  font-size: calc(10px + (56 - 10) * ((100vw - 320px) / (1920 - 320)));\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Strings",
+      "source": "\na {\n  b: '';\n  c: '\\'hi\\'';\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "URLs",
+      "source": "\na {\n  b: http://something-else?foo=bar;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Important declarations",
+      "source": "\na {\n  b: c !important;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Declarations without trailing semicolons",
+      "source": "\na {\n  b: c;\n  d: e\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Comments right after numbers",
+      "source": "\n// A comment\na {\n\tshape-outside: circle(20em/*=*/at 50% 50%);\n\tshape-outside: inset(1em, 1em, 1em, 1em);\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Declarations at the top level",
+      "source": "\n--a-variable: -5px;\na-property: calc(5px + var(--a-variable));\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Spaces after colons in property declarations",
+      "source": "\ndiv {\n  margin      : 0;\n  padding     : 0;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "No spaces after colons",
+      "source": "\ndiv {\n  all:unset;\n  display:flex;\n  justify-content:center;\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "PostCSS",
+      "source": "\n.selector {\n  @apply variable-a meta-variable-b lots-of-combined-properties-c !important;\n}\n\n@layer components {\n  .btn-blue {\n    @apply --mixin sm:space-x-0 left-[11%] border-foreground/20 !important !text-white;\n  }\n}\n\n@layer utilities {\n  .btn {\n  }\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "Comments in declarations",
+      "source": "\n& {\n  position: /*${}*/ relative;\n}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Universal selectors",
+      "source": "\n* {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Type selectors",
+      "source": "\ndiv, span {}\nh1, h2, h3, h4 {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Class selectors",
+      "source": "\n.class-a {}\ndiv.class-b, .class-c.class-d {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Id selectors",
+      "source": "\n#some-id, a#another-id {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Attribute selectors",
+      "source": "\n[a] {}\n[b=c] {}\n[d~=e] {}\na[b] {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Pseudo-class selectors",
+      "source": "\na:hover {}\n:nth-child(2) {}\np:has(li) {}\np:is(.foo) {}\np:has(li.foo) {}\n*:where(li#foo) {}\np:has(.foo, .bar) {}\na:not([href]) {}\n:host([a=\"b\"]:hover) {}\n:host([a='b']:hover) {}\n:host {}\n:host { display: block; }\n:host(div.foo) {}\n:nth-child(2n of a.external) {}"
+    },
+    {
+      "file": "selectors.txt",
+      "title": ":nth-child and :nth-last-child selectors",
+      "source": "\n:nth-child(2) {}\n:nth-last-child(-n) {}\n:nth-last-child(2n+1) {}\n:nth-child(2n + 2) {}\n:nth-last-child(-n) {}\n:nth-child(2n of a.external) {}"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Pseudo-element selectors",
+      "source": "\na::first-line {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "::slotted pseudo element",
+      "source": "\n::slotted(button) {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Child selectors",
+      "source": "\na > b {}\nc > d > e {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Descendant selectors",
+      "source": "\na b {}\nc d e {}\nf * {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Nesting selectors",
+      "source": "\na {\n  &.b {}\n  & c {}\n  & > d {}\n}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Sibling selectors",
+      "source": "\na.b ~ c.d {}\n.e.f + .g.h {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "The :not selector",
+      "source": "\na:not(:hover) {}\n.b:not(c > .d) {}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Nested combinators",
+      "source": "\n.parent {\n\t>p {}\n\t>* {}\n\t~div {}\n\t+p {}\n\tspace-element {}\n\t| ns-element {}\n}\n"
+    },
+    {
+      "file": "selectors.txt",
+      "title": "Escape sequences",
+      "source": "\n.hover\\:bg-blue-600::before {\n\tcontent: \"\\f123\";\n}\n\n.a\\.5 {}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Import statements",
+      "source": "\n@import url(\"fineprint.css\") print;\n@import url(\"bluish.css\") speech;\n@import 'custom.css';\n@import url(\"chrome://communicator/skin/\");\n@import \"common.css\" screen;\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Namespace statements",
+      "source": "\n/* Default namespace */\n@namespace url(XML-namespace-URL);\n@namespace \"XML-namespace-URL\";\n@namespace url(http://www.w3.org/1999/xhtml);\n@namespace svg url(http://www.w3.org/2000/svg);\n\n/* Prefixed namespace */\n@namespace prefix url(XML-namespace-URL);\n@namespace prefix \"XML-namespace-URL\";\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Keyframes statements",
+      "source": "\n@keyframes important1 {\n  from { margin-top: 50px; }\n  50%  { margin-top: 150px !important; } /* ignored */\n  to   { margin-top: 100px; }\n}\n\n@keyframes hello {\n  0%, 50% {}\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Media statements",
+      "source": "\n@media screen and (min-width: 30em) and (orientation: landscape) {}\n@media (min-height: 680px), screen and (orientation: portrait) {}\n@media not all and (monochrome) {}\n@media only screen {}\n@media screen and (min-width: 0 0) {\n    .tooltipped-multiline: after {}\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Supports statements",
+      "source": "\n@supports (animation-name: test) {\n  div { animation-name: test; }\n}\n@supports (transform-style: preserve) or (-moz-transform-style: preserve) {}\n@supports not ((text-align-last: justify) or (-moz-text-align-last: justify)) {}\n@supports not selector(:matches(a, b)) {}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Charset statements",
+      "source": "\n@charset \"utf-8\";\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Scope statements",
+      "source": "\n@scope (.card) {\n  h1 {\n    color: blue;\n  }\n}\n\n@scope (.article-body) to (figure) {\n  img {\n    border: 5px solid black;\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Other at-statements",
+      "source": "\n@font-face {\n  font-family: \"Open Sans\";\n  src: url(\"/a\") format(\"woff2\"), url(\"/b/c\") format(\"woff\");\n}\n"
+    },
+    {
+      "file": "stylesheets.txt",
+      "title": "Rule sets",
+      "source": "\n#some-id {\n  some-property: 5px;\n}\n"
+    }
+  ]
+}

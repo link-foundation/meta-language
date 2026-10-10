@@ -1,0 +1,1146 @@
+{
+  "generatedBy": "js/scripts/generate-native-grammar-fixtures.mjs",
+  "sourceSha256": "f8171460dc7ead91bd4cae76057102391aab0427452400fe0026118d2645bbb6",
+  "cases": [
+    {
+      "file": "attributes.txt",
+      "title": "module attribute",
+      "source": "\n-module(foo).\n-'module'(foo).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "behaviour attribute",
+      "source": "\n-behaviour(gen_server).\n-behavior(gen_server).\n-'behaviour'(gen_server).\n-'behavior'(gen_server).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "deprecated attribute with arity",
+      "source": "\n-deprecated({f,1}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "deprecated attribute with arity wildcard",
+      "source": "\n-deprecated({f,'_'}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "deprecated module attribute",
+      "source": "\n-deprecated(module).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "deprecated '_', '_' attribute",
+      "source": "\n-deprecated({'_','_'}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "deprecated function/arity/desc attribute",
+      "source": "\n-deprecated({f,1,\"Use g/1 instead\"}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "deprecated '_', '_', atom attribute",
+      "source": "\n-deprecated({'_','_',eventually}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "deprecated list attribute with func, arity and atom desc",
+      "source": "\n-deprecated([{g,1,next_version}]).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "deprecated list attribute",
+      "source": "\n-deprecated([{foo,'_',next}, {bar,1,\"desc\"}, {baz, 2}, {'_', '_', \"all\"}]).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "deprecated multi-string description",
+      "source": "\n-deprecated({new, 1, \"str1\" \"str2\"}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "include attribute",
+      "source": "\n-include(\"foo.h\").\n-'include'(\"foo.h\").\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "include attribute, concatenation",
+      "source": "\n-include(\"root\" \"foo.h\").\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "include_lib attribute",
+      "source": "\n-include_lib(\"foo.h\").\n-'include_lib'(\"foo.h\").\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "include_lib attribute, concatenation",
+      "source": "\n-include_lib(?APP \"foo.h\").\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "export attribute",
+      "source": "\n-export([foo/1]).\n-'export'([]).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "import attribute",
+      "source": "\n-import(bar, [foo/1, baz/3]).\n-'import'(baz, []).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "import record attribute",
+      "source": "\n-import_record(foo, [bar, baz]).\n-'import_record'(baz, []).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "export record attribute",
+      "source": "\n-export_record([local, vector]).\n-'export_record'([]).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "export type attribute",
+      "source": "\n-export_type([foo/0]).\n-'export_type'([]).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "compile attribute",
+      "source": "\n-compile(export_all).\n-'compile'([export_all, blah]).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "file attribute",
+      "source": "\n-file(\"baz.erl\", 45).\n-'file'(\"baz.erl\", 45).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "record decl",
+      "source": "\n-record(foo, {f1, f2 = 3}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "record decl with types",
+      "source": "\n-record(foo, {f1 :: atom(), f2 = 3}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "record decl from manual",
+      "source": "\n-record(name, {first = \"Robert\", last = \"Ericsson\"}).\n-record(person, {name = #name{}, phone}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "record decl - empty record",
+      "source": "\n-'record'(state, {}).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "type decl",
+      "source": "\n-type my_struct_type() :: atom() | integer().\n-opaque my_opaq_type() :: term().\n-'type' orddict(Key, Val) :: [{Key, Val}].\n-'opaque' useless(A) :: A.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "function spec 1",
+      "source": "\n-spec my_function(integer()) -> integer().\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "function spec 2",
+      "source": "\n-spec empty_map_02() -> map().\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "function spec 3",
+      "source": "\n-spec foo() -> #{A => B} when A :: integer(), B :: float().\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "wild attribute 1",
+      "source": "\n-foo(bar).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "wild attribute 2",
+      "source": "\n-oncall(\"whatsapp_c3\").\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "feature attribute",
+      "source": "\n-feature(maybe_expr, enable).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "function declaration",
+      "source": "\nfoo(Bar, Baz) -> ok.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "undef attribute",
+      "source": "\n-undef(FOO).\n-'undef'(FOO).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "ifdef attribute",
+      "source": "\n-ifdef(FOO).\n-'ifdef'(FOO).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "ifndef attribute",
+      "source": "\n-ifndef(FOO).\n-'ifndef'(FOO).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "else attribute",
+      "source": "\n-else.\n-'else'.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "endif attribute",
+      "source": "\n-endif.\n-'endif'.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "if $.expression",
+      "source": "\n-if 1.\n-'if'(1).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "elif attribute",
+      "source": "\n-elif(TRUE).\n-'elif'(TRUE).\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "simple spec",
+      "source": "\n-spec foo() -> ok.\n-'spec' foo() -> ok.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "callback",
+      "source": "\n-callback foo(Bar) -> ok.\n-'callback' foo(Bar) -> ok.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "string with % in it",
+      "source": "\nfoo() -> \"\\\"%\".\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "string",
+      "source": "\nfoo() -> (\"whatsapp_c3\").\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "char %",
+      "source": "\nfoo() -> $%.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "char space",
+      "source": "\nfoo() -> $ .\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "char \\]",
+      "source": "\nfoo() -> $\\].\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "char \\^g",
+      "source": "\nfoo() -> $\\^g.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "char \\\\",
+      "source": "\nfoo() -> $\\\\.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "char \\^]",
+      "source": "\nfoo() -> $\\^].\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "char \\^Z",
+      "source": "\nfoo() -> $\\^Z.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "char \\%",
+      "source": "\nfoo() -> $\\%.\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "optional_callbacks attribute",
+      "source": "\n-optional_callbacks([foo/1, bar/2]).\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "doc attribute multiline sq string",
+      "source": "\n-doc \"\nThis is a test\n\".\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "moduledoc attribute bool",
+      "source": "\n-moduledoc false.\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "moduledoc triple quoted string",
+      "source": "\n-moduledoc \"\"\"\n  Moduledoc test module\n  \"\"\".\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "doc sigil string S",
+      "source": "-doc ~S\"Doc test module\".\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "doc sigil string B",
+      "source": "-doc ~B\"Doc test module\".\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "doc binary string",
+      "source": "\n-doc <<\"Doc\",\"test\",\"modul\",$e>>.\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "doc binary utf8 string",
+      "source": "\n-doc <<\"Doc test mödule\"/utf8>>.\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "doc binary string with macro",
+      "source": "\n-doc <<?MODULE_STRING, \"-Doc module\">>.\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "doc macro and string concatenation",
+      "source": "\n-doc ?MODULE_STRING \"-\" ?MODULE_STRING.\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "doc macro and string concatenation",
+      "source": "\n-doc \"\"\"\n     Sigil examples\n     \"\"\".\n-spec f() -> ok.\nf() -> ok.\n"
+    },
+    {
+      "file": "doc-attributes.txt",
+      "title": "doc include file",
+      "source": "\n-doc {file,\"../../doc/src/info.md\"}.\nf() -> ok.\n"
+    },
+    {
+      "file": "expected_errors.txt",
+      "title": "top level error",
+      "source": "\n-if (true).\n-define(CASE_START_PEER_NODE,\n    case true of\n        Node ->\n            Node;\n).\n-else.\n-define(CASE_START_PEER_NODE,\n    case true of\n        Node ->\n            Node;).\n-endif.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "record index",
+      "source": "\nf() -> #record.field.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "record field",
+      "source": "\nf(X) -> X#record.field.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "record expr",
+      "source": "\nf() -> #record{a = 1}.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "record update",
+      "source": "\nf(X) -> X#record{a = 1}.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "try",
+      "source": "\nf(X) ->\n  try 1 of\n    X -> ok;\n    Y when Z -> ok\n  catch\n    Pattern -> ok;\n    error:Pattern -> ok;\n    throw:Pattern:Stack -> ok;\n    exit:Complex + Pattern:Stack -> ok;\n    throw:E = {bad, _}:Stack -> ok\n  after\n    ok\n  end,\n  try _\n  catch\n  end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "funs",
+      "source": "\nf() -> [\n  fun foo/1,\n  fun mod:foo/1,\n  fun () -> ok end\n].\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "list",
+      "source": "\nf() ->\n  [],\n  [A],\n  [A, B],\n  [A | B],\n  [A + B | B + C],\n  [A, B | C],\n  [A = B | C].\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "binary",
+      "source": "\nf(<<_>>) ->\n  <<>>,\n  <<1>>,\n  <<1/integer>>,\n  <<1:32/integer>>,\n  <<+1:32/integer>>,\n  <<1:32/integer-unit:8>>.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "catch",
+      "source": "\nf() ->\n  catch 1 + 2.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "catch in comprehension",
+      "source": "\ntest(X, Acc) -> [catch foo(X) | Acc]."
+    },
+    {
+      "file": "expr.txt",
+      "title": "receive",
+      "source": "\nf() ->\n  receive\n  end,\n  receive\n    ok -> ok;\n    error -> error\n  end,\n  receive\n    after 1000 -> ok\n  end,\n  receive\n    ok -> ok\n    after Timeout -> timeout\n  end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "case",
+      "source": "\nf() ->\n  case _ of\n  end,\n  case Foo of\n    A when A; B, C -> ok;\n    _ -> error\n  end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "function call",
+      "source": "\nf() ->\n  foo(),\n  (foo)(),\n  mod:foo(),\n  (mod:foo)(),\n  (Mod):(Foo)().\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "variable assignment",
+      "source": "\nf() ->\n  A = 3 + B.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "fun",
+      "source": "\n foo() -> fun(X) -> X end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "named fun",
+      "source": "\n foo() -> fun Named(X) -> X end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "maybe",
+      "source": "f() ->\n  maybe\n    {ok, A} ?= a(),\n    true = A >= 0,\n    {ok, B} ?= b(),\n    A + B\n  end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "maybe else",
+      "source": "f() ->\n  maybe\n    {ok, A} ?= a(),\n    true = A >= 0,\n    A\n  else\n    Err when Err /= warn -> error;\n    false -> error\n  end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "maybe precedence",
+      "source": "\ntest(X) ->\n    maybe\n        {ok, Y} = Z ?= X,\n        Y\n    end."
+    },
+    {
+      "file": "expr.txt",
+      "title": "simple map comprehension",
+      "source": "f() ->\n  #{K => V || K := V <- #{1 => 2, 3 => 4}}."
+    },
+    {
+      "file": "expr.txt",
+      "title": "simple map comprehension with filter",
+      "source": "f() ->\n  #{K => V || K := V <- #{1 => 2, 3 => 4}, K>1}."
+    },
+    {
+      "file": "expr.txt",
+      "title": "map comprehension with list generator",
+      "source": "f() ->\n  #{K => K + 1 || K <- [1, 2, 3], K>1}."
+    },
+    {
+      "file": "expr.txt",
+      "title": "map comprehension with binary generator",
+      "source": "f() ->\n  #{K => V || <<K, V>> <= <<1, 2, 3, 4>>, K>1}."
+    },
+    {
+      "file": "expr.txt",
+      "title": "list comprehension with map generator",
+      "source": "f() ->\n  [{K, V} || K := V <- #{1 => 2, 3 => 4}, K>1]."
+    },
+    {
+      "file": "expr.txt",
+      "title": "strict generator basic",
+      "source": "f() ->\n   <<2,3,4>> = << <<(X+1)>> || X <:- [1,2,3]>>."
+    },
+    {
+      "file": "expr.txt",
+      "title": "strict generator binary",
+      "source": "f() ->\n  <<2,3,4>> = << <<(X+1)>> || <<X>> <:= <<1,2,3>> >>."
+    },
+    {
+      "file": "expr.txt",
+      "title": "strict generator map",
+      "source": "f() ->\n  <<2,12>> = << <<(X*Y)>> || X := Y <:- #{1 => 2, 3 => 4} >>."
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator simple normal and binary",
+      "source": "f() ->\n  [{X,Y} || X <- [1,2,3] && <<Y>> <= <<4,5,6>>]."
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator simple normal and normal",
+      "source": "f() ->\n    begin X = 32, Y = 32, [{X, Y} || X <- [1,2,3] && Y <- [4,5,6]] end."
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator normal list and normal list",
+      "source": "f() ->\n    begin\n        S1 = [x, y, z],\n        S2 = [5, 10, 15],\n        X = 32, Y = 32,\n        [{X, Y} || X <- S1 && Y <- S2]\n    end."
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator strict and map generator",
+      "source": "\nf() ->\n   begin [{X, Y, K} || X <:- [1,2,3] &&  Y:=K <- #{1=>a, 2=>b, 3=>c}] end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator combined with normal one",
+      "source": "f() ->\n   begin [{X, W+Y} || X <- [a, b, c] && <<Y>> <= <<2, 4, 6>>, W <- [1,2]] end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator normal followed by zip then filter",
+      "source": "f() ->\n   begin\n      [{X, W+Y} || W <- [0],\n                   X <- [a, b, c] && <<Y>> <:= <<2, 4, 6>>,\n                   Y<4]\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator LHS match",
+      "source": "f() ->\n   begin [{X,Y}|| a=b=X <- [1,2] && Y <-[1,2]] end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator normal followed by zip",
+      "source": "f() ->\n   begin\n      [{A,B,W} || {Same,W} <- [{a,1}],\n                  {Same,A} <- [{a,1},{b,9},{x,10}] &&\n                  {Same,B} <- [{a,7},{wrong,8},{x,20}]]\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator binary and binary",
+      "source": "\nf() ->\n   begin\n      X = 32, Y = 32,\n      << <<(X+Y)/integer>> || <<X>> <= <<1,2,3>> && <<Y>> <= <<2,2,2>> >>\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator binary and binary followed by normal",
+      "source": "f() ->\n   begin\n      X = 32, Y = 32, Z = 32,\n      << <<(X+Y+Z)/integer>> || <<X>> <= <<1,2,3>> && <<Y>> <= <<2,2,2>>,\n                                Z<-[1,2,3] >>\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator three binary lists",
+      "source": "f() ->\n   begin\n      L1 = <<1, 2, 3>>,\n      L2 = <<1, 1, 1>>,\n      L3 = <<2, 2, 2>>,\n      << <<(X+Y+Z)/integer>> || <<X>> <= L1 && <<Y>> <= L2 && <<Z>> <= L3 >>\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator match LHS and normal",
+      "source": "f() ->\n   begin << <<(X+Y):64>>|| a=b=X <- [1,2] && Y <- [1,2] >> end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator match lhs and binary",
+      "source": "f() ->\n   begin << <<(X+Y):64>>|| a=b=X <- [1,2] && <<Y>> <= <<1,2>> >> end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator match LHS and map",
+      "source": "f() ->\n   begin << <<(X+V):64>>|| a=b=X <- [1,2] && _K:=V <- #{a=>1,b=>2}>> end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator maps from variables",
+      "source": "f() ->\n   begin\n      M1 = #{a=>1},\n      M2 = #{b=>3},\n      [{K1, K2, V1, V2} || K1 := V1 <- M1 && K2 := V2 <- M2]\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator maps from variables 2",
+      "source": "f() ->\n   begin\n      Seq = lists:seq(1, 50),\n        M1 = maps:iterator(#{X=>X || X <- Seq}, ordered),\n        M2 = maps:iterator(#{X=>X || X <- lists:seq(1,50)}, ordered),\n        [X+Y+Z+W || X := Y <- M1 && Z := W <- M2]\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator maps from variables 3",
+      "source": "f() ->\n   begin\n      Seq = lists:seq(1, 50),\n      M3 = maps:iterator(#{X=>X*3 || X <- Seq}, ordered),\n      M4 = maps:iterator(#{X*2=>X*4 || X <- Seq}, ordered),\n      [{X, Y, Z, W} || X := Y <- M3 && Z := W <- M4]\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator map and map",
+      "source": "f() ->\n   begin\n      #{K1 => V1+V2 || K1:=V1 <- #{a=>1} && _K2:=V2 <- #{b=>3}}\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "zip generator simple",
+      "source": "f() ->\n   begin\n      #{K=>V || a := b <- #{x => y} && K := V <- #{x => y}}\n   end.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "Operator precedence, =:= vs orelse",
+      "source": "\nfn(A, B) -> A =:= -1 orelse B =:= -1.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "Operator precedence, andalso right-associativity",
+      "source": "\nfn(A, B, C) -> A andalso B andalso C.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "Operator precedence, orelse right-associativity",
+      "source": "\nfn(A, B, C) -> A orelse B orelse C.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "Operator precedence, andalso vs orelse (andalso binds tighter)",
+      "source": "\nfn(A, B, C) -> A orelse B andalso C.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "Operator precedence, and vs >",
+      "source": "\nfn(X) -> my_is_integer(X) and X > 0.\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "Based floating point literals (EEP-75)",
+      "source": "\nfn(X) ->\n      [{10#1.0,1.0},\n       {10#012345.625, 012345.625},\n       {10#3.31200,3.31200},\n       {10#1.0#e0,1.0e0},\n       {10#1.0#E17,1.0E17},\n       {10#34.21#E-18, 34.21E-18},\n       {10#17.0#E+14, 17.0E+14},\n       {10#12345.625#e3, 12345.625e3},\n       {10#12345.625#E-3, 12345.625E-3},\n\n       {2#1.0, 1.0},\n       {2#101.0, 5.0},\n       {2#101.1, 5.5},\n       {2#101.101, 5.625},\n       {2#101.1#e0, 5.5},\n       {2#1.0#e+3, 8.0},\n       {2#1.0#e-3, 0.125},\n       {2#000100.001000, 4.125},\n       {2#0.10000000000000000000000000000000000000000000000000001,\n             0.5000000000000001}, % 53 bits\n       {2#0.100000000000000000000000000000000000000000000000000001,\n             0.5}, % not 54 bits\n       {2#0.11001001000011111101101010100010001000010110100011000#e+2,\n             math:pi()}, % pi to 53 bits\n\n       {3#102.12, 3#10212/3#100},\n\n       {16#100.0, 256.0},\n       {16#ff.d, 16#ffd/16},\n       {16#1.0, 1.0},\n       {16#abc.def, 16#abcdef/16#1000},\n       {16#00100.001000, 256.0 + 1/16#1000},\n       {16#0.80000000000008, 0.5000000000000001}, % 53-bit fraction\n       {16#0.80000000000004, 0.5}, % not 54 bits\n       {16#fe.8#e0, 16#fe8/16},\n       {16#f.e#e+3, float(16#fe*16#100)},\n       {16#c.0#e-1, 16#c/16},\n       {16#0.0e0, 16#e/16#100}, % e is a hex digit, not exponent\n       {16#0.0E0, 16#e/16#100}, % same for E\n       {16#0.3243f6a8885a30#e+1, math:pi()} % pi to 53 bits\n       ].\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "Based floating point literals, with underscore (EEP-75)",
+      "source": "\nfn() ->\n   [{1_6#000_100.0_0, 256.0},\n    {16#0.3243_f6a8_885a_30#e+1, math:pi()},\n    {16#3243_f6a8.885a_30#e-7, math:pi()},\n    {16#3243_f6a8_885a.30#e-1_1, math:pi()},\n    {2#1.010101010101010101010#e+2_1, 2796202.0}].\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "Based integer literals, with underscore",
+      "source": "\nfn() ->\n   [{1_6#000_100, 256},\n    {16#03243_f6a8_885a_30},\n    {16#3243_f6a8_885a},\n    {2#1010101010101010101010}].\n"
+    },
+    {
+      "file": "expr.txt",
+      "title": "Types using based ranges",
+      "source": "\n-type goo() :: 0..16.\n-type foo() :: 0..16#ffffffff.\n-type bar() :: 0..16#ffffffffffffffff.\n-type baz() :: 0 | 1 | 2 | 4 | 8.\n"
+    },
+    {
+      "file": "fault_tolerance.txt",
+      "title": "incomplete behaviour attribute WIP",
+      "source": "\n-behavior(gen\n"
+    },
+    {
+      "file": "fault_tolerance.txt",
+      "title": "missing dot after export attribute (limitation)",
+      "source": "\n-export([foo/1]).\n-'export'([])\n"
+    },
+    {
+      "file": "fault_tolerance.txt",
+      "title": "missing dot after variable (limitation)",
+      "source": "\n  test(X) ->\n"
+    },
+    {
+      "file": "fault_tolerance.txt",
+      "title": "function after missing dot (limitation)",
+      "source": "\n    foo() ->\n        b\n    bar() -> ok.   % ideally would be in AST\n"
+    },
+    {
+      "file": "fault_tolerance.txt",
+      "title": "function reference missing dot (limitation)",
+      "source": "\n  foo() ->\n      fun sample2:f\n"
+    },
+    {
+      "file": "fault_tolerance.txt",
+      "title": "incomplete record index (limitation)",
+      "source": "\n foo() -> #r.\n"
+    },
+    {
+      "file": "fault_tolerance.txt",
+      "title": "Incomplete function after spec",
+      "source": "\n-spec foo() -> ok.\nfoo( -> ok.\n"
+    },
+    {
+      "file": "fault_tolerance.txt",
+      "title": "Shebang, for escript",
+      "source": "\n#!/usr/bin/env escript\n%% -*- erlang -*-\nfoo() -> ok.\n"
+    },
+    {
+      "file": "fragment.txt",
+      "title": "simple expression with ending dot",
+      "source": "\nmaps:get(hello, World).\n"
+    },
+    {
+      "file": "fragment.txt",
+      "title": "simple expression without ending dot",
+      "source": "\nmaps:get(hello, World)\n"
+    },
+    {
+      "file": "fragment.txt",
+      "title": "rebar.config",
+      "source": "\n{erl_opts, [debug_info]}.\n\n{deps, []}.\n\n{dialyzer, [\n    {plt_apps, all_deps},\n    {plt_extra_apps, [\n        common_test,\n        syntax_tools\n    ]},\n    {warnings, [\n        unknown,\n        unmatched_returns\n    ]},\n    incremental\n]}.\n\n{shell, [{apps, [foo]}]}.\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "expr",
+      "source": "\n-define(X, a).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "guard and",
+      "source": "\n-define(X, a, b, c).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "guard or",
+      "source": "\n-define(X, a; b, c).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "expr guard",
+      "source": "\n-define(X, Error when Error == oops).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "function clauses",
+      "source": "\n-define(X,\nfoo() -> ok;\nfoo() -> not_ok\n).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "statement list",
+      "source": "\n-define(IS_STRING(X), is_binary(X); is_list(X); is_atom(X)).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "function clause",
+      "source": "\n-define(MATCH(Type, Predicate),\n    match({type, _, Type, []}, Val) ->\n        ?CHECK(Predicate(Val), ?FMT(\"Expected ~p, got ~p\", [Type, Val]))\n).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "LOOP macro",
+      "source": "\n-define(LOOP(),\n    [] when Suffix =:= []; length(Prefix) > 3 ->\n        null;\n    [] ->\n        [Digit | Rest] = Suffix,\n        ?FUNCTION_NAME(Prefix ++ [Digit], Rest)\n).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "Comma separated macro",
+      "source": "\n-define(SECURE_REQUEST(SessionID, Env, ImplFun, Args, Flag),\n    {current_function, {_Mod, CurFunction, _Arity}} = process_info(\n        self(),\n        current_function\n    ),\n    secure_req(SessionID, Env, CurFunction, ImplFun, Args, Flag)\n).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "Empty macro",
+      "source": "\n-define(E2E_SPEC, ).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "Calling a macro",
+      "source": "\nlookup(Prefix, Suffix) ->\n    case ets:select(Prefix) of\n        [CCI] ->\n            {CCI, Suffix};\n        ?LOOP()\n    end.\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "Macro type",
+      "source": "\n-define(TYPE, integer() | atom()).\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "Concatables",
+      "source": "\n-define(TXT(Str), \"abc\" Str ??Str).\n-define(TXT(Str), Str \"abc\").\n-define(TXT(Str), ??Str \"abc\").\n-define(TXT(Str), \"abc\" \"def\").\n"
+    },
+    {
+      "file": "macros.txt",
+      "title": "Macro type in call",
+      "source": "\n-define(X, ?MACRO(integer() | atom())).\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "broadened remote expression with parens",
+      "source": "\nf(M, F) -> (M):(F)(1, 2).\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "remote in type union",
+      "source": "\n-type t() :: foo() | mod:bar().\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "multi-template list comprehension",
+      "source": "\nf() -> [X, Y || X <- Xs, Y <- Ys].\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "multi-template map comprehension",
+      "source": "\nf() -> #{K1 => V1, K2 => V2 || K <- Ks, V <- Vs}.\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "qualified record creation",
+      "source": "\nf() -> #mod:name{a = 1}.\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "qualified record update",
+      "source": "\nf(X) -> X#mod:name{a = 1, b = 3}.\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "qualified record field access",
+      "source": "\nf(X) -> X#mod:name.field.\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "anonymous record creation",
+      "source": "\nf() -> #_{a = 1, b = 2}.\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "anonymous record update",
+      "source": "\nf(X) -> X#_{a = 1}.\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "anonymous record field access",
+      "source": "\nf(X) -> X#_.field.\n"
+    },
+    {
+      "file": "otp29.txt",
+      "title": "native record declaration",
+      "source": "\n-record #name{a, b}.\n"
+    },
+    {
+      "file": "pat_expr.txt",
+      "title": "binary operator",
+      "source": "\nf(1 + 1) -> ok;\nf([] ++ []) -> ok.\n"
+    },
+    {
+      "file": "pat_expr.txt",
+      "title": "unary operator",
+      "source": "\nf(+1) -> ok.\n"
+    },
+    {
+      "file": "pat_expr.txt",
+      "title": "match",
+      "source": "\nf(A = B) -> ok.\n"
+    },
+    {
+      "file": "pat_expr.txt",
+      "title": "record index",
+      "source": "\nf(#record.field) -> ok.\n"
+    },
+    {
+      "file": "pat_expr.txt",
+      "title": "record pat",
+      "source": "\nf(#record{a = 1}) -> ok.\n"
+    },
+    {
+      "file": "ssr.txt",
+      "title": "basic example, replacement",
+      "source": "\nssr: _@X = 3 ==>> _@X = 4.\n"
+    },
+    {
+      "file": "ssr.txt",
+      "title": "basic example, match only",
+      "source": "\nssr: _@X = 3.\n"
+    },
+    {
+      "file": "ssr.txt",
+      "title": "basic example, match only, alternative syntax",
+      "source": "\nssr: _@X = 3.\n"
+    },
+    {
+      "file": "ssr.txt",
+      "title": "with where clause",
+      "source": "\nssr: _@X = _@Y ==>> _@X = 4\n   where is_atom(_@Y).\n\n--------------------------------------------------------------------------------\n\n(source_file\n  (ssr_definition\n    (match_expr\n      (var)\n      (var))\n    (ssr_replacement\n      (match_expr\n        (var)\n        (integer)))\n    (ssr_where\n      (guard\n        (guard_clause\n          (call\n            (atom)\n            (expr_args\n              (var))))))))\n================================================================================\nwith when and where clause\nThis is expected to not parse, until we define the ssr RHS as\n_macro_def_replacement\n================================================================================\n\nssr: _@X = _@Y when is_atom(_@Y)\n   where is_atom(_@Y).\n"
+    },
+    {
+      "file": "ssr.txt",
+      "title": "record field name as placeholder",
+      "source": "\nssr: #foo{x = _@A, k2 = _@B, k3 = _@C}.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `()`",
+      "source": "\nf() -> ~(foo).\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `[]`",
+      "source": "\nf() -> ~[foo].\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `{}`",
+      "source": "\nf() -> ~{foo}.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `<>`",
+      "source": "\nf() -> ~<foo>.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `<>` as param",
+      "source": "\nf(~<foo>) -> ok.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `/`",
+      "source": "\nf() -> ~/foo/.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `|`",
+      "source": "\nf() -> ~|foo|.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `'`",
+      "source": "\nf() -> ~'foo'.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `\"`",
+      "source": "\nf() -> ~\"foo\".\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil backtick",
+      "source": "\nf() -> ~`foo`.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "vanilla sigil `#`",
+      "source": "\nf() -> ~#foo#.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `()`",
+      "source": "\nf() -> ~S(foo).\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `[]`",
+      "source": "\nf() -> ~S[foo].\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `{}`",
+      "source": "\nf() -> ~S{foo}.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `<>`",
+      "source": "\nf() -> ~S<foo>.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `<>` as param",
+      "source": "\nf(~S<foo>) -> ok.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `/`",
+      "source": "\nf() -> ~S/foo/.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `|`",
+      "source": "\nf() -> ~S|foo|.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `'`",
+      "source": "\nf() -> ~S'foo'.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `\"`",
+      "source": "\nf() -> ~S\"foo\".\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil backtick",
+      "source": "\nf() -> ~S`foo`.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "verbatim sigil `#`",
+      "source": "\nf() -> ~S#foo#.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `()`",
+      "source": "\nf() -> ~b(foo).\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `[]`",
+      "source": "\nf() -> ~b[foo].\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `{}`",
+      "source": "\nf() -> ~b{foo}.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `<>`",
+      "source": "\nf() -> ~b<foo>.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `<>` as param",
+      "source": "\nf(~b<foo>) -> ok.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `/`",
+      "source": "\nf() -> ~b/foo/.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `|`",
+      "source": "\nf() -> ~b|foo|.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `'`",
+      "source": "\nf() -> ~b'foo'.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `\"`",
+      "source": "\nf() -> ~b\"foo\".\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil backtick",
+      "source": "\nf() -> ~b`foo`.\n"
+    },
+    {
+      "file": "string_delimiters.txt",
+      "title": "quoted sigil `#`",
+      "source": "\nf() -> ~b#foo#.\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "triple quoted string",
+      "source": "\nf() -> \"\"\"\n       hello\n       there\n       \"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "triple quoted string, 4 quotes",
+      "source": "\nf() -> \"\"\"\"\n       hello\n       there\n       \"\"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "triple quoted string, 4 quotes, embedded 3 quotes",
+      "source": "\nf() -> \"\"\"\"\n       hello\n       \"\"\"\n       there\n       \"\"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "triple quoted string, 4 quotes, embedded 3 quotes, multiple",
+      "source": "\nf() -> \"\"\"\"\n       hello\n       \"\"\"\n       there\n       \"\"\"\".\ng() -> \"\"\"\"\n       another one, checking greedy\n       \"\"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "triple quoted string, internal sq strings",
+      "source": "\nf() ->\n  \"\"\"\n  Line a1a\n  Line a2a\n  \"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "quoted binary no sigil",
+      "source": "\nf() -> <<\"ab\\\"c\\\"\\d\"/utf8>>.\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "quoted binary default sigil",
+      "source": "\nf() -> ~\"ab\\\"c\\\"\\d\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "quoted binary explicit sigil",
+      "source": "\nf() -> ~b\"ab\\\"c\\\"\\d\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "quoted binary explicit sigil in tq string",
+      "source": "\nf() -> ~b\"\"\"\n        ab\"c\"\\d\n        \"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "quoted binary explicit sigil in tq string, 5 quotes, with 3 inside",
+      "source": "\nf() -> ~b\"\"\"\"\"\n        ab\n        \"\"\"\n        \"\"\"\"\".\ng() -> \"\"\"\"\"\n       checking for greedy regex match\n       \"\"\"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "verbatim binary no sigil",
+      "source": "\nf() ->  <<\"ab\\\"c\\\"\\\\d\"/utf8>>.\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "verbatim binary with sigil",
+      "source": "\nf() -> ~B\"ab\\\"c\\\"\\d\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "verbatim binary in default sigil tq string",
+      "source": "\nf() -> ~\"\"\"\n        ab\"c\"\\d\n        \"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "verbatim binary in verabtim sigil tq string",
+      "source": "\nf() -> ~B\"\"\"\n        ab\"c\"\\d\n        \"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "quoted string no sigil",
+      "source": "\nf() -> \"ab\\\"c\\\"\\d\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "quoted string with sigil",
+      "source": "\nf() -> ~s\"ab\\\"c\\\"\\d\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "quoted string with sigil in tq string",
+      "source": "\nf() -> ~s\"\"\"\n        ab\"c\"\\d\n        \"\"\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "verbatim string no sigil",
+      "source": "\nf() -> \"ab\\\"c\\\"\\\\d\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "verbatim string with sigil",
+      "source": "\nf() -> ~S\"ab\\\"c\\\"\\d\".\n"
+    },
+    {
+      "file": "strings.txt",
+      "title": "verbatim string with sigil in tq string",
+      "source": "\nf() -> ~S\"\"\"\n        ab\"c\"\\d\n        \"\"\".\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "binary type",
+      "source": "\n-type x() :: {<<>>, <<_:_*8>>, <<_:8, _:_*8>>, <<_:_*1>>, <<_:1, _:_*1>>}.\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "ann type",
+      "source": "\n-type x() :: A :: B :: atom().\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "union type",
+      "source": "\n-type x() :: atom() | integer() | float().\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "union type in list",
+      "source": "\n-type x() :: [atom() | integer() | float()].\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "union and ann types mixed",
+      "source": "\n-type x() :: A :: B :: atom() | C :: term() | none().\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "fun types",
+      "source": "\n-type x() :: {fun(), fun((...) -> atom()), fun((atom()) -> atom())}.\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "nominal type",
+      "source": "\n-nominal kg() :: integer().\n"
+    },
+    {
+      "file": "types.txt",
+      "title": "Unchecked cast operator :>",
+      "source": "\n-define(unchecked_cast(Expr, Type), (Expr :> Type)).\n"
+    }
+  ]
+}

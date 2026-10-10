@@ -82,8 +82,7 @@ export class LinkNetwork {
     return LinkNetwork._parseWithLinks(text, 'LiNo', configuration);
   }
 
-  static _parseWithLinks(text, language, configuration) {
-    const parsed = parseProgrammingLanguage(text, language);
+  static _parseWithLinks(text, language, configuration, parsed = parseProgrammingLanguage(text, language)) {
     if (!parsed) return { network: LinkNetwork.parseLosslessText(text, language, configuration), links: [] };
     const network = new LinkNetwork();
     const { root: document } = network._insertProgrammingLanguage(parsed, language, configuration);

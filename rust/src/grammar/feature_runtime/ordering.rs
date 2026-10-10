@@ -718,17 +718,28 @@ pub(super) fn shift_preferred(
     while let Some(inner) = items(&progress.children).find(|child| {
         child.ty == TreeType::Node && child.start < short.end && child.end > short.end
     }) {
-        if first_leaf_start(&inner) == begin {
+        if first_leaf_start(&inner) == begin
+            && inner.rule != short.rule
+            && !leftmost_chain(&inner)
+                .iter()
+                .any(|node| node.rule == short.rule && meaningful(&node.children).len() > 1)
+        {
             return compare_precedence(&reduction(short), &PrecedenceTag::unranked(None), orders)
                 .reverse();
         }
         progress = inner;
     }
-    let shifted = progress
+    let mut shifted = progress
         .precedence
         .clone()
         .unwrap_or_else(|| PrecedenceTag::unranked(progress.rule.clone()));
-    let reduced = reduced_before(short, &progress);
+    if first_meaningful(&progress.children).is_some_and(|head| head.end == short.end)
+        && let Some(lookahead) = lookahead
+        && let Some(suffix) = grammar.operand_shift(progress.rule.as_ref(), lookahead, orders)
+    {
+        shifted = suffix;
+    }
+    let reduced = reduced_before(short, &progress, grammar);
     if let Some(before) = shift_reduction(short, &progress, grammar) {
         let order = compare_precedence(&PrecedenceTag::unranked(Some(before)), &reduced, orders);
         if order != Ordering::Equal {
@@ -763,7 +774,7 @@ pub(super) fn reduction(node: &Tree) -> PrecedenceTag {
 /// {}` and `module "m" {}`, whose `module_name_and_body` of level 0 right
 /// ends with the name where the body is left out, so the body shifts); else
 /// the precedence `short` reduces with.
-fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
+fn reduced_before(short: &Rc<Tree>, progress: &Tree, grammar: &GrammarFacts) -> PrecedenceTag {
     let mut closing = None;
     if let Some(first) = first_meaningful(&progress.children) {
         let mut node = short.clone();
@@ -778,8 +789,10 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
                 break;
             };
             if same_tree(&last, &first) {
-                if last.ty == TreeType::Token
-                    && let Some(reduced) = &last.reduced
+                if let Some(reduced) = &last.reduced
+                    && (last.ty == TreeType::Token
+                        || (grammar.is_silent(reduced.rule.as_ref())
+                            && !PrecedenceTag::same(Some(reduced), first.reduced.as_ref())))
                 {
                     return reduced.clone();
                 }
@@ -788,7 +801,18 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
                 // s`, a `_pattern` of level 0 in one parse and the
                 // constructor of `c s`, of level 80, in the other) is that
                 // rule's reduction, not the node's it ends.
-                if last.ty == TreeType::Token && last.alone && !first.alone {
+                if last.ty == TreeType::Token
+                    && last.alone
+                    && (!first.alone
+                        || (last
+                            .precedence
+                            .as_ref()
+                            .is_some_and(|tag| grammar.is_silent(tag.rule.as_ref()))
+                            && !PrecedenceTag::same(
+                                last.precedence.as_ref(),
+                                first.precedence.as_ref(),
+                            )))
+                {
                     return last
                         .precedence
                         .clone()
@@ -807,7 +831,9 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
             }
         }
     }
-    closing.unwrap_or_else(|| reduction(short))
+    closing
+        .filter(|tag| grammar.is_silent(tag.rule.as_ref()))
+        .unwrap_or_else(|| reduction(short))
 }
 
 /// The order of two results of one text that end alike, each its children

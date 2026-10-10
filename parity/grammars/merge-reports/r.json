@@ -1,0 +1,348 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "r",
+  "native": "native-r",
+  "sources": [
+    {
+      "id": "tree-sitter-r",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-r 1.3.0",
+      "repository": "https://github.com/r-lib/tree-sitter-r",
+      "revision": "f2289db204dda2bf7c7ea720de5c2a2c3eff2530",
+      "path": "src/grammar.json",
+      "sha256": "90a92dc73949699d60c0dc29add88c8158411d36a11c0fadada07d96764a30b1",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/r.lino",
+    "sha256": "34dd10f47be5d10d6c1f1f9e31d43a7b83ce46f4ff3dd6bddb2f20fbf392d7a2",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "e99e003ab8b0463dee975432b6f9f7e39cd75eb0047989f064fdf57927fa8e9d"
+    },
+    "scanners": [
+      {
+        "name": "scoped_layout",
+        "tokens": [
+          "start",
+          "newline",
+          "semicolon",
+          "external_else",
+          "scoped_whitespace",
+          "external_open_parenthesis",
+          "external_close_parenthesis",
+          "external_open_brace",
+          "external_close_brace",
+          "external_open_double_bracket",
+          "external_close_double_bracket",
+          "external_open_bracket",
+          "external_close_bracket",
+          "error_sentinel"
+        ]
+      },
+      {
+        "name": "raw_string",
+        "tokens": [
+          "raw_string_open",
+          "raw_string_content",
+          "raw_string_close"
+        ]
+      }
+    ],
+    "immediate": [
+      "_start",
+      "_newline",
+      "_semicolon",
+      "_raw_string_open",
+      "_raw_string_content",
+      "_raw_string_close",
+      "_external_else",
+      "_external_open_parenthesis",
+      "_external_close_parenthesis",
+      "_external_open_brace",
+      "_external_close_brace",
+      "_external_open_bracket",
+      "_external_close_bracket",
+      "_external_open_bracket2",
+      "_external_close_bracket2",
+      "_error_sentinel"
+    ]
+  },
+  "rules": 67,
+  "keywords": [
+    "FALSE",
+    "Inf",
+    "L",
+    "NA",
+    "NA_character_",
+    "NA_complex_",
+    "NA_integer_",
+    "NA_real_",
+    "NULL",
+    "NaN",
+    "TRUE",
+    "break",
+    "for",
+    "function",
+    "i",
+    "if",
+    "in",
+    "next",
+    "repeat",
+    "while"
+  ],
+  "renamed": [
+    {
+      "source": "parameters",
+      "native": "parameter_list"
+    },
+    {
+      "source": "_parameter_with_default",
+      "native": "parameter_with_default"
+    },
+    {
+      "source": "_parameter_without_default",
+      "native": "parameter_without_default"
+    },
+    {
+      "source": "_parameter_name",
+      "native": "parameter_name"
+    },
+    {
+      "source": "subset2",
+      "native": "element_subset"
+    },
+    {
+      "source": "subset2_arguments",
+      "native": "element_subset_arguments"
+    },
+    {
+      "source": "_argument_named",
+      "native": "named_argument"
+    },
+    {
+      "source": "_argument_unnamed",
+      "native": "unnamed_argument"
+    },
+    {
+      "source": "_argument_value",
+      "native": "argument_value"
+    },
+    {
+      "source": "integer",
+      "native": "integer_literal"
+    },
+    {
+      "source": "_hex_literal",
+      "native": "hex_literal"
+    },
+    {
+      "source": "_number_literal",
+      "native": "number_literal"
+    },
+    {
+      "source": "_float_literal",
+      "native": "float_literal"
+    },
+    {
+      "source": "_raw_string",
+      "native": "raw_string"
+    },
+    {
+      "source": "_single_quoted_string",
+      "native": "single_quoted_string"
+    },
+    {
+      "source": "_double_quoted_string",
+      "native": "double_quoted_string"
+    },
+    {
+      "source": "_single_quoted_string_content",
+      "native": "single_quoted_string_content"
+    },
+    {
+      "source": "_double_quoted_string_content",
+      "native": "double_quoted_string_content"
+    },
+    {
+      "source": "dots",
+      "native": "variadic_argument"
+    },
+    {
+      "source": "dot_dot_i",
+      "native": "indexed_dots"
+    },
+    {
+      "source": "_identifier",
+      "native": "identifier_form"
+    },
+    {
+      "source": "_string_or_identifier",
+      "native": "string_or_identifier"
+    },
+    {
+      "source": "_argument_name_string_or_identifier_or_null",
+      "native": "argument_name_string_or_identifier_or_null"
+    },
+    {
+      "source": "next",
+      "native": "continue_statement"
+    },
+    {
+      "source": "false",
+      "native": "false_value"
+    },
+    {
+      "source": "inf",
+      "native": "infinity_literal"
+    },
+    {
+      "source": "nan",
+      "native": "not_a_number_literal"
+    },
+    {
+      "source": "na",
+      "native": "missing_value_literal"
+    },
+    {
+      "source": "_expression",
+      "native": "expression"
+    },
+    {
+      "source": "_else",
+      "native": "else_keyword"
+    },
+    {
+      "source": "_open_parenthesis",
+      "native": "open_parenthesis"
+    },
+    {
+      "source": "_close_parenthesis",
+      "native": "close_parenthesis"
+    },
+    {
+      "source": "_open_brace",
+      "native": "open_brace"
+    },
+    {
+      "source": "_close_brace",
+      "native": "close_brace"
+    },
+    {
+      "source": "_open_bracket",
+      "native": "open_bracket"
+    },
+    {
+      "source": "_close_bracket",
+      "native": "close_bracket"
+    },
+    {
+      "source": "_open_bracket2",
+      "native": "open_double_bracket"
+    },
+    {
+      "source": "_close_bracket2",
+      "native": "close_double_bracket"
+    }
+  ],
+  "expandedWords": [],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "program",
+        "concept": "grammar.program"
+      },
+      {
+        "rule": "parameter",
+        "concept": "parameter"
+      },
+      {
+        "rule": "argument",
+        "concept": "argument"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "false_value",
+        "concept": "grammar.false-value"
+      },
+      {
+        "rule": "null",
+        "concept": "grammar.null"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 57
+  },
+  "sourceTransforms": [
+    {
+      "family": "contextual-newline-extras",
+      "pattern": "\\s",
+      "token": "_scoped_whitespace",
+      "reason": "Line feeds belong to the contextual scanner: outside continuation brackets they are statement separators, while inside parentheses or brackets they are trivia."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "identifier",
+      "pattern": "if|for|while|repeat|function|next|break|TRUE|FALSE|NULL|Inf|NaN|NA_integer_|NA_real_|NA_complex_|NA_character_|NA",
+      "continuationPattern": "[A-Za-z0-9_.\\u0080-\\u{10ffff}]",
+      "reason": "Reserved literal words retain lexical identity even when their syntax is incomplete. The contextual external else token remains an identifier when that continuation is unavailable."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "binary_operator",
+      "value": 1,
+      "reason": "A continued infix expression stays one expression instead of splitting into an identifier and a following unary expression in a repeated body."
+    },
+    {
+      "family": "ordered-variants",
+      "rule": "argument",
+      "variants": [
+        "_argument_named",
+        "_argument_unnamed"
+      ],
+      "reason": "A named argument binds its argument name instead of parsing its assignment as an unnamed argument expression."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "identifier",
+      "pattern": "[rR][\"']",
+      "reason": "A raw-literal opening is one lexical token even when its matching closing delimiter is missing; it cannot become an identifier followed by a separate ordinary string."
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "rule": "extract_operator",
+      "value": 1,
+      "reason": "A complete chained extraction stays one expression instead of splitting after the optional missing right-hand name."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "extract_operator"
+      ],
+      "symbol": "_string_or_identifier",
+      "value": 1,
+      "reason": "A present extraction member name outranks the recovery alternative that omits it and starts a separate expression."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

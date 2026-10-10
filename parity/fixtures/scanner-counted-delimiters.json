@@ -1,0 +1,77 @@
+[
+  {
+    "name": "raw string delimiter counts",
+    "assertion": "rustStyleRawDelimiters",
+    "scanners": [
+      {
+        "family": "counted-delimiter",
+        "name": "raw_strings",
+        "token": "raw_string",
+        "prefix": "r",
+        "marker": "#",
+        "opening": "\"",
+        "closing": "\""
+      }
+    ],
+    "accept": [
+      "r\"\"",
+      "r#\"one\"#",
+      "r##\"one\"#two\"##",
+      "r#\"é😀\"#",
+      "r#\"a\"#r##\"b\"##"
+    ],
+    "reject": [
+      "r\"",
+      "r#\"bad\"",
+      "r##\"bad\"#",
+      "r#\"a\"##"
+    ],
+    "generated": "(scanner raw_strings (tokens raw_string) (operations (if (not (valid raw_string)) (then fail)) (consume (literal r)) (while (next (literal %23)) (do (consume (literal %23)) (push delimiters (integer 1)))) (consume (literal %22)) (while (not atEnd) (do (if (next (literal %22)) (then (consume (literal %22)) (while (all (next (literal %23)) (less (depth candidate) (depth delimiters))) (do (consume (literal %23)) (push candidate (integer 1)))) (if (all (equal (depth candidate) (depth delimiters))) (then (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit raw_string))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner raw_strings (tokens raw_string) (operations (if (not (valid raw_string)) (then fail)) (consume (literal r)) (while (next (literal %23)) (do (consume (literal %23)) (push delimiters (integer 1)))) (consume (literal %22)) (while (not atEnd) (do (if (next (literal %22)) (then (consume (literal %22)) (while (all (next (literal %23)) (less (depth candidate) (depth delimiters))) (do (consume (literal %23)) (push candidate (integer 1)))) (if (all (equal (depth candidate) (depth delimiters))) (then (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit raw_string))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) fail))\n(rule source normal (repeat1 (ref raw_string)))\n",
+    "trees": {
+      "r\"\"": "(source (raw_string \"r\\\"\\\"\"))",
+      "r#\"one\"#": "(source (raw_string \"r#\\\"one\\\"#\"))",
+      "r##\"one\"#two\"##": "(source (raw_string \"r##\\\"one\\\"#two\\\"##\"))",
+      "r#\"é😀\"#": "(source (raw_string \"r#\\\"é😀\\\"#\"))",
+      "r#\"a\"#r##\"b\"##": "(source (raw_string \"r#\\\"a\\\"#\") (raw_string \"r##\\\"b\\\"##\"))"
+    }
+  },
+  {
+    "name": "long bracket delimiter counts",
+    "assertion": "luaStyleLongDelimiters",
+    "scanners": [
+      {
+        "family": "counted-delimiter",
+        "name": "long_strings",
+        "token": "long_string",
+        "prefix": "[",
+        "marker": "=",
+        "opening": "[",
+        "closing": "]",
+        "suffix": "]"
+      }
+    ],
+    "accept": [
+      "[[]]",
+      "[=[one]=]",
+      "[==[one]=]two]==]",
+      "[=[é😀]=]",
+      "[=[a]=][==[b]==]"
+    ],
+    "reject": [
+      "[=[bad]]",
+      "[==[bad]=]",
+      "[=[bad]=",
+      "[[bad"
+    ],
+    "generated": "(scanner long_strings (tokens long_string) (operations (if (not (valid long_string)) (then fail)) (consume (literal %5B)) (while (next (literal %3D)) (do (consume (literal %3D)) (push delimiters (integer 1)))) (consume (literal %5B)) (while (not atEnd) (do (if (next (literal %5D)) (then (consume (literal %5D)) (while (all (next (literal %3D)) (less (depth candidate) (depth delimiters))) (do (consume (literal %3D)) (push candidate (integer 1)))) (if (all (equal (depth candidate) (depth delimiters)) (next (literal %5D))) (then (consume (literal %5D)) (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit long_string))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) fail))\n",
+    "listing": "(grammar (start source))\n(scanner long_strings (tokens long_string) (operations (if (not (valid long_string)) (then fail)) (consume (literal %5B)) (while (next (literal %3D)) (do (consume (literal %3D)) (push delimiters (integer 1)))) (consume (literal %5B)) (while (not atEnd) (do (if (next (literal %5D)) (then (consume (literal %5D)) (while (all (next (literal %3D)) (less (depth candidate) (depth delimiters))) (do (consume (literal %3D)) (push candidate (integer 1)))) (if (all (equal (depth candidate) (depth delimiters)) (next (literal %5D))) (then (consume (literal %5D)) (while (greater (depth candidate) (integer 0)) (do (pop candidate))) (while (greater (depth delimiters) (integer 0)) (do (pop delimiters))) (emit long_string))) (while (greater (depth candidate) (integer 0)) (do (pop candidate)))) (else advance)))) fail))\n(rule source normal (repeat1 (ref long_string)))\n",
+    "trees": {
+      "[[]]": "(source (long_string \"[[]]\"))",
+      "[=[one]=]": "(source (long_string \"[=[one]=]\"))",
+      "[==[one]=]two]==]": "(source (long_string \"[==[one]=]two]==]\"))",
+      "[=[é😀]=]": "(source (long_string \"[=[é😀]=]\"))",
+      "[=[a]=][==[b]==]": "(source (long_string \"[=[a]=]\") (long_string \"[==[b]==]\"))"
+    }
+  }
+]

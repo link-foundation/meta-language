@@ -4,7 +4,7 @@
   "issue": 195,
   "pullRequest": 196,
   "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
-  "reconciledAt": "2026-10-07",
+  "reconciledAt": "2026-10-08",
   "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
   "requirementSources": [
     {
@@ -394,12 +394,12 @@
       "sha256": "faf1c6dd2ef1b1655a1f441f7189a16610e2cfc0ee2dffa7a6a090e19c78136c"
     },
     {
-      "key": "bulkDeliverySecondRepost",
+      "key": "bulkDeliveryFinalRepost",
       "id": 6025369792,
       "kind": "comment",
       "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025369792",
       "title": "CI does not fail “on purpose” — finish the work. Audit of `c39470d0` (2026-10-07)",
-      "role": "Binding: re-posts the audit of c39470d0 and requires bulk delivery: the most frequent carried constructs (export class, classes, closures, destructuring, Map/Set, iterators, template literals, try/throw, modules) in one batch, and in the same session the start of automatic scanner porting and multi-source merging for the single-source languages",
+      "role": "Third repost of the bulk-delivery audit; all existing open-row requirements remain binding",
       "ledgerCoverage": [
         "I195-SELF-TRANSLATION-",
         "I195-GRAMMAR-NATIVE-MERGED",
@@ -419,6 +419,33 @@
       "updatedAt": "2026-10-06T21:01:15Z",
       "bytes": 10703,
       "sha256": "faf1c6dd2ef1b1655a1f441f7189a16610e2cfc0ee2dffa7a6a090e19c78136c"
+    },
+    {
+      "key": "remainingScope",
+      "id": 199,
+      "kind": "issue",
+      "url": "https://github.com/link-foundation/meta-language/issues/199",
+      "title": "Goal",
+      "role": "Carries the remaining issue #195 scope after PR #196, including release and bounded memory regressions",
+      "ledgerCoverage": [
+        "I195-RESOURCE-BOUNDED-MEMORY-REGRESSIONS",
+        "I195-SELF-TRANSLATION-",
+        "I195-GRAMMAR-",
+        "I195-DEPENDENCY-",
+        "I195-MERGE-",
+        "I195-INTERCHANGE-",
+        "I195-SEM-",
+        "I195-TRANSLATE-",
+        "I195-SEMANTICS-",
+        "I195-DOWNSTREAM-",
+        "I195-DELIVERY-",
+        "I195-ACCEPTANCE-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-06T21:18:23Z",
+      "updatedAt": "2026-10-08T08:23:56Z",
+      "bytes": 14543,
+      "sha256": "48e3cbc08a83864d33fb85f8b34b2ee1931d6e34cf2b32175099bcc176e89098"
     }
   ],
   "statusReports": [

@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { CONCEPT_RECORDS } from './concept-records.js';
 import { FOUNDATION_MODELS } from './foundation-models.js';
 
@@ -12,68 +13,9 @@ import { FOUNDATION_MODELS } from './foundation-models.js';
  */
 
 /** The concept pairs that stay distinct in every grammar and program, with the reason. */
-export const REQUIRED_CONCEPT_DISTINCTIONS = Object.freeze([
-  {
-    concepts: ['grammar.ordered-choice', 'grammar.unordered-choice'],
-    reason: 'An ordered choice commits to the first alternative that matches, while an unordered choice accepts every alternative that matches, so the two accept different languages.',
-  },
-  {
-    concepts: ['grammar.lexical-precedence', 'grammar.syntactic-precedence'],
-    reason: 'Lexical precedence decides which token the lexer produces, while syntactic precedence decides between parse alternatives over tokens already produced.',
-  },
-  {
-    concepts: ['binding', 'assignment'],
-    reason: 'A binding introduces a name for a value in a scope, while an assignment updates the value stored in a location that already exists.',
-  },
-  {
-    concepts: ['grammar.list', 'grammar.linked-list'],
-    reason: 'A list rule is a delimited sequence of items, while a linked list is built from pairs and may end in a dotted pair, so a linked list has no counterpart among plain sequences.',
-  },
-  {
-    concepts: ['grammar.string', 'grammar.symbol'],
-    reason: 'A string literal denotes text, while a symbol denotes an interned identifier that compares by identity, so the same characters read as different data.',
-  },
-  {
-    concepts: ['grammar.member', 'grammar.ini.setting'],
-    reason: 'An object member pairs a name with any nested value, while an INI setting is one key and value line of a section whose value is raw text.',
-  },
-  {
-    concepts: ['grammar.object', 'grammar.racket.hash-table'],
-    reason: 'An object maps names to values with no stated key comparison, while a Racket hash table maps any datum keys under its equality, so the two key sets differ.',
-  },
-  {
-    concepts: ['grammar.value', 'grammar.datum'],
-    reason: 'A value of a data grammar is data only, while a datum is the external representation of a program value, which the reader may also read as code.',
-  },
-  {
-    concepts: ['grammar.identifier', 'grammar.identifier-name'],
-    reason: 'An identifier rule accepts letters, digits and underscores that start with a letter, while an ECMAScript identifier name also accepts dollar signs, Unicode letters and escapes.',
-  },
-  {
-    concepts: ['grammar.document', 'grammar.program'],
-    reason: 'A document is the whole text of a data or document format, while a program is source text the reader reads as code.',
-  },
-  {
-    concepts: ['grammar.boolean-value', 'grammar.true-value'],
-    reason: 'A boolean value rule accepts both truth values, while a true value rule accepts the literal true alone, so one cannot replace the other.',
-  },
-  {
-    concepts: ['grammar.program', 'grammar.module'],
-    reason: 'A program is source text the reader reads as code as a whole, while a TypeScript module declaration is one statement that opens a namespace inside a program.',
-  },
-  {
-    concepts: ['grammar.true-constant', 'grammar.true-value'],
-    reason: 'A Lean true constant accepts the proposition True as well as the Boolean literal true, while a true value rule accepts the literal true alone.',
-  },
-  {
-    concepts: ['grammar.symbol', 'grammar.keyword'],
-    reason: 'A symbol may name a variable, while a keyword evaluates to itself and is never a variable.',
-  },
-  {
-    concepts: ['grammar.comment', 'grammar.block-comment'],
-    reason: 'A comment rule covers every comment its format allows, while a block comment runs between nesting delimiters, so it does not end at the end of its line.',
-  },
-].map((entry) => Object.freeze({ ...entry, concepts: Object.freeze(entry.concepts) })));
+export const REQUIRED_CONCEPT_DISTINCTIONS = Object.freeze(JSON.parse(
+  await readFile(new URL('./data/required-concept-distinctions.json', import.meta.url), 'utf8'),
+).map((entry) => Object.freeze({ ...entry, concepts: Object.freeze(entry.concepts) })));
 
 /** The foundation model pairs that stay distinct; the register records the reason for each. */
 export const REQUIRED_FOUNDATION_DISTINCTIONS = Object.freeze([

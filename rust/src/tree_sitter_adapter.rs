@@ -4,47 +4,6 @@ use tree_sitter::{
     InputEdit, Language, Node, Parser, Point as TreeSitterPoint, Range as TreeSitterRange, Tree,
 };
 
-#[allow(unsafe_code)]
-mod rocq_grammar {
-    use tree_sitter_language::LanguageFn;
-
-    unsafe extern "C" {
-        fn tree_sitter_rocq() -> *const ();
-    }
-
-    // SAFETY: build.rs compiles the generated parser from the pinned revision
-    // recorded in vendor/tree-sitter-rocq/NOTICE.md with this exact symbol.
-    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_rocq) };
-}
-
-#[allow(unsafe_code)]
-mod lean_grammar {
-    use tree_sitter_language::LanguageFn;
-
-    unsafe extern "C" {
-        fn tree_sitter_lean() -> *const ();
-    }
-
-    // SAFETY: build.rs compiles the generated parser and scanner from the
-    // pinned revision recorded in vendor/tree-sitter-lean/NOTICE.md with this
-    // exact symbol.
-    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_lean) };
-}
-
-#[allow(unsafe_code)]
-mod cmake_grammar {
-    use tree_sitter_language::LanguageFn;
-
-    unsafe extern "C" {
-        fn tree_sitter_cmake() -> *const ();
-    }
-
-    // SAFETY: build.rs compiles the generated parser and the patched scanner
-    // from the pinned revision recorded in vendor/tree-sitter-cmake/NOTICE.md
-    // with this exact symbol.
-    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_cmake) };
-}
-
 mod native;
 
 use crate::line_index::LineIndex;
@@ -372,47 +331,23 @@ pub fn grammar_names(id: &str) -> Option<GrammarNames> {
 /// their ids return `None`.
 pub fn grammar_by_id(id: &str) -> Option<Language> {
     Some(match id {
-        "agda" => tree_sitter_agda::LANGUAGE.into(),
         "bash" => tree_sitter_bash::LANGUAGE.into(),
-        "cmake" => cmake_grammar::LANGUAGE.into(),
-        "cpp" => tree_sitter_cpp::LANGUAGE.into(),
         "csharp" => tree_sitter_c_sharp::LANGUAGE.into(),
-        "css" => tree_sitter_css::LANGUAGE.into(),
-        "dart" => tree_sitter_dart::LANGUAGE.into(),
-        "dtd" => tree_sitter_xml::LANGUAGE_DTD.into(),
         "elixir" => tree_sitter_elixir::LANGUAGE.into(),
         "elm" => tree_sitter_elm::LANGUAGE.into(),
-        "erlang" => tree_sitter_erlang::LANGUAGE.into(),
-        "groovy" => tree_sitter_groovy::LANGUAGE.into(),
         "haskell" => tree_sitter_haskell::LANGUAGE.into(),
-        "hcl" => tree_sitter_hcl::LANGUAGE.into(),
-        "html" => tree_sitter_html::LANGUAGE.into(),
         "kotlin" => tree_sitter_kotlin_ng::LANGUAGE.into(),
-        "lean" => lean_grammar::LANGUAGE.into(),
-        "lua" => tree_sitter_lua::LANGUAGE.into(),
         "markdown" => tree_sitter_md_025::LANGUAGE.into(),
         "markdown_inline" => tree_sitter_md_025::INLINE_LANGUAGE.into(),
         "matlab" => tree_sitter_matlab::LANGUAGE.into(),
-        "nix" => tree_sitter_nix::LANGUAGE.into(),
         "ocaml" => tree_sitter_ocaml::LANGUAGE_OCAML.into(),
         "ocaml_interface" => tree_sitter_ocaml::LANGUAGE_OCAML_INTERFACE.into(),
-        "odin" => tree_sitter_odin::LANGUAGE.into(),
-        "pascal" => tree_sitter_pascal::LANGUAGE.into(),
         "perl" => ts_parser_perl::LANGUAGE.into(),
         "php" => tree_sitter_php::LANGUAGE_PHP.into(),
-        "powershell" => tree_sitter_powershell::LANGUAGE.into(),
-        "python" => tree_sitter_python::LANGUAGE.into(),
-        "r" => tree_sitter_r::LANGUAGE.into(),
-        "rocq" => rocq_grammar::LANGUAGE.into(),
         "ruby" => tree_sitter_ruby::LANGUAGE.into(),
         "scala" => tree_sitter_scala::LANGUAGE.into(),
-        "sql" => tree_sitter_sequel::LANGUAGE.into(),
         "swift" => tree_sitter_swift::LANGUAGE.into(),
-        "toml" => tree_sitter_toml_ng::LANGUAGE.into(),
-        "vb" => tree_sitter_vb_dotnet::LANGUAGE.into(),
-        "xml" => tree_sitter_xml::LANGUAGE_XML.into(),
         "yaml" => tree_sitter_yaml::LANGUAGE.into(),
-        "zig" => tree_sitter_zig::LANGUAGE.into(),
         _ => return None,
     })
 }
@@ -859,6 +794,13 @@ impl<'a> ConvertContext<'a> {
 pub fn top_level_nodes(text: &str, language: &str) -> Option<Vec<(String, usize, usize)>> {
     if let Some(id) = native_grammar_for_language(language) {
         let root = parse_native(id, text);
+        if crate::translation::frontend_rules::accept_root_syntax_item(
+            &root.term,
+            !root.children.is_empty(),
+            root.end > root.start,
+        ) {
+            return Some(vec![(root.term, root.start, root.end)]);
+        }
         return Some(
             root.children
                 .iter()

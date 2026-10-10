@@ -1,0 +1,1275 @@
+{
+  "schemaVersion": 1,
+  "id": "groovy",
+  "language": "Groovy",
+  "grammar": "parity/grammars/native/groovy.lino",
+  "oracle": "crates.io tree-sitter-groovy 0.1.2",
+  "sources": [
+    "https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf",
+    "https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf/test/corpus"
+  ],
+  "corpus": {
+    "path": "test/corpus",
+    "file": "parity/grammars/sources/tree-sitter-groovy-0.1.2.corpus.json.gz",
+    "sha256": "9d2d7d22b007bf0570d28b7350e6fc45ffb6eeab7b080cd0c33ec0ad33e99482",
+    "url": "https://github.com/amaanq/tree-sitter-groovy/tree/70efb0b9b50f95bcbd89dcfd42b275e0304e10cf/test/corpus"
+  },
+  "hidden": [],
+  "anonymous": [
+    "unnamed_token"
+  ],
+  "extras": [
+    "line_comment",
+    "block_comment"
+  ],
+  "oracleKinds": {
+    "top_level_statement": "_toplevel_statement",
+    "literal": "_literal",
+    "string_literal_content": "_string_literal",
+    "multiple_line_string_literal": "_multiline_string_literal",
+    "multiple_line_string_fragment_content": "_multiline_string_fragment",
+    "escape_sequence_content": "_escape_sequence",
+    "instance_of_expression": "instanceof_expression",
+    "dimensions_expression": "dimensions_expr",
+    "unqualified_object_creation_expression": "_unqualified_object_creation_expression",
+    "wildcard_bounds": "_wildcard_bounds",
+    "annotation_variant": "_annotation",
+    "element_value": "_element_value",
+    "enumeration_declaration": "enum_declaration",
+    "enumeration_body": "enum_body",
+    "enumeration_body_declarations": "enum_body_declarations",
+    "enumeration_constant": "enum_constant",
+    "class_body_declaration": "_class_body_declaration",
+    "constructor_declarator": "_constructor_declarator",
+    "name": "_name",
+    "default_value": "_default_value",
+    "variable_declarator_list": "_variable_declarator_list",
+    "variable_declarator_identifier": "_variable_declarator_id",
+    "variable_initializer": "_variable_initializer",
+    "type": "_type",
+    "unannotated_type": "_unannotated_type",
+    "simple_type": "_simple_type",
+    "method_header": "_method_header",
+    "method_declarator": "_method_declarator",
+    "reserved_identifier": "_reserved_identifier",
+    "juxtaposed_function_call": "juxt_function_call",
+    "juxtaposed_function_name": "_juxt_function_name",
+    "juxtaposed_argument_list": "_juxt_argument_list",
+    "multiple_line_string_fragment_double": "_multiline_string_fragment_double",
+    "multiple_line_string_fragment_single": "_multiline_string_fragment_single",
+    "class_method_declaration": "_class_method_declaration",
+    "class_method_header": "_class__method_header",
+    "multiple_line_string_fragment": "multiline_string_fragment"
+  },
+  "matches": [
+    {
+      "source": "",
+      "rows": [
+        [0,null,"program",1,0,0,""]
+      ]
+    },
+    {
+      "source": "// café\n",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"line_comment",1,0,8,"X"]
+      ]
+    },
+    {
+      "source": "/* café */\n",
+      "rows": [
+        [0,null,"program",1,0,12,""],
+        [1,null,"block_comment",1,0,11,"X"]
+      ]
+    },
+    {
+      "source": "def x = 1",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"local_variable_declaration",1,0,9,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,9,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","decimal_integer_literal",1,8,9,""],
+        [2,null,"",0,9,9,""]
+      ]
+    },
+    {
+      "source": "def x = true\n",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"local_variable_declaration",1,0,13,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,12,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","true",1,8,12,""]
+      ]
+    },
+    {
+      "source": "def x = null\n",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"local_variable_declaration",1,0,13,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,12,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","null_literal",1,8,12,""]
+      ]
+    },
+    {
+      "source": "def x = \"é😀\"\n",
+      "rows": [
+        [0,null,"program",1,0,17,""],
+        [1,null,"local_variable_declaration",1,0,17,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,16,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","string_literal",1,8,16,""],
+        [4,null,"\"",0,8,9,""],
+        [4,null,"string_fragment",1,9,15,""],
+        [4,null,"\"",0,15,16,""]
+      ]
+    },
+    {
+      "source": "def x = 'a'\n",
+      "rows": [
+        [0,null,"program",1,0,12,""],
+        [1,null,"local_variable_declaration",1,0,12,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,11,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","character_literal",1,8,11,""]
+      ]
+    },
+    {
+      "source": "def x = \"hello ${name}\"\n",
+      "rows": [
+        [0,null,"program",1,0,24,""],
+        [1,null,"local_variable_declaration",1,0,24,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,23,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","string_literal",1,8,23,""],
+        [4,null,"\"",0,8,9,""],
+        [4,null,"string_fragment",1,9,22,""],
+        [4,null,"\"",0,22,23,""]
+      ]
+    },
+    {
+      "source": "def x = \"\"\"a\nb\"\"\"\n",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"local_variable_declaration",1,0,18,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,17,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","string_literal",1,8,17,""],
+        [4,null,"\"\"\"",0,8,11,""],
+        [4,null,"multiline_string_fragment",1,11,14,""],
+        [4,null,"\"\"\"",0,14,17,""]
+      ]
+    },
+    {
+      "source": "def x = '''a\nb'''\n",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"local_variable_declaration",1,0,18,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,17,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","string_literal",1,8,17,""],
+        [4,null,"'''",0,8,11,""],
+        [4,null,"multiline_string_fragment",1,11,14,""],
+        [4,null,"'''",0,14,17,""]
+      ]
+    },
+    {
+      "source": "def x = 0xff\n",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"local_variable_declaration",1,0,13,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,12,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","hex_integer_literal",1,8,12,""]
+      ]
+    },
+    {
+      "source": "def x = 1.5e2\n",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"local_variable_declaration",1,0,14,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,13,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","decimal_floating_point_literal",1,8,13,""]
+      ]
+    },
+    {
+      "source": "def x = [1, 2, 3]\n",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"local_variable_declaration",1,0,18,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,17,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","array_literal",1,8,17,""],
+        [4,null,"[",0,8,9,""],
+        [4,null,"decimal_integer_literal",1,9,10,""],
+        [4,null,",",0,10,11,""],
+        [4,null,"decimal_integer_literal",1,12,13,""],
+        [4,null,",",0,13,14,""],
+        [4,null,"decimal_integer_literal",1,15,16,""],
+        [4,null,"]",0,16,17,""]
+      ]
+    },
+    {
+      "source": "def x = [a: 1, b: 2]\n",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"local_variable_declaration",1,0,21,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,20,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","map_literal",1,8,20,""],
+        [4,null,"[",0,8,9,""],
+        [4,null,"map_item",1,9,13,""],
+        [5,"key","identifier",1,9,10,""],
+        [5,null,":",0,10,11,""],
+        [5,"value","decimal_integer_literal",1,12,13,""],
+        [4,null,",",0,13,14,""],
+        [4,null,"map_item",1,15,19,""],
+        [5,"key","identifier",1,15,16,""],
+        [5,null,":",0,16,17,""],
+        [5,"value","decimal_integer_literal",1,18,19,""],
+        [4,null,"]",0,19,20,""]
+      ]
+    },
+    {
+      "source": "def x = 1..3\n",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"local_variable_declaration",1,0,13,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,12,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","range_expression",1,8,12,""],
+        [4,"start","decimal_integer_literal",1,8,9,""],
+        [4,null,"..",0,9,11,""],
+        [4,"end","decimal_integer_literal",1,11,12,""]
+      ]
+    },
+    {
+      "source": "def x = new C()\n",
+      "rows": [
+        [0,null,"program",1,0,16,""],
+        [1,null,"local_variable_declaration",1,0,16,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,15,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","object_creation_expression",1,8,15,""],
+        [4,null,"new",0,8,11,""],
+        [4,"type","type_identifier",1,12,13,""],
+        [4,"arguments","argument_list",1,13,15,""],
+        [5,null,"(",0,13,14,""],
+        [5,null,")",0,14,15,""]
+      ]
+    },
+    {
+      "source": "def x = a.b\n",
+      "rows": [
+        [0,null,"program",1,0,12,""],
+        [1,null,"local_variable_declaration",1,0,12,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,11,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","field_access",1,8,11,""],
+        [4,"object","identifier",1,8,9,""],
+        [4,null,".",0,9,10,""],
+        [4,"field","identifier",1,10,11,""]
+      ]
+    },
+    {
+      "source": "def x = a[0]\n",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"local_variable_declaration",1,0,13,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,12,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","array_access",1,8,12,""],
+        [4,"array","identifier",1,8,9,""],
+        [4,null,"[",0,9,10,""],
+        [4,"index","decimal_integer_literal",1,10,11,""],
+        [4,null,"]",0,11,12,""]
+      ]
+    },
+    {
+      "source": "def x = a + b * c\n",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"local_variable_declaration",1,0,18,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,17,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","binary_expression",1,8,17,""],
+        [4,"left","identifier",1,8,9,""],
+        [4,"operator","+",0,10,11,""],
+        [4,"right","binary_expression",1,12,17,""],
+        [5,"left","identifier",1,12,13,""],
+        [5,"operator","*",0,14,15,""],
+        [5,"right","identifier",1,16,17,""]
+      ]
+    },
+    {
+      "source": "println(\"hi\")\n",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"expression_statement",1,0,14,""],
+        [2,null,"method_invocation",1,0,13,""],
+        [3,"name","identifier",1,0,7,""],
+        [3,"arguments","argument_list",1,7,13,""],
+        [4,null,"(",0,7,8,""],
+        [4,null,"string_literal",1,8,12,""],
+        [5,null,"\"",0,8,9,""],
+        [5,null,"string_fragment",1,9,11,""],
+        [5,null,"\"",0,11,12,""],
+        [4,null,")",0,12,13,""]
+      ]
+    },
+    {
+      "source": "println \"hi\"\n",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"juxt_function_call",1,0,12,""],
+        [2,"name","identifier",1,0,7,""],
+        [2,"args","argument_list",1,8,12,""],
+        [3,null,"string_literal",1,8,12,""],
+        [4,null,"\"",0,8,9,""],
+        [4,null,"string_fragment",1,9,11,""],
+        [4,null,"\"",0,11,12,""]
+      ]
+    },
+    {
+      "source": "def f(int x) { return x + 1; }\n",
+      "rows": [
+        [0,null,"program",1,0,31,""],
+        [1,null,"function_definition",1,0,30,""],
+        [2,null,"def",0,0,3,""],
+        [2,"name","identifier",1,4,5,""],
+        [2,"parameters","formal_parameters",1,5,12,""],
+        [3,null,"(",0,5,6,""],
+        [3,null,"formal_parameter",1,6,11,""],
+        [4,"type","integral_type",1,6,9,""],
+        [5,null,"int",0,6,9,""],
+        [4,"name","identifier",1,10,11,""],
+        [3,null,")",0,11,12,""],
+        [2,"body","closure",1,13,30,""],
+        [3,null,"{",0,13,14,""],
+        [3,null,"return_statement",1,15,28,""],
+        [4,null,"return",0,15,21,""],
+        [4,null,"binary_expression",1,22,27,""],
+        [5,"left","identifier",1,22,23,""],
+        [5,"operator","+",0,24,25,""],
+        [5,"right","decimal_integer_literal",1,26,27,""],
+        [4,null,";",0,27,28,""],
+        [3,null,"}",0,29,30,""]
+      ]
+    },
+    {
+      "source": "class C {}\n",
+      "rows": [
+        [0,null,"program",1,0,11,""],
+        [1,null,"class_declaration",1,0,10,""],
+        [2,null,"class",0,0,5,""],
+        [2,"name","identifier",1,6,7,""],
+        [2,"body","class_body",1,8,10,""],
+        [3,null,"{",0,8,9,""],
+        [3,null,"}",0,9,10,""]
+      ]
+    },
+    {
+      "source": "class C { int x; int f(int y) { return x + y; } }\n",
+      "rows": [
+        [0,null,"program",1,0,50,""],
+        [1,null,"class_declaration",1,0,49,""],
+        [2,null,"class",0,0,5,""],
+        [2,"name","identifier",1,6,7,""],
+        [2,"body","class_body",1,8,49,""],
+        [3,null,"{",0,8,9,""],
+        [3,null,"field_declaration",1,10,16,""],
+        [4,"type","integral_type",1,10,13,""],
+        [5,null,"int",0,10,13,""],
+        [4,"declarator","variable_declarator",1,14,15,""],
+        [5,"name","identifier",1,14,15,""],
+        [4,null,";",0,15,16,""],
+        [3,null,"method_declaration",1,17,47,""],
+        [4,"type","integral_type",1,17,20,""],
+        [5,null,"int",0,17,20,""],
+        [4,"name","identifier",1,21,22,""],
+        [4,"parameters","formal_parameters",1,22,29,""],
+        [5,null,"(",0,22,23,""],
+        [5,null,"formal_parameter",1,23,28,""],
+        [6,"type","integral_type",1,23,26,""],
+        [7,null,"int",0,23,26,""],
+        [6,"name","identifier",1,27,28,""],
+        [5,null,")",0,28,29,""],
+        [4,"body","block",1,30,47,""],
+        [5,null,"{",0,30,31,""],
+        [5,null,"return_statement",1,32,45,""],
+        [6,null,"return",0,32,38,""],
+        [6,null,"binary_expression",1,39,44,""],
+        [7,"left","identifier",1,39,40,""],
+        [7,"operator","+",0,41,42,""],
+        [7,"right","identifier",1,43,44,""],
+        [6,null,";",0,44,45,""],
+        [5,null,"}",0,46,47,""],
+        [3,null,"}",0,48,49,""]
+      ]
+    },
+    {
+      "source": "interface I { int f(); }\n",
+      "rows": [
+        [0,null,"program",1,0,25,""],
+        [1,null,"interface_declaration",1,0,24,""],
+        [2,null,"interface",0,0,9,""],
+        [2,"name","identifier",1,10,11,""],
+        [2,"body","interface_body",1,12,24,""],
+        [3,null,"{",0,12,13,""],
+        [3,null,"method_declaration",1,14,22,""],
+        [4,"type","integral_type",1,14,17,""],
+        [5,null,"int",0,14,17,""],
+        [4,"name","identifier",1,18,19,""],
+        [4,"parameters","formal_parameters",1,19,21,""],
+        [5,null,"(",0,19,20,""],
+        [5,null,")",0,20,21,""],
+        [4,null,";",0,21,22,""],
+        [3,null,"}",0,23,24,""]
+      ]
+    },
+    {
+      "source": "enum E { A, B }\n",
+      "rows": [
+        [0,null,"program",1,0,16,""],
+        [1,null,"enum_declaration",1,0,15,""],
+        [2,null,"enum",0,0,4,""],
+        [2,"name","identifier",1,5,6,""],
+        [2,"body","enum_body",1,7,15,""],
+        [3,null,"{",0,7,8,""],
+        [3,null,"enum_constant",1,9,10,""],
+        [4,"name","identifier",1,9,10,""],
+        [3,null,",",0,10,11,""],
+        [3,null,"enum_constant",1,12,13,""],
+        [4,"name","identifier",1,12,13,""],
+        [3,null,"}",0,14,15,""]
+      ]
+    },
+    {
+      "source": "package demo\nimport java.util.List\n",
+      "rows": [
+        [0,null,"program",1,0,35,""],
+        [1,null,"package_declaration",1,0,13,""],
+        [2,null,"package",0,0,7,""],
+        [2,null,"identifier",1,8,12,""],
+        [1,null,"import_declaration",1,13,35,""],
+        [2,null,"import",0,13,19,""],
+        [2,null,"scoped_identifier",1,20,34,""],
+        [3,"scope","scoped_identifier",1,20,29,""],
+        [4,"scope","identifier",1,20,24,""],
+        [4,null,".",0,24,25,""],
+        [4,"name","identifier",1,25,29,""],
+        [3,null,".",0,29,30,""],
+        [3,"name","identifier",1,30,34,""]
+      ]
+    },
+    {
+      "source": "if (x) { f() } else { g() }\n",
+      "rows": [
+        [0,null,"program",1,0,28,""],
+        [1,null,"if_statement",1,0,28,""],
+        [2,null,"if",0,0,2,""],
+        [2,"condition","parenthesized_expression",1,3,6,""],
+        [3,null,"(",0,3,4,""],
+        [3,null,"identifier",1,4,5,""],
+        [3,null,")",0,5,6,""],
+        [2,"consequence","closure",1,7,14,""],
+        [3,null,"{",0,7,8,""],
+        [3,null,"method_invocation",1,9,12,""],
+        [4,"name","identifier",1,9,10,""],
+        [4,"arguments","argument_list",1,10,12,""],
+        [5,null,"(",0,10,11,""],
+        [5,null,")",0,11,12,""],
+        [3,null,"}",0,13,14,""],
+        [2,null,"else",0,15,19,""],
+        [2,"alternative","expression_statement",1,20,28,""],
+        [3,null,"closure",1,20,27,""],
+        [4,null,"{",0,20,21,""],
+        [4,null,"method_invocation",1,22,25,""],
+        [5,"name","identifier",1,22,23,""],
+        [5,"arguments","argument_list",1,23,25,""],
+        [6,null,"(",0,23,24,""],
+        [6,null,")",0,24,25,""],
+        [4,null,"}",0,26,27,""]
+      ]
+    },
+    {
+      "source": "while (x) { break; }\n",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"while_statement",1,0,20,""],
+        [2,null,"while",0,0,5,""],
+        [2,"condition","parenthesized_expression",1,6,9,""],
+        [3,null,"(",0,6,7,""],
+        [3,null,"identifier",1,7,8,""],
+        [3,null,")",0,8,9,""],
+        [2,"body","block",1,10,20,""],
+        [3,null,"{",0,10,11,""],
+        [3,null,"break_statement",1,12,18,""],
+        [4,null,"break",0,12,17,""],
+        [4,null,";",0,17,18,""],
+        [3,null,"}",0,19,20,""]
+      ]
+    },
+    {
+      "source": "for (int i = 0; i < 3; i++) { f(i) }\n",
+      "rows": [
+        [0,null,"program",1,0,37,""],
+        [1,null,"for_statement",1,0,37,""],
+        [2,null,"for",0,0,3,""],
+        [2,null,"(",0,4,5,""],
+        [2,"init","local_variable_declaration",1,5,15,""],
+        [3,"type","integral_type",1,5,8,""],
+        [4,null,"int",0,5,8,""],
+        [3,"declarator","variable_declarator",1,9,14,""],
+        [4,"name","identifier",1,9,10,""],
+        [4,null,"=",0,11,12,""],
+        [4,"value","decimal_integer_literal",1,13,14,""],
+        [3,null,";",0,14,15,""],
+        [2,"condition","binary_expression",1,16,21,""],
+        [3,"left","identifier",1,16,17,""],
+        [3,"operator","<",0,18,19,""],
+        [3,"right","decimal_integer_literal",1,20,21,""],
+        [2,null,";",0,21,22,""],
+        [2,"update","update_expression",1,23,26,""],
+        [3,null,"identifier",1,23,24,""],
+        [3,null,"++",0,24,26,""],
+        [2,null,")",0,26,27,""],
+        [2,"body","expression_statement",1,28,37,""],
+        [3,null,"closure",1,28,36,""],
+        [4,null,"{",0,28,29,""],
+        [4,null,"method_invocation",1,30,34,""],
+        [5,"name","identifier",1,30,31,""],
+        [5,"arguments","argument_list",1,31,34,""],
+        [6,null,"(",0,31,32,""],
+        [6,null,"identifier",1,32,33,""],
+        [6,null,")",0,33,34,""],
+        [4,null,"}",0,35,36,""]
+      ]
+    },
+    {
+      "source": "for (x in xs) { f(x) }\n",
+      "rows": [
+        [0,null,"program",1,0,23,""],
+        [1,null,"enhanced_for_statement",1,0,23,""],
+        [2,null,"for",0,0,3,""],
+        [2,null,"(",0,4,5,""],
+        [2,"name","identifier",1,5,6,""],
+        [2,null,"in",0,7,9,""],
+        [2,"value","identifier",1,10,12,""],
+        [2,null,")",0,12,13,""],
+        [2,"body","expression_statement",1,14,23,""],
+        [3,null,"closure",1,14,22,""],
+        [4,null,"{",0,14,15,""],
+        [4,null,"method_invocation",1,16,20,""],
+        [5,"name","identifier",1,16,17,""],
+        [5,"arguments","argument_list",1,17,20,""],
+        [6,null,"(",0,17,18,""],
+        [6,null,"identifier",1,18,19,""],
+        [6,null,")",0,19,20,""],
+        [4,null,"}",0,21,22,""]
+      ]
+    },
+    {
+      "source": "try { f(); } catch (Exception e) { g(); } finally { h(); }\n",
+      "rows": [
+        [0,null,"program",1,0,59,""],
+        [1,null,"try_statement",1,0,58,""],
+        [2,null,"try",0,0,3,""],
+        [2,"body","block",1,4,12,""],
+        [3,null,"{",0,4,5,""],
+        [3,null,"expression_statement",1,6,10,""],
+        [4,null,"method_invocation",1,6,9,""],
+        [5,"name","identifier",1,6,7,""],
+        [5,"arguments","argument_list",1,7,9,""],
+        [6,null,"(",0,7,8,""],
+        [6,null,")",0,8,9,""],
+        [4,null,";",0,9,10,""],
+        [3,null,"}",0,11,12,""],
+        [2,null,"catch_clause",1,13,41,""],
+        [3,null,"catch",0,13,18,""],
+        [3,null,"(",0,19,20,""],
+        [3,null,"catch_formal_parameter",1,20,31,""],
+        [4,null,"catch_type",1,20,29,""],
+        [5,null,"type_identifier",1,20,29,""],
+        [4,"name","identifier",1,30,31,""],
+        [3,null,")",0,31,32,""],
+        [3,"body","block",1,33,41,""],
+        [4,null,"{",0,33,34,""],
+        [4,null,"expression_statement",1,35,39,""],
+        [5,null,"method_invocation",1,35,38,""],
+        [6,"name","identifier",1,35,36,""],
+        [6,"arguments","argument_list",1,36,38,""],
+        [7,null,"(",0,36,37,""],
+        [7,null,")",0,37,38,""],
+        [5,null,";",0,38,39,""],
+        [4,null,"}",0,40,41,""],
+        [2,null,"finally_clause",1,42,58,""],
+        [3,null,"finally",0,42,49,""],
+        [3,null,"block",1,50,58,""],
+        [4,null,"{",0,50,51,""],
+        [4,null,"expression_statement",1,52,56,""],
+        [5,null,"method_invocation",1,52,55,""],
+        [6,"name","identifier",1,52,53,""],
+        [6,"arguments","argument_list",1,53,55,""],
+        [7,null,"(",0,53,54,""],
+        [7,null,")",0,54,55,""],
+        [5,null,";",0,55,56,""],
+        [4,null,"}",0,57,58,""]
+      ]
+    },
+    {
+      "source": "def x = { a -> a + 1 }\n",
+      "rows": [
+        [0,null,"program",1,0,23,""],
+        [1,null,"local_variable_declaration",1,0,23,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,22,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","closure",1,8,22,""],
+        [4,null,"{",0,8,9,""],
+        [4,null,"lambda_expression",1,10,20,""],
+        [5,"parameters","identifier",1,10,11,""],
+        [5,null,"->",0,12,14,""],
+        [5,"body","binary_expression",1,15,20,""],
+        [6,"left","identifier",1,15,16,""],
+        [6,"operator","+",0,17,18,""],
+        [6,"right","decimal_integer_literal",1,19,20,""],
+        [4,null,"}",0,21,22,""]
+      ]
+    },
+    {
+      "source": "def x = { a, b -> a + b }\n",
+      "rows": [
+        [0,null,"program",1,0,26,""],
+        [1,null,"local_variable_declaration",1,0,26,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,25,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","array_initializer",1,8,25,""],
+        [4,null,"{",0,8,9,""],
+        [4,null,"identifier",1,10,11,""],
+        [4,null,",",0,11,12,""],
+        [4,null,"lambda_expression",1,13,23,""],
+        [5,"parameters","identifier",1,13,14,""],
+        [5,null,"->",0,15,17,""],
+        [5,"body","binary_expression",1,18,23,""],
+        [6,"left","identifier",1,18,19,""],
+        [6,"operator","+",0,20,21,""],
+        [6,"right","identifier",1,22,23,""],
+        [4,null,"}",0,24,25,""]
+      ]
+    },
+    {
+      "source": "def x = a ? b : c\n",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"local_variable_declaration",1,0,18,""],
+        [2,null,"def",0,0,3,""],
+        [2,"declarator","variable_declarator",1,4,17,""],
+        [3,"name","identifier",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,"value","ternary_expression",1,8,17,""],
+        [4,"condition","identifier",1,8,9,""],
+        [4,null,"?",0,10,11,""],
+        [4,"consequence","identifier",1,12,13,""],
+        [4,null,":",0,14,15,""],
+        [4,"alternative","identifier",1,16,17,""]
+      ]
+    },
+    {
+      "source": "assert x == 1;\n",
+      "rows": [
+        [0,null,"program",1,0,15,""],
+        [1,null,"assert_statement",1,0,14,""],
+        [2,null,"assert",0,0,6,""],
+        [2,null,"binary_expression",1,7,13,""],
+        [3,"left","identifier",1,7,8,""],
+        [3,"operator","==",0,9,11,""],
+        [3,"right","decimal_integer_literal",1,12,13,""],
+        [2,null,";",0,13,14,""]
+      ]
+    },
+    {
+      "source": "throw new Exception(\"x\");\n",
+      "rows": [
+        [0,null,"program",1,0,26,""],
+        [1,null,"throw_statement",1,0,25,""],
+        [2,null,"throw",0,0,5,""],
+        [2,null,"object_creation_expression",1,6,24,""],
+        [3,null,"new",0,6,9,""],
+        [3,"type","type_identifier",1,10,19,""],
+        [3,"arguments","argument_list",1,19,24,""],
+        [4,null,"(",0,19,20,""],
+        [4,null,"string_literal",1,20,23,""],
+        [5,null,"\"",0,20,21,""],
+        [5,null,"string_fragment",1,21,22,""],
+        [5,null,"\"",0,22,23,""],
+        [4,null,")",0,23,24,""],
+        [2,null,";",0,24,25,""]
+      ]
+    },
+    {
+      "source": "#!/usr/bin/env groovy\ndef x=1\n",
+      "rows": [
+        [0,null,"program",1,0,30,""],
+        [1,null,"shebang",1,0,21,""],
+        [1,null,"local_variable_declaration",1,22,30,""],
+        [2,null,"def",0,22,25,""],
+        [2,"declarator","variable_declarator",1,26,29,""],
+        [3,"name","identifier",1,26,27,""],
+        [3,null,"=",0,27,28,""],
+        [3,"value","decimal_integer_literal",1,28,29,""]
+      ]
+    },
+    {
+      "source": "\r\n  def x=1\r\n",
+      "rows": [
+        [0,null,"program",1,4,13,""],
+        [1,null,"local_variable_declaration",1,4,13,""],
+        [2,null,"def",0,4,7,""],
+        [2,"declarator","variable_declarator",1,8,11,""],
+        [3,"name","identifier",1,8,9,""],
+        [3,null,"=",0,9,10,""],
+        [3,"value","decimal_integer_literal",1,10,11,""]
+      ]
+    },
+    {
+      "source": "f()",
+      "rows": [
+        [0,null,"program",1,0,3,""],
+        [1,null,"expression_statement",1,0,3,""],
+        [2,null,"method_invocation",1,0,3,""],
+        [3,"name","identifier",1,0,1,""],
+        [3,"arguments","argument_list",1,1,3,""],
+        [4,null,"(",0,1,2,""],
+        [4,null,")",0,2,3,""],
+        [2,null,"",0,3,3,""]
+      ]
+    },
+    {
+      "source": "return 1",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"return_statement",1,0,8,""],
+        [2,null,"return",0,0,6,""],
+        [2,null,"decimal_integer_literal",1,7,8,""],
+        [2,null,"",0,8,8,""]
+      ]
+    },
+    {
+      "source": "break",
+      "rows": [
+        [0,null,"program",1,0,5,""],
+        [1,null,"break_statement",1,0,5,""],
+        [2,null,"break",0,0,5,""],
+        [2,null,"",0,5,5,""]
+      ]
+    },
+    {
+      "source": "continue",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"continue_statement",1,0,8,""],
+        [2,null,"continue",0,0,8,""],
+        [2,null,"",0,8,8,""]
+      ]
+    },
+    {
+      "source": "yield 1",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"yield_statement",1,0,7,""],
+        [2,null,"yield",0,0,5,""],
+        [2,null,"decimal_integer_literal",1,6,7,""],
+        [2,null,"",0,7,7,""]
+      ]
+    },
+    {
+      "source": "import java.util.List",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"import_declaration",1,0,21,""],
+        [2,null,"import",0,0,6,""],
+        [2,null,"scoped_identifier",1,7,21,""],
+        [3,"scope","scoped_identifier",1,7,16,""],
+        [4,"scope","identifier",1,7,11,""],
+        [4,null,".",0,11,12,""],
+        [4,"name","identifier",1,12,16,""],
+        [3,null,".",0,16,17,""],
+        [3,"name","identifier",1,17,21,""],
+        [2,null,"",0,21,21,""]
+      ]
+    },
+    {
+      "source": "int f()",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"method_declaration",1,0,7,""],
+        [2,"type","integral_type",1,0,3,""],
+        [3,null,"int",0,0,3,""],
+        [2,"name","identifier",1,4,5,""],
+        [2,"parameters","formal_parameters",1,5,7,""],
+        [3,null,"(",0,5,6,""],
+        [3,null,")",0,6,7,""],
+        [2,null,"",0,7,7,""]
+      ]
+    },
+    {
+      "source": "do {} while (true)",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"do_statement",1,0,18,""],
+        [2,null,"do",0,0,2,""],
+        [2,"body","block",1,3,5,""],
+        [3,null,"{",0,3,4,""],
+        [3,null,"}",0,4,5,""],
+        [2,null,"while",0,6,11,""],
+        [2,"condition","parenthesized_expression",1,12,18,""],
+        [3,null,"(",0,12,13,""],
+        [3,null,"true",1,13,17,""],
+        [3,null,")",0,17,18,""],
+        [2,null,"",0,18,18,""]
+      ]
+    },
+    {
+      "source": "int f() {\n return 2\n}",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"method_declaration",1,0,21,""],
+        [2,"type","integral_type",1,0,3,""],
+        [3,null,"int",0,0,3,""],
+        [2,"name","identifier",1,4,5,""],
+        [2,"parameters","formal_parameters",1,5,7,""],
+        [3,null,"(",0,5,6,""],
+        [3,null,")",0,6,7,""],
+        [2,"body","block",1,8,21,""],
+        [3,null,"{",0,8,9,""],
+        [3,null,"return_statement",1,11,20,""],
+        [4,null,"return",0,11,17,""],
+        [4,null,"decimal_integer_literal",1,18,19,""],
+        [3,null,"}",0,20,21,""]
+      ]
+    },
+    {
+      "source": "if (a == b) {\n f(\"x\")\n}",
+      "rows": [
+        [0,null,"program",1,0,23,""],
+        [1,null,"if_statement",1,0,23,""],
+        [2,null,"if",0,0,2,""],
+        [2,"condition","parenthesized_expression",1,3,11,""],
+        [3,null,"(",0,3,4,""],
+        [3,null,"binary_expression",1,4,10,""],
+        [4,"left","identifier",1,4,5,""],
+        [4,"operator","==",0,6,8,""],
+        [4,"right","identifier",1,9,10,""],
+        [3,null,")",0,10,11,""],
+        [2,"consequence","closure",1,12,23,""],
+        [3,null,"{",0,12,13,""],
+        [3,null,"expression_statement",1,15,22,""],
+        [4,null,"method_invocation",1,15,21,""],
+        [5,"name","identifier",1,15,16,""],
+        [5,"arguments","argument_list",1,16,21,""],
+        [6,null,"(",0,16,17,""],
+        [6,null,"string_literal",1,17,20,""],
+        [7,null,"\"",0,17,18,""],
+        [7,null,"string_fragment",1,18,19,""],
+        [7,null,"\"",0,19,20,""],
+        [6,null,")",0,20,21,""],
+        [3,null,"}",0,22,23,""]
+      ]
+    },
+    {
+      "source": "if (a) f(a) else f(b)",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"if_statement",1,0,21,""],
+        [2,null,"if",0,0,2,""],
+        [2,"condition","parenthesized_expression",1,3,6,""],
+        [3,null,"(",0,3,4,""],
+        [3,null,"identifier",1,4,5,""],
+        [3,null,")",0,5,6,""],
+        [2,"consequence","method_invocation",1,7,11,""],
+        [3,"name","identifier",1,7,8,""],
+        [3,"arguments","argument_list",1,8,11,""],
+        [4,null,"(",0,8,9,""],
+        [4,null,"identifier",1,9,10,""],
+        [4,null,")",0,10,11,""],
+        [2,null,"else",0,12,16,""],
+        [2,"alternative","expression_statement",1,17,21,""],
+        [3,null,"method_invocation",1,17,21,""],
+        [4,"name","identifier",1,17,18,""],
+        [4,"arguments","argument_list",1,18,21,""],
+        [5,null,"(",0,18,19,""],
+        [5,null,"identifier",1,19,20,""],
+        [5,null,")",0,20,21,""],
+        [3,null,"",0,21,21,""]
+      ]
+    },
+    {
+      "source": "class C { def f() {\n given:\n def a=1\n expect:\n a==1\n } }",
+      "rows": [
+        [0,null,"program",1,0,56,""],
+        [1,null,"class_declaration",1,0,56,""],
+        [2,null,"class",0,0,5,""],
+        [2,"name","identifier",1,6,7,""],
+        [2,"body","class_body",1,8,56,""],
+        [3,null,"{",0,8,9,""],
+        [3,null,"method_declaration",1,10,54,""],
+        [4,"type","type_identifier",1,10,13,""],
+        [4,"name","identifier",1,14,15,""],
+        [4,"parameters","formal_parameters",1,15,17,""],
+        [5,null,"(",0,15,16,""],
+        [5,null,")",0,16,17,""],
+        [4,"body","block",1,18,54,""],
+        [5,null,"{",0,18,19,""],
+        [5,null,"labeled_statement",1,21,37,""],
+        [6,null,"identifier",1,21,26,""],
+        [6,null,":",0,26,27,""],
+        [6,null,"local_variable_declaration",1,29,37,""],
+        [7,null,"def",0,29,32,""],
+        [7,"declarator","variable_declarator",1,33,36,""],
+        [8,"name","identifier",1,33,34,""],
+        [8,null,"=",0,34,35,""],
+        [8,"value","decimal_integer_literal",1,35,36,""],
+        [5,null,"labeled_statement",1,38,52,""],
+        [6,null,"identifier",1,38,44,""],
+        [6,null,":",0,44,45,""],
+        [6,null,"expression_statement",1,47,52,""],
+        [7,null,"binary_expression",1,47,51,""],
+        [8,"left","identifier",1,47,48,""],
+        [8,"operator","==",0,48,50,""],
+        [8,"right","decimal_integer_literal",1,50,51,""],
+        [5,null,"}",0,53,54,""],
+        [3,null,"}",0,55,56,""]
+      ]
+    },
+    {
+      "source": "@Library(\"x\") _\n\nflow {}",
+      "rows": [
+        [0,null,"program",1,0,24,""],
+        [1,null,"local_variable_declaration",1,0,17,""],
+        [2,null,"modifiers",1,0,13,""],
+        [3,null,"annotation",1,0,13,""],
+        [4,null,"@",0,0,1,""],
+        [4,"name","identifier",1,1,8,""],
+        [4,"arguments","annotation_argument_list",1,8,13,""],
+        [5,null,"(",0,8,9,""],
+        [5,null,"string_literal",1,9,12,""],
+        [6,null,"\"",0,9,10,""],
+        [6,null,"string_fragment",1,10,11,""],
+        [6,null,"\"",0,11,12,""],
+        [5,null,")",0,12,13,""],
+        [2,"declarator","variable_declarator",1,14,15,""],
+        [3,"name","underscore_pattern",1,14,15,""],
+        [1,null,"expression_statement",1,17,24,""],
+        [2,null,"method_invocation",1,17,24,""],
+        [3,"name","identifier",1,17,21,""],
+        [3,"body","closure",1,22,24,""],
+        [4,null,"{",0,22,23,""],
+        [4,null,"}",0,23,24,""],
+        [2,null,"",0,24,24,""]
+      ]
+    },
+    {
+      "source": "switch (a) {\n case 2: f()\n default: g()\n}",
+      "rows": [
+        [0,null,"program",1,0,41,""],
+        [1,null,"switch_expression",1,0,41,""],
+        [2,null,"switch",0,0,6,""],
+        [2,"condition","parenthesized_expression",1,7,10,""],
+        [3,null,"(",0,7,8,""],
+        [3,null,"identifier",1,8,9,""],
+        [3,null,")",0,9,10,""],
+        [2,"body","switch_block",1,11,41,""],
+        [3,null,"{",0,11,12,""],
+        [3,null,"switch_block_statement_group",1,14,26,""],
+        [4,null,"switch_label",1,14,20,""],
+        [5,null,"case",0,14,18,""],
+        [5,null,"decimal_integer_literal",1,19,20,""],
+        [4,null,":",0,20,21,""],
+        [4,null,"expression_statement",1,22,26,""],
+        [5,null,"method_invocation",1,22,25,""],
+        [6,"name","identifier",1,22,23,""],
+        [6,"arguments","argument_list",1,23,25,""],
+        [7,null,"(",0,23,24,""],
+        [7,null,")",0,24,25,""],
+        [3,null,"switch_block_statement_group",1,27,40,""],
+        [4,null,"switch_label",1,27,34,""],
+        [5,null,"default",0,27,34,""],
+        [4,null,":",0,34,35,""],
+        [4,null,"expression_statement",1,36,40,""],
+        [5,null,"method_invocation",1,36,39,""],
+        [6,"name","identifier",1,36,37,""],
+        [6,"arguments","argument_list",1,37,39,""],
+        [7,null,"(",0,37,38,""],
+        [7,null,")",0,38,39,""],
+        [3,null,"}",0,40,41,""]
+      ]
+    },
+    {
+      "source": "@Mark(value)\ndef task() {\n}",
+      "rows": [
+        [0,null,"program",1,0,27,""],
+        [1,null,"function_definition",1,0,27,""],
+        [2,null,"modifiers",1,0,12,""],
+        [3,null,"annotation",1,0,12,""],
+        [4,null,"@",0,0,1,""],
+        [4,"name","identifier",1,1,5,""],
+        [4,"arguments","annotation_argument_list",1,5,12,""],
+        [5,null,"(",0,5,6,""],
+        [5,null,"identifier",1,6,11,""],
+        [5,null,")",0,11,12,""],
+        [2,null,"def",0,13,16,""],
+        [2,"name","identifier",1,17,21,""],
+        [2,"parameters","formal_parameters",1,21,23,""],
+        [3,null,"(",0,21,22,""],
+        [3,null,")",0,22,23,""],
+        [2,"body","closure",1,24,27,""],
+        [3,null,"{",0,24,25,""],
+        [3,null,"}",0,26,27,""]
+      ]
+    },
+    {
+      "source": "while (ready) {\n step()\n}",
+      "rows": [
+        [0,null,"program",1,0,25,""],
+        [1,null,"while_statement",1,0,25,""],
+        [2,null,"while",0,0,5,""],
+        [2,"condition","parenthesized_expression",1,6,13,""],
+        [3,null,"(",0,6,7,""],
+        [3,null,"identifier",1,7,12,""],
+        [3,null,")",0,12,13,""],
+        [2,"body","block",1,14,25,""],
+        [3,null,"{",0,14,15,""],
+        [3,null,"expression_statement",1,17,24,""],
+        [4,null,"method_invocation",1,17,23,""],
+        [5,"name","identifier",1,17,21,""],
+        [5,"arguments","argument_list",1,21,23,""],
+        [6,null,"(",0,21,22,""],
+        [6,null,")",0,22,23,""],
+        [3,null,"}",0,24,25,""]
+      ]
+    },
+    {
+      "source": "for (;;) {\n step()\n}",
+      "rows": [
+        [0,null,"program",1,0,20,""],
+        [1,null,"for_statement",1,0,20,""],
+        [2,null,"for",0,0,3,""],
+        [2,null,"(",0,4,5,""],
+        [2,null,";",0,5,6,""],
+        [2,null,";",0,6,7,""],
+        [2,null,")",0,7,8,""],
+        [2,"body","block",1,9,20,""],
+        [3,null,"{",0,9,10,""],
+        [3,null,"expression_statement",1,12,19,""],
+        [4,null,"method_invocation",1,12,18,""],
+        [5,"name","identifier",1,12,16,""],
+        [5,"arguments","argument_list",1,16,18,""],
+        [6,null,"(",0,16,17,""],
+        [6,null,")",0,17,18,""],
+        [3,null,"}",0,19,20,""]
+      ]
+    },
+    {
+      "source": "for (item in items) {\n step(item)\n}",
+      "rows": [
+        [0,null,"program",1,0,35,""],
+        [1,null,"enhanced_for_statement",1,0,35,""],
+        [2,null,"for",0,0,3,""],
+        [2,null,"(",0,4,5,""],
+        [2,"name","identifier",1,5,9,""],
+        [2,null,"in",0,10,12,""],
+        [2,"value","identifier",1,13,18,""],
+        [2,null,")",0,18,19,""],
+        [2,"body","block",1,20,35,""],
+        [3,null,"{",0,20,21,""],
+        [3,null,"expression_statement",1,23,34,""],
+        [4,null,"method_invocation",1,23,33,""],
+        [5,"name","identifier",1,23,27,""],
+        [5,"arguments","argument_list",1,27,33,""],
+        [6,null,"(",0,27,28,""],
+        [6,null,"identifier",1,28,32,""],
+        [6,null,")",0,32,33,""],
+        [3,null,"}",0,34,35,""]
+      ]
+    },
+    {
+      "source": "for (item in 2..4) {\n step(item)\n}",
+      "rows": [
+        [0,null,"program",1,0,34,""],
+        [1,null,"enhanced_for_statement",1,0,34,""],
+        [2,null,"for",0,0,3,""],
+        [2,null,"(",0,4,5,""],
+        [2,"name","identifier",1,5,9,""],
+        [2,null,"in",0,10,12,""],
+        [2,"value","range_expression",1,13,17,""],
+        [3,"start","decimal_integer_literal",1,13,14,""],
+        [3,null,"..",0,14,16,""],
+        [3,"end","decimal_integer_literal",1,16,17,""],
+        [2,null,")",0,17,18,""],
+        [2,"body","block",1,19,34,""],
+        [3,null,"{",0,19,20,""],
+        [3,null,"expression_statement",1,22,33,""],
+        [4,null,"method_invocation",1,22,32,""],
+        [5,"name","identifier",1,22,26,""],
+        [5,"arguments","argument_list",1,26,32,""],
+        [6,null,"(",0,26,27,""],
+        [6,null,"identifier",1,27,31,""],
+        [6,null,")",0,31,32,""],
+        [3,null,"}",0,33,34,""]
+      ]
+    },
+    {
+      "source": "if (ready) {\n step()\n} else if (done) {\n stop()\n}",
+      "rows": [
+        [0,null,"program",1,0,49,""],
+        [1,null,"if_statement",1,0,49,""],
+        [2,null,"if",0,0,2,""],
+        [2,"condition","parenthesized_expression",1,3,10,""],
+        [3,null,"(",0,3,4,""],
+        [3,null,"identifier",1,4,9,""],
+        [3,null,")",0,9,10,""],
+        [2,"consequence","closure",1,11,22,""],
+        [3,null,"{",0,11,12,""],
+        [3,null,"expression_statement",1,14,21,""],
+        [4,null,"method_invocation",1,14,20,""],
+        [5,"name","identifier",1,14,18,""],
+        [5,"arguments","argument_list",1,18,20,""],
+        [6,null,"(",0,18,19,""],
+        [6,null,")",0,19,20,""],
+        [3,null,"}",0,21,22,""],
+        [2,null,"else",0,23,27,""],
+        [2,"alternative","if_statement",1,28,49,""],
+        [3,null,"if",0,28,30,""],
+        [3,"condition","parenthesized_expression",1,31,37,""],
+        [4,null,"(",0,31,32,""],
+        [4,null,"identifier",1,32,36,""],
+        [4,null,")",0,36,37,""],
+        [3,"consequence","closure",1,38,49,""],
+        [4,null,"{",0,38,39,""],
+        [4,null,"expression_statement",1,41,48,""],
+        [5,null,"method_invocation",1,41,47,""],
+        [6,"name","identifier",1,41,45,""],
+        [6,"arguments","argument_list",1,45,47,""],
+        [7,null,"(",0,45,46,""],
+        [7,null,")",0,46,47,""],
+        [4,null,"}",0,48,49,""]
+      ]
+    },
+    {
+      "source": "a = \"\"\"\"\"\"\nb = \"\"\"\ntext with \"quotes\" and \"\"pairs\"\"\n${value}\n\"\"\"",
+      "rows": [
+        [0,null,"program",1,0,64,""],
+        [1,null,"expression_statement",1,0,11,""],
+        [2,null,"assignment_expression",1,0,10,""],
+        [3,"left","identifier",1,0,1,""],
+        [3,"operator","=",0,2,3,""],
+        [3,"right","string_literal",1,4,10,""],
+        [4,null,"\"\"\"",0,4,7,""],
+        [4,null,"\"\"\"",0,7,10,""],
+        [1,null,"expression_statement",1,11,64,""],
+        [2,null,"assignment_expression",1,11,64,""],
+        [3,"left","identifier",1,11,12,""],
+        [3,"operator","=",0,13,14,""],
+        [3,"right","string_literal",1,15,64,""],
+        [4,null,"\"\"\"",0,15,18,""],
+        [4,null,"multiline_string_fragment",1,18,29,""],
+        [4,null,"multiline_string_fragment",1,29,36,""],
+        [4,null,"multiline_string_fragment",1,36,42,""],
+        [4,null,"multiline_string_fragment",1,42,43,""],
+        [4,null,"multiline_string_fragment",1,43,49,""],
+        [4,null,"multiline_string_fragment",1,49,50,""],
+        [4,null,"multiline_string_fragment",1,50,61,""],
+        [4,null,"\"\"\"",0,61,64,""],
+        [2,null,"",0,64,64,""]
+      ]
+    }
+  ],
+  "divergences": [],
+  "rejections": [
+    {
+      "source": "def x =",
+      "recovered": "(program (local_variable_declaration \"def\" declarator:(variable_declarator ~\" \" name:(identifier \"x\") ~\" \" \"=\" (MISSING@7 decimal_integer_literal)) (\"'\" \"\")))"
+    },
+    {
+      "source": "class C {",
+      "recovered": "(program (class_declaration \"class\" ~\" \" name:(identifier \"C\") body:(class_body ~\" \" \"{\" (MISSING@9 \"}\"))))"
+    },
+    {
+      "source": "def x = \"unterminated",
+      "recovered": "(program (local_variable_declaration \"def\" declarator:(variable_declarator ~\" \" name:(identifier \"x\") ~\" \" \"=\" value:(string_literal ~\" \" \"\\\"\" (string_fragment \"unterminated\") (MISSING@21 \"\\\"\"))) (\"'\" \"\")))"
+    },
+    {
+      "source": "if (x { f() }",
+      "recovered": "(program (if_statement \"if\" condition:(parenthesized_expression ~\" \" \"(\" (method_invocation name:(identifier \"x\") body:(closure ~\" \" \"{\" (method_invocation ~\" \" name:(identifier \"f\") arguments:(argument_list \"(\" \")\")) ~\" \" \"}\")) (MISSING@13 \")\")) (MISSING@13 decimal_integer_literal)))"
+    },
+    {
+      "source": "def x = [1,",
+      "recovered": "(program (local_variable_declaration \"def\" declarator:(variable_declarator ~\" \" name:(identifier \"x\") ~\" \" \"=\" value:(array_literal ~\" \" \"[\" (decimal_integer_literal \"1\") \",\" (MISSING@11 \"]\"))) (\"'\" \"\")))"
+    },
+    {
+      "source": "def f(int x) { return x + 1 }\n",
+      "recovered": "(program (function_definition \"def\" ~\" \" name:(identifier \"f\") parameters:(formal_parameters \"(\" (formal_parameter type:(integral_type \"int\") ~\" \" name:(identifier \"x\")) \")\") body:(closure ~\" \" \"{\" (return_statement ~\" \" \"return\" (binary_expression ~\" \" left:(identifier \"x\") ~\" \" operator:\"+\" ~\" \" right:(decimal_integer_literal \"1\")) (MISSING@27 \";\") ~\" \") \"}\")) ~\"\\n\")"
+    },
+    {
+      "source": "while (x) { break }\n",
+      "recovered": "(program (while_statement \"while\" condition:(parenthesized_expression ~\" \" \"(\" (identifier \"x\") \")\") body:(block ~\" \" \"{\" (break_statement ~\" \" \"break\" (MISSING@17 \";\") ~\" \") \"}\")) ~\"\\n\")"
+    },
+    {
+      "source": "try { f() } catch (Exception e) { g() } finally { h() }\n",
+      "recovered": "(program (juxtaposed_function_call name:(method_invocation (ERROR@0..1 \"t\") name:(identifier \"ry\") body:(closure ~\" \" \"{\" (method_invocation ~\" \" name:(identifier \"f\") arguments:(argument_list \"(\" \")\")) ~\" \" \"}\")) args:(argument_list (MISSING@11 decimal_integer_literal) ~\" \")) (function_definition (MISSING@12 void_type) (ERROR@12..13 \"c\") name:(identifier \"atch\") parameters:(formal_parameters ~\" \" \"(\" (formal_parameter type:(type_identifier \"Exception\") ~\" \" name:(identifier \"e\")) \")\") body:(closure ~\" \" \"{\" (method_invocation ~\" \" name:(identifier \"g\") arguments:(argument_list \"(\" \")\")) ~\" \" \"}\")) (juxtaposed_function_call (MISSING@39 identifier) ~\" \" args:(argument_list (ERROR@40..41 \"f\") (identifier \"inally\"))) (expression_statement (closure ~\" \" \"{\" (method_invocation ~\" \" name:(identifier \"h\") arguments:(argument_list \"(\" \")\")) ~\" \" \"}\") (unnamed_token \"\\n\")))"
+    },
+    {
+      "source": "assert x == 1\n",
+      "recovered": "(program (assert_statement \"assert\" (binary_expression ~\" \" left:(identifier \"x\") ~\" \" operator:\"==\" ~\" \" right:(decimal_integer_literal \"1\")) (MISSING@13 \";\") ~\"\\n\"))"
+    },
+    {
+      "source": "throw new Exception(\"x\")\n",
+      "recovered": "(program (throw_statement \"throw\" (object_creation_expression ~\" \" \"new\" ~\" \" type:(type_identifier \"Exception\") arguments:(argument_list \"(\" (string_literal \"\\\"\" (string_fragment \"x\") \"\\\"\") \")\")) (MISSING@24 \";\") ~\"\\n\"))"
+    },
+    {
+      "source": "package demo",
+      "recovered": "(program (package_declaration \"package\" ~\" \" (identifier \"demo\") (MISSING@12 \";\")))"
+    }
+  ]
+}

@@ -248,11 +248,16 @@ jobs:
         if: ${{ !cancelled() }}
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt
+          components: rustfmt, clippy
 
       - name: Check the generated Rust frontend rules against JavaScript
         if: ${{ !cancelled() }}
         run: npm run check:frontend-rules
+        working-directory: js
+
+      - name: Check generated frontend rule compilation and style
+        if: ${{ !cancelled() }}
+        run: npm run check:frontend-rule-styles
         working-directory: js
 
       # The pull request description and the release reports are live texts

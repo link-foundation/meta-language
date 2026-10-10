@@ -21,10 +21,9 @@ import {
   PARITY_ARTIFACT_FILES,
   PARITY_REQUIREMENTS,
   mismatchedSections,
-  ndjson,
   observationFromRecords,
   parityAssertions,
-  parityDigests,
+  writeParityDigestArtifacts,
   stableJson,
 } from './issue-195-parity-evidence.mjs';
 import { runtimeObservation } from './issue-195-runtime-observation.mjs';
@@ -38,9 +37,7 @@ if (artifactsOption !== -1) {
   const directory = path.resolve(root, process.argv[artifactsOption + 1]);
   await mkdir(directory, { recursive: true });
   const observations = { javascript, rust };
-  const { digests, differences } = parityDigests(observations);
-  await writeFile(path.join(directory, PARITY_ARTIFACT_FILES.digests), ndjson(digests));
-  await writeFile(path.join(directory, PARITY_ARTIFACT_FILES.differences), ndjson(differences));
+  await writeParityDigestArtifacts(directory, observations);
   for (const [runtime, observation] of Object.entries(observations)) {
     await writeFile(
       path.join(directory, PARITY_ARTIFACT_FILES.translations(runtime)),

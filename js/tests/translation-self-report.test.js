@@ -8,6 +8,9 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { DecoratorSet } from '../src/decorators.js';
+import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
+import { LinkNetwork } from '../src/network.js';
+import { createModuleContext } from '../scripts/generate-self-translation-report.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const script = path.join(root, 'js/scripts/generate-self-translation-report.mjs');
@@ -18,6 +21,56 @@ const list = (directory) => readdirSync(path.join(root, directory), { withFileTy
   return entry.isDirectory() ? list(file) : file.endsWith('.js') ? [file] : [];
 });
 const metrics = { functions: 0, matched: 0, identical: 0, codeLines: 0, sharedLines: 0, handWrittenLines: 0 };
+
+test('report contexts resolve real translated exports across relative module dependencies', () => {
+  const modules = new Map([
+    ['value.js', '/** @param {number} x @returns {number} */\nexport function increment(x) { return x + 1; }\n'],
+    ['nested/second.js', "import { increment as next } from '../value.js';\n/** @param {number} x @returns {number} */\nexport function second(x) { return next(x) + 1; }\n"],
+    ['main.js', "import { second } from './nested/second.js';\n/** @param {number} x @returns {number} */\nexport function compute(x) { return second(x) + 1; }\n"],
+  ]);
+  const reads = new Map();
+  const context = createModuleContext((name) => {
+    reads.set(name, (reads.get(name) ?? 0) + 1);
+    return modules.get(name) ?? null;
+  });
+  for (const name of ['main.js', 'nested/second.js']) {
+    const translation = selfTranslate(modules.get(name), 'JavaScript', 'Rust', context(name));
+    assert.ok(translation.items.every((item) => item.status !== 'carried'), translation.code);
+  }
+  assert.deepEqual(context('nested/second.js').moduleDirectory, ['nested']);
+  assert.deepEqual(context('main.js').imports['./nested/second.js'].map(({ name }) => name), ['second']);
+  assert.equal(context('main.js'), context('main.js'));
+  assert.ok([...reads.values()].every((count) => count === 1));
+});
+
+test('report contexts use syntax imports and refuse paths outside the source root', () => {
+  const source = `// import { fake } from './fake.js'
+import { outside } from '../outside.js';
+import { absent } from './missing.js';
+export const message = 'import { pretend } from "./pretend.js"';
+`;
+  const reads = [];
+  const context = createModuleContext((name) => {
+    reads.push(name);
+    return name === 'main.js' ? source : null;
+  });
+  assert.deepEqual(context('main.js').imports, {});
+  assert.deepEqual(reads, ['main.js', 'missing.js']);
+});
+
+test('report contexts keep missing exports and import cycles unbound', () => {
+  const modules = new Map([
+    ['provider.js', 'export class Unsupported {}\n'],
+    ['missing.js', "import { absent } from './provider.js';\n/** @returns {number} */\nexport function read() { return absent(); }\n"],
+    ['first.js', "import { second } from './second.js';\n/** @returns {number} */\nexport function first() { return second(); }\n"],
+    ['second.js', "import { first } from './first.js';\n/** @returns {number} */\nexport function second() { return first(); }\n"],
+  ]);
+  const context = createModuleContext((name) => modules.get(name) ?? null);
+  for (const name of ['missing.js', 'first.js']) {
+    const translation = selfTranslate(modules.get(name), 'JavaScript', 'Rust', context(name));
+    assert.ok(translation.items.some((item) => item.status === 'carried'), translation.code);
+  }
+});
 
 function fixture() {
   const modules = list('js/src').sort().map((module) => {
@@ -86,4 +139,23 @@ test('incomplete, stale or inconsistent reports cannot record the reporting asse
   const result = verify(fixture(), 'No per-module rows.');
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Markdown row/u);
+});
+
+
+test('signature discovery checks exports without constructing another complete source graph', () => {
+  const source = '/** @returns {number} */\nexport function count() { return 2; }\nexport const limit = 3;\nexport class Unsupported {}\n';
+  const original = LinkNetwork.parse;
+  let signatures;
+  try {
+    LinkNetwork.parse = () => { throw new Error('signature discovery constructed a source graph'); };
+    signatures = selfTranslationSignatures(source, 'JavaScript');
+  } finally { LinkNetwork.parse = original; }
+  assert.deepEqual(signatures, [
+    { k: 'fn', name: 'count', params: [], ret: { kind: 'float' } },
+    { k: 'const', name: 'limit', type: { kind: 'float' }, literal: true },
+  ]);
+  const translation = selfTranslate(source, 'JavaScript', 'Rust');
+  assert.ok(translation.items.some(({ status }) => status === 'translated'));
+  assert.ok(translation.items.some(({ status }) => status === 'carried'));
+  assert.throws(() => selfTranslationSignatures("export const invalid = '\ud800';", 'JavaScript'), /do not reproduce/u);
 });

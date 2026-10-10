@@ -1,3 +1,4 @@
+import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 // Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer
 // the translation carries in its own prelude, so no value is ever narrowed;
 // machine integers stay Rust machine integers with checked arithmetic, which
@@ -13,6 +14,7 @@ import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState, withParts } from './emit-common.js';
+import { acceptConstantEmission, constantBindingForm, renderConstantBinding } from './frontend-rules.js';
 
 const KEYWORDS = new Set([
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
@@ -567,19 +569,19 @@ function externalName(kind, name) {
  */
 export function emitRustConstants(program) {
   const effects = program.main?.effects ?? [];
-  if (program.declarations.size > 0 || effects.length !== 1 || !effects[0].constant || effects[0].name.startsWith('ml_')) return null;
+  const effect = effects[0];
+  const legalName = effect && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);
+  if (!acceptConstantEmission(effect?.constant ?? false, effects.length, program.declarations.size, legalName ?? false)) return null;
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data', typeName: camel, valueName: snake, ctorName: camel, moduleSegment: snake, typeSpace: true, modulesShareTypeSpace: true,
   });
+  for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
   const emitter = new RustEmitter(program, state);
   const [{ name, value }] = effects;
-  if (KEYWORDS.has(name) || !/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name)) return null;
-  const scalar = value.k === 'lit' && ['float', 'bool', 'fixed'].includes(value.type.kind);
-  const definition = scalar
-    ? `pub const ${name}: ${emitter.type(value.type)} = ${emitter.expr(value)};`
-    : value.k === 'lit' && value.type.kind === 'string'
-      ? `pub const ${name}: &str = ${rustString(String(value.value))};`
-      : `pub static ${name}: std::sync::LazyLock<${emitter.type(value.type)}> = std::sync::LazyLock::new(|| ${emitter.expr(value)});`;
+  const form = constantBindingForm(value.k, value.type.kind);
+  const definition = renderConstantBinding(form, name,
+    form === 'string' ? '&str' : emitter.type(value.type),
+    form === 'string' ? rustString(String(value.value)) : emitter.expr(value));
   const preludes = [
     ...(emitter.usesBig ? [PRELUDE] : []),
     ...(emitter.usesNumber ? [NUMBER_PRELUDE] : []),
@@ -947,15 +949,10 @@ class RustEmitter {
         }
         return `${this.receiver(e.arg)}.to_string()`;
       case 'stringMap':
-        if (e.op === 'toLowerCase' || e.op === 'toUpperCase') {
-          return `${this.receiver(e.string)}.${e.op === 'toLowerCase' ? 'to_lowercase' : 'to_uppercase'}()`;
-        }
-        // JavaScript whitespace is Unicode White_Space without U+0085, plus U+FEFF.
-        return `${this.receiver(e.string)}.${{ trim: 'trim_matches', trimStart: 'trim_start_matches', trimEnd: 'trim_end_matches' }[e.op]}(|c: char| (c.is_whitespace() && c != '\\u{85}') || c == '\\u{feff}').to_string()`;
+        return renderStringMapExpression('Rust', e.op, this.receiver(e.string));
       case 'stringTest': {
-        const method = { startsWith: 'starts_with', endsWith: 'ends_with', includes: 'contains' }[e.op];
         const search = e.search.k === 'lit' ? rustString(String(e.search.value)) : `${this.receiver(e.search)}.as_str()`;
-        return `${this.receiver(e.string)}.${method}(${search})`;
+        return renderStringTestExpression('Rust', e.op, this.receiver(e.string), search);
       }
       case 'cast':
         return this.cast(e);
@@ -975,6 +972,7 @@ class RustEmitter {
         return `crate::ml_array::at(${this.borrow(e.array)}, ${index})`;
       }
       case 'length':
+        if (e.array.type.kind === 'string') return renderStringLengthExpression('Rust', this.receiver(e.array));
         if (e.type.kind === 'float') return `(${this.receiver(e.array)}.len() as f64)`;
         this.usesBig = true;
         return `crate::ml::Big::from_u128(${this.receiver(e.array)}.len() as u128)`;

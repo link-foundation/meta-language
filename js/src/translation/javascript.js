@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDefaultParameterReference } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
@@ -19,11 +19,9 @@ import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
-const STRING_TESTS = new Set(['startsWith', 'endsWith', 'includes']);
 // String-to-string maps: the Unicode case mappings, which Rust's
 // to_lowercase/to_uppercase also follow, and trimming of the JavaScript
 // whitespace set.
-const STRING_MAPS = new Set(['toLowerCase', 'toUpperCase', 'trim', 'trimStart', 'trimEnd']);
 const ROOT = 'crate';
 const EQUALITY = { '===': 'eq', '!==': 'ne' };
 const RELATIONAL = { '<': 'lt', '<=': 'le', '>': 'gt', '>=': 'ge' };
@@ -71,13 +69,14 @@ export function parseJavaScript(source, context = {}) {
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments, { externals = [], moduleDirectory = null } = {}) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map() } = {}) {
     this.source = source;
     // The other items of the module an item may call and read, by name.
     this.externals = new Map(externals.map((external) => [external.name, external]));
     this.moduleDirectory = moduleDirectory;
     this.imports = [];
     this.cursor = new TokenCursor(tokens, 'JavaScript');
+    this.literalBindings = literalBindings;
     this.docs = comments.filter((comment) => comment.text.startsWith('/**') && comment.text !== '/**/');
     // Tags of every @typedef data type, for `switch (x.$)`.
     this.dataTypes = new Map();
@@ -1483,6 +1482,10 @@ class JavaScriptParser {
   unary() {
     const c = this.cursor;
     const token = c.peek();
+    if (token.kind === 'identifier' && c.eat('typeof')) {
+      const arg = this.unary();
+      return { k: 'typeOf', arg, span: joined(token, arg, token) };
+    }
     if (c.eat('!')) {
       const arg = this.unary();
       return { k: 'unary', op: 'not', arg, span: joined(token, arg, token) };
@@ -1516,13 +1519,20 @@ class JavaScriptParser {
       if (c.is('.') && c.peek(1).kind === 'identifier') {
         c.next();
         const field = c.next();
-        if (c.is('(') && STRING_TESTS.has(field.value)) {
+        const arrayForm = readArrayMethodForm(field.value);
+        if (c.is('(') && arrayForm !== '') {
+          const args = this.arguments(field.value);
+          if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`.${field.value}() with arguments`, 'array copying takes no index arguments until their bounds are modeled', span(token, c.peek()));
+          expr = { k: 'array', items: [expr, ...args].map((value) => ({ spread: true, value })), span: joined(expr, { span: span(token, c.peek()) }, token) };
+          continue;
+        }
+        if (c.is('(') && readStringTestOperation('JavaScript', field.value) !== '') {
           const args = this.arguments(field.value);
           if (args.length !== 1) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'search the whole string, with one argument', span(token, c.peek()));
           expr = { k: 'stringTest', op: field.value, object: expr, search: args[0], span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
-        if (c.is('(') && STRING_MAPS.has(field.value)) {
+        if (c.is('(') && readStringMapOperation('JavaScript', field.value) !== '') {
           const args = this.arguments(field.value);
           if (args.length !== 0) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'string maps take no arguments', span(token, c.peek()));
           expr = { k: 'stringMap', op: field.value, object: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
@@ -1586,7 +1596,7 @@ class JavaScriptParser {
     }
     if (c.is('{')) return this.objectLiteral();
     if (c.is('[')) return this.arrayLiteral();
-    if (c.is('/')) throw unsupported('regular expression', 'outside the portable core', span(token, token));
+    if (token.kind === 'regex' || c.is('/')) throw unsupported('regular expression', 'outside the portable core', span(token, token));
     throw this.fail('expected an expression');
   }
 
@@ -1721,6 +1731,7 @@ class JavaScriptParser {
     }
     c.next();
     if (this.scope.locals.has(token.value) || this.scope.tdz.has(token.value)) return this.reference(token);
+    if (this.literalBindings.has(token.value)) return { ...this.literalBindings.get(token.value), span: span(token, token) };
     if (this.assertion?.name === token.value) throw unsupported('assertion in an expression', 'assertions are top-level statements', span(token, token));
     // A constant of another item of the module is read by name.
     if (this.externals.get(token.value)?.k === 'const' && !c.is('(')) return { k: 'name', path: [ROOT, token.value], span: span(token, token) };
@@ -1745,6 +1756,11 @@ class JavaScriptParser {
     }
     const args = this.arguments(name);
     const called = span(token, c.peek());
+    const arrayForm = readArrayMethodForm(name);
+    if (arrayForm === 'copy-from' || arrayForm === 'construct') {
+      if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`${name}() with ${args.length} arguments`, 'array copying takes one array and no mapping function', called);
+      return { k: 'array', items: args.map(value => ({ spread: arrayForm === 'copy-from', value })), span: called };
+    }
     if (name === 'String' && args.length === 1) return { k: 'toString', arg: args[0], span: called };
     if (name === 'Object.freeze' && args.length === 1) return { ...args[0], span: called };
     if (GLOBALS.has(segments[0]) || name === 'String') {
@@ -1884,7 +1900,9 @@ function jsdocTags(comment) {
       type = text.slice(index + 1, end).replaceAll('\n', ' ');
       index = end + 1;
     }
-    const name = /^[ \t]*([A-Za-z_$][\w$]*)/u.exec(text.slice(index))?.[1] ?? null;
+    const tail = text.slice(index);
+    const range = findDocumentationParameterRange(Array.from({ length: tail.length }, (_, offset) => tail.charCodeAt(offset)));
+    const name = range.length ? tail.slice(range[0], range[1]) : null;
     tags.push({ tag: match[1], type, name });
     pattern.lastIndex = index;
     match = pattern.exec(text);

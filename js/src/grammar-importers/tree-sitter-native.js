@@ -38,8 +38,10 @@
 //                one with the token tree-sitter's lexer prefers first wins:
 //                the higher lexical precedence, the longer, a literal over a
 //                pattern, the earlier
+import { readFileSync } from 'node:fs';
 import { compileGrammar } from '../grammar.js';
-import { parseGrammarLinks } from '../grammar-links.js';
+import { parseGrammarLinks, renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from '../grammar-links.js';
+import { grammarDeclarations } from '../grammar-feature-forms.js';
 import { parseError } from './common.js';
 import { excludedKeywordTexts } from './tree-sitter-keywords.js';
 
@@ -58,10 +60,9 @@ export class UnsupportedTreeSitterPattern extends Error {}
 
 // tree-sitter patterns are JavaScript regular expression sources. The parser
 // below reads the subset grammars use into {alt|seq|repeat|class|char|and|not}.
+const IDENTIFIER_PROPERTIES = JSON.parse(readFileSync(new URL('../data/unicode-identifier-properties.json', import.meta.url), 'utf8')).properties;
 const ID_START = ['Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl'];
-const ID_CONTINUE = [...ID_START, 'Mn', 'Mc', 'Nd', 'Pc'];
 const PROPERTY_CATEGORIES = {
-  XID_Start: ID_START, ID_Start: ID_START, XID_Continue: ID_CONTINUE, ID_Continue: ID_CONTINUE,
   Alphabetic: [...ID_START], Letter: ['L'], L: ['L'], Lu: ['Lu'], Ll: ['Ll'], Lt: ['Lt'], Lm: ['Lm'], Lo: ['Lo'],
   Uppercase_Letter: ['Lu'], Lowercase_Letter: ['Ll'], Titlecase_Letter: ['Lt'], Modifier_Letter: ['Lm'], Other_Letter: ['Lo'],
   Uppercase: ['Lu'], Lowercase: ['Ll'],
@@ -131,7 +132,10 @@ export function parseTreeSitterPattern(source, flags = '') {
     name = name.replace(/^(?:General_Category|gc)=/u, '');
     const scriptName = name.replace(/^(?:Script|sc|Script_Extensions|scx)=/u, '');
     let items;
-    if (SCRIPTS.has(scriptName)) items = [{ kind: 'script', value: scriptName }];
+    if (Object.hasOwn(IDENTIFIER_PROPERTIES, name)) items = IDENTIFIER_PROPERTIES[name].map(([start, end]) => start === end
+      ? { kind: 'char', value: String.fromCodePoint(start) }
+      : { kind: 'range', start: String.fromCodePoint(start), end: String.fromCodePoint(end) });
+    else if (SCRIPTS.has(scriptName)) items = [{ kind: 'script', value: scriptName }];
     else if (PROPERTY_CATEGORIES[name]) items = PROPERTY_CATEGORIES[name].map((value) => ({ kind: 'category', value }));
     else fail(`unknown property ${name}`);
     items.push(...[...(PROPERTY_CHARACTERS[name] ?? '')].map((value) => ({ kind: 'char', value })));
@@ -169,7 +173,11 @@ export function parseTreeSitterPattern(source, flags = '') {
   };
   const classBody = () => {
     const negated = eat('^');
-    const isSetOperator = () => ['&&', '--', '~~'].includes(source.slice(index, index + 2));
+    const start = index;
+    // Doubled punctuation at an edge is literal class content, as in the
+    // PowerShell grammar's [--]. A binary operator needs both operands.
+    const isSetOperator = () => index > start && source[index + 2] !== ']' && source[index + 2] !== undefined
+      && ['&&', '--', '~~'].includes(source.slice(index, index + 2));
     // Ranges and implicit union bind before the three set operators. Each
     // operand consumes exactly one scalar; lookahead checks membership without
     // consuming it a second time. The binary operators associate to the left.
@@ -351,7 +359,11 @@ export function renderTreeSitterPattern(node) {
 // ---------------------------------------------------------------- grammar
 
 const unwrapPrecedence = (node) => (node.type.startsWith('PREC') ? unwrapPrecedence(node.content) : node);
-const isLexicalBody = (node) => ['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(unwrapPrecedence(node).type);
+const isLexicalBody = (node) => {
+  const bare = unwrapPrecedence(node);
+  return bare.type === 'NATIVE_PREFIX_EXCLUSION' ? isLexicalBody(bare.content)
+    : ['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN', 'NATIVE_WORD_BOUNDARY'].includes(bare.type);
+};
 const memberName = (member) => member.name ?? member.value ?? member;
 
 // The finite set of texts a lexical expression matches, or null when it is
@@ -390,6 +402,8 @@ function finiteTexts(node, limit = 64) {
 // (a TOKEN, an IMMEDIATE_TOKEN or a whole lexical rule) as one unit.
 function lexicalUnits(node, out) {
   if (!node || typeof node !== 'object') return out;
+  // Context guards and preferred copies introduce no source lexer tokens.
+  if (['NATIVE_LITERAL_BOUNDARY', 'NATIVE_WORD_BOUNDARY', 'NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return lexicalUnits(node.content, out);
   if (node.type === 'STRING' || node.type === 'TOKEN' || node.type === 'IMMEDIATE_TOKEN') {
     out.push(node);
     return out;
@@ -408,6 +422,7 @@ const isMetadata = (node) => node.type.startsWith('PREC') || node.type === 'FIEL
 // (precedences, fields, aliases) merged into it around or inside, so that a
 // token of nothing but a string is that string.
 function tokenKey(node, around = []) {
+  if (['NATIVE_WORD_BOUNDARY', 'NATIVE_LITERAL_BOUNDARY'].includes(node.type)) return tokenKey(node.content, around);
   if (node.type === 'STRING' || node.type === 'PATTERN') return JSON.stringify(node);
   const merged = around.map(({ content, ...metadata }) => metadata);
   let content = node.content;
@@ -429,6 +444,7 @@ function countTokens(node, counts, around = []) {
     node.forEach((item) => countTokens(item, counts));
     return counts;
   }
+  if (['NATIVE_LITERAL_BOUNDARY', 'NATIVE_WORD_BOUNDARY', 'NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return countTokens(node.content, counts, around);
   const add = (key) => counts.set(key, (counts.get(key) ?? 0) + 1);
   if (node.type === 'STRING' || node.type === 'PATTERN') add(tokenKey(node));
   else if (node.type === 'TOKEN' || node.type === 'IMMEDIATE_TOKEN') add(tokenKey(node, around));
@@ -477,14 +493,20 @@ export function importTreeSitterNative(source, options = {}) {
   // A STRING external, which the C scanner only asks about (JavaScript's
   // `||`), is the literal the rules match; only a SYMBOL is a scanner token.
   const externals = (grammar.externals ?? []).filter((member) => member.type !== 'STRING').map(memberName);
-  const scannerLines = (options.scanners ?? '').split('\n').filter((line) => line !== '');
+  let scannerLines = (options.scanners ?? '').split('\n').filter((line) => line !== '');
   const scannerTokens = new Set();
+  const scannerRules = new Map();
   if (scannerLines.length > 0) {
-    const declared = parseGrammarLinks(`(grammar (start %20))\n${scannerLines.join('\n')}\n(rule %20 normal empty)\n`).declarations?.scanners ?? [];
+    const scannerGrammar = parseGrammarLinks(`(grammar (start %20))\n${scannerLines.join('\n')}\n(rule %20 normal empty)\n`);
+    const declared = scannerGrammar.declarations?.scanners ?? [];
     for (const { tokens } of declared) tokens.forEach((token) => scannerTokens.add(token));
+    for (const [name, rule] of scannerGrammar.rules) if (name !== ' ') scannerRules.set(name, rule);
+    // Rules generated alongside an operation scanner pass through the same
+    // concept/provenance pipeline as source grammar rules, exactly once.
+    if (scannerRules.size > 0) scannerLines = renderDeclarationLinks(grammarDeclarations(scannerGrammar));
   }
   const immediate = new Set(options.immediate ?? []);
-  const scanned = (name) => externals.includes(name) && !ruleNames.includes(name) && scannerTokens.has(nameOf(name));
+  const scanned = (name) => externals.includes(name) && !ruleNames.includes(name) && (scannerTokens.has(nameOf(name)) || scannerRules.has(nameOf(name)));
   for (const name of immediate) {
     if (!scanned(name)) throw parseError(FORMAT, `the immediate external ${name} is no scanner token`);
   }
@@ -517,11 +539,36 @@ export function importTreeSitterNative(source, options = {}) {
       case 'STRING':
         if (!inToken && keywords.has(node.value)) return `(token (seq (literal ${enc(node.value)}) (not (ref ${wordRule}))))`;
         return `(literal ${enc(node.value)})`;
+      case 'NATIVE_END_BOUNDARY': return `(choice unordered ${expr(node.content, inToken, keywords, aliased)} (token (not any)))`;
+      case 'NATIVE_WORD_BOUNDARY': {
+        const body = `(seq ${expr(node.content, true, keywords, aliased)} (not ${expr(node.word, true, keywords, aliased)}))`;
+        return inToken ? body : unnamed(`(token ${body})`, aliased);
+      }
+      case 'NATIVE_LITERAL_BOUNDARY': {
+        const body = `(seq ${expr(node.content, true, keywords, aliased)} (not ${renderTreeSitterPattern(parseTreeSitterPattern(node.continuationPattern))}))`;
+        return inToken ? body : `(token ${body})`;
+      }
+      case 'NATIVE_PREFIX_EXCLUSION': return `(seq (not (token ${expr(node.prefixes, true, keywords)})) ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_KEYWORD_CONTEXT_VARIANT': return `(choice ordered ${expr(node.preferred, inToken, keywords, aliased)} ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_PATTERN_LOOKAHEAD': return `(seq (and (token ${renderTreeSitterPattern(parseTreeSitterPattern(node.pattern))})) ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_COMPLETE_CONTEXT_VARIANT': return `(choice ordered (seq ${expr(node.preferred, inToken, keywords, aliased)} ${node.boundary === null ? '(and (token (not any)))' : `(and (literal ${enc(node.boundary)}))`}) ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': {
+        const prefix = expr(node.content.members[0], inToken, keywords);
+        const suffix = expr(node.content.members[1].members.find((member) => member.type !== 'BLANK'), inToken, keywords);
+        return `(choice unordered ${prefix} (dynamicPrecedence ${node.value} (seq ${ref(node.helper)} ${suffix})))`;
+      }
       case 'PATTERN': {
         const text = fixedPattern(parseTreeSitterPattern(node.value, node.flags ?? ''));
         return inToken ? text : unnamed(`(token ${text})`, aliased);
       }
+      case 'NATIVE_KEYWORD_REQUIREMENT':
+      case 'NATIVE_KEYWORD_EXCLUSION': {
+        const keyword = expr(node.keywords, true, keywords);
+        const word = expr(unwrapPrecedence(node.word).type === 'TOKEN' ? unwrapPrecedence(node.word).content : node.word, true, keywords);
+        return `(seq (${node.type === 'NATIVE_KEYWORD_REQUIREMENT' ? 'and' : 'not'} (seq (token ${keyword}) (not (immediateToken ${word})))) ${expr(node.content, inToken, keywords, aliased)})`;
+      }
       case 'BLANK': return 'empty';
+      case 'NATIVE_ORDERED_CHOICE': return `(choice ordered ${node.members.map((member) => expr(member, inToken, keywords)).join(' ')})`;
       case 'SEQ': {
         const items = node.members.map((member) => expr(member, inToken, keywords)).filter((item) => item !== 'empty');
         if (items.length === 0) return 'empty';
@@ -553,6 +600,17 @@ export function importTreeSitterNative(source, options = {}) {
       }
       case 'FIELD': return `(capture labeled ${enc(node.name)} ${expr(node.content, inToken, keywords)})`;
       case 'ALIAS': {
+        // An optional alias applies only when its symbol is present. Keep
+        // the alias directly around that symbol so a hidden rule still
+        // builds its named node, and the absent branch builds no empty node.
+        if (!inToken && node.content.type === 'CHOICE'
+          && node.content.members.length === 2
+          && node.content.members.some((member) => member.type === 'BLANK')
+          && node.content.members.some((member) => member.type === 'SYMBOL')) {
+          const members = node.content.members.map((member) => member.type === 'BLANK'
+            ? member : { ...node, content: member });
+          return expr({ ...node.content, members }, inToken, keywords, aliased);
+        }
         // tree-sitter aliases each step of an aliased sequence, so
         // TypeScript's `unique symbol` is two leaves of that kind, no node
         // over them.
@@ -599,11 +657,11 @@ export function importTreeSitterNative(source, options = {}) {
     if (index === 0) return false;
     const around = [];
     let node = grammar.rules[name];
-    while (node.type.startsWith('PREC')) {
-      around.push(node);
+    while (node.type.startsWith('PREC') || (node.type === 'NATIVE_PREFIX_EXCLUSION' && node.preserveLexicalIdentity === true)) {
+      if (node.type.startsWith('PREC')) around.push(node);
       node = node.content;
     }
-    if (!['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(node.type)) return false;
+    if (!['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN', 'NATIVE_WORD_BOUNDARY'].includes(node.type)) return false;
     if ((node.type === 'STRING' || node.type === 'PATTERN') && around.length > 0) return false;
     const key = tokenKey(node, around);
     if (usage.get(key) !== 1) return false;
@@ -627,7 +685,10 @@ export function importTreeSitterNative(source, options = {}) {
   const keywordUnits = new Set();
   let wordBody = null;
   if (word !== null) {
-    const bare = unwrapPrecedence(grammar.rules[word]);
+    // Reviewed prefix guards constrain identifier parsing, not the original
+    // lexical word language used to discover keywords and their boundaries.
+    let bare = unwrapPrecedence(grammar.rules[word]);
+    while (bare.type === 'NATIVE_PREFIX_EXCLUSION') bare = unwrapPrecedence(bare.content);
     try {
       wordBody = expr(bare.type === 'TOKEN' || bare.type === 'IMMEDIATE_TOKEN' ? bare.content : bare, true, keywords);
     } catch (error) {
@@ -720,19 +781,28 @@ export function importTreeSitterNative(source, options = {}) {
     if (body === undefined) report.unsupported.push(`external ${name} has no native scanner`);
     rules.push({ name: nameOf(name), sourceName: name, kind: name.startsWith('_') ? 'silent' : 'token', body: body ?? '(not empty)', external: true });
   }
+  for (const [name, rule] of scannerRules) {
+    if (rules.some((existing) => existing.name === name)) throw parseError(FORMAT, `the scanner rule ${name} duplicates a source rule`);
+    const sourceName = externals.find((external) => nameOf(external) === name) ?? null;
+    rules.push({ name, sourceName, kind: rule.kind, body: renderLinksExpression(rule.expression), fields: renderRuleFieldLinks(rule), external: sourceName !== null });
+  }
   // Two upstream names that read the same natively would merge two kinds,
   // such as tree-sitter's hidden _type_identifier and the type_identifier it
   // aliases: the importer asks for a name for one of them instead.
   const clashes = [];
   const sourcesOf = new Map();
   for (const { name, sourceName } of rules) sourcesOf.set(name, [...(sourcesOf.get(name) ?? []), sourceName]);
-  for (const name of externals.filter(scanned)) sourcesOf.set(nameOf(name), [...(sourcesOf.get(nameOf(name)) ?? []), name]);
+  for (const name of externals.filter(scanned)) if (!scannerRules.has(nameOf(name))) sourcesOf.set(nameOf(name), [...(sourcesOf.get(nameOf(name)) ?? []), name]);
   // The kinds only an alias names keep their upstream names, as the rules do.
   const kinds = [];
   for (const [name, sources] of aliasSources) {
     if (sourcesOf.has(name)) sourcesOf.set(name, [...new Set([...sourcesOf.get(name), ...sources])]);
     else if (sources.size > 1) clashes.push(`${name} (${[...sources].join(', ')})`);
     else if (!sources.has(name)) kinds.push({ name, sourceName: [...sources][0] });
+  }
+  for (const sourceName of externals.filter(scanned)) {
+    const name = nameOf(sourceName);
+    if (!scannerRules.has(name) && name !== sourceName && !kinds.some((kind) => kind.name === name)) kinds.push({ name, sourceName });
   }
   for (const [name, sources] of sourcesOf) if (sources.length > 1) clashes.push(`${name} (${sources.join(', ')})`);
   if (clashes.length > 0) throw parseError(FORMAT, `upstream names read the same natively: ${clashes.join('; ')}`);
@@ -767,7 +837,7 @@ export function renderTreeSitterNative(imported, { annotate } = {}) {
     lines.push(`(kind ${enc(kind.name)} (source-names (tree-sitter ${enc(kind.sourceName)})))`);
   }
   for (const rule of imported.rules) {
-    lines.push(`(rule ${[enc(rule.name), rule.kind, rule.body, ...fields(rule)].join(' ')})`);
+    lines.push(`(rule ${[enc(rule.name), rule.kind, rule.body, ...(rule.fields ?? []), ...fields(rule)].join(' ')})`);
   }
   return `${lines.join('\n')}\n`;
 }

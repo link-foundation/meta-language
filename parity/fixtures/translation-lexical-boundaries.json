@@ -1,0 +1,126 @@
+{
+  "regexLiterals": [
+    "/^[A-Za-z_][0-9A-Za-z_]*$/u",
+    "/[0-9_]/u",
+    "/^['\"]|['\"]$/gu",
+    "/[`]/u",
+    "/[\\/]/g",
+    "/a\\/b/i"
+  ],
+  "divisionPrograms": [
+    "function f(x) { return x / 2; }",
+    "function f(x) { x /= 2; return x; }",
+    "function f(x) { return (x + 1) / 2; }"
+  ],
+  "malformedRegex": [
+    "return /[unterminated",
+    "return /first\nsecond/",
+    "return /first second/"
+  ],
+  "templateProgram": "function terminated(name) { return `${name}\\0`; }",
+  "repeatedRegex": {
+    "count": 200,
+    "literal": "/[é😀/]/u"
+  },
+  "controlRegexPrograms": [
+    "if (value) /9A/.test(text);",
+    "if ((value)) /* retain context */ /[\\\"9A]/u.test(text);",
+    "while (ready()) /9A/.exec(text);",
+    "for (; ready; ) /9A/.test(text);",
+    "with (context) /9A/.test(text);",
+    "switch (value) { case 1: /9A/.test(text); }",
+    "if (value) action(); else /9A/.test(text);",
+    "do /9A/.test(text); while (false);"
+  ],
+  "qualifiedDivisionPrograms": [
+    "function f(x) { return obj.if(x) / 2; }",
+    "function f(x) { return obj?.while(x) / 2; }",
+    "function f(x) { return obj.return / 2; }",
+    "function f(x) { return obj?.do / 2; }"
+  ],
+  "templateBoundaries": [
+    {
+      "source": "`head ${\"}\"} tail`",
+      "expression": "\"}\""
+    },
+    {
+      "source": "`head ${'{'} tail`",
+      "expression": "'{'"
+    },
+    {
+      "source": "`head ${1 /* } { */ + 2} tail`",
+      "expression": "1 /* } { */ + 2"
+    },
+    {
+      "source": "`head ${1 // }\n + 2} tail`",
+      "expression": "1 // }\n + 2"
+    },
+    {
+      "source": "`head ${/[{}]/.test(\"}\")} tail`",
+      "expression": "/[{}]/.test(\"}\")"
+    },
+    {
+      "source": "`head ${`nested ${\"}\"}`} tail`",
+      "expression": "`nested ${\"}\"}`"
+    },
+    {
+      "source": "`head ${{text: \"}\"}.text} tail`",
+      "expression": "{text: \"}\"}.text"
+    }
+  ],
+  "malformedTemplates": [
+    "`head ${1",
+    "`head ${\"}\"",
+    "`head ${1 /* } */",
+    "`head ${`nested ${1}`"
+  ],
+  "templateBoundaryProgram": "console.log(`head ${\"}\"} ${`nested ${\"{\"}`} ${1 /* } */ + 2} tail`);",
+  "templateBoundaryOutput": "head } nested { 3 tail\n",
+  "escapedLiterals": [
+    {
+      "source": "`\\u00e9\\u{1F600}\\ud83d\\ude00\\xE9`",
+      "value": "é😀😀é"
+    },
+    {
+      "source": "\"\\x00\\x41\\xFF\"",
+      "value": "\u0000Aÿ"
+    },
+    {
+      "source": "`\\x00${1}\\u00e9`",
+      "value": "\u00001é"
+    },
+    {
+      "source": "\"\\b\\f\\v\\q\\{\"",
+      "value": "\b\f\u000bq{"
+    },
+    {
+      "source": "`left\\\r\nright`",
+      "value": "leftright"
+    },
+    {
+      "source": "\"left\\\nright\"",
+      "value": "leftright"
+    },
+    {
+      "source": "`left\r\ncenter\rright`",
+      "value": "left\ncenter\nright"
+    }
+  ],
+  "malformedEscapedLiterals": [
+    "`\\xA`",
+    "`\\xGG`",
+    "`\\x{41}`",
+    "`\\u12`",
+    "`\\u{no}`",
+    "\"\\xG0\"",
+    "`\\8`",
+    "`\\9`",
+    "\"\\01\"",
+    "\"\\9\"",
+    "\"left\rright\""
+  ],
+  "unsupportedEscapedLiterals": [
+    "`\\ud800`",
+    "`\\u{110000}`"
+  ]
+}

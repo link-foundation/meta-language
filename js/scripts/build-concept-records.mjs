@@ -61,11 +61,25 @@ export function formatConceptRecords(records) {
 async function main() {
   const register = JSON.parse(await readFile(registerPath, 'utf8'));
   const text = formatConceptRecords(buildConceptRecords(register));
+  const distinctions = JSON.parse(await readFile(join(root, 'parity/required-concept-distinctions.json'), 'utf8'));
+  const identities = new Set(register.concepts.map(({ id }) => id));
+  const pairs = new Set();
+  for (const { concepts, reason } of distinctions) {
+    if (!Array.isArray(concepts) || concepts.length !== 2 || concepts[0] === concepts[1] || concepts.some((id) => !identities.has(id)) || typeof reason !== 'string' || !reason.endsWith('.')) throw new TypeError('required distinctions need two recorded concepts and an explanatory sentence');
+    const pair = [...concepts].sort().join('\0');
+    if (pairs.has(pair)) throw new TypeError('required distinction pairs must be unique');
+    pairs.add(pair);
+  }
+  const generated = [
+    [join(root, 'js/src/data/required-concept-distinctions.json'), JSON.stringify(distinctions, null, 2) + '\n'],
+    [join(root, 'rust/src/data/required-concept-distinctions.rs'), '&[\n' + distinctions.map(({ concepts, reason }) => '    RequiredDistinction {\n        concepts: [' + concepts.map((id) => JSON.stringify(id)).join(', ') + '],\n        reason: ' + JSON.stringify(reason) + ',\n    },').join('\n') + '\n]\n'],
+  ];
+  const outputs = [...CONCEPT_RECORD_PATHS.map((path) => [path, text]), ...generated];
   if (process.argv.includes('--check')) {
     const stale = [];
-    for (const path of CONCEPT_RECORD_PATHS) {
+    for (const [path, expected] of outputs) {
       const current = await readFile(path, 'utf8').catch(() => '');
-      if (current !== text) stale.push(path.slice(root.length + 1));
+      if (current !== expected) stale.push(path.slice(root.length + 1));
     }
     if (stale.length > 0) {
       console.error(`concept records are stale: ${stale.join(', ')}`);
@@ -75,7 +89,7 @@ async function main() {
     console.log(`concept records match the register for ${register.concepts.length} concepts`);
     return;
   }
-  await Promise.all(CONCEPT_RECORD_PATHS.map((path) => writeFile(path, text)));
+  await Promise.all(outputs.map(([path, text]) => writeFile(path, text)));
   console.log(`wrote the concept records for ${register.concepts.length} concepts`);
 }
 

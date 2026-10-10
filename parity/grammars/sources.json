@@ -41,7 +41,7 @@
       "licenseFile": "parity/grammars/sources/tree-sitter-rust-0.24.2.LICENSE",
       "scanner": {
         "file": "parity/grammars/scanners/rust.lino",
-        "sha256": "933d8dc709509e7a4613a836d928df83392b81833ce4e81a7945b696f400f8e9",
+        "sha256": "f6e3e317b500ed5b976f67c0f7534379d658f6832fdd569731f24a5d30360d46",
         "ports": {
           "path": "src/scanner.c",
           "sha256": "9609a2f92dbb7c32bc056fd8fb94e5478428f04496696aa08b048a9b66caf283"
@@ -381,6 +381,791 @@
         "sha256": "b0ae17f8fa1fd43a11763e81d78381b28cf8815a280edc2582245e40910a3245"
       },
       "oracle": "solidity"
+    },
+    {
+      "id": "tree-sitter-lua",
+      "language": "lua",
+      "native": "native-lua",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-lua 0.5.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-lua",
+      "revision": "10fe0054734eec83049514ea2e718b2a56acd0c9",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-lua-0.5.0.grammar.json.gz",
+      "sha256": "016172714e10e7b5a3b25433cfd2a9626c983c6ede228fcc8301537da516e462",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-lua-0.5.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/lua.lino",
+        "sha256": "a2408d8a0ffe56ff84cf12950cda309fa5c300db5c0b06f45f0bb222dda2fff3",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "35bbd630b5a7421d46d2e91185eeea09bf78565d44cb676b63ca20d0f1b54bbd"
+        },
+        "generator": "js/experiments/build-lua-scanner.mjs",
+        "immediate": [
+          "_block_string_content",
+          "_block_string_end",
+          "_block_comment_content",
+          "_block_comment_end"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-lua-0.5.0.corpus.json.gz",
+        "sha256": "6a7dc603c2e77bf03e11e57e4f8f9f56ae914c6d9452331f6e049457aede95a4"
+      },
+      "oracle": "lua"
+    },
+    {
+      "id": "tree-sitter-toml",
+      "language": "toml",
+      "native": "native-toml",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-toml-ng 0.7.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-toml",
+      "revision": "64b56832c2cffe41758f28e05c756a3a98d16f41",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-toml-ng-0.7.0.grammar.json.gz",
+      "sha256": "fe710cf103c58a843cadba4bc64f6bef1306c90421616ebce56c9120871e28db",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-toml-ng-0.7.0.LICENSE",
+      "oracle": "toml",
+      "scanner": {
+        "file": "parity/grammars/scanners/toml.lino",
+        "sha256": "4cbf757a31819059ba07585c15e5262c7b3b947d963e7b8a61666a9ce3e2c50f",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "b25ff3b5034f40046e9a041d1e9110aa46d081706bbd1b748b480701aa6f5bde"
+        },
+        "generator": "js/experiments/build-toml-scanner.mjs",
+        "immediate": [
+          "_line_ending_or_eof",
+          "_multiline_basic_string_content",
+          "_multiline_basic_string_end",
+          "_multiline_literal_string_content",
+          "_multiline_literal_string_end"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-toml-ng-0.7.0.corpus.json.gz",
+        "sha256": "dfafc21d672b82b4736f9c00727585d23797a49c6bcc87e3a71493d0bb5e6836"
+      }
+    },
+    {
+      "id": "tree-sitter-zig",
+      "language": "zig",
+      "native": "native-zig",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-zig 1.1.2",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-zig",
+      "revision": "b670c8df85a1568f498aa5c8cae42f51a90473c0",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-zig-1.1.2.grammar.json.gz",
+      "sha256": "83b0b4f6a58d5803aa4be2fdc4eeeecab8cbd5724543239e23ad06fc9abfafde",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-zig-1.1.2.LICENSE",
+      "oracle": "zig",
+      "corpus": {
+        "repository": "https://github.com/ziglang/zig",
+        "revision": "e4cbd752c8c05f131051f8c873cff7823177d7d3",
+        "path": "test/cases",
+        "format": "source-files",
+        "file": "parity/grammars/sources/zig-0.15.2.corpus.json.gz",
+        "sha256": "a8160fe53661ab5b6873e57573606acef073114ec5ae23ee11008a9003a40a4d",
+        "license": "MIT",
+        "licenseFile": "parity/grammars/sources/zig-0.15.2.LICENSE"
+      }
+    },
+    {
+      "id": "tree-sitter-pascal",
+      "language": "pascal",
+      "native": "native-pascal",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-pascal 0.10.2",
+      "repository": "https://github.com/Isopod/tree-sitter-pascal",
+      "revision": "042119eca2e18a60e56317fb06ee3ba5c32cb447",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-pascal-0.10.2.grammar.json.gz",
+      "sha256": "8ffb11445fa8f6be49560b6e074b2a1484523c00e49015a6c8fa382e259a2d1a",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-pascal-0.10.2.LICENSE",
+      "oracle": "pascal",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-pascal-0.10.2.corpus.json.gz",
+        "sha256": "c0863d2c42668f2da11060b011e925e1d819ab3e993d8dffd3f5b2a692f02221"
+      }
+    },
+    {
+      "id": "tree-sitter-vb",
+      "language": "vb",
+      "native": "native-vb",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-vb-dotnet 0.1.0",
+      "repository": "https://github.com/jamie8johnson/tree-sitter-vb-dotnet",
+      "revision": "687025b7c41b8c5ac8b2134edbb9d575430347f7",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-vb-dotnet-0.1.0.grammar.json.gz",
+      "sha256": "ba9402559f9fef78c7e6076aaaae7cd242257420ce7922b1137e91488e20e73c",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-vb-dotnet-0.1.0.LICENSE",
+      "oracle": "vb",
+      "corpus": {
+        "path": "test",
+        "file": "parity/grammars/sources/tree-sitter-vb-dotnet-0.1.0.corpus.json.gz",
+        "sha256": "5bbfbc2083d730a0db58838928c887b9a681851f473cdfb6bda3d6b299dd5f81",
+        "format": "source-files"
+      }
+    },
+    {
+      "id": "tree-sitter-css",
+      "language": "css",
+      "native": "native-css",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-css 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-css",
+      "revision": "dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-css-0.25.0.grammar.json.gz",
+      "sha256": "1a170e0c93009b5b592a611c663d4af4d625ddb97ebff1550c3e7f32fd045292",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-css-0.25.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/css.lino",
+        "sha256": "5ea4e10130d970d4778267f5984a38f2ce558363d5166f0f63bf53543d55e6c1",
+        "ports": {
+          "path": "src/scanner.c",
+          "file": "parity/grammars/sources/tree-sitter-css-0.25.0.scanner.c.gz",
+          "sha256": "18dae8c8c4f515f28a3dc7ffb5bda259b06013a752921dc411a2fad8ecf78988",
+          "license": "MIT",
+          "licenseFile": "parity/grammars/sources/tree-sitter-css-0.25.0.LICENSE"
+        },
+        "generator": "js/experiments/build-context-scanners.mjs",
+        "generatorArguments": [
+          "css"
+        ],
+        "immediate": [
+          "_descendant_operator"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-css-0.25.0.corpus.json.gz",
+        "sha256": "6ab73d342bb85cce25a277231d8a6bae3690456994d9e586098d0f019a4ad524"
+      },
+      "oracle": "css"
+    },
+    {
+      "id": "tree-sitter-powershell",
+      "language": "powershell",
+      "native": "native-powershell",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-powershell 0.26.4",
+      "repository": "https://github.com/airbus-cert/tree-sitter-powershell",
+      "revision": "d398441825243b00e317e87e1829b9d6a3e54ce0",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-powershell-0.26.4.grammar.json.gz",
+      "sha256": "8d3b7b851a037064f08f350c0eed45324db644641424c71396a976e746549211",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-powershell-0.26.4.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/powershell.lino",
+        "sha256": "f08f6532c8c52b344499b9d6e5e573cd78e69a9d5ac1972ff54354741c973a58",
+        "ports": {
+          "path": "src/scanner.c",
+          "file": "parity/grammars/sources/tree-sitter-powershell-0.26.4.scanner.c.gz",
+          "sha256": "cf366b70e258a0ac1eb264ac0f4165c8f0c1b943d1a6e9db9d291c6cf178221f",
+          "license": "MIT",
+          "licenseFile": "parity/grammars/sources/tree-sitter-powershell-0.26.4.LICENSE"
+        },
+        "generator": "js/experiments/build-context-scanners.mjs",
+        "generatorArguments": [
+          "powershell"
+        ],
+        "immediate": [
+          "_statement_terminator"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-powershell-0.26.4.corpus.json.gz",
+        "sha256": "527fd214092ae8db880dec945ddb20c1471c6fe157cd5bd8a942a2d51c9629b5"
+      },
+      "oracle": "powershell"
+    },
+    {
+      "id": "tree-sitter-erlang",
+      "language": "erlang",
+      "native": "native-erlang",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-erlang 0.20.0",
+      "repository": "https://github.com/WhatsApp/tree-sitter-erlang",
+      "revision": "67e7f7f05baf492ca2a7c0d9538761b242d33d95",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-erlang-0.20.0.grammar.json.gz",
+      "sha256": "a225ad78f04d9f50b51c3907e0daece60c63e7b5992453cca2bb36d8fa323f16",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-erlang-0.20.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/erlang.lino",
+        "sha256": "1c0d30a458b8f64017b641ab0e3545c1a9b919e72fe9e9ff5cba18b1cbc9d546",
+        "ports": {
+          "path": "src/scanner.c",
+          "file": "parity/grammars/sources/tree-sitter-erlang-0.20.0.scanner.c.gz",
+          "sha256": "bcb05457c981783245db637ec98a0b47f18e0acfe939efdd69a9da3e26f1b8a6",
+          "license": "Apache-2.0",
+          "licenseFile": "parity/grammars/sources/tree-sitter-erlang-0.20.0.scanner.LICENSE-APACHE"
+        },
+        "generator": "js/experiments/build-context-scanners.mjs",
+        "generatorArguments": [
+          "erlang"
+        ],
+        "immediate": []
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-erlang-0.20.0.corpus.json.gz",
+        "sha256": "f8171460dc7ead91bd4cae76057102391aab0427452400fe0026118d2645bbb6"
+      },
+      "oracle": "erlang"
+    },
+    {
+      "id": "tree-sitter-groovy",
+      "language": "groovy",
+      "native": "native-groovy",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-groovy 0.1.2",
+      "repository": "https://github.com/amaanq/tree-sitter-groovy",
+      "revision": "70efb0b9b50f95bcbd89dcfd42b275e0304e10cf",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-groovy-0.1.2.grammar.json.gz",
+      "sha256": "f063835d8233d37fd0da94a2e712e41edc23b35de8db737eadb4ccc46e0d0b7f",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-groovy-0.1.2.LICENSE",
+      "licenseNotice": "The pinned Cargo and npm manifests declare MIT; upstream ships no license file. The notice reproduces the declared MIT terms and identifies the author.",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-groovy-0.1.2.corpus.json.gz",
+        "sha256": "9d2d7d22b007bf0570d28b7350e6fc45ffb6eeab7b080cd0c33ec0ad33e99482"
+      },
+      "oracle": "groovy"
+    },
+    {
+      "id": "tree-sitter-cpp",
+      "language": "cpp",
+      "native": "native-cpp",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-cpp 0.23.4",
+      "repository": "https://github.com/tree-sitter/tree-sitter-cpp",
+      "revision": "f41e1a044c8a84ea9fa8577fdd2eab92ec96de02",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-cpp-0.23.4.grammar.json.gz",
+      "sha256": "c0a93751d708440bb2c1929d738a5b03c4b835f61e5aeb580d0af269faf68f8d",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-cpp-0.23.4.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/cpp.lino",
+        "sha256": "7a5c20b296a2b753daf1abe288fabe17353d4175bf6937ec5e37effa8473c0c6",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "cf60387d290271f4d2fb558d0569b2b9ef879cb72206a9df5cc73b0b1a4b20ff"
+        },
+        "generator": "js/experiments/build-cpp-scanner.mjs",
+        "immediate": [
+          "raw_string_delimiter",
+          "raw_string_content"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-cpp-0.23.4.corpus.json.gz",
+        "sha256": "0bce221046dfa7efa1c526129e5cc8975a2a2156cd3130505543f26f214cbcc0"
+      },
+      "oracle": "cpp"
+    },
+    {
+      "id": "tree-sitter-sequel",
+      "language": "sql",
+      "native": "native-sql",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-sequel 0.3.11",
+      "repository": "https://github.com/derekstride/tree-sitter-sql",
+      "revision": "7b51ecda191d36b92f5a90a8d1bc3faef1c7b8b8",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-sequel-0.3.11.grammar.json.gz",
+      "sha256": "d0ce0452876e14e73b533dd2a3010fbded021a55d153d6e6842cd0127efa971c",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-sequel-0.3.11.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/sql.lino",
+        "sha256": "92201ee76aa3a87a5ef40833307c5118d265a4317fcf24b5e3ee4848b574a266",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "de17b5cffc3c86f56cf6630abb969330c3c839a81ece0b901bdac0ecee93c403"
+        },
+        "generator": "js/experiments/build-sql-scanner.mjs",
+        "immediate": []
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-sequel-0.3.11.corpus.json.gz",
+        "sha256": "9e56d442429a7dbb94355ebb8c2c4984c3306bf240aab81ef7edb47f464940a2"
+      },
+      "oracle": "sql",
+      "generatedFrom": {
+        "path": "grammar.js",
+        "sha256": "6b1f0554a355d8fe3b341ef25c7236cf4b433f85b632e39ade62931b78de16bc",
+        "artifact": "crates.io tree-sitter-sequel 0.3.11 src/grammar.json",
+        "reason": "The release archive includes grammar.json generated from this exact grammar.js; the repository tracks the grammar definition and scanner but not the generated JSON."
+      }
+    },
+    {
+      "id": "tree-sitter-dart",
+      "language": "dart",
+      "native": "native-dart",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-dart 0.2.0",
+      "repository": "https://github.com/nielsenko/tree-sitter-dart",
+      "revision": "b57d734c84f510bbd524097902cab671e4dbfca9",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-dart-0.2.0.grammar.json.gz",
+      "sha256": "d31255ccd7db351af7df681030f4fd3ac9c9b33c823e29a898efeec35d741ef2",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-dart-0.2.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/dart.lino",
+        "sha256": "2af8935abe888564be6ddb7745a369b14b523a4449f3294655ccd6a7d4f8fa9c",
+        "ports": {
+          "path": "src/scanner.c",
+          "file": "parity/grammars/sources/tree-sitter-dart-0.2.0.scanner.c.gz",
+          "sha256": "7d9fc9245dc2532bb666f737d4b8c48dc2c465ace4677a17d11496ca1268cbd5",
+          "license": "MIT",
+          "licenseFile": "parity/grammars/sources/tree-sitter-dart-0.2.0.LICENSE"
+        },
+        "generator": "js/experiments/build-fragment-scanners.mjs",
+        "generatorArguments": [
+          "dart"
+        ],
+        "immediate": [
+          "template_chars_single",
+          "template_chars_double",
+          "template_chars_single_single",
+          "template_chars_double_single",
+          "template_chars_raw_slash",
+          "block_comment",
+          "documentation_block_comment",
+          "annotation_open_paren"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-dart-0.2.0.corpus.json.gz",
+        "sha256": "d3a63bd8f220ff7bde454e6ad0829c7b74479372bd3ae71ab727ee868405150d"
+      },
+      "oracle": "dart"
+    },
+    {
+      "id": "tree-sitter-nix",
+      "language": "nix",
+      "native": "native-nix",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-nix 0.3.0",
+      "repository": "https://github.com/nix-community/tree-sitter-nix",
+      "revision": "ea1d87f7996be1329ef6555dcacfa63a69bd55c6",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-nix-0.3.0.grammar.json.gz",
+      "sha256": "68a6a80898ef0adb5ab655e05b991ce5d8a3718f6837bc773f0ea306c3a414f6",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-nix-0.3.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/nix.lino",
+        "sha256": "c0adec5921330eff8a8f6ea668a3c0c862b12df5aef59a795ba7465f4214b797",
+        "ports": {
+          "path": "src/scanner.c",
+          "file": "parity/grammars/sources/tree-sitter-nix-0.3.0.scanner.c.gz",
+          "sha256": "45e12521e8be62ea47525417c64d9372fa34e9e12bff643c430b8b3607be9d56",
+          "license": "MIT",
+          "licenseFile": "parity/grammars/sources/tree-sitter-nix-0.3.0.LICENSE"
+        },
+        "generator": "js/experiments/build-fragment-scanners.mjs",
+        "generatorArguments": [
+          "nix"
+        ],
+        "immediate": [
+          "string_fragment",
+          "_indented_string_fragment",
+          "path_fragment",
+          "dollar_escape",
+          "_indented_dollar_escape"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-nix-0.3.0.corpus.json.gz",
+        "sha256": "62b405d88881f963e77d8b9452f6bd6de13151d866f980edd90e394f0ababe27"
+      },
+      "oracle": "nix"
+    },
+    {
+      "id": "tree-sitter-cmake",
+      "language": "cmake",
+      "native": "native-cmake",
+      "format": "tree-sitter grammar.json",
+      "package": "vendored tree-sitter-cmake 0.7.5",
+      "repository": "https://github.com/uyha/tree-sitter-cmake",
+      "revision": "e997bd0b275ca525ce9befecedf5299031183661",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-cmake-0.7.5.grammar.json.gz",
+      "sha256": "c449fc074b4bbc42dd681edf83259974acbf4b4e74461e69d2f8149a36eff723",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-cmake-0.7.5.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/cmake.lino",
+        "sha256": "c21218be72569a652096701b47bf484f1de0e3ed0202fa8a15f760c6adb7a715",
+        "ports": {
+          "path": "src/scanner.c",
+          "file": "parity/grammars/sources/tree-sitter-cmake-0.7.5.scanner.c.gz",
+          "sha256": "10e6fb30e7df09585f115ba385951e22b8179bc7f830478f57d42d82c7c79ce3",
+          "license": "MIT",
+          "licenseFile": "parity/grammars/sources/tree-sitter-cmake-0.7.5.LICENSE"
+        },
+        "generator": "js/experiments/build-fragment-scanners.mjs",
+        "generatorArguments": [
+          "cmake"
+        ],
+        "immediate": []
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-cmake-0.7.5.corpus.json.gz",
+        "sha256": "068194999223242a059d0fc286c1853f0d73dd8392a5f78461933b3f78b78eea"
+      },
+      "oracle": "cmake"
+    },
+    {
+      "id": "tree-sitter-python",
+      "language": "python",
+      "native": "native-python",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-python 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-python",
+      "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-python-0.25.0.grammar.json.gz",
+      "sha256": "2adc15e78f4dae293e85de1517c45bcee2f8b075fa30a083c658925b944afec4",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-python-0.25.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/python.lino",
+        "sha256": "6a80b04646d502fbb96d66fcc8a2278d1d839460c6dab0ee242d3f26f18b804e",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "6db82134ac2d4c90a1a1475487a625cface02662ebda9b7478cad9c7147e9afe"
+        },
+        "generator": "js/experiments/build-python-scanner.mjs",
+        "immediate": [
+          "_newline",
+          "_indent",
+          "_dedent",
+          "_string_content",
+          "string_end",
+          "escape_interpolation"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-python-0.25.0.corpus.json.gz",
+        "sha256": "ff26117b53813be29d5978f1ef04dc8c8fe83b590634f6a92216be8d2dccee8c"
+      },
+      "oracle": "python"
+    },
+    {
+      "id": "tree-sitter-hcl",
+      "language": "hcl",
+      "native": "native-hcl",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-hcl 1.1.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-hcl",
+      "revision": "009def4ae38ec30e5b40beeae26efe93484ab286",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-hcl-1.1.0.grammar.json.gz",
+      "sha256": "058d12ff07abbbc27ff368e84249254b2aeacdf7d4830a0a7132fb7437f7f7bc",
+      "license": "Apache-2.0",
+      "licenseFile": "parity/grammars/sources/tree-sitter-hcl-1.1.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/hcl.lino",
+        "sha256": "92fce22208d45d60b453785e5f4f65e5e12a65b88b3cda0ce907a8e5f6adebb6",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "846b6e63d4b352c6cf9de1255ca100100e52b1a3f8a7b9805c501bbc83d41966"
+        },
+        "generator": "js/experiments/build-hcl-scanner.mjs",
+        "immediate": [
+          "quoted_template_start",
+          "quoted_template_end",
+          "_template_literal_chunk",
+          "template_interpolation_start",
+          "template_interpolation_end",
+          "template_directive_start",
+          "template_directive_end",
+          "heredoc_identifier"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-hcl-1.1.0.corpus.json.gz",
+        "sha256": "ec5b63cc16d14f248472716939215f3703c6937ce0d81372e0f5a88567f2155c"
+      },
+      "oracle": "hcl"
+    },
+    {
+      "id": "tree-sitter-r",
+      "language": "r",
+      "native": "native-r",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-r 1.3.0",
+      "repository": "https://github.com/r-lib/tree-sitter-r",
+      "revision": "f2289db204dda2bf7c7ea720de5c2a2c3eff2530",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-r-1.3.0.grammar.json.gz",
+      "sha256": "90a92dc73949699d60c0dc29add88c8158411d36a11c0fadada07d96764a30b1",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-r-1.3.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/r.lino",
+        "sha256": "34dd10f47be5d10d6c1f1f9e31d43a7b83ce46f4ff3dd6bddb2f20fbf392d7a2",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "e99e003ab8b0463dee975432b6f9f7e39cd75eb0047989f064fdf57927fa8e9d"
+        },
+        "generator": "js/experiments/build-r-scanner.mjs",
+        "immediate": [
+          "_start",
+          "_newline",
+          "_semicolon",
+          "_raw_string_open",
+          "_raw_string_content",
+          "_raw_string_close",
+          "_external_else",
+          "_external_open_parenthesis",
+          "_external_close_parenthesis",
+          "_external_open_brace",
+          "_external_close_brace",
+          "_external_open_bracket",
+          "_external_close_bracket",
+          "_external_open_bracket2",
+          "_external_close_bracket2",
+          "_error_sentinel"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-r-1.3.0.corpus.json.gz",
+        "sha256": "b19de54975832d4203d63cecdbd6b49e06fa72cc6d09e8f9dddf450c25536d98"
+      },
+      "oracle": "r"
+    },
+    {
+      "id": "tree-sitter-xml",
+      "language": "xml",
+      "native": "native-xml",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-xml 0.7.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-xml",
+      "revision": "4b64dd3a03ec002258d6268d712fd93716d6ab57",
+      "path": "xml/src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-xml-0.7.0.grammar.json.gz",
+      "sha256": "99e650457a7228ef521f1909bf231b43d4846b2a1010e79b91b418226a2be2a4",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-xml-0.7.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/xml.lino",
+        "sha256": "730568db9553f40d6c3e10918b6ab1cc31b46567ae6d16f13c65e5bc29ed51c9",
+        "ports": {
+          "path": "xml/src/scanner.c",
+          "sha256": "e7f401b138bbb0bd3f736c196dddcb74ff627fef2427e333bc4a7a629c0ad3b0",
+          "includes": [
+            {
+              "path": "common/scanner.h",
+              "sha256": "ce5082af60b1808035a43c3df129df9b811c9c69949fdb664a351f7aae340409"
+            }
+          ]
+        },
+        "generator": "js/experiments/build-xml-scanner.mjs",
+        "arguments": [
+          "--xml"
+        ],
+        "immediate": [
+          "PITarget",
+          "_pi_content",
+          "Comment",
+          "CharData",
+          "CData",
+          "_start_tag_name",
+          "_end_tag_name",
+          "_erroneous_end_name",
+          "_self_closing_tag_delimiter"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-xml-0.7.0.corpus.json.gz",
+        "sha256": "3472a2c90e5baa591153747f1f4ff606d90d98f7332ae1e80bfa573f65808092",
+        "language": "xml"
+      },
+      "oracle": "xml"
+    },
+    {
+      "id": "tree-sitter-dtd",
+      "language": "dtd",
+      "native": "native-dtd",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-xml 0.7.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-xml",
+      "revision": "4b64dd3a03ec002258d6268d712fd93716d6ab57",
+      "path": "dtd/src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-dtd-0.7.0.grammar.json.gz",
+      "sha256": "44d3d915ed635a45181206d1d05352f6a7060fff6be07906c9f3aa8f809f5786",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-xml-0.7.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/dtd.lino",
+        "sha256": "0549278f5ea21f378db870a91dde16e01eeb031530b6c38fe1f38a5b2528b03f",
+        "ports": {
+          "path": "dtd/src/scanner.c",
+          "sha256": "cdb323ea613368705ade3c6904523848f262db38ee01f5722e2f16e0751bd71c",
+          "includes": [
+            {
+              "path": "common/scanner.h",
+              "sha256": "ce5082af60b1808035a43c3df129df9b811c9c69949fdb664a351f7aae340409"
+            }
+          ]
+        },
+        "generator": "js/experiments/build-xml-scanner.mjs",
+        "arguments": [
+          "--dtd"
+        ],
+        "immediate": [
+          "PITarget",
+          "_pi_content",
+          "Comment"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-xml-0.7.0.corpus.json.gz",
+        "sha256": "3472a2c90e5baa591153747f1f4ff606d90d98f7332ae1e80bfa573f65808092",
+        "language": "dtd"
+      },
+      "oracle": "dtd"
+    },
+    {
+      "id": "tree-sitter-odin",
+      "language": "odin",
+      "native": "native-odin",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-odin 1.3.0",
+      "repository": "https://github.com/tree-sitter-grammars/tree-sitter-odin",
+      "revision": "e8adc739b78409a99f8c31313f0bb54cc538cf73",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-odin-1.3.0.grammar.json.gz",
+      "sha256": "44a75b3f879982725c9333c8c2bbeebaf199434ddf3144c80979242cab35f374",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-odin-1.3.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/odin.lino",
+        "sha256": "f42d023352a3f1964fb7c128713ff8535ec1e7917608253e60a7da4d9bf39ab0",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "e342d07d3e35c3865a6bda0587f3a3b46a7b2411fd93cbee01dc40ab7631c93b"
+        },
+        "generator": "js/experiments/build-odin-scanner.mjs",
+        "immediate": []
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-odin-1.3.0.corpus.json.gz",
+        "sha256": "5e8029d1a36bdc1a7fb3d08e5633373d50378283bbe21a96509f9c6b15f642f5"
+      },
+      "oracle": "odin"
+    },
+    {
+      "id": "tree-sitter-html",
+      "language": "html",
+      "native": "native-html",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-html 0.23.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-html",
+      "revision": "5a5ca8551a179998360b4a4ca2c0f366a35acc03",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-html-0.23.2.grammar.json.gz",
+      "sha256": "242c55ee874835b2d47288859878a0cf5dba50ffaae861a81d19fef6d010e227",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-html-0.23.2.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/html.lino",
+        "sha256": "ce0caa0efc5b8c42ada6af9738c3ac712e1b19923a67f1c398d93fdbf409d646",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "5c0a0567e010277b81fe63be0acd04f6b44c3ef3063ac01429b910c1d22f0dca",
+          "includes": [
+            {
+              "path": "src/tag.h",
+              "sha256": "aaf1a10c8a2f685ef51a4aa6c01a2cbe166bff67eeccf6b9501a625b71f9ab70"
+            }
+          ]
+        },
+        "generator": "js/experiments/build-html-scanner.mjs",
+        "immediate": [
+          "raw_text"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-html-0.23.2.corpus.json.gz",
+        "sha256": "02a6df6f728870ed27419f9d1aac6d9e6f89daaaa3e4e15619cf9ee08e0f6f6b"
+      },
+      "oracle": "html"
+    },
+    {
+      "id": "tree-sitter-agda",
+      "language": "agda",
+      "native": "native-agda",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-agda 1.3.3",
+      "repository": "https://github.com/tree-sitter/tree-sitter-agda",
+      "revision": "47802091de0cb8ac2533d67ac37e65692c5902c4",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-agda-1.3.3.grammar.json.gz",
+      "sha256": "72933f8f5a8039b852b1f22e818514012cb435a454d24dffb0f80bcc62d643ec",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-agda-1.3.3.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/agda.lino",
+        "sha256": "c0a88e1b29005643d2625de1133555a89a6d870082bdcd1b4eca093086d7f4c8",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "2f8cf5eba1412dcbe69bf3b392e7ca0c9664ff7f340c9848885c929a12a223ae"
+        },
+        "generator": "js/experiments/build-agda-scanner.mjs",
+        "immediate": [
+          "_newline",
+          "_indent",
+          "_dedent"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-agda-1.3.3.corpus.json.gz",
+        "sha256": "b9e78578004d31c846b3acd8d43a22cd038dcbda02fbb6bb359cab1822d09ab0"
+      },
+      "oracle": "agda",
+      "oracleIsolation": {
+        "mode": "process",
+        "reason": "The pinned scanner changes the circular token queue modulus during growth without relocating queued entries; fresh-process snapshots isolate its allocator-dependent missing-dedent diagnostics. The oracle source and assertions remain unchanged."
+      }
     }
   ]
 }

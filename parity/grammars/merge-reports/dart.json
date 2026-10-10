@@ -1,0 +1,681 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "dart",
+  "native": "native-dart",
+  "sources": [
+    {
+      "id": "tree-sitter-dart",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-dart 0.2.0",
+      "repository": "https://github.com/nielsenko/tree-sitter-dart",
+      "revision": "b57d734c84f510bbd524097902cab671e4dbfca9",
+      "path": "src/grammar.json",
+      "sha256": "d31255ccd7db351af7df681030f4fd3ac9c9b33c823e29a898efeec35d741ef2",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/dart.lino",
+    "sha256": "2af8935abe888564be6ddb7745a369b14b523a4449f3294655ccd6a7d4f8fa9c",
+    "ports": {
+      "path": "src/scanner.c",
+      "file": "parity/grammars/sources/tree-sitter-dart-0.2.0.scanner.c.gz",
+      "sha256": "7d9fc9245dc2532bb666f737d4b8c48dc2c465ace4677a17d11496ca1268cbd5",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-dart-0.2.0.LICENSE"
+    },
+    "scanners": [
+      {
+        "name": "template_single_quote_characters",
+        "tokens": [
+          "template_single_quote_characters"
+        ]
+      },
+      {
+        "name": "template_double_quote_characters",
+        "tokens": [
+          "template_double_quote_characters"
+        ]
+      },
+      {
+        "name": "template_single_quote_line_characters",
+        "tokens": [
+          "template_single_quote_line_characters"
+        ]
+      },
+      {
+        "name": "template_double_quote_line_characters",
+        "tokens": [
+          "template_double_quote_line_characters"
+        ]
+      },
+      {
+        "name": "raw_template_characters",
+        "tokens": [
+          "raw_template_characters"
+        ]
+      },
+      {
+        "name": "block_comment",
+        "tokens": [
+          "block_comment"
+        ]
+      },
+      {
+        "name": "documentation_block_comment",
+        "tokens": [
+          "documentation_block_comment"
+        ]
+      }
+    ],
+    "immediate": [
+      "template_chars_single",
+      "template_chars_double",
+      "template_chars_single_single",
+      "template_chars_double_single",
+      "template_chars_raw_slash",
+      "block_comment",
+      "documentation_block_comment",
+      "annotation_open_paren"
+    ]
+  },
+  "rules": 284,
+  "keywords": [
+    "Function",
+    "abstract",
+    "assert",
+    "augment",
+    "await",
+    "base",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "covariant",
+    "default",
+    "deferred",
+    "do",
+    "dynamic",
+    "else",
+    "enum",
+    "export",
+    "extends",
+    "extension",
+    "external",
+    "factory",
+    "false",
+    "final",
+    "finally",
+    "for",
+    "get",
+    "hide",
+    "if",
+    "implements",
+    "import",
+    "in",
+    "inline",
+    "inout",
+    "interface",
+    "is",
+    "late",
+    "library",
+    "mixin",
+    "native",
+    "new",
+    "null",
+    "of",
+    "on",
+    "operator",
+    "out",
+    "part",
+    "required",
+    "rethrow",
+    "return",
+    "sealed",
+    "set",
+    "show",
+    "static",
+    "super",
+    "switch",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "type",
+    "typedef",
+    "var",
+    "void",
+    "when",
+    "while",
+    "with",
+    "yield"
+  ],
+  "renamed": [
+    {
+      "source": "_top_level_definition",
+      "native": "top_level_definition"
+    },
+    {
+      "source": "uri",
+      "native": "uniform_resource_identifier"
+    },
+    {
+      "source": "configurable_uri",
+      "native": "conditional_resource_identifier"
+    },
+    {
+      "source": "configuration_uri",
+      "native": "configuration_resource_identifier"
+    },
+    {
+      "source": "uri_test",
+      "native": "resource_identifier_test"
+    },
+    {
+      "source": "combinator",
+      "native": "import_name_filter"
+    },
+    {
+      "source": "_metadata",
+      "native": "metadata"
+    },
+    {
+      "source": "_annotation",
+      "native": "annotation_body"
+    },
+    {
+      "source": "_annotation_with_args",
+      "native": "annotation_with_arguments"
+    },
+    {
+      "source": "_annotation_no_args",
+      "native": "annotation_no_arguments"
+    },
+    {
+      "source": "qualified",
+      "native": "qualified_name"
+    },
+    {
+      "source": "_type_not_function",
+      "native": "type_not_function"
+    },
+    {
+      "source": "_type_not_void",
+      "native": "type_not_void"
+    },
+    {
+      "source": "_type_not_void_not_function",
+      "native": "type_not_void_not_function"
+    },
+    {
+      "source": "_type_name",
+      "native": "type_name"
+    },
+    {
+      "source": "_function_type_tails",
+      "native": "function_type_tails"
+    },
+    {
+      "source": "_function_type_tail",
+      "native": "function_type_suffix"
+    },
+    {
+      "source": "named_parameter_types",
+      "native": "named_parameter_type_list"
+    },
+    {
+      "source": "_named_parameter_type",
+      "native": "named_parameter_type"
+    },
+    {
+      "source": "type_arguments",
+      "native": "type_argument_list"
+    },
+    {
+      "source": "type_parameters",
+      "native": "type_parameter_list"
+    },
+    {
+      "source": "_literal",
+      "native": "literal"
+    },
+    {
+      "source": "false",
+      "native": "false_literal"
+    },
+    {
+      "source": "_sub_string_test",
+      "native": "substring_test"
+    },
+    {
+      "source": "identifier_dollar_escaped",
+      "native": "dollar_escaped_identifier"
+    },
+    {
+      "source": "_unused_escape_sequence",
+      "native": "unused_escape_sequence"
+    },
+    {
+      "source": "_element",
+      "native": "collection_element"
+    },
+    {
+      "source": "_record_literal_no_const",
+      "native": "record_literal_no_constant"
+    },
+    {
+      "source": "_expression",
+      "native": "expression"
+    },
+    {
+      "source": "_expression_without_cascade",
+      "native": "expression_without_cascade"
+    },
+    {
+      "source": "_real_expression",
+      "native": "real_expression"
+    },
+    {
+      "source": "_assignment_operator",
+      "native": "assignment_operator"
+    },
+    {
+      "source": "bitwise_or_expression",
+      "native": "bit_level_or_expression"
+    },
+    {
+      "source": "bitwise_xor_expression",
+      "native": "bit_level_exclusive_or_expression"
+    },
+    {
+      "source": "bitwise_and_expression",
+      "native": "bit_level_and_expression"
+    },
+    {
+      "source": "shift_expression",
+      "native": "bit_shift_expression"
+    },
+    {
+      "source": "_shift_operator",
+      "native": "shift_operator"
+    },
+    {
+      "source": "_additive_operator",
+      "native": "additive_operator"
+    },
+    {
+      "source": "_unary_expression",
+      "native": "unary_expression_body"
+    },
+    {
+      "source": "_postfix_expression",
+      "native": "postfix_expression_body"
+    },
+    {
+      "source": "_cascade_postfix_expression",
+      "native": "cascade_postfix_expression"
+    },
+    {
+      "source": "_primary",
+      "native": "primary"
+    },
+    {
+      "source": "function_expression_body",
+      "native": "anonymous_function_body"
+    },
+    {
+      "source": "_instantiation",
+      "native": "instantiation"
+    },
+    {
+      "source": "const_object_expression",
+      "native": "constant_object_expression"
+    },
+    {
+      "source": "constructor_tearoff",
+      "native": "constructor_function_reference"
+    },
+    {
+      "source": "arguments",
+      "native": "argument_list"
+    },
+    {
+      "source": "_argument_list",
+      "native": "call_argument_sequence"
+    },
+    {
+      "source": "_formal_parameter_part",
+      "native": "formal_parameter_part"
+    },
+    {
+      "source": "_normal_formal_parameters",
+      "native": "normal_formal_parameter_list"
+    },
+    {
+      "source": "_default_formal_parameter",
+      "native": "default_formal_parameter"
+    },
+    {
+      "source": "_default_named_parameter",
+      "native": "default_named_parameter"
+    },
+    {
+      "source": "_normal_formal_parameter",
+      "native": "normal_formal_parameter"
+    },
+    {
+      "source": "_function_formal_parameter",
+      "native": "function_formal_parameter"
+    },
+    {
+      "source": "_simple_formal_parameter",
+      "native": "simple_formal_parameter"
+    },
+    {
+      "source": "_declared_identifier",
+      "native": "declared_identifier"
+    },
+    {
+      "source": "constructor_param",
+      "native": "constructor_parameter"
+    },
+    {
+      "source": "_statement",
+      "native": "statement"
+    },
+    {
+      "source": "_for_loop_parts",
+      "native": "for_loop_parts"
+    },
+    {
+      "source": "_on_part",
+      "native": "on_part"
+    },
+    {
+      "source": "rethrow_statement",
+      "native": "exception_propagation_statement"
+    },
+    {
+      "source": "assertion",
+      "native": "assertion_expression"
+    },
+    {
+      "source": "_function_name",
+      "native": "function_name"
+    },
+    {
+      "source": "getter_signature",
+      "native": "property_reader_signature"
+    },
+    {
+      "source": "_declaration",
+      "native": "declaration_body"
+    },
+    {
+      "source": "_final_const_var_or_type",
+      "native": "final_constant_variable_or_type"
+    },
+    {
+      "source": "_var_or_type",
+      "native": "variable_or_type"
+    },
+    {
+      "source": "_final_var_or_type",
+      "native": "final_variable_or_type"
+    },
+    {
+      "source": "_external_and_static",
+      "native": "external_and_static"
+    },
+    {
+      "source": "redirection",
+      "native": "constructor_target_clause"
+    },
+    {
+      "source": "initializers",
+      "native": "initializer_list"
+    },
+    {
+      "source": "_class_modifiers",
+      "native": "class_modifiers"
+    },
+    {
+      "source": "_mixin_class_modifiers",
+      "native": "trait_class_modifier_list"
+    },
+    {
+      "source": "mixins",
+      "native": "trait_list"
+    },
+    {
+      "source": "interfaces",
+      "native": "interface_list"
+    },
+    {
+      "source": "mixin_application_class",
+      "native": "trait_application_class"
+    },
+    {
+      "source": "mixin_application",
+      "native": "trait_application"
+    },
+    {
+      "source": "mixin_declaration",
+      "native": "trait_declaration"
+    },
+    {
+      "source": "enum_declaration",
+      "native": "enumeration_declaration"
+    },
+    {
+      "source": "enum_body",
+      "native": "enumeration_body"
+    },
+    {
+      "source": "enum_constant",
+      "native": "enumeration_constant"
+    },
+    {
+      "source": "getter_declaration",
+      "native": "property_reader_declaration"
+    },
+    {
+      "source": "external_getter_declaration",
+      "native": "external_property_reader_declaration"
+    },
+    {
+      "source": "_guarded_pattern",
+      "native": "guarded_pattern"
+    },
+    {
+      "source": "_pattern",
+      "native": "pattern"
+    },
+    {
+      "source": "_logical_or_pattern",
+      "native": "logical_or_pattern"
+    },
+    {
+      "source": "_logical_and_pattern",
+      "native": "logical_and_pattern"
+    },
+    {
+      "source": "_relational_pattern",
+      "native": "relational_pattern"
+    },
+    {
+      "source": "_unary_pattern",
+      "native": "unary_pattern"
+    },
+    {
+      "source": "_primary_pattern",
+      "native": "primary_pattern"
+    },
+    {
+      "source": "_parenthesized_pattern",
+      "native": "parenthesized_pattern"
+    },
+    {
+      "source": "_pattern_field",
+      "native": "pattern_field"
+    },
+    {
+      "source": "_outer_pattern",
+      "native": "outer_pattern"
+    },
+    {
+      "source": "_identifier_or_new",
+      "native": "identifier_or_creation_keyword"
+    },
+    {
+      "source": "_name",
+      "native": "identifier_characters"
+    },
+    {
+      "source": "_built_in_identifier",
+      "native": "built_in_identifier"
+    },
+    {
+      "source": "_ordinary_type_body",
+      "native": "ordinary_type_body"
+    },
+    {
+      "source": "_ordinary_function_keyword_body",
+      "native": "ordinary_function_keyword_body"
+    },
+    {
+      "source": "_ordinary_record_type_body",
+      "native": "ordinary_record_type_body"
+    },
+    {
+      "source": "_ordinary_void_type_body",
+      "native": "ordinary_void_type_body"
+    },
+    {
+      "source": "_non_void_function_type_body",
+      "native": "non_void_function_type_body"
+    },
+    {
+      "source": "_non_void_record_type_body",
+      "native": "non_void_record_type_body"
+    },
+    {
+      "source": "_non_void_named_type_body",
+      "native": "non_void_named_type_body"
+    },
+    {
+      "source": "_non_void_function_keyword_body",
+      "native": "non_void_function_keyword_body"
+    },
+    {
+      "source": "_non_void_non_function_named_type_body",
+      "native": "non_void_non_function_named_type_body"
+    },
+    {
+      "source": "_non_void_non_function_keyword_body",
+      "native": "non_void_non_function_keyword_body"
+    },
+    {
+      "source": "annotation_open_paren",
+      "native": "annotation_opening_parenthesis"
+    }
+  ],
+  "expandedWords": [
+    "args",
+    "bitwise",
+    "const",
+    "enum",
+    "initializers",
+    "param",
+    "var",
+    "xor"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 279
+  },
+  "sourceTransforms": [
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "declaration",
+        "method_signature"
+      ],
+      "symbol": "constructor_signature",
+      "value": 1,
+      "reason": "Preserve the source constructor signature reduction before an identical function signature without a return type, retaining the complete function production."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "declaration",
+        "method_signature"
+      ],
+      "symbol": "setter_signature",
+      "value": 1,
+      "reason": "The source setter keyword retains its complete setter signature before an overlapping function whose return type and name split the same input."
+    },
+    {
+      "family": "alias-choice-branches",
+      "rule": "_type_not_function",
+      "alias": "type",
+      "helpers": [
+        "_ordinary_type_body",
+        "_ordinary_function_keyword_body",
+        "_ordinary_record_type_body",
+        "_ordinary_void_type_body"
+      ],
+      "suffix": "?",
+      "reason": "Preserve the nested type identifier of each aliased choice branch and the separate nullable suffix reduction, without adding or removing source alternatives."
+    },
+    {
+      "family": "alias-choice-branches",
+      "rule": "_type_not_void",
+      "alias": "type",
+      "helpers": [
+        "_non_void_function_type_body",
+        "_non_void_record_type_body",
+        "_non_void_named_type_body",
+        "_non_void_function_keyword_body"
+      ],
+      "suffix": "?",
+      "reason": "Preserve the nested type identifier of each aliased choice branch and the separate nullable suffix reduction, without adding or removing source alternatives."
+    },
+    {
+      "family": "alias-choice-branches",
+      "rule": "_type_not_void_not_function",
+      "alias": "type",
+      "helpers": [
+        "_non_void_non_function_named_type_body",
+        "_non_void_non_function_keyword_body"
+      ],
+      "suffix": "?",
+      "reason": "Preserve the nested type identifier of each aliased choice branch and the separate nullable suffix reduction, without adding or removing source alternatives."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

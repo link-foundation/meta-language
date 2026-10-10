@@ -50,7 +50,8 @@ test('CI splits the Rust and JavaScript tests into matrix jobs with their own ti
   assert.deepEqual(javascript.match(/group: \[([^\]]*)\]/u)[1].split(', '), Object.keys(TEST_GROUPS));
   assert.match(javascript, /scripts\/test-groups\.mjs --run "\$TEST_GROUP"/u);
   assert.deepEqual(partitionProblems(partitionTests(testFiles())), []);
-  for (const text of [rust, javascript]) assert.match(text, /\n {4}timeout-minutes: \d+\n/u);
+  assert.match(javascript, /\n {4}timeout-minutes: \d+\n/u);
+  assert.match(rust, /timeout-minutes: \$\{\{ matrix\.os == 'windows-latest' && matrix\.suite == 'grammar' && 30 \|\| 15 \}\}/u);
   observe('I195-RESOURCE-CI-TEST-MATRIX',
     ['rustTestsSplitBySuite', 'javascriptTestsSplitByGroup', 'everyTestFileInExactlyOneGroup', 'matrixJobsHaveTimeouts'],
     'CI splits the Rust and JavaScript tests into matrix jobs with their own timeouts');

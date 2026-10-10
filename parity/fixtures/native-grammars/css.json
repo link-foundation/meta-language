@@ -1,0 +1,833 @@
+{
+  "schemaVersion": 1,
+  "id": "css",
+  "language": "CSS",
+  "grammar": "parity/grammars/native/css.lino",
+  "oracle": "crates.io tree-sitter-css 0.25.0",
+  "sources": [
+    "https://github.com/tree-sitter/tree-sitter-css/tree/dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f",
+    "https://github.com/tree-sitter/tree-sitter-css/tree/dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f/test/corpus"
+  ],
+  "corpus": {
+    "path": "test/corpus",
+    "file": "parity/grammars/sources/tree-sitter-css-0.25.0.corpus.json.gz",
+    "sha256": "6ab73d342bb85cce25a277231d8a6bae3690456994d9e586098d0f019a4ad524",
+    "url": "https://github.com/tree-sitter/tree-sitter-css/tree/dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f/test/corpus"
+  },
+  "hidden": [],
+  "anonymous": [
+    "unnamed_token"
+  ],
+  "extras": [
+    "comment",
+    "js_comment"
+  ],
+  "oracleKinds": {
+    "style_sheet": "stylesheet",
+    "top_level_item": "_top_level_item",
+    "medium_statement": "media_statement",
+    "character_set_statement": "charset_statement",
+    "key_frames_statement": "keyframes_statement",
+    "key_frame_block_list": "keyframe_block_list",
+    "key_frame_block": "keyframe_block",
+    "initial_key_frame": "from",
+    "final_key_frame": "to",
+    "post_processing_style_statement": "postcss_statement",
+    "selector_list": "selectors",
+    "block_item": "_block_item",
+    "selector": "_selector",
+    "nth_child_pseudo_class_selector": "_nth_child_pseudo_class_selector",
+    "identifier_selector": "id_selector",
+    "nth_functional_notation": "_nth_functional_notation",
+    "importance_modifier": "important",
+    "selection_query": "_query",
+    "value": "_value",
+    "argument_list": "arguments",
+    "key_frames_name": "keyframes_name",
+    "identifier_name": "id_name",
+    "descendant_operator": "_descendant_operator",
+    "pseudo_class_selector_colon": "_pseudo_class_selector_colon",
+    "error_recovery": "__error_recovery"
+  },
+  "matches": [
+    {
+      "source": "",
+      "rows": [
+        [0,null,"stylesheet",1,0,0,""]
+      ]
+    },
+    {
+      "source": "/* café */\n",
+      "rows": [
+        [0,null,"stylesheet",1,0,12,""],
+        [1,null,"comment",1,0,11,"X"]
+      ]
+    },
+    {
+      "source": "a {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,4,""],
+        [1,null,"rule_set",1,0,4,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,4,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"}",0,3,4,""]
+      ]
+    },
+    {
+      "source": "a { color: red; }",
+      "rows": [
+        [0,null,"stylesheet",1,0,17,""],
+        [1,null,"rule_set",1,0,17,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,17,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"declaration",1,4,15,""],
+        [4,null,"property_name",1,4,9,""],
+        [4,null,":",0,9,10,""],
+        [4,null,"plain_value",1,11,14,""],
+        [4,null,";",0,14,15,""],
+        [3,null,"}",0,16,17,""]
+      ]
+    },
+    {
+      "source": ".x { width: 10px; }",
+      "rows": [
+        [0,null,"stylesheet",1,0,19,""],
+        [1,null,"rule_set",1,0,19,""],
+        [2,null,"selectors",1,0,2,""],
+        [3,null,"class_selector",1,0,2,""],
+        [4,null,".",0,0,1,""],
+        [4,null,"class_name",1,1,2,""],
+        [5,null,"identifier",1,1,2,""],
+        [2,null,"block",1,3,19,""],
+        [3,null,"{",0,3,4,""],
+        [3,null,"declaration",1,5,17,""],
+        [4,null,"property_name",1,5,10,""],
+        [4,null,":",0,10,11,""],
+        [4,null,"integer_value",1,12,16,""],
+        [5,null,"unit",1,14,16,""],
+        [4,null,";",0,16,17,""],
+        [3,null,"}",0,18,19,""]
+      ]
+    },
+    {
+      "source": "#x { color: #fff; }",
+      "rows": [
+        [0,null,"stylesheet",1,0,19,""],
+        [1,null,"rule_set",1,0,19,""],
+        [2,null,"selectors",1,0,2,""],
+        [3,null,"id_selector",1,0,2,""],
+        [4,null,"#",0,0,1,""],
+        [4,null,"id_name",1,1,2,""],
+        [2,null,"block",1,3,19,""],
+        [3,null,"{",0,3,4,""],
+        [3,null,"declaration",1,5,17,""],
+        [4,null,"property_name",1,5,10,""],
+        [4,null,":",0,10,11,""],
+        [4,null,"color_value",1,12,16,""],
+        [5,null,"#",0,12,13,""],
+        [4,null,";",0,16,17,""],
+        [3,null,"}",0,18,19,""]
+      ]
+    },
+    {
+      "source": "a b { color: red; }",
+      "rows": [
+        [0,null,"stylesheet",1,0,19,""],
+        [1,null,"rule_set",1,0,19,""],
+        [2,null,"selectors",1,0,3,""],
+        [3,null,"descendant_selector",1,0,3,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,"tag_name",1,2,3,""],
+        [2,null,"block",1,4,19,""],
+        [3,null,"{",0,4,5,""],
+        [3,null,"declaration",1,6,17,""],
+        [4,null,"property_name",1,6,11,""],
+        [4,null,":",0,11,12,""],
+        [4,null,"plain_value",1,13,16,""],
+        [4,null,";",0,16,17,""],
+        [3,null,"}",0,18,19,""]
+      ]
+    },
+    {
+      "source": "a > b {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,8,""],
+        [1,null,"rule_set",1,0,8,""],
+        [2,null,"selectors",1,0,5,""],
+        [3,null,"child_selector",1,0,5,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,">",0,2,3,""],
+        [4,null,"tag_name",1,4,5,""],
+        [2,null,"block",1,6,8,""],
+        [3,null,"{",0,6,7,""],
+        [3,null,"}",0,7,8,""]
+      ]
+    },
+    {
+      "source": "a + b {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,8,""],
+        [1,null,"rule_set",1,0,8,""],
+        [2,null,"selectors",1,0,5,""],
+        [3,null,"adjacent_sibling_selector",1,0,5,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,"+",0,2,3,""],
+        [4,null,"tag_name",1,4,5,""],
+        [2,null,"block",1,6,8,""],
+        [3,null,"{",0,6,7,""],
+        [3,null,"}",0,7,8,""]
+      ]
+    },
+    {
+      "source": "a ~ b {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,8,""],
+        [1,null,"rule_set",1,0,8,""],
+        [2,null,"selectors",1,0,5,""],
+        [3,null,"sibling_selector",1,0,5,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,"~",0,2,3,""],
+        [4,null,"tag_name",1,4,5,""],
+        [2,null,"block",1,6,8,""],
+        [3,null,"{",0,6,7,""],
+        [3,null,"}",0,7,8,""]
+      ]
+    },
+    {
+      "source": "a, b {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,7,""],
+        [1,null,"rule_set",1,0,7,""],
+        [2,null,"selectors",1,0,4,""],
+        [3,null,"tag_name",1,0,1,""],
+        [3,null,",",0,1,2,""],
+        [3,null,"tag_name",1,3,4,""],
+        [2,null,"block",1,5,7,""],
+        [3,null,"{",0,5,6,""],
+        [3,null,"}",0,6,7,""]
+      ]
+    },
+    {
+      "source": "[x] {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,6,""],
+        [1,null,"rule_set",1,0,6,""],
+        [2,null,"selectors",1,0,3,""],
+        [3,null,"attribute_selector",1,0,3,""],
+        [4,null,"[",0,0,1,""],
+        [4,null,"attribute_name",1,1,2,""],
+        [4,null,"]",0,2,3,""],
+        [2,null,"block",1,4,6,""],
+        [3,null,"{",0,4,5,""],
+        [3,null,"}",0,5,6,""]
+      ]
+    },
+    {
+      "source": "[x=\"y\"] {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,10,""],
+        [1,null,"rule_set",1,0,10,""],
+        [2,null,"selectors",1,0,7,""],
+        [3,null,"attribute_selector",1,0,7,""],
+        [4,null,"[",0,0,1,""],
+        [4,null,"attribute_name",1,1,2,""],
+        [4,null,"=",0,2,3,""],
+        [4,null,"string_value",1,3,6,""],
+        [5,null,"\"",0,3,4,""],
+        [5,null,"string_content",1,4,5,""],
+        [5,null,"\"",0,5,6,""],
+        [4,null,"]",0,6,7,""],
+        [2,null,"block",1,8,10,""],
+        [3,null,"{",0,8,9,""],
+        [3,null,"}",0,9,10,""]
+      ]
+    },
+    {
+      "source": "a:hover {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,10,""],
+        [1,null,"rule_set",1,0,10,""],
+        [2,null,"selectors",1,0,7,""],
+        [3,null,"pseudo_class_selector",1,0,7,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,":",0,1,2,""],
+        [4,null,"class_name",1,2,7,""],
+        [5,null,"identifier",1,2,7,""],
+        [2,null,"block",1,8,10,""],
+        [3,null,"{",0,8,9,""],
+        [3,null,"}",0,9,10,""]
+      ]
+    },
+    {
+      "source": "a::before {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,12,""],
+        [1,null,"rule_set",1,0,12,""],
+        [2,null,"selectors",1,0,9,""],
+        [3,null,"pseudo_element_selector",1,0,9,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,"::",0,1,3,""],
+        [4,null,"tag_name",1,3,9,""],
+        [2,null,"block",1,10,12,""],
+        [3,null,"{",0,10,11,""],
+        [3,null,"}",0,11,12,""]
+      ]
+    },
+    {
+      "source": "a:not(.x) {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,12,""],
+        [1,null,"rule_set",1,0,12,""],
+        [2,null,"selectors",1,0,9,""],
+        [3,null,"pseudo_class_selector",1,0,9,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,":",0,1,2,""],
+        [4,null,"class_name",1,2,5,""],
+        [4,null,"arguments",1,5,9,""],
+        [5,null,"(",0,5,6,""],
+        [5,null,"class_selector",1,6,8,""],
+        [6,null,".",0,6,7,""],
+        [6,null,"class_name",1,7,8,""],
+        [7,null,"identifier",1,7,8,""],
+        [5,null,")",0,8,9,""],
+        [2,null,"block",1,10,12,""],
+        [3,null,"{",0,10,11,""],
+        [3,null,"}",0,11,12,""]
+      ]
+    },
+    {
+      "source": "a:nth-child(2n+1) {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,20,""],
+        [1,null,"rule_set",1,0,20,""],
+        [2,null,"selectors",1,0,17,""],
+        [3,null,"pseudo_class_selector",1,0,17,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,":",0,1,2,""],
+        [4,null,"class_name",1,2,11,""],
+        [4,null,"arguments",1,11,17,""],
+        [5,null,"(",0,11,12,""],
+        [5,null,"plain_value",1,12,16,""],
+        [5,null,")",0,16,17,""],
+        [2,null,"block",1,18,20,""],
+        [3,null,"{",0,18,19,""],
+        [3,null,"}",0,19,20,""]
+      ]
+    },
+    {
+      "source": ":root { --x: 1; }",
+      "rows": [
+        [0,null,"stylesheet",1,0,17,""],
+        [1,null,"rule_set",1,0,17,""],
+        [2,null,"selectors",1,0,5,""],
+        [3,null,"pseudo_class_selector",1,0,5,""],
+        [4,null,":",0,0,1,""],
+        [4,null,"class_name",1,1,5,""],
+        [5,null,"identifier",1,1,5,""],
+        [2,null,"block",1,6,17,""],
+        [3,null,"{",0,6,7,""],
+        [3,null,"declaration",1,8,15,""],
+        [4,null,"property_name",1,8,11,""],
+        [4,null,":",0,11,12,""],
+        [4,null,"integer_value",1,13,14,""],
+        [4,null,";",0,14,15,""],
+        [3,null,"}",0,16,17,""]
+      ]
+    },
+    {
+      "source": "a { color: rgb(1, 2, 3); }",
+      "rows": [
+        [0,null,"stylesheet",1,0,26,""],
+        [1,null,"rule_set",1,0,26,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,26,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"declaration",1,4,24,""],
+        [4,null,"property_name",1,4,9,""],
+        [4,null,":",0,9,10,""],
+        [4,null,"call_expression",1,11,23,""],
+        [5,null,"function_name",1,11,14,""],
+        [5,null,"arguments",1,14,23,""],
+        [6,null,"(",0,14,15,""],
+        [6,null,"integer_value",1,15,16,""],
+        [6,null,",",0,16,17,""],
+        [6,null,"integer_value",1,18,19,""],
+        [6,null,",",0,19,20,""],
+        [6,null,"integer_value",1,21,22,""],
+        [6,null,")",0,22,23,""],
+        [4,null,";",0,23,24,""],
+        [3,null,"}",0,25,26,""]
+      ]
+    },
+    {
+      "source": "a { width: calc(100% - 1px); }",
+      "rows": [
+        [0,null,"stylesheet",1,0,30,""],
+        [1,null,"rule_set",1,0,30,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,30,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"declaration",1,4,28,""],
+        [4,null,"property_name",1,4,9,""],
+        [4,null,":",0,9,10,""],
+        [4,null,"call_expression",1,11,27,""],
+        [5,null,"function_name",1,11,15,""],
+        [5,null,"arguments",1,15,27,""],
+        [6,null,"(",0,15,16,""],
+        [6,null,"binary_expression",1,16,26,""],
+        [7,null,"integer_value",1,16,20,""],
+        [8,null,"unit",1,19,20,""],
+        [7,null,"-",0,21,22,""],
+        [7,null,"integer_value",1,23,26,""],
+        [8,null,"unit",1,24,26,""],
+        [6,null,")",0,26,27,""],
+        [4,null,";",0,27,28,""],
+        [3,null,"}",0,29,30,""]
+      ]
+    },
+    {
+      "source": "a { content: \"é😀\"; }",
+      "rows": [
+        [0,null,"stylesheet",1,0,24,""],
+        [1,null,"rule_set",1,0,24,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,24,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"declaration",1,4,22,""],
+        [4,null,"property_name",1,4,11,""],
+        [4,null,":",0,11,12,""],
+        [4,null,"string_value",1,13,21,""],
+        [5,null,"\"",0,13,14,""],
+        [5,null,"string_content",1,14,20,""],
+        [5,null,"\"",0,20,21,""],
+        [4,null,";",0,21,22,""],
+        [3,null,"}",0,23,24,""]
+      ]
+    },
+    {
+      "source": "a { content: 'literal'; }",
+      "rows": [
+        [0,null,"stylesheet",1,0,25,""],
+        [1,null,"rule_set",1,0,25,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,25,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"declaration",1,4,23,""],
+        [4,null,"property_name",1,4,11,""],
+        [4,null,":",0,11,12,""],
+        [4,null,"string_value",1,13,22,""],
+        [5,null,"'",0,13,14,""],
+        [5,null,"string_content",1,14,21,""],
+        [5,null,"'",0,21,22,""],
+        [4,null,";",0,22,23,""],
+        [3,null,"}",0,24,25,""]
+      ]
+    },
+    {
+      "source": "a { background: url(\"x.png\"); }",
+      "rows": [
+        [0,null,"stylesheet",1,0,31,""],
+        [1,null,"rule_set",1,0,31,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,31,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"declaration",1,4,29,""],
+        [4,null,"property_name",1,4,14,""],
+        [4,null,":",0,14,15,""],
+        [4,null,"call_expression",1,16,28,""],
+        [5,null,"function_name",1,16,19,""],
+        [5,null,"arguments",1,19,28,""],
+        [6,null,"(",0,19,20,""],
+        [6,null,"string_value",1,20,27,""],
+        [7,null,"\"",0,20,21,""],
+        [7,null,"string_content",1,21,26,""],
+        [7,null,"\"",0,26,27,""],
+        [6,null,")",0,27,28,""],
+        [4,null,";",0,28,29,""],
+        [3,null,"}",0,30,31,""]
+      ]
+    },
+    {
+      "source": "a { margin: 1px 2px; }",
+      "rows": [
+        [0,null,"stylesheet",1,0,22,""],
+        [1,null,"rule_set",1,0,22,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,22,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"declaration",1,4,20,""],
+        [4,null,"property_name",1,4,10,""],
+        [4,null,":",0,10,11,""],
+        [4,null,"integer_value",1,12,15,""],
+        [5,null,"unit",1,13,15,""],
+        [4,null,"integer_value",1,16,19,""],
+        [5,null,"unit",1,17,19,""],
+        [4,null,";",0,19,20,""],
+        [3,null,"}",0,21,22,""]
+      ]
+    },
+    {
+      "source": "a { color: red !important; }",
+      "rows": [
+        [0,null,"stylesheet",1,0,28,""],
+        [1,null,"rule_set",1,0,28,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,28,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"declaration",1,4,26,""],
+        [4,null,"property_name",1,4,9,""],
+        [4,null,":",0,9,10,""],
+        [4,null,"plain_value",1,11,14,""],
+        [4,null,"important",1,15,25,""],
+        [4,null,";",0,25,26,""],
+        [3,null,"}",0,27,28,""]
+      ]
+    },
+    {
+      "source": "@import \"x.css\";",
+      "rows": [
+        [0,null,"stylesheet",1,0,16,""],
+        [1,null,"import_statement",1,0,16,""],
+        [2,null,"@import",0,0,7,""],
+        [2,null,"string_value",1,8,15,""],
+        [3,null,"\"",0,8,9,""],
+        [3,null,"string_content",1,9,14,""],
+        [3,null,"\"",0,14,15,""],
+        [2,null,";",0,15,16,""]
+      ]
+    },
+    {
+      "source": "@charset \"UTF-8\";",
+      "rows": [
+        [0,null,"stylesheet",1,0,17,""],
+        [1,null,"charset_statement",1,0,17,""],
+        [2,null,"@charset",0,0,8,""],
+        [2,null,"string_value",1,9,16,""],
+        [3,null,"\"",0,9,10,""],
+        [3,null,"string_content",1,10,15,""],
+        [3,null,"\"",0,15,16,""],
+        [2,null,";",0,16,17,""]
+      ]
+    },
+    {
+      "source": "@media screen { a {} }",
+      "rows": [
+        [0,null,"stylesheet",1,0,22,""],
+        [1,null,"media_statement",1,0,22,""],
+        [2,null,"@media",0,0,6,""],
+        [2,null,"keyword_query",1,7,13,""],
+        [2,null,"block",1,14,22,""],
+        [3,null,"{",0,14,15,""],
+        [3,null,"rule_set",1,16,20,""],
+        [4,null,"selectors",1,16,17,""],
+        [5,null,"tag_name",1,16,17,""],
+        [4,null,"block",1,18,20,""],
+        [5,null,"{",0,18,19,""],
+        [5,null,"}",0,19,20,""],
+        [3,null,"}",0,21,22,""]
+      ]
+    },
+    {
+      "source": "@media (min-width: 10px) { .x > a:hover {color:red;} }",
+      "rows": [
+        [0,null,"stylesheet",1,0,54,""],
+        [1,null,"media_statement",1,0,54,""],
+        [2,null,"@media",0,0,6,""],
+        [2,null,"feature_query",1,7,24,""],
+        [3,null,"(",0,7,8,""],
+        [3,null,"feature_name",1,8,17,""],
+        [3,null,":",0,17,18,""],
+        [3,null,"integer_value",1,19,23,""],
+        [4,null,"unit",1,21,23,""],
+        [3,null,")",0,23,24,""],
+        [2,null,"block",1,25,54,""],
+        [3,null,"{",0,25,26,""],
+        [3,null,"rule_set",1,27,52,""],
+        [4,null,"selectors",1,27,39,""],
+        [5,null,"pseudo_class_selector",1,27,39,""],
+        [6,null,"child_selector",1,27,33,""],
+        [7,null,"class_selector",1,27,29,""],
+        [8,null,".",0,27,28,""],
+        [8,null,"class_name",1,28,29,""],
+        [9,null,"identifier",1,28,29,""],
+        [7,null,">",0,30,31,""],
+        [7,null,"tag_name",1,32,33,""],
+        [6,null,":",0,33,34,""],
+        [6,null,"class_name",1,34,39,""],
+        [7,null,"identifier",1,34,39,""],
+        [4,null,"block",1,40,52,""],
+        [5,null,"{",0,40,41,""],
+        [5,null,"declaration",1,41,51,""],
+        [6,null,"property_name",1,41,46,""],
+        [6,null,":",0,46,47,""],
+        [6,null,"plain_value",1,47,50,""],
+        [6,null,";",0,50,51,""],
+        [5,null,"}",0,51,52,""],
+        [3,null,"}",0,53,54,""]
+      ]
+    },
+    {
+      "source": "@supports (display: grid) { a { display: grid; } }",
+      "rows": [
+        [0,null,"stylesheet",1,0,50,""],
+        [1,null,"supports_statement",1,0,50,""],
+        [2,null,"@supports",0,0,9,""],
+        [2,null,"feature_query",1,10,25,""],
+        [3,null,"(",0,10,11,""],
+        [3,null,"feature_name",1,11,18,""],
+        [3,null,":",0,18,19,""],
+        [3,null,"plain_value",1,20,24,""],
+        [3,null,")",0,24,25,""],
+        [2,null,"block",1,26,50,""],
+        [3,null,"{",0,26,27,""],
+        [3,null,"rule_set",1,28,48,""],
+        [4,null,"selectors",1,28,29,""],
+        [5,null,"tag_name",1,28,29,""],
+        [4,null,"block",1,30,48,""],
+        [5,null,"{",0,30,31,""],
+        [5,null,"declaration",1,32,46,""],
+        [6,null,"property_name",1,32,39,""],
+        [6,null,":",0,39,40,""],
+        [6,null,"plain_value",1,41,45,""],
+        [6,null,";",0,45,46,""],
+        [5,null,"}",0,47,48,""],
+        [3,null,"}",0,49,50,""]
+      ]
+    },
+    {
+      "source": "@keyframes pulse {from {opacity:0;} to {opacity:1;}}",
+      "rows": [
+        [0,null,"stylesheet",1,0,52,""],
+        [1,null,"keyframes_statement",1,0,52,""],
+        [2,null,"@keyframes",0,0,10,""],
+        [2,null,"keyframes_name",1,11,16,""],
+        [2,null,"keyframe_block_list",1,17,52,""],
+        [3,null,"{",0,17,18,""],
+        [3,null,"keyframe_block",1,18,35,""],
+        [4,null,"from",1,18,22,""],
+        [4,null,"block",1,23,35,""],
+        [5,null,"{",0,23,24,""],
+        [5,null,"declaration",1,24,34,""],
+        [6,null,"property_name",1,24,31,""],
+        [6,null,":",0,31,32,""],
+        [6,null,"integer_value",1,32,33,""],
+        [6,null,";",0,33,34,""],
+        [5,null,"}",0,34,35,""],
+        [3,null,"keyframe_block",1,36,51,""],
+        [4,null,"to",1,36,38,""],
+        [5,null,"to",0,36,38,""],
+        [4,null,"block",1,39,51,""],
+        [5,null,"{",0,39,40,""],
+        [5,null,"declaration",1,40,50,""],
+        [6,null,"property_name",1,40,47,""],
+        [6,null,":",0,47,48,""],
+        [6,null,"integer_value",1,48,49,""],
+        [6,null,";",0,49,50,""],
+        [5,null,"}",0,50,51,""],
+        [3,null,"}",0,51,52,""]
+      ]
+    },
+    {
+      "source": "@font-face { font-family: demo; src: url(x); }",
+      "rows": [
+        [0,null,"stylesheet",1,0,46,""],
+        [1,null,"at_rule",1,0,46,""],
+        [2,null,"at_keyword",1,0,10,""],
+        [2,null,"block",1,11,46,""],
+        [3,null,"{",0,11,12,""],
+        [3,null,"declaration",1,13,31,""],
+        [4,null,"property_name",1,13,24,""],
+        [4,null,":",0,24,25,""],
+        [4,null,"plain_value",1,26,30,""],
+        [4,null,";",0,30,31,""],
+        [3,null,"declaration",1,32,44,""],
+        [4,null,"property_name",1,32,35,""],
+        [4,null,":",0,35,36,""],
+        [4,null,"call_expression",1,37,43,""],
+        [5,null,"function_name",1,37,40,""],
+        [5,null,"arguments",1,40,43,""],
+        [6,null,"(",0,40,41,""],
+        [6,null,"plain_value",1,41,42,""],
+        [6,null,")",0,42,43,""],
+        [4,null,";",0,43,44,""],
+        [3,null,"}",0,45,46,""]
+      ]
+    },
+    {
+      "source": "@namespace svg \"urn:svg\";",
+      "rows": [
+        [0,null,"stylesheet",1,0,25,""],
+        [1,null,"namespace_statement",1,0,25,""],
+        [2,null,"@namespace",0,0,10,""],
+        [2,null,"namespace_name",1,11,14,""],
+        [2,null,"string_value",1,15,24,""],
+        [3,null,"\"",0,15,16,""],
+        [3,null,"string_content",1,16,23,""],
+        [3,null,"\"",0,23,24,""],
+        [2,null,";",0,24,25,""]
+      ]
+    },
+    {
+      "source": "a /* hi */ b {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,15,""],
+        [1,null,"rule_set",1,0,15,""],
+        [2,null,"selectors",1,0,12,""],
+        [3,null,"descendant_selector",1,0,12,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,"comment",1,2,10,"X"],
+        [4,null,"tag_name",1,11,12,""],
+        [2,null,"block",1,13,15,""],
+        [3,null,"{",0,13,14,""],
+        [3,null,"}",0,14,15,""]
+      ]
+    },
+    {
+      "source": "a :hover {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,11,""],
+        [1,null,"rule_set",1,0,11,""],
+        [2,null,"selectors",1,0,8,""],
+        [3,null,"descendant_selector",1,0,8,""],
+        [4,null,"tag_name",1,0,1,""],
+        [4,null,"pseudo_class_selector",1,2,8,""],
+        [5,null,":",0,2,3,""],
+        [5,null,"class_name",1,3,8,""],
+        [6,null,"identifier",1,3,8,""],
+        [2,null,"block",1,9,11,""],
+        [3,null,"{",0,9,10,""],
+        [3,null,"}",0,10,11,""]
+      ]
+    },
+    {
+      "source": "a { color: red; /* tail */ }\r\n",
+      "rows": [
+        [0,null,"stylesheet",1,0,30,""],
+        [1,null,"rule_set",1,0,28,""],
+        [2,null,"selectors",1,0,1,""],
+        [3,null,"tag_name",1,0,1,""],
+        [2,null,"block",1,2,28,""],
+        [3,null,"{",0,2,3,""],
+        [3,null,"declaration",1,4,15,""],
+        [4,null,"property_name",1,4,9,""],
+        [4,null,":",0,9,10,""],
+        [4,null,"plain_value",1,11,14,""],
+        [4,null,";",0,14,15,""],
+        [3,null,"comment",1,16,26,"X"],
+        [3,null,"}",0,27,28,""]
+      ]
+    },
+    {
+      "source": "\n:root {}",
+      "rows": [
+        [0,null,"stylesheet",1,1,9,""],
+        [1,null,"rule_set",1,1,9,""],
+        [2,null,"selectors",1,1,6,""],
+        [3,null,"pseudo_class_selector",1,1,6,""],
+        [4,null,":",0,1,2,""],
+        [4,null,"class_name",1,2,6,""],
+        [5,null,"identifier",1,2,6,""],
+        [2,null,"block",1,7,9,""],
+        [3,null,"{",0,7,8,""],
+        [3,null,"}",0,8,9,""]
+      ]
+    },
+    {
+      "source": "\n:nth-child(2n+1) {}",
+      "rows": [
+        [0,null,"stylesheet",1,1,20,""],
+        [1,null,"rule_set",1,1,20,""],
+        [2,null,"selectors",1,1,17,""],
+        [3,null,"pseudo_class_selector",1,1,17,""],
+        [4,null,":",0,1,2,""],
+        [4,null,"class_name",1,2,11,""],
+        [4,null,"arguments",1,11,17,""],
+        [5,null,"(",0,11,12,""],
+        [5,null,"plain_value",1,12,16,""],
+        [5,null,")",0,16,17,""],
+        [2,null,"block",1,18,20,""],
+        [3,null,"{",0,18,19,""],
+        [3,null,"}",0,19,20,""]
+      ]
+    },
+    {
+      "source": "::slotted(a) {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,15,""],
+        [1,null,"rule_set",1,0,15,""],
+        [2,null,"selectors",1,0,12,""],
+        [3,null,"pseudo_element_selector",1,0,12,""],
+        [4,null,"::",0,0,2,""],
+        [4,null,"tag_name",1,2,9,""],
+        [4,null,"arguments",1,9,12,""],
+        [5,null,"(",0,9,10,""],
+        [5,null,"tag_name",1,10,11,""],
+        [5,null,")",0,11,12,""],
+        [2,null,"block",1,13,15,""],
+        [3,null,"{",0,13,14,""],
+        [3,null,"}",0,14,15,""]
+      ]
+    },
+    {
+      "source": "@supports not selector(:matches(a, b)) {}",
+      "rows": [
+        [0,null,"stylesheet",1,0,41,""],
+        [1,null,"supports_statement",1,0,41,""],
+        [2,null,"@supports",0,0,9,""],
+        [2,null,"unary_query",1,10,38,""],
+        [3,null,"not",0,10,13,""],
+        [3,null,"selector_query",1,14,38,""],
+        [4,null,"selector",0,14,22,""],
+        [4,null,"(",0,22,23,""],
+        [4,null,"pseudo_class_selector",1,23,37,""],
+        [5,null,":",0,23,24,""],
+        [5,null,"class_name",1,24,31,""],
+        [6,null,"identifier",1,24,31,""],
+        [5,null,"arguments",1,31,37,""],
+        [6,null,"(",0,31,32,""],
+        [6,null,"tag_name",1,32,33,""],
+        [6,null,",",0,33,34,""],
+        [6,null,"tag_name",1,35,36,""],
+        [6,null,")",0,36,37,""],
+        [4,null,")",0,37,38,""],
+        [2,null,"block",1,39,41,""],
+        [3,null,"{",0,39,40,""],
+        [3,null,"}",0,40,41,""]
+      ]
+    }
+  ],
+  "divergences": [],
+  "rejections": [
+    {
+      "source": "a:hover/* { ignored } */ {}",
+      "recovered": "(style_sheet (declaration (property_name \"a\") \":\" (plain_value \"hover\") ~(comment \"/* { ignored } */\") (MISSING@24 \";\") ~\" \") (ERROR@25..27 \"{}\"))"
+    },
+    {
+      "source": "a {",
+      "recovered": "(style_sheet (rule_set (selector_list (tag_name \"a\")) (block ~\" \" \"{\" (MISSING@3 \"}\"))))"
+    },
+    {
+      "source": "a { color: }",
+      "recovered": "(style_sheet (rule_set (selector_list (tag_name \"a\")) (block ~\" \" \"{\" (declaration ~\" \" (property_name \"color\") \":\" (MISSING@10 plain_value) ~\" \") \"}\")))"
+    },
+    {
+      "source": "a { content: \"unterminated; }",
+      "recovered": "(style_sheet (rule_set (selector_list (tag_name \"a\")) (block ~\" \" \"{\" (declaration ~\" \" (property_name \"content\") \":\" (string_value ~\" \" \"\\\"\" (string_content \"unterminated; }\") (MISSING@29 \"\\\"\"))) (MISSING@29 \"}\"))))"
+    },
+    {
+      "source": "a > {}",
+      "recovered": "(style_sheet (rule_set (selector_list (child_selector (tag_name \"a\") ~\" \" \">\" (universal_selector (MISSING@3 \"*\") ~\" \"))) (block \"{\" \"}\")))"
+    }
+  ]
+}

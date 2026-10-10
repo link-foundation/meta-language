@@ -13,7 +13,7 @@
 //!
 //! Mirrors `js/src/translation/javascript.js`.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use super::diagnostics::{Result, TranslationError, type_error, unsupported};
 use super::lexer::{
@@ -27,6 +27,7 @@ use super::surface::{
 use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, array};
 use super::{Language, Span};
 
+mod array_methods;
 mod console;
 mod declarations;
 mod expressions;
@@ -138,8 +139,17 @@ pub struct ModuleContext {
 ///
 /// As [`parse_javascript`].
 pub fn parse_javascript_in(source: &str, context: &ModuleContext) -> Result<SProgram> {
+    parse_javascript_bound_in(source, context, &HashMap::new())
+}
+
+pub(crate) fn parse_javascript_bound_in(
+    source: &str,
+    context: &ModuleContext,
+    literal_bindings: &HashMap<String, SExpr>,
+) -> Result<SProgram> {
     let tokens = tokenize(source, Language::JavaScript)?;
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
+    parser.literal_bindings.clone_from(literal_bindings);
     parser.externals.clone_from(&context.externals);
     parser
         .module_directory
@@ -312,6 +322,7 @@ struct JavaScriptParser {
     /// Tags of every @typedef data type, for `switch (x.$)`.
     data_types: Vec<SData>,
     scope: Scope,
+    literal_bindings: HashMap<String, SExpr>,
     assertion: Option<Assertion>,
     /// Async functions run sequentially: each call of one is awaited where it
     /// is made, so nothing else runs until its result is back. `await` is
@@ -345,6 +356,7 @@ impl JavaScriptParser {
                 .collect(),
             data_types: Vec::new(),
             scope: Scope::default(),
+            literal_bindings: HashMap::new(),
             assertion: None,
             async_names: HashSet::new(),
             in_async: true,
@@ -465,22 +477,18 @@ fn next_tag(text: &[char], from: usize) -> Option<(usize, usize)> {
     })
 }
 
-/// `^[ \t]*([A-Za-z_$][\w$]*)`.
+/// Read the shared `JSDoc` name range; convert its UTF-16 offsets at the host boundary.
 fn jsdoc_name(text: &[char]) -> Option<String> {
-    let start = text
-        .iter()
-        .take_while(|&&ch| ch == ' ' || ch == '\t')
-        .count();
-    let first = *text.get(start)?;
-    if !(first.is_ascii_alphabetic() || first == '_' || first == '$') {
+    let tail: String = text.iter().collect();
+    let units: Vec<u16> = tail.encode_utf16().collect();
+    let numeric: Vec<f64> = units.iter().map(|&unit| f64::from(unit)).collect();
+    let range = super::frontend_rules::find_documentation_parameter_range(&numeric);
+    if range.is_empty() {
         return None;
     }
-    Some(
-        text[start..]
-            .iter()
-            .take_while(|&&ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '$')
-            .collect(),
-    )
+    let start = super::frontend_rules::ml_array::number_index(range[0])?;
+    let end = super::frontend_rules::ml_array::number_index(range[1])?;
+    Some(String::from_utf16_lossy(units.get(start..end)?))
 }
 
 /// `/^[A-Za-z_$][\w$]*$/`.

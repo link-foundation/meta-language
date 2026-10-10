@@ -25,6 +25,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { compileGrammar, languageEntry, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
+import { NATIVE_BATCH_FIXTURES } from './native-grammar-batch-fixtures.mjs';
 import { nativeOracleKinds } from './build-language-catalog.mjs';
 import { corpusCases, grammarSourceOf } from './import-native-grammars.mjs';
 import { hasRecovery, nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
@@ -36,9 +37,9 @@ const inventory = JSON.parse(readFileSync(path.join(root, 'parity/language-gramm
 // default tree places as the oracle does, which both runtimes read from the
 // language catalog.
 function nativeGrammar(id) {
-  const { grammar, hidden, anonymous, extras } = inventory.nativeGrammars[id];
+  const { grammar, hidden, anonymous, extras, rootIncludesLeadingTrivia } = inventory.nativeGrammars[id];
   const oracleKinds = nativeOracleKinds(readFileSync(path.join(root, grammar), 'utf8'));
-  return { nativeGrammar: id, hidden, anonymous, extras, oracleKinds };
+  return { nativeGrammar: id, hidden, anonymous, extras, oracleKinds, ...(rootIncludesLeadingTrivia ? { rootIncludesLeadingTrivia } : {}) };
 }
 
 // The empty last field the RFC 4180 ABNF allows and the oracle recovers from.
@@ -148,6 +149,46 @@ const solidityCorpus = (recovers) => upstreamCorpus('native-solidity').filter((s
 const REGEX_LITERAL_BRACKET = 'ECMA-262 Annex B.1.2 reads a { that opens no count quantifier, and a [: that opens no POSIX class, as characters; the tree-sitter-regex 0.25.0 lexer takes them as the literals and recovers.';
 
 export const NATIVE_GRAMMARS = Object.freeze([
+  ...NATIVE_BATCH_FIXTURES.map((entry) => {
+    const source = grammarSourceOf(`native-${entry.id}`);
+    return { divergences: [], ...entry, grammar: `parity/grammars/native/${entry.id}.lino`, oracle: source.package,
+      sources: [`${source.repository}/tree/${source.revision}`,
+        ...(source.corpus ? [`${source.corpus.repository ?? source.repository}/tree/${source.corpus.revision ?? source.revision}/${source.corpus.path}`] : [])],
+      ...(source.corpus ? { corpus: { ...source.corpus, url: `${source.corpus.repository ?? source.repository}/tree/${source.corpus.revision ?? source.revision}/${source.corpus.path}` } } : {}),
+      ...nativeGrammar(`native-${entry.id}`),
+    };
+  }),
+  {
+    id: 'lua', language: 'Lua', grammar: 'parity/grammars/native/lua.lino',
+    oracle: 'tree-sitter-lua 0.5.0',
+    sources: ['https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9', 'https://github.com/tree-sitter-grammars/tree-sitter-lua/tree/10fe0054734eec83049514ea2e718b2a56acd0c9/test/corpus'],
+    ...nativeGrammar('native-lua'),
+    matches: [
+      inventory.languages.find(({ name }) => name === 'Lua').source,
+      '', 'function f() end', 'function f() return 1 end',
+      'local x = [[]]', 'local x = [=[é😀]=]',
+      '--[[block]]\nlocal x = 1', '--[==[a]=]b]==]\nlocal x=2',
+      'local x = [=[a]==]b]=]', 'local x=[=[a]=]; local y=[==[b]==]',
+      'local function f(...) return ... end',
+      '--\n-- next\n', '-- \n-- next\n', '--\n--[[block]]', 'f()\n("hi")\n"last"', 'f()(x)(y)', 'f(); (g)()',
+      'a,b=1,2', 'local f=function(x) return x end; f(2)',
+      'function t:f(x) return self.x+x end; t:f(2)',
+      'local x=-1+2*3^4; local y=not x and true or false',
+      'local x=0x1f; local y=1.25e-2', 'local t={1,2;a=3,}; return t',
+      '#!/usr/bin/lua\nreturn 1',
+
+      'for i=1,3 do print(i) end', 'for k,v in pairs(t) do print(k,v) end',
+      'if a then return 1 elseif b then return 2 else return 3 end',
+      'repeat x=x+1 until x>2', 'while ready do ready=false end',
+      'local t={a=1,[2]="b"}; t.a=t[2]', '::again:: goto again',
+      `local x=[${'='.repeat(255)}[é]${'='.repeat(255)}]`,
+      `local x=[${'='.repeat(256)}[é]]`,
+      'local x <const> = 1', '-- café\nreturn "é\\n"',
+    ],
+    divergences: [],
+    rejections: ['local x = [=[bad]]', 'local x = [==[bad]=]', 'local x = [[bad',
+      'local x = [=[bad]=', 'local x=[[a\0b]]', 'local x =', 'function f(', 'if a then', 'local = 1'],
+  },
   {
     id: 'json',
     language: 'JSON',
@@ -631,12 +672,12 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // keyword is lexed where a statement or declaration may start, so the
     // identifier `typedef` stands only where no keyword may come.
     ...nativeGrammar('native-c'),
-    matches: [
+    get matches() { return [
       ...upstreamCorpus('native-c'),
       '', 'int x;', 'x = typedef;', 'int typedef;', 'int main(void) { return 0; }', 'struct s { int a; } v;',
       '#include <stdio.h>\n', '#define N 1\nint a[N];\n', '/* c */ int x; // d\n', 'char *s = "a\\n" L"b";',
       'int f(int a, ...);', 'x = a ? b : c;', 'if (a) b; else c;', 'for (;;) {}', 'do x++; while (x < 3);',
-    ],
+    ]; },
     divergences: [],
     rejections: [
       'int x', 'int x = ;', '{', '}', 'int f() {', ')', '(', '"abc', "'a", '/* abc', 'int x = 1 +;', 'if (x',
@@ -661,7 +702,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // those of error.txt, which the oracle recovers from and the native
     // grammar rejects, and a few sources more.
     ...nativeGrammar('native-rust'),
-    matches: [
+    get matches() { return [
       ...upstreamCorpus('native-rust', (file) => file !== 'error.txt'),
       '', 'fn main() {}', 'let x = 1;', 'struct S { a: i32 }', '// c\nfn f() {}\n', '/* a /* b */ c */ fn f() {}',
       'fn f() -> i32 { 1 + 2 * 3 }', 'const R: &str = r#"a"#;', 'x.await?;', '//! i\n/// d\nfn f() {}\n',
@@ -682,9 +723,9 @@ export const NATIVE_GRAMMARS = Object.freeze([
       // expression is reduced there, as an LR parser reduces on a lookahead
       // its left-corner context follows; a block or a label is shifted.
       'fn f(){ loop { break -1; } }', 'fn f(){ loop { break {1}; } }', "fn f(){ 'a: loop { break 'a; } }",
-    ],
+    ]; },
     divergences: [],
-    rejections: [
+    get rejections() { return [
       ...upstreamCorpus('native-rust', (file) => file === 'error.txt'),
       'fn', 'fn f(', 'fn f() {', '}', '{', 'let x = ;', 'struct S {', '"abc', "'a", '/* abc', 'fn f() { 1 + }', 'if x {',
       'impl {', 'use ;', 'mod', 'x = = 1;', 'fn f(a,,) {}', 'a[;', 'match x {', 'enum E { A,, }', 'fn main() { let }',
@@ -692,7 +733,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'fn f() -> {}', '1 +',
       // tree-sitter's `\s` is ASCII white space: a no-break or ideographic space is an error.
       'fn a() {}\u00a0fn b() {}', '\u3000fn f() {}', 'fn f() {}\u2028',
-    ],
+    ]; },
   },
   {
     id: 'javascript',
@@ -708,7 +749,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // the matches are every case of its upstream corpus at the same revision
     // but the one the oracle recovers from, and a few sources more.
     ...nativeGrammar('native-javascript'),
-    matches: [
+    get matches() { return [
       ...upstreamCorpus('native-javascript', (_file, title) => title !== JAVASCRIPT_ORACLE_ERROR),
       '', 'x;', 'let x = 1;', 'const f = (a, b) => a + b;', 'function f(a, ...b) { return a; }',
       'class A extends B { #x = 1; static m() {} }', 'import { a as b } from "c";', 'export default function () {}', 'a?.b ?? c;',
@@ -720,14 +761,14 @@ export const NATIVE_GRAMMARS = Object.freeze([
       // no-break or ideographic space, the byte order mark and a line separator
       // separate tokens, as tree-sitter-javascript's extras read them.
       'let x = 1;\u3000let y;', 'let a;\u00a0let b;', 'x;\u2028y;', 'x;\ufeff',
-    ],
+    ]; },
     divergences: [],
-    rejections: [
+    get rejections() { return [
       ...upstreamCorpus('native-javascript', (_file, title) => title === JAVASCRIPT_ORACLE_ERROR),
       'const = 1;', 'if (ready { go(); }', 'function', 'function f(', 'function f() {', '}', '{', 'let x = ;', 'class A {', '"abc',
       "'a", '/* abc', 'x = 1 +;', 'if (x', 'import {', 'x = = 1;', 'a[;', 'switch (x) {', '`abc', 'x.;', 'for (;;', 'new',
       'x = <div>;',
-    ],
+    ]; },
   },
   {
     id: 'typescript',
@@ -740,12 +781,12 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // (js/scripts/import-native-grammars.mjs); the matches are every case of
     // its upstream corpus at the same revision, and a few sources more.
     ...nativeGrammar('native-typescript'),
-    matches: [
+    get matches() { return [
       ...upstreamCorpus('native-typescript'), ...TYPESCRIPT_MATCHES,
       // A type assertion and an arrow function with type parameters, which
       // TSX reads as JSX.
       'let x = <string>y;', 'const f = <T>(a: T) => a;', 'x = a < b > c;',
-    ],
+    ]; },
     divergences: [],
     rejections: TYPESCRIPT_REJECTIONS,
   },
@@ -760,10 +801,10 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // of the upstream corpus at the same revision the TSX oracle runs, and a
     // few sources more.
     ...nativeGrammar('native-tsx'),
-    matches: [
+    get matches() { return [
       ...upstreamCorpus('native-tsx'), ...TYPESCRIPT_MATCHES,
       'x = <div className="a">{b}</div>;', 'const C = <T,>(a: T) => <span>{a}</span>;', 'x = <A.B c={1} {...d} />;', 'x = <></>;', 'x = <a></b>;',
-    ],
+    ]; },
     divergences: [],
     rejections: [...TYPESCRIPT_REJECTIONS, 'x = <div>;'],
   },
@@ -782,7 +823,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // its upstream corpus at the same revision but those the oracle recovers
     // from, which the native grammar rejects, and a few sources more.
     ...nativeGrammar('native-lean'),
-    matches: [
+    get matches() { return [
       ...leanCorpus(false),
       '', 'def x := 1\n', 'def f (x : Nat) : Nat := x + 1\n', 'theorem t : 1 = 1 := rfl\n', '#eval 1 + 2\n', '#check Nat\n',
       '-- c\ndef x := 1 /- d -/\n', '/-- doc -/\ndef x := 1\n', 'namespace N\ndef x := 1\nend N\n', 'open Nat\n', 'import Mathlib\n',
@@ -799,20 +840,20 @@ export const NATIVE_GRAMMARS = Object.freeze([
       // follows, and an application whose argument is reduced alone where the
       // other parse shifts its first token is projected (`f a.b`).
       'def f := x[i]! + 1\n', 'example := by\n  apply f a.b\n',
-    ],
-    divergences: [
+    ]; },
+    get divergences() { return [
       {
         source: upstreamCorpus('native-lean', (_file, title) => title === LEAN_EXPLICIT_FUNCTION)[0],
         reason: LEAN_EXPLICIT_FUNCTION_REASON,
       },
-    ],
-    rejections: [
+    ]; },
+    get rejections() { return [
       ...leanCorpus(true),
       'def f :=', 'def', 'theorem t : := rfl\n', 'structure P where\n  x :\n', 'def f (x : Nat := x\n', '#eval (1 +\n', 'def s := "abc\n',
       '/- abc\n', 'def x := [1, 2\n', 'namespace\n', 'inductive\n',
       // The command ends before `!`, which a subscript reduces first.
       '#eval x[i]!\n',
-    ],
+    ]; },
   },
   {
     id: 'rocq',
@@ -830,7 +871,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // oracle recovers from, which the native grammar rejects, and a few
     // sources more.
     ...nativeGrammar('native-rocq'),
-    matches: [
+    get matches() { return [
       ...rocqCorpus(false),
       '', 'Definition x := 1.\n', 'Definition f (x : nat) : nat := x + 1.\n', 'Theorem t : 1 = 1.\nProof. reflexivity. Qed.\n',
       'Require Import Arith.\n', 'Check nat.\n', 'Compute 1 + 2.\n', '(* c *)\nDefinition x := 1. (* d *)\n', 'Module M.\nDefinition x := 1.\nEnd M.\n',
@@ -841,13 +882,13 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'Definition x := let y := 1 in y.\n', 'Open Scope nat_scope.\n', 'Set Implicit Arguments.\n', '#[local] Definition x := 1.\n',
       'Definition l := [1; 2].\n', 'Example e : 1 + 1 = 2.\nProof. simpl. reflexivity. Qed.\n', 'Axiom a : nat.\n', 'Fail Check x.\n',
       'Goal True.\nProof.\n  - exact I.\nQed.\n', 'Definition x := @id nat 1.\n', 'Definition f {A : Type} (x : A) := x.\n',
-    ],
+    ]; },
     divergences: [],
-    rejections: [
+    get rejections() { return [
       ...rocqCorpus(true),
       'Definition f :=', 'Definition', 'Definition x := 1', 'Definition f (x : nat := x.\n', 'Compute (1 +.\n', 'Definition s := "abc.\n',
       '(* abc\n', 'Module.\n', 'Inductive.\n', 'Definition x := [1; 2.\n', 'Theorem t : := I.\n',
-    ],
+    ]; },
   },
   {
     id: 'java',
@@ -865,7 +906,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // sources more; the rejections are the cases the oracle recovers from,
     // none at this revision, and a few sources more.
     ...nativeGrammar('native-java'),
-    matches: [
+    get matches() { return [
       ...javaCorpus(false),
       '', 'class A {}\n', 'public class A { int x = 1; }\n', 'interface I { void f(); }\n', 'enum E { A, B }\n',
       'record P(int x, int y) {}\n', 'package a.b;\nimport java.util.*;\n', 'class A { void f() { return; } }\n',
@@ -880,14 +921,14 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'class A { boolean b = x instanceof String s; }\n', 'class A { Object o = (String) x; }\n', 'class A { int x = a ? b : c; }\n',
       'class A { String s = """\n  text\n  """; }\n', 'class A { void f() throws E { throw new E(); } }\n', 'class A { static { x = 1; } }\n',
       'class A { A() { super(); } }\n', 'class A { void f() { synchronized (this) {} } }\n', 'module m { requires a; exports b; }\n',
-    ],
+    ]; },
     divergences: [],
-    rejections: [
+    get rejections() { return [
       ...javaCorpus(true),
       'class', 'class A {', 'class A { int x = ; }\n', 'class A { void f() { f(1, ); } }\n', 'class A { String s = "abc; }\n',
       '/* abc\nclass A {}\n', 'class { }\n', 'class A { void f( }\n', 'class A { int[] a = {1, 2; }\n', 'class A { void f() { if x {} } }\n',
       'import ;\n',
-    ],
+    ]; },
   },
   {
     id: 'go',
@@ -905,7 +946,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // sources more; the rejections are the cases the oracle recovers from,
     // and a few sources more.
     ...nativeGrammar('native-go'),
-    matches: [
+    get matches() { return [
       ...goCorpus(false),
       '', 'package main\n', 'package main\n\nimport "fmt"\n', 'package main\n\nimport (\n\t"fmt"\n\tos "os"\n)\n',
       'package main\n\nfunc main() {}\n', 'package main\n\nfunc f(x int, y string) (int, error) { return x, nil }\n',
@@ -924,14 +965,14 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'package main\n\nfunc f() {\n\tx++\n\ty -= 2\n}\n', 'package main\n\nvar b = !a && c || d\n',
       'package main\n\nvar c chan<- chan int\n', 'package main\n\nvar x = <-chan int(c)\n', 'package main\n\nvar x = a[b](c)\n',
       'package main\n\nfunc main() {\n\tx := a\n\ty := b\n}\n',
-    ],
+    ]; },
     divergences: [],
-    rejections: [
+    get rejections() { return [
       ...goCorpus(true),
       'package', 'package main\nfunc f() {', 'package main\nvar x = \n', 'package main\nfunc f() { g(1, }\n', 'package main\nvar s = "abc\n',
       'package main\n/* abc\n', 'package main\nimport (\n', 'package main\nvar a = []int{1, 2\n', 'package main\nfunc f() { if {} }\n',
       'package main\ntype struct {}\n', 'package main\ntype P struct { X int\n',
-    ],
+    ]; },
   },
   {
     id: 'regex',
@@ -948,22 +989,22 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // its upstream corpus at the same revision the oracle reads, and a few
     // sources more; the rejections are sources the oracle recovers from.
     ...nativeGrammar('native-regex'),
-    matches: [
+    get matches() { return [
       ...regexCorpus(false),
       'a', 'abc', 'a|b|c', '^a$', '\\bword\\B', 'a*b+c?', 'a*?b+?c??', 'a{2}', 'a{2,}', 'a{2,5}?', 'a{,5}', '[abc]', '[^a-z0-9_]',
       '[\\d\\s]', '[-a]', '[a-]', '(a)(b)', '(?:a|b)', '(?<year>\\d{4})-\\k<year>', '(?P<n>x)', '(?=a)', '(?!a)', '(?<=a)', '(?<!a)',
       '\\1', '\\cA', '\\n\\t', '\\u00e9', '\\u{1F600}', '\\p{L}', '\\P{Script=Greek}', '[[:alpha:]]', '(?i)abc', '(?i-m:abc)', '(?-s)x',
       '.', 'caf[eé]', '^(?<word>[a-zé]+)\\s*(\\d{2,4})?$|caf[eé]', 'a\nb', 'x\\.y', '\\/', '{1}', 'a{2}{3}', '[]', '[^]',
-    ],
+    ]; },
     divergences: [
       { source: 'a{', reason: REGEX_LITERAL_BRACKET },
       { source: '[[:alpha:]', reason: REGEX_LITERAL_BRACKET },
     ],
-    rejections: [
+    get rejections() { return [
       ...regexCorpus(true),
       '', '(ab[c', '(', ')', '[', ']', '(?', '(?<', '(?<a', '(?:', 'a|(', '[a', '\\', '(?P<>a)', '*', '+a', '?', 'a**', '(?<n>a', 'a)',
       '\\k<', '\\p{', '(?=', '(?i',
-    ],
+    ]; },
   },
   {
     id: 'graphql',
@@ -982,7 +1023,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // field take as their own, included; the rejections are sources the
     // oracle recovers from.
     ...nativeGrammar('native-graphql'),
-    matches: [
+    get matches() { return [
       ...graphqlCorpus(false),
       '{ a }', 'query { a }', 'query Q { a b c }', 'mutation M($id: ID!) { like(id: $id) { count } }', 'subscription S { events { id } }',
       'query Q($a: Int = 1, $b: [String!]! = ["x"]) @d { a }', 'query Q($a: Int, $b: Int) { a }', '{ alias: field(arg: 1) }', '{ f(o: {a: 1, b: 2}, x: [1, 2]) }',
@@ -996,14 +1037,14 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'extend interface I @d', 'extend union U = C', 'extend enum E { C }', 'extend input I { c: Int }', 'extend scalar S @d',
       'type Query {\n  user(id: ID!): User\n  users(first: Int = 10, after: String): [User!]!\n}\n\nquery Q {\n  user(id: "é") { name }\n}\n',
       '{ a(f: 0.5, g: 1E10, h: -0) }', '{ a(l: [], o: {}) }', 'query ($v: Int) { a(v: $v) }',
-    ],
+    ]; },
     divergences: [],
-    rejections: [
+    get rejections() { return [
       ...graphqlCorpus(true),
       '', '{', '}', '{ a', 'query', 'query Q', 'type', 'type T {', 'type T { a: }', '{ a(: 1) }', '{ a(b: ) }', 'union U =', 'enum E { A',
       'fragment F { a }', 'fragment on T { a }', 'directive @d', 'directive d on FIELD', 'schema { query }', '{ a(b: [1, 2) }', '{ a(b: {c: 1) }',
       'query Q($a) { a }', 'query Q($a: ) { a }', 'scalar', 'extend', '{ a } }', '"desc"', '{ a(s: "unterminated) }', '$a', '@d',
-    ],
+    ]; },
   },
   {
     id: 'proto',
@@ -1022,7 +1063,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // streaming services included; the rejections are sources the oracle
     // recovers from.
     ...nativeGrammar('native-proto'),
-    matches: [
+    get matches() { return [
       ...protoCorpus(false),
       '', 'syntax = "proto3";', "syntax = 'proto2';", 'edition = "2023";', 'package a.b.c;', 'import "x.proto";', 'import public "x.proto";',
       'import weak "x.proto";', 'option java_package = "com.x";', 'option (my.opt).sub = 1;', 'option (a) = { b: 1 c: "s" };', 'option a = 1.5e3;',
@@ -1034,14 +1075,14 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'service S { rpc F (stream Req) returns (stream Res) { option (x) = 1; } }', 'extend google.protobuf.MessageOptions { string my = 50000; }',
       '// c\nmessage M {}', '/* c */ message M {}', 'message M { int32 a = 1; // trailing\n }',
       'syntax = "proto3";\npackage p;\nimport "a.proto";\nmessage M {\n  string name = 1; // é\n}\n', 'message M { required group G = 1 { optional int32 a = 2; } }',
-    ],
+    ]; },
     divergences: [],
-    rejections: [
+    get rejections() { return [
       ...protoCorpus(true),
       'message', 'message M', 'message M {', 'message M { int32 a; }', 'message M { int32 a = ; }', 'syntax = ;', 'syntax "proto3";', 'import;', 'package;',
       'enum E { A }', 'service S { rpc F (A) (B); }', 'option = 1;', 'message M { map<string> m = 1; }', '}', 'message M { int32 a = 1 }', '"unterminated',
       'message M { int32 a = 1; } }', 'service S { rpc F (A) returns B; }', 'enum E { A = ; }', 'message M { reserved; }',
-    ],
+    ]; },
   },
   {
     id: 'make',
@@ -1061,7 +1102,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // recovers from (a custom .RECIPEPREFIX, which it does not read) and
     // sources it recovers from.
     ...nativeGrammar('native-make'),
-    matches: [
+    get matches() { return [
       ...makeCorpus(false),
       '', '\n', 'a = b\n', 'a := b\n', 'a ::= b\n', 'a ?= b\n', 'a += b\n', 'a != echo hi\n', 'a =\n', 'a = $(b) $(c)\n', 'a = ${b}\n', 'a = $(b:.c=.o)\n',
       'a = $(subst a,b,c)\n', 'a = $(shell ls)\n', 'a = $(wildcard *.c)\n', 'a = $(patsubst %.c,%.o,$(SRC))\n', 'a = $(foreach x,$(L),$(x).o)\n',
@@ -1073,14 +1114,14 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'ifeq ($(a),b)\nc = d\nendif\n', 'ifneq "a" "b"\nc = d\nelse\nc = e\nendif\n', 'ifdef a\nb = c\nelse ifndef d\ne = f\nendif\n', 'ifndef a\nendif\n',
       '# comment\n', 'a = b # c\n', 'all: # c\n\techo\n', 'a = b \\\n  c\n', 'a: b\n\t$(MAKE) $@\n', 'a: b\n\techo $(@D) $(<F) $^ $+ $? $* $%\n',
       'VPATH = a:b\n', '.RECIPEPREFIX = >\n', 'a.o: CFLAGS += -O2\n', 'a = é\n', 'ifeq a b\nendif\n', 'a: \nb: c\n',
-    ],
+    ]; },
     divergences: [],
-    rejections: [
+    get rejections() { return [
       ...makeCorpus(true),
       'ifeq (a,b\n', 'ifeq (a,b)\n', 'define a\nb\n', 'a = $(b\n', 'a: $(\n', 'endif\n', 'else\n', 'endef\n', 'a = ${b\n', 'ifdef\n', '\techo\n', 'export a = $(\n',
       'a: b\n\techo $(\n', 'vpath %.c $(\n', 'include $(\n', ':\n', '$(a\n', 'override\n',
       'a: private b = c\n', 'a: export b = c\n', '# café\nall: é\n', 'a:\nb\n', 'all:\necho\n', 'a: ;\n>b\n',
-    ],
+    ]; },
   },  {
     id: 'solidity',
     language: 'Solidity',
@@ -1098,7 +1139,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // and literals included; the rejections are sources the oracle recovers
     // from.
     ...nativeGrammar('native-solidity'),
-    matches: [
+    get matches() { return [
       ...solidityCorpus(false),
 
   '', 'pragma solidity ^0.8.0;\n', 'contract C {}\n', 'contract C { uint x; }\n', 'contract C { uint256 public x = 1; }\n',
@@ -1118,14 +1159,17 @@ export const NATIVE_GRAMMARS = Object.freeze([
   'contract C { function f() public { x = new D{value: 1}(2); } }\n', 'contract C { function f() public { x = a[1:2]; delete a; } }\n',
   'contract C { string s = unicode"é"; bytes b = hex"00ff"; }\n', 'contract C { uint x = 1 ether + 2 gwei; }\n', '// é\n/* é */\n',
   '/// @notice é\ncontract C {}\n', 'contract C { function f() public virtual override(A, B) {} }\n',
-    ],
+      "contract Plant {function build() public { target = new Seed{value: 7}(4); }}\n",
+      "contract Math {function sum() public returns(int) {return 9+4-2;}}\n",
+      "contract Math {function sum() public returns(int) {return 9-4+2;}}\n",
+    ]; },
     divergences: [],
-    rejections: [
+    get rejections() { return [
       ...solidityCorpus(true),
   'contract C {', 'contract C { function f( }\n', 'contract C { uint x = ; }\n', 'pragma solidity\n', 'contract { }\n', 'import ;\n',
   'contract C { function f() public { if (a { } } }\n', 'contract C { function f() public { x = (1; } }\n', 'contract C { struct S { } \n',
   'contract C { function f() public { return } }\n',
-    ],
+    ]; },
   },
 ]);
 
@@ -1164,64 +1208,130 @@ export function buildNativeGrammarFixture(entry) {
     if (repaired.rejection?.reason !== 'recovered') throw new Error(`${entry.grammar} does not recover from ${JSON.stringify(source)}`);
     return { source, recovered: renderSyntaxTree(repaired.tree) };
   });
-  const { id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds } = entry;
+  const { id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds, corpus, rootIncludesLeadingTrivia } = entry;
   return {
-    schemaVersion: 1, id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds, matches, divergences, rejections,
+    schemaVersion: 1, id, language, grammar, oracle, sources, ...(corpus ? { corpus } : {}), hidden, anonymous, extras, oracleKinds, ...(rootIncludesLeadingTrivia ? { rootIncludesLeadingTrivia } : {}), matches, divergences, rejections,
   };
 }
 
 export const fixturePath = (entry) => `parity/fixtures/native-grammars/${entry.id}.json`;
+
+// The pinned tree-sitter-nix revision has no upstream corpus cases. Keep that
+// evidence gap explicit and use independent Nix 2.28.8 manual-derived cases,
+// each tested against the pinned tree-sitter oracle in both runtimes.
+const NIX_REFERENCE = 'https://nix.dev/manual/nix/2.28/language/syntax';
+const NIX_REFERENCE_CASES = Object.freeze([
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Integer expression",
+    "source": "1"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "List literal",
+    "source": "[1 2 3]"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Attribute path definition",
+    "source": "{ a.b=1; }"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Recursive attribute set",
+    "source": "rec { x=1; y=x; }"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Let expression",
+    "source": "let x=1; in x"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Function expression",
+    "source": "x: x+1"
+  },
+  {
+    "file": "Nix 2.28.8 language syntax",
+    "title": "Inherit attributes",
+    "source": "{ inherit x y; }"
+  }
+]);
+
+/** Pinned corpus inputs; these are source cases, not execution evidence. */
+export function buildNativeGrammarCorpusSources(id) {
+  const entry = grammarSourceOf(`native-${id}`);
+  const upstream = corpusCases(entry);
+  const supplement = id === 'nix' && upstream.length === 0 ? NIX_REFERENCE_CASES : [];
+  return {
+    generatedBy: 'js/scripts/generate-native-grammar-fixtures.mjs',
+    sourceSha256: entry.corpus.sha256,
+    ...(supplement.length ? { supplementalReference: NIX_REFERENCE } : {}),
+    cases: [...upstream, ...supplement],
+  };
+}
 
 export const DEFAULT_CST_PATH = 'parity/fixtures/native-default-cst-expected.json';
 
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 
 /**
- * The default concrete syntax trees of the inventory sources of every
- * language a native grammar parses by default, in the rows of
+ * The default concrete syntax trees of one native grammar's inventory
+ * sources, in the rows of
  * parity/fixtures/default-cst-expected.json. A positive tree is the oracle's
  * tree of the source, which the native grammar must build; a recovery tree is
  * the native grammar's repair of the recovery source, which the oracle also
  * recovers from.
  */
-export function buildNativeDefaultCstExpected() {
-  const languages = {};
-  for (const entry of NATIVE_GRAMMARS) {
-    const language = inventory.languages.find(({ name }) => name === entry.language);
-    const catalog = languageEntry(entry.language);
-    if (catalog.grammars[0]?.id !== entry.nativeGrammar) {
-      throw new Error(`the catalog does not parse ${entry.language} with ${entry.nativeGrammar}`);
-    }
-    const parser = grammarParser(entry);
-    const positive = parser.parseTree(language.source);
-    if (!positive.ok) throw new Error(`${entry.grammar} rejects the ${entry.language} inventory source`);
-    const rows = oracleRows(language.source, entry.language);
-    if (JSON.stringify(nativeRows(positive.tree, language.source, entry)) !== JSON.stringify(rows)) {
-      throw new Error(`${entry.grammar} and ${entry.oracle} disagree on the ${entry.language} inventory source`);
-    }
-    if (!oracleRecovers(language.recoverySource, entry.language)) {
-      throw new Error(`the ${entry.oracle} oracle accepts the ${entry.language} recovery source`);
-    }
-    const repaired = parser.parseTree(language.recoverySource, { errorRecovery: true, recovery: 'accept' });
-    const recovery = nativeRows(repaired.tree, language.recoverySource, entry);
-    if (!hasRecovery(recovery)) throw new Error(`${entry.grammar} repairs the ${entry.language} recovery source without an ERROR or MISSING node`);
-    const versions = (grammars) => Object.fromEntries(grammars.map(({ id, version, parserSha256 }) => [id, { version, parserSha256 }]));
-    languages[entry.language] = {
-      grammars: versions(catalog.grammars),
-      oracleGrammars: versions(catalog.oracleGrammars),
-      sourceSha256: sha256(language.source),
-      recoverySourceSha256: sha256(language.recoverySource),
-      positive: rows,
-      recovery,
-      embedded: [],
-    };
+export function buildNativeDefaultLanguageExpected(entry) {
+  const language = inventory.languages.find(({ name }) => name === entry.language);
+  const catalog = languageEntry(entry.language);
+  if (catalog.grammars[0]?.id !== entry.nativeGrammar) {
+    throw new Error(`the catalog does not parse ${entry.language} with ${entry.nativeGrammar}`);
   }
+  const parser = grammarParser(entry);
+  const positive = parser.parseTree(language.source);
+  if (!positive.ok) throw new Error(`${entry.grammar} rejects the ${entry.language} inventory source`);
+  const rows = oracleRows(language.source, entry.language);
+  if (JSON.stringify(nativeRows(positive.tree, language.source, entry)) !== JSON.stringify(rows)) {
+    throw new Error(`${entry.grammar} and ${entry.oracle} disagree on the ${entry.language} inventory source`);
+  }
+  if (!oracleRecovers(language.recoverySource, entry.language)) {
+    throw new Error(`the ${entry.oracle} oracle accepts the ${entry.language} recovery source`);
+  }
+  const repaired = parser.parseTree(language.recoverySource, { errorRecovery: true, recovery: 'accept' });
+  const recovery = nativeRows(repaired.tree, language.recoverySource, entry);
+  if (!hasRecovery(recovery)) throw new Error(`${entry.grammar} repairs the ${entry.language} recovery source without an ERROR or MISSING node`);
+  // Keep independent host-region boundaries while native rows replace the
+  // host parser. Their source identity must still match the inventory source.
+  const oracle = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/default-cst-expected.json'), 'utf8')).languages[entry.language];
+  if (oracle?.embedded?.length && oracle.sourceSha256 !== sha256(language.source)) throw new Error(`the independent embedded-region source of ${entry.language} is stale`);
+  const versions = (grammars) => Object.fromEntries(grammars.map(({ id, version, parserSha256 }) => [id, { version, parserSha256 }]));
+  return {
+    grammars: versions(catalog.grammars),
+    oracleGrammars: versions(catalog.oracleGrammars),
+    sourceSha256: sha256(language.source),
+    recoverySourceSha256: sha256(language.recoverySource),
+    positive: rows,
+    recovery,
+    embedded: oracle?.embedded ?? [],
+  };
+}
+
+/** Catalog dialects sharing a native grammar each retain independent expectations. */
+export function nativeDefaultLanguages(entry) {
+  return inventory.languages.filter((language) => language.nativeGrammar === entry.nativeGrammar).map(({ name }) => name);
+}
+
+/** Every native default expectation and the shared embedded-region fixtures. */
+export function buildNativeDefaultCstExpected() {
+  const languages = Object.fromEntries(NATIVE_GRAMMARS.flatMap((entry) => nativeDefaultLanguages(entry).map((language) => [language, buildNativeDefaultLanguageExpected({ ...entry, language })])));
   return {
     description:
       'Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default, and of the embedded regions in those languages of the shared embedded-language fixtures. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
     generator: { script: 'js/scripts/generate-native-grammar-fixtures.mjs' },
     languages,
-    embeddedFixtures: nativeEmbeddedFixtures(),
+    embeddedFixtures: buildNativeEmbeddedFixtures(),
   };
 }
 
@@ -1233,7 +1343,7 @@ export function buildNativeDefaultCstExpected() {
  * a recovery region. The host grammar places the regions, so their bounds are
  * the oracle's. Only fixtures with such a region are listed.
  */
-function nativeEmbeddedFixtures() {
+export function buildNativeEmbeddedFixtures(only = null) {
   const oracle = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/default-cst-expected.json'), 'utf8')).embeddedFixtures;
   const evidence = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/issue-195-evidence.json'), 'utf8')).embedded;
   const fixtures = {};
@@ -1241,14 +1351,21 @@ function nativeEmbeddedFixtures() {
     const label = `${fixture.host} -> ${fixture.target}`;
     let native = false;
     const regions = (text, embedded, recovery) => embedded.map((region) => {
-      const entry = NATIVE_GRAMMARS.find(({ language }) => language === region.language);
-      if (!entry) return region;
+      const grammar = NATIVE_GRAMMARS.find((entry) => nativeDefaultLanguages(entry).includes(region.language));
+      const entry = grammar && { ...grammar, language: region.language };
+      if (!entry || (only && !only.includes(entry.id))) return region;
       native = true;
       const regionText = Buffer.from(text, 'utf8').subarray(region.startByte, region.endByte).toString('utf8');
       const parser = grammarParser(entry);
       if (!recovery) {
-        const positive = parser.parseTree(regionText);
-        if (!positive.ok || JSON.stringify(nativeRows(positive.tree, regionText, entry)) !== JSON.stringify(region.rows)) {
+        // The ordinary embedded API appends and clips a missing CSS terminator.
+        const trimmed = regionText.trimEnd();
+        const terminated = entry.id === 'css' && trimmed.length > 0 && !trimmed.endsWith(';') && !trimmed.endsWith('}') && !trimmed.includes('{');
+        const parseText = terminated ? `${regionText};` : regionText;
+        const positive = parser.parseTree(parseText);
+        const byteEnd = Buffer.byteLength(regionText);
+        const rows = nativeRows(positive.tree, parseText, entry).filter((row) => !(row[4] >= byteEnd && row[5] > byteEnd)).map((row) => row[5] > byteEnd ? [...row.slice(0, 5), byteEnd, row[6]] : row);
+        if (!positive.ok || JSON.stringify(rows) !== JSON.stringify(region.rows)) {
           throw new Error(`${entry.grammar} and ${entry.oracle} disagree on the ${region.path} region of ${label}`);
         }
         return region;
@@ -1265,7 +1382,7 @@ function nativeEmbeddedFixtures() {
     };
     if (native) fixtures[label] = entry;
   }
-  return fixtures;
+  return Object.fromEntries(Object.entries(fixtures).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
 }
 
 const ROW_KEYS = new Set(['rows', 'positive', 'recovery']);
@@ -1283,6 +1400,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   let stale = 0;
   const outputs = [
     ...NATIVE_GRAMMARS.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
+    ...['odin', 'xml', 'dtd', 'r', 'python', 'dart', 'nix', 'cmake', 'lua', 'toml', 'zig', 'pascal', 'vb', 'css', 'powershell', 'erlang', 'groovy'].map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
     [DEFAULT_CST_PATH, buildNativeDefaultCstExpected],
   ];
   for (const [relative, build] of outputs) {
@@ -1298,6 +1416,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       if (current !== text) {
         stale += 1;
         console.error(`${relative} is stale; run node scripts/generate-native-grammar-fixtures.mjs`);
+        if (relative === DEFAULT_CST_PATH && current !== null) {
+          const before = JSON.parse(current);
+          const after = JSON.parse(text);
+          for (const [language, expected] of Object.entries(after.languages)) {
+            if (JSON.stringify(before.languages[language]) !== JSON.stringify(expected)) console.error(`  changed language: ${language}`);
+          }
+          if (JSON.stringify(before.embeddedFixtures) !== JSON.stringify(after.embeddedFixtures)) console.error('  changed embedded fixtures');
+        }
       }
     } else {
       mkdirSync(path.dirname(file), { recursive: true });

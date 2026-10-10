@@ -284,6 +284,11 @@ impl JavaScriptParser {
 
     pub(super) fn unary(&mut self) -> Result<SExpr> {
         let token = self.peek();
+        if token.kind == TokenKind::Identifier && self.cursor.eat("typeof").is_some() {
+            let arg = self.unary()?;
+            let place = Span::new(token.start, arg.span.map_or(token.end, |arg| arg.end));
+            return Ok(node(SNode::TypeOf { arg: Box::new(arg) }, place));
+        }
         for (symbol, op) in [("!", UnaryOp::Not), ("-", UnaryOp::Neg)] {
             if self.cursor.eat(symbol).is_some() {
                 let arg = self.unary()?;
@@ -378,6 +383,62 @@ impl JavaScriptParser {
                 self.cursor.advance();
                 let field = self.cursor.advance();
                 if self.cursor.is("(") {
+                    let array_form =
+                        crate::translation::frontend_rules::read_array_method_form(&field.value);
+                    if !array_form.is_empty() {
+                        let args = self.arguments(&field.value)?;
+                        let place = Span::new(start, self.to_here(&token).end);
+                        expr = Self::array_method_expression(&array_form, args, Some(expr), place)?;
+                        continue;
+                    }
+                    let mapping = crate::translation::frontend_rules::read_string_map_operation(
+                        "JavaScript",
+                        &field.value,
+                    );
+                    if !mapping.is_empty() {
+                        let args = self.arguments(&field.value)?;
+                        if !args.is_empty() {
+                            return Err(unsupported(
+                                &format!(".{}() with {} arguments", field.value, args.len()),
+                                "string maps take no arguments",
+                                Some(self.to_here(&token)),
+                            ));
+                        }
+                        expr = node(
+                            SNode::StringMap {
+                                op: mapping,
+                                object: Box::new(expr),
+                            },
+                            self.to_here(&token),
+                        );
+                        continue;
+                    }
+                    let operation = crate::translation::frontend_rules::read_string_test_operation(
+                        "JavaScript",
+                        &field.value,
+                    );
+                    if !operation.is_empty() {
+                        let args = self.arguments(&field.value)?;
+                        if args.len() != 1 {
+                            return Err(unsupported(
+                                &format!(".{}() with {} arguments", field.value, args.len()),
+                                "search the whole string, with one argument",
+                                Some(self.to_here(&token)),
+                            ));
+                        }
+                        let place = Span::new(start, self.to_here(&token).end);
+                        expr = node(
+                            SNode::StringTest {
+                                op: operation,
+                                object: Box::new(expr),
+                                search: Box::new(
+                                    args.into_iter().next().expect("one search argument"),
+                                ),
+                            },
+                            place,
+                        );
+                        continue;
+                    }
                     if field.value != "toString" {
                         return Err(unsupported(
                             &format!("method call .{}()", field.value),
@@ -524,7 +585,7 @@ impl JavaScriptParser {
         if self.cursor.is("[") {
             return self.array_literal();
         }
-        if self.cursor.is("/") {
+        if token.kind == TokenKind::RegularExpression || self.cursor.is("/") {
             return Err(unsupported(
                 "regular expression",
                 "outside the portable core",
@@ -773,6 +834,11 @@ impl JavaScriptParser {
         if self.scope.locals.contains(&token.value) || self.scope.tdz.contains(&token.value) {
             return self.reference(&token);
         }
+        if let Some(value) = self.literal_bindings.get(&token.value) {
+            let mut value = value.clone();
+            value.span = Some(span(&token, &token));
+            return Ok(value);
+        }
         if self
             .assertion
             .as_ref()
@@ -817,6 +883,10 @@ impl JavaScriptParser {
         }
         let mut args = self.arguments(&name)?;
         let called = self.to_here(&token);
+        let array_form = crate::translation::frontend_rules::read_array_method_form(&name);
+        if array_form == "copy-from" || array_form == "construct" {
+            return Self::array_method_expression(&array_form, args, None, called);
+        }
         if name == "String" && args.len() == 1 {
             let arg = args.remove(0);
             return Ok(node(SNode::ToString { arg: Box::new(arg) }, called));
