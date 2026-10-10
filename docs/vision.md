@@ -955,3 +955,11 @@ the JavaScript package also excludes their oracle WebAssembly assets. Both
 ordinary parse paths retain the native Links grammars. Independent development
 parsers keep the original source revisions and the MSVC UTF-8 and stream-close
 build guarantees for oracle comparisons.
+
+The native R grammar is generated from pinned tree-sitter-r 1.3.0 sources.
+Shared `scoped-layout` scanner data records bracket-dependent line endings and
+continuation keywords; `quoted-counted` scanner data remembers raw-literal
+quotes, brackets and bounded marker counts. Both runtimes execute these Links
+operations, and the original parser remains a development oracle. Focused
+fixtures run locally; CI checks every pinned upstream corpus input. This
+single-source import does not complete the required multi-source grammar union.

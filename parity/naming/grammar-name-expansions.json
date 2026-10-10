@@ -3606,6 +3606,63 @@
       "concepts": {
         "for_expr": "grammar.collection-comprehension"
       }
+    },
+    "r": {
+      "names": {
+        "subset2": "element_subset",
+        "subset2_arguments": "element_subset_arguments",
+        "_external_open_bracket2": "external_open_double_bracket",
+        "_external_close_bracket2": "external_close_double_bracket",
+        "dot_dot_i": "indexed_dots",
+        "_identifier": "identifier_form",
+        "_open_bracket2": "open_double_bracket",
+        "_close_bracket2": "close_double_bracket",
+        "_argument_named": "named_argument",
+        "_argument_unnamed": "unnamed_argument",
+        "next": "continue_statement",
+        "false": "false_value",
+        "inf": "infinity_literal",
+        "nan": "not_a_number_literal",
+        "na": "missing_value_literal",
+        "_else": "else_keyword",
+        "dots": "variadic_argument",
+        "parameters": "parameter_list",
+        "integer": "integer_literal"
+      },
+      "sourceTransforms": [
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "identifier",
+          "pattern": "else|if|for|while|repeat|function|next|break|TRUE|FALSE|NULL|Inf|NaN|NA_integer_|NA_real_|NA_complex_|NA_character_|NA",
+          "continuationPattern": "[A-Za-z0-9_.\\u0080-\\u{10ffff}]",
+          "reason": "Reserved words retain lexical identity even when their syntax is incomplete, while identifier continuations remain identifiers."
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "binary_operator",
+          "value": 1,
+          "reason": "A continued infix expression stays one expression instead of splitting into an identifier and a following unary expression in a repeated body."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "argument",
+          "variants": [
+            "_argument_named",
+            "_argument_unnamed"
+          ],
+          "reason": "A named argument binds its argument name instead of parsing its assignment as an unnamed argument expression."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "identifier",
+          "pattern": "[rR][\"']",
+          "reason": "A raw-literal opening is one lexical token even when its matching closing delimiter is missing; it cannot become an identifier followed by a separate ordinary string."
+        }
+      ],
+      "concepts": {
+        "parameter": "parameter",
+        "argument": "argument"
+      }
     }
   },
   "concepts": {
@@ -3955,7 +4012,13 @@
           "reason": "The SQL character type stores strings; a type case is a branch selected by a value type. The lexical character/case synonym does not equate these grammar constructs."
         }
       ],
-      "grammar.collection-comprehension": []
+      "grammar.collection-comprehension": [],
+      "grammar.unnamed-argument": [
+        {
+          "reason": "An unnamed argument supplies a concrete call input without a name; a nameless parameter declares an input slot without a binding name.",
+          "id": "grammar.nameless-parameter"
+        }
+      ]
     }
   }
 }

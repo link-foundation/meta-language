@@ -96,6 +96,7 @@ test('checkConceptDistinctions rejects records that merge or fail to justify a r
       'grammar.symbol / grammar.keyword',
       'grammar.comment / grammar.block-comment',
       'grammar.null-keyword / grammar.nil-keyword',
+      'grammar.collection-comprehension / grammar.for-expression',
     ],
   );
   assert.equal(REQUIRED_FOUNDATION_DISTINCTIONS.length, 6);

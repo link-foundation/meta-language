@@ -110,6 +110,7 @@ macro_rules! native {
 
 fn natives() -> Vec<Native> {
     vec![
+        native!("native-r", "r", Some(|| tree_sitter_r::LANGUAGE.into())),
         native!(
             "native-hcl",
             "hcl",

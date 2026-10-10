@@ -1,0 +1,650 @@
+{
+  "schemaVersion": 1,
+  "id": "r",
+  "language": "R",
+  "grammar": "parity/grammars/native/r.lino",
+  "oracle": "crates.io tree-sitter-r 1.3.0",
+  "sources": [
+    "https://github.com/r-lib/tree-sitter-r/tree/f2289db204dda2bf7c7ea720de5c2a2c3eff2530",
+    "https://github.com/r-lib/tree-sitter-r/tree/f2289db204dda2bf7c7ea720de5c2a2c3eff2530/test/corpus"
+  ],
+  "corpus": {
+    "path": "test/corpus",
+    "file": "parity/grammars/sources/tree-sitter-r-1.3.0.corpus.json.gz",
+    "sha256": "b19de54975832d4203d63cecdbd6b49e06fa72cc6d09e8f9dddf450c25536d98",
+    "url": "https://github.com/r-lib/tree-sitter-r/tree/f2289db204dda2bf7c7ea720de5c2a2c3eff2530/test/corpus"
+  },
+  "hidden": [
+    "whitespace"
+  ],
+  "anonymous": [
+    "unnamed_token",
+    "number_literal"
+  ],
+  "extras": [
+    "comment",
+    "whitespace"
+  ],
+  "oracleKinds": {
+    "parameter_list": "parameters",
+    "parameter_with_default": "_parameter_with_default",
+    "parameter_without_default": "_parameter_without_default",
+    "parameter_name": "_parameter_name",
+    "element_subset": "subset2",
+    "element_subset_arguments": "subset2_arguments",
+    "named_argument": "_argument_named",
+    "unnamed_argument": "_argument_unnamed",
+    "argument_value": "_argument_value",
+    "integer_literal": "integer",
+    "hex_literal": "_hex_literal",
+    "number_literal": "_number_literal",
+    "float_literal": "_float_literal",
+    "raw_string": "_raw_string",
+    "single_quoted_string": "_single_quoted_string",
+    "double_quoted_string": "_double_quoted_string",
+    "single_quoted_string_content": "_single_quoted_string_content",
+    "double_quoted_string_content": "_double_quoted_string_content",
+    "variadic_argument": "dots",
+    "indexed_dots": "dot_dot_i",
+    "identifier_form": "_identifier",
+    "string_or_identifier": "_string_or_identifier",
+    "argument_name_string_or_identifier_or_null": "_argument_name_string_or_identifier_or_null",
+    "continue_statement": "next",
+    "false_value": "false",
+    "infinity_literal": "inf",
+    "not_a_number_literal": "nan",
+    "missing_value_literal": "na",
+    "expression": "_expression",
+    "else_keyword": "_else",
+    "open_parenthesis": "_open_parenthesis",
+    "close_parenthesis": "_close_parenthesis",
+    "open_brace": "_open_brace",
+    "close_brace": "_close_brace",
+    "open_bracket": "_open_bracket",
+    "close_bracket": "_close_bracket",
+    "open_double_bracket": "_open_bracket2",
+    "close_double_bracket": "_close_bracket2",
+    "start": "_start",
+    "newline": "_newline",
+    "semicolon": "_semicolon",
+    "raw_string_open": "_raw_string_open",
+    "raw_string_content": "_raw_string_content",
+    "raw_string_close": "_raw_string_close",
+    "external_else": "_external_else",
+    "external_open_parenthesis": "_external_open_parenthesis",
+    "external_close_parenthesis": "_external_close_parenthesis",
+    "external_open_brace": "_external_open_brace",
+    "external_close_brace": "_external_close_brace",
+    "external_open_bracket": "_external_open_bracket",
+    "external_close_bracket": "_external_close_bracket",
+    "external_open_double_bracket": "_external_open_bracket2",
+    "external_close_double_bracket": "_external_close_bracket2",
+    "error_sentinel": "_error_sentinel"
+  },
+  "rootIncludesLeadingTrivia": true,
+  "matches": [
+    {
+      "source": "",
+      "rows": [
+        [0,null,"program",1,0,0,""]
+      ]
+    },
+    {
+      "source": "# café\n",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"comment",1,0,7,"X"]
+      ]
+    },
+    {
+      "source": "x <- 1\n",
+      "rows": [
+        [0,null,"program",1,0,7,""],
+        [1,null,"binary_operator",1,0,6,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","float",1,5,6,""]
+      ]
+    },
+    {
+      "source": "x = -1.5\n",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"binary_operator",1,0,8,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","=",0,2,3,""],
+        [2,"rhs","unary_operator",1,4,8,""],
+        [3,"operator","-",0,4,5,""],
+        [3,"rhs","float",1,5,8,""]
+      ]
+    },
+    {
+      "source": "x <- TRUE\n",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"binary_operator",1,0,9,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","true",1,5,9,""]
+      ]
+    },
+    {
+      "source": "x <- NULL\n",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"binary_operator",1,0,9,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","null",1,5,9,""]
+      ]
+    },
+    {
+      "source": "x <- \"é😀\"\n",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"binary_operator",1,0,13,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,13,""],
+        [3,"open","string_open",1,5,6,""],
+        [3,"content","string_content",1,6,12,""],
+        [3,"close","string_close",1,12,13,""]
+      ]
+    },
+    {
+      "source": "x <- 'a'\n",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"binary_operator",1,0,8,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,8,""],
+        [3,"open","string_open",1,5,6,""],
+        [3,"content","string_content",1,6,7,""],
+        [3,"close","string_close",1,7,8,""]
+      ]
+    },
+    {
+      "source": "x <- r\"(hello)\"\n",
+      "rows": [
+        [0,null,"program",1,0,16,""],
+        [1,null,"binary_operator",1,0,15,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,15,""],
+        [3,"open","string_open",1,5,8,""],
+        [3,"content","string_content",1,8,13,""],
+        [3,"close","string_close",1,13,15,""]
+      ]
+    },
+    {
+      "source": "x <- R'--[é😀]--'\n",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"binary_operator",1,0,20,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,20,""],
+        [3,"open","string_open",1,5,10,""],
+        [3,"content","string_content",1,10,16,""],
+        [3,"close","string_close",1,16,20,""]
+      ]
+    },
+    {
+      "source": "x <- r\"{}\"\n",
+      "rows": [
+        [0,null,"program",1,0,11,""],
+        [1,null,"binary_operator",1,0,10,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,10,""],
+        [3,"open","string_open",1,5,8,""],
+        [3,"close","string_close",1,8,10,""]
+      ]
+    },
+    {
+      "source": "x <- r\"(())\"\n",
+      "rows": [
+        [0,null,"program",1,0,13,""],
+        [1,null,"binary_operator",1,0,12,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,12,""],
+        [3,"open","string_open",1,5,8,""],
+        [3,"content","string_content",1,8,10,""],
+        [3,"close","string_close",1,10,12,""]
+      ]
+    },
+    {
+      "source": "x <- r\"--(one )-\" two)--\"\n",
+      "rows": [
+        [0,null,"program",1,0,26,""],
+        [1,null,"binary_operator",1,0,25,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,25,""],
+        [3,"open","string_open",1,5,10,""],
+        [3,"content","string_content",1,10,21,""],
+        [3,"close","string_close",1,21,25,""]
+      ]
+    },
+    {
+      "source": "f <- function(x=1) { x+1 }\n",
+      "rows": [
+        [0,null,"program",1,0,27,""],
+        [1,null,"binary_operator",1,0,26,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","function_definition",1,5,26,""],
+        [3,"name","function",0,5,13,""],
+        [3,"parameters","parameters",1,13,18,""],
+        [4,"open","(",0,13,14,""],
+        [4,"parameter","parameter",1,14,17,""],
+        [5,"name","identifier",1,14,15,""],
+        [5,null,"=",0,15,16,""],
+        [5,"default","float",1,16,17,""],
+        [4,"close",")",0,17,18,""],
+        [3,"body","braced_expression",1,19,26,""],
+        [4,"open","{",0,19,20,""],
+        [4,"body","binary_operator",1,21,24,""],
+        [5,"lhs","identifier",1,21,22,""],
+        [5,"operator","+",0,22,23,""],
+        [5,"rhs","float",1,23,24,""],
+        [4,"close","}",0,25,26,""]
+      ]
+    },
+    {
+      "source": "if (x) y else z\n",
+      "rows": [
+        [0,null,"program",1,0,16,""],
+        [1,null,"if_statement",1,0,15,""],
+        [2,null,"if",0,0,2,""],
+        [2,"open","(",0,3,4,""],
+        [2,"condition","identifier",1,4,5,""],
+        [2,"close",")",0,5,6,""],
+        [2,"consequence","identifier",1,7,8,""],
+        [2,null,"else",0,9,13,""],
+        [2,"alternative","identifier",1,14,15,""]
+      ]
+    },
+    {
+      "source": "{if(x) y\nelse z}\n",
+      "rows": [
+        [0,null,"program",1,0,17,""],
+        [1,null,"braced_expression",1,0,16,""],
+        [2,"open","{",0,0,1,""],
+        [2,"body","if_statement",1,1,15,""],
+        [3,null,"if",0,1,3,""],
+        [3,"open","(",0,3,4,""],
+        [3,"condition","identifier",1,4,5,""],
+        [3,"close",")",0,5,6,""],
+        [3,"consequence","identifier",1,7,8,""],
+        [3,null,"else",0,9,13,""],
+        [3,"alternative","identifier",1,14,15,""],
+        [2,"close","}",0,15,16,""]
+      ]
+    },
+    {
+      "source": "{if(x) y\n# note\nelse z}\n",
+      "rows": [
+        [0,null,"program",1,0,24,""],
+        [1,null,"braced_expression",1,0,23,""],
+        [2,"open","{",0,0,1,""],
+        [2,"body","if_statement",1,1,22,""],
+        [3,null,"if",0,1,3,""],
+        [3,"open","(",0,3,4,""],
+        [3,"condition","identifier",1,4,5,""],
+        [3,"close",")",0,5,6,""],
+        [3,"consequence","identifier",1,7,8,""],
+        [3,null,"comment",1,9,15,"X"],
+        [3,null,"else",0,16,20,""],
+        [3,"alternative","identifier",1,21,22,""],
+        [2,"close","}",0,22,23,""]
+      ]
+    },
+    {
+      "source": "x[a[[1]]]\n",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"subset",1,0,9,""],
+        [2,"function","identifier",1,0,1,""],
+        [2,"arguments","arguments",1,1,9,""],
+        [3,"open","[",0,1,2,""],
+        [3,"argument","argument",1,2,8,""],
+        [4,"value","subset2",1,2,8,""],
+        [5,"function","identifier",1,2,3,""],
+        [5,"arguments","arguments",1,3,8,""],
+        [6,"open","[[",0,3,5,""],
+        [6,"argument","argument",1,5,6,""],
+        [7,"value","float",1,5,6,""],
+        [6,"close","]]",0,6,8,""],
+        [3,"close","]",0,8,9,""]
+      ]
+    },
+    {
+      "source": "x[[a[1]]]\n",
+      "rows": [
+        [0,null,"program",1,0,10,""],
+        [1,null,"subset2",1,0,9,""],
+        [2,"function","identifier",1,0,1,""],
+        [2,"arguments","arguments",1,1,9,""],
+        [3,"open","[[",0,1,3,""],
+        [3,"argument","argument",1,3,7,""],
+        [4,"value","subset",1,3,7,""],
+        [5,"function","identifier",1,3,4,""],
+        [5,"arguments","arguments",1,4,7,""],
+        [6,"open","[",0,4,5,""],
+        [6,"argument","argument",1,5,6,""],
+        [7,"value","float",1,5,6,""],
+        [6,"close","]",0,6,7,""],
+        [3,"close","]]",0,7,9,""]
+      ]
+    },
+    {
+      "source": "x <- f(\n1,\n2)\n",
+      "rows": [
+        [0,null,"program",1,0,14,""],
+        [1,null,"binary_operator",1,0,13,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","call",1,5,13,""],
+        [3,"function","identifier",1,5,6,""],
+        [3,"arguments","arguments",1,6,13,""],
+        [4,"open","(",0,6,7,""],
+        [4,"argument","argument",1,8,9,""],
+        [5,"value","float",1,8,9,""],
+        [4,null,"comma",1,9,10,""],
+        [4,"argument","argument",1,11,12,""],
+        [5,"value","float",1,11,12,""],
+        [4,"close",")",0,12,13,""]
+      ]
+    },
+    {
+      "source": "for (x in xs) print(x)\n",
+      "rows": [
+        [0,null,"program",1,0,23,""],
+        [1,null,"for_statement",1,0,22,""],
+        [2,null,"for",0,0,3,""],
+        [2,"open","(",0,4,5,""],
+        [2,"variable","identifier",1,5,6,""],
+        [2,null,"in",0,7,9,""],
+        [2,"sequence","identifier",1,10,12,""],
+        [2,"close",")",0,12,13,""],
+        [2,"body","call",1,14,22,""],
+        [3,"function","identifier",1,14,19,""],
+        [3,"arguments","arguments",1,19,22,""],
+        [4,"open","(",0,19,20,""],
+        [4,"argument","argument",1,20,21,""],
+        [5,"value","identifier",1,20,21,""],
+        [4,"close",")",0,21,22,""]
+      ]
+    },
+    {
+      "source": "while(TRUE) break\n",
+      "rows": [
+        [0,null,"program",1,0,18,""],
+        [1,null,"while_statement",1,0,17,""],
+        [2,null,"while",0,0,5,""],
+        [2,"open","(",0,5,6,""],
+        [2,"condition","true",1,6,10,""],
+        [2,"close",")",0,10,11,""],
+        [2,"body","break",1,12,17,""]
+      ]
+    },
+    {
+      "source": "x <- c(1,2) |> sum()\n",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"binary_operator",1,0,20,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","binary_operator",1,5,20,""],
+        [3,"lhs","call",1,5,11,""],
+        [4,"function","identifier",1,5,6,""],
+        [4,"arguments","arguments",1,6,11,""],
+        [5,"open","(",0,6,7,""],
+        [5,"argument","argument",1,7,8,""],
+        [6,"value","float",1,7,8,""],
+        [5,null,"comma",1,8,9,""],
+        [5,"argument","argument",1,9,10,""],
+        [6,"value","float",1,9,10,""],
+        [5,"close",")",0,10,11,""],
+        [3,"operator","|>",0,12,14,""],
+        [3,"rhs","call",1,15,20,""],
+        [4,"function","identifier",1,15,18,""],
+        [4,"arguments","arguments",1,18,20,""],
+        [5,"open","(",0,18,19,""],
+        [5,"close",")",0,19,20,""]
+      ]
+    },
+    {
+      "source": "library(stats)\n",
+      "rows": [
+        [0,null,"program",1,0,15,""],
+        [1,null,"call",1,0,14,""],
+        [2,"function","identifier",1,0,7,""],
+        [2,"arguments","arguments",1,7,14,""],
+        [3,"open","(",0,7,8,""],
+        [3,"argument","argument",1,8,13,""],
+        [4,"value","identifier",1,8,13,""],
+        [3,"close",")",0,13,14,""]
+      ]
+    },
+    {
+      "source": "x <- list(a=1,b=\"s\")\n",
+      "rows": [
+        [0,null,"program",1,0,21,""],
+        [1,null,"binary_operator",1,0,20,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","call",1,5,20,""],
+        [3,"function","identifier",1,5,9,""],
+        [3,"arguments","arguments",1,9,20,""],
+        [4,"open","(",0,9,10,""],
+        [4,"argument","argument",1,10,13,""],
+        [5,"name","identifier",1,10,11,""],
+        [5,null,"=",0,11,12,""],
+        [5,"value","float",1,12,13,""],
+        [4,null,"comma",1,13,14,""],
+        [4,"argument","argument",1,14,19,""],
+        [5,"name","identifier",1,14,15,""],
+        [5,null,"=",0,15,16,""],
+        [5,"value","string",1,16,19,""],
+        [6,"open","string_open",1,16,17,""],
+        [6,"content","string_content",1,17,18,""],
+        [6,"close","string_close",1,18,19,""],
+        [4,"close",")",0,19,20,""]
+      ]
+    },
+    {
+      "source": "# café\nsquare <- function(x) x^2\nvalues <- c(1, 2, 3)\nprint(sapply(values, square)) # é\n",
+      "rows": [
+        [0,null,"program",1,0,90,""],
+        [1,null,"comment",1,0,7,"X"],
+        [1,null,"binary_operator",1,8,33,""],
+        [2,"lhs","identifier",1,8,14,""],
+        [2,"operator","<-",0,15,17,""],
+        [2,"rhs","function_definition",1,18,33,""],
+        [3,"name","function",0,18,26,""],
+        [3,"parameters","parameters",1,26,29,""],
+        [4,"open","(",0,26,27,""],
+        [4,"parameter","parameter",1,27,28,""],
+        [5,"name","identifier",1,27,28,""],
+        [4,"close",")",0,28,29,""],
+        [3,"body","binary_operator",1,30,33,""],
+        [4,"lhs","identifier",1,30,31,""],
+        [4,"operator","^",0,31,32,""],
+        [4,"rhs","float",1,32,33,""],
+        [1,null,"binary_operator",1,34,54,""],
+        [2,"lhs","identifier",1,34,40,""],
+        [2,"operator","<-",0,41,43,""],
+        [2,"rhs","call",1,44,54,""],
+        [3,"function","identifier",1,44,45,""],
+        [3,"arguments","arguments",1,45,54,""],
+        [4,"open","(",0,45,46,""],
+        [4,"argument","argument",1,46,47,""],
+        [5,"value","float",1,46,47,""],
+        [4,null,"comma",1,47,48,""],
+        [4,"argument","argument",1,49,50,""],
+        [5,"value","float",1,49,50,""],
+        [4,null,"comma",1,50,51,""],
+        [4,"argument","argument",1,52,53,""],
+        [5,"value","float",1,52,53,""],
+        [4,"close",")",0,53,54,""],
+        [1,null,"call",1,55,84,""],
+        [2,"function","identifier",1,55,60,""],
+        [2,"arguments","arguments",1,60,84,""],
+        [3,"open","(",0,60,61,""],
+        [3,"argument","argument",1,61,83,""],
+        [4,"value","call",1,61,83,""],
+        [5,"function","identifier",1,61,67,""],
+        [5,"arguments","arguments",1,67,83,""],
+        [6,"open","(",0,67,68,""],
+        [6,"argument","argument",1,68,74,""],
+        [7,"value","identifier",1,68,74,""],
+        [6,null,"comma",1,74,75,""],
+        [6,"argument","argument",1,76,82,""],
+        [7,"value","identifier",1,76,82,""],
+        [6,"close",")",0,82,83,""],
+        [3,"close",")",0,83,84,""],
+        [1,null,"comment",1,85,89,"X"]
+      ]
+    },
+    {
+      "source": "\nx <- 1\n",
+      "rows": [
+        [0,null,"program",1,0,8,""],
+        [1,null,"binary_operator",1,1,7,""],
+        [2,"lhs","identifier",1,1,2,""],
+        [2,"operator","<-",0,3,5,""],
+        [2,"rhs","float",1,6,7,""]
+      ]
+    },
+    {
+      "source": "  x <- 1\n",
+      "rows": [
+        [0,null,"program",1,0,9,""],
+        [1,null,"binary_operator",1,2,8,""],
+        [2,"lhs","identifier",1,2,3,""],
+        [2,"operator","<-",0,4,6,""],
+        [2,"rhs","float",1,7,8,""]
+      ]
+    },
+    {
+      "source": "x <- r\"[ ]\"\n",
+      "rows": [
+        [0,null,"program",1,0,12,""],
+        [1,null,"binary_operator",1,0,11,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,11,""],
+        [3,"open","string_open",1,5,8,""],
+        [3,"content","string_content",1,8,9,""],
+        [3,"close","string_close",1,9,11,""]
+      ]
+    },
+    {
+      "source": "x <- r\"{é😀}\"\n",
+      "rows": [
+        [0,null,"program",1,0,17,""],
+        [1,null,"binary_operator",1,0,16,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,16,""],
+        [3,"open","string_open",1,5,8,""],
+        [3,"content","string_content",1,8,14,""],
+        [3,"close","string_close",1,14,16,""]
+      ]
+    },
+    {
+      "source": "{if(x) y\nelse_idx <- 1}\n",
+      "rows": [
+        [0,null,"program",1,0,24,""],
+        [1,null,"braced_expression",1,0,23,""],
+        [2,"open","{",0,0,1,""],
+        [2,"body","if_statement",1,1,8,""],
+        [3,null,"if",0,1,3,""],
+        [3,"open","(",0,3,4,""],
+        [3,"condition","identifier",1,4,5,""],
+        [3,"close",")",0,5,6,""],
+        [3,"consequence","identifier",1,7,8,""],
+        [2,"body","binary_operator",1,9,22,""],
+        [3,"lhs","identifier",1,9,17,""],
+        [3,"operator","<-",0,18,20,""],
+        [3,"rhs","float",1,21,22,""],
+        [2,"close","}",0,22,23,""]
+      ]
+    },
+    {
+      "source": "{if(x) y\nelseμ <- 1}\n",
+      "rows": [
+        [0,null,"program",1,0,22,""],
+        [1,null,"braced_expression",1,0,21,""],
+        [2,"open","{",0,0,1,""],
+        [2,"body","if_statement",1,1,8,""],
+        [3,null,"if",0,1,3,""],
+        [3,"open","(",0,3,4,""],
+        [3,"condition","identifier",1,4,5,""],
+        [3,"close",")",0,5,6,""],
+        [3,"consequence","identifier",1,7,8,""],
+        [2,"body","binary_operator",1,9,20,""],
+        [3,"lhs","identifier",1,9,15,""],
+        [3,"operator","<-",0,16,18,""],
+        [3,"rhs","float",1,19,20,""],
+        [2,"close","}",0,20,21,""]
+      ]
+    },
+    {
+      "source": "x <- r\"---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------(body)---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\"\n",
+      "rows": [
+        [0,null,"program",1,0,525,""],
+        [1,null,"binary_operator",1,0,524,""],
+        [2,"lhs","identifier",1,0,1,""],
+        [2,"operator","<-",0,2,4,""],
+        [2,"rhs","string",1,5,524,""],
+        [3,"open","string_open",1,5,263,""],
+        [3,"content","string_content",1,263,267,""],
+        [3,"close","string_close",1,267,524,""]
+      ]
+    }
+  ],
+  "divergences": [],
+  "rejections": [
+    {
+      "source": "x <-",
+      "recovered": "(program (unnamed_token \"\") (binary_operator lhs:(identifier (unnamed_token \"x\")) ~\" \" operator:\"<-\" rhs:(float (MISSING@4 hex_literal))))"
+    },
+    {
+      "source": "x <- function(",
+      "recovered": "(program (unnamed_token \"\") (binary_operator lhs:(identifier (unnamed_token \"x\")) ~\" \" operator:\"<-\" rhs:(function_definition ~\" \" name:\"function\" parameters:(parameter_list open:(\"'(\" \"(\") (MISSING@14 \"')\")) body:(float (MISSING@14 hex_literal)))))"
+    },
+    {
+      "source": "x <- \"unterminated",
+      "recovered": "(program (unnamed_token \"\") (binary_operator lhs:(identifier (unnamed_token \"x\")) ~\" \" operator:\"<-\" rhs:(string ~\" \" open:(string_open \"\\\"\") content:(string_content (unnamed_token \"unterminated\")) (MISSING@18 string_close))))"
+    },
+    {
+      "source": "x[[1]",
+      "recovered": "(program (unnamed_token \"\") (element_subset function:(identifier (unnamed_token \"x\")) arguments:(arguments open:(\"'[[\" \"[[\") argument:(argument value:(float (number_literal \"1\"))) (MISSING@4 \"']]\"))) (ERROR@4..5 \"]\"))"
+    },
+    {
+      "source": "{x <- 1",
+      "recovered": "(program (unnamed_token \"\") (braced_expression open:(\"'{\" \"{\") body:(binary_operator lhs:(identifier (unnamed_token \"x\")) ~\" \" operator:\"<-\" rhs:(float ~\" \" (number_literal \"1\"))) (MISSING@7 \"'}\")))"
+    },
+    {
+      "source": "x <- r\"(unterminated",
+      "recovered": "(program (unnamed_token \"\") (binary_operator lhs:(identifier (unnamed_token \"x\")) ~\" \" operator:\"<-\" rhs:(string ~\" \" open:(string_open \"r\\\"(\") (MISSING@8 string_close))) (identifier (unnamed_token \"unterminated\")))"
+    },
+    {
+      "source": "x <- r\"-(body)\"",
+      "recovered": "(program (unnamed_token \"\") (binary_operator lhs:(identifier (unnamed_token \"x\")) ~\" \" operator:\"<-\" rhs:(string ~\" \" open:(string_open \"r\\\"-(\") (MISSING@9 string_close))) (identifier (unnamed_token \"body\")) (ERROR@13..15 \")\\\"\"))"
+    },
+    {
+      "source": "if(x)",
+      "recovered": "(program (unnamed_token \"\") (if_statement \"if\" open:(\"'(\" \"(\") condition:(identifier (unnamed_token \"x\")) close:(\"')\" \")\") consequence:(float (MISSING@5 hex_literal))))"
+    },
+    {
+      "source": "x <- c(1,",
+      "recovered": "(program (unnamed_token \"\") (binary_operator lhs:(identifier (unnamed_token \"x\")) ~\" \" operator:\"<-\" rhs:(call function:(identifier ~\" \" (unnamed_token \"c\")) arguments:(arguments open:(\"'(\" \"(\") argument:(argument value:(float (number_literal \"1\"))) (comma \",\") (MISSING@9 \"')\")))))"
+    }
+  ]
+}

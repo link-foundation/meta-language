@@ -3821,6 +3821,91 @@
         [4,null,"}",0,26,26,"M"]
       ],
       "embedded": []
+    },
+    "R": {
+      "grammars": {
+        "native-r": {
+          "version": "1.0.0",
+          "parserSha256": "6e0e48cc157a9bd0b389ae32d277dbcfc1ed604f0ed27b6e21739058953c1de1"
+        }
+      },
+      "oracleGrammars": {
+        "r": {
+          "version": "1.3.0",
+          "parserSha256": "43ec2413de8aec823c76e6994991fe07d9877e019ab2e1892534a76ce81a0771"
+        }
+      },
+      "sourceSha256": "f3a1ac67ce888520f736d5db1a28c98103acb99fcee01ef64dd9457f2c42701a",
+      "recoverySourceSha256": "8e8e403a350c51893a24a6509016f8c6ef58f1112a062776a2bc8bf74fe7fb82",
+      "positive": [
+        [0,null,"program",1,0,90,""],
+        [1,null,"comment",1,0,7,"X"],
+        [1,null,"binary_operator",1,8,33,""],
+        [2,"lhs","identifier",1,8,14,""],
+        [2,"operator","<-",0,15,17,""],
+        [2,"rhs","function_definition",1,18,33,""],
+        [3,"name","function",0,18,26,""],
+        [3,"parameters","parameters",1,26,29,""],
+        [4,"open","(",0,26,27,""],
+        [4,"parameter","parameter",1,27,28,""],
+        [5,"name","identifier",1,27,28,""],
+        [4,"close",")",0,28,29,""],
+        [3,"body","binary_operator",1,30,33,""],
+        [4,"lhs","identifier",1,30,31,""],
+        [4,"operator","^",0,31,32,""],
+        [4,"rhs","float",1,32,33,""],
+        [1,null,"binary_operator",1,34,54,""],
+        [2,"lhs","identifier",1,34,40,""],
+        [2,"operator","<-",0,41,43,""],
+        [2,"rhs","call",1,44,54,""],
+        [3,"function","identifier",1,44,45,""],
+        [3,"arguments","arguments",1,45,54,""],
+        [4,"open","(",0,45,46,""],
+        [4,"argument","argument",1,46,47,""],
+        [5,"value","float",1,46,47,""],
+        [4,null,"comma",1,47,48,""],
+        [4,"argument","argument",1,49,50,""],
+        [5,"value","float",1,49,50,""],
+        [4,null,"comma",1,50,51,""],
+        [4,"argument","argument",1,52,53,""],
+        [5,"value","float",1,52,53,""],
+        [4,"close",")",0,53,54,""],
+        [1,null,"call",1,55,84,""],
+        [2,"function","identifier",1,55,60,""],
+        [2,"arguments","arguments",1,60,84,""],
+        [3,"open","(",0,60,61,""],
+        [3,"argument","argument",1,61,83,""],
+        [4,"value","call",1,61,83,""],
+        [5,"function","identifier",1,61,67,""],
+        [5,"arguments","arguments",1,67,83,""],
+        [6,"open","(",0,67,68,""],
+        [6,"argument","argument",1,68,74,""],
+        [7,"value","identifier",1,68,74,""],
+        [6,null,"comma",1,74,75,""],
+        [6,"argument","argument",1,76,82,""],
+        [7,"value","identifier",1,76,82,""],
+        [6,"close",")",0,82,83,""],
+        [3,"close",")",0,83,84,""],
+        [1,null,"comment",1,85,89,"X"]
+      ],
+      "recovery": [
+        [0,null,"program",1,0,16,""],
+        [1,null,"binary_operator",1,0,16,""],
+        [2,"lhs","identifier",1,0,5,""],
+        [2,"operator","<-",0,6,8,""],
+        [2,"rhs","call",1,9,16,""],
+        [3,"function","identifier",1,9,10,""],
+        [3,"arguments","arguments",1,10,16,""],
+        [4,"open","(",0,10,11,""],
+        [4,"argument","argument",1,11,12,""],
+        [5,"value","float",1,11,12,""],
+        [4,null,"comma",1,12,13,""],
+        [4,"argument","argument",1,14,15,""],
+        [5,"value","integer",1,14,15,""],
+        [6,null,"L",0,15,15,"M"],
+        [4,null,")",0,16,16,"M"]
+      ],
+      "embedded": []
     }
   },
   "embeddedFixtures": {

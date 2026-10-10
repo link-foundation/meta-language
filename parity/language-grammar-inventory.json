@@ -731,6 +731,22 @@
         "whitespace"
       ],
       "rootIncludesLeadingTrivia": true
+    },
+    "native-r": {
+      "version": "1.0.0",
+      "grammar": "parity/grammars/native/r.lino",
+      "hidden": [
+        "whitespace"
+      ],
+      "anonymous": [
+        "unnamed_token",
+        "number_literal"
+      ],
+      "extras": [
+        "comment",
+        "whitespace"
+      ],
+      "rootIncludesLeadingTrivia": true
     }
   },
   "languages": [
@@ -1154,12 +1170,13 @@
       "recoverySource": "value <- c(1, 2\n",
       "javascript": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-r"
+        "backend": "native Links Notation grammar native-r"
       },
       "rust": {
         "status": "grammar-cst",
-        "backend": "tree-sitter-r"
-      }
+        "backend": "native Links Notation grammar native-r"
+      },
+      "nativeGrammar": "native-r"
     },
     {
       "name": "Ruby",

@@ -418,7 +418,8 @@
       "version": "1.3.0",
       "parserSha256": "43ec2413de8aec823c76e6994991fe07d9877e019ab2e1892534a76ce81a0771",
       "wasmSha256": "8443d229942c1719c40fac5729e8d9252e48950aa2e0dbcf86c52bd38e875209",
-      "license": "r.LICENSE"
+      "license": "r.LICENSE",
+      "oracle": true
     },
     "racket": {
       "id": "racket",

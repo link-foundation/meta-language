@@ -112,7 +112,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   powershell: { crate: 'tree-sitter-powershell', dir: '.', oracle: true },
   proto: { crate: 'tree-sitter-proto', dir: '.', oracle: true },
   python: { crate: 'tree-sitter-python', dir: '.', oracle: true },
-  r: { crate: 'tree-sitter-r', dir: '.' },
+  r: { crate: 'tree-sitter-r', dir: '.', oracle: true },
   racket: { crate: 'tree-sitter-racket', dir: '.', oracle: true },
   regex: { crate: 'tree-sitter-regex', dir: '.', oracle: true },
   ruby: { crate: 'tree-sitter-ruby', dir: '.' },

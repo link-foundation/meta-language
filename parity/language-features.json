@@ -1115,7 +1115,11 @@
           "parity/fixtures/native-grammars/hcl.json",
           "parity/fixtures/native-grammars/hcl-corpus.json",
           "parity/fixtures/scanner-token-spans.json",
-          "rust/tests/unit/issue_195_grammar_native_hcl.rs"
+          "rust/tests/unit/issue_195_grammar_native_hcl.rs",
+          "parity/grammars/native/r.lino",
+          "parity/fixtures/native-grammars/r.json",
+          "parity/fixtures/native-grammars/r-corpus.json",
+          "rust/tests/unit/issue_195_grammar_native_r.rs"
         ]
       },
       "javascript": {
@@ -1200,7 +1204,12 @@
           "parity/fixtures/scanner-token-spans.json",
           "js/scripts/template-context-scanner.mjs",
           "js/experiments/build-hcl-scanner.mjs",
-          "js/tests/issue-195-grammar-native-hcl.test.js"
+          "js/tests/issue-195-grammar-native-hcl.test.js",
+          "parity/grammars/native/r.lino",
+          "parity/fixtures/native-grammars/r.json",
+          "parity/fixtures/native-grammars/r-corpus.json",
+          "js/experiments/build-r-scanner.mjs",
+          "js/tests/issue-195-grammar-native-r.test.js"
         ]
       }
     },

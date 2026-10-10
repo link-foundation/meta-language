@@ -1233,6 +1233,10 @@
           "name": "expression"
         },
         {
+          "source": "native:r",
+          "name": "expression"
+        },
+        {
           "source": "native:rust",
           "name": "expression"
         },
@@ -1516,6 +1520,10 @@
         },
         {
           "source": "native:python",
+          "name": "identifier"
+        },
+        {
+          "source": "native:r",
           "name": "identifier"
         },
         {
@@ -1978,6 +1986,10 @@
           "name": "string"
         },
         {
+          "source": "native:r",
+          "name": "string"
+        },
+        {
           "source": "native:racket",
           "name": "string"
         },
@@ -2118,6 +2130,10 @@
         {
           "source": "native:lua",
           "name": "null_value"
+        },
+        {
+          "source": "native:r",
+          "name": "null"
         },
         {
           "source": "native:tsx",
@@ -2333,6 +2349,10 @@
         },
         {
           "source": "native:python",
+          "name": "comment"
+        },
+        {
+          "source": "native:r",
           "name": "comment"
         },
         {
@@ -2908,6 +2928,10 @@
           "name": "escape_sequence"
         },
         {
+          "source": "native:r",
+          "name": "escape_sequence"
+        },
+        {
           "source": "native:racket",
           "name": "escape_sequence"
         },
@@ -2990,6 +3014,10 @@
         {
           "source": "native:proto",
           "name": "false"
+        },
+        {
+          "source": "native:r",
+          "name": "false_value"
         },
         {
           "source": "native:solidity",
@@ -3145,6 +3173,10 @@
         },
         {
           "source": "native:powershell",
+          "name": "program"
+        },
+        {
+          "source": "native:r",
           "name": "program"
         },
         {
@@ -4170,6 +4202,10 @@
           "name": "parameter"
         },
         {
+          "source": "native:r",
+          "name": "parameter"
+        },
+        {
           "source": "native:rust",
           "name": "parameter"
         },
@@ -4243,6 +4279,10 @@
         },
         {
           "source": "native:graphql",
+          "name": "argument"
+        },
+        {
+          "source": "native:r",
           "name": "argument"
         },
         {
@@ -6657,6 +6697,10 @@
           "name": "function_definition"
         },
         {
+          "source": "native:r",
+          "name": "function_definition"
+        },
+        {
           "source": "native:solidity",
           "name": "function_definition"
         }
@@ -8158,6 +8202,10 @@
           "name": "parameter_list"
         },
         {
+          "source": "native:r",
+          "name": "parameter_list"
+        },
+        {
           "source": "native:rust",
           "name": "parameters"
         },
@@ -8507,6 +8555,10 @@
           "name": "if_statement"
         },
         {
+          "source": "native:r",
+          "name": "if_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "if_statement"
         },
@@ -8699,6 +8751,10 @@
           "name": "while_statement"
         },
         {
+          "source": "native:r",
+          "name": "while_statement"
+        },
+        {
           "source": "native:solidity",
           "name": "while_statement"
         },
@@ -8830,6 +8886,10 @@
         },
         {
           "source": "native:python",
+          "name": "for_statement"
+        },
+        {
+          "source": "native:r",
           "name": "for_statement"
         },
         {
@@ -9042,6 +9102,10 @@
         },
         {
           "source": "native:python",
+          "name": "continue_statement"
+        },
+        {
+          "source": "native:r",
           "name": "continue_statement"
         },
         {
@@ -10226,6 +10290,10 @@
           "name": "parenthesized_expression"
         },
         {
+          "source": "native:r",
+          "name": "parenthesized_expression"
+        },
+        {
           "source": "native:rust",
           "name": "parenthesized_expression"
         },
@@ -10385,6 +10453,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "number_literal"
+        },
+        {
+          "source": "native:r",
           "name": "number_literal"
         },
         {
@@ -13840,6 +13912,10 @@
         },
         {
           "source": "native:python",
+          "name": "integer_literal"
+        },
+        {
+          "source": "native:r",
           "name": "integer_literal"
         },
         {
@@ -18061,6 +18137,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:r",
+          "name": "parameter_name"
+        },
+        {
           "source": "native:tsx",
           "name": "parameter_name"
         },
@@ -20833,6 +20913,10 @@
         {
           "source": "native:lean",
           "name": "named_argument"
+        },
+        {
+          "source": "native:r",
+          "name": "named_argument"
         }
       ],
       "formerNames": []
@@ -20997,6 +21081,10 @@
         },
         {
           "source": "native:python",
+          "name": "float"
+        },
+        {
+          "source": "native:r",
           "name": "float"
         },
         {
@@ -28602,12 +28690,16 @@
       "role": "concept",
       "definition": "A rule for a variadic argument, the construct the upstream grammar names variadic_argument.",
       "constraints": [
-        "Only the native Go grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:go",
+          "name": "variadic_argument"
+        },
+        {
+          "source": "native:r",
           "name": "variadic_argument"
         }
       ],
@@ -28864,6 +28956,10 @@
         },
         {
           "source": "native:proto",
+          "name": "float_literal"
+        },
+        {
+          "source": "native:r",
           "name": "float_literal"
         }
       ],
@@ -30425,6 +30521,10 @@
         },
         {
           "source": "native:hcl",
+          "name": "comma"
+        },
+        {
+          "source": "native:r",
           "name": "comma"
         }
       ],
@@ -33264,10 +33364,14 @@
       "role": "concept",
       "definition": "A rule for a call arguments, the construct the upstream grammar names _call_arguments.",
       "constraints": [
-        "Only the native Solidity grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "call_arguments"
+        },
         {
           "source": "native:solidity",
           "name": "call_arguments"
@@ -33895,12 +33999,16 @@
       "role": "concept",
       "definition": "A rule for a repeat statement, the construct the upstream grammar names repeat_statement.",
       "constraints": [
-        "Only the native Lua grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:lua",
+          "name": "repeat_statement"
+        },
+        {
+          "source": "native:r",
           "name": "repeat_statement"
         }
       ],
@@ -39360,6 +39468,10 @@
       "sourceAliases": [
         {
           "source": "native:pascal",
+          "name": "else_keyword"
+        },
+        {
+          "source": "native:r",
           "name": "else_keyword"
         },
         {
@@ -46584,6 +46696,10 @@
         {
           "source": "native:python",
           "name": "collection_call"
+        },
+        {
+          "source": "native:r",
+          "name": "call"
         }
       ],
       "formerNames": []
@@ -59658,6 +59774,10 @@
         {
           "source": "native:python",
           "name": "true"
+        },
+        {
+          "source": "native:r",
+          "name": "true"
         }
       ],
       "formerNames": []
@@ -61348,6 +61468,10 @@
         },
         {
           "source": "native:python",
+          "name": "binary_operator"
+        },
+        {
+          "source": "native:r",
           "name": "binary_operator"
         }
       ],
@@ -64686,12 +64810,16 @@
       "role": "concept",
       "definition": "A rule for an unary operator, the construct the upstream grammar names unary_operator.",
       "constraints": [
-        "Only the native Python grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:python",
+          "name": "unary_operator"
+        },
+        {
+          "source": "native:r",
           "name": "unary_operator"
         }
       ],
@@ -66144,6 +66272,624 @@
         {
           "source": "native:hcl",
           "name": "for_object_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-with-default",
+      "phrase": "parameter with default",
+      "role": "concept",
+      "definition": "A rule for a parameter with default, the construct the upstream grammar names _parameter_with_default.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "parameter_with_default"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-without-default",
+      "phrase": "parameter without default",
+      "role": "concept",
+      "definition": "A rule for a parameter without default, the construct the upstream grammar names _parameter_without_default.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "parameter_without_default"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.braced-expression",
+      "phrase": "braced expression",
+      "role": "concept",
+      "definition": "A rule for a braced expression, the construct the upstream grammar names braced_expression.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "braced_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.subset",
+      "phrase": "subset",
+      "role": "concept",
+      "definition": "A rule for a subset, the construct the upstream grammar names subset.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "subset"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.element-subset",
+      "phrase": "element subset",
+      "role": "concept",
+      "definition": "A rule for an element subset, the construct the upstream grammar names subset2.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "element_subset"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.subset-arguments",
+      "phrase": "subset arguments",
+      "role": "concept",
+      "definition": "A rule for a subset arguments, the construct the upstream grammar names subset_arguments.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "subset_arguments"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.element-subset-arguments",
+      "phrase": "element subset arguments",
+      "role": "concept",
+      "definition": "A rule for an element subset arguments, the construct the upstream grammar names subset2_arguments.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "element_subset_arguments"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.argument-value",
+      "phrase": "argument value",
+      "role": "concept",
+      "definition": "A rule for an argument value, the construct the upstream grammar names _argument_value.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "argument_value"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.extract-operator",
+      "phrase": "extract operator",
+      "role": "concept",
+      "definition": "A rule for an extract operator, the construct the upstream grammar names extract_operator.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "extract_operator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.namespace-operator",
+      "phrase": "namespace operator",
+      "role": "concept",
+      "definition": "A rule for a namespace operator, the construct the upstream grammar names namespace_operator.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "namespace_operator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.complex",
+      "phrase": "complex",
+      "role": "concept",
+      "definition": "A rule for a complex, the construct the upstream grammar names complex.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "complex"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.hex-literal",
+      "phrase": "hex literal",
+      "role": "concept",
+      "definition": "A rule for a hex literal, the construct the upstream grammar names _hex_literal.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "hex_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.raw-string",
+      "phrase": "raw string",
+      "role": "concept",
+      "definition": "A rule for a raw string, the construct the upstream grammar names _raw_string.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "raw_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.single-quoted-string",
+      "phrase": "single quoted string",
+      "role": "concept",
+      "definition": "A rule for a single quoted string, the construct the upstream grammar names _single_quoted_string.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "single_quoted_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.double-quoted-string",
+      "phrase": "double quoted string",
+      "role": "concept",
+      "definition": "A rule for a double quoted string, the construct the upstream grammar names _double_quoted_string.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "double_quoted_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.single-quoted-string-content",
+      "phrase": "single quoted string content",
+      "role": "concept",
+      "definition": "A rule for a single quoted string content, the construct the upstream grammar names _single_quoted_string_content.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "single_quoted_string_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.double-quoted-string-content",
+      "phrase": "double quoted string content",
+      "role": "concept",
+      "definition": "A rule for a double quoted string content, the construct the upstream grammar names _double_quoted_string_content.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "double_quoted_string_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.indexed-dots",
+      "phrase": "indexed dots",
+      "role": "concept",
+      "definition": "A rule for an indexed dots, the construct the upstream grammar names dot_dot_i.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "indexed_dots"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.identifier-form",
+      "phrase": "identifier form",
+      "role": "concept",
+      "definition": "A rule for an identifier form, the construct the upstream grammar names _identifier.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "identifier_form"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.string-or-identifier",
+      "phrase": "string or identifier",
+      "role": "concept",
+      "definition": "A rule for a string or identifier, the construct the upstream grammar names _string_or_identifier.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "string_or_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.argument-name-string-or-identifier-or-null",
+      "phrase": "argument name string or identifier or null",
+      "role": "concept",
+      "definition": "A rule for an argument name string or identifier or null, the construct the upstream grammar names _argument_name_string_or_identifier_or_null.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "argument_name_string_or_identifier_or_null"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.break",
+      "phrase": "break",
+      "role": "concept",
+      "definition": "A rule for a break, the construct the upstream grammar names break.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "break"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.open-parenthesis",
+      "phrase": "open parenthesis",
+      "role": "concept",
+      "definition": "A rule for an open parenthesis, the construct the upstream grammar names _open_parenthesis.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "open_parenthesis"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.close-parenthesis",
+      "phrase": "close parenthesis",
+      "role": "concept",
+      "definition": "A rule for a close parenthesis, the construct the upstream grammar names _close_parenthesis.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "close_parenthesis"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.open-brace",
+      "phrase": "open brace",
+      "role": "concept",
+      "definition": "A rule for an open brace, the construct the upstream grammar names _open_brace.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "open_brace"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.close-brace",
+      "phrase": "close brace",
+      "role": "concept",
+      "definition": "A rule for a close brace, the construct the upstream grammar names _close_brace.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "close_brace"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.open-bracket",
+      "phrase": "open bracket",
+      "role": "concept",
+      "definition": "A rule for an open bracket, the construct the upstream grammar names _open_bracket.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "open_bracket"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.close-bracket",
+      "phrase": "close bracket",
+      "role": "concept",
+      "definition": "A rule for a close bracket, the construct the upstream grammar names _close_bracket.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "close_bracket"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.open-double-bracket",
+      "phrase": "open double bracket",
+      "role": "concept",
+      "definition": "A rule for an open double bracket, the construct the upstream grammar names _open_bracket2.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "open_double_bracket"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.close-double-bracket",
+      "phrase": "close double bracket",
+      "role": "concept",
+      "definition": "A rule for a close double bracket, the construct the upstream grammar names _close_bracket2.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "close_double_bracket"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generate-scoped-layout-scanner",
+      "phrase": "generate scoped layout scanner",
+      "role": "operation",
+      "definition": "Generate executable scanner data for bracket-dependent line endings, separators and continuation keywords.",
+      "constraints": [
+        "Each bracket scope declares whether line endings continue an expression and whether continuation keywords may cross a line ending.",
+        "Both runtime executors consume the same generated Links Notation operations."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript scanner family generators",
+          "name": "scopedLayoutScanner"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generate-quoted-counted-scanner",
+      "phrase": "generate quoted counted scanner",
+      "role": "operation",
+      "definition": "Generate executable scanner data for raw literals whose closing quote, bracket and repeated marker count match their opening delimiter.",
+      "constraints": [
+        "Remember quote, bracket and marker count independently; candidate closing sequences remain content unless every component matches.",
+        "Enforce the configured marker bound and reset remembered state after closing a literal."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript scanner family generators",
+          "name": "quotedCountedScanner"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unnamed-argument",
+      "phrase": "unnamed argument",
+      "role": "concept",
+      "definition": "A rule for an unnamed argument, the construct the upstream grammar names _argument_unnamed.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "unnamed_argument"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "reason": "An unnamed argument supplies a concrete call input without a name; a nameless parameter declares an input slot without a binding name.",
+          "id": "grammar.nameless-parameter"
+        }
+      ]
+    },
+    {
+      "id": "grammar.infinity-literal",
+      "phrase": "infinity literal",
+      "role": "concept",
+      "definition": "A rule for an infinity literal, the construct the upstream grammar names inf.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "infinity_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.not-a-number-literal",
+      "phrase": "not a number literal",
+      "role": "concept",
+      "definition": "A rule for a not a number literal, the construct the upstream grammar names nan.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "not_a_number_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.missing-value-literal",
+      "phrase": "missing value literal",
+      "role": "concept",
+      "definition": "A rule for a missing value literal, the construct the upstream grammar names na.",
+      "constraints": [
+        "Only the native R grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:r",
+          "name": "missing_value_literal"
         }
       ],
       "formerNames": []

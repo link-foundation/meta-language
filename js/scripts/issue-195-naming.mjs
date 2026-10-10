@@ -554,6 +554,13 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `grammar.generate-${name}`,
   },
   {
+    inventory: 'contextual bracket and raw literal scanner generators',
+    files: ['js/scripts/scoped-layout-scanner.mjs', 'js/scripts/quoted-counted-scanner.mjs'],
+    extract: (text) => captures(text, /^export function (scopedLayoutScanner|quotedCountedScanner)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.generate-${name}`,
+  },
+  {
     inventory: 'native grammar embedding generator',
     files: ['js/scripts/build-language-catalog.mjs'],
     extract: (text) => captures(text, /^export function (nativeGrammarRustSource)\(/gmu)

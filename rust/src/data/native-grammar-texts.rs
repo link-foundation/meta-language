@@ -101,6 +101,10 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
         include_str!("native-grammars/python.lino"),
     ),
     (
+        "native-grammars/r.lino",
+        include_str!("native-grammars/r.lino"),
+    ),
+    (
         "native-grammars/racket.lino",
         include_str!("native-grammars/racket.lino"),
     ),

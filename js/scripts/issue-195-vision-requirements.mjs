@@ -225,6 +225,17 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_hcl.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-R',
+    area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/r.json',
+    construct: 'generated native R grammar with shared quoted counted delimiter and scoped layout scanner data',
+    expectedBehavior:
+      'The automatic import pipeline generates the canonical native R grammar from pinned tree-sitter-r 1.3.0 sources and records its naming decisions and scanner provenance. Both executors match the independent oracle on the focused fixture and every input in the pinned upstream corpus, preserve every accepted source byte, and reject and losslessly recover invalid sources. The ordinary R and r parses use the shipped native grammar in both packages; the Rust oracle crate is a development dependency. Raw literals remember their quote, bracket and bounded marker count. Contextual bracket scopes control line endings and continuation keywords, including nested indexing, Unicode content, closing lookalikes, identifier boundaries and state reset.',
+    assertions: ['nativeRCatalogDispatch', 'nativeRGrammarIsCanonicalLinks', 'nativeRTreesMatchOracle', 'nativeRTreesLossless', 'nativeRRejectsInvalidInput', 'nativeRUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-native-r.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_r.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS',
     area: 'native-grammar',
     specification: 'grammar-feature-union',
