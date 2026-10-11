@@ -69,6 +69,21 @@ jobs:
         run: npm ci
         working-directory: js
 
+      # A short-lived, reproducible workspace snapshot makes parser failures
+      # locally debuggable without changing the grammar assertions.
+      - name: Pack issue 199 debugging workspace
+        if: matrix.group == 'tooling'
+        run: tar -czf /tmp/issue-199-workspace.tgz --exclude=.git --exclude=node_modules/.cache .
+
+      - name: Export issue 199 debugging workspace
+        if: matrix.group == 'tooling'
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-199-workspace
+          path: /tmp/issue-199-workspace.tgz
+          retention-days: 1
+          if-no-files-found: error
+
       - name: Run the test group
         env:
           TEST_GROUP: ${{ matrix.group }}
