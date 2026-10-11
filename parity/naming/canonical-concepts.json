@@ -2493,7 +2493,7 @@
       "role": "concept",
       "definition": "A rule for a CSV field that holds a whole number.",
       "constraints": [
-        "Native grammars share this concept only where the construct means the same in each language."
+        "Only the native csv grammar associates a numeric field token with the CSV integer-field concept; other languages' integer literals are distinct constructs."
       ],
       "sourceAliases": [
         {

@@ -8776,6 +8776,78 @@
           "whitespace"
         ]
       ]
+    },
+    {
+      "construct": "atom",
+      "concept": "grammar.atom",
+      "rules": [
+        [
+          "native-agda",
+          "atom"
+        ],
+        [
+          "native-erlang",
+          "atom"
+        ],
+        [
+          "native-lean",
+          "atom"
+        ]
+      ]
+    },
+    {
+      "construct": "instance declaration",
+      "concept": "grammar.instance-declaration",
+      "rules": [
+        [
+          "native-agda",
+          "instance_declaration"
+        ],
+        [
+          "native-lean",
+          "instance_declaration"
+        ],
+        [
+          "native-rocq",
+          "instance_command"
+        ]
+      ]
+    },
+    {
+      "construct": "lambda",
+      "concept": "grammar.lambda",
+      "rules": [
+        [
+          "native-agda",
+          "lambda"
+        ],
+        [
+          "native-pascal",
+          "lambda"
+        ],
+        [
+          "native-python",
+          "lambda"
+        ]
+      ]
+    },
+    {
+      "construct": "where clause",
+      "concept": "grammar.where-clause",
+      "rules": [
+        [
+          "native-agda",
+          "where_clause"
+        ],
+        [
+          "native-odin",
+          "where_clause"
+        ],
+        [
+          "native-rust",
+          "where_clause"
+        ]
+      ]
     }
   ],
   "lookalikes": [
