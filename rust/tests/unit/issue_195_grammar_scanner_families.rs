@@ -258,3 +258,10 @@ fn fragment_contexts_and_counted_content_match_shared_trees() {
         test_name: "fragment_contexts_and_counted_content_match_shared_trees",
     });
 }
+
+#[test]
+fn structured_scanner_contexts_match_shared_trees_and_reject_malformed_boundaries() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-structured-contexts.json"
+    ));
+}
