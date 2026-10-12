@@ -18,6 +18,14 @@ function field(network, parent, label) {
 function scalarByField(network, label, value) {
   return network.fieldRelations().find((relation) => relation.label === label && network.link(relation.child).metadata().definition === value)?.child;
 }
+function construct(network, kind) {
+  return network.fieldRelations().find((relation) => relation.label === 'construct kind' && network.link(relation.child).metadata().definition === kind)?.parent;
+}
+function replaceField(network, parent, label, child) {
+  const relation = network.fieldRelations().find((item) => item.parent.equals(parent) && item.label === label);
+  assert.ok(relation, `missing ${label} relation`);
+  relation.link.setReferences([parent, relation.link.references()[1], child]);
+}
 
 for (const [language, source] of [
   ['JavaScript', 'function add(a,b) { return a+b; } console.log(add(2,3));'],
@@ -100,6 +108,56 @@ test('declaration retargeting preserves checked call signatures and uses actual 
   const target = archive.network.fieldRelations().find(({ child }) => child.asU64() === declarationName.asU64()).parent;
   reference.link.setReferences([reference.parent, reference.link.references()[1], target]);
   assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), ['6']);
+});
+
+test('function reference retargeting rejects incompatible callable signatures', () => {
+  const archive = roundTrip(createTypedProgramLinks('function g(a){return a+1;}function h(a,b){return a+b;}const fn=g;console.log(fn(2));', 'JavaScript'));
+  assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), ['3']);
+  const functionReference = construct(archive.network, 'functionRef');
+  const targetName = scalarByField(archive.network, 'full name', 'h');
+  const target = archive.network.fieldRelations().find((relation) => relation.child.equals(targetName)).parent;
+  replaceField(archive.network, functionReference, 'declaration reference', target);
+  for (const language of ['JavaScript', 'Rust']) {
+    assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, language), /inconsistent function reference type/u);
+  }
+});
+
+for (const [changedField, message] of [
+  ['branch', 'conditional branch types'], ['result', 'conditional result type'], ['condition', 'conditional condition type'],
+]) {
+  test(`conditional ${changedField} type edits cannot bypass checked semantics`, () => {
+    const archive = roundTrip(createTypedProgramLinks('/** @param {boolean} flag */function choose(flag){if(flag){return 1;}return 2;}console.log(choose(true)+3);', 'JavaScript'));
+    assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), ['4']);
+    const conditional = construct(archive.network, 'if');
+    const textKind = scalarByField(archive.network, 'kind', 'string');
+    const textType = archive.network.fieldRelations().find((relation) => relation.child.equals(textKind)).parent;
+    const owner = changedField === 'branch' ? field(archive.network, conditional, 'then')
+      : changedField === 'condition' ? field(archive.network, conditional, 'condition') : conditional;
+    replaceField(archive.network, owner, 'type', textType);
+    for (const language of ['JavaScript', 'Rust']) {
+      assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, language), new RegExp(message, 'u'));
+    }
+  });
+}
+
+test('unary policy and text conversion result edits retain their checked types', () => {
+  const source = 'function neg(a){return -a;}console.log(neg(2));';
+  const numeric = roundTrip(createTypedProgramLinks(source, 'JavaScript'));
+  const policy = field(numeric.network, construct(numeric.network, 'unary'), 'semantics');
+  numeric.network.link(policy).setMetadata(numeric.network.link(policy).metadata().withDefinition('exact'));
+  assert.throws(() => emitTypedProgramLinks(numeric.network, numeric.root, 'JavaScript'), /inconsistent numeric semantics/u);
+  const text = roundTrip(createTypedProgramLinks(source, 'JavaScript'));
+  assert.deepEqual(run(emitTypedProgramLinks(text.network, text.root, 'JavaScript').code), ['-2']);
+  replaceField(text.network, construct(text.network, 'toString'), 'type', field(text.network, construct(text.network, 'unary'), 'type'));
+  assert.throws(() => emitTypedProgramLinks(text.network, text.root, 'JavaScript'), /inconsistent text conversion result type/u);
+});
+
+test('shared type paths are bounded before canonical type equality expands them', () => {
+  const program = checkProgram(parseJavaScript('function add(a,b){return a+b;}'));
+  let shared = { kind: 'float' };
+  for (let index = 0; index < 17; index += 1) shared = { kind: 'tuple', elements: [shared, shared] };
+  program.declarations.get('add').params[0].type = shared;
+  assert.throws(() => encodeTypedProgramLinks(program), /semantic resource limit/u);
 });
 
 test('malformed semantic edits cannot bypass typing, identity or structural bounds', () => {

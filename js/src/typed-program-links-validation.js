@@ -1,5 +1,6 @@
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
+import { acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence } from './typed-program-link-rules.js';
 
 const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'output']);
 
@@ -22,16 +23,23 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
     active.delete(value);
   }
   bounded(program);
+  // Shared records can describe exponentially many expression paths. Bound
+  // the semantic walk as well as the number of unique structural records.
+  let semanticVisits = 0;
+  function visit() {
+    if (++semanticVisits > 100_000) throw new TypeError('the linked program exceeds its semantic resource limit');
+  }
   function type(value) {
+    visit();
     if (!value || typeof value !== 'object' || typeof value.kind !== 'string') throw new TypeError('the linked program contains a malformed type');
     if (primitives.has(value.kind)) return;
     if (value.kind === 'fixed') {
-      if (![8, 16, 32, 64, 128].includes(value.bits) || typeof value.signed !== 'boolean') throw new TypeError('the linked program contains an invalid machine integer type');
+      if (!Number.isSafeInteger(value.bits) || !acceptProgramMachineIntegerWidth(String(value.bits)) || typeof value.signed !== 'boolean') throw new TypeError('the linked program contains an invalid machine integer type');
     } else if (value.kind === 'data') {
       if (typeof value.name !== 'string' || !value.name) throw new TypeError('a linked data type has no name');
     } else if (['array', 'set', 'option', 'cell'].includes(value.kind)) {
       type(value.element);
-      if (value.kind === 'option' && !['null', 'undefined', 'both'].includes(value.absence ?? 'both')) throw new TypeError('a linked optional type has an invalid absence policy');
+      if (value.kind === 'option' && !acceptProgramOptionalAbsence(value.absence ?? 'both')) throw new TypeError('a linked optional type has an invalid absence policy');
     } else if (value.kind === 'tuple') value.elements.forEach(type);
     else if (value.kind === 'record') value.fields.forEach((field) => type(field.type));
     else if (value.kind === 'map') { type(value.key); type(value.value); }
@@ -51,6 +59,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
   };
   function expression(node, environment) {
     if (!node || typeof node !== 'object') return;
+    visit();
     if (node.type && node.k) type(node.type);
     if (node.span && (!Number.isSafeInteger(node.span.start) || !Number.isSafeInteger(node.span.end)
       || node.span.start < 0 || node.span.end < node.span.start)) throw new TypeError('a linked source span is invalid');
@@ -91,11 +100,14 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
       same(node.type, binder.k === 'let' ? binder.value?.type : binder.type, 'variable type');
       return;
     }
-    if (node.k === 'call' || node.k === 'functionValue') {
+    if (node.k === 'call' || node.k === 'functionRef') {
       const declaration = declarations.get(node.fn);
       if (!declaration) throw new TypeError(`the linked declaration reference ${node.fn} is unresolved`);
       if (references.get(node)?.target && references.get(node).target !== declaration) throw new TypeError('the linked declaration reference targets a different declaration');
-      if (node.k === 'call') {
+      if (node.k === 'functionRef') {
+        if (declaration.k === 'const') throw new TypeError('a linked function reference targets a constant');
+        same(node.type, { kind: 'function', params: declaration.params.map((parameter) => parameter.type), ret: declaration.ret }, 'function reference type');
+      } else {
         const arguments_ = node.args ?? [];
         if (declaration.k === 'const') {
           if (arguments_.length) throw new TypeError('a linked constant reference has arguments');
@@ -106,6 +118,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
           same(node.type, declaration.ret, 'call return type');
         }
       }
+      return;
     }
     if (node.k === 'let') {
       expression(node.value, environment);
@@ -137,6 +150,24 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
         same(node.value.type, node.cell.type.element, 'cell write type');
         same(node.type, node.body.type, 'cell write result type');
       }
+    }
+    if (node.k === 'if') {
+      same(node.cond.type, { kind: 'bool' }, 'conditional condition type');
+      same(node.then.type, node.else.type, 'conditional branch types');
+      same(node.type, node.then.type, 'conditional result type');
+    }
+    if (node.k === 'unary') {
+      same(node.type, node.arg.type, 'unary result type');
+      if (node.op === 'not') {
+        if (node.type.kind !== 'bool') throw new TypeError('a linked logical negation has a nonboolean type');
+      } else if (node.op === 'neg') {
+        const policy = { float: 'ieee', int: 'exact', fixed: 'checked' }[node.type.kind];
+        if (!policy || node.semantics !== policy || (node.type.kind === 'fixed' && !node.type.signed)) throw new TypeError('a linked negation has inconsistent numeric semantics');
+      } else throw new TypeError('a linked unary operation has no checked semantics');
+    }
+    if (node.k === 'toString') {
+      same(node.type, { kind: 'string' }, 'text conversion result type');
+      if (!['nat', 'int', 'float', 'fixed', 'string', 'bool'].includes(node.arg.type?.kind)) throw new TypeError('a linked text conversion has an unsupported operand type');
     }
     if (node.k === 'binary') {
       same(node.left.type, node.right.type, 'binary operand types');
@@ -172,6 +203,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
   }
   function findVariableType(node, name) {
     if (!node || typeof node !== 'object') return undefined;
+    visit();
     if (node.k === 'var' && node.name === name) return node.type;
     for (const value of Object.values(node)) {
       if (Array.isArray(value)) { for (const child of value) { const found = findVariableType(child, name); if (found) return found; } }
