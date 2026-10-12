@@ -1,0 +1,1 @@
+C# native grammar generation now keeps base-type generics and constructor arguments attached to their base list, and selects complete switch patterns before label colons while retaining expression fallbacks. The recorded context preferences resolve class and switch ambiguities without removing source productions or changing parser budgets.
