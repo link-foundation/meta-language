@@ -71,6 +71,7 @@ class Inference {
     this.conditions = [];
     this.joins = [];
     this.results = [];
+    this.calls = [];
   }
 
   fresh(bigint = false) {
@@ -334,13 +335,32 @@ class Inference {
       for (const { signature, body } of this.results) {
         if (signature.declaredRet && !this.additionalAbsence(body, signature.declaredRet)) continue;
         const actual = this.resolve(body);
-        if (actual.kind !== 'option' && !this.additionalAbsence(body, signature.declaredRet)) continue;
+        if (actual.kind === 'var') continue;
         if (signature.ret.kind === 'var' && this.resolve(signature.ret) !== actual) {
           if (!this.contains(actual, signature.ret.id)) {
             this.bindings[signature.ret.id] = actual;
             progress = true;
           }
         }
+      }
+      for (const { signature, args, where } of this.calls) {
+        args.forEach((arg, index) => {
+          const param = signature.params[index];
+          const actual = this.resolve(arg);
+          if (param?.kind === 'var' && actual.kind === 'option') {
+            const current = this.resolve(param);
+            if (current.kind === 'option') {
+              this.unify(current.element, actual.element, where);
+              if (current.absence !== actual.absence && current.absence !== 'both') {
+                current.absence = 'both';
+                progress = true;
+              }
+            } else if (!this.contains(actual, param.id)) {
+              this.bindings[param.id] = { ...actual };
+              progress = true;
+            }
+          }
+        });
       }
       for (const constraint of [...this.recordSpreads]) {
         if (constraint.entries.some((entry) => entry.spread && this.resolve(entry.type).kind === 'var')) continue;
@@ -780,6 +800,7 @@ class Inference {
     const signature = this.signature(path);
     const argTypes = args.map((arg, index) => this.expr(arg, env, signature?.params[index]));
     if (!signature || !acceptArgumentCount(signature.defaults, args.length)) return this.fresh();
+    this.calls.push({ signature, args: argTypes, where });
     argTypes.forEach((type, index) => {
       const param = signature.params[index];
       this.unify(type, param, args[index].span ?? where);

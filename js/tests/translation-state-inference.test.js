@@ -85,3 +85,31 @@ test('a captured cell survives lifted loops without becoming a copied loop resul
 }
 console.log(count());`);
 });
+
+test('lifted loops retain nullable values inferred after their capture signatures are created', () => {
+  const source = `function seenEarlier(values, at) {
+  const value = values[at];
+  let other = 0;
+  while (other < at) {
+    if (values[other] === value) return true;
+    other += 1;
+  }
+  return false;
+}
+console.log(seenEarlier(['first', 'first'], 1));
+console.log(seenEarlier(['first', 'second'], 1));
+console.log(seenEarlier(['first', 'second'], 3));`;
+  const parsed = parseJavaScript(source);
+  const loop = parsed.items.find((item) => item.generated && item.k === 'fn');
+  const capture = loop.params.find((param) => param.name === 'value');
+  assert.equal(capture.type.kind, 'option');
+  assert.equal(capture.type.absence, 'undefined');
+  preservesSource(source);
+});
+
+test('separate nullable argument sources converge to one caller signature', () => {
+  preservesSource(`function identity(value) { return value; }
+function first(values) { return identity(values[0]); }
+function second(values) { return identity(values[1]); }
+console.log(first([1])); console.log(second([2]));`);
+});
