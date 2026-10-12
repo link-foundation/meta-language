@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 // The correspondence and its two premises are themselves inspectable links.
 import { LinkNetwork } from './network.js';
 import { LinkId, LinkMetadata, LinkType } from './primitives.js';
-import { decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks } from './typed-program-links.js';
+import { decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from './typed-program-links.js';
 import { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
 
 const LANGUAGE = 'meta-language formal definition';
@@ -113,6 +113,33 @@ function correspondence(first, second) {
     ? left.map((index, at) => [index, right[at]]) : null;
 }
 
+function bindingExclusions(network, body, exclusions, bindings) {
+  const semantic = graph(network, body, exclusions);
+  const protectedNames = new Set();
+  const visitedTypes = new Set();
+  const pending = [];
+  for (const entry of semantic.entries) {
+    const kind = entry.fields.find(({ label }) => label === 'construct kind');
+    const record = kind && network.link(kind.child).metadata().definition === 'record';
+    for (const relation of entry.fields) {
+      if (['type', 'domain', 'return type', 'from', 'to', 'constructors'].includes(relation.label)) pending.push(relation.child);
+      // Field descriptors name observable properties. They must retain that
+      // role if a linked edit aliases one descriptor with a lexical binder.
+      if (record && ['entries', 'fields'].includes(relation.label)) for (const member of network.link(relation.child).references()) protectedNames.add(key(member));
+    }
+  }
+  for (let at = 0; at < pending.length; at += 1) {
+    const id = pending[at];
+    if (visitedTypes.has(key(id))) continue;
+    visitedTypes.add(key(id));
+    protectedNames.add(key(id));
+    const entry = semantic.entries[semantic.indices.get(key(id))];
+    if (!entry) continue;
+    pending.push(...entry.references, ...entry.fields.map(({ child }) => child));
+  }
+  for (const id of bindings) if (!protectedNames.has(key(id))) exclusions.add(`${key(id)}:name`);
+}
+
 function checked(value) {
   const { network, root } = archive(value);
   const wrapper = network.link(root);
@@ -133,8 +160,8 @@ function checked(value) {
     emitTypedProgramLinks(network, body, 'Rust');
     for (const relation of network.fieldRelations()) {
       if (relation.label === 'source span' || key(relation.parent) === key(body) && relation.label === 'provenance') exclusions.add(`${key(relation.parent)}:${relation.label}`);
-      if (relation.label === 'binding reference') exclusions.add(`${key(relation.child)}:name`);
     }
+    bindingExclusions(network, body, exclusions, readTypedProgramBindingIdentities(network, body));
   } else {
     const expectedBody = data(expected, MODELS[model]);
     if (!correspondence(graph(network, body), graph(expected, expectedBody))) throw new TypeError('a source interpretation differs from its declared primitive meaning');

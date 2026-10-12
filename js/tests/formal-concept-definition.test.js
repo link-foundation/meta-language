@@ -1,14 +1,21 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import vm from 'node:vm';
 import { LinkNetwork } from '../src/network.js';
-import { createTypedProgramLinks } from '../src/typed-program-links.js';
+import { LinkMetadata } from '../src/primitives.js';
+import { createTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
 import { encodeFormalConceptDefinition, readFormalConceptDefinition, proveFormalConceptEquivalence, verifyFormalConceptEquivalence } from '../src/formal-concept-definition.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const reload = ({ network, root }) => ({ network: LinkNetwork.fromLino(network.toLino()), root });
 const encode = (source) => encodeFormalConceptDefinition(createTypedProgramLinks(source, 'JavaScript'));
 const scalar = (network, label, text) => network.fieldRelations().find((relation) => relation.label === label && network.link(relation.child).metadata().definition === text)?.child;
+const output = (code) => {
+  const values = [];
+  vm.runInNewContext(code, { console: { log: (...args) => values.push(args.map((value) => value && typeof value === 'object' ? JSON.stringify(value) : String(value)).join(' ')) }, process: { argv: [] } }, { timeout: 1_000 });
+  return values;
+};
 
 test('recursive operational definitions carry a closed linked correspondence after reload', () => {
   const first = reload(encode('function factorial(n){return n<=1 ? 1 : n*factorial(n-1);} console.log(factorial(4));'));
@@ -29,6 +36,55 @@ test('public declaration names and semantic source context remain part of the de
   assert.equal(proveFormalConceptEquivalence(first, renamed), null);
   const rust = encodeFormalConceptDefinition(createTypedProgramLinks('fn add(a: f64,b: f64)->f64{a+b} fn main(){}', 'Rust'));
   assert.equal(proveFormalConceptEquivalence(first, rust), null, 'a source-language change alone is no operational proof');
+});
+
+test('owned unused local binders normalize while public names and types stay explicit', () => {
+  for (const [language, firstSource, secondSource] of [
+    ['JavaScript', 'function keep(value,unused){return value;} console.log(keep(1,2));', 'function keep(value,discarded){return value;} console.log(keep(1,2));'],
+    ['JavaScript', 'function keep(){const unused=1;return 2;} console.log(keep());', 'function keep(){const discarded=1;return 2;} console.log(keep());'],
+    ['Rust', 'fn keep(value:i32,unused:i32)->i32{value} fn main(){println!("{}",keep(1,2));}', 'fn keep(value:i32,discarded:i32)->i32{value} fn main(){println!("{}",keep(1,2));}'],
+    ['Rust', 'fn keep()->i32{let unused=1;2} fn main(){println!("{}",keep());}', 'fn keep()->i32{let discarded=1;2} fn main(){println!("{}",keep());}'],
+  ]) {
+    const first = encodeFormalConceptDefinition(createTypedProgramLinks(firstSource, language));
+    const second = encodeFormalConceptDefinition(createTypedProgramLinks(secondSource, language));
+    const proof = proveFormalConceptEquivalence(first, second);
+    assert.ok(proof, firstSource);
+    assert.equal(verifyFormalConceptEquivalence(reload(first), reload(second), reload(proof)), true, secondSource);
+    const emit = (definition) => emitTypedProgramLinks(definition.network, definition.network.link(definition.root).references()[0], 'JavaScript').code;
+    assert.deepEqual(output(emit(first)), output(emit(second)), 'source-free operational interpretation agrees after local renaming');
+    if (language === 'JavaScript') assert.deepEqual(output(emit(first)), output(firstSource), 'the independent source behavior is retained');
+  }
+  const first = encodeFormalConceptDefinition(createTypedProgramLinks('fn keep(value:i32,unused:i32)->i32{value} fn main(){println!("{}",keep(1,2));}', 'Rust'));
+  const changedType = encodeFormalConceptDefinition(createTypedProgramLinks('fn keep(value:i32,unused:i64)->i32{value} fn main(){println!("{}",keep(1,2));}', 'Rust'));
+  assert.equal(proveFormalConceptEquivalence(first, changedType), null, 'an unused parameter type remains a public signature constraint');
+});
+
+test('disconnected binding decoys cannot hide observable record field names', () => {
+  const first = encode('console.log({left:1});');
+  const second = encode('console.log({right:1});');
+  assert.notDeepEqual(output('console.log({left:1});'), output('console.log({right:1});'));
+  assert.equal(proveFormalConceptEquivalence(first, second), null);
+  for (const archive of [first, second]) {
+    for (const { parent } of archive.network.fieldRelations().filter(({ label }) => label === 'name')) {
+      const decoy = archive.network.insertLink([], LinkMetadata.new());
+      archive.network.insertFieldRelation(decoy, 'binding reference', parent);
+    }
+  }
+  assert.equal(proveFormalConceptEquivalence(first, second), null, 'unreachable edges are not evidence of a lexical binder');
+});
+
+test('a lexical binder aliased with a public type field retains its observable name', () => {
+  const definitions = ['left', 'right'].map((name) => encode(`/** @param {{${name}:number}} item @param {number} ${name} */ function keep(item,${name}){return 3;} console.log(3);`));
+  for (const definition of definitions) {
+    const relations = definition.network.fieldRelations();
+    const fn = relations.find(({ label, child }) => label === 'construct kind' && definition.network.link(child).metadata().definition === 'fn').parent;
+    const field = (parent, label) => relations.find((relation) => relation.parent.asU64() === parent.asU64() && relation.label === label).child;
+    const parameters = definition.network.link(field(fn, 'parameters')).references();
+    const publicFields = field(field(parameters[0], 'type'), 'fields');
+    definition.network.link(publicFields).setReferences([parameters[1]]);
+    assert.equal(readFormalConceptDefinition(definition).model, 'checked typed program', 'the checked graph admits the shared record identity');
+  }
+  assert.equal(proveFormalConceptEquivalence(...definitions), null, 'binding ownership cannot erase a second public type-field role');
 });
 
 test('primitive operations, type policies, binding targets and effects constrain equality', () => {
