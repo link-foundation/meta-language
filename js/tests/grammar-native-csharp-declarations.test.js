@@ -19,11 +19,10 @@ const selector = ({ family, rule, rules, field, alias }) => JSON.stringify([fami
 const configured = [...decisions.sourceTransforms];
 for (const decision of fixture.decisions) {
   const existing = configured.find((candidate) => selector(candidate) === selector(decision));
-  if (existing) {
-    const { reason: _reason, ...actual } = existing;
-    const { reason: _expectedReason, ...expected } = decision;
-    assert.deepEqual(actual, expected, 'the registered preference matches its bounded regression policy');
-  } else configured.push(decision);
+  assert.ok(existing, 'the bounded declaration preference is registered in the source pipeline');
+  const { reason: _reason, ...actual } = existing;
+  const { reason: _expectedReason, ...expected } = decision;
+  assert.deepEqual(actual, expected, 'the registered preference matches its bounded regression policy');
 }
 const source = transformNativeSource(JSON.parse(sourceText(entry)), configured);
 const imported = importTreeSitterNative(source, {
