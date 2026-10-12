@@ -18,7 +18,9 @@ import {
   workingState,
 } from './operations.js';
 import { columnOf, decodeAt, encodeText, quoteText, textOf, utf16View } from './text.js';
-import { acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
+import { acceptFixedLexicalExpression } from './lexical-cache.js';
+import { completeRuleContexts } from './precedence-contexts.js';
+import { acceptPrecedenceOperandContext, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -95,7 +97,7 @@ export function stepBudget(options, length, memory = memoryBudget(options)) {
 /**
  * The memory budget of one parse, shared by its runs, its recovery rounds and
  * its embedded languages: the memo cells it may make, one per rule call it
- * records and one per result such a call keeps (`memoryLimit`, default
+ * records, one per fixed lexical match cached, and one per result each keeps (`memoryLimit`, default
  * 2000000). The cells are what a parse keeps until it ends (the calls under
  * keyword lexing outlive their run), so they are counted, never released,
  * and a parse that needs more is rejected with `memoryBudget` instead of
@@ -2159,12 +2161,16 @@ export class Executor {
     this.shiftMemo = new Map();
     this.owners = null;
     this.edgeMemo = new Map();
+    this.precedenceContextMemo = new Map();
     this.belowMemo = new Map();
     this.inExtra = false;
     this.extraStart = -1;
     // The repair points where a continuation after a MISSING leaf is open.
     this.chained = new Set();
     this.scannerMemo = new Map();
+    this.lexicalCacheForms = new WeakMap();
+    this.lexicalCache = new WeakMap();
+    this.lexicalCacheSize = 0;
     // The requests a scanner's `expected` asks about, and the offset a
     // scanner run in token context answers for (see `Expectations`).
     this.expectations = new Expectations();
@@ -2313,6 +2319,7 @@ export class Executor {
     for (;;) {
       let best = cursor;
       let bestKind = null;
+      let bestProjectionName = null;
       let bestResult = null;
       let bestExtra = null;
       const mode = current.modes[current.modes.length - 1];
@@ -2331,6 +2338,7 @@ export class Executor {
           if (composite.end > best) {
             best = composite.end;
             bestKind = item.kind;
+            bestProjectionName = item.projectionName ?? null;
             bestResult = composite;
             bestExtra = composite;
           }
@@ -2341,6 +2349,7 @@ export class Executor {
         if (end > best) {
           best = end;
           bestKind = item.kind;
+          bestProjectionName = item.projectionName ?? null;
           bestResult = result;
           bestExtra = null;
         }
@@ -2352,10 +2361,13 @@ export class Executor {
       // prefix as separate whitespace, as scannerToken does for syntax tokens.
       const scanned = extra === null && this.program.externalTokens.has(bestKind)
         ? this.runScanner(bestKind, cursor, current, position) : null;
+      // Lexical comparisons still need the source token identity. Apply the
+      // declared alias only when the selected tree becomes a public CST.
+      const project = (leaf) => bestProjectionName === null ? leaf : { ...leaf, projectionName: bestProjectionName };
       if (scanned?.end === best) {
-        leaves.push(...scanned.skipped, { type: 'token', kind: bestKind, start: scanned.tokenStart, end: best, trivia: true });
+        leaves.push(...scanned.skipped, project({ type: 'token', kind: bestKind, start: scanned.tokenStart, end: best, trivia: true }));
       } else {
-        leaves.push(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true });
+        leaves.push(project(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true }));
       }
       cursor = extra?.end ?? best;
       while (states.length <= leaves.length) states.push(current);
@@ -2746,6 +2758,26 @@ export class Executor {
 
   /** Every result of `expression` at `position` in `state`. */
   evaluate(expression, position, state, inToken) {
+    // Fixed lexical trees read input and retain the supplied state. In token
+    // context they neither skip extras nor request syntax expectations; quiet
+    // evaluation also has no diagnostic or recovery effects to replay.
+    const cacheable = inToken && this.suppressed > 0
+      && acceptFixedLexicalExpression(expression, this.lexicalCacheForms);
+    if (!cacheable) return this.evaluateCase(expression, position, state, inToken);
+    let cache = this.lexicalCache.get(expression);
+    if (!cache) this.lexicalCache.set(expression, cache = new Map());
+    const key = `${position}|${state.key}`;
+    if (cache.has(key)) return cache.get(key);
+    const results = this.evaluateCase(expression, position, state, inToken);
+    if (this.lexicalCacheSize < this.memoLimit) {
+      this.retain(1 + results.length);
+      this.lexicalCacheSize += 1;
+      cache.set(key, results);
+    }
+    return results;
+  }
+
+  evaluateCase(expression, position, state, inToken) {
     this.step();
     switch (expression.kind) {
       case 'empty': return [makeResult(position, state)];
@@ -3277,6 +3309,11 @@ export class Executor {
     const owner = this.ownerOf(expression);
     const rule = this.program.rules.get(kind);
     if (owner === null || rule?.nodeKind !== kind) return true;
+    const contexts = (name) => {
+      if (!this.precedenceContextMemo.has(name)) this.precedenceContextMemo.set(name, completeRuleContexts(this.program, name));
+      return this.precedenceContextMemo.get(name);
+    };
+    if (!acceptPrecedenceOperandContext(contexts(owner), contexts(kind))) return false;
     const key = `${kind}|${side}`;
     let names = this.edgeMemo.get(key);
     if (!names) {

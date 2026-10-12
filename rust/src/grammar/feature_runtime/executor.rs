@@ -48,7 +48,7 @@ pub(super) type Retry<'r, 'c> =
 
 /// The evaluation frames a parse may nest before it is refused as too deep;
 /// the parse thread's stack holds this many with room to spare.
-const FRAME_LIMIT: usize = 20_000;
+pub(super) const FRAME_LIMIT: usize = 20_000;
 
 /// The repair cost of a MISSING leaf; an ERROR leaf costs the bytes it skips.
 const MISSING_COST: usize = 2;
@@ -109,6 +109,8 @@ pub(super) struct Executor<'c> {
     pub(super) owners: Option<HashMap<usize, usize>>,
     /// The rules at the edge of a kind's node facing an operator.
     pub(super) edge_memo: HashMap<(Name, Associativity), Rc<HashSet<usize>>>,
+    /// Whole-rule source contexts for the shared precedence regrouping test.
+    pub(super) precedence_context_memo: HashMap<usize, Rc<Vec<bool>>>,
     /// The reduction below a right operand's first part, by the address of
     /// the precedence's item, the operand's rule and the part's kind (see
     /// `shifts_below`).
@@ -126,6 +128,9 @@ pub(super) struct Executor<'c> {
     /// The scans of each scanner token at an offset, by the context offset
     /// too where the scanner asks what the parse expects.
     pub(super) scanner_memo: HashMap<ScanKey, Option<Rc<Scanned>>>,
+    /// Fixed lexical matches in quiet token context, by expression, offset and state.
+    pub(super) lexical_cache: HashMap<(usize, usize, State), Vec<Res>>,
+    pub(super) lexical_cache_forms: HashMap<usize, bool>,
     /// The context offset of a scan inside a token or trivia: where the
     /// token's terminal or the trivia started (see `Expectations`).
     pub(super) scan_context: Option<usize>,
@@ -216,11 +221,14 @@ impl<'c> Executor<'c> {
             shift_memo: HashMap::new(),
             owners: None,
             edge_memo: HashMap::new(),
+            precedence_context_memo: HashMap::new(),
             below_memo: HashMap::new(),
             rest_memo: HashMap::new(),
             in_extra: InExtra::Outside,
             extra_start: usize::MAX,
             scanner_memo: HashMap::new(),
+            lexical_cache: HashMap::new(),
+            lexical_cache_forms: HashMap::new(),
             scan_context: None,
             embed_memo: HashMap::new(),
             farthest: begin,
@@ -389,26 +397,7 @@ impl<'c> Executor<'c> {
         text_of(self.bytes, start, end).unwrap_or_default()
     }
 
-    /// Every result of `expr` at `position` in `state`.
-    pub(super) fn evaluate(
-        &mut self,
-        expr: &Expr,
-        position: usize,
-        state: &State,
-        in_token: bool,
-    ) -> Run<Vec<Res>> {
-        self.step()?;
-        let frames = self.shared.frames.get() + 1;
-        if frames > FRAME_LIMIT {
-            return Err(Abort::NestingTooDeep);
-        }
-        self.shared.frames.set(frames);
-        let results = self.evaluate_case(expr, position, state, in_token);
-        self.shared.frames.set(frames - 1);
-        results
-    }
-
-    fn evaluate_case(
+    pub(super) fn evaluate_case(
         &mut self,
         expr: &Expr,
         position: usize,
