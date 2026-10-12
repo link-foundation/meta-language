@@ -8,7 +8,7 @@
       "grammars": {
         "native-agda": {
           "version": "1.0.0",
-          "parserSha256": "8f906cf8126fe32bad58a017137944446c56121498a8287cb41f6526e6b10c8e"
+          "parserSha256": "80af7dc90ef9ef3b5d6d75af6142e107285daf34cde0967a211ae5ba0aaa33e0"
         }
       },
       "oracleGrammars": {

@@ -83,7 +83,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 
 | Grammar | Matches | Rows | Bytes | Divergences | Rejections |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `native-agda` | 46 | 763 | 1222 | 4 | 7 |
+| `native-agda` | 49 | 854 | 1344 | 4 | 7 |
 | `native-c` | 100 | 5348 | 12987 | 0 | 33 |
 | `native-cmake` | 35 | 524 | 870 | 0 | 6 |
 | `native-cpp` | 77 | 1732 | 2272 | 0 | 9 |
@@ -126,7 +126,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-xml` | 31 | 495 | 837 | 0 | 7 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 4101 | 94730 | 206490 | 105 | 674 |
+| all | 4104 | 94821 | 206612 | 105 | 674 |
 
 ## Coverage
 
