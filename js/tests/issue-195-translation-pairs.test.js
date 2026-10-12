@@ -197,7 +197,7 @@ for (const source of LANGUAGES) {
             // Untyped JavaScript has no type declaration; the data encoding stands for it.
             assert.ok(semantics.encodings.some(({ id }) => id === 'data'), mapping.target);
           } else if (target === 'JavaScript' && mapping.kind === 'constructor') {
-            assert.ok(code.includes(`$: '${lastSegment(mapping.target)}'`), `${target} tags ${mapping.target}`);
+            assert.ok(code.includes(`$: ${JSON.stringify(lastSegment(mapping.target))}`), `${target} tags ${mapping.target}`);
           } else {
             assert.ok(terms.has(lastSegment(mapping.target)), `${target} declares ${mapping.target}`);
           }

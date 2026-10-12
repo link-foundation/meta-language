@@ -12,6 +12,7 @@ import {
   evidenceGroupFor,
   observedEvidenceForCell,
 } from '../scripts/issue-195-evidence-plan.mjs';
+import { runTestCommand } from './support/child-test-output.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -132,7 +133,7 @@ test('executed translation callbacks reach the evaluator; green no-op and missin
       ...process.env, ISSUE_195_OBSERVATION_FILE: observations, ISSUE_195_COMMIT: commit,
     };
     delete childEnvironment.NODE_TEST_CONTEXT;
-    const testOutput = execFileSync(process.execPath, [
+    const testOutput = runTestCommand(process.execPath, [
       '--test', '--test-name-pattern', '^Rust -> JavaScript translation',
       'tests/issue-195-translation-pairs.test.js',
     ], {
@@ -178,7 +179,7 @@ test('inventory malformed-input checks emit observed evidence for each JavaScrip
       ...process.env, ISSUE_195_OBSERVATION_FILE: observations, ISSUE_195_COMMIT: commit,
     };
     delete childEnvironment.NODE_TEST_CONTEXT;
-    execFileSync(process.execPath, [
+    runTestCommand(process.execPath, [
       ...process.execArgv,
       '--test', '--test-name-pattern=every JavaScript grammar inventory frontend retains',
       'tests/four-language-conformance.test.js',
