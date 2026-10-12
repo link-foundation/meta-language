@@ -9,6 +9,7 @@ import { checkProgram } from './translation/check.js';
 import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust } from './translation/emit-rust.js';
 import { validateLinkedTypedProgram } from './typed-program-links-validation.js';
+import { recheckLinkedTypedProgram } from './typed-program-checked-projection.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
 import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields } from './typed-program-link-rules.js';
 
@@ -113,6 +114,7 @@ function bindingTargets(program) {
 
 export function encodeTypedProgramLinks(program, { provenance } = {}) {
   validateLinkedTypedProgram(program);
+  recheckLinkedTypedProgram(program);
   const network = new LinkNetwork();
   const identities = new WeakMap();
   const { targets, patternOverrides } = bindingTargets(program);
@@ -237,6 +239,7 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
   }
   const patternScopes = new WeakMap();
   validateLinkedTypedProgram(program, references, { graphPatterns: true, patternScopes });
+  recheckLinkedTypedProgram(program);
   return { program, objects, patternScopes };
 }
 

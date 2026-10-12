@@ -255,22 +255,46 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
         String::from("false")
     } else if (context == "program" && field == "abortsThreaded") {
         String::from("false")
+    } else if (context == "program" && field == "main") {
+        String::from("null")
     } else if (context == "main" && field == "sequentialAsync") {
         String::from("false")
+    } else if (context == "main" && field == "span") {
+        String::from("null")
     } else if (context == "declaration:fn" && field == "mutual") {
         String::from("false")
     } else if (context == "declaration:fn" && field == "generated") {
         String::from("false")
+    } else if (context == "declaration:fn" && field == "decreasing") {
+        String::from("null")
+    } else if (context == "declaration:fn" && field == "span") {
+        String::from("null")
     } else if (context == "declaration:data" && field == "generated") {
         String::from("false")
     } else if (context == "declaration:data" && field == "output") {
         String::from("false")
+    } else if (context == "declaration:data" && field == "span") {
+        String::from("null")
     } else if (context == "expression:ctor" && field == "frozen") {
         String::from("false")
     } else if (context == "expression:toString" && field == "console") {
         String::from("false")
+    } else if (context == "expression:tuple" && field == "frozen") {
+        String::from("false")
+    } else if (context == "parameter" && field == "guard") {
+        String::from("null")
+    } else if (context == "parameter" && field == "default") {
+        String::from("null")
+    } else if (context == "effect:let" && field == "constant") {
+        String::from("false")
+    } else if (context == "effect:let" && field == "span") {
+        String::from("null")
+    } else if (context == "declaration:module" && field == "span") {
+        String::from("null")
+    } else if (context == "effect:print" && field == "span") {
+        String::from("null")
     } else if (field == "span"
-        && ((((((((((((((((((((context == "expression:lit"
+        && ((((((((((((((((((((((context == "expression:lit"
             || context == "expression:unit")
             || context == "expression:var")
             || context == "expression:call")
@@ -290,12 +314,35 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
             || context == "expression:append")
             || context == "expression:index")
             || context == "expression:length")
-            || context == "expression:math"))
+            || context == "expression:math")
+            || context == "expression:tuple")
+            || context == "expression:tupleIndex"))
     {
         String::from("null")
     } else {
         String::from("")
     }
+}
+
+/// Read the corresponding decision of the shared typed program links schema.
+#[must_use]
+pub fn accept_program_expression_field(kind: &str, field: &str) -> bool {
+    if kind == "tuple" {
+        (((((field == "k" || field == "type") || field == "span") || field == "items")
+            || field == "frozen")
+            || field == "productModel")
+    } else if kind == "tupleIndex" {
+        ((((field == "k" || field == "type") || field == "span") || field == "object")
+            || field == "index")
+    } else {
+        false
+    }
+}
+
+/// Read the corresponding decision of the shared typed program links schema.
+#[must_use]
+pub fn accept_program_tuple_product_model(model: &str, frozen: bool) -> bool {
+    model == "immutable value product" && frozen
 }
 
 /// Read the corresponding decision of the shared typed program links schema.
@@ -361,6 +408,10 @@ pub fn read_program_expression_projection(term: &str) -> String {
         String::from("length:string")
     } else if term == "math" {
         String::from("math")
+    } else if term == "tuple" {
+        String::from("tuple")
+    } else if term == "tupleIndex" {
+        String::from("tupleIndex")
     } else {
         String::from("")
     }

@@ -2,7 +2,7 @@
 import { fixedBounds, sameType } from './translation/types.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
-import { acceptProgramDivisionRounding, acceptProgramExpressionOperation, acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence, readProgramReferenceRole } from './typed-program-link-rules.js';
+import { acceptProgramDivisionRounding, acceptProgramExpressionField, acceptProgramExpressionOperation, acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence, acceptProgramTupleProductModel, readProgramReferenceRole } from './typed-program-link-rules.js';
 
 const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'output']);
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
@@ -53,7 +53,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     } else if (['array', 'set', 'option', 'cell'].includes(value.kind)) {
       type(value.element);
       if (value.kind === 'option' && !acceptProgramOptionalAbsence(value.absence ?? 'both')) throw new TypeError('a linked optional type has an invalid absence policy');
-    } else if (value.kind === 'tuple') value.elements.forEach(type);
+    } else if (value.kind === 'tuple') {
+      if (!Array.isArray(value.elements) || Object.keys(value).some(field => !['kind', 'elements'].includes(field))) throw new TypeError('a linked tuple type has a malformed element layout');
+      value.elements.forEach(type);
+    }
     else if (value.kind === 'record') value.fields.forEach((field) => type(field.type));
     else if (value.kind === 'map') { type(value.key); type(value.value); }
     else if (value.kind === 'function') { value.params.forEach(type); type(value.ret); }
@@ -114,6 +117,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if (!node || typeof node !== 'object') return;
     visit();
     if (node.k !== undefined && node.p !== undefined) throw new TypeError('a linked record has conflicting expression and proposition roles');
+    if (['tuple', 'tupleIndex'].includes(node.k)
+      && Object.keys(node).some(field => !acceptProgramExpressionField(node.k, field))) throw new TypeError('a linked tuple expression has an unrecognized projection field');
     if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
@@ -191,6 +196,14 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       if (!Array.isArray(node.args) || node.args.length !== constructor.fields.length) throw new TypeError('a linked constructor has the wrong number of arguments');
       node.args.forEach((argument, index) => { expression(argument, environment); same(argument.type, constructor.fields[index].type, 'constructor argument type'); });
       same(node.type, { kind: 'data', name: datatype.fullName }, 'constructor result type');
+      return;
+    }
+    if (node.k === 'tuple') {
+      if (Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked tuple immutability flag must be a boolean');
+      if (Object.hasOwn(node, 'productModel') && (typeof node.productModel !== 'string'
+        || !acceptProgramTupleProductModel(node.productModel, node.frozen === true))) throw new TypeError('a linked tuple product model is unknown or contradicts its immutability');
+      if (node.type?.kind !== 'tuple' || !Array.isArray(node.items) || node.items.length !== node.type.elements.length) throw new TypeError('a linked tuple has the wrong element layout or arity');
+      node.items.forEach((item, index) => { expression(item, environment); same(item?.type, node.type.elements[index], 'tuple element type'); });
       return;
     }
     if (node.k === 'let') {
@@ -275,6 +288,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'tupleIndex' || node.k === 'recordField' || node.k === 'optionalField') {
       if (!Number.isSafeInteger(node.index) || node.index < 0) throw new TypeError('a linked positional field index is invalid');
+      if (node.k === 'tupleIndex' && node.object?.type?.kind !== 'tuple') throw new TypeError('a linked tuple index requires a tuple receiver');
       const object = node.k === 'optionalField' ? node.object.type?.element : node.object.type;
       const entry = node.k === 'tupleIndex' ? object?.elements?.[node.index] : object?.fields?.[node.index];
       if (!entry || (node.k !== 'tupleIndex' && entry.name !== node.field)) throw new TypeError('a linked positional field index differs from its layout');

@@ -45,6 +45,11 @@ const source = '// Generated from data/typed-program-links-schema.json. Do not e
   + referenceSource + '\n'
   + decide('readProgramReferenceTargetField', Object.fromEntries(Object.entries(referenceRoles).map(([label, role]) => [label, schema.referenceTargetFields[role]])), 'label') + '\n'
   + neutralFields + '\n'
+  + '/** @param {string} kind @param {string} field @returns {boolean} */\nexport function acceptProgramExpressionField(kind, field) {\n'
+  + Object.entries(schema.expressionFields).map(([kind, fields]) => `  if (kind === ${JSON.stringify(kind)}) return ${fields.map(field => `field === ${JSON.stringify(field)}`).join(' || ')};`).join('\n')
+  + '\n  return false;\n}\n\n'
+  + '/** @param {string} model @param {boolean} frozen @returns {boolean} */\nexport function acceptProgramTupleProductModel(model, frozen) {\n'
+  + `  return (${schema.tupleProductModels.map(model => `model === ${JSON.stringify(model)}`).join(' || ')}) && frozen;\n}\n\n`
   + classify('readProgramExpressionProjection', Object.fromEntries(Object.keys(schema.expressionProjections).map((kind) => [kind, kind]))) + '\n'
   + '/** @param {string} kind @param {string} operation @returns {boolean} */\nexport function acceptProgramExpressionOperation(kind, operation) {\n'
   + Object.entries(schema.expressionOperations).map(([kind, operations]) => `  if (kind === ${JSON.stringify(kind)}) return ${operations.map((operation) => `operation === ${JSON.stringify(operation)}`).join(' || ')};`).join('\n')
@@ -68,9 +73,9 @@ if (process.argv.includes('--update-styles')) {
   const actions = [];
   let styled = raw;
   const replace = (from, to) => { if (styled.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); styled = styled.split(from).join(to); } };
-  for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence', 'kind', 'operation', 'rounding', 'construct_kind', 'type_kind', 'context', 'field']) replace(`${name}: String`, `${name}: &str`);
+  for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence', 'kind', 'operation', 'rounding', 'construct_kind', 'type_kind', 'context', 'field', 'model']) replace(`${name}: String`, `${name}: &str`);
   for (const match of [...styled.matchAll(/\([a-z]+ == "[^"\n]*"\)/gu)]) replace(match[0], match[0].slice(1, -1));
-  for (const name of ['accept_program_container_fields', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
+  for (const name of ['accept_program_container_fields', 'accept_program_expression_field', 'accept_program_tuple_product_model', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
     const begin = styled.indexOf(`pub fn ${name}`);
     const end = styled.indexOf('\n}', begin);
     const body = styled.slice(begin, end);
@@ -96,7 +101,7 @@ if (process.argv.includes('--update-styles')) {
     const to = `} else ${styled.slice(opening + 1, cursor - 1).trim()}`;
     replace(from, to);
   }
-  for (const name of ['read_program_container_kind', 'accept_program_container_fields', 'read_program_scalar_kind', 'read_program_reference_role', 'read_program_expression_projection', 'read_program_pattern_binding_form', 'read_program_expression_operand_fields', 'read_program_reference_source_field', 'read_program_reference_target_field', 'read_program_neutral_field_default', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
+  for (const name of ['read_program_container_kind', 'accept_program_container_fields', 'accept_program_expression_field', 'accept_program_tuple_product_model', 'read_program_scalar_kind', 'read_program_reference_role', 'read_program_expression_projection', 'read_program_pattern_binding_form', 'read_program_expression_operand_fields', 'read_program_reference_source_field', 'read_program_reference_target_field', 'read_program_neutral_field_default', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
     replace(`pub fn ${name}`, `/// Read the corresponding decision of the shared typed program links schema.\n#[must_use]\npub fn ${name}`);
   }
   writeFileSync(styleFile, new DecoratorSet([{ id: 'typed-program-link-library-style', level: 'emitter', order: 0,

@@ -1,10 +1,12 @@
 // Host JSON boundary adapter. Projection instructions and admission decisions
 // are shared data; the existing checker still owns types and semantics.
 import { TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
-import { acceptProgramExpressionOperation, readProgramExpressionProjection } from './typed-program-link-rules.js';
+import { acceptProgramExpressionField, acceptProgramExpressionOperation, readProgramExpressionProjection } from './typed-program-link-rules.js';
 
 export function projectLinkedProgramExpression(value, declarations = new Map()) {
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;
+  if (['tuple', 'tupleIndex'].includes(value?.k)
+    && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked tuple expression has an unrecognized projection field');
   if (Object.hasOwn(TYPED_PROGRAM_LINKS_SCHEMA.expressionOperations, value?.k)
     && !acceptProgramExpressionOperation(value.k, value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
   let key = value?.k;
