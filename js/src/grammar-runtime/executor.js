@@ -18,7 +18,7 @@ import {
   workingState,
 } from './operations.js';
 import { columnOf, decodeAt, encodeText, quoteText, textOf, utf16View } from './text.js';
-import { readScannerContinuationAction } from '../translation/frontend-rules.js';
+import { acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -1622,6 +1622,7 @@ function startsWidthless(result) {
 function lexedPast(result, last) {
   let after = null;
   for (const leaf of leavesBackward(result.children)) {
+    if (!acceptScannerPreemptionBoundary(widthless(leaf), leaf.start === last.end)) return false;
     const action = readScannerContinuationAction(widthless(leaf), leaf.start >= last.end, leaf.end > last.end);
     if (action === 1) after = leaf;
     else if (action === -1) return after !== null && oneLeaf(leaf, last);
@@ -3785,17 +3786,8 @@ export class Executor {
   scannerToken(name, position, state, inToken, rawStart = false) {
     const { end: start, leaves, state: afterTrivia } = rawStart ? { end: position, leaves: NO_CHILDREN, state } : this.terminalStart(position, state, inToken);
     state = afterTrivia;
-    const scanner = this.program.scanners.get(name);
     const context = inToken || rawStart ? (this.scanContext ?? start) : position;
-    const key = scanner.consults ? `${name}|${start}|${context}|${state.key}` : `${name}|${start}|${state.key}`;
-    let scanned = this.scannerMemo.get(key);
-    if (scanned === undefined) {
-      scanned = this.runScanner(name, start, state, context);
-      this.scannerMemo.set(key, scanned);
-      // A trace, off unless a probe sets the array: every scanner run, the
-      // token it was asked for and what it scanned.
-      globalThis.__scanTrace?.push([name, start, context, scanned]);
-    }
+    const scanned = this.runScanner(name, start, state, context);
     if (!scanned) {
       this.fail(start, name);
       if (inToken) return [];
@@ -3811,54 +3803,66 @@ export class Executor {
 
   runScanner(name, start, state, context) {
     const scanner = this.program.scanners.get(name);
-    const working = workingState(state);
-    const skipped = [];
-    let cursor = start;
-    let tokenStart = start;
-    let markPosition = null;
-    // Predicates read the state after preceding scanner operations, including
-    // temporary stack traversal and restoration.
-    const match = (expression) => this.quietly(() => longestResult(this.evaluate(expression, cursor, settleState(working), true))?.end ?? -1);
-    const machine = {
-      state: working,
-      requested: name,
-      step: () => this.step(),
-      matched: () => this.text(tokenStart, cursor),
-      column: () => columnOf(this.bytes, cursor, this.begin),
-      atEnd: () => cursor >= this.end,
-      expected: (item) => this.expectations.holds(context, this.program.expectedItems.get(item)),
-      lookahead: (expression) => match(expression) >= 0,
-      advance: () => {
-        if (cursor >= this.end) throw new OperationFailed();
-        cursor += decodeAt(this.bytes, cursor, this.end).length;
-      },
-      consume: (expression) => {
-        const end = match(expression);
-        if (end < 0) throw new OperationFailed();
-        cursor = end;
-      },
-      skip: (expression) => {
-        const end = match(expression);
-        if (cursor !== tokenStart || end < 0) throw new OperationFailed();
-        if (end > cursor) skipped.push({ type: 'token', kind: null, start: cursor, end, trivia: true });
-        cursor = end;
-        tokenStart = end;
-      },
-      mark: () => {
-        markPosition = cursor;
-      },
-    };
-    let signal;
-    try {
-      signal = runStatements(scanner.operations, machine);
-    } catch (error) {
-      if (error instanceof OperationFailed) return null;
-      throw error;
-    }
-    if (!signal || signal.emit !== name) return null;
-    const end = markPosition ?? cursor;
-    if (end < tokenStart) return null;
-    return { tokenStart, end, skipped, state: settleState(working) };
+    // Scanner probes for lexical priority and extras have the same input,
+    // context and state as token scans. Share their memo so a repeated probe
+    // cannot spend the parse budget executing the same operations again.
+    const key = scanner.consults ? `${name}|${start}|${context}|${state.key}` : `${name}|${start}|${state.key}`;
+    if (this.scannerMemo.has(key)) return this.scannerMemo.get(key);
+    const scanned = (() => {
+      const working = workingState(state);
+      const skipped = [];
+      let cursor = start;
+      let tokenStart = start;
+      let markPosition = null;
+      // Predicates read the state after preceding scanner operations, including
+      // temporary stack traversal and restoration.
+      const match = (expression) => this.quietly(() => longestResult(this.evaluate(expression, cursor, settleState(working), true))?.end ?? -1);
+      const machine = {
+        state: working,
+        requested: name,
+        step: () => this.step(),
+        matched: () => this.text(tokenStart, cursor),
+        column: () => columnOf(this.bytes, cursor, this.begin),
+        atEnd: () => cursor >= this.end,
+        expected: (item) => this.expectations.holds(context, this.program.expectedItems.get(item)),
+        lookahead: (expression) => match(expression) >= 0,
+        advance: () => {
+          if (cursor >= this.end) throw new OperationFailed();
+          cursor += decodeAt(this.bytes, cursor, this.end).length;
+        },
+        consume: (expression) => {
+          const end = match(expression);
+          if (end < 0) throw new OperationFailed();
+          cursor = end;
+        },
+        skip: (expression) => {
+          const end = match(expression);
+          if (cursor !== tokenStart || end < 0) throw new OperationFailed();
+          if (end > cursor) skipped.push({ type: 'token', kind: null, start: cursor, end, trivia: true });
+          cursor = end;
+          tokenStart = end;
+        },
+        mark: () => {
+          markPosition = cursor;
+        },
+      };
+      let signal;
+      try {
+        signal = runStatements(scanner.operations, machine);
+      } catch (error) {
+        if (error instanceof OperationFailed) return null;
+        throw error;
+      }
+      if (!signal || signal.emit !== name) return null;
+      const end = markPosition ?? cursor;
+      if (end < tokenStart) return null;
+      return { tokenStart, end, skipped, state: settleState(working) };
+    })();
+    this.scannerMemo.set(key, scanned);
+    // A trace, off unless a probe sets the array: every scanner run, the
+    // token it was asked for and what it scanned.
+    globalThis.__scanTrace?.push([name, start, context, scanned]);
+    return scanned;
   }
 
   /**
