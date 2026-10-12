@@ -69,6 +69,11 @@ jobs:
         run: npm ci
         working-directory: js
 
+      - name: Build the independently corrected Agda layout oracle
+        if: matrix.group == 'grammar'
+        run: node scripts/build-agda-layout-oracle.mjs
+        working-directory: js
+
       # A short-lived, reproducible workspace snapshot makes parser failures
       # locally debuggable without changing the grammar assertions.
       - name: Pack issue 199 debugging workspace
@@ -85,6 +90,7 @@ jobs:
           if-no-files-found: error
 
       - name: Run the test group
+        if: ${{ !cancelled() }}
         env:
           TEST_GROUP: ${{ matrix.group }}
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"
@@ -200,6 +206,19 @@ jobs:
         run: npm run check:merge-quality
         working-directory: js
 
+      - name: Run grammar conversion cycles under the actual Peggy target tool
+        if: ${{ !cancelled() }}
+        run: node js/scripts/run-grammar-interchange-tools.mjs --out issue-195-artifacts/grammar-interchange-tools.json
+
+      - name: Upload the grammar conversion target-tool report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: grammar-interchange-tools-${{ github.sha }}
+          path: issue-195-artifacts/grammar-interchange-tools.json
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Check the foundation models are neutral data
         if: ${{ !cancelled() }}
         run: npm run check:foundations
@@ -270,6 +289,10 @@ jobs:
         run: npm run check:frontend-rules
         working-directory: js
 
+      - name: Check the generated global concept rules against JavaScript
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-global-concept-rules.mjs --check
+
       - name: Check generated frontend rule compilation and style
         if: ${{ !cancelled() }}
         run: npm run check:frontend-rule-styles
@@ -327,6 +350,9 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      REQUESTED_VERSION: ${{ github.event.inputs.release_version }}
     steps:
       - uses: actions/checkout@v7
 
@@ -341,6 +367,16 @@ jobs:
           npm install -g npm@12
           npm --version
 
+      - name: Verify the tagged npm and crate release identity
+        id: package
+        run: node scripts/release-publication.mjs --identity
+        working-directory: js
+
+      - name: Check matching registry artifacts before publication
+        id: npm
+        run: node scripts/release-publication.mjs --preflight
+        working-directory: js
+
       # actions/setup-node writes `_authToken=${NODE_AUTH_TOKEN}` and exports the
       # placeholder `XXXXX-XXXXX-XXXXX-XXXXX` whenever no token is supplied. npm
       # then skips the OIDC exchange and the registry rejects the anonymous PUT
@@ -349,6 +385,7 @@ jobs:
       # See actions/setup-node#1551 and issue #191.
       - name: Prepare npm authentication
         id: npm_auth
+        if: steps.npm.outputs.already_published != 'true'
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PACKAGE_NAME: meta-language
@@ -357,53 +394,6 @@ jobs:
           NPM_AUTH_DEBUG: ${{ vars.NPM_AUTH_DEBUG }}
         run: node scripts/prepare-npm-auth.mjs
         working-directory: js
-
-      - name: Read package metadata
-        id: package
-        working-directory: js
-        run: |
-          name="$(node -p "require('./package.json').name")"
-          version="$(node -p "require('./package.json').version")"
-
-          if [ "$name" != "meta-language" ]; then
-            echo "::error::Expected package name meta-language, got $name"
-            exit 1
-          fi
-
-          echo "name=$name" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Package: $name@$version"
-
-      - name: Verify requested release version
-        env:
-          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-          REQUESTED_VERSION: ${{ github.event.inputs.release_version }}
-        run: |
-          if [ -n "$RELEASE_TAG" ]; then
-            normalized_tag="${RELEASE_TAG#v}"
-            if [ "$normalized_tag" != "$PACKAGE_VERSION" ]; then
-              echo "::error::Release tag $RELEASE_TAG does not match js/package.json version $PACKAGE_VERSION"
-              exit 1
-            fi
-          fi
-
-          if [ -n "$REQUESTED_VERSION" ] && [ "$REQUESTED_VERSION" != "$PACKAGE_VERSION" ]; then
-            echo "::error::Requested version $REQUESTED_VERSION does not match js/package.json version $PACKAGE_VERSION"
-            exit 1
-          fi
-
-      - name: Check npm registry
-        id: npm
-        env:
-          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
-        working-directory: js
-        run: |
-          if npm view "meta-language@$PACKAGE_VERSION" version >/dev/null 2>&1; then
-            echo "already_published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "already_published=false" >> "$GITHUB_OUTPUT"
-          fi
 
       # npm treats a refused trusted-publisher exchange as "no credential" and
       # reports only ENEEDAUTH. Perform the same exchange first so the log shows
@@ -441,10 +431,8 @@ jobs:
           fi
 
       - name: Verify published package
-        if: steps.npm.outputs.already_published != 'true'
-        env:
-          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
-        run: npm view "meta-language@$PACKAGE_VERSION" version
+        run: node scripts/release-publication.mjs --published
+        working-directory: js
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}

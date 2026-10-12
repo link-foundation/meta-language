@@ -883,7 +883,12 @@ jobs:
           pattern: self-translation-report-${{ github.sha }}-*
           path: issue-195-artifacts/self-translation-report
 
+      - name: Build the independently corrected Agda layout oracle
+        if: ${{ !cancelled() }}
+        run: node js/scripts/build-agda-layout-oracle.mjs
+
       - name: Produce the stage evidence
+        if: ${{ !cancelled() }}
         env:
           ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
           ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json

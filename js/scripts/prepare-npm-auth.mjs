@@ -12,7 +12,7 @@
 //
 // Removing the placeholder line makes npm fall through to the trusted
 // publishing (OIDC) path. When a real NPM_TOKEN is supplied the line is kept
-// so the classic token flow still works as a bootstrap fallback.
+// so the granular token flow still works as a bootstrap fallback.
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -88,7 +88,7 @@ export function buildMissingCredentialGuidance(packageName, repository, workflow
     `     settings, add a trusted publisher for repository ${repository} with workflow`,
     `     filename ${path.basename(workflow)} (the file ${workflow}; npm expects the bare`,
     '     filename), and keep "permissions: id-token: write" on the publish job.',
-    '  2. A classic automation token: add an NPM_TOKEN repository secret. This is the',
+    '  2. A granular token with package publishing access: add an NPM_TOKEN repository secret. This is the',
     '     bootstrap path for a package that has no trusted publisher yet; it can be removed',
     '     once trusted publishing is configured.',
   ].join('\n');
@@ -254,6 +254,7 @@ export function buildTrustedPublisherSettings(packageName, repository, workflow)
     `  Repository: ${name}`,
     `  Workflow filename: ${path.basename(workflow)}`,
     '  Environment name: (empty; the publish job declares no environment)',
+    '  Allowed actions: direct npm publish enabled (staging alone is insufficient)',
   ].join('\n');
 }
 

@@ -6,6 +6,7 @@ import { test } from 'node:test';
 
 import { parseCargoManifest } from '../scripts/dependency-inventory.mjs';
 import { grammarFile } from '../scripts/grammar-files.mjs';
+import { releaseIdentity, releaseRegistryState, verifyPublishedRelease } from '../scripts/release-publication.mjs';
 
 async function readJson(url) {
   return JSON.parse(await readFile(url, 'utf8'));
@@ -125,7 +126,9 @@ test('JavaScript workflow publishes to npm with trusted publishing provenance', 
   assert.match(workflow, /registry-url:\s+['"]https:\/\/registry\.npmjs\.org['"]/);
   assert.match(workflow, /working-directory:\s+js/);
   assert.match(workflow, /npm publish --provenance/);
-  assert.match(workflow, /npm view "meta-language@\$PACKAGE_VERSION" version >\/dev\/null 2>&1/);
+  assert.match(workflow, /node scripts\/release-publication\.mjs --preflight/);
+  assert.match(workflow, /node scripts\/release-publication\.mjs --published/);
+  assert.doesNotMatch(workflow, /npm view[^\n]*>\/dev\/null 2>&1/);
   // OIDC trusted publishing is the steady-state mechanism, so the only
   // NODE_AUTH_TOKEN in the workflow is the optional NPM_TOKEN bootstrap
   // fallback, and the placeholder credential setup-node writes must be
@@ -152,6 +155,81 @@ test('JavaScript workflow publishes to npm with trusted publishing provenance', 
   assert.doesNotMatch(publishJob, /queue:\s+/);
   assert.match(publishJob, /REQUESTED_VERSION:\s+\$\{\{ github\.event\.inputs\.release_version \}\}/);
   assert.doesNotMatch(publishJob, /run:[^\n]*\$\{\{\s*github\.event\.inputs\.release_version\s*\}\}/);
+});
+
+const releaseFixture = () => ({
+  packageJson: { name: 'meta-language', version: '1.0.0' },
+  packageLock: { name: 'meta-language', version: '1.0.0', packages: { '': { name: 'meta-language', version: '1.0.0' } } },
+  cargoManifest: '[package]\nname = "meta-language"\nversion = "1.0.0"\n\n[dependencies]\nsomething = "9.0.0"\n',
+  env: { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/tags/v1.0.0', GITHUB_SHA: 'a'.repeat(40), REQUESTED_VERSION: '1.0.0' },
+  commit: 'a'.repeat(40),
+});
+
+test('publication refuses a branch, differing crate or lock version and a different workflow commit', () => {
+  assert.deepEqual(releaseIdentity(releaseFixture()), {
+    name: 'meta-language', version: '1.0.0', tag: 'v1.0.0', commit: 'a'.repeat(40),
+  });
+  for (const mutate of [
+    (fixture) => { fixture.env.GITHUB_REF = 'refs/heads/main'; },
+    (fixture) => { fixture.cargoManifest = fixture.cargoManifest.replace('version = "1.0.0"', 'version = "1.0.1"'); },
+    (fixture) => { fixture.packageLock.version = '1.0.1'; },
+    (fixture) => { fixture.packageLock.packages[''].version = '1.0.1'; },
+    (fixture) => { fixture.commit = 'b'.repeat(40); },
+    (fixture) => { fixture.env.REQUESTED_VERSION = '1.0.1'; },
+    (fixture) => { fixture.env.GITHUB_EVENT_NAME = 'pull_request'; },
+    (fixture) => { fixture.env.RELEASE_TAG = 'v1.0.1'; },
+  ]) {
+    const fixture = releaseFixture();
+    mutate(fixture);
+    assert.throws(() => releaseIdentity(fixture));
+  }
+  const release = releaseFixture();
+  release.env.GITHUB_EVENT_NAME = 'release';
+  assert.throws(() => releaseIdentity(release), /release event/u);
+  release.env.RELEASE_TAG = 'v1.0.0';
+  assert.equal(releaseIdentity(release).tag, 'v1.0.0');
+});
+
+const registryFixture = (npmStatus = 200) => async (url) => {
+  const crate = String(url).startsWith('https://crates.io/');
+  return new Response(JSON.stringify(crate
+    ? { version: { num: '1.0.0', yanked: false, checksum: 'b'.repeat(64) } }
+    : { name: 'meta-language', version: '1.0.0', dist: { integrity: 'sha512-fixture', tarball: 'https://registry.npmjs.org/meta-language/-/meta-language-1.0.0.tgz' } }),
+  { status: crate ? 200 : npmStatus });
+};
+
+test('registry preflight treats only npm 404 as absent and refuses outages or invalid crate metadata', async () => {
+  const identity = releaseIdentity(releaseFixture());
+  assert.equal((await releaseRegistryState(identity, { fetchImpl: registryFixture(404) })).alreadyPublished, false);
+  assert.equal((await releaseRegistryState(identity, { fetchImpl: registryFixture() })).alreadyPublished, true);
+  for (const status of [401, 403, 429, 500, 503]) {
+    await assert.rejects(releaseRegistryState(identity, { fetchImpl: registryFixture(status) }), new RegExp(`HTTP ${status}`, 'u'));
+  }
+  await assert.rejects(releaseRegistryState(identity, { fetchImpl: async () => { throw new Error('network unavailable'); } }), /network unavailable/u);
+  for (const version of [
+    { num: '0.46.0', yanked: false, checksum: 'b'.repeat(64) },
+    { num: '1.0.0', yanked: true, checksum: 'b'.repeat(64) },
+    { num: '1.0.0', yanked: false },
+  ]) {
+    await assert.rejects(releaseRegistryState(identity, { fetchImpl: async () => new Response(JSON.stringify({ version })) }), /non-yanked/u);
+  }
+  await assert.rejects(releaseRegistryState(identity, { fetchImpl: async () => new Response('not JSON') }), /invalid registry metadata/u);
+  for (const value of ['null', '[]', '"version absent"']) {
+    await assert.rejects(releaseRegistryState(identity, { fetchImpl: async () => new Response(value) }), /invalid registry metadata/u);
+  }
+});
+
+test('post-publication verification waits for registry propagation and fails if npm stays absent', async () => {
+  const identity = releaseIdentity(releaseFixture());
+  let lookups = 0;
+  let delays = 0;
+  const fetchImpl = async (url) => registryFixture(String(url).startsWith('https://registry.npmjs.org/') && ++lookups === 1 ? 404 : 200)(url);
+  assert.equal((await verifyPublishedRelease(identity, { fetchImpl, delay: async () => { delays += 1; } })).alreadyPublished, true);
+  assert.equal(delays, 1);
+  assert.equal(lookups, 2);
+  await assert.rejects(verifyPublishedRelease(identity, {
+    fetchImpl: registryFixture(404), attempts: 2, delay: async () => {},
+  }), /after 2 registry checks/u);
 });
 
 test('Rust release pipeline delegates npm publishing to the canonical JavaScript workflow', async () => {

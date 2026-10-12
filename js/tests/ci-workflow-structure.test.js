@@ -10,6 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { lineCoverage, mergeLcov, renderLcov } from '../../scripts/merge-lcov.mjs';
+import { partitionTests } from '../scripts/test-groups.mjs';
 import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -190,6 +191,33 @@ test('both acceptance suites verify the complete published self-translation repo
     assert.doesNotMatch(steps[download].text, /merge-multiple: true/u, 'each shard retains its JSON and Markdown pair');
     assert.match(steps[execute].text, /ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY:/u);
   }
+});
+
+test('required JavaScript CI retains bounded memory regressions and actual target-tool conversion cycles', () => {
+  const partition = partitionTests([
+    'issue-195-evidence-memory.test.js', 'issue-195-parse-memory-budget.test.js', 'parser-memory.test.js',
+  ]);
+  assert.deepEqual(partition.unassigned, []);
+  assert.deepEqual(partition.ambiguous, []);
+  assert.deepEqual(partition.groups.grammar, ['issue-195-parse-memory-budget.test.js', 'parser-memory.test.js']);
+  assert.deepEqual(partition.groups.tooling, ['issue-195-evidence-memory.test.js']);
+  const parsed = jobs('js.yml');
+  const groupRun = parsed.get('tests').steps.find((step) => step.name === 'Run the test group');
+  assert.ok(groupRun.afterFailure, 'test groups report failures even if the oracle build failed');
+  const oracle = parsed.get('tests').steps.find((step) => /build-agda-layout-oracle\.mjs/u.test(step.run));
+  assert.ok(oracle, 'the independent Agda scanner oracle is built in CI');
+  assert.match(oracle.text, /matrix\.group == 'grammar'/u);
+  const evidence = jobs('ci.yml').get('javascript-suite');
+  const rebuild = evidence.steps.findIndex((step) => /build-agda-layout-oracle\.mjs/u.test(step.run));
+  const suite = evidence.steps.findIndex((step) => step.name === 'Produce the stage evidence');
+  assert.ok(rebuild >= 0 && suite > rebuild, 'acceptance rebuilds the same independent oracle before its corpus tests');
+  assert.ok(evidence.steps[suite].afterFailure, 'other acceptance tests still report failures if the oracle build fails');
+  const conversion = parsed.get('test').steps.find((step) => /run-grammar-interchange-tools\.mjs/u.test(step.run));
+  assert.ok(conversion?.afterFailure, 'the real target compiler runs despite other package check failures');
+  assert.doesNotMatch(conversion.text, /continue-on-error|github\.event_name != 'pull_request'/u);
+  const report = parsed.get('test').steps.find((step) => step.name === 'Upload the grammar conversion target-tool report');
+  assert.ok(report?.afterFailure, 'the target-tool report is retained after check failures');
+  assert.match(report.text, /grammar-interchange-tools-\$\{\{ github\.sha \}\}/u);
 });
 
 test('the acceptance workflow runs each Rust stage only after the matching JavaScript stage passes', () => {
