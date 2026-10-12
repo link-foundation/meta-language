@@ -95,7 +95,7 @@ test('materialized cleanup preserves metadata and refuses changed downloads', as
   const bytes = Buffer.from('source');
   const options = workspace(context, { 'vendor/source.txt': receipt(bytes) });
   execFileSync('git', ['init', '--quiet'], { cwd: options.root });
-  writeFileSync(join(options.root, '.gitignore'), '/vendor/\n');
+  writeFileSync(join(options.root, '.gitignore'), '/vendor/\n/.external-grammars/\n');
   await downloadExternalGrammarAssets({ ...options, all: true, materialize: true, fetchImpl: async () => new Response(bytes) });
   writeFileSync(join(options.root, 'vendor/NOTICE.md'), 'metadata');
   writeFileSync(join(options.root, 'vendor/source.txt'), 'edited');
@@ -104,4 +104,57 @@ test('materialized cleanup preserves metadata and refuses changed downloads', as
   assert.deepEqual(cleanMaterializedExternalGrammarAssets(options), ['vendor/source.txt']);
   assert.equal(readFileSync(join(options.root, 'vendor/NOTICE.md'), 'utf8'), 'metadata');
   assert.deepEqual(readExternalGrammarAsset('vendor/source.txt', options), bytes);
+});
+
+test('custom caches inside a worktree require an actual ignore rule before acquisition', async context => {
+  const bytes = Buffer.from('pinned source');
+  const options = workspace(context, { 'vendor/source.txt': receipt(bytes) });
+  execFileSync('git', ['init', '--quiet'], { cwd: options.root });
+  let requests = 0;
+  const custom = { ...options, cacheRoot: join(options.root, 'custom-cache'), all: true,
+    fetchImpl: async () => { requests++; return new Response(bytes); } };
+  await assert.rejects(downloadExternalGrammarAssets(custom), /cache inside the worktree must be explicitly ignored/u);
+  assert.equal(requests, 0);
+  assert.equal(existsSync(custom.cacheRoot), false);
+  writeFileSync(join(options.root, '.gitignore'), '/custom-cache/\n');
+  await downloadExternalGrammarAssets(custom);
+  assert.equal(requests, 1);
+  assert.deepEqual(readExternalGrammarAsset('vendor/source.txt', custom), bytes);
+});
+
+test('a custom cache rule must cover actual selected files as well as a directory probe', async context => {
+  const bytes = Buffer.from('pinned source');
+  const options = workspace(context, { 'vendor/source.txt': receipt(bytes) });
+  execFileSync('git', ['init', '--quiet'], { cwd: options.root });
+  writeFileSync(join(options.root, '.gitignore'), '/custom-cache/*\n!/custom-cache/vendor/\n');
+  const custom = { ...options, cacheRoot: join(options.root, 'custom-cache'), all: true,
+    fetchImpl: () => { throw new Error('unignored selected input must be refused before fetching'); } };
+  await assert.rejects(downloadExternalGrammarAssets(custom), /explicitly ignored by Git: custom-cache\/vendor\/source.txt/u);
+  assert.equal(existsSync(custom.cacheRoot), false);
+});
+
+test('an ignore rule cannot authorize overwriting a tracked cache input', async context => {
+  const bytes = Buffer.from('pinned source');
+  const options = workspace(context, { 'vendor/source.txt': receipt(bytes) });
+  execFileSync('git', ['init', '--quiet'], { cwd: options.root });
+  writeFileSync(join(options.root, '.gitignore'), '/.external-grammars/\n');
+  mkdirSync(join(options.cacheRoot, 'vendor'), { recursive: true });
+  const target = join(options.cacheRoot, 'vendor/source.txt');
+  writeFileSync(target, 'tracked human source');
+  execFileSync('git', ['add', '--force', '--', '.external-grammars/vendor/source.txt'], { cwd: options.root });
+  await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true,
+    fetchImpl: () => { throw new Error('no request before the tracked-source guard'); } }), /cache input must be untracked/u);
+  assert.equal(readFileSync(target, 'utf8'), 'tracked human source');
+});
+
+test('outside-worktree temporary caches retain checked acquisition without editing repository ignore rules', async context => {
+  const bytes = Buffer.from('pinned source');
+  const options = workspace(context, { 'vendor/source.txt': receipt(bytes) });
+  execFileSync('git', ['init', '--quiet'], { cwd: options.root });
+  const outside = mkdtempSync(join(tmpdir(), 'meta-external-cache-outside-'));
+  context.after(() => rmSync(outside, { recursive: true, force: true }));
+  const configured = { ...options, cacheRoot: outside };
+  await downloadExternalGrammarAssets({ ...configured, all: true, fetchImpl: async () => new Response(bytes) });
+  assert.deepEqual(readExternalGrammarAsset('vendor/source.txt', configured), bytes);
+  assert.equal(existsSync(join(options.root, '.gitignore')), false);
 });

@@ -4,7 +4,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
@@ -126,6 +126,49 @@ function selectedPaths(context, options) {
   return selected;
 }
 
+// A custom cache inside this worktree is a source-storage location until Git
+// explicitly ignores it. Outside-worktree scratch and Gitless workspaces keep
+// their existing behavior; the guard never adds or changes an ignore rule.
+function verifyCacheDirectory(context, paths) {
+  let worktree;
+  try {
+    worktree = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+      cwd: context.root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim();
+  } catch (error) {
+    if (error.status === 128 && /not a git repository/u.test(String(error.stderr))) return;
+    throw error;
+  }
+  worktree = realpathSync(worktree);
+  // Git canonicalizes macOS /var and other symbolic ancestor spellings. Resolve
+  // the existing prefix even when the new cache directory does not exist yet.
+  const suffix = [];
+  let existing = context.cacheRoot;
+  while (!existsSync(existing)) { suffix.unshift(basename(existing)); existing = dirname(existing); }
+  const cache = join(realpathSync(existing), ...suffix);
+  if (cache !== worktree && !cache.startsWith(`${worktree}${sep}`)) return;
+  const location = relative(worktree, cache).split(sep).join('/');
+  const probe = location ? `${location}/__meta_language_external_asset_probe__` : '__meta_language_external_asset_probe__';
+  const cachePaths = [probe, ...paths.map(path => location ? `${location}/${path}` : path)];
+  let ignored;
+  try {
+    ignored = new Set(execFileSync('git', ['check-ignore', '--no-index', '-z', '--stdin'], {
+      cwd: worktree, encoding: 'utf8', input: cachePaths.join('\0') + '\0', stdio: ['pipe', 'pipe', 'pipe'],
+    }).split('\0'));
+  } catch (error) {
+    if (error.status === 1) ignored = new Set();
+    else throw error;
+  }
+  for (const file of cachePaths) if (!ignored.has(file)) throw new Error(`external grammar cache inside the worktree must be explicitly ignored by Git: ${file}`);
+  const tracked = new Set(execFileSync('git', ['ls-files', '-z'], {
+    cwd: worktree, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+  }).split('\0'));
+  for (const path of paths) {
+    const file = location ? `${location}/${path}` : path;
+    if (tracked.has(file)) throw new Error(`external grammar cache input must be untracked: ${file}`);
+  }
+}
+
 async function responseBytes(response, limit) {
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   if (response.url && new URL(response.url).protocol !== 'https:') throw new Error('external grammar redirect requires HTTPS');
@@ -187,6 +230,7 @@ export async function downloadExternalGrammarAssets(options = {}) {
   const paths = selectedPaths(context, options);
   const jobs = options.jobs ?? 4;
   if (!Number.isInteger(jobs) || jobs < 1 || jobs > 16) throw new Error('external grammar download jobs must be between 1 and 16');
+  verifyCacheDirectory(context, paths);
   let cursor = 0;
   const results = [];
   const failures = [];

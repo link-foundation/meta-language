@@ -14,6 +14,48 @@ const externalGrammarIgnoreSource = capture('ignored-external-grammar-folders');
 const associativeDataSource = capture('associative-data-storage');
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
+// Entry points identify executable implementations. Their presence is not an
+// observation: the tooling tests emit each cell only after its whole behavior
+// succeeds, with the original conversation capture retained as a fixture.
+const dataTooling = {
+  'I195-ASSOCIATIVE-DATA-STORAGE': {
+    tooling: ['js/src/structured-data-links.js', 'rust/src/structured_data_links.rs',
+      'js/scripts/project-data-storage.mjs', 'js/scripts/project-data-tooling-evidence.mjs'],
+    fixtures: ['structured-data-migration-baselines', 'project-data-json-exceptions'],
+  },
+  'I195-ASSOCIATIVE-DATA-AUTOMATED-CONVERSION': {
+    tooling: ['js/scripts/convert-structured-data.mjs', 'js/scripts/validate-structured-data-migration.mjs',
+      'js/scripts/fixture-source-bytes.mjs', 'js/src/project-data-files.js', 'rust/src/project_data.rs'],
+    fixtures: ['structured-data-migration-baselines'],
+  },
+  'I195-ASSOCIATIVE-DATA-JSON-EXCEPTIONS': {
+    tooling: ['js/scripts/project-data-storage.mjs', 'js/scripts/check-project-data-storage.mjs',
+      'js/tests/project-data-tooling-evidence.test.js'],
+    fixtures: ['project-data-json-exceptions'],
+  },
+  'I195-EXTERNAL-GRAMMAR-UNTRACKED': {
+    tooling: ['js/scripts/external-grammar-cache.mjs', 'js/scripts/project-data-tooling-evidence.mjs'],
+    fixtures: ['external-grammar-assets', 'language-grammar-inventory'],
+  },
+  'I195-EXTERNAL-GRAMMAR-TEMPORARY-DOWNLOAD': {
+    tooling: ['js/scripts/external-grammar-cache.mjs', 'js/scripts/project-data-tooling-evidence.mjs',
+      'js/scripts/check-prepared-native-snapshots.mjs'],
+    fixtures: ['external-grammar-assets', 'language-grammar-inventory'],
+  },
+  'I195-EXTERNAL-GRAMMAR-IGNORED-DIRECTORY': {
+    tooling: ['.gitignore', 'js/scripts/project-data-tooling-evidence.mjs',
+      'js/tests/project-data-tooling-evidence.test.js'],
+    fixtures: ['external-grammar-assets', 'language-grammar-inventory'],
+  },
+};
+
+const dataToolingFixtures = {
+  'structured-data-migration-baselines': 'parity/fixtures/structured-data-migration-baselines.lino',
+  'project-data-json-exceptions': 'parity/project-data-json-exceptions.lino',
+  'external-grammar-assets': 'parity/grammars/external-assets.lino',
+  'language-grammar-inventory': 'parity/language-grammar-inventory.lino',
+};
+
 function rows(sourceKey, fixture, specification, area, declarations, tooling = false) {
   return declarations.map(([id, construct, expectedBehavior, assertions]) => ({
     id, construct, expectedBehavior, assertions, sourceKey, fixture,
@@ -22,7 +64,13 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
     } : {}),
     specification, area,
-    ...(tooling ? { tooling: null } : { javascript: null, rust: null }),
+    ...(tooling ? { tooling: dataTooling[id]?.tooling ?? null } : { javascript: null, rust: null }),
+    ...(dataTooling[id] ? {
+      additionalFixtures: [
+        { id: 'project-data-tooling-contract', path: 'parity/fixtures/project-data-tooling-contract.lino' },
+        ...dataTooling[id].fixtures.map(id => ({ id, path: dataToolingFixtures[id] })),
+      ],
+    } : {}),
   }));
 }
 
