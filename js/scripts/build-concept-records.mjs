@@ -10,6 +10,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import { readProjectData, serializeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -18,6 +19,7 @@ export const CONCEPT_RECORD_PATHS = Object.freeze([
   join(root, 'js/src/data/concept-records.lino'),
   join(root, 'rust/src/data/concept-records.lino'),
 ]);
+const metadataPath = join(root, 'js/src/data/concept-records-metadata.lino');
 
 const RECORD_FIELDS = Object.freeze([
   'id', 'phrase', 'role', 'definition', 'constraints', 'sourceAliases', 'formerNames', 'represents', 'distinctFrom',
@@ -72,6 +74,10 @@ async function main() {
     pairs.add(pair);
   }
   const generated = [
+    [metadataPath, serializeProjectData({
+      schemaVersion: 1, source: 'concept-records.lino', conceptCount: register.concepts.length,
+      sourceSha256: createHash('sha256').update(text).digest('hex'),
+    }, metadataPath)],
     [join(root, 'js/src/data/required-concept-distinctions.lino'), serializeProjectData(distinctions, join(root, 'js/src/data/required-concept-distinctions.lino'))],
     [join(root, 'rust/src/data/required-concept-distinctions.rs'), '&[\n' + distinctions.map(({ concepts, reason }) => '    RequiredDistinction {\n        concepts: [' + concepts.map((id) => JSON.stringify(id)).join(', ') + '],\n        reason: ' + JSON.stringify(reason) + ',\n    },').join('\n') + '\n]\n'],
   ];
