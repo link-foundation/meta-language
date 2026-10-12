@@ -100,5 +100,6 @@ test('JavaScript grammar checks and publication provision their assets explicitl
     assert.doesNotMatch(job.steps[provision].text, /continue-on-error:\s*true/u);
     const install = job.steps.findIndex((step) => /npm ci\b/u.test(step.run));
     assert.ok(install >= 0 && install < provision, `${id} installs the linked manifest reader before provisioning`);
+    teardown(job);
   }
 });
