@@ -543,7 +543,11 @@ impl Decoder<'_> {
         id: LinkId,
         environment: &BTreeMap<String, LinkId>,
         declarations: &BTreeMap<String, LinkId>,
+        remaining: &mut usize,
     ) -> Result<()> {
+        *remaining = remaining.checked_sub(1).ok_or_else(|| {
+            error("the linked program exceeds its semantic traversal resource limit")
+        })?;
         if let Some(effects) = self.field(id, "effects") {
             let mut inner = environment.clone();
             for effect in self.array(effects)? {
@@ -553,10 +557,11 @@ impl Decoder<'_> {
                             .ok_or_else(|| error("a linked binding has no value"))?,
                         &inner,
                         declarations,
+                        remaining,
                     )?;
                     inner.insert(self.name(*effect)?, *effect);
                 } else {
-                    self.bindings(*effect, &inner, declarations)?;
+                    self.bindings(*effect, &inner, declarations, remaining)?;
                 }
             }
             return Ok(());
@@ -602,6 +607,7 @@ impl Decoder<'_> {
                     .ok_or_else(|| error("a linked binding has no value"))?,
                 environment,
                 declarations,
+                remaining,
             )?;
             let mut inner = environment.clone();
             inner.insert(self.name(id)?, id);
@@ -610,19 +616,20 @@ impl Decoder<'_> {
                     .ok_or_else(|| error("a linked binding has no body"))?,
                 &inner,
                 declarations,
+                remaining,
             );
         }
         match self.values.get(&id) {
             Some(Data::Record(fields)) => {
                 for (field, child) in fields {
                     if !matches!(field.as_str(), "type" | "domain" | "span" | "from" | "to") {
-                        self.bindings(*child, environment, declarations)?;
+                        self.bindings(*child, environment, declarations, remaining)?;
                     }
                 }
             }
             Some(Data::Array(values)) => {
                 for child in values {
-                    self.bindings(*child, environment, declarations)?;
+                    self.bindings(*child, environment, declarations, remaining)?;
                 }
             }
             _ => {}
@@ -751,6 +758,7 @@ pub(super) fn decode(
         }
         declarations.insert(name, *entry);
     }
+    let mut traversal_remaining = limits.node_limit;
     for entry in declarations.values() {
         let mut environment = BTreeMap::new();
         if let Some(parameters) = decoder.field(*entry, "params") {
@@ -762,11 +770,16 @@ pub(super) fn decode(
             .field(*entry, "body")
             .or_else(|| decoder.field(*entry, "value"))
         {
-            decoder.bindings(body, &environment, &declarations)?;
+            decoder.bindings(body, &environment, &declarations, &mut traversal_remaining)?;
         }
     }
     if let Some(main) = decoder.field(body, "main") {
-        decoder.bindings(main, &BTreeMap::new(), &declarations)?;
+        decoder.bindings(
+            main,
+            &BTreeMap::new(),
+            &declarations,
+            &mut traversal_remaining,
+        )?;
     }
     let mut remaining = limits.node_limit;
     let mut bytes = 64 * 1024 * 1024;

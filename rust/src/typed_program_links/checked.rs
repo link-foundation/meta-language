@@ -5,8 +5,12 @@ use crate::translation::ir::{Decl, Effect, Expr, Item, LitValue, Node, Program};
 use crate::translation::surface::{
     SEffect, SExpr, SFn, SItem, SMain, SNode, SParam, SProgram, ShowStyle,
 };
+use crate::translation::typed_program_link_rules::{
+    accept_program_machine_integer_width, accept_program_optional_absence,
+};
 use crate::translation::types::Type;
 use regex::Regex;
+use serde_json::Value;
 use std::sync::OnceLock;
 
 fn valid_float(value: &str) -> bool {
@@ -19,6 +23,44 @@ fn valid_float(value: &str) -> bool {
             .unwrap()
         })
         .is_match(value)
+}
+
+fn validate_type_records(value: &Value) -> Result<()> {
+    if let Some(fields) = value.as_object() {
+        if matches!(
+            value["kind"].as_str(),
+            Some("named" | "literal" | "hypothesis" | "output" | "data")
+        ) {
+            return Err(error(
+                "the Rust typed links adapter does not yet recheck unresolved or threaded value types",
+            ));
+        }
+        if value["kind"] == "fixed" {
+            let width = value["bits"]
+                .as_u64()
+                .map(|width| width.to_string())
+                .unwrap_or_default();
+            if !accept_program_machine_integer_width(&width) || !value["signed"].is_boolean() {
+                return Err(error(
+                    "the linked program contains an invalid machine integer type",
+                ));
+            }
+        } else if value["kind"] == "option"
+            && !accept_program_optional_absence(value["absence"].as_str().unwrap_or("both"))
+        {
+            return Err(error(
+                "a linked optional type has an invalid absence policy",
+            ));
+        }
+        for child in fields.values() {
+            validate_type_records(child)?;
+        }
+    } else if let Some(values) = value.as_array() {
+        for child in values {
+            validate_type_records(child)?;
+        }
+    }
+    Ok(())
 }
 
 fn expression(value: &Expr) -> Result<SExpr> {
@@ -108,6 +150,9 @@ fn expression(value: &Expr) -> Result<SExpr> {
     Ok(SExpr::new(node, value.span))
 }
 pub(super) fn validate(program: &Program) -> Result<()> {
+    validate_type_records(
+        &serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?,
+    )?;
     if program.schema_version != 1 {
         return Err(error("the linked value is not a checked typed program"));
     }

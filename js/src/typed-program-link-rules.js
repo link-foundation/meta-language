@@ -33,3 +33,13 @@ export function isUnsafeProgramField(name) {
 export function acceptProgramSchemaRoot(term, revision, arity) {
   return term === "typed program" && revision === "1" && arity === "1";
 }
+
+/** @param {string} width @returns {boolean} */
+export function acceptProgramMachineIntegerWidth(width) {
+  return width === "8" || width === "16" || width === "32" || width === "64" || width === "128";
+}
+
+/** @param {string} absence @returns {boolean} */
+export function acceptProgramOptionalAbsence(absence) {
+  return absence === "null" || absence === "undefined" || absence === "both";
+}

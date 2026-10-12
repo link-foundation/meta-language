@@ -21,7 +21,11 @@ const source = '// Generated from data/typed-program-links-schema.json. Do not e
   + '/** @param {string} name @returns {boolean} */\nexport function isUnsafeProgramField(name) {\n'
   + '  return name === "__proto__" || name === "constructor" || name === "prototype";\n}\n\n'
   + '/** @param {string} term @param {string} revision @param {string} arity @returns {boolean} */\nexport function acceptProgramSchemaRoot(term, revision, arity) {\n'
-  + `  return term === ${JSON.stringify(schema.root)} && revision === ${JSON.stringify(String(schema.schemaVersion))} && arity === "1";\n}\n`;
+  + `  return term === ${JSON.stringify(schema.root)} && revision === ${JSON.stringify(String(schema.schemaVersion))} && arity === "1";\n}\n\n`
+  + '/** @param {string} width @returns {boolean} */\nexport function acceptProgramMachineIntegerWidth(width) {\n'
+  + `  return ${schema.machineIntegerWidths.map((width) => `width === ${JSON.stringify(String(width))}`).join(' || ')};\n}\n\n`
+  + '/** @param {string} absence @returns {boolean} */\nexport function acceptProgramOptionalAbsence(absence) {\n'
+  + `  return ${schema.optionalAbsences.map((absence) => `absence === ${JSON.stringify(absence)}`).join(' || ')};\n}\n`;
 const emitted = emitRust(checkProgram(parseJavaScript(source)));
 const raw = emitted.definitions.join('\n\n');
 const styleFile = new URL('../../parity/self-translation/typed-program-link-rules-decorators.lino', import.meta.url);
@@ -29,9 +33,9 @@ if (process.argv.includes('--update-styles')) {
   const actions = [];
   let styled = raw;
   const replace = (from, to) => { if (styled.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); styled = styled.split(from).join(to); } };
-  for (const name of ['term', 'label', 'name', 'revision', 'arity']) replace(`${name}: String`, `${name}: &str`);
+  for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence']) replace(`${name}: String`, `${name}: &str`);
   for (const match of [...styled.matchAll(/\([a-z]+ == "[^"\n]*"\)/gu)]) replace(match[0], match[0].slice(1, -1));
-  for (const name of ['accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root']) {
+  for (const name of ['accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence']) {
     const begin = styled.indexOf(`pub fn ${name}`);
     const end = styled.indexOf('\n}', begin);
     const body = styled.slice(begin, end);
@@ -57,7 +61,7 @@ if (process.argv.includes('--update-styles')) {
     const to = `} else ${styled.slice(opening + 1, cursor - 1).trim()}`;
     replace(from, to);
   }
-  for (const name of ['read_program_container_kind', 'read_program_scalar_kind', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root']) {
+  for (const name of ['read_program_container_kind', 'read_program_scalar_kind', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence']) {
     replace(`pub fn ${name}`, `/// Read the corresponding decision of the shared typed program links schema.\n#[must_use]\npub fn ${name}`);
   }
   writeFileSync(styleFile, new DecoratorSet([{ id: 'typed-program-link-library-style', level: 'emitter', order: 0,

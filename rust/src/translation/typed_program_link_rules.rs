@@ -51,3 +51,15 @@ pub fn is_unsafe_program_field(name: &str) -> bool {
 pub fn accept_program_schema_root(term: &str, revision: &str, arity: &str) -> bool {
     term == "typed program" && revision == "1" && arity == "1"
 }
+
+/// Read the corresponding decision of the shared typed program links schema.
+#[must_use]
+pub fn accept_program_machine_integer_width(width: &str) -> bool {
+    width == "8" || width == "16" || width == "32" || width == "64" || width == "128"
+}
+
+/// Read the corresponding decision of the shared typed program links schema.
+#[must_use]
+pub fn accept_program_optional_absence(absence: &str) -> bool {
+    absence == "null" || absence == "undefined" || absence == "both"
+}

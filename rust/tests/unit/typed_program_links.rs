@@ -242,3 +242,40 @@ fn malformed_literal_type_and_structural_edits_are_rejected_before_emission() {
             .contains("structural cycle")
     );
 }
+
+#[test]
+fn shared_graph_paths_have_a_bounded_semantic_walk() {
+    let fixtures = fixture();
+    for case in fixtures["resourceCases"].as_array().unwrap() {
+        let graph = LinkNetwork::from_lino(case["lino"].as_str().unwrap()).unwrap();
+        let root = LinkId::from_u64(case["root"].as_u64().unwrap());
+        assert!(
+            graph.len() < 1000,
+            "the fixture must exercise repeated paths rather than unique-node bounds"
+        );
+        assert!(
+            decode_typed_program_links(&graph, root)
+                .unwrap_err()
+                .message
+                .contains("semantic traversal resource limit")
+        );
+    }
+}
+
+#[test]
+fn machine_integer_width_edits_return_a_diagnostic_before_emission() {
+    let fixtures = fixture();
+    let case = &fixtures["cases"][1];
+    let graph = LinkNetwork::from_lino(case["lino"].as_str().unwrap()).unwrap();
+    let root = LinkId::from_u64(case["root"].as_u64().unwrap());
+    let bits = scalar(&graph, "bits", "32");
+    for width in fixtures["invalidMachineIntegerWidths"].as_array().unwrap() {
+        let changed = edit_definition(&graph, bits, &width.to_string());
+        assert!(
+            emit_typed_program_links(&changed, root, "Rust")
+                .unwrap_err()
+                .message
+                .contains("invalid machine integer type")
+        );
+    }
+}

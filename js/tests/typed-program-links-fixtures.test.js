@@ -19,3 +19,22 @@ test('bounded typed graph fixtures reload without source and preserve behavior',
     assert.equal(emitted.code, entry.javascript);
   }
 });
+
+test('shared typed graph paths stop at the semantic traversal budget', () => {
+  for (const entry of fixture.resourceCases) {
+    const network = LinkNetwork.fromLino(entry.lino);
+    assert.ok([...network.links()].length < 1000);
+    assert.throws(() => emitTypedProgramLinks(network, LinkId.fromU64(entry.root), 'JavaScript'), /resource limit/u);
+  }
+});
+
+test('machine integer width edits are refused before target emission', () => {
+  for (const width of fixture.invalidMachineIntegerWidths) {
+    const entry = fixture.cases.find((entry) => entry.id === 'rust-add');
+    const network = LinkNetwork.fromLino(entry.lino);
+    const bits = network.fieldRelations().find((relation) => relation.label === 'bits').child;
+    const value = network.link(bits);
+    value.setMetadata(value.metadata().withDefinition(String(width)));
+    assert.throws(() => emitTypedProgramLinks(network, LinkId.fromU64(entry.root), 'Rust'), /invalid machine integer type/u);
+  }
+});
