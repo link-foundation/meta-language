@@ -324,28 +324,10 @@ struct Decoder<'a> {
     values: HashMap<LinkId, Data>,
     active: HashSet<LinkId>,
     references: HashMap<LinkId, (String, LinkId)>,
-    semantic_values: BTreeSet<LinkId>,
     limits: TypedProgramLinksLimits,
     visited: usize,
 }
 impl Decoder<'_> {
-    fn protect_semantic_values(&mut self, id: LinkId) {
-        if !self.semantic_values.insert(id) {
-            return;
-        }
-        let children = match self.values.get(&id) {
-            Some(Data::Record(fields)) => fields.values().copied().collect::<Vec<_>>(),
-            Some(Data::Array(values)) => values.clone(),
-            Some(Data::Map(values)) => values
-                .iter()
-                .flat_map(|(key, value)| [*key, *value])
-                .collect(),
-            _ => Vec::new(),
-        };
-        for child in children {
-            self.protect_semantic_values(child);
-        }
-    }
     fn read(&mut self, id: LinkId, depth: usize) -> Result<()> {
         if self.active.contains(&id) {
             return Err(error("a linked program contains a structural cycle"));
@@ -393,12 +375,6 @@ impl Decoder<'_> {
                             return Err(error("a linked program contains an unsafe property name"));
                         }
                         self.read(child, depth + 1)?;
-                        if matches!(
-                            field.as_str(),
-                            "type" | "domain" | "ret" | "from" | "to" | "ctors"
-                        ) {
-                            self.protect_semantic_values(child);
-                        }
                         if fields.insert(field, child).is_some() {
                             return Err(error("a program record contains a duplicate field"));
                         }
@@ -770,7 +746,6 @@ pub(super) fn decode_with_binding_identities(
         values: HashMap::new(),
         active: HashSet::new(),
         references: HashMap::new(),
-        semantic_values: BTreeSet::new(),
         limits,
         visited: 0,
     };
@@ -858,11 +833,5 @@ pub(super) fn decode_with_binding_identities(
         &value,
         &serde_json::to_value(&program).map_err(|failure| error(failure.to_string()))?,
     )?;
-    Ok((
-        program,
-        identities
-            .into_iter()
-            .filter(|id| !decoder.semantic_values.contains(id))
-            .collect(),
-    ))
+    Ok((program, identities.into_iter().collect()))
 }
