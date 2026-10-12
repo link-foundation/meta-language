@@ -13,9 +13,10 @@ import {
   additionalGrammarTexts,
   importAdditionalGrammar,
   compareMergeDecisionReports,
+  createPipelineGlobalConceptSpace,
 } from '../scripts/run-grammar-bulk-pipeline.mjs';
 import { GRAMMAR_SOURCES } from '../scripts/build-vendored-grammars.mjs';
-import { compileGrammar, importAntlr } from '../src/index.js';
+import { compileGrammar, importAntlr, renderGrammarLinks, deserializeGrammar } from '../src/index.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 // The pipeline over all 57 languages runs in CI (the grammar-bulk-pipeline
@@ -210,4 +211,18 @@ test('an additional lexer retains tokens and skipped trivia when linked with its
   assert.ok(grammar.declarations.extras.length > 0);
   const outcome = compileGrammar(grammar).parseTree('name \n');
   assert.equal(outcome.ok, true);
+});
+
+test('the pipeline retains all serialized source origins and forwards only explicit formal premises', () => {
+  const fixture = read('parity/fixtures/global-concept-space.json');
+  const list = fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammarLinks: renderGrammarLinks(deserializeGrammar(grammar)) }));
+  const options = { records: fixture.records, equivalences: fixture.equivalences };
+  const grounded = createPipelineGlobalConceptSpace(list, { ...options, formalDefinitions: fixture.formalDefinitions });
+  assert.deepEqual(grounded, fixture.expectedSpace);
+  const unknown = createPipelineGlobalConceptSpace(list, options);
+  assert.equal(unknown.proofs.length, 0);
+  assert.deepEqual(unknown.formalDefinitions, {});
+  assert.equal(unknown.concepts.length, 6);
+  assert.equal(Object.keys(unknown.mappings).length, 6);
+  assert.equal(unknown.failures.length, 2);
 });

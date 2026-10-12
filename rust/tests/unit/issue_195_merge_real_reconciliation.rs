@@ -397,3 +397,66 @@ fn shared_source_production_union_preserves_syntax_and_distinct_meanings() {
         );
     }
 }
+
+#[test]
+fn the_merge_forwards_formal_operational_premises_and_retains_unknown_origins() {
+    let fixture: Value = serde_json::from_str(&read("parity/fixtures/global-concept-space.json"))
+        .expect("formal premise fixture");
+    let list: Vec<GrammarMergeSource> = fixture["sources"]
+        .as_array()
+        .expect("sources")
+        .iter()
+        .map(|entry| {
+            let source = meta_language::GlobalConceptSource::from_json(entry)
+                .expect("fixture grammar source");
+            GrammarMergeSource::new(source.id, source.language, source.grammar)
+                .with_edition(source.edition)
+        })
+        .collect();
+    let mut options = GrammarMergeOptions {
+        concept_records: Some(fixture["records"].clone()),
+        formal_definitions: Some(fixture["formalDefinitions"].clone()),
+        global_equivalences: fixture["equivalences"]
+            .as_array()
+            .expect("equivalences")
+            .iter()
+            .map(|pair| {
+                [
+                    pair[0].as_str().expect("origin").to_owned(),
+                    pair[1].as_str().expect("origin").to_owned(),
+                ]
+            })
+            .collect(),
+        ..GrammarMergeOptions::default()
+    };
+    let grounded = merge_grammars(&list, &options).expect("the formally grounded merge runs");
+    assert_eq!(grounded.status(), "complete");
+    assert_eq!(grounded.global_concept_space, fixture["expectedSpace"]);
+    options.formal_definitions = None;
+    let unknown = merge_grammars(&list, &options).expect("unknown concepts remain copied");
+    assert_eq!(unknown.status(), "incomplete");
+    assert!(
+        unknown.global_concept_space["proofs"]
+            .as_array()
+            .expect("proofs")
+            .is_empty()
+    );
+    assert_eq!(
+        unknown.global_concept_space["formalDefinitions"],
+        serde_json::json!({})
+    );
+    assert_eq!(
+        unknown.global_concept_space["concepts"]
+            .as_array()
+            .expect("concepts")
+            .len(),
+        6
+    );
+    assert_eq!(
+        unknown.global_concept_space["mappings"]
+            .as_object()
+            .expect("origins")
+            .len(),
+        6
+    );
+}

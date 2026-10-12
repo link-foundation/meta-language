@@ -8,7 +8,7 @@
 // grammars that imported, and lists every feature still missing: unsupported
 // constructs, undefined rules, compile errors and rejected samples.
 //
-//   node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir DIR [--only A,B] [--jobs N] [--timeout SECONDS]
+//   node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir DIR [--only A,B] [--jobs N] [--timeout SECONDS] [--formal-definitions FILE]
 //
 // It writes DIR/grammar-bulk-matrix.json and DIR/grammar-bulk-matrix.md. Each
 // language runs in its own process with a memory limit and a timeout, and
@@ -146,6 +146,14 @@ export async function importAdditionalGrammar(source) {
 const message = (error) => String(error?.message ?? error).split('\n')[0].slice(0, 300);
 const elapsed = (start) => Math.round(performance.now() - start);
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
+const bulkSourceId = (language, id) => `${language.replace(/[^A-Za-z0-9_-]/gu, '_')}--${id}`;
+
+/** Rebuild the aggregate global space with only caller-supplied premises. */
+export function createPipelineGlobalConceptSpace(sources, options = {}) {
+  return createGlobalConceptSpace(sources.map(({ grammarLinks, ...source }) => ({
+    ...source, grammar: parseGrammarLinks(grammarLinks),
+  })), options);
+}
 
 // A rejection as `syntax at 3:1, expected "\n" or "\r"`.
 function rejectionText(rejection) {
@@ -182,7 +190,7 @@ async function importPinned(pinned) {
 }
 
 /** Runs every stage of one language, calling `report(row)` after each. */
-export async function bulkLanguageRow(entry, report = () => {}) {
+export async function bulkLanguageRow(entry, report = () => {}, options = {}) {
   const { compileGrammar, importAntlr, mergeGrammars, parseGrammarLinks, sharedRuleDecisions } = await import('../src/index.js');
   const { importTreeSitterNative, renderTreeSitterNative } = await import('../src/grammar-importers/tree-sitter-native.js');
   const { nativeRows } = await import('./native-grammar-rows.mjs');
@@ -268,9 +276,14 @@ export async function bulkLanguageRow(entry, report = () => {}) {
       row.merge = { sources: grammars.map(({ id }) => id), stage: 'merge' };
       report(row);
       const start = performance.now();
+      const formalDefinitions = options.formalDefinitions === undefined ? undefined : { ...options.formalDefinitions };
+      if (formalDefinitions) for (const { id, grammar } of grammars) for (const rule of grammar.rules.values()) {
+        const alias = `${bulkSourceId(entry.name, id)}:${rule.name}`;
+        if (Object.hasOwn(formalDefinitions, alias)) formalDefinitions[`${id}:${rule.name}`] = formalDefinitions[alias];
+      }
       const merged = mergeGrammars(
         grammars.map(({ id, grammar }, precedence) => ({ id, language: entry.name, precedence, grammar })),
-        { reconcile: true },
+        { reconcile: true, formalDefinitions },
       );
       const shared = merged.groups.flatMap(sharedRuleDecisions);
       row.merge = {
@@ -290,7 +303,7 @@ export async function bulkLanguageRow(entry, report = () => {}) {
       };
       row.nativeGrammar = renderGrammarLinks(merged.groups[0].grammar);
       row.conceptSources = grammars.map(({ id, grammar }) => ({
-        id: `${entry.name.replace(/[^A-Za-z0-9_-]/gu, '_')}--${id}`,
+        id: bulkSourceId(entry.name, id),
         language: entry.name,
         grammarLinks: renderGrammarLinks(grammar),
       }));
@@ -298,6 +311,7 @@ export async function bulkLanguageRow(entry, report = () => {}) {
         copiedOrigins: Object.keys(merged.globalConceptSpace.mappings).length,
         concepts: merged.globalConceptSpace.concepts.length,
         proofs: merged.globalConceptSpace.proofs.length,
+        formalOrigins: Object.keys(merged.globalConceptSpace.formalDefinitions).length,
         failures: merged.globalConceptSpace.failures,
         ambiguities: merged.globalConceptSpace.ambiguities,
       };
@@ -393,9 +407,10 @@ export function missingFeatures(row) {
 }
 
 // Runs one language in a child process; resolves with its last reported row.
-function runWorker(entry, { timeout, memory }) {
+function runWorker(entry, { timeout, memory, formalDefinitionsFile }) {
   return new Promise((resolveRow) => {
-    const child = spawn(process.execPath, [`--max-old-space-size=${memory}`, script, '--worker', entry.name], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [`--max-old-space-size=${memory}`, script, '--worker', entry.name,
+      ...(formalDefinitionsFile ? ['--formal-definitions', formalDefinitionsFile] : [])], { stdio: ['ignore', 'pipe', 'pipe'] });
     let last = { language: entry.name, grammars: entry.grammars, treeSitter: { stage: 'start' }, grammarsV4: null, merge: null };
     let buffer = '';
     let stderr = '';
@@ -484,15 +499,24 @@ function summarize(rows, mapped) {
 }
 
 /** Runs the pipeline over `only` (default: every language) and writes the matrix. */
-export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout = 300, memory = 3072, previousMatrix = null }) {
+export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout = 300, memory = 3072, previousMatrix = null, formalDefinitions }) {
+  if (formalDefinitions !== undefined && (formalDefinitions === null || typeof formalDefinitions !== 'object' || Array.isArray(formalDefinitions))) {
+    throw new TypeError('formal definitions must map qualified origins or concept identities to explicit Links archives');
+  }
   const languages = bulkLanguages().filter(({ name }) => !only || only.includes(name));
   if (only) for (const name of only) if (!languages.some((entry) => entry.name === name)) throw new Error(`${name} is not an inventory language with a grammar`);
   const rows = new Array(languages.length);
+  let formalDefinitionsFile;
+  if (formalDefinitions !== undefined) {
+    mkdirSync(outDir, { recursive: true });
+    formalDefinitionsFile = join(outDir, 'formal-concept-definitions.input.json');
+    writeFileSync(formalDefinitionsFile, `${JSON.stringify(formalDefinitions, null, 2)}\n`);
+  }
   let next = 0;
   const worker = async () => {
     while (next < languages.length) {
       const index = next++;
-      const row = await runWorker(languages[index], { timeout, memory });
+      const row = await runWorker(languages[index], { timeout, memory, formalDefinitionsFile });
       row.missing = missingFeatures(row);
       rows[index] = row;
       process.stderr.write(`${row.language}: ${row.missing.length} missing features\n`);
@@ -506,13 +530,14 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   const decisionChanges = compareMergeDecisionReports(previousMatrix, matrix);
   writeFileSync(join(outDir, 'grammar-merge-decision-changes.json'), `${JSON.stringify(decisionChanges, null, 2)}\n`);
   const importedSources = rows.flatMap((row) => row.conceptSources ?? []);
-  const conceptSpace = createGlobalConceptSpace(importedSources.map(({ grammarLinks, ...source }) => ({ ...source, grammar: parseGrammarLinks(grammarLinks) })));
+  const conceptSpace = createPipelineGlobalConceptSpace(importedSources, { formalDefinitions });
   writeFileSync(join(outDir, 'global-concept-space.json'), `${JSON.stringify(conceptSpace, null, 2)}\n`);
   writeFileSync(join(outDir, 'global-concept-space.lino'), globalConceptSpaceToLinks(conceptSpace));
   matrix.globalConceptSpace = {
     copiedOrigins: Object.keys(conceptSpace.mappings).length,
     concepts: conceptSpace.concepts.length,
     proofs: conceptSpace.proofs.length,
+    formalOrigins: Object.keys(conceptSpace.formalDefinitions).length,
     failures: conceptSpace.failures,
     ambiguities: conceptSpace.ambiguities,
   };
@@ -533,14 +558,16 @@ function option(args, name, fallback) {
 }
 
 async function main(args) {
+  const definitionsFile = option(args, '--formal-definitions', null);
+  const formalDefinitions = definitionsFile === null ? undefined : JSON.parse(readFileSync(resolve(definitionsFile), 'utf8'));
   const worker = option(args, '--worker', null);
   if (worker) {
     const entry = bulkLanguages().find(({ name }) => name === worker);
-    await bulkLanguageRow(entry, (row) => process.stdout.write(`${JSON.stringify(row)}\n`));
+    await bulkLanguageRow(entry, (row) => process.stdout.write(`${JSON.stringify(row)}\n`), { formalDefinitions });
     return;
   }
   const outDir = option(args, '--out-dir', null);
-  if (!outDir) throw new Error('usage: run-grammar-bulk-pipeline.mjs --out-dir DIR [--only A,B] [--jobs N] [--timeout SECONDS]');
+  if (!outDir) throw new Error('usage: run-grammar-bulk-pipeline.mjs --out-dir DIR [--only A,B] [--jobs N] [--timeout SECONDS] [--formal-definitions FILE]');
   const only = option(args, '--only', null)?.split(',');
   const previousFile = option(args, '--previous-matrix', null);
   const matrix = await runBulkPipeline({
@@ -550,6 +577,7 @@ async function main(args) {
     timeout: Number(option(args, '--timeout', 300)),
     memory: Number(option(args, '--memory', 3072)),
     previousMatrix: previousFile === null ? null : JSON.parse(readFileSync(resolve(previousFile), 'utf8')),
+    formalDefinitions,
   });
   process.stdout.write(`${JSON.stringify(matrix.summary)}\n`);
 }

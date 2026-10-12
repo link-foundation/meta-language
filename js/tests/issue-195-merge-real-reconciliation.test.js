@@ -21,7 +21,7 @@ import {
   sharedRuleDecisions,
   compileGrammar,
 } from '../src/index.js';
-import { Grammar } from '../src/grammar.js';
+import { Grammar, deserializeGrammar } from '../src/grammar.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const FIXTURE = 'parity/grammars/reconcile/pairs.json';
@@ -222,3 +222,19 @@ for (const fixture of JSON.parse(read('parity/fixtures/grammar-source-production
     assert.equal(group.sourceProductions.length, list.reduce((count, { grammar }) => count + grammar.rules.size, 0));
   });
 }
+
+test('the merge forwards explicit operational premises and retains unknown concepts without them', () => {
+  const fixture = JSON.parse(read('parity/fixtures/global-concept-space.json'));
+  const list = fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammar: deserializeGrammar(grammar) }));
+  const options = { conceptRecords: fixture.records, globalEquivalences: fixture.equivalences };
+  const grounded = mergeGrammars(list, { ...options, formalDefinitions: fixture.formalDefinitions });
+  assert.equal(grounded.status, 'complete');
+  assert.deepEqual(grounded.globalConceptSpace, fixture.expectedSpace);
+  const unknown = mergeGrammars(list, options);
+  assert.equal(unknown.status, 'incomplete');
+  assert.equal(unknown.globalConceptSpace.proofs.length, 0);
+  assert.equal(unknown.globalConceptSpace.concepts.length, 6);
+  assert.deepEqual(unknown.globalConceptSpace.formalDefinitions, {});
+  assert.notEqual(unknown.globalConceptSpace.mappings['first:atom'], unknown.globalConceptSpace.mappings['second:letter']);
+  assert.equal(Object.keys(unknown.globalConceptSpace.mappings).length, 6);
+});

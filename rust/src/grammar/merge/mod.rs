@@ -103,6 +103,8 @@ pub struct GrammarMergeOptions<'a> {
     pub global_equivalences: Vec<[String; 2]>,
     /// Optional semantic concept records for the global proof procedure.
     pub concept_records: Option<serde_json::Value>,
+    /// Explicit supported operational Links archives, by origin or concept id.
+    pub formal_definitions: Option<serde_json::Value>,
 }
 
 /// What the merge decided about one class of rules.
@@ -598,6 +600,7 @@ pub fn merge_grammars(
                 .map(|result| result.global_concept_space.clone()),
             equivalences: options.global_equivalences.clone(),
             records: options.concept_records.clone(),
+            formal_definitions: options.formal_definitions.clone(),
             ..crate::global_concept_space::GlobalConceptOptions::default()
         },
     )

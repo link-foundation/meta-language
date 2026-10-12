@@ -45,6 +45,8 @@ export const GRAMMAR_MERGE_METHOD = 'recursive-structural-bisimulation';
  * shared grammar rule; it is not an equivalence proof for concept identity.
  * Every source also contributes to `globalConceptSpace`, across language and
  * edition boundaries; `globalEquivalences` requires exact one-to-one proofs.
+ * `formalDefinitions` supplies explicit operational Links archives for those
+ * proofs. Without supported premises, concepts retain their original identities.
  */
 export function mergeGrammars(sources, options = {}) {
   const prepared = prepareSources(sources);
@@ -87,6 +89,7 @@ export function mergeGrammars(sources, options = {}) {
     previous: options.previous?.globalConceptSpace,
     equivalences: options.globalEquivalences,
     records: options.conceptRecords,
+    formalDefinitions: options.formalDefinitions,
   });
   return {
     status: failures.length === 0 && globalConceptSpace.failures.length === 0 ? 'complete' : 'incomplete',
