@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 1,
+  "description": "Additional official and mature grammar sources consumed by the same bulk import and reconciliation pipeline. A source contributes only after its pinned bytes have been verified and imported; these records are not evidence of full catalog source union.",
+  "languages": {
+    "Groovy": [
+      {
+        "id": "apache-groovy",
+        "format": "antlr",
+        "repository": "https://github.com/apache/groovy",
+        "revision": "a8ab7bcb9350c0d8895273ff3abbd6bd288f60e4",
+        "license": "Apache-2.0",
+        "licenseUrl": "https://github.com/apache/groovy/blob/a8ab7bcb9350c0d8895273ff3abbd6bd288f60e4/LICENSE",
+        "entryPoint": "compilationUnit",
+        "files": [
+          {
+            "path": "src/antlr/GroovyParser.g4",
+            "url": "https://raw.githubusercontent.com/apache/groovy/a8ab7bcb9350c0d8895273ff3abbd6bd288f60e4/src/antlr/GroovyParser.g4",
+            "file": "parity/grammars/sources/apache-groovy-a8ab7bc-GroovyParser.g4.gz",
+            "sha256": "6e2a36b5b4b73748ff402fff740f5d2483ad0aeca9a436118ecf7c5313e25b67",
+            "bytes": 40015
+          },
+          {
+            "path": "src/antlr/GroovyLexer.g4",
+            "url": "https://raw.githubusercontent.com/apache/groovy/a8ab7bcb9350c0d8895273ff3abbd6bd288f60e4/src/antlr/GroovyLexer.g4",
+            "file": "parity/grammars/sources/apache-groovy-a8ab7bc-GroovyLexer.g4.gz",
+            "sha256": "15619754cc3ead2ba69aeb4d2246a3f9ceb62e379112340272d4594f23fb3cf5",
+            "bytes": 25956
+          }
+        ],
+        "corpora": [
+          {
+            "repository": "https://github.com/apache/groovy",
+            "revision": "a8ab7bcb9350c0d8895273ff3abbd6bd288f60e4",
+            "path": "src/test/groovy",
+            "role": "independent upstream tests"
+          }
+        ]
+      }
+    ],
+    "Ruby": [
+      {
+        "id": "ruby-yacc",
+        "format": "yacc",
+        "repository": "https://github.com/ruby/ruby",
+        "revision": "229531a6cfbf07e3caef30dbac24a2a3f3fed482",
+        "license": "Ruby OR BSD-2-Clause",
+        "licenseUrl": "https://github.com/ruby/ruby/blob/229531a6cfbf07e3caef30dbac24a2a3f3fed482/COPYING",
+        "entryPoint": "program",
+        "files": [
+          {
+            "path": "parse.y",
+            "url": "https://raw.githubusercontent.com/ruby/ruby/229531a6cfbf07e3caef30dbac24a2a3f3fed482/parse.y",
+            "file": "parity/grammars/sources/ruby-4.0.7-parse.y.gz",
+            "sha256": "5c1e01f88be01913f985bf2d549885f7d5f355a2c071f0c94b0f3eb268d08e13",
+            "bytes": 520035,
+            "role": "grammar"
+          },
+          {
+            "path": "COPYING",
+            "url": "https://raw.githubusercontent.com/ruby/ruby/229531a6cfbf07e3caef30dbac24a2a3f3fed482/COPYING",
+            "file": "parity/grammars/sources/ruby-4.0.7-COPYING.gz",
+            "sha256": "4ebe48076b3ee165fbb9350aa8a9552f8043c8ed8a7edca2089133d33c1ea45f",
+            "bytes": 2461,
+            "role": "license"
+          },
+          {
+            "path": "BSDL",
+            "url": "https://raw.githubusercontent.com/ruby/ruby/229531a6cfbf07e3caef30dbac24a2a3f3fed482/BSDL",
+            "file": "parity/grammars/sources/ruby-4.0.7-BSDL.gz",
+            "sha256": "36a9a6e7347214bbba599a412617204e65bff065dcbe5c46f5cb454c80de9eb0",
+            "bytes": 1291,
+            "role": "license"
+          }
+        ],
+        "corpora": [
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "revision": "229531a6cfbf07e3caef30dbac24a2a3f3fed482",
+            "path": "test/ruby",
+            "role": "independent upstream tests"
+          }
+        ]
+      }
+    ],
+    "Perl": [
+      {
+        "id": "perl-yacc",
+        "format": "yacc",
+        "repository": "https://github.com/Perl/perl5",
+        "revision": "e634cc838fb1785dfafb5d13b52807ea16b5c52c",
+        "license": "Artistic-1.0-Perl OR GPL-1.0-or-later",
+        "licenseUrl": "https://github.com/Perl/perl5/blob/e634cc838fb1785dfafb5d13b52807ea16b5c52c/Copying",
+        "entryPoint": "grammar",
+        "files": [
+          {
+            "path": "perly.y",
+            "url": "https://raw.githubusercontent.com/Perl/perl5/e634cc838fb1785dfafb5d13b52807ea16b5c52c/perly.y",
+            "file": "parity/grammars/sources/perl-5.44.0-perly.y.gz",
+            "sha256": "783af8ff7ff42fd7313d85df8bbde58d7480e4964bb41ce7b92a5039a7286074",
+            "bytes": 53716,
+            "role": "grammar"
+          },
+          {
+            "path": "Copying",
+            "url": "https://raw.githubusercontent.com/Perl/perl5/e634cc838fb1785dfafb5d13b52807ea16b5c52c/Copying",
+            "file": "parity/grammars/sources/perl-5.44.0-Copying.gz",
+            "sha256": "8979e6dd61852041643c5c5c40ea63b2bd1b438a67d114e62cbaef808c514315",
+            "bytes": 12522,
+            "role": "license"
+          },
+          {
+            "path": "Artistic",
+            "url": "https://raw.githubusercontent.com/Perl/perl5/e634cc838fb1785dfafb5d13b52807ea16b5c52c/Artistic",
+            "file": "parity/grammars/sources/perl-5.44.0-Artistic.gz",
+            "sha256": "dd90d4f42e4dcadf5a7c09eea0189d93c7b37ae560c91f0f6d5233ed3b9292a2",
+            "bytes": 6321,
+            "role": "license"
+          }
+        ],
+        "corpora": [
+          {
+            "repository": "https://github.com/Perl/perl5",
+            "revision": "e634cc838fb1785dfafb5d13b52807ea16b5c52c",
+            "path": "t",
+            "role": "independent upstream tests"
+          }
+        ]
+      }
+    ],
+    "OCaml": [
+      {
+        "id": "ocaml-menhir",
+        "format": "menhir",
+        "repository": "https://github.com/ocaml/ocaml",
+        "revision": "46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91",
+        "license": "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception",
+        "licenseUrl": "https://github.com/ocaml/ocaml/blob/46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91/LICENSE",
+        "entryPoint": "implementation",
+        "files": [
+          {
+            "path": "parsing/parser.mly",
+            "url": "https://raw.githubusercontent.com/ocaml/ocaml/46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91/parsing/parser.mly",
+            "file": "parity/grammars/sources/ocaml-5.5.1-parser.mly.gz",
+            "sha256": "a913c20b0acc0c9a5abb19794daf770ff755ef8586ce5c34e0b01ca97b9a1085",
+            "bytes": 139012,
+            "role": "grammar"
+          },
+          {
+            "path": "parsing/lexer.mll",
+            "url": "https://raw.githubusercontent.com/ocaml/ocaml/46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91/parsing/lexer.mll",
+            "file": "parity/grammars/sources/ocaml-5.5.1-lexer.mll.gz",
+            "sha256": "8d7a2180cdabfa3c752329b8ab30ae855478676392fb2dfe671a7d79f548855b",
+            "bytes": 35195,
+            "role": "companion",
+            "format": "ocamllex"
+          },
+          {
+            "path": "LICENSE",
+            "url": "https://raw.githubusercontent.com/ocaml/ocaml/46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91/LICENSE",
+            "file": "parity/grammars/sources/ocaml-5.5.1-LICENSE.gz",
+            "sha256": "65f47d3bf5a921011ac7fa30f23d54f9dffbe7683921eeb116d5ce8dc26ff0c1",
+            "bytes": 27179,
+            "role": "license"
+          }
+        ],
+        "corpora": [
+          {
+            "repository": "https://github.com/ocaml/ocaml",
+            "revision": "46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91",
+            "path": "testsuite/tests",
+            "role": "independent upstream tests"
+          }
+        ],
+        "options": {
+          "dialect": "menhir"
+        }
+      }
+    ],
+    "OCaml Interface": [
+      {
+        "id": "ocaml-interface-menhir",
+        "format": "menhir",
+        "repository": "https://github.com/ocaml/ocaml",
+        "revision": "46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91",
+        "license": "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception",
+        "licenseUrl": "https://github.com/ocaml/ocaml/blob/46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91/LICENSE",
+        "entryPoint": "interface",
+        "files": [
+          {
+            "path": "parsing/parser.mly",
+            "url": "https://raw.githubusercontent.com/ocaml/ocaml/46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91/parsing/parser.mly",
+            "file": "parity/grammars/sources/ocaml-5.5.1-parser.mly.gz",
+            "sha256": "a913c20b0acc0c9a5abb19794daf770ff755ef8586ce5c34e0b01ca97b9a1085",
+            "bytes": 139012,
+            "role": "grammar"
+          },
+          {
+            "path": "parsing/lexer.mll",
+            "url": "https://raw.githubusercontent.com/ocaml/ocaml/46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91/parsing/lexer.mll",
+            "file": "parity/grammars/sources/ocaml-5.5.1-lexer.mll.gz",
+            "sha256": "8d7a2180cdabfa3c752329b8ab30ae855478676392fb2dfe671a7d79f548855b",
+            "bytes": 35195,
+            "role": "companion",
+            "format": "ocamllex"
+          },
+          {
+            "path": "LICENSE",
+            "url": "https://raw.githubusercontent.com/ocaml/ocaml/46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91/LICENSE",
+            "file": "parity/grammars/sources/ocaml-5.5.1-LICENSE.gz",
+            "sha256": "65f47d3bf5a921011ac7fa30f23d54f9dffbe7683921eeb116d5ce8dc26ff0c1",
+            "bytes": 27179,
+            "role": "license"
+          }
+        ],
+        "corpora": [
+          {
+            "repository": "https://github.com/ocaml/ocaml",
+            "revision": "46e1c324fb9e9f21f52c9cc3399020f7ef8b9b91",
+            "path": "testsuite/tests",
+            "role": "independent upstream tests"
+          }
+        ],
+        "options": {
+          "dialect": "menhir"
+        }
+      }
+    ],
+    "Bash": [
+      {
+        "id": "gnu-bash-yacc",
+        "format": "yacc",
+        "repository": "https://git.savannah.gnu.org/cgit/bash.git",
+        "revision": "b8c60bc9ca365f8261fa97900b6fa939f6ebc303",
+        "license": "GPL-3.0-or-later",
+        "licenseUrl": "https://git.savannah.gnu.org/cgit/bash.git/tree/COPYING?id=b8c60bc9ca365f8261fa97900b6fa939f6ebc303",
+        "entryPoint": "inputunit",
+        "files": [
+          {
+            "path": "parse.y",
+            "url": "https://git.savannah.gnu.org/cgit/bash.git/plain/parse.y?id=b8c60bc9ca365f8261fa97900b6fa939f6ebc303",
+            "file": "parity/grammars/sources/bash-5.3-parse.y.gz",
+            "sha256": "076a16d00c5b065137b3d2730d2b94a1f6c89a1bbb5d2f4bd72d31e00947e27f",
+            "bytes": 217136,
+            "role": "grammar"
+          },
+          {
+            "path": "COPYING",
+            "url": "https://git.savannah.gnu.org/cgit/bash.git/plain/COPYING?id=b8c60bc9ca365f8261fa97900b6fa939f6ebc303",
+            "file": "parity/grammars/sources/bash-5.3-COPYING.gz",
+            "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+            "bytes": 35147,
+            "role": "license"
+          }
+        ],
+        "corpora": [
+          {
+            "repository": "https://git.savannah.gnu.org/cgit/bash.git",
+            "revision": "b8c60bc9ca365f8261fa97900b6fa939f6ebc303",
+            "path": "tests",
+            "role": "independent upstream tests"
+          }
+        ]
+      }
+    ]
+  }
+}
