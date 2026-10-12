@@ -5,31 +5,53 @@ import { scannerFamilies } from '../scripts/scanner-families.mjs';
 import { compileGrammar } from '../src/grammar.js';
 import { parseGrammarLinks } from '../src/grammar-links.js';
 import { renderSyntaxTree } from '../src/grammar-runtime/syntax-tree.js';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtures = JSON.parse(readFileSync(new URL('../../parity/fixtures/scanner-structured-contexts.json', import.meta.url), 'utf8'));
 const leaves = (node) => node.type === 'token' ? [node] : node.children.flatMap(leaves);
 
-for (const fixture of fixtures) {
-  test(`${fixture.name} preserves concrete source and rejects malformed boundaries`, () => {
-    assert.equal(scannerFamilies(fixture.scanners), fixture.generated);
-    const parser = compileGrammar(parseGrammarLinks(fixture.listing));
-    // Failed speculation must leave no remembered label or quote context in
-    // the following parse, even when a parser instance is reused.
-    for (const input of fixture.reject) assert.equal(parser.parseTree(input).ok, false, input);
-    for (const input of fixture.accept) {
-      const outcome = parser.parseTree(input);
-      assert.equal(outcome.ok, true, `${fixture.name}: ${JSON.stringify(input)}`);
-      assert.equal(outcome.tree.start, 0);
-      assert.equal(outcome.tree.end, Buffer.byteLength(input));
-      assert.equal(leaves(outcome.tree).map(({ text }) => text).join(''), input);
-      assert.equal(renderSyntaxTree(outcome.tree), fixture.trees[input]);
-      let offset = 0;
-      for (const token of leaves(outcome.tree)) {
-        assert.equal(token.start, offset);
-        offset += Buffer.byteLength(token.text);
-        assert.equal(token.end, offset);
+const families = [
+  ['here-document', 'HERE-DOCUMENTS', 'scannerHereDocumentsMatchFixtures'],
+  ['interpolated-quoted', 'INTERPOLATED-QUOTES', 'scannerInterpolationContextsMatchFixtures'],
+  ['offside-layout', 'OFFSIDE-LAYOUT', 'scannerOffsideLayoutMatchesFixtures'],
+  ['fenced-block', 'FENCED-BLOCKS', 'scannerFencedBlocksMatchFixtures'],
+];
+
+for (const [family, suffix, assertion] of families) {
+  const testName = `${family} scanners preserve concrete source and reject every malformed fixture boundary`;
+  test(testName, () => {
+    const cases = fixtures.filter((fixture) => fixture.scanners[0].family === family);
+    assert.ok(cases.length > 0);
+    for (const fixture of cases) {
+      assert.equal(scannerFamilies(fixture.scanners), fixture.generated);
+      const parser = compileGrammar(parseGrammarLinks(fixture.listing));
+      // Failed speculation must leave no remembered label or quote context in
+      // the following parse, even when a parser instance is reused.
+      for (const input of fixture.reject) assert.equal(parser.parseTree(input).ok, false, input);
+      for (const input of fixture.accept) {
+        const outcome = parser.parseTree(input);
+        assert.equal(outcome.ok, true, `${fixture.name}: ${JSON.stringify(input)}`);
+        assert.equal(outcome.tree.start, 0);
+        assert.equal(outcome.tree.end, Buffer.byteLength(input));
+        assert.equal(leaves(outcome.tree).map(({ text }) => text).join(''), input);
+        assert.equal(renderSyntaxTree(outcome.tree), fixture.trees[input]);
+        let offset = 0;
+        for (const token of leaves(outcome.tree)) {
+          assert.equal(token.start, offset);
+          offset += Buffer.byteLength(token.text);
+          assert.equal(token.end, offset);
+        }
       }
     }
+    const requirementId = `I195-GRAMMAR-SCANNER-${suffix}`;
+    recordIssue195Observations({
+      requirementId,
+      suffix: 'behavior',
+      fixtureId: 'scanner-structured-contexts',
+      fixtureFile: 'parity/fixtures/scanner-structured-contexts.json',
+      assertions: [assertion],
+      testName,
+    });
   });
 }
 

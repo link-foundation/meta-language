@@ -19,6 +19,7 @@ export {
 
 const SOURCE_LABELS = Object.freeze({
   issue: 'Issue #195',
+  remainingScope: 'Issue #199: remaining implementation and delivery',
   clarification: 'Full-support clarification',
   acceptanceGate: 'Executable acceptance-gate clarification',
   completeScope: 'Directive to complete the entire scope',
@@ -37,6 +38,12 @@ const SOURCE_LABELS = Object.freeze({
   finishTheWorkAudit: 'Audit of c39470d0: every open row is work this PR delivers',
   bulkDeliveryAudit: 'Re-posted audit of c39470d0: deliver the open rows in bulk',
   bulkDeliveryRepost: 'Second identical re-post of the c39470d0 bulk-delivery audit',
+  bulkDeliveryFinalRepost: 'Final re-post of the c39470d0 bulk-delivery audit',
+  followupDeliveryAudit: 'PR #201 complete delivery audit of 9917e358',
+  latestDeliveryAudit: 'PR #201 progress and remaining-delivery audit of 3bee2a79',
+  formalAiSelfTranslation: 'Formal AI self-translation constructs and release request',
+  reverseStringSemantics: 'Router reverse trimming and Unicode whitespace semantics',
+  globalConceptSpace: 'Captured direct request for one global grammar concept space',
 });
 
 function allKeys(value, prefix = '') {
@@ -754,7 +761,8 @@ export function renderIssue195Markdown(manifest, report) {
     '',
     'Every source below is registered with its revision and content hash in `parity/issue-195-sources.json`; `npm run check:issue-195:sources -- --online` reports an edited or unregistered comment.',
     '',
-    ...Object.entries(manifest.sources).map(([key, url]) => `- [${SOURCE_LABELS[key] ?? key}](${url})`),
+    ...Object.entries(manifest.sources).map(([key, url]) =>
+      `- [${SOURCE_LABELS[key] ?? key}](${url.startsWith('parity/') ? `../${url}` : url})`),
     '',
     '## Enforcement status',
     '',

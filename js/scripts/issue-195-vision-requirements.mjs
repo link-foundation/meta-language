@@ -31,6 +31,87 @@ const JAVASCRIPT_LINO = ['js/src/lino-grammar.js', 'js/src/lino-semantics.js', '
 const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/Cargo.toml'];
 
 export const VISION_REQUIREMENTS = Object.freeze([
+  ...[
+    ['HERE-DOCUMENTS', 'line-anchored quoted and FIFO here-document scanner boundaries',
+      'Shared scanner descriptors preserve quoted opening labels, whole-line closing labels and FIFO pending bodies. Both executors match the shared accepted concrete trees and reject malformed boundaries without leaking speculative label state.',
+      'scannerHereDocumentsMatchFixtures'],
+    ['INTERPOLATED-QUOTES', 'independent nested quoted and interpolation scanner contexts',
+      'Shared scanner descriptors preserve nested quote and brace contexts inside interpolation. Both executors match the shared accepted concrete trees and reject truncated or mismatched boundaries without confusing enclosing contexts.',
+      'scannerInterpolationContextsMatchFixtures'],
+    ['OFFSIDE-LAYOUT', 'shared offside-layout scanner token boundaries',
+      'Descriptor-owned offside layout emits the configured opening, separator and closing tokens, retains exact Unicode source and matches the shared accepted concrete trees. Both executors reject the malformed layout fixtures and preserve independent state between inputs.',
+      'scannerOffsideLayoutMatchesFixtures'],
+    ['FENCED-BLOCKS', 'Markdown fence marker width and indentation scanner rules',
+      'Shared fence descriptors retain opening marker identity and width, permit only configured indentation and keep shorter or different-marker fences inside body text. Both executors match the shared concrete trees, preserve source bytes and reject malformed boundaries.',
+      'scannerFencedBlocksMatchFixtures'],
+  ].map(([suffix, construct, expectedBehavior, assertion]) => ({
+    id: `I195-GRAMMAR-SCANNER-${suffix}`,
+    area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-structured-contexts.json',
+    fixtureId: 'scanner-structured-contexts',
+    construct, expectedBehavior, assertions: [assertion],
+    javascript: ['js/scripts/structured-scanner-families.mjs', 'js/tests/grammar-scanner-structured-contexts.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  })),
+  ...[
+    ['SPACE', 'one global concept space for every language and grammar',
+      'Every rule of every input grammar and translation representation belongs to one global concept space. Equivalent verified occurrences resolve to a stable global identity; concepts without a proven counterpart retain a separate identity in that same space.',
+      ['allRulesInOneSpace', 'stableIdentities']],
+    ['COPY', 'lossless copied concepts before deduplication',
+      'Automatic import and translation copy every concept and recursive definition into the global space before deduplication. The copied inventory includes every source concept and preserves its occurrences without presenting potential correspondences as shared identities.',
+      ['copiesBeforeDeduplication']],
+    ['EQUIVALENCE', 'checked recursive one-to-one correspondence of concept meaning',
+      'Deduplication accepts only a checked one-to-one certificate for complete reachable concept definitions with matching operational contexts and justified semantic meaning, including recursive references. Equal spelling or syntax without established meaning is insufficient.',
+      ['recursiveOneToOneProof', 'matchingOperationalContext']],
+    ['UNPROVED', 'preserved unproved and ambiguous concept correspondences',
+      'Unproved, incomplete or ambiguous equivalence claims preserve separate concept identities and explicit uncertainty. The verifier rejects fabricated or invalid certificates instead of treating declarations or accepted samples as proof.',
+      ['rejectUnprovedEquivalence', 'preserveAmbiguity']],
+    ['DISTINCTIONS', 'distinct semantic meanings inside the global concept space',
+      'Concepts with different operational or semantic meanings retain distinct global identities even when their spelling or accepted syntax coincides. Integer models, binding, effects, proof universes and language-specific distinctions survive deduplication.',
+      ['preserveDistinctMeanings']],
+    ['REUSE', 'complete reuse of every verified equivalent concept',
+      'Every concept with a verified faithful one-to-one correspondence is reused through one global identity at every applicable occurrence across languages and grammars. Deduplication is deterministic and does not leave verified duplicates isolated in language-specific spaces.',
+      ['reuseEveryVerifiedCorrespondence']],
+    ['PROVENANCE', 'qualified aliases and source provenance after global reuse',
+      'Global reuse preserves every language-qualified original rule alias, source identity, occurrence and provenance. Export and translation can recover language-specific syntax without relying on discarded definitions or unqualified name guesses.',
+      ['preserveQualifiedProvenance']],
+    ['SERIALIZATION', 'reloadable Links representation of the global concept space',
+      'The complete global concept space, copied definitions, correspondences and verified certificates serialize as Links Notation and reload without the original source definitions while preserving identities, semantics and qualified provenance.',
+      ['linksRoundTrip']],
+    ['RUNTIME-PARITY', 'automatically translated global concept verification decisions',
+      'Both runtime packages compute the same global concept equivalence and reuse decisions from shared data. The portable JavaScript verification rules generate their Rust counterpart automatically and shared accepted and rejected certificates produce matching decisions.',
+      ['generatedRuntimeDecisions']],
+  ].map(([suffix, construct, expectedBehavior, assertions]) => ({
+    id: `I195-GLOBAL-CONCEPT-${suffix}`,
+    area: 'global-concept-space', specification: 'global-concept-space',
+    fixture: 'parity/fixtures/global-concept-space.json',
+    fixtureId: 'global-concept-space',
+    construct, expectedBehavior, assertions,
+    javascript: ['js/src/global-concept-space.js', 'js/tests/global-concept-space.test.js'],
+    rust: ['rust/src/global_concept_space.rs', 'rust/src/global_concept_rules.rs', 'rust/tests/unit/global_concept_space.rs'],
+  })),
+  {
+    id: 'I195-GRAMMAR-NATURAL-LANGUAGE-REPRESENTATION',
+    area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-text-grammars.json',
+    fixtureId: 'native-text-grammars',
+    construct: 'defined native representation of natural-language documents',
+    expectedBehavior: 'Natural-language documents use executable Links grammar definitions to retain Unicode lexemes, punctuation, whitespace, sentences, document structure, exact source spans and rejected-control diagnostics. Both packages preserve every input byte. This native representation exposes language-specific annotations and unresolved alternatives without declaring full linguistic semantics from segmentation or a starter lexicon.',
+    assertions: ['nativeNaturalLanguageGrammarExecuted', 'naturalLanguageUnicodeSpansLossless', 'naturalLanguageSentenceLexemesPreserved', 'naturalLanguageControlDiagnostics'],
+    javascript: ['js/src/text-grammar.js', 'js/tests/native-text-grammars.test.js'],
+    rust: ['rust/src/structured_text_parser.rs'],
+  },
+  {
+    id: 'I195-STRING-TRIM-SEMANTICS',
+    area: 'full-semantics', specification: 'four-language-semantics-and-translation',
+    fixture: 'parity/fixtures/string-trim-semantics.json',
+    fixtureId: 'string-trim-semantics',
+    construct: 'Rust and JavaScript whitespace semantics in bidirectional string trimming',
+    expectedBehavior: 'Rust trim, trim_start and trim_end translated into JavaScript retain the Unicode White_Space predicate, and JavaScript trimming translated into Rust retains ECMAScript whitespace. Shared NEL, BOM, ASCII, NBSP and supplementary Unicode fixtures distinguish the predicates in both directions; supported translations execute faithfully and do not return a source envelope.',
+    assertions: ['rustWhitespacePreserved', 'ecmascriptWhitespacePreserved', 'bidirectionalUnicodeTrimFixtures', 'trimTranslationsHaveNoSourceEnvelope'],
+    javascript: ['js/src/translation/emit-common.js', 'js/src/translation/emit-javascript.js', 'js/src/translation/emit-rust.js', 'js/tests/translation-string-trim-semantics.test.js'],
+    rust: ['rust/src/translation/frontend_rules/strings.rs', 'rust/src/translation/emit_javascript.rs', 'rust/src/translation/emit_rust.rs', 'rust/tests/unit/translation_string_trim_semantics.rs'],
+  },
   {
     id: 'I195-GRAMMAR-SCANNER-FRAGMENTS', area: 'native-grammar', specification: 'grammar-feature-union',
     fixture: 'parity/fixtures/scanner-fragments.json',
@@ -1916,7 +1997,7 @@ const RUNTIMES = ['javascript', 'rust', 'tooling'];
 /** Builds the ledger entries with the ledger's own constructors. */
 export function buildVisionRequirements(fixtureCatalog, { requirement, verification, pinnedFixture, source, sourceByRequirement = {} }) {
   return VISION_REQUIREMENTS.map((row) => {
-    const fixtureId = `planned:repository-directive:${row.id.toLowerCase()}`;
+    const fixtureId = row.fixtureId ?? `planned:repository-directive:${row.id.toLowerCase()}`;
     fixtureCatalog[fixtureId] = row.fixture
       ? pinnedFixture(row.fixture, `${VISION_SPECIFICATION}#${row.specification}: ${row.construct}`)
       : pinnedFixture(VISION_SPECIFICATION, `#${row.specification}: ${row.construct}`);

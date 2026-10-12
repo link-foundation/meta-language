@@ -264,4 +264,35 @@ fn structured_scanner_contexts_match_shared_trees_and_reject_malformed_boundarie
     check_cases(include_str!(
         "../../../parity/fixtures/scanner-structured-contexts.json"
     ));
+    for (requirement_id, fixture_id, assertion) in [
+        (
+            "I195-GRAMMAR-SCANNER-HERE-DOCUMENTS",
+            "scanner-structured-contexts",
+            "scannerHereDocumentsMatchFixtures",
+        ),
+        (
+            "I195-GRAMMAR-SCANNER-INTERPOLATED-QUOTES",
+            "scanner-structured-contexts",
+            "scannerInterpolationContextsMatchFixtures",
+        ),
+        (
+            "I195-GRAMMAR-SCANNER-OFFSIDE-LAYOUT",
+            "scanner-structured-contexts",
+            "scannerOffsideLayoutMatchesFixtures",
+        ),
+        (
+            "I195-GRAMMAR-SCANNER-FENCED-BLOCKS",
+            "scanner-structured-contexts",
+            "scannerFencedBlocksMatchFixtures",
+        ),
+    ] {
+        record(&Observation {
+            requirement_id,
+            suffix: "behavior",
+            fixture_id,
+            fixture_file: "parity/fixtures/scanner-structured-contexts.json",
+            assertions: &[assertion],
+            test_name: "structured_scanner_contexts_match_shared_trees_and_reject_malformed_boundaries",
+        });
+    }
 }

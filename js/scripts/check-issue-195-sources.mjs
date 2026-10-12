@@ -15,6 +15,7 @@ import {
   compareWithLiveDiscussion,
   fetchLiveDiscussion,
   refreshRegister,
+  validateDirectInstructions,
   validateSourceRegister,
 } from './issue-195-sources.mjs';
 
@@ -31,6 +32,7 @@ if (args.has('--update')) {
 }
 
 const errors = validateSourceRegister(register, await buildIssue195Manifest(root), ISSUE_195_SOURCES);
+errors.push(...await validateDirectInstructions(register, root));
 if (args.has('--online') || args.has('--update')) {
   errors.push(...compareWithLiveDiscussion(register, await fetchLiveDiscussion()));
 }

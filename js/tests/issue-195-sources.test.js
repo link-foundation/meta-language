@@ -3,16 +3,21 @@
 // or unregistered comment is reported, and the register and the ledger agree.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { test } from 'node:test';
 
 import { ISSUE_195_SOURCES } from '../scripts/issue-195-requirements.mjs';
 import {
   compareWithLiveDiscussion,
   contentHash,
+  fetchLiveDiscussion,
   isAutomationComment,
   refreshRegister,
   revisionOf,
   validateSourceRegister,
+  validateDirectInstructions,
 } from '../scripts/issue-195-sources.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
@@ -168,4 +173,68 @@ test('the remaining-scope issue is checked and refreshed independently of the or
   assert.deepEqual(compareWithLiveDiscussion(refreshed, edited), []);
   assert.equal(refreshed.requirementSources[0].sha256, contentHash(discussion.issue.body));
   assert.match(compareWithLiveDiscussion(refreshed, { ...edited, issues: [] })[0], /issues\/199 no longer exists/u);
+});
+
+test('source discovery includes every original and follow-up discussion endpoint', async () => {
+  const endpoints = [];
+  const discussion = await fetchLiveDiscussion({ request: async (endpoint) => {
+    endpoints.push(endpoint);
+    const issueNumber = /^repos\/[^/]+\/[^/]+\/issues\/(\d+)$/u.exec(endpoint)?.[1];
+    if (issueNumber) return { number: Number(issueNumber), body: `Issue ${issueNumber}` };
+    if (endpoint.includes('/reviews?')) return [
+      { id: 99, body: '', submitted_at: '2026-10-12T00:00:00Z' },
+      { id: 100, body: 'A reviewed requirement', submitted_at: '2026-10-12T00:00:00Z' },
+    ];
+    return [{ id: endpoint, body: endpoint }];
+  } });
+  assert.deepEqual(endpoints.sort(), [
+    'issues/195', 'issues/195/comments?per_page=100',
+    'issues/199', 'issues/199/comments?per_page=100',
+    'issues/196/comments?per_page=100', 'pulls/196/comments?per_page=100', 'pulls/196/reviews?per_page=100',
+    'issues/201/comments?per_page=100', 'pulls/201/comments?per_page=100', 'pulls/201/reviews?per_page=100',
+  ].map((endpoint) => `repos/link-foundation/meta-language/${endpoint}`).sort());
+  assert.equal(discussion.issue.number, 195);
+  assert.deepEqual(discussion.issues.map(({ number }) => number), [199]);
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/199/comments')));
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/201/comments')));
+  const reviews = discussion.comments.filter(({ body }) => body === 'A reviewed requirement');
+  assert.equal(reviews.length, 2);
+  assert.ok(reviews.every(({ created_at, updated_at }) => created_at === updated_at && updated_at === '2026-10-12T00:00:00Z'));
+  assert.ok(discussion.comments.every(({ body }) => body !== ''));
+});
+
+test('follow-up comment permalinks are validated without assuming pull request 196', () => {
+  const discussion = syntheticDiscussion();
+  const manifest = { atomicRequirements: [{ id: 'I195-TEST', source: discussion.register.requirementSources[0].url }] };
+  for (const url of [
+    'https://github.com/link-foundation/meta-language/pull/201#issuecomment-1',
+    'https://github.com/link-foundation/meta-language/issues/199#issuecomment-1',
+  ]) {
+    discussion.register.requirementSources[1].url = url;
+    const sources = Object.fromEntries(discussion.register.requirementSources.map(({ key, url }) => [key, url]));
+    assert.deepEqual(validateSourceRegister(discussion.register, manifest, sources), []);
+  }
+  discussion.register.requirementSources[1].url = 'https://github.com/link-foundation/meta-language/pull/201#issuecomment-2';
+  const sources = Object.fromEntries(discussion.register.requirementSources.map(({ key, url }) => [key, url]));
+  assert.match(validateSourceRegister(discussion.register, manifest, sources).join('\n'), /exact comment/u);
+});
+
+test('captured conversation instructions detect changed or missing committed bytes', async () => {
+  const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'meta-language-source-register-'));
+  const instruction = register.requirementSources.find(({ kind }) => kind === 'direct-instruction');
+  assert.ok(instruction);
+  assert.equal(instruction.revisionOrigin, 'capture time; the conversation does not expose a source timestamp');
+  assert.deepEqual(await validateDirectInstructions(register), []);
+  const body = readFileSync(repositoryFile(instruction.url), 'utf8');
+  try {
+    await mkdir(path.join(temporaryRoot, 'parity', 'sources'), { recursive: true });
+    await writeFile(path.join(temporaryRoot, instruction.url), body);
+    assert.deepEqual(await validateDirectInstructions(register, temporaryRoot), []);
+    await writeFile(path.join(temporaryRoot, instruction.url), `${body}Changed obligation.`);
+    assert.match((await validateDirectInstructions(register, temporaryRoot))[0], /content hash or byte count/u);
+    await rm(path.join(temporaryRoot, instruction.url));
+    assert.match((await validateDirectInstructions(register, temporaryRoot))[0], /no longer exists/u);
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
 });

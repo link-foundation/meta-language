@@ -3,9 +3,9 @@
   "repository": "link-foundation/meta-language",
   "issue": 195,
   "pullRequest": 196,
-  "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
+  "hashAlgorithm": "sha256 of the exact UTF-8 GitHub REST body or captured direct-instruction file bytes",
   "reconciledAt": "2026-10-12",
-  "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
+  "classificationRule": "Every tracked discussion comment is a requirement source, a status report, or recognized automation output; direct conversation instructions are captured verbatim and hash-checked from committed files.",
   "requirementSources": [
     {
       "key": "issue",
@@ -446,6 +446,89 @@
       "updatedAt": "2026-10-10T19:37:56Z",
       "bytes": 14543,
       "sha256": "48e3cbc08a83864d33fb85f8b34b2ee1931d6e34cf2b32175099bcc176e89098"
+    },
+    {
+      "key": "followupDeliveryAudit",
+      "id": 6059812347,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/201#issuecomment-6059812347",
+      "title": "What is missing to fully deliver #199 — audit of `9917e358` (2026-10-08)",
+      "role": "Follow-up PR201 audit: every remaining issue199 obligation, native parsers and built-in grammars, scanner families, full self-translation constructs, multi-source merging, interchange, independent oracles, faithful semantics, TypeScript consumers and matching published releases. Prior obligations remain binding.",
+      "ledgerCoverage": [
+        "I195-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-08T12:25:31Z",
+      "updatedAt": "2026-10-08T12:25:31Z",
+      "bytes": 10093,
+      "sha256": "60a403868a35b4cec31524426e71cd2ad76c5661440a3fda0f742949db172316"
+    },
+    {
+      "key": "latestDeliveryAudit",
+      "id": 6116039616,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/201#issuecomment-6116039616",
+      "title": "Progress check and what is left — audit of `3bee2a79` (2026-10-12)",
+      "role": "Binding audit of 3bee2a79: fix all previous CI failures, implement every failing pre-merge and post-merge row, finish remaining native languages, built-in and grammar-description formats and natural-language representation, exact grammar source catalog, multi-source reconciliation, carried-zero self-translation, faithful translations, real-tool interchange, independent oracles and matching published packages.",
+      "ledgerCoverage": [
+        "I195-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T01:17:41Z",
+      "updatedAt": "2026-10-12T01:17:41Z",
+      "bytes": 8935,
+      "sha256": "cc8ab486f854d4fe157974d6c976d2508d9f78b4a606c45cdd3db50eef7b087c"
+    },
+    {
+      "key": "formalAiSelfTranslation",
+      "id": 6055834620,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/issues/199#issuecomment-6055834620",
+      "title": "Downstream: formal-ai's self-translation blockers, one issue per construct, and a release request",
+      "role": "Formal AI self-translation blocker inventory: relative modules, sibling items, array and string methods, optional values, tuples and records, collections and classes, closures, regular expression lexing and structured control flow; release both packages with the self-translation API.",
+      "ledgerCoverage": [
+        "I195-SELF-TRANSLATION-",
+        "I195-DOWNSTREAM-",
+        "I195-DELIVERY-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-08T08:23:56Z",
+      "updatedAt": "2026-10-08T08:23:56Z",
+      "bytes": 2214,
+      "sha256": "bab48e877ba527105faae58519a4852fb223497b72979808c53db9d7df3856d3"
+    },
+    {
+      "key": "reverseStringSemantics",
+      "id": 6101425254,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/issues/199#issuecomment-6101425254",
+      "title": "Rust→JavaScript trim boundary measured while implementing [Router #759](https://github.com/link-assistant/router/issues/759). This adds a reverse-direction case",
+      "role": "Router reverse string translation: Rust trim, trim_start and trim_end keep Unicode White_Space semantics distinct from ECMAScript whitespace, with shared NEL/BOM, ASCII, NBSP and supplementary Unicode fixtures and executable supported output without source envelopes.",
+      "ledgerCoverage": [
+        "I195-STRING-TRIM-SEMANTICS"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-10T19:37:56Z",
+      "updatedAt": "2026-10-10T19:37:56Z",
+      "bytes": 2399,
+      "sha256": "c37220546eef53f88685b14fc7de5fc22fe8f4f538f7387e4c2013b64b67b46b"
+    },
+    {
+      "key": "globalConceptSpace",
+      "id": "global-concept-space-2026-10-12",
+      "kind": "direct-instruction",
+      "url": "parity/sources/global-concept-space-2026-10-12.txt",
+      "title": "Direct user request for one universal grammar concept space and proof-backed reuse",
+      "role": "Direct conversation instruction: all languages and grammars share one global concept space, copy concepts from automated translation before deduplication, prove faithful one-to-one correspondence before merging, and reuse every unique equivalent concept everywhere it applies.",
+      "ledgerCoverage": [
+        "I195-GLOBAL-CONCEPT-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T04:10:18.600Z",
+      "updatedAt": "2026-10-12T04:10:18.600Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 1765,
+      "sha256": "3bd5a6f81194e4cd33d09c3fb95d176bdd2a319f84fdf44b6c589a245750af5f"
     }
   ],
   "statusReports": [
@@ -580,6 +663,42 @@
       "updatedAt": "2026-10-04T08:44:18Z",
       "bytes": 2090,
       "sha256": "6f8a9346b88c076d5f4e55cdbec5d2bfbd261c8b340586e2e31623be935409b3"
+    },
+    {
+      "id": 6064249282,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/201#issuecomment-6064249282",
+      "title": "Full Requirements Aggregate from [CI run 37795659939](https://github.com/link-foundation/meta-language/actions/runs/37795659939), observed merge commit `c4f2244",
+      "role": "Historical PR201 execution status and incomplete aggregate report; no added requirements.",
+      "author": "konard",
+      "createdAt": "2026-10-08T16:20:06Z",
+      "updatedAt": "2026-10-08T16:20:06Z",
+      "bytes": 10031,
+      "sha256": "405a9138859a15921ad4abc2c030900aea0e12c49725b0d68b1aa18be8d0323a"
+    },
+    {
+      "id": 6068432957,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/201#issuecomment-6068432957",
+      "title": "Fresh Full Requirements Aggregate for source head `f260cf30cf7423c6c56f8e6398df03e8b5c71fa7`, tested merge commit `e6b75b1ac9bd078340fc2075ba36719cdedd0e9c`:",
+      "role": "Historical PR201 execution status and incomplete aggregate report; no added requirements.",
+      "author": "konard",
+      "createdAt": "2026-10-08T20:27:18Z",
+      "updatedAt": "2026-10-08T20:27:18Z",
+      "bytes": 1572,
+      "sha256": "a40547a46ae75334bac63c8882368f3ea6efe02e35431a6710f0085cc42317f7"
+    },
+    {
+      "id": 6068900589,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/201#issuecomment-6068900589",
+      "title": "Implementation is not complete. Verified batches through `52b6d451` are pushed, and `c72f9fa1` additionally registers the native-oracle regression tests in CI, ",
+      "role": "Historical PR201 execution status and incomplete aggregate report; no added requirements.",
+      "author": "konard",
+      "createdAt": "2026-10-08T20:56:34Z",
+      "updatedAt": "2026-10-08T20:56:34Z",
+      "bytes": 1689,
+      "sha256": "9fd25b3ef82e7128398ef7260d9789cd3e1c9d56cb44949f1b3d3ad371b55145"
     }
   ]
 }

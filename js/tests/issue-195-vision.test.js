@@ -158,6 +158,8 @@ test('the generated ledger presents universal claims only as finite evidence unl
   };
   const markdown = renderIssue195Markdown(manifest, report);
   assert.deepEqual(universalClaimProblems(manifest, markdown), []);
+  assert.ok(markdown.includes('](../parity/sources/global-concept-space-2026-10-12.txt)'),
+    'captured instruction links resolve relative to the generated document');
   assert.ok(markdown.includes(`| \`I195-INTERCHANGE-REVERSE-CONVERSION\` | grammar-interchange | ${FINITE_EVIDENCE_QUALIFIER} |`));
   assert.ok(markdown.includes('| `I195-CST-rust` | default-cst | PASS |'));
 

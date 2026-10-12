@@ -50,6 +50,16 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025209380',
   bulkDeliveryFinalRepost:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025369792',
+  followupDeliveryAudit:
+    'https://github.com/link-foundation/meta-language/pull/201#issuecomment-6059812347',
+  latestDeliveryAudit:
+    'https://github.com/link-foundation/meta-language/pull/201#issuecomment-6116039616',
+  formalAiSelfTranslation:
+    'https://github.com/link-foundation/meta-language/issues/199#issuecomment-6055834620',
+  reverseStringSemantics:
+    'https://github.com/link-foundation/meta-language/issues/199#issuecomment-6101425254',
+  globalConceptSpace:
+    'parity/sources/global-concept-space-2026-10-12.txt',
 });
 
 // The rows the audit of c39470d0 lists as open work.
@@ -911,6 +921,12 @@ export async function buildIssue195Manifest(root) {
     ...buildVisionRequirements(fixtureCatalog, {
       requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.repositoryDirective,
       sourceByRequirement: {
+        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ id }) => id.startsWith('I195-GLOBAL-CONCEPT-'))
+          .map(({ id }) => [id, ISSUE_195_SOURCES.globalConceptSpace])),
+        'I195-GRAMMAR-NATURAL-LANGUAGE-REPRESENTATION': ISSUE_195_SOURCES.latestDeliveryAudit,
+        'I195-STRING-TRIM-SEMANTICS': ISSUE_195_SOURCES.reverseStringSemantics,
+        ...Object.fromEntries(['HERE-DOCUMENTS', 'INTERPOLATED-QUOTES', 'OFFSIDE-LAYOUT', 'FENCED-BLOCKS']
+          .map((suffix) => [`I195-GRAMMAR-SCANNER-${suffix}`, ISSUE_195_SOURCES.latestDeliveryAudit])),
         'I195-DEPENDENCY-CURRENT-STABLE-DELIVERY': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-DOWNSTREAM-RML-PR184-AUDIT': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS': ISSUE_195_SOURCES.consolidatedChecklist,

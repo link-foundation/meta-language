@@ -22,6 +22,12 @@ every requirement-bearing comment on
 [pull request #196](https://github.com/link-foundation/meta-language/pull/196).
 After that pull request merged, [issue #199](https://github.com/link-foundation/meta-language/issues/199)
 carries its remaining scope and adds release and memory-regression obligations.
+Its requirement-bearing comments and the audits on
+[pull request #201](https://github.com/link-foundation/meta-language/pull/201)
+remain binding. Direct conversation requirements are captured verbatim under
+`parity/sources/` and registered with their content hashes; their timestamp
+records the capture, because the conversation does not expose a source revision
+time. They do not create another architecture specification.
 Four files keep it honest:
 
 | File | Role |
@@ -63,6 +69,35 @@ Both runtime packages, the Rust crate `meta-language` and the npm package
 [`parity/language-features.json`](../parity/language-features.json) enforces
 this, and the runtime-parity rows of the ledger check it again on shared
 fixtures.
+
+### Global concept space
+
+All grammars of all languages inhabit **one global concept space**. It includes
+programming languages, grammar-description languages, document formats and
+natural languages, together with the translation rules over their concepts.
+An unshared concept belongs to this same space; it retains its own identity and
+qualified language provenance until an equivalence proof permits reuse.
+
+The automated translation and import pipeline first copies every concept and
+its recursive links into this space without losing rules, aliases, occurrence
+order or provenance. Deduplication then constructs a checked one-to-one
+correspondence between the complete reachable definitions. The correspondence
+must preserve recursive structure, operational context, semantic distinctions,
+binding, effects and any proof assumptions. The certificate records the paired
+concepts and the evidence used to validate every pair. Equal names, samples or
+accepted text alone do not establish equivalence. An unsupported or ambiguous
+proof leaves both identities intact and preserves the candidate correspondence
+as data.
+
+Every verified equivalent concept resolves to the same stable global identity
+at every occurrence in every grammar and translation rule. Its original
+language-specific spelling, concrete syntax and source location remain aliases
+and provenance on those occurrences. Distinct integer, whitespace, binding,
+effect and universe meanings retain distinct identities even when their names
+coincide. The complete space and its certificates serialize as links, reload
+without the original grammar sources and yield identical decisions in both
+runtime packages. Shared identity simplifies translation by exposing a reusable
+meaning; target-specific syntax and faithful encodings remain explicit rules.
 
 ## Links Notation fitness
 
@@ -146,7 +181,24 @@ parse with every external grammar engine and oracle asset absent. Changing one
 native linked grammar rule changes the output of the public parse path, without
 an unrelated host-code patch.
 
+Natural-language documents also use executable native Links grammars. Their
+concrete representation retains Unicode lexemes, punctuation, whitespace,
+sentence and document structure, exact source spans and rejected-control
+diagnostics. Language-specific lexical and grammatical annotations extend that
+tree with links and provenance. An uncertain analysis remains a set of explicit
+alternatives; a segmentation tree or a finite starter lexicon does not establish
+complete morphology, syntax or meaning for a language. Their concepts belong to
+the same global space as programming languages, and reuse requires the same
+checked meaning correspondence. Tests distinguish native representation and
+source preservation from any richer linguistic capability they verify.
+
 ## Grammar feature union
+
+Structured scanner descriptors cover whole-line quoted and FIFO here-documents,
+nested quoted and interpolation contexts, offside layout tokens and Markdown
+fence width and indentation rules. Shared accepted and rejected lexical fixtures
+verify their concrete trees in both executors. These scanner checks do not
+establish completion of a whole language grammar or its independent corpora.
 
 Reusable scanner family descriptors generate executable Links Notation data
 through `js/scripts/scanner-families.mjs`. Delimiter parameters cover nested
@@ -727,6 +779,15 @@ braces inside strings, comments, regex bodies and nested templates cannot end
 a substitution. String and template escapes use the shared scalar decoder;
 template cooking preserves line continuations and normalizes line endings.
 
+TypeScript compile-time erasure selects native concrete-tree spans through
+shared linked erasure definitions. Its source annotations and type-only
+declarations remain provenance, including when no executable definitions remain.
+Enums, namespaces and parameter properties retain carried obligations until
+their runtime behavior has faithful linked lowering. Projection probes strip
+restoration provenance before replay; source restoration alone cannot prove
+semantic preservation. Native execution of the translated Rust remains a CI
+verification boundary.
+
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
 CST → AST, transformations, emitters and translation rules. Decorators compose
@@ -812,6 +873,13 @@ sources. Both acceptance suites verify the complete published reports before
 recording the per-module difference assertion; a small local report test alone
 cannot supply that evidence.
 
+Real target-tool interchange reports identify the emitted target format, its
+tool and version, the accepted and rejected corpus inputs and any failed cycle.
+A Peggy report verifies the Peggy target only; it cannot satisfy the obligation
+to execute cycles under every other real grammar tool. Development oracle
+corrections build in CI and keep their original source hashes and a separately
+identified correction, so the native runtime remains independent of the oracle.
+
 ## Resource limits
 
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling
@@ -863,6 +931,13 @@ relative-meta-logic and formal-ai. Candidate builds, or a publication workflow
 that has not run, do not prove that users can install the delivered
 capabilities.
 
+Release publication verifies the release tag, checked-out commit, package
+versions and lockfiles before either registry write. A registry preflight fails
+closed when existing publication state cannot be established. The release then
+checks that npm and crates.io expose the same intended version and verifies its
+self-translation API through installed consumers. Trusted-publisher settings
+and the release-tag workflow are documented alongside the publishing machinery.
+
 ## Documentation consistency
 
 The following all agree with the evidence:
@@ -885,58 +960,25 @@ This section is a summary and may lag behind. The generated
 [ledger](issue-195-requirement-ledger.md) is authoritative. The largest known
 gaps against the target above:
 
-- **External parsers in production.** Default parsing of most catalog languages
-  still runs vendored tree-sitter grammars: `web-tree-sitter` with WebAssembly
-  binaries in JavaScript, and the `tree-sitter-*` crates in Rust. Native merged
-  Links Notation grammars exist for built-in formats such as LiNo and PDF, and
-  for JSON
-  ([`parity/grammars/native/json.lino`](../parity/grammars/native/json.lino)),
-  INI
-  ([`parity/grammars/native/ini.lino`](../parity/grammars/native/ini.lino)),
-  unified diffs
-  ([`parity/grammars/native/diff.lino`](../parity/grammars/native/diff.lino)),
-  CSV
-  ([`parity/grammars/native/csv.lino`](../parity/grammars/native/csv.lino)),
-  JSON5
-  ([`parity/grammars/native/json5.lino`](../parity/grammars/native/json5.lino)),
-  Scheme
-  ([`parity/grammars/native/scheme.lino`](../parity/grammars/native/scheme.lino)),
-  Racket
-  ([`parity/grammars/native/racket.lino`](../parity/grammars/native/racket.lino))
-  and C
-  ([`parity/grammars/native/c.lino`](../parity/grammars/native/c.lino), the
-  first written by the automatic import pipeline
-  [`js/scripts/import-native-grammars.mjs`](../js/scripts/import-native-grammars.mjs)).
-  These eight are the default parsers of their languages in both runtimes,
-  with automatic error recovery, and are checked against tree-sitter-json,
-  tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
-  tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket and
-  tree-sitter-c, which are now development dependencies only. Every other
-  catalog language still parses with its tree-sitter grammar.
-- **Incomplete grammar expression model.** The model in
-  [`rust/src/grammar/mod.rs`](../rust/src/grammar/mod.rs) covers:
-  - terminals and non-terminals;
-  - sequences and choices;
-  - repetition;
-  - predicates;
-  - captures;
-  - character classes.
-
-  It does not yet represent:
-  - precedence and associativity;
-  - lexer modes and state;
-  - external scanners;
-  - semantic actions;
-  - parameterization;
-  - imports.
-- **Grammar interchange.** Importers exist for several formats; reverse
-  conversion, cross-format cycles against the real tools and the automatic
-  multi-source merge do not.
-- **Four-language translation.** It covers a portable core. Full construct
-  inventories, faithful abort and effect encodings, and proof preservation remain
-  open.
-- **Unpublished release.** The npm and crates.io releases that carry this work
-  have not been published, and formal-ai does not consume them yet.
+- **Remaining external parsers and native coverage.** Generated native grammars
+  now serve many catalog languages. Remaining production parsers, scanner
+  families, document formats and grammar-description languages still need their
+  complete native implementations and independent corpus evidence before the
+  production dependency count can reach zero.
+- **Incomplete source unions.** A native single-source import is insufficient.
+  Every catalog language still needs the union of its applicable pinned official
+  and mature grammar sources, with reproducible decisions and independent
+  comparisons. Global concept sharing additionally needs checked semantic
+  correspondences; structural similarity alone does not discharge that proof.
+- **Grammar interchange.** Import and export capabilities do not establish the
+  complete union of format features or cycles under every real target tool.
+- **Four-language translation and self-translation.** Portable constructs are
+  implemented, while complete real-project construct inventories, zero carried
+  items, generated runtime replacements, faithful abort and effect encodings
+  and proof preservation remain acceptance obligations.
+- **Matching published releases.** The crate release and npm publication must
+  expose matching versions and the delivered APIs. Exact published consumers,
+  downstream integrations and post-merge rules still require executed evidence.
 
 Self-translation preserves carriage-return sources through a serialized source
 envelope guarded by the original byte length and digest and the complete emitted
