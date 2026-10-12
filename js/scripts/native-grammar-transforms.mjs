@@ -1,8 +1,34 @@
 // Reviewed source-grammar transformations. They generate ordinary grammar
 // expressions; neither executor needs a language-specific callback.
+import { transformFieldFollowingContext } from './native-source-contexts.mjs';
+import { transformOptionalCallContext } from './native-optional-call-context.mjs';
+import { applyDeclarationSourceTransform } from './native-csharp-declarations.mjs';
+import { applyRootSourceTransform } from './native-csharp-roots.mjs';
+
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (applyDeclarationSourceTransform(grammar, decision) || applyRootSourceTransform(grammar, decision)) continue;
+    if (decision.family === 'split-character-separator') {
+      const { pattern, count } = decision;
+      if (typeof pattern !== 'string' || !/^\[(?:\\.|[^\]\\])+\]\+$/u.test(pattern) || !Number.isSafeInteger(count) || count <= 0) throw new TypeError('separator partitioning needs a repeated character class and exact occurrence count');
+      let changes = 0;
+      grammar.extras = (grammar.extras ?? []).map(extra => {
+        if (extra.type !== 'PATTERN' || extra.value !== pattern) return extra;
+        changes += 1;
+        return { ...extra, value: pattern.slice(0, -1) };
+      });
+      if (changes !== count) throw new TypeError('separator partitioning must match exactly the recorded extra occurrences');
+      continue;
+    }
+    if (decision.family === 'field-following-context') {
+      transformFieldFollowingContext(grammar, decision);
+      continue;
+    }
+    if (decision.family === 'optional-call-context') {
+      transformOptionalCallContext(grammar, decision);
+      continue;
+    }
     if (decision.family === 'symbol-kind-alias') {
       const { rule, symbol, alias, count } = decision;
       const declared = Object.hasOwn(grammar.rules, symbol) || (grammar.externals ?? []).some(external => external.name === symbol);
@@ -112,11 +138,77 @@ export function transformNativeSource(source, transformations = []) {
       continue;
     }
     if (decision.family === 'rule-prefix-exclusion') {
-      const { rule, pattern, continuationPattern = null } = decision;
+      const { rule, pattern, continuationPattern = null, immediate = false } = decision;
       if (!Object.hasOwn(grammar.rules, rule) || typeof pattern !== 'string' || !pattern) throw new TypeError('rule prefix exclusions need an existing rule and nonempty pattern');
       if (continuationPattern !== null && (typeof continuationPattern !== 'string' || !continuationPattern)) throw new TypeError('prefix continuations need a nonempty pattern');
+      if (typeof immediate !== 'boolean') throw new TypeError('prefix immediacy must be boolean');
       const prefix = { type: 'PATTERN', value: pattern };
-      grammar.rules[rule] = { type: 'NATIVE_PREFIX_EXCLUSION', content: grammar.rules[rule], prefixes: continuationPattern === null ? prefix : { type: 'NATIVE_WORD_BOUNDARY', content: prefix, word: { type: 'PATTERN', value: continuationPattern } } };
+      grammar.rules[rule] = { type: 'NATIVE_PREFIX_EXCLUSION', content: grammar.rules[rule], prefixes: continuationPattern === null ? prefix : { type: 'NATIVE_WORD_BOUNDARY', content: prefix, word: { type: 'PATTERN', value: continuationPattern } }, ...(immediate ? { immediate } : {}) };
+      continue;
+    }
+    if (decision.family === 'symbol-pattern-exclusion') {
+      const { rule, symbol, pattern, occurrence = null, count, immediate = false } = decision;
+      if (![rule, symbol].every((name) => Object.hasOwn(grammar.rules, name)) || typeof pattern !== 'string' || !pattern
+        || !Number.isSafeInteger(count) || count <= 0 || typeof immediate !== 'boolean'
+        || occurrence !== null && (!Number.isSafeInteger(occurrence) || occurrence <= 0)) throw new TypeError('symbol pattern exclusions need existing rules, a pattern and exact positive occurrence counts');
+      let seen = 0;
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'SYMBOL' && node.name === symbol) {
+          seen += 1;
+          if (occurrence !== null && seen !== occurrence) return node;
+          changes += 1;
+          return { type: 'NATIVE_PREFIX_EXCLUSION', content: node, prefixes: { type: 'PATTERN', value: pattern }, ...(immediate ? { immediate } : {}) };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== count) throw new TypeError('symbol pattern exclusions must select exactly the recorded production count');
+      continue;
+    }
+    if (decision.family === 'field-dependent-following') {
+      const { rule, selectorField, selectorRule, selectorLiteral, field, symbol, followingPattern, count } = decision;
+      const selectors = grammar.rules[selectorRule];
+      if (!Object.hasOwn(grammar.rules, rule) || !Object.hasOwn(grammar.rules, symbol) || selectors?.type !== 'CHOICE'
+        || ![selectorField, selectorLiteral, field, followingPattern].every((value) => typeof value === 'string' && value)
+        || !Number.isSafeInteger(count) || count <= 0) throw new TypeError('dependent field following needs existing rules, a source selector choice and exact production count');
+      const valueOf = (node) => {
+        while (['TOKEN', 'IMMEDIATE_TOKEN', 'PREC'].includes(node.type)) node = node.content;
+        return node.type === 'STRING' ? node.value : null;
+      };
+      if (selectors.members.some((member) => valueOf(member) === null) || selectors.members.filter((member) => valueOf(member) === selectorLiteral).length !== 1) throw new TypeError('dependent following must select exactly one source literal alternative');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'SEQ' && node.members.some((member) => member.type === 'FIELD' && member.name === selectorField && member.content.type === 'SYMBOL' && member.content.name === selectorRule)
+          && node.members.some((member) => member.type === 'FIELD' && member.name === field)) {
+          const members = selectors.members.map((selector) => {
+            let selected = 0;
+            const condition = (child) => {
+              if (Array.isArray(child)) return child.map(condition);
+              if (!child || typeof child !== 'object') return child;
+              if (child.type === 'SYMBOL' && child.name === symbol) {
+                selected += 1;
+                return { type: 'SEQ', members: [child, { type: 'NATIVE_PATTERN_LOOKAHEAD', content: { type: 'BLANK' }, pattern: followingPattern }] };
+              }
+              return Object.fromEntries(Object.entries(child).map(([key, value]) => [key, condition(value)]));
+            };
+            const result = { ...node, members: node.members.map((member) => member.type === 'FIELD' && member.name === selectorField
+              ? { ...member, content: selector }
+              : member.type === 'FIELD' && member.name === field && valueOf(selector) === selectorLiteral
+                ? { ...member, content: condition(member.content) } : member) };
+            if (valueOf(selector) === selectorLiteral) changes += selected;
+            return result;
+          });
+          return { type: 'CHOICE', members };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== count) throw new TypeError('dependent following must select exactly the recorded field production count');
       continue;
     }
     if (['pattern-prefix-exclusion', 'literal-prefix-exclusion'].includes(decision.family)) {
@@ -372,8 +464,8 @@ export function transformNativeSource(source, transformations = []) {
       continue;
     }
     if (decision.family === 'rule-variant-precedence') {
-      const { rule, fields, associativity, value, dynamic = 0 } = decision;
-      if (!Object.hasOwn(grammar.rules, rule) || !fields || !Object.keys(fields).length || !['left', 'right', 'none'].includes(associativity) || !Number.isSafeInteger(value) || !Number.isSafeInteger(dynamic) || dynamic < 0) throw new TypeError('variant precedence needs an existing rule, field selectors and integer precedence');
+      const { rule, fields, associativity, value, dynamic = 0, count = 1 } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || !fields || !Object.keys(fields).length || !['left', 'right', 'none'].includes(associativity) || !Number.isSafeInteger(value) || !Number.isSafeInteger(dynamic) || dynamic < 0 || !Number.isSafeInteger(count) || count <= 0) throw new TypeError('variant precedence needs an existing rule, field selectors and integer precedence');
       let changes = 0;
       const rewrite = (node) => {
         if (Array.isArray(node)) return node.map(rewrite);
@@ -386,7 +478,7 @@ export function transformNativeSource(source, transformations = []) {
         return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
       };
       grammar.rules[rule] = rewrite(grammar.rules[rule]);
-      if (changes !== 1) throw new TypeError('variant precedence must select exactly one production');
+      if (changes !== count) throw new TypeError('variant precedence must select exactly the recorded production count');
       continue;
     }
     if (decision.family === 'alias-choice-branches') {

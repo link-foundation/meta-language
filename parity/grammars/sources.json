@@ -1276,7 +1276,7 @@
       "licenseFile": "parity/grammars/sources/tree-sitter-ruby-0.23.1.LICENSE",
       "scanner": {
         "file": "parity/grammars/scanners/ruby.lino",
-        "sha256": "a16ecee42305f5d903e841371e68a9e80cd61d38a7ed014df5eed3b2a6c9ebd2",
+        "sha256": "f32ffe65a784704a352e4665c6d640890fe99290e1cb93d4fe67c494cab00729",
         "ports": {
           "path": "src/scanner.c",
           "file": "parity/grammars/sources/tree-sitter-ruby-0.23.1.scanner.c.gz",

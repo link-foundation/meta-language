@@ -16,7 +16,7 @@
   ],
   "scanner": {
     "file": "parity/grammars/scanners/ruby.lino",
-    "sha256": "a16ecee42305f5d903e841371e68a9e80cd61d38a7ed014df5eed3b2a6c9ebd2",
+    "sha256": "f32ffe65a784704a352e4665c6d640890fe99290e1cb93d4fe67c494cab00729",
     "ports": {
       "path": "src/scanner.c",
       "file": "parity/grammars/sources/tree-sitter-ruby-0.23.1.scanner.c.gz",
@@ -629,6 +629,65 @@
       "token": "_forward_slash",
       "count": 2,
       "reason": "Retain the anonymous slash kind while making its parser-validity bit visible to the native scanner for the pinned Ruby regular-expression/operator decision."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "_call_command_argument_list",
+      "pattern": "\\.{2}|-|[ \\t\\r]*\\n",
+      "immediate": true,
+      "reason": "An adjacent range or minus operator continues the preceding expression, and an unescaped line break ends a command; separated unary and beginless range arguments remain valid."
+    },
+    {
+      "family": "symbol-pattern-exclusion",
+      "rule": "chained_string",
+      "symbol": "string",
+      "occurrence": 2,
+      "pattern": "[ \\t\\r]*\\n",
+      "count": 1,
+      "immediate": true,
+      "reason": "Only strings on the same logical source line chain; newline-separated literals are separate statements."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "_statement",
+      "pattern": "(?:else|elsif|end|when|rescue|ensure)",
+      "continuationPattern": "(?:[^\\x00-\\x1F\\s:;`\"'@$#.,|^&<=>+\\-*/\\\\%?!~()\\[\\]{}]|[!?])",
+      "reason": "The pinned lexer reserves block continuation and closing keywords; prevent a competing identifier statement from retaining a rejected keyword interpretation as an ambiguity."
+    },
+    {
+      "family": "field-dependent-following",
+      "rule": "_call",
+      "selectorField": "operator",
+      "selectorRule": "_call_operator",
+      "selectorLiteral": "::",
+      "field": "method",
+      "symbol": "constant",
+      "followingPattern": "\\(|\\{|do(?![^\\x00-\\x1F\\s:;`\"'@$#.,|^&<=>+\\-*/\\\\%?!~()\\[\\]{}])",
+      "count": 1,
+      "reason": "A constant after a scope separator is the higher-precedence namespace production unless an argument or block follows; retain dot and safe navigation calls, as well as namespace calls with actual arguments."
+    },
+    {
+      "family": "rule-variant-precedence",
+      "rule": "command_call_with_block",
+      "fields": {
+        "block": "do_block"
+      },
+      "associativity": "none",
+      "value": -1,
+      "dynamic": 1,
+      "reason": "The pinned do-block production binds to the enclosing unparenthesized command when its argument also has a competing ordinary call interpretation."
+    },
+    {
+      "family": "rule-variant-precedence",
+      "rule": "call",
+      "fields": {
+        "block": "block"
+      },
+      "associativity": "none",
+      "value": 57,
+      "count": 2,
+      "reason": "The pinned parser shifts a curly block onto the closest ordinary call before reducing its receiver-only call prefix at binding level56. Record that continuation priority while retaining all two source alternatives and lower do-block binding.",
+      "dynamic": 1
     }
   ],
   "approximations": [],

@@ -52,7 +52,22 @@
     "x = %q!a(b)c!\n",
     "x = a / b\n",
     "x = \"\\#{text}\"\n",
-    "x = %q(#{text})\n"
+    "x = %q(#{text})\n",
+    "unless foo\nelse\nend\n",
+    "x = case foo\nwhen bar\nelse\nend\n",
+    "puts ::Foo::Bar\n",
+    "obj::Constant()\n",
+    "foo-a\n",
+    "a *b\n",
+    "''\n' '\n'  '\n",
+    "a..b\n",
+    "else?\n",
+    "elsewhere\n",
+    "rescue!\n",
+    "foo items.any? { |i| i > 0 }\n",
+    "foo bar {}\n",
+    "foo bar do end\n",
+    "foo(bar) {}\n"
   ],
   "rejections": [
     "x = \"unfinished\n",

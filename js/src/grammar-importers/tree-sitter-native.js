@@ -548,9 +548,20 @@ export function importTreeSitterNative(source, options = {}) {
         const body = `(seq ${expr(node.content, true, keywords, aliased)} (not ${renderTreeSitterPattern(parseTreeSitterPattern(node.continuationPattern))}))`;
         return inToken ? body : `(token ${body})`;
       }
-      case 'NATIVE_PREFIX_EXCLUSION': return `(seq (not (token ${expr(node.prefixes, true, keywords)})) ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_PREFIX_EXCLUSION': {
+        const prefix = expr(node.prefixes, true, keywords);
+        // An immediate exclusion is a raw, zero-width assertion. Put the
+        // negation inside token context so its inspected text is never
+        // registered as a consumed lexical separator.
+        const guard = node.immediate ? `(and (immediateToken (not ${prefix})))` : `(not (token ${prefix}))`;
+        return `(seq ${guard} ${expr(node.content, inToken, keywords, aliased)})`;
+      }
       case 'NATIVE_KEYWORD_CONTEXT_VARIANT': return `(choice ordered ${expr(node.preferred, inToken, keywords, aliased)} ${expr(node.content, inToken, keywords, aliased)})`;
-      case 'NATIVE_PATTERN_LOOKAHEAD': return `(seq (and (token ${renderTreeSitterPattern(parseTreeSitterPattern(node.pattern))})) ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_PATTERN_LOOKAHEAD': {
+        const pattern = renderTreeSitterPattern(parseTreeSitterPattern(node.pattern));
+        const assertion = node.immediate ? `(immediateToken (and ${pattern}))` : `(token ${pattern})`;
+        return `(seq (and ${assertion}) ${expr(node.content, inToken, keywords, aliased)})`;
+      }
       case 'NATIVE_COMPLETE_CONTEXT_VARIANT': return `(choice ordered (seq ${expr(node.preferred, inToken, keywords, aliased)} ${node.boundary === null ? '(and (token (not any)))' : `(and (literal ${enc(node.boundary)}))`}) ${expr(node.content, inToken, keywords, aliased)})`;
       case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': {
         const prefix = expr(node.content.members[0], inToken, keywords);
@@ -734,7 +745,7 @@ export function importTreeSitterNative(source, options = {}) {
   const extras = [];
   for (const extra of grammar.extras ?? []) {
     try {
-      extras.push(extra.type === 'SYMBOL' ? ref(extra.name) : expr(extra, true, keywords));
+      extras.push(expr(extra, true, keywords));
     } catch (error) {
       if (!(error instanceof UnsupportedTreeSitterPattern)) throw error;
       report.unsupported.push(`extra: ${error.message}`);
