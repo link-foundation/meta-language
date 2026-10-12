@@ -587,9 +587,67 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `translation.${name}`,
   },
   {
+    inventory: 'linked reference operation programs',
+    files: ['js/src/data/reference-operations.lino', 'rust/src/data/reference-operations.lino'],
+    extract: (text) => captures(text, /^\(([a-z-]+):/gmu),
+    describe: (text, file) => [...text.matchAll(/^\(([a-z-]+):.*?\(kind ([a-z-]+)\)(?: \(method ([a-z-]+)\))?/gmu)].map(([, name, kind, method]) => ({
+      name,
+      sourceAliases: [
+        { source: file.startsWith('js/') ? 'JavaScript reference operations' : 'Rust reference operations', name },
+        ...(method ? [{ source: `JavaScript ${kind} methods`, name: method }] : []),
+      ],
+    })),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'linked reference program instructions',
+    files: ['js/src/data/reference-operations.lino', 'rust/src/data/reference-operations.lino'],
+    extract: (text) => captures(text, /\((allocate-reference|read-reference|write-reference|compare-identities|return-value|invoke-array-method|invoke-map-method|invoke-set-method|read-selected-value|write-selected-value)\b/gu),
+    recordOf: (name) => `translation.${({
+      'allocate-reference': 'allocate-reference-cell',
+      'read-reference': 'read-reference-cell',
+      'write-reference': 'write-reference-cell',
+      'compare-identities': 'compare-reference-identity',
+      'return-value': 'return-reference-operation-value',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'linked reference value records',
+    files: ['js/src/translation/reference-model.js'],
+    extract: (text) => [
+      ...captures(text, /(?:this\.network\.point\(|term === )'([a-z-]+)'/gu),
+      ...captures(text, /return '(array|map|set|record)'/gu).map((kind) => `${kind}-value`),
+      ...[...text.matchAll(/\? '(null-prototype)' : '(object-prototype)'/gu)].flatMap(([, first, second]) => [first, second]),
+      ...(text.includes('_newCell(kind)') ? ['reference-cell'] : []),
+      ...captures(text, /^export class (ReferenceHeap|ReferenceValue)\b/gmu).map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    ].filter((name) => name !== 'reference-heap' || text.includes("'reference-heap'")),
+    recordOf: (name) => `translation.${name === 'set-value' ? 'set-reference-value' : name === 'program' ? 'reference-operation-program' : ['undefined-value', 'null-value', 'boolean-value', 'number-value', 'big-integer-value', 'string-value'].includes(name) ? name.replace('-value', '-scalar-value') : name}`,
+  },
+  {
+    inventory: 'reference representation selection',
+    files: ['js/src/translation/reference-analysis.js'],
+    extract: (text) => captures(text, /^export function (requiresReferenceSemantics|hasStructuralIdentity)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.${name === 'requires-reference-semantics' ? 'require-reference-semantics' : 'find-structural-identity'}`,
+  },
+  {
+    inventory: 'structured type decisions',
+    files: ['js/src/translation/structured-type-rules.js', 'rust/src/translation/structured_type_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) (mergeOptionalAbsence|acceptTypeIdentity|acceptOptionalAbsence|renderPortableTypeIdentity|renderRustCompoundType|readRustOptionalPrelude|wrapPortableReferenceIdentity|renderRustReferenceType|merge_optional_absence|accept_type_identity|accept_optional_absence|render_portable_type_identity|render_rust_compound_type|read_rust_optional_prelude|wrap_portable_reference_identity|render_rust_reference_type)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
     inventory: 'indentation scanner generator',
     files: ['js/scripts/scanner-families.mjs'],
     extract: (text) => captures(text, /^export function (indentationScanner|prefixedQuotedScanner)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.generate-${name}`,
+  },
+  {
+    inventory: 'structured and counted scanner generators',
+    files: ['js/scripts/structured-scanner-families.mjs', 'js/scripts/counted-interpolation-scanner.mjs', 'js/scripts/generate-native-scanner-profiles.mjs'],
+    extract: (text) => captures(text, /^export function (hereDocumentScanner|interpolatedQuotedScanner|fencedBlockScanner|offsideLayoutScanner|countedInterpolationScanner|nativeScannerProfile)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
     recordOf: (name) => `grammar.generate-${name}`,
   },

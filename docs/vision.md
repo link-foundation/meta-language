@@ -648,20 +648,39 @@ distinct concepts with explicit correspondences.
 
 ### Associative stack and theoretical foundation
 
-The [formal-ai associative technology stack](https://github.com/link-assistant/formal-ai/blob/main/docs/associative-tech-stack.md)
+The [formal-ai associative technology stack](https://github.com/link-assistant/formal-ai/blob/70df98cf64c92c46e5ba7c7eb1b079521678aab0/docs/associative-tech-stack.md)
 is audited across both runtime packages, code, grammars, translation, tooling,
 documentation and dependencies at an immutable recorded revision. Actual direct
 runtime providers, compatibility or theoretical alignment, and development tools
 have distinct roles. Relevant obligations need code and dependency traceability;
 adoption does not require blindly adding every formal-ai dependency here.
+The [pinned provider audit](../parity/associative-stack-audit.json) records the
+current source and manifest findings separately from execution evidence.
 
-[Meta-theory](https://github.com/link-foundation/meta-theory) supplies the
+Both packages directly depend on Links Notation. Rust additionally offers the
+optional Doublets and platform-mem storage providers through its own adapter.
+link-cli integration is a protocol and query boundary rather than a direct
+package dependency. The text and binary codec compatibility fixtures exercise
+meta-language's codec; they do not establish an upstream codec dependency.
+Rust uses clap and JavaScript uses its argument reader. Consumer-specific logic,
+calculation and localization providers remain role-specific choices. This
+provider inventory is partial alignment, not project-wide adoption evidence.
+
+[Meta-theory at the recorded revision](https://github.com/link-foundation/meta-theory/tree/d5923a7d0996ab4abf70bf03e9f212e3d1a8e6cc) supplies the
 philosophical and theoretical links foundation. Its adopted definitions and
 premises are traced to pinned sources, with archives and drafts identified
 separately, and applied throughout the common representation. That foundation
 remains distinct from consumer-owned proof authority, selectable logical
 semantics, execution policies and universal self-typing claims. A source citation
 or conceptual analogy alone does not prove project-wide adoption or consistency.
+The [0.0.2 archived article](https://github.com/link-foundation/meta-theory/blob/d5923a7d0996ab4abf70bf03e9f212e3d1a8e6cc/archive/0.0.2/article.md)
+describes links referring to links and the doublet self-loop vertex `(x: x x)`;
+the 0.0.3 draft develops n-arity networks and recursive definitions. Its
+universality and physical consistency proposals are conjectures rather than
+kernel-checked theorems. Meta-language's existing unary self-referencing interned
+points need an explicit model or projection for the doublet vertex. Current
+concept-record English definitions and host metadata do not yet implement the
+deep recursive formal linked definitions required above.
 
 ## Downstream consumers
 

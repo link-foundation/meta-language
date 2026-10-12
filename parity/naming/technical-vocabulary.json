@@ -385,6 +385,22 @@
       ],
       "definition": "A function that is both injective and surjective, hence pairs every element of its domain with exactly one element of its codomain and reaches the whole codomain.",
       "source": "Lean Mathlib, Mathlib.Logic.Function.Defs, Function.Bijective: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Logic/Function/Defs.html#Function.Bijective"
+    },
+    {
+      "word": "prepend",
+      "partsOfSpeech": [
+        "verb"
+      ],
+      "definition": "To insert an item at the beginning of an ordered list before its existing items.",
+      "source": "WHATWG Infra Standard, Lists, prepend: https://infra.spec.whatwg.org/#list-prepend"
+    },
+    {
+      "word": "extensibility",
+      "partsOfSpeech": [
+        "noun"
+      ],
+      "definition": "The object state that permits or forbids adding own properties, represented by the ECMAScript Extensible internal slot.",
+      "source": "ECMA-262, Ordinary Object Internal Methods and Internal Slots, section10.1: https://tc39.es/ecma262/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ordinary-object-internal-methods-and-internal-slots"
     }
   ]
 }
