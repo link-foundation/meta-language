@@ -1502,6 +1502,48 @@ export function emitTreeSitterJson(grammar: Grammar, options?: DecoratorOptions)
 export const emit_tree_sitter_json: typeof emitTreeSitterJson;
 
 export const GRAMMAR_MERGE_METHOD: 'recursive-structural-bisimulation';
+/** Every imported production has a qualified origin before meaning is shared. */
+export interface GlobalConceptSource {
+  id: string;
+  language: string;
+  edition?: string;
+  grammar: Grammar;
+}
+export interface GlobalConceptOrigin {
+  alias: string;
+  source: string;
+  language: string;
+  edition: string;
+  rule: string;
+  concept: string | null;
+  sourceNames: Array<{ source: string; name: string }>;
+}
+export interface GlobalConceptProof {
+  method: 'recursive-structural-bijection';
+  first: string;
+  second: string;
+  correspondence: Array<[string, string]>;
+}
+export interface GlobalConceptSpace {
+  schemaVersion: 1;
+  sources: Array<{ id: string; language: string; edition: string; context: GrammarDeclarations }>;
+  concepts: Array<{ id: string; origins: GlobalConceptOrigin[]; definition: Omit<GrammarRuleValue, 'name'>;
+    definitions: Array<{ origin: string; definition: Omit<GrammarRuleValue, 'name'> }>; proofs: number[] }>;
+  mappings: Record<string, string>;
+  proofs: GlobalConceptProof[];
+  failures: Array<{ members: [string, string]; reason: 'unknown-origin' | 'no-one-to-one-proof' }>;
+  ambiguities: Array<{ alias: string; meanings: string[] }>;
+  redirects: Record<string, string>;
+}
+export interface GlobalConceptOptions {
+  previous?: GlobalConceptSpace | null;
+  equivalences?: Array<[string, string]>;
+  records?: readonly ConceptRecord[];
+}
+export const GLOBAL_CONCEPT_PROOF_METHOD: 'recursive-structural-bijection';
+export function createGlobalConceptSpace(sources: readonly GlobalConceptSource[], options?: GlobalConceptOptions): GlobalConceptSpace;
+export function globalConceptSpaceToLinks(space: GlobalConceptSpace): string;
+export function parseGlobalConceptSpaceLinks(source: string, options?: GlobalConceptOptions): GlobalConceptSpace;
 export interface GrammarMergeSource {
   id: string;
   language: string;
@@ -1550,11 +1592,15 @@ export interface GrammarMergeResult {
   failures: GrammarMergeFailure[];
   reused: string[];
   recomputed: string[];
+  globalConceptSpace: GlobalConceptSpace;
 }
 export interface GrammarMergeOptions extends DecoratorOptions {
   samples?: Record<string, string[]>;
   requiredEquivalences?: Array<[string, string]>;
   previous?: GrammarMergeResult | null;
+  reconcile?: boolean;
+  globalEquivalences?: Array<[string, string]>;
+  conceptRecords?: readonly ConceptRecord[];
 }
 export class GrammarMergeError extends Error {
   failures: GrammarMergeFailure[];

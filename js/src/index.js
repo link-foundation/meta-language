@@ -16,6 +16,7 @@ export * from './graphql-adapter.js';
 export * from './language-catalog.js';
 export * from './concept-records.js';
 export * from './concept-distinctions.js';
+export * from './global-concept-space.js';
 export * from './decorators.js';
 export * from './grammar-decorators.js';
 export * from './grammar-concepts.js';
