@@ -18,7 +18,7 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 /** Test groups, each a pattern over the test file name without `.test.js`. */
 export const TEST_GROUPS = Object.freeze({
   grammar:
-    /^(?!issue-195-grammar-(?:profile-|native-|declared-settling$))(?!error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|lino-grammar-scaling$|unicode-input-)(?:grammar-|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|issue-195-merge-real-reconciliation$|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
+    /^(?!issue-195-grammar-(?:profile-|native-|declared-settling$))(?!error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|lino-grammar-scaling$|unicode-input-)(?:grammar-|native-concept-reuse-normalization$|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|issue-195-merge-real-reconciliation$|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
   'grammar-native':
     /^(?:issue-195-grammar-native-(?!recovery$)|issue-195-grammar-declared-settling$|native-development-oracles$|native-text-grammars$)/u,
   'grammar-recovery': /^(?:error-recovery-|issue-195-grammar-native-recovery$)/u,
@@ -31,7 +31,7 @@ export const TEST_GROUPS = Object.freeze({
     /^(?!self-translation-report-artifacts$)(?:translation|typed-program-|typescript-erasure$|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation(?:-|$))/u,
   'report-artifacts': /^self-translation-report-artifacts$/u,
   conformance:
-    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|structured-data-(?:links|records)$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|global-concept-space$|formal-concept-definition$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
+    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|structured-data-(?:links|records)$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|concept-records-lazy$|global-concept-space$|formal-concept-definition$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
   downstream:
     /^(?:downstream-|formal-ai-semantic-projections$|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
   tooling:

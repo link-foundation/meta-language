@@ -14,13 +14,14 @@ import {
   validateConsumerMatrix,
 } from '../scripts/issue-195-downstream.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 
 const repositoryFile = (relative) => new URL(`../../${relative}`, import.meta.url);
 const markdown = readFileSync(repositoryFile(CONSUMER_MATRIX), 'utf8');
-const manifest = JSON.parse(readFileSync(repositoryFile('parity/issue-195-requirements.json'), 'utf8'));
+const manifest = readProjectData(repositoryFile('parity/issue-195-requirements.json'));
 const context = {
   rowIds: new Set(manifest.atomicRequirements.map(({ id }) => id)),
-  fileExists: (relative) => existsSync(repositoryFile(relative)),
+  fileExists: (relative) => existsSync(resolveProjectDataPath(repositoryFile(relative))),
 };
 
 function observe(assertions, testName) {

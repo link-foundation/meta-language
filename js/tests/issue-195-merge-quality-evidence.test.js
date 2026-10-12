@@ -1,4 +1,4 @@
-import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+import { readProjectData, resolveProjectDataPath, serializeProjectData } from '../scripts/project-data.mjs';
 // Requirement I195-MERGE-QUALITY-EVIDENCE: the published comparison of every
 // native grammar with the pinned tree-sitter grammar it was merged from, on
 // the corpus of that grammar. This suite recomputes the
@@ -43,7 +43,7 @@ function observe(assertions, testName) {
 
 test('merge quality evidence: the JavaScript report equals the published report', (context) => {
   const report = mergeQualityReport();
-  assert.equal(formatMergeQuality(report), read(MERGE_QUALITY_FIXTURE));
+  assert.equal(serializeProjectData(JSON.parse(formatMergeQuality(report)), new URL(`../../${MERGE_QUALITY_FIXTURE}`, import.meta.url)), read(MERGE_QUALITY_FIXTURE));
   assert.deepEqual(report.grammars.map(({ grammar }) => grammar), nativeGrammarEntries().map(([id]) => id));
   assert.equal(report.grammars.length, 43);
   for (const { grammar, sources, corpus, mergeReport, coverage, correctness, recovery } of report.grammars) {

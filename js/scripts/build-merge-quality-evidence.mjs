@@ -30,7 +30,7 @@
 //   node js/scripts/build-merge-quality-evidence.mjs --measure --only native-rocq  # measure one grammar, keep the others
 //   node js/scripts/build-merge-quality-evidence.mjs --check    # fail on drift
 import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { arch, cpus, platform } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -73,12 +73,7 @@ export function nativeFixtureFile(grammar) {
 /** The merge report of the native grammar whose links are at `grammar`, when the importer wrote one. */
 function mergeReportFile(grammar) {
   const file = `parity/grammars/merge-reports/${grammar.replace(/^.*\//u, '').replace(/\.lino$/u, '.json')}`;
-  try {
-    read(file);
-    return file;
-  } catch {
-    return null;
-  }
+  return existsSync(resolveProjectDataPath(join(root, file))) ? file : null;
 }
 
 const utf8Length = (text) => Buffer.byteLength(text, 'utf8');

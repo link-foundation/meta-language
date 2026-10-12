@@ -117,10 +117,11 @@ test('Markdown inline regions share one inline parser and delete their trees', (
 test('grammar code is not tiered up after parsing ends', () => {
   const index = new URL('../src/index.js', import.meta.url).href;
   const inventory = new URL('../../parity/language-grammar-inventory.json', import.meta.url);
+  const projectData = new URL('../scripts/project-data.mjs', import.meta.url).href;
   const script = `
-    const { readFileSync } = await import('node:fs');
+    const { readProjectData } = await import(${JSON.stringify(projectData)});
     const { LinkNetwork } = await import(${JSON.stringify(index)});
-    const { languages } = JSON.parse(readFileSync(new URL(${JSON.stringify(inventory.href)}), 'utf8'));
+    const { languages } = readProjectData(new URL(${JSON.stringify(inventory.href)}));
     const { source } = languages.find(({ name }) => name === 'PowerShell');
     for (let round = 0; round < 20; round += 1) LinkNetwork.parse(source, 'PowerShell');
     const parsed = process.memoryUsage().rss;

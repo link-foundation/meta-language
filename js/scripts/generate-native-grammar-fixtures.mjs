@@ -10,8 +10,11 @@ import { readStructuredDataLino, structuredDataToLino } from '../src/structured-
 //   node scripts/generate-native-grammar-fixtures.mjs           write the fixtures
 //   node scripts/generate-native-grammar-fixtures.mjs --check   fail when one is stale
 //   node scripts/generate-native-grammar-fixtures.mjs --language agda
+//   node scripts/generate-native-grammar-fixtures.mjs --language r --refresh-provenance
 // Regeneration can be limited to a changed grammar without executing the
 // unrelated corpora. The default still checks every committed fixture.
+// Provenance refresh retains all independent oracle and native expected rows;
+// the ordinary CI freshness check still recomputes and verifies those rows.
 //
 // `matches` are sources whose native rows equal the oracle rows. `divergences`
 // are sources one merged source accepts and the oracle does not; the native
@@ -1384,19 +1387,55 @@ export function renderFixture(fixture) {
   return structuredDataToLino(fixture);
 }
 
+/** Refresh selected native provider receipts without rewriting expected trees. */
+export function refreshNativeDefaultProvenance(only) {
+  if (!only?.length) throw new Error('provenance refresh requires at least one selected native grammar');
+  const previous = readProjectData(path.join(root, DEFAULT_CST_PATH));
+  const languages = { ...previous.languages };
+  const versions = (grammars) => Object.fromEntries(grammars.map(({ id, version, parserSha256 }) => [id, { version, parserSha256 }]));
+  for (const id of only) {
+    const entry = NATIVE_GRAMMARS.find((candidate) => candidate.id === id);
+    if (!entry) throw new Error(`unknown native grammar: ${id}`);
+    const actualSha256 = sha256(readFileSync(resolveProjectDataPath(path.join(root, entry.grammar))));
+    for (const name of nativeDefaultLanguages(entry)) {
+      const old = previous.languages[name];
+      const source = inventory.languages.find((language) => language.name === name);
+      const catalog = languageEntry(name);
+      if (!old || old.sourceSha256 !== sha256(source.source) || old.recoverySourceSha256 !== sha256(source.recoverySource)) {
+        throw new Error(`cannot refresh changed inventory sources of ${name}`);
+      }
+      if (catalog.grammars[0]?.id !== entry.nativeGrammar || catalog.grammars[0].parserSha256 !== actualSha256) {
+        throw new Error(`the native provider receipt of ${name} does not match the generated grammar`);
+      }
+      const grammars = versions(catalog.grammars);
+      if (JSON.stringify(Object.keys(old.grammars)) !== JSON.stringify(Object.keys(grammars))
+        || Object.entries(grammars).some(([provider, value]) => old.grammars[provider]?.version !== value.version
+          || (provider !== entry.nativeGrammar && old.grammars[provider]?.parserSha256 !== value.parserSha256))) {
+        throw new Error(`cannot refresh changed provider identities or versions of ${name}`);
+      }
+      if (JSON.stringify(old.oracleGrammars) !== JSON.stringify(versions(catalog.oracleGrammars))) {
+        throw new Error(`cannot refresh changed independent oracle providers of ${name}`);
+      }
+      languages[name] = { ...old, grammars };
+    }
+  }
+  return { ...previous, languages };
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
+  const refreshProvenance = process.argv.includes('--refresh-provenance');
   const only = [];
   for (let index = 2; index < process.argv.length; index += 1) {
     if (process.argv[index] === '--language') {
       const id = process.argv[++index];
       if (!NATIVE_GRAMMARS.some((entry) => entry.id === id)) throw new Error(`unknown native grammar: ${id ?? '(missing)'}`);
       if (!only.includes(id)) only.push(id);
-    } else if (process.argv[index] !== '--check') throw new Error(`unknown argument: ${process.argv[index]}`);
+    } else if (!['--check', '--refresh-provenance'].includes(process.argv[index])) throw new Error(`unknown argument: ${process.argv[index]}`);
   }
   const entries = only.length ? NATIVE_GRAMMARS.filter(({ id }) => only.includes(id)) : NATIVE_GRAMMARS;
   let stale = 0;
-  const outputs = [
+  const outputs = refreshProvenance ? [[DEFAULT_CST_PATH, () => refreshNativeDefaultProvenance(only)]] : [
     ...entries.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
     ...['odin', 'xml', 'dtd', 'r', 'python', 'dart', 'nix', 'cmake', 'lua', 'toml', 'zig', 'pascal', 'vb', 'css', 'powershell', 'erlang', 'groovy']
       .filter((id) => !only.length || only.includes(id)).map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),

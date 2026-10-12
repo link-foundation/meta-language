@@ -1,4 +1,4 @@
-import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+import { readProjectData, resolveProjectDataPath, serializeProjectData } from '../scripts/project-data.mjs';
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -34,7 +34,7 @@ test('malformed hexadecimal and non-scalar escapes fail with an importer diagnos
 });
 
 test('compiled character-class corpus preserves set membership and scalar consumption', () => {
-  assert.equal(importCharacterClassFixtures()[0][1], fixtureText, 'generated Links data matches the importer');
+  assert.equal(serializeProjectData(JSON.parse(importCharacterClassFixtures()[0][1]), new URL(`../../${fixtureFile}`, import.meta.url)), fixtureText, 'generated Links data matches the importer');
   assert.equal(new Set(fixture.cases.map(({ id }) => id)).size, fixture.cases.length);
   for (const entry of fixture.cases) {
     const parser = compileGrammar(parseGrammarLinks(entry.grammar));

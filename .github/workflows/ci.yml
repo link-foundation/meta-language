@@ -909,6 +909,8 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -997,6 +999,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
           STAGE: javascript-suite
+          META_LANGUAGE_TOOLING_FULL_SCOPE: '1'
         run: >-
           node js/scripts/run-issue-195-evidence.mjs
           --checkpoint "$ACCEPTANCE_CHECKPOINT"

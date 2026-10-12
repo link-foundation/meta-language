@@ -478,6 +478,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-rust-indirection-rules.mjs --check
 
+      - name: Check the generated Rust source product rules against JavaScript
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-product-rules.mjs --check
+
+      - name: Check the generated closed product source proofs against JavaScript
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-product-source-rules.mjs --check
+
       - name: Check shared source-free typed program fixtures
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-typed-program-links-fixtures.mjs --check
@@ -485,6 +493,14 @@ jobs:
       - name: Check shared editable algebraic program fixtures
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-typed-program-algebraic-fixtures.mjs --check
+
+      - name: Check shared editable immutable product fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-typed-program-tuple-fixtures.mjs --check
+
+      - name: Check the associative data tooling fixture
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-project-data-tooling-fixture.mjs --check
 
       - name: Check shared formal definition and certificate fixtures
         if: ${{ !cancelled() }}

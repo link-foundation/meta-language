@@ -66,7 +66,7 @@ const MARKDOWN_INLINE_CONTAINERS = new Set(['inline', 'pipe_table_cell']);
 // The same UTF-8 runtime the package parses with (see
 // js/scripts/build-web-tree-sitter-runtime.mjs), so node offsets are UTF-8 bytes.
 await Parser.init({
-  wasmBinary: gunzipSync(readExternalGrammarAsset('js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz')),
+  wasmBinary: gunzipSync(await readFile(join(root, 'js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz'))),
 });
 const languages = new Map();
 async function loadGrammar(id) {

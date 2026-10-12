@@ -241,6 +241,14 @@ state and finishing older active owners, or negotiating protocol fencing.
 Explicit `clean-caches --json` requests retain their JSON output contract;
 the tool's own report and history storage uses Links Notation.
 
+Oversized grammar reports use bounded typed LiNo object fragments with a checksum
+index. `readGrammarReport` reconstructs every original field, occurrence order and
+repeated object identity. Each fragment retains the codec's existing depth, node
+and byte limits. The native global concept snapshot remains a direct semantic
+graph. Shipped concept records retain their frozen array interface while loading
+and authenticating the complete register on first use; a generated count and
+digest keep ordinary package imports within their existing memory budget.
+
 ## Links Notation fitness
 
 Links Notation (LiNo) is the serialization of the common language. Both packages
@@ -677,6 +685,25 @@ the following is a substitute implementation; each is honest unfinished work:
 - a claim that holds only for non-aborting executions;
 - source pass-through;
 - a bounded theorem check.
+
+The current editable typed-program model represents immutable value products
+with explicit ordered items, a frozen flag and an `immutable value product`
+model. Fixed projections retain natural-number positions. Rust tuple source
+admission preserves empty, singleton and nested arities; JavaScript admission
+checks fresh dense `Object.freeze` arrays, actual element types, lexical origins
+and closed callers. A finite source dependency solver refuses ungrounded cycles.
+Const bindings or declared types alone do not prove immutability, and arbitrary
+arrays, identity observations, mutable aliases, unknown escapes, sparse products
+and dynamic positions require additional operational support.
+
+Shared link rules validate these products during reload and compare the complete
+rechecked semantic program before emission. Edits to the model, frozen flag,
+arity, references or positions receive precise diagnostics. Scalar field
+comparisons work under the selected scalar model; whole-product equality and
+ordering remain unsupported until their source-language behavior has a faithful
+encoding. Lean and Rocq preserve explicit product arities only under an accepted
+product model. This bounded support does not establish the complete twelve-way
+translation or project-wide semantics contract.
 
 ## Structured transformation and binding safety
 
@@ -1288,3 +1315,12 @@ oracle snapshots to isolate allocator history while retaining the original
 parser, source hashes and oracle assertions. Production parsing uses the
 shared native grammar directly. Focused layout discrepancies remain explicit;
 complete grammar unions and the remaining delivery requirements remain open.
+
+Independent oracle workers initialize the same authenticated UTF-8 runtime
+through a leaf module without importing the complete public concept register.
+Within one fixture build, an exact source reuses its isolated snapshot for row
+and recovery-status comparisons. Duplicate fixture entries and every independent
+assertion remain intact; snapshots are not shared across unrelated builds.
+Provenance-only refresh updates selected native provider digests while refusing
+changed source identities, provider versions or independent oracle receipts.
+It retains all expected trees; CI still recomputes the complete fixture checks.
