@@ -285,6 +285,21 @@ jobs:
         run: node scripts/generate-ruby-expression-syntax-fixture.mjs --check
         working-directory: js
 
+      - name: Check the pinned Ruby heredoc call fixtures against their independent oracle
+        if: ${{ !cancelled() }}
+        run: node scripts/generate-ruby-heredoc-fixture.mjs --check
+        working-directory: js
+
+      - name: Check the pinned Ruby method declaration fixtures against their independent oracle
+        if: ${{ !cancelled() }}
+        run: node scripts/generate-ruby-heredoc-fixture.mjs --fixture ruby-method-declaration-context-ci --check
+        working-directory: js
+
+      - name: Check the pinned Ruby literal CI fixtures against their independent oracle
+        if: ${{ !cancelled() }}
+        run: node scripts/generate-ruby-literal-ci-regressions.mjs --check
+        working-directory: js
+
       - name: Check the native merged grammar fixtures against their oracles
         if: ${{ !cancelled() }}
         run: npm run check:native-grammars

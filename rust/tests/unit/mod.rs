@@ -43,6 +43,7 @@ mod grammar_lexical_cache;
 mod grammar_literal_quoting;
 mod grammar_merge;
 mod grammar_native_ruby_expression_syntax;
+mod grammar_native_ruby_literal_ci;
 mod grammar_native_ruby_patterns;
 mod grammar_parsing;
 mod grammar_render;

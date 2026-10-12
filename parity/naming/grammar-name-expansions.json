@@ -6352,6 +6352,34 @@
           "symbol": "argument_list",
           "value": 1,
           "reason": "Prefer the existing immediate parenthesized argument list on a complete ordinary call over treating those parentheses as a command argument; preserve separated command arguments and all existing call alternatives."
+        },
+        {
+          "family": "symbol-complete-context",
+          "rules": [
+            "_statement"
+          ],
+          "symbol": "_expression",
+          "wholeRule": true,
+          "preferredSymbol": "method",
+          "boundaries": [
+            {
+              "type": "NATIVE_END_BOUNDARY",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_terminator"
+              }
+            }
+          ],
+          "count": 1,
+          "reason": "Prefer a complete ordinary method declaration at a source statement boundary or end of input, retaining expression-valued, singleton and operator definitions and all original alternatives as fallback."
+        },
+        {
+          "family": "token-prefix-exclusion",
+          "rule": "comment",
+          "prefixSymbol": "_interpolation_start",
+          "immediate": true,
+          "count": 1,
+          "reason": "A parser-owned interpolation opener is a valid literal token while a literal context is active; retain ordinary code comments and comments inside the suspended interpolation context."
         }
       ]
     }

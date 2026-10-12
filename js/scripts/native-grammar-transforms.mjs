@@ -11,10 +11,15 @@ import { applyDeclarationSourceTransform } from './native-csharp-declarations.mj
 import { applyRootSourceTransform } from './native-csharp-roots.mjs';
 import { applySourceContextPreference } from './native-source-preferences.mjs';
 import { transformSymbolChoiceContext } from './native-symbol-choice-context.mjs';
+import { transformTokenPrefixExclusion } from './native-token-prefix-context.mjs';
 
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'token-prefix-exclusion') {
+      transformTokenPrefixExclusion(grammar, decision);
+      continue;
+    }
     if (decision.family === 'symbol-choice-context') {
       transformSymbolChoiceContext(grammar, decision);
       continue;
