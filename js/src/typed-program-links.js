@@ -166,7 +166,7 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
       if (!/^-?[0-9]+$/u.test(definition ?? '')) throw new TypeError('a linked program contains an invalid integer');
       value = BigInt(definition);
     } else {
-      if (!/^(?:-?(?:[0-9]+(?:\.[0-9]+)?)(?:e[+-]?[0-9]+)?|NaN|Infinity|-Infinity)$/iu.test(definition ?? '')) throw new TypeError('a linked program contains an invalid number');
+      if (!/^(?:-?(?:[0-9]+(?:\.[0-9]+)?)(?:[eE][+-]?[0-9]+)?|NaN|Infinity|-Infinity)$/u.test(definition ?? '')) throw new TypeError('a linked program contains an invalid number');
       value = Number(definition);
     }
     objects.set(key, value);

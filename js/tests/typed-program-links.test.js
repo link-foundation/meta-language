@@ -189,6 +189,38 @@ test('unary policy and text conversion result edits retain their checked types',
   assert.throws(() => emitTypedProgramLinks(text.network, text.root, 'JavaScript'), /inconsistent text conversion result type/u);
 });
 
+test('admitted math edits change behavior while incompatible result types are refused', () => {
+  const archive = roundTrip(createTypedProgramLinks('function root(value){return Math.sqrt(value);}console.log(root(9));', 'JavaScript'));
+  const operation = field(archive.network, construct(archive.network, 'math'), 'operation');
+  archive.network.link(operation).setMetadata(archive.network.link(operation).metadata().withDefinition('floor'));
+  assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), ['9']);
+  archive.network.link(operation).setMetadata(archive.network.link(operation).metadata().withDefinition('isInteger'));
+  for (const target of ['JavaScript', 'Rust']) assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, target), /inconsistent math result type/u);
+});
+
+test('collection operation edits preserve the checked lookup result type', () => {
+  const archive = roundTrip(createTypedProgramLinks('const values=new Map([[1,2]]);console.log(values.get(1));', 'JavaScript'));
+  assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), ['2']);
+  const operation = field(archive.network, construct(archive.network, 'collectionRead'), 'operation');
+  archive.network.link(operation).setMetadata(archive.network.link(operation).metadata().withDefinition('has'));
+  assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, 'JavaScript'), /inconsistent collection read result type/u);
+});
+
+test('optional Number predicates retain false for explicitly absent nonnumeric values', () => {
+  const archive = roundTrip(createTypedProgramLinks('console.log(Number.isFinite(undefined));console.log(Number.isNaN(null));', 'JavaScript'));
+  assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), ['false', 'false']);
+  assert.match(emitTypedProgramLinks(archive.network, archive.root, 'Rust').code, /false/u);
+});
+
+test('positional index edits remain numeric fields rather than interpolated target source', () => {
+  const archive = roundTrip(createTypedProgramLinks('/** @param {[number,number]} pair */function first(pair){return pair[0];}console.log(first([2,3]));', 'JavaScript'));
+  assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), ['2']);
+  const index = field(archive.network, construct(archive.network, 'tupleIndex'), 'index');
+  archive.network.link(index).setMetadata(archive.network.link(index).metadata().withTerm('string value')
+    .withDefinition('0]; globalThis.injectionObserved=true; [0'));
+  for (const target of ['JavaScript', 'Rust']) assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, target), /positional field index is invalid/u);
+});
+
 test('shared type paths are bounded before canonical type equality expands them', () => {
   const program = checkProgram(parseJavaScript('function add(a,b){return a+b;}'));
   let shared = { kind: 'float' };
@@ -226,4 +258,19 @@ test('edited literal data cannot become host source code during emission', () =>
   const literal = scalarByField(archive.network, 'value', '3');
   archive.network.link(literal).setMetadata(archive.network.link(literal).metadata().withDefinition('0); injected(); (0'));
   assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, 'JavaScript'), /floating-point literal is invalid/u);
+});
+
+test('floating-point literal edits admit canonical specials and both exponent spellings', () => {
+  for (const [value, expected] of [['1e2', '100'], ['1E2', '100'], ['NaN', 'NaN'], ['Infinity', 'Infinity'], ['-Infinity', '-Infinity']]) {
+    const archive = roundTrip(createTypedProgramLinks('console.log(3);', 'JavaScript'));
+    const literal = scalarByField(archive.network, 'value', '3');
+    archive.network.link(literal).setMetadata(archive.network.link(literal).metadata().withDefinition(value));
+    assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), [expected]);
+  }
+  for (const value of ['nan', 'NAN', 'infinity', '-infinity']) {
+    const archive = roundTrip(createTypedProgramLinks('console.log(3);', 'JavaScript'));
+    const literal = scalarByField(archive.network, 'value', '3');
+    archive.network.link(literal).setMetadata(archive.network.link(literal).metadata().withDefinition(value));
+    for (const target of ['JavaScript', 'Rust']) assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, target), /floating-point literal is invalid/u);
+  }
 });

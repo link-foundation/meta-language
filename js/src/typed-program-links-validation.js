@@ -1,8 +1,9 @@
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
-import { acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence } from './typed-program-link-rules.js';
+import { acceptProgramDivisionRounding, acceptProgramExpressionOperation, acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence } from './typed-program-link-rules.js';
 
 const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'output']);
+const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
 
 export function validateLinkedTypedProgram(program, references = new WeakMap()) {
   if (!program || program.schemaVersion !== 1 || !['JavaScript', 'Rust', 'Lean', 'Rocq'].includes(program.sourceLanguage)
@@ -60,13 +61,14 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
   function expression(node, environment) {
     if (!node || typeof node !== 'object') return;
     visit();
+    if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.type && node.k) type(node.type);
     if (node.span && (!Number.isSafeInteger(node.span.start) || !Number.isSafeInteger(node.span.end)
       || node.span.start < 0 || node.span.end < node.span.start)) throw new TypeError('a linked source span is invalid');
     if (node.k === 'lit') {
       if (node.type.kind === 'bool' && typeof node.value !== 'boolean') throw new TypeError('a linked boolean literal is invalid');
       if (node.type.kind === 'string' && typeof node.value !== 'string') throw new TypeError('a linked string literal is invalid');
-      if (node.type.kind === 'float' && (typeof node.value !== 'string' || !/^(?:-?(?:[0-9]+(?:\.[0-9]+)?)(?:e[+-]?[0-9]+)?|NaN|Infinity|-Infinity)$/iu.test(node.value))) throw new TypeError('a linked floating-point literal is invalid');
+      if (node.type.kind === 'float' && (typeof node.value !== 'string' || !/^(?:-?(?:[0-9]+(?:\.[0-9]+)?)(?:[eE][+-]?[0-9]+)?|NaN|Infinity|-Infinity)$/u.test(node.value))) throw new TypeError('a linked floating-point literal is invalid');
       if (['nat', 'int', 'fixed'].includes(node.type.kind)) {
         if (typeof node.value !== 'string' || !/^-?[0-9]+$/u.test(node.value)) throw new TypeError('a linked integer literal is invalid');
         const value = BigInt(node.value);
@@ -168,7 +170,47 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
     if (node.k === 'toString') {
       same(node.type, { kind: 'string' }, 'text conversion result type');
     }
+    if (node.k === 'math') {
+      const spread = node.op === 'maxOf' || node.op === 'minOf';
+      const variadic = node.op === 'max' || node.op === 'min';
+      if (!Array.isArray(node.args) || (!variadic && node.args.length !== 1)) throw new TypeError('a linked math operation has the wrong number of arguments');
+      for (const argument of node.args) same(argument.type, spread ? { kind: 'array', element: { kind: 'float' } } : { kind: 'float' }, 'math argument type');
+      same(node.type, { kind: acceptProgramExpressionOperation('optionalPredicate', node.op) ? 'bool' : 'float' }, 'math result type');
+    }
+    if (node.k === 'stringMap' || node.k === 'stringTest') {
+      same(node.string.type, { kind: 'string' }, 'string operation receiver type');
+      if (node.k === 'stringTest') same(node.search.type, { kind: 'string' }, 'string search type');
+      same(node.type, { kind: node.k === 'stringMap' ? 'string' : 'bool' }, 'string operation result type');
+    }
+    if (node.k === 'method' && !['string', 'array'].includes(node.object.type?.kind)) throw new TypeError('a linked method has an unsupported receiver type');
+    if (node.k === 'optionalPredicate') {
+      if (node.arg.type?.kind !== 'option') throw new TypeError('a linked optional predicate requires an optional value');
+      same(node.type, { kind: 'bool' }, 'optional predicate result type');
+    }
+    if (node.k === 'collectionRead' || node.k === 'collectionItems') {
+      const object = node.object.type;
+      if (!['map', 'set'].includes(object?.kind)) throw new TypeError('a linked collection operation has a noncollection receiver');
+      const key = object.kind === 'map' ? object.key : object.element;
+      const value = object.kind === 'map' ? object.value : key;
+      if (node.k === 'collectionRead') {
+        same(node.key.type, key, 'collection key type');
+        if (node.op === 'get' && object.kind !== 'map') throw new TypeError('a linked collection lookup requires a map');
+        same(node.type, node.op === 'has' ? { kind: 'bool' } : { kind: 'option', element: value, absence: 'undefined' }, 'collection read result type');
+      } else {
+        const element = node.op === 'keys' ? key : node.op === 'values' ? value : { kind: 'tuple', elements: [key, value] };
+        same(node.type, { kind: 'array', element }, 'collection items result type');
+      }
+    }
+    if (node.k === 'tupleIndex' || node.k === 'recordField' || node.k === 'optionalField') {
+      if (!Number.isSafeInteger(node.index) || node.index < 0) throw new TypeError('a linked positional field index is invalid');
+      const object = node.k === 'optionalField' ? node.object.type?.element : node.object.type;
+      const entry = node.k === 'tupleIndex' ? object?.elements?.[node.index] : object?.fields?.[node.index];
+      if (!entry || (node.k !== 'tupleIndex' && entry.name !== node.field)) throw new TypeError('a linked positional field index differs from its layout');
+      same(node.type, node.k === 'tupleIndex' ? entry : node.k === 'optionalField'
+        ? { kind: 'option', element: entry.type, absence: 'undefined' } : entry.type, 'positional field type');
+    }
     if (node.k === 'binary') {
+      if (node.rounding !== undefined && !acceptProgramDivisionRounding(node.rounding)) throw new TypeError('a linked division has an unsupported rounding policy');
       same(node.left.type, node.right.type, 'binary operand types');
       if (node.domain) same(node.domain, node.left.type, 'binary operation domain');
       const comparison = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'].includes(node.op);
