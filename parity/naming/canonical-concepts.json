@@ -61801,12 +61801,16 @@
       "role": "concept",
       "definition": "A rule for a postfix expression, the construct the upstream grammar names postfix_expression.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:dart",
+          "name": "postfix_expression"
+        },
+        {
+          "source": "native:elixir",
           "name": "postfix_expression"
         }
       ],
@@ -81853,6 +81857,838 @@
         {
           "source": "Native grammar source field expression contexts",
           "name": "transformFieldExpressionContext"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-object-property-definition",
+      "phrase": "accept object property definition",
+      "role": "operation",
+      "definition": "Accept an object property form when it does not select the special prototype setter syntax.",
+      "constraints": [
+        "The uncomputed colon definition named __proto__ is rejected because it sets the object prototype rather than defining an ordinary own data property.",
+        "Computed names and noncolon property forms preserve their ordinary property interpretation.",
+        "This decision distinguishes prototype setter syntax; other unsupported property behavior retains its own checking obligations."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript primitive value decisions",
+          "name": "acceptObjectPropertyDefinition"
+        },
+        {
+          "source": "Rust primitive value decisions",
+          "name": "accept_object_property_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.transform-syntactic-boundary-context",
+      "phrase": "transform syntactic boundary context",
+      "role": "operation",
+      "definition": "Prefer an omitted optional source suffix when a complete recorded syntactic boundary follows.",
+      "constraints": [
+        "The existing rule, optional source symbol, exact occurrence selector and declared boundary symbols must match the recorded decision.",
+        "The complete boundary is inspected using its source grammar interpretation, including registered trivia handling.",
+        "The original source production remains available as the fallback when the preferred complete boundary does not hold.",
+        "Generated ordinary grammar operations carry the decision rather than a language callback."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar source syntactic boundaries",
+          "name": "transformSyntacticBoundaryContext"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constant-pattern-value-body",
+      "phrase": "constant pattern value body",
+      "role": "concept",
+      "definition": "A rule for a constant pattern value body, the construct the upstream grammar names _constant_pattern_value_body.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "constant_pattern_value_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constant-pattern-test-expression",
+      "phrase": "constant pattern test expression",
+      "role": "concept",
+      "definition": "A rule for a constant pattern test expression, the construct the upstream grammar names _constant_pattern_test_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "constant_pattern_test_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.qualified-name-type-pattern",
+      "phrase": "qualified name type pattern",
+      "role": "concept",
+      "definition": "A rule for a qualified name type pattern, the construct the upstream grammar names _qualified_name_type_pattern.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "qualified_name_type_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.qualified-name-disjunction-pattern",
+      "phrase": "qualified name disjunction pattern",
+      "role": "concept",
+      "definition": "A rule for a qualified name disjunction pattern, the construct the upstream grammar names _qualified_name_disjunction_pattern.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "qualified_name_disjunction_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.require-data-object-freeze",
+      "phrase": "require data object freeze",
+      "role": "operation",
+      "definition": "Determine whether a data object requires freezing to retain its declared source policy.",
+      "constraints": [
+        "An explicit frozen declaration always requires the emitted data object to be frozen.",
+        "Ordinary JavaScript source objects retain their mutable data property behavior.",
+        "Other declared source language objects retain the existing frozen emission policy.",
+        "The decision selects an emission policy; it does not itself execute a target object or prove unsupported object behavior."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript primitive value decisions",
+          "name": "requireDataObjectFreeze"
+        },
+        {
+          "source": "Rust primitive value decisions",
+          "name": "require_data_object_freeze"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.null-capable-type-test-expression",
+      "phrase": "null capable type test expression",
+      "role": "concept",
+      "definition": "A rule for a null capable type test expression, the construct the upstream grammar names _nullable_type_test_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "null_admitting_type_test_expression"
+        },
+        {
+          "source": "native:csharp",
+          "name": "null_capable_type_test_expression"
+        }
+      ],
+      "formerNames": [
+        "grammar.null-admitting-type-test-expression"
+      ]
+    },
+    {
+      "id": "translation.constructor-immutability",
+      "phrase": "constructor immutability",
+      "role": "concept",
+      "definition": "An explicit immutability policy on a typed program data constructor.",
+      "constraints": [
+        "The boolean field is inspectable linked data governed by the shared typed program schema.",
+        "A true value retains explicitly frozen construction; otherwise the declared source language supplies its ordinary construction policy.",
+        "The policy remains distinct from grammar syntax for declaring a constructor or from a claim that every source object is immutable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Shared typed linked program schema",
+          "name": "constructor immutability"
+        },
+        {
+          "source": "Shared typed program constructor metadata",
+          "name": "frozen"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.transform-ordered-field-alternatives",
+      "phrase": "transform ordered field alternatives",
+      "role": "operation",
+      "definition": "Order selected source grammar field alternatives by their recorded structural identities.",
+      "constraints": [
+        "Exact symbol, alias and literal content selectors must identify each original source alternative once, with matching field occurrence counts.",
+        "Every production, named alias, field and lexical wrapper remains present in the resulting source grammar.",
+        "A recorded literal continuation guard retains complete source word boundaries without changing the original alias identity.",
+        "Existing shared ordered choice and boundary operations carry the preference without a language callback."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar source field alternatives",
+          "name": "transformOrderedFieldAlternatives"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bare-argument-call",
+      "phrase": "bare argument call",
+      "role": "concept",
+      "definition": "A rule for a bare argument call, the construct the upstream grammar names _bare_argument_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bare-argument-parenthesized-call",
+      "phrase": "bare argument parenthesized call",
+      "role": "concept",
+      "definition": "A rule for a bare argument parenthesized call, the construct the upstream grammar names _bare_argument_parenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_parenthesized_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bare-argument-local-parenthesized-call",
+      "phrase": "bare argument local parenthesized call",
+      "role": "concept",
+      "definition": "A rule for a bare argument local parenthesized call, the construct the upstream grammar names _bare_argument_local_parenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_local_parenthesized_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bare-argument-remote-parenthesized-call",
+      "phrase": "bare argument remote parenthesized call",
+      "role": "concept",
+      "definition": "A rule for a bare argument remote parenthesized call, the construct the upstream grammar names _bare_argument_remote_parenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_remote_parenthesized_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bare-argument-anonymous-call",
+      "phrase": "bare argument anonymous call",
+      "role": "concept",
+      "definition": "A rule for a bare argument anonymous call, the construct the upstream grammar names _bare_argument_anonymous_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_anonymous_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bare-argument-repeated-call",
+      "phrase": "bare argument repeated call",
+      "role": "concept",
+      "definition": "A rule for a bare argument repeated call, the construct the upstream grammar names _bare_argument_repeated_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_repeated_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bare-argument-expression",
+      "phrase": "bare argument expression",
+      "role": "concept",
+      "definition": "A rule for a bare argument expression, the construct the upstream grammar names _bare_argument_expression.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-call",
+      "phrase": "postfix call",
+      "role": "concept",
+      "definition": "A rule for a postfix call, the construct the upstream grammar names _postfix_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-parenthesized-call",
+      "phrase": "postfix parenthesized call",
+      "role": "concept",
+      "definition": "A rule for a postfix parenthesized call, the construct the upstream grammar names _postfix_parenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_parenthesized_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-block-call",
+      "phrase": "postfix block call",
+      "role": "concept",
+      "definition": "A rule for a postfix block call, the construct the upstream grammar names _postfix_block_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_block_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-remote-reference",
+      "phrase": "postfix remote reference",
+      "role": "concept",
+      "definition": "A rule for a postfix remote reference, the construct the upstream grammar names _postfix_remote_reference.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_remote_reference"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-local-parenthesized-call",
+      "phrase": "postfix local parenthesized call",
+      "role": "concept",
+      "definition": "A rule for a postfix local parenthesized call, the construct the upstream grammar names _postfix_local_parenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_local_parenthesized_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-remote-parenthesized-call",
+      "phrase": "postfix remote parenthesized call",
+      "role": "concept",
+      "definition": "A rule for a postfix remote parenthesized call, the construct the upstream grammar names _postfix_remote_parenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_remote_parenthesized_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-anonymous-call",
+      "phrase": "postfix anonymous call",
+      "role": "concept",
+      "definition": "A rule for a postfix anonymous call, the construct the upstream grammar names _postfix_anonymous_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_anonymous_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-repeated-call",
+      "phrase": "postfix repeated call",
+      "role": "concept",
+      "definition": "A rule for a postfix repeated call, the construct the upstream grammar names _postfix_repeated_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_repeated_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-call",
+      "phrase": "attribute call",
+      "role": "concept",
+      "definition": "A rule for an attribute call, the construct the upstream grammar names _attribute_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "attribute_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-parenthesized-call",
+      "phrase": "attribute parenthesized call",
+      "role": "concept",
+      "definition": "A rule for an attribute parenthesized call, the construct the upstream grammar names _attribute_parenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "attribute_parenthesized_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-block-call",
+      "phrase": "attribute block call",
+      "role": "concept",
+      "definition": "A rule for an attribute block call, the construct the upstream grammar names _attribute_block_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "attribute_block_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-local-parenthesized-call",
+      "phrase": "attribute local parenthesized call",
+      "role": "concept",
+      "definition": "A rule for an attribute local parenthesized call, the construct the upstream grammar names _attribute_local_parenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "attribute_local_parenthesized_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-repeated-call",
+      "phrase": "attribute repeated call",
+      "role": "concept",
+      "definition": "A rule for an attribute repeated call, the construct the upstream grammar names _attribute_repeated_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "attribute_repeated_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-attribute-call",
+      "phrase": "postfix attribute call",
+      "role": "concept",
+      "definition": "A rule for a postfix attribute call, the construct the upstream grammar names _postfix_attribute_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_attribute_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-attribute-parenthesized-call",
+      "phrase": "postfix attribute parenthesized call",
+      "role": "concept",
+      "definition": "A rule for a postfix attribute parenthesized call, the construct the upstream grammar names _postfix_attribute_parenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_attribute_parenthesized_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-expression",
+      "phrase": "attribute expression",
+      "role": "concept",
+      "definition": "A rule for an attribute expression, the construct the upstream grammar names _attribute_expression.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "attribute_expression"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.dimensions-expression",
+          "reason": "The Elixir attribute expression is an operand grammar for module attributes introduced by @; the Java and Groovy dimensions expression carries an array dimension size inside square brackets."
+        }
+      ]
+    },
+    {
+      "id": "grammar.postfix-attribute-expression",
+      "phrase": "postfix attribute expression",
+      "role": "concept",
+      "definition": "A rule for a postfix attribute expression, the construct the upstream grammar names _postfix_attribute_expression.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_attribute_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-unary-operand",
+      "phrase": "postfix unary operand",
+      "role": "concept",
+      "definition": "A rule for a postfix unary operand, the construct the upstream grammar names _postfix_unary_operand.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_unary_operand"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bare-argument-call-without-parentheses",
+      "phrase": "bare argument call without parentheses",
+      "role": "concept",
+      "definition": "A rule for a bare argument call without parentheses, the construct the upstream grammar names _bare_argument_unparenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_call_without_parentheses"
+        },
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_unparenthesized_call"
+        }
+      ],
+      "formerNames": [
+        "grammar.bare-argument-unparenthesized-call"
+      ]
+    },
+    {
+      "id": "grammar.bare-argument-local-call-without-parentheses",
+      "phrase": "bare argument local call without parentheses",
+      "role": "concept",
+      "definition": "A rule for a bare argument local call without parentheses, the construct the upstream grammar names _bare_argument_local_unparenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_local_call_without_parentheses"
+        },
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_local_unparenthesized_call"
+        }
+      ],
+      "formerNames": [
+        "grammar.bare-argument-local-unparenthesized-call"
+      ]
+    },
+    {
+      "id": "grammar.bare-argument-remote-call-without-parentheses",
+      "phrase": "bare argument remote call without parentheses",
+      "role": "concept",
+      "definition": "A rule for a bare argument remote call without parentheses, the construct the upstream grammar names _bare_argument_remote_unparenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_remote_call_without_parentheses"
+        },
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_remote_unparenthesized_call"
+        }
+      ],
+      "formerNames": [
+        "grammar.bare-argument-remote-unparenthesized-call"
+      ]
+    },
+    {
+      "id": "grammar.postfix-call-without-parentheses",
+      "phrase": "postfix call without parentheses",
+      "role": "concept",
+      "definition": "A rule for a postfix call without parentheses, the construct the upstream grammar names _postfix_unparenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_call_without_parentheses"
+        },
+        {
+          "source": "native:elixir",
+          "name": "postfix_unparenthesized_call"
+        }
+      ],
+      "formerNames": [
+        "grammar.postfix-unparenthesized-call"
+      ]
+    },
+    {
+      "id": "grammar.attribute-call-without-parentheses",
+      "phrase": "attribute call without parentheses",
+      "role": "concept",
+      "definition": "A rule for an attribute call without parentheses, the construct the upstream grammar names _attribute_unparenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "attribute_call_without_parentheses"
+        },
+        {
+          "source": "native:elixir",
+          "name": "attribute_unparenthesized_call"
+        }
+      ],
+      "formerNames": [
+        "grammar.attribute-unparenthesized-call"
+      ]
+    },
+    {
+      "id": "grammar.attribute-local-call-without-parentheses",
+      "phrase": "attribute local call without parentheses",
+      "role": "concept",
+      "definition": "A rule for an attribute local call without parentheses, the construct the upstream grammar names _attribute_local_unparenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "attribute_local_call_without_parentheses"
+        },
+        {
+          "source": "native:elixir",
+          "name": "attribute_local_unparenthesized_call"
+        }
+      ],
+      "formerNames": [
+        "grammar.attribute-local-unparenthesized-call"
+      ]
+    },
+    {
+      "id": "grammar.postfix-attribute-call-without-parentheses",
+      "phrase": "postfix attribute call without parentheses",
+      "role": "concept",
+      "definition": "A rule for a postfix attribute call without parentheses, the construct the upstream grammar names _postfix_attribute_unparenthesized_call.",
+      "constraints": [
+        "Only the native Elixir grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:elixir",
+          "name": "postfix_attribute_call_without_parentheses"
+        },
+        {
+          "source": "native:elixir",
+          "name": "postfix_attribute_unparenthesized_call"
+        }
+      ],
+      "formerNames": [
+        "grammar.postfix-attribute-unparenthesized-call"
+      ]
+    },
+    {
+      "id": "translation.accept-object-freeze-operand",
+      "phrase": "accept object freeze operand",
+      "role": "operation",
+      "definition": "Accept a freeze operand only when its typed representation preserves the supported freezing policy.",
+      "constraints": [
+        "A direct data constructor object is admitted as an explicitly frozen construction.",
+        "An array literal is admitted only when the host adapter establishes the declared read only module initializer policy.",
+        "Other operands retain rejection instead of silently reducing arbitrary runtime freeze behavior."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript primitive value decisions",
+          "name": "acceptObjectFreezeOperand"
+        },
+        {
+          "source": "Rust primitive value decisions",
+          "name": "accept_object_freeze_operand"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.constructor-prototype-definition",
+      "phrase": "constructor prototype definition",
+      "role": "concept",
+      "definition": "A source data constructor prototype setter retaining its initializer, source range and original property position.",
+      "constraints": [
+        "The source marker preserves the complete uncomputed __proto__ initializer, including its position relative to the constructor tag.",
+        "Computed __proto__ names and ordinary data property forms retain separate source interpretations.",
+        "The checked translation boundary preserves a precise refusal until the prototype effect has a faithful operational encoding."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript translation source constructors",
+          "name": "prototypeDefinition"
+        },
+        {
+          "source": "Rust translation source constructors",
+          "name": "ConstructorPrototypeDefinition"
         }
       ],
       "formerNames": []

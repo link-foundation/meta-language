@@ -163,6 +163,12 @@
       "source": "Merriam-Webster Dictionary, parenthesize (verb)"
     },
     {
+      "word": "parentheses",
+      "partsOfSpeech": ["noun"],
+      "definition": "Plural of parenthesis: the paired curved punctuation marks ( and ) that enclose or group expressions and call arguments.",
+      "source": "Merriam-Webster Dictionary, parenthesis, plural and punctuation sense https://www.merriam-webster.com/dictionary/parenthesis; official Elixir syntax reference, local and remote calls https://elixir.hexdocs.pm/syntax-reference.html#non-qualified-calls-local-calls"
+    },
+    {
       "word": "variadic",
       "partsOfSpeech": ["adjective"],
       "definition": "Taking a variable number of arguments.",

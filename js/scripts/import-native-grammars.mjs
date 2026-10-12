@@ -203,6 +203,21 @@ function languageName(entry) {
  * shared where two or more name it, else only by its one language.
  */
 export function mergeConcepts(register, imports, decisions = {}) {
+  const legacyAliases = decisions.legacyAliases ?? {};
+  const formerNames = decisions.formerNames ?? {};
+  for (const table of [legacyAliases, formerNames]) {
+    if (!table || typeof table !== 'object' || Array.isArray(table)) throw new TypeError('legacy concept decisions need identity mappings');
+  }
+  for (const [id, aliases] of Object.entries(legacyAliases)) {
+    if (!id || !Array.isArray(aliases) || !aliases.length || aliases.some((alias) => !alias
+      || typeof alias.source !== 'string' || !alias.source.startsWith('native:')
+      || typeof alias.name !== 'string' || !alias.name
+      || Object.keys(alias).length !== 2)) throw new TypeError('legacy native aliases need a concept identity and exact source names');
+  }
+  for (const [id, names] of Object.entries(formerNames)) {
+    if (!id || !Array.isArray(names) || !names.length || names.some((name) => typeof name !== 'string' || !name || name === id)
+      || new Set(names).size !== names.length) throw new TypeError('former concept decisions need distinct retired identities');
+  }
   const sources = new Set(imports.map(({ entry }) => nativeSource(entry)));
   // Keep existing identities and their stable order while rebuilding imported
   // aliases. A temporarily empty generated record may be used again below:
@@ -212,6 +227,12 @@ export function mergeConcepts(register, imports, decisions = {}) {
     .map((record) => ({ ...record, sourceAliases: record.sourceAliases.filter(({ source }) => !sources.has(source)) }));
   const byId = new Map(concepts.map((record) => [record.id, record]));
   const former = new Map(concepts.flatMap((record) => record.formerNames.map((name) => [name, record.id])));
+  for (const [id, names] of Object.entries(formerNames)) {
+    for (const name of names) {
+      if (former.has(name) && former.get(name) !== id) throw new TypeError('a retired concept identity cannot name different concepts');
+      former.set(name, id);
+    }
+  }
   for (const { entry, rules } of imports) {
     for (const rule of rules) {
       // A former name stays retired: a rule that would revive it needs a reviewed decision.
@@ -240,6 +261,14 @@ export function mergeConcepts(register, imports, decisions = {}) {
       if (Object.hasOwn(decisions.distinctFrom ?? {}, rule.concept)) record.distinctFrom = decisions.distinctFrom[rule.concept];
       record.sourceAliases = sortAliases([...record.sourceAliases, alias]);
     }
+  }
+  for (const id of new Set([...Object.keys(legacyAliases), ...Object.keys(formerNames)])) {
+    const record = byId.get(id);
+    if (!record) throw new TypeError(`legacy decisions name an unknown concept: ${id}`);
+    const aliases = new Map([...record.sourceAliases, ...(legacyAliases[id] ?? [])]
+      .map((alias) => [`${alias.source}\u0000${alias.name}`, alias]));
+    record.sourceAliases = sortAliases([...aliases.values()]);
+    record.formerNames = [...new Set([...record.formerNames, ...(formerNames[id] ?? [])])];
   }
   const names = new Map(imports.map(({ entry }) => [nativeSource(entry), entry.language.toLowerCase() === languageName(entry).toLowerCase() ? languageName(entry) : `${entry.language} (${languageName(entry)})`]));
   for (const record of concepts) {

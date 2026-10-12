@@ -658,6 +658,14 @@ export const NAME_INVENTORIES = Object.freeze([
       nativeRuleConcepts(text).map(({ rule, concept }) => ({ name: concept, sourceAliases: [{ source: nativeGrammarSource(file), name: rule }] })),
   },
   {
+    inventory: 'reviewed legacy native concept identities',
+    files: ['parity/naming/grammar-name-expansions.json'],
+    extract: (text) => [...new Set([...Object.keys(JSON.parse(text).concepts.legacyAliases ?? {}),
+      ...Object.keys(JSON.parse(text).concepts.formerNames ?? {})])],
+    describe: (text) => Object.entries(JSON.parse(text).concepts.legacyAliases ?? {})
+      .map(([name, sourceAliases]) => ({ name, sourceAliases })),
+  },
+  {
     inventory: 'translation stages',
     files: ['parity/fixtures/translation-stages.json'],
     extract: (text) => [
@@ -738,6 +746,13 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `translation.${name}`,
   },
   {
+    inventory: 'source constructor prototype definitions',
+    files: ['js/src/translation/javascript.js', 'rust/src/translation/surface.rs'],
+    extract: (text) => captures(text, /(?:let |^pub struct )(prototypeDefinition|ConstructorPrototypeDefinition)(?: = null;| \{)/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: () => 'translation.constructor-prototype-definition',
+  },
+  {
     inventory: 'structured type decisions',
     files: ['js/src/translation/structured-type-rules.js', 'rust/src/translation/structured_type_rules.rs'],
     extract: (text) => captures(text, /^(?:export function|pub fn) (mergeOptionalAbsence|acceptTypeIdentity|acceptOptionalAbsence|renderPortableTypeIdentity|renderRustCompoundType|readRustOptionalPrelude|wrapPortableReferenceIdentity|renderRustReferenceType|merge_optional_absence|accept_type_identity|accept_optional_absence|render_portable_type_identity|render_rust_compound_type|read_rust_optional_prelude|wrap_portable_reference_identity|render_rust_reference_type)\(/gmu)
@@ -760,8 +775,8 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'recorded source context boundaries',
-    files: ['js/scripts/native-source-contexts.mjs', 'js/scripts/native-source-boundaries.mjs', 'js/scripts/native-source-preferences.mjs', 'js/scripts/native-optional-call-context.mjs', 'js/scripts/native-argument-suffix-context.mjs', 'js/scripts/native-field-expression-context.mjs'],
-    extract: (text) => captures(text, /^export function (transformFieldFollowingContext|transformTriviaContinuationBoundary|applySourceContextPreference|transformOptionalCallContext|transformArgumentSuffixContext|transformFieldExpressionContext)\(/gmu)
+    files: ['js/scripts/native-source-contexts.mjs', 'js/scripts/native-source-boundaries.mjs', 'js/scripts/native-source-preferences.mjs', 'js/scripts/native-optional-call-context.mjs', 'js/scripts/native-argument-suffix-context.mjs', 'js/scripts/native-field-expression-context.mjs', 'js/scripts/native-syntactic-boundary-context.mjs', 'js/scripts/native-field-alternatives.mjs'],
+    extract: (text) => captures(text, /^export function (transformFieldFollowingContext|transformTriviaContinuationBoundary|applySourceContextPreference|transformOptionalCallContext|transformArgumentSuffixContext|transformFieldExpressionContext|transformSyntacticBoundaryContext|transformOrderedFieldAlternatives)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
     recordOf: (name) => `grammar.${name}`,
   },
@@ -814,6 +829,12 @@ export const NAME_INVENTORIES = Object.freeze([
  * former names.
  */
 export const FORMER_NAME_TABLES = Object.freeze([
+  {
+    table: 'reviewed legacy native concept identities',
+    file: 'parity/naming/grammar-name-expansions.json',
+    extract: (text) => Object.entries(JSON.parse(text).concepts.formerNames ?? {})
+      .flatMap(([current, formers]) => formers.map((former) => [former, current])),
+  },
   {
     table: 'FORMER_CONCEPT_IDS',
     file: 'rust/src/concept_ontology.rs',
