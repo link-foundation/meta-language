@@ -1186,6 +1186,10 @@
           "name": "expression"
         },
         {
+          "source": "native:csharp",
+          "name": "expression"
+        },
+        {
           "source": "native:dart",
           "name": "expression"
         },
@@ -1496,6 +1500,10 @@
           "name": "identifier"
         },
         {
+          "source": "native:csharp",
+          "name": "identifier"
+        },
+        {
           "source": "native:css",
           "name": "identifier"
         },
@@ -1619,6 +1627,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "statement"
+        },
+        {
+          "source": "native:csharp",
           "name": "statement"
         },
         {
@@ -1835,6 +1847,10 @@
         {
           "source": "Russian grammar surface",
           "name": "имя"
+        },
+        {
+          "source": "native:csharp",
+          "name": "name"
         },
         {
           "source": "native:dtd",
@@ -2273,6 +2289,10 @@
           "name": "character_literal"
         },
         {
+          "source": "native:csharp",
+          "name": "character_literal"
+        },
+        {
           "source": "native:erlang",
           "name": "character_literal"
         },
@@ -2338,6 +2358,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "comment"
+        },
+        {
+          "source": "native:csharp",
           "name": "comment"
         },
         {
@@ -2958,6 +2982,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "escape_sequence"
+        },
+        {
+          "source": "native:csharp",
           "name": "escape_sequence"
         },
         {
@@ -4283,6 +4311,10 @@
           "name": "parameter"
         },
         {
+          "source": "native:csharp",
+          "name": "parameter"
+        },
+        {
           "source": "native:r",
           "name": "parameter"
         },
@@ -4356,6 +4388,10 @@
         },
         {
           "source": "Delphi/Object Pascal",
+          "name": "argument"
+        },
+        {
+          "source": "native:csharp",
           "name": "argument"
         },
         {
@@ -5063,6 +5099,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "attribute"
+        },
+        {
+          "source": "native:csharp",
           "name": "attribute"
         },
         {
@@ -5980,6 +6020,10 @@
           "name": "top_level_item"
         },
         {
+          "source": "native:csharp",
+          "name": "top_level_item"
+        },
+        {
           "source": "native:css",
           "name": "top_level_item"
         }
@@ -6561,6 +6605,10 @@
         {
           "source": "native:cpp",
           "name": "preprocessor_argument"
+        },
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_argument"
         }
       ],
       "formerNames": [],
@@ -6587,6 +6635,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "preprocessor_directive"
+        },
+        {
+          "source": "native:csharp",
           "name": "preprocessor_directive"
         },
         {
@@ -6617,6 +6669,10 @@
         {
           "source": "native:cpp",
           "name": "preprocessor_expression"
+        },
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_expression"
         }
       ],
       "formerNames": []
@@ -6637,6 +6693,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "preprocessor_parenthesized_expression"
+        },
+        {
+          "source": "native:csharp",
           "name": "preprocessor_parenthesized_expression"
         }
       ],
@@ -6679,6 +6739,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "preprocessor_unary_expression"
+        },
+        {
+          "source": "native:csharp",
           "name": "preprocessor_unary_expression"
         }
       ],
@@ -6742,6 +6806,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "preprocessor_binary_expression"
+        },
+        {
+          "source": "native:csharp",
           "name": "preprocessor_binary_expression"
         }
       ],
@@ -6837,6 +6905,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "declaration"
+        },
+        {
+          "source": "native:csharp",
           "name": "declaration"
         },
         {
@@ -7250,6 +7322,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "declaration_list"
+        },
+        {
+          "source": "native:csharp",
           "name": "declaration_list"
         },
         {
@@ -8146,6 +8222,10 @@
           "name": "field_declaration"
         },
         {
+          "source": "native:csharp",
+          "name": "field_declaration"
+        },
+        {
           "source": "native:go",
           "name": "field_declaration"
         },
@@ -8280,6 +8360,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "parameter_list"
+        },
+        {
+          "source": "native:csharp",
           "name": "parameter_list"
         },
         {
@@ -8473,6 +8557,10 @@
           "name": "labeled_statement"
         },
         {
+          "source": "native:csharp",
+          "name": "labeled_statement"
+        },
+        {
           "source": "native:dart",
           "name": "labeled_statement"
         },
@@ -8551,6 +8639,10 @@
           "name": "expression_statement"
         },
         {
+          "source": "native:csharp",
+          "name": "expression_statement"
+        },
+        {
           "source": "native:dart",
           "name": "expression_statement"
         },
@@ -8613,6 +8705,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "if_statement"
+        },
+        {
+          "source": "native:csharp",
           "name": "if_statement"
         },
         {
@@ -8766,6 +8862,10 @@
           "name": "switch_statement"
         },
         {
+          "source": "native:csharp",
+          "name": "switch_statement"
+        },
+        {
           "source": "native:dart",
           "name": "switch_statement"
         },
@@ -8833,6 +8933,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "while_statement"
+        },
+        {
+          "source": "native:csharp",
           "name": "while_statement"
         },
         {
@@ -8913,6 +9017,10 @@
           "name": "do_statement"
         },
         {
+          "source": "native:csharp",
+          "name": "do_statement"
+        },
+        {
           "source": "native:dart",
           "name": "do_statement"
         },
@@ -8967,6 +9075,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "for_statement"
+        },
+        {
+          "source": "native:csharp",
           "name": "for_statement"
         },
         {
@@ -9076,6 +9188,10 @@
           "name": "return_statement"
         },
         {
+          "source": "native:csharp",
+          "name": "return_statement"
+        },
+        {
           "source": "native:dart",
           "name": "return_statement"
         },
@@ -9145,6 +9261,10 @@
           "name": "break_statement"
         },
         {
+          "source": "native:csharp",
+          "name": "break_statement"
+        },
+        {
           "source": "native:dart",
           "name": "break_statement"
         },
@@ -9207,6 +9327,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "continue_statement"
+        },
+        {
+          "source": "native:csharp",
           "name": "continue_statement"
         },
         {
@@ -9276,6 +9400,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "go_to_statement"
+        },
+        {
+          "source": "native:csharp",
           "name": "go_to_statement"
         },
         {
@@ -9442,6 +9570,10 @@
           "name": "conditional_expression"
         },
         {
+          "source": "native:csharp",
+          "name": "conditional_expression"
+        },
+        {
           "source": "native:dart",
           "name": "conditional_expression"
         },
@@ -9493,6 +9625,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "assignment_expression"
+        },
+        {
+          "source": "native:csharp",
           "name": "assignment_expression"
         },
         {
@@ -9679,6 +9815,10 @@
           "name": "binary_expression"
         },
         {
+          "source": "native:csharp",
+          "name": "binary_expression"
+        },
+        {
           "source": "native:css",
           "name": "binary_expression"
         },
@@ -9821,6 +9961,10 @@
           "name": "cast_expression"
         },
         {
+          "source": "native:csharp",
+          "name": "cast_expression"
+        },
+        {
           "source": "native:groovy",
           "name": "cast_expression"
         },
@@ -9876,6 +10020,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "size_of_expression"
+        },
+        {
+          "source": "native:csharp",
           "name": "size_of_expression"
         }
       ],
@@ -10254,6 +10402,10 @@
           "name": "argument_list"
         },
         {
+          "source": "native:csharp",
+          "name": "argument_list"
+        },
+        {
           "source": "native:css",
           "name": "argument_list"
         },
@@ -10396,6 +10548,10 @@
         },
         {
           "source": "native:cpp",
+          "name": "parenthesized_expression"
+        },
+        {
+          "source": "native:csharp",
           "name": "parenthesized_expression"
         },
         {
@@ -10671,6 +10827,10 @@
           "name": "string_literal"
         },
         {
+          "source": "native:csharp",
+          "name": "string_literal"
+        },
+        {
           "source": "native:dart",
           "name": "string_literal"
         },
@@ -10886,6 +11046,10 @@
           "name": "word_characters"
         },
         {
+          "source": "native:csharp",
+          "name": "word_characters"
+        },
+        {
           "source": "native:dart",
           "name": "word_characters"
         },
@@ -11047,6 +11211,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "empty_statement"
+        },
         {
           "source": "native:dart",
           "name": "empty_statement"
@@ -11614,6 +11782,10 @@
           "name": "where_clause"
         },
         {
+          "source": "native:csharp",
+          "name": "where_clause"
+        },
+        {
           "source": "native:odin",
           "name": "where_clause"
         },
@@ -11754,6 +11926,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "type_parameter_list"
+        },
+        {
           "source": "native:dart",
           "name": "type_parameter_list"
         },
@@ -11815,6 +11991,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "type_parameter"
+        },
         {
           "source": "native:dart",
           "name": "type_parameter"
@@ -12044,6 +12224,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "type"
+        },
+        {
           "source": "native:dart",
           "name": "type"
         },
@@ -12178,6 +12362,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "array_type"
+        },
+        {
           "source": "native:go",
           "name": "array_type"
         },
@@ -12284,6 +12472,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "tuple_type"
+        },
         {
           "source": "native:odin",
           "name": "tuple_type"
@@ -12444,6 +12636,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "type_argument_list"
+        },
+        {
           "source": "native:dart",
           "name": "type_argument_list"
         },
@@ -12507,10 +12703,14 @@
       "role": "concept",
       "definition": "A rule for a reference type, the construct the upstream grammar names reference_type.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "reference_type"
+        },
         {
           "source": "native:rust",
           "name": "reference_type"
@@ -12528,6 +12728,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "pointer_type"
+        },
         {
           "source": "native:go",
           "name": "pointer_type"
@@ -12795,6 +12999,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "range_expression"
+        },
+        {
           "source": "native:groovy",
           "name": "range_expression"
         },
@@ -12852,10 +13060,14 @@
       "role": "concept",
       "definition": "A rule for a reference expression, the construct the upstream grammar names reference_expression.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "reference_expression"
+        },
         {
           "source": "native:rust",
           "name": "reference_expression"
@@ -13006,6 +13218,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "tuple_expression"
+        },
         {
           "source": "native:lean",
           "name": "tuple"
@@ -13575,6 +13791,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "await_expression"
+        },
+        {
           "source": "native:dart",
           "name": "await_expression"
         },
@@ -13684,6 +13904,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "block"
+        },
+        {
           "source": "native:css",
           "name": "block"
         },
@@ -13742,6 +13966,10 @@
       "sourceAliases": [
         {
           "source": "native:agda",
+          "name": "pattern"
+        },
+        {
+          "source": "native:csharp",
           "name": "pattern"
         },
         {
@@ -13824,6 +14052,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "tuple_pattern"
+        },
         {
           "source": "native:lean",
           "name": "tuple_pattern"
@@ -14015,10 +14247,14 @@
       "role": "concept",
       "definition": "A rule for an or pattern, the construct the upstream grammar names or_pattern.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "or_pattern"
+        },
         {
           "source": "native:rust",
           "name": "or_pattern"
@@ -14038,6 +14274,10 @@
       "sourceAliases": [
         {
           "source": "native:agda",
+          "name": "literal"
+        },
+        {
+          "source": "native:csharp",
           "name": "literal"
         },
         {
@@ -14136,6 +14376,10 @@
           "name": "integer_literal"
         },
         {
+          "source": "native:csharp",
+          "name": "integer_literal"
+        },
+        {
           "source": "native:erlang",
           "name": "integer_literal"
         },
@@ -14205,6 +14449,10 @@
           "name": "raw_string_literal"
         },
         {
+          "source": "native:csharp",
+          "name": "raw_string_literal"
+        },
+        {
           "source": "native:go",
           "name": "raw_string_literal"
         },
@@ -14229,6 +14477,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "boolean_literal"
+        },
         {
           "source": "native:hcl",
           "name": "boolean_literal"
@@ -14414,6 +14666,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "reserved_identifier"
+        },
         {
           "source": "native:groovy",
           "name": "reserved_identifier"
@@ -14809,6 +15065,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "from_clause"
+        },
+        {
           "source": "native:javascript",
           "name": "from_clause"
         },
@@ -14942,6 +15202,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "variable_declaration"
+        },
+        {
           "source": "native:go",
           "name": "variable_declaration"
         },
@@ -15032,6 +15296,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "variable_declarator"
+        },
         {
           "source": "native:groovy",
           "name": "variable_declarator"
@@ -15150,6 +15418,10 @@
       "sourceAliases": [
         {
           "source": "native:cpp",
+          "name": "try_statement"
+        },
+        {
+          "source": "native:csharp",
           "name": "try_statement"
         },
         {
@@ -15272,6 +15544,10 @@
           "name": "throw_statement"
         },
         {
+          "source": "native:csharp",
+          "name": "throw_statement"
+        },
+        {
           "source": "native:groovy",
           "name": "throw_statement"
         },
@@ -15308,6 +15584,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "switch_body"
+        },
         {
           "source": "native:javascript",
           "name": "switch_body"
@@ -15400,6 +15680,10 @@
           "name": "catch_clause"
         },
         {
+          "source": "native:csharp",
+          "name": "catch_clause"
+        },
+        {
           "source": "native:dart",
           "name": "catch_clause"
         },
@@ -15448,6 +15732,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "finally_clause"
+        },
         {
           "source": "native:dart",
           "name": "finally_clause"
@@ -16238,6 +16526,10 @@
           "name": "class_declaration"
         },
         {
+          "source": "native:csharp",
+          "name": "class_declaration"
+        },
+        {
           "source": "native:dart",
           "name": "class_declaration"
         },
@@ -16776,6 +17068,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "spread_element"
+        },
         {
           "source": "native:dart",
           "name": "spread_element"
@@ -17838,6 +18134,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "as_expression"
+        },
+        {
           "source": "native:tsx",
           "name": "as_expression"
         },
@@ -18156,6 +18456,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "interface_declaration"
+        },
+        {
           "source": "native:groovy",
           "name": "interface_declaration"
         },
@@ -18209,6 +18513,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "enumeration_declaration"
+        },
         {
           "source": "native:dart",
           "name": "enumeration_declaration"
@@ -19181,6 +19489,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "predefined_type"
+        },
+        {
           "source": "native:tsx",
           "name": "predefined_type"
         },
@@ -19501,6 +19813,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "modifier"
+        },
         {
           "source": "native:lean",
           "name": "modifier"
@@ -19850,6 +20166,10 @@
       "sourceAliases": [
         {
           "source": "native:agda",
+          "name": "attribute_list"
+        },
+        {
+          "source": "native:csharp",
           "name": "attribute_list"
         },
         {
@@ -20827,6 +21147,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "list_pattern"
+        },
         {
           "source": "native:dart",
           "name": "list_pattern"
@@ -24498,6 +24822,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "parenthesized_pattern"
+        },
+        {
           "source": "native:dart",
           "name": "parenthesized_pattern"
         },
@@ -25415,6 +25743,10 @@
           "name": "qualified_identifier"
         },
         {
+          "source": "native:csharp",
+          "name": "qualified_identifier"
+        },
+        {
           "source": "native:proto",
           "name": "full_identifier"
         },
@@ -25984,6 +26316,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "null_literal"
+        },
+        {
           "source": "native:dart",
           "name": "null_literal"
         },
@@ -26038,6 +26374,10 @@
           "name": "lambda_expression"
         },
         {
+          "source": "native:csharp",
+          "name": "lambda_expression"
+        },
+        {
           "source": "native:groovy",
           "name": "lambda_expression"
         },
@@ -26083,6 +26423,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "array_creation_expression"
+        },
         {
           "source": "native:groovy",
           "name": "array_creation_expression"
@@ -26146,6 +26490,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "object_creation_expression"
+        },
         {
           "source": "native:groovy",
           "name": "object_creation_expression"
@@ -26369,6 +26717,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "switch_expression"
+        },
+        {
           "source": "native:dart",
           "name": "switch_expression"
         },
@@ -26485,6 +26837,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "type_pattern"
+        },
         {
           "source": "native:groovy",
           "name": "type_pattern"
@@ -26648,6 +27004,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "yield_statement"
+        },
         {
           "source": "native:dart",
           "name": "yield_statement"
@@ -27476,6 +27836,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "constructor_declaration"
+        },
+        {
           "source": "native:groovy",
           "name": "constructor_declaration"
         },
@@ -27563,6 +27927,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "record_declaration"
+        },
         {
           "source": "native:erlang",
           "name": "record_declaration"
@@ -28133,6 +28501,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "method_declaration"
+        },
+        {
           "source": "native:dart",
           "name": "method_declaration"
         },
@@ -28422,6 +28794,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "type_declaration"
+        },
         {
           "source": "native:go",
           "name": "type_declaration"
@@ -32860,6 +33236,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "structure_declaration"
+        },
+        {
           "source": "native:odin",
           "name": "structure_declaration"
         },
@@ -32969,10 +33349,14 @@
       "role": "concept",
       "definition": "A rule for an using directive, the construct the upstream grammar names using_directive.",
       "constraints": [
-        "Only the native Solidity grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "using_directive"
+        },
         {
           "source": "native:solidity",
           "name": "using_directive"
@@ -33861,6 +34245,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "function_body"
+        },
+        {
           "source": "native:dart",
           "name": "function_body"
         },
@@ -34550,6 +34938,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "local_function_declaration"
+        },
         {
           "source": "native:dart",
           "name": "local_function_declaration"
@@ -35781,6 +36173,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "calling_convention"
+        },
+        {
           "source": "native:odin",
           "name": "calling_convention"
         },
@@ -36568,6 +36964,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "for_each_statement"
+        },
         {
           "source": "native:pascal",
           "name": "for_each_statement"
@@ -37481,10 +37881,14 @@
       "role": "concept",
       "definition": "A rule for a generic name, the construct the upstream grammar names _genericName.",
       "constraints": [
-        "Only the native pascal (Delphi/Object Pascal) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "generic_name"
+        },
         {
           "source": "native:pascal",
           "name": "generic_name"
@@ -41496,10 +41900,14 @@
       "role": "concept",
       "definition": "A rule for a delegate declaration, the construct the upstream grammar names delegate_declaration.",
       "constraints": [
-        "Only the native vb (Visual Basic) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "delegate_declaration"
+        },
         {
           "source": "native:vb",
           "name": "delegate_declaration"
@@ -41598,10 +42006,14 @@
       "role": "concept",
       "definition": "A rule for an array rank specifier, the construct the upstream grammar names array_rank_specifier.",
       "constraints": [
-        "Only the native vb (Visual Basic) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "array_rank_specifier"
+        },
         {
           "source": "native:vb",
           "name": "array_rank_specifier"
@@ -41666,10 +42078,14 @@
       "role": "concept",
       "definition": "A rule for an event declaration, the construct the upstream grammar names event_declaration.",
       "constraints": [
-        "Only the native vb (Visual Basic) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "event_declaration"
+        },
         {
           "source": "native:vb",
           "name": "event_declaration"
@@ -41967,6 +42383,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:csharp",
+          "name": "using_statement"
+        },
+        {
           "source": "native:odin",
           "name": "using_statement"
         },
@@ -42173,10 +42593,14 @@
       "role": "concept",
       "definition": "A rule for a with initializer, the construct the upstream grammar names with_initializer.",
       "constraints": [
-        "Only the native vb (Visual Basic) grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "with_initializer"
+        },
         {
           "source": "native:vb",
           "name": "with_initializer"
@@ -42279,6 +42703,10 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "interpolation"
+        },
         {
           "source": "native:nix",
           "name": "interpolation"
@@ -43260,10 +43688,14 @@
       "role": "concept",
       "definition": "A rule for a real literal, the construct the upstream grammar names real_literal.",
       "constraints": [
-        "Only the native PowerShell grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "real_literal"
+        },
         {
           "source": "native:powershell",
           "name": "real_literal"
@@ -43345,10 +43777,14 @@
       "role": "concept",
       "definition": "A rule for a simple name, the construct the upstream grammar names simple_name.",
       "constraints": [
-        "Only the native PowerShell grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "simple_name"
+        },
         {
           "source": "native:powershell",
           "name": "simple_name"
@@ -45043,10 +45479,14 @@
       "role": "concept",
       "definition": "A rule for an invocation expression, the construct the upstream grammar names invokation_expression.",
       "constraints": [
-        "Only the native PowerShell grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "invocation_expression"
+        },
         {
           "source": "native:powershell",
           "name": "invocation_expression"
@@ -45434,10 +45874,14 @@
       "role": "concept",
       "definition": "A rule for a preprocessor removal directive, the construct the upstream grammar names pp_undef.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_removal_directive"
+        },
         {
           "source": "native:erlang",
           "name": "preprocessor_removal_directive"
@@ -45536,10 +45980,14 @@
       "role": "concept",
       "definition": "A rule for a preprocessor definition directive, the construct the upstream grammar names pp_define.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_definition_directive"
+        },
         {
           "source": "native:erlang",
           "name": "preprocessor_definition_directive"
@@ -47896,10 +48344,14 @@
       "role": "concept",
       "definition": "A rule for a guard clause, the construct the upstream grammar names guard_clause.",
       "constraints": [
-        "Only the native Erlang grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "guard_clause"
+        },
         {
           "source": "native:erlang",
           "name": "guard_clause"
@@ -48070,10 +48522,14 @@
       "role": "concept",
       "definition": "A rule for a string literal content, the construct the upstream grammar names _string_literal.",
       "constraints": [
-        "Only the native Groovy grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "string_literal_content"
+        },
         {
           "source": "native:groovy",
           "name": "string_literal_content"
@@ -58656,10 +59112,14 @@
       "role": "concept",
       "definition": "A rule for a default expression, the construct the upstream grammar names _default_expression.",
       "constraints": [
-        "Only the native sql grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "default_expression"
+        },
         {
           "source": "native:sql",
           "name": "default_expression"
@@ -59971,10 +60431,14 @@
       "role": "concept",
       "definition": "A rule for a qualified name, the construct the upstream grammar names qualified.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "qualified_name"
+        },
         {
           "source": "native:dart",
           "name": "qualified_name"
@@ -60527,10 +60991,14 @@
       "role": "concept",
       "definition": "A rule for a collection element, the construct the upstream grammar names _element.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "collection_element"
+        },
         {
           "source": "native:dart",
           "name": "collection_element"
@@ -60680,10 +61148,14 @@
       "role": "concept",
       "definition": "A rule for a throw expression, the construct the upstream grammar names throw_expression.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "throw_expression"
+        },
         {
           "source": "native:dart",
           "name": "throw_expression"
@@ -60697,10 +61169,14 @@
       "role": "concept",
       "definition": "A rule for an assignable expression, the construct the upstream grammar names assignable_expression.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "assignable_expression"
+        },
         {
           "source": "native:dart",
           "name": "assignable_expression"
@@ -62452,10 +62928,14 @@
       "role": "concept",
       "definition": "A rule for a relational pattern, the construct the upstream grammar names _relational_pattern.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "relational_pattern"
+        },
         {
           "source": "native:dart",
           "name": "relational_pattern"
@@ -62554,10 +63034,14 @@
       "role": "concept",
       "definition": "A rule for a constant pattern, the construct the upstream grammar names constant_pattern.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "constant_pattern"
+        },
         {
           "source": "native:dart",
           "name": "constant_pattern"
@@ -62571,10 +63055,14 @@
       "role": "concept",
       "definition": "A rule for a variable pattern, the construct the upstream grammar names variable_pattern.",
       "constraints": [
-        "Only the native Dart grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "variable_pattern"
+        },
         {
           "source": "native:dart",
           "name": "variable_pattern"
@@ -63119,10 +63607,14 @@
       "role": "concept",
       "definition": "A rule for a with expression, the construct the upstream grammar names with_expression.",
       "constraints": [
-        "Only the native Nix grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "with_expression"
+        },
         {
           "source": "native:nix",
           "name": "with_expression"
@@ -64789,10 +65281,14 @@
       "role": "concept",
       "definition": "A rule for a global statement, the construct the upstream grammar names global_statement.",
       "constraints": [
-        "Only the native Python grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "global_statement"
+        },
         {
           "source": "native:python",
           "name": "global_statement"
@@ -71213,6 +71709,3196 @@
         {
           "source": "Rust frontend decisions",
           "name": "accept_statement_brace"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-concept-space",
+      "phrase": "global concept space",
+      "role": "concept",
+      "definition": "The complete shared Links representation of copied grammar concepts, verified correspondences and qualified source provenance.",
+      "constraints": [
+        "Every copied source rule belongs to this space even when no correspondence is proved.",
+        "Sharing preserves the checked recursive definition and its established meaning."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "global-concept-space"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-concept",
+      "phrase": "global concept",
+      "role": "concept",
+      "definition": "One stable identity for a concept and every occurrence proved equivalent to it in the shared space.",
+      "constraints": [
+        "Unproved meanings retain separate identities.",
+        "An identity can retain several language-qualified source origins."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "global-concept"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-concept-origin",
+      "phrase": "global concept origin",
+      "role": "concept",
+      "definition": "The qualified source, language, edition, rule and known meaning of one copied global concept occurrence.",
+      "constraints": [
+        "Source identity and rule name jointly identify the origin.",
+        "Meaning uncertainty and original aliases are preserved."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "concept-origin"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-grammar-origin",
+      "phrase": "global grammar origin",
+      "role": "concept",
+      "definition": "The original identity, language, edition, explicit start and rule order of a grammar copied into the global concept space.",
+      "constraints": [
+        "An absent explicit start retains the original first rule as its implicit start.",
+        "Empty grammars and source rule declaration order remain representable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "grammar-origin"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-grammar-context",
+      "phrase": "global grammar context",
+      "role": "concept",
+      "definition": "The operational grammar declarations that constrain concept correspondence in the global space.",
+      "constraints": [
+        "Matching, settling, scanners, actions, predicates, imports and binding context remain inspectable Links data.",
+        "A context difference can invalidate correspondence even when productions have the same shape."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "grammar-context"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-concept-definition",
+      "phrase": "global concept definition",
+      "role": "concept",
+      "definition": "The copied executable grammar production associated with one qualified global concept origin.",
+      "constraints": [
+        "Recursive references retain their original qualified bindings.",
+        "This network definition is distinct from a language construct that declares a concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "concept-definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-concept-proof",
+      "phrase": "global concept proof",
+      "role": "concept",
+      "definition": "A checked certificate of a closed recursive one-to-one correspondence between qualified concept definitions under their established meaning records.",
+      "constraints": [
+        "Every reachable reference must have a paired definition.",
+        "The certificate does not independently establish the semantic premises supplied by reviewed meaning records."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "concept-proof"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unproved-concept-equivalence",
+      "phrase": "unproved concept equivalence",
+      "role": "concept",
+      "definition": "A rejected or unproved correspondence whose candidate concept identities remain separate.",
+      "constraints": [
+        "The record preserves its members and rejection reason.",
+        "An unproved claim never contributes a shared identity."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "unproved-equivalence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.ambiguous-concept-origin",
+      "phrase": "ambiguous concept origin",
+      "role": "concept",
+      "definition": "A copied concept origin with several possible meaning records and no uniquely established meaning.",
+      "constraints": [
+        "Every possible meaning remains recorded.",
+        "Ambiguity prevents automatic semantic sharing."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "ambiguous-origin"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-concept-identity-mapping",
+      "phrase": "global concept identity mapping",
+      "role": "concept",
+      "definition": "A mapping from a prior global concept identity to the stable identity that survives extending the shared space.",
+      "constraints": [
+        "Previous references remain resolvable after verified reuse.",
+        "The mapping cannot establish a new semantic equivalence by itself."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "concept-redirect"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.qualified-source-alias",
+      "phrase": "qualified source alias",
+      "role": "concept",
+      "definition": "An original grammar spelling qualified by its source identity and retained on a copied concept origin.",
+      "constraints": [
+        "Aliases preserve source identity as well as spelling.",
+        "A spelling alone is insufficient to identify a shared concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "source-alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.concept-correspondence",
+      "phrase": "concept correspondence",
+      "role": "concept",
+      "definition": "An ordered list of paired qualified concept origins that witnesses a recursive one-to-one certificate.",
+      "constraints": [
+        "No origin maps to two different origins.",
+        "Every referenced definition must occur in the closed correspondence."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "correspondence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.recursive-structural-bijection",
+      "phrase": "recursive structural bijection",
+      "role": "concept",
+      "definition": "A one-to-one and onto correspondence of reachable grammar definitions that preserves recursive edges, operational context and grounded meaning signatures.",
+      "constraints": [
+        "The correspondence is conditional on the supplied reviewed semantic premises.",
+        "Equal syntax alone cannot establish an unknown meaning."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Global concept Links representation",
+          "name": "recursive-structural-bijection"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "operation.create-global-concept-space",
+      "phrase": "create global concept space",
+      "role": "operation",
+      "definition": "Copy every imported grammar concept into one shared space and deduplicate only verified one-to-one correspondences.",
+      "constraints": [
+        "The original grammar start and rule order are preserved.",
+        "Unknown or ambiguous meanings remain separate."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript global concept operations",
+          "name": "createGlobalConceptSpace"
+        },
+        {
+          "source": "Rust global concept operations",
+          "name": "create_global_concept_space"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "operation.serialize-global-concept-space",
+      "phrase": "serialize global concept space",
+      "role": "operation",
+      "definition": "Serialize copied grammar definitions, qualified origins and checked concept certificates as Links Notation.",
+      "constraints": [
+        "The serialized space contains enough data for source-free reconstruction.",
+        "Serialization preserves original aliases and recursive definition order."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript global concept operations",
+          "name": "globalConceptSpaceToLinks"
+        },
+        {
+          "source": "Rust global concept operations",
+          "name": "global_concept_space_to_links"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "operation.read-global-concept-space-links",
+      "phrase": "read global concept space links",
+      "role": "operation",
+      "definition": "Read a global concept Links representation and validate its definitions, origins and correspondence certificates before reconstructing it.",
+      "constraints": [
+        "Invalid, omitted or mutated witnesses are rejected.",
+        "Reload does not require the original grammar source buffers."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript global concept operations",
+          "name": "readGlobalConceptSpaceLinks"
+        },
+        {
+          "source": "Rust global concept operations",
+          "name": "read_global_concept_space_links"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "operation.verify-global-concept-correspondence",
+      "phrase": "verify global concept correspondence",
+      "role": "operation",
+      "definition": "Verify the complete paired recursive graph under its supplied structural and grounded meaning signatures.",
+      "constraints": [
+        "The mapping must be one-to-one and cover every reachable edge.",
+        "Invalid offsets, omitted pairs and different signatures are rejected.",
+        "This decision does not independently prove the semantic premises."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript global concept operations",
+          "name": "verifyGlobalConceptCorrespondence"
+        },
+        {
+          "source": "Rust global concept operations",
+          "name": "verify_global_concept_correspondence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "operation.translate-global-construct",
+      "phrase": "translate global construct",
+      "role": "operation",
+      "definition": "Resolve a source construct through its verified global concept identity to an applicable target grammar origin.",
+      "constraints": [
+        "Only a previously verified shared identity permits translation.",
+        "Unavailable targets are untranslatable and several distinct target origins remain explicitly ambiguous.",
+        "The result retains qualified target origin and edition provenance."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript global concept operations",
+          "name": "translateGlobalConstruct"
+        },
+        {
+          "source": "Rust global concept operations",
+          "name": "translate_global_construct"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.compilation-unit",
+      "phrase": "compilation unit",
+      "role": "concept",
+      "definition": "A rule for a compilation unit, the construct the upstream grammar names compilation_unit.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "compilation_unit"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.top-level-item-no-statement",
+      "phrase": "top level item no statement",
+      "role": "concept",
+      "definition": "A rule for a top level item no statement, the construct the upstream grammar names _top_level_item_no_statement.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "top_level_item_no_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.extern-alias-directive",
+      "phrase": "extern alias directive",
+      "role": "concept",
+      "definition": "A rule for an extern alias directive, the construct the upstream grammar names extern_alias_directive.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "extern_alias_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.global-attribute",
+      "phrase": "global attribute",
+      "role": "concept",
+      "definition": "A rule for a global attribute, the construct the upstream grammar names global_attribute.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "global_attribute"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-argument-list",
+      "phrase": "attribute argument list",
+      "role": "concept",
+      "definition": "A rule for an attribute argument list, the construct the upstream grammar names attribute_argument_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "attribute_argument_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-argument",
+      "phrase": "attribute argument",
+      "role": "concept",
+      "definition": "A rule for an attribute argument, the construct the upstream grammar names attribute_argument.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "attribute_argument"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-list-body",
+      "phrase": "attribute list body",
+      "role": "concept",
+      "definition": "A rule for an attribute list body, the construct the upstream grammar names _attribute_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "attribute_list_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-target-specifier",
+      "phrase": "attribute target specifier",
+      "role": "concept",
+      "definition": "A rule for an attribute target specifier, the construct the upstream grammar names attribute_target_specifier.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "attribute_target_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.namespace-member-declaration",
+      "phrase": "namespace member declaration",
+      "role": "concept",
+      "definition": "A rule for a namespace member declaration, the construct the upstream grammar names _namespace_member_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "namespace_member_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.namespace-declaration",
+      "phrase": "namespace declaration",
+      "role": "concept",
+      "definition": "A rule for a namespace declaration, the construct the upstream grammar names namespace_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "namespace_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.file-scoped-namespace-declaration",
+      "phrase": "file scoped namespace declaration",
+      "role": "concept",
+      "definition": "A rule for a file scoped namespace declaration, the construct the upstream grammar names file_scoped_namespace_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "file_scoped_namespace_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.class-declaration-initializer",
+      "phrase": "class declaration initializer",
+      "role": "concept",
+      "definition": "A rule for a class declaration initializer, the construct the upstream grammar names _class_declaration_initializer.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "class_declaration_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structure-declaration-initializer",
+      "phrase": "structure declaration initializer",
+      "role": "concept",
+      "definition": "A rule for a structure declaration initializer, the construct the upstream grammar names _struct_declaration_initializer.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "structure_declaration_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-declaration-initializer",
+      "phrase": "enumeration declaration initializer",
+      "role": "concept",
+      "definition": "A rule for an enumeration declaration initializer, the construct the upstream grammar names _enum_declaration_initializer.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "enumeration_declaration_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-member-declaration-list",
+      "phrase": "enumeration member declaration list",
+      "role": "concept",
+      "definition": "A rule for an enumeration member declaration list, the construct the upstream grammar names enum_member_declaration_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "enumeration_member_declaration_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-member-declaration",
+      "phrase": "enumeration member declaration",
+      "role": "concept",
+      "definition": "A rule for an enumeration member declaration, the construct the upstream grammar names enum_member_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "enumeration_member_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interface-declaration-initializer",
+      "phrase": "interface declaration initializer",
+      "role": "concept",
+      "definition": "A rule for an interface declaration initializer, the construct the upstream grammar names _interface_declaration_initializer.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "interface_declaration_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.delegate-declaration-initializer",
+      "phrase": "delegate declaration initializer",
+      "role": "concept",
+      "definition": "A rule for a delegate declaration initializer, the construct the upstream grammar names _delegate_declaration_initializer.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "delegate_declaration_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-declaration-initializer",
+      "phrase": "record declaration initializer",
+      "role": "concept",
+      "definition": "A rule for a record declaration initializer, the construct the upstream grammar names _record_declaration_initializer.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "record_declaration_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.record-base",
+      "phrase": "record base",
+      "role": "concept",
+      "definition": "A rule for a record base, the construct the upstream grammar names record_base.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "record_base"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-list-body",
+      "phrase": "declaration list body",
+      "role": "concept",
+      "definition": "A rule for a declaration list body, the construct the upstream grammar names _declaration_list_body.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "declaration_list_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.primary-constructor-base-type",
+      "phrase": "primary constructor base type",
+      "role": "concept",
+      "definition": "A rule for a primary constructor base type, the construct the upstream grammar names primary_constructor_base_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "primary_constructor_base_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.base-list",
+      "phrase": "base list",
+      "role": "concept",
+      "definition": "A rule for a base list, the construct the upstream grammar names base_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "base_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-parameter-constraints-clause",
+      "phrase": "type parameter constraints clause",
+      "role": "concept",
+      "definition": "A rule for a type parameter constraints clause, the construct the upstream grammar names type_parameter_constraints_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "type_parameter_constraints_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-parameter-constraint",
+      "phrase": "type parameter constraint",
+      "role": "concept",
+      "definition": "A rule for a type parameter constraint, the construct the upstream grammar names type_parameter_constraint.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "type_parameter_constraint"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constructor-constraint",
+      "phrase": "constructor constraint",
+      "role": "concept",
+      "definition": "A rule for a constructor constraint, the construct the upstream grammar names constructor_constraint.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "constructor_constraint"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.operator-declaration",
+      "phrase": "operator declaration",
+      "role": "concept",
+      "definition": "A rule for an operator declaration, the construct the upstream grammar names operator_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "operator_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.conversion-operator-declaration",
+      "phrase": "conversion operator declaration",
+      "role": "concept",
+      "definition": "A rule for a conversion operator declaration, the construct the upstream grammar names conversion_operator_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "conversion_operator_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constructor-declaration-initializer",
+      "phrase": "constructor declaration initializer",
+      "role": "concept",
+      "definition": "A rule for a constructor declaration initializer, the construct the upstream grammar names _constructor_declaration_initializer.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "constructor_declaration_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.destruction-method-declaration",
+      "phrase": "destruction method declaration",
+      "role": "concept",
+      "definition": "A rule for a destruction method declaration, the construct the upstream grammar names destructor_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "destruction_method_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.event-field-declaration",
+      "phrase": "event field declaration",
+      "role": "concept",
+      "definition": "A rule for an event field declaration, the construct the upstream grammar names event_field_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "event_field_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.access-method-list",
+      "phrase": "access method list",
+      "role": "concept",
+      "definition": "A rule for an access method list, the construct the upstream grammar names accessor_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "access_method_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.access-method-declaration",
+      "phrase": "access method declaration",
+      "role": "concept",
+      "definition": "A rule for an access method declaration, the construct the upstream grammar names accessor_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "access_method_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.indexer-declaration",
+      "phrase": "indexer declaration",
+      "role": "concept",
+      "definition": "A rule for an indexer declaration, the construct the upstream grammar names indexer_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "indexer_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bracketed-parameter-list",
+      "phrase": "bracketed parameter list",
+      "role": "concept",
+      "definition": "A rule for a bracketed parameter list, the construct the upstream grammar names bracketed_parameter_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "bracketed_parameter_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.property-declaration",
+      "phrase": "property declaration",
+      "role": "concept",
+      "definition": "A rule for a property declaration, the construct the upstream grammar names property_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "property_declaration"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.attribute-declaration",
+          "reason": "A C# property declares a named member with accessors, while a C or C++ attribute declaration applies annotations rather than declaring an accessor member."
+        }
+      ]
+    },
+    {
+      "id": "grammar.explicit-interface-specifier",
+      "phrase": "explicit interface specifier",
+      "role": "concept",
+      "definition": "A rule for an explicit interface specifier, the construct the upstream grammar names explicit_interface_specifier.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "explicit_interface_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-type-with-modifiers",
+      "phrase": "parameter type with modifiers",
+      "role": "concept",
+      "definition": "A rule for a parameter type with modifiers, the construct the upstream grammar names _parameter_type_with_modifiers.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "parameter_type_with_modifiers"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-array",
+      "phrase": "parameter array",
+      "role": "concept",
+      "definition": "A rule for a parameter array, the construct the upstream grammar names _parameter_array.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "parameter_array"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constructor-initializer",
+      "phrase": "constructor initializer",
+      "role": "concept",
+      "definition": "A rule for a constructor initializer, the construct the upstream grammar names constructor_initializer.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "constructor_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.arrow-expression-clause",
+      "phrase": "arrow expression clause",
+      "role": "concept",
+      "definition": "A rule for an arrow expression clause, the construct the upstream grammar names arrow_expression_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "arrow_expression_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.using-variable-declaration",
+      "phrase": "using variable declaration",
+      "role": "concept",
+      "definition": "A rule for an using variable declaration, the construct the upstream grammar names using_variable_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "using_variable_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.using-variable-declarator",
+      "phrase": "using variable declarator",
+      "role": "concept",
+      "definition": "A rule for an using variable declarator, the construct the upstream grammar names using_variable_declarator.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "using_variable_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bracketed-argument-list",
+      "phrase": "bracketed argument list",
+      "role": "concept",
+      "definition": "A rule for a bracketed argument list, the construct the upstream grammar names bracketed_argument_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "bracketed_argument_list"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.bracketed-parameter-list",
+          "reason": "A bracketed C# argument list evaluates invocation or indexing expressions, while a bracketed parameter list declares typed parameter bindings."
+        }
+      ]
+    },
+    {
+      "id": "grammar.alias-qualified-name",
+      "phrase": "alias qualified name",
+      "role": "concept",
+      "definition": "A rule for an alias qualified name, the construct the upstream grammar names alias_qualified_name.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "alias_qualified_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.implicit-type",
+      "phrase": "implicit type",
+      "role": "concept",
+      "definition": "A rule for an implicit type, the construct the upstream grammar names implicit_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "implicit_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.array-base-type",
+      "phrase": "array base type",
+      "role": "concept",
+      "definition": "A rule for an array base type, the construct the upstream grammar names _array_base_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "array_base_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pointer-base-type",
+      "phrase": "pointer base type",
+      "role": "concept",
+      "definition": "A rule for a pointer base type, the construct the upstream grammar names _pointer_base_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "pointer_base_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-pointer-type",
+      "phrase": "function pointer type",
+      "role": "concept",
+      "definition": "A rule for a function pointer type, the construct the upstream grammar names function_pointer_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "function_pointer_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-pointer-parameter",
+      "phrase": "function pointer parameter",
+      "role": "concept",
+      "definition": "A rule for a function pointer parameter, the construct the upstream grammar names function_pointer_parameter.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "function_pointer_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scoped-type",
+      "phrase": "scoped type",
+      "role": "concept",
+      "definition": "A rule for a scoped type, the construct the upstream grammar names scoped_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "scoped_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scoped-base-type",
+      "phrase": "scoped base type",
+      "role": "concept",
+      "definition": "A rule for a scoped base type, the construct the upstream grammar names _scoped_base_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "scoped_base_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tuple-element",
+      "phrase": "tuple element",
+      "role": "concept",
+      "definition": "A rule for a tuple element, the construct the upstream grammar names tuple_element.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "tuple_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.checked-statement",
+      "phrase": "checked statement",
+      "role": "concept",
+      "definition": "A rule for a checked statement, the construct the upstream grammar names checked_statement.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "checked_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.fixed-statement",
+      "phrase": "fixed statement",
+      "role": "concept",
+      "definition": "A rule for a fixed statement, the construct the upstream grammar names fixed_statement.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "fixed_statement"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.set-command",
+          "reason": "A C# fixed statement pins managed storage for scoped pointer access, while a Rocq Set command changes a proof environment option."
+        }
+      ]
+    },
+    {
+      "id": "grammar.for-statement-conditions",
+      "phrase": "for statement conditions",
+      "role": "concept",
+      "definition": "A rule for a for statement conditions, the construct the upstream grammar names _for_statement_conditions.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "for_statement_conditions"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lock-statement",
+      "phrase": "lock statement",
+      "role": "concept",
+      "definition": "A rule for a lock statement, the construct the upstream grammar names lock_statement.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "lock_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.switch-section",
+      "phrase": "switch section",
+      "role": "concept",
+      "definition": "A rule for a switch section, the construct the upstream grammar names switch_section.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "switch_section"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.catch-declaration",
+      "phrase": "catch declaration",
+      "role": "concept",
+      "definition": "A rule for a catch declaration, the construct the upstream grammar names catch_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "catch_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.catch-filter-clause",
+      "phrase": "catch filter clause",
+      "role": "concept",
+      "definition": "A rule for a catch filter clause, the construct the upstream grammar names catch_filter_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "catch_filter_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unsafe-statement",
+      "phrase": "unsafe statement",
+      "role": "concept",
+      "definition": "A rule for an unsafe statement, the construct the upstream grammar names unsafe_statement.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "unsafe_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-each-statement-initializer",
+      "phrase": "for each statement initializer",
+      "role": "concept",
+      "definition": "A rule for a for each statement initializer, the construct the upstream grammar names _foreach_statement_initializer.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "for_each_statement_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.local-declaration-statement",
+      "phrase": "local declaration statement",
+      "role": "concept",
+      "definition": "A rule for a local declaration statement, the construct the upstream grammar names local_declaration_statement.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "local_declaration_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.local-function-statement",
+      "phrase": "local function statement",
+      "role": "concept",
+      "definition": "A rule for a local function statement, the construct the upstream grammar names local_function_statement.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "local_function_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parenthesized-pattern-with-designation",
+      "phrase": "parenthesized pattern with designation",
+      "role": "concept",
+      "definition": "A rule for a parenthesized pattern with designation, the construct the upstream grammar names _parenthesized_pattern_with_designation.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "parenthesized_pattern_with_designation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.name-invocation-pattern",
+      "phrase": "name invocation pattern",
+      "role": "concept",
+      "definition": "A rule for a name invocation pattern, the construct the upstream grammar names _name_invocation_pattern.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "name_invocation_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.complex-invocation-expression",
+      "phrase": "complex invocation expression",
+      "role": "concept",
+      "definition": "A rule for a complex invocation expression, the construct the upstream grammar names _complex_invocation_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "complex_invocation_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.discard",
+      "phrase": "discard",
+      "role": "concept",
+      "definition": "A rule for a discard, the construct the upstream grammar names discard.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "discard"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.recursive-pattern",
+      "phrase": "recursive pattern",
+      "role": "concept",
+      "definition": "A rule for a recursive pattern, the construct the upstream grammar names recursive_pattern.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "recursive_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.positional-pattern-clause",
+      "phrase": "positional pattern clause",
+      "role": "concept",
+      "definition": "A rule for a positional pattern clause, the construct the upstream grammar names positional_pattern_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "positional_pattern_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.property-pattern-clause",
+      "phrase": "property pattern clause",
+      "role": "concept",
+      "definition": "A rule for a property pattern clause, the construct the upstream grammar names property_pattern_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "property_pattern_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.negated-pattern",
+      "phrase": "negated pattern",
+      "role": "concept",
+      "definition": "A rule for a negated pattern, the construct the upstream grammar names negated_pattern.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "negated_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.and-pattern",
+      "phrase": "and pattern",
+      "role": "concept",
+      "definition": "A rule for an and pattern, the construct the upstream grammar names and_pattern.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "and_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-pattern",
+      "phrase": "declaration pattern",
+      "role": "concept",
+      "definition": "A rule for a declaration pattern, the construct the upstream grammar names declaration_pattern.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "declaration_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-designation",
+      "phrase": "variable designation",
+      "role": "concept",
+      "definition": "A rule for a variable designation, the construct the upstream grammar names _variable_designation.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "variable_designation"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.variable-assignment",
+          "reason": "A C# variable designation introduces names through a binding pattern, while a variable assignment writes values to assignment targets."
+        }
+      ]
+    },
+    {
+      "id": "grammar.parenthesized-variable-designation",
+      "phrase": "parenthesized variable designation",
+      "role": "concept",
+      "definition": "A rule for a parenthesized variable designation, the construct the upstream grammar names parenthesized_variable_designation.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "parenthesized_variable_designation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-statement-expression",
+      "phrase": "expression statement expression",
+      "role": "concept",
+      "definition": "A rule for an expression statement expression, the construct the upstream grammar names _expression_statement_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "expression_statement_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.postfix-unary-expression",
+      "phrase": "postfix unary expression",
+      "role": "concept",
+      "definition": "A rule for a postfix unary expression, the construct the upstream grammar names postfix_unary_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "postfix_unary_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.prefix-unary-expression",
+      "phrase": "prefix unary expression",
+      "role": "concept",
+      "definition": "A rule for a prefix unary expression, the construct the upstream grammar names prefix_unary_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "prefix_unary_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pointer-indirection-expression",
+      "phrase": "pointer indirection expression",
+      "role": "concept",
+      "definition": "A rule for a pointer indirection expression, the construct the upstream grammar names _pointer_indirection_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "pointer_indirection_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.query-expression",
+      "phrase": "query expression",
+      "role": "concept",
+      "definition": "A rule for a query expression, the construct the upstream grammar names query_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "query_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.query-body",
+      "phrase": "query body",
+      "role": "concept",
+      "definition": "A rule for a query body, the construct the upstream grammar names _query_body.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "query_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.query-clause",
+      "phrase": "query clause",
+      "role": "concept",
+      "definition": "A rule for a query clause, the construct the upstream grammar names _query_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "query_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.join-clause",
+      "phrase": "join clause",
+      "role": "concept",
+      "definition": "A rule for a join clause, the construct the upstream grammar names join_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "join_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.join-header",
+      "phrase": "join header",
+      "role": "concept",
+      "definition": "A rule for a join header, the construct the upstream grammar names _join_header.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "join_header"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.join-body",
+      "phrase": "join body",
+      "role": "concept",
+      "definition": "A rule for a join body, the construct the upstream grammar names _join_body.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "join_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.join-into-clause",
+      "phrase": "join into clause",
+      "role": "concept",
+      "definition": "A rule for a join into clause, the construct the upstream grammar names join_into_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "join_into_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.let-clause",
+      "phrase": "let clause",
+      "role": "concept",
+      "definition": "A rule for a let clause, the construct the upstream grammar names let_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "let_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.order-by-clause",
+      "phrase": "order by clause",
+      "role": "concept",
+      "definition": "A rule for an order by clause, the construct the upstream grammar names order_by_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "order_by_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.ordering",
+      "phrase": "ordering",
+      "role": "concept",
+      "definition": "A rule for an ordering, the construct the upstream grammar names _ordering.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "ordering"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.select-or-group-clause",
+      "phrase": "select or group clause",
+      "role": "concept",
+      "definition": "A rule for a select or group clause, the construct the upstream grammar names _select_or_group_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "select_or_group_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.group-clause",
+      "phrase": "group clause",
+      "role": "concept",
+      "definition": "A rule for a group clause, the construct the upstream grammar names group_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "group_clause"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.grouping-clause",
+          "reason": "A C# query group clause specifies both projected elements and their grouping key, while a SQL grouping clause supplies grouping keys whose projections belong to other query clauses."
+        }
+      ]
+    },
+    {
+      "id": "grammar.select-clause",
+      "phrase": "select clause",
+      "role": "concept",
+      "definition": "A rule for a select clause, the construct the upstream grammar names select_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "select_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.conditional-access-expression",
+      "phrase": "conditional access expression",
+      "role": "concept",
+      "definition": "A rule for a conditional access expression, the construct the upstream grammar names conditional_access_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "conditional_access_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.is-expression",
+      "phrase": "is expression",
+      "role": "concept",
+      "definition": "A rule for an is expression, the construct the upstream grammar names is_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "is_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.is-pattern-expression",
+      "phrase": "is pattern expression",
+      "role": "concept",
+      "definition": "A rule for an is pattern expression, the construct the upstream grammar names is_pattern_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "is_pattern_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.checked-expression",
+      "phrase": "checked expression",
+      "role": "concept",
+      "definition": "A rule for a checked expression, the construct the upstream grammar names checked_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "checked_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.switch-expression-body",
+      "phrase": "switch expression body",
+      "role": "concept",
+      "definition": "A rule for a switch expression body, the construct the upstream grammar names _switch_expression_body.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "switch_expression_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.switch-expression-arm",
+      "phrase": "switch expression arm",
+      "role": "concept",
+      "definition": "A rule for a switch expression arm, the construct the upstream grammar names switch_expression_arm.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "switch_expression_arm"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.element-access-expression",
+      "phrase": "element access expression",
+      "role": "concept",
+      "definition": "A rule for an element access expression, the construct the upstream grammar names element_access_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "element_access_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interpolated-string-expression",
+      "phrase": "interpolated string expression",
+      "role": "concept",
+      "definition": "A rule for an interpolated string expression, the construct the upstream grammar names interpolated_string_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "interpolated_string_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interpolated-string-content",
+      "phrase": "interpolated string content",
+      "role": "concept",
+      "definition": "A rule for an interpolated string content, the construct the upstream grammar names _interpolated_string_content.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "interpolated_string_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interpolated-verbatim-string-content",
+      "phrase": "interpolated verbatim string content",
+      "role": "concept",
+      "definition": "A rule for an interpolated verbatim string content, the construct the upstream grammar names _interpolated_verbatim_string_content.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "interpolated_verbatim_string_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interpolated-raw-string-content",
+      "phrase": "interpolated raw string content",
+      "role": "concept",
+      "definition": "A rule for an interpolated raw string content, the construct the upstream grammar names _interpolated_raw_string_content.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "interpolated_raw_string_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interpolation-alignment-clause",
+      "phrase": "interpolation alignment clause",
+      "role": "concept",
+      "definition": "A rule for an interpolation alignment clause, the construct the upstream grammar names interpolation_alignment_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "interpolation_alignment_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.interpolation-format-clause",
+      "phrase": "interpolation format clause",
+      "role": "concept",
+      "definition": "A rule for an interpolation format clause, the construct the upstream grammar names interpolation_format_clause.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "interpolation_format_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.member-access-expression",
+      "phrase": "member access expression",
+      "role": "concept",
+      "definition": "A rule for a member access expression, the construct the upstream grammar names member_access_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "member_access_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.member-binding-expression",
+      "phrase": "member binding expression",
+      "role": "concept",
+      "definition": "A rule for a member binding expression, the construct the upstream grammar names member_binding_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "member_binding_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object-creation-type",
+      "phrase": "object creation type",
+      "role": "concept",
+      "definition": "A rule for an object creation type, the construct the upstream grammar names _object_creation_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "object_creation_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.anonymous-method-expression",
+      "phrase": "anonymous method expression",
+      "role": "concept",
+      "definition": "A rule for an anonymous method expression, the construct the upstream grammar names anonymous_method_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "anonymous_method_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.anonymous-object-creation-expression",
+      "phrase": "anonymous object creation expression",
+      "role": "concept",
+      "definition": "A rule for an anonymous object creation expression, the construct the upstream grammar names anonymous_object_creation_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "anonymous_object_creation_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.anonymous-object-member-declarator",
+      "phrase": "anonymous object member declarator",
+      "role": "concept",
+      "definition": "A rule for an anonymous object member declarator, the construct the upstream grammar names _anonymous_object_member_declarator.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "anonymous_object_member_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.implicit-array-creation-expression",
+      "phrase": "implicit array creation expression",
+      "role": "concept",
+      "definition": "A rule for an implicit array creation expression, the construct the upstream grammar names implicit_array_creation_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "implicit_array_creation_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.implicit-object-creation-expression",
+      "phrase": "implicit object creation expression",
+      "role": "concept",
+      "definition": "A rule for an implicit object creation expression, the construct the upstream grammar names implicit_object_creation_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "implicit_object_creation_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.collection-expression",
+      "phrase": "collection expression",
+      "role": "concept",
+      "definition": "A rule for a collection expression, the construct the upstream grammar names collection_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "collection_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-element",
+      "phrase": "expression element",
+      "role": "concept",
+      "definition": "A rule for an expression element, the construct the upstream grammar names expression_element.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "expression_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.initializer-expression",
+      "phrase": "initializer expression",
+      "role": "concept",
+      "definition": "A rule for an initializer expression, the construct the upstream grammar names initializer_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "initializer_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-expression",
+      "phrase": "declaration expression",
+      "role": "concept",
+      "definition": "A rule for a declaration expression, the construct the upstream grammar names declaration_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "declaration_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.with-body",
+      "phrase": "with body",
+      "role": "concept",
+      "definition": "A rule for a with body, the construct the upstream grammar names _with_body.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "with_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.character-literal-content",
+      "phrase": "character literal content",
+      "role": "concept",
+      "definition": "A rule for a character literal content, the construct the upstream grammar names character_literal_content.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "character_literal_content"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.string-literal-encoding",
+      "phrase": "string literal encoding",
+      "role": "concept",
+      "definition": "A rule for a string literal encoding, the construct the upstream grammar names string_literal_encoding.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "string_literal_encoding"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.verbatim-string-literal",
+      "phrase": "verbatim string literal",
+      "role": "concept",
+      "definition": "A rule for a verbatim string literal, the construct the upstream grammar names verbatim_string_literal.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "verbatim_string_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.identifier-token",
+      "phrase": "identifier token",
+      "role": "concept",
+      "definition": "A rule for an identifier token, the construct the upstream grammar names _identifier_token.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "identifier_token"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-in-top-level",
+      "phrase": "preprocessor if in top level",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if in top level, the construct the upstream grammar names preproc_if_in_top_level.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_if_in_top_level"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-in-top-level",
+      "phrase": "preprocessor else in top level",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else in top level, the construct the upstream grammar names preproc_else_in_top_level.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_else_in_top_level"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-in-top-level",
+      "phrase": "preprocessor else if in top level",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if in top level, the construct the upstream grammar names preproc_elif_in_top_level.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_else_if_in_top_level"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-in-expression",
+      "phrase": "preprocessor if in expression",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if in expression, the construct the upstream grammar names preproc_if_in_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_if_in_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-in-expression",
+      "phrase": "preprocessor else in expression",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else in expression, the construct the upstream grammar names preproc_else_in_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_else_in_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-in-expression",
+      "phrase": "preprocessor else if in expression",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if in expression, the construct the upstream grammar names preproc_elif_in_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_else_if_in_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-in-enumeration-member-declaration",
+      "phrase": "preprocessor if in enumeration member declaration",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if in enumeration member declaration, the construct the upstream grammar names preproc_if_in_enum_member_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_if_in_enumeration_member_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-in-enumeration-member-declaration",
+      "phrase": "preprocessor else in enumeration member declaration",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else in enumeration member declaration, the construct the upstream grammar names preproc_else_in_enum_member_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_else_in_enumeration_member_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-in-enumeration-member-declaration",
+      "phrase": "preprocessor else if in enumeration member declaration",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if in enumeration member declaration, the construct the upstream grammar names preproc_elif_in_enum_member_declaration.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_else_if_in_enumeration_member_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-in-attribute-list",
+      "phrase": "preprocessor if in attribute list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if in attribute list, the construct the upstream grammar names preproc_if_in_attribute_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_if_in_attribute_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-in-attribute-list",
+      "phrase": "preprocessor else in attribute list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else in attribute list, the construct the upstream grammar names preproc_else_in_attribute_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_else_in_attribute_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-in-attribute-list",
+      "phrase": "preprocessor else if in attribute list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if in attribute list, the construct the upstream grammar names preproc_elif_in_attribute_list.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_else_if_in_attribute_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-region",
+      "phrase": "preprocessor region",
+      "role": "concept",
+      "definition": "A rule for a preprocessor region, the construct the upstream grammar names preproc_region.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_region"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-line",
+      "phrase": "preprocessor line",
+      "role": "concept",
+      "definition": "A rule for a preprocessor line, the construct the upstream grammar names preproc_line.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_line"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.preprocessor-argument",
+          "reason": "A C# line directive controls source line and file mapping, while a preprocessor argument is the token text supplied to a directive or macro."
+        }
+      ]
+    },
+    {
+      "id": "grammar.preprocessor-pragma",
+      "phrase": "preprocessor pragma",
+      "role": "concept",
+      "definition": "A rule for a preprocessor pragma, the construct the upstream grammar names preproc_pragma.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_pragma"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-error",
+      "phrase": "preprocessor error",
+      "role": "concept",
+      "definition": "A rule for a preprocessor error, the construct the upstream grammar names preproc_error.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_error"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-warning",
+      "phrase": "preprocessor warning",
+      "role": "concept",
+      "definition": "A rule for a preprocessor warning, the construct the upstream grammar names preproc_warning.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_warning"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.shebang-directive",
+      "phrase": "shebang directive",
+      "role": "concept",
+      "definition": "A rule for a shebang directive, the construct the upstream grammar names shebang_directive.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "shebang_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.retain-first-erasure-child",
+      "phrase": "retain first erasure child",
+      "role": "operation",
+      "definition": "Select the first named expression child retained while erasing a TypeScript wrapper.",
+      "constraints": [
+        "Child spans stay tied to their native concrete-tree origin.",
+        "The decision retains the first named expression rather than an arbitrary source suffix."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript TypeScript erasure decisions",
+          "name": "retainFirstErasureChild"
+        },
+        {
+          "source": "Rust TypeScript erasure decisions",
+          "name": "retain_first_erasure_child"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.erase-exported-declaration",
+      "phrase": "erase exported declaration",
+      "role": "operation",
+      "definition": "Determine the complete source span erased for a type-only declaration and its enclosing export.",
+      "constraints": [
+        "The exported owner is included when its declaration is erased.",
+        "Executable declarations retain their runtime behavior."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript TypeScript erasure decisions",
+          "name": "eraseExportedDeclaration"
+        },
+        {
+          "source": "Rust TypeScript erasure decisions",
+          "name": "erase_exported_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.erase-optional-parameter-marker",
+      "phrase": "erase optional parameter marker",
+      "role": "operation",
+      "definition": "Determine whether an optional parameter marker may be erased from native TypeScript syntax.",
+      "constraints": [
+        "Only an optional_parameter concrete construct permits this erasure.",
+        "Question marks in runtime expressions retain their original meaning."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript TypeScript erasure decisions",
+          "name": "eraseOptionalParameterMarker"
+        },
+        {
+          "source": "Rust TypeScript erasure decisions",
+          "name": "erase_optional_parameter_marker"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.render-erased-type-script-scalar",
+      "phrase": "render erased type script scalar",
+      "role": "operation",
+      "definition": "Render an erased TypeScript source scalar as an ASCII space while retaining carriage returns and line feeds.",
+      "constraints": [
+        "Every original line boundary remains present.",
+        "The decision applies to an already selected native type-only span."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript TypeScript erasure decisions",
+          "name": "renderErasedTypeScriptScalar"
+        },
+        {
+          "source": "Rust TypeScript erasure decisions",
+          "name": "render_erased_type_script_scalar"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-rust-number-bounds",
+      "phrase": "read rust number bounds",
+      "role": "operation",
+      "definition": "Read decimal fraction, exponent and suffix boundaries of a Rust number token while leaving range and member dots for the following token.",
+      "constraints": [
+        "A decimal fraction consumes only its permitted digit sequence.",
+        "The bounds and float marker retain the original lexical token boundary.",
+        "The JavaScript and Rust frontends use the same automatically translated decision."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "readRustNumberBounds"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "read_rust_number_bounds"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.null-capable-type",
+      "phrase": "null capable type",
+      "role": "concept",
+      "definition": "A rule for a null capable type, the construct the upstream grammar names nullable_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "null_capable_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.null-capable-base-type",
+      "phrase": "null capable base type",
+      "role": "concept",
+      "definition": "A rule for a null capable base type, the construct the upstream grammar names _nullable_base_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "null_capable_base_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reference-base-type",
+      "phrase": "reference base type",
+      "role": "concept",
+      "definition": "A rule for a reference base type, the construct the upstream grammar names _ref_base_type.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "reference_base_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.subsidiary-pattern",
+      "phrase": "subsidiary pattern",
+      "role": "concept",
+      "definition": "A rule for a subsidiary pattern, the construct the upstream grammar names subpattern.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "subsidiary_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.value-expression",
+      "phrase": "value expression",
+      "role": "concept",
+      "definition": "A rule for a value expression, the construct the upstream grammar names non_lvalue_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "value_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parenthesized-assignable-expression",
+      "phrase": "parenthesized assignable expression",
+      "role": "concept",
+      "definition": "A rule for a parenthesized assignable expression, the construct the upstream grammar names _parenthesized_lvalue_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "parenthesized_assignable_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.initialized-lambda-expression",
+      "phrase": "initialized lambda expression",
+      "role": "concept",
+      "definition": "A rule for an initialized lambda expression, the construct the upstream grammar names _lambda_expression_init.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "initialized_lambda_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lambda-parameter-sequence",
+      "phrase": "lambda parameter sequence",
+      "role": "concept",
+      "definition": "A rule for a lambda parameter sequence, the construct the upstream grammar names _lambda_parameters.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "lambda_parameter_sequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.implicit-stack-allocation-expression",
+      "phrase": "implicit stack allocation expression",
+      "role": "concept",
+      "definition": "A rule for an implicit stack allocation expression, the construct the upstream grammar names implicit_stackalloc_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "implicit_stack_allocation_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-query-expression",
+      "phrase": "type query expression",
+      "role": "concept",
+      "definition": "A rule for a type query expression, the construct the upstream grammar names typeof_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "type_query_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reference-creation-expression",
+      "phrase": "reference creation expression",
+      "role": "concept",
+      "definition": "A rule for a reference creation expression, the construct the upstream grammar names makeref_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "reference_creation_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reference-type-query-expression",
+      "phrase": "reference type query expression",
+      "role": "concept",
+      "definition": "A rule for a reference type query expression, the construct the upstream grammar names reftype_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "reference_type_query_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reference-value-access-expression",
+      "phrase": "reference value access expression",
+      "role": "concept",
+      "definition": "A rule for a reference value access expression, the construct the upstream grammar names refvalue_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "reference_value_access_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.stack-allocation-expression",
+      "phrase": "stack allocation expression",
+      "role": "concept",
+      "definition": "A rule for a stack allocation expression, the construct the upstream grammar names stackalloc_expression.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "stack_allocation_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-conditional-directive",
+      "phrase": "preprocessor conditional directive",
+      "role": "concept",
+      "definition": "A rule for a preprocessor conditional directive, the construct the upstream grammar names preproc_if.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_conditional_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-alternative-directive",
+      "phrase": "preprocessor alternative directive",
+      "role": "concept",
+      "definition": "A rule for a preprocessor alternative directive, the construct the upstream grammar names preproc_else.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_alternative_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-conditional-alternative-directive",
+      "phrase": "preprocessor conditional alternative directive",
+      "role": "concept",
+      "definition": "A rule for a preprocessor conditional alternative directive, the construct the upstream grammar names preproc_elif.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_conditional_alternative_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-region-end-directive",
+      "phrase": "preprocessor region end directive",
+      "role": "concept",
+      "definition": "A rule for a preprocessor region end directive, the construct the upstream grammar names preproc_endregion.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_region_end_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-null-policy-directive",
+      "phrase": "preprocessor null policy directive",
+      "role": "concept",
+      "definition": "A rule for a preprocessor null policy directive, the construct the upstream grammar names preproc_nullable.",
+      "constraints": [
+        "Only the native csharp (C#) grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csharp",
+          "name": "preprocessor_null_policy_directive"
         }
       ],
       "formerNames": []

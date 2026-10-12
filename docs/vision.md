@@ -372,6 +372,14 @@ catalog starts with:
 
 This list is a minimum and is reconciled with the other widely used formats.
 
+The JavaScript Yacc/Lex draft lowers declared token rules, left and right
+precedence, `%prec`, lexical modes, trivia and supported arithmetic or textual
+actions to shared native Links operations. Rejection actions become explicit
+failures. Unsupported prologues, arbitrary host actions, typed unions and other
+unimplemented constructs retain precise diagnostics. These finite supported
+cases do not establish complete source-format coverage, a Rust importer or the
+union of the pinned official Ruby, Perl, Bash and OCaml grammars.
+
 - Every feature of every inventoried format has an explicit native
   representation, an operational meaning and executable tests. Imports follow
   included grammars, supporting lexer and scanner definitions, and action code;

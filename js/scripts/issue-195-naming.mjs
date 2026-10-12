@@ -362,6 +362,45 @@ const nativeRuleConcepts = (text) => [...text.matchAll(/^\(rule ([a-z0-9_]+) [^\
  */
 export const NAME_INVENTORIES = Object.freeze([
   {
+    inventory: 'global concept link records',
+    files: ['js/src/global-concept-space.js'],
+    extract: (text) => captures(text, /(?:head (?:===|!==)|tag !==) '([a-z-]+)'/gu),
+    recordOf: (name) => ({
+      'global-concept-space': 'grammar.global-concept-space',
+      'global-concept': 'grammar.global-concept',
+      'concept-origin': 'grammar.global-concept-origin',
+      'grammar-origin': 'grammar.global-grammar-origin',
+      'grammar-context': 'grammar.global-grammar-context',
+      'concept-definition': 'grammar.global-concept-definition',
+      'concept-proof': 'grammar.global-concept-proof',
+      'unproved-equivalence': 'grammar.unproved-concept-equivalence',
+      'ambiguous-origin': 'grammar.ambiguous-concept-origin',
+      'concept-redirect': 'grammar.global-concept-identity-mapping',
+      'source-alias': 'grammar.qualified-source-alias',
+      correspondence: 'grammar.concept-correspondence',
+    })[name] ?? `grammar.${name}`,
+  },
+  {
+    inventory: 'global concept proof method',
+    files: ['js/src/global-concept-space.js'],
+    extract: (text) => captures(text, /export const GLOBAL_CONCEPT_PROOF_METHOD = '([^']+)'/gu),
+    recordOf: (name) => `grammar.${name}`,
+  },
+  {
+    inventory: 'global concept interface operations',
+    files: ['js/src/global-concept-space.js', 'rust/src/global_concept_space.rs', 'rust/src/global_concept_space/links.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ((?:createGlobalConceptSpace|globalConceptSpaceToLinks|readGlobalConceptSpaceLinks|translateGlobalConstruct|create_global_concept_space|global_concept_space_to_links|read_global_concept_space_links|translate_global_construct))\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `operation.${name === 'global-concept-space-to-links' ? 'serialize-global-concept-space' : name}`,
+  },
+  {
+    inventory: 'global concept correspondence verifier',
+    files: ['js/src/global-concept-rules.js', 'rust/src/global_concept_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) (verifyGlobalConceptCorrespondence|verify_global_concept_correspondence)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `operation.${name}`,
+  },
+  {
     inventory: 'grammar concepts',
     files: ['rust/src/grammar/concepts.rs'],
     extract: (text) => captures(block(text, 'pub const GRAMMAR_CONCEPTS', '\n];'), /id: "([^"]+)"/gu),
@@ -534,9 +573,16 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'frontend decision operations',
-    files: ['js/src/translation/frontend-rules.js', 'rust/src/translation/frontend_rules.rs'],
+    files: ['js/src/translation/frontend-rules.js', 'rust/src/translation/frontend_rules.rs', 'rust/src/translation/frontend_rules/strings.rs'],
     extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
       .filter((name) => !name.startsWith('ml_'))
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'TypeScript erasure decisions',
+    files: ['js/src/typescript-erasure-rules.js', 'rust/src/self_translation/typescript_erasure_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name}`,
   },

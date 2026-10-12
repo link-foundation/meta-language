@@ -377,6 +377,14 @@
       "partsOfSpeech": ["noun", "adjective"],
       "definition": "The character encoding standard that assigns a code point and properties to every character of the world's writing systems.",
       "source": "The Unicode Standard, Version 15.1 (2023), chapter 1, Introduction"
+    },
+    {
+      "word": "bijection",
+      "partsOfSpeech": [
+        "noun"
+      ],
+      "definition": "A function that is both injective and surjective, hence pairs every element of its domain with exactly one element of its codomain and reaches the whole codomain.",
+      "source": "Lean Mathlib, Mathlib.Logic.Function.Defs, Function.Bijective: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Logic/Function/Defs.html#Function.Bijective"
     }
   ]
 }
