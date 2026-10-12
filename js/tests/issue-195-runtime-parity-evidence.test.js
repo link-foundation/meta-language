@@ -22,15 +22,14 @@ import {
   parityDigests,
 } from '../scripts/issue-195-parity-evidence.mjs';
 import { runtimeObservation } from '../scripts/issue-195-runtime-observation.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 import {
   ISSUE_195_FIXTURE_FILES,
   issue195FixtureDigest,
   recordIssue195DirectiveObservation as observe,
 } from './support/issue-195-observations.js';
 
-const manifest = JSON.parse(
-  await readFile(new URL('../../parity/issue-195-requirements.json', import.meta.url)),
-);
+const manifest = readProjectData(new URL('../../parity/issue-195-requirements.json', import.meta.url));
 const pinnedDigest = issue195FixtureDigest(ISSUE_195_FIXTURE_FILES.fourLanguage);
 const javascript = runtimeObservation();
 

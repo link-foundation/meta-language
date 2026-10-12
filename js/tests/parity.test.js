@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 import {
   API_OPERATIONS,
@@ -38,9 +38,7 @@ test('executable JavaScript API-style fixtures cover every applicable registry c
 });
 
 test('issue-163 parity manifest keeps Rust and JavaScript feature rows in sync', async () => {
-  const manifest = JSON.parse(
-    await readFile(new URL('../../parity/language-features.json', import.meta.url), 'utf8'),
-  );
+  const manifest = readProjectData(new URL('../../parity/language-features.json', import.meta.url));
   const required = manifest.features.filter((feature) => feature.required);
 
   assert.ok(required.length > 0);

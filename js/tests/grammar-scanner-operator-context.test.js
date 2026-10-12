@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { operatorLineScanner, unaryOperatorBoundaryScanner } from '../scripts/operator-context-scanner.mjs';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
-const profiles = JSON.parse(readFileSync(new URL('../../parity/naming/grammar-name-expansions.json', import.meta.url), 'utf8')).grammars.elixir.scannerFamilies;
+const profiles = readProjectData(new URL('../../parity/naming/grammar-name-expansions.json', import.meta.url)).grammars.elixir.scannerFamilies;
 const line = profiles.find(({ family }) => family === 'operator-line');
 const unary = profiles.find(({ family }) => family === 'unary-operator-boundary');
 const leaves = node => node.type === 'token' ? [node] : node.children.flatMap(leaves);
