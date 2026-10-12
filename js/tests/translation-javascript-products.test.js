@@ -94,3 +94,26 @@ test('solved expression identities follow reference representation clones withou
   assert.equal(Object.keys(surface).includes('inferredExpressionTypes'), false);
   assert.equal(JSON.stringify(surface).includes('inferredExpressionTypes'), false);
 });
+
+test('shadowed global numeric names follow actual bindings and temporal dead zones', () => {
+  for (const name of ['NaN', 'Infinity']) {
+    equivalent(`function make(${name}){return Object.freeze([${name},true]);}
+console.log(make(5)[0]===5);`, ['true']);
+    assert.throws(() => parseJavaScript(`function make(){const value=${name};const ${name}=5;return Object.freeze([value,true]);}`), /temporal dead zone/u);
+    assert.throws(() => parseJavaScript(`function make(){return Object.freeze([${name},true]);}const ${name}=5;console.log(make()[0]===5);`), /global binding/u);
+  }
+  equivalent('function value(undefined){return undefined;}console.log(value(5)===5);', ['true']);
+  assert.throws(() => parseJavaScript('function value(){const result=undefined;const undefined=5;return result;}'), /temporal dead zone/u);
+});
+
+test('whole product conditions retain the explicit position-only obligation', () => {
+  for (const [condition, diagnostic] of [['value', /immutable tuple product use/u], ['value?true:false', /immutable tuple product use/u], ['!value', /immutable tuple product use/u], ['value&&true', /tuple.*boolean/u], ['value||false', /tuple.*boolean/u]]) {
+    assert.throws(() => parseJavaScript(`function check(){const value=Object.freeze([5,true]);if(${condition})return true;return false;}console.log(check());`), diagnostic);
+  }
+});
+
+test('parameter defaults follow the same product caller and escape proof as function bodies', () => {
+  const externals = [{ k: 'fn', name: 'escape', params: [{ name: 'value', type: { kind: 'tuple', elements: [{ kind: 'float' }, { kind: 'bool' }] } }], ret: { kind: 'bool' } }];
+  assert.throws(() => parseJavaScript('function run(flag=escape(Object.freeze([5,true]))){return flag;}console.log(run());', { externals }), /unknown or external caller/u);
+  equivalent('function read(value=Object.freeze([5,true])){return value[0];}console.log(read()===5);console.log(read(Object.freeze([7,true]))===7);', ['true', 'true']);
+});

@@ -109,6 +109,7 @@ class JavaScriptParser {
     this.unawaited = [];
     this.sequentialAsync = false;
     this.exportedNames = new Set();
+    this.moduleBindings = new Set([...this.externals.keys(), ...this.literalBindings.keys()]);
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -128,6 +129,17 @@ class JavaScriptParser {
     let depth = 0;
     for (let index = c.index; index < c.tokens.length; index += 1) {
       const token = c.tokens[index];
+      if (depth === 0 && token.value === 'import' && token.kind === 'identifier') {
+        let braces = 0;
+        for (let at = index + 1; at < c.tokens.length; at += 1) {
+          const imported = c.tokens[at];
+          if (!braces && (imported.kind === 'string' || imported.value === 'from' || imported.value === ';')) break;
+          const previous = c.tokens[at - 1]?.value;
+          if (imported.kind === 'identifier' && (previous === 'import' || previous === 'as' || ['{', ','].includes(previous) && c.tokens[at + 1]?.value !== 'as')) this.moduleBindings.add(imported.value);
+          if (imported.value === '{') braces += 1;
+          if (imported.value === '}') braces -= 1;
+        }
+      }
       if (depth === 0 && token.kind === 'identifier') {
         if (token.value === 'function' && c.tokens[index + 1]?.kind === 'identifier') this.functionNames.add(c.tokens[index + 1].value);
         if (token.value === 'const' && c.tokens[index + 1]?.kind === 'identifier' && c.tokens[index + 2]?.value === '=' && this.startsFunction(index + 3)) this.functionNames.add(c.tokens[index + 1].value);
@@ -135,6 +147,7 @@ class JavaScriptParser {
       if (token.kind === 'punct' && ['(', '[', '{'].includes(token.value)) depth += 1;
       if (token.kind === 'punct' && [')', ']', '}'].includes(token.value)) depth -= 1;
     }
+    for (const name of [...this.scope.tdz, ...this.functionNames]) this.moduleBindings.add(name);
     // Top-level statements that declare or assign variables, lowered together
     // before the next statement that prints, binds a constant or asserts.
     let pending = [];
@@ -1907,11 +1920,19 @@ class JavaScriptParser {
       c.next();
       return { k: 'bool', value: token.value === 'true', span: span(token, token) };
     }
-    if (token.value === 'NaN' || token.value === 'Infinity') {
+    // These are global bindings rather than reserved literal keywords. A
+    // parameter or local declaration takes precedence, including its TDZ.
+    if (['NaN', 'Infinity', 'undefined'].includes(token.value) && (this.scope.locals.has(token.value) || this.scope.tdz.has(token.value))) {
+      c.next();
+      return this.reference(token);
+    }
+    const boundGlobal = this.moduleBindings.has(token.value) || this.externals.has(token.value) || this.literalBindings.has(token.value) || this.functionNames.has(token.value);
+    if (['NaN', 'Infinity', 'undefined'].includes(token.value) && boundGlobal && !this.externals.has(token.value) && !this.literalBindings.has(token.value) && !this.functionNames.has(token.value)) throw unsupported(`global binding ${token.value}`, 'a delayed function read needs an owned module binding; it cannot be replaced with the built-in constant', span(token, token));
+    if (!boundGlobal && (token.value === 'NaN' || token.value === 'Infinity')) {
       c.next();
       return { k: 'num', value: token.value, type: FLOAT, span: span(token, token) };
     }
-    if (['null', 'undefined'].includes(token.value)) { c.next(); return { k: 'none', absence: token.value, span: span(token, token) }; }
+    if (token.value === 'null' || token.value === 'undefined' && !boundGlobal) { c.next(); return { k: 'none', absence: token.value, span: span(token, token) }; }
     if (token.value === 'new') {
       c.next();
       const constructor = c.identifier('constructor');

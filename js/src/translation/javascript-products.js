@@ -42,6 +42,7 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
       if (item.k === 'module') collect(item.items, [...path, item.name]);
       if (item.k === 'fn') functions.set([...path, item.name].join('.'), {
         item, path, result: fact(item.ret, item), params: item.params.map(param => fact(param.type, param)),
+        defaults: item.params.map(param => param.default ? fact(param.type, param.default) : null),
       });
     }
   };
@@ -65,7 +66,7 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
     fn.params.forEach((param, index) => {
       // Omitted product arguments have no ownership proof. Scalar defaults are
       // handled by the existing callable signature and checker.
-      edge(param, values[index] ?? fact(null));
+      edge(param, values[index] ?? fn.defaults[index] ?? fact(null));
     });
     edge(id, fn.result, entries[id].type?.kind === 'tuple');
   };
@@ -104,7 +105,8 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
         return id;
       }
       case 'if': {
-        expression(node.condition ?? node.cond, env, context);
+        const condition = expression(node.condition ?? node.cond, env, context);
+        uses.push({ node, values: [condition], reason: 'whole product truthiness needs its own shared value predicate' });
         const yes = expression(node.then, env, context), no = expression(node.else, env, context);
         edge(id, yes, type?.kind === 'tuple'); edge(id, no, type?.kind === 'tuple');
         return id;
@@ -134,6 +136,13 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
       }
     }
   };
+  for (const fn of functions.values()) {
+    const defaults = new Map();
+    fn.item.params.forEach((param, index) => {
+      if (param.default) edge(fn.defaults[index], expression(param.default, defaults, fn.path));
+      defaults.set(param.name, fn.params[index]);
+    });
+  }
   for (const fn of functions.values()) {
     const env = new Map(fn.item.params.map((param, index) => [param.name, fn.params[index]]));
     edge(fn.result, expression(fn.item.body, env, fn.path), fn.item.ret.kind === 'tuple');
