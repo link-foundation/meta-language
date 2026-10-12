@@ -678,7 +678,7 @@ export function transformNativeSource(source, transformations = []) {
       continue;
     }
     if (decision.family === 'ordered-variants') {
-      const { rule, variants, lookaheadPatterns = {} } = decision;
+      const { rule, variants, lookaheadPatterns = {}, followingPatterns = {} } = decision;
       let choice = grammar.rules[rule];
       while (choice && ['PREC', 'PREC_LEFT', 'PREC_RIGHT'].includes(choice.type)) choice = choice.content;
       if (choice?.type !== 'CHOICE' || !Array.isArray(variants) || variants.length < 2) throw new TypeError('ordered variants need a choice and at least two alternatives');
@@ -695,10 +695,13 @@ export function transformNativeSource(source, transformations = []) {
       }));
       if (indices.some((index) => index < 0) || new Set(indices).size !== indices.length) throw new TypeError('ordered variants must identify distinct existing alternatives');
       for (const [name, pattern] of Object.entries(lookaheadPatterns)) if (!variants.includes(name) || typeof pattern !== 'string' || !pattern) throw new TypeError('ordered lookaheads need a selected variant and a nonempty pattern');
+      for (const [name, pattern] of Object.entries(followingPatterns)) if (!variants.includes(name) || typeof pattern !== 'string' || !pattern) throw new TypeError('ordered following contexts need a selected variant and a nonempty pattern');
       const ordered = { type: 'NATIVE_ORDERED_CHOICE', members: indices.map((index, position) => {
         const name = variants[position];
         let content = choice.members[index];
         if (Object.hasOwn(lookaheadPatterns, name)) content = { type: 'NATIVE_PATTERN_LOOKAHEAD', content, pattern: lookaheadPatterns[name] };
+        if (Object.hasOwn(followingPatterns, name)) content = { type: 'SEQ', members: [content,
+          { type: 'NATIVE_PATTERN_LOOKAHEAD', content: { type: 'BLANK' }, pattern: followingPatterns[name] }] };
         return content;
       }) };
       const first = Math.min(...indices);

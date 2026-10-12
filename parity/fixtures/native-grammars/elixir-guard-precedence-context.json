@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "language": "Elixir",
+  "source": "tree-sitter-elixir",
+  "orderedRule": "_stab_clause_left",
+  "context": {
+    "family": "field-expression-context",
+    "clones": [
+      {
+        "rule": "binary_operator",
+        "helper": "_guard_binary_expression",
+        "precedences": {
+          "values": [
+            20,
+            30,
+            40,
+            50,
+            70,
+            80,
+            90,
+            100,
+            110,
+            120,
+            130,
+            140,
+            150,
+            160,
+            170,
+            180,
+            190
+          ],
+          "count": 19
+        },
+        "references": {
+          "_expression": "_guard_argument_expression"
+        }
+      },
+      {
+        "rule": "_expression",
+        "helper": "_guard_argument_expression",
+        "references": {
+          "binary_operator": "_guard_binary_expression",
+          "call": "_guard_complete_call"
+        }
+      },
+      {
+        "rule": "_stab_clause_arguments_without_parentheses",
+        "helper": "_guard_argument_list",
+        "references": {
+          "_expression": "_guard_argument_expression"
+        }
+      },
+      {
+        "rule": "_postfix_call",
+        "helper": "_guard_complete_call"
+      }
+    ],
+    "fields": [
+      {
+        "rule": "_stab_clause_arguments_without_parentheses_with_guard",
+        "field": "left",
+        "symbol": "_stab_clause_arguments_without_parentheses",
+        "helper": "_guard_argument_list",
+        "count": 1
+      }
+    ]
+  },
+  "boundary": {
+    "family": "literal-continuation-exclusion",
+    "rules": [
+      "_guard_binary_expression"
+    ],
+    "literal": "<",
+    "continuationPattern": "-"
+  },
+  "followingPatterns": {
+    "alias:binary_operator:_stab_clause_arguments_with_parentheses_with_guard": "->",
+    "alias:binary_operator:_stab_clause_arguments_without_parentheses_with_guard": "->",
+    "alias:arguments:_stab_clause_arguments_with_parentheses": "->",
+    "alias:arguments:_stab_clause_arguments_without_parentheses": "->"
+  },
+  "corpus": [
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / edge cases / operator with lower precedence than \"when\""
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "stab clause / guard"
+    }
+  ],
+  "matches": [
+    "foo do\n x <- y when x -> y\nend",
+    "foo do\n (x <- y) when x -> y\nend",
+    "(x, y when x, z -> 1)",
+    "((x, y when x, z) -> 1)",
+    "fn x when x > 0 -> x end",
+    "fn x when x > 0 when x < 3 -> x end",
+    "fn () when true -> 1 end",
+    "foo do\n (x) when x > 0 -> x\nend",
+    "fn (x, y) when x > y -> x end",
+    "fn f x when y -> 1 end",
+    "fn f x <- y when z -> 1 end",
+    "fn (f x) when y -> 1 end",
+    "fn f(x) when y -> 1 end",
+    "fn Mod.f x when y -> 1 end"
+  ]
+}

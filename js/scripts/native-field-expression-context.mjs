@@ -28,6 +28,13 @@ export function transformFieldExpressionContext(grammar, { clones, fields }) {
     || Array.isArray(node) && node.some(child => contains(child, name))
     || node && typeof node === 'object' && Object.values(node).some(child => contains(child, name));
   const hidden = new Set([...(grammar.inline ?? []), ...(grammar.supertypes ?? [])].map(node => typeof node === 'string' ? node : node.name));
+  const fieldReference = content => {
+    while (content?.type === 'ALIAS') content = content.content;
+    return content?.type === 'SYMBOL' ? content.name : null;
+  };
+  const replaceFieldReference = (content, helper) => content.type === 'ALIAS'
+    ? { ...content, content: replaceFieldReference(content.content, helper) }
+    : { type: 'SYMBOL', name: helper };
   const rewriteFields = (source, policies) => {
     const observed = policies.map(() => 0);
     const rewrite = (node, precedence = null) => {
@@ -37,12 +44,12 @@ export function transformFieldExpressionContext(grammar, { clones, fields }) {
       if (node.type === 'FIELD') {
         const selected = policies.map((policy, index) => ({ policy, index })).filter(({ policy }) => policy.field === node.name
           && (policy.precedence === undefined || policy.precedence === precedence)
-          && node.content?.type === 'SYMBOL' && node.content.name === policy.symbol);
+          && fieldReference(node.content) === policy.symbol);
         if (selected.length > 1) throw new TypeError('context field policies overlap');
         if (selected.length === 1) {
           const { policy, index } = selected[0];
           observed[index] += 1;
-          return { ...node, content: { type: 'SYMBOL', name: policy.helper } };
+          return { ...node, content: replaceFieldReference(node.content, policy.helper) };
         }
       }
       return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, rewrite(value, precedence)]));
