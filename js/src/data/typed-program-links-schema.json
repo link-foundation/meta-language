@@ -79,6 +79,7 @@
     "math": { "construct": "math", "renames": { "maxOf": "max", "minOf": "min" }, "spreadOperations": ["maxOf", "minOf"], "fields": [["op", "operation", "op"], ["name", "operation-name", "op"], ["args", "array-items", "args"]] }
   },
   "containers": { "record": "program record", "array": "ordered program list", "map": "program mapping" },
+  "containerFieldPolicies": { "record": "named", "array": "positional", "map": "positional" },
   "scalars": { "string": "string value", "number": "number value", "boolean": "boolean value", "bigint": "integer value", "null": "null value", "undefined": "undefined value" },
   "fields": {
     "k": "construct kind", "p": "proposition kind", "ret": "return type", "op": "operation",

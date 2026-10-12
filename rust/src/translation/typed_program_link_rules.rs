@@ -16,6 +16,20 @@ pub fn read_program_container_kind(term: &str) -> String {
 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
+pub fn accept_program_container_fields(kind: &str, has_fields: bool) -> bool {
+    if kind == "record" {
+        true
+    } else if kind == "array" {
+        !has_fields
+    } else if kind == "map" {
+        !has_fields
+    } else {
+        false
+    }
+}
+
+/// Read the corresponding decision of the shared typed program links schema.
+#[must_use]
 pub fn read_program_scalar_kind(term: &str) -> String {
     if term == "string value" {
         String::from("string")

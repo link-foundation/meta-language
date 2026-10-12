@@ -10,7 +10,7 @@ import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust } from './translation/emit-rust.js';
 import { validateLinkedTypedProgram } from './typed-program-links-validation.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
-import { acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields } from './typed-program-link-rules.js';
+import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields } from './typed-program-link-rules.js';
 
 export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(JSON.parse(readFileSync(new URL('./data/typed-program-links-schema.json', import.meta.url), 'utf8')));
 const schema = TYPED_PROGRAM_LINKS_SCHEMA;
@@ -172,6 +172,7 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
     const { term, definition } = link.metadata();
     const kind = readProgramContainerKind(term ?? '');
     if (kind) {
+      if (!acceptProgramContainerFields(kind, fields.has(key))) throw new TypeError('an ordered program container contains named fields');
       const value = kind === 'array' ? [] : kind === 'map' ? new Map() : {};
       objects.set(key, value);
       active.add(key);

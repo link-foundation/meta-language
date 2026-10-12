@@ -8,6 +8,14 @@ export function readProgramContainerKind(term) {
   return "";
 }
 
+/** @param {string} kind @param {boolean} hasFields @returns {boolean} */
+export function acceptProgramContainerFields(kind, hasFields) {
+  if (kind === "record") return true;
+  if (kind === "array") return !hasFields;
+  if (kind === "map") return !hasFields;
+  return false;
+}
+
 /** @param {string} term @returns {string} */
 export function readProgramScalarKind(term) {
   if (term === "string value") return "string";

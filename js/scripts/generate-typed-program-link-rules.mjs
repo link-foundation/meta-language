@@ -32,6 +32,11 @@ const neutralFields = '/** @param {string} context @param {string} field @return
   + '\n  return "";\n}\n';
 const source = '// Generated from data/typed-program-links-schema.json. Do not edit by hand.\n\n'
   + classify('readProgramContainerKind', schema.containers) + '\n'
+  + '/** @param {string} kind @param {boolean} hasFields @returns {boolean} */\nexport function acceptProgramContainerFields(kind, hasFields) {\n'
+  + Object.entries(schema.containerFieldPolicies).map(([kind, policy]) => {
+    if (!['named', 'positional'].includes(policy)) throw new Error('a container field policy must be named or positional');
+    return `  if (kind === ${JSON.stringify(kind)}) return ${policy === 'named' ? 'true' : '!hasFields'};`;
+  }).join('\n') + '\n  return false;\n}\n\n'
   + classify('readProgramScalarKind', schema.scalars) + '\n'
   + decide('readProgramReferenceRole', referenceRoles, 'term') + '\n'
   + decide('readProgramPatternBindingForm', schema.patternBindingForms) + '\n'
@@ -64,7 +69,7 @@ if (process.argv.includes('--update-styles')) {
   const replace = (from, to) => { if (styled.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); styled = styled.split(from).join(to); } };
   for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence', 'kind', 'operation', 'rounding', 'construct_kind', 'type_kind', 'context', 'field']) replace(`${name}: String`, `${name}: &str`);
   for (const match of [...styled.matchAll(/\([a-z]+ == "[^"\n]*"\)/gu)]) replace(match[0], match[0].slice(1, -1));
-  for (const name of ['accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
+  for (const name of ['accept_program_container_fields', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
     const begin = styled.indexOf(`pub fn ${name}`);
     const end = styled.indexOf('\n}', begin);
     const body = styled.slice(begin, end);
@@ -90,7 +95,7 @@ if (process.argv.includes('--update-styles')) {
     const to = `} else ${styled.slice(opening + 1, cursor - 1).trim()}`;
     replace(from, to);
   }
-  for (const name of ['read_program_container_kind', 'read_program_scalar_kind', 'read_program_reference_role', 'read_program_expression_projection', 'read_program_pattern_binding_form', 'read_program_expression_operand_fields', 'read_program_reference_source_field', 'read_program_reference_target_field', 'read_program_neutral_field_default', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
+  for (const name of ['read_program_container_kind', 'accept_program_container_fields', 'read_program_scalar_kind', 'read_program_reference_role', 'read_program_expression_projection', 'read_program_pattern_binding_form', 'read_program_expression_operand_fields', 'read_program_reference_source_field', 'read_program_reference_target_field', 'read_program_neutral_field_default', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
     replace(`pub fn ${name}`, `/// Read the corresponding decision of the shared typed program links schema.\n#[must_use]\npub fn ${name}`);
   }
   writeFileSync(styleFile, new DecoratorSet([{ id: 'typed-program-link-library-style', level: 'emitter', order: 0,
