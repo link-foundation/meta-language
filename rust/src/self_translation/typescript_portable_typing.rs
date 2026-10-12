@@ -187,10 +187,12 @@ mod tests {
 
     #[test]
     fn native_typing_projection_matches_shared_javascript_annotation_spans() {
-        let fixture: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../parity/fixtures/typescript-erasure.json"
-        ))
-        .unwrap();
+        let source = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../parity/fixtures/typescript-erasure.json"),
+        )
+        .expect("shared TypeScript erasure fixture is available in the test checkout");
+        let fixture: serde_json::Value = serde_json::from_str(&source).unwrap();
         for case in fixture["cases"]
             .as_array()
             .unwrap()

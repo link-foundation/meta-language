@@ -37,6 +37,7 @@ mod items {
     use meta_language::FORMER_CONCEPT_IDS as _;
     use meta_language::FOUR_LANGUAGE_SUPPORT as _;
     use meta_language::FluentPipeline as _;
+    use meta_language::GLOBAL_CONCEPT_PROOF_METHOD as _;
     use meta_language::GRAMMAR_COMMAND_USAGE as _;
     use meta_language::GRAMMAR_DIAGNOSTIC_KINDS as _;
     use meta_language::GRAMMAR_EXPORT_FORMATS as _;
@@ -165,6 +166,7 @@ mod items {
     use meta_language::concept_records_for_source_name as _;
     use meta_language::construct_program as _;
     use meta_language::construct_program_from_fragments as _;
+    use meta_language::create_global_concept_space as _;
     use meta_language::current_concept_id as _;
     use meta_language::decode_program_translation as _;
     use meta_language::decorate_grammar as _;
@@ -185,6 +187,8 @@ mod items {
     use meta_language::emit_peggy as _;
     use meta_language::emit_pest as _;
     use meta_language::emit_tree_sitter_json as _;
+    use meta_language::erase_type_script as _;
+    use meta_language::global_concept_space_to_links as _;
     use meta_language::grammar_emitter as _;
     use meta_language::grammar_expr_concept_id as _;
     use meta_language::grammar_importer as _;
@@ -226,6 +230,7 @@ mod items {
     use meta_language::percent_decode_links_text as _;
     use meta_language::percent_encode_links_text as _;
     use meta_language::query_by_concept_term as _;
+    use meta_language::read_global_concept_space_links as _;
     use meta_language::read_translation_provenance as _;
     use meta_language::reconstruct_grammar as _;
     use meta_language::rename_grammar_rule as _;
@@ -251,12 +256,14 @@ mod items {
     use meta_language::sniff_language as _;
     use meta_language::source_meanings_in as _;
     use meta_language::split_grammar_source as _;
+    use meta_language::translate_global_construct as _;
     use meta_language::translate_native_construct as _;
     use meta_language::translate_native_construct_tree as _;
     use meta_language::translate_program as _;
     use meta_language::translation_contract as _;
     use meta_language::translation_contracts as _;
     use meta_language::validate as _;
+    use meta_language::verify_global_concept_correspondence as _;
 }
 
 /// Every JavaScript export as `(export, Rust path, kind)`.
@@ -285,6 +292,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "constant",
     ),
     ("FluentPipeline", "FluentPipeline", "type"),
+    (
+        "GLOBAL_CONCEPT_PROOF_METHOD",
+        "GLOBAL_CONCEPT_PROOF_METHOD",
+        "constant",
+    ),
     ("GRAMMAR_COMMAND_USAGE", "GRAMMAR_COMMAND_USAGE", "constant"),
     (
         "GRAMMAR_DIAGNOSTIC_KINDS",
@@ -518,6 +530,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "construct_program_from_fragments",
         "function",
     ),
+    (
+        "createGlobalConceptSpace",
+        "create_global_concept_space",
+        "function",
+    ),
     ("createGrammarParser", "compile_feature_grammar", "function"),
     (
         "createProgramSnapshot",
@@ -574,8 +591,14 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("emit_lark", "emit_lark", "function"),
     ("emit_pest", "emit_pest", "function"),
     ("emit_tree_sitter_json", "emit_tree_sitter_json", "function"),
+    ("eraseTypeScript", "erase_type_script", "function"),
     ("fourLanguageSupport", "FOUR_LANGUAGE_SUPPORT", "constant"),
     ("freeze", "LinkNetwork::freeze", "method"),
+    (
+        "globalConceptSpaceToLinks",
+        "global_concept_space_to_links",
+        "function",
+    ),
     ("grammarEmitter", "grammar_emitter", "function"),
     (
         "grammarExprConceptId",
@@ -697,6 +720,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ),
     ("queryByConceptTerm", "query_by_concept_term", "function"),
     (
+        "readGlobalConceptSpaceLinks",
+        "read_global_concept_space_links",
+        "function",
+    ),
+    (
         "readProgramSnapshot",
         "ProgramRepresentation::from_snapshot",
         "method",
@@ -762,6 +790,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("sourceTextPredicateHost", "SourceTextPredicateHost", "type"),
     ("splitGrammarSource", "split_grammar_source", "function"),
     (
+        "translateGlobalConstruct",
+        "translate_global_construct",
+        "function",
+    ),
+    (
         "translateNativeConstruct",
         "translate_native_construct",
         "function",
@@ -775,6 +808,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("translationContract", "translation_contract", "function"),
     ("translationContracts", "translation_contracts", "function"),
     ("validateGrammar", "validate", "function"),
+    (
+        "verifyGlobalConceptCorrespondence",
+        "verify_global_concept_correspondence",
+        "function",
+    ),
 ];
 
 const FIXTURE_ID: &str = "planned:repository-directive:i195-parity-feature-completeness";
