@@ -193,7 +193,8 @@ class JavaScriptParser {
         continue;
       }
       flush();
-      effects.push(this.mainStatement());
+      const effect = this.mainStatement();
+      effects.push(...(Array.isArray(effect) ? effect : [effect]));
     }
     flush();
     if (this.unawaited.length) {
@@ -1158,6 +1159,7 @@ class JavaScriptParser {
   /** Whether the next top-level statement declares or assigns variables, or is a block, if or loop. */
   startsTopLevelImperative() {
     const c = this.cursor;
+    if (c.is('const')) return false;
     if (['let', 'var', 'if', 'for', 'while', 'do'].some((word) => c.is(word)) && c.peek().kind === 'identifier') return true;
     return c.is('{') || this.startsAssignment() || this.startsReferenceAssignment();
   }
@@ -1189,6 +1191,7 @@ class JavaScriptParser {
     if (c.is('const')) {
       if (c.is('{', 1)) throw unsupported('top-level destructuring', 'bind each value with const', span(token, c.peek(1)));
       const binding = this.constStatement(this.readonlyModuleConstants);
+      if (binding.s === 'block' && binding.inline) return binding.body.map(entry => ({ k: 'let', name: entry.name, value: entry.value, constant: true, span: entry.span }));
       if (isLiteralBinding(binding.value)) this.literalBindings.set(binding.name, binding.value);
       return { k: 'let', name: binding.name, value: binding.value, constant: true, span: binding.span };
     }

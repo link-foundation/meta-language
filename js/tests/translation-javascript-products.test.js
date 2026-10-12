@@ -38,6 +38,11 @@ function choose(){const [[value,flag],increment]=make();return flag?value+increm
 console.log(choose()===7);`, ['read', 'true']);
 });
 
+test('top-level nested product destructuring keeps one source evaluation and lexical bindings', () => {
+  equivalent(`function make(){console.log('read');return Object.freeze([Object.freeze([5,true]),2]);}
+const [[value,flag],increment]=make();console.log(flag?value+increment:value);`, ['read', '7']);
+});
+
 test('nested fresh freezes follow actual owned local bindings rather than tuple annotations', () => {
   equivalent(`function make(){const inner=Object.freeze([5,true]);return Object.freeze([inner,2]);}
 const value=make();console.log(value[0][0]===5);console.log(value[0][1]===true);`, ['true', 'true']);
