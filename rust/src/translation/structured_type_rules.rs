@@ -11,6 +11,9 @@
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
+    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
+        index.and_then(|index| values.get(index)).cloned()
+    }
     /// The element at an index; a read outside the array, undefined in
     /// JavaScript, aborts.
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
@@ -32,6 +35,86 @@ pub mod ml_array {
     pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
         left.extend(right);
         left
+    }
+    fn integer(value: f64) -> f64 {
+        if value.is_nan() { 0.0 } else { value.trunc() }
+    }
+    fn relative(value: f64, length: usize) -> usize {
+        let value = integer(value);
+        if value < 0.0 {
+            (length as f64 + value).max(0.0) as usize
+        } else {
+            value.min(length as f64) as usize
+        }
+    }
+    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
+        let start = relative(start, values.len());
+        let end = relative(end, values.len());
+        values[start..end.max(start)].to_vec()
+    }
+    pub fn index_of<T, F: Fn(&T, &T) -> bool>(
+        values: &[T],
+        search: &T,
+        from: f64,
+        reverse: bool,
+        equal: F,
+    ) -> f64 {
+        if values.is_empty() {
+            return -1.0;
+        }
+        let from = integer(from);
+        if reverse {
+            if from < -(values.len() as f64) {
+                return -1.0;
+            }
+            let start = if from < 0.0 {
+                (values.len() as f64 + from) as usize
+            } else {
+                from.min((values.len() - 1) as f64) as usize
+            };
+            (0..=start)
+                .rev()
+                .find(|&index| equal(&values[index], search))
+                .map_or(-1.0, |index| index as f64)
+        } else {
+            let start = if from < 0.0 {
+                (values.len() as f64 + from).max(0.0) as usize
+            } else {
+                from.min(values.len() as f64) as usize
+            };
+            (start..values.len())
+                .find(|&index| equal(&values[index], search))
+                .map_or(-1.0, |index| index as f64)
+        }
+    }
+    pub fn includes<T, F: Fn(&T, &T) -> bool>(
+        values: &[T],
+        search: &T,
+        from: f64,
+        reverse: bool,
+        equal: F,
+    ) -> bool {
+        index_of(values, search, from, reverse, equal) >= 0.0
+    }
+    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
+        let mut out = Vec::new();
+        for value in values {
+            if !out.iter().any(|previous| equal(previous, &value)) {
+                out.push(value);
+            }
+        }
+        out
+    }
+    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
+        let mut out: Vec<(K, V)> = Vec::new();
+        for (key, value) in values {
+            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {
+                out[index].1 = value;
+            } else {
+                out.push((key, value));
+            }
+        }
+        out
     }
 }
 
@@ -80,14 +163,17 @@ pub fn render_portable_type_identity(
         if (kind == "data") {
             format!("{}{}", (String::from("data:")), detail)
         } else {
-            if ((kind == "array") || (kind == "set")) {
+            if (((kind == "array") || (kind == "set")) || (kind == "cell")) {
                 format!(
                     "{}{}",
                     (format!("{}{}", kind, (String::from(":")))),
-                    (crate::translation::structured_type_rules::ml_array::at(
+                    (match crate::translation::structured_type_rules::ml_array::optional_at(
                         &children,
                         crate::translation::structured_type_rules::ml_array::number_index(0f64)
-                    ))
+                    ) {
+                        Some(ml_present) => ml_present.clone(),
+                        None => String::from("undefined"),
+                    })
                 )
             } else {
                 if (kind == "option") {
@@ -98,10 +184,13 @@ pub fn render_portable_type_identity(
                             (format!("{}{}", (String::from("option:")), detail)),
                             (String::from(":"))
                         )),
-                        (crate::translation::structured_type_rules::ml_array::at(
+                        (match crate::translation::structured_type_rules::ml_array::optional_at(
                             &children,
                             crate::translation::structured_type_rules::ml_array::number_index(0f64)
-                        ))
+                        ) {
+                            Some(ml_present) => ml_present.clone(),
+                            None => String::from("undefined"),
+                        })
                     )
                 } else {
                     if (kind == "tuple") {
@@ -137,7 +226,7 @@ pub fn render_portable_type_identity(
                             )
                         } else {
                             if (kind == "map") {
-                                format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("map:")), (crate::translation::structured_type_rules::ml_array::at(&children, crate::translation::structured_type_rules::ml_array::number_index(0f64))))), (String::from(":")))), (crate::translation::structured_type_rules::ml_array::at(&children, crate::translation::structured_type_rules::ml_array::number_index(1f64))))
+                                format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("map:")), (match crate::translation::structured_type_rules::ml_array::optional_at(&children, crate::translation::structured_type_rules::ml_array::number_index(0f64)) { Some(ml_present) => ml_present.clone(), None => String::from("undefined") }))), (String::from(":")))), (match crate::translation::structured_type_rules::ml_array::optional_at(&children, crate::translation::structured_type_rules::ml_array::number_index(1f64)) { Some(ml_present) => ml_present.clone(), None => String::from("undefined") }))
                             } else {
                                 if (kind == "function") {
                                     format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("function:(")), (crate::translation::structured_type_rules::join_type_names(children.clone(), String::from(","))))), (String::from("):")))), detail)
@@ -154,67 +243,91 @@ pub fn render_portable_type_identity(
 }
 
 pub fn render_rust_compound_type(kind: String, detail: String, children: Vec<String>) -> String {
-    if ((kind == "array") || (kind == "set")) {
+    if (kind == "cell") {
         format!(
             "{}{}",
             (format!(
                 "{}{}",
-                (String::from("Vec<")),
-                (crate::translation::structured_type_rules::ml_array::at(
+                (String::from("std::rc::Rc<std::cell::RefCell<")),
+                (match crate::translation::structured_type_rules::ml_array::optional_at(
                     &children,
                     crate::translation::structured_type_rules::ml_array::number_index(0f64)
-                ))
+                ) {
+                    Some(ml_present) => ml_present.clone(),
+                    None => String::from("undefined"),
+                })
             )),
-            (String::from(">"))
+            (String::from(">>"))
         )
     } else {
-        if (kind == "option") {
+        if ((kind == "array") || (kind == "set")) {
             format!(
                 "{}{}",
                 (format!(
                     "{}{}",
-                    (if (detail == "both") {
-                        String::from("crate::MlOptional<")
-                    } else {
-                        String::from("Option<")
-                    }),
-                    (crate::translation::structured_type_rules::ml_array::at(
+                    (String::from("Vec<")),
+                    (match crate::translation::structured_type_rules::ml_array::optional_at(
                         &children,
                         crate::translation::structured_type_rules::ml_array::number_index(0f64)
-                    ))
+                    ) {
+                        Some(ml_present) => ml_present.clone(),
+                        None => String::from("undefined"),
+                    })
                 )),
                 (String::from(">"))
             )
         } else {
-            if ((kind == "tuple") || (kind == "record")) {
+            if (kind == "option") {
                 format!(
                     "{}{}",
                     (format!(
                         "{}{}",
-                        (format!(
-                            "{}{}",
-                            (String::from("(")),
-                            (crate::translation::structured_type_rules::join_type_names(
-                                children.clone(),
-                                String::from(", ")
-                            ))
-                        )),
-                        (if ((children.len() as f64) == (1f64)) {
-                            String::from(",")
+                        (if (detail == "both") {
+                            String::from("crate::MlOptional<")
                         } else {
-                            String::from("")
+                            String::from("Option<")
+                        }),
+                        (match crate::translation::structured_type_rules::ml_array::optional_at(
+                            &children,
+                            crate::translation::structured_type_rules::ml_array::number_index(0f64)
+                        ) {
+                            Some(ml_present) => ml_present.clone(),
+                            None => String::from("undefined"),
                         })
                     )),
-                    (String::from(")"))
+                    (String::from(">"))
                 )
             } else {
-                if (kind == "map") {
-                    format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("Vec<(")), (crate::translation::structured_type_rules::ml_array::at(&children, crate::translation::structured_type_rules::ml_array::number_index(0f64))))), (String::from(", ")))), (crate::translation::structured_type_rules::ml_array::at(&children, crate::translation::structured_type_rules::ml_array::number_index(1f64))))), (String::from(")>")))
+                if ((kind == "tuple") || (kind == "record")) {
+                    format!(
+                        "{}{}",
+                        (format!(
+                            "{}{}",
+                            (format!(
+                                "{}{}",
+                                (String::from("(")),
+                                (crate::translation::structured_type_rules::join_type_names(
+                                    children.clone(),
+                                    String::from(", ")
+                                ))
+                            )),
+                            (if ((children.len() as f64) == (1f64)) {
+                                String::from(",")
+                            } else {
+                                String::from("")
+                            })
+                        )),
+                        (String::from(")"))
+                    )
                 } else {
-                    if (kind == "function") {
-                        format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("std::rc::Rc<dyn Fn(")), (crate::translation::structured_type_rules::join_type_names(children.clone(), String::from(", "))))), (String::from(") -> ")))), detail)), (String::from(">")))
+                    if (kind == "map") {
+                        format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("Vec<(")), (match crate::translation::structured_type_rules::ml_array::optional_at(&children, crate::translation::structured_type_rules::ml_array::number_index(0f64)) { Some(ml_present) => ml_present.clone(), None => String::from("undefined") }))), (String::from(", ")))), (match crate::translation::structured_type_rules::ml_array::optional_at(&children, crate::translation::structured_type_rules::ml_array::number_index(1f64)) { Some(ml_present) => ml_present.clone(), None => String::from("undefined") }))), (String::from(")>")))
                     } else {
-                        String::from("")
+                        if (kind == "function") {
+                            format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("std::rc::Rc<dyn Fn(")), (crate::translation::structured_type_rules::join_type_names(children.clone(), String::from(", "))))), (String::from(") -> ")))), detail)), (String::from(">")))
+                        } else {
+                            String::from("")
+                        }
                     }
                 }
             }
@@ -224,8 +337,32 @@ pub fn render_rust_compound_type(kind: String, detail: String, children: Vec<Str
 
 pub fn read_rust_optional_prelude() -> String {
     String::from(
-        "/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }",
+        "/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }",
     )
+}
+
+pub fn wrap_portable_reference_identity(identity: String, reference: bool) -> String {
+    if reference {
+        format!("{}{}", (String::from("reference:")), identity)
+    } else {
+        identity.clone()
+    }
+}
+
+pub fn render_rust_reference_type(type_: String, reference: bool) -> String {
+    if reference {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (String::from("std::rc::Rc<std::cell::RefCell<")),
+                type_
+            )),
+            (String::from(">>"))
+        )
+    } else {
+        type_.clone()
+    }
 }
 
 pub fn ml_join_type_names_loop1(
@@ -249,10 +386,13 @@ pub fn ml_join_type_names_loop1(
                     let text_4 = format!(
                         "{}{}",
                         text_3,
-                        (crate::translation::structured_type_rules::ml_array::at(
+                        (match crate::translation::structured_type_rules::ml_array::optional_at(
                             &children,
                             crate::translation::structured_type_rules::ml_array::number_index(at)
-                        ))
+                        ) {
+                            Some(ml_present) => ml_present.clone(),
+                            None => String::from("undefined"),
+                        })
                     );
                     {
                         let at_2 = (at + 1f64);

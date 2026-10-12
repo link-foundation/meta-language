@@ -71,7 +71,7 @@ impl LeanEmitter<'_> {
     fn undecidable_type(&self, ty: &Type, nested: bool, seen: &mut HashSet<String>) -> bool {
         match ty {
             Type::Float => true,
-            Type::Array { element } => self.undecidable_type(element, true, seen),
+            Type::Array { element, .. } => self.undecidable_type(element, true, seen),
             Type::Data { name } => nested || self.undecidable(name, seen),
             _ => false,
         }

@@ -38,7 +38,7 @@ export function acceptOptionalAbsence(expected, actual) {
 export function renderPortableTypeIdentity(kind, detail, children) {
   if (kind === 'fixed') return detail;
   if (kind === 'data') return 'data:' + detail;
-  if (kind === 'array' || kind === 'set') return kind + ':' + children[0];
+  if (kind === 'array' || kind === 'set' || kind === 'cell') return kind + ':' + children[0];
   if (kind === 'option') return 'option:' + detail + ':' + children[0];
   if (kind === 'tuple') return 'tuple:[' + joinTypeNames(children, ',') + ']';
   if (kind === 'record') return 'record:' + detail + '[' + joinTypeNames(children, ',') + ']';
@@ -54,6 +54,7 @@ export function renderPortableTypeIdentity(kind, detail, children) {
  * @returns {string}
  */
 export function renderRustCompoundType(kind, detail, children) {
+  if (kind === 'cell') return 'std::rc::Rc<std::cell::RefCell<' + children[0] + '>>';
   if (kind === 'array' || kind === 'set') return 'Vec<' + children[0] + '>';
   if (kind === 'option') return (detail === 'both' ? 'crate::MlOptional<' : 'Option<') + children[0] + '>';
   if (kind === 'tuple' || kind === 'record') return '(' + joinTypeNames(children, ', ') + (children.length === 1 ? ',' : '') + ')';
@@ -64,5 +65,15 @@ export function renderRustCompoundType(kind, detail, children) {
 
 /** @returns {string} */
 export function readRustOptionalPrelude() {
-  return '/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }';
+  return '/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }';
+}
+
+/** @param {string} identity @param {boolean} reference @returns {string} */
+export function wrapPortableReferenceIdentity(identity, reference) {
+  return reference ? 'reference:' + identity : identity;
+}
+
+/** @param {string} type @param {boolean} reference @returns {string} */
+export function renderRustReferenceType(type, reference) {
+  return reference ? 'std::rc::Rc<std::cell::RefCell<' + type + '>>' : type;
 }

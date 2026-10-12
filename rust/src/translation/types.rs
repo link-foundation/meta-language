@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use super::Span;
 use super::structured_type_rules::{
     accept_optional_absence, accept_type_identity, merge_optional_absence,
-    render_portable_type_identity,
+    render_portable_type_identity, wrap_portable_reference_identity,
 };
 
 fn default_absence() -> std::string::String {
@@ -52,8 +52,14 @@ pub enum Type {
     Data {
         name: std::string::String,
     },
-    /// A JavaScript array, which the portable core reads and never mutates.
+    /// A JavaScript array, optionally retaining a shared reference identity.
     Array {
+        element: Box<Self>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        reference: bool,
+    },
+    /// A binding whose value lives in a shared reference cell.
+    Cell {
         element: Box<Self>,
     },
     /// Absence retains the distinction between JavaScript null and undefined.
@@ -71,15 +77,21 @@ pub enum Type {
         fields: Vec<TypeField>,
         #[serde(default, skip_serializing_if = "is_false")]
         open: bool,
+        #[serde(default, skip_serializing_if = "is_false")]
+        reference: bool,
     },
-    /// An insertion-ordered read-only mapping.
+    /// An insertion-ordered mapping, optionally retaining a shared reference identity.
     Map {
         key: Box<Self>,
         value: Box<Self>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        reference: bool,
     },
-    /// An insertion-ordered read-only set.
+    /// An insertion-ordered set, optionally retaining a shared reference identity.
     Set {
         element: Box<Self>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        reference: bool,
     },
     /// The parameter and return types of a callable value.
     Function {
@@ -117,6 +129,7 @@ pub const fn fixed(bits: u32, signed: bool) -> Type {
 pub fn array(element: Type) -> Type {
     Type::Array {
         element: Box::new(element),
+        reference: false,
     }
 }
 
@@ -146,12 +159,15 @@ impl Type {
     #[must_use]
     pub fn children(&self) -> Vec<&Self> {
         match self {
-            Self::Array { element } | Self::Option { element, .. } | Self::Set { element } => {
+            Self::Array { element, .. }
+            | Self::Option { element, .. }
+            | Self::Set { element, .. }
+            | Self::Cell { element } => {
                 vec![element]
             }
             Self::Tuple { elements } => elements.iter().collect(),
             Self::Record { fields, .. } => fields.iter().map(|field| &field.ty).collect(),
-            Self::Map { key, value } => vec![key, value],
+            Self::Map { key, value, .. } => vec![key, value],
             Self::Function { params, ret } => {
                 params.iter().chain(std::iter::once(ret.as_ref())).collect()
             }
@@ -169,18 +185,25 @@ impl Type {
         mut map: impl FnMut(&Self) -> Result<Self, E>,
     ) -> Result<Self, E> {
         Ok(match self {
-            Self::Array { element } => array(map(element)?),
+            Self::Array { element, .. } => Self::Array {
+                element: Box::new(map(element)?),
+                reference: self.is_reference(),
+            },
+            Self::Cell { element } => Self::Cell {
+                element: Box::new(map(element)?),
+            },
             Self::Option { element, absence } => Self::Option {
                 element: Box::new(map(element)?),
                 absence: absence.clone(),
             },
-            Self::Set { element } => Self::Set {
+            Self::Set { element, .. } => Self::Set {
                 element: Box::new(map(element)?),
+                reference: self.is_reference(),
             },
             Self::Tuple { elements } => Self::Tuple {
                 elements: elements.iter().map(&mut map).collect::<Result<_, _>>()?,
             },
-            Self::Record { fields, open } => {
+            Self::Record { fields, open, .. } => {
                 let mut fields: Vec<_> = fields
                     .iter()
                     .map(|field| {
@@ -196,11 +219,13 @@ impl Type {
                 Self::Record {
                     fields,
                     open: *open,
+                    reference: self.is_reference(),
                 }
             }
-            Self::Map { key, value } => Self::Map {
+            Self::Map { key, value, .. } => Self::Map {
                 key: Box::new(map(key)?),
                 value: Box::new(map(value)?),
+                reference: self.is_reference(),
             },
             Self::Function { params, ret } => Self::Function {
                 params: params.iter().map(&mut map).collect::<Result<_, _>>()?,
@@ -219,7 +244,7 @@ impl Type {
                 Vec::new(),
             ),
             Self::Data { name } => (name.clone(), Vec::new()),
-            Self::Array { element } | Self::Set { element } => {
+            Self::Array { element, .. } | Self::Set { element, .. } | Self::Cell { element } => {
                 (std::string::String::new(), vec![element.key()])
             }
             Self::Option { element, absence } => {
@@ -239,7 +264,7 @@ impl Type {
                 std::string::String::new(),
                 elements.iter().map(Self::key).collect(),
             ),
-            Self::Record { fields, open } => {
+            Self::Record { fields, open, .. } => {
                 let mut sorted: Vec<_> = fields.iter().collect();
                 sorted.sort_by(|first, second| {
                     first.name.encode_utf16().cmp(second.name.encode_utf16())
@@ -260,11 +285,28 @@ impl Type {
                     children,
                 )
             }
-            Self::Map { key, value } => (std::string::String::new(), vec![key.key(), value.key()]),
+            Self::Map { key, value, .. } => {
+                (std::string::String::new(), vec![key.key(), value.key()])
+            }
             Self::Function { params, ret } => (ret.key(), params.iter().map(Self::key).collect()),
             _ => (std::string::String::new(), Vec::new()),
         };
-        render_portable_type_identity(self.kind().to_owned(), detail, children)
+        wrap_portable_reference_identity(
+            render_portable_type_identity(self.kind().to_owned(), detail, children),
+            self.is_reference(),
+        )
+    }
+
+    /// Whether a structural value retains a shared mutable reference identity.
+    #[must_use]
+    pub const fn is_reference(&self) -> bool {
+        match self {
+            Self::Array { reference, .. }
+            | Self::Record { reference, .. }
+            | Self::Map { reference, .. }
+            | Self::Set { reference, .. } => *reference,
+            _ => false,
+        }
     }
 
     /// The `kind` discriminant as the JavaScript runtime spells it.
@@ -280,6 +322,7 @@ impl Type {
             Self::Fixed { .. } => "fixed",
             Self::Data { .. } => "data",
             Self::Array { .. } => "array",
+            Self::Cell { .. } => "cell",
             Self::Option { .. } => "option",
             Self::Tuple { .. } => "tuple",
             Self::Record { .. } => "record",
@@ -340,7 +383,7 @@ impl Type {
     #[must_use]
     pub fn element(&self) -> Option<&Self> {
         match self {
-            Self::Array { element } => Some(element),
+            Self::Array { element, .. } => Some(element),
             _ => None,
         }
     }

@@ -237,7 +237,9 @@ impl Inference {
                 name: path.last().cloned().unwrap_or_default(),
             }),
             Some(Type::Nat) => Term::Known(INT),
-            Some(Type::Array { element }) => Term::Array(Box::new(self.declared(Some(element)))),
+            Some(Type::Array { element, .. }) => {
+                Term::Array(Box::new(self.declared(Some(element))))
+            }
             Some(other) => Term::Known(other.clone()),
         }
     }
@@ -519,6 +521,7 @@ impl Inference {
             Term::Known(ty) => ty,
             Term::Array(element) => Type::Array {
                 element: Box::new(self.surface(&element, place)),
+                reference: false,
             },
         }
     }

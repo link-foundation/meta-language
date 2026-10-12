@@ -159,9 +159,8 @@ pub(super) fn declared_signatures(program: &Program, constant: bool) -> Vec<Exte
 
 fn portable(ty: &Type) -> bool {
     match ty {
-        Type::Array { element } => portable(element),
         Type::Data { .. } => false,
-        _ => true,
+        _ => ty.children().into_iter().all(portable),
     }
 }
 

@@ -2,7 +2,7 @@
 // `nat` and `int` are unbounded, `fixed` is a Rust machine integer whose
 // arithmetic aborts on overflow, `float` is a JavaScript Number (an IEEE-754
 // binary64). Data types are named by their qualified path.
-import { acceptTypeIdentity, mergeOptionalAbsence, renderPortableTypeIdentity } from './structured-type-rules.js';
+import { acceptTypeIdentity, mergeOptionalAbsence, renderPortableTypeIdentity, wrapPortableReferenceIdentity } from './structured-type-rules.js';
 
 export const NAT = Object.freeze({ kind: 'nat' });
 export const INT = Object.freeze({ kind: 'int' });
@@ -22,9 +22,14 @@ export function data(name) {
   return Object.freeze({ kind: 'data', name });
 }
 
-/** A JavaScript array whose elements all have one type; the portable core never mutates it. */
-export function array(element) {
-  return Object.freeze({ kind: 'array', element });
+/** A JavaScript array whose checked type can retain a shared reference identity. */
+export function array(element, reference = false) {
+  return Object.freeze({ kind: 'array', element, ...(reference && { reference: true }) });
+}
+
+/** A mutable binding keeps its identity separately from its current value. */
+export function cell(element) {
+  return Object.freeze({ kind: 'cell', element });
 }
 
 /** Absence keeps the distinction between JavaScript null and undefined. */
@@ -40,16 +45,16 @@ export function tuple(elements) {
 }
 
 /** Fields are named; their declaration order is not part of a record's shape. */
-export function record(fields, open = false) {
-  return Object.freeze({ kind: 'record', fields: Object.freeze(fields.map((field) => Object.freeze({ ...field }))), ...(open && { open }) });
+export function record(fields, open = false, reference = false) {
+  return Object.freeze({ kind: 'record', fields: Object.freeze(fields.map((field) => Object.freeze({ ...field }))), ...(open && { open }), ...(reference && { reference: true }) });
 }
 
-export function map(key, value) {
-  return Object.freeze({ kind: 'map', key, value });
+export function map(key, value, reference = false) {
+  return Object.freeze({ kind: 'map', key, value, ...(reference && { reference: true }) });
 }
 
-export function set(element) {
-  return Object.freeze({ kind: 'set', element });
+export function set(element, reference = false) {
+  return Object.freeze({ kind: 'set', element, ...(reference && { reference: true }) });
 }
 
 export function callable(params, ret) {
@@ -57,12 +62,17 @@ export function callable(params, ret) {
 }
 
 export function typeKey(type) {
+  return wrapPortableReferenceIdentity(ordinaryTypeKey(type), Boolean(type.reference) && ['array', 'record', 'map', 'set'].includes(type.kind));
+}
+
+function ordinaryTypeKey(type) {
   switch (type.kind) {
     case 'fixed':
       return renderPortableTypeIdentity(type.kind, `${type.signed ? 'i' : 'u'}${type.bits}`, []);
     case 'data':
       return renderPortableTypeIdentity(type.kind, type.name, []);
     case 'array':
+    case 'cell':
       return renderPortableTypeIdentity(type.kind, '', [typeKey(type.element)]);
     case 'option': {
       const normalized = option(type.element, type.absence ?? 'both');

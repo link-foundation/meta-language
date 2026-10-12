@@ -474,6 +474,13 @@ impl RocqEmitter<'_> {
     }
 
     fn ty(&mut self, ty: &Type) -> Result<String> {
+        if ty.is_reference() || matches!(ty, Type::Cell { .. }) {
+            return Err(unsupported(
+                "mutable structural value",
+                "shared reference state needs an explicit target state model",
+                None,
+            ));
+        }
         Ok(match ty {
             Type::Nat => "N".to_owned(),
             Type::Int => "Z".to_owned(),
@@ -491,7 +498,7 @@ impl RocqEmitter<'_> {
             Type::Unit => "unit".to_owned(),
             Type::Output => "list string".to_owned(),
             Type::Data { name } => self.state.reference(name, "."),
-            Type::Array { element } => {
+            Type::Array { element, .. } => {
                 self.state.encode(
                     "arrays",
                     "a JavaScript array, which the portable core never mutates, is a Rocq list; a read walks it to the index",

@@ -293,6 +293,13 @@ impl LeanEmitter<'_> {
     }
 
     fn ty(&mut self, ty: &Type) -> Result<String> {
+        if ty.is_reference() || matches!(ty, Type::Cell { .. }) {
+            return Err(unsupported(
+                "mutable structural value",
+                "shared reference state needs an explicit target state model",
+                None,
+            ));
+        }
         Ok(match ty {
             Type::Nat => "Nat".to_owned(),
             Type::Int => "Int".to_owned(),
@@ -313,7 +320,7 @@ impl LeanEmitter<'_> {
             Type::Unit => "Unit".to_owned(),
             Type::Output => "List String".to_owned(),
             Type::Data { name } => self.state.reference(name, "."),
-            Type::Array { element } => {
+            Type::Array { element, .. } => {
                 self.state.encode(
                     "arrays",
                     "a JavaScript array, which the portable core never mutates, is a Lean Array; a read outside it panics",

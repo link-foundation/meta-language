@@ -29,16 +29,49 @@ const cases = [
   ['zero parameter function', { kind: 'function', params: [], ret: bool }, 'function:():bool'],
   ['callable function', { kind: 'function', params: [string, bool], ret: string }, 'function:(string,bool):string'],
   ['array of nullable records', { kind: 'array', element: optional(record([['value', bool]]), 'both') }, 'array:option:both:record:[["value","bool"]]'],
+  ['false reference remains readonly', { kind: 'array', element: bool, reference: false }, 'array:bool'],
+  ['reference array', { kind: 'array', element: bool, reference: true }, 'reference:array:bool'],
+  ['reference record', { ...record([['z', bool], ['a', string]]), reference: true }, 'reference:record:[["a","string"],["z","bool"]]'],
+  ['reference map', { kind: 'map', key: string, value: bool, reference: true }, 'reference:map:string:bool'],
+  ['reference set', { kind: 'set', element: string, reference: true }, 'reference:set:string'],
+  ['boolean cell', { kind: 'cell', element: bool }, 'cell:bool'],
+  ['optional reference cell', optional({ kind: 'cell', element: { kind: 'array', element: bool, reference: true } }, 'both'), 'option:both:cell:reference:array:bool'],
 ].map(([name, type, identity]) => {
   if (typeKey(type) !== identity) throw new Error(`${name}: canonical identity differs from independently specified fixture`);
   return { name, type, identity };
 });
-const emissionNames = ['nullable boolean', 'undefined boolean', 'empty tuple', 'singleton tuple', 'ordered tuple', 'empty record', 'sorted record', 'readonly map', 'readonly set', 'zero parameter function', 'callable function', 'array of nullable records'];
+const emissionNames = ['nullable boolean', 'undefined boolean', 'empty tuple', 'singleton tuple', 'ordered tuple', 'empty record', 'sorted record', 'readonly map', 'readonly set', 'zero parameter function', 'callable function', 'array of nullable records', 'reference array', 'reference record', 'reference map', 'reference set', 'boolean cell', 'optional reference cell'];
 const emissionCases = cases.filter(({ name }) => emissionNames.includes(name)).map(({ name, type }) => {
   const surface = { language: 'JavaScript', items: [{ k: 'fn', name: 'identity', params: [{ name: 'value', type }], ret: type, body: { k: 'name', path: ['value'] } }], main: null };
-  return { name, surface, rust: emitRust(checkProgram(surface)).text };
+  const checked = checkProgram(surface);
+  if (typeKey(checked.declarations.get('identity').params[0].type) !== typeKey(type)) throw new Error(`${name}: checker changed the parameter type identity`);
+  const rust = emitRust(checked).text;
+  const referenceTargetTypes = {
+    'reference array': 'std::rc::Rc<std::cell::RefCell<Vec<bool>>>',
+    'reference record': 'std::rc::Rc<std::cell::RefCell<(String, bool)>>',
+    'reference map': 'std::rc::Rc<std::cell::RefCell<Vec<(String, bool)>>>',
+    'reference set': 'std::rc::Rc<std::cell::RefCell<Vec<String>>>',
+    'boolean cell': 'std::rc::Rc<std::cell::RefCell<bool>>',
+    'optional reference cell': 'crate::MlOptional<std::rc::Rc<std::cell::RefCell<std::rc::Rc<std::cell::RefCell<Vec<bool>>>>>>',
+  };
+  const targetType = referenceTargetTypes[name];
+  if (targetType && !rust.includes(`pub fn identity(value: ${targetType}) -> ${targetType}`)) throw new Error(`${name}: Rust signature differs from independently specified reference encoding`);
+  return { name, surface, rust };
 });
-const data = `${JSON.stringify({ cases, emissionCases, optionalPrelude: '/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }' }, null, 2)}\n`;
+const traitCases = [
+  ['nullable boolean retains equality', optional(bool, 'both'), true],
+  ['nullable Number omits total equality', optional({ kind: 'float' }, 'both'), false],
+  ['nested record map Number omits total equality', record([['values', { kind: 'map', key: string, value: { kind: 'float' } }]]), false],
+  ['reference cell Number omits total equality', { kind: 'cell', element: { kind: 'float' } }, false],
+].map(([name, type, totalEquality]) => {
+  const surface = { language: 'JavaScript', items: [{ k: 'data', name: 'Box', ctors: [{ name: 'Wrap', fields: [{ type }] }] }], main: null };
+  const rust = emitRust(checkProgram(surface)).text;
+  const derive = totalEquality ? '#[derive(Clone, Debug, PartialEq, Eq)]\npub enum Box' : '#[derive(Clone, Debug, PartialEq)]\npub enum Box';
+  if (!rust.includes(derive)) throw new Error(`${name}: Rust data traits differ from independent expectation`);
+  return { name, surface, rust, totalEquality };
+});
+const callableData = { language: 'JavaScript', items: [{ k: 'data', name: 'Box', ctors: [{ name: 'Wrap', fields: [{ type: optional(record([['callback', { kind: 'function', params: [], ret: bool }]]), 'both') }] }] }], main: null };
+const data = `${JSON.stringify({ cases, emissionCases, traitCases, callableData, optionalPrelude: '/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }' }, null, 2)}\n`;
 const target = new URL('../../parity/fixtures/translation-structured-types.json', import.meta.url);
 if (process.argv.includes('--check')) {
   if (readFileSync(target, 'utf8') !== data) throw new Error('structured type fixtures have drifted');

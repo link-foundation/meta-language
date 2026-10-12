@@ -1,7 +1,7 @@
 //! Modules, data, functions, theorem runners and propositions.
 
 use crate::translation::structured_type_rules::{
-    read_rust_optional_prelude, render_rust_compound_type,
+    read_rust_optional_prelude, render_rust_compound_type, render_rust_reference_type,
 };
 use std::collections::BTreeSet;
 
@@ -105,14 +105,14 @@ impl<'p> RustEmitter<'p> {
 
     pub(super) fn declaration(&mut self, entry: &'p Decl) -> Result<String> {
         match entry {
-            Decl::Data(_) => Ok(self.data(entry)),
+            Decl::Data(_) => self.data(entry),
             Decl::Fn(_) => self.function(entry),
             Decl::Theorem(_) => self.theorem(entry),
         }
     }
 
     pub(super) fn ty(&mut self, ty: &Type) -> String {
-        match ty {
+        let rendered = match ty {
             Type::Nat | Type::Int => {
                 self.preludes.insert(Prelude::Big);
                 self.state.encode(
@@ -130,12 +130,15 @@ impl<'p> RustEmitter<'p> {
             Type::String => "String".to_owned(),
             Type::Unit => "()".to_owned(),
             Type::Data { name } => format!("crate::{}", self.state.reference(name, "::")),
-            Type::Array { element } => {
+            Type::Array { element, .. } => {
                 self.state.encode(
                     "arrays",
                     "a JavaScript array, which the portable core never mutates, is a Rust Vec; a read outside it panics",
                 );
                 render_rust_compound_type("array".to_owned(), String::new(), vec![self.ty(element)])
+            }
+            Type::Cell { element } => {
+                render_rust_compound_type("cell".to_owned(), String::new(), vec![self.ty(element)])
             }
             Type::Option { element, absence } => {
                 if absence == "both" {
@@ -155,10 +158,10 @@ impl<'p> RustEmitter<'p> {
                 let children = fields.iter().map(|field| self.ty(&field.ty)).collect();
                 render_rust_compound_type("record".to_owned(), String::new(), children)
             }
-            Type::Set { element } => {
+            Type::Set { element, .. } => {
                 render_rust_compound_type("set".to_owned(), String::new(), vec![self.ty(element)])
             }
-            Type::Map { key, value } => {
+            Type::Map { key, value, .. } => {
                 let children = vec![self.ty(key), self.ty(value)];
                 render_rust_compound_type("map".to_owned(), String::new(), children)
             }
@@ -168,7 +171,8 @@ impl<'p> RustEmitter<'p> {
                 render_rust_compound_type("function".to_owned(), result, children)
             }
             other => unreachable!("no Rust type for {}", other.kind()),
-        }
+        };
+        render_rust_reference_type(rendered, ty.is_reference())
     }
 
     pub(super) fn field_type(&mut self, ty: &Type) -> String {
@@ -179,10 +183,23 @@ impl<'p> RustEmitter<'p> {
         }
     }
 
-    pub(super) fn data(&mut self, entry: &'p Decl) -> String {
+    pub(super) fn data(&mut self, entry: &'p Decl) -> Result<String> {
         let Decl::Data(data) = entry else {
             unreachable!("a data declaration")
         };
+        if self.type_contains(
+            &Type::Data {
+                name: data.full_name.clone(),
+            },
+            "function",
+            &mut BTreeSet::new(),
+        ) {
+            return Err(crate::translation::diagnostics::unsupported(
+                "callable data field",
+                "callable fields need their own identity, debug and equality encodings before this target derives structural traits",
+                data.span,
+            ));
+        }
         let name = self.state.local_name(&data.full_name).to_owned();
         self.state.map(entry, &name);
         self.state.encode(
@@ -216,7 +233,7 @@ impl<'p> RustEmitter<'p> {
             lines.push(format!("    {local}({}),", fields.join(", ")));
         }
         lines.push("}".to_owned());
-        lines.join("\n")
+        Ok(lines.join("\n"))
     }
 
     pub(super) fn function(&mut self, entry: &'p Decl) -> Result<String> {
@@ -270,11 +287,28 @@ impl<'p> RustEmitter<'p> {
     }
 
     fn type_holds_float(&self, ty: &Type, seen: &mut BTreeSet<String>) -> bool {
+        self.type_contains(ty, "float", seen)
+    }
+
+    fn type_contains(&self, ty: &Type, kind: &str, seen: &mut BTreeSet<String>) -> bool {
+        if ty.kind() == kind {
+            return true;
+        }
         match ty {
-            Type::Float => true,
-            Type::Array { element } => self.type_holds_float(element, seen),
-            Type::Data { name } => self.holds_float(name, seen),
-            _ => false,
+            Type::Data { name } => {
+                if !seen.insert(name.clone()) {
+                    return false;
+                }
+                self.program.data(name).ctors.iter().any(|ctor| {
+                    ctor.fields
+                        .iter()
+                        .any(|field| self.type_contains(&field.ty, kind, seen))
+                })
+            }
+            _ => ty
+                .children()
+                .iter()
+                .any(|child| self.type_contains(child, kind, seen)),
         }
     }
 

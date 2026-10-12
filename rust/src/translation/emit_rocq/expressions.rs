@@ -189,7 +189,7 @@ impl RocqEmitter<'_> {
             Type::Float => "0%float".to_owned(),
             Type::Unit => "tt".to_owned(),
             Type::Output => "(@nil string)".to_owned(),
-            Type::Array { element } => format!("(@nil {})", self.ty(element)?),
+            Type::Array { element, .. } => format!("(@nil {})", self.ty(element)?),
             Type::Data { name } => {
                 let program = self.program;
                 let entry = program.data(name);
