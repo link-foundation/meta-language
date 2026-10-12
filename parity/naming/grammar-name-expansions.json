@@ -3950,16 +3950,16 @@
           "family": "pattern-prefix-exclusion",
           "rule": "id",
           "pattern": "([^\\s\\\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
-          "excludedPattern": ";|[:=](?![^\\s;.\"(){}@])",
-          "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
+          "excludedPattern": "[;⦃⦄]|[:=](?![^\\s;.\"(){}@])",
+          "reason": "Preserve declaration delimiters, semicolons and Unicode instance braces as lexical delimiters instead of accepting them as identifiers; retain longer operator names where the source allows them.",
           "preserveLexicalIdentity": true
         },
         {
           "family": "pattern-prefix-exclusion",
           "rule": "_qid",
           "pattern": "(([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*\\.)*([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
-          "excludedPattern": ";|[:=](?![^\\s;.\"(){}@])",
-          "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
+          "excludedPattern": "[;⦃⦄]|[:=](?![^\\s;.\"(){}@])",
+          "reason": "Preserve declaration delimiters, semicolons and Unicode instance braces as lexical delimiters instead of accepting them as identifiers; retain longer operator names where the source allows them.",
           "preserveLexicalIdentity": true
         },
         {
@@ -4005,6 +4005,12 @@
           "associativity": "right",
           "value": 0,
           "reason": "Universal quantification retains the complete function-type body instead of reducing before its final arrow, matching the source parser shift."
+        },
+        {
+          "family": "precedence-ordered-choice",
+          "rule": "module_application",
+          "value": 1,
+          "reason": "Prefer the source grammar explicit instance-argument ellipsis production over its general atom alternative, retaining ordinary module arguments and the empty argument list."
         }
       ],
       "concepts": {

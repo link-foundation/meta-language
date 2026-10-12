@@ -476,6 +476,27 @@ export function transformNativeSource(source, transformations = []) {
       grammar.rules[insertInto].members.push({ type: 'ALIAS', named: true, value: alias, content: { type: 'SYMBOL', name: helper } });
       continue;
     }
+    if (decision.family === 'precedence-ordered-choice') {
+      const { rule, value } = decision;
+      if (!Object.hasOwn(grammar.rules, rule) || !Number.isSafeInteger(value)) throw new TypeError('precedence ordering needs an existing rule and integer precedence');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'CHOICE') {
+          const preferred = node.members.filter((member) => ['PREC', 'PREC_LEFT', 'PREC_RIGHT'].includes(member.type) && member.value === value);
+          if (preferred.length > 1) throw new TypeError('precedence ordering must select one alternative per choice');
+          if (preferred.length) {
+            changes += 1;
+            return { type: 'NATIVE_ORDERED_CHOICE', members: [preferred[0], ...node.members.filter((member) => member !== preferred[0])] };
+          }
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('precedence ordering must select exactly one source choice');
+      continue;
+    }
     if (decision.family === 'ordered-variants') {
       const { rule, variants, lookaheadPatterns = {} } = decision;
       let choice = grammar.rules[rule];

@@ -14,6 +14,22 @@ import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
 const rule = (character, length = 80) => character.repeat(length);
 
+test('source precedence ordering selects a full production and retains its fallback', () => {
+  const source = { name: 'arguments', rules: {
+    document: { type: 'CHOICE', members: [{ type: 'PATTERN', value: '[a-z{}.]+' }, { type: 'PREC', value: 1, content: { type: 'SEQ', members: [{ type: 'STRING', value: '{{' }, { type: 'STRING', value: '...' }, { type: 'STRING', value: '}}' }] } }] },
+  } };
+  const decision = { family: 'precedence-ordered-choice', rule: 'document', value: 1 };
+  const before = structuredClone(source);
+  const transformed = transformNativeSource(source, [decision]);
+  assert.deepEqual(source, before);
+  assert.equal(transformed.rules.document.members.length, 2);
+  assert.deepEqual(transformed.rules.document.members[1], source.rules.document.members[0]);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  for (const input of ['{{...}}', 'leaf', '{{leaf}}']) assert.equal(parser.parseTree(input).ok, true, input);
+  assert.throws(() => transformNativeSource(source, [{ ...decision, value: 2 }]), /exactly one source choice/);
+  assert.throws(() => transformNativeSource(source, [{ ...decision, rule: 'missing' }]), /existing rule/);
+});
+
 test('optional symbol shifts retain the absent branch and reject stale decisions', () => {
   const source = { name: 'universe', rules: {
     document: { type: 'SYMBOL', name: 'universe' },
