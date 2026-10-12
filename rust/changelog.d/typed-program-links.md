@@ -13,3 +13,7 @@ checker. The instructions replace the codec's separate expression match and are
 exercised by the same source-free archives in both packages.
 Edited operation names and division rounding policies pass generated admission
 rules before emission. Operator-like strings inside user literals remain data.
+Constructor immutability is an inspectable boolean graph field. Shared archives
+verify mutable JavaScript defaults, explicit freezing and algebraic origin
+defaults; the Rust graph adapter explicitly refuses constructor programs until
+their data projection is supported.

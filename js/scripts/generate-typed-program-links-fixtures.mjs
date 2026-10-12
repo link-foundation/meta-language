@@ -95,6 +95,32 @@ function roundingMutationFixture() {
     replacement: 'trunc\";globalThis.injectionObserved=true;//' };
 }
 
+function constructorImmutabilityFixtures() {
+  const declaration = "/** @typedef {{ $:'value', value:number } | { $:'none' }} Choice */";
+  const mutable = createTypedProgramLinks(`${declaration}function make(){return {$:'value',value:1};}`, 'JavaScript');
+  const frozen = createTypedProgramLinks(`${declaration}function make(){return Object.freeze({$:'value',value:1});}`, 'JavaScript');
+  const editedProgram = decodeTypedProgramLinks(frozen.network, frozen.root);
+  editedProgram.declarations.get('make').body.frozen = false;
+  const edited = encodeTypedProgramLinks(editedProgram);
+  const algebraicProgram = decodeTypedProgramLinks(edited.network, edited.root);
+  algebraicProgram.sourceLanguage = 'Rust';
+  const algebraic = encodeTypedProgramLinks(algebraicProgram);
+  return [['mutable-absent', mutable, false], ['frozen-explicit', frozen, true],
+    ['mutable-edited-false', edited, false], ['algebraic-origin-default', algebraic, true]].map(([id, archive, isFrozen]) => {
+    const javascript = emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code;
+    const descriptors = JSON.parse(vm.runInNewContext(`${javascript}\n(() => {
+      const value = make(); const property = Object.getOwnPropertyDescriptor(value, 'value');
+      return JSON.stringify({ frozen: Object.isFrozen(value), extensible: Object.isExtensible(value),
+        writable: property.writable, configurable: property.configurable, enumerable: property.enumerable,
+        assigned: Reflect.set(value, 'value', 2), value: value.value });
+    })()`, {}, { timeout: 1000 }));
+    const expected = { frozen: isFrozen, extensible: !isFrozen, writable: !isFrozen, configurable: !isFrozen,
+      enumerable: true, assigned: !isFrozen, value: isFrozen ? 1 : 2 };
+    if (JSON.stringify(descriptors) !== JSON.stringify(expected)) throw new Error(`constructor immutability fixture ${id} changed descriptors`);
+    return { id, root: archive.root.asU64(), lino: archive.network.toLino(), javascript, descriptors };
+  });
+}
+
 export function typedProgramLinksFixture() {
   return { schemaVersion: 1, generatedBy: 'js/scripts/generate-typed-program-links-fixtures.mjs',
     cases: inputs.map(([id, language, source, output]) => {
@@ -107,6 +133,7 @@ export function typedProgramLinksFixture() {
     derivedCases: [derivedIndexFixture()],
     operationMutations: operationMutationFixtures(),
     roundingMutations: [roundingMutationFixture()],
+    constructorImmutabilityCases: constructorImmutabilityFixtures(),
     resourceCases: [sharedDagFixture()],
     invalidMachineIntegerWidths: [0, 7, 129, 130],
     invalidFloatingPointSpellings: ['nan', 'infinity', '-infinity', 'nAn', 'iNfInItY'],

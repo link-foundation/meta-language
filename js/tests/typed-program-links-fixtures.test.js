@@ -86,6 +86,27 @@ test('floating-point spellings retain canonical special values', () => {
   }
 });
 
+test('constructor immutability descriptors and origin defaults survive shared archive reload', () => {
+  for (const entry of fixture.constructorImmutabilityCases) {
+    const network = LinkNetwork.fromLino(entry.lino);
+    const root = LinkId.fromU64(entry.root);
+    const code = emitTypedProgramLinks(network, root, 'JavaScript').code;
+    const actual = JSON.parse(vm.runInNewContext(`${code}\n(() => {
+      const value = make(); const property = Object.getOwnPropertyDescriptor(value, 'value');
+      return JSON.stringify({ frozen: Object.isFrozen(value), extensible: Object.isExtensible(value),
+        writable: property.writable, configurable: property.configurable, enumerable: property.enumerable,
+        assigned: Reflect.set(value, 'value', 2), value: value.value });
+    })()`, {}, { timeout: 1000 }));
+    assert.deepEqual(actual, entry.descriptors);
+    assert.equal(code, entry.javascript);
+    if (entry.id !== 'mutable-absent') {
+      const immutability = network.fieldRelations().find((relation) => relation.label === 'constructor immutability');
+      assert.ok(immutability, 'the explicit boolean policy is inspectable linked data');
+      assert.equal(network.link(immutability.child).metadata().term, 'boolean value');
+    }
+  }
+});
+
 function normalized(value) {
   if (value instanceof Map) return [...value].map(([name, value]) => [name, normalized(value)]);
   if (Array.isArray(value)) return value.map(normalized);

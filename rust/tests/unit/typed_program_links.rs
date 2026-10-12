@@ -369,3 +369,38 @@ fn floating_point_special_spellings_cannot_become_undefined_identifiers() {
         );
     }
 }
+
+#[test]
+fn constructor_immutability_flags_are_explicitly_refused_until_data_projection_is_supported() {
+    let fixtures = fixture();
+    for case in fixtures["constructorImmutabilityCases"].as_array().unwrap() {
+        let graph = LinkNetwork::from_lino(case["lino"].as_str().unwrap()).unwrap();
+        let root = LinkId::from_u64(case["root"].as_u64().unwrap());
+        if case["id"].as_str() != Some("mutable-absent") {
+            let immutability = graph
+                .links()
+                .find_map(|link| match link.references() {
+                    [_, label, child]
+                        if graph.link(*label).and_then(|label| label.metadata().term())
+                            == Some("constructor immutability") =>
+                    {
+                        Some(*child)
+                    }
+                    _ => None,
+                })
+                .expect("the schema retains the explicit constructor boolean");
+            assert_eq!(
+                graph.link(immutability).unwrap().metadata().term(),
+                Some("boolean value")
+            );
+        }
+        for target in ["JavaScript", "Rust"] {
+            assert!(
+                emit_typed_program_links(&graph, root, target)
+                    .unwrap_err()
+                    .message
+                    .contains("does not yet")
+            );
+        }
+    }
+}
