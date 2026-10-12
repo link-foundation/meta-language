@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "source": "https://github.com/link-foundation/meta-language/issues/199#issuecomment-6101425254",
+  "cases": [
+    {"name": "next-line", "input": "\u0085x\u0085", "rust": ["x", "x\u0085", "\u0085x"], "javascript": ["\u0085x\u0085", "\u0085x\u0085", "\u0085x\u0085"]},
+    {"name": "byte-order-mark", "input": "\ufeffx\ufeff", "rust": ["\ufeffx\ufeff", "\ufeffx\ufeff", "\ufeffx\ufeff"], "javascript": ["x", "x\ufeff", "\ufeffx"]},
+    {"name": "ascii", "input": " \t\nx\r\n ", "rust": ["x", "x\r\n ", " \t\nx"], "javascript": ["x", "x\r\n ", " \t\nx"]},
+    {"name": "non-breaking-space", "input": "\u00a0x\u00a0", "rust": ["x", "x\u00a0", "\u00a0x"], "javascript": ["x", "x\u00a0", "\u00a0x"]},
+    {"name": "supplementary-unicode", "input": "\u3000😀 café\u3000", "rust": ["😀 café", "😀 café\u3000", "\u3000😀 café"], "javascript": ["😀 café", "😀 café\u3000", "\u3000😀 café"]},
+    {"name": "distinct-boundaries", "input": "\u0085\ufeff😀\ufeff\u0085", "rust": ["\ufeff😀\ufeff", "\ufeff😀\ufeff\u0085", "\u0085\ufeff😀\ufeff"], "javascript": ["\u0085\ufeff😀\ufeff\u0085", "\u0085\ufeff😀\ufeff\u0085", "\u0085\ufeff😀\ufeff\u0085"]}
+  ]
+}

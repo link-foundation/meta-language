@@ -14,6 +14,7 @@ import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState, withParts } from './emit-common.js';
+import { STRING_PRELUDE } from './string-runtime.js';
 import { acceptConstantEmission, constantBindingForm, renderConstantBinding } from './frontend-rules.js';
 
 const KEYWORDS = new Set([
@@ -493,7 +494,7 @@ pub mod ml_math {
     }
 }`;
 
-const ARRAY_PRELUDE = `/// Reads of JavaScript arrays, which the portable core never mutates.
+const LEGACY_ARRAY_PRELUDE = `/// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
     /// The element at an index; a read outside the array, undefined in
     /// JavaScript, aborts.
@@ -519,6 +520,72 @@ pub mod ml_array {
     }
 }`;
 
+const ARRAY_PRELUDE = `/// Reads of JavaScript arrays, which the portable core never mutates.
+pub mod ml_array {
+    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
+        index.and_then(|index| values.get(index)).cloned()
+    }
+    /// The element at an index; a read outside the array, undefined in
+    /// JavaScript, aborts.
+    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
+        match index.and_then(|index| values.get(index)) {
+            Some(value) => value.clone(),
+            None => panic!("array index out of range"),
+        }
+    }
+
+    /// The index a Number names: a non-negative integer, -0 included.
+    pub fn number_index(index: f64) -> Option<usize> {
+        if index >= 0.0 && index.fract() == 0.0 && index < 9007199254740992.0 {
+            Some(index as usize)
+        } else {
+            None
+        }
+    }
+
+    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
+        left.extend(right);
+        left
+    }
+    fn integer(value: f64) -> f64 { if value.is_nan() { 0.0 } else { value.trunc() } }
+    fn relative(value: f64, length: usize) -> usize {
+        let value = integer(value);
+        if value < 0.0 { (length as f64 + value).max(0.0) as usize } else { value.min(length as f64) as usize }
+    }
+    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
+        let start = relative(start, values.len()); let end = relative(end, values.len());
+        values[start..end.max(start)].to_vec()
+    }
+    pub fn index_of<T, F: Fn(&T, &T) -> bool>(values: &[T], search: &T, from: f64, reverse: bool, equal: F) -> f64 {
+        if values.is_empty() { return -1.0; }
+        let from = integer(from);
+        if reverse {
+            if from < -(values.len() as f64) { return -1.0; }
+            let start = if from < 0.0 { (values.len() as f64 + from) as usize } else { from.min((values.len() - 1) as f64) as usize };
+            (0..=start).rev().find(|&index| equal(&values[index], search)).map_or(-1.0, |index| index as f64)
+        } else {
+            let start = if from < 0.0 { (values.len() as f64 + from).max(0.0) as usize } else { from.min(values.len() as f64) as usize };
+            (start..values.len()).find(|&index| equal(&values[index], search)).map_or(-1.0, |index| index as f64)
+        }
+    }
+    pub fn includes<T, F: Fn(&T, &T) -> bool>(values: &[T], search: &T, from: f64, reverse: bool, equal: F) -> bool {
+        index_of(values, search, from, reverse, equal) >= 0.0
+    }
+    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
+        let mut out = Vec::new();
+        for value in values { if !out.iter().any(|previous| equal(previous, &value)) { out.push(value); } }
+        out
+    }
+    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
+        let mut out: Vec<(K, V)> = Vec::new();
+        for (key, value) in values {
+            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) { out[index].1 = value; }
+            else { out.push((key, value)); }
+        }
+        out
+    }
+}`;
+
 function ident(name) {
   let result = name.replace(/[^A-Za-z0-9_]/gu, '_');
   if (/^[0-9]/u.test(result) || result.startsWith('__') || result === '_' || result === '') result = `x${result}`;
@@ -539,6 +606,9 @@ function camel(name) {
 }
 
 const COPY = new Set(['bool', 'fixed', 'float', 'unit']);
+const OPTIONAL_PRELUDE = `/// A nullable value retains the distinct JavaScript null and undefined cases.
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlOptional<T> { Value(T), Null, Undefined }`;
 
 export function emitRust(program) {
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
@@ -586,7 +656,7 @@ export function emitRustConstants(program) {
     ...(emitter.usesBig ? [PRELUDE] : []),
     ...(emitter.usesNumber ? [NUMBER_PRELUDE] : []),
     ...(emitter.usesMath ? [MATH_PRELUDE] : []),
-    ...(emitter.usesArray ? [ARRAY_PRELUDE] : []),
+    ...(emitter.usesArray ? [(emitter.usesStandardArray ? ARRAY_PRELUDE : LEGACY_ARRAY_PRELUDE)] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
@@ -602,7 +672,16 @@ class RustEmitter {
     this.usesBig = false;
     this.usesNumber = false;
     this.usesArray = false;
+    this.usesStandardArray = false;
     this.usesMath = false;
+    this.usesOptional = false;
+    const needsUnits = (node) => {
+      if (!node || typeof node !== 'object') return false;
+      if (node.k === 'method' && node.object.type.kind === 'string') return true;
+      return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));
+    };
+    this.utf16Strings = Boolean(program.utf16Strings) || [...program.declarations.values()].some(needsUnits) || needsUnits(program.main);
+    if (this.utf16Strings) this.state.encode('utf16-strings', 'strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8');
   }
 
   file() {
@@ -626,7 +705,9 @@ class RustEmitter {
       ...(this.usesBig ? [PRELUDE, ''] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE, ''] : []),
       ...(this.usesMath ? [MATH_PRELUDE, ''] : []),
-      ...(this.usesArray ? [ARRAY_PRELUDE, ''] : []),
+      ...(this.usesArray ? [(this.usesStandardArray ? ARRAY_PRELUDE : LEGACY_ARRAY_PRELUDE), ''] : []),
+      ...(this.utf16Strings ? [STRING_PRELUDE, ''] : []),
+      ...(this.usesOptional ? [OPTIONAL_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -634,7 +715,9 @@ class RustEmitter {
       ...(this.usesBig ? [PRELUDE] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE] : []),
       ...(this.usesMath ? [MATH_PRELUDE] : []),
-      ...(this.usesArray ? [ARRAY_PRELUDE] : []),
+      ...(this.usesArray ? [(this.usesStandardArray ? ARRAY_PRELUDE : LEGACY_ARRAY_PRELUDE)] : []),
+      ...(this.utf16Strings ? [STRING_PRELUDE] : []),
+      ...(this.usesOptional ? [OPTIONAL_PRELUDE] : []),
     ];
     return withParts({
       language: 'Rust',
@@ -669,7 +752,7 @@ class RustEmitter {
     if (k === 'fn') return `${externalName(k, e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
     // A literal Number, boolean or machine integer is a const, a literal string a &str const, and any other value a static.
     if (literal && COPY.has(e.type.kind)) return e.fn;
-    if (literal && e.type.kind === 'string') return `String::from(${e.fn})`;
+    if (literal && e.type.kind === 'string') return this.utf16Strings ? `crate::ml_string::Text::from_text(${e.fn})` : `String::from(${e.fn})`;
     return COPY.has(e.type.kind) ? `*${e.fn}` : `${e.fn}.clone()`;
   }
 
@@ -703,7 +786,23 @@ class RustEmitter {
       case 'bool':
         return 'bool';
       case 'string':
-        return 'String';
+        return this.utf16Strings ? 'crate::ml_string::Text' : 'String';
+      case 'option':
+        if (type.absence === 'both') {
+          this.usesOptional = true;
+          return `crate::MlOptional<${this.type(type.element)}>`;
+        }
+        return `Option<${this.type(type.element)}>`;
+      case 'tuple':
+        return `(${type.elements.map((element) => this.type(element)).join(', ')}${type.elements.length === 1 ? ',' : ''})`;
+      case 'record':
+        return `(${type.fields.map((field) => this.type(field.type)).join(', ')}${type.fields.length === 1 ? ',' : ''})`;
+      case 'function':
+        return `std::rc::Rc<dyn Fn(${type.params.map((param) => this.type(param)).join(', ')}) -> ${this.type(type.ret)}>`;
+      case 'set':
+        return `Vec<${this.type(type.element)}>`;
+      case 'map':
+        return `Vec<(${this.type(type.key)}, ${this.type(type.value)})>`;
       case 'unit':
         return '()';
       case 'data':
@@ -894,6 +993,7 @@ class RustEmitter {
 
   /** A comparison operand: read in place, a string literal as a `&str`. */
   compared(e) {
+    if (this.utf16Strings && e.type.kind === 'string') return this.receiver(e);
     if (e.k === 'lit' && e.type.kind === 'string') return rustString(String(e.value));
     if (e.k === 'call' && this.externals.get(e.fn)?.literal && e.type.kind === 'string') return e.fn;
     return this.receiver(e);
@@ -902,6 +1002,101 @@ class RustEmitter {
   /** A method receiver: `&self` methods borrow a variable in place. */
   receiver(e) {
     return e.k === 'var' ? e.name : `(${this.expr(e)})`;
+  }
+
+  lambda(e) {
+    const captured = new Map();
+    const visit = (node, bound) => {
+      if (!node || typeof node !== 'object') return;
+      if (node.k === 'var' && !bound.has(node.name)) captured.set(node.name, node.type);
+      if (node.k === 'let') {
+        visit(node.value, bound);
+        visit(node.body, new Set([...bound, node.name]));
+        return;
+      }
+      if (node.k === 'lambda') {
+        visit(node.body, new Set([...bound, ...node.params.map((param) => param.name)]));
+        return;
+      }
+      if (node.k === 'match') {
+        visit(node.scrutinee, bound);
+        for (const kase of node.cases) {
+          const names = kase.pattern.k === 'bind' || kase.pattern.k === 'natSucc' ? [kase.pattern.name] : (kase.pattern.binds ?? []).filter(Boolean);
+          visit(kase.body, new Set([...bound, ...names]));
+        }
+        return;
+      }
+      for (const [key, value] of Object.entries(node)) {
+        if (key === 'type' || key === 'span') continue;
+        if (Array.isArray(value)) value.forEach((item) => visit(item, bound));
+        else visit(value, bound);
+      }
+    };
+    visit(e.body, new Set(e.params.map((param) => param.name)));
+    const copies = [...captured].map(([name, type]) => `let ${name} = ${this.own(name, type)};`);
+    const closure = `std::rc::Rc::new(move |${e.params.map((param) => `${param.name}: ${this.type(param.type)}`).join(', ')}| -> ${this.type(e.type.ret)} { ${this.expr(e.body)} })`;
+    return copies.length ? `{ ${copies.join(' ')} ${closure} }` : closure;
+  }
+
+  method(e) {
+    if (e.object.type.kind === 'string') {
+      const names = { indexOf: 'index_of', lastIndexOf: 'last_index_of', codePointAt: 'code_point_at' };
+      const object = this.receiver(e.object);
+      const argumentsText = e.args.map((arg) => arg === null ? 'None' : arg.type.kind === 'string' ? this.borrow(arg) : this.expr(arg));
+      if (e.op === 'split') return `${object}.split(${e.args[0] === null ? 'None' : `Some(${argumentsText[0]})`}, ${argumentsText[1]})`;
+      if (e.op === 'replace' || e.op === 'replaceAll') return `${object}.replace(${argumentsText.join(', ')}, ${e.op === 'replaceAll'})`;
+      if (e.op === 'padStart' || e.op === 'padEnd') return `${object}.pad(${argumentsText.join(', ')}, ${e.op === 'padStart'})`;
+      return `${object}.${names[e.op] ?? e.op}(${argumentsText.join(', ')})`;
+    }
+    if (e.object.type.kind === 'array') {
+      this.usesArray = true;
+      if (['slice', 'indexOf', 'lastIndexOf', 'includes'].includes(e.op)) this.usesStandardArray = true;
+      if (e.op === 'join') {
+        if (e.object.type.element.kind === 'string') return this.utf16Strings ? `crate::ml_string::join(${this.borrow(e.object)}, ${this.borrow(e.args[0])})` : `${this.receiver(e.object)}.join(${this.receiver(e.args[0])}.as_str())`;
+        const text = (name, type) => {
+          if (type.kind === 'option') {
+            const empty = this.literal({ type: { kind: 'string' }, value: '' });
+            if (type.absence === 'both') { this.usesOptional = true; return `match ${name} { crate::MlOptional::Value(ml_present) => ${text('ml_present', type.element)}, _ => ${empty} }`; }
+            return `match ${name} { Some(ml_present) => ${text('ml_present', type.element)}, None => ${empty} }`;
+          }
+          return this.expr({ k: 'toString', arg: { k: 'var', name, type }, type: { kind: 'string' } });
+        };
+        const values = `${this.receiver(e.object)}.iter().cloned().map(|ml_value| ${text('ml_value', e.object.type.element)}).collect::<Vec<_>>()`;
+        return this.utf16Strings ? `crate::ml_string::join(&${values}, ${this.borrow(e.args[0])})` : `(${values}).join(${this.receiver(e.args[0])}.as_str())`;
+      }
+      if (e.op === 'slice') return `crate::ml_array::slice(${this.borrow(e.object)}, ${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+      if (['indexOf', 'lastIndexOf', 'includes'].includes(e.op)) {
+        const comparator = e.op === 'includes' && e.object.type.element.kind === 'float' ? '|a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan())' : '|a, b| a == b';
+        return `crate::ml_array::${e.op === 'includes' ? 'includes' : 'index_of'}(${this.borrow(e.object)}, &${this.expr(e.args[0])}, ${this.expr(e.args[1])}, ${e.op === 'lastIndexOf'}, ${comparator})`;
+      }
+      this.temporaries += 1;
+      const suffix = this.temporaries;
+      const values = `ml_values${suffix}`;
+      const callback = `ml_callback${suffix}`;
+      const index = `ml_index${suffix}`;
+      const value = `ml_value${suffix}`;
+      const fn = e.args[0];
+      const available = e.op === 'reduce' ? [`ml_accumulator${suffix}`, value, `(${index} as f64)`, `${values}.clone()`] : [value, `(${index} as f64)`, `${values}.clone()`];
+      const call = `${callback}(${available.slice(0, fn.type.params.length).join(', ')})`;
+      const head = `let ${values} = ${this.expr(e.object)}; let ${callback} = ${this.expr(fn)};`;
+      const iterator = `${values}.iter().cloned().enumerate()`;
+      if (e.op === 'some' || e.op === 'every') return `{ ${head} ${iterator}.${e.op === 'some' ? 'any' : 'all'}(|(${index}, ${value})| ${call}) }`;
+      if (e.op === 'findIndex') return `{ ${head} ${iterator}.position(|(${index}, ${value})| ${call}).map_or(-1f64, |ml_position| ml_position as f64) }`;
+      if (e.op === 'map') return `{ ${head} ${iterator}.map(|(${index}, ${value})| ${call}).collect::<Vec<_>>() }`;
+      if (e.op === 'flatMap') return `{ ${head} ${iterator}.flat_map(|(${index}, ${value})| ${call}).collect::<Vec<_>>() }`;
+      if (e.op === 'filter' || e.op === 'find') {
+        const predicateArgs = available.slice(0, fn.type.params.length).map((argument, index) => index === 0 ? `${value}.clone()` : argument);
+        const predicate = `${callback}(${predicateArgs.join(', ')})`;
+        if (e.op === 'filter') return `{ ${head} ${iterator}.filter_map(|(${index}, ${value})| if ${predicate} { Some(${value}) } else { None }).collect::<Vec<_>>() }`;
+        return `{ ${head} ${iterator}.find_map(|(${index}, ${value})| if ${predicate} { Some(${value}) } else { None }) }`;
+      }
+      if (e.op === 'forEach') return `{ ${head} for (${index}, ${value}) in ${iterator} { ${call}; } () }`;
+      if (e.op === 'reduce') {
+        if (e.args.length === 1) return `{ ${head} let mut ml_iterator${suffix} = ${iterator}; let ml_initial${suffix} = ml_iterator${suffix}.next().map(|(_, ml_first)| ml_first).expect("Reduce of empty array with no initial value"); ml_iterator${suffix}.fold(ml_initial${suffix}, |ml_accumulator${suffix}, (${index}, ${value})| ${call}) }`;
+        return `{ ${head} ${iterator}.fold(${this.expr(e.args[1])}, |ml_accumulator${suffix}, (${index}, ${value})| ${call}) }`;
+      }
+    }
+    throw unsupported(`method call .${e.op}()`, 'the Rust target has no operational encoding for this method', e.span);
   }
 
   expr(e) {
@@ -915,6 +1110,97 @@ class RustEmitter {
       case 'call':
         if (this.externals.has(e.fn)) return this.external(e, this.externals.get(e.fn));
         return `crate::${this.state.ref(e.fn, '::')}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+      case 'functionRef':
+        return `std::rc::Rc::new(crate::${this.state.ref(e.fn, '::')})`;
+      case 'apply':
+        return `(${this.expr(e.fn)})(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+      case 'lambda':
+        return this.lambda(e);
+      case 'method':
+        return this.method(e);
+      case 'record':
+        return `(${e.entries.map((entry) => this.expr(entry.value)).join(', ')}${e.entries.length === 1 ? ',' : ''})`;
+      case 'recordField':
+        return `(${this.expr(e.object)}).${e.index}`;
+      case 'tuple':
+        return `(${e.items.map((item) => this.expr(item)).join(', ')}${e.items.length === 1 ? ',' : ''})`;
+      case 'tupleIndex':
+        return `(${this.expr(e.object)}).${e.index}`;
+      case 'none':
+        if (e.type.absence === 'both') {
+          this.usesOptional = true;
+          return `crate::MlOptional::${e.absence === 'null' ? 'Null' : 'Undefined'}`;
+        }
+        return `None::<${this.type(e.type.element)}>`;
+      case 'some':
+        if (e.type.absence === 'both') {
+          this.usesOptional = true;
+          return `crate::MlOptional::Value(${this.expr(e.value)})`;
+        }
+        return `Some(${this.expr(e.value)})`;
+      case 'flattenOption': {
+        if (e.type.absence === 'both') this.usesOptional = true;
+        const absent = (absence) => e.type.absence === 'both' ? `crate::MlOptional::${absence === 'null' ? 'Null' : 'Undefined'}` : 'None';
+        const present = e.type.absence === 'both' ? 'crate::MlOptional::Value(ml_present)' : 'Some(ml_present)';
+        const cases = (type, binder, body) => type.absence === 'both'
+          ? `crate::MlOptional::Value(${binder}) => ${body}, crate::MlOptional::Null => ${absent('null')}, crate::MlOptional::Undefined => ${absent('undefined')}`
+          : `Some(${binder}) => ${body}, None => ${absent(type.absence)}`;
+        return `match ${this.expr(e.value)} { ${cases(e.value.type, 'ml_nested', `match ml_nested { ${cases(e.value.type.element, 'ml_present', present)} }`)} }`;
+      }
+      case 'coalesce':
+        if (e.left.type.absence === 'both') {
+          this.usesOptional = true;
+          return `match ${this.expr(e.left)} { crate::MlOptional::Value(ml_value) => ml_value, _ => ${this.expr(e.right)} }`;
+        }
+        return `${this.receiver(e.left)}.clone().unwrap_or_else(|| ${this.expr(e.right)})`;
+      case 'optionalField': {
+        if (e.object.type.absence === 'both') {
+          this.usesOptional = true;
+          return `match ${this.expr(e.object)} { crate::MlOptional::Value(ml_record) => Some(ml_record.${e.index}), _ => None }`;
+        }
+        return `${this.receiver(e.object)}.clone().map(|ml_record| ml_record.${e.index})`;
+      }
+      case 'optionalProject': {
+        const element = e.object.type.element;
+        const length = element.kind === 'string' ? this.utf16Strings ? 'ml_value.length()' : renderStringLengthExpression('Rust', 'ml_value') : '(ml_value.len() as f64)';
+        if (e.object.type.absence === 'both') {
+          this.usesOptional = true;
+          return `match ${this.expr(e.object)} { crate::MlOptional::Value(ml_value) => Some(${length}), _ => None }`;
+        }
+        return `${this.receiver(e.object)}.clone().map(|ml_value| ${length})`;
+      }
+      case 'optionalIndex': {
+        this.usesArray = true;
+        this.usesStandardArray = true;
+        const index = e.index.type.kind === 'float' ? `crate::ml_array::number_index(${this.expr(e.index)})` : `${this.receiver(e.index)}.to_index()`;
+        return `crate::ml_array::optional_at(${this.borrow(e.array)}, ${index})`;
+      }
+      case 'stringPoints':
+        return this.utf16Strings ? `${this.receiver(e.object)}.code_points()` : `${this.receiver(e.object)}.chars().map(|ml_character| ml_character.to_string()).collect::<Vec<String>>()`;
+      case 'set':
+      case 'map': {
+        this.usesArray = true;
+        this.usesStandardArray = true;
+        const key = e.k === 'set' ? e.type.element : e.type.key;
+        const comparator = key.kind === 'float' ? '|a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan())' : '|a, b| a == b';
+        let values = this.expr(e.k === 'set' ? e.items : e.entries);
+        if (key.kind === 'float') values = `(${values}).into_iter().map(|ml_value| ${e.k === 'set' ? 'if ml_value == 0f64 { 0f64 } else { ml_value }' : '(if ml_value.0 == 0f64 { 0f64 } else { ml_value.0 }, ml_value.1)'}).collect::<Vec<_>>()`;
+        return `crate::ml_array::${e.k}(${values}, ${comparator})`;
+      }
+      case 'collectionSize':
+        return `(${this.receiver(e.object)}.len() as f64)`;
+      case 'collectionRead': {
+        const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
+        const equal = keyType.kind === 'float' ? '(ml_key == &ml_search || (ml_key.is_nan() && ml_search.is_nan()))' : 'ml_key == &ml_search';
+        const binds = e.object.type.kind === 'map' ? '(ml_key, ml_value)' : 'ml_key';
+        return `{ let ml_collection = ${this.expr(e.object)}; let ml_search = ${this.expr(e.key)}; ml_collection.iter().${e.op === 'get' ? `find_map(|${binds}| if ${equal} { Some(ml_value.clone()) } else { None })` : `any(|${binds}| ${equal})`} }`;
+      }
+      case 'collectionItems': {
+        const map = e.object.type.kind === 'map';
+        if (e.op === 'entries') return map ? this.expr(e.object) : `${this.receiver(e.object)}.iter().map(|ml_value| (ml_value.clone(), ml_value.clone())).collect::<Vec<_>>()`;
+        if (!map) return this.expr(e.object);
+        return `${this.receiver(e.object)}.iter().map(|ml_pair| ml_pair.${e.op === 'keys' ? 0 : 1}.clone()).collect::<Vec<_>>()`;
+      }
       case 'ctor': {
         const entry = this.program.declarations.get(e.data);
         const ctor = entry.ctors.find((candidate) => candidate.name === e.ctor);
@@ -945,12 +1231,23 @@ class RustEmitter {
         }
         if (e.arg.type.kind === 'float') {
           this.usesNumber = true;
-          return `crate::ml_number::${e.console ? 'js_console' : 'js_number'}(${this.expr(e.arg)})`;
+          const text = `crate::ml_number::${e.console ? 'js_console' : 'js_number'}(${this.expr(e.arg)})`;
+          return this.utf16Strings ? `crate::ml_string::Text::from_text(&${text})` : text;
         }
-        return `${this.receiver(e.arg)}.to_string()`;
+        return this.utf16Strings ? `crate::ml_string::Text::from_text(&${this.receiver(e.arg)}.to_string())` : `${this.receiver(e.arg)}.to_string()`;
       case 'stringMap':
+        if (this.utf16Strings) {
+          if (e.op === 'toLowerCase' || e.op === 'toUpperCase') return `${this.receiver(e.string)}.map_case(${e.op === 'toUpperCase'})`;
+          const start = !['trimEnd', 'rustTrimEnd'].includes(e.op);
+          const end = !['trimStart', 'rustTrimStart'].includes(e.op);
+          return `${this.receiver(e.string)}.trim(${start}, ${end}, ${e.op.startsWith('rust')})`;
+        }
         return renderStringMapExpression('Rust', e.op, this.receiver(e.string));
       case 'stringTest': {
+        if (this.utf16Strings) {
+          const method = { startsWith: 'starts_with', endsWith: 'ends_with', includes: 'contains' }[e.op];
+          return `${this.receiver(e.string)}.${method}(${this.borrow(e.search)})`;
+        }
         const search = e.search.k === 'lit' ? rustString(String(e.search.value)) : `${this.receiver(e.search)}.as_str()`;
         return renderStringTestExpression('Rust', e.op, this.receiver(e.string), search);
       }
@@ -972,7 +1269,7 @@ class RustEmitter {
         return `crate::ml_array::at(${this.borrow(e.array)}, ${index})`;
       }
       case 'length':
-        if (e.array.type.kind === 'string') return renderStringLengthExpression('Rust', this.receiver(e.array));
+        if (e.array.type.kind === 'string') return this.utf16Strings ? `${this.receiver(e.array)}.length()` : renderStringLengthExpression('Rust', this.receiver(e.array));
         if (e.type.kind === 'float') return `(${this.receiver(e.array)}.len() as f64)`;
         this.usesBig = true;
         return `crate::ml::Big::from_u128(${this.receiver(e.array)}.len() as u128)`;
@@ -1036,6 +1333,7 @@ class RustEmitter {
       case 'bool':
         return String(e.value);
       case 'string':
+        if (this.utf16Strings) return `crate::ml_string::Text::from_units(vec![${Array.from({ length: String(e.value).length }, (_, index) => String(e.value).charCodeAt(index)).join(', ')}])`;
         return `String::from(${rustString(String(e.value))})`;
       default:
         throw new Error(`no Rust literal for ${e.type.kind}`);
@@ -1059,6 +1357,7 @@ class RustEmitter {
       case 'or':
         return `(${this.expr(e.left)} || ${this.expr(e.right)})`;
       case 'concat':
+        if (this.utf16Strings) return `${this.receiver(e.left)}.concat(${this.borrow(e.right)})`;
         return `format!("{}{}", ${this.receiver(e.left)}, ${this.receiver(e.right)})`;
       case 'eq':
       case 'ne':

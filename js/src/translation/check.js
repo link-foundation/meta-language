@@ -136,6 +136,7 @@ class Checker {
         type: this.resolveType(param.type, itemPath, item.span),
         guard: param.guard ?? null,
         default: param.default ?? null,
+        ...(param.optional && { optional: true }),
       }));
       entry.ret = this.resolveType(item.ret, itemPath, item.span);
     });
@@ -177,6 +178,11 @@ class Checker {
   resolveType(type, path, span) {
     if (!type) throw typeError('missing type annotation', span);
     if (type.kind === 'array') return array(this.resolveType(type.element, path, span));
+    if (type.kind === 'option' || type.kind === 'set') return { ...type, element: this.resolveType(type.element, path, span) };
+    if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.resolveType(element, path, span)) };
+    if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.resolveType(field.type, path, span) })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0) };
+    if (type.kind === 'map') return { ...type, key: this.resolveType(type.key, path, span), value: this.resolveType(type.value, path, span) };
+    if (type.kind === 'function') return { ...type, params: type.params.map((param) => this.resolveType(param.type ?? param, path, span)), ret: this.resolveType(type.ret, path, span) };
     if (type.kind !== 'named') return type;
     const entry = this.lookup(type.path, path, span);
     if (!entry || entry.k !== 'data') throw typeError(`unknown type ${type.path.join('.')}`, type.span ?? span);
@@ -372,14 +378,30 @@ class Checker {
         if (node.path.length === 1 && env.has(node.path[0])) {
           return { k: 'var', name: node.path[0], type: env.get(node.path[0]) };
         }
+        const declaration = this.lookup(node.path, path, node.span);
+        if (declaration?.k === 'fn' && expected?.kind === 'function') {
+          return { k: 'functionRef', fn: declaration.fullName, type: { kind: 'function', params: declaration.params.map((param) => param.type), ret: declaration.ret } };
+        }
         return this.application(node, [], env, path, expected, node.span);
+      }
+      case 'functionValue': {
+        const declaration = this.lookup(node.path, path, node.span);
+        if (declaration?.k !== 'fn') throw typeError(`unknown function ${node.path.join('.')}`, node.span);
+        return { k: 'functionRef', fn: declaration.fullName, type: { kind: 'function', params: declaration.params.map((param) => param.type), ret: declaration.ret } };
       }
       case 'dotCtor':
       case 'app':
         return this.application(node.k === 'app' ? node.fn : node, node.args ?? [], env, path, expected, node.span);
       case 'field': {
+        const value = this.expr(node.object, env, path, undefined);
+        if (value.type.kind === 'record') {
+          const field = value.type.fields.find((field) => field.name === node.field);
+          if (!field) throw typeError(`record has no field ${node.field}`, node.span);
+          return { k: 'recordField', object: value, field: node.field, index: value.type.fields.indexOf(field), type: field.type };
+        }
+        if (node.field === 'size' && ['map', 'set'].includes(value.type.kind)) return { k: 'collectionSize', object: value, type: FLOAT };
         if (node.field === 'length') {
-          const object = this.expr(node.object, env, path, undefined);
+          const object = value;
           if (object.type.kind === 'array' || object.type.kind === 'string') return { k: 'length', array: object, type: FLOAT };
         }
         throw unsupported('field access', `field ${node.field} is only portable inside a constructor match`, node.span);
@@ -390,11 +412,90 @@ class Checker {
         return { k: 'length', array: object, type: node.integer ? INT : FLOAT };
       }
       case 'array':
+        if (expected?.kind === 'tuple') {
+          if (node.items.length !== expected.elements.length || node.items.some((item) => item.spread)) throw typeError('tuple literal has the wrong number of elements', node.span);
+          return { k: 'tuple', items: node.items.map((item, index) => coerce(this.expr(item.value, env, path, expected.elements[index]), expected.elements[index], this.language, node.span)), type: expected };
+        }
         return this.arrayLiteral(node, env, path, expected);
+      case 'record':
+        return this.recordLiteral(node, env, path, expected);
+      case 'set': {
+        const want = node.type ? this.resolveType(node.type, path, node.span) : expected;
+        const items = this.expr(node.items, env, path, want?.kind === 'set' ? array(want.element) : undefined);
+        if (items.type.kind !== 'array') throw typeError('Set constructor needs an iterable array', node.span);
+        if (!primitiveKey(items.type.element)) throw unsupported('Set object identity', 'set keys need explicit reference identities for structured values', node.span);
+        return { k: 'set', items, type: { kind: 'set', element: items.type.element } };
+      }
+      case 'map': {
+        const want = node.type ? this.resolveType(node.type, path, node.span) : expected;
+        const pair = want?.kind === 'map' ? { kind: 'tuple', elements: [want.key, want.value] } : undefined;
+        const entries = this.expr(node.entries, env, path, pair ? array(pair) : undefined);
+        if (entries.type.kind !== 'array' || entries.type.element.kind !== 'tuple' || entries.type.element.elements.length !== 2) throw typeError('Map constructor needs an iterable of key/value pairs', node.span);
+        const [key, value] = entries.type.element.elements;
+        if (!primitiveKey(key)) throw unsupported('Map object identity', 'map keys need explicit reference identities for structured values', node.span);
+        return { k: 'map', entries, type: { kind: 'map', key, value } };
+      }
+      case 'arrayFrom': {
+        if (node.args.length < 1 || node.args.length > 2) throw typeError('Array.from expects one or two arguments', node.span);
+        const object = this.expr(node.args[0], env, path, undefined);
+        let result;
+        if (object.type.kind === 'array') result = object;
+        else if (object.type.kind === 'string') result = { k: 'stringPoints', object, type: array(STRING) };
+        else if (object.type.kind === 'set') result = { k: 'collectionItems', object, op: 'values', type: array(object.type.element) };
+        else if (object.type.kind === 'map') result = { k: 'collectionItems', object, op: 'entries', type: array({ kind: 'tuple', elements: [object.type.key, object.type.value] }) };
+        else throw unsupported('Array.from', 'this iterable needs an operational iterator encoding', node.span);
+        if (!node.args[1]) return result;
+        const callback = this.expr(node.args[1], env, path, { kind: 'function', params: [result.type.element, FLOAT], ret: expected?.kind === 'array' ? expected.element : undefined });
+        return { k: 'method', object: result, op: 'map', args: [callback], type: array(callback.type.ret) };
+      }
+      case 'arrayIsArray': {
+        const value = this.expr(node.arg, env, path, undefined);
+        const body = literal(BOOL, value.type.kind === 'array' || value.type.kind === 'tuple');
+        return { k: 'let', name: this.freshName('ml_array_test'), value, body, type: BOOL };
+      }
+      case 'lambda': {
+        const inner = new Map(env);
+        const params = node.params.map((param, index) => {
+          const type = param.type ? this.resolveType(param.type, path, param.span) : expected?.kind === 'function' ? expected.params[index] : null;
+          if (!type) throw typeError(`cannot infer callback parameter ${param.name}`, param.span ?? node.span);
+          bindLocal(inner, param.name, type);
+          return { ...param, type };
+        });
+        const body = this.expr(node.body, inner, path, expected?.ret);
+        return { k: 'lambda', params, body, type: { kind: 'function', params: params.map((param) => param.type), ret: body.type } };
+      }
+      case 'method':
+        return this.method(node, env, path, expected);
+      case 'none':
+        return { k: 'none', absence: node.absence, type: expected?.kind === 'option' ? expected : { kind: 'option', element: UNIT, absence: node.absence } };
+      case 'coalesce': {
+        const left = node.left.k === 'index' ? this.expr({ ...node.left, optional: true }, env, path, undefined) : this.expr(node.left, env, path, undefined);
+        if (left.type.kind !== 'option') return left;
+        const right = coerce(this.expr(node.right, env, path, left.type.element), left.type.element, this.language, node.span);
+        return { k: 'coalesce', left, right, type: left.type.element };
+      }
+      case 'optionalField': {
+        const object = this.expr(node.object, env, path, undefined);
+        if (object.type.kind !== 'option') return this.expr({ k: 'field', object: node.object, field: node.field, span: node.span }, env, path, expected);
+        if ((node.field === 'length' && ['string', 'array'].includes(object.type.element.kind)) || (node.field === 'size' && ['set', 'map'].includes(object.type.element.kind))) return { k: 'optionalProject', object, field: node.field, type: { kind: 'option', element: FLOAT, absence: 'undefined' } };
+        if (object.type.element.kind !== 'record') throw unsupported('optional field access', 'this property needs a known structural type', node.span);
+        const field = object.type.element.fields.find((field) => field.name === node.field);
+        if (!field) throw typeError(`record has no field ${node.field}`, node.span);
+        return flattenOption({ k: 'optionalField', object, field: node.field, index: object.type.element.fields.indexOf(field), type: { kind: 'option', element: field.type, absence: 'undefined' } });
+      }
+      case 'stringPoints': {
+        const object = coerce(this.expr(node.object, env, path, STRING), STRING, this.language, node.span);
+        return { k: 'stringPoints', object, type: array(STRING) };
+      }
       case 'math':
         return this.math(node, env, path);
       case 'index': {
         const object = this.expr(node.object, env, path, undefined);
+        if (object.type.kind === 'tuple' && node.index.k === 'num') {
+          const index = Number(node.index.value);
+          if (!Number.isInteger(index) || index < 0 || index >= object.type.elements.length) throw typeError('tuple index out of range', node.span);
+          return { k: 'tupleIndex', object, index, type: object.type.elements[index] };
+        }
         if (object.type.kind !== 'array') {
           throw unsupported(`indexing of ${typeKey(object.type)}`, 'only arrays are indexed in the portable core', node.span);
         }
@@ -402,6 +503,7 @@ class Checker {
         if (!isFloat(index.type) && index.type.kind !== 'int' && index.type.kind !== 'nat') {
           throw typeError(`array index of type ${typeKey(index.type)}; an index is a Number or a BigInt`, node.index.span ?? node.span);
         }
+        if (node.optional || (expected?.kind === 'option' && sameType(expected.element, object.type.element))) return flattenOption({ k: 'optionalIndex', array: object, index, type: { kind: 'option', element: object.type.element, absence: 'undefined' } });
         return { k: 'index', array: object, index, type: object.type.element };
       }
       case 'typeOf': {
@@ -511,6 +613,147 @@ class Checker {
    * arrays, appended in order; `[...xs]` is `xs` itself, since no array is
    * ever mutated.
    */
+  recordLiteral(node, env, path, expected) {
+    const entries = [];
+    const bindings = [];
+    for (const entry of node.entries) {
+      if (entry.spread) {
+        const value = this.expr(entry.value, env, path, undefined);
+        if (value.type.kind !== 'record') throw typeError('record spread needs a record value', node.span);
+        const name = this.freshName('ml_spread');
+        bindings.push({ name, value });
+        const object = { k: 'var', name, type: value.type };
+        for (const [index, field] of value.type.fields.entries()) entries.push({ name: field.name, value: { k: 'recordField', object, field: field.name, index, type: field.type } });
+      } else {
+        const want = expected?.kind === 'record' ? expected.fields.find((field) => field.name === entry.name)?.type : undefined;
+        const value = this.expr(entry.value, env, path, want);
+        const name = this.freshName('ml_field');
+        bindings.push({ name, value });
+        entries.push({ name: entry.name, value: { k: 'var', name, type: value.type } });
+      }
+    }
+    // Overwritten fields still evaluate: bind every entry before selecting the final values.
+    const fields = new Map();
+    entries.forEach((entry) => fields.set(entry.name, entry));
+    const selected = [...fields.values()].sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
+    const type = { kind: 'record', fields: selected.map((entry) => ({ name: entry.name, type: entry.value.type })) };
+    let body = { k: 'record', entries: selected, type };
+    for (const binding of bindings.reverse()) body = { k: 'let', name: binding.name, value: binding.value, body, type };
+    return body;
+  }
+
+  method(node, env, path, expected) {
+    const object = this.expr(node.object, env, path, undefined);
+    const args = node.args;
+    const count = (minimum, maximum = minimum) => {
+      if (args.length < minimum || args.length > maximum) throw unsupported(`method call .${node.op}()`, `.${node.op}() expects ${minimum === maximum ? minimum : `${minimum} to ${maximum}`} arguments`, node.span);
+    };
+    const checked = (index, type, fallback) => args[index] ? coerce(this.expr(args[index], env, path, type), type, this.language, args[index].span ?? node.span) : fallback;
+    const number = (index, fallback) => checked(index, FLOAT, literal(FLOAT, fallback));
+    if (object.type.kind === 'record') {
+      const field = object.type.fields.find((field) => field.name === node.op);
+      if (!field || field.type.kind !== 'function') throw typeError(`record has no method ${node.op}`, node.span);
+      if (args.length !== field.type.params.length) throw typeError(`.${node.op}() expects ${field.type.params.length} arguments`, node.span);
+      return { k: 'apply', fn: { k: 'recordField', object, field: node.op, index: object.type.fields.indexOf(field), type: field.type }, args: args.map((arg, index) => checked(index, field.type.params[index])), type: field.type.ret };
+    }
+    if (object.type.kind === 'set' || object.type.kind === 'map') {
+      const key = object.type.kind === 'set' ? object.type.element : object.type.key;
+      if (node.op === 'has' || (node.op === 'get' && object.type.kind === 'map')) {
+        count(1);
+        return flattenOption({ k: 'collectionRead', object, op: node.op, key: checked(0, key), type: node.op === 'has' ? BOOL : { kind: 'option', element: object.type.value, absence: 'undefined' } });
+      }
+      if (['keys', 'values', 'entries'].includes(node.op)) {
+        count(0);
+        const value = object.type.kind === 'map' ? object.type.value : key;
+        const element = node.op === 'keys' ? key : node.op === 'values' ? value : { kind: 'tuple', elements: [key, value] };
+        return { k: 'collectionItems', object, op: node.op, type: array(element) };
+      }
+      throw unsupported(`mutable collection .${node.op}()`, 'mutation requires shared reference identities and cells so aliases observe every change', node.span);
+    }
+    if (object.type.kind === 'string') {
+      let type;
+      let values;
+      switch (node.op) {
+        case 'split':
+          count(0, 2); type = array(STRING);
+          values = [checked(0, STRING, null), number(1, '4294967295')]; break;
+        case 'slice':
+          count(0, 2); type = STRING;
+          values = [number(0, '0'), number(1, 'Infinity')]; break;
+        case 'indexOf':
+        case 'lastIndexOf':
+          count(1, 2); type = FLOAT;
+          values = [checked(0, STRING), number(1, node.op === 'indexOf' ? '0' : 'Infinity')]; break;
+        case 'replace':
+        case 'replaceAll':
+          count(2); type = STRING;
+          values = [checked(0, STRING), checked(1, STRING)]; break;
+        case 'repeat':
+          count(1); type = STRING; values = [number(0)]; break;
+        case 'padStart':
+        case 'padEnd':
+          count(1, 2); type = STRING;
+          values = [number(0), checked(1, STRING, literal(STRING, ' '))]; break;
+        case 'codePointAt':
+          count(1); type = { kind: 'option', element: FLOAT, absence: 'undefined' }; values = [number(0)]; break;
+        default:
+          throw unsupported(`method call .${node.op}()`, `.${node.op}() has no checked string operation`, node.span);
+      }
+      return { k: 'method', object, op: node.op, args: values, type, span: node.span };
+    }
+    if (object.type.kind === 'array') {
+      const element = object.type.element;
+      const callback = (index, params, ret) => {
+        const value = this.expr(args[index], env, path, { kind: 'function', params, ret });
+        if (value.type.kind !== 'function') throw typeError(`.${node.op}() requires a function`, node.span);
+        if (value.type.params.length > params.length || value.type.params.some((type, index) => !sameType(type, params[index]))) throw typeError(`.${node.op}() callback parameters differ`, node.span);
+        if (ret && !sameType(value.type.ret, ret)) throw typeError(`.${node.op}() callback result must be ${typeKey(ret)}`, node.span);
+        return value;
+      };
+      if (['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'forEach'].includes(node.op)) {
+        count(1);
+        const predicate = ['filter', 'find', 'findIndex', 'some', 'every'].includes(node.op);
+        const fn = callback(0, [element, FLOAT, object.type], predicate ? BOOL : undefined);
+        let type = node.op === 'map' ? array(fn.type.ret) : object.type;
+        if (node.op === 'flatMap') {
+          if (fn.type.ret.kind !== 'array') throw typeError('flatMap callback must return an array', node.span);
+          type = fn.type.ret;
+        }
+        if (node.op === 'find') type = { kind: 'option', element, absence: 'undefined' };
+        if (node.op === 'findIndex') type = FLOAT;
+        if (node.op === 'some' || node.op === 'every') type = BOOL;
+        if (node.op === 'forEach') type = UNIT;
+        return { k: 'method', object, op: node.op, args: [fn], type, span: node.span };
+      }
+      if (node.op === 'reduce') {
+        count(1, 2);
+        if (!args[1]) {
+          const fn = callback(0, [element, element, FLOAT, object.type], element);
+          return { k: 'method', object, op: node.op, args: [fn], type: element, span: node.span };
+        }
+        const initial = this.expr(args[1], env, path, expected);
+        const fn = callback(0, [initial.type, element, FLOAT, object.type], initial.type);
+        return { k: 'method', object, op: node.op, args: [fn, initial], type: initial.type, span: node.span };
+      }
+      if (node.op === 'slice') {
+        count(0, 2);
+        return { k: 'method', object, op: node.op, args: [number(0, '0'), number(1, 'Infinity')], type: object.type, span: node.span };
+      }
+      if (node.op === 'indexOf' || node.op === 'lastIndexOf' || node.op === 'includes') {
+        count(1, 2);
+        if (['array', 'record', 'map', 'set', 'data', 'function'].includes(element.kind)) throw unsupported('array identity search', 'object identity must be represented before searching arrays of objects', node.span);
+        return { k: 'method', object, op: node.op, args: [checked(0, element), number(1, node.op === 'lastIndexOf' ? 'Infinity' : '0')], type: node.op === 'includes' ? BOOL : FLOAT, span: node.span };
+      }
+      if (node.op === 'join') {
+        count(0, 1);
+        const base = element.kind === 'option' ? element.element : element;
+        if (!primitiveKey(base)) throw unsupported('array join', 'joining structured values needs their JavaScript string conversion and cycle semantics', node.span);
+        return { k: 'method', object, op: node.op, args: [checked(0, STRING, literal(STRING, ','))], type: STRING, span: node.span };
+      }
+    }
+    throw unsupported(`method call .${node.op}()`, `.${node.op}() has no checked operation on ${typeKey(object.type)}`, node.span);
+  }
+
   arrayLiteral(node, env, path, expected) {
     let element = expected?.kind === 'array' ? expected.element : undefined;
     // Inference fixes the element type of an array literal with no element of its own.
@@ -649,6 +892,12 @@ class Checker {
   }
 
   application(head, args, env, path, expected, span) {
+    if ((head.k !== 'name' && head.k !== 'dotCtor') || (head.k === 'name' && head.path.length === 1 && env.get(head.path[0])?.kind === 'function')) {
+      const fn = this.expr(head, env, path, undefined);
+      if (fn.type.kind !== 'function') throw typeError('the called value is not a function', span);
+      if (args.length !== fn.type.params.length) throw typeError(`function expects ${fn.type.params.length} arguments`, span);
+      return { k: 'apply', fn, args: args.map((arg, index) => coerce(this.expr(arg, env, path, fn.type.params[index]), fn.type.params[index], this.language, span)), type: fn.type.ret };
+    }
     if (head.k === 'dotCtor') {
       if (!expected || expected.kind !== 'data') throw typeError(`cannot infer the type of .${head.name}`, span);
       const dataEntry = this.items.get(expected.name);
@@ -676,8 +925,8 @@ class Checker {
     if (entry.k !== 'fn') throw typeError(`${head.path.join('.')} is not a function`, span);
     if (!entry.params) throw typeError(`${entry.fullName} is used before its signature is known`, span);
     // A call that leaves out trailing parameters with defaults passes the defaults.
-    if (args.length < entry.params.length && acceptArgumentCount(entry.params.map((param) => Boolean(param.default)), args.length)) {
-      args = [...args, ...entry.params.slice(args.length).map((param) => ({ ...param.default, closedDefault: true }))];
+    if (args.length < entry.params.length && acceptArgumentCount(entry.params.map((param) => Boolean(param.default || param.optional)), args.length)) {
+      args = [...args, ...entry.params.slice(args.length).map((param) => ({ ...(param.default ?? { k: 'none', absence: 'undefined' }), closedDefault: true }))];
     }
     if (args.length !== entry.params.length) {
       if (args.length < entry.params.length) {
@@ -687,8 +936,13 @@ class Checker {
     }
     const checkedArgs = args.map((arg, index) => {
       const param = entry.params[index];
+      if (param.default && arg.k === 'none' && arg.absence === 'undefined') arg = { ...param.default, closedDefault: true };
       // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
-      const value = this.expr(arg, arg.closedDefault ? new Map() : env, arg.closedDefault ? entry.modulePath : path, param.guard && arg.k !== 'num' ? INT : param.type);
+      let value = this.expr(arg, arg.closedDefault ? new Map() : env, arg.closedDefault ? entry.modulePath : path, param.guard && arg.k !== 'num' ? INT : param.type);
+      if (param.default && value.type.kind === 'option' && value.type.absence === 'undefined' && sameType(value.type.element, param.type)) {
+        const fallback = coerce(this.expr(param.default, new Map(), entry.modulePath, param.type), param.type, this.language, span);
+        value = { k: 'coalesce', left: value, right: fallback, type: param.type };
+      }
       const checked = coerce(value, param.type, this.language, arg.span ?? span, param.guard ? 'checked' : undefined);
       return checked.k === 'cast' && checked.flavor === 'checked' ? { ...checked, message: param.guard.message, order: param.guard.order } : checked;
     });
@@ -1077,6 +1331,17 @@ function isOrdered(type) {
   return isNumeric(type) || isFloat(type);
 }
 
+function primitiveKey(type) {
+  return ['bool', 'float', 'fixed', 'int', 'nat', 'string', 'unit'].includes(type.kind);
+}
+
+function flattenOption(value) {
+  if (value.type.kind !== 'option' || value.type.element.kind !== 'option') return value;
+  const inner = value.type.element;
+  const type = { kind: 'option', element: inner.element, absence: value.type.absence === inner.absence ? inner.absence : 'both' };
+  return flattenOption({ k: 'flattenOption', value, type });
+}
+
 /** The canonical text of a negated Number: `-x`, and NaN for NaN. */
 function negateNumber(text) {
   if (text === 'NaN') return text;
@@ -1181,6 +1446,11 @@ export function coerce(value, type, language, span, flavor = undefined) {
   if (value.type.kind === 'literal') throw typeError('untyped literal', span);
   if (sameType(value.type, type)) return value;
   if (value.k === 'abort') return { ...value, type };
+  if (type.kind === 'option' && value.k === 'none') {
+    if (type.absence !== 'both' && type.absence !== value.absence) throw typeError(`expected ${type.absence} absence but found ${value.absence}`, span);
+    return { ...value, type };
+  }
+  if (type.kind === 'option' && sameType(value.type, type.element)) return { k: 'some', value, type };
   if (language === 'JavaScript' && value.type.kind === 'nat' && type.kind === 'int') {
     return castTo(value, INT, 'exact', span);
   }

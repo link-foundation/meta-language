@@ -262,6 +262,18 @@ class LeanEmitter {
       case 'array':
         this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Lean Array; a read outside it panics');
         return `(Array ${this.type(type.element)})`;
+      case 'option':
+        return type.absence === 'both' ? `(Option (Option ${this.type(type.element)}))` : `(Option ${this.type(type.element)})`;
+      case 'tuple':
+        return type.elements.length ? `(${type.elements.map((element) => this.type(element)).join(' × ')})` : 'Unit';
+      case 'record':
+        return type.fields.length ? `(${type.fields.map((field) => this.type(field.type)).join(' × ')})` : 'Unit';
+      case 'function':
+        return `(${[...type.params.map((param) => this.type(param)), this.type(type.ret)].join(' → ')})`;
+      case 'set':
+        return `(Array ${this.type(type.element)})`;
+      case 'map':
+        return `(Array (${this.type(type.key)} × ${this.type(type.value)}))`;
       default:
         throw new Error(`no Lean type for ${type.kind}`);
     }
@@ -399,6 +411,79 @@ class LeanEmitter {
         const head = this.state.ref(e.fn);
         return e.args.length ? `(${head} ${e.args.map((arg) => this.expr(arg, depth)).join(' ')})` : head;
       }
+      case 'functionRef':
+        return this.state.ref(e.fn);
+      case 'apply':
+        return `(${this.expr(e.fn, depth)} ${e.args.map((arg) => this.expr(arg, depth)).join(' ')})`;
+      case 'lambda':
+        return `(fun ${e.params.map((param) => `(${param.name} : ${this.type(param.type)})`).join(' ')} => ${this.expr(e.body, depth)})`;
+      case 'record':
+        return e.entries.length ? `(${e.entries.map((entry) => this.expr(entry.value, depth)).join(', ')})` : '()';
+      case 'recordField':
+      case 'tupleIndex': {
+        const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
+        return count === 1 ? this.expr(e.object, depth) : `(${this.expr(e.object, depth)})${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
+      }
+      case 'tuple':
+        return e.items.length ? `(${e.items.map((item) => this.expr(item, depth)).join(', ')})` : '()';
+      case 'none':
+        return e.type.absence === 'both' && e.absence === 'undefined' ? '(some none)' : 'none';
+      case 'some':
+        return e.type.absence === 'both' ? `(some (some ${this.expr(e.value, depth)}))` : `(some ${this.expr(e.value, depth)})`;
+      case 'flattenOption': {
+        const absent = (absence) => e.type.absence === 'both' && absence === 'undefined' ? '(some none)' : 'none';
+        const present = e.type.absence === 'both' ? '(some (some ml_present))' : '(some ml_present)';
+        const cases = (type, binder, body) => type.absence === 'both' ? `| some (some ${binder}) => ${body} | none => ${absent('null')} | some none => ${absent('undefined')}` : `| some ${binder} => ${body} | none => ${absent(type.absence)}`;
+        return `(match ${this.expr(e.value, depth)} with ${cases(e.value.type, 'ml_nested', `(match ml_nested with ${cases(e.value.type.element, 'ml_present', present)})`)})`;
+      }
+      case 'coalesce':
+        return `(match ${this.expr(e.left, depth)} with | ${e.left.type.absence === 'both' ? 'some (some ml_value)' : 'some ml_value'} => ml_value | _ => ${this.expr(e.right, depth)})`;
+      case 'optionalField': {
+        const count = e.object.type.element.fields.length;
+        const field = count === 1 ? 'ml_record' : `ml_record${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
+        return `(match ${this.expr(e.object, depth)} with | ${e.object.type.absence === 'both' ? 'some (some ml_record)' : 'some ml_record'} => some ${field} | _ => none)`;
+      }
+      case 'optionalProject': {
+        const length = e.object.type.element.kind === 'string' ? renderStringLengthExpression('Lean', 'ml_value') : '(Float.ofNat ml_value.size)';
+        return `(match ${this.expr(e.object, depth)} with | ${e.object.type.absence === 'both' ? 'some (some ml_value)' : 'some ml_value'} => some ${length} | _ => none)`;
+      }
+      case 'optionalIndex': {
+        const index = this.expr(e.index, depth);
+        const value = this.expr(e.array, depth);
+        if (e.index.type.kind === 'float') return `(let ml_index := ${index}; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then ${value}[ml_index.toUInt64.toNat]? else none)`;
+        if (e.index.type.kind === 'nat') return `(${value}[${index}]?)`;
+        return `(let ml_index := ${index}; if ml_index < 0 then none else ${value}[ml_index.toNat]?)`;
+      }
+      case 'method':
+        return this.method(e, depth);
+      case 'stringPoints':
+        return `((${this.expr(e.object, depth)}.toList.map (fun ml_character => String.singleton ml_character)).toArray)`;
+      case 'set':
+      case 'map': {
+        const set = e.k === 'set';
+        const keyType = set ? e.type.element : e.type.key;
+        const value = set ? 'ml_value' : 'ml_value.1';
+        const previous = set ? 'ml_previous' : 'ml_previous.1';
+        const equal = keyType.kind === 'float' ? `(${previous} == ${value} || (${previous}.isNaN && ${value}.isNaN))` : `(${previous} == ${value})`;
+        const normalized = keyType.kind === 'float' ? set ? '(if ml_value == (0 : Float) then (0 : Float) else ml_value)' : '((if ml_value.1 == (0 : Float) then (0 : Float) else ml_value.1), ml_value.2)' : 'ml_value';
+        const values = this.expr(set ? e.items : e.entries, depth);
+        const existing = set ? 'ml_accumulator' : `(ml_accumulator.map (fun ml_previous => if ${equal} then (ml_previous.1, ml_value.2) else ml_previous))`;
+        return `(${values}.foldl (fun ml_accumulator ml_original => let ml_value := ${normalized.replaceAll('ml_value', 'ml_original')}; if ml_accumulator.any (fun ml_previous => ${equal}) then ${existing} else ml_accumulator.push ml_value) (#[] : ${this.type(e.type)}))`;
+      }
+      case 'collectionSize':
+        return `(Float.ofNat ${this.expr(e.object, depth)}.size)`;
+      case 'collectionRead': {
+        const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
+        const key = e.object.type.kind === 'map' ? 'ml_value.1' : 'ml_value';
+        const equal = keyType.kind === 'float' ? `(${key} == ml_search || (${key}.isNaN && ml_search.isNaN))` : `(${key} == ml_search)`;
+        const result = e.op === 'get' ? `((ml_values.toList.find? (fun ml_value => ${equal})).map (fun ml_pair => ml_pair.2))` : `(ml_values.any (fun ml_value => ${equal}))`;
+        return `(let ml_values := ${this.expr(e.object, depth)}; let ml_search := ${this.expr(e.key, depth)}; ${result})`;
+      }
+      case 'collectionItems': {
+        const map = e.object.type.kind === 'map';
+        if (e.op === 'entries') return map ? this.expr(e.object, depth) : `(${this.expr(e.object, depth)}.map (fun ml_value => (ml_value, ml_value)))`;
+        return map ? `(${this.expr(e.object, depth)}.map (fun ml_pair => ml_pair.${e.op === 'keys' ? 1 : 2}))` : this.expr(e.object, depth);
+      }
       case 'ctor': {
         const head = this.state.ctorRef(e.data, e.ctor);
         return e.args.length ? `(${head} ${e.args.map((arg) => this.expr(arg, depth)).join(' ')})` : head;
@@ -456,6 +541,33 @@ class LeanEmitter {
   }
 
   /** Math and Number functions: Float's where they agree with JavaScript, the math helpers otherwise. */
+  method(e, depth) {
+    if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, 'this target needs a UTF-16 operational string encoding for this operation', e.span);
+    const object = this.expr(e.object, depth);
+    if (e.op === 'join') {
+      const text = (name, type) => {
+        if (type.kind === 'option') return `(match ${name} with | ${type.absence === 'both' ? 'some (some ml_present)' : 'some ml_present'} => ${text('ml_present', type.element)} | _ => "")`;
+        return type.kind === 'string' ? name : this.toText({ k: 'var', name, type }, depth, false);
+      };
+      return `(String.intercalate ${this.expr(e.args[0], depth)} (${object}.toList.map (fun ml_value => ${text('ml_value', e.object.type.element)})))`;
+    }
+    if (e.op === 'reduce' && e.args.length === 1) throw unsupported('array reduce without an initial value', 'the empty-array TypeError needs an operational abort encoding in Lean', e.span);
+    if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, 'this array operation needs an operational encoding in Lean', e.span);
+    const callback = e.args[0];
+    const args = e.op === 'reduce' ? ['ml_accumulator', 'ml_pair.1', '(Float.ofNat ml_pair.2)', 'ml_values'] : ['ml_pair.1', '(Float.ofNat ml_pair.2)', 'ml_values'];
+    const call = callback.type.params.length ? `(ml_callback ${args.slice(0, callback.type.params.length).join(' ')})` : 'ml_callback';
+    const head = `(let ml_values := ${object}; let ml_callback := ${this.expr(callback, depth)}; `;
+    const pairs = 'ml_values.toList.zipIdx';
+    const lambda = `(fun ml_pair => ${call})`;
+    if (e.op === 'map') return `${head} (${pairs}.map ${lambda}).toArray)`;
+    if (e.op === 'flatMap') return `${head} (${pairs}.flatMap (fun ml_pair => ${call}.toList)).toArray)`;
+    if (e.op === 'some' || e.op === 'every') return `${head} ${pairs}.${e.op === 'some' ? 'any' : 'all'} ${lambda})`;
+    if (e.op === 'filter') return `${head} ((${pairs}.filter ${lambda}).map (fun ml_pair => ml_pair.1)).toArray)`;
+    if (e.op === 'find') return `${head} (${pairs}.find? ${lambda}).map (fun ml_pair => ml_pair.1))`;
+    if (e.op === 'findIndex') return `${head} ((${pairs}.find? ${lambda}).map (fun ml_pair => Float.ofNat ml_pair.2)).getD (-1 : Float))`;
+    return `${head} ${pairs}.foldl (fun ml_accumulator ml_pair => ${call}) ${this.expr(e.args[1], depth)})`;
+  }
+
   math(e, depth) {
     const args = e.args.map((arg) => this.expr(arg, depth));
     const native = { abs: 'Float.abs', floor: 'Float.floor', ceil: 'Float.ceil', sqrt: 'Float.sqrt', isFinite: 'Float.isFinite', isNaN: 'Float.isNaN' }[e.op];

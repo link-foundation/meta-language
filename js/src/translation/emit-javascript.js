@@ -379,6 +379,48 @@ class JavaScriptEmitter {
         return e.name;
       case 'call':
         return `${this.state.ref(e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+      case 'functionRef':
+        return this.state.ref(e.fn);
+      case 'apply':
+        return `(${this.expr(e.fn)})(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+      case 'lambda':
+        return `((${e.params.map((param) => param.name).join(', ')}) => ${this.expr(e.body)})`;
+      case 'method':
+        return `(${this.expr(e.object)}).${e.op}(${e.args.map((arg) => arg === null ? 'undefined' : this.expr(arg)).join(', ')})`;
+      case 'record':
+        return `({${e.entries.map((entry) => `${JSON.stringify(entry.name)}: ${this.expr(entry.value)}`).join(', ')}})`;
+      case 'recordField':
+        return `(${this.expr(e.object)})[${JSON.stringify(e.field)}]`;
+      case 'tuple':
+        return `[${e.items.map((item) => this.expr(item)).join(', ')}]`;
+      case 'tupleIndex':
+        return `(${this.expr(e.object)})[${e.index}]`;
+      case 'none':
+        return e.absence === 'null' ? 'null' : 'undefined';
+      case 'some':
+        return this.expr(e.value);
+      case 'flattenOption':
+        return this.expr(e.value);
+      case 'coalesce':
+        return `(${this.expr(e.left)} ?? ${this.expr(e.right)})`;
+      case 'optionalField':
+        return `(${this.expr(e.object)})?.[${JSON.stringify(e.field)}]`;
+      case 'optionalProject':
+        return `(${this.expr(e.object)})?.[${JSON.stringify(e.field)}]`;
+      case 'optionalIndex':
+        return `(${this.expr(e.array)})[${this.expr(e.index)}]`;
+      case 'stringPoints':
+        return `[...${this.expr(e.object)}]`;
+      case 'set':
+        return `new Set(${this.expr(e.items)})`;
+      case 'map':
+        return `new Map(${this.expr(e.entries)})`;
+      case 'collectionSize':
+        return `(${this.expr(e.object)}).size`;
+      case 'collectionRead':
+        return `(${this.expr(e.object)}).${e.op}(${this.expr(e.key)})`;
+      case 'collectionItems':
+        return `[...(${this.expr(e.object)}).${e.op}()]`;
       case 'ctor': {
         const entry = this.program.declarations.get(e.data);
         const ctor = entry.ctors.find((candidate) => candidate.name === e.ctor);
@@ -404,6 +446,9 @@ class JavaScriptEmitter {
         return e.arg.type.kind === 'string' ? this.expr(e.arg) : this.toText(e.arg);
       case 'stringMap': {
         const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;
+        if (e.op === 'rustTrim') return `${string}.replace(/^\\p{White_Space}+|\\p{White_Space}+$/gu, '')`;
+        if (e.op === 'rustTrimStart') return `${string}.replace(/^\\p{White_Space}+/u, '')`;
+        if (e.op === 'rustTrimEnd') return `${string}.replace(/\\p{White_Space}+$/u, '')`;
         return renderStringMapExpression('JavaScript', e.op, string);
       }
       case 'stringTest': {

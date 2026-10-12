@@ -219,7 +219,7 @@ export function dependencies(entry) {
       return;
     }
     if (node.kind === 'data') found.add(node.name);
-    if (node.k === 'call') found.add(node.fn);
+    if (node.k === 'call' || node.k === 'functionRef') found.add(node.fn);
     if (node.k === 'ctor') found.add(node.data);
     for (const value of Object.values(node)) visit(value);
   };

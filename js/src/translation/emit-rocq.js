@@ -356,6 +356,18 @@ class RocqEmitter {
       case 'array':
         this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Rocq list; a read walks it to the index');
         return `(list ${this.type(type.element)})`;
+      case 'option':
+        return type.absence === 'both' ? `(option (option ${this.type(type.element)}))` : `(option ${this.type(type.element)})`;
+      case 'tuple':
+        return type.elements.length ? `(${type.elements.map((element) => this.type(element)).join(' * ')})%type` : 'unit';
+      case 'record':
+        return type.fields.length ? `(${type.fields.map((field) => this.type(field.type)).join(' * ')})%type` : 'unit';
+      case 'function':
+        return `(${[...type.params.map((param) => this.type(param)), this.type(type.ret)].join(' -> ')})`;
+      case 'set':
+        return `(list ${this.type(type.element)})`;
+      case 'map':
+        return `(list (${this.type(type.key)} * ${this.type(type.value)}))%type`;
       default:
         throw new Error(`no Rocq type for ${type.kind}`);
     }
@@ -633,6 +645,87 @@ class RocqEmitter {
         const head = self ? this.current.name : this.state.ref(e.fn);
         return e.args.length ? `(${head} ${e.args.map((arg) => this.expr(arg)).join(' ')})` : head;
       }
+      case 'functionRef':
+        return this.state.ref(e.fn);
+      case 'apply':
+        return `(${this.expr(e.fn)} ${e.args.map((arg) => this.expr(arg)).join(' ')})`;
+      case 'lambda':
+        return `(fun ${e.params.map((param) => `(${param.name} : ${this.type(param.type)})`).join(' ')} => ${this.expr(e.body)})`;
+      case 'record':
+        return e.entries.length ? `(${e.entries.map((entry) => this.expr(entry.value)).join(', ')})` : 'tt';
+      case 'recordField':
+      case 'tupleIndex': {
+        const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
+        let value = this.expr(e.object);
+        for (let index = count - 1; index > e.index; index -= 1) value = `(fst ${value})`;
+        return e.index === 0 ? value : `(snd ${value})`;
+      }
+      case 'tuple':
+        return e.items.length ? `(${e.items.map((item) => this.expr(item)).join(', ')})` : 'tt';
+      case 'none':
+        return e.type.absence === 'both' && e.absence === 'undefined' ? `(Some (@None ${this.type(e.type.element)}))` : `(@None ${e.type.absence === 'both' ? `(option ${this.type(e.type.element)})` : this.type(e.type.element)})`;
+      case 'some':
+        return e.type.absence === 'both' ? `(Some (Some ${this.expr(e.value)}))` : `(Some ${this.expr(e.value)})`;
+      case 'flattenOption': {
+        const absent = (absence) => e.type.absence === 'both' && absence === 'undefined' ? '(Some None)' : 'None';
+        const present = e.type.absence === 'both' ? '(Some (Some ml_present))' : '(Some ml_present)';
+        const cases = (type, binder, body) => type.absence === 'both' ? `| Some (Some ${binder}) => ${body} | None => ${absent('null')} | Some None => ${absent('undefined')}` : `| Some ${binder} => ${body} | None => ${absent(type.absence)}`;
+        return `(match ${this.expr(e.value)} with ${cases(e.value.type, 'ml_nested', `(match ml_nested with ${cases(e.value.type.element, 'ml_present', present)} end)`)} end)`;
+      }
+      case 'coalesce':
+        return `(match ${this.expr(e.left)} with | ${e.left.type.absence === 'both' ? 'Some (Some ml_value)' : 'Some ml_value'} => ml_value | _ => ${this.expr(e.right)} end)`;
+      case 'optionalField': {
+        const count = e.object.type.element.fields.length;
+        let field = 'ml_record';
+        for (let index = count - 1; index > e.index; index -= 1) field = `(fst ${field})`;
+        if (e.index > 0) field = `(snd ${field})`;
+        return `(match ${this.expr(e.object)} with | ${e.object.type.absence === 'both' ? 'Some (Some ml_record)' : 'Some ml_record'} => Some ${field} | _ => None end)`;
+      }
+      case 'optionalProject': {
+        this.floats();
+        const length = e.object.type.element.kind === 'string' ? renderStringLengthExpression('Rocq', 'ml_value') : '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ml_value))))';
+        return `(match ${this.expr(e.object)} with | ${e.object.type.absence === 'both' ? 'Some (Some ml_value)' : 'Some ml_value'} => Some ${length} | _ => None end)`;
+      }
+      case 'optionalIndex': {
+        let index = this.expr(e.index);
+        if (e.index.type.kind === 'float') { this.helpers.add('floatIndex'); index = `(ml_float_index ${index})`; }
+        else if (e.index.type.kind === 'nat') index = `(Z.of_N ${index})`;
+        return `(let ml_index := ${index} in if Z.ltb ml_index 0 then None else List.nth_error ${this.expr(e.array)} (Z.to_nat ml_index))`;
+      }
+      case 'method':
+        return this.method(e);
+      case 'stringPoints':
+        throw unsupported('string iteration', 'this target needs a Unicode code-point iterator over its UTF-8 string encoding', e.span);
+      case 'set':
+      case 'map': {
+        const set = e.k === 'set';
+        const keyType = set ? e.type.element : e.type.key;
+        const value = set ? 'ml_value' : '(fst ml_value)';
+        const previous = set ? 'ml_previous' : '(fst ml_previous)';
+        let equal = this.comparison('eq', keyType, previous, value);
+        if (keyType.kind === 'float') equal = `(orb ${equal} (andb (PrimFloat.is_nan ${previous}) (PrimFloat.is_nan ${value})))`;
+        const normalized = keyType.kind === 'float' ? set ? '(if PrimFloat.eqb ml_original 0%float then 0%float else ml_original)' : '((if PrimFloat.eqb (fst ml_original) 0%float then 0%float else fst ml_original), snd ml_original)' : 'ml_original';
+        const values = this.expr(set ? e.items : e.entries);
+        const existing = set ? 'ml_accumulator' : `(List.map (fun ml_previous => if ${equal} then (fst ml_previous, snd ml_value) else ml_previous) ml_accumulator)`;
+        const element = set ? this.type(e.type.element) : `(${this.type(e.type.key)} * ${this.type(e.type.value)})%type`;
+        return `(List.fold_left (fun ml_accumulator ml_original => let ml_value := ${normalized} in if List.existsb (fun ml_previous => ${equal}) ml_accumulator then ${existing} else List.app ml_accumulator (ml_value :: nil)) ${values} (@nil ${element}))`;
+      }
+      case 'collectionSize':
+        this.floats();
+        return `(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ${this.expr(e.object)}))))`;
+      case 'collectionRead': {
+        const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
+        const key = e.object.type.kind === 'map' ? '(fst ml_value)' : 'ml_value';
+        let equal = this.comparison('eq', keyType, key, 'ml_search');
+        if (keyType.kind === 'float') equal = `(orb ${equal} (andb (PrimFloat.is_nan ${key}) (PrimFloat.is_nan ml_search)))`;
+        const result = e.op === 'get' ? `(option_map (@snd ${this.type(e.object.type.key)} ${this.type(e.object.type.value)}) (List.find (fun ml_value => ${equal}) ml_values))` : `(List.existsb (fun ml_value => ${equal}) ml_values)`;
+        return `(let ml_values := ${this.expr(e.object)} in let ml_search := ${this.expr(e.key)} in ${result})`;
+      }
+      case 'collectionItems': {
+        const map = e.object.type.kind === 'map';
+        if (e.op === 'entries') return map ? this.expr(e.object) : `(List.map (fun ml_value => (ml_value, ml_value)) ${this.expr(e.object)})`;
+        return map ? `(List.map (@${e.op === 'keys' ? 'fst' : 'snd'} ${this.type(e.object.type.key)} ${this.type(e.object.type.value)}) ${this.expr(e.object)})` : this.expr(e.object);
+      }
       case 'ctor': {
         const head = this.state.ctorRef(e.data, e.ctor);
         return e.args.length ? `(${head} ${e.args.map((arg) => this.expr(arg)).join(' ')})` : head;
@@ -695,6 +788,26 @@ class RocqEmitter {
   }
 
   /** Math and Number functions: PrimFloat's where they agree with JavaScript, the math helpers otherwise. */
+  method(e) {
+    if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, 'this target needs a UTF-16 operational string encoding for this operation', e.span);
+    if (e.op === 'reduce' && e.args.length === 1) throw unsupported('array reduce without an initial value', 'the empty-array TypeError needs an operational abort encoding in Rocq', e.span);
+    if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, 'this array operation needs an operational encoding in Rocq', e.span);
+    const callback = e.args[0];
+    const number = '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (snd ml_pair))))';
+    const args = e.op === 'reduce' ? ['ml_accumulator', '(fst ml_pair)', number, 'ml_values'] : ['(fst ml_pair)', number, 'ml_values'];
+    const call = callback.type.params.length ? `(ml_callback ${args.slice(0, callback.type.params.length).join(' ')})` : 'ml_callback';
+    if (callback.type.params.length > (e.op === 'reduce' ? 2 : 1)) this.floats();
+    const head = `(let ml_values := ${this.expr(e.object)} in let ml_callback := ${this.expr(callback)} in `;
+    const pairs = '(List.combine ml_values (List.seq 0 (List.length ml_values)))';
+    const lambda = `(fun ml_pair => ${call})`;
+    if (e.op === 'map' || e.op === 'flatMap') return `${head} List.${e.op === 'map' ? 'map' : 'flat_map'} ${lambda} ${pairs})`;
+    if (e.op === 'some' || e.op === 'every') return `${head} List.${e.op === 'some' ? 'existsb' : 'forallb'} ${lambda} ${pairs})`;
+    if (e.op === 'filter') return `${head} List.map (@fst ${this.type(e.object.type.element)} nat) (List.filter ${lambda} ${pairs}))`;
+    if (e.op === 'find') return `${head} option_map (@fst ${this.type(e.object.type.element)} nat) (List.find ${lambda} ${pairs}))`;
+    if (e.op === 'findIndex') { this.floats(); return `${head} match List.find ${lambda} ${pairs} with Some ml_pair => ${number} | None => (PrimFloat.opp 1%float) end)`; }
+    return `${head} List.fold_left (fun ml_accumulator ml_pair => ${call}) ${pairs} ${this.expr(e.args[1])})`;
+  }
+
   math(e) {
     this.floats();
     const args = e.args.map((arg) => this.expr(arg));
@@ -759,6 +872,14 @@ class RocqEmitter {
         return '(@nil string)';
       case 'array':
         return `(@nil ${this.type(type.element)})`;
+      case 'option':
+        return `(@None ${type.absence === 'both' ? `(option ${this.type(type.element)})` : this.type(type.element)})`;
+      case 'tuple':
+        return type.elements.length ? `(${type.elements.map((element) => this.inhabitant(element)).join(', ')})` : 'tt';
+      case 'record':
+        return type.fields.length ? `(${type.fields.map((field) => this.inhabitant(field.type)).join(', ')})` : 'tt';
+      case 'function':
+        return `(fun ${type.params.map((param, index) => `(ml_arg${index} : ${this.type(param)})`).join(' ')} => ${this.inhabitant(type.ret)})`;
       case 'data': {
         const entry = this.program.declarations.get(type.name);
         const ctor = entry.ctors.find((candidate) => candidate.fields.every((field) => field.type.kind !== 'data'))
