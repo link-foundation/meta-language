@@ -403,7 +403,7 @@ function finiteTexts(node, limit = 64) {
 function lexicalUnits(node, out) {
   if (!node || typeof node !== 'object') return out;
   // Context guards and preferred copies introduce no source lexer tokens.
-  if (['NATIVE_LITERAL_BOUNDARY', 'NATIVE_WORD_BOUNDARY', 'NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return lexicalUnits(node.content, out);
+  if (['NATIVE_LITERAL_BOUNDARY', 'NATIVE_WORD_BOUNDARY', 'NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT', 'NATIVE_SYNTACTIC_CONTEXT_VARIANT'].includes(node.type)) return lexicalUnits(node.content, out);
   if (node.type === 'STRING' || node.type === 'TOKEN' || node.type === 'IMMEDIATE_TOKEN') {
     out.push(node);
     return out;
@@ -444,7 +444,7 @@ function countTokens(node, counts, around = []) {
     node.forEach((item) => countTokens(item, counts));
     return counts;
   }
-  if (['NATIVE_LITERAL_BOUNDARY', 'NATIVE_WORD_BOUNDARY', 'NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT'].includes(node.type)) return countTokens(node.content, counts, around);
+  if (['NATIVE_LITERAL_BOUNDARY', 'NATIVE_WORD_BOUNDARY', 'NATIVE_PREFIX_EXCLUSION', 'NATIVE_KEYWORD_EXCLUSION', 'NATIVE_KEYWORD_REQUIREMENT', 'NATIVE_PATTERN_LOOKAHEAD', 'NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_KEYWORD_CONTEXT_VARIANT', 'NATIVE_OPTIONAL_SUFFIX_CONTEXT', 'NATIVE_SYNTACTIC_CONTEXT_VARIANT'].includes(node.type)) return countTokens(node.content, counts, around);
   const add = (key) => counts.set(key, (counts.get(key) ?? 0) + 1);
   if (node.type === 'STRING' || node.type === 'PATTERN') add(tokenKey(node));
   else if (node.type === 'TOKEN' || node.type === 'IMMEDIATE_TOKEN') add(tokenKey(node, around));
@@ -557,6 +557,7 @@ export function importTreeSitterNative(source, options = {}) {
         return `(seq ${guard} ${expr(node.content, inToken, keywords, aliased)})`;
       }
       case 'NATIVE_KEYWORD_CONTEXT_VARIANT': return `(choice ordered ${expr(node.preferred, inToken, keywords, aliased)} ${expr(node.content, inToken, keywords, aliased)})`;
+      case 'NATIVE_SYNTACTIC_CONTEXT_VARIANT': return `(choice ordered (seq ${expr(node.preferred, false, keywords, aliased)} (and ${expr(node.boundary, false, keywords)})) ${expr(node.content, inToken, keywords, aliased)})`;
       case 'NATIVE_PATTERN_LOOKAHEAD': {
         const pattern = renderTreeSitterPattern(parseTreeSitterPattern(node.pattern));
         const assertion = node.immediate ? `(immediateToken (and ${pattern}))` : `(token ${pattern})`;
