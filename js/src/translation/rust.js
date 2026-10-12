@@ -12,6 +12,7 @@ import { TranslationError, unsupported } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, STRING, UNIT, rustFixedType } from './types.js';
 import { RustSourceOrigins } from './rust-source-origins.js';
+import { acceptRustSourceBoxOwner } from './rust-indirection-rules.js';
 import { checkProgram } from './check.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -47,6 +48,7 @@ class RustParser {
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
+    this.crateDeclarations = new Set();
     this.origins = new RustSourceOrigins(catalog);
   }
 
@@ -124,6 +126,14 @@ class RustParser {
         c.expect('}', 'mod');
         continue;
       }
+      if (path.length === 0 && c.is('extern') && c.is('crate', 1) && c.is('alloc', 2) && c.is(';', 3)) {
+        const key = [...path, 'alloc'].join('.');
+        if (this.crateDeclarations.has(key)) throw unsupported('extern crate alloc', 'each source crate declaration must be unique in its module', span(start, start));
+        this.crateDeclarations.add(key);
+        for (let index = 0; index < 4; index += 1) c.next();
+        this.origins.declaration('alloc', path, { k: 'externalCrate' });
+        continue;
+      }
       if (c.is('use')) {
         this.use(path);
         continue;
@@ -185,11 +195,13 @@ class RustParser {
         tree(full);
         return;
       }
-      if (!['crate', 'super', 'self'].includes(full[0])) {
+      const standardBox = full.length > 1 && acceptRustSourceBoxOwner(full.join('::'), false);
+      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox) {
         throw unsupported(`use ${full.join('::')}`, 'only items of this crate can be imported; the standard library is outside the portable core', span(start, c.peek()));
       }
+      if (standardBox) this.origins.box(full, full, path, span(start, c.peek()));
       const alias = c.eat('as') ? c.identifier('use alias').value : segment;
-      aliases.set(alias, absolute(full, path, span(start, c.peek())));
+      aliases.set(alias, standardBox ? full : absolute(full, path, span(start, c.peek())));
     };
     tree([]);
     c.expect(';', 'use');
@@ -263,8 +275,9 @@ class RustParser {
     }
     const segments = this.pathSegments('type');
     const name = segments.join('::');
-    if (['Box', 'std::boxed::Box', 'alloc::boxed::Box'].includes(name)) {
-      this.origins.box(segments, this.resolve(segments, this.modulePath), this.modulePath, span(token, c.peek()));
+    const resolved = this.resolve(segments, this.modulePath);
+    if (acceptRustSourceBoxOwner(name, false) || acceptRustSourceBoxOwner(resolved.join('::'), false)) {
+      this.origins.box(segments, resolved, this.modulePath, span(token, c.peek()));
       c.expect('<', 'Box');
       const inner = this.type();
       c.expect('>', 'Box');
@@ -749,9 +762,10 @@ class RustParser {
       }
       c.expect(')', 'call');
       const range = span(token, c.peek());
-      if (['Box::new', 'std::boxed::Box::new', 'alloc::boxed::Box::new'].includes(name)) {
+      const resolvedOwner = segments.length > 1 ? this.resolve(segments.slice(0, -1), path) : [];
+      if (segments.at(-1) === 'new' && (acceptRustSourceBoxOwner(segments.slice(0, -1).join('::'), false) || acceptRustSourceBoxOwner(resolvedOwner.join('::'), false))) {
         if (args.length !== 1) throw new TranslationError('type', 'Box::new expects 1 argument', range);
-        this.origins.box(segments.slice(0, -1), this.resolve(segments.slice(0, -1), path), path, range);
+        this.origins.box(segments.slice(0, -1), resolvedOwner, path, range);
         return this.origins.wrap(args[0], path, 'box');
       }
       if (name === 'String::from') {

@@ -18,7 +18,7 @@ if (process.argv.includes('--update-styles')) {
     { op: 'replace', field: 'source', from: 'kind: String', to: 'kind: &str' },
     { op: 'replace', field: 'source', from: 'operation: String', to: 'operation: &str' },
   ];
-  for (const name of ['accept_rust_immutable_indirection_layer', 'accept_rust_source_box_owner', 'accept_rust_source_indirection_argument', 'accept_rust_source_box_coercion_layer', 'read_rust_source_expression_origin']) {
+  for (const name of ['accept_rust_immutable_indirection_layer', 'accept_rust_source_box_owner', 'accept_rust_source_indirection_argument', 'accept_rust_source_box_coercion_layer', 'read_rust_source_expression_origin', 'accept_rust_source_box_availability']) {
     actions.push({ op: 'replace', field: 'source', from: `pub fn ${name}`, to: `/// Admit the corresponding immutable Rust source projection.\n#[must_use]\npub fn ${name}` });
   }
   // These functions contain only Boolean expressions, so parentheses added
@@ -38,6 +38,11 @@ if (process.argv.includes('--update-styles')) {
   for (const expression of raw.matchAll(/\(kind == "[^"]+"\)/gu)) actions.push({ op: 'replace', field: 'source', from: expression[0], to: expression[0].slice(1, -1) });
   for (const line of definitions[4].split('\n').filter(line => /^\s*if /u.test(line))) {
     actions.push({ op: 'replace', field: 'source', from: line.trim(), to: line.trim().replace(/[()]/gu, '') });
+  }
+  for (const line of definitions[5].split('\n').filter(line => line.startsWith('    '))) {
+    const from = line.trim();
+    const to = 'owner != "alloc::boxed::Box" || declared';
+    if (from !== to) actions.push({ op: 'replace', field: 'source', from, to });
   }
   writeFileSync(style, new DecoratorSet([{ id: 'rust-indirection-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
 }

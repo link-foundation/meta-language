@@ -35,3 +35,8 @@ export function readRustSourceExpressionOrigin(kind, operation) {
   if (kind === 'toString' || kind === 'show' || kind === 'stringMap' || kind === 'stringTest') return 'derived-value';
   return 'unknown';
 }
+
+/** @param {string} owner @param {boolean} declared @returns {boolean} */
+export function acceptRustSourceBoxAvailability(owner, declared) {
+  return owner !== 'alloc::boxed::Box' || declared;
+}

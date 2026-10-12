@@ -79,3 +79,9 @@ pub fn read_rust_source_expression_origin(kind: &str, operation: &str) -> String
         }
     }
 }
+
+/// Admit the corresponding immutable Rust source projection.
+#[must_use]
+pub fn accept_rust_source_box_availability(owner: &str, declared: bool) -> bool {
+    owner != "alloc::boxed::Box" || declared
+}

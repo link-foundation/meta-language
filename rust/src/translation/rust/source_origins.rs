@@ -6,9 +6,9 @@
 use std::collections::{HashMap, VecDeque};
 
 use super::indirection_rules::{
-    accept_rust_immutable_indirection_layer, accept_rust_source_box_coercion_layer,
-    accept_rust_source_box_owner, accept_rust_source_indirection_argument,
-    read_rust_source_expression_origin,
+    accept_rust_immutable_indirection_layer, accept_rust_source_box_availability,
+    accept_rust_source_box_coercion_layer, accept_rust_source_box_owner,
+    accept_rust_source_indirection_argument, read_rust_source_expression_origin,
 };
 use super::{Result, SExpr, SNode, SPattern, SPatternNode, Span, Type, unsupported};
 
@@ -62,6 +62,7 @@ impl SourceOrigin {
 
 #[derive(Clone, Debug)]
 pub(super) enum SourceDeclaration {
+    ExternalCrate,
     Module,
     Data,
     Constructor {
@@ -119,12 +120,30 @@ impl SourceOrigins {
         ty
     }
 
-    pub(super) fn declaration(&mut self, name: &str, path: &[String], entry: SourceDeclaration) {
+    pub(super) fn declaration(
+        &mut self,
+        name: &str,
+        path: &[String],
+        entry: SourceDeclaration,
+    ) -> Result<()> {
         if self.collecting {
             let mut full_path = path.to_vec();
             full_path.push(name.to_owned());
-            self.catalog.insert(full_path.join("."), entry);
+            let key = full_path.join(".");
+            if let Some(existing) = self.catalog.get(&key) {
+                let existing_crate = matches!(existing, SourceDeclaration::ExternalCrate);
+                let new_crate = matches!(entry, SourceDeclaration::ExternalCrate);
+                if existing_crate != new_crate {
+                    return Err(unsupported(
+                        "extern crate alloc",
+                        "a source crate declaration cannot share its module name with another item",
+                        None,
+                    ));
+                }
+            }
+            self.catalog.insert(key, entry);
         }
+        Ok(())
     }
 
     /// Resolve forward aliases with the completed parser's existing resolver.
@@ -147,7 +166,9 @@ impl SourceOrigins {
                     fields.iter_mut().for_each(&mut resolve_origin);
                     resolve_origin(result);
                 }
-                SourceDeclaration::Module | SourceDeclaration::Data => {}
+                SourceDeclaration::ExternalCrate
+                | SourceDeclaration::Module
+                | SourceDeclaration::Data => {}
             }
         }
     }
@@ -205,14 +226,31 @@ impl SourceOrigins {
         if self.collecting {
             return Ok(());
         }
-        let shadowed = segments != resolved
-            || segments
-                .first()
-                .is_some_and(|name| self.lookup(std::slice::from_ref(name), path).is_some());
-        if !accept_rust_source_box_owner(&segments.join("::"), shadowed) {
+        let owner = resolved.join("::");
+        let shadowed = [segments.first(), resolved.first()]
+            .into_iter()
+            .flatten()
+            .any(|name| {
+                self.lookup(std::slice::from_ref(name), path)
+                    .is_some_and(|entry| {
+                        !matches!(entry.declaration, SourceDeclaration::ExternalCrate)
+                    })
+            });
+        if !accept_rust_source_box_owner(&owner, shadowed) {
             return Err(unsupported(
                 "Box owner",
                 "only the unshadowed standard immutable Box is portable",
+                span,
+            ));
+        }
+        let declared = resolved
+            .first()
+            .and_then(|name| self.lookup(std::slice::from_ref(name), path))
+            .is_some_and(|entry| matches!(entry.declaration, SourceDeclaration::ExternalCrate));
+        if !accept_rust_source_box_availability(&owner, declared) {
+            return Err(unsupported(
+                "Box source crate",
+                "alloc requires an actual extern crate alloc declaration",
                 span,
             ));
         }
@@ -271,7 +309,9 @@ impl SourceOrigins {
             match entry.declaration {
                 SourceDeclaration::Function { result, .. }
                 | SourceDeclaration::Constructor { result, .. } => return result,
-                SourceDeclaration::Module | SourceDeclaration::Data => {}
+                SourceDeclaration::ExternalCrate
+                | SourceDeclaration::Module
+                | SourceDeclaration::Data => {}
             }
         }
         if let SNode::Name { path: names } = &node.node {

@@ -27,10 +27,20 @@ const positives = [
   ['boxed-display-value', 'fn text(value:Box<u64>)->String{value.to_string()} fn main(){println!("{}",text(Box::new(71)));}', ['71']],
   ['explicit-box-literal-pattern', 'fn read(value:Box<u64>)->u64{match *value{1=>1,_=>2}} fn main(){println!("{}",read(Box::new(1)));}', ['1']],
   ['explicit-box-fieldless-constructor-pattern', 'enum Flag{One,Two} fn read(value:Box<Flag>)->u64{match *value{Flag::One=>1,Flag::Two=>2}} fn main(){println!("{}",read(Box::new(Flag::One)));}', ['1']],
+  ['declared-allocation-crate', 'extern crate alloc; fn take(value:alloc::boxed::Box<i32>)->i32{*value} fn main(){println!("{}",take(alloc::boxed::Box::new(79)));}', ['79']],
+  ['standard-box-import', 'use std::boxed::Box; fn take(value:Box<i32>)->i32{*value} fn main(){println!("{}",take(Box::new(83)));}', ['83']],
+  ['standard-box-import-alias', 'use std::boxed::Box as Heap; fn take(value:Heap<i32>)->i32{*value} fn main(){println!("{}",take(Heap::new(89)));}', ['89']],
+  ['allocation-box-import-alias', 'extern crate alloc; use alloc::boxed::Box as Heap; fn take(value:Heap<i32>)->i32{*value} fn main(){println!("{}",take(Heap::new(97)));}', ['97']],
   ['borrowed-reference-wildcard-pattern', 'fn read(value:&u64)->u64{match value{&_=>73}} fn main(){println!("{}",read(&1));}', ['73']],
 ];
 const main = ' fn main(){println!("x");}';
 const negatives = [
+  ['undeclared-allocation-crate', 'fn take(value:alloc::boxed::Box<i32>)->i32{*value}'],
+  ['undeclared-allocation-import', 'use alloc::boxed::Box as Heap; fn take(value:Heap<i32>)->i32{*value}'],
+  ['foreign-crate-declaration', 'extern crate other; fn value()->u64{1}'],
+  ['allocation-crate-owner-collision', 'mod alloc{} extern crate alloc; fn take(value:alloc::boxed::Box<i32>)->i32{*value}'],
+  ['duplicate-allocation-crate-declaration', 'extern crate alloc; extern crate alloc; fn value()->u64{1}'],
+  ['shadowed-standard-box-import', 'mod std{pub mod boxed{pub enum Box{Value(u64)}}} use std::boxed::Box as Heap; fn take(value:Heap<u64>)->u64{*value}'],
   ['scalar-dereference', 'fn read(value:u64)->u64{*value}'],
   ['literal-dereference', 'fn read()->u64{*1}'],
   ['unknown-dereference', 'fn read()->u64{*missing}'],

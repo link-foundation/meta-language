@@ -3,7 +3,7 @@
 // type, path and pattern records rather than inferring a second typed program.
 import { unsupported } from './diagnostics.js';
 import { rustFixedType } from './types.js';
-import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
+import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
 
 const unknown = (uncertain = false) => ({ wrappers: [], type: null, path: [], proven: false, diverging: false, uncertain });
 const value = () => ({ ...unknown(), proven: true });
@@ -31,7 +31,14 @@ export class RustSourceOrigins {
   }
 
   declaration(name, path, entry) {
-    if (this.collecting) this.catalog.set([...path, name].join('.'), entry);
+    if (this.collecting) {
+      const key = [...path, name].join('.');
+      const existing = this.catalog.get(key);
+      if (existing && existing.k !== entry.k && (existing.k === 'externalCrate' || entry.k === 'externalCrate')) {
+        throw unsupported('extern crate alloc', 'a source crate declaration cannot share its module name with another item');
+      }
+      this.catalog.set(key, entry);
+    }
   }
 
   resolveTypes(resolve) {
@@ -76,11 +83,15 @@ export class RustSourceOrigins {
 
   box(segments, resolved, path, span) {
     if (this.collecting) return;
-    const owner = segments.join('::');
-    const shadowed = JSON.stringify(segments) !== JSON.stringify(resolved)
-      || Boolean(this.lookup([segments[0]], path));
+    const owner = resolved.join('::');
+    const source = this.lookup([segments[0]], path);
+    const target = this.lookup([resolved[0]], path);
+    const shadowed = Boolean(source && source.k !== 'externalCrate') || Boolean(target && target.k !== 'externalCrate');
     if (!acceptRustSourceBoxOwner(owner, shadowed)) {
       throw unsupported('Box owner', 'only the unshadowed standard immutable Box is portable', span);
+    }
+    if (!acceptRustSourceBoxAvailability(owner, target?.k === 'externalCrate')) {
+      throw unsupported('Box source crate', 'alloc requires an actual extern crate alloc declaration', span);
     }
   }
 

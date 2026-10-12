@@ -10,7 +10,7 @@
 //!
 //! Mirrors `js/src/translation/rust.js`.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::aborts::rust_macro_message;
 use super::diagnostics::{Result, TranslationError, type_error, unsupported};
@@ -146,6 +146,7 @@ struct RustParser {
     /// `use` aliases, per module path.
     aliases: HashMap<String, HashMap<String, Vec<String>>>,
     module_path: Vec<String>,
+    crate_declarations: HashSet<String>,
     main: Option<SMain>,
     origins: SourceOrigins,
 }
@@ -156,6 +157,7 @@ impl RustParser {
             cursor: TokenCursor::new(tokens, Language::Rust),
             aliases: HashMap::new(),
             module_path: Vec::new(),
+            crate_declarations: HashSet::new(),
             main: None,
             origins,
         }

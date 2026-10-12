@@ -1,5 +1,6 @@
 //! Expressions from operator precedence down to paths, macros, `if` and `match`.
 
+use super::indirection_rules::accept_rust_source_box_owner;
 use super::{
     Alias, BinaryOp, Flavor, Options, Result, RustParser, SExpr, SNode, SPattern, SPatternNode,
     SRow, STRING, SourceOrigin, Span, Token, TokenKind, UnaryOp, additive_op, binary,
@@ -401,13 +402,21 @@ impl RustParser {
         let mut args = self.call_arguments(path)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
-        if ["Box::new", "std::boxed::Box::new", "alloc::boxed::Box::new"].contains(&name.as_str()) {
+        let owner = &segments[..segments.len() - 1];
+        let resolved_owner = if owner.is_empty() {
+            Vec::new()
+        } else {
+            self.resolve(owner, path)
+        };
+        if segments.last().is_some_and(|segment| segment == "new")
+            && (accept_rust_source_box_owner(&owner.join("::"), false)
+                || accept_rust_source_box_owner(&resolved_owner.join("::"), false))
+        {
             if args.len() != 1 {
                 return Err(type_error("Box::new expects 1 argument", range));
             }
-            let owner = &segments[..segments.len() - 1];
             self.origins
-                .box_owner(owner, &self.resolve(owner, path), path, range)?;
+                .box_owner(owner, &resolved_owner, path, range)?;
             let result = args.remove(0);
             self.origins.wrap(&result, path, "box");
             return Ok(result);

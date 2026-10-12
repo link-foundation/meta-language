@@ -1,5 +1,6 @@
 //! Attributes, items, `use` trees, enums, types, functions, blocks and `main`.
 
+use super::indirection_rules::accept_rust_source_box_owner;
 use super::{
     ACCEPTED_DERIVES, ACCEPTED_LINTS, BOOL, Binding, ItemsEnd, Language, Options, RESERVED_ITEMS,
     Result, RustParser, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain,
@@ -115,7 +116,7 @@ impl RustParser {
                 c.expect("{", Some("mod"))?;
                 let module_span = span(&start, c.peek());
                 self.origins
-                    .declaration(&name, path, SourceDeclaration::Module);
+                    .declaration(&name, path, SourceDeclaration::Module)?;
                 let mut inner = path.to_vec();
                 inner.push(name.clone());
                 let module_items = self.items(&inner, ItemsEnd::Module)?;
@@ -125,6 +126,26 @@ impl RustParser {
                     items: module_items,
                     span: module_span,
                 }));
+                continue;
+            }
+            if path.is_empty()
+                && c.is("extern")
+                && c.is_at("crate", 1)
+                && c.is_at("alloc", 2)
+                && c.is_at(";", 3)
+            {
+                if !self.crate_declarations.insert("alloc".to_owned()) {
+                    return Err(unsupported(
+                        "extern crate alloc",
+                        "each source crate declaration must be unique in its module",
+                        span(&start, &start),
+                    ));
+                }
+                for _ in 0..4 {
+                    c.advance();
+                }
+                self.origins
+                    .declaration("alloc", path, SourceDeclaration::ExternalCrate)?;
                 continue;
             }
             if c.is("use") {
@@ -225,19 +246,28 @@ impl RustParser {
         if c.eat("::").is_some() {
             return self.use_tree(&full, start, path);
         }
-        if !["crate", "super", "self"].contains(&full[0].as_str()) {
+        let standard_box = full.len() > 1 && accept_rust_source_box_owner(&full.join("::"), false);
+        if !["crate", "super", "self"].contains(&full[0].as_str()) && !standard_box {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
                 "only items of this crate can be imported; the standard library is outside the portable core",
                 span(start, c.peek()),
             ));
         }
+        if standard_box {
+            self.origins
+                .box_owner(&full, &full, path, span(start, c.peek()))?;
+        }
         let alias = if c.eat("as").is_some() {
             c.identifier(Some("use alias"))?.value
         } else {
             segment
         };
-        let target = absolute(&full, path, span(start, c.peek()))?;
+        let target = if standard_box {
+            full
+        } else {
+            absolute(&full, path, span(start, c.peek()))?
+        };
         self.aliases
             .entry(path.join("."))
             .or_default()
@@ -275,7 +305,7 @@ impl RustParser {
             .collect::<Vec<_>>()
             .join(".");
         self.origins
-            .declaration(&name, path, SourceDeclaration::Data);
+            .declaration(&name, path, SourceDeclaration::Data)?;
         while !self.cursor.is("}") {
             self.attributes()?;
             let variant = self.cursor.identifier(Some("variant"))?;
@@ -327,7 +357,7 @@ impl RustParser {
                         Vec::new(),
                     ),
                 },
-            );
+            )?;
             ctors.push(SCtor {
                 name: variant.value,
                 fields,
@@ -395,8 +425,10 @@ impl RustParser {
         }
         let segments = self.path_segments("type")?;
         let name = segments.join("::");
-        if ["Box", "std::boxed::Box", "alloc::boxed::Box"].contains(&name.as_str()) {
-            let resolved = self.resolve(&segments, &self.module_path);
+        let resolved = self.resolve(&segments, &self.module_path);
+        if accept_rust_source_box_owner(&name, false)
+            || accept_rust_source_box_owner(&resolved.join("::"), false)
+        {
             self.origins.box_owner(
                 &segments,
                 &resolved,
@@ -520,7 +552,7 @@ impl RustParser {
                 parameters: source_params.clone(),
                 result: source_result.clone(),
             },
-        );
+        )?;
         if self.cursor.is("where") {
             return Err(unsupported(
                 "where clause",
@@ -562,7 +594,7 @@ impl RustParser {
                 parameters: Vec::new(),
                 result: source_result.clone(),
             },
-        );
+        )?;
         self.cursor.expect("=", Some("const"))?;
         let body = self.expr(path, Options::default())?;
         self.origins

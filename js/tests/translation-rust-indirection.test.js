@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import { rustSourceIndirectionFixture } from '../scripts/generate-rust-source-indirection-fixtures.mjs';
 import { parseRust } from '../src/translation/rust.js';
 import { checkProgram } from '../src/translation/check.js';
-import { acceptRustImmutableIndirectionLayer, acceptRustSourceBoxOwner, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer } from '../src/translation/rust-indirection-rules.js';
+import { acceptRustImmutableIndirectionLayer, acceptRustSourceBoxOwner, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxAvailability } from '../src/translation/rust-indirection-rules.js';
 
 const fixture = readProjectData(new URL('../../parity/fixtures/rust-source-indirection.json', import.meta.url));
 
@@ -44,6 +44,9 @@ test('shared indirection decisions distinguish standard ownership and borrowed B
     assert.equal(acceptRustSourceBoxOwner(owner, true), false);
   }
   assert.equal(acceptRustSourceBoxOwner('Other::Box', false), false);
+  assert.equal(acceptRustSourceBoxAvailability('alloc::boxed::Box', false), false);
+  assert.equal(acceptRustSourceBoxAvailability('alloc::boxed::Box', true), true);
+  for (const owner of ['Box', 'std::boxed::Box']) assert.equal(acceptRustSourceBoxAvailability(owner, false), true);
   assert.equal(acceptRustSourceIndirectionArgument(true, false, false, true), false);
   assert.equal(acceptRustSourceIndirectionArgument(true, false, true, true), true);
   assert.equal(acceptRustSourceIndirectionArgument(true, true, false, false), true);
