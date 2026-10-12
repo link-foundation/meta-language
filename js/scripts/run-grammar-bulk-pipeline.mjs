@@ -562,7 +562,7 @@ function option(args, name, fallback) {
 
 async function main(args) {
   const definitionsFile = option(args, '--formal-definitions', null);
-  const formalDefinitions = definitionsFile === null ? undefined : JSON.parse(readFileSync(resolve(definitionsFile), 'utf8'));
+  const formalDefinitions = definitionsFile === null ? undefined : readProjectData(resolve(definitionsFile));
   const worker = option(args, '--worker', null);
   if (worker) {
     const entry = bulkLanguages().find(({ name }) => name === worker);
