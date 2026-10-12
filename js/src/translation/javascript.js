@@ -17,6 +17,7 @@ import { imperative, lowerImperative, lowerTopLevel, statementUses } from './jav
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 import { bindArrayElements, isLiteralBinding, readArrayBinding, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
+import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
@@ -70,8 +71,10 @@ export function parseJavaScript(source, context = {}) {
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map() } = {}) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics } = {}) {
     this.source = source;
+    this.referenceSemantics = referenceSemantics ?? requiresReferenceSemantics(source);
+    this.referenceSemanticsEnabled = referenceSemantics !== false;
     // The other items of the module an item may call and read, by name.
     this.externals = new Map(externals.map((external) => [external.name, external]));
     this.moduleDirectory = moduleDirectory;
@@ -194,9 +197,12 @@ class JavaScriptParser {
     const main = { effects, span: { start: 0, end: this.source.length } };
     if (this.sequentialAsync) main.sequentialAsync = true;
     const program = { language: 'JavaScript', items, main };
+    if (this.referenceSemantics) program.referenceSemantics = true;
     if (this.imports.length) program.imports = this.imports;
     if (this.externals.size) program.externals = [...this.externals.values()];
-    return inferJavaScriptTypes(program);
+    const inferred = inferJavaScriptTypes(program);
+    if (this.referenceSemanticsEnabled && hasStructuralIdentity(inferred)) inferred.referenceSemantics = true;
+    return inferred;
   }
 
   /** Names of the top-level async functions, which every call must await. */
@@ -533,7 +539,7 @@ class JavaScriptParser {
     const names = params.map((param) => param.name);
     this.scope = { locals: new Set(names), tdz: new Set(), mutable: new Set(names) };
     const statements = statementsOf();
-    validateClosureCaptures(statements);
+    validateClosureCaptures(statements, this.referenceSemantics);
     this.scope = outer;
     this.inAsync = outerAsync;
     this.jumps = outerJumps;
@@ -703,6 +709,11 @@ class JavaScriptParser {
     if (token.kind === 'identifier' && c.peek(1).kind === 'punct' && c.peek(1).value === ':') {
       throw unsupported(`label ${token.value}`, 'labels are outside the portable core; a break or continue applies to the innermost loop', span(token, c.peek(1)));
     }
+    if (this.startsReferenceAssignment()) {
+      const statement = this.referenceAssignment();
+      c.eat(';');
+      return statement;
+    }
     if (this.startsAssignment()) {
       const statement = this.assignment();
       c.eat(';');
@@ -791,6 +802,52 @@ class JavaScriptParser {
     if (!c.isKind('identifier')) return false;
     const next = c.peek(1);
     return next.kind === 'punct' && (ASSIGNMENTS.has(next.value) || next.value === '++' || next.value === '--');
+  }
+
+  startsReferenceAssignment() {
+    const c = this.cursor;
+    let index = c.index;
+    if (c.tokens[index]?.value === '++' || c.tokens[index]?.value === '--') index += 1;
+    if (c.tokens[index]?.kind !== 'identifier') return false;
+    index += 1;
+    let member = false;
+    for (;;) {
+      if (c.tokens[index]?.value === '.' && c.tokens[index + 1]?.kind === 'identifier') { member = true; index += 2; continue; }
+      if (c.tokens[index]?.value === '[') { member = true; index = this.matching(index) + 1; continue; }
+      break;
+    }
+    const operator = c.tokens[index];
+    return member && (operator?.kind === 'punct' && (ASSIGNMENTS.has(operator.value) || operator.value === '++' || operator.value === '--') || c.is('++') || c.is('--'));
+  }
+
+  referenceAssignment() {
+    const c = this.cursor;
+    const start = c.peek();
+    const prefix = c.is('++') || c.is('--') ? c.next() : null;
+    const token = c.identifier('reference assignment');
+    let object = this.reference(token);
+    let index = null;
+    let field = null;
+    for (;;) {
+      if (c.eat('.')) {
+        const member = c.identifier('reference field');
+        field = member.value;
+        index = null;
+      } else if (c.eat('[')) {
+        index = this.expr();
+        c.expect(']', 'reference index');
+        field = null;
+      } else throw this.fail('expected a field or index in reference assignment');
+      if (!c.is('.') && !c.is('[')) break;
+      object = field === null ? { k: 'index', object, index, span: span(start, c.peek()) } : { k: 'field', object, field, span: span(start, c.peek()) };
+    }
+    const op = prefix ? prefix.value : c.next().value;
+    const where = span(start, c.peek());
+    const target = { object, ...(field === null ? { index } : { field }) };
+    if (op === '++' || op === '--') return { s: 'assignReference', ...target, op, span: where };
+    if (op !== '=' && !COMPOUND[op]) throw unsupported(`${op} reference assignment`, 'the operator needs a source-language read and write rule', where);
+    const value = this.expr();
+    return { s: 'assignReference', ...target, value, op, span: span(start, c.peek()) };
   }
 
   /** An assignment of a local: `x op= e` is `x = x op e`, and `x++` is `x = x + 1`. */
@@ -918,7 +975,7 @@ class JavaScriptParser {
     if (name) reserved(name);
     c.expect('of', 'for…of');
     const value = this.expr();
-    const iterable = { k: 'arrayFrom', args: [value], span: value.span };
+    const iterable = { k: 'forOfIterable', object: value, span: value.span };
     c.expect(')', 'for');
     this.generatedCount += 1;
     const values = `ml_values${this.generatedCount}`;
@@ -934,7 +991,7 @@ class JavaScriptParser {
     }
     const where = span(start, c.peek());
     const read = (local) => ({ k: 'name', path: [local], span: where });
-    const element = { k: 'index', object: read(values), index: read(index), span: where };
+    const element = { k: 'index', object: read(values), index: read(index), provenInBounds: true, span: where };
     const declarations = bindings ? [{ s: 'const', name: `ml_element${this.generatedCount}`, value: element, span: where }, ...bindArrayElements(bindings, read(`ml_element${this.generatedCount}`), binding, where)] : [{ s: binding, name: name.value, value: element, span: where }];
     return {
       s: 'block',
@@ -1088,7 +1145,7 @@ class JavaScriptParser {
   startsTopLevelImperative() {
     const c = this.cursor;
     if (['let', 'var', 'if', 'for', 'while', 'do'].some((word) => c.is(word)) && c.peek().kind === 'identifier') return true;
-    return c.is('{') || this.startsAssignment();
+    return c.is('{') || this.startsAssignment() || this.startsReferenceAssignment();
   }
 
   /** A top-level statement read as a function body's, where `return` has no function to leave. */

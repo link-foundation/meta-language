@@ -19,7 +19,7 @@ export function readClosure(parser, method = false) {
   const outerJumps = parser.jumps;
   const outerTop = parser.topLevel;
   const outerAsync = parser.inAsync;
-  parser.scope = { locals: new Set([...outer.locals, ...names]), tdz: new Set([...outer.tdz].filter((name) => !names.includes(name))), mutable: new Set(names) };
+  parser.scope = { locals: new Set([...outer.locals, ...names]), tdz: new Set([...outer.tdz].filter((name) => !names.includes(name))), mutable: new Set([...outer.mutable, ...names]) };
   parser.jumps = { loops: 0, switches: 0 };
   parser.topLevel = false;
   parser.inAsync = false;
@@ -27,9 +27,10 @@ export function readClosure(parser, method = false) {
     const statements = c.is('{') ? parser.blockStatements() : [{ s: 'return', expr: parser.expr(), span: start }];
     const where = { start: start.start, end: c.peek().start };
     const { assigned, free } = statementUses(statements, new Set(names));
-    if (assigned.size) throw unsupported('mutable closure capture', 'captured assignments require a shared cell across calls', where);
-    const body = imperative(statements) ? lowerImperative(parser, `closure${++parser.generatedCount}`, params, statements, where) : parser.lower(statements, where);
-    return { k: 'lambda', params, ret: null, captures: [...free].filter((name) => outer.locals.has(name)), body, span: where };
+    const assignedCaptures = [...assigned].filter((name) => outer.locals.has(name));
+    if (assignedCaptures.length && !parser.referenceSemantics) throw unsupported('mutable closure capture', 'captured assignments require a shared cell across calls', where);
+    const body = imperative(statements) ? lowerImperative(parser, `closure${++parser.generatedCount}`, params, statements, where, new Set(assignedCaptures)) : parser.lower(statements, where);
+    return { k: 'lambda', params, ret: null, captures: [...free].filter((name) => outer.locals.has(name)), ...(assignedCaptures.length ? { assignedCaptures } : {}), body, span: where };
   } finally {
     parser.scope = outer;
     parser.jumps = outerJumps;
@@ -38,7 +39,7 @@ export function readClosure(parser, method = false) {
   }
 }
 
-export function validateClosureCaptures(statements) {
+export function validateClosureCaptures(statements, references = false) {
   const assigned = new Set();
   const closures = [];
   const visit = (node) => {
@@ -51,7 +52,7 @@ export function validateClosureCaptures(statements) {
   visit(statements);
   for (const closure of closures) {
     const capture = closure.captures.find((name) => assigned.has(name));
-    if (capture) throw unsupported(`mutable closure capture ${capture}`, 'captured assignments require a shared cell across calls', closure.span);
+    if (capture && !references) throw unsupported(`mutable closure capture ${capture}`, 'captured assignments require a shared cell across calls', closure.span);
   }
 }
 

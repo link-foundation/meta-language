@@ -40,9 +40,11 @@ test('computed closures and function expressions preserve parameter shadowing', 
 console.log(value(3));`, '12\n');
 });
 
-test('closures refuse captures whose binding changes outside the closure', () => {
-  assert.throws(() => parseJavaScript('function value(){ let factor=2; const read=()=>factor; factor=3; return read(); }'), /mutable closure capture factor/u);
-  assert.throws(() => parseJavaScript('function value(){ let factor=2; const change=()=>{factor=3;return factor;}; return change(); }'), /assignment of constant factor|mutable closure capture/u);
+test('closures require the shared cell representation for mutable captures', () => {
+  for (const source of [
+    'function value(){ let factor=2; const read=()=>factor; factor=3; return read(); }',
+    'function value(){ let factor=2; const change=()=>{factor=3;return factor;}; return change(); }',
+  ]) assert.throws(() => parseJavaScript(source, { referenceSemantics: false }), /mutable closure capture/u);
 });
 
 test('array destructuring evaluates its source once and preserves holes in the binding pattern', () => {
