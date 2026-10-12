@@ -1,6 +1,6 @@
 // The checked semantic program, represented entirely by inspectable links.
 // No source text, source envelope, JSON AST payload or cached emission is stored.
-import { readFileSync } from 'node:fs';
+import { readRuntimeProjectData } from './project-data-loader.js';
 import { LinkNetwork } from './network.js';
 import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { parseJavaScript } from './translation/javascript.js';
@@ -12,7 +12,7 @@ import { validateLinkedTypedProgram } from './typed-program-links-validation.js'
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
 import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields } from './typed-program-link-rules.js';
 
-export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(JSON.parse(readFileSync(new URL('./data/typed-program-links-schema.json', import.meta.url), 'utf8')));
+export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-links-schema.json', import.meta.url)));
 const schema = TYPED_PROGRAM_LINKS_SCHEMA;
 const idOf = (id) => id.asU64();
 const labelOf = (name) => schema.fields[name] ?? name.replace(/[A-Z]/gu, (letter) => ` ${letter.toLowerCase()}`);

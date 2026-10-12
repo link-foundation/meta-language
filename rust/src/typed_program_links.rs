@@ -82,8 +82,8 @@ pub struct TypedProgramLinksEmission {
 pub fn typed_program_links_schema() -> &'static Value {
     static SCHEMA: OnceLock<Value> = OnceLock::new();
     SCHEMA.get_or_init(|| {
-        serde_json::from_str(include_str!("data/typed-program-links-schema.json"))
-            .expect("generated typed schema is JSON")
+        crate::read_structured_data_lino(include_str!("data/typed-program-links-schema.lino"))
+            .expect("generated typed schema is structured Links data")
     })
 }
 fn metadata(term: &str, definition: Option<&str>) -> LinkMetadata {

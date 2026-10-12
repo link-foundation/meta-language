@@ -6,10 +6,11 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
+import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 
 const schemaSource = new URL('../src/data/typed-program-links-schema.json', import.meta.url);
-const schemaText = readFileSync(schemaSource, 'utf8');
-const schema = JSON.parse(schemaText);
+const schemaText = readProjectFileBytes(schemaSource).toString('utf8');
+const schema = readProjectData(schemaSource);
 const referenceRoles = Object.fromEntries(Object.entries(schema.references).map(([role, label]) => [label, role]));
 for (const [label, role] of Object.entries(schema.referenceAliases ?? {})) {
   if (Object.hasOwn(referenceRoles, label) || !Object.hasOwn(schema.references, role)) throw new Error('a shared reference alias must name one existing role and a distinct label');
@@ -112,7 +113,7 @@ const rust = '// Generated from the shared typed-program-links schema through\n'
 const artifacts = [
   [new URL('../src/typed-program-link-rules.js', import.meta.url), source],
   [new URL('../../rust/src/translation/typed_program_link_rules.rs', import.meta.url), rust],
-  [new URL('../../rust/src/data/typed-program-links-schema.json', import.meta.url), schemaText],
+  [new URL('../../rust/src/data/typed-program-links-schema.lino', import.meta.url), schemaText],
 ];
 for (const [file, expected] of artifacts) {
   if (process.argv.includes('--check')) {
