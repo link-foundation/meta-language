@@ -39,6 +39,8 @@ test('inspectable data round trips exact primitive values, ordered fields and sh
   const decoded = decodeStructuredDataLinks(ordered.network, ordered.root);
   assert.deepEqual(Object.keys(decoded), ['2', '1']);
   assert.deepEqual(Object.keys(readStructuredDataLino(structuredDataToLino(decoded))), ['2', '1']);
+  const insertion = readStructuredDataLino(structuredDataToLino({ z: 1, a: 2 }));
+  assert.deepEqual(Object.keys(insertion), ['z', 'a']);
 });
 
 test('standalone reader refuses counterfeit shapes, identities, scalar types and hidden components', () => {
