@@ -43,10 +43,15 @@ pub const FORMER_CONCEPT_IDS: &[(&str, &str)] = &[
 /// The current identity of a concept: `id` itself, or the identity that replaced it.
 #[must_use]
 pub fn current_concept_id(id: &str) -> &str {
-    FORMER_CONCEPT_IDS
-        .iter()
-        .find(|(former, _)| *former == id)
-        .map_or(id, |(_, current)| current)
+    concept_record(id).map_or_else(
+        || {
+            FORMER_CONCEPT_IDS
+                .iter()
+                .find(|(former, _)| *former == id)
+                .map_or(id, |(_, current)| current)
+        },
+        |record| record.id.as_str(),
+    )
 }
 
 /// Summary returned after importing concept links from an ontology source.

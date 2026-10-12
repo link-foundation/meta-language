@@ -182,6 +182,53 @@ fn every_runtime_name_is_unabbreviated_and_has_a_role() {
 }
 
 #[test]
+fn migrated_native_former_ids_resolve_through_the_shared_records() {
+    let migrations = [
+        (
+            "grammar.bare-argument-unparenthesized-call",
+            "grammar.bare-argument-call-without-parentheses",
+        ),
+        (
+            "grammar.bare-argument-local-unparenthesized-call",
+            "grammar.bare-argument-local-call-without-parentheses",
+        ),
+        (
+            "grammar.bare-argument-remote-unparenthesized-call",
+            "grammar.bare-argument-remote-call-without-parentheses",
+        ),
+        (
+            "grammar.postfix-unparenthesized-call",
+            "grammar.postfix-call-without-parentheses",
+        ),
+        (
+            "grammar.attribute-unparenthesized-call",
+            "grammar.attribute-call-without-parentheses",
+        ),
+        (
+            "grammar.attribute-local-unparenthesized-call",
+            "grammar.attribute-local-call-without-parentheses",
+        ),
+        (
+            "grammar.postfix-attribute-unparenthesized-call",
+            "grammar.postfix-attribute-call-without-parentheses",
+        ),
+        (
+            "grammar.null-admitting-type-test-expression",
+            "grammar.null-capable-type-test-expression",
+        ),
+    ];
+    for (former, current) in migrations {
+        assert_eq!(current_concept_id(former), current);
+        assert_eq!(current_concept_id(current), current);
+        assert_eq!(concept_record(former), concept_record(current));
+        assert!(concept_record(current).is_some());
+    }
+    let unknown = "grammar.unregistered-concept-identity";
+    assert_eq!(concept_record(unknown), None);
+    assert_eq!(current_concept_id(unknown), unknown);
+}
+
+#[test]
 fn former_names_stay_aliases_that_decode_to_the_canonical_concept() {
     for (former, current) in FORMER_CONCEPT_IDS {
         assert_eq!(current_concept_id(former), *current);

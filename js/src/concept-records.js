@@ -44,7 +44,7 @@ for (const record of CONCEPT_RECORDS) {
 
 /** The current identity of a concept: `id` itself, or the identity that replaced it. */
 export function currentConceptId(id) {
-  return FORMER_IDS.get(id) ?? id;
+  return BY_NAME.get(id)?.id ?? FORMER_IDS.get(id) ?? id;
 }
 
 /** Every concept record, in register order. */

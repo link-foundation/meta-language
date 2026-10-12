@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { GENERATED, mergeConcepts } from '../scripts/import-native-grammars.mjs';
-import { conceptRecord, conceptRecordsForSourceName } from '../src/concept-records.js';
+import { conceptRecord, conceptRecordsForSourceName, currentConceptId } from '../src/concept-records.js';
 
 const current = 'grammar.fixture-call-without-parentheses';
 const retired = 'grammar.fixture-unparenthesized-call';
@@ -69,6 +69,8 @@ test('the seven reviewed Elixir migrations resolve old identities and spellings 
     const record = conceptRecord(id);
     assert.ok(record, id);
     assert.equal(conceptRecord(former), record, former);
+    assert.equal(currentConceptId(former), id, former);
+    assert.equal(currentConceptId(id), id, id);
     assert.ok(conceptRecordsForSourceName(alias.source, alias.name).includes(record), alias.name);
   }
 });
@@ -77,5 +79,13 @@ test('the reviewed CSharp type test name retains its generated identity and spel
   const record = conceptRecord('grammar.null-capable-type-test-expression');
   assert.ok(record);
   assert.equal(conceptRecord('grammar.null-admitting-type-test-expression'), record);
+  assert.equal(currentConceptId('grammar.null-admitting-type-test-expression'), record.id);
+  assert.equal(currentConceptId(record.id), record.id);
   assert.ok(conceptRecordsForSourceName('native:csharp', 'null_admitting_type_test_expression').includes(record));
+});
+
+test('unknown concept identities remain unchanged', () => {
+  const unknown = 'grammar.unregistered-concept-identity';
+  assert.equal(conceptRecord(unknown), undefined);
+  assert.equal(currentConceptId(unknown), unknown);
 });
