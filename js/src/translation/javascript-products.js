@@ -6,6 +6,12 @@ import { solveProductSourceFacts } from './product-source-rules.js';
 const scalar = type => ['bool', 'float', 'fixed', 'unit'].includes(type?.kind);
 const copyTuple = type => type?.kind === 'tuple' && type.elements.length > 0 && type.elements.every(element => scalar(element) || copyTuple(element));
 
+export function readJavaScriptProductIndex(node) {
+  if (node.k === 'num') return Number(node.value) * (node.negative ? -1 : 1);
+  if (node.k === 'unary' && node.op === 'neg' && node.arg.k === 'num') return -readJavaScriptProductIndex(node.arg);
+  return NaN;
+}
+
 export function requiresJavaScriptProductProof(program) {
   const relevant = value => value && typeof value === 'object' && (value.productModel === 'immutable value product' || value.productBinding === true
     || value.k === 'fn' && (copyTuple(value.ret) || value.params.some(param => copyTuple(param.type)))
@@ -148,10 +154,10 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
     throw unsupported('exported immutable tuple function', 'external callers cannot be proved to use the selected immutable value model', fn.item.span);
   }
   for (const { node, object } of projections) if (potential[object]) {
-    const index = node.k === 'tupleIndex' ? node.index : node.index.k === 'num' && !node.index.negative ? Number(node.index.value) : NaN;
+    const index = node.k === 'tupleIndex' ? node.index : readJavaScriptProductIndex(node.index);
     const type = entries[object].type;
     if (!Number.isSafeInteger(index) || index < 0 || type?.kind !== 'tuple' || index >= type.elements.length) throw unsupported('immutable tuple index', 'a product read needs a fixed in-range positional index', node.span);
-    node.k = 'tupleIndex'; node.index = index;
+    node.k = 'tupleIndex'; node.index = index === 0 ? 0 : index;
     delete node.productBinding;
   }
   for (const { node, object } of projections) if (node.productBinding && !potential[object]) throw unsupported('nested array binding', 'nested destructuring requires a proved immutable product; arbitrary array iterators and accessors need their own evaluation model', node.span);

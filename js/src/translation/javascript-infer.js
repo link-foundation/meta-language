@@ -10,7 +10,7 @@ import { typeError } from './diagnostics.js';
 import { acceptArgumentCount } from './frontend-rules.js';
 import { BOOL, FLOAT, INT, STRING, UNIT, option, sameType } from './types.js';
 import { markSharedReferenceTypes } from './javascript-cells.js';
-import { requiresJavaScriptProductProof } from './javascript-products.js';
+import { readJavaScriptProductIndex, requiresJavaScriptProductProof } from './javascript-products.js';
 
 const ROOT = 'crate';
 const LOGICAL = new Set(['and', 'or']);
@@ -355,8 +355,8 @@ class Inference {
           this.unify(constraint.result, value, constraint.where);
           if (constraint.result.kind === 'var') this.bindings[constraint.result.id] = value;
         }
-        else if (object.kind === 'tuple' && constraint.index.k === 'num') {
-          const at = Number(constraint.index.value);
+        else if (object.kind === 'tuple' && !Number.isNaN(readJavaScriptProductIndex(constraint.index))) {
+          const at = readJavaScriptProductIndex(constraint.index);
           if (!Number.isInteger(at) || at < 0 || at >= object.elements.length) throw typeError('tuple index out of range', constraint.where);
           this.unify(constraint.result, object.elements[at], constraint.where);
         }

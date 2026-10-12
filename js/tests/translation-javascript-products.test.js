@@ -45,6 +45,13 @@ const value=make();console.log(value[0][0]===5);console.log(value[0][1]===true);
 const value=make([5,true]);console.log(value[0][0]);`)), /immutable tuple product/u);
 });
 
+test('fixed numeric negative zero selects the same product position as positive zero', () => {
+  const { surface } = equivalent(pair + '\nconsole.log(value[-0]===value[0]);', ['true', 'true', 'true']);
+  const projection = surface.main.effects.at(-1).expr.left;
+  assert.equal(projection.k, 'tupleIndex');
+  assert.equal(projection.index, 0);
+});
+
 test('product ownership requires every caller and refuses mutable arrays despite tuple annotations', () => {
   for (const source of [
     pair.replace('Object.freeze([5,true])', '[5,true]'),
