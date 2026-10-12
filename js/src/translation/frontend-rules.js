@@ -459,6 +459,17 @@ export function readScannerContinuationAction(widthless, startsAfter, endsAfter)
   return -1;
 }
 
+/**
+ * A continuation that already shifted the virtual token at this boundary
+ * is compatible with that scanner lookahead.
+ * @param {boolean} virtualToken
+ * @param {boolean} atBoundary
+ * @returns {boolean}
+ */
+export function acceptScannerPreemptionBoundary(virtualToken, atBoundary) {
+  return !virtualToken || !atBoundary;
+}
+
 /** @param {boolean} sourceMatches @param {boolean} bodyMatches @param {boolean} originalMatches @returns {boolean} */
 export function acceptSourceEnvelopeRestoration(sourceMatches, bodyMatches, originalMatches) {
   return sourceMatches && bodyMatches && originalMatches;
