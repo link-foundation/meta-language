@@ -1,15 +1,18 @@
 //! Adapt the supported typed IR to the existing checker, preserving policies.
-use super::projection::project as expression;
+use super::projection::{project as expression, project_type};
 use super::{Result, error, typed_program_links_schema};
 use crate::translation::check::check_program;
 use crate::translation::ir::{Decl, Effect, Item, Program};
-use crate::translation::surface::{SEffect, SFn, SItem, SMain, SParam, SProgram, ShowStyle};
+use crate::translation::surface::{
+    SCtor, SData, SEffect, SField, SFn, SItem, SMain, SParam, SProgram, ShowStyle,
+};
 use crate::translation::typed_program_link_rules::{
     accept_program_division_rounding, accept_program_expression_operation,
     accept_program_machine_integer_width, accept_program_optional_absence,
 };
 use regex::Regex;
 use serde_json::Value;
+use std::collections::HashSet;
 use std::sync::OnceLock;
 
 fn valid_float(value: &str) -> bool {
@@ -24,7 +27,7 @@ fn valid_float(value: &str) -> bool {
         .is_match(value)
 }
 
-fn validate_type_records(value: &Value) -> Result<()> {
+fn validate_type_records(value: &Value, data_names: &HashSet<&str>) -> Result<()> {
     if let Some(fields) = value.as_object() {
         if value["k"] == "binary"
             && value
@@ -54,11 +57,18 @@ fn validate_type_records(value: &Value) -> Result<()> {
         }
         if matches!(
             value["kind"].as_str(),
-            Some("named" | "literal" | "hypothesis" | "output" | "data")
+            Some("named" | "literal" | "hypothesis" | "output")
         ) {
             return Err(error(
                 "the Rust typed links adapter does not yet recheck unresolved or threaded value types",
             ));
+        }
+        if value["kind"] == "data"
+            && !value["name"]
+                .as_str()
+                .is_some_and(|name| data_names.contains(name))
+        {
+            return Err(error("the linked data type has no data declaration"));
         }
         if value["kind"] == "fixed" {
             let width = value["bits"]
@@ -78,19 +88,28 @@ fn validate_type_records(value: &Value) -> Result<()> {
             ));
         }
         for child in fields.values() {
-            validate_type_records(child)?;
+            validate_type_records(child, data_names)?;
         }
     } else if let Some(values) = value.as_array() {
         for child in values {
-            validate_type_records(child)?;
+            validate_type_records(child, data_names)?;
         }
     }
     Ok(())
 }
 
 pub(super) fn validate(program: &Program) -> Result<()> {
+    let data_names = program
+        .declarations
+        .iter()
+        .filter_map(|declaration| match declaration {
+            Decl::Data(declaration) => Some(declaration.full_name.as_str()),
+            _ => None,
+        })
+        .collect();
     validate_type_records(
         &serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?,
+        &data_names,
     )?;
     if program.schema_version != 1 {
         return Err(error("the linked value is not a checked typed program"));
@@ -111,9 +130,46 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                 "the Rust typed links adapter does not yet recheck module items",
             ));
         };
-        let Some(Decl::Fn(function)) = program.declaration(full_name) else {
+        let declaration = program
+            .declaration(full_name)
+            .ok_or_else(|| error("the linked declaration item has no declaration"))?;
+        if let Decl::Data(data) = declaration {
+            if !data.module_path.is_empty() {
+                return Err(error(
+                    "the Rust typed links adapter does not yet recheck qualified declarations",
+                ));
+            }
+            items.push(SItem::Data(SData {
+                name: data.name.clone(),
+                ctors: data
+                    .ctors
+                    .iter()
+                    .map(|constructor| -> Result<SCtor> {
+                        Ok(SCtor {
+                            name: constructor.name.clone(),
+                            fields: constructor
+                                .fields
+                                .iter()
+                                .map(|field| -> Result<SField> {
+                                    Ok(SField {
+                                        name: Some(field.name.clone()),
+                                        ty: project_type(&field.ty)?,
+                                        rocq_type: None,
+                                        span: None,
+                                    })
+                                })
+                                .collect::<Result<_>>()?,
+                        })
+                    })
+                    .collect::<Result<_>>()?,
+                span: data.span,
+                generated: data.generated,
+            }));
+            continue;
+        }
+        let Decl::Fn(function) = declaration else {
             return Err(error(
-                "the Rust typed links adapter currently rechecks function declarations",
+                "the Rust typed links adapter does not yet recheck theorem declarations",
             ));
         };
         if !function.module_path.is_empty() {
@@ -126,17 +182,19 @@ pub(super) fn validate(program: &Program) -> Result<()> {
             params: function
                 .params
                 .iter()
-                .map(|parameter| SParam {
-                    name: parameter.name.clone(),
-                    ty: Some(parameter.ty.clone()),
-                    default_value: parameter.default_value.clone(),
-                    guard: parameter.guard.clone(),
-                    span: None,
-                    rocq_type: None,
+                .map(|parameter| -> Result<SParam> {
+                    Ok(SParam {
+                        name: parameter.name.clone(),
+                        ty: Some(project_type(&parameter.ty)?),
+                        default_value: parameter.default_value.clone(),
+                        guard: parameter.guard.clone(),
+                        span: None,
+                        rocq_type: None,
+                    })
                 })
-                .collect(),
-            ret: Some(function.ret.clone()),
-            body: expression(&function.body)?,
+                .collect::<Result<_>>()?,
+            ret: Some(project_type(&function.ret)?),
+            body: expression(&function.body, program)?,
             span: function.span,
             generated: function.generated,
         }));
@@ -155,7 +213,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                 .iter()
                 .map(|effect| match effect {
                     Effect::Print { expr, span } => Ok(SEffect::Print {
-                        expr: expression(expr)?,
+                        expr: expression(expr, program)?,
                         style: ShowStyle::JsConsole,
                         span: *span,
                     }),
@@ -166,8 +224,8 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                         span,
                     } => Ok(SEffect::Let {
                         name: name.clone(),
-                        ty: Some(value.ty.clone()),
-                        value: expression(value)?,
+                        ty: Some(project_type(&value.ty)?),
+                        value: expression(value, program)?,
                         constant: *constant,
                         span: *span,
                     }),
