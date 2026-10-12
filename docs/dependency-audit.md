@@ -13,13 +13,15 @@ of the two published packages and the website crate, every lockfile
 resolution, the experiment manifests, the vendored grammar assets, the
 generators, the toolchains, the GitHub Actions, the build images, the runners
 and the published artifact contents, each with the current stable release its
-source reported on the audit date.
+source reported on the audit date or a later item-specific registry receipt.
+A receipt with `checkedAt` updates only that item; the full audit date and
+the previously recorded releases of every other item stay unchanged.
 
 ## Method
 
 `node js/scripts/check-dependencies.mjs --refresh` (`npm run dependencies:refresh`)
 reads every pin from the repository, queries the npm registry, the crates.io
-index, GitHub releases, nodejs.org and Docker Hub for the current stable
+index, PyPI JSON registry, GitHub releases, nodejs.org and Docker Hub for the current stable
 release, derives the reason of a locked package that a dependent's requirement
 holds from `js/package-lock.json` and `cargo metadata`, and rewrites
 `parity/dependency-inventory.json` and this document. Every other reason is
@@ -65,12 +67,12 @@ they are.
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 37 | 36 | 1 | 0 |
-| Toolchains and tools | 16 | 14 | 1 | 1 |
+| Generators | 42 | 41 | 1 | 0 |
+| Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 15 | 0 | 0 | 15 |
+| Published artifact contents | 20 | 0 | 0 | 20 |
 
 ## JavaScript engines
 
@@ -540,6 +542,7 @@ they are.
 | `js/scripts/build-web-tree-sitter-runtime.mjs` | `js/scripts/build-web-tree-sitter-runtime.mjs` | `script` |  | derived | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
 | `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-default-cst-expectations.mjs` | `js/scripts/generate-default-cst-expectations.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-elm-candidate-fixtures.mjs` | `js/scripts/generate-elm-candidate-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-export-parity.mjs` | `js/scripts/generate-export-parity.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-frontend-rule-styles.mjs` | `js/scripts/generate-frontend-rule-styles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-frontend-rules.mjs` | `js/scripts/generate-frontend-rules.mjs` | `script` |  | derived | current |  |
@@ -557,31 +560,36 @@ they are.
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-scanner-fixtures.mjs` | `js/scripts/generate-structured-scanner-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-type-fixtures.mjs` | `js/scripts/generate-structured-type-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-type-rules.mjs` | `js/scripts/generate-structured-type-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
-| Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
-|---|---|---|---|---|---|---|
-| `@secretlint/secretlint-rule-preset-recommend` | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `cargo-llvm-cov` | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `elan` | `.github/workflows/ci.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
-| `lean` | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
-| `node` | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
-| `node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
-| `npm` | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
-| `ocaml` | `.github/workflows/ci.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
-| `pre-commit/pre-commit-hooks` | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
-| `rocq-core` | `.github/workflows/ci.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
-| `rocq-prover` | `.github/workflows/ci.yml` | `meta.1` |  | unversioned | not applicable |  |
-| `rocq-stdlib` | `.github/workflows/ci.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
-| `rust-script` | `rust/scripts/install-rust-script.sh` | `latest` |  | floating | current |  |
-| `secretlint` | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `tree-sitter-cli` | `js/src/vendor/grammars/grammar-lock.json`, `rust/src/data/grammar-lock.json` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
-| `wasm-pack` | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| Item | Scope | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
+|---|---|---|---|---|---|---|---|
+| `@secretlint/secretlint-rule-preset-recommend` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `cargo-llvm-cov` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `elan` |  | `.github/workflows/ci.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
+| `lean` |  | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
+| `npm` |  | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
+| `ocaml` |  | `.github/workflows/ci.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
+| `pre-commit/pre-commit-hooks` |  | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
+| `lark` | `pypi` | `.github/workflows/js.yml` | `1.3.1` | 1.3.1 (PyPI JSON registry, lark newest non-yanked stable release) | version | current |  |
+| `rocq-core` |  | `.github/workflows/ci.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
+| `rocq-prover` |  | `.github/workflows/ci.yml` | `meta.1` |  | unversioned | not applicable |  |
+| `rocq-stdlib` |  | `.github/workflows/ci.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
+| `rust-script` |  | `rust/scripts/install-rust-script.sh` | `latest` |  | floating | current |  |
+| `secretlint` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.json`, `rust/src/data/grammar-lock.json` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
+| `wasm-pack` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 
 ## GitHub Actions
 
@@ -638,7 +646,12 @@ they are.
 | `src/data/language-catalog.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-trigrams.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-grammars/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/native-text-grammar.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/native-text-grammar.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typed-program-links-schema.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 

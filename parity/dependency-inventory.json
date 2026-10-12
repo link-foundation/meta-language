@@ -8007,6 +8007,20 @@
       ]
     },
     {
+      "category": "generator",
+      "name": "js/scripts/generate-elm-candidate-fixtures.mjs",
+      "declaredIn": [
+        "js/scripts/generate-elm-candidate-fixtures.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-elm-candidate-fixtures.mjs@script",
+      "dependsOn": []
+    },
+    {
       "id": "generator js/scripts/generate-export-parity.mjs@script",
       "category": "generator",
       "name": "js/scripts/generate-export-parity.mjs",
@@ -8262,6 +8276,20 @@
     },
     {
       "category": "generator",
+      "name": "js/scripts/generate-stateful-extra-fixtures.mjs",
+      "declaredIn": [
+        "js/scripts/generate-stateful-extra-fixtures.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-stateful-extra-fixtures.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
       "name": "js/scripts/generate-structured-scanner-fixtures.mjs",
       "declaredIn": [
         "js/scripts/generate-structured-scanner-fixtures.mjs"
@@ -8272,6 +8300,48 @@
         "type": "none"
       },
       "id": "generator js/scripts/generate-structured-scanner-fixtures.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
+      "name": "js/scripts/generate-structured-type-fixtures.mjs",
+      "declaredIn": [
+        "js/scripts/generate-structured-type-fixtures.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-structured-type-fixtures.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
+      "name": "js/scripts/generate-structured-type-rules.mjs",
+      "declaredIn": [
+        "js/scripts/generate-structured-type-rules.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-structured-type-rules.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
+      "name": "js/scripts/generate-typed-program-link-rules.mjs",
+      "declaredIn": [
+        "js/scripts/generate-typed-program-link-rules.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-typed-program-link-rules.mjs@script",
       "dependsOn": []
     },
     {
@@ -8473,6 +8543,25 @@
       },
       "current": "v6.0.0",
       "evidence": "GitHub release, pre-commit/pre-commit-hooks"
+    },
+    {
+      "id": "toolchain pypi lark@1.3.1",
+      "category": "toolchain",
+      "scope": "pypi",
+      "name": "lark",
+      "declaredIn": [
+        ".github/workflows/js.yml"
+      ],
+      "pinned": "1.3.1",
+      "compare": "version",
+      "source": {
+        "type": "pypi",
+        "package": "lark"
+      },
+      "current": "1.3.1",
+      "evidence": "PyPI JSON registry, lark newest non-yanked stable release",
+      "checkedAt": "2026-10-12T05:21:03.087Z",
+      "registrySha256": "c988b34c6890c5a6b2f3ae6913cc12422d16ef0c9c34122c8d9e260a2678c9ca"
     },
     {
       "id": "toolchain rocq-core@9.3.0",
@@ -9139,6 +9228,48 @@
       }
     },
     {
+      "category": "published",
+      "name": "src/data/native-text-grammar.json",
+      "scope": "crate",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "id": "published crate src/data/native-text-grammar.json@include"
+    },
+    {
+      "category": "published",
+      "name": "src/data/native-text-grammar.lino",
+      "scope": "crate",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "id": "published crate src/data/native-text-grammar.lino@include"
+    },
+    {
+      "category": "published",
+      "name": "src/data/reference-operations.lino",
+      "scope": "crate",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "id": "published crate src/data/reference-operations.lino@include"
+    },
+    {
       "id": "published crate src/data/semantic-lexicon.json@include",
       "category": "published",
       "scope": "crate",
@@ -9151,6 +9282,34 @@
       "source": {
         "type": "none"
       }
+    },
+    {
+      "category": "published",
+      "name": "src/data/typed-program-links-schema.json",
+      "scope": "crate",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "id": "published crate src/data/typed-program-links-schema.json@include"
+    },
+    {
+      "category": "published",
+      "name": "src/data/typescript-erasure.lino",
+      "scope": "crate",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "id": "published crate src/data/typescript-erasure.lino@include"
     },
     {
       "id": "published npm README.md@files",

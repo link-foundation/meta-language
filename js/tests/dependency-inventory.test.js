@@ -15,10 +15,13 @@ import {
   INVENTORY_FILE,
   checkInventory,
   collectDependencies,
+  comparePypiVersions,
   ownStatus,
+  pinnedPipPackages,
   refreshInventory,
   reconcileLocalDeclarations,
   registryHttp,
+  releaseResolvers,
   renderAuditDocument,
   statuses,
 } from '../scripts/dependency-inventory.mjs';
@@ -42,6 +45,57 @@ function observe(assertions, testName) {
 }
 
 const kinds = (problems) => problems.map(({ kind }) => kind);
+
+test('workflow pip pins use normalized PyPI names and retain the declared exact versions', () => {
+  assert.deepEqual(pinnedPipPackages(`
+    # python3 -m pip install ignored==9.0.0
+    python3 -m pip install --disable-pip-version-check --no-cache-dir lark==1.3.1
+    pip3 install 'Example_Package[extra]==2.0.1' \\
+      Another.Package==1.2.0.post1 # comment==0.1.0
+  `), [
+    { name: 'lark', pinned: '1.3.1' },
+    { name: 'example-package', pinned: '2.0.1' },
+    { name: 'another-package', pinned: '1.2.0.post1' },
+  ]);
+  assert.deepEqual(pinnedPipPackages('pip install unpinned range>=1.0 wildcard==1.*'), []);
+  const actual = collectDependencies(root).find((item) => item.id === 'toolchain pypi lark@1.3.1');
+  assert.ok(actual);
+  assert.deepEqual(actual.source, { type: 'pypi', package: 'lark' });
+  assert.deepEqual(actual.declaredIn, ['.github/workflows/js.yml']);
+  assert.throws(() => reconcileLocalDeclarations({ auditDate: TODAY, items: [] }, [actual]), /live dependency refresh/u);
+});
+
+test('the primary PyPI resolver excludes yanked and prerelease distributions and caches its one registry request', async () => {
+  const requests = [];
+  const resolvers = releaseResolvers({ today: TODAY, github: () => assert.fail('no GitHub calls'), http: async (url, headers) => {
+    requests.push({ url, headers });
+    return JSON.stringify({ info: { name: 'Example_Package', version: '9.0.0rc1' }, releases: {
+      '1.0.0': [{ yanked: false }], '2.0.0': [{ yanked: false }], '2.0.0.post1': [{ yanked: false }],
+      '3.0.0': [{ yanked: true }], '8.0.0': [], '9.0.0rc1': [{ yanked: false }],
+      '8.0.0.dev1': [{ yanked: false }], '1!9.0rc1': [{ yanked: false }],
+    } });
+  } });
+  const source = { package: 'example-package' };
+  const result = await resolvers.pypi(source);
+  assert.equal(result.current, '2.0.0.post1');
+  assert.equal((await resolvers.pypi(source)).current, result.current);
+  assert.deepEqual(requests, [{ url: 'https://pypi.org/pypi/example-package/json', headers: { accept: 'application/json' } }]);
+  assert.equal(ownStatus({ compare: 'version', pinned: '2.0.0', current: result.current, source: { type: 'pypi' } }), 'behind');
+  assert.equal(comparePypiVersions('1!1.0', '999.0.0'), 1);
+  assert.equal(comparePypiVersions('1.0.0.1', '1.0.0'), 1);
+  assert.equal(comparePypiVersions('1.0', '1.0.0'), 0);
+  assert.equal(comparePypiVersions('999999999999999999999999', '999999999999999999999998'), 1);
+});
+
+test('PyPI resolver fails closed on missing projects, outages and unusable registry metadata', async () => {
+  const resolver = (http) => releaseResolvers({ today: TODAY, github: () => assert.fail('no GitHub calls'), http }).pypi({ package: 'lark' });
+  await assert.rejects(resolver(async () => { throw new Error('HTTP 503'); }), /HTTP 503/u);
+  await assert.rejects(resolver(async () => { throw new Error('HTTP 404'); }), /HTTP 404/u);
+  await assert.rejects(resolver(async () => 'not JSON'));
+  await assert.rejects(resolver(async () => JSON.stringify({ info: { name: 'other' }, releases: {} })), /inconsistent project/u);
+  await assert.rejects(resolver(async () => JSON.stringify({ info: { name: 'lark' }, releases: { '2.0.0rc1': [{ yanked: false }], '1.0.0': [{ yanked: true }] } })), /no available stable release/u);
+  await assert.rejects(resolver(async () => JSON.stringify({ info: { name: 'lark' }, releases: { 'unknown-stable': [{ yanked: false }] } })), /unsupported stable PyPI version/u);
+});
 
 test('local declaration reconciliation retains audited releases and rejects unaudited external pins', () => {
   const external = { id: 'npm example@1', category: 'npm', name: 'example', pinned: '1',

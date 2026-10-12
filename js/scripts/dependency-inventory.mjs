@@ -402,6 +402,9 @@ function collectWorkflows(root, items) {
     for (const match of text.matchAll(/npm install -g npm@(\S+)/gu)) {
       addItem(items, { category: 'toolchain', name: 'npm', declaredIn: file, pinned: match[1], compare: 'major', source: { type: 'npm', package: 'npm' } });
     }
+    for (const { name, pinned } of pinnedPipPackages(text)) {
+      addItem(items, { category: 'toolchain', scope: 'pypi', name, declaredIn: file, pinned, compare: 'version', source: { type: 'pypi', package: name } });
+    }
     for (const match of text.matchAll(/^\s*ocaml-compiler:\s*['"]?([^'"\s#]+)/gmu)) {
       addItem(items, { category: 'toolchain', name: 'ocaml', declaredIn: file, pinned: match[1], compare: 'minor', source: { type: 'github-release', repository: 'ocaml/ocaml' } });
     }
@@ -437,6 +440,37 @@ function collectWorkflows(root, items) {
       addItem(items, { category: 'image', name: match[1], declaredIn: file, pinned: match[2], compare: 'version', source: { type: 'docker-hub', repository: match[1] } });
     }
   }
+}
+
+/** Exact package pins in pip install commands; PEP 503 normalizes project names. */
+export function pinnedPipPackages(text) {
+  const source = text.replace(/^\s*#.*$/gmu, '').replace(/\\\r?\n\s*/gu, ' ');
+  const packages = [];
+  for (const command of source.matchAll(/\b(?:python(?:[0-9.]+)?\s+-m\s+)?pip(?:[0-9.]+)?\s+install\b([^\n]*)/gu)) {
+    const argumentsText = command[1].split(/\s+#/u)[0];
+    for (const match of argumentsText.matchAll(/(?:^|\s)['"]?([A-Za-z0-9][A-Za-z0-9._-]*)(?:\[[A-Za-z0-9_,.-]+\])?==([0-9][A-Za-z0-9.!+-]*)['"]?(?=\s|$)/gu)) {
+      const name = match[1].toLowerCase().replace(/[-_.]+/gu, '-');
+      packages.push({ name, pinned: match[2] });
+    }
+  }
+  return packages;
+}
+
+/** Compare normalized stable public PyPI versions, including epochs and post releases. */
+export function comparePypiVersions(left, right) {
+  const parts = (value) => {
+    const match = /^(?:(\d+)!)?(\d+(?:\.\d+)*)(?:\.post(\d+))?$/u.exec(value);
+    if (!match) throw new Error(`unsupported stable PyPI version ${JSON.stringify(value)}`);
+    return { epoch: BigInt(match[1] ?? 0), release: match[2].split('.').map((component) => BigInt(component)), post: match[3] === undefined ? -1n : BigInt(match[3]) };
+  };
+  const orderOf = (first, second) => first > second ? 1 : first < second ? -1 : 0;
+  const [first, second] = [parts(left), parts(right)];
+  if (first.epoch !== second.epoch) return orderOf(first.epoch, second.epoch);
+  for (let index = 0; index < Math.max(first.release.length, second.release.length); index += 1) {
+    const order = orderOf(first.release[index] ?? 0n, second.release[index] ?? 0n);
+    if (order !== 0) return Math.sign(order);
+  }
+  return orderOf(first.post, second.post);
 }
 
 function collectFloatingTools(items, file, text) {
@@ -527,6 +561,7 @@ export function ownStatus(item) {
       return compareVersions(item.pinned, item.current, 2) >= 0 ? 'current' : 'behind';
     case 'version':
     case 'floor':
+      if (item.source?.type === 'pypi') return comparePypiVersions(item.pinned, item.current) >= 0 ? 'current' : 'behind';
       return compareVersions(item.pinned, item.current) >= 0 ? 'current' : 'behind';
     default:
       throw new Error(`${item.id}: unknown comparison ${item.compare}`);
@@ -927,6 +962,22 @@ export function releaseResolvers({ http, github, today }) {
         const versions = Object.entries(document.versions ?? {}).filter(([, entry]) => !entry.deprecated).map(([version]) => version);
         return { current: document['dist-tags'].latest, evidence: `npm registry, ${name} latest`, versions };
       }),
+    pypi: ({ package: name }) =>
+      once(`pypi ${name}`, async () => {
+        const normalized = name.toLowerCase().replace(/[-_.]+/gu, '-');
+        const document = JSON.parse(await http(`https://pypi.org/pypi/${encodeURIComponent(normalized)}/json`, { accept: 'application/json' }));
+        if (document.info?.name?.toLowerCase().replace(/[-_.]+/gu, '-') !== normalized) throw new Error(`PyPI returned inconsistent project metadata for ${name}`);
+        const versions = Object.entries(document.releases ?? {})
+          .filter(([version, files]) => !isPrerelease(version) && !/(?:a|b|rc)\d+(?:\.post\d+)?(?:\.dev\d+)?$|\.dev\d*$/iu.test(version)
+            && Array.isArray(files) && files.some((file) => file.yanked === false))
+          .map(([version]) => version);
+        // Compare public stable PEP 440 release numbers and post releases;
+        // unsupported version spellings fail rather than concealing a newer release.
+        for (const version of versions) comparePypiVersions(version, version);
+        const current = versions.sort((first, second) => comparePypiVersions(second, first))[0];
+        if (!current) throw new Error(`PyPI lists no available stable release for ${name}`);
+        return { current, evidence: `PyPI JSON registry, ${normalized} newest non-yanked stable release`, versions };
+      }),
     crate: ({ crate }) =>
       once(`crate ${crate}`, async () => {
         const lines = (await http(`https://index.crates.io/${crateIndexPath(crate)}`)).trim().split('\n').map((line) => JSON.parse(line));
@@ -1236,13 +1287,15 @@ export function renderAuditDocument(inventory) {
     'resolution, the experiment manifests, the vendored grammar assets, the',
     'generators, the toolchains, the GitHub Actions, the build images, the runners',
     'and the published artifact contents, each with the current stable release its',
-    'source reported on the audit date.',
+    'source reported on the audit date or a later item-specific registry receipt.',
+    'A receipt with `checkedAt` updates only that item; the full audit date and',
+    'the previously recorded releases of every other item stay unchanged.',
     '',
     '## Method',
     '',
     '`node js/scripts/check-dependencies.mjs --refresh` (`npm run dependencies:refresh`)',
     'reads every pin from the repository, queries the npm registry, the crates.io',
-    'index, GitHub releases, nodejs.org and Docker Hub for the current stable',
+    'index, PyPI JSON registry, GitHub releases, nodejs.org and Docker Hub for the current stable',
     'release, derives the reason of a locked package that a dependent\'s requirement',
     'holds from `js/package-lock.json` and `cargo metadata`, and rewrites',
     '`parity/dependency-inventory.json` and this document. Every other reason is',
