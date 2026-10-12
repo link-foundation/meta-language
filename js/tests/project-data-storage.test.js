@@ -89,3 +89,31 @@ test('the exception registry is itself structured LiNo and duplicate formats are
   writeProjectData(join(root, 'source.lino'), {});
   assert.ok((await validateProjectDataStorage(root, exceptions)).problems.includes('JSON exception also has LiNo storage: source.json'));
 }));
+
+test('runtime coordination records cannot exempt source files and require actual writer/reader evidence', () => scratch(async root => {
+  put(root, 'protocol.js', 'function writeIdentity() { return JSON.stringify({ pid: 1 }); }\nfunction readIdentity() { return JSON.parse(text); }\n');
+  const interprocess = ['active cache lease', 'cache cleanup owner lock', 'scratch owner marker'];
+  const records = [...interprocess, 'explicit JSON cleanup report'].map(id => ({
+    id, kind: interprocess.includes(id) ? 'older peer interprocess JSON' : 'explicit JSON command interface',
+    format: 'UTF-8 JSON with a final newline', location: 'runtime-owned state outside the source exception list',
+    compatibilityReason: 'older active readers parse the JSON identity', replacementCondition: 'all participating readers upgrade before the coordinated switch',
+    writer: { path: 'protocol.js', function: 'writeIdentity', contains: 'JSON.stringify' },
+    readers: [{ path: 'protocol.js', function: 'readIdentity', contains: 'JSON.parse' }],
+    ...(interprocess.includes(id) ? {} : { selector: { flag: '--json', requiresExplicitRequest: true } }),
+  }));
+  const exceptions = { schemaVersion: 1, exceptions: [], runtimeProtocols: records };
+  assert.deepEqual((await validateProjectDataStorage(root, exceptions)).problems, []);
+  put(root, 'protocol.js', 'function writeIdentity() { return structuredDataToLino({ pid: 1 }); }\nfunction readIdentity() { return JSON.parse(text); }\nfunction other() { return JSON.stringify({ pid: 2 }); }\n');
+  assert.ok((await validateProjectDataStorage(root, exceptions)).problems.some(problem => problem.startsWith('runtime JSON protocol source evidence changed')),
+    'another function retaining JSON output cannot impersonate the declared protocol writer');
+  put(root, 'protocol.js', 'function writeIdentity() { return JSON.stringify({ pid: 1, brace: "}", template: `}` }); }\nfunction readIdentity() { return JSON.parse(text); }\n');
+  assert.deepEqual((await validateProjectDataStorage(root, exceptions)).problems, [], 'opaque source tokens preserve the writer context');
+  put(root, 'new-own-report.json', '{}\n');
+  assert.ok((await validateProjectDataStorage(root, exceptions)).problems.some(problem => problem.endsWith('new-own-report.json')));
+  records[0].writer.contains = 'an invented consumer';
+  assert.ok((await validateProjectDataStorage(root, exceptions)).problems.some(problem => problem.startsWith('runtime JSON protocol source evidence changed')));
+  records[3].selector.requiresExplicitRequest = false;
+  assert.ok((await validateProjectDataStorage(root, exceptions)).problems.some(problem => problem.startsWith('JSON command output requires')));
+  records.push({ ...records[0], id: 'all cache reports' });
+  assert.ok((await validateProjectDataStorage(root, exceptions)).problems.includes('unrecognized runtime JSON protocol: all cache reports'));
+}));
