@@ -9,7 +9,7 @@
     "arg": "argument", "args": "arguments", "expr": "expression", "cond": "condition",
     "fn": "function name", "ctors": "constructors", "ctor": "constructor", "params": "parameters",
     "recursive": "recursive definition", "declarations": "declaration mapping", "span": "source span",
-    "sourceLanguage": "source language", "schemaVersion": "schema version", "utf16Strings": "UTF16 strings"
+    "sourceLanguage": "source language", "schemaVersion": "schema version", "utf16Strings": "Unicode code unit strings"
   },
   "references": { "binding": "binding reference", "declaration": "declaration reference" }
 }

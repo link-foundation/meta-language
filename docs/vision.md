@@ -110,6 +110,18 @@ and cannot substitute for it. Definition comparison checks obligations under
 the declared model and preserves an unknown result when a proof is unavailable.
 It does not promise to decide arbitrary program equivalence.
 
+The current typed-program adapter serializes checked semantic records, ordered
+containers, scalar values and explicit binding and declaration references as
+links. Reload validates structural limits, types and owned references before
+emission. Its shared schema gives abbreviated host fields readable English
+relation names, including the Unicode code unit string model. The finite formal
+definition adapter checks closed recursive correspondences under supported
+typed-program, literal source-text and source-trivia primitive models. A
+certificate carries both premises and every node pair; counterfeit or missing
+premises cannot authorize sharing. These conditional operational witnesses do
+not provide deep formal definitions for every catalog concept or prove arbitrary
+source-language equivalence.
+
 ### Ontology and taxonomy entry points
 
 The library exposes ontology and taxonomy as separate entry points into the

@@ -378,6 +378,8 @@ export const NAME_INVENTORIES = Object.freeze([
       'concept-redirect': 'grammar.global-concept-identity-mapping',
       'source-alias': 'grammar.qualified-source-alias',
       correspondence: 'grammar.concept-correspondence',
+      'formal-origin-definition': 'grammar.formal-origin-definition',
+      links: 'grammar.formal-definition-network',
     })[name] ?? `grammar.${name}`,
   },
   {
@@ -392,6 +394,83 @@ export const NAME_INVENTORIES = Object.freeze([
     extract: (text) => captures(text, /^(?:export function|pub fn) ((?:createGlobalConceptSpace|globalConceptSpaceToLinks|readGlobalConceptSpaceLinks|translateGlobalConstruct|create_global_concept_space|global_concept_space_to_links|read_global_concept_space_links|translate_global_construct))\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `operation.${name === 'global-concept-space-to-links' ? 'serialize-global-concept-space' : name}`,
+  },
+  {
+    inventory: 'formal definition operations',
+    files: ['js/src/formal-concept-definition.js', 'rust/src/formal_concept_definition.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) (encodeFormalConceptDefinition|readFormalConceptDefinition|proveFormalConceptEquivalence|verifyFormalConceptEquivalence|encode_formal_concept_definition|read_formal_concept_definition|prove_formal_concept_equivalence|verify_formal_concept_equivalence)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `operation.${name}`,
+  },
+  {
+    inventory: 'formal definition records',
+    files: ['js/src/formal-concept-definition.js'],
+    extract: (text) => [
+      ...captures(text, /(?:const (?:ROOT|CERTIFICATE|PAIRS|PAIR) = |metadata\(|\.term !== )'([^']+)'/gu),
+      ...(text.includes('`formal declaration ${typeof value}`') ? ['formal declaration string', 'formal declaration number', 'formal declaration boolean'] : []),
+    ].map((name) => name.replaceAll(' ', '-')),
+    recordOf: (name) => `grammar.${name === 'formal-declaration-boolean' ? 'formal-declaration-truth-value' : name}`,
+  },
+  {
+    inventory: 'formal definition host inputs',
+    files: ['rust/src/formal_concept_definition.rs'],
+    extract: (text) => captures(text, /^pub (?:struct|enum) (FormalConceptArchive|FormalConceptDefinitionInput)\b/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.${name}`,
+  },
+  {
+    inventory: 'formal primitive models',
+    files: ['js/src/data/formal-concept-models.json', 'rust/src/data/formal-concept-models.json'],
+    extract: (text) => Object.keys(JSON.parse(text)).map((name) => name.replaceAll(' ', '-')),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'typed linked program operations',
+    files: ['js/src/typed-program-links.js', 'js/src/typed-program-links-validation.js', 'js/src/typed-program-link-rules.js', 'rust/src/translation/typed_program_link_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name === 'is-unsafe-program-field' ? 'detect-unsafe-program-field' : name}`,
+  },
+  {
+    inventory: 'typed linked program records',
+    files: ['js/src/data/typed-program-links-schema.json', 'rust/src/data/typed-program-links-schema.json'],
+    extract: (text) => {
+      const schema = JSON.parse(text);
+      return [schema.root, ...Object.values(schema.containers), ...Object.values(schema.scalars), ...Object.values(schema.fields), ...Object.values(schema.references)].map((name) => name.toLowerCase().replaceAll(' ', '-'));
+    },
+    recordOf: (name) => ({
+      'string-value': 'translation.string-scalar-value',
+      'number-value': 'translation.number-scalar-value',
+      'boolean-value': 'translation.boolean-scalar-value',
+      'integer-value': 'translation.big-integer-scalar-value',
+      'null-value': 'translation.null-scalar-value',
+      'undefined-value': 'translation.undefined-scalar-value',
+      argument: 'translation.program-argument-field',
+      arguments: 'translation.program-argument-list-field',
+      constructor: 'translation.program-constructor-field',
+      constructors: 'translation.program-constructor-list-field',
+      parameters: 'translation.program-parameter-list-field',
+      operation: 'translation.program-operation-field',
+      expression: 'translation.program-expression-field',
+      condition: 'translation.program-condition-field',
+      'function-name': 'translation.program-function-name-field',
+      'recursive-definition': 'translation.program-recursion-model',
+      'unicode-code-unit-strings': 'translation.program-unicode-code-unit-string-model',
+    })[name] ?? `translation.${name}`,
+  },
+  {
+    inventory: 'reference operation queries',
+    files: ['js/src/translation/reference-model.js'],
+    extract: (text) => captures(text, /^export function (referenceMethodOperation|referenceOperation|referenceOperations|referenceOperationNetwork)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.${name === 'reference-operations' ? 'read-reference-operation-list' : `read-${name}`}`,
+  },
+  {
+    inventory: 'shared mutable binding decisions',
+    files: ['js/src/translation/javascript-cells.js'],
+    extract: (text) => captures(text, /^export function (mutableClosureCells|markSharedReferenceTypes)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.${name === 'mutable-closure-cells' ? 'find-mutable-closure-cells' : name}`,
   },
   {
     inventory: 'global concept correspondence verifier',
