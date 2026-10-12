@@ -1,0 +1,1 @@
+Scanner priority inside a composite extra is retained by that extra's own parse frame. A following syntax token can consume the completed extra without inheriting priority from its internal scanner tokens.

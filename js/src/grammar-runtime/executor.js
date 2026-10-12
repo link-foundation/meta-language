@@ -2450,10 +2450,12 @@ export class Executor {
 
   // The innermost rule call that began before `position`: the one a token
   // at `position` is lexed for, the calls that begin there being part of
-  // the same parse state.
+  // the same parse state. A composite extra owns its frame from its first
+  // token, so scanner priority there never reaches the enclosing syntax.
   lexFrame(position) {
     for (let index = this.callStack.length - 1; index >= 0; index -= 1) {
-      if (this.callStack[index].position < position) return this.callStack[index];
+      const frame = this.callStack[index];
+      if (frame.position < position || (this.inExtra !== false && frame.position === this.extraStart && frame.rule.kind === 'normal')) return frame;
     }
     return null;
   }
@@ -3553,6 +3555,22 @@ export class Executor {
 
   /** A rule call or an external token, memoized with left-recursion growth. */
   reference(name, position, state, inToken) {
+    const rule = this.program.rules.get(name);
+    const nestedSyntax = !inToken && this.inExtra === true && rule?.kind === 'normal'
+      && !this.program.trivia.some(item => item.kind === name);
+    if (!nestedSyntax) return this.referenceAt(name, position, state, inToken);
+    // Ordinary syntax within a scanned extra (an interpolation, for example)
+    // admits its own comment extras while the surrounding scanned text does not.
+    const outer = this.inExtra;
+    this.inExtra = 'nesting';
+    try {
+      return this.referenceAt(name, position, state, inToken);
+    } finally {
+      this.inExtra = outer;
+    }
+  }
+
+  referenceAt(name, position, state, inToken) {
     if (!inToken && this.program.expectedReferences.size > 0) {
       const id = this.program.expectedReferences.get(name);
       if (id !== undefined) this.expectations.request(position, id);
@@ -3566,9 +3584,10 @@ export class Executor {
     }
     // While repairing, a call made quietly (where nothing is repaired) or
     // after a MISSING leaf at its offset is memoized apart from the same call
-    // made in the open.
+    // made in the open. Extra parser contexts have different trivia behavior
+    // and must not reuse the results of an ordinary syntactic context.
     const quiet = !this.repairPoints ? '' : this.suppressed > 0 ? '|quiet' : this.chained.has(position) ? '|chained' : '';
-    const key = `${rule.index}|${position}|${state.key}|${inToken ? 1 : 0}${quiet}`;
+    const key = `${rule.index}|${position}|${state.key}|${inToken ? 1 : 0}|${this.inExtra}|${this.extraStart}${quiet}`;
     const known = this.memo.get(key);
     if (known) {
       known.parents?.add(this.callStack[this.callStack.length - 1] ?? null);

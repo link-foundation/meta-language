@@ -13,7 +13,7 @@ use super::forking::target_name;
 use super::operations::{
     Abort, Machine, OpError, OpResult, OperationValue, State, Working, run_statements,
 };
-use super::program::{Expr, Name, PrecedenceTag, Rule, Target};
+use super::program::{Expr, InExtra, Name, PrecedenceTag, Rule, Target};
 use super::results::{
     Children, Entry, Outcome, Res, ResultSet, Scanned, Skipped, Tree, TreeType, children_of,
     complete_order, concat, content_start, longest_result, no_children, reduced_alone,
@@ -47,6 +47,35 @@ impl Executor<'_> {
 
     /// A rule call or an external token, memoized with left-recursion growth.
     pub(super) fn reference(
+        &mut self,
+        target: &Target,
+        position: usize,
+        state: &State,
+        in_token: bool,
+    ) -> Run<Vec<Res>> {
+        let nested_syntax =
+            match target {
+                Target::Rule(index) => {
+                    !in_token
+                        && self.in_extra == InExtra::Flat
+                        && matches!(self.program.rules[*index].kind, RuleKind::Normal)
+                        && !self.program.trivia.iter().any(|item| {
+                            item.kind.as_ref() == Some(&self.program.rules[*index].name)
+                        })
+                }
+                Target::External(_) => false,
+            };
+        if !nested_syntax {
+            return self.reference_at(target, position, state, in_token);
+        }
+        let outer = self.in_extra;
+        self.in_extra = InExtra::Nesting;
+        let outcome = self.reference_at(target, position, state, in_token);
+        self.in_extra = outer;
+        outcome
+    }
+
+    fn reference_at(
         &mut self,
         target: &Target,
         position: usize,
@@ -88,6 +117,8 @@ impl Executor<'_> {
             state.clone(),
             in_token,
             self.repair_mode(position),
+            self.in_extra,
+            self.extra_start,
         );
         if let Some(known) = self.memo.get(&key).cloned() {
             if let Some(keywords) = self.keywords {

@@ -14,7 +14,7 @@ pub(super) use super::keyword_lexing::KeywordLexing;
 use super::operations::{OperationValue, State};
 use super::ordering::settled_order;
 pub(super) use super::ordering::{complete_order, preferred_tokens};
-use super::program::{Name, PrecedenceTag, Settling, TokenRank, TokenRanks, Trivia};
+use super::program::{InExtra, Name, PrecedenceTag, Settling, TokenRank, TokenRanks, Trivia};
 use super::separators::separator_text;
 pub(super) use super::walk::same_children;
 use super::walk::same_output;
@@ -642,8 +642,8 @@ pub(super) struct Scanned {
 }
 
 /// A rule call: rule index, offset, state, in a token, and, while
-/// repairing, how it is made.
-pub(super) type MemoKey = (usize, usize, State, bool, Repair);
+/// repairing, how it is made, plus the extra parser context and its start.
+pub(super) type MemoKey = (usize, usize, State, bool, Repair, InExtra, usize);
 
 /// How a rule call is made while repairing: in the open, quietly (where
 /// nothing is repaired), or after a MISSING leaf at its offset.

@@ -302,7 +302,13 @@ impl Executor<'_> {
         self.call_stack
             .iter()
             .rev()
-            .find(|frame| frame.borrow().position < position)
+            .find(|frame| {
+                let frame = frame.borrow();
+                frame.position < position
+                    || (self.in_extra != InExtra::Outside
+                        && frame.position == self.extra_start
+                        && frame.builds.is_some())
+            })
             .cloned()
     }
 
