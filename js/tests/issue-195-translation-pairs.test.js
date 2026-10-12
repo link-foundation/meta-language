@@ -13,6 +13,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 import {
   decodeProgramTranslation,
@@ -25,7 +26,7 @@ import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/i
 import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const root = new URL('../../', import.meta.url);
-const shared = JSON.parse(await readFile(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root), 'utf8'));
+const shared = readProjectData(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root));
 const corpus = shared.translationCorpus;
 const corpusDirectory = new URL(`${corpus.directory}/`, root);
 const expectedBytes = await readFile(new URL(corpus.expectedOutput.file, corpusDirectory));

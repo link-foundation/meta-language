@@ -122,13 +122,22 @@ test('every workflow cancels the runs a newer push supersedes', () => {
 test('AGENTS.md and CONTRIBUTING.md keep local runs targeted, bounded and cleaned up', () => {
   const agents = read('AGENTS.md');
   const section = agents.slice(agents.indexOf('## Local checks and resources'));
+  const contributing = read('CONTRIBUTING.md');
   assert.match(section, /Run only the checks that cover the change/u);
   assert.match(section, /node --test tests\/<area>\*\.test\.js/u);
-  assert.match(section, /cargo test --test unit <filter>/u);
-  for (const text of [section, read('CONTRIBUTING.md')]) {
-    assert.match(text, /CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 CARGO_INCREMENTAL=0/u);
+  for (const text of [section, contributing]) {
+    assert.match(text, /rustfmt --edition 2024 --check/u);
+    assert.match(text, /--config skip_children=true/u);
+    assert.match(text, /Never compile Rust locally/u);
+    assert.match(text, /let CI run native\s+compilation, tests and runtime parity/u);
     assert.match(text, /with-cache-cleanup\.mjs --event test --/u);
   }
+  assert.match(contributing, /CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 CARGO_INCREMENTAL=0/u);
+  const env = boundedEnvironment({ META_LANGUAGE_JOBS: '2' });
+  assert.deepEqual([env.CARGO_BUILD_JOBS, env.RUST_TEST_THREADS, env.CARGO_INCREMENTAL], ['2', '2', '0']);
+  const rust = read(`${WORKFLOWS}/rust.yml`);
+  assert.match(job(rust, 'check'), /with-cache-cleanup\.mjs --event build -- cargo check --locked --all-targets --all-features/u);
+  assert.match(job(rust, 'test'), /with-cache-cleanup\.mjs --event test -- cargo test --no-fail-fast/u);
   for (const forbidden of ['npm run acceptance:issue-195', 'run-issue-195-evidence.mjs', 'Lean, Rocq and Rust',
     'clean-consumer installs', 'workload clones', 'cargo llvm-cov', 'whole grammar registry']) {
     assert.ok(section.replace(/\s+/gu, ' ').includes(forbidden), `AGENTS.md forbids ${forbidden} locally`);
