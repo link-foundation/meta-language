@@ -549,27 +549,13 @@ impl Executor<'_> {
         };
         let start = skipped.end;
         let state = &skipped.state;
-        let program = self.program;
-        let consults = program.scanners[program.external[&**name]].consults;
         // Where the scanner answers `expected` for (see `Expectations`).
         let context = if in_token || raw_start {
             self.scan_context.unwrap_or(start)
         } else {
             position
         };
-        let key = (
-            name.clone(),
-            start,
-            consults.then_some(context),
-            state.clone(),
-        );
-        let scanned = if let Some(scanned) = self.scanner_memo.get(&key) {
-            scanned.clone()
-        } else {
-            let scanned = self.run_scanner(name, start, context, state)?.map(Rc::new);
-            self.scanner_memo.insert(key, scanned.clone());
-            scanned
-        };
+        let scanned = self.run_scanner(name, start, context, state)?;
         let Some(scanned) = scanned else {
             self.fail(start, name);
             if in_token {
@@ -611,37 +597,52 @@ impl Executor<'_> {
         start: usize,
         context: usize,
         state: &State,
-    ) -> Run<Option<Scanned>> {
+    ) -> Run<Option<Rc<Scanned>>> {
         let program = self.program;
         let scanner = &program.scanners[program.external[&**name]];
-        let mut machine = ScannerMachine {
-            executor: self,
-            requested: name.clone(),
-            context,
-            working: state.working(),
-            cursor: start,
-            token_start: start,
-            mark: None,
-            skipped: Vec::new(),
-        };
-        let signal = match run_statements(&scanner.operations, &mut machine) {
-            Ok(signal) => signal,
-            Err(OpError::Failed) => return Ok(None),
-            Err(OpError::Abort(abort)) => return Err(abort),
-        };
-        if signal.as_deref() != Some(&**name) {
-            return Ok(None);
+        // Lexical priority and extra probes share the token scanner's memo:
+        // identical input, context and state must execute its operations once.
+        let key = (
+            name.clone(),
+            start,
+            scanner.consults.then_some(context),
+            state.clone(),
+        );
+        if let Some(scanned) = self.scanner_memo.get(&key) {
+            return Ok(scanned.clone());
         }
-        let end = machine.mark.unwrap_or(machine.cursor);
-        if end < machine.token_start {
-            return Ok(None);
-        }
-        Ok(Some(Scanned {
-            token_start: machine.token_start,
-            end,
-            skipped: machine.skipped,
-            state: machine.working.settle(),
-        }))
+        let scanned = (|| {
+            let mut machine = ScannerMachine {
+                executor: self,
+                requested: name.clone(),
+                context,
+                working: state.working(),
+                cursor: start,
+                token_start: start,
+                mark: None,
+                skipped: Vec::new(),
+            };
+            let signal = match run_statements(&scanner.operations, &mut machine) {
+                Ok(signal) => signal,
+                Err(OpError::Failed) => return Ok(None),
+                Err(OpError::Abort(abort)) => return Err(abort),
+            };
+            if signal.as_deref() != Some(&**name) {
+                return Ok(None);
+            }
+            let end = machine.mark.unwrap_or(machine.cursor);
+            if end < machine.token_start {
+                return Ok(None);
+            }
+            Ok(Some(Rc::new(Scanned {
+                token_start: machine.token_start,
+                end,
+                skipped: machine.skipped,
+                state: machine.working.settle(),
+            })))
+        })()?;
+        self.scanner_memo.insert(key, scanned.clone());
+        Ok(scanned)
     }
 
     /// Parses the whole range from `start_rule`: the tree, or the farthest

@@ -102,6 +102,28 @@ fn native_hcl_focused_trees_match_oracle_and_preserve_every_byte() {
 }
 
 #[test]
+fn native_hcl_long_heredoc_identifier_fits_the_unchanged_default_budget() {
+    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let corpus: Value = serde_json::from_str(CORPUS).unwrap();
+    let case = corpus["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| {
+            case["file"] == "templates.txt"
+                && case["title"] == "heredoc with identifier that does not fit into the serialization buffer (should not crash)"
+        })
+        .unwrap();
+    let source = source(case);
+    let (expected, recovers) = oracle_rows(&tree_sitter_hcl::LANGUAGE.into(), source);
+    assert!(!recovers);
+    let tree = parse(&parser(GRAMMAR), source)
+        .expect("the pinned long heredoc is accepted without a larger parse budget");
+    assert_eq!(Rows::new(&fixture).rows(&tree, source), expected);
+    assert_eq!(rebuilt(&tree), source);
+}
+
+#[test]
 fn native_hcl_focused_invalid_sources_are_rejected_and_recovered_losslessly() {
     let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);

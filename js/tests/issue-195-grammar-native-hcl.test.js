@@ -61,6 +61,17 @@ test('native HCL focused trees match the independent oracle and preserve every b
   observe(['nativeHclTreesMatchOracle', 'nativeHclTreesLossless'], context.name);
 });
 
+test('native HCL parses the pinned long heredoc identifier within its unchanged default budget', () => {
+  const { source } = JSON.parse(read('parity/fixtures/native-grammars/hcl-corpus.json')).cases
+    .find(({ file, title }) => file === 'templates.txt' && title === 'heredoc with identifier that does not fit into the serialization buffer (should not crash)');
+  assert.equal(oracleRecovers(source, 'HCL'), false);
+  const outcome = parser.parseTree(source);
+  assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));
+  assert.deepEqual(outcome.ambiguities, []);
+  assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'HCL'));
+  assert.equal(text(outcome.tree), source);
+});
+
 test('native HCL rejects and losslessly recovers invalid focused sources', (context) => {
   for (const { source, recovered } of fixture.rejections) {
     assert.equal(oracleRecovers(source, 'HCL'), true, JSON.stringify(source));

@@ -202,7 +202,7 @@ impl Executor<'_> {
                         None
                     };
                     if let Some(scanned) = scanned.filter(|scanned| scanned.end == best) {
-                        leaves.extend(scanned.skipped);
+                        leaves.extend(scanned.skipped.iter().cloned());
                         leaves.push(Rc::new(Tree::trivia_leaf(
                             best_kind,
                             scanned.token_start,
