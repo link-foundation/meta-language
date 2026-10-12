@@ -199,14 +199,14 @@ test('required JavaScript CI retains bounded memory regressions and actual targe
   ]);
   assert.deepEqual(partition.unassigned, []);
   assert.deepEqual(partition.ambiguous, []);
-  assert.deepEqual(partition.groups.grammar, ['issue-195-parse-memory-budget.test.js', 'parser-memory.test.js']);
+  assert.deepEqual(partition.groups['grammar-scaling'], ['issue-195-parse-memory-budget.test.js', 'parser-memory.test.js']);
   assert.deepEqual(partition.groups.tooling, ['issue-195-evidence-memory.test.js']);
   const parsed = jobs('js.yml');
   const groupRun = parsed.get('tests').steps.find((step) => step.name === 'Run the test group');
   assert.ok(groupRun.afterFailure, 'test groups report failures even if the oracle build failed');
   const oracle = parsed.get('tests').steps.find((step) => /build-agda-layout-oracle\.mjs/u.test(step.run));
   assert.ok(oracle, 'the independent Agda scanner oracle is built in CI');
-  assert.match(oracle.text, /matrix\.group == 'grammar'/u);
+  assert.match(oracle.text, /contains\(fromJSON\('\["grammar", "grammar-native", "grammar-recovery"\]'\), matrix\.group\)/u);
   const evidence = jobs('ci.yml').get('javascript-suite');
   const rebuild = evidence.steps.findIndex((step) => /build-agda-layout-oracle\.mjs/u.test(step.run));
   const suite = evidence.steps.findIndex((step) => step.name === 'Produce the stage evidence');

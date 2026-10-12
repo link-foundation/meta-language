@@ -137,7 +137,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [grammar, grammar-csharp, grammar-elixir, grammar-ruby, translation, conformance, downstream, tooling]
+        group: [grammar, grammar-native, grammar-recovery, grammar-scaling, grammar-csharp, grammar-elixir, grammar-ruby, translation, conformance, downstream, tooling]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -161,7 +161,7 @@ jobs:
         working-directory: js
 
       - name: Build the independently corrected Agda layout oracle
-        if: matrix.group == 'grammar'
+        if: contains(fromJSON('["grammar", "grammar-native", "grammar-recovery"]'), matrix.group)
         run: node scripts/build-agda-layout-oracle.mjs
         working-directory: js
 

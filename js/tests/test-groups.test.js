@@ -25,6 +25,35 @@ test('the test group guard reports unassigned, ambiguous and empty groups', () =
   assert.ok(partitionProblems(overlapping).includes('tests/x.test.js (grammar, tooling) is in more than one test group'));
 });
 
+test('native corpora, recovery and scaling checks run independently with every assertion retained', () => {
+  const partition = partitionTests([
+    'grammar-native-field-expression-context.test.js',
+    'issue-195-grammar-native-agda.test.js',
+    'issue-195-grammar-native-zig.test.js',
+    'issue-195-grammar-native-recovery.test.js',
+    'error-recovery-parity.test.js',
+    'parse-scaling.test.js',
+    'lino-grammar-scaling.test.js',
+    'issue-195-grammar-profile-ruby.test.js',
+    'typed-program-constructor-references.test.js',
+    'typed-program-pattern-bindings.test.js',
+  ]);
+  assert.deepEqual(partition.unassigned, []);
+  assert.deepEqual(partition.ambiguous, []);
+  assert.deepEqual(partition.groups.grammar, ['grammar-native-field-expression-context.test.js']);
+  assert.deepEqual(partition.groups['grammar-native'], [
+    'issue-195-grammar-native-agda.test.js', 'issue-195-grammar-native-zig.test.js',
+  ]);
+  assert.deepEqual(partition.groups['grammar-recovery'], [
+    'issue-195-grammar-native-recovery.test.js', 'error-recovery-parity.test.js',
+  ]);
+  assert.deepEqual(partition.groups['grammar-scaling'], ['parse-scaling.test.js', 'lino-grammar-scaling.test.js']);
+  assert.deepEqual(partition.groups['grammar-ruby'], ['issue-195-grammar-profile-ruby.test.js']);
+  assert.deepEqual(partition.groups.translation, [
+    'typed-program-constructor-references.test.js', 'typed-program-pattern-bindings.test.js',
+  ]);
+});
+
 test('the JavaScript workflow runs every test group and gates the package check on them', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
   const tests = workflow.slice(workflow.indexOf('\n  tests:\n'), workflow.indexOf('\n  test:\n'));

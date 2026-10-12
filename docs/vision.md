@@ -1036,7 +1036,8 @@ keeps every run within that bound instead of relying on a larger machine:
   compile and test need it, so a compile error fails once.
 - CI splits the Rust tests by test target and filter, and the JavaScript tests
   by file group, into matrix jobs with their own timeouts. Every JavaScript test
-  file belongs to exactly one group.
+  file still runs exactly once. Native grammar corpora, recovery and scaling
+  checks have separate parallel groups with unchanged assertions and limits.
   Full C#, Elixir and Ruby candidate corpora run in separate JavaScript jobs
   with the same time and memory limits, keeping every corpus input and assertion
   while preventing their combined work from cancelling the general grammar job.
