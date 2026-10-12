@@ -1,0 +1,1459 @@
+{
+  "schemaVersion": 1,
+  "language": "ruby",
+  "revision": "71bd32fb7607035768799732addba884a37a6210",
+  "sourceSha256": "ff0a0ab48788daea51cb418d9cfc14086dfcad50ac10e4981776be8b4d9296ab",
+  "corpusSha256": "ec977cec254d37a011dfdc5f1e7e07e845fa935d4ecbf5909bb4ce435922e7f2",
+  "cases": [
+    {
+      "file": "comments.txt",
+      "title": "comments",
+      "source": "\n# anything else here should be ignored\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "empty block comment",
+      "source": "\n=begin\n=end\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "one-line block comment",
+      "source": "\n=begin\nwhatever\n=end\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "block comment with comment after begin",
+      "source": "\n=begin rdoc\n=end\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "block comment with comment after end",
+      "source": "\n=begin \n=end rdoc\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "multi-line block comments",
+      "source": "\n=begin\nwhatever\nmultiple lines of whatever\n=end\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "multi-line block comments followed by standard comment",
+      "source": "\n=begin\nwhatever\nmultiple lines of whatever\n=end\n# Another comment\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "multi-line block comments with almost end",
+      "source": "\n=begin\n=e\n=en\n=end\n"
+    },
+    {
+      "file": "comments.txt",
+      "title": "block comment without newline after end",
+      "source": "\n=begin\ncomment\n=end"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "empty while statement",
+      "source": "\nwhile foo do\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "while without do",
+      "source": "\nwhile foo\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "while statement with body",
+      "source": "\nwhile foo do\n  bar\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "empty until statement",
+      "source": "\nuntil foo bar do\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "until statement with body",
+      "source": "\nuntil foo do\n  bar\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "empty if statement",
+      "source": "\nif foo\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "empty if/else statement",
+      "source": "\nif foo then\nelse\nend\n\nif true then ;; 123; end\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "single-line if then else statement",
+      "source": "\nif foo then bar else quux end\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "if elsif",
+      "source": "\nif foo\n  bar\nelsif quux\n  baz\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "if elsif else",
+      "source": "\nif foo\n  bar\nelsif quux\n  baz\nelse\n  bat\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "empty unless statement",
+      "source": "\nunless foo\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "empty unless statement with then",
+      "source": "\nunless foo then\n  hi\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "empty unless statement with else",
+      "source": "\nunless foo\nelse\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "for",
+      "source": "\nfor x in y do\n\tf\nend\n\nfor x, in y\n\tf\nend\n\nfor x, *y in z do\n\tf\nend\n\nfor (k, v) in y do\n\tf\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "for without do",
+      "source": "\nfor x in y\n  f\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "next",
+      "source": "\nfor x in y\n  next\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "retry",
+      "source": "\nfor x in y\n  retry\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "break",
+      "source": "\nwhile b\n  break\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "redo",
+      "source": "\nwhile b\n  redo\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "empty begin",
+      "source": "\nbegin\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "begin with body",
+      "source": "\nbegin\n\tfoo\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "begin with else",
+      "source": "\nbegin\n\tfoo\nelse\n  bar\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "begin with ensure",
+      "source": "\nbegin\n\tfoo\nensure\n  bar\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "begin with empty rescue",
+      "source": "\nbegin\nrescue\nend\n\nbegin\nrescue then\nend\n\nbegin\nrescue\n  bar\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "begin with rescue with args",
+      "source": "\nbegin\nrescue x\nend\n\nbegin\nrescue x then\nend\n\nbegin\nrescue x\n  bar\nend\n\nbegin\nrescue => x\n  bar\nend\n\nbegin\nrescue x, y\n  bar\nend\n\nbegin\nrescue Error => x\nend\n\nbegin\nrescue Error => x\n  bar\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "begin with rescue with splat args",
+      "source": "\nbegin\nrescue *args\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "rescue modifier",
+      "source": "\nfoo rescue nil\n\nif foo rescue nil\nelsif bar rescue nil\nend\n\nunless foo rescue nil\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "rescue modifier in assignments",
+      "source": "\nx = foo rescue 1\nx += foo rescue 1\nx, y = foo rescue 1\nx = bar, foo rescue 1\nx = foo 1 rescue 2\nx += foo 1 rescue 2\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "begin with all the trimmings",
+      "source": "\nbegin\n\tfoo\nrescue x\n  retry\nelse\n\tquux\nensure\n  baz\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "return",
+      "source": "\nreturn foo\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "return without value",
+      "source": "\nreturn\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "case",
+      "source": "\ncase foo\nwhen bar\nend\n\ncase \n  foo\nwhen bar\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "case with else",
+      "source": "\ncase foo\nwhen bar\nelse\nend\n\ncase key\nwhen bar\nelse; leaf\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "case with multiple when blocks",
+      "source": "\ncase a\nwhen b\n  c\nwhen d\n  e\nelse\n  f\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "case without line break",
+      "source": "\ncase a when b\n c end\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "case with splat parameter in when",
+      "source": "\ncase a\nwhen *foo\n  c\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "case with assignment",
+      "source": "\nx = case foo\nwhen bar\nelse\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "case with expression",
+      "source": "\nx = case foo = bar | baz\nwhen bar\nelse\nend\n"
+    },
+    {
+      "file": "control-flow.txt",
+      "title": "case without expression",
+      "source": "\ncase when b\n c end\n\ncase \nwhen b then c\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "empty method",
+      "source": "\ndef foo\nend\n\ndef foo?\nend\n\ndef foo!\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with body",
+      "source": "\ndef foo\n  bar\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "\"end\"-less method",
+      "source": "\ndef foo = bar\ndef foo() = bar\ndef foo(x) = bar\ndef Object.foo = bar\ndef Object.foo (x) = bar\ndef foo() = bar rescue (print \"error\")\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method as attribute setter",
+      "source": "\ndef foo=\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method definition of operators",
+      "source": "\ndef `(a)\n  \"`\"\nend\n\ndef +@(a)\nend\n\ndef -@(a)\nend\n\ndef ~@(a)\nend\n\ndef %(a)\nend\n\ndef ..(a)\nend\n\ndef !~(a)\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with forward slash name and regex ambiguity",
+      "source": "\nputs /(/\n\ndef /(name)\nend\n\ndef / name\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with call to super",
+      "source": "\ndef foo\n  super\nend\n\ndef foo\n  bar.baz { super }\nend\n\ndef foo\n  super.bar a, b\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with args",
+      "source": "\ndef foo(bar)\nend\n\ndef foo(bar); end\ndef foo(bar) end\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with unparenthesized args",
+      "source": "\ndef foo bar\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with multiple args",
+      "source": "\ndef foo(bar, quux)\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with multiple unparenthesized args",
+      "source": "\ndef foo bar, quux\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with keyword parameters",
+      "source": "\ndef foo(bar: nil, baz:)\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with default parameters",
+      "source": "\ndef foo(bar = nil)\nend\n\ndef foo(bar=nil)\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "method with interesting params",
+      "source": "\ndef foo(*options)\nend\n\ndef foo(x, *options)\nend\n\ndef foo(x, *options, y)\nend\n\ndef foo(**options)\nend\n\ndef foo(name:, **)\nend\n\ndef foo(x, **nil)\nend\n\ndef foo(&block)\nend\n\ndef foo(&)\nend\n\ndef foo(...)\n  super(...)\nend\n\ndef foo(a, b, ...)\n  bar(b, ...)\nend\n\ndef foo ...\n  3\nend\n\ndef foo\n  ... 3\nend\n\ndef foo\n  .. 3\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "singleton method",
+      "source": "\ndef self.foo\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "singleton method with body",
+      "source": "\ndef self.foo\n  bar\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "singleton method with arg",
+      "source": "\ndef self.foo(bar)\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "singleton method with un-parenthesized arg",
+      "source": "\ndef self.foo bar\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "singleton method with args",
+      "source": "\ndef self.foo(bar, baz)\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "singleton method with un-parenthesized args",
+      "source": "\ndef self.foo bar, baz\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "empty class",
+      "source": "\nclass Foo\nend\n\nclass Foo; end\n\nclass Foo::Bar\nend\n\nclass ::Foo::Bar\nend\n\nclass Cß\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "empty subclass",
+      "source": "\nclass Foo < Bar\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "empty subclass of namespaced class",
+      "source": "\nclass Foo < Bar::Quux\nend\n\nclass Foo < ::Bar\nend\n\nclass Foo < Bar::Baz.new(foo)\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "one-line class/module def without ;",
+      "source": "\nmodule NoActiveModel class Resource; end; end\nclass String def foo; end end\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "unparenthesized call as superclass",
+      "source": "\nclass A < B.new \\\n  :c,\n  :d\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "class with body",
+      "source": "\nclass Foo\n\tdef bar\n\tend\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "class with operators",
+      "source": "\nclass A\n  def ==; end\n  def !=(other); end\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "class within dynamically-computed module",
+      "source": "\nclass foo()::Bar\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "singleton class",
+      "source": "\nclass << self\nend\n\nclass <<self\nend\n\nclass << Foo\nend\n\nclass << Foo::Bar\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "empty module",
+      "source": "\nmodule Foo\nend\n\nmodule Foo::Bar\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "module with body",
+      "source": "\nmodule Foo\n\tdef bar\n\tend\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "module without semicolon",
+      "source": "\nmodule Foo end\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "__END__",
+      "source": "\nword\n__END__\nword\nx\nab\nd\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "__END__ followed by a comment",
+      "source": "\nword\n__END__\n# comment\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "__END__ at end of file, without new line",
+      "source": "\nword\n__END__"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "module with class with methods",
+      "source": "\nmodule A\n  class B < C\n    include D::E.f.g\n\n    attr_reader :h\n\n    # i\n    def j\n      k\n    end\n\n    def self.l\n    end\n  end\nend\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "empty BEGIN block",
+      "source": "\nBEGIN {\n\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "BEGIN block",
+      "source": "\nbaz\nBEGIN {\nfoo\n}\nbar\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "empty END block",
+      "source": "\nEND {\n\n}\n"
+    },
+    {
+      "file": "declarations.txt",
+      "title": "END block",
+      "source": "\nbaz\nEND {\nfoo\n}\nbar\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "scope resolution",
+      "source": "\nFoo::Bar\n::Bar\n\nputs ::Foo::Bar\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "element reference",
+      "source": "\nfoo[bar]\nfoo[*bar]\nfoo[* bar]\nfoo[]\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "element reference with string",
+      "source": "\nfoo[\"bar\"]\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "element reference with symbol",
+      "source": "\nfoo[:bar]\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "element assignment",
+      "source": "\nfoo[bar] = 1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "vacuous literal",
+      "source": "\n()\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "empty statement",
+      "source": "\n;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "yield without value",
+      "source": "\nyield\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "yield",
+      "source": "\nyield foo\nyield foo, bar\nyield(baz)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "not",
+      "source": "\nnot foo\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "and",
+      "source": "\nfoo and bar\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "or",
+      "source": "\nfoo or bar\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "and or associativity",
+      "source": "\na or b and c\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "defined?",
+      "source": "\ndefined? foo\ndefined? Foo.bar\ndefined?(foo)\ndefined?($foo)\ndefined?(@foo)\ndefined?(@äö).should be_true\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "assignment",
+      "source": "\nx = y\nx = *args\nFALSE = \"false\"\nTRUE = \"true\"\nNIL = \"nil\"\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "multiple assignment",
+      "source": "\nx, y = [1, 2]\nx, * = [1, 2]\nx, *args = [1, 2]\nx, y = *foo\nself.foo, self.bar = target.a?, target.b\n(x, y) = foo\n(a, b, c = 1)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "multiple assignment with multiple right hand sides",
+      "source": "\nfoo = 1, 2\nx, y = foo, bar\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "destructured left hand side assignment",
+      "source": "\na, (b, c), d, (e, (f, g)) = foo\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "assignment from method call",
+      "source": "\nx = foo a, b\nx = foo a, :b => 1, :c => 2\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "math assignment",
+      "source": "\nx += y\nx -= y\nx *= y\nx **= y\nx /= y\nputs \"/hi\"\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "operator assignment",
+      "source": "\nx ||= y\nx &&= y\nx &= y\nx |= y\nx %= y\nx >>= y\nx <<= y\nx ^= y\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "conditional",
+      "source": "\na ? b : c\n\na ? b\n  : c\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "conditional and character literal ambiguity",
+      "source": "\ntrue ?\")\":\"c\"\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "conditional with reserved identifiers",
+      "source": "\nfoo ? true: false\nfoo ? return: false\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "inclusive range",
+      "source": "\na..b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "exclusive range",
+      "source": "\na...b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "boolean or",
+      "source": "\na || b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "boolean and",
+      "source": "\na && b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "boolean and/or",
+      "source": "\na || b && c\na && b || c\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "relational",
+      "source": "\na == b\na != b\na === b\na <=> b\na =~ b\na !~ b\na==b\na!=b\na===b\na<=>b\na=~b\na!~b # not a binary operation\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "comparison",
+      "source": "\na < b\na <= b\na > b\na >= b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "bitwise or",
+      "source": "\na | b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "bitwise xor",
+      "source": "\na ^ b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "bitwise and",
+      "source": "\na & b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "shift",
+      "source": "\na >> b\na << b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "additive",
+      "source": "\na + b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "multiplicative",
+      "source": "\na * b\na*b\na *b\na* b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "binary operations",
+      "source": "\n2+2*2\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "unary minus",
+      "source": "\n-a\nfoo -a, bar\nfoo(-a, bar)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "binary minus",
+      "source": "\nfoo-a\n@ivar-1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "exponential",
+      "source": "\na ** b\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "minus, call, exponential, range",
+      "source": "\na - 1\na-1\na -1\na- 1\n(-1.foo)\n\na - b\na-b\na -b\na- b\n(-b.foo)\n\n-2**10\n-x**10\n\n1..-1\n1 .. -1\n1.. -1\n1 ..-1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "complement",
+      "source": "\n!a\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call",
+      "source": "\nfoo\nfoo()\nprint \"hello\"\nprint(\"hello\")\nexit!\nexit!()\ninclude?\ninclude?(\"hello\")\ninclude? \"hello\"\nexit! if done\nexit!() if done\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "nested unparenthesized method calls",
+      "source": "\nputs get_name self, true\nputs(get_name self, true)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with arguments on multiple lines",
+      "source": "\nfoo a,\n  b, c\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with trailing comma",
+      "source": "\nfoo(a, b,)\nfoo(bar(a),)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "keyword arguments, no space, trailing comma",
+      "source": "\nfoo(a:b)\nfoo(a_:b)\nfoo(a2:b)\nfoo(a_:b,)\nfoo(a2:b,)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with receiver",
+      "source": "\nfoo.bar\nfoo.bar()\nfoo.bar \"hi\"\nfoo.bar \"hi\", 2\nfoo.bar(\"hi\")\nfoo.bar(\"hi\", 2)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "implicit call",
+      "source": "\nfoo[bar].()\nfoo.(1, 2)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "implicit call with block",
+      "source": "\na.() {}\na.(b: c) do\n  d\nend\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "call with operator method name",
+      "source": "\nfoo.[]()\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with :: operator",
+      "source": "\nfoo::bar\n::Foo::bar\nFoo::Bar::baz\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with safe navigation operator",
+      "source": "\nfoo&.bar\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "calls to methods on negated literals",
+      "source": "\n-1.class.should eq(Fixnum)\n-0.1.class\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with hash args",
+      "source": "\nfoo(:a => true)\nfoo([] => 1)\nfoo(bar => 1)\nfoo :a => true, :c => 1\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with keyword args",
+      "source": "\nfoo(a: true)\nfoo a: true\nfoo B: true\nfoo a: ;\nfoo B:\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with reserved keyword args",
+      "source": "\nfoo(if: true)\nfoo alias: true\nfoo and: true\nfoo begin: true\nfoo break: true\nfoo case: true\nfoo class: true\nfoo def: true\nfoo defined: true\nfoo do: true\nfoo else: true\nfoo elsif: true\nfoo end: true\nfoo ensure: true\nfoo false: true\nfoo for: true\nfoo if: true\nfoo in: true\nfoo module: true\nfoo next: true\nfoo nil: true\nfoo not: true\nfoo or: true\nfoo redo: true\nfoo rescue: true\nfoo retry: true\nfoo return: true\nfoo self: true\nfoo super: true\nfoo then: true\nfoo true: true\nfoo undef: true\nfoo unless: true\nfoo until: true\nfoo when: true\nfoo while: true\nfoo yield: true\nfoo yield:\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with paren args",
+      "source": "\nfoo (b), a\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with block argument",
+      "source": "\nfoo(&:sort)\nfoo(&bar)\nfoo(&bar, 1)\nfoo &bar\nfoo &bar, 1\nfoo(&)\nfoo(&, 1)\nfoo &;\nfoo 1, &;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with splat argument",
+      "source": "\nfoo(*bar)\nfoo *bar\nfoo *%w{ .. lib }\nfoo *(bar.baz)\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call lambda argument",
+      "source": "\nfoo :bar, -> (a) { 1 }\nfoo :bar, -> (a) { where(:c => b) }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call lambda argument and do block",
+      "source": "\nfoo :bar, -> (a) { 1 } do\nend\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "chained method calls with blocks but no parens",
+      "source": "\na.b c, *d do |e|\n  f\nend.g h { |i|\n  i\n}.j do\n  k\nend\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method calls in binary expression",
+      "source": "\none two or\n  three four, five and\n  six seven, eight, nine\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method calls in unary expression",
+      "source": "\n!a.b c\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method calls with splat argument",
+      "source": "\nfoo(*bar)\nfoo(*[bar, baz].quoz)\nfoo(x, *bar)\nfoo(*bar.baz)\nfoo(**baz)\nfoo **bar, baz\nfoo(*)\nfoo(x, *)\nfoo(**)\nfoo x, **"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call without parens",
+      "source": "\ninclude D::E.f\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with line break",
+      "source": "\nFoo\n  .bar!\n  .baz\n\nFoo \\\n  .bar\n\nFoo \\\n  &.bar\n  &.baz\n\nFoo\n  # a comment\n  .bar\n  .baz\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with block argument do end",
+      "source": "\nfoo do |i|\n  bar\nrescue E\n  baz\nensure\n  quux\nend\n\nfoo do\n  |i| i\nend\n\nfoo do; end\n\nfoo(a) do |i|\n  foo\nend\n\nfoo.bar a do |i|\n  foo\nend\n\nfoo(a) do |name: i, *args|\nend\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with block argument curly",
+      "source": "\nfoo { |i| foo }\nfoo items.any? { |i| i > 0 }\nfoo(bar, baz) { quux }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with block shadow arguments",
+      "source": "\nfoo { |; i, j| }\nfoo { |x, y ; i, j| }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "method call with capitalized name",
+      "source": "\nrequest.GET\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "destructured parameters",
+      "source": "\n-> (d, *f, (x, y)) {}\n\ndef foo(d, *f, (x, y))\nend\n\ndef foo d, *f, (x, y)\nend\n\nfoo do |a, (c, d, *f, (x, y)), *e|\nend\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "element reference and method with array arguments",
+      "source": "\nfoo []\nfoo [1]\nfoo[1]\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "element reference on call expression",
+      "source": "\nd(a) [0]\nd.find { |x| x > 1 } [0]\nd.find { |x| x > 1 } [0] == 0\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "element reference with block",
+      "source": "\nfoo[:bar] { |baz| baz }\n\nfoo[:bar] do |baz|\n  baz\nend\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "call with array and block",
+      "source": "\nfun [0] { |x| x }\n\nfun [0] do\n  puts 1\nend\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "call with normal and keyword argument with value that looks like a block",
+      "source": "render \"foo/bars/show\", locals: { }\nrender \"foo/bars/show\", locals: { display_text: dt, safe_text: \"hello\" }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "call with keyword argument on different lines",
+      "source": "\nrender :show_details, 5,\n    description:\n      \"Some long \" \\\n      \"piece of text.\",\n    dark_mode: false\n\nrender \"/foo/bar\", params:\n    {\n        id: 3,\n        title: \"Hello world\"\n    },\n    headers: { Accept: \"text/html\" }\n\nrender \"/foo/bar\", params:\n    {\n        id: 3,\n        title: \"Hello world\"\n    }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "empty lambda expression",
+      "source": "\nlambda {}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "lambda expressions",
+      "source": "\nlambda { foo }\nlambda(&block) { foo }\nlambda(&lambda{})\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "lambda expression with an arg",
+      "source": "\nlambda { |foo| 1 }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "lambda expression with multiple args",
+      "source": "\nlambda { |a, b, c|\n  1\n  2\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "lambda expression with trailing comma",
+      "source": "\nlambda { |a, b,|\n  1\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "lambda expression with optional arg",
+      "source": "\nlambda { |a, b=nil|\n  1\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "lambda expression with keyword arg",
+      "source": "\nlambda { |a, b: nil|\n  1\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "lambda expression with do end",
+      "source": "\nlambda do |foo|\n  1\nend\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "lambda and proc as variables",
+      "source": "\nproc = Proc.new\nlambda = lambda {}\nproc = proc {}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "backslash-newline as line continuation",
+      "source": "\nfoo \\\n  a, b\n\n\"abc \\\nde\"\n\nfoo \\\n  \"abc\"\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "basic division",
+      "source": "\n10 / 5\nx / y\nx /\n5"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "division without spaces",
+      "source": "\nh/w\n\"#{foo}\"\n\nTime.at(timestamp/1000)\n\"#{timestamp}\"\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "regex as parameter",
+      "source": "\nfoo /bar/\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "regex with opening space",
+      "source": "\nfoo\n/ bar/\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "forward slash operator as method",
+      "source": "\nFoo / \"bar\"\n\"/edit\"\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "multiline regex",
+      "source": "\n/ a\n  b/\n"
+    },
+    {
+      "file": "line-endings.txt",
+      "title": "CRLF line endings",
+      "source": "\r\nputs 'hi'\r\nx = foo()\r\n\r"
+    },
+    {
+      "file": "line-endings.txt",
+      "title": "CRLF multiline comments",
+      "source": "\r\n=begin\r\n=end\r\n\r"
+    },
+    {
+      "file": "literals.txt",
+      "title": "symbol",
+      "source": "\n:foo\n:foo!\n:foo?\n:foo=\n:@foo\n:@foo_0123_bar\n:@@foo\n:$foo\n:$0\n:_bar\n:åäö\n:_\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "symbol operators",
+      "source": "\n:+\n:-\n:+@\n:-@\n:[]\n:[]=\n:&\n:!\n:`\n:^\n:|\n:~\n:/\n:%\n:*\n:**\n:==\n:===\n:=~\n:>\n:>=\n:>>\n:<\n:<=\n:<<\n:<=>\n:!=\n:!~\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "single quoted symbol",
+      "source": "\n:''\n:'foo bar'\n:'#{'\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "double quoted symbol",
+      "source": "\n:\"foo bar\"\n:\"#\"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "double quoted symbol with interpolation",
+      "source": "\n:\"foo #{bar}\"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "interpolation with no content",
+      "source": "\n:\"foo #{}\"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent symbol with unbalanced delimiters",
+      "source": "\n%s/a/\n%s\\a\\\n%s#a#\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent symbol with balanced delimiters",
+      "source": "\n%s{a{b}c}\n%s<a<b>c>\n%s(a(b)c)\n%s[a[b]c]\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "global variables",
+      "source": "\n$foo\n$$\n$!\n$@\n$&\n$`\n$'\n$+\n$~\n$=\n$/\n$\\\n$,\n$;\n$.\n$<\n$>\n$_\n$0\n$*\n$$\n$?\n$:\n$\"\n$0\n$1\n$2\n$3\n$4\n$5\n$6\n$7\n$8\n$9\n$0\n$10\n$stdin\n$stdout\n$stderr\n$DEBUG\n$FILENAME\n$LOAD_PATH\n$VERBOSE\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "integer",
+      "source": "\n1234\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "integer as object",
+      "source": "\n3.times\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "integer with underscore",
+      "source": "\n1_234\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "integer with decimal prefix",
+      "source": "\n0d1_234\n0D1_234\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "integer with hexadecimal prefix",
+      "source": "\n0xa_bcd_ef0_123_456_789\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "integer with hexadecimal prefix capitalised",
+      "source": "\n0Xa_bcd_ef0_123_456_789\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "integer with octal prefix",
+      "source": "\n01234567\n0o1234567\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "integer with binary prefix",
+      "source": "0b1_0\n0B1_0\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "float",
+      "source": "\n1.234_5e678_90\n1E30\n1.0e+6\n1.0e-6\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "complex",
+      "source": "\n-2i\n+2i\n1+1i\n1-10i\n10+3i\n12-34i\n\n-2.2i\n+2.2i\n1+1.2i\n1-10.2i\n10+3.2i\n12-34.2i\n\n-2ri\n+2.2ri\n1+1ri\n1-10.2ri\n10+3ri\n12-34.2ri\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "rational",
+      "source": "\n2/3r\n1.2r\n+1.2r\n-2r\n0b01r\n0o7r\n0d1r\n0x12r\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "boolean",
+      "source": "\ntrue\nfalse\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "nil",
+      "source": "\nnil\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "single-quoted string",
+      "source": "\n''\n' '\n'  '\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "single-quoted strings with backslashes",
+      "source": "\n'\\''\n'\\\\ \\n'\n'\\x00\\x01\\x02'\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "single-quoted string with pound and curly brace",
+      "source": "\n'#{hello'\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "double-quoted string",
+      "source": "\n\"\"\n\" \"\n\"  \"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "double-quoted strings with escape sequences",
+      "source": "\n\"\\\"\"\n\"\\\\\"\n\"\\d\"\n\"\\#{foo}\"\n\"\\u{1F600}\"\n\"\\u{1F600 1F600}\"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "double-quoted string with just pound",
+      "source": "\n\"#\"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "interpolation",
+      "source": "\n\"#{foo}\"\n\"foo#@foo\"\n\"#@@foo\"\n\"#$foo\"\n\"#$%\"\n\"#$1\"\n\"#$_1\"\n\"#$-AB\"\n\"#$-10\"\n\"#@1\"\n\"#@@1\"\n\"#{':foo' unless bar}\"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent q string with unbalanced delimiters",
+      "source": "\n%q/a/\n%q\\a\\\n%q#a#\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent q string with balanced delimiters",
+      "source": "\n%q<a<b>c>\n%q{a{b}c}\n%q[a[b]c]\n%q(a(b)c)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent string with unbalanced delimiters",
+      "source": "\n%/a/\n%\\a\\\n%#a#\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent string with balanced delimiters",
+      "source": "\n%<a<b>c>\n%{a{b}c}\n%[a[b]c]\n%(a(b)c)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent Q string with unbalanced delimiters",
+      "source": "\n%Q#a#\n%Q/a/\n%Q\\a\\\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent Q string with balanced delimiters",
+      "source": "\n%Q<a<b>c>\n%Q{a{b}c}\n%Q[a[b]c]\n%Q(a(b)c)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "string chaining",
+      "source": "\n%q(a) \"b\" \"c\"\n\"d\" \"e\"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "newline-delimited strings",
+      "source": "\nflash[:notice] = \"Pattern addition failed for '%s' in '%s'\", %\n                  [pattern, key]\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "% formatting that looks like a newline-delimited strings",
+      "source": "\nfoo(\"%s '%s' \" %\n  [a, b])\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Single character string literals",
+      "source": "\n?a\n??\n?\\n\n?\\\\\n?\\377\n?\\u{41}\n?\\M-a\n?\\C-a\n?\\M-\\C-a\n?あ\n?\\u028f\n?\\u{028f}\n?\\xff\nfoo(?/)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "nested strings with different delimiters",
+      "source": "\n\"abc#{\n  %r(def(ghi#{\n    `whoami`\n  })klm)\n}nop\"\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "basic heredocs",
+      "source": "\n<<TEXT\nheredoc \\x01 content\nTEXT\n\n<<TEXT1\n  TEXT1 ok if indented\nTEXT1\n\n<<TEXT_B\n* heredoc content\nTEXT_B\n\n<<~TEXT\ncontent\nTEXT\n\nif indentation_works?\n  <<-sql\n  heredoc content\n  sql\n\n  <<~TEXT\n  TEXT\n\n  <<~EOF\n    content\n  EOF\nend\n\n<<'..end src/parser.c modeval..id7a99570e05'\nheredoc content\n..end src/parser.c modeval..id7a99570e05\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "heredoc with interspersed end word",
+      "source": "\n<<-eos\n  repositories\neos\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "heredoc with end word in content",
+      "source": "\n<<HTML\n<HTML>\n  <HEAD></HEAD><BODY></BODY>\n</HTML>\nHTML\n\n<<a\nattr_accessor\na\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "heredocs in context starting with dot",
+      "source": "\ndef foo\n  select(<<-SQL)\n  .\n  SQL\nend\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "heredocs with method continuation",
+      "source": "\nselect(<<-SQL)\nab\nSQL\n  .join()\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "heredocs with suffix dot method continuation",
+      "source": "\njoins(<<~SQL).\n   `foo`\nSQL\nwhere(\"a\")\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "multiple heredocs with method continuation",
+      "source": "\njoins(<<~SQL).where(<<~SQL).\n  `one`\nSQL\n  `two`\nSQL\ngroup(\"b\")\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "heredocs with interpolation",
+      "source": "\n<<TEXT\na\nb #{[1, \"c #{2} d\", 3]} e\n#{4} f #{foo.bar}\n#{a if b}\n#{\n  # multiline\n  foo(\n    1,\n    bar\n  ).baz\n}\n#@foo#@@bar#$0\ng\nTEXT\n\nreturn\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "heredocs with in args, pairs, and arrays",
+      "source": "\nfoo.new(\n  select: <<-TEXT,\n    heredoc content,\n  TEXT\n  conditions: <<-TEXT\n    heredoc content\n  TEXT\n)\n{\n  select: <<-TEXT,\n    heredoc content,\n  TEXT\n  conditions: <<-TEXT\n    heredoc content\n  TEXT\n}\n\n[\n  <<-TEXT,\n  a\n  TEXT\n  <<-TEXT\n  b\n  TEXT\n]\n\nfoo[\n  1,\n  <<-TEXT\n  hi\n  TEXT\n  ] = 3\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "heredocs with method calls and interpolation with method calls",
+      "source": "\nfoo(<<-STR.strip_heredoc.tr()\n    content #{ foo; bar().foo}\n  STR\n)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "multiple heredocs",
+      "source": "\nputs <<-ONE.size, <<-TWO.size\nfirst heredoc content\nONE\nsecond heredoc content\nTWO\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "heredoc content that starts with a dot",
+      "source": "\n-> {\n  select(<<-SQL)\n  .\n  SQL\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "un-terminated heredocs",
+      "source": "\n<<-ONE\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "no interpolation or escape sequences in single quoted heredoc",
+      "source": "\n<<'EOF'\nThis is \\not\\ an interpolation: #{foo}\nEOF\n\n<<~'EOF'\nThis is \\not\\ an interpolation: #{foo}\nEOF\n\n<<-'EOF'\nThis is \\not\\ an interpolation: #{foo}\nEOF\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "backticks subshell",
+      "source": "\n`/usr/bin/env test blah blah`\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "backticks subshell with escape",
+      "source": "\n`/usr/bin/env test blah \\`blah\\``\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "empty array",
+      "source": "\n[]\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "array",
+      "source": "\n[ foo, bar ]\n[foo, *bar]\n[foo, *@bar]\n[foo, *$bar]\n[foo, :bar => 1]\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "array as object",
+      "source": "\n[1, 2].any? { |i| i > 1 }\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "array with trailing comma",
+      "source": "\n[ foo, ]\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "empty percent w array",
+      "source": "\n%w()\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "unbalanced percent w array",
+      "source": "\n%w/one two/\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent w array",
+      "source": "\n%w(word word)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent W array with interpolations",
+      "source": "\n%W(a #{b} c)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "empty percent i array",
+      "source": "\n%i()\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "unbalanced percent i array",
+      "source": "\n%i/one two/\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent i array",
+      "source": "\n%i(word word)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent I array with interpolations",
+      "source": "\n%I(a #{b} c)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent i array with spaces",
+      "source": "\n%I{\n  *\n  /#{something}+\n  ok\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "empty hash",
+      "source": "\n{}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "hash with no spaces",
+      "source": "\n{:name=>\"foo\"}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "hash with expression keys",
+      "source": "\n{ \"a\" => 1, \"b\" => 2 }\n{ [] => 1 }\n{ foo => 1 }\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "hash with reserved word key",
+      "source": "\n{\n  alias: :foo,\n  and: :foo,\n  begin: :foo,\n  break: :foo,\n  case: :foo,\n  class: :foo,\n  def: :foo,\n  defined: :foo,\n  do: :foo,\n  else: :foo,\n  elsif: :foo,\n  end: :foo,\n  ensure: :foo,\n  false: :foo,\n  for: :foo,\n  in: :foo,\n  module: :foo,\n  next: :foo,\n  nil: :foo,\n  not: :foo,\n  or: :foo,\n  redo: :foo,\n  rescue: :foo,\n  retry: :foo,\n  return: :foo,\n  self: :foo,\n  super: :foo,\n  then: :foo,\n  true: :foo,\n  undef: :foo,\n  when: :foo,\n  yield: :foo,\n  if: :foo,\n  unless: :foo,\n  while: :foo,\n  until: :foo,\n  until:\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "hash with keyword keys",
+      "source": "\n{ a: 1, b: 2, \"c\": 3 }\n{a:\n  1, B:2, \"c\":3 }\n{ a:, B:\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "hash with trailing comma",
+      "source": "\n{ a: 1, }\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "hash initialization with hash splat",
+      "source": "\n{a: 1, **{b: 2}}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "hash with line breaks and inline comments",
+      "source": "\n{\n  :pusher => pusher,\n\n  # Only warm caches if there are fewer than 10 tags and branches.\n  :should_warm_caches_after => 10,\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "regular expression",
+      "source": "\n/^(foo|bar[^_])$/i\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "regular expression with interpolation",
+      "source": "\n/word#{foo}word/\n/word#word/\n/#/\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent r regular expression with unbalanced delimiters",
+      "source": "\n%r/a/\n%r\\a\\\n%r#a#\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent r regular expression with balanced delimiters",
+      "source": "\n%r<a<b>c>\n%r{a{b}c}\n%r[a[b]c]\n%r(a(b)c)\n%r(#)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent r regular expression with unbalanced delimiters and interpolation",
+      "source": "\n%r/a#{b}c/\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "percent r regular expression with balanced delimiters and interpolation",
+      "source": "\n%r(a#{b}c)\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "empty function",
+      "source": "\n-> {}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "lambda literal with body",
+      "source": "\n-> { foo }\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "lambda literal with an arg",
+      "source": "\n-> foo { 1 }\n-> (foo) { 1 }\n-> *foo { 1 }\n-> foo: 1 { 2 }\n-> foo, bar { 2 }\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "lambda literal with multiple args",
+      "source": "\n-> (a, b, c) {\n  1\n  2\n}\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "lambda literal with do end",
+      "source": "\n-> (foo) do\n  1\nend\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "non-ascii identifiers",
+      "source": "\nCß\n@äö\n@@äö\n:äö\näö\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "pattern matching",
+      "source": "\ncase expr\n  in 5 then true\n  else false\nend\n\ncase expr\n  in x unless x < 0\n  then true\n  in x if x < 0\n  then true\n  else false\nend\n\ncase expr\n  in 5\n  in 5,\n  in 1, 2\n  in 1, 2,\n  in 1, 2, 3\n  in 1, 2, 3,\n  in 1, 2, 3, *\n  in 1, *x, 3\n  in *\n  in *, 3, 4\n  in *, 3, *\n  in *a, 3, *b\n  in a:\n  in a: 5\n  in a: 5,\n  in a: 5, b:, **\n  in a: 5, b:, **map\n  in a: 5, b:, **nil\n  in **nil\n  in [5]\n  in [5,]\n  in [1, 2]\n  in [1, 2,]\n  in [1, 2, 3]\n  in [1, 2, 3,]\n  in [1, 2, 3, *]\n  in [1, *x, 3]\n  in [*]\n  in [*, 3, 4]\n  in [*, 3, *]\n  in [*a, 3, *b]\n  in {a:}\n  in {a: 5}\n  in {a: 5,}\n  in {a: 5, b:, **}\n  in {a: 5, b:, **map}\n  in {a: 5, b:, **nil}\n  in {**nil}\n  in {}\n  in []\nend\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "more pattern matching",
+      "source": "\ncase expr\n  in 5\n  in ^foo\n  in ^$foo\n  in ^@foo\n  in ^@@foo\n  in ^(1+1)\n  in ^(foo)\n  in ^(Foo::Bar)\n  in var\n  in \"string\"\n  in %w(foo bar)\n  in %i(foo bar)\n  in /.*abc[0-9]/\n  in 5 .. 10\n  in .. 10\n  in 5 ..\n  in 5 => x\n  in 5 | ^foo | var | \"string\"\n  in Foo\n  in Foo::Bar\n  in ::Foo::Bar\n  in (nil | self | true | false | __LINE__ | __FILE__ | __ENCODING__)\n  in -> x { x == 10 }\n  in :foo\n  in :\"foo bar\"\n  in -5 | +10\nend\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "array patterns",
+      "source": "case expr\n  in [];\n  in [x];\n  in [x, ];\n  in Foo::Bar[];\n  in Foo();\n  in Bar(*);\n  in Bar(a, b, *c, d, e);\nend\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "find patterns",
+      "source": "\ncase expr\n  in [*, x, *];\n  in [*x, 1, 2, *y];\n  in Foo::Bar[*, 1, *];\n  in Foo(*, Bar, *);\nend\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "hash patterns",
+      "source": "\ncase expr\n  in {};\n  in {x:};\n  in Foo::Bar[ x:1 ];\n  in Foo::Bar[ x:1, a:, **rest ];\n  in Foo( y:);\n  in Bar( ** );\n  in Bar( a: 1, **nil);\nend\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "pattern matching with fancy string literals",
+      "source": "\ncase expr\n  in \"string\";\n  in `ls`;\n  in <<\"DOC\" then end\nsome text\nDOC\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "one-line patterns",
+      "source": "\nx in Foo(y:)\n\ncase foo in 5 in true then 1 end\ncase foo in 5; in true then 1 end\ncase (foo x) in 5; in true then 1 end\n\nx => 6 | 7\nreturn x => 6 | 7\n"
+    },
+    {
+      "file": "patterns.txt",
+      "title": "one-line patterns: incorrectly parsed",
+      "source": "foo x in 5 # FIXME: should be parsed as `(foo x) in 5` instead of `foo (x in 5)`\n"
+    },
+    {
+      "file": "single-cr-as-whitespace.txt",
+      "title": "Single CR characters as whitespace",
+      "source": "\nputs\r\r\r\r\r\r\r\r\r\r\r\r\r\r\"hi\"\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "conditional modifier",
+      "source": "\nfoo if bar\nreturn if false\nreturn true if foo bar\nreturn nil if foo\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "while modifier",
+      "source": "\nfoo while bar\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "unless modifier",
+      "source": "\nfoo unless bar\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "until modifier",
+      "source": "\nfoo until bar\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "alias",
+      "source": "\nalias :foo :bar\nalias foo bar\nalias $FOO $&\nalias foo +\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "undef",
+      "source": "\nundef :foo\nundef foo\nundef +\nundef :foo, :bar\n"
+    }
+  ]
+}

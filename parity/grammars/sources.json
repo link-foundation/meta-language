@@ -1260,6 +1260,67 @@
         "sha256": "cc122680b1ad28fb92af8c104197536506d5f4aca5472dc927df072d0c2d76ac"
       },
       "oracle": "elixir"
+    },
+    {
+      "id": "tree-sitter-ruby",
+      "language": "ruby",
+      "native": "native-ruby",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-ruby 0.23.1",
+      "repository": "https://github.com/tree-sitter/tree-sitter-ruby",
+      "revision": "71bd32fb7607035768799732addba884a37a6210",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-ruby-0.23.1.grammar.json.gz",
+      "sha256": "ff0a0ab48788daea51cb418d9cfc14086dfcad50ac10e4981776be8b4d9296ab",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-ruby-0.23.1.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/ruby.lino",
+        "sha256": "a16ecee42305f5d903e841371e68a9e80cd61d38a7ed014df5eed3b2a6c9ebd2",
+        "ports": {
+          "path": "src/scanner.c",
+          "file": "parity/grammars/sources/tree-sitter-ruby-0.23.1.scanner.c.gz",
+          "sha256": "e7a6196d6e78bf4c6728502e924c867dee5d851c6253e43fcdb8ba169009bc58"
+        },
+        "generator": "js/scripts/generate-native-scanner-profiles.mjs --language ruby",
+        "immediate": [
+          "_line_break",
+          "_no_line_break",
+          "simple_symbol",
+          "_string_start",
+          "_symbol_start",
+          "_subshell_start",
+          "_regex_start",
+          "_string_array_start",
+          "_symbol_array_start",
+          "_heredoc_body_start",
+          "string_content",
+          "heredoc_content",
+          "_string_end",
+          "heredoc_end",
+          "_block_ampersand",
+          "_splat_star",
+          "_unary_minus",
+          "_unary_minus_num",
+          "_binary_minus",
+          "_binary_star",
+          "_singleton_class_left_angle_left_langle",
+          "hash_key_symbol",
+          "_identifier_suffix",
+          "_constant_suffix",
+          "_hash_splat_star_star",
+          "_binary_star_star",
+          "_element_reference_bracket",
+          "_short_interpolation",
+          "_forward_slash"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-ruby-0.23.1.corpus.json.gz",
+        "sha256": "ec977cec254d37a011dfdc5f1e7e07e845fa935d4ecbf5909bb4ce435922e7f2"
+      },
+      "oracle": "ruby"
     }
   ]
 }

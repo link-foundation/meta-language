@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "language": "Ruby",
+  "grammar": "parity/grammars/native/ruby.lino",
+  "source": "tree-sitter-ruby",
+  "hidden": [],
+  "anonymous": [
+    "unnamed_token"
+  ],
+  "extras": [
+    "comment",
+    "heredoc_body",
+    "line_delimited_string_body"
+  ],
+  "matches": [
+    "",
+    "x = 1\n",
+    "x = \"hello\"\n",
+    "x = \"hello #{name}\"\n",
+    "x = 'raw\\'x'\n",
+    "x = %q(a(b)c)\n",
+    "x = :hello\n",
+    "x = /ab+/i\n",
+    "x = %w(one two)\n",
+    "x = %W(one #{two})\n",
+    "x = %i(one two)\n",
+    "x = %I(one #{two})\n",
+    "x = `echo hi`\n",
+    "x = :\"#{name}\"\n",
+    "x = \"#{ {a: \"#{b}\"} }\"\n",
+    "x = \"#@name #$value\"\n",
+    "x = \"é😀#{name}\"\n",
+    "x = \"#plain #\"\n",
+    "x = 2 * 3\n",
+    "x = -1\n",
+    "x = a - b\n",
+    "f(*args, **options)\n",
+    "x = a[1]\n",
+    "x = {key: 1}\n",
+    "leaf!\n",
+    "Leaf!\n",
+    "class Leaf\n def seed(x)\n  x + 1\n end\nend\n",
+    "if ready\n x = \"yes\"\nelse\n x = \"no\"\nend\n",
+    "require \"leaf\"\n",
+    "x = <<~EOF\n  hello\n  EOF\n",
+    "x = <<'RAW'\n#{text}\nRAW\n",
+    "x = <<A + <<B\nfirst\nA\nsecond\nB\n",
+    "x = <<~EOF\n  hello #{name}\n  EOF\n",
+    "x = <<\"END TAG\"\ntext\nEND TAG\n",
+    "x = <<EOF\nx\nEOF  \n",
+    "x = <<-\"EOF\"\nbody\n EOF\n",
+    "x = %q!a(b)c!\n",
+    "x = a / b\n",
+    "x = \"\\#{text}\"\n",
+    "x = %q(#{text})\n"
+  ],
+  "rejections": [
+    "x = \"unfinished\n",
+    "x = %q(unfinished\n",
+    "x = \"#{name\"\n",
+    "class Leaf\n"
+  ]
+}

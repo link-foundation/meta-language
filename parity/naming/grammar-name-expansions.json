@@ -4520,6 +4520,552 @@
           "reason": "A bare plus or minus followed by whitespace remains a binary operator; the pinned scanner only permits whitespace-prefixed unary call arguments when the operand follows the sign immediately."
         }
       ]
+    },
+    "ruby": {
+      "names": {
+        "_singleton_class_left_angle_left_langle": "singleton_class_left_angle_pair",
+        "_body_statement": "body_statement_choice",
+        "_arg": "argument_choice",
+        "_argument": "argument_expression_body",
+        "_call": "call_choice",
+        "_constant_suffix": "constant_suffix_token",
+        "_identifier_suffix": "identifier_suffix_token",
+        "uninterpreted": "opaque_text",
+        "next": "loop_continuation_statement",
+        "redo": "redo_statement",
+        "retry": "retry_statement",
+        "until_modifier": "condition_exit_modifier",
+        "until": "condition_exit_loop",
+        "for": "iteration_statement",
+        "in": "iteration_binding_clause",
+        "when": "case_selection_clause",
+        "if": "conditional_statement",
+        "unless": "negated_condition_statement",
+        "elsif": "chained_condition_clause",
+        "else": "alternate_clause",
+        "ensure": "cleanup_clause",
+        "conditional": "ternary_expression",
+        "unary": "unary_expression",
+        "command_unary": "command_unary_expression",
+        "parenthesized_unary": "parenthesized_unary_expression",
+        "numeric": "numeric_expression",
+        "simple_numeric": "simple_numeric_literal",
+        "_mlhs": "multiple_assignment_target",
+        "destructured_parameter": "unpacked_parameter",
+        "destructured_left_assignment": "unpacked_assignment_target",
+        "nonlocal_variable": "external_scope_variable",
+        "undef": "method_removal_statement",
+        "false": "false_literal",
+        "subshell": "shell_command_expression",
+        "_subshell_start": "shell_command_start",
+        "heredoc_body": "line_delimited_string_body",
+        "heredoc_content": "line_delimited_string_content",
+        "heredoc_end": "line_delimited_string_end",
+        "heredoc_beginning": "line_delimited_string_beginning",
+        "_heredoc_body_start": "line_delimited_string_body_start",
+        "_statements": "statement_sequence",
+        "parameters": "method_parameter_list",
+        "block_parameter": "block_parameter_binding",
+        "block_parameters": "block_parameter_list",
+        "return": "method_return_statement",
+        "assignment": "assignment_expression",
+        "integer": "integer_literal",
+        "character": "character_literal",
+        "case": "case_statement",
+        "nil": "null_literal",
+        "line": "source_line_reference",
+        "yield": "block_invocation_expression",
+        "range": "range_expression",
+        "return_command": "method_return_command_expression",
+        "yield_command": "block_invocation_command_expression",
+        "break_command": "loop_exit_command_expression",
+        "catch_block": "exception_handler_block",
+        "block_argument": "block_argument_expression",
+        "parenthesized_statements": "parenthesized_statement_sequence",
+        "keyword_parameter": "keyword_parameter_binding",
+        "forward_argument": "forwarded_argument_expression",
+        "splat_argument": "spread_argument_expression",
+        "hash_splat_argument": "mapping_spread_argument_expression",
+        "_numeric": "numeric_expression",
+        "_simple_numeric": "simple_numeric_literal",
+        "_nonlocal_variable": "external_scope_variable",
+        "next_command": "loop_continuation_command_expression"
+      },
+      "scannerFamilies": [
+        {
+          "interpolationStartToken": "interpolation_start",
+          "interpolationEndToken": "interpolation_end",
+          "family": "contextual-literal",
+          "name": "literal_context",
+          "tokens": [
+            "line_break",
+            "no_line_break",
+            "simple_symbol",
+            "string_start",
+            "symbol_start",
+            "shell_command_start",
+            "regular_expression_start",
+            "string_array_start",
+            "symbol_array_start",
+            "line_delimited_string_body_start",
+            "string_content",
+            "line_delimited_string_content",
+            "string_end",
+            "line_delimited_string_end",
+            "line_delimited_string_beginning",
+            "forward_slash",
+            "block_ampersand",
+            "splat_star",
+            "unary_minus",
+            "unary_minus_number",
+            "binary_minus",
+            "binary_star",
+            "singleton_class_left_angle_pair",
+            "hash_key_symbol",
+            "identifier_suffix_token",
+            "constant_suffix_token",
+            "hash_splat_star_star",
+            "binary_star_star",
+            "element_reference_bracket",
+            "short_interpolation",
+            "interpolation_start",
+            "interpolation_end"
+          ],
+          "contentToken": "string_content",
+          "endToken": "string_end",
+          "openGateToken": "string_start",
+          "lineBreakToken": "line_break",
+          "noLineBreakToken": "no_line_break",
+          "shortInterpolationToken": "short_interpolation",
+          "shortInterpolationPattern": "(?:\\$[!@&`'\\+~=/\\\\,;.<>*$?:\"A-Za-z_0-9]|\\$-[A-Za-z_]|@{1,2}[A-Za-z_])",
+          "literals": [
+            {
+              "token": "string_start",
+              "prefix": "",
+              "delimiter": "\"",
+              "interpolated": true,
+              "words": false
+            },
+            {
+              "token": "string_start",
+              "prefix": "",
+              "delimiter": "'",
+              "interpolated": false,
+              "words": false
+            },
+            {
+              "token": "shell_command_start",
+              "prefix": "",
+              "delimiter": "`",
+              "interpolated": true,
+              "words": false
+            },
+            {
+              "token": "regular_expression_start",
+              "prefix": "",
+              "delimiter": "/",
+              "interpolated": true,
+              "words": false,
+              "suffixPattern": "[a-z]",
+              "guard": "(some (not (valid forward_slash)) (all (equal $leading (integer 1)) (not (next (seq (literal %2F) (choice unordered (class plain (char %20) (char %09) (char %0A) (char %0D)) (literal %3D)))))))"
+            },
+            {
+              "token": "symbol_start",
+              "prefix": ":",
+              "delimiter": "\"",
+              "interpolated": true,
+              "words": false,
+              "gate": false
+            },
+            {
+              "token": "symbol_start",
+              "prefix": ":",
+              "delimiter": "'",
+              "interpolated": false,
+              "words": false,
+              "gate": false
+            },
+            {
+              "token": "symbol_start",
+              "prefix": "%s",
+              "interpolated": false,
+              "words": false
+            },
+            {
+              "token": "regular_expression_start",
+              "prefix": "%r",
+              "interpolated": true,
+              "words": false,
+              "suffixPattern": "[a-z]"
+            },
+            {
+              "token": "shell_command_start",
+              "prefix": "%x",
+              "interpolated": true,
+              "words": false
+            },
+            {
+              "token": "string_start",
+              "prefix": "%q",
+              "interpolated": false,
+              "words": false
+            },
+            {
+              "token": "string_start",
+              "prefix": "%Q",
+              "interpolated": true,
+              "words": false
+            },
+            {
+              "token": "string_array_start",
+              "prefix": "%w",
+              "interpolated": false,
+              "words": true
+            },
+            {
+              "token": "symbol_array_start",
+              "prefix": "%i",
+              "interpolated": false,
+              "words": true
+            },
+            {
+              "token": "string_array_start",
+              "prefix": "%W",
+              "interpolated": true,
+              "words": true
+            },
+            {
+              "token": "symbol_array_start",
+              "prefix": "%I",
+              "interpolated": true,
+              "words": true
+            },
+            {
+              "token": "string_start",
+              "prefix": "%",
+              "interpolated": true,
+              "words": false
+            }
+          ],
+          "delimiters": [
+            {
+              "opening": "(",
+              "closing": ")"
+            },
+            {
+              "opening": "[",
+              "closing": "]"
+            },
+            {
+              "opening": "{",
+              "closing": "}"
+            },
+            {
+              "opening": "<",
+              "closing": ">"
+            },
+            {
+              "opening": "|",
+              "closing": "|"
+            },
+            {
+              "opening": "!",
+              "closing": "!"
+            },
+            {
+              "opening": "#",
+              "closing": "#"
+            },
+            {
+              "opening": "/",
+              "closing": "/"
+            },
+            {
+              "opening": "\\",
+              "closing": "\\"
+            },
+            {
+              "opening": "@",
+              "closing": "@"
+            },
+            {
+              "opening": "$",
+              "closing": "$"
+            },
+            {
+              "opening": "%",
+              "closing": "%"
+            },
+            {
+              "opening": "^",
+              "closing": "^"
+            },
+            {
+              "opening": "&",
+              "closing": "&"
+            },
+            {
+              "opening": "*",
+              "closing": "*"
+            },
+            {
+              "opening": ")",
+              "closing": ")"
+            },
+            {
+              "opening": "]",
+              "closing": "]"
+            },
+            {
+              "opening": "}",
+              "closing": "}"
+            },
+            {
+              "opening": ">",
+              "closing": ">"
+            },
+            {
+              "opening": "+",
+              "closing": "+"
+            },
+            {
+              "opening": "-",
+              "closing": "-"
+            },
+            {
+              "opening": "~",
+              "closing": "~"
+            },
+            {
+              "opening": "`",
+              "closing": "`"
+            },
+            {
+              "opening": ",",
+              "closing": ","
+            },
+            {
+              "opening": ".",
+              "closing": "."
+            },
+            {
+              "opening": "?",
+              "closing": "?"
+            },
+            {
+              "opening": ":",
+              "closing": ":"
+            },
+            {
+              "opening": ";",
+              "closing": ";"
+            },
+            {
+              "opening": "_",
+              "closing": "_"
+            },
+            {
+              "opening": "\"",
+              "closing": "\""
+            },
+            {
+              "opening": "'",
+              "closing": "'"
+            }
+          ],
+          "lexical": [
+            {
+              "token": "block_ampersand",
+              "pattern": "&",
+              "after": "(not (next (choice unordered (class plain (char %20) (char %09) (char %0A) (char %0D)) (literal %26) (literal .) (literal %3D))))"
+            },
+            {
+              "token": "singleton_class_left_angle_pair",
+              "pattern": "<<"
+            },
+            {
+              "token": "binary_star_star",
+              "pattern": "\\*\\*(?!=)",
+              "guard": "(equal $leading (integer 0))"
+            },
+            {
+              "token": "hash_splat_star_star",
+              "pattern": "\\*\\*(?!=)",
+              "following": "[^\\s=]"
+            },
+            {
+              "token": "binary_star_star",
+              "pattern": "\\*\\*(?!=)"
+            },
+            {
+              "token": "hash_splat_star_star",
+              "pattern": "\\*\\*(?!=)"
+            },
+            {
+              "token": "binary_star",
+              "pattern": "\\*(?![=*])",
+              "guard": "(equal $leading (integer 0))"
+            },
+            {
+              "token": "splat_star",
+              "pattern": "\\*(?![=*])",
+              "following": "[^\\s=]"
+            },
+            {
+              "token": "binary_star",
+              "pattern": "\\*(?![=*])"
+            },
+            {
+              "token": "splat_star",
+              "pattern": "\\*(?![=*])"
+            },
+            {
+              "token": "unary_minus_number",
+              "pattern": "-(?![=>])",
+              "guard": "(some (not (valid binary_star)) (equal $leading (integer 1)))",
+              "following": "[0-9]"
+            },
+            {
+              "token": "unary_minus",
+              "pattern": "-(?![=>])",
+              "guard": "(equal $leading (integer 1))",
+              "following": "[^\\s=>]"
+            },
+            {
+              "token": "binary_minus",
+              "pattern": "-(?![=>])",
+              "guard": "(not (all (equal $leading (integer 1)) (valid unary_minus) (next (seq (literal -) (not (class plain (char %20) (char %09) (char %0A) (char %0D)))))))"
+            },
+            {
+              "token": "unary_minus",
+              "pattern": "-(?![=>])"
+            },
+            {
+              "token": "element_reference_bracket",
+              "pattern": "\\[",
+              "guard": "(some (equal $leading (integer 0)) (not (valid string_start)))"
+            },
+            {
+              "token": "hash_key_symbol",
+              "pattern": "[A-Za-z_][A-Za-z_0-9]*",
+              "guard": "(next (seq (repeat1 (class plain (range a z) (range A Z) (char _) (range 0 9))) (literal %3A) (not (literal %3A))))",
+              "markBeforeSuffix": ":",
+              "after": "(not (next (literal %3A)))"
+            },
+            {
+              "token": "constant_suffix_token",
+              "pattern": "[A-Z][A-Za-z_0-9]*!(?!=)"
+            },
+            {
+              "token": "identifier_suffix_token",
+              "pattern": "[a-z_][A-Za-z_0-9]*!(?!=)"
+            },
+            {
+              "token": "simple_symbol",
+              "pattern": ":(?:[@$]{0,2}[A-Za-z_][A-Za-z_0-9]*[!?]?=?|<=>|===|==|=~|!=|!~|<<|>>|<=|>=|\\[\\]=?|\\*\\*|\\.\\.?\\.?|[+~\\-&^|/%`*!<>]=?)(?!>)",
+              "guard": "(valid symbol_start)"
+            },
+            {
+              "token": "forward_slash",
+              "pattern": "/"
+            }
+          ],
+          "heredoc": {
+            "startToken": "line_delimited_string_beginning",
+            "bodyStartToken": "line_delimited_string_body_start",
+            "contentToken": "line_delimited_string_content",
+            "endToken": "line_delimited_string_end",
+            "opening": "<<",
+            "modifiers": [
+              {
+                "name": "squiggly",
+                "text": "~",
+                "indented": true
+              },
+              {
+                "name": "indented",
+                "text": "-",
+                "indented": true
+              },
+              {
+                "name": "plain",
+                "text": "",
+                "indented": false
+              }
+            ],
+            "quotes": [
+              {
+                "name": "double",
+                "quote": "\"",
+                "interpolated": true
+              },
+              {
+                "name": "single",
+                "quote": "'",
+                "interpolated": false
+              },
+              {
+                "name": "command",
+                "quote": "`",
+                "interpolated": true
+              }
+            ],
+            "labelPattern": "[A-Za-z_0-9]+",
+            "quotedLabelPattern": "[^$quote\\r\\n]+",
+            "allowEnd": true
+          }
+        }
+      ],
+      "sourceTransforms": [
+        {
+          "family": "rule-dynamic-precedence",
+          "rule": "_terminator",
+          "value": 1,
+          "reason": "The pinned parser shifts the existing zero-width line-break terminal before finishing its statement list. Retain that source production and its trivia while resolving the otherwise indistinguishable root extra placement."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "command_argument_list"
+          ],
+          "insertInto": [
+            "command_call",
+            "command_call_with_block"
+          ],
+          "prefix": "_call_",
+          "reason": "A command call owns the lexical ambiguity between its first argument and an infix operator; clone that argument context while retaining return and other keyword command arguments."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "_call_command_argument_list",
+          "pattern": "\\+|-[ \\t\\r\\n]",
+          "reason": "The pinned oracle reduces a completed method value before a following plus or a minus separated from its operand. Keep unary arguments in their separately qualified command and ordinary expression contexts."
+        },
+        {
+          "family": "parser-literal-boundaries",
+          "rule": "interpolation",
+          "boundaries": [
+            {
+              "literal": "#{",
+              "token": "_interpolation_start",
+              "count": 1
+            },
+            {
+              "literal": "}",
+              "token": "_interpolation_end",
+              "count": 1
+            }
+          ],
+          "reason": "The grammar owns interpolation boundaries; their native actions suspend and resume the same source literal stack without changing concrete kinds."
+        },
+        {
+          "family": "external-literal-token",
+          "literal": "/",
+          "token": "_forward_slash",
+          "count": 2,
+          "reason": "Retain the anonymous slash kind while making its parser-validity bit visible to the native scanner for the pinned Ruby regular-expression/operator decision."
+        }
+      ]
     }
   },
   "concepts": {

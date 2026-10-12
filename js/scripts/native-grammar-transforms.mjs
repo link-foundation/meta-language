@@ -40,6 +40,27 @@ export function transformNativeSource(source, transformations = []) {
       if (changes !== count) throw new TypeError('immediate literals must match exactly the recorded occurrences');
       continue;
     }
+    if (decision.family === 'parser-literal-boundaries') {
+      const { rule, boundaries } = decision;
+      if (typeof rule !== 'string' || !Object.hasOwn(grammar.rules, rule) || !Array.isArray(boundaries) || boundaries.length === 0) throw new TypeError('parser boundaries need one existing production and boundary policies');
+      for (const { literal, token, count } of boundaries) {
+        if (typeof literal !== 'string' || !literal || typeof token !== 'string' || !/^_[A-Za-z_]+$/u.test(token) || !Number.isSafeInteger(count) || count <= 0 || Object.hasOwn(grammar.rules, token) || (grammar.externals ?? []).some((external) => external.name === token)) throw new TypeError('parser boundaries need unique hidden tokens and exact occurrence counts');
+        let changes = 0;
+        const rewrite = (node) => {
+          if (Array.isArray(node)) return node.map(rewrite);
+          if (!node || typeof node !== 'object') return node;
+          if (node.type === 'STRING' && node.value === literal) {
+            changes += 1;
+            return { type: 'ALIAS', named: false, value: literal, content: { type: 'SYMBOL', name: token } };
+          }
+          return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+        };
+        grammar.rules[rule] = rewrite(grammar.rules[rule]);
+        if (changes !== count) throw new TypeError('parser boundary occurrences differ from the pinned production');
+        grammar.externals = [...(grammar.externals ?? []), { type: 'SYMBOL', name: token }];
+      }
+      continue;
+    }
     if (decision.family === 'lexical-literal-rule') {
       const { rule, literal } = decision;
       if (typeof rule !== 'string' || !Object.hasOwn(grammar.rules, rule)

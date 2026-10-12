@@ -6,6 +6,7 @@ import { scopedLayoutScanner } from './scoped-layout-scanner.mjs';
 import { quotedCountedScanner } from './quoted-counted-scanner.mjs';
 import { hereDocumentScanner, interpolatedQuotedScanner, fencedBlockScanner, offsideLayoutScanner } from './structured-scanner-families.mjs';
 import { countedInterpolationScanner } from './counted-interpolation-scanner.mjs';
+import { contextualLiteralScanner } from './contextual-literal-scanner.mjs';
 import { quotedFragmentScanner } from './quoted-fragment-scanner.mjs';
 import { operatorLineScanner, unaryOperatorBoundaryScanner } from './operator-context-scanner.mjs';
 const encode = (text) => [...Buffer.from(text)].map((byte) => (
@@ -349,6 +350,7 @@ export function scannerFamilies(descriptors) {
   const tokens = new Set();
   const generated = descriptors.map(({ family, ...options }) => {
     const declared = family === 'operator-line' ? [options.keywordToken, options.operatorToken, options.commentToken]
+      : family === 'contextual-literal' ? options.tokens
       : family === 'counted-interpolation' ? [options.optionalToken, options.regularStartToken, options.verbatimStartToken, options.rawStartToken, options.startQuoteToken, options.endQuoteToken, options.openBraceToken, options.closeBraceToken, options.contentToken, options.rawQuoteStartToken, options.rawQuoteEndToken, options.rawContentToken]
       : family === 'here-document' ? [options.startToken, options.contentToken, options.endToken]
       : family === 'interpolated-quoted' ? [options.startToken, options.contentToken, options.endToken, options.interpolationStartToken, options.interpolationEndToken, options.braceOpenToken, options.braceCloseToken]
@@ -369,6 +371,7 @@ export function scannerFamilies(descriptors) {
     if (family === 'quoted-fragment') return quotedFragmentScanner(options);
     if (family === 'operator-line') return operatorLineScanner(options);
     if (family === 'unary-operator-boundary') return unaryOperatorBoundaryScanner(options);
+    if (family === 'contextual-literal') return contextualLiteralScanner(options);
     if (family === 'counted-interpolation') return countedInterpolationScanner(options);
     if (family === 'here-document') return hereDocumentScanner(options);
     if (family === 'interpolated-quoted') return interpolatedQuotedScanner(options);
