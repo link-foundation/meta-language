@@ -9,7 +9,10 @@ export function completeRuleContexts(program, name) {
     const pending = [rule.expression];
     while (pending.length > 0) {
       const expression = pending.pop();
-      const form = readUnitAlternativeExpressionForm(expression.kind);
+      // Rust lowers optional and an explicit repeat of zero or one to the
+      // same expression; normalize their equivalent source shapes here too.
+      const kind = expression.kind === 'repeat' && expression.min === 0 && expression.max === 1 ? 'optional' : expression.kind;
+      const form = readUnitAlternativeExpressionForm(kind);
       if (form === 1) parents.get(expression.name)?.add(owner);
       else if (form === 2) pending.push(...expression.items);
       else if (form === 3) pending.push(expression.item);
