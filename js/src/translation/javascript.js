@@ -499,6 +499,17 @@ class JavaScriptParser {
   parameters(name) {
     const c = this.cursor;
     const tokens = [];
+    const names = [];
+    let depth = 0;
+    let binding = true;
+    for (let at = c.index; at < c.tokens.length; at += 1) {
+      const token = c.tokens[at];
+      if (!depth && token.value === ')') break;
+      if (!depth && binding && token.kind === 'identifier') { names.push(token.value); binding = false; }
+      if (token.kind === 'punct' && ['(', '[', '{'].includes(token.value)) depth += 1;
+      else if (token.kind === 'punct' && [')', ']', '}'].includes(token.value)) depth -= 1;
+      else if (!depth && token.value === ',') binding = true;
+    }
     while (!c.is(')')) {
       const token = c.peek();
       if (c.is('...')) throw unsupported('rest parameter', 'functions take a fixed number of arguments', span(token, token));
@@ -507,12 +518,14 @@ class JavaScriptParser {
       // A default is filled in where a call leaves the argument out; it reads no parameter.
       if (c.eat('=')) {
         const remaining = c.tokens.slice(c.index);
-        const reference = findDefaultParameterReference(remaining.map((token) => token.kind), remaining.map((token) => token.value), tokens.map((token) => token.value));
+        const reference = findDefaultParameterReference(remaining.map((token) => token.kind), remaining.map((token) => token.value), names);
         if (reference >= 0) {
           const token = c.peek(reference);
           throw unsupported(`default reading parameter ${token.value}`, 'a call fills in a default where it leaves the argument out, so a default reads no parameter', span(token, token));
         }
-        tokens.push({ ...param, defaultValue: this.expr() });
+        const outer = this.scope;
+        this.scope = { ...outer, tdz: new Set([...outer.tdz, ...names]) };
+        try { tokens.push({ ...param, defaultValue: this.expr() }); } finally { this.scope = outer; }
       }
       else if (tokens.at(-1)?.defaultValue) throw unsupported(`parameter ${param.value} after a default`, 'a call fills in trailing defaults only; give it a default too', span(param, param));
       else tokens.push(param);

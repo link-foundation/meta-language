@@ -117,3 +117,11 @@ test('parameter defaults follow the same product caller and escape proof as func
   assert.throws(() => parseJavaScript('function run(flag=escape(Object.freeze([5,true]))){return flag;}console.log(run());', { externals }), /unknown or external caller/u);
   equivalent('function read(value=Object.freeze([5,true])){return value[0];}console.log(read()===5);console.log(read(Object.freeze([7,true]))===7);', ['true', 'true']);
 });
+
+test('default initializers cannot substitute global constants for current or later parameter bindings', () => {
+  for (const name of ['NaN', 'Infinity', 'undefined']) {
+    for (const params of [`${name}=${name}`, `value=${name},${name}=5`, `${name}=\`\${${name}}\``]) {
+      assert.throws(() => parseJavaScript(`function make(${params}){return Object.freeze([5,true]);}make();`), /default reading parameter|temporal dead zone/u);
+    }
+  }
+});
