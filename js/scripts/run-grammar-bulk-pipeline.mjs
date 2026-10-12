@@ -130,10 +130,12 @@ export async function importAdditionalGrammar(source) {
   else if (['yacc', 'bison', 'menhir', 'lex', 'lexer'].includes(source.format)) {
     const importer = await import('../src/grammar-importers/yacc.js');
     const method = ['lex', 'lexer'].includes(source.format) ? 'importLex' : 'importYacc';
-    const tokenRules = source.lexerText ? [...importer.importLex(source.lexerText).rules.values()] : undefined;
+    const lexer = source.lexerText ? importer.importLex(source.lexerText) : null;
+    const tokenRules = lexer ? [...lexer.rules.values()].filter(({ kind }) => kind === 'token') : undefined;
     grammar = importer[method](source.text, {
       ...(source.format === 'menhir' ? { dialect: 'menhir' } : {}),
       ...(tokenRules ? { tokenRules } : {}),
+      ...(lexer ? { extras: lexer.declarations.extras, modes: lexer.declarations.modes } : {}),
       ...source.options,
     });
   } else throw new Error(`unsupported additional grammar format ${source.format}`);

@@ -199,3 +199,15 @@ test('decision reports explain every lost or changed shared correspondence', () 
   assert.equal(report.changes[1].currentMembers.length, 2);
   assert.equal(compareMergeDecisionReports(null, next)[0].baselineAvailable, false);
 });
+
+test('an additional lexer retains tokens and skipped trivia when linked with its Yacc parser', async () => {
+  const grammar = await importAdditionalGrammar({
+    id: 'parser-with-lexer', format: 'yacc', entryPoint: 'document',
+    text: '%token NAME\n%start document\n%%\ndocument: NAME ;\n',
+    lexerText: '%option nodefault\n%%\n[a-z]+ { return NAME; }\n[ \\t\\n]+ ;\n%%\n',
+  });
+  assert.deepEqual(grammar.undefinedNonterminals(), []);
+  assert.ok(grammar.declarations.extras.length > 0);
+  const outcome = compileGrammar(grammar).parseTree('name \n');
+  assert.equal(outcome.ok, true);
+});

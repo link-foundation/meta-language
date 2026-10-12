@@ -13,7 +13,7 @@ const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/elm
 fn elm_candidate_is_canonical_native_links_with_every_source_scanner_token() {
     let grammar = parse_grammar_links(GRAMMAR).expect("the generated Elm candidate reads");
     assert_eq!(render_grammar_links(&grammar), GRAMMAR);
-    assert_eq!(grammar.external_tokens().len(), 7);
+    assert_eq!(grammar.declarations().external_tokens().len(), 7);
 }
 
 #[test]
