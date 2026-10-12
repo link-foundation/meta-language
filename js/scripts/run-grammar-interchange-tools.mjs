@@ -1,12 +1,13 @@
 // CI-only independent target-tool evidence; no Rust compilation is performed.
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import peggy from 'peggy';
 import { checkIndependentGrammarCycle } from './grammar-interchange-tools.mjs';
+import { readProjectData } from './project-data.mjs';
 
 const root = new URL('../../', import.meta.url);
-const fixture = JSON.parse(await readFile(new URL('parity/fixtures/grammar-interchange-tools.json', root), 'utf8'));
+const fixture = readProjectData(new URL('parity/fixtures/grammar-interchange-tools.json', root));
 const index = process.argv.indexOf('--out');
 if (index < 0 || !process.argv[index + 1]) throw new Error('provide --out REPORT.json');
 const output = path.resolve(process.argv[index + 1]);

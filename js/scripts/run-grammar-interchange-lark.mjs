@@ -1,17 +1,19 @@
 // Runs the actual independent Lark tool in CI. This is authoring/oracle work;
 // ordinary installed parsing never launches Python or imports a grammar engine.
 import { createHash } from 'node:crypto';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { grammarEmitter, grammarImporter } from '../src/grammar-interchange.js';
 import { parseWithGrammar } from '../src/grammar.js';
+import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 
 const expectedVersion = '1.3.1';
 const root = new URL('../../', import.meta.url);
-const fixtureBytes = await readFile(new URL('parity/fixtures/grammar-interchange-tools.json', root));
-const fixture = JSON.parse(fixtureBytes);
+const fixturePath = new URL('parity/fixtures/grammar-interchange-tools.json', root);
+const fixtureBytes = readProjectFileBytes(fixturePath);
+const fixture = readProjectData(fixturePath);
 const index = process.argv.indexOf('--out');
 if (index < 0 || !process.argv[index + 1]) throw new Error('provide --out REPORT.json');
 const output = path.resolve(process.argv[index + 1]);

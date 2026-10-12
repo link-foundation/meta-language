@@ -49,6 +49,7 @@ import { mkdir, readFile, readdir, rm, statfs, writeFile } from 'node:fs/promise
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectFileBytes } from './project-data.mjs';
 
 import { gitBlob } from './issue-195-rml-pr184.mjs';
 import {
@@ -125,7 +126,7 @@ async function main() {
     schemaVersion: FORMAL_AI_WORKLOAD_SCHEMA_VERSION,
     requirementId: FORMAL_AI_WORKLOAD_REQUIREMENT,
     fixture: FORMAL_AI_WORKLOAD_FIXTURE,
-    fixtureSha256: sha256(await readFile(path.join(root, FORMAL_AI_WORKLOAD_FIXTURE))),
+    fixtureSha256: sha256(readProjectFileBytes(path.join(root, FORMAL_AI_WORKLOAD_FIXTURE))),
     platform: `${process.platform}-${process.arch}`,
     node: process.version,
     formalAi: formalAi.report,
@@ -148,7 +149,7 @@ async function main() {
       linkEdits: inputs.linkEdits.length,
       projections: inputs.projections.length,
       semanticProjections: inputs.semanticProjections.length,
-      semanticProjectionFixtureSha256: sha256(await readFile(path.join(root, 'parity/fixtures/formal-ai-semantic-projections.json'))),
+      semanticProjectionFixtureSha256: sha256(readProjectFileBytes(path.join(root, 'parity/fixtures/formal-ai-semantic-projections.json'))),
     };
     report.npm = await guarded(() => javascriptWorkloads(formalAi.directory, inputsPath, outputs));
     report.crate = skipRust

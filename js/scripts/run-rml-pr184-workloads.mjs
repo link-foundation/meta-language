@@ -29,6 +29,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectFileBytes } from './project-data.mjs';
 
 import { gitBlob } from './issue-195-rml-pr184.mjs';
 import {
@@ -71,7 +72,7 @@ async function main() {
     schemaVersion: RML_WORKLOAD_SCHEMA_VERSION,
     requirementId: RML_WORKLOAD_REQUIREMENT,
     fixture: RML_WORKLOAD_FIXTURE,
-    fixtureSha256: sha256(await readFile(path.join(root, RML_WORKLOAD_FIXTURE))),
+    fixtureSha256: sha256(readProjectFileBytes(path.join(root, RML_WORKLOAD_FIXTURE))),
     platform: `${process.platform}-${process.arch}`,
     node: process.version,
     rml: rml.report,

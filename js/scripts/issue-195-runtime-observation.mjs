@@ -2,7 +2,6 @@
 // the normalized form the Rust probe (rust/examples/issue_195_runtime_probe.rs)
 // prints: byte offsets, UTF-8 string order, and canonical language names.
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,19 +15,15 @@ import {
 } from '../src/index.js';
 import { ISSUE_195_FIXTURE_FILES } from '../tests/support/issue-195-observations.js';
 import { canonicalJson } from './issue-195-parity-evidence.mjs';
+import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const corpusBytes = await readFile(path.join(root, ISSUE_195_FIXTURE_FILES.fourLanguage));
-const corpus = JSON.parse(corpusBytes.toString('utf8'));
-const grammarInventory = JSON.parse(
-  await readFile(path.join(root, 'parity/language-grammar-inventory.json'), 'utf8'),
-);
-const linoGrammarCases = JSON.parse(
-  await readFile(path.join(root, 'parity/fixtures/lino-grammar-cases.json'), 'utf8'),
-);
-const pdfGrammarCases = JSON.parse(
-  await readFile(path.join(root, 'parity/fixtures/pdf-grammar-cases.json'), 'utf8'),
-);
+const corpusPath = path.join(root, ISSUE_195_FIXTURE_FILES.fourLanguage);
+const corpusBytes = readProjectFileBytes(corpusPath);
+const corpus = readProjectData(corpusPath);
+const grammarInventory = readProjectData(path.join(root, 'parity/language-grammar-inventory.json'));
+const linoGrammarCases = readProjectData(path.join(root, 'parity/fixtures/lino-grammar-cases.json'));
+const pdfGrammarCases = readProjectData(path.join(root, 'parity/fixtures/pdf-grammar-cases.json'));
 
 export function runtimeObservation() {
   return {

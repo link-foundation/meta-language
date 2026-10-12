@@ -11,9 +11,9 @@
 // same outputs, and sharedConceptsReused holds only when they agree.
 // `validateFormalAiWorkloadReport` is the pure check of the runner's report for
 // one runtime, shared by the runner and the tests; the Rust suite ports it.
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectData } from './project-data.mjs';
 
 export const FORMAL_AI_WORKLOAD_REQUIREMENT = 'I195-DOWNSTREAM-FORMAL-AI-WORKLOADS';
 export const FORMAL_AI_WORKLOAD_FIXTURE_ID = 'planned:repository-directive:i195-downstream-formal-ai-workloads';
@@ -38,7 +38,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 
 /** The pinned formal-ai fixture. */
 export function loadFormalAiWorkloadFixture(directory = root) {
-  return JSON.parse(readFileSync(path.join(directory, FORMAL_AI_WORKLOAD_FIXTURE), 'utf8'));
+  return readProjectData(path.join(directory, FORMAL_AI_WORKLOAD_FIXTURE));
 }
 
 /** The inventoried workload files `runtime` runs, as formal-ai repository paths. */
