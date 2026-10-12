@@ -352,6 +352,15 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-global-concept-rule-styles.mjs --check
 
+      - name: Retain exact generated sources and compiler feedback
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated-compiler-feedback-${{ github.sha }}
+          path: issue-195-artifacts/compiler-feedback
+          retention-days: 7
+          if-no-files-found: error
+
       # The pull request description and the release reports are live texts
       # outside the commit; they are compared on main as a non-blocking report.
       - name: Compare the pull request description and the release reports with the requirement ledger (post-merge report)
