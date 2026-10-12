@@ -4,7 +4,8 @@ import test from 'node:test';
 
 import { Parser } from 'links-notation';
 import { deserializeGrammar, Grammar } from '../src/grammar.js';
-import { GLOBAL_CONCEPT_PROOF_METHOD, createGlobalConceptSpace, globalConceptSpaceToLinks, readGlobalConceptSpaceLinks } from '../src/global-concept-space.js';
+import { parseGrammarLinks } from '../src/grammar-links.js';
+import { GLOBAL_CONCEPT_PROOF_METHOD, createGlobalConceptSpace, globalConceptSpaceToLinks, readGlobalConceptSpaceLinks, translateGlobalConstruct } from '../src/global-concept-space.js';
 import { verifyGlobalConceptCorrespondence } from '../src/global-concept-rules.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
@@ -181,6 +182,49 @@ test('source-free reload preserves explicit and implicit starts, rule order and 
   assert.equal(empty.start, null);
   assert.deepEqual(empty.ruleOrder, []);
   assert.throws(() => readGlobalConceptSpaceLinks(globalConceptSpaceToLinks(space).replace('(start defined root)', '(start defined missing)'), { records: fixture.records }), /start or rule order/);
+});
+
+test('automatic proof discovery uses catalog source identities for real native grammar concepts', () => {
+  const imported = ['scheme', 'racket'].map((language) => {
+    const grammar = parseGrammarLinks(readFileSync(new URL(`../src/data/native-grammars/${language}.lino`, import.meta.url), 'utf8'));
+    // Raw source imports have no preassigned concept metadata. The registered
+    // native aliases provide semantic premises, with the actual definitions
+    // and complete parser context supplying the correspondence proof.
+    return { id: `pinned-${language}`, language: language === 'scheme' ? 'Scheme' : 'Racket', grammar: rewritten({ grammar }, (rule) => ({ ...rule, concept: undefined })).grammar };
+  });
+  const space = createGlobalConceptSpace(imported);
+  const first = space.mappings['pinned-scheme:block_comment'];
+  const second = space.mappings['pinned-racket:block_comment'];
+  assert.equal(first, second);
+  const shared = space.concepts.find(({ id }) => id === first);
+  assert.equal(shared.origins.length, 2);
+  assert.ok(shared.proofs.length > 0);
+  assert.equal(Object.keys(space.mappings).length, imported.reduce((sum, { grammar }) => sum + grammar.rules.size, 0));
+  assert.notEqual(space.mappings['pinned-scheme:program'], space.mappings['pinned-racket:program']);
+  const translated = translateGlobalConstruct(space, 'pinned-scheme:block_comment', 'rkt');
+  assert.equal(translated.relation, 'translated');
+  assert.equal(translated.concept, first);
+  assert.deepEqual(translated.origins.map(({ alias }) => alias), ['pinned-racket:block_comment']);
+  assert.ok(translated.proofs.length > 0);
+  assert.equal(translateGlobalConstruct(space, 'pinned-scheme:program', 'Racket').relation, 'untranslatable');
+  assert.deepEqual(readGlobalConceptSpaceLinks(globalConceptSpaceToLinks(space)), space);
+});
+
+test('global construct queries preserve unknown meanings, target ambiguity and editions', () => {
+  const first = sources();
+  const third = { ...first[1], id: 'third', edition: '3' };
+  const space = build([...first, third]);
+  const ambiguous = translateGlobalConstruct(space, 'first:root', 'second-language');
+  assert.equal(ambiguous.relation, 'ambiguous');
+  assert.deepEqual(ambiguous.origins.map(({ alias }) => alias), ['second:page', 'third:page']);
+  const edition = translateGlobalConstruct(space, 'first:root', 'second-language', { edition: '3' });
+  assert.equal(edition.relation, 'translated');
+  assert.deepEqual(edition.origins.map(({ alias }) => alias), ['third:page']);
+  assert.equal(translateGlobalConstruct(space, 'first:unique', 'second-language').relation, 'untranslatable');
+  assert.deepEqual(translateGlobalConstruct(space, 'missing:rule', 'second-language'), { relation: 'unknown', concept: null, origins: [], proofs: [] });
+  const duplicate = { id: 'fixture.other-letter', definition: 'A separate meaning of the letter.', constraints: ['The role is distinct.'], sourceAliases: [{ source: 'first', name: 'root' }] };
+  const uncertain = build(first, { records: [...fixture.records, duplicate] });
+  assert.deepEqual(translateGlobalConstruct(uncertain, 'first:root', 'second-language'), { relation: 'ambiguous', concept: null, origins: [], proofs: [] });
 });
 
 test('invalid sources and unresolved required origins are explicit', () => {

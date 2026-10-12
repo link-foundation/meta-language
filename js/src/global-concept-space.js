@@ -9,6 +9,7 @@ import { DEFAULT_SETTLING, grammarDeclarations } from './grammar-feature-forms.j
 import { parseGrammarLinks, percentDecodeLinksText, percentEncodeLinksText, renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from './grammar-links.js';
 import { compareText } from './grammar-merge-normalize.js';
 import { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
+import { LANGUAGE_CATALOG, languageEntry } from './language-catalog.js';
 
 /** The decision procedure used for every shared global identity. */
 export const GLOBAL_CONCEPT_PROOF_METHOD = 'recursive-structural-bijection';
@@ -23,6 +24,16 @@ const copy = (value) => JSON.parse(JSON.stringify(value));
 
 function prepare(sources, records) {
   if (!Array.isArray(sources)) throw new TypeError('global concept sources must be an array');
+  const recordsByAlias = new Map();
+  const recordsById = new Map();
+  for (const record of records) {
+    if (!recordsById.has(record.id)) recordsById.set(record.id, record);
+    for (const alias of record.sourceAliases) {
+      const key = canonical([alias.source, alias.name]);
+      if (!recordsByAlias.has(key)) recordsByAlias.set(key, []);
+      recordsByAlias.get(key).push(record);
+    }
+  }
   const sourceIds = new Set();
   const aliases = new Map();
   const nodes = [];
@@ -32,18 +43,24 @@ function prepare(sources, records) {
     if (typeof source.id !== 'string' || source.id === '' || typeof source.language !== 'string' || source.language === '' || (source.edition !== undefined && typeof source.edition !== 'string') || !(source.grammar instanceof Grammar)) throw new TypeError('a global concept source needs an identity, language, edition and imported grammar');
     if (sourceIds.has(source.id)) throw new TypeError(`duplicate global concept source ${source.id}`);
     sourceIds.add(source.id);
+    const nativeSources = new Set([`native:${source.language}`]);
+    for (const { id } of languageEntry(source.language)?.grammars ?? []) {
+      const file = LANGUAGE_CATALOG.nativeGrammars?.[id]?.file;
+      if (file) nativeSources.add(`native:${file.replace(/^.*\//u, '').replace(/\.lino$/u, '')}`);
+    }
     for (const rule of [...source.grammar.rules.values()].sort((first, second) => compareText(first.name, second.name))) {
       const alias = `${source.id}:${rule.name}`;
       if (aliases.has(alias)) throw new TypeError(`colliding global concept origin ${alias}`);
       const sourceNames = (rule.sourceNames?.map((entry) => ({ ...entry })) ?? []).sort((first, second) => compareText(first.source, second.source) || compareText(first.name, second.name));
       const origin = { alias, source: source.id, language: source.language, edition: source.edition ?? '', rule: rule.name, concept: rule.concept ?? null, sourceNames };
-      const spellings = [{ source: source.id, name: rule.name }, { source: `native:${source.language}`, name: rule.name }, ...sourceNames];
-      const meanings = records.filter((record) => record.sourceAliases.some((candidate) => spellings.some((spelling) => spelling.source === candidate.source && spelling.name === candidate.name))).map(({ id }) => id);
+      const spellings = [{ source: source.id, name: rule.name }, ...[...nativeSources].map((source) => ({ source, name: rule.name })), ...sourceNames];
+      const matchingRecords = new Set(spellings.flatMap((alias) => recordsByAlias.get(canonical([alias.source, alias.name])) ?? []));
+      const meanings = [...matchingRecords].map(({ id }) => id);
       if (rule.concept !== undefined && !meanings.includes(rule.concept)) meanings.push(rule.concept);
       meanings.sort(compareText);
       if (meanings.length > 1) ambiguities.push({ alias, meanings });
       aliases.set(alias, nodes.length);
-      const record = meanings.length === 1 ? records.find(({ id }) => id === meanings[0]) : null;
+      const record = meanings.length === 1 ? recordsById.get(meanings[0]) : null;
       // A name or two identical parsers do not establish the meaning of an
       // unannotated construct. Only a grounded unique semantic record permits
       // sharing; the copied origin remains usable while its meaning is unknown.
@@ -192,6 +209,19 @@ export function createGlobalConceptSpace(sources, options = {}) {
     return mappings[members[0]] === mappings[members[1]] ? [] : [{ members: [...members], reason: 'no-one-to-one-proof' }];
   });
   return { schemaVersion: 1, sources: ordered.map(({ id, language, edition, grammar }) => ({ id, language, edition: edition ?? '', start: grammar.start, ruleOrder: grammar.ruleNames(), context: copy(grammarDeclarations(grammar)) })), concepts, mappings, proofs, failures, ambiguities, redirects };
+}
+
+/** Resolve a construct through its proven global identity, retaining target alternatives. */
+export function translateGlobalConstruct(space, alias, language, options = {}) {
+  const empty = { relation: 'unknown', concept: null, origins: [], proofs: [] };
+  if (space.ambiguities.some((entry) => entry.alias === alias)) return { ...empty, relation: 'ambiguous' };
+  const id = space.mappings[alias];
+  const concept = space.concepts.find((entry) => entry.id === id);
+  if (!concept) return empty;
+  const targetLanguage = languageEntry(language)?.name ?? language;
+  const origins = concept.origins.filter((origin) => (languageEntry(origin.language)?.name ?? origin.language) === targetLanguage && (options.edition === undefined || origin.edition === options.edition)).map(copy);
+  const relation = origins.length === 0 ? 'untranslatable' : origins.length === 1 ? 'translated' : 'ambiguous';
+  return { relation, concept: id, origins, proofs: [...concept.proofs] };
 }
 
 /** Serialize the copied productions, qualified origins and proof witnesses as links. */
