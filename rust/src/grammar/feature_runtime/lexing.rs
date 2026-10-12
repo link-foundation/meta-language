@@ -136,6 +136,7 @@ impl Executor<'_> {
             let mut best = cursor;
             let mut best_kind = None;
             let mut best_state = current.clone();
+            let mut best_extra = None;
             let mode = current.mode().to_owned();
             for item in trivia {
                 if item
@@ -151,6 +152,19 @@ impl Executor<'_> {
                 {
                     continue;
                 }
+                match self.extra_node(item.kind.as_ref(), cursor, None, &current)? {
+                    Extra::Node(node, end, state) => {
+                        if end > best {
+                            best = end;
+                            best_kind.clone_from(&item.kind);
+                            best_state = state.clone();
+                            best_extra = Some(Extra::Node(node, end, state));
+                        }
+                        continue;
+                    }
+                    Extra::None => continue,
+                    Extra::Leaf => {}
+                }
                 let end =
                     self.quietly(|this| this.evaluate(&item.expression, cursor, &current, true))?;
                 if let Some(result) = longest_result(end)
@@ -159,13 +173,19 @@ impl Executor<'_> {
                     best = result.end;
                     best_state = result.state;
                     best_kind.clone_from(&item.kind);
+                    best_extra = None;
                 }
             }
             if best == cursor {
                 break;
             }
             let before = current.clone();
-            match self.extra_node(best_kind.as_ref(), cursor, best, &current)? {
+            let extra = if let Some(extra) = best_extra {
+                extra
+            } else {
+                self.extra_node(best_kind.as_ref(), cursor, Some(best), &current)?
+            };
+            match extra {
                 Extra::Node(node, end, state) => {
                     leaves.push(node);
                     cursor = end;
@@ -220,7 +240,23 @@ impl Executor<'_> {
         position: usize,
         state: &State,
     ) -> Run<()> {
-        let level = self.priority_of(item);
+        // A requested scanner runs before internal extras and retains any
+        // skipped prefix as trivia. Empty layout tokens do not claim content.
+        let external = if let Expr::Ref(Target::External(name)) = item {
+            self.quietly(|this| {
+                this.run_scanner(name, position, this.scan_context.unwrap_or(position), state)
+            })?
+        } else {
+            None
+        };
+        let owns_start = external
+            .as_ref()
+            .is_some_and(|scanned| scanned.end > scanned.token_start);
+        let level = if owns_start {
+            9_007_199_254_740_991
+        } else {
+            self.priority_of(item)
+        };
         if level <= 0 {
             return Ok(());
         }
@@ -235,8 +271,13 @@ impl Executor<'_> {
         {
             return Ok(());
         }
-        let results = self.quietly(|this| this.evaluate(item, position, state, true))?;
-        if longest_result(results).is_some_and(|result| result.end > position) {
+        let matched = if owns_start {
+            true
+        } else {
+            let results = self.quietly(|this| this.evaluate(item, position, state, true))?;
+            longest_result(results).is_some_and(|result| result.end > position)
+        };
+        if matched {
             frame.borrow_mut().outranks.insert(position, level);
         }
         Ok(())
@@ -265,7 +306,7 @@ impl Executor<'_> {
         &mut self,
         kind: Option<&Name>,
         start: usize,
-        end: usize,
+        end: Option<usize>,
         state: &State,
     ) -> Run<Extra> {
         let Some(&index) = kind.and_then(|kind| self.program.rule_index.get(&**kind)) else {
@@ -307,7 +348,13 @@ impl Executor<'_> {
             }
             let better = match (self.lexing, &best) {
                 (_, None) if self.lexing.is_some() => true,
-                (None, best) => best.is_none() && result.end == end,
+                (None, best) => {
+                    if let Some(end) = end {
+                        best.is_none() && result.end == end
+                    } else {
+                        best.as_ref().is_none_or(|best| result.end > best.end)
+                    }
+                }
                 (Some(tokens), Some(best)) => {
                     let order = preferred_tokens(&result.children, &best.children, tokens);
                     order == Ordering::Greater
@@ -329,7 +376,11 @@ impl Executor<'_> {
                 extra.trivia = true;
                 Some(Extra::Node(Rc::new(extra), best.end, best.state))
             })
-            .unwrap_or(Extra::Leaf))
+            .unwrap_or(if end.is_none() {
+                Extra::None
+            } else {
+                Extra::Leaf
+            }))
     }
 
     /// The start of a terminal: after trivia in syntactic context, at once in token context.

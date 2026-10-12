@@ -144,6 +144,7 @@ impl<'a> Rows<'a> {
     fn trivia(&self, tree: &SyntaxTree) -> bool {
         self.invisible(tree)
             || matches!(tree, SyntaxTree::Token { trivia: true, .. })
+            || matches!(tree, SyntaxTree::Node { trivia: true, .. })
             || matches!(tree, SyntaxTree::Node { kind, .. } if self.extras.contains(kind.as_str()))
     }
 
@@ -210,9 +211,10 @@ impl<'a> Rows<'a> {
                 kind,
                 field,
                 children,
+                trivia,
                 ..
             } => {
-                let flags = if self.extras.contains(kind.as_str()) {
+                let flags = if *trivia || self.extras.contains(kind.as_str()) {
                     "X"
                 } else {
                     ""

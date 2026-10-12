@@ -2313,22 +2313,39 @@ export class Executor {
       let best = cursor;
       let bestKind = null;
       let bestResult = null;
+      let bestExtra = null;
       const mode = current.modes[current.modes.length - 1];
       for (const item of trivia) {
         if (item.modes && !item.modes.includes(mode)) continue;
         if (item.kind !== null && (this.inExtra === true || (atExtra && cursor === position))) continue;
         if (cursor === position && outrank > 0 && this.priorityOf(item.expression) < outrank) continue;
         if (cursor === position && lexed && item.kind === null) continue;
+        // A composite extra is syntax: its internal separators remain trivia.
+        // Probing it as one token would disable those separators and reject
+        // directives such as a name followed by a whitespace-separated value.
+        const composite = item.kind !== null && this.program.rules.get(item.kind)?.kind === 'normal'
+          ? this.extraNode(item.kind, cursor, null, current) : null;
+        if (composite === NO_EXTRA) continue;
+        if (composite !== null) {
+          if (composite.end > best) {
+            best = composite.end;
+            bestKind = item.kind;
+            bestResult = composite;
+            bestExtra = composite;
+          }
+          continue;
+        }
         const result = this.quietly(() => longestResult(this.evaluate(item.expression, cursor, current, true)));
         const end = result?.end ?? -1;
         if (end > best) {
           best = end;
           bestKind = item.kind;
           bestResult = result;
+          bestExtra = null;
         }
       }
       if (best === cursor) break;
-      const extra = this.extraNode(bestKind, cursor, best, current);
+      const extra = bestExtra ?? this.extraNode(bestKind, cursor, best, current);
       if (extra === NO_EXTRA) break;
       // An external extra may skip a prefix before its named token. Keep the
       // prefix as separate whitespace, as scannerToken does for syntax tokens.
@@ -2378,14 +2395,14 @@ export class Executor {
       let best = null;
       for (const result of results) {
         if (!this.lexing) {
-          if (result.end === end) best ??= result;
+          if (end === null ? best === null || result.end > best.end : result.end === end && best === null) best = result;
           continue;
         }
         const order = best === null ? 1 : preferredTokens(result, best, this.lexing);
         if (order > 0 || (order === 0 && result.end > best.end)) best = result;
       }
       const node = best?.children.find((child) => child.type === 'node');
-      return node ? { node: { ...node, trivia: true }, end: best.end, state: best.state } : null;
+      return node ? { node: { ...node, trivia: true }, end: best.end, state: best.state } : end === null ? NO_EXTRA : null;
     } finally {
       this.inExtra = outer;
       this.extraStart = outerStart;
@@ -2402,11 +2419,19 @@ export class Executor {
   // as a lexer lexes it in one parse state: after the opening quote of a
   // string, not after a string the parse tried to open at its closing quote.
   outrankTrivia(item, position, state) {
-    const level = this.priorityOf(item);
+    // A requested external scanner runs before the internal lexer. A match
+    // beginning here therefore owns its content even when an internal extra
+    // would run farther (a comment-shaped fragment of an interpolated string).
+    // The scanner retains padding it explicitly skipped as separate trivia;
+    // zero-width layout tokens leave the internal extras available.
+    const external = item.kind === 'ref' && this.program.externalTokens.has(item.name)
+      ? this.quietly(() => this.runScanner(item.name, position, state, this.scanContext ?? position)) : null;
+    const ownsStart = external !== null && external.end > external.tokenStart;
+    const level = ownsStart ? Number.MAX_SAFE_INTEGER : this.priorityOf(item);
     if (level <= 0) return;
     const frame = this.lexFrame(position);
     if (!frame || (frame.outranks?.get(position) ?? 0) >= level) return;
-    const end = this.quietly(() => longestResult(this.evaluate(item, position, state, true))?.end ?? -1);
+    const end = ownsStart ? external.end : this.quietly(() => longestResult(this.evaluate(item, position, state, true))?.end ?? -1);
     if (end > position) (frame.outranks ??= new Map()).set(position, level);
   }
 

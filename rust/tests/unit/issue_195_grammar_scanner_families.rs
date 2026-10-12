@@ -303,3 +303,29 @@ fn stateful_extras_preserve_committed_state_and_restore_retaken_prefixes() {
         "../../../parity/fixtures/scanner-stateful-extras.json"
     ));
 }
+
+#[test]
+fn requested_scanners_precede_internal_extras_and_composite_extras_keep_separators() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-external-precedence.json"
+    ));
+    let fixtures: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/scanner-external-precedence.json"
+    ))
+    .unwrap();
+    let input = "#define VALUE\nx";
+    let parser =
+        super::issue_195_native_grammar_rows::parser(fixtures[2]["listing"].as_str().unwrap());
+    let tree = super::issue_195_native_grammar_rows::parse(&parser, input).unwrap();
+    let projection_fixture = serde_json::json!({});
+    let projection = super::issue_195_native_grammar_rows::Rows::new(&projection_fixture);
+    let rows = projection.rows(&tree, input);
+    assert_eq!(
+        rows.iter().find(|row| row[2] == "directive"),
+        Some(&serde_json::json!([1, null, "directive", 1, 0, 14, "X"]))
+    );
+    assert_eq!(
+        rows.iter().find(|row| row[2] == "name"),
+        Some(&serde_json::json!([2, null, "name", 1, 8, 13, ""]))
+    );
+}

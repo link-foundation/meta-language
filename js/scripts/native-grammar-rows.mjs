@@ -128,7 +128,7 @@ export function nativeRows(tree, source, { hidden = [], anonymous = [], extras =
   const anonymousKinds = new Set(anonymous);
   const extraKinds = new Set(extras);
   const invisible = (node) => node.type === 'token' && ((node.trivia && node.kind === null) || hiddenKinds.has(node.kind));
-  const trivia = (node) => invisible(node) || (node.type === 'token' && node.trivia) || (node.type === 'node' && extraKinds.has(node.kind));
+  const trivia = (node) => invisible(node) || node.trivia === true || (node.type === 'node' && extraKinds.has(node.kind));
   const hoist = (node) => {
     if (node.type !== 'node') return [node];
     const children = node.children.flatMap(hoist);
@@ -148,7 +148,7 @@ export function nativeRows(tree, source, { hidden = [], anonymous = [], extras =
     if (invisible(node) || (node.type === 'token' && anonymousKinds.has(node.kind)) || hiddenMissing(node)) return;
     const [start, end] = span(node);
     if (node.type === 'node') {
-      rows.push([depth, node.field ?? null, term(node.kind), anonymousAlias(node.kind) ? 0 : 1, start, end, extraKinds.has(node.kind) ? 'X' : '']);
+      rows.push([depth, node.field ?? null, term(node.kind), anonymousAlias(node.kind) ? 0 : 1, start, end, node.trivia === true || extraKinds.has(node.kind) ? 'X' : '']);
       for (const child of node.children.flatMap(hoist)) visit(child, depth + 1);
     } else if (node.type === 'error') {
       rows.push([depth, null, 'ERROR', 1, start, end, 'E']);
