@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import { translateProgram } from '../src/program-translation.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
+import { preservesTranslationBehavior } from './support/translation-behavior.js';
 
 const VOID = `function hello(name) {
   console.log(\`hello \${name}\`);
@@ -40,9 +41,13 @@ test('a call whose value a statement discards still runs, for the lines it print
   assert.ok(body.includes('let ml_f_ignored1 = crate::g(x.clone());'), body);
 });
 
-test('a function that returns a value on one path and nothing on another is refused with a reason', () => {
-  assert.throws(
-    () => parseJavaScript('function f(n) { if (n > 0n) return n; }'),
-    (error) => error.message === 'the function returns a bigint on one path and finishes without a return value, returning undefined, on another; return a value on every path at 16..38',
-  );
+test('a function that returns a value on one path preserves undefined on the other', () => {
+  const original = 'function f(n) { if (n > 0n) return n; }';
+  assert.deepEqual(parseJavaScript(original).items[0].ret, { kind: 'option', element: { kind: 'int' }, absence: 'undefined' });
+  preservesTranslationBehavior(`${original}\nconsole.log(f(1n));\nconsole.log(f(0n));\nconsole.log(f(-1n));\n`, '1n\nundefined\nundefined\n');
+});
+
+test('an effectful void return retains its output before producing undefined', () => {
+  const source = "function trace() { console.log('trace'); }\nfunction f(n) { if (n > 0n) return n; return trace(); }\nconsole.log(f(1n));\nconsole.log(f(0n));\n";
+  preservesTranslationBehavior(source, '1n\ntrace\nundefined\n');
 });

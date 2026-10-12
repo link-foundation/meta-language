@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { translateProgram } from '../src/program-translation.js';
 import { checkProgram } from '../src/translation/check.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
+import { preservesTranslationBehavior } from './support/translation-behavior.js';
 
 test('translation stages retain constant bindings and explicitly absent parameter defaults', () => {
   const source = "function identity(value) { return value; }\nconst answer = identity(42);\n";
@@ -79,6 +80,7 @@ test('optional JSDoc names preserve declared types without supplying runtime def
   assert.deepEqual(identity.items[0].params[0].type, { kind: 'option', element: { kind: 'string' }, absence: 'undefined' });
   assert.equal(identity.items[0].params[0].optional, true);
   assert.deepEqual(identity.items[0].params[0].default, { k: 'none', absence: 'undefined', span: identity.items[0].params[0].span });
-  assert.match(refusal('/** @param {number} [value=99] @returns {number} */\nfunction add(value) { return value + 1; }\nconsole.log(add());\n'), /option|optional/u);
+  preservesTranslationBehavior('/** @param {number} [value=99] @returns {number} */\nfunction add(value) { return value + 1; }\nconsole.log(add());\nconsole.log(add(undefined));\nconsole.log(add(7));\n', 'NaN\nNaN\n8\n');
+  preservesTranslationBehavior('/** @param {number} [value=99] @returns {number} */\nfunction add(value = 2) { return value + 1; }\nconsole.log(add());\nconsole.log(add(undefined));\nconsole.log(add(7));\n', '3\n3\n8\n');
   assert.match(refusal('/** @param {number} [other] */\nfunction identity(value) { return value; }\n'), /other is not a parameter/u);
 });
