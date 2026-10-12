@@ -88,7 +88,12 @@ function selectedModules() {
 /** The hand-written Rust module `module` corresponds to, or null. */
 function counterpart(module) {
   const path = posix.relative('js/src', module).replace(/\.js$/u, '').replaceAll('-', '_');
-  return [`rust/src/${path}.rs`, `rust/src/${path}/mod.rs`].find((candidate) => existsSync(join(root, candidate))) ?? null;
+  // The native grammar hosts use different directory names in the packages.
+  const paths = path.startsWith('grammar_runtime/')
+    ? [path, `grammar/feature_runtime/${path.slice('grammar_runtime/'.length)}`]
+    : [path];
+  return paths.flatMap(stem => [`rust/src/${stem}.rs`, `rust/src/${stem}/mod.rs`])
+    .find(candidate => existsSync(join(root, candidate))) ?? null;
 }
 
 /** The top-level Rust functions of `text`, by name, with their text. */

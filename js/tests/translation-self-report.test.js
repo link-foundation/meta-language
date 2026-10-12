@@ -75,7 +75,9 @@ test('report contexts keep missing exports and import cycles unbound', () => {
 function fixture() {
   const modules = list('js/src').sort().map((module) => {
     const stem = path.posix.relative('js/src', module).replace(/\.js$/u, '').replaceAll('-', '_');
-    const rust = [`rust/src/${stem}.rs`, `rust/src/${stem}/mod.rs`].find((file) => existsSync(path.join(root, file))) ?? null;
+    const nativeStem = stem.replace(/^grammar_runtime\//u, 'grammar/feature_runtime/');
+    const rust = [stem, nativeStem].flatMap(path => [`rust/src/${path}.rs`, `rust/src/${path}/mod.rs`])
+      .find((file) => existsSync(path.join(root, file))) ?? null;
     return {
       module, rust, sourceSha256: digest(module), rustSha256: rust ? digest(rust) : null,
       items: { translated: 0, carried: 0, comment: 0 }, milliseconds: 0,
@@ -101,6 +103,8 @@ function verify(report, markdown) {
 
 test('the published report validator covers every source module at the observed commit', () => {
   const report = fixture();
+  assert.equal(report.modules.find(row => row.module === 'js/src/grammar-runtime/lexical-cache.js')?.rust,
+    'rust/src/grammar/feature_runtime/lexical_cache.rs');
   const result = verify(report);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, new RegExp(`${report.modules.length} modules at ${commit}`, 'u'));

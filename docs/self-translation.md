@@ -119,7 +119,8 @@ denied, without downloading or building the crate's dependencies.
 
 `js/scripts/generate-self-translation-report.mjs` translates every module of
 `js/src` into Rust and measures it against its hand-written counterpart
-(`rust/src/<module>.rs` or `rust/src/<module>/mod.rs`): the items by status,
+(`rust/src/<module>.rs` or `rust/src/<module>/mod.rs`, with grammar runtime
+hosts under `rust/src/grammar/feature_runtime`): the items by status,
 the Rust functions written, how many the hand-written Rust defines under the
 same name and how many are identical up to whitespace, and how many translated
 code lines the hand-written Rust holds too. The report also accounts for every
@@ -135,14 +136,18 @@ difference the decorators close. The whole of `js/src` takes over an hour on
 one runner, so `--shard K/N` measures one of N shards that hold about the same
 number of source bytes, and `--list` prints a shard's modules. CI's
 `Self-Translation Report` jobs in `ci.yml` run eight shards beside the
-JavaScript and Rust workflows. Each shard publishes its part of the report in
+JavaScript tests. Each shard publishes its part of the report in
 its job summary and as a `self-translation-report-<sha>-<shard>` artifact.
 The JSON records the observed commit and the SHA-256 hashes of each module and
 its Rust counterpart. Both acceptance suites download all eight shards and run
 `--verify-reports <directory> --commit <sha>` before recording the per-module
 report assertion. Verification rejects missing or duplicate modules, stale
 sources, failed translations, inconsistent measurements and missing Markdown
-rows without translating the whole corpus again.
+rows without translating the whole corpus again. A separate `report-artifacts`
+JavaScript test group checks these published measurements on the producers'
+exact checkout before Rust and delivery stages start. It retains the per-module
+source coverage and generic/decorated difference assertions. Standalone runs
+of `js.yml` produce the same eight shards and run the same assertion group.
 
 The report resolves relative named imports against the source tree and passes
 the providers' checked translated-export signatures and each module's directory
