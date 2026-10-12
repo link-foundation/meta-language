@@ -8,6 +8,7 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { translateProgram } from '../src/program-translation.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const source = readFileSync(new URL('../../parity/fixtures/translation-corpus/string-length.mjs', import.meta.url), 'utf8');
 const expected = readFileSync(new URL('../../parity/fixtures/translation-corpus/string-length.expected.txt', import.meta.url), 'utf8');
@@ -16,18 +17,19 @@ test('string lengths retain UTF-16 units and evaluate the receiver once', () => 
   for (const script of [source, emitJavaScript(checkProgram(parseJavaScript(source))).text]) {
     assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' }), expected);
   }
+  const translated = translateProgram(source, 'JavaScript', 'Rust');
+  assert.equal(translated.diagnostic, null);
+  for (const target of ['Lean', 'Rocq']) {
+    assert.equal(translateProgram(source, 'JavaScript', target).diagnostic, null, target);
+  }
+  if (!nativeRustChecksEnabled()) return;
   const directory = mkdtempSync(join(tmpdir(), 'string-length-'));
   try {
-    const translated = translateProgram(source, 'JavaScript', 'Rust');
-    assert.equal(translated.diagnostic, null);
     const file = join(directory, 'main.rs');
-    const binary = join(directory, 'main');
+    const binary = join(directory, process.platform === 'win32' ? 'main.exe' : 'main');
     writeFileSync(file, translated.code);
-    execFileSync('rustc', ['--edition', '2024', file, '-o', binary], { stdio: 'pipe' });
-    assert.equal(execFileSync(binary, [], { encoding: 'utf8' }), expected);
-    for (const target of ['Lean', 'Rocq']) {
-      assert.equal(translateProgram(source, 'JavaScript', target).diagnostic, null, target);
-    }
+    execFileSync('rustc', ['--edition', '2024', file, '-o', binary], { stdio: 'pipe', timeout: 60_000 });
+    assert.equal(execFileSync(binary, [], { encoding: 'utf8', timeout: 10_000 }), expected);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 

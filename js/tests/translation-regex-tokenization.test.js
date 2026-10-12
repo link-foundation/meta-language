@@ -9,6 +9,7 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const fixtures = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-lexical-boundaries.json', import.meta.url), 'utf8'));
 
@@ -131,12 +132,15 @@ test('escaped literal programs compile and preserve output in Rust', () => {
   const source = fixtures.escapedLiterals.map(({ source }) => `console.log(${source});`).join('\n');
   const expected = fixtures.escapedLiterals.map(({ value }) => `${value}\n`).join('');
   const code = emitRust(checkProgram(parseJavaScript(source))).text;
+  assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', source], { encoding: 'utf8' }), expected);
+  assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', emitJavaScript(checkProgram(parseJavaScript(source))).text], { encoding: 'utf8' }), expected);
+  if (!nativeRustChecksEnabled()) return;
   const directory = mkdtempSync(join(tmpdir(), 'translation-escapes-'));
   try {
     const file = join(directory, 'main.rs');
-    const binary = join(directory, 'main');
+    const binary = join(directory, process.platform === 'win32' ? 'main.exe' : 'main');
     writeFileSync(file, code);
-    execFileSync('rustc', ['--edition', '2024', file, '-o', binary], { stdio: 'pipe' });
-    assert.equal(execFileSync(binary, [], { encoding: 'utf8' }), expected);
+    execFileSync('rustc', ['--edition', '2024', file, '-o', binary], { stdio: 'pipe', timeout: 60_000 });
+    assert.equal(execFileSync(binary, [], { encoding: 'utf8', timeout: 10_000 }), expected);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });

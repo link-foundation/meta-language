@@ -21,6 +21,7 @@ import {
 import { caseDecorators, readSelfTranslationCorpus } from '../scripts/generate-self-translation-cases.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { compileRustTranslation } from './support/self-translation-rust.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
@@ -156,7 +157,7 @@ test('the JavaScript acceptance stage compiles every generated Rust case with cl
   // that executed acceptance stage is allowed to record generatedRustCompiles.
   // SELF_TRANSLATION_CHECK_RUST also executes the compilers for local checks,
   // without an observation file or any acceptance evidence.
-  if (!process.env.ISSUE_195_OBSERVATION_FILE && !process.env.SELF_TRANSLATION_CHECK_RUST) return;
+  if (!nativeRustChecksEnabled(process.env, 'SELF_TRANSLATION_CHECK_RUST')) return;
   const directory = mkdtempSync(path.join(tmpdir(), 'self-translation-rust-'));
   try {
     const rustCases = cases.filter(({ to }) => to === 'Rust');

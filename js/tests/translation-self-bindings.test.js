@@ -5,12 +5,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { selfTranslate } from '../src/self-translation.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/self-translation-bindings.json', import.meta.url), 'utf8'));
 fixture.cases = fixture.cases.map((entry) => entry.module ? { ...entry, source: readFileSync(new URL(`../../${entry.module}`, import.meta.url), 'utf8') } : entry);
 
 test('sibling bindings share a checked scope, execute faithfully and restore their source', () => {
-  const directory = mkdtempSync(path.join(tmpdir(), 'self-translation-bindings-'));
+  const directory = nativeRustChecksEnabled() ? mkdtempSync(path.join(tmpdir(), 'self-translation-bindings-')) : null;
   try {
     for (const entry of fixture.cases) {
       const translated = selfTranslate(entry.source, 'JavaScript', 'Rust');
@@ -18,17 +19,18 @@ test('sibling bindings share a checked scope, execute faithfully and restore the
       assert.equal(selfTranslate(translated.code, 'Rust', 'JavaScript').code, entry.source, entry.name);
       for (const observation of [entry, ...(entry.additionalCalls ?? [])]) {
         const name = observation === entry ? entry.name : `${entry.name}-${observation.name}`;
-        const source = path.join(directory, `${name}.rs`);
-        const binary = path.join(directory, name);
-        writeFileSync(source, `${translated.code}\nfn main() { println!("{}", ${observation.rustCall}); }\n`);
-        execFileSync('rustc', ['--edition', '2024', source, '-o', binary], { stdio: 'pipe' });
-        const actual = execFileSync(binary, [], { encoding: 'utf8' });
-        const expected = execFileSync(process.execPath, ['--input-type=module', '-e', `${entry.source}\nconsole.log(${observation.call});`], { encoding: 'utf8' });
+        const expected = execFileSync(process.execPath, ['--input-type=module', '-e', `${entry.source}\nconsole.log(${observation.call});`], { encoding: 'utf8', timeout: 10_000 });
         assert.equal(expected, observation.expected, name);
+        if (!directory) continue;
+        const source = path.join(directory, `${name}.rs`);
+        const binary = path.join(directory, process.platform === 'win32' ? `${name}.exe` : name);
+        writeFileSync(source, `${translated.code}\nfn main() { println!("{}", ${observation.rustCall}); }\n`);
+        execFileSync('rustc', ['--edition', '2024', source, '-o', binary], { stdio: 'pipe', timeout: 60_000 });
+        const actual = execFileSync(binary, [], { encoding: 'utf8', timeout: 10_000 });
         assert.equal(actual, expected, name);
       }
     }
-  } finally { rmSync(directory, { recursive: true, force: true }); }
+  } finally { if (directory) rmSync(directory, { recursive: true, force: true }); }
 });
 
 test('a carried sibling and its caller stay carried without poisoning an independent function', () => {

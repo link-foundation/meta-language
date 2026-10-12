@@ -22,6 +22,7 @@ import {
   translateProgram,
 } from '../src/index.js';
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const root = new URL('../../', import.meta.url);
 const shared = JSON.parse(await readFile(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root), 'utf8'));
@@ -38,7 +39,8 @@ const ASSERTIONS = [
   'noUnsupportedDescriptor', 'noSilentWeakening',
 ];
 const TOOLS = { JavaScript: 'node', Rust: 'rustc', Lean: 'lean', Rocq: 'rocq' };
-// Acceptance runs must execute every pair; other runs skip pairs whose toolchain is absent.
+// Acceptance runs must execute every pair; other runs need explicit native
+// opt-in and skip pairs whose toolchain is absent.
 const toolchainRequired = Boolean(process.env.ISSUE_195_OBSERVATION_FILE);
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
@@ -52,6 +54,7 @@ function run(command, args, cwd) {
 
 const availability = new Map();
 function toolAvailable(language) {
+  if (language === 'Rust' && !nativeRustChecksEnabled()) return Promise.resolve(false);
   if (!availability.has(language)) {
     availability.set(language, run(TOOLS[language], ['--version']).then(({ ok }) => ok));
   }

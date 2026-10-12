@@ -6,6 +6,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 
 import { translateProgram } from '../src/program-translation.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const corpusBytes = await readFile(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url));
 const cases = JSON.parse(corpusBytes).translationBehaviorCases;
@@ -29,6 +30,8 @@ test('JavaScript console output translation executes in Rust and detects effect 
   assert.equal(translation.contract.support, 'semantic-translation');
   assert.match(translation.code, /fn main\(\)/u);
   assert.match(translation.code, /js_console\(42f64\)/u);
+  assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', fixture.source], { encoding: 'utf8', timeout: 10_000 }), fixture.expectedStdout);
+  if (!nativeRustChecksEnabled()) return;
   const directory = await mkdtemp(path.join(tmpdir(), 'issue-195-js-to-rust-'));
   try {
     const source = path.join(directory, 'translated.rs');

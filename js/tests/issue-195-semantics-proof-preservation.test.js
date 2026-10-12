@@ -20,6 +20,7 @@ import { test } from 'node:test';
 import { proofObligationProblems } from '../scripts/issue-195-proof-obligations.mjs';
 import { translateProgram } from '../src/index.js';
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const root = new URL('../../', import.meta.url);
 const corpus = JSON.parse(await readFile(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root), 'utf8')).translationCorpus;
@@ -29,7 +30,8 @@ const PROOF_SOURCES = LANGUAGES.filter((language) => corpus.sources[language].th
 const TOOLS = { JavaScript: 'node', Rust: 'rustc', Lean: 'lean', Rocq: 'rocq' };
 // The axioms of Lean's own foundations; any other axiom would be an outside authority.
 const LEAN_STANDARD_AXIOMS = new Set(['propext', 'Quot.sound', 'Classical.choice']);
-// Acceptance runs must use every toolchain; other runs skip when one is absent.
+// Acceptance runs must use every toolchain; other runs need explicit native
+// opt-in and skip when one is absent.
 const toolchainRequired = Boolean(process.env.ISSUE_195_OBSERVATION_FILE);
 const REQUIREMENT_ID = 'I195-SEMANTICS-PROOF-PRESERVATION';
 
@@ -53,7 +55,8 @@ function run(command, args, cwd) {
 }
 
 async function toolchainsPresent(t) {
-  const present = await Promise.all(LANGUAGES.map((language) => run(TOOLS[language], ['--version'])));
+  const present = await Promise.all(LANGUAGES.map((language) => language === 'Rust' && !nativeRustChecksEnabled()
+    ? { ok: false } : run(TOOLS[language], ['--version'])));
   if (present.every(({ ok }) => ok)) return true;
   assert.equal(toolchainRequired, false, 'node, rustc, lean and rocq are required for acceptance');
   t.skip('a JavaScript, Rust, Lean or Rocq toolchain is not installed');
