@@ -729,7 +729,39 @@ impl JavaScriptParser {
                 span(&token, &token),
             ));
         }
-        if token.value == "NaN" || token.value == "Infinity" {
+        if ["NaN", "Infinity", "undefined"].contains(&token.value.as_str())
+            && (self.scope.locals.contains(&token.value) || self.scope.tdz.contains(&token.value))
+        {
+            self.cursor.advance();
+            return self.reference(&token);
+        }
+        if ["NaN", "Infinity", "undefined"].contains(&token.value.as_str()) {
+            if let Some(value) = self.literal_bindings.get(&token.value) {
+                let mut value = value.clone();
+                value.span = Some(span(&token, &token));
+                self.cursor.advance();
+                return Ok(value);
+            }
+            if self.global_binding_names.contains(&token.value)
+                && !self.function_names.contains(&token.value)
+                && !self
+                    .externals
+                    .iter()
+                    .any(|external| external.name() == token.value)
+            {
+                return Err(unsupported(
+                    &format!("global binding {}", token.value),
+                    "a delayed function read needs an owned module binding; it cannot be replaced with the built-in constant",
+                    Some(span(&token, &token)),
+                ));
+            }
+        }
+        let declared = self.function_names.contains(&token.value)
+            || self
+                .externals
+                .iter()
+                .any(|external| external.name() == token.value);
+        if !declared && (token.value == "NaN" || token.value == "Infinity") {
             self.cursor.advance();
             return Ok(node(
                 SNode::Num {
@@ -741,7 +773,7 @@ impl JavaScriptParser {
                 span(&token, &token),
             ));
         }
-        if ["null", "undefined"].contains(&token.value.as_str()) {
+        if token.value == "null" || (!declared && token.value == "undefined") {
             return Err(unsupported(&token.value, "outside the portable core", here));
         }
         let expressions = [

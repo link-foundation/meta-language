@@ -10,6 +10,12 @@ use super::{
     assertion_kind, has_ctor, node, prop_of, span, type_error, unsupported,
 };
 
+struct ArrayBinding {
+    name: String,
+    path: Vec<usize>,
+    span: Span,
+}
+
 impl JavaScriptParser {
     pub(super) fn statement(&mut self) -> Result<Stmt> {
         let token = self.peek();
@@ -144,9 +150,115 @@ impl JavaScriptParser {
         if self.cursor.is("{") {
             return self.destructuring(&start);
         }
+        if self.cursor.is("[") {
+            return self.array_destructuring(&start);
+        }
         let (name, value, span) =
             self.const_binding(&start, self.top_level && self.readonly_module_constants)?;
         Ok(Stmt::Const { name, value, span })
+    }
+
+    fn read_array_binding(&mut self, path: &[usize]) -> Result<Vec<ArrayBinding>> {
+        self.cursor.expect("[", Some("array binding"))?;
+        let mut bindings = Vec::new();
+        let mut index = 0;
+        while !self.cursor.is("]") {
+            if self.cursor.eat(",").is_some() {
+                index += 1;
+                continue;
+            }
+            let token = self.peek();
+            if self.cursor.is("...") {
+                return Err(unsupported(
+                    "array rest binding",
+                    "rest binding needs an array suffix operation",
+                    Some(token.span()),
+                ));
+            }
+            let mut position = path.to_vec();
+            position.push(index);
+            if self.cursor.is("[") {
+                bindings.extend(self.read_array_binding(&position)?);
+            } else {
+                let name = self.cursor.identifier(Some("array binding"))?;
+                reserved(&name)?;
+                if self.cursor.is("=") {
+                    return Err(unsupported(
+                        "array binding default",
+                        "a missing element needs an undefined-aware default",
+                        Some(name.span()),
+                    ));
+                }
+                bindings.push(ArrayBinding {
+                    name: name.value.clone(),
+                    path: position,
+                    span: name.span(),
+                });
+            }
+            index += 1;
+            if self.cursor.eat(",").is_none() {
+                break;
+            }
+        }
+        self.cursor.expect("]", Some("array binding"))?;
+        Ok(bindings)
+    }
+
+    fn array_destructuring(&mut self, start: &Token) -> Result<Stmt> {
+        let bindings = self.read_array_binding(&[])?;
+        self.cursor.expect("=", Some("array binding"))?;
+        let value = self.expr()?;
+        self.cursor.eat(";");
+        let whole = self.to_here(start);
+        self.generated_count += 1;
+        let name = format!("ml_binding{}", self.generated_count);
+        let object = node(
+            SNode::Name {
+                path: vec![name.clone()],
+            },
+            whole,
+        );
+        let mut body = vec![Stmt::Const {
+            name,
+            value,
+            span: whole,
+        }];
+        for binding in bindings {
+            let nested = binding.path.len() > 1;
+            let mut value = object.clone();
+            for index in binding.path {
+                let position = node(
+                    SNode::Num {
+                        value: index.to_string(),
+                        ty: None,
+                        negative: false,
+                        unit: false,
+                    },
+                    binding.span,
+                );
+                value = node(
+                    SNode::Index {
+                        object: Box::new(value),
+                        index: Box::new(position),
+                    },
+                    binding.span,
+                );
+            }
+            if nested {
+                self.nested_product_bindings.insert(binding.span);
+            }
+            self.declare_local(&binding.name, false);
+            body.push(Stmt::Const {
+                name: binding.name,
+                value,
+                span: whole,
+            });
+        }
+        Ok(Stmt::Block {
+            body,
+            inline: true,
+            span: whole,
+        })
     }
 
     /// `const name = value;` after the `const`.
@@ -521,7 +633,7 @@ impl JavaScriptParser {
         Ok(())
     }
 
-    pub(super) fn main_statement(&mut self) -> Result<SEffect> {
+    pub(super) fn main_statement(&mut self) -> Result<Vec<SEffect>> {
         let token = self.peek();
         if self.cursor.is("const") {
             if self.cursor.is_at("{", 1) {
@@ -531,23 +643,42 @@ impl JavaScriptParser {
                     Some(span(&token, self.cursor.peek_at(1))),
                 ));
             }
+            if self.cursor.is_at("[", 1) {
+                let start = self.cursor.advance();
+                let Stmt::Block { body, .. } = self.array_destructuring(&start)? else {
+                    unreachable!("array bindings lower to an inline block");
+                };
+                return Ok(body
+                    .into_iter()
+                    .map(|entry| match entry {
+                        Stmt::Const { name, value, span } => SEffect::Let {
+                            name,
+                            ty: None,
+                            value,
+                            constant: true,
+                            span: Some(span),
+                        },
+                        _ => unreachable!("array binding blocks contain only constants"),
+                    })
+                    .collect());
+            }
             let start = self.cursor.advance();
             let (name, value, span) = self.const_binding(&start, self.readonly_module_constants)?;
-            return Ok(SEffect::Let {
+            return Ok(vec![SEffect::Let {
                 name,
                 ty: None,
                 value,
                 constant: true,
                 span: Some(span),
-            });
+            }]);
         }
         if self.cursor.is("console") && self.cursor.is_at(".", 1) {
-            return self.console_statement();
+            return self.console_statement().map(|effect| vec![effect]);
         }
         if let Some(assertion) = &self.assertion
             && self.cursor.is(&assertion.name)
         {
-            return self.assert_statement();
+            return self.assert_statement().map(|effect| vec![effect]);
         }
         let statements = ["switch", "try", "throw", "class", "return"];
         if token.kind == TokenKind::Identifier && statements.contains(&token.value.as_str()) {
@@ -562,13 +693,13 @@ impl JavaScriptParser {
         let value = self.expr()?;
         self.cursor.eat(";");
         self.generated_count += 1;
-        Ok(SEffect::Let {
+        Ok(vec![SEffect::Let {
             name: format!("ml_main_ignored{}", self.generated_count),
             ty: None,
             value,
             constant: false,
             span: Some(self.to_here(&token)),
-        })
+        }])
     }
 
     pub(super) fn console_statement(&mut self) -> Result<SEffect> {

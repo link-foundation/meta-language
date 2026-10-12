@@ -144,6 +144,18 @@ impl JavaScriptParser {
     }
 
     pub(super) fn freeze_object_argument(&self, mut arg: SExpr, called: Span) -> Result<SExpr> {
+        if self.function_names.contains("Object")
+            || self
+                .externals
+                .iter()
+                .any(|external| external.name() == "Object")
+        {
+            return Err(unsupported(
+                "shadowed Object.freeze",
+                "immutable products require the actual unshadowed Object.freeze built-in",
+                Some(called),
+            ));
+        }
         let expression = match &arg.node {
             SNode::CtorObject { .. } => "ctorObject",
             SNode::Array { .. } => "array",
@@ -152,6 +164,27 @@ impl JavaScriptParser {
         let readonly_literal = self.readonly_constant_initializer
             && expression == "array"
             && literal_array_value(&arg);
+        if !readonly_literal && let SNode::Array { items, .. } = arg.node {
+            if items.is_empty()
+                || items
+                    .iter()
+                    .any(|item| item.spread || matches!(item.value.node, SNode::Array { .. }))
+            {
+                return Err(unsupported(
+                    "immutable tuple product",
+                    "a fresh nonempty dense array needs scalar Copy elements or separately frozen nested products",
+                    Some(called),
+                ));
+            }
+            return Ok(node(
+                SNode::Tuple {
+                    items: items.into_iter().map(|item| item.value).collect(),
+                    frozen: true,
+                    product_model: Some("immutable value product".to_owned()),
+                },
+                called,
+            ));
+        }
         if !accept_object_freeze_operand(expression.to_owned(), readonly_literal) {
             return Err(unsupported(
                 "Object.freeze operand",

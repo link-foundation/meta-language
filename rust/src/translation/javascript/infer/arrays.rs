@@ -65,6 +65,7 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             | SNode::Show { arg: object, .. }
             | SNode::Cast { arg: object, .. }
             | SNode::Length { object, .. } => walk(object, arrays),
+            SNode::TupleIndex { object, .. } => walk(object, arrays),
             SNode::StringTest {
                 object: left,
                 search: right,
@@ -127,7 +128,7 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                     walk(&mut definition.value, arrays);
                 }
             }
-            SNode::List { items } => {
+            SNode::List { items } | SNode::Tuple { items, .. } => {
                 for item in items {
                     walk(item, arrays);
                 }

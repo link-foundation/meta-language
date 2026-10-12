@@ -1,8 +1,10 @@
 //! Files, imports, `JSDoc` typedefs, functions, namespaces and blocks.
 
+use super::infer::infer_javascript_product_types;
 use super::infer::infer_javascript_types;
 use super::loops::reserved;
 use super::math::global;
+use super::products::{has_javascript_products, validate_javascript_products};
 use super::{
     BOOL, FLOAT, Guard, HashSet, INT, JavaScriptParser, JsDoc, Language, NAT, ROOT, Result, SCtor,
     SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram, STRING, ScanEnd, Scope, Span,
@@ -34,6 +36,8 @@ impl JavaScriptParser {
             tdz: self.block_declarations(self.cursor.index, ScanEnd::File),
             mutable: HashSet::new(),
         };
+        self.global_binding_names.clone_from(&self.scope.tdz);
+        self.prescan_product_bindings();
         self.async_names = self.async_declarations(self.cursor.index);
         // Top-level statements that declare or assign variables, lowered together
         // before the next statement that prints, binds a constant or asserts.
@@ -46,6 +50,7 @@ impl JavaScriptParser {
             }
             let exports_async =
                 |cursor: &TokenCursor| cursor.is("async") && cursor.is_at("function", 1);
+            let exported = self.cursor.is("export");
             if self.cursor.eat("export").is_some()
                 && !self.cursor.is("function")
                 && !self.cursor.is("const")
@@ -59,7 +64,11 @@ impl JavaScriptParser {
             }
             if self.cursor.is("async") && self.cursor.is_at("function", 1) {
                 self.cursor.advance();
-                items.push(SItem::Fn(self.function_declaration(&start, true)?));
+                let function = self.function_declaration(&start, true)?;
+                if exported {
+                    self.exported_names.insert(function.name.clone());
+                }
+                items.push(SItem::Fn(function));
                 continue;
             }
             if self.cursor.is("async") {
@@ -70,7 +79,11 @@ impl JavaScriptParser {
                 ));
             }
             if self.cursor.is("function") {
-                items.push(SItem::Fn(self.function_declaration(&start, false)?));
+                let function = self.function_declaration(&start, false)?;
+                if exported {
+                    self.exported_names.insert(function.name.clone());
+                }
+                items.push(SItem::Fn(function));
                 continue;
             }
             if self.cursor.is("const")
@@ -89,7 +102,11 @@ impl JavaScriptParser {
                         Some(span(&start, &name)),
                     ));
                 }
-                items.push(SItem::Fn(self.const_function(&start)?));
+                let function = self.const_function(&start)?;
+                if exported {
+                    self.exported_names.insert(function.name.clone());
+                }
+                items.push(SItem::Fn(function));
                 continue;
             }
             if self.cursor.is("const")
@@ -109,7 +126,11 @@ impl JavaScriptParser {
                         Some(span(&start, &name)),
                     ));
                 }
-                items.push(SItem::Module(self.namespace(&start)?));
+                let module = self.namespace(&start)?;
+                if exported {
+                    self.exported_names.insert(module.name.clone());
+                }
+                items.push(SItem::Module(module));
                 continue;
             }
             if self.starts_top_level_imperative() {
@@ -117,7 +138,7 @@ impl JavaScriptParser {
                 continue;
             }
             self.flush(&mut pending, &mut effects)?;
-            effects.push(self.main_statement()?);
+            effects.extend(self.main_statement()?);
         }
         self.flush(&mut pending, &mut effects)?;
         if let Some((name, place)) = self.unawaited.first() {
@@ -128,7 +149,7 @@ impl JavaScriptParser {
             ));
         }
         items.append(&mut self.generated);
-        infer_javascript_types(SProgram {
+        let program = SProgram {
             language: Language::JavaScript,
             items,
             main: Some(SMain {
@@ -138,7 +159,19 @@ impl JavaScriptParser {
             }),
             imports: std::mem::take(&mut self.imports),
             externals: std::mem::take(&mut self.externals),
-        })
+        };
+        if has_javascript_products(&program, &self.nested_product_bindings) {
+            let (mut program, types) = infer_javascript_product_types(program)?;
+            validate_javascript_products(
+                &mut program,
+                &types,
+                &self.exported_names,
+                &self.nested_product_bindings,
+            )?;
+            Ok(program)
+        } else {
+            infer_javascript_types(program)
+        }
     }
 
     /// `@typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint }} Tree`
@@ -477,6 +510,7 @@ impl JavaScriptParser {
     /// A parameter list after its `(`, through its `)`.
     fn parameters(&mut self, name: &str) -> Result<Vec<(Token, Option<SExpr>)>> {
         let mut tokens: Vec<(Token, Option<SExpr>)> = Vec::new();
+        let binding_names = self.parameter_binding_names();
         while !self.cursor.is(")") {
             let token = self.peek();
             if self.cursor.is("...") {
@@ -523,7 +557,11 @@ impl JavaScriptParser {
                         Some(token.span()),
                     ));
                 }
-                Some(self.expr()?)
+                let outer_tdz = self.scope.tdz.clone();
+                self.scope.tdz.extend(binding_names.iter().cloned());
+                let value = self.expr();
+                self.scope.tdz = outer_tdz;
+                Some(value?)
             } else if tokens
                 .last()
                 .is_some_and(|(_, default_value)| default_value.is_some())
@@ -785,6 +823,21 @@ impl JavaScriptParser {
                         }
                         offset += 1;
                     }
+                } else if c.is("[") {
+                    let mut offset = 1;
+                    let mut nesting = 1;
+                    while nesting > 0 && !c.is_kind_at(TokenKind::Eof, offset) {
+                        if c.is_at("[", offset) {
+                            nesting += 1;
+                        }
+                        if c.is_at("]", offset) {
+                            nesting -= 1;
+                        }
+                        if c.peek_at(offset).kind == TokenKind::Identifier {
+                            names.insert(c.peek_at(offset).value.clone());
+                        }
+                        offset += 1;
+                    }
                 }
             }
         }
@@ -851,6 +904,33 @@ fn jsdoc_type(text: &str, range: Span) -> Result<Type> {
     }
     if let Some(element) = name.strip_suffix("[]") {
         return Ok(array(jsdoc_type(element, range)?));
+    }
+    if let Some(inner) = name
+        .strip_prefix('[')
+        .and_then(|text| text.strip_suffix(']'))
+    {
+        let mut depth = 0_i64;
+        let mut start = 0;
+        let mut elements = Vec::new();
+        for (index, character) in inner.char_indices() {
+            match character {
+                '[' | '(' | '{' | '<' => depth += 1,
+                ']' | ')' | '}' | '>' => depth -= 1,
+                ',' if depth == 0 => {
+                    let field = js_trim(&inner[start..index]);
+                    if !field.is_empty() {
+                        elements.push(jsdoc_type(field, range)?);
+                    }
+                    start = index + 1;
+                }
+                _ => {}
+            }
+        }
+        let field = js_trim(&inner[start..]);
+        if !field.is_empty() {
+            elements.push(jsdoc_type(field, range)?);
+        }
+        return Ok(Type::Tuple { elements });
     }
     let generic = name
         .strip_prefix("Array<")

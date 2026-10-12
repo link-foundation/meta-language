@@ -11,6 +11,9 @@
 //! Mirrors `js/src/translation/javascript-infer.js`.
 
 mod arrays;
+mod products;
+
+pub(super) use products::{infer_javascript_product_types, infer_javascript_types};
 
 use arrays::fill_arrays;
 use std::collections::{HashMap, HashSet};
@@ -19,40 +22,7 @@ use super::{
     BOOL, BinaryOp, FLOAT, INT, ROOT, Result, SCtor, SEffect, SExpr, SFn, SItem, SNode, SPattern,
     SPatternNode, SProgram, SProp, SPropNode, STRING, Span, Type, UnaryOp, type_error,
 };
-use crate::translation::frontend_rules::accept_argument_count;
 use crate::translation::types::UNIT;
-
-/// Fills in the missing parameter and result types of the functions of a parsed JavaScript program.
-pub(super) fn infer_javascript_types(mut program: SProgram) -> Result<SProgram> {
-    let mut functions = Vec::new();
-    collect_functions(&program.items, &[ROOT.to_owned()], &mut functions);
-    let untyped = program.items.iter().any(|item| {
-        matches!(item, SItem::Data(data) if data.ctors.iter().any(|ctor| {
-            ctor.fields.iter().any(|field| field.ty == Type::Literal)
-        }))
-    });
-    if !untyped
-        && functions.iter().all(|(_, function)| {
-            function.ret.is_some() && function.params.iter().all(|param| param.ty.is_some())
-        })
-    {
-        return Ok(program);
-    }
-    let mut inference = Inference::new(&program.items);
-    let inferred = inference.run(&functions, &program)?;
-    let arrays: HashMap<*const SExpr, Type> = inference
-        .empty_arrays
-        .iter()
-        .map(|(node, (term, place))| (*node, inference.surface(term, *place)))
-        .collect();
-    let mut inferred = inferred.into_iter();
-    fill_functions(&mut program.items, &mut inferred);
-    fill_fields(&mut program.items, &inference);
-    if !arrays.is_empty() {
-        fill_arrays(&mut program, &arrays);
-    }
-    Ok(program)
-}
 
 /// Writes the inferred types of the fields the translator makes up back.
 fn fill_fields(items: &mut [SItem], inference: &Inference) {
@@ -122,6 +92,8 @@ enum Term {
     Known(Type),
     /// An array, whose element type may still be unknown.
     Array(Box<Self>),
+    /// A product preserves each ordered field's independently inferred type.
+    Tuple(Vec<Self>),
 }
 
 #[derive(Clone)]
@@ -145,6 +117,14 @@ struct FieldOf {
     place: Option<Span>,
 }
 
+struct IndexOf {
+    object: Term,
+    index: f64,
+    literal: bool,
+    result: Term,
+    place: Option<Span>,
+}
+
 struct Inference {
     /// Constructors of every data type, in declaration order.
     data: Vec<(String, Vec<SCtor>)>,
@@ -152,6 +132,7 @@ struct Inference {
     bigints: HashSet<usize>,
     plus: Vec<Plus>,
     fields: Vec<FieldOf>,
+    indices: Vec<IndexOf>,
     signatures: HashMap<String, Signature>,
     context: Vec<String>,
     /// The types of the fields the translator makes up, which are inferred
@@ -160,6 +141,8 @@ struct Inference {
     /// Array literals with no element of their own, whose element type the
     /// rest of the program fixes, by node.
     empty_arrays: HashMap<*const SExpr, (Term, Option<Span>)>,
+    expression_terms: HashMap<*const SExpr, (Term, Option<Span>)>,
+    record_expressions: bool,
 }
 
 type Env = HashMap<String, Term>;
@@ -179,10 +162,13 @@ impl Inference {
             bigints: HashSet::new(),
             plus: Vec::new(),
             fields: Vec::new(),
+            indices: Vec::new(),
             signatures: HashMap::new(),
             context: vec![ROOT.to_owned()],
             field_terms: HashMap::new(),
             empty_arrays: HashMap::new(),
+            expression_terms: HashMap::new(),
+            record_expressions: false,
         }
     }
 
@@ -240,6 +226,12 @@ impl Inference {
             Some(Type::Array { element, .. }) => {
                 Term::Array(Box::new(self.declared(Some(element))))
             }
+            Some(Type::Tuple { elements }) => Term::Tuple(
+                elements
+                    .iter()
+                    .map(|element| self.declared(Some(element)))
+                    .collect(),
+            ),
             Some(other) => Term::Known(other.clone()),
         }
     }
@@ -261,6 +253,7 @@ impl Inference {
                 .then(|| "a bigint".to_owned()),
             Some(Term::Known(ty)) => Some(describe(ty)),
             Some(Term::Array(_)) => Some("an array".to_owned()),
+            Some(Term::Tuple(_)) => Some("a tuple".to_owned()),
         };
         if let Some(described) = described {
             return Err(type_error(
@@ -291,10 +284,28 @@ impl Inference {
                         place,
                     ));
                 }
+                if self.contains(other, *variable, &mut HashSet::new()) {
+                    return Err(type_error(
+                        "a recursive inferred type needs an explicit data type",
+                        place,
+                    ));
+                }
                 self.bindings[*variable] = Some(other.clone());
                 Ok(())
             }
             (Term::Array(x), Term::Array(y)) => self.unify(x, y, place),
+            (Term::Tuple(left), Term::Tuple(right)) => {
+                if left.len() != right.len() {
+                    return Err(type_error(
+                        "one tuple is used with two different lengths",
+                        place,
+                    ));
+                }
+                for (left, right) in left.iter().zip(right) {
+                    self.unify(left, right, place)?;
+                }
+                Ok(())
+            }
             (Term::Known(x), Term::Known(y)) if x == y || (is_integer(x) && is_integer(y)) => {
                 Ok(())
             }
@@ -361,11 +372,11 @@ impl Inference {
             self.context = path[..path.len() - 1].to_vec();
             for (param, term) in function.params.iter().zip(&signature.params) {
                 if let Some(default_value) = &param.default_value {
-                    let value = self.expr(default_value, &Env::new())?;
+                    let value = self.expr_expected(default_value, &Env::new(), Some(term))?;
                     self.unify(&value, term, param.span)?;
                 }
             }
-            let body = self.expr(&function.body, &env)?;
+            let body = self.expr_expected(&function.body, &env, Some(&ret))?;
             self.unify(&body, &ret, function.span)?;
         }
         self.context = vec![ROOT.to_owned()];
@@ -420,6 +431,7 @@ impl Inference {
                 }
             }
             self.fields = waiting;
+            progress |= self.solve_product_indices()?;
             // `.length` of a value nothing else fixes reads an array.
             let length = self.fields.iter().find(|constraint| {
                 constraint.field == "length"
@@ -429,6 +441,13 @@ impl Inference {
                 let (object, place) = (length.object.clone(), length.place);
                 let array = Term::Array(Box::new(self.fresh(false)));
                 self.unify(&object, &array, place)?;
+                progress = true;
+            }
+            if !progress && !self.indices.is_empty() {
+                let object = self.indices[0].object.clone();
+                let place = self.indices[0].place;
+                let element = self.fresh(false);
+                self.unify(&object, &Term::Array(Box::new(element)), place)?;
                 progress = true;
             }
             if !progress && !self.plus.is_empty() {
@@ -458,7 +477,9 @@ impl Inference {
     fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
         let name = match self.resolve(&constraint.object) {
             Term::Known(Type::Data { name }) => name,
-            Term::Array(_) | Term::Known(Type::String) if constraint.field == "length" => {
+            Term::Array(_) | Term::Tuple(_) | Term::Known(Type::String)
+                if constraint.field == "length" =>
+            {
                 self.unify(&constraint.result, &Term::Known(FLOAT), constraint.place)?;
                 return Ok(true);
             }
@@ -523,6 +544,12 @@ impl Inference {
                 element: Box::new(self.surface(&element, place)),
                 reference: false,
             },
+            Term::Tuple(elements) => Type::Tuple {
+                elements: elements
+                    .iter()
+                    .map(|element| self.surface(element, place))
+                    .collect(),
+            },
         }
     }
 
@@ -539,6 +566,15 @@ impl Inference {
     }
 
     fn expr(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {
+        let term = self.expr_inner(expr, env)?;
+        if self.record_expressions {
+            self.expression_terms
+                .insert(std::ptr::from_ref(expr), (term.clone(), expr.span));
+        }
+        Ok(term)
+    }
+
+    fn expr_inner(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {
         match &expr.node {
             // The 1 of `x++` has the type of `x`, a Number or a BigInt.
             SNode::Num { unit: true, .. } => Ok(self.fresh(false)),
@@ -575,7 +611,7 @@ impl Inference {
             SNode::Unary { op, arg } => {
                 let arg = self.expr(arg, env)?;
                 if *op == UnaryOp::Not {
-                    self.unify(&arg, &Term::Known(BOOL), expr.span)?;
+                    self.product_condition(&arg, expr.span)?;
                     return Ok(Term::Known(BOOL));
                 }
                 Ok(arg)
@@ -589,7 +625,7 @@ impl Inference {
                 otherwise,
             } => {
                 let condition = self.expr(cond, env)?;
-                self.unify(&condition, &Term::Known(BOOL), cond.span.or(expr.span))?;
+                self.product_condition(&condition, cond.span.or(expr.span))?;
                 let then = self.expr(then, env)?;
                 let otherwise = self.expr(otherwise, env)?;
                 self.unify(&otherwise, &then, expr.span)?;
@@ -673,6 +709,12 @@ impl Inference {
                 }
                 Ok(Term::Array(Box::new(element)))
             }
+            SNode::Tuple { items, .. } => Ok(Term::Tuple(
+                items
+                    .iter()
+                    .map(|item| self.expr(item, env))
+                    .collect::<Result<Vec<_>>>()?,
+            )),
             SNode::Math { op, args, .. } => {
                 // Math takes Numbers: an argument of no known type is one, and the checker refuses any other.
                 for item in args {
@@ -683,7 +725,7 @@ impl Inference {
                         Term::Array(element) => {
                             item.spread && matches!(self.resolve(element), Term::Var(_))
                         }
-                        Term::Known(_) => false,
+                        Term::Known(_) | Term::Tuple(_) => false,
                     };
                     if unknown {
                         let want = if item.spread {
@@ -703,17 +745,43 @@ impl Inference {
             }
             SNode::Index { object, index } => {
                 let element = self.fresh(false);
-                let array = self.expr(object, env)?;
-                self.unify(
-                    &array,
-                    &Term::Array(Box::new(element.clone())),
-                    object.span.or(expr.span),
-                )?;
+                let object_type = self.expr(object, env)?;
                 self.expr(index, env)?;
+                let position = super::products::read_javascript_product_index(index);
+                let literal = matches!(index.node, SNode::Num { .. })
+                    || matches!(&index.node, SNode::Unary { op: UnaryOp::Neg, arg } if matches!(arg.node, SNode::Num { .. }));
+                self.indices.push(IndexOf {
+                    object: object_type,
+                    index: position,
+                    literal,
+                    result: element.clone(),
+                    place: object.span.or(expr.span),
+                });
+                Ok(element)
+            }
+            SNode::TupleIndex { object, index } => {
+                let element = self.fresh(false);
+                let object_type = self.expr(object, env)?;
+                #[allow(clippy::cast_precision_loss)]
+                let position = *index as f64;
+                self.indices.push(IndexOf {
+                    object: object_type,
+                    index: position,
+                    literal: true,
+                    result: element.clone(),
+                    place: object.span.or(expr.span),
+                });
                 Ok(element)
             }
             SNode::Length { object, integer } => {
                 let array = self.expr(object, env)?;
+                if matches!(self.resolve(&array), Term::Tuple(_)) {
+                    return Ok(if *integer {
+                        self.fresh(true)
+                    } else {
+                        Term::Known(FLOAT)
+                    });
+                }
                 let element = self.fresh(false);
                 self.unify(&array, &Term::Array(Box::new(element)), expr.span)?;
                 Ok(if *integer {
@@ -724,31 +792,6 @@ impl Inference {
             }
             _ => Ok(self.fresh(false)),
         }
-    }
-
-    fn call(
-        &mut self,
-        path: &[String],
-        args: &[SExpr],
-        env: &Env,
-        place: Option<Span>,
-    ) -> Result<Term> {
-        let arg_terms = args
-            .iter()
-            .map(|arg| self.expr(arg, env))
-            .collect::<Result<Vec<_>>>()?;
-        #[allow(clippy::cast_precision_loss)]
-        let argument_count = args.len() as f64;
-        let Some(signature) = self
-            .signature(path)
-            .filter(|signature| accept_argument_count(signature.defaults.clone(), argument_count))
-        else {
-            return Ok(self.fresh(false));
-        };
-        for ((term, param), arg) in arg_terms.iter().zip(&signature.params).zip(args) {
-            self.unify(term, param, arg.span.or(place))?;
-        }
-        Ok(signature.ret)
     }
 
     fn binary(
@@ -908,6 +951,7 @@ fn describe_term(term: &Term) -> String {
     match term {
         Term::Known(ty) => describe(ty),
         Term::Array(_) => "an array".to_owned(),
+        Term::Tuple(_) => "a tuple".to_owned(),
         Term::Var(_) => "an unknown type".to_owned(),
     }
 }
