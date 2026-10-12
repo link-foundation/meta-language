@@ -105,12 +105,12 @@ Issue #3's seven explicit asks are all addressed:
 
 Raw GitHub data is stored in [`raw-data/`](./raw-data/):
 
-- `issue-3.json`, `issue-3-comments.json` - the planning issue and comments.
-- `issue-1.json`, `issue-1-comments.json` - the founding vision issue and comments.
-- `pr-2.json`, `pr-4.json` - the prior core PR and this case-study PR.
-- `implementation-issues-5-20.json` - current snapshots of the 16 filed and
+- `issue-3.lino`, `issue-3-comments.lino` - the planning issue and comments.
+- `issue-1.lino`, `issue-1-comments.lino` - the founding vision issue and comments.
+- `pr-2.lino`, `pr-4.lino` - the prior core PR and this case-study PR.
+- `implementation-issues-5-20.lino` - current snapshots of the 16 filed and
   closed implementation issues.
-- `implementation-prs-21-36.json` - current snapshots of the merged PRs that
+- `implementation-prs-21-36.lino` - current snapshots of the merged PRs that
   implemented issues #5-#20.
 
 ## Status

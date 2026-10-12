@@ -15,13 +15,13 @@ The fix changes `deploy-docs` to depend on `build`, gates it on `needs.build.res
 
 Raw GitHub and template comparison data is stored in this directory:
 
-- `raw-data/issue-38.json` and `raw-data/issue-38-comments.json`: issue details and the latest issue comments.
-- `raw-data/pr-39.json`, `raw-data/pr-39-conversation-comments.json`, `raw-data/pr-39-review-comments.json`, and `raw-data/pr-39-reviews.json`: prepared PR data.
-- `raw-data/main-run-24465255225.json` and `raw-data/main-run-24465255225.log.gz`: Rust template `main` release run that reproduced the issue.
-- `raw-data/downstream-meta-before-run-24983875003.json` and `.log.gz`: downstream `meta-ontology` run before the same fix.
-- `raw-data/downstream-meta-after-run-24985948212.json` and `.log.gz`: downstream `meta-ontology` run after the same fix.
-- `raw-data/pr-run-25212295127.json` and `.log.gz`: initial PR branch CI run.
-- `raw-data/js-template-issue-search.json` and `raw-data/rust-template-issue-search.json`: search results for matching template issues.
+- `raw-data/issue-38.lino` and `raw-data/issue-38-comments.lino`: issue details and the latest issue comments.
+- `raw-data/pr-39.lino`, `raw-data/pr-39-conversation-comments.lino`, `raw-data/pr-39-review-comments.lino`, and `raw-data/pr-39-reviews.lino`: prepared PR data.
+- `raw-data/main-run-24465255225.lino` and `raw-data/main-run-24465255225.log.gz`: Rust template `main` release run that reproduced the issue.
+- `raw-data/downstream-meta-before-run-24983875003.lino` and `.log.gz`: downstream `meta-ontology` run before the same fix.
+- `raw-data/downstream-meta-after-run-24985948212.lino` and `.log.gz`: downstream `meta-ontology` run after the same fix.
+- `raw-data/pr-run-25212295127.lino` and `.log.gz`: initial PR branch CI run.
+- `raw-data/js-template-issue-search.lino` and `raw-data/rust-template-issue-search.lino`: search results for matching template issues.
 - `template-data/rust-template-release-before.yml` and `template-data/rust-template-release-after.yml`: before/after workflow snapshots.
 - `template-data/js-template-release.yml`, `template-data/js-template-links.yml`, and template tree files: JavaScript template comparison inputs.
 
@@ -109,14 +109,14 @@ Rust template:
 
 - Before fix: `template-data/rust-template-release-before.yml` used `cancel-in-progress: true` and `deploy-docs.needs: [auto-release, manual-release]`.
 - After fix: `template-data/rust-template-release-after.yml` uses `cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}` and `deploy-docs.needs: [build]`.
-- Search results in `raw-data/rust-template-issue-search.json` found the existing tracked issue: #38. No additional Rust template issue is needed.
+- Search results in `raw-data/rust-template-issue-search.lino` found the existing tracked issue: #38. No additional Rust template issue is needed.
 
 JavaScript template:
 
 - `template-data/js-template-release.yml` has no documentation deployment job and no GitHub Pages publication job, so the exact docs-release coupling bug does not exist there.
 - The JavaScript template already uses `cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}`, which avoids cancelling in-progress PR checks while keeping stale `main` release runs under control.
 - The JavaScript template has a `validate-docs` job for documentation-only validation, but that is a validation concern rather than a deployment concern.
-- Search results in `raw-data/js-template-issue-search.json` found no matching issue to file or update.
+- Search results in `raw-data/js-template-issue-search.lino` found no matching issue to file or update.
 
 ## Online Research
 

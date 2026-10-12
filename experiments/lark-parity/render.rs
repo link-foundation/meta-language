@@ -1,18 +1,20 @@
-//! Prints every case of `cases.json` imported by the Rust Lark importer in the
+//! Prints every case of `cases.lino` imported by the Rust Lark importer in the
 //! runtime-neutral rendering shared with `render.mjs`, so the two outputs can
 //! be diffed line for line.
 
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
 
-use meta_language::{CharClassItem, GrammarExpr, GrammarImportError, RuleKind, import_lark};
+use meta_language::{
+    CharClassItem, GrammarExpr, GrammarImportError, RuleKind, import_lark, read_project_data_file,
+};
 
 fn main() {
     let path = std::env::args()
         .nth(1)
-        .unwrap_or_else(|| "cases.json".to_owned());
-    let text = std::fs::read_to_string(&path).expect("cases.json is readable");
-    let cases: Vec<(String, String)> = serde_json::from_str(&text).expect("cases.json is valid");
+        .unwrap_or_else(|| "cases.lino".to_owned());
+    let cases: Vec<(String, String)> =
+        read_project_data_file(&path).expect("the linked cases are readable and valid");
     let mut output = String::new();
     for (name, source) in cases {
         writeln!(output, "== {name}").unwrap();
@@ -21,7 +23,9 @@ fn main() {
                 writeln!(
                     output,
                     "format {}",
-                    grammar.source_format().map_or("none", |format| format.as_str())
+                    grammar
+                        .source_format()
+                        .map_or("none", |format| format.as_str())
                 )
                 .unwrap();
                 writeln!(output, "start {}", grammar.start().unwrap_or("none")).unwrap();
@@ -33,8 +37,13 @@ fn main() {
                         continue;
                     }
                     let rule = grammar.rule(name).expect("named rule exists");
-                    writeln!(output, "rule {name} = {} {}", kind(rule.kind()), render(rule.expr()))
-                        .unwrap();
+                    writeln!(
+                        output,
+                        "rule {name} = {} {}",
+                        kind(rule.kind()),
+                        render(rule.expr())
+                    )
+                    .unwrap();
                     if let Some(doc) = rule.doc() {
                         writeln!(output, "  doc {}", quote(doc)).unwrap();
                     }

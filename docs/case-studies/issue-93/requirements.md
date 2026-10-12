@@ -2,7 +2,7 @@
 
 Every requirement extracted verbatim-in-intent from
 [issue #93](https://github.com/link-foundation/meta-language/issues/93) and its
-body (see [`raw-data/issue-93.json`](./raw-data/issue-93.json)), split into the
+body (see [`raw-data/issue-93.lino`](./raw-data/issue-93.lino)), split into the
 smallest independently-verifiable units. Two kinds are tracked:
 
 - **Product requirements (`P-*`)** — capabilities the *meta-language system*

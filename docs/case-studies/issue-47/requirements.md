@@ -8,7 +8,7 @@ the implementation state of this repository on branch
 `issue-47-76af108c0f24` as of 2026-06-10.
 
 The issue body snapshot is stored at
-[`raw-data/issue-47.json`](./raw-data/issue-47.json). The register style follows
+[`raw-data/issue-47.lino`](./raw-data/issue-47.lino). The register style follows
 the prior [issue #3 requirements register](../issue-3/requirements.md).
 
 This file is the initial audit snapshot from 2026-06-10. The implementation
@@ -48,7 +48,7 @@ below are kept as traceable evidence for why the sub-issues were filed.
 | R-18 | Everything replaceable and configurable | Partial | `src/configuration.rs:ParseConfiguration` (trivia, region detection, language ID backend, formalization, direction) | Grammar set, parser dispatch, reconstruction, and storage backend are not swappable |
 | R-19 | Nothing deferred or unimplemented in vision/roadmap | Partial | Issues #37/#39 closed; registries gated by tests (`tests/unit/parity_corpora.rs`); roadmap deferrals are tied to open issues #47, #50, and #70 | Full SQL dialect keys, Delphi-specific compiler coverage, and complete upstream corpus copying remain future work under tracked issues |
 | R-20 | 100% test coverage copying competitor test cases | Partial | `cargo llvm-cov --fail-under-lines 84.30` job in `.github/workflows/release.yml`; 68 provenance-bearing `PARITY_FIXTURES` | The current wave ports representative assertion shapes; complete upstream test-suite copying remains under issue #47 |
-| R-21 | Create sub-issues with blocked-by markings | Missing | `raw-data/issue-47.json`: `sub_issues_summary.total = 0`, `blocked_by = 0` | No sub-issues or dependency ordering exist for issue #47 |
+| R-21 | Create sub-issues with blocked-by markings | Missing | `raw-data/issue-47.lino`: `sub_issues_summary.total = 0`, `blocked_by = 0` | No sub-issues or dependency ordering exist for issue #47 |
 | R-22 | Case-study compilation in `docs/case-studies/issue-47` | Partial | [`raw-data/`](./raw-data/) holds issue, comments, all-issues, PR #48 snapshots | No analysis, online research, solution plans, or proposed-issues documents (this register is the first analysis artifact) |
 
 ## Detailed Findings
@@ -392,10 +392,10 @@ so "most of test cases from our competitors" is not met.
 
 **Status: Missing.**
 The issue snapshot itself records the absence:
-[`raw-data/issue-47.json`](./raw-data/issue-47.json) shows
+[`raw-data/issue-47.lino`](./raw-data/issue-47.lino) shows
 `"sub_issues_summary": {"total": 0, ...}` and
 `"issue_dependencies_summary": {"blocked_by": 0, ...}`, and
-[`raw-data/all-issues.json`](./raw-data/all-issues.json) contains no
+[`raw-data/all-issues.lino`](./raw-data/all-issues.lino) contains no
 issues filed for issue #47 aspects. Unlike issue #3 (which produced
 proposed-issue specs and filed #5-#20), no `proposed-issues/` folder or
 filed sub-issues exist for this task.
@@ -405,8 +405,8 @@ filed sub-issues exist for this task.
 > "make sure we compile that data to `./docs/case-studies/issue-{id}` folder, and use it to do deep case study analysis ... list of each and all requirements ... propose possible solutions and solution plans"
 
 **Status: Partial.**
-Raw data is collected: [`raw-data/`](./raw-data/) holds `issue-47.json`,
-`issue-47-comments.json`, `all-issues.json`, and `pr-48.json`.
+Raw data is collected: [`raw-data/`](./raw-data/) holds `issue-47.lino`,
+`issue-47-comments.lino`, `all-issues.lino`, and `pr-48.lino`.
 
 **Gap.** Compared with the issue #3 case study
 (`../issue-3/`: `requirements.md`, `solution-plans.md`,
