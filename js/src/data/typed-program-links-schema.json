@@ -89,5 +89,6 @@
     "binds": "pattern bindings",
     "sourceLanguage": "source language", "schemaVersion": "schema version", "utf16Strings": "Unicode code unit strings"
   },
-  "references": { "binding": "binding reference", "declaration": "declaration reference", "datatype": "datatype declaration reference", "constructor": "constructor declaration reference" }
+  "referenceAliases": { "datatype declaration reference": "datatype" },
+  "references": { "binding": "binding reference", "declaration": "declaration reference", "datatype": "data type declaration reference", "constructor": "constructor declaration reference" }
 }

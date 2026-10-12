@@ -313,7 +313,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         }
         if (kase.pattern.k === 'ctor') {
           const datatype = declarations.get(kase.pattern.data);
-          const datatypeTarget = references.get(kase.pattern)?.get('datatype declaration reference');
+          const datatypeTarget = targetOf(kase.pattern, 'datatype');
           const constructorTarget = references.get(kase.pattern)?.get('constructor declaration reference');
           if (datatypeTarget && datatypeTarget !== datatype) throw new TypeError('a linked pattern targets another datatype');
           if (constructorTarget && constructorTarget !== datatype?.ctors.find(constructor => constructor.name === kase.pattern.ctor)) throw new TypeError('a linked pattern targets another constructor');

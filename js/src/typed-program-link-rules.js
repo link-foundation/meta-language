@@ -23,8 +23,9 @@ export function readProgramScalarKind(term) {
 export function readProgramReferenceRole(term) {
   if (term === "binding reference") return "binding";
   if (term === "declaration reference") return "declaration";
-  if (term === "datatype declaration reference") return "datatype";
+  if (term === "data type declaration reference") return "datatype";
   if (term === "constructor declaration reference") return "constructor";
+  if (term === "datatype declaration reference") return "datatype";
   return "";
 }
 
@@ -94,9 +95,11 @@ export function readProgramReferenceSourceField(label, constructKind, typeKind) 
   if (label === "binding reference" && constructKind === "var" && typeKind === "") return "name";
   if (label === "declaration reference" && constructKind === "call" && typeKind === "") return "fn";
   if (label === "declaration reference" && constructKind === "functionRef" && typeKind === "") return "fn";
+  if (label === "data type declaration reference" && constructKind === "" && typeKind === "data") return "name";
+  if (label === "data type declaration reference" && constructKind === "ctor" && typeKind === "") return "data";
+  if (label === "constructor declaration reference" && constructKind === "ctor" && typeKind === "") return "ctor";
   if (label === "datatype declaration reference" && constructKind === "" && typeKind === "data") return "name";
   if (label === "datatype declaration reference" && constructKind === "ctor" && typeKind === "") return "data";
-  if (label === "constructor declaration reference" && constructKind === "ctor" && typeKind === "") return "ctor";
   return "";
 }
 
@@ -104,8 +107,9 @@ export function readProgramReferenceSourceField(label, constructKind, typeKind) 
 export function readProgramReferenceTargetField(label) {
   if (label === "binding reference") return "name";
   if (label === "declaration reference") return "fullName";
-  if (label === "datatype declaration reference") return "fullName";
+  if (label === "data type declaration reference") return "fullName";
   if (label === "constructor declaration reference") return "name";
+  if (label === "datatype declaration reference") return "fullName";
   return "";
 }
 
@@ -175,7 +179,7 @@ export function acceptProgramExpressionOperation(kind, operation) {
 
 /** @param {string} label @returns {boolean} */
 export function acceptProgramReferenceField(label) {
-  return label === "binding reference" || label === "declaration reference" || label === "datatype declaration reference" || label === "constructor declaration reference";
+  return label === "binding reference" || label === "declaration reference" || label === "data type declaration reference" || label === "constructor declaration reference" || label === "datatype declaration reference";
 }
 
 /** @param {string} name @returns {boolean} */

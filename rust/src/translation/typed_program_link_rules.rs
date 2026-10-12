@@ -41,10 +41,12 @@ pub fn read_program_reference_role(term: &str) -> String {
         String::from("binding")
     } else if term == "declaration reference" {
         String::from("declaration")
-    } else if term == "datatype declaration reference" {
+    } else if term == "data type declaration reference" {
         String::from("datatype")
     } else if term == "constructor declaration reference" {
         String::from("constructor")
+    } else if term == "datatype declaration reference" {
+        String::from("datatype")
     } else {
         String::from("")
     }
@@ -185,6 +187,18 @@ pub fn read_program_reference_source_field(
         && (type_kind == ""))
     {
         String::from("fn")
+    } else if ((label == "data type declaration reference" && (construct_kind == ""))
+        && (type_kind == "data"))
+    {
+        String::from("name")
+    } else if ((label == "data type declaration reference" && (construct_kind == "ctor"))
+        && (type_kind == ""))
+    {
+        String::from("data")
+    } else if ((label == "constructor declaration reference" && (construct_kind == "ctor"))
+        && (type_kind == ""))
+    {
+        String::from("ctor")
     } else if ((label == "datatype declaration reference" && (construct_kind == ""))
         && (type_kind == "data"))
     {
@@ -193,10 +207,6 @@ pub fn read_program_reference_source_field(
         && (type_kind == ""))
     {
         String::from("data")
-    } else if ((label == "constructor declaration reference" && (construct_kind == "ctor"))
-        && (type_kind == ""))
-    {
-        String::from("ctor")
     } else {
         String::from("")
     }
@@ -209,10 +219,12 @@ pub fn read_program_reference_target_field(label: &str) -> String {
         String::from("name")
     } else if label == "declaration reference" {
         String::from("fullName")
-    } else if label == "datatype declaration reference" {
+    } else if label == "data type declaration reference" {
         String::from("fullName")
     } else if label == "constructor declaration reference" {
         String::from("name")
+    } else if label == "datatype declaration reference" {
+        String::from("fullName")
     } else {
         String::from("")
     }
@@ -406,8 +418,9 @@ pub fn accept_program_expression_operation(kind: &str, operation: &str) -> bool 
 pub fn accept_program_reference_field(label: &str) -> bool {
     label == "binding reference"
         || label == "declaration reference"
-        || label == "datatype declaration reference"
+        || label == "data type declaration reference"
         || label == "constructor declaration reference"
+        || label == "datatype declaration reference"
 }
 
 /// Read the corresponding decision of the shared typed program links schema.

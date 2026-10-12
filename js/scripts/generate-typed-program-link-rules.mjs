@@ -10,6 +10,11 @@ import { DecoratorSet } from '../src/decorators.js';
 const schemaSource = new URL('../src/data/typed-program-links-schema.json', import.meta.url);
 const schemaText = readFileSync(schemaSource, 'utf8');
 const schema = JSON.parse(schemaText);
+const referenceRoles = Object.fromEntries(Object.entries(schema.references).map(([role, label]) => [label, role]));
+for (const [label, role] of Object.entries(schema.referenceAliases ?? {})) {
+  if (Object.hasOwn(referenceRoles, label) || !Object.hasOwn(schema.references, role)) throw new Error('a shared reference alias must name one existing role and a distinct label');
+  referenceRoles[label] = role;
+}
 const classify = (name, table) => `/** @param {string} term @returns {string} */\nexport function ${name}(term) {\n`
   + Object.entries(table).map(([kind, term]) => `  if (term === ${JSON.stringify(term)}) return ${JSON.stringify(kind)};`).join('\n')
   + '\n  return "";\n}\n';
@@ -17,8 +22,8 @@ const decide = (name, table, parameter = 'kind') => `/** @param {string} ${param
   + Object.entries(table).map(([kind, value]) => `  if (${parameter} === ${JSON.stringify(kind)}) return ${JSON.stringify(value)};`).join('\n')
   + '\n  return "";\n}\n';
 const referenceSource = '/** @param {string} label @param {string} constructKind @param {string} typeKind @returns {string} */\nexport function readProgramReferenceSourceField(label, constructKind, typeKind) {\n'
-  + Object.entries(schema.referenceSourceFields).flatMap(([role, selections]) => selections.map(([construct, type, field]) =>
-    `  if (label === ${JSON.stringify(schema.references[role])} && constructKind === ${JSON.stringify(construct)} && typeKind === ${JSON.stringify(type)}) return ${JSON.stringify(field)};`)).join('\n')
+  + Object.entries(referenceRoles).flatMap(([label, role]) => schema.referenceSourceFields[role].map(([construct, type, field]) =>
+    `  if (label === ${JSON.stringify(label)} && constructKind === ${JSON.stringify(construct)} && typeKind === ${JSON.stringify(type)}) return ${JSON.stringify(field)};`)).join('\n')
   + '\n  return "";\n}\n';
 const neutralFields = '/** @param {string} context @param {string} field @returns {string} */\nexport function readProgramNeutralFieldDefault(context, field) {\n'
   + Object.entries(schema.neutralFieldDefaults).flatMap(([context, fields]) => Object.entries(fields).map(([field, value]) =>
@@ -28,18 +33,18 @@ const neutralFields = '/** @param {string} context @param {string} field @return
 const source = '// Generated from data/typed-program-links-schema.json. Do not edit by hand.\n\n'
   + classify('readProgramContainerKind', schema.containers) + '\n'
   + classify('readProgramScalarKind', schema.scalars) + '\n'
-  + classify('readProgramReferenceRole', schema.references) + '\n'
+  + decide('readProgramReferenceRole', referenceRoles, 'term') + '\n'
   + decide('readProgramPatternBindingForm', schema.patternBindingForms) + '\n'
   + decide('readProgramExpressionOperandFields', Object.fromEntries(Object.entries(schema.expressionOperands).map(([kind, fields]) => [kind, fields.join(' ')]))) + '\n'
   + referenceSource + '\n'
-  + decide('readProgramReferenceTargetField', Object.fromEntries(Object.entries(schema.referenceTargetFields).map(([role, field]) => [schema.references[role], field])), 'label') + '\n'
+  + decide('readProgramReferenceTargetField', Object.fromEntries(Object.entries(referenceRoles).map(([label, role]) => [label, schema.referenceTargetFields[role]])), 'label') + '\n'
   + neutralFields + '\n'
   + classify('readProgramExpressionProjection', Object.fromEntries(Object.keys(schema.expressionProjections).map((kind) => [kind, kind]))) + '\n'
   + '/** @param {string} kind @param {string} operation @returns {boolean} */\nexport function acceptProgramExpressionOperation(kind, operation) {\n'
   + Object.entries(schema.expressionOperations).map(([kind, operations]) => `  if (kind === ${JSON.stringify(kind)}) return ${operations.map((operation) => `operation === ${JSON.stringify(operation)}`).join(' || ')};`).join('\n')
   + '\n  return false;\n}\n\n'
   + '/** @param {string} label @returns {boolean} */\nexport function acceptProgramReferenceField(label) {\n'
-  + `  return ${Object.values(schema.references).map(label => `label === ${JSON.stringify(label)}`).join(' || ')};\n}\n\n`
+  + `  return ${Object.keys(referenceRoles).map(label => `label === ${JSON.stringify(label)}`).join(' || ')};\n}\n\n`
   + '/** @param {string} name @returns {boolean} */\nexport function isUnsafeProgramField(name) {\n'
   + '  return name === "__proto__" || name === "constructor" || name === "prototype";\n}\n\n'
   + '/** @param {string} term @param {string} revision @param {string} arity @returns {boolean} */\nexport function acceptProgramSchemaRoot(term, revision, arity) {\n'

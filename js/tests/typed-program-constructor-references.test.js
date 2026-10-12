@@ -6,7 +6,7 @@ import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks
 import { encodeTypedProgramLinks } from '../src/typed-program-links.js';
 import { checkProgram } from '../src/translation/check.js';
 import { parseRust } from '../src/translation/rust.js';
-import { readProgramNeutralFieldDefault, readProgramReferenceSourceField, readProgramReferenceTargetField } from '../src/typed-program-link-rules.js';
+import { readProgramNeutralFieldDefault, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramReferenceRole, acceptProgramReferenceField } from '../src/typed-program-link-rules.js';
 
 const source = 'enum Value { Empty, Full(i64) } fn make() -> Value { Value::Full(7) } fn main() {}';
 const reload = archive => ({ ...archive, network: LinkNetwork.fromLino(archive.network.toLino()) });
@@ -20,7 +20,7 @@ const value = archive => vm.runInNewContext(`${emitTypedProgramLinks(archive.net
 test('constructor expressions retain their datatype and constructor as distinct owned references', () => {
   const archive = reload(createTypedProgramLinks(source, 'Rust'));
   const expression = construct(archive.network, 'ctor');
-  const datatype = field(archive.network, expression, 'datatype declaration reference').child;
+  const datatype = field(archive.network, expression, 'data type declaration reference').child;
   const constructor = field(archive.network, expression, 'constructor declaration reference').child;
   assert.equal(scalar(archive.network, field(archive.network, datatype, 'construct kind').child), 'data');
   assert.equal(scalar(archive.network, field(archive.network, constructor, 'name').child), 'Full');
@@ -45,7 +45,7 @@ test('one constructor declaration rename updates every source-free construction 
 test('datatype spelling changes preserve owned references through signatures and constructor result types', () => {
   let archive = reload(createTypedProgramLinks(source, 'Rust'));
   const expression = construct(archive.network, 'ctor');
-  const datatype = field(archive.network, expression, 'datatype declaration reference').child;
+  const datatype = field(archive.network, expression, 'data type declaration reference').child;
   rename(archive.network, field(archive.network, datatype, 'name').child, 'Renamed');
   rename(archive.network, field(archive.network, datatype, 'full name').child, 'Renamed');
   const mapping = archive.network.fieldRelations().find(relation => relation.label === 'declaration mapping').child;
@@ -74,11 +74,11 @@ test('datatype references cannot target functions and duplicate scalar/reference
   const archive = reload(createTypedProgramLinks(source, 'Rust'));
   const expression = construct(archive.network, 'ctor');
   const function_ = construct(archive.network, 'fn');
-  retarget(field(archive.network, expression, 'datatype declaration reference'), function_);
+  retarget(field(archive.network, expression, 'data type declaration reference'), function_);
   assert.throws(() => decodeTypedProgramLinks(archive.network, archive.root), /datatype declaration/u);
   const duplicate = reload(createTypedProgramLinks(source, 'Rust'));
   const constructor = construct(duplicate.network, 'ctor');
-  const datatype = field(duplicate.network, constructor, 'datatype declaration reference').child;
+  const datatype = field(duplicate.network, constructor, 'data type declaration reference').child;
   duplicate.network.insertFieldRelation(constructor, 'data', field(duplicate.network, datatype, 'full name').child);
   assert.throws(() => decodeTypedProgramLinks(duplicate.network, duplicate.root), /duplicate source field/u);
 });
@@ -134,6 +134,13 @@ test('generated reference and neutral-field policies distinguish datatype names 
   assert.equal(readProgramReferenceSourceField('constructor declaration reference', 'ctor', ''), 'ctor');
   assert.equal(readProgramReferenceSourceField('constructor declaration reference', '', 'data'), '');
   assert.equal(readProgramReferenceTargetField('datatype declaration reference'), 'fullName');
+  assert.equal(readProgramReferenceRole('data type declaration reference'), 'datatype');
+  assert.equal(readProgramReferenceRole('datatype declaration reference'), 'datatype');
+  assert.equal(acceptProgramReferenceField('data type declaration reference'), true);
+  assert.equal(acceptProgramReferenceField('datatype declaration reference'), true);
+  assert.equal(readProgramReferenceSourceField('data type declaration reference', '', 'data'), 'name');
+  assert.equal(readProgramReferenceSourceField('data type declaration reference', 'ctor', ''), 'data');
+  assert.equal(readProgramReferenceTargetField('data type declaration reference'), 'fullName');
   assert.equal(readProgramReferenceTargetField('constructor declaration reference'), 'name');
   assert.equal(readProgramNeutralFieldDefault('expression:ctor', 'frozen'), 'false');
   assert.equal(readProgramNeutralFieldDefault('pattern:ctor', 'frozen'), '');
@@ -141,6 +148,29 @@ test('generated reference and neutral-field policies distinguish datatype names 
   assert.equal(readProgramNeutralFieldDefault('expression:ctor', 'generated'), '');
   assert.equal(readProgramNeutralFieldDefault('expression:ctor', 'span'), 'null');
   assert.equal(readProgramNeutralFieldDefault('type:data', 'span'), '');
+});
+
+test('the former datatype relation spelling reloads as an explicit alias of the canonical role', () => {
+  let archive = reload(createTypedProgramLinks(source, 'Rust'));
+  const canonical = archive.network.fieldRelations().filter(relation => relation.label === 'data type declaration reference');
+  assert.ok(canonical.length > 0);
+  for (const relation of canonical) {
+    const label = relation.link.references()[1];
+    archive.network.link(label).setMetadata(archive.network.link(label).metadata().withTerm('datatype declaration reference'));
+  }
+  archive = reload(archive);
+  assert.ok(archive.network.fieldRelations().some(relation => relation.label === 'datatype declaration reference'));
+  assert.equal(value(archive), 7n);
+  assert.equal(decodeTypedProgramLinks(archive.network, archive.root).declarations.get('make').body.data, 'Value');
+  assert.match(emitTypedProgramLinks(archive.network, archive.root, 'Rust').code, /Value::Full\(7i64\)/u);
+});
+
+test('canonical and alias datatype relations cannot claim the same source field twice', () => {
+  const archive = reload(createTypedProgramLinks(source, 'Rust'));
+  const expression = construct(archive.network, 'ctor');
+  const target = field(archive.network, expression, 'data type declaration reference').child;
+  archive.network.insertFieldRelation(expression, 'datatype declaration reference', target);
+  assert.throws(() => decodeTypedProgramLinks(archive.network, archive.root), /duplicate source field/u);
 });
 
 test('an uninhabited datatype retains its declaration and identity-function signature', () => {

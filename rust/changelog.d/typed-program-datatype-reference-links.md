@@ -3,3 +3,5 @@ references through source-free serialization and reload. Constructor and type
 renames follow owned references; lexical pattern binders retain their scoped
 identities. Reload checks declaration order, constructor ownership and argument
 types, duplicate field aliases, conflicting semantic roles, and traversal bounds.
+The canonical relation label is `data type declaration reference`; the former
+`datatype declaration reference` spelling remains an explicitly admitted alias.
