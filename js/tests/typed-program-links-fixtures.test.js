@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
+import { readProjectData } from '../scripts/project-data.mjs';
 import { typedProgramLinksFixture } from '../scripts/generate-typed-program-links-fixtures.mjs';
 import { LinkNetwork } from '../src/network.js';
 import { LinkId } from '../src/primitives.js';
@@ -10,7 +10,7 @@ import { decodeTypedProgramLinks } from '../src/typed-program-links.js';
 import { projectLinkedProgramExpression } from '../src/typed-program-expression-projection.js';
 import { checkProgram } from '../src/translation/check.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/typed-program-links.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/typed-program-links.json', import.meta.url));
 test('bounded typed graph fixtures reload without source and preserve behavior', () => {
   assert.deepEqual(typedProgramLinksFixture(), fixture);
   for (const entry of [...fixture.cases, ...fixture.derivedCases]) {

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Small source-free graphs with independently executed JavaScript behavior.
-import { readFileSync, writeFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { createTypedProgramLinks, decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
 
 const inputs = [
@@ -152,8 +152,7 @@ export function typedProgramLinksFixture() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const path = new URL('../../parity/fixtures/typed-program-links.json', import.meta.url);
-  const text = JSON.stringify(typedProgramLinksFixture(), null, 2) + '\n';
-  if (process.argv.includes('--check')) {
-    if (readFileSync(path, 'utf8') !== text) throw new Error('typed program link fixtures are stale');
-  } else writeFileSync(path, text);
+  const fixture = typedProgramLinksFixture();
+  if (process.argv.includes('--check')) checkProjectData(path, fixture);
+  else writeProjectData(path, fixture);
 }

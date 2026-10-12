@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
+import { readProjectData } from '../scripts/project-data.mjs';
 import { LinkNetwork } from '../src/network.js';
 import { LinkId } from '../src/primitives.js';
 import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities, TYPED_PROGRAM_LINKS_SCHEMA } from '../src/typed-program-links.js';
 import { applyAlgebraicProgramEdits, typedProgramAlgebraicFixture } from '../scripts/generate-typed-program-algebraic-fixtures.mjs';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/typed-program-algebraic.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/typed-program-algebraic.json', import.meta.url));
 function run(code) {
   const output = [];
   vm.runInNewContext(code, { console: { log: (...values) => output.push(values.map(String).join(' ')) }, process: { argv: [] } }, { timeout: 1000 });

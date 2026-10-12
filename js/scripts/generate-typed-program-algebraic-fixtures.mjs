@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Source-free algebraic examples with independent JavaScript source behavior.
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
+import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { LinkId } from '../src/primitives.js';
 import { LinkNetwork } from '../src/network.js';
 import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, TYPED_PROGRAM_LINKS_SCHEMA } from '../src/typed-program-links.js';
@@ -56,7 +56,7 @@ function graphCase(input, language) {
   assert.equal(decoded.items[0], decoded.declarations.get(decoded.items[0].fullName));
   assert.ok([...network.links()].every(link => !link.metadata().definition?.includes(source)), 'the graph carries no original source');
   return { id: `${language.toLowerCase()}-${input.id}`, program: input.id, language, source,
-    oracleSource: input.javascript, output: input.output, root: archive.root.asU64(), lino: network.toLino(), javascript, rust };
+    oracleSource: input.javascript, output: [...input.output], root: archive.root.asU64(), lino: network.toLino(), javascript, rust };
 }
 
 function graph(case_) {
@@ -170,7 +170,9 @@ function invalidEdits(cases) {
 
 export function typedProgramAlgebraicFixture() {
   const cases = inputs.flatMap(input => ['Rust', 'JavaScript'].map(language => graphCase(input, language)));
-  const mutations = edits(cases);
+  // Recorded observations remain independent arrays, as the previous JSON
+  // storage decoded them; shared Links identities belong to the program graphs.
+  const mutations = edits(cases).map(mutation => ({ ...mutation, output: [...mutation.output] }));
   for (const mutation of mutations) {
     const original = cases.find(case_ => case_.id === mutation.case);
     const archive = graph(original);
@@ -191,7 +193,7 @@ export function typedProgramAlgebraicFixture() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const path = new URL('../../parity/fixtures/typed-program-algebraic.json', import.meta.url);
-  const text = `${JSON.stringify(typedProgramAlgebraicFixture(), null, 2)}\n`;
-  if (process.argv.includes('--check')) assert.equal(readFileSync(path, 'utf8'), text, 'algebraic link fixtures are stale');
-  else writeFileSync(path, text);
+  const fixture = typedProgramAlgebraicFixture();
+  if (process.argv.includes('--check')) checkProjectData(path, fixture);
+  else writeProjectData(path, fixture);
 }

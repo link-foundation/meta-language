@@ -2,7 +2,7 @@
 use super::issue_195_translation_pairs::TemporaryDirectory;
 use meta_language::{
     LinkId, LinkNetwork, LinkType, create_typed_program_links, decode_typed_program_links,
-    emit_typed_program_links, percent_encode_links_text,
+    emit_typed_program_links, percent_encode_links_text, read_structured_data_lino,
 };
 use serde_json::Value;
 use std::collections::BTreeSet;
@@ -11,8 +11,8 @@ use std::path::Path;
 use std::process::Command;
 
 fn fixture() -> Value {
-    serde_json::from_str(include_str!(
-        "../../../parity/fixtures/typed-program-algebraic.json"
+    read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/typed-program-algebraic.lino"
     ))
     .unwrap()
 }

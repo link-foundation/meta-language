@@ -1,14 +1,14 @@
 //! Shared source-free graph reload, edit and rejection cases.
 use meta_language::{
     LinkId, LinkNetwork, LinkType, create_typed_program_links, decode_typed_program_links,
-    emit_typed_program_links, percent_encode_links_text,
+    emit_typed_program_links, percent_encode_links_text, read_structured_data_lino,
 };
 use serde_json::Value;
 use std::process::Command;
 
 fn fixture() -> Value {
-    serde_json::from_str(include_str!(
-        "../../../parity/fixtures/typed-program-links.json"
+    read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/typed-program-links.lino"
     ))
     .unwrap()
 }
