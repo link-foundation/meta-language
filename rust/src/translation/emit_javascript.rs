@@ -81,8 +81,8 @@ fn ctor_object(ctor: &Ctor, args: &[String]) -> String {
         format!(", {}", fields.join(", "))
     };
     format!(
-        "Object.freeze({{ $: '{}'{fields} }})",
-        ctor.name.replace('\'', "\\'")
+        "Object.freeze({{ $: {}{fields} }})",
+        json_string(&ctor.name)
     )
 }
 
@@ -625,7 +625,7 @@ impl<'p> JavaScriptEmitter<'p> {
                     })
                 })
                 .collect();
-            lines.push(format!("  case '{}': {{", ctor.name.replace('\'', "\\'")));
+            lines.push(format!("  case {}: {{", json_string(&ctor.name)));
             body.extend(self.statements(&kase.body)?);
             lines.push(indent(&body.join("\n"), 2));
             lines.push("  }".to_owned());

@@ -1,0 +1,9 @@
+{
+  "tags": [
+    "plain",
+    "backslash\\and'apostrophe",
+    "double\"quote\nand-line-break",
+    "\\'); globalThis.injected = true; //",
+    "Unicode \u2028 separator \u2029"
+  ]
+}

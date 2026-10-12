@@ -262,7 +262,7 @@ class JavaScriptEmitter {
 
   ctorObject(entry, ctor, args) {
     const fields = ctor.fields.map((field, index) => `${fieldKey(field.name)}: ${args[index]}`);
-    return `Object.freeze({ $: '${ctor.name.replace(/'/gu, "\\'")}'${fields.length ? `, ${fields.join(', ')}` : ''} })`;
+    return `Object.freeze({ $: ${JSON.stringify(ctor.name)}${fields.length ? `, ${fields.join(', ')}` : ''} })`;
   }
 
   prop(prop) {
@@ -362,7 +362,7 @@ class JavaScriptEmitter {
       const binds = kase.pattern.binds
         .map((bind, index) => (bind ? `const ${bind} = ${subject}.${fieldKey(ctor.fields[index].name)};` : null))
         .filter(Boolean);
-      lines.push(`  case '${ctor.name.replace(/'/gu, "\\'")}': {`);
+      lines.push(`  case ${JSON.stringify(ctor.name)}: {`);
       lines.push(indent([...binds, ...this.statements(kase.body)].join('\n'), 2));
       lines.push('  }');
     }

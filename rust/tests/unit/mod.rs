@@ -157,6 +157,7 @@ mod storage;
 mod substitution;
 mod translation_arrays;
 mod translation_console_format;
+mod translation_constructor_tags;
 mod translation_defaults;
 mod translation_emit_javascript;
 mod translation_emit_lean;
