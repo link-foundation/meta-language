@@ -1,23 +1,205 @@
 {
   "absences": [
-    { "operation": "arithmetic", "absence": "null", "value": "zero", "expressions": { "JavaScript": "0", "Rust": "0f64", "Lean": "(0 : Float)", "Rocq": "0%float" } },
-    { "operation": "arithmetic", "absence": "undefined", "value": "not-a-number", "expressions": { "JavaScript": "NaN", "Rust": "f64::NAN", "Lean": "(0 / 0 : Float)", "Rocq": "PrimFloat.nan" } },
-    { "operation": "array-index", "absence": "null", "value": "not-a-number", "expressions": { "JavaScript": "NaN", "Rust": "f64::NAN", "Lean": "(0 / 0 : Float)", "Rocq": "PrimFloat.nan" } },
-    { "operation": "array-index", "absence": "undefined", "value": "not-a-number", "expressions": { "JavaScript": "NaN", "Rust": "f64::NAN", "Lean": "(0 / 0 : Float)", "Rocq": "PrimFloat.nan" } }
+    {
+      "operation": "arithmetic",
+      "absence": "null",
+      "value": "zero",
+      "expressions": {
+        "JavaScript": "0",
+        "Rust": "0f64",
+        "Lean": "(0 : Float)",
+        "Rocq": "0%float"
+      }
+    },
+    {
+      "operation": "arithmetic",
+      "absence": "undefined",
+      "value": "not-a-number",
+      "expressions": {
+        "JavaScript": "NaN",
+        "Rust": "f64::NAN",
+        "Lean": "(0 / 0 : Float)",
+        "Rocq": "PrimFloat.nan"
+      }
+    },
+    {
+      "operation": "array-index",
+      "absence": "null",
+      "value": "not-a-number",
+      "expressions": {
+        "JavaScript": "NaN",
+        "Rust": "f64::NAN",
+        "Lean": "(0 / 0 : Float)",
+        "Rocq": "PrimFloat.nan"
+      }
+    },
+    {
+      "operation": "array-index",
+      "absence": "undefined",
+      "value": "not-a-number",
+      "expressions": {
+        "JavaScript": "NaN",
+        "Rust": "f64::NAN",
+        "Lean": "(0 / 0 : Float)",
+        "Rocq": "PrimFloat.nan"
+      }
+    }
   ],
   "displayRefusal": "Rust formatting retains negative zero, spells infinities inf and expands exponents; it needs its own operational formatter",
   "cells": [
-    { "expression": "cellAllocate", "operation": "allocate-reference-cell" },
-    { "expression": "cellRead", "operation": "read-reference-cell" },
-    { "expression": "cellWrite", "operation": "write-reference-cell" }
+    {
+      "expression": "cellAllocate",
+      "operation": "allocate-reference-cell"
+    },
+    {
+      "expression": "cellRead",
+      "operation": "read-reference-cell"
+    },
+    {
+      "expression": "cellWrite",
+      "operation": "write-reference-cell"
+    }
   ],
   "rustFloatCases": [
-    { "name": "signed-zero", "expression": "-0f64", "expected": "-0" },
-    { "name": "not-a-number", "expression": "0f64 / 0f64", "expected": "NaN" },
-    { "name": "positive-infinity", "expression": "1f64 / 0f64", "expected": "Infinity" },
-    { "name": "negative-infinity", "expression": "-1f64 / 0f64", "expected": "-Infinity" },
-    { "name": "small-exponent", "expression": "1.25e-30f64", "expected": "1.25e-30" },
-    { "name": "large-exponent", "expression": "1.25e30f64", "expected": "1.25e+30" },
-    { "name": "ordinary-number", "expression": "2.5f64", "expected": "2.5" }
+    {
+      "name": "signed-zero",
+      "expression": "-0f64",
+      "expected": "-0"
+    },
+    {
+      "name": "not-a-number",
+      "expression": "0f64 / 0f64",
+      "expected": "NaN"
+    },
+    {
+      "name": "positive-infinity",
+      "expression": "1f64 / 0f64",
+      "expected": "Infinity"
+    },
+    {
+      "name": "negative-infinity",
+      "expression": "-1f64 / 0f64",
+      "expected": "-Infinity"
+    },
+    {
+      "name": "small-exponent",
+      "expression": "1.25e-30f64",
+      "expected": "1.25e-30"
+    },
+    {
+      "name": "large-exponent",
+      "expression": "1.25e30f64",
+      "expected": "1.25e+30"
+    },
+    {
+      "name": "ordinary-number",
+      "expression": "2.5f64",
+      "expected": "2.5"
+    }
+  ],
+  "objectProperties": [
+    {
+      "name": "__proto__",
+      "computed": false,
+      "colon": true,
+      "accepted": false
+    },
+    {
+      "name": "__proto__",
+      "computed": true,
+      "colon": true,
+      "accepted": true
+    },
+    {
+      "name": "__proto__",
+      "computed": false,
+      "colon": false,
+      "accepted": true
+    },
+    {
+      "name": "__proto__",
+      "computed": true,
+      "colon": false,
+      "accepted": true
+    },
+    {
+      "name": "constructor",
+      "computed": false,
+      "colon": true,
+      "accepted": true
+    },
+    {
+      "name": "prototype",
+      "computed": false,
+      "colon": true,
+      "accepted": true
+    },
+    {
+      "name": "__proto__ ",
+      "computed": false,
+      "colon": true,
+      "accepted": true
+    },
+    {
+      "name": "__Proto__",
+      "computed": false,
+      "colon": true,
+      "accepted": true
+    },
+    {
+      "name": "",
+      "computed": false,
+      "colon": true,
+      "accepted": true
+    }
+  ],
+  "prototypeSources": [
+    "function make() { return {__proto__: null}; }",
+    "function make() { return {__proto__: 7}; }",
+    "function make() { return {\"__proto__\": {inherited: 1}}; }",
+    "function make() { return {\"__pr\\u006fto__\": null}; }",
+    "const Namespace = {__proto__: {read() { return 1; }}, own() { return 2; }};",
+    "/** @typedef {{ $: 'one', __proto__: number } | { $: 'two' }} Item */\n/** @returns {Item} */ function make() { return {$: 'one', __proto__: 7}; }"
+  ],
+  "objectDataSources": [
+    {
+      "source": "/** @typedef {{ $: 'one', __proto__: number } | { $: 'two' }} Item */\n/** @param {number} __proto__ @returns {Item} */\nfunction make(__proto__) { return {$: 'one', __proto__}; }",
+      "frozen": false
+    },
+    {
+      "source": "/** @typedef {{ $: 'one', __proto__: number } | { $: 'two' }} Item */\n/** @param {number} __proto__ @returns {Item} */\nfunction make(__proto__) { return {$: 'one', [\"__proto__\"]: __proto__}; }",
+      "frozen": false
+    },
+    {
+      "source": "/** @typedef {{ $: 'one', __proto__: number } | { $: 'two' }} Item */\n/** @param {number} __proto__ @returns {Item} */\nfunction make(__proto__) { return Object.freeze({$: 'one', [\"__proto__\"]: __proto__}); }",
+      "frozen": true
+    }
+  ],
+  "dataObjectFreeze": [
+    {
+      "language": "JavaScript",
+      "explicitFrozen": false,
+      "frozen": false
+    },
+    {
+      "language": "JavaScript",
+      "explicitFrozen": true,
+      "frozen": true
+    },
+    {
+      "language": "Rust",
+      "explicitFrozen": false,
+      "frozen": true
+    },
+    {
+      "language": "Lean",
+      "explicitFrozen": false,
+      "frozen": true
+    },
+    {
+      "language": "Rocq",
+      "explicitFrozen": false,
+      "frozen": true
+    }
   ]
 }

@@ -9,6 +9,10 @@
     invalid_nan_comparisons
 )]
 
+pub fn accept_object_property_definition(name: String, computed: bool, colon: bool) -> bool {
+    (((name != "__proto__") || computed) || !colon)
+}
+
 pub fn read_absent_number_value(operation: String, absence: String) -> String {
     if ((absence != "null") && (absence != "undefined")) {
         String::from("")
@@ -115,6 +119,10 @@ pub fn read_scalar_cell_operation(expression: String) -> String {
             }
         }
     }
+}
+
+pub fn require_data_object_freeze(language: String, explicit_frozen: bool) -> bool {
+    (explicit_frozen || (language != "JavaScript"))
 }
 
 fn ml_main() {}

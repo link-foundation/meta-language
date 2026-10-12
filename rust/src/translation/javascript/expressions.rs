@@ -6,6 +6,7 @@ use super::{
     Token, TokenCursor, TokenKind, UnaryOp, binary, describe, has_ctor, is_tag_field, joined, node,
     number_literal, span, tokenize, type_error, unsupported, wild,
 };
+use crate::translation::primitive_value_rules::accept_object_property_definition;
 
 impl JavaScriptParser {
     /// Expressions, by JavaScript precedence.
@@ -723,19 +724,44 @@ impl JavaScriptParser {
         let mut tag = None;
         let mut fields: Vec<(String, SExpr)> = Vec::new();
         while !self.cursor.is("}") {
-            let key = self.peek();
-            let here = Some(span(&key, &key));
+            let mut key = self.peek();
+            let mut here = Some(span(&key, &key));
             if self.cursor.is("...") {
                 return Err(unsupported("object spread", "name every field", here));
             }
-            if key.kind != TokenKind::Identifier {
+            let computed = self.cursor.eat("[").is_some();
+            if computed {
+                let value = self.expr()?;
+                let close = self.cursor.expect("]", Some("computed object key"))?;
+                let SNode::Str { value } = value.node else {
+                    return Err(unsupported(
+                        "computed object key",
+                        "the portable record shape needs a literal string key",
+                        Some(span(&key, &close)),
+                    ));
+                };
+                key.kind = TokenKind::String;
+                key.value = value;
+                key.end = close.end;
+                here = Some(span(&key, &key));
+            } else {
+                if !matches!(key.kind, TokenKind::Identifier | TokenKind::String) {
+                    return Err(unsupported(
+                        &format!("object key {}", describe(&key)),
+                        "keys are literal names",
+                        here,
+                    ));
+                }
+                self.cursor.advance();
+            }
+            if !accept_object_property_definition(key.value.clone(), computed, self.cursor.is(":"))
+            {
                 return Err(unsupported(
-                    &format!("object key {}", describe(&key)),
-                    "keys are identifiers",
+                    "object prototype definition",
+                    "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
                     here,
                 ));
             }
-            self.cursor.advance();
             if key.value == "$" {
                 self.cursor.expect(":", Some("object"))?;
                 let value = self.cursor.advance();
@@ -761,13 +787,15 @@ impl JavaScriptParser {
                 let value = if self.cursor.eat(":").is_some() {
                     self.expr()?
                 } else {
+                    if computed || key.kind != TokenKind::Identifier {
+                        return Err(Self::fail(
+                            "expected : after the object property name",
+                            &key,
+                        ));
+                    }
                     self.reference(&key)?
                 };
-                // Assigning `__proto__` sets the prototype of the JavaScript
-                // frontend's field object rather than adding a field.
-                if key.value != "__proto__" {
-                    fields.push((key.value, value));
-                }
+                fields.push((key.value, value));
             }
             if self.cursor.eat(",").is_none() {
                 break;
@@ -782,7 +810,11 @@ impl JavaScriptParser {
             ));
         };
         Ok(node(
-            SNode::CtorObject { tag, fields },
+            SNode::CtorObject {
+                tag,
+                fields,
+                frozen: false,
+            },
             self.to_here(&start),
         ))
     }
@@ -893,6 +925,9 @@ impl JavaScriptParser {
         }
         if name == "Object.freeze" && args.len() == 1 {
             let mut arg = args.remove(0);
+            if let SNode::CtorObject { frozen, .. } = &mut arg.node {
+                *frozen = true;
+            }
             arg.span = Some(called);
             return Ok(arg);
         }

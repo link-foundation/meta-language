@@ -11,6 +11,7 @@ use super::{
     lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
 };
 use crate::translation::frontend_rules::find_default_parameter_reference;
+use crate::translation::primitive_value_rules::accept_object_property_definition;
 use crate::translation::surface::SExpr;
 
 /// How a function's body is written: a block, or an arrow's block or expression.
@@ -710,6 +711,14 @@ impl JavaScriptParser {
                 ));
             }
             self.cursor.advance();
+            if !accept_object_property_definition(member.value.clone(), false, self.cursor.is(":"))
+            {
+                return Err(unsupported(
+                    "object prototype definition",
+                    "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
+                    Some(span(&member, &member)),
+                ));
+            }
             if self.cursor.is("(") {
                 items.push(SItem::Fn(self.function_rest(&member, &member, false)?));
             } else if self.cursor.eat(":").is_some() {

@@ -4,9 +4,22 @@ import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { translateProgram } from '../src/program-translation.js';
 import { referenceOperation } from '../src/translation/reference-model.js';
-import { readAbsentNumberValue, renderAbsentNumberExpression, readNumberDisplayRefusal, readNumberDisplayFunction, readScalarCellOperation } from '../src/translation/primitive-value-rules.js';
+import { acceptObjectPropertyDefinition, readAbsentNumberValue, renderAbsentNumberExpression, readNumberDisplayRefusal, readNumberDisplayFunction, readScalarCellOperation, requireDataObjectFreeze } from '../src/translation/primitive-value-rules.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
 
 const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-primitive-values.json', import.meta.url), 'utf8'));
+
+test('shared source admission distinguishes prototype definitions from actual data property forms', () => {
+  for (const entry of fixture.objectProperties) {
+    assert.equal(acceptObjectPropertyDefinition(entry.name, entry.computed, entry.colon), entry.accepted, JSON.stringify(entry));
+  }
+  for (const source of fixture.prototypeSources) {
+    assert.throws(() => parseJavaScript(source), error => error.kind === 'unsupported' && error.details.construct === 'object prototype definition', source);
+  }
+  for (const entry of fixture.dataObjectFreeze) {
+    assert.equal(requireDataObjectFreeze(entry.language, entry.explicitFrozen), entry.frozen, JSON.stringify(entry));
+  }
+});
 
 test('absence conversion distinguishes arithmetic from missing array property selection', () => {
   for (const entry of fixture.absences) {

@@ -1,6 +1,11 @@
 // Portable primitive-value decisions. Rust is generated from this module;
 // host adapters supply checked types and preserve expression evaluation order.
 
+/** @param {string} name @param {boolean} computed @param {boolean} colon @returns {boolean} */
+export function acceptObjectPropertyDefinition(name, computed, colon) {
+  return name !== '__proto__' || computed || !colon;
+}
+
 /**
  * Numeric conversion and array property selection have different null rules.
  * A null key names the non-index property "null", so dense portable arrays
@@ -42,4 +47,9 @@ export function readScalarCellOperation(expression) {
   if (expression === 'cellRead') return 'read-reference-cell';
   if (expression === 'cellWrite') return 'write-reference-cell';
   return '';
+}
+
+/** @param {string} language @param {boolean} explicitFrozen @returns {boolean} */
+export function requireDataObjectFreeze(language, explicitFrozen) {
+  return explicitFrozen || language !== 'JavaScript';
 }

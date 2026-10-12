@@ -18,6 +18,7 @@ import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 import { bindArrayElements, isLiteralBinding, readArrayBinding, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
+import { acceptObjectPropertyDefinition } from './primitive-value-rules.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
@@ -588,6 +589,9 @@ class JavaScriptParser {
         throw unsupported(`${member.value} member`, 'accessors and asynchronous methods are outside the portable core', span(member, c.peek(1)));
       }
       c.next();
+      if (!acceptObjectPropertyDefinition(member.value, false, c.is(':'))) {
+        throw unsupported('object prototype definition', 'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', span(member, member));
+      }
       if (c.is('(')) {
         this.functionNames.add(`${name}.${member.value}`);
         items.push(this.functionRest(member, member));
@@ -1814,18 +1818,30 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     let tag = null;
-    const fields = {};
+    const fields = Object.create(null);
     const entries = [];
     let duplicate = null;
     while (!c.is('}')) {
-      const key = c.peek();
+      let key = c.peek();
       if (c.eat('...')) {
         entries.push({ spread: true, value: this.expr() });
         if (!c.eat(',')) break;
         continue;
       }
-      if (key.kind !== 'identifier' && key.kind !== 'string') throw unsupported(`object key ${describe(key)}`, 'keys are literal names', span(key, key));
-      c.next();
+      const computed = c.eat('[');
+      if (computed) {
+        const startKey = key;
+        const value = this.expr();
+        const close = c.expect(']', 'computed object key');
+        if (value.k !== 'str') throw unsupported('computed object key', 'the portable record shape needs a literal string key', span(startKey, close));
+        key = { kind: 'string', value: value.value, start: startKey.start, end: close.end };
+      } else {
+        if (key.kind !== 'identifier' && key.kind !== 'string') throw unsupported(`object key ${describe(key)}`, 'keys are literal names', span(key, key));
+        c.next();
+      }
+      if (!acceptObjectPropertyDefinition(key.value, Boolean(computed), c.is(':'))) {
+        throw unsupported('object prototype definition', 'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', span(key, key));
+      }
       if (key.value === '$') {
         c.expect(':', 'object');
         const value = c.next();
@@ -1833,7 +1849,12 @@ class JavaScriptParser {
         tag = value.value;
       } else {
         if (Object.hasOwn(fields, key.value)) duplicate ??= key;
-        fields[key.value] = c.is('(') ? readClosure(this, true) : c.eat(':') ? this.expr() : this.reference(key);
+        if (c.is('(')) fields[key.value] = readClosure(this, true);
+        else if (c.eat(':')) fields[key.value] = this.expr();
+        else {
+          if (computed || key.kind !== 'identifier') throw this.fail('expected : after the object property name', key);
+          fields[key.value] = this.reference(key);
+        }
         entries.push({ name: key.value, spread: false, value: fields[key.value] });
       }
       if (!c.eat(',')) break;
@@ -1922,7 +1943,7 @@ class JavaScriptParser {
       return { k: 'array', items: args.map(value => ({ spread: arrayForm === 'copy-from', value })), span: called };
     }
     if (name === 'String' && args.length === 1) return { k: 'toString', arg: args[0], span: called };
-    if (name === 'Object.freeze' && args.length === 1) return { ...args[0], span: called };
+    if (name === 'Object.freeze' && args.length === 1) return { ...args[0], ...(args[0].k === 'ctorObject' && { frozen: true }), span: called };
     if (GLOBALS.has(segments[0]) || name === 'String') {
       throw unsupported(name, 'the JavaScript standard library is outside the portable core', called);
     }

@@ -1,7 +1,8 @@
 use meta_language::translate_program;
 use meta_language::translation::primitive_value_rules::{
-    read_absent_number_value, read_number_display_function, read_number_display_refusal,
-    read_scalar_cell_operation, render_absent_number_expression,
+    accept_object_property_definition, read_absent_number_value, read_number_display_function,
+    read_number_display_refusal, read_scalar_cell_operation, render_absent_number_expression,
+    require_data_object_freeze,
 };
 use serde_json::Value;
 use std::process::Command;
@@ -16,6 +17,27 @@ fn fixture() -> Value {
 #[test]
 fn generated_primitive_value_decisions_match_shared_independent_fixtures() {
     let data = fixture();
+    for entry in data["objectProperties"].as_array().unwrap() {
+        assert_eq!(
+            accept_object_property_definition(
+                entry["name"].as_str().unwrap().to_owned(),
+                entry["computed"].as_bool().unwrap(),
+                entry["colon"].as_bool().unwrap()
+            ),
+            entry["accepted"].as_bool().unwrap(),
+            "{entry}"
+        );
+    }
+    for entry in data["dataObjectFreeze"].as_array().unwrap() {
+        assert_eq!(
+            require_data_object_freeze(
+                entry["language"].as_str().unwrap().to_owned(),
+                entry["explicitFrozen"].as_bool().unwrap()
+            ),
+            entry["frozen"].as_bool().unwrap(),
+            "{entry}"
+        );
+    }
     for entry in data["absences"].as_array().unwrap() {
         let operation = entry["operation"].as_str().unwrap();
         let absence = entry["absence"].as_str().unwrap();
@@ -52,6 +74,59 @@ fn generated_primitive_value_decisions_match_shared_independent_fixtures() {
         read_number_display_function("float".to_owned(), true),
         "js_console"
     );
+}
+
+#[test]
+fn native_javascript_source_refuses_prototype_definitions_before_creating_constructor_fields() {
+    let data = fixture();
+    for source in data["prototypeSources"].as_array().unwrap() {
+        let source = source.as_str().unwrap();
+        let error = meta_language::translation::javascript::parse_javascript(source).unwrap_err();
+        assert_eq!(error.kind.as_str(), "unsupported", "{source}: {error}");
+        assert_eq!(
+            error.construct.as_deref(),
+            Some("object prototype definition"),
+            "{source}: {error}"
+        );
+        assert!(
+            error.reason.contains("prototype-definition syntax"),
+            "{source}: {error}"
+        );
+    }
+}
+
+#[test]
+fn native_javascript_source_preserves_tagged_proto_data_and_explicit_freezing() {
+    use meta_language::translation::check::check_program;
+    use meta_language::translation::emit_javascript::emit_javascript;
+    use meta_language::translation::javascript::parse_javascript;
+
+    let data = fixture();
+    for entry in data["objectDataSources"].as_array().unwrap() {
+        let source = entry["source"].as_str().unwrap();
+        let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+        let emitted = emit_javascript(&checked).unwrap();
+        let inspect = "\nconst item = make(7); console.log(JSON.stringify([Object.hasOwn(item, '__proto__'), item.__proto__, Object.getPrototypeOf(item) === Object.prototype, Object.getOwnPropertyDescriptor(item, '__proto__')]));";
+        let observe = |program: &str| {
+            let output = Command::new("node")
+                .args(["--input-type=module", "-e", &format!("{program}{inspect}")])
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            serde_json::from_slice::<Value>(&output.stdout).unwrap()
+        };
+        let original = observe(source);
+        let frozen = entry["frozen"].as_bool().unwrap();
+        assert_eq!(
+            original,
+            serde_json::json!([true, 7, true, {"value": 7, "writable": !frozen, "enumerable": true, "configurable": !frozen}])
+        );
+        assert_eq!(observe(&emitted.text), original, "{source}");
+    }
 }
 
 #[test]
