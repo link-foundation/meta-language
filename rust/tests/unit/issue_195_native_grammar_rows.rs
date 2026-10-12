@@ -89,7 +89,8 @@ fn kinds<'a>(fixture: &'a Value, key: &str) -> HashSet<&'a str> {
 
 /// Projects a native tree to the rows of the tree-sitter oracle: see
 /// js/scripts/native-grammar-rows.mjs. `hidden` leaves are projected like
-/// whitespace, `anonymous` leaves are not rows but count in the spans, and
+/// whitespace, `anonymous` leaves are not rows but count in the spans when
+/// they are significant syntax rather than trivia, and
 /// `extras` nodes are rows with flag X. A rule renamed from its tree-sitter
 /// name is a row of that name (`oracleKinds`).
 pub struct Rows<'a> {
@@ -124,15 +125,20 @@ impl<'a> Rows<'a> {
             .unwrap_or_else(|| self.oracle_kinds.get(kind).copied().unwrap_or(kind))
     }
 
-    /// Whitespace and hidden leaves, which are not rows.
+    /// Whitespace, anonymous trivia and hidden leaves, which are not rows.
     fn invisible(&self, tree: &SyntaxTree) -> bool {
         match tree {
             SyntaxTree::Token {
                 kind: None, trivia, ..
             } => *trivia,
             SyntaxTree::Token {
-                kind: Some(kind), ..
-            } => self.hidden.contains(kind.as_str()),
+                kind: Some(kind),
+                trivia,
+                ..
+            } => {
+                self.hidden.contains(kind.as_str())
+                    || (*trivia && self.anonymous.contains(kind.as_str()))
+            }
             _ => false,
         }
     }

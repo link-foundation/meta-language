@@ -425,6 +425,8 @@ pub(super) enum InExtra {
 pub(super) struct Trivia {
     pub(super) expression: Expr,
     pub(super) kind: Option<Name>,
+    /// The outer alias applied to the public tree after lexing and scanners.
+    pub(super) projection_name: Option<Name>,
     pub(super) modes: Option<Vec<Name>>,
 }
 

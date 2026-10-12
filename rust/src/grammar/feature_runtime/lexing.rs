@@ -135,6 +135,7 @@ impl Executor<'_> {
         loop {
             let mut best = cursor;
             let mut best_kind = None;
+            let mut best_projection_name = None;
             let mut best_state = current.clone();
             let mut best_extra = None;
             let mode = current.mode().to_owned();
@@ -157,6 +158,7 @@ impl Executor<'_> {
                         if end > best {
                             best = end;
                             best_kind.clone_from(&item.kind);
+                            best_projection_name.clone_from(&item.projection_name);
                             best_state = state.clone();
                             best_extra = Some(Extra::Node(node, end, state));
                         }
@@ -173,6 +175,7 @@ impl Executor<'_> {
                     best = result.end;
                     best_state = result.state;
                     best_kind.clone_from(&item.kind);
+                    best_projection_name.clone_from(&item.projection_name);
                     best_extra = None;
                 }
             }
@@ -185,9 +188,18 @@ impl Executor<'_> {
             } else {
                 self.extra_node(best_kind.as_ref(), cursor, Some(best), &current)?
             };
+            let project = |node: Rc<Tree>| {
+                if let Some(name) = &best_projection_name {
+                    let mut copy = (*node).clone();
+                    copy.projection_name = Some(name.clone());
+                    Rc::new(copy)
+                } else {
+                    node
+                }
+            };
             match extra {
                 Extra::Node(node, end, state) => {
-                    leaves.push(node);
+                    leaves.push(project(node));
                     cursor = end;
                     current = state;
                 }
@@ -203,13 +215,13 @@ impl Executor<'_> {
                     };
                     if let Some(scanned) = scanned.filter(|scanned| scanned.end == best) {
                         leaves.extend(scanned.skipped.iter().cloned());
-                        leaves.push(Rc::new(Tree::trivia_leaf(
+                        leaves.push(project(Rc::new(Tree::trivia_leaf(
                             best_kind,
                             scanned.token_start,
                             best,
-                        )));
+                        ))));
                     } else {
-                        leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
+                        leaves.push(project(Rc::new(Tree::trivia_leaf(best_kind, cursor, best))));
                     }
                     cursor = best;
                     current = best_state;

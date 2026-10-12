@@ -291,7 +291,9 @@ pub(super) fn public_tree(node: &Tree, bytes: &[u8]) -> SyntaxTree {
     let name = |value: &Option<super::program::Name>| value.as_deref().map(str::to_owned);
     match node.ty {
         TreeType::Node => SyntaxTree::Node {
-            kind: name(&node.kind).unwrap_or_default(),
+            kind: name(&node.projection_name)
+                .or_else(|| name(&node.kind))
+                .unwrap_or_default(),
             field: name(&node.field),
             trivia: node.trivia,
             start: node.start,
@@ -304,7 +306,7 @@ pub(super) fn public_tree(node: &Tree, bytes: &[u8]) -> SyntaxTree {
             attributes: node.attributes.clone(),
         },
         TreeType::Token => SyntaxTree::Token {
-            kind: name(&node.kind),
+            kind: name(&node.projection_name).or_else(|| name(&node.kind)),
             field: name(&node.field),
             trivia: node.trivia,
             start: node.start,

@@ -122,6 +122,8 @@ pub(super) fn join_children(left: &Children, right: &Children) -> Children {
 pub(super) struct Tree {
     pub(super) ty: TreeType,
     pub(super) kind: Option<Name>,
+    /// An extra's outer alias; internal lexer decisions keep `kind` unchanged.
+    pub(super) projection_name: Option<Name>,
     pub(super) rule: Option<Name>,
     pub(super) field: Option<Name>,
     pub(super) trivia: bool,
@@ -180,6 +182,7 @@ impl Tree {
         Self {
             ty,
             kind,
+            projection_name: None,
             rule: None,
             field: None,
             trivia: false,
