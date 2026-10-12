@@ -4,7 +4,7 @@
 // part of the JavaScript frontend's input.
 
 import { TranslationError } from './diagnostics.js';
-import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
+import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, readRustNumberBounds, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -98,17 +98,19 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       continue;
     }
     if (/[0-9]/u.test(char)) {
-      const pattern = language === 'Rust' ? /^[0-9][0-9_]*(\.(?![.A-Za-z_])[0-9_]*)?([eE][+-]?[0-9][0-9_]*)?([a-z][a-z0-9]*)?/u : /^[0-9][0-9_]*(?:[a-z][a-z0-9]*)?/u;
-      const match = pattern.exec(source.slice(index));
-      const raw = match[0];
-      const floating = language === 'Rust' && Boolean(match[1] || match[2] || /^f(?:32|64)$/u.test(match[3] ?? ''));
-      if (floating) {
-        const suffix = match[3] ?? '';
-        const text = suffix ? raw.slice(0, -suffix.length) : raw;
-        tokens.push({ kind: 'number', floating: true, value: String(Number(text.replaceAll('_', ''))), suffix, raw, start, end: start + raw.length });
-        index += raw.length;
+      if (language === 'Rust') {
+        encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+        const [end, suffixStart, floating] = readRustNumberBounds(encoding.units, index);
+        const raw = source.slice(index, end);
+        const digits = source.slice(index, suffixStart);
+        if (!floating && digits.endsWith('_')) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end });
+        if (floating && !Number.isFinite(Number(digits.replaceAll('_', '')))) throw new TranslationError('syntax', `floating-point literal out of range ${raw}`, { start, end });
+        tokens.push({ kind: 'number', ...(floating && { floating: true }), value: floating ? String(Number(digits.replaceAll('_', ''))) : digits.replaceAll('_', ''), suffix: source.slice(suffixStart, end), raw, start, end });
+        index = end;
         continue;
       }
+      const match = /^[0-9][0-9_]*(?:[a-z][a-z0-9]*)?/u.exec(source.slice(index));
+      const raw = match[0];
       const digits = /^[0-9_]*/u.exec(raw)[0];
       if (digits.endsWith('_')) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end: start + raw.length });
       tokens.push({

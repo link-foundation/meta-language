@@ -18,9 +18,6 @@
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
-    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
-        index.and_then(|index| values.get(index)).cloned()
-    }
     /// The element at an index; a read outside the array, undefined in
     /// JavaScript, aborts.
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
@@ -41,86 +38,6 @@ pub mod ml_array {
     pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
         left.extend(right);
         left
-    }
-    fn integer(value: f64) -> f64 {
-        if value.is_nan() { 0.0 } else { value.trunc() }
-    }
-    fn relative(value: f64, length: usize) -> usize {
-        let value = integer(value);
-        if value < 0.0 {
-            (length as f64 + value).max(0.0) as usize
-        } else {
-            value.min(length as f64) as usize
-        }
-    }
-    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
-        let start = relative(start, values.len());
-        let end = relative(end, values.len());
-        values[start..end.max(start)].to_vec()
-    }
-    pub fn index_of<T, F: Fn(&T, &T) -> bool>(
-        values: &[T],
-        search: &T,
-        from: f64,
-        reverse: bool,
-        equal: F,
-    ) -> f64 {
-        if values.is_empty() {
-            return -1.0;
-        }
-        let from = integer(from);
-        if reverse {
-            if from < -(values.len() as f64) {
-                return -1.0;
-            }
-            let start = if from < 0.0 {
-                (values.len() as f64 + from) as usize
-            } else {
-                from.min((values.len() - 1) as f64) as usize
-            };
-            (0..=start)
-                .rev()
-                .find(|&index| equal(&values[index], search))
-                .map_or(-1.0, |index| index as f64)
-        } else {
-            let start = if from < 0.0 {
-                (values.len() as f64 + from).max(0.0) as usize
-            } else {
-                from.min(values.len() as f64) as usize
-            };
-            (start..values.len())
-                .find(|&index| equal(&values[index], search))
-                .map_or(-1.0, |index| index as f64)
-        }
-    }
-    pub fn includes<T, F: Fn(&T, &T) -> bool>(
-        values: &[T],
-        search: &T,
-        from: f64,
-        reverse: bool,
-        equal: F,
-    ) -> bool {
-        index_of(values, search, from, reverse, equal) >= 0.0
-    }
-    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
-        let mut out = Vec::new();
-        for value in values {
-            if !out.iter().any(|previous| equal(previous, &value)) {
-                out.push(value);
-            }
-        }
-        out
-    }
-    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
-        let mut out: Vec<(K, V)> = Vec::new();
-        for (key, value) in values {
-            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {
-                out[index].1 = value;
-            } else {
-                out.push((key, value));
-            }
-        }
-        out
     }
 }
 
@@ -643,25 +560,23 @@ pub fn find_documentation_parameter_range(units: &[f64]) -> Vec<f64> {
 }
 
 pub fn accept_type_query_operand(kind: &str) -> bool {
-    ((((((kind == "var") || (kind == "lit")) || (kind == "name")) || (kind == "num"))
-        || (kind == "bool"))
-        || (kind == "str"))
+    matches!(
+        kind,
+        "var" | "lit" | "name" | "num" | "bool" | "str" | "functionValue" | "functionRef"
+    )
 }
 
 pub fn read_type_query_result(kind: &str) -> String {
-    if kind == "float" {
-        String::from("number")
-    } else if kind == "nat" || kind == "int" {
-        String::from("bigint")
-    } else if kind == "bool" {
-        String::from("boolean")
-    } else if kind == "string" {
-        String::from("string")
-    } else if kind == "array" || kind == "data" {
-        String::from("object")
-    } else {
-        String::new()
+    match kind {
+        "float" => "number",
+        "nat" | "int" => "bigint",
+        "bool" => "boolean",
+        "string" => "string",
+        "function" => "function",
+        "array" | "data" => "object",
+        _ => "",
     }
+    .to_owned()
 }
 
 pub fn read_array_method_form(method: &str) -> String {

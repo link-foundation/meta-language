@@ -1,4 +1,46 @@
 // Literal token readers share the lexer namespace through include!.
+// The shared generated decision owns decimal/exponent/suffix boundaries.
+#[allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
+fn rust_number(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -> Result<Token> {
+    let encoded =
+        units.get_or_insert_with(|| source.units().iter().map(|unit| f64::from(*unit)).collect());
+    let bounds = read_rust_number_bounds(encoded, index as f64);
+    let end = bounds[0] as usize;
+    let suffix = bounds[1] as usize;
+    let floating = bounds[2] > 0.0;
+    let raw = source.slice(index, end);
+    let digits = source.slice(index, suffix);
+    if !floating && digits.ends_with('_') {
+        return Err(TranslationError::syntax(
+            format!("malformed number {raw}"),
+            Some(span(index, end)),
+        ));
+    }
+    let numeric = digits.replace('_', "");
+    let value = if floating {
+        let number = numeric.parse::<f64>().map_err(|_| {
+            TranslationError::syntax(format!("malformed number {raw}"), Some(span(index, end)))
+        })?;
+        if !number.is_finite() {
+            return Err(TranslationError::syntax(
+                format!("floating-point literal out of range {raw}"),
+                Some(span(index, end)),
+            ));
+        }
+        super::js_number::js_number(number)
+    } else {
+        numeric
+    };
+    let mut token = Token::new(TokenKind::Number, value, raw, index, end);
+    token.suffix = source.slice(suffix, end);
+    token.floating = floating;
+    Ok(token)
+}
+
 fn javascript_number_regex() -> &'static Regex {
     static NUMBER: OnceLock<Regex> = OnceLock::new();
     NUMBER.get_or_init(|| {

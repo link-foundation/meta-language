@@ -296,7 +296,7 @@ export function findDocumentationParameterRange(units) {
 
 /** @param {string} kind @returns {boolean} */
 export function acceptTypeQueryOperand(kind) {
-  return kind === 'var' || kind === 'lit' || kind === 'name' || kind === 'num' || kind === 'bool' || kind === 'str';
+  return kind === 'var' || kind === 'lit' || kind === 'name' || kind === 'num' || kind === 'bool' || kind === 'str' || kind === 'functionValue' || kind === 'functionRef';
 }
 
 /** @param {string} kind @returns {string} */
@@ -305,6 +305,7 @@ export function readTypeQueryResult(kind) {
   if (kind === 'nat' || kind === 'int') return 'bigint';
   if (kind === 'bool') return 'boolean';
   if (kind === 'string') return 'string';
+  if (kind === 'function') return 'function';
   if (kind === 'array' || kind === 'data') return 'object';
   return '';
 }
@@ -478,4 +479,45 @@ export function renderStringLengthExpression(target, object) {
   if (target === 'Rust') return '(' + object + '.encode_utf16().count() as f64)';
   if (target === 'Lean') return '(Float.ofNat (String.foldl (fun (count : Nat) c => count + (if c.toNat > 65535 then 2 else 1)) 0 ' + object + '))';
   return '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat ((fix ml_utf16_length (s : string) : nat := match s with EmptyString => 0%nat | String c rest => ((if Nat.ltb (Ascii.nat_of_ascii c) 128 then 1 else if Nat.ltb (Ascii.nat_of_ascii c) 192 then 0 else if Nat.ltb (Ascii.nat_of_ascii c) 240 then 1 else 2) + ml_utf16_length rest)%nat end) ' + object + '))))';
+}
+
+/**
+ * Bounds of a decimal Rust number: token end, suffix start, float marker.
+ * Decimal points before ranges or member names belong to later tokens.
+ * @param {number[]} units
+ * @param {number} start
+ * @returns {number[]}
+ */
+export function readRustNumberBounds(units, start) {
+  let at = start;
+  while (at < units.length && ((units[at] >= 48 && units[at] <= 57) || units[at] === 95)) at += 1;
+  let floating = false;
+  if (at < units.length && units[at] === 46) {
+    let member = false;
+    if (at + 1 < units.length) {
+      const next = units[at + 1];
+      member = next === 46 || next === 95 || (next >= 65 && next <= 90) || (next >= 97 && next <= 122);
+    }
+    if (!member) {
+      floating = true;
+      at += 1;
+      while (at < units.length && ((units[at] >= 48 && units[at] <= 57) || units[at] === 95)) at += 1;
+    }
+  }
+  if (at < units.length && (units[at] === 69 || units[at] === 101)) {
+    let exponent = at + 1;
+    if (exponent < units.length && (units[exponent] === 43 || units[exponent] === 45)) exponent += 1;
+    if (exponent < units.length && units[exponent] >= 48 && units[exponent] <= 57) {
+      floating = true;
+      at = exponent + 1;
+      while (at < units.length && ((units[at] >= 48 && units[at] <= 57) || units[at] === 95)) at += 1;
+    }
+  }
+  const suffix = at;
+  if (at < units.length && units[at] >= 97 && units[at] <= 122) {
+    at += 1;
+    while (at < units.length && ((units[at] >= 97 && units[at] <= 122) || (units[at] >= 48 && units[at] <= 57))) at += 1;
+  }
+  if (at - suffix === 3 && units[suffix] === 102 && ((units[suffix + 1] === 51 && units[suffix + 2] === 50) || (units[suffix + 1] === 54 && units[suffix + 2] === 52))) floating = true;
+  return [at, suffix, floating ? 1 : 0];
 }

@@ -76,7 +76,9 @@ test('optional JSDoc names preserve declared types without supplying runtime def
   assert.ok(rust.code.includes('crate::add(2f64)'), rust.code);
   assert.ok(rust.code.includes('crate::add(7f64)'), rust.code);
   const identity = parseJavaScript('/** @param {string} [value] @returns {string} */\nfunction identity(value) { return value; }\n');
-  assert.equal(identity.items[0].params[0].type.kind, 'string');
-  assert.match(refusal('/** @param {number} [value=99] @returns {number} */\nfunction add(value) { return value + 1; }\nconsole.log(add());\n'), /argument/u);
+  assert.deepEqual(identity.items[0].params[0].type, { kind: 'option', element: { kind: 'string' }, absence: 'undefined' });
+  assert.equal(identity.items[0].params[0].optional, true);
+  assert.deepEqual(identity.items[0].params[0].default, { k: 'none', absence: 'undefined', span: identity.items[0].params[0].span });
+  assert.match(refusal('/** @param {number} [value=99] @returns {number} */\nfunction add(value) { return value + 1; }\nconsole.log(add());\n'), /option|optional/u);
   assert.match(refusal('/** @param {number} [other] */\nfunction identity(value) { return value; }\n'), /other is not a parameter/u);
 });

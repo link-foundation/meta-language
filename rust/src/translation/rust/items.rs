@@ -373,6 +373,9 @@ impl RustParser {
         {
             return Ok(fixed);
         }
+        if name == "f64" {
+            return Ok(super::FLOAT);
+        }
         if name == "bool" {
             return Ok(BOOL);
         }

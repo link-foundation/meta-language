@@ -20,7 +20,7 @@ use super::surface::{
     SMain, SModule, SNode, SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow,
     ShowStyle, UnaryOp,
 };
-use super::types::{BOOL, STRING, Type, UNIT, rust_fixed_type};
+use super::types::{BOOL, FLOAT, STRING, Type, UNIT, rust_fixed_type};
 use super::{Language, Span};
 
 mod expressions;
@@ -49,8 +49,8 @@ const RESERVED_ITEMS: [&str; 10] = [
     "async",
     "unsafe",
 ];
-const UNSUPPORTED_TYPES: [&str; 11] = [
-    "str", "char", "f32", "f64", "Vec", "Option", "Result", "Rc", "Arc", "HashMap", "Self",
+const UNSUPPORTED_TYPES: [&str; 10] = [
+    "str", "char", "f32", "Vec", "Option", "Result", "Rc", "Arc", "HashMap", "Self",
 ];
 
 fn comparison_op(value: &str) -> Option<BinaryOp> {

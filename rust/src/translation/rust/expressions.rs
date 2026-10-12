@@ -209,13 +209,15 @@ impl RustParser {
         let token = self.peek();
         if token.kind == TokenKind::Number {
             self.cursor.advance();
-            let ty = if token.suffix.is_empty() {
+            let ty = if token.suffix == "f64" || (token.suffix.is_empty() && token.floating) {
+                Some(super::FLOAT)
+            } else if token.suffix.is_empty() {
                 None
             } else {
                 let Some(fixed) = rust_fixed_type(&token.suffix) else {
                     return Err(unsupported(
                         &format!("literal suffix {}", token.suffix),
-                        "only integer literals are portable",
+                        "portable numeric literals are integers and IEEE-754 binary64 values",
                         span(&token, &token),
                     ));
                 };

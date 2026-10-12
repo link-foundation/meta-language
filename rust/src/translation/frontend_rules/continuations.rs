@@ -256,7 +256,7 @@ pub fn ml_find_default_parameter_reference_loop8(
                             depth_3
                         };
                         {
-                            let ml_s16 = if (((crate::translation::frontend_rules::ml_array::at(
+                            let ml_s18 = if (((crate::translation::frontend_rules::ml_array::at(
                                 &kinds,
                                 crate::translation::frontend_rules::ml_array::number_index(at),
                             )) == "identifier")
@@ -271,8 +271,8 @@ pub fn ml_find_default_parameter_reference_loop8(
                                 {
                                     let parameter_index = 0f64;
                                     {
-                                        let ml_s17 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop10(parameters.clone(), at, value.clone(), parameter_index);
-                                        match ml_s17.clone() {
+                                        let ml_s19 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop10(parameters.clone(), at, value.clone(), parameter_index);
+                                        match ml_s19.clone() {
                                             crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop10Result::MlFindDefaultParameterReferenceLoop10Done => {
                                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Next
                                             }
@@ -285,7 +285,7 @@ pub fn ml_find_default_parameter_reference_loop8(
                             } else {
                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Next
                             };
-                            match ml_s16.clone() {
+                            match ml_s18.clone() {
                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Next => {
                                     {
                                         let at_2 = (at + 1f64);
@@ -365,7 +365,7 @@ pub fn ml_regular_expression_end_loop11(
                     crate::translation::frontend_rules::MlRegularExpressionEndLoop11Result::MlRegularExpressionEndLoop11Return(-1f64)
                 } else {
                     {
-                        let ml_s18 = if escaped {
+                        let ml_s20 = if escaped {
                             {
                                 let escaped_2 = false;
                                 crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped_2, character_class)
@@ -396,7 +396,7 @@ pub fn ml_regular_expression_end_loop11(
                         } else {
                             crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class)
                         };
-                        match ml_s18.clone() {
+                        match ml_s20.clone() {
                             crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index_4, escaped_4, character_class_4) => {
                                 {
                                     let index_5 = (index_4 + 1f64);
@@ -626,6 +626,136 @@ pub fn ml_find_documentation_parameter_range_loop21(mut units: Vec<f64>, mut aft
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlFindDocumentationParameterRangeJoin18 {
     MlFindDocumentationParameterRangeJoin18Next(f64, bool),
+}
+
+pub fn ml_read_rust_number_bounds_loop22(units: &[f64], mut at: f64) -> f64 {
+    loop {
+        return if ((at < (units.len() as f64))
+            && ((((crate::translation::frontend_rules::ml_array::at(
+                units,
+                crate::translation::frontend_rules::ml_array::number_index(at),
+            )) >= (48f64))
+                && ((crate::translation::frontend_rules::ml_array::at(
+                    units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )) <= (57f64)))
+                || ((crate::translation::frontend_rules::ml_array::at(
+                    units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )) == (95f64))))
+        {
+            {
+                let at_2 = (at + 1f64);
+                {
+                    at = at_2;
+                    continue;
+                }
+            }
+        } else {
+            at
+        };
+    }
+}
+
+pub fn ml_read_rust_number_bounds_loop25(units: &[f64], mut at: f64) -> f64 {
+    loop {
+        return if ((at < (units.len() as f64))
+            && ((((crate::translation::frontend_rules::ml_array::at(
+                units,
+                crate::translation::frontend_rules::ml_array::number_index(at),
+            )) >= (97f64))
+                && ((crate::translation::frontend_rules::ml_array::at(
+                    units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )) <= (122f64)))
+                || (((crate::translation::frontend_rules::ml_array::at(
+                    units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )) >= (48f64))
+                    && ((crate::translation::frontend_rules::ml_array::at(
+                        units,
+                        crate::translation::frontend_rules::ml_array::number_index(at),
+                    )) <= (57f64)))))
+        {
+            {
+                let at_2 = (at + 1f64);
+                {
+                    at = at_2;
+                    continue;
+                }
+            }
+        } else {
+            at
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadRustNumberBoundsJoin24 {
+    MlReadRustNumberBoundsJoin24Next(f64, bool),
+}
+
+pub fn ml_read_rust_number_bounds_loop26(units: &[f64], mut at: f64) -> f64 {
+    loop {
+        return if ((at < (units.len() as f64))
+            && ((((crate::translation::frontend_rules::ml_array::at(
+                units,
+                crate::translation::frontend_rules::ml_array::number_index(at),
+            )) >= (48f64))
+                && ((crate::translation::frontend_rules::ml_array::at(
+                    units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )) <= (57f64)))
+                || ((crate::translation::frontend_rules::ml_array::at(
+                    units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )) == (95f64))))
+        {
+            {
+                let at_2 = (at + 1f64);
+                {
+                    at = at_2;
+                    continue;
+                }
+            }
+        } else {
+            at
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadRustNumberBoundsJoin23 {
+    MlReadRustNumberBoundsJoin23Next(f64, bool),
+}
+
+pub fn ml_read_rust_number_bounds_loop27(units: &[f64], mut at: f64) -> f64 {
+    loop {
+        return if ((at < (units.len() as f64))
+            && ((((crate::translation::frontend_rules::ml_array::at(
+                units,
+                crate::translation::frontend_rules::ml_array::number_index(at),
+            )) >= (48f64))
+                && ((crate::translation::frontend_rules::ml_array::at(
+                    units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )) <= (57f64)))
+                || ((crate::translation::frontend_rules::ml_array::at(
+                    units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )) == (95f64))))
+        {
+            {
+                let at_2 = (at + 1f64);
+                {
+                    at = at_2;
+                    continue;
+                }
+            }
+        } else {
+            at
+        };
+    }
 }
 
 const fn ml_main() {}

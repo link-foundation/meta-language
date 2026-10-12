@@ -14,7 +14,7 @@ use super::decimal::Decimal;
 use super::diagnostics::{ErrorKind, Result, TranslationError};
 use super::frontend_rules::{
     UnicodeEscape, accept_control_parenthesis, accept_statement_brace, decode_unicode_escape,
-    regular_expression_end, start_regular_expression,
+    read_rust_number_bounds, regular_expression_end, start_regular_expression,
 };
 use super::js_number::js_number_literal;
 use super::{Language, Span};
@@ -136,6 +136,8 @@ pub struct Token {
     pub value: String,
     /// The letters after a number's digits (`n`, `u32`, `x1fn`).
     pub suffix: String,
+    /// A decimal or explicitly suffixed binary floating-point literal.
+    pub floating: bool,
     pub raw: String,
     pub start: usize,
     pub end: usize,
@@ -152,6 +154,7 @@ impl Token {
             kind,
             value,
             suffix: String::new(),
+            floating: false,
             raw,
             start,
             end,
@@ -469,6 +472,12 @@ fn tokenize_region(
             continue;
         }
         if ch.is_some_and(|ch| ch.is_ascii_digit()) {
+            if language == Language::Rust {
+                let token = rust_number(source, index, units)?;
+                index = token.end;
+                tokens.push(token);
+                continue;
+            }
             let mut stop = index;
             while source
                 .char_at(stop)

@@ -32,7 +32,10 @@ test('type queries preserve JavaScript type names for bound values and literals'
 test('type queries refuse operands whose evaluation could be discarded', () => {
   for (const [source, reason] of [
     ["function fail() { throw new Error('preserve'); } console.log(typeof fail());", /typeof operand/u],
-    ["function answer() { return 7; } console.log(typeof answer);", /function value/u],
     ["console.log(typeof [1]);", /typeof operand/u],
   ]) assert.match(translateProgram(source, 'JavaScript', 'Rust').diagnostic?.message ?? '', reason, source);
+  const source = 'function answer() { return 7; } console.log(typeof answer);';
+  assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', source], { encoding: 'utf8' }), 'function\n');
+  assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', emitJavaScript(checkProgram(parseJavaScript(source))).text], { encoding: 'utf8' }), 'function\n');
+  assert.equal(translateProgram(source, 'JavaScript', 'Rust').diagnostic, null);
 });

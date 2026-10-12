@@ -392,17 +392,19 @@ class JavaScriptParser {
     const doc = this.docs.findLast((comment) => comment.end <= token.start && this.source.slice(comment.end, token.start).trim() === '');
     if (!doc) return null;
     const params = new Map();
+    const optionalParams = new Set();
     let returns = null;
     for (const tag of jsdocTags(doc)) {
       if (tag.tag === 'param') {
         if (!tag.type || !tag.name) throw new TranslationError('syntax', '@param needs a type and a name', doc);
         if (params.has(tag.name)) throw typeError(`duplicate @param ${tag.name}`, doc);
         params.set(tag.name, tag.type);
+        if (tag.optional) optionalParams.add(tag.name);
       } else if (tag.tag === 'returns' || tag.tag === 'return') {
         returns = tag.type;
       }
     }
-    return { params, returns, range: { start: doc.start, end: doc.end } };
+    return { params, optionalParams, returns, range: { start: doc.start, end: doc.end } };
   }
 
   functionDeclaration(start, isAsync = false) {
@@ -505,10 +507,13 @@ class JavaScriptParser {
     const params = tokens.map((token) => {
       reserved(token);
       const text = doc?.params.get(token.value);
+      const optional = doc?.optionalParams.has(token.value) && !token.defaultValue;
+      const declared = text ? this.type(text, doc.range) : null;
+      const type = optional && declared ? { kind: 'option', element: declared, absence: 'undefined' } : declared;
       return {
         name: token.value,
-        type: text ? this.type(text, doc.range) : null,
-        ...(token.defaultValue ? { default: token.defaultValue } : {}),
+        type,
+        ...(token.defaultValue ? { default: token.defaultValue } : optional ? { optional: true, default: { k: 'none', absence: 'undefined', span: span(token, token) } } : {}),
         span: span(token, token),
       };
     });
@@ -912,7 +917,8 @@ class JavaScriptParser {
     const name = bindings ? null : c.identifier('for…of');
     if (name) reserved(name);
     c.expect('of', 'for…of');
-    const iterable = this.expr();
+    const value = this.expr();
+    const iterable = { k: 'arrayFrom', args: [value], span: value.span };
     c.expect(')', 'for');
     this.generatedCount += 1;
     const values = `ml_values${this.generatedCount}`;
@@ -1586,6 +1592,10 @@ class JavaScriptParser {
         const arrayForm = readArrayMethodForm(field.value);
         if (c.is('(') && arrayForm !== '') {
           const args = this.arguments(field.value);
+          if (field.value === 'slice' && !args.length) {
+            expr = { k: 'copySlice', object: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
+            continue;
+          }
           if (field.value === 'slice' && args.length) {
             expr = { k: 'method', object: expr, op: field.value, args, span: joined(expr, { span: span(token, c.peek()) }, token) };
             continue;
@@ -1749,6 +1759,7 @@ class JavaScriptParser {
     let tag = null;
     const fields = {};
     const entries = [];
+    let duplicate = null;
     while (!c.is('}')) {
       const key = c.peek();
       if (c.eat('...')) {
@@ -1764,7 +1775,7 @@ class JavaScriptParser {
         if (value.kind !== 'string') throw unsupported('computed tag', 'the $ tag is a string literal', span(value, value));
         tag = value.value;
       } else {
-        if (Object.hasOwn(fields, key.value)) throw typeError(`duplicate field ${key.value}`, span(key, key));
+        if (Object.hasOwn(fields, key.value)) duplicate ??= key;
         fields[key.value] = c.is('(') ? readClosure(this, true) : c.eat(':') ? this.expr() : this.reference(key);
         entries.push({ name: key.value, spread: false, value: fields[key.value] });
       }
@@ -1772,6 +1783,7 @@ class JavaScriptParser {
     }
     c.expect('}', 'object');
     if (tag === null) return { k: 'record', entries, span: span(start, c.peek()) };
+    if (duplicate) throw typeError(`duplicate field ${duplicate.value}`, span(duplicate, duplicate));
     if (entries.some((entry) => entry.spread)) throw unsupported('tagged object spread', 'constructor spreads require a complete tagged field projection', span(start, c.peek()));
     return { k: 'ctorObject', tag, fields, span: span(start, c.peek()) };
   }
@@ -1994,7 +2006,7 @@ function jsdocTags(comment) {
     const tail = text.slice(index);
     const range = findDocumentationParameterRange(Array.from({ length: tail.length }, (_, offset) => tail.charCodeAt(offset)));
     const name = range.length ? tail.slice(range[0], range[1]) : null;
-    tags.push({ tag: match[1], type, name });
+    tags.push({ tag: match[1], type, name, ...(tail.trimStart().startsWith('[') ? { optional: true } : {}) });
     pattern.lastIndex = index;
     match = pattern.exec(text);
   }

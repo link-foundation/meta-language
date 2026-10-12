@@ -10,3 +10,10 @@ braces when deciding whether a slash starts a regular expression. The shared
 frontend decisions also distinguish Rust Unicode whitespace trimming from
 JavaScript trimming, with Rust decisions generated from JavaScript and
 reviewed Links Notation style decorators.
+
+Optional JSDoc parameters retain an omitted `undefined` value, separately from
+an actual JavaScript default expression. Named functions can be higher order
+arguments and have the JavaScript `typeof` result `function`. Decimal Rust
+binary64 literals use shared generated lexical boundary decisions in both
+runtime packages; ranges, member names and integer suffixes keep their own
+tokens, and binary32 remains a separately reported translation gap.

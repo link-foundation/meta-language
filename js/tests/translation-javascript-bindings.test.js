@@ -7,6 +7,7 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { tokenize } from '../src/translation/lexer.js';
+import { translateProgram } from '../src/program-translation.js';
 
 function execute(source) {
   return execFileSync(process.execPath, ['--input-type=module', '-e', source], { encoding: 'utf8' });
@@ -54,6 +55,8 @@ test('const destructuring is fresh for every for-of iteration', () => {
   equivalent(`/** @param {string[][]} pairs @returns {string} */
 function keys(pairs) { let out = ''; for (const [key] of pairs) out += key; return out; }
 console.log(keys([['a', 'A'], ['b', 'B']]));`, 'ab\n');
+  equivalent(`function spell(text) { let out = ''; for (const point of text) out += point + '|'; return out; }
+console.log(spell('café😀'));`, 'c|a|f|é|😀|\n');
 });
 
 test('string and Number switches retain strict equality and their default placement', () => {
@@ -70,6 +73,45 @@ console.log(valueOrDefault(null), valueOrDefault(0), valueOrDefault(3));`, '7 0 
   for (const expression of ['null ?? false || true', 'true && null ?? 1', 'null ?? true && false']) {
     assert.throws(() => parseJavaScript(`function value(){return ${expression};}`), /mixing \?\?/u);
   }
+});
+
+test('optional documentation parameters retain omitted undefined values and real defaults', () => {
+  equivalent(`/** @param {number} [count] @returns {number} */
+function countOrOne(count) { return count ?? 1; }
+/** @param {number} [count=7] @returns {number} */
+function countOrSeven(count = 7) { return count; }
+console.log(countOrOne(), countOrOne(0), countOrOne(3), countOrSeven(), countOrSeven(0));`, '1 0 3 7 0\n');
+});
+
+test('overwritten record fields still evaluate in source order', () => {
+  equivalent(`function first() { console.log('first'); return 1; }
+function last() { console.log('last'); return 2; }
+function selected() { const record = { value: first(), value: last() }; return record.value; }
+console.log(selected());`, 'first\nlast\n2\n');
+});
+
+test('named functions are callable values for higher order array methods', () => {
+  equivalent(`function double(number) { return number * 2; }
+function total(numbers) { const doubled = numbers.map(double); return doubled[0] + doubled[1]; }
+console.log(total([2, 3]));`, '10\n');
+});
+
+test('Rust decimal floating tokens leave ranges and member names outside the literal', () => {
+  for (const [source, value, suffix] of [['1.25f64', '1.25', 'f64'], ['2e3', '2000', ''], ['1.', '1', ''], ['2f64', '2', 'f64']]) {
+    const [token] = tokenize(source, 'Rust').tokens;
+    assert.equal(token.value, value);
+    assert.equal(token.suffix, suffix);
+    assert.equal(token.floating, true);
+  }
+  for (const source of ['1..2', '1.floor()']) assert.equal(tokenize(source, 'Rust').tokens[0].raw, '1');
+  const [integer] = tokenize('5usize', 'Rust').tokens;
+  assert.equal(integer.suffix, 'usize');
+  assert.equal(integer.floating, undefined);
+  assert.throws(() => tokenize('1e9999f64', 'Rust'), /out of range/u);
+  const result = translateProgram('fn scale(value: f64) -> f64 { value * 1.25f64 + 2e3 } fn main() { println!("{}", scale(2f64) == 2002.5f64); }', 'Rust', 'JavaScript');
+  assert.equal(result.diagnostic, null);
+  assert.equal(execute(result.code), 'true\n');
+  assert.match(translateProgram('fn value() -> f32 { 1.25f32 } fn main() {}', 'Rust', 'JavaScript').diagnostic.message, /f32/u);
 });
 
 test('statement braces permit regex literals while expression braces retain division', () => {

@@ -48,13 +48,18 @@ console.log(copyOrder([1, 2, 3]), copyOrder([]), copyNested([[1, 2], [], [3]]), 
   for (const target of ['Rust', 'Lean', 'Rocq']) assert.equal(translateProgram(source, 'JavaScript', target).diagnostic, null, target);
 });
 
-test('indexed slices and non-array copy receivers retain explicit diagnostics', () => {
-  for (const source of [
-    'function copy() { return [1].slice(0).length; }',
-    'function copy() { return [1].slice(-1, 2).length; }',
-    "function copy() { return 'a'.slice(); }",
-    'function copy() { return 3.slice(); }',
-  ]) assert.ok(translateProgram(source, 'JavaScript', 'Rust').diagnostic, source);
+test('indexed slices and string copies preserve behavior while invalid receivers retain diagnostics', () => {
+  for (const [source, expected] of [
+    ['function copy() { return [1].slice(0).length; }', '1\n'],
+    ['function copy() { return [1].slice(-1, 2).length; }', '1\n'],
+    ["function copy() { return 'a'.slice(); }", 'a\n'],
+  ]) {
+    const runnable = `${source}\nconsole.log(copy());`;
+    assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', runnable], { encoding: 'utf8' }), expected);
+    assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', emitJavaScript(checkProgram(parseJavaScript(runnable))).text], { encoding: 'utf8' }), expected);
+    assert.equal(translateProgram(runnable, 'JavaScript', 'Rust').diagnostic, null, source);
+  }
+  assert.ok(translateProgram('function copy() { return 3.slice(); }', 'JavaScript', 'Rust').diagnostic);
 });
 
 test('Array.from and Array.of preserve homogeneous construction, nesting and single evaluation', () => {
@@ -76,12 +81,20 @@ console.log(copyOrder([1, 2, 3]), copyOrder([]), constructNested().length, const
   for (const target of ['Rust', 'Lean', 'Rocq']) assert.equal(translateProgram(source, 'JavaScript', target).diagnostic, null, target);
 });
 
-test('array construction refuses array-like objects, string iterators, mapping and mixed elements', () => {
+test('array construction preserves string iterators and mapping with precise invalid argument diagnostics', () => {
   for (const source of [
     'function copy() { return Array.from().length; }',
     'function copy() { return Array.from([1], 2).length; }',
-    "function copy() { return Array.from('café😀').length; }",
     'function copy() { return Array.from(2).length; }',
     "function copy() { return Array.of(1, 'a').length; }",
   ]) assert.ok(translateProgram(source, 'JavaScript', 'Rust').diagnostic, source);
+  for (const [source, expected] of [
+    ["function copy() { return Array.from('café😀').length; }", '5\n'],
+    ['function copy() { const values = Array.from([1, 2], value => value * 2); return values[0] + values[1]; }', '6\n'],
+  ]) {
+    const runnable = `${source}\nconsole.log(copy());`;
+    assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', runnable], { encoding: 'utf8' }), expected);
+    assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', emitJavaScript(checkProgram(parseJavaScript(runnable))).text], { encoding: 'utf8' }), expected);
+    assert.equal(translateProgram(runnable, 'JavaScript', 'Rust').diagnostic, null, source);
+  }
 });
