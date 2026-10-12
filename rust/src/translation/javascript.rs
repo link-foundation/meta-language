@@ -586,6 +586,14 @@ mod product_tests {
         let surface = parse_javascript(source).expect("legacy homogeneous positional arrays parse");
         super::super::check::check_program(&surface).expect("legacy positional reads check");
         for source in [
+            "/** @returns {[string,number]} */function pair(){return ['name',5];}",
+            "/** @param {string[]} values @returns {[string,number]} */function pair(values){return [values[0],1];}",
+        ] {
+            let surface = parse_javascript(source).expect("legacy reference-bearing tuples parse");
+            super::super::check::check_program(&surface)
+                .expect("legacy reference-bearing tuples check");
+        }
+        for source in [
             "function make(){return Object.freeze([1,2]);}",
             "function make(){return Object.freeze([5,true]);}",
         ] {

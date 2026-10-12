@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { convertStructuredData } from '../scripts/convert-structured-data.mjs';
 import { createFixtureSourceLayout } from '../scripts/fixture-source-bytes.mjs';
-import { compareStructuredDataMigrationValues, normalizeMigrationProviderReceipts, validateStructuredDataMigration } from '../scripts/validate-structured-data-migration.mjs';
+import { compareStructuredDataMigrationValues, normalizeMigrationProviderReceipts, normalizeMigrationTranslationStages, validateStructuredDataMigration } from '../scripts/validate-structured-data-migration.mjs';
 import { generateStructuredDataMigrationRevisions } from '../scripts/generate-structured-data-migration-revisions.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
@@ -336,4 +336,36 @@ test('provider fingerprint refresh preserves every protected tree, source, order
   }
   assert.throws(() => normalizeMigrationProviderReceipts(historical, current, [...receipts, ...receipts]), /repeats/u);
   assert.throws(() => normalizeMigrationProviderReceipts(historical, current, [{ language: 'Rust', provider: 'native-r' }]), /cannot add/u);
+});
+
+test('generated stage refresh preserves all sources, unselected stages, order and collection identities', () => {
+  const shared = { source: 'original metadata' };
+  const historical = { generator: 'actual generator', programs: [
+    { name: 'first', extension: 'rs', source: 'fn first() {}', parse: { error: { kind: 'unsupported', message: 'old diagnostic' } } },
+    { name: 'second', extension: 'mjs', source: 'function second(){}', parse: { sha256: 'a'.repeat(64) } },
+  ], first: shared, second: shared };
+  const current = structuredClone(historical);
+  current.programs[0].parse = { sha256: 'b'.repeat(64) };
+  current.programs[0].check = { sha256: 'c'.repeat(64) };
+  const policy = [{ program: 'first', stages: ['parse', 'check'] }];
+  const normalized = normalizeMigrationTranslationStages(historical, current, policy);
+  assert.deepEqual(normalized, historical);
+  assert.equal(normalized.first, normalized.second);
+  assert.equal(current.programs[0].parse.sha256, 'b'.repeat(64));
+  for (const edit of [
+    value => { value.programs[0].source += ' changed'; },
+    value => { value.programs[0].name = 'renamed'; },
+    value => { value.programs[1].parse.sha256 = 'd'.repeat(64); },
+    value => { value.programs.reverse(); },
+    value => { value.programs.push(structuredClone(value.programs[1])); },
+    value => { value.programs[0].parse = { status: 'pass' }; },
+    value => { value.programs[0].check.error = { kind: 'fake', message: 'mixed shape' }; },
+    value => { value.second = structuredClone(value.second); },
+  ]) {
+    const forged = structuredClone(current);
+    edit(forged);
+    assert.throws(() => normalizeMigrationTranslationStages(historical, forged, policy), /translation|migration|identity|collection/u);
+  }
+  assert.throws(() => normalizeMigrationTranslationStages(historical, current, [{ program: 'first', stages: ['source'] }]), /metadata/u);
+  assert.throws(() => normalizeMigrationTranslationStages(historical, current, [...policy, ...policy]), /repeats/u);
 });

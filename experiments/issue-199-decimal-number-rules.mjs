@@ -1,6 +1,10 @@
 // Draft exact decimal selection; native parity and typed-model integration are pending.
 // Host adapters supply IEEE significand, binary exponent and sign; every
 // formatting decision below is portable checked JavaScript source.
+// Number::toString's shortest, nearest and even-decimal rules:
+// https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-number-tostring
+// Rust's shortest-digit tie policy is checked against actual Rust in CI:
+// https://doc.rust-lang.org/beta/src/core/num/imp/flt2dec/strategy/dragon.rs.html
 
 /** @param {bigint} base @param {bigint} exponent @returns {bigint} */
 export function raiseIntegerPower(base, exponent) {

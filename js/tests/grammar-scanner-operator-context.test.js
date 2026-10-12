@@ -86,6 +86,27 @@ test('private external extras keep concrete text without becoming named syntax r
   assert.equal(tokens.some(({ kind }) => kind === '_line'), false);
 });
 
+test('contextual source-pattern replacements preserve anonymous extra identity independently of private tokens', async () => {
+  const { transformNativeSource } = await import('../scripts/native-grammar-transforms.mjs');
+  const source = { name: 'contextual_extra', extras: [{ type: 'PATTERN', value: '\\s' }],
+    rules: { document: { type: 'REPEAT1', content: { type: 'STRING', value: 'x' } } } };
+  const transformed = transformNativeSource(source, [{ family: 'contextual-newline-extras', pattern: '\\s', token: '_line', anonymous: true }]);
+  const scanner = '(scanner line (tokens _line) (operations (consume (literal %0A)) (emit _line)))\n';
+  const imported = importTreeSitterNative(transformed, { scanners: scanner });
+  assert.deepEqual(imported.report.unsupported, []);
+  const outcome = compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported))).parseTree('x\nx');
+  assert.equal(outcome.ok, true);
+  const tokens = leaves(outcome.tree);
+  assert.equal(tokens.map(({ text }) => text).join(''), 'x\nx');
+  assert.equal(tokens.find(({ text }) => text === '\n').kind, 'unnamed_token');
+  assert.equal(tokens.find(({ text }) => text === '\n').trivia, true);
+  assert.equal(tokens.some(({ kind }) => kind === '_line'), false);
+  assert.throws(() => transformNativeSource(source, [{ family: 'contextual-newline-extras', pattern: '\\s', token: '_line', anonymous: 'true' }]), TypeError);
+  const forged = structuredClone(transformed);
+  forged.extras.at(-1).content = { type: 'STRING', value: 'x' };
+  assert.throws(() => importTreeSitterNative(forged, { scanners: scanner }), /declared private scanner token/u);
+});
+
 test('public external extras retain their named token identity and source span', () => {
   const source = {
     name: 'public_extra',

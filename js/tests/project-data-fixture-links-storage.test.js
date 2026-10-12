@@ -7,7 +7,7 @@ import test from 'node:test';
 import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import { createFixtureSourceLayout, readFixtureSourceBytes, renderFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
-import { normalizeMigrationProviderReceipts } from '../scripts/validate-structured-data-migration.mjs';
+import { normalizeMigrationProviderReceipts, normalizeMigrationTranslationStages } from '../scripts/validate-structured-data-migration.mjs';
 
 const root = new URL('../../', import.meta.url);
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -23,20 +23,26 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
     assert.equal(existsSync(file), false, `${logicalPath} has one authoritative Links representation`);
     assert.ok(resolveProjectDataPath(file).endsWith('.lino'), logicalPath);
     let protectedValue = readProjectData(file);
-    const refresh = contract.currentFreshnessChecks.find(check => check.logicalPaths.includes(logicalPath))?.providerReceiptRefresh;
-    if (refresh) {
+    const freshness = contract.currentFreshnessChecks.find(check => check.logicalPaths.includes(logicalPath));
+    const refresh = freshness?.providerReceiptRefresh;
+    if (refresh || freshness?.translationStageRefresh) {
       const revision = revisions.find(entry => entry.logicalPath === logicalPath)?.migrationRevision;
       assert.match(revision, /^[0-9a-f]{40}$/u);
       const historical = readStructuredDataLino(execFileSync('git', ['show', `${revision}:${logicalPath.replace(/\.json$/u, '.lino')}`],
         { cwd: fileURLToPath(root), encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
       assert.equal(hash(JSON.stringify(historical)), decodedSha256, `${logicalPath}: frozen original conversion`);
-      for (const { language, provider } of refresh) {
+      for (const { language, provider } of refresh ?? []) {
         const catalog = readProjectData(new URL('../../js/src/data/language-catalog.lino', import.meta.url));
         const grammar = catalog.languages.find(entry => entry.name === language).grammars.find(entry => entry.id === provider);
         assert.equal(protectedValue.languages[language].grammars[provider].parserSha256, grammar.parserSha256);
         for (const runtime of ['js', 'rust']) assert.equal(hash(readFileSync(new URL(`../../${runtime}/src/data/${catalog.nativeGrammars[provider].file}`, import.meta.url))), grammar.parserSha256);
       }
-      protectedValue = normalizeMigrationProviderReceipts(historical, protectedValue, refresh);
+      if (refresh) protectedValue = normalizeMigrationProviderReceipts(historical, protectedValue, refresh);
+      if (freshness.translationStageRefresh) {
+        assert.deepEqual(freshness.command, ['node', 'js/scripts/build-translation-stage-fixtures.mjs', '--check'],
+          'the complete current pipeline remains a required CI freshness check');
+        protectedValue = normalizeMigrationTranslationStages(historical, protectedValue, freshness.translationStageRefresh);
+      }
     }
     assert.equal(hash(JSON.stringify(protectedValue)), decodedSha256, `${logicalPath}: values and ordered occurrences`);
     if (sourceSha256) assert.equal(hash(readFixtureSourceBytes(file)), sourceSha256, `${logicalPath}: unchanged provenance bytes`);

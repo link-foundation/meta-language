@@ -27,12 +27,14 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join, posix, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { isMainThread } from 'node:worker_threads';
 import { readProjectData, writeProjectData } from './project-data.mjs';
 
 import { DecoratorSet } from '../src/decorators.js';
 import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
 import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
 import { tokenize } from '../src/translation/lexer.js';
+import { createReportMeasurementWorker } from './self-translation-report-worker-host.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -268,7 +270,7 @@ function readPortableExportBindings(source) {
   return names;
 }
 
-function measure(module, decorators, context) {
+export function measureSelfTranslationModule(module, decorators, context) {
   const rust = counterpart(module);
   const source = readFileSync(join(root, module), 'utf8');
   const started = performance.now();
@@ -388,7 +390,7 @@ function verifyPublishedReports(directory, commit) {
 }
 
 
-function main() {
+async function main() {
   if (process.argv.includes('--verify-reports')) {
     try {
       verifyPublishedReports(option('--verify-reports'), option('--commit'));
@@ -407,25 +409,46 @@ function main() {
     console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js] [--decorators file.lino] [--shard K/N] [--list]');
     process.exit(2);
   }
-  const decorators = DecoratorSet.fromLino(readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8'));
+  const decoratorsText = readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8');
+  const decorators = DecoratorSet.fromLino(decoratorsText);
   const rows = [];
   const failures = [];
   const context = createModuleContext((module) => {
     const file = join(root, 'js/src', module);
     return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
   });
-  for (const module of selectedModules()) {
-    const started = performance.now();
-    console.error(`self-translation report: resolving ${module}`);
-    try {
-      const moduleContext = context(posix.relative('js/src', module));
-      console.error(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
-      rows.push(measure(module, decorators, moduleContext));
+  const worker = process.env.CI === 'true' ? createReportMeasurementWorker(decoratorsText) : null;
+  let pending = null;
+  const finish = async () => {
+    if (!pending) return;
+    const { module, started, result } = pending;
+    pending = null;
+    const outcome = await result;
+    if (outcome.error) failures.push({ module, error: outcome.error });
+    else {
+      rows.push(outcome.row);
       console.error(`self-translation report: recorded ${module} (${Math.round(performance.now() - started)} ms)`);
-    } catch (error) {
-      failures.push({ module, error: String(error?.message ?? error) });
     }
-  }
+  };
+  try {
+    for (const module of selectedModules()) {
+      const started = performance.now();
+      console.error(`self-translation report: resolving ${module}`);
+      try {
+        const moduleContext = context(posix.relative('js/src', module));
+        // Resolve this context while the preceding module is being measured.
+        // Complete results in their original source order before starting another.
+        await finish();
+        console.error(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
+        pending = { module, started, result: worker
+          ? worker.measure(module, moduleContext).then(row => ({ row }), error => ({ error: String(error?.message ?? error) }))
+          : Promise.resolve({ row: measureSelfTranslationModule(module, decorators, moduleContext) }) };
+      } catch (error) {
+        failures.push({ module, error: String(error?.message ?? error) });
+      }
+    }
+    await finish();
+  } finally { await worker?.close(); }
   mkdirSync(outDir, { recursive: true });
   const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '');
   writeFileSync(join(outDir, 'self-translation-report.md'), report);
@@ -438,4 +461,7 @@ function main() {
   console.log(report);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
+if (isMainThread && process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(error => {
+  console.error(String(error?.message ?? error));
+  process.exitCode = 1;
+});

@@ -159,8 +159,9 @@ export function transformNativeSource(source, transformations = []) {
       continue;
     }
     if (decision.family === 'contextual-newline-extras') {
-      const { pattern, token } = decision;
+      const { pattern, token, anonymous = false } = decision;
       if (typeof pattern !== 'string' || !pattern || typeof token !== 'string' || !/^_[A-Za-z_]+$/u.test(token)
+        || typeof anonymous !== 'boolean'
         || Object.hasOwn(grammar.rules, token) || (grammar.externals ?? []).some((external) => external.name === token)) throw new TypeError('contextual newline extras need a source pattern and a unique hidden scanner token');
       let changes = 0;
       grammar.extras = (grammar.extras ?? []).map((extra) => {
@@ -170,7 +171,10 @@ export function transformNativeSource(source, transformations = []) {
       });
       if (changes !== 1) throw new TypeError('contextual newline extras must select exactly one source pattern');
       grammar.externals = [...(grammar.externals ?? []), { type: 'SYMBOL', name: token }];
-      grammar.extras.push({ type: 'SYMBOL', name: token });
+      // The retained CST policy explicitly selects an anonymous source-pattern
+      // leaf; otherwise the new private scanner token stays unnamed.
+      const extra = { type: 'SYMBOL', name: token };
+      grammar.extras.push(anonymous ? { type: 'NATIVE_ANONYMOUS_EXTRA', content: extra } : extra);
       continue;
     }
     if (decision.family === 'rule-prefix-exclusion') {

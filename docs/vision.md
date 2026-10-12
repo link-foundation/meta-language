@@ -709,8 +709,9 @@ parameter defaults and closed callers. A finite source dependency solver refuses
 ungrounded cycles.
 An uncalled product-returning function has no witnessed caller context and stays
 unsupported. Existing homogeneous positional array annotations retain their
-array representation; mixed and nested positions require independent product
-origins. Readonly module constants continue to require literal initializers.
+array representation. Mixed and nested scalar Copy positions require independent
+product origins; ordinary reference-bearing tuples keep their existing array
+model. Readonly module constants continue to require literal initializers.
 Const bindings or declared types alone do not prove immutability, and arbitrary
 arrays, identity observations, whole-product conditions, mutable aliases,
 unknown escapes, sparse products and dynamic positions require additional
@@ -1127,6 +1128,10 @@ Report import resolution checks every candidate callable and avoids resolving
 dependencies of classes and forwarded names that the current source binder
 cannot bind. Every source module still receives its complete measurement and
 byte-coverage check.
+In CI one JavaScript worker measures a module while the coordinator resolves
+the following module's imports. Contexts and results travel as LiNo records;
+completed rows retain their original order. Local reports remain sequential,
+and CI keeps the same report deadlines and verification gates.
 
 The native grammar and conformance test groups run in disjoint CI file
 partitions. Their union retains every original file exactly once, and each job

@@ -149,6 +149,39 @@ export function normalizeMigrationProviderReceipts(historical, current, receipts
   return normalized;
 }
 
+/** Compare original source identities while separately refreshing generated stages. */
+export function normalizeMigrationTranslationStages(historical, current, refreshes) {
+  if (!Array.isArray(refreshes) || !refreshes.length || !Array.isArray(historical?.programs)
+    || !Array.isArray(current?.programs)) throw new Error('translation stage refresh needs explicit programs and stages');
+  const normalized = structuredClone(current);
+  const before = new Map(historical.programs.map(program => [program.name, program]));
+  const after = new Map(normalized.programs.map(program => [program.name, program]));
+  if (before.size !== historical.programs.length || after.size !== current.programs.length) throw new Error('translation stage refresh cannot duplicate a program');
+  const seen = new Set();
+  const result = value => value && typeof value === 'object' && !Array.isArray(value)
+    && (isDeepStrictEqual(Object.keys(value), ['sha256']) && digest.test(value.sha256)
+      || isDeepStrictEqual(Object.keys(value), ['error']) && value.error && typeof value.error === 'object'
+        && isDeepStrictEqual(Object.keys(value.error), ['kind', 'message'])
+        && typeof value.error.kind === 'string' && typeof value.error.message === 'string');
+  for (const { program, stages } of refreshes) {
+    if (typeof program !== 'string' || !before.has(program) || !after.has(program)
+      || !Array.isArray(stages) || !stages.length || new Set(stages).size !== stages.length
+      || stages.some(stage => !['parse', 'check', 'emit'].includes(stage))) throw new Error('translation stage refresh cannot add a program or select a metadata field');
+    if (seen.has(program)) throw new Error('translation stage refresh repeats a program');
+    seen.add(program);
+    for (const stage of stages) {
+      const value = after.get(program)[stage];
+      if (value !== undefined && (stage === 'emit'
+        ? !value || !isDeepStrictEqual(Object.keys(value), ['javascript', 'rust', 'lean', 'rocq']) || !Object.values(value).every(result)
+        : !result(value))) throw new Error('translation stage refresh needs actual digest or diagnostic records');
+      if (Object.hasOwn(before.get(program), stage)) after.get(program)[stage] = structuredClone(before.get(program)[stage]);
+      else delete after.get(program)[stage];
+    }
+  }
+  compareStructuredDataMigrationValues(historical, normalized, 'protected translation source and stage fields');
+  return normalized;
+}
+
 /**
  * Authenticate the recorded baseline with original Git JSON, then replay the
  * actual converter against the committed historical LiNo. Changed current
@@ -296,6 +329,9 @@ export function validateStructuredDataMigration({
         if (!check) throw new Error('changed current output has no independently executed registered generator freshness check');
         if (check.providerReceiptRefresh) {
           normalizeMigrationProviderReceipts(historical, migrated, check.providerReceiptRefresh);
+        }
+        if (check.translationStageRefresh) {
+          normalizeMigrationTranslationStages(historical, migrated, check.translationStageRefresh);
         }
         freshness = verifyFreshness(check);
         if (freshness instanceof Error) throw freshness;

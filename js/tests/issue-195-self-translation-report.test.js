@@ -1,7 +1,31 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { compareRustDefinitions, createModuleContext, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
+import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate } from '../src/self-translation.js';
+
+test('one CI measurement worker preserves full source coverage, hashes and both independent comparisons', async () => {
+  const module = 'js/src/translation/primitive-value-rules.js';
+  const context = { moduleDirectory: [], imports: {} };
+  const decoratorsText = readFileSync(new URL('../../parity/self-translation/decorators.lino', import.meta.url), 'utf8');
+  const worker = createReportMeasurementWorker(decoratorsText);
+  try {
+    const expected = measureSelfTranslationModule(module, DecoratorSet.fromLino(decoratorsText), context);
+    const actual = await worker.measure(module, context);
+    const { milliseconds: first, ...stableExpected } = expected;
+    const { milliseconds: second, ...stableActual } = actual;
+    assert.ok(first >= 0 && second >= 0);
+    assert.deepEqual(stableActual, stableExpected);
+    assert.equal(actual.coverage.unrepresentedBytes, 0);
+    assert.ok(actual.functions > 0);
+    assert.ok(actual.handWrittenLines > 0);
+    const repeated = await worker.measure(module, context);
+    assert.equal(repeated.sourceSha256, actual.sourceSha256);
+    await assert.rejects(worker.measure('../outside.js', context), /inside js\/src/u);
+  } finally { await worker.close(); }
+});
 
 test('report import resolution checks callable candidates and avoids dependencies of carried classes', () => {
   const modules = new Map([

@@ -126,8 +126,13 @@ fn scalar(ty: &Type) -> bool {
 }
 
 fn needs_product_origin(ty: &Type) -> bool {
-    matches!(ty, Type::Tuple { elements } if elements.first().is_some_and(|first|
+    matches!(ty, Type::Tuple { elements } if copy_tuple(ty) && elements.first().is_some_and(|first|
         elements.iter().any(|element| matches!(element, Type::Tuple { .. }) || element != first)))
+}
+
+fn copy_tuple(ty: &Type) -> bool {
+    matches!(ty, Type::Tuple { elements } if !elements.is_empty()
+        && elements.iter().all(|element| scalar(element) || copy_tuple(element)))
 }
 
 fn children(node: &SExpr) -> Vec<&SExpr> {

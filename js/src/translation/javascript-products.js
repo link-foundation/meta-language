@@ -5,9 +5,12 @@ import { solveProductSourceFacts } from './product-source-rules.js';
 import { sameType } from './types.js';
 
 const scalar = type => ['bool', 'float', 'fixed', 'unit'].includes(type?.kind);
-// Homogeneous positional annotations retain the existing array ABI. Mixed or
-// nested positions require the selected product ABI, with independent origins.
+const copyTuple = type => type?.kind === 'tuple' && type.elements.length > 0
+  && type.elements.every(element => scalar(element) || copyTuple(element));
+// Ordinary reference-bearing tuples retain the existing array ABI. The mixed
+// scalar Copy domain selects a product obligation, never an ownership proof.
 const needsProductOrigin = type => type?.kind === 'tuple' && type.elements.length > 0
+  && copyTuple(type)
   && type.elements.some(element => element.kind === 'tuple' || !sameType(element, type.elements[0]));
 
 export function readJavaScriptProductIndex(node) {

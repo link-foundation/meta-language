@@ -526,6 +526,11 @@ export function importTreeSitterNative(source, options = {}) {
   const unnamed = (node, aliased) => (aliased ? node : `(alias ${enc(unnamedToken)} ${node})`);
   const expr = (node, inToken, keywords, aliased = false) => {
     switch (node.type) {
+      case 'NATIVE_ANONYMOUS_EXTRA':
+        if (node.content?.type !== 'SYMBOL' || !node.content.name.startsWith('_') || !scanned(node.content.name)) {
+          throw parseError(FORMAT, 'anonymous extra identity needs a declared private scanner token');
+        }
+        return unnamed(expr(node.content, inToken, keywords, true), aliased);
       case 'SYMBOL':
         if (scanned(node.name)) {
           const token = immediate.has(node.name) ? `(immediateToken ${ref(node.name)})` : ref(node.name);
@@ -746,10 +751,11 @@ export function importTreeSitterNative(source, options = {}) {
   const extras = [];
   for (const extra of grammar.extras ?? []) {
     try {
-      // Hidden external scanner tokens are anonymous leaves, including when
-      // used as extras. Retain the same token alias and scanner state as syntax;
-      // the extra wrapper supplies trivia without losing the leaf's identity.
-      extras.push(expr(extra, true, keywords));
+      // Private external extras have text and scanner state without a named
+      // syntax kind. Explicit anonymous source-pattern replacements retain
+      // their alias through the ordinary expression lowering above.
+      const privateExternal = extra.type === 'SYMBOL' && extra.name.startsWith('_') && scanned(extra.name);
+      extras.push(privateExternal ? `(seq ${expr(extra, true, keywords, true)})` : expr(extra, true, keywords));
     } catch (error) {
       if (!(error instanceof UnsupportedTreeSitterPattern)) throw error;
       report.unsupported.push(`extra: ${error.message}`);
