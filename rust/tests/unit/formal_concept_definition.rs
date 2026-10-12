@@ -5,6 +5,43 @@ use meta_language::{
 };
 use serde_json::Value;
 
+use super::issue_195_observations::{Observation, record};
+
+fn observe(requirement_id: &str, assertions: &[&str], test_name: &str) {
+    record(&Observation {
+        requirement_id,
+        suffix: "behavior",
+        fixture_id: "formal-concept-definitions",
+        fixture_file: "parity/fixtures/formal-concept-definitions.json",
+        assertions,
+        test_name,
+    });
+}
+
+fn contains_cycle(prepared: &Value) -> bool {
+    fn visit(node: usize, prepared: &Value, states: &mut [u8]) -> bool {
+        if states[node] == 1 {
+            return true;
+        }
+        if states[node] == 2 {
+            return false;
+        }
+        states[node] = 1;
+        let first = prepared["offsets"][node].as_u64().unwrap() as usize;
+        let end = prepared["offsets"][node + 1].as_u64().unwrap() as usize;
+        for edge in first..end {
+            let target = prepared["edges"][edge].as_u64().unwrap() as usize;
+            if visit(target, prepared, states) {
+                return true;
+            }
+        }
+        states[node] = 2;
+        false
+    }
+    let mut states = vec![0; prepared["shapes"].as_array().unwrap().len()];
+    visit(0, prepared, &mut states)
+}
+
 fn fixture() -> Value {
     serde_json::from_str(include_str!(
         "../../../parity/fixtures/formal-concept-definitions.json"
@@ -16,6 +53,18 @@ fn fixture() -> Value {
 fn formal_archives_prepare_the_same_shared_cyclic_and_labeled_graphs() {
     let fixture = fixture();
     for definition in fixture["definitions"].as_array().unwrap() {
+        let archive = FormalConceptArchive::from_json(&definition["archive"]).unwrap();
+        let root = archive.network.link(archive.root).unwrap();
+        assert_eq!(root.metadata().term(), Some("formal concept definition"));
+        assert_eq!(root.references().len(), 2);
+        let basis = archive.network.link(root.references()[1]).unwrap();
+        assert_eq!(basis.metadata().term(), Some("formal primitive model"));
+        assert_eq!(
+            basis.metadata().definition(),
+            definition["prepared"]["model"].as_str()
+        );
+        assert_eq!(basis.references().len(), 1);
+        assert!(archive.network.link(basis.references()[0]).is_some());
         assert_eq!(
             read_formal_concept_definition(&definition["archive"]).unwrap(),
             definition["prepared"],
@@ -59,6 +108,44 @@ fn formal_archives_prepare_the_same_shared_cyclic_and_labeled_graphs() {
             .to_lino()
             .contains("first%20imported%20text")
     );
+    let recursive = &fixture["definitions"][4]["prepared"];
+    assert!(contains_cycle(recursive));
+    let mut incoming = vec![0; recursive["shapes"].as_array().unwrap().len()];
+    for edge in recursive["edges"].as_array().unwrap() {
+        incoming[edge.as_u64().unwrap() as usize] += 1;
+    }
+    assert!(incoming.iter().any(|count| *count > 1));
+    assert!(
+        recursive["shapes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|shape| shape.as_str().unwrap().contains("source language"))
+    );
+    assert!(
+        recursive["shapes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|shape| shape.as_str().unwrap().contains("reference semantics"))
+    );
+    observe(
+        "I195-FORMAL-CONCEPT-DEFINITIONS",
+        &[
+            "definitionsAreInspectableLinks",
+            "foundationalPrimitivesExplicit",
+        ],
+        "formal_archives_prepare_the_same_shared_cyclic_and_labeled_graphs",
+    );
+    observe(
+        "I195-FORMAL-CONCEPT-REFERENCES",
+        &[
+            "recursiveConceptReferencesPreserved",
+            "sharedAndCyclicDefinitionsReloaded",
+            "definitionAssumptionsPreserved",
+        ],
+        "formal_archives_prepare_the_same_shared_cyclic_and_labeled_graphs",
+    );
 }
 
 #[test]
@@ -94,7 +181,25 @@ fn formal_certificates_recheck_every_pair_and_copied_premise() {
             proof["name"]
         );
     }
-    assert!(prove_formal_concept_equivalence(&archives[0], &archives[1]).is_none());
+    for pair in fixture["negativeEquivalences"].as_array().unwrap() {
+        assert!(
+            prove_formal_concept_equivalence(
+                &archives[pair["first"].as_u64().unwrap() as usize],
+                &archives[pair["second"].as_u64().unwrap() as usize],
+            )
+            .is_none(),
+            "{}",
+            pair["name"],
+        );
+    }
+    observe(
+        "I195-FORMAL-CONCEPT-MEANING-COMPARISON",
+        &[
+            "formalDefinitionsCompared",
+            "unprovedMeaningEquivalenceRejected",
+        ],
+        "formal_certificates_recheck_every_pair_and_copied_premise",
+    );
 }
 
 #[test]
@@ -116,5 +221,10 @@ fn unknown_counterfeit_cyclic_dangling_and_duplicate_bases_are_refused() {
             "proof by descriptive prose"
         )
         .is_err()
+    );
+    observe(
+        "I195-FORMAL-CONCEPT-MEANING-COMPARISON",
+        &["semanticObligationsChecked"],
+        "unknown_counterfeit_cyclic_dangling_and_duplicate_bases_are_refused",
     );
 }

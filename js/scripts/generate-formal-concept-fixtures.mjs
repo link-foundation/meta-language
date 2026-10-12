@@ -19,6 +19,7 @@ const inputs = [
   ['recursive factorial alpha binding', program('function factorial(value){return value<=1 ? 1 : value*factorial(value-1);} console.log(factorial(4));')],
   ['source text first provenance', encodeFormalConceptDefinition(undefined, { model: 'source text value', provenance: { source: 'first imported text' } })],
   ['source text second provenance', encodeFormalConceptDefinition(undefined, { model: 'source text value', provenance: { source: 'second imported text' } })],
+  ['same interface changed operation', program('function add(a,b){return a*b;} console.log(add(2,3));')],
 ];
 const definitions = inputs.map(([name, archive]) => ({ name, archive: portable(archive), prepared: readFormalConceptDefinition(archive) }));
 const proofs = [[0, 0], [1, 1], [2, 3], [4, 5], [6, 7]].map(([first, second]) => {
@@ -50,6 +51,16 @@ for (const change of ['unknown model', 'changed basis', 'structural cycle', 'dan
   assert.equal(proveFormalConceptEquivalence(definitions[0].archive, value), null, change);
   rejections.push({ name: change, archive: value });
 }
+{
+  const archive = reload(definitions[2].archive);
+  const relation = archive.network.fieldRelations().find(({ label, child }) => label === 'semantics' && archive.network.link(child).metadata().definition === 'ieee');
+  assert.ok(relation);
+  const link = archive.network.link(relation.child);
+  link.setMetadata(link.metadata().withDefinition('checked'));
+  const value = portable(archive);
+  assert.throws(() => readFormalConceptDefinition(value), undefined, 'floating operation policy must retain its declared basis');
+  rejections.push({ name: 'counterfeit floating operation policy', archive: value });
+}
 const invalidCertificates = [];
 for (const change of ['removed pair', 'duplicate pair', 'retargeted pair', 'stale copied premise']) {
   const certificate = reload(proofs[0].certificate);
@@ -67,7 +78,11 @@ for (const change of ['removed pair', 'duplicate pair', 'retargeted pair', 'stal
   assert.equal(verifyFormalConceptEquivalence(definitions[0].archive, definitions[0].archive, value), false, change);
   invalidCertificates.push({ name: change, first: 0, second: 0, certificate: value });
 }
-const fixture = { schemaVersion: 1, definitions, proofs, rejections, invalidCertificates };
+const negativeEquivalences = [[0, 1], [2, 8]].map(([first, second]) => {
+  assert.equal(proveFormalConceptEquivalence(definitions[first].archive, definitions[second].archive), null);
+  return { name: `${definitions[first].name} differs from ${definitions[second].name}`, first, second };
+});
+const fixture = { schemaVersion: 1, definitions, proofs, rejections, invalidCertificates, negativeEquivalences };
 const path = new URL('../../parity/fixtures/formal-concept-definitions.json', import.meta.url);
 const expected = `${JSON.stringify(fixture, null, 2)}\n`;
 if (process.argv.includes('--check')) assert.ok(readFileSync(path, 'utf8') === expected, 'formal concept fixtures are stale');
