@@ -81630,6 +81630,85 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "grammar.apply-declaration-source-transform",
+      "phrase": "apply declaration source transform",
+      "role": "operation",
+      "definition": "Apply recorded declaration alias and complete optional prefix preferences to a copied source grammar.",
+      "constraints": [
+        "Existing source alternatives remain available; only the selected complete parse receives its recorded preference.",
+        "Rule, field, named alias and occurrence selectors must match exactly before generated output can be used.",
+        "Ordinary shared grammar expressions carry the behavior without a language callback in either runtime."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar declaration contexts",
+          "name": "applyDeclarationSourceTransform"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.apply-root-source-transform",
+      "phrase": "apply root source transform",
+      "role": "operation",
+      "definition": "Apply recorded member precedence and complete nested choice contexts to a copied source grammar.",
+      "constraints": [
+        "Existing root alternatives remain available while recorded complete-context boundaries preserve the selected source reduction.",
+        "Rules, symbols, alternatives and occurrence counts must match their recorded context.",
+        "The resulting shared grammar uses existing dynamic precedence and complete context operations."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar root contexts",
+          "name": "applyRootSourceTransform"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-program-expression-operation",
+      "phrase": "accept program expression operation",
+      "role": "operation",
+      "definition": "Accept only the declared executable operation names of a supported typed expression family.",
+      "constraints": [
+        "The seven operation families retain exact shared schema whitelists for mathematical, string, method, collection and optional predicate operations.",
+        "Arbitrary source strings and property names remain data and cannot become executable operation names.",
+        "Unknown kinds and operations retain explicit rejection."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript typed linked program decisions",
+          "name": "acceptProgramExpressionOperation"
+        },
+        {
+          "source": "Rust typed linked program decisions",
+          "name": "accept_program_expression_operation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-program-division-rounding",
+      "phrase": "accept program division rounding",
+      "role": "operation",
+      "definition": "Accept only an explicitly supported integer division rounding policy.",
+      "constraints": [
+        "The admitted shared policies are truncation, Euclidean division and floor, named trunc, euclid and floor by the source enum.",
+        "Malformed or quoted policy strings cannot become target source expressions."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript typed linked program decisions",
+          "name": "acceptProgramDivisionRounding"
+        },
+        {
+          "source": "Rust typed linked program decisions",
+          "name": "accept_program_division_rounding"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

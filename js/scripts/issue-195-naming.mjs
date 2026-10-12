@@ -752,6 +752,13 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `grammar.generate-${name}`,
   },
   {
+    inventory: 'declaration and root source contexts',
+    files: ['js/scripts/native-csharp-declarations.mjs', 'js/scripts/native-csharp-roots.mjs'],
+    extract: (text) => captures(text, /^export function (applyDeclarationSourceTransform|applyRootSourceTransform)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.${name}`,
+  },
+  {
     inventory: 'structured and counted scanner generators',
     files: ['js/scripts/structured-scanner-families.mjs', 'js/scripts/counted-interpolation-scanner.mjs', 'js/scripts/generate-native-scanner-profiles.mjs'],
     extract: (text) => captures(text, /^export function (hereDocumentScanner|interpolatedQuotedScanner|fencedBlockScanner|offsideLayoutScanner|countedInterpolationScanner|nativeScannerProfile)\(/gmu)
