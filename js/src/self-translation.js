@@ -20,6 +20,7 @@ import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
 import { tokenize } from './translation/lexer.js';
 import { eraseTypeScript, requiresTypeScriptErasure } from './typescript-erasure.js';
+import { projectTypeScriptTyping } from './typescript-portable-typing.js';
 import { parseRust } from './translation/rust.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 
@@ -467,7 +468,7 @@ function collectLiteralBindings(groups, bind, from, to, decorators) {
   if (bind) for (const group of groups) {
     if (group.kind !== 'item') continue;
     try {
-      const parsed = parseJavaScript(from === 'TypeScript' ? eraseTypeScript(group.text).code : group.text);
+      const parsed = parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(group.text).code : group.text);
       const effects = parsed.main.effects;
       const effect = effects[0];
       if (effect && acceptLiteralBinding(effect.value?.k ?? '', effect.constant ?? false, effects.length, parsed.items.length)) {
@@ -511,7 +512,7 @@ function translateGroup(group, from, to, decorators, context = {}) {
     // The Rust frontend reads a program, so an item alone gets an empty main.
     const program = checkProgram(family(from) === 'Rust'
       ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`)
-      : parseJavaScript(from === 'TypeScript' ? eraseTypeScript(text).code : text, context));
+      : parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(text).code : text, context));
     if (context.utf16Strings) program.utf16Strings = true;
     // A top-level constant is a Rust constant; other top-level statements run once, as a program.
     const constants = family(to) === 'Rust' ? emitRustConstants(program) : null;

@@ -1,8 +1,20 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import vm from 'node:vm';
+import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { eraseTypeScript } from '../src/typescript-erasure.js';
 import { selfTranslate } from '../src/self-translation.js';
+import { projectTypeScriptTyping } from '../src/typescript-portable-typing.js';
+
+test('shared TypeScript erasure rules and bounded fixtures reproduce exactly', () => {
+  assert.equal(readFileSync(new URL('../src/data/typescript-erasure.lino', import.meta.url), 'utf8'),
+    readFileSync(new URL('../../rust/src/data/typescript-erasure.lino', import.meta.url), 'utf8'));
+  for (const script of ['generate-typescript-erasure-rules.mjs', 'generate-typescript-erasure-fixtures.mjs']) {
+    const result = spawnSync(process.execPath, [new URL(`../scripts/${script}`, import.meta.url).pathname, '--check'], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+  }
+});
 
 test('TypeScript annotations erase through the native tree and translated JavaScript executes', () => {
   const source = 'function add(a: number, b: number): number { return a + b; }\n';
@@ -65,4 +77,17 @@ test('editing emitted JavaScript invalidates erased-source restoration', () => {
   assert.notEqual(reverse.code, source);
   assert.match(reverse.code, /return a - b;/u);
   assert.equal(vm.runInNewContext(`${reverse.code}\nadd(5, 8)`), -3);
+});
+
+test('TypeScript annotations retain string and boolean types in the Rust semantic projection', () => {
+  for (const [type, expected] of [['string', 'String'], ['boolean', 'bool']]) {
+    const source = `export function identity(value: ${type}): ${type} { return value; }\n`;
+    const projected = projectTypeScriptTyping(source);
+    assert.match(projected.code, new RegExp(`@param \\{${type}\\} value`, 'u'));
+    const translation = selfTranslate(source, 'TypeScript', 'Rust');
+    assert.ok(translation.items.every(({ status }) => status === 'translated'));
+    assert.ok(translation.code.includes(`pub fn identity(value: ${expected}) -> ${expected}`));
+  }
+  const contradictory = selfTranslate('function answer(): number { return "wrong"; }\n', 'TypeScript', 'Rust');
+  assert.ok(contradictory.items.some(({ status }) => status === 'carried'), 'source type contradictions are not erased from checking');
 });
