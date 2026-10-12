@@ -2,7 +2,7 @@
 // No source text, source envelope, JSON AST payload or cached emission is stored.
 import { readFileSync } from 'node:fs';
 import { LinkNetwork } from './network.js';
-import { LinkMetadata, LinkType } from './primitives.js';
+import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { parseJavaScript } from './translation/javascript.js';
 import { parseRust } from './translation/rust.js';
 import { checkProgram } from './translation/check.js';
@@ -104,7 +104,7 @@ export function encodeTypedProgramLinks(program, { provenance } = {}) {
   return { network, root };
 }
 
-export function decodeTypedProgramLinks(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {
+function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {
   const rootLink = network.link(root);
   if (!rootLink || !acceptProgramSchemaRoot(rootLink.metadata().term ?? '', rootLink.metadata().definition ?? '', String(rootLink.references().length))) throw new TypeError('the linked program root or schema is invalid');
   const fields = new Map();
@@ -182,7 +182,96 @@ export function decodeTypedProgramLinks(network, root, { nodeLimit = 100_000, de
     references.set(reference.owner, { target, label: reference.label });
   }
   validateLinkedTypedProgram(program, references);
-  return program;
+  return { program, objects };
+}
+
+export function decodeTypedProgramLinks(network, root, options) {
+  return decodeTypedProgramLinksContext(network, root, options).program;
+}
+
+// Expression operands consumed by the existing emitters. This intentionally
+// does not walk arbitrary metadata, types, source spans or provenance fields.
+const expressionOperands = {
+  call: ['args'], ctor: ['args'], math: ['args'], recur: ['args'],
+  apply: ['fn', 'args'], method: ['object', 'args'],
+  cellAllocate: ['value'], cellRead: ['cell'], cellWrite: ['cell', 'value', 'body'],
+  referenceAllocate: ['value'], referenceRead: ['reference'],
+  recordField: ['object'], tupleIndex: ['object'], tuple: ['items'], array: ['items'],
+  some: ['value'], flattenOption: ['value'], nullishNumber: ['arg'], optionalIndexNumber: ['arg'],
+  truthy: ['arg'], strictEqual: ['left', 'right'], optionalTypeOf: ['arg'], optionalText: ['arg'],
+  unwrapOption: ['arg'], optionalPredicate: ['arg'], coalesce: ['left', 'right'],
+  optionalField: ['object'], optionalProject: ['object'], optionalIndex: ['array', 'index'],
+  stringPoints: ['object'], set: ['items'], map: ['entries'],
+  collectionSize: ['object'], collectionRead: ['object', 'key'], collectionItems: ['object'],
+  unary: ['arg'], binary: ['left', 'right'], if: ['cond', 'then', 'else'],
+  print: ['text', 'body'], toString: ['arg'], stringMap: ['string'], stringTest: ['string', 'search'],
+  cast: ['arg'], append: ['left', 'right'], index: ['array', 'index'], length: ['array'],
+};
+
+/** Internal formal bridge: identify owned lexical binder records, including unused binders. */
+export function readTypedProgramBindingIdentities(network, root) {
+  const { program, objects } = decodeTypedProgramLinksContext(network, root);
+  const bindings = new WeakSet();
+  const expressions = new WeakSet();
+  const propositions = new WeakSet();
+  let visits = 0;
+  function admit(node, visited) {
+    if (!node || typeof node !== 'object' || visited.has(node)) return false;
+    if (++visits > 100_000) throw new TypeError('the linked program exceeds its binding resource limit');
+    visited.add(node);
+    return true;
+  }
+  function expression(node) {
+    if (!admit(node, expressions)) return;
+    if (node.k === 'let') {
+      bindings.add(node);
+      expression(node.value); expression(node.body);
+    } else if (node.k === 'lambda') {
+      for (const parameter of node.params) bindings.add(parameter);
+      expression(node.body);
+    } else if (node.k === 'record') {
+      for (const entry of node.entries) expression(entry.value);
+    } else if (node.k === 'match') {
+      expression(node.scrutinee);
+      // Pattern variable spelling is still conservative in this codec.
+      for (const entry of node.cases) expression(entry.body);
+    } else {
+      for (const field of expressionOperands[node.k] ?? []) {
+        const value = node[field];
+        if (Array.isArray(value)) value.forEach(expression);
+        else expression(value);
+      }
+    }
+  }
+  function proposition(node) {
+    if (!admit(node, propositions)) return;
+    if (node.p === 'forall') {
+      for (const binder of node.binders) bindings.add(binder);
+      proposition(node.body);
+    } else if (['and', 'or', 'implies'].includes(node.p)) {
+      proposition(node.left); proposition(node.right);
+    } else if (node.p === 'not') proposition(node.arg);
+    else if (node.p === 'bool') expression(node.expr);
+    else if (['eq', 'ne', 'lt', 'le', 'gt', 'ge'].includes(node.p)) {
+      expression(node.left); expression(node.right);
+    }
+  }
+  for (const entry of program.declarations.values()) {
+    if (entry.k === 'fn') {
+      for (const parameter of entry.params) bindings.add(parameter);
+      expression(entry.body);
+    } else if (entry.k === 'const') expression(entry.value);
+    else if (entry.k === 'theorem') {
+      for (const binder of entry.binders) bindings.add(binder);
+      proposition(entry.prop);
+    }
+  }
+  for (const effect of program.main?.effects ?? []) {
+    if (effect.k === 'let') { bindings.add(effect); expression(effect.value); }
+    else if (effect.k === 'print') expression(effect.expr);
+    else if (effect.k === 'assert') proposition(effect.prop);
+  }
+  return [...objects].filter(([, value]) => bindings.has(value)).map(([id]) => LinkId.fromU64(id));
 }
 
 export function createTypedProgramLinks(source, language, options = {}) {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { test } from 'node:test';
 import { LinkNetwork } from '../src/network.js';
-import { createTypedProgramLinks, decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
+import { createTypedProgramLinks, decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from '../src/typed-program-links.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 
@@ -59,6 +59,43 @@ test('binding identity permits a declaration rename without capture or stale var
   const emitted = emitTypedProgramLinks(archive.network, archive.root, 'JavaScript');
   assert.match(emitted.code, /function add\(renamed, b\)/u);
   assert.deepEqual(run(emitted.code), ['5']);
+});
+
+test('owned binding identities include unused parameters, locals and callback parameters', () => {
+  const examples = [
+    ['function calculate(value,unused){const constant=1;const increment=()=>value+constant;return increment();}const result=calculate(2,3);console.log(result);', ['constant', 'increment', 'result', 'unused', 'value']],
+    ['/** @param {number[]} values */function ones(values){return values.map((unused)=>1);}console.log(ones([1,2]).join(","));', ['unused', 'values']],
+  ];
+  for (const [source, expected] of examples) {
+    const archive = roundTrip(createTypedProgramLinks(source, 'JavaScript'));
+    const names = readTypedProgramBindingIdentities(archive.network, archive.root)
+      .map((id) => archive.network.link(field(archive.network, id, 'name')).metadata().definition).sort();
+    assert.deepEqual(names, expected);
+  }
+});
+
+test('ignored metadata and disconnected relations cannot counterfeit binder identities', () => {
+  const program = checkProgram(parseJavaScript('console.log({left:1});'));
+  const record = program.main.effects[0].expr.arg.body;
+  const publicField = record.type.fields[0];
+  // The same public descriptor can be placed in metadata with convincing
+  // function/lambda tags. These are not semantic declarations or operands.
+  program.extra = { k: 'fn', params: [publicField] };
+  program.main.effects[0].expr.arg.value.extra = {
+    k: 'lambda', params: [publicField], body: { k: 'lit', type: { kind: 'float' }, value: '0' },
+    type: { kind: 'function', params: [publicField.type], ret: { kind: 'float' } },
+  };
+  const archive = roundTrip(encodeTypedProgramLinks(program));
+  const names = readTypedProgramBindingIdentities(archive.network, archive.root)
+    .map((id) => archive.network.link(field(archive.network, id, 'name')).metadata().definition);
+  assert.deepEqual(names, ['ml_field1']);
+  const fieldName = scalarByField(archive.network, 'name', 'left');
+  const descriptor = archive.network.fieldRelations().find((relation) => relation.child.equals(fieldName)).parent;
+  const decoy = archive.network.insertLink([], archive.network.link(descriptor).metadata());
+  archive.network.insertFieldRelation(decoy, 'binding reference', descriptor);
+  assert.deepEqual(readTypedProgramBindingIdentities(archive.network, archive.root)
+    .map((id) => archive.network.link(field(archive.network, id, 'name')).metadata().definition), names);
+  assert.ok(readTypedProgramBindingIdentities(archive.network, archive.root).every((id) => !id.equals(descriptor)));
 });
 
 test('sequential effects and lexical shadowing remain structured after source-free reload', () => {

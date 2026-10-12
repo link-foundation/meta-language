@@ -167,7 +167,6 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
     }
     if (node.k === 'toString') {
       same(node.type, { kind: 'string' }, 'text conversion result type');
-      if (!['nat', 'int', 'float', 'fixed', 'string', 'bool'].includes(node.arg.type?.kind)) throw new TypeError('a linked text conversion has an unsupported operand type');
     }
     if (node.k === 'binary') {
       same(node.left.type, node.right.type, 'binary operand types');
