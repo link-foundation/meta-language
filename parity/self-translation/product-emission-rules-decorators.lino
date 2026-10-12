@@ -1,0 +1,6 @@
+(decorator product-emission-array-module (level emitter) (order 0) (when (format Rust)) (replace line crate%3A%3Aml_array%3A%3A crate%3A%3Atranslation%3A%3Aproduct_emission_rules%3A%3Aml_array%3A%3A))
+(decorator product-emission-join-module (level emitter) (order 1) (when (format Rust)) (replace line crate%3A%3Ajoin_product_items crate%3A%3Atranslation%3A%3Aproduct_emission_rules%3A%3Ajoin_product_items))
+(decorator product-emission-loop-module (level emitter) (order 2) (when (format Rust)) (replace line crate%3A%3Aml_join_product_items crate%3A%3Atranslation%3A%3Aproduct_emission_rules%3A%3Aml_join_product_items))
+(decorator product-emission-continuation-module (level emitter) (order 3) (when (format Rust)) (replace line crate%3A%3AMlJoinProductItems crate%3A%3Atranslation%3A%3Aproduct_emission_rules%3A%3AMlJoinProductItems))
+(decorator product-emission-copy-loop-module (level emitter) (order 4) (when (format Rust)) (replace line crate%3A%3Aml_accept_tuple_copy_type crate%3A%3Atranslation%3A%3Aproduct_emission_rules%3A%3Aml_accept_tuple_copy_type))
+(decorator product-emission-copy-continuation-module (level emitter) (order 5) (when (format Rust)) (replace line crate%3A%3AMlAcceptTupleCopyType crate%3A%3Atranslation%3A%3Aproduct_emission_rules%3A%3AMlAcceptTupleCopyType))

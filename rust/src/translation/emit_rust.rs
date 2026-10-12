@@ -663,11 +663,15 @@ struct RustEmitter<'p> {
     loop_params: Option<(String, Vec<String>)>,
 }
 
-const fn is_copy(ty: &Type) -> bool {
-    matches!(
-        ty,
-        Type::Bool | Type::Fixed { .. } | Type::Float | Type::Unit
-    )
+fn is_copy(ty: &Type, tuple_copy: bool) -> bool {
+    if matches!(ty, Type::Tuple { .. }) && !tuple_copy {
+        return false;
+    }
+    let fields = match ty {
+        Type::Tuple { elements } => elements.iter().map(|item| is_copy(item, true)).collect(),
+        _ => Vec::new(),
+    };
+    super::product_emission_rules::accept_tuple_copy_type(ty.kind().to_owned(), fields)
 }
 
 const fn comparison_operator(op: BinaryOp) -> &'static str {
@@ -694,8 +698,8 @@ const fn rounding_text(rounding: Option<Rounding>) -> &'static str {
 impl RustEmitter<'_> {}
 
 /// An owned copy of a variable.
-fn own(name: &str, ty: &Type) -> String {
-    if is_copy(ty) {
+fn own(name: &str, ty: &Type, tuple_copy: bool) -> String {
+    if is_copy(ty, tuple_copy) {
         name.to_owned()
     } else {
         format!("{name}.clone()")

@@ -663,6 +663,26 @@ impl<'p> JavaScriptEmitter<'p> {
         match &e.node {
             Node::Lit { value } => literal(&e.ty, value),
             Node::Unit => Ok("null".to_owned()),
+            Node::Tuple { items, frozen } => {
+                let texts = self.exprs(items)?;
+                Ok(
+                    crate::translation::product_emission_rules::render_tuple_value(
+                        "JavaScript".to_owned(),
+                        texts,
+                        *frozen,
+                    ),
+                )
+            }
+            Node::TupleIndex { object, index } => {
+                let text = self.expr(object)?;
+                Ok(
+                    crate::translation::product_emission_rules::render_tuple_projection(
+                        "JavaScript".to_owned(),
+                        text,
+                        index.to_string(),
+                    ),
+                )
+            }
             Node::Var { name } => Ok(name.clone()),
             Node::Print { text, body } => Ok(format!(
                 "(console.log({}), {})",

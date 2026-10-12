@@ -18,6 +18,7 @@ import { STRING_PRELUDE } from './string-runtime.js';
 import { readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceType } from './structured-type-rules.js';
 import { acceptConstantEmission, constantBindingForm, renderConstantBinding } from './frontend-rules.js';
 import { readNumberDisplayFunction, renderAbsentNumberExpression } from './primitive-value-rules.js';
+import { acceptTupleCopyType, renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
 
 const KEYWORDS = new Set([
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
@@ -607,7 +608,10 @@ function camel(name) {
   return ident(parts.map((part) => part[0].toUpperCase() + part.slice(1)).join('') || 'T');
 }
 
-const COPY = new Set(['bool', 'fixed', 'float', 'unit']);
+function isCopyType(type, tupleCopy) {
+  if (type.kind === 'tuple' && !tupleCopy) return false;
+  return acceptTupleCopyType(type.kind, type.kind === 'tuple' ? type.elements.map(item => isCopyType(item, true)) : []);
+}
 const OPTIONAL_PRELUDE = readRustOptionalPrelude();
 
 /** The exact target runtime data shared with the native Rust host adapter. */
@@ -756,9 +760,9 @@ class RustEmitter {
   external(e, { k, literal }) {
     if (k === 'fn') return `${externalName(k, e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
     // A literal Number, boolean or machine integer is a const, a literal string a &str const, and any other value a static.
-    if (literal && COPY.has(e.type.kind)) return e.fn;
+    if (literal && isCopyType(e.type, this.program.sourceLanguage === 'Rust')) return e.fn;
     if (literal && e.type.kind === 'string') return this.utf16Strings ? `crate::ml_string::Text::from_text(${e.fn})` : `String::from(${e.fn})`;
-    return COPY.has(e.type.kind) ? `*${e.fn}` : `${e.fn}.clone()`;
+    return isCopyType(e.type, this.program.sourceLanguage === 'Rust') ? `*${e.fn}` : `${e.fn}.clone()`;
   }
 
   moduleBody(node, path) {
@@ -986,7 +990,7 @@ class RustEmitter {
 
   /** An owned copy of a variable. */
   own(name, type) {
-    return COPY.has(type.kind) ? name : `${name}.clone()`;
+    return isCopyType(type, this.program.sourceLanguage === 'Rust') ? name : `${name}.clone()`;
   }
 
   /** An expression whose value is only read: variables are borrowed, not cloned. */
@@ -1182,9 +1186,9 @@ class RustEmitter {
       case 'recordField':
         return `(${this.expr(e.object)}).${e.index}`;
       case 'tuple':
-        return `(${e.items.map((item) => this.expr(item)).join(', ')}${e.items.length === 1 ? ',' : ''})`;
+        return renderTupleValue('Rust', e.items.map((item) => this.expr(item)), e.frozen === true);
       case 'tupleIndex':
-        return `(${this.expr(e.object)}).${e.index}`;
+        return renderTupleProjection('Rust', this.expr(e.object), String(e.index));
       case 'none':
         if (e.type.absence === 'both') {
           this.usesOptional = true;

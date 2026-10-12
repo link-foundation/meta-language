@@ -66,11 +66,24 @@ impl RustEmitter<'_> {
             }
             // A literal Number, boolean or machine integer is a const, a
             // literal string a `&str` const, and any other value a static.
-            Some(External::Constant { literal: true, .. }) if is_copy(ty) => Ok(func.to_owned()),
+            Some(External::Constant { literal: true, .. })
+                if is_copy(
+                    ty,
+                    self.program.source_language == crate::translation::Language::Rust,
+                ) =>
+            {
+                Ok(func.to_owned())
+            }
             Some(External::Constant { literal: true, .. }) if *ty == Type::String => {
                 Ok(format!("String::from({func})"))
             }
-            _ if is_copy(ty) => Ok(format!("*{func}")),
+            _ if is_copy(
+                ty,
+                self.program.source_language == crate::translation::Language::Rust,
+            ) =>
+            {
+                Ok(format!("*{func}"))
+            }
             _ => Ok(format!("{func}.clone()")),
         }
     }

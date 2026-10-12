@@ -366,7 +366,13 @@ impl<'p> RustEmitter<'p> {
                 let args: Vec<String> = check
                     .binders
                     .iter()
-                    .map(|binder| own(&binder.name, &binder.ty))
+                    .map(|binder| {
+                        own(
+                            &binder.name,
+                            &binder.ty,
+                            self.program.source_language == crate::translation::Language::Rust,
+                        )
+                    })
                     .collect();
                 let call = format!("{}({})", check.reference, args.join(", "));
                 let holds = self.all_of(&check.binders, call);

@@ -9,6 +9,7 @@ import { renderStringMapExpression, renderStringTestExpression } from './fronten
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { requireDataObjectFreeze } from './primitive-value-rules.js';
+import { renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
 import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -412,9 +413,9 @@ class JavaScriptEmitter {
       case 'recordField':
         return `(${this.expr(e.object)})[${JSON.stringify(e.field)}]`;
       case 'tuple':
-        return `[${e.items.map((item) => this.expr(item)).join(', ')}]`;
+        return renderTupleValue('JavaScript', e.items.map((item) => this.expr(item)), e.frozen === true);
       case 'tupleIndex':
-        return `(${this.expr(e.object)})[${e.index}]`;
+        return renderTupleProjection('JavaScript', this.expr(e.object), String(e.index));
       case 'none':
         return e.absence === 'null' ? 'null' : 'undefined';
       case 'some':

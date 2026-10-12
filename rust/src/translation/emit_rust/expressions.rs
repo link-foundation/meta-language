@@ -21,7 +21,34 @@ impl RustEmitter<'_> {
         match &expr.node {
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),
-            Node::Var { name } => Ok(own(name, &expr.ty)),
+            Node::Tuple { items, frozen } => {
+                let mut texts = Vec::with_capacity(items.len());
+                for item in items {
+                    texts.push(self.expr(item)?);
+                }
+                Ok(
+                    crate::translation::product_emission_rules::render_tuple_value(
+                        "Rust".to_owned(),
+                        texts,
+                        *frozen,
+                    ),
+                )
+            }
+            Node::TupleIndex { object, index } => {
+                let text = self.expr(object)?;
+                Ok(
+                    crate::translation::product_emission_rules::render_tuple_projection(
+                        "Rust".to_owned(),
+                        text,
+                        index.to_string(),
+                    ),
+                )
+            }
+            Node::Var { name } => Ok(own(
+                name,
+                &expr.ty,
+                self.program.source_language == crate::translation::Language::Rust,
+            )),
             Node::Print { text, body } => {
                 let text = self.expr(text)?;
                 let body = self.expr(body)?;

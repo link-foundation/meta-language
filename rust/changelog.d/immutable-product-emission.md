@@ -1,0 +1,1 @@
+JavaScript target emission retains the explicit immutable product facet with frozen nested tuple allocations. Rust target emission preserves constant tuple projections and single-element tuple syntax, with recursive scalar Copy ownership for admitted Rust products. Existing ordinary tuple-array allocations retain their previous behavior.
