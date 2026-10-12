@@ -29,6 +29,7 @@ import {
   collectDependencies,
   compareAudits,
   refreshInventory,
+  reconcileLocalDeclarations,
   registryHttp,
   releaseResolvers,
   renderAuditDocument,
@@ -66,6 +67,14 @@ const readInventory = () => (existsSync(path.join(root, INVENTORY_FILE)) ? JSON.
 
 async function main(argv) {
   const collected = collectDependencies(root);
+  if (argv.includes('--refresh-declarations')) {
+    const previous = readInventory();
+    if (!previous) throw new Error('a registry audit is required before reconciling local declarations');
+    const inventory = reconcileLocalDeclarations(previous, collected);
+    writeFileSync(path.join(root, INVENTORY_FILE), `${JSON.stringify(inventory, null, 2)}\n`);
+    writeFileSync(path.join(root, AUDIT_DOCUMENT), renderAuditDocument(inventory));
+    console.log(`reconciled local declarations; registry audit date remains ${inventory.auditDate}`);
+  }
   if (argv.includes('--refresh')) {
     const today = new Date().toISOString().slice(0, 10);
     const inventory = await refreshInventory({

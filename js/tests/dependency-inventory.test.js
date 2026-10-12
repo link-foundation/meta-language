@@ -17,6 +17,7 @@ import {
   collectDependencies,
   ownStatus,
   refreshInventory,
+  reconcileLocalDeclarations,
   registryHttp,
   renderAuditDocument,
   statuses,
@@ -41,6 +42,25 @@ function observe(assertions, testName) {
 }
 
 const kinds = (problems) => problems.map(({ kind }) => kind);
+
+test('local declaration reconciliation retains audited releases and rejects unaudited external pins', () => {
+  const external = { id: 'npm example@1', category: 'npm', name: 'example', pinned: '1',
+    source: { type: 'npm', package: 'example' }, declaredIn: ['package.json'] };
+  const local = { id: 'generator rules@script', category: 'generator', name: 'rules', pinned: 'script',
+    source: { type: 'none' }, declaredIn: ['rules.mjs'] };
+  const audit = { auditDate: '2026-10-06', items: [{ ...external, current: '2', evidence: 'registry receipt',
+    reason: 'verified compatibility constraint', compatible: '1' }] };
+  const updated = reconcileLocalDeclarations(audit, [{ ...external, declaredIn: ['package.json', 'consumer.json'] }, local]);
+  assert.equal(updated.auditDate, audit.auditDate);
+  assert.equal(updated.items[0].current, '2');
+  assert.equal(updated.items[0].compatible, '1');
+  assert.equal(updated.items[0].evidence, 'registry receipt');
+  assert.deepEqual(updated.items[0].declaredIn, ['package.json', 'consumer.json']);
+  assert.deepEqual(updated.items[1].dependsOn, []);
+  assert.deepEqual(audit.items[0].declaredIn, ['package.json']);
+  assert.throws(() => reconcileLocalDeclarations(audit, [{ ...external, id: 'npm example@3', pinned: '3' }]), /live dependency refresh/u);
+  assert.throws(() => reconcileLocalDeclarations(audit, [{ ...external, source: { type: 'npm', package: 'different' } }]), /release source changed/u);
+});
 
 /** A toolchain item as the collector records it, with its resolved current release. */
 function toolchain(name, pinned, current, extra = {}) {

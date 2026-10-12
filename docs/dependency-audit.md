@@ -59,13 +59,13 @@ they are.
 |---|---|---|---|---|
 | JavaScript engines | 1 | 1 | 0 | 0 |
 | npm packages | 17 | 17 | 0 | 0 |
-| Rust package settings | 8 | 8 | 0 | 0 |
-| Rust crates | 308 | 282 | 24 | 2 |
+| Rust package settings | 9 | 9 | 0 | 0 |
+| Rust crates | 309 | 282 | 24 | 3 |
 | Experiment manifests | 6 | 6 | 0 | 0 |
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 26 | 25 | 1 | 0 |
+| Generators | 37 | 36 | 1 | 0 |
 | Toolchains and tools | 16 | 14 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -109,6 +109,7 @@ they are.
 | `edition` | `experiments/issue-195-projects/rust/Cargo.toml` | `experiments/issue-195-projects/rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/Cargo.toml` | `rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `rust-version` | `rust/Cargo.toml` | `rust/Cargo.toml` | `1.90` | 1.90 (cargo metadata, the highest rust-version of the resolved crates (meta-language 0.58.2, tree-sitter 0.27.0, tree-sitter-graphql 0.3.0)) | floor | current |  |
+| `edition` | `rust/oracles/agda-layout-source-oracle/Cargo.toml` | `rust/oracles/agda-layout-source-oracle/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/oracles/cmake-source-oracle/Cargo.toml` | `rust/oracles/cmake-source-oracle/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/oracles/native-source-oracles/Cargo.toml` | `rust/oracles/native-source-oracles/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/web/Cargo.toml` | `rust/web/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
@@ -137,7 +138,7 @@ they are.
 | `bytecheck` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, bytecheck) | version | current |  |
 | `byteorder` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.0` | transitive |  | 1.5.0 (crates.io, byteorder) | version | current |  |
 | `bytes` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.12.1` | transitive |  | 1.12.1 (crates.io, bytes) | version | current |  |
-| `cc` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.2.67` | direct, build | `1; 1.2` | 1.6.0 (crates.io, cc) | version | behind | Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. |
+| `cc` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.2.67` | direct, build | `1; 1.2` | 1.6.0 (crates.io, cc) | version | behind | Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. |
 | `cfg-if` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.5` | transitive |  | 1.0.5 (crates.io, cfg-if) | version | current |  |
 | `clap_builder` | `rust/Cargo.lock` | `rust/Cargo.lock` | `4.6.7` | transitive |  | 4.6.7 (crates.io, clap_builder) | version | current |  |
 | `clap_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `4.6.7` | transitive |  | 4.6.7 (crates.io, clap_derive) | version | current |  |
@@ -169,7 +170,7 @@ they are.
 | `fastrand` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.5.0` | transitive |  | 2.5.0 (crates.io, fastrand) | version | current |  |
 | `filetime` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.29` | transitive |  | 0.2.29 (crates.io, filetime) | version | current |  |
 | `find-msvc-tools` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.14` | transitive |  | 0.1.14 (crates.io, find-msvc-tools) | version | current |  |
-| `flate2` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.1.10` | direct, build | `1` | 1.1.10 (crates.io, flate2) | version | current |  |
+| `flate2` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.1.10` | direct, build | `1` | 1.1.10 (crates.io, flate2) | version | current |  |
 | `foldhash` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.5` | transitive |  | 0.2.0 (crates.io, foldhash) | version | behind | Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does. |
 | `form_urlencoded` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.2.2` | transitive |  | 1.2.2 (crates.io, form_urlencoded) | version | current |  |
 | `fst` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.7` | transitive |  | 0.4.7 (crates.io, fst) | version | current |  |
@@ -325,7 +326,7 @@ they are.
 | `tree-sitter-json` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.8` | direct, development | `=0.24.8` | 0.24.8 (crates.io, tree-sitter-json) | version | current |  |
 | `tree-sitter-json5-orchard` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, development | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-json5-orchard) | version | current |  |
 | `tree-sitter-kotlin-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.0` | direct, runtime | `=1.1.0` | 1.1.0 (crates.io, tree-sitter-kotlin-ng) | version | current |  |
-| `tree-sitter-language` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `0.1.8` | direct, runtime | `0.1.8` | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
+| `tree-sitter-language` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `0.1.8` | direct, runtime | `0.1.8` | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
 | `tree-sitter-lua` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.5.0` | direct, development | `=0.5.0` | 0.5.0 (crates.io, tree-sitter-lua) | version | current |  |
 | `tree-sitter-make` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.1` | direct, development | `=1.1.1` | 1.1.1 (crates.io, tree-sitter-make) | version | current |  |
 | `tree-sitter-matlab` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.1` | direct, runtime | `=1.3.1` | 1.3.1 (crates.io, tree-sitter-matlab) | version | current |  |
@@ -402,6 +403,7 @@ they are.
 | `zerovec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.8` | transitive |  | 0.11.8 (crates.io, zerovec) | version | current |  |
 | `zlib-rs` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.8` | transitive |  | 0.6.8 (crates.io, zlib-rs) | version | current |  |
 | `zmij` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.23` | transitive |  | 1.0.23 (crates.io, zmij) | version | current |  |
+| `agda-layout-source-oracle` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/agda-layout-source-oracle` | direct, development |  |  | unversioned | not applicable |  |
 | `cmake-source-oracle` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/cmake-source-oracle` | direct, development |  | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | unversioned | not applicable |  |
 | `native-source-oracles` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/native-source-oracles` | direct, development |  |  | unversioned | not applicable |  |
 | `bumpalo` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `3.20.3` | transitive |  | 3.20.3 (crates.io, bumpalo) | version | current |  |
@@ -457,6 +459,7 @@ they are.
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
+| `js/oracles/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.3` |  | derived | current |  |
 | `js/oracles/grammars/c.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.2` |  | derived | current |  |
 | `js/oracles/grammars/cmake.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `v0.7.5` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
 | `js/oracles/grammars/cpp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.4` |  | derived | current |  |
@@ -470,6 +473,7 @@ they are.
 | `js/oracles/grammars/graphql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.0` |  | derived | current |  |
 | `js/oracles/grammars/groovy.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.2` |  | derived | current |  |
 | `js/oracles/grammars/hcl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.0` |  | derived | current |  |
+| `js/oracles/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
 | `js/oracles/grammars/ini.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.4.0` |  | derived | current |  |
 | `js/oracles/grammars/java.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.5` |  | derived | current |  |
 | `js/oracles/grammars/javascript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
@@ -479,6 +483,7 @@ they are.
 | `js/oracles/grammars/lua.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.0` |  | derived | current |  |
 | `js/oracles/grammars/make.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.1` |  | derived | current |  |
 | `js/oracles/grammars/nix.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.0` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
+| `js/oracles/grammars/odin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.0` |  | derived | current |  |
 | `js/oracles/grammars/pascal.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.10.2` |  | derived | current |  |
 | `js/oracles/grammars/powershell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.4` |  | derived | current |  |
 | `js/oracles/grammars/proto.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.6.0` |  | derived | current |  |
@@ -497,20 +502,17 @@ they are.
 | `js/oracles/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
 | `js/oracles/grammars/xml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
 | `js/oracles/grammars/zig.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.2` |  | derived | current |  |
-| `js/oracles/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.3` |  | derived | current |  |
 | `js/src/vendor/grammars/bash.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.1` |  | derived | current |  |
 | `js/src/vendor/grammars/csharp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.5` |  | derived | current |  |
 | `js/src/vendor/grammars/elixir.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.5` |  | derived | current |  |
 | `js/src/vendor/grammars/elm.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `5.9.4` |  | derived | current |  |
 | `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.1` |  | derived | current |  |
-| `js/oracles/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
 | `js/src/vendor/grammars/kotlin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.0` |  | derived | current |  |
 | `js/src/vendor/grammars/markdown_inline.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.6` |  | derived | current |  |
 | `js/src/vendor/grammars/markdown.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.6` |  | derived | current |  |
 | `js/src/vendor/grammars/matlab.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.1` |  | derived | current |  |
 | `js/src/vendor/grammars/ocaml_interface.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.0` |  | derived | current |  |
 | `js/src/vendor/grammars/ocaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.0` |  | derived | current |  |
-| `js/oracles/grammars/odin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.0` |  | derived | current |  |
 | `js/src/vendor/grammars/perl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `2.0.0` |  | derived | current |  |
 | `js/src/vendor/grammars/php.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.2` |  | derived | current |  |
 | `js/src/vendor/grammars/ruby.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.1` |  | derived | current |  |
@@ -522,6 +524,7 @@ they are.
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
+| `js/scripts/build-agda-layout-oracle.mjs` | `js/scripts/build-agda-layout-oracle.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-bidi-table.mjs` | `js/scripts/build-bidi-table.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-concept-records.mjs` | `js/scripts/build-concept-records.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-foundation-models.mjs` | `js/scripts/build-foundation-models.mjs` | `script` |  | derived | current |  |
@@ -530,6 +533,7 @@ they are.
 | `js/scripts/build-lean-root-names.mjs` | `js/scripts/build-lean-root-names.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-merge-quality-evidence.mjs` | `js/scripts/build-merge-quality-evidence.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-native-grammar-concept-reuse.mjs` | `js/scripts/build-native-grammar-concept-reuse.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-native-text-grammars.mjs` | `js/scripts/build-native-text-grammars.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-translation-stage-fixtures.mjs` | `js/scripts/build-translation-stage-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-unicode-identifier-properties.mjs` | `js/scripts/build-unicode-identifier-properties.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | current |  |
@@ -539,14 +543,23 @@ they are.
 | `js/scripts/generate-export-parity.mjs` | `js/scripts/generate-export-parity.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-frontend-rule-styles.mjs` | `js/scripts/generate-frontend-rule-styles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-frontend-rules.mjs` | `js/scripts/generate-frontend-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-global-concept-rule-styles.mjs` | `js/scripts/generate-global-concept-rule-styles.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-global-concept-rules.mjs` | `js/scripts/generate-global-concept-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-global-concept-space-fixture.mjs` | `js/scripts/generate-global-concept-space-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-lino-grammar-cases.mjs` | `js/scripts/generate-lino-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-grammar-fixtures.mjs` | `js/scripts/generate-native-grammar-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-recovery.mjs` | `js/scripts/generate-native-recovery.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-native-scanner-profiles.mjs` | `js/scripts/generate-native-scanner-profiles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-scanner-fixtures.mjs` | `js/scripts/generate-structured-scanner-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
@@ -636,7 +649,7 @@ they are.
 0 are stale and fail the delivery check.
 
 - `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.21`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.2.9`).
-- `cc` `1.2.67` → `1.6.0` (`rust/Cargo.lock`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. Delivered at its newest compatible release `1.2.67`, held by `crate rust/Cargo.lock tree-sitter-sequel@0.3.11` (`~1.2.1`).
+- `cc` `1.2.67` → `1.6.0` (`rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. Delivered at its newest compatible release `1.2.67`, held by `crate rust/Cargo.lock tree-sitter-sequel@0.3.11` (`~1.2.1`).
 - `foldhash` `0.1.5` → `0.2.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does. Delivered at its newest compatible release `0.1.5`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.1.2`).
 - `getrandom` `0.2.17` → `0.4.3` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.2.10`), which does not admit 0.4.3; it moves when that dependent does. Delivered at its newest compatible release `0.2.17`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.2.10`).
 - `hashbrown` `0.14.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.1; it moves when that dependent does. Delivered at its newest compatible release `0.14.5`, held by `crate rust/Cargo.lock dashmap@6.2.1` (`^0.14.5`).

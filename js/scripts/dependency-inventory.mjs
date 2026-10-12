@@ -645,6 +645,33 @@ export function deliveredStatuses(items) {
 
 const COLLECTED_FIELDS = ['category', 'name', 'scope', 'declaredIn', 'pinned', 'compare', 'source', 'role', 'kind', 'requirement', 'patch'];
 
+/** Reconcile repository-owned declarations without changing registry audit evidence. */
+export function reconcileLocalDeclarations(inventory, collected) {
+  const previous = new Map(inventory.items.map((item) => [item.id, item]));
+  const items = collected.map((item) => {
+    const old = previous.get(item.id);
+    if (old && JSON.stringify(old.source) !== JSON.stringify(item.source)) {
+      throw new Error(`${item.id}: the release source changed; run a live dependency refresh`);
+    }
+    if (!old && !['none', 'rust-edition'].includes(item.source.type)) {
+      throw new Error(`${item.id}: a new external release needs a live dependency refresh`);
+    }
+    const entry = { ...old };
+    for (const field of COLLECTED_FIELDS) {
+      if (item[field] === undefined) delete entry[field];
+      else entry[field] = item[field];
+    }
+    entry.id = item.id;
+    if (!old && item.source.type === 'rust-edition') {
+      entry.current = RUST_EDITIONS.at(-1);
+      entry.evidence = 'Rust editions, the newest stable edition';
+    }
+    if (item.category === 'generator') entry.dependsOn ??= [];
+    return entry;
+  });
+  return { ...inventory, items };
+}
+
 /**
  * The problems of an inventory against the collected items: missing,
  * unexpected or changed items, a missing or invalid audit date, items without
