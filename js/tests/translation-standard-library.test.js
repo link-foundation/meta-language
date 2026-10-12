@@ -99,3 +99,22 @@ function mapped() { return Array.from(new Set(['a', 'b', 'a']), (value, index) =
   const mutation = translateProgram("function changed(){ const values = new Set(['a']); values.add('b'); return values.size; }", 'JavaScript', 'Rust');
   assert.ok(mutation.diagnostic);
 });
+
+test('array joins convert primitive values using JavaScript string conversion', () => {
+  const source = `function numbers() { return [1, -0, NaN, Infinity].join('|'); }
+function absent() { return [null, undefined, 1, -0].join('|'); }
+function booleans() { return [true, false].join(); }
+function reduction() { return [1, 2, 3].reduce((sum, value, index) => sum + value + index); }
+`;
+  const original = runInNewContext(source + '[numbers, absent, booleans, reduction]');
+  const emitted = emitJavaScript(checkProgram(parseJavaScript(source))).text;
+  const translated = runInNewContext(emitted + '[numbers, absent, booleans, reduction]');
+  for (let index = 0; index < original.length; index += 1) assert.equal(translated[index](), original[index]());
+  assert.equal(translateProgram(source, 'JavaScript', 'Rust').diagnostic, null);
+});
+
+test('Rust floating-point display stays explicit until its formatter is represented', () => {
+  for (const source of ['fn main() { println!("{}", -0.0_f64); }', 'pub fn text(value: f64) -> String { value.to_string() } fn main() {}']) {
+    assert.match(translateProgram(source, 'Rust', 'JavaScript').diagnostic.message, /Rust Float display/u);
+  }
+});

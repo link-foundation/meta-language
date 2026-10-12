@@ -546,6 +546,7 @@ class LeanEmitter {
     const object = this.expr(e.object, depth);
     if (e.op === 'join') {
       const text = (name, type) => {
+        if (type.kind === 'unit') return '""';
         if (type.kind === 'option') return `(match ${name} with | ${type.absence === 'both' ? 'some (some ml_present)' : 'some ml_present'} => ${text('ml_present', type.element)} | _ => "")`;
         return type.kind === 'string' ? name : this.toText({ k: 'var', name, type }, depth, false);
       };

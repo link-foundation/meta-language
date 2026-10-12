@@ -262,6 +262,7 @@ class Checker {
 
   show(expr, env, path, style) {
     const value = this.expr(expr, env, path, undefined);
+    if (this.language === 'Rust' && value.type.kind === 'float') throw unsupported('Rust Float display', 'Rust formatting retains negative zero, spells infinities inf and expands exponents; it needs its own operational formatter', expr.span);
     const bigint = value.type.kind === 'int' || value.type.kind === 'nat';
     if (style === 'js-format-first' && value.type.kind === 'string') {
       throw unsupported('console.log with a computed first string', 'util.format reads the % directives of a first string argument, which only the run knows; pass a literal format string, or print one template literal', expr.span);
@@ -417,6 +418,12 @@ class Checker {
           return { k: 'tuple', items: node.items.map((item, index) => coerce(this.expr(item.value, env, path, expected.elements[index]), expected.elements[index], this.language, node.span)), type: expected };
         }
         return this.arrayLiteral(node, env, path, expected);
+      case 'copySlice': {
+        const object = this.expr(node.object, env, path, undefined);
+        if (object.type.kind === 'array' || object.type.kind === 'string') return object;
+        if (object.type.kind === 'record') return this.method({ ...node, k: 'method', op: 'slice', args: [] }, env, path, expected);
+        throw unsupported('method call .slice()', 'this value has no string or array slice method', node.span);
+      }
       case 'record':
         return this.recordLiteral(node, env, path, expected);
       case 'set': {
@@ -582,6 +589,7 @@ class Checker {
         const arg = this.expr(node.arg, env, path, undefined);
         if (arg.type.kind === 'string') return arg;
         if (arg.type.kind === 'array') throw arrayText(node.span);
+        if (this.language === 'Rust' && arg.type.kind === 'float') throw unsupported('Rust Float display', 'Rust formatting retains negative zero, spells infinities inf and expands exponents; it needs its own operational formatter', node.span);
         if (!isOrdered(arg.type) && arg.type.kind !== 'bool') throw typeError(`toString of ${typeKey(arg.type)}`, node.span);
         return { k: 'toString', arg, type: STRING };
       }

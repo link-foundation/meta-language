@@ -15,6 +15,7 @@ import { typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState, withParts } from './emit-common.js';
 import { STRING_PRELUDE } from './string-runtime.js';
+import { readRustOptionalPrelude, renderRustCompoundType } from './structured-type-rules.js';
 import { acceptConstantEmission, constantBindingForm, renderConstantBinding } from './frontend-rules.js';
 
 const KEYWORDS = new Set([
@@ -606,9 +607,7 @@ function camel(name) {
 }
 
 const COPY = new Set(['bool', 'fixed', 'float', 'unit']);
-const OPTIONAL_PRELUDE = `/// A nullable value retains the distinct JavaScript null and undefined cases.
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlOptional<T> { Value(T), Null, Undefined }`;
+const OPTIONAL_PRELUDE = readRustOptionalPrelude();
 
 export function emitRust(program) {
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
@@ -790,26 +789,26 @@ class RustEmitter {
       case 'option':
         if (type.absence === 'both') {
           this.usesOptional = true;
-          return `crate::MlOptional<${this.type(type.element)}>`;
+          return renderRustCompoundType('option', 'both', [this.type(type.element)]);
         }
-        return `Option<${this.type(type.element)}>`;
+        return renderRustCompoundType('option', type.absence, [this.type(type.element)]);
       case 'tuple':
-        return `(${type.elements.map((element) => this.type(element)).join(', ')}${type.elements.length === 1 ? ',' : ''})`;
+        return renderRustCompoundType('tuple', '', type.elements.map((element) => this.type(element)));
       case 'record':
-        return `(${type.fields.map((field) => this.type(field.type)).join(', ')}${type.fields.length === 1 ? ',' : ''})`;
+        return renderRustCompoundType('record', '', type.fields.map((field) => this.type(field.type)));
       case 'function':
-        return `std::rc::Rc<dyn Fn(${type.params.map((param) => this.type(param)).join(', ')}) -> ${this.type(type.ret)}>`;
+        return renderRustCompoundType('function', this.type(type.ret), type.params.map((param) => this.type(param)));
       case 'set':
-        return `Vec<${this.type(type.element)}>`;
+        return renderRustCompoundType('set', '', [this.type(type.element)]);
       case 'map':
-        return `Vec<(${this.type(type.key)}, ${this.type(type.value)})>`;
+        return renderRustCompoundType('map', '', [this.type(type.key), this.type(type.value)]);
       case 'unit':
         return '()';
       case 'data':
         return `crate::${this.state.ref(type.name, '::')}`;
       case 'array':
         this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Rust Vec; a read outside it panics');
-        return `Vec<${this.type(type.element)}>`;
+        return renderRustCompoundType('array', '', [this.type(type.element)]);
       default:
         throw new Error(`no Rust type for ${type.kind}`);
     }
@@ -1054,6 +1053,7 @@ class RustEmitter {
       if (e.op === 'join') {
         if (e.object.type.element.kind === 'string') return this.utf16Strings ? `crate::ml_string::join(${this.borrow(e.object)}, ${this.borrow(e.args[0])})` : `${this.receiver(e.object)}.join(${this.receiver(e.args[0])}.as_str())`;
         const text = (name, type) => {
+          if (type.kind === 'unit') return this.literal({ type: { kind: 'string' }, value: '' });
           if (type.kind === 'option') {
             const empty = this.literal({ type: { kind: 'string' }, value: '' });
             if (type.absence === 'both') { this.usesOptional = true; return `match ${name} { crate::MlOptional::Value(ml_present) => ${text('ml_present', type.element)}, _ => ${empty} }`; }

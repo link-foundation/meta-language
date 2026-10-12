@@ -790,6 +790,14 @@ class RocqEmitter {
   /** Math and Number functions: PrimFloat's where they agree with JavaScript, the math helpers otherwise. */
   method(e) {
     if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, 'this target needs a UTF-16 operational string encoding for this operation', e.span);
+    if (e.op === 'join') {
+      const text = (name, type) => {
+        if (type.kind === 'unit') return 'EmptyString';
+        if (type.kind === 'option') return `(match ${name} with | ${type.absence === 'both' ? 'Some (Some ml_present)' : 'Some ml_present'} => ${text('ml_present', type.element)} | _ => EmptyString end)`;
+        return type.kind === 'string' ? name : this.toText({ k: 'var', name, type }, false);
+      };
+      return `(let ml_values := ${this.expr(e.object)} in let ml_separator := ${this.expr(e.args[0])} in match ml_values with nil => EmptyString | ml_first :: ml_rest => List.fold_left (fun ml_accumulator ml_value => String.append ml_accumulator (String.append ml_separator ${text('ml_value', e.object.type.element)})) ml_rest ${text('ml_first', e.object.type.element)} end)`;
+    }
     if (e.op === 'reduce' && e.args.length === 1) throw unsupported('array reduce without an initial value', 'the empty-array TypeError needs an operational abort encoding in Rocq', e.span);
     if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, 'this array operation needs an operational encoding in Rocq', e.span);
     const callback = e.args[0];
