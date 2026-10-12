@@ -120,6 +120,12 @@ pub(super) fn ends_missing(children: &Children) -> bool {
 fn lexed_past(children: &Children, last: &Tree) -> bool {
     let mut after: Option<Rc<Tree>> = None;
     leaves_backward(children, &mut |leaf| {
+        if !crate::translation::frontend_rules::accept_scanner_preemption_boundary(
+            widthless(leaf),
+            leaf.start == last.end,
+        ) {
+            return Some(false);
+        }
         let action = crate::translation::frontend_rules::read_scanner_continuation_action(
             widthless(leaf),
             leaf.start >= last.end,
