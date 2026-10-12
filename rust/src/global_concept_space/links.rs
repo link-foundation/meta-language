@@ -9,12 +9,14 @@ use super::{
     GLOBAL_CONCEPT_PROOF_METHOD, GlobalConceptOptions, array, canonical,
     create_global_concept_space_in, declarations, production, representative, string,
 };
+use crate::formal_concept_definition::read_formal_concept_definition;
 use crate::global_concept_rules::verify_global_concept_correspondence;
 use crate::grammar::Grammar;
 use crate::grammar::interchange::{
     deserialize_grammar, parse_grammar_links, percent_decode_links_text, percent_encode_links_text,
     render_declaration_links, render_links_expression, render_rule_fields, serialize_grammar,
 };
+use crate::link_network::LinkNetwork;
 
 fn definition_grammar(definition: &Value) -> Result<Grammar, String> {
     let mut rule = definition.clone();
@@ -70,6 +72,19 @@ pub fn global_concept_space_to_links(space: &Value) -> Result<String, String> {
         let grammar = deserialize_grammar(&json!({"schemaVersion":1,"start":"global_context","rules":[{"name":"global_context","kind":"normal","expression":{"kind":"empty"}}],"declarations":context}).to_string()).map_err(|error| error.to_string())?;
         for declaration in render_declaration_links(grammar.declarations()) {
             lines.push(format!("(grammar-context {id} {declaration})"));
+        }
+    }
+    if let Some(definitions) = space["formalDefinitions"].as_object() {
+        for (alias, definition) in definitions {
+            let root = definition["root"]
+                .as_u64()
+                .ok_or("a formal origin needs a root")?;
+            let links = string(&definition["links"])?;
+            lines.push(format!(
+                "(formal-origin-definition {} {root} (links {}))",
+                percent_encode_links_text(alias),
+                links.trim().replace('\n', " ")
+            ));
         }
     }
     for concept in array(&space["concepts"])? {
@@ -192,6 +207,24 @@ fn print_link(node: &LiNo<String>) -> Result<String, String> {
     }
 }
 
+fn print_network_link(node: &LiNo<String>) -> String {
+    match node {
+        LiNo::Link { id, values } if !values.is_empty() => {
+            let prefix = id.as_ref().map_or(String::new(), |id| format!("{id}: "));
+            format!(
+                "({prefix}{})",
+                values
+                    .iter()
+                    .map(print_network_link)
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            )
+        }
+        LiNo::Link { id, .. } => id.clone().unwrap_or_default(),
+        LiNo::Ref(value) => value.clone(),
+    }
+}
+
 /// Reloads structured links and rechecks all recorded shared concept proofs.
 /// Original imported grammars are reconstructed from their linked definitions.
 ///
@@ -206,7 +239,7 @@ pub fn read_global_concept_space_links(
     if statements.is_empty() {
         return Err("missing global concept space header".to_owned());
     }
-    let mut space = json!({"schemaVersion":1,"sources":[],"concepts":[],"mappings":{},"proofs":[],"failures":[],"ambiguities":[],"redirects":{}});
+    let mut space = json!({"schemaVersion":1,"sources":[],"concepts":[],"mappings":{},"proofs":[],"failures":[],"ambiguities":[],"redirects":{},"formalDefinitions":{}});
     let mut sources = BTreeMap::new();
     let mut concepts = BTreeMap::new();
     let mut origins: BTreeMap<String, (usize, usize)> = BTreeMap::new();
@@ -223,6 +256,34 @@ pub fn read_global_concept_space_links(
             continue;
         }
         match head {
+            "formal-origin-definition" => {
+                if args.len() != 3 {
+                    return Err("invalid or duplicated formal origin definition".to_owned());
+                }
+                let alias = link_word(&args[0])?;
+                if space["formalDefinitions"].get(&alias).is_some() {
+                    return Err("invalid or duplicated formal origin definition".to_owned());
+                }
+                let root = link_word(&args[1])?
+                    .parse::<u64>()
+                    .map_err(|_| "a formal origin needs a root".to_owned())?;
+                let (tag, links) = link_parts(&args[2])?;
+                if tag != "links" {
+                    return Err("a formal origin needs actual linked definitions".to_owned());
+                }
+                let text = format!(
+                    "{}\n",
+                    links
+                        .iter()
+                        .map(print_network_link)
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                );
+                let network = LinkNetwork::from_lino(&text).map_err(|error| error.to_string())?;
+                let definition = json!({"root":root,"links":network.to_lino()});
+                read_formal_concept_definition(&definition)?;
+                space["formalDefinitions"][alias] = definition;
+            }
             "grammar-origin" => {
                 if args.len() != 5 {
                     return Err(
@@ -502,10 +563,19 @@ pub fn read_global_concept_space_links(
     }
     let settings = GlobalConceptOptions {
         records: options.records.clone(),
+        formal_definitions: Some(space["formalDefinitions"].clone()),
         previous: Some(space.clone()),
         equivalences: required,
     };
     let (checked, graph, aliases) = create_global_concept_space_in(&imported, &settings)?;
+    if space["formalDefinitions"]
+        .as_object()
+        .ok_or("invalid formal definitions")?
+        .keys()
+        .any(|alias| !aliases.contains_key(alias))
+    {
+        return Err("unknown formal definition origin".to_owned());
+    }
     let mut witnessed: Vec<_> = (0..aliases.len()).collect();
     for proof in array(&space["proofs"])? {
         let pairs = array(&proof["correspondence"])?;

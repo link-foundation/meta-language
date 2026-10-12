@@ -26,6 +26,7 @@ fn sources(data: &Value) -> Vec<GlobalConceptSource> {
 fn settings(data: &Value) -> GlobalConceptOptions {
     GlobalConceptOptions {
         records: Some(data["records"].clone()),
+        formal_definitions: data.get("formalDefinitions").cloned(),
         previous: None,
         equivalences: data["equivalences"]
             .as_array()
@@ -307,6 +308,7 @@ fn global_links_reload_source_free_and_reject_invalid_or_omitted_proofs() {
     assert!(links.contains("(concept-proof recursive-structural-bijection"));
     assert!(links.contains("(literal %CE%B1)"));
     assert_eq!(links.matches("(concept-definition ").count(), 6);
+    assert_eq!(links.matches("(formal-origin-definition ").count(), 4);
     assert_eq!(links, data["expectedLinks"].as_str().unwrap());
     let reloaded = read_global_concept_space_links(&links, &options).unwrap();
     assert_eq!(reloaded, space);
@@ -329,11 +331,57 @@ fn global_links_reload_source_free_and_reject_invalid_or_omitted_proofs() {
             .unwrap_err()
             .contains("lacks its proof witnesses")
     );
+    let missing_basis = links
+        .lines()
+        .filter(|line| !line.starts_with("(formal-origin-definition "))
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(read_global_concept_space_links(&missing_basis, &options).is_err());
+    let counterfeit = links.replacen(
+        "(def: literal%20source%20text%20value)",
+        "(def: unrelated%20primitive)",
+        1,
+    );
+    assert_ne!(counterfeit, links);
+    assert!(read_global_concept_space_links(&counterfeit, &options).is_err());
     observe(
         "I195-GLOBAL-CONCEPT-SERIALIZATION",
         &["linksRoundTrip"],
         "global_links_reload_source_free_and_reject_invalid_or_omitted_proofs",
     );
+}
+
+#[test]
+fn global_semantic_premises_require_supported_operational_archives() {
+    let data = fixture();
+    let mut options = settings(&data);
+    options.formal_definitions = None;
+    let prose = create_global_concept_space(&sources(&data), &options).unwrap();
+    assert_eq!(prose["proofs"], json!([]));
+    assert_eq!(prose["formalDefinitions"], json!({}));
+    assert_eq!(prose["concepts"].as_array().unwrap().len(), 6);
+    options.formal_definitions =
+        Some(json!({"fixture.letter":{"links":"(claim same-meaning)","root":1}}));
+    let counterfeit = create_global_concept_space(&sources(&data), &options).unwrap();
+    assert_eq!(counterfeit["proofs"], json!([]));
+    assert_eq!(counterfeit["formalDefinitions"], json!({}));
+    assert_eq!(counterfeit["concepts"].as_array().unwrap().len(), 6);
+    let mut alias_basis = serde_json::Map::new();
+    for alias in ["first:root", "first:atom", "second:page", "second:letter"] {
+        alias_basis.insert(
+            alias.to_owned(),
+            data["formalDefinitions"]["fixture.letter"].clone(),
+        );
+    }
+    options.records = Some(json!([]));
+    options.formal_definitions = Some(Value::Object(alias_basis));
+    let explicit = create_global_concept_space(&sources(&data), &options).unwrap();
+    assert_eq!(explicit["concepts"].as_array().unwrap().len(), 4);
+    assert_eq!(
+        explicit["mappings"]["first:root"],
+        explicit["mappings"]["second:page"]
+    );
+    assert_eq!(explicit["formalDefinitions"].as_object().unwrap().len(), 4);
 }
 
 #[test]
@@ -419,6 +467,7 @@ fn global_recursive_proofs_reject_many_to_one_reference_collapse() {
         ],
         &GlobalConceptOptions {
             records: Some(json!([root, leaf])),
+            formal_definitions: Some(json!({"fixture.root":fixture()["formalDefinitions"]["fixture.letter"],"fixture.leaf":fixture()["formalDefinitions"]["fixture.letter"]})),
             previous: None,
             equivalences: vec![["one:root".to_owned(), "two:root".to_owned()]],
         },
@@ -466,7 +515,13 @@ fn global_proof_discovery_resolves_catalog_aliases_of_real_native_grammars() {
         }
     })
     .collect();
-    let options = GlobalConceptOptions::default();
+    let trivia = fixture()["triviaDefinition"].clone();
+    let options = GlobalConceptOptions {
+        formal_definitions: Some(
+            json!({"pinned-scheme:block_comment":trivia,"pinned-racket:block_comment":trivia}),
+        ),
+        ..GlobalConceptOptions::default()
+    };
     let space = create_global_concept_space(&input, &options).unwrap();
     let shared_id = &space["mappings"]["pinned-scheme:block_comment"];
     assert_eq!(shared_id, &space["mappings"]["pinned-racket:block_comment"]);

@@ -598,6 +598,7 @@ pub fn merge_grammars(
                 .map(|result| result.global_concept_space.clone()),
             equivalences: options.global_equivalences.clone(),
             records: options.concept_records.clone(),
+            ..crate::global_concept_space::GlobalConceptOptions::default()
         },
     )
     .map_err(GrammarMergeError::new)?;

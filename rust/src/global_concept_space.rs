@@ -8,8 +8,10 @@ use sha2::{Digest, Sha256};
 
 use crate::global_concept_rules::verify_global_concept_correspondence;
 
+use crate::formal_concept_definition::read_formal_concept_definition;
 use crate::grammar::interchange::{deserialize_grammar, serialize_grammar};
 use crate::grammar::{Grammar, GrammarSourceName};
+use crate::link_network::LinkNetwork;
 
 mod links;
 pub use links::{global_concept_space_to_links, read_global_concept_space_links};
@@ -92,6 +94,8 @@ impl GlobalConceptSource {
 pub struct GlobalConceptOptions {
     /// Canonical semantic records; absent uses the shipped register.
     pub records: Option<Value>,
+    /// Explicit supported operational definitions, by origin alias or record id.
+    pub formal_definitions: Option<Value>,
     /// Previous concept space whose surviving identities remain stable.
     pub previous: Option<Value>,
     /// Qualified origin pairs that require a proven shared identity.
@@ -383,6 +387,7 @@ fn create_global_concept_space_in(
     let mut aliases = BTreeMap::new();
     let mut nodes = Vec::new();
     let mut ambiguities = Vec::new();
+    let mut formal = Map::new();
     let mut contexts = Vec::new();
     for (source_index, source) in ordered.iter().enumerate() {
         let id = string(&source["id"])?;
@@ -482,27 +487,39 @@ fn create_global_concept_space_in(
             } else {
                 None
             };
-            let meaning = if let Some(record) = record.filter(|record| {
-                record["definition"]
-                    .as_str()
-                    .is_some_and(|definition| !definition.trim().is_empty())
-                    && record["constraints"]
-                        .as_array()
-                        .is_some_and(|constraints| !constraints.is_empty())
-            }) {
-                let mut constraints = array(&record["constraints"])?.to_vec();
-                constraints.sort_by(|first, second| {
-                    first
-                        .as_str()
-                        .unwrap_or_default()
-                        .cmp(second.as_str().unwrap_or_default())
+            // Catalog identifiers and prose nominate candidates, never proofs.
+            // Only a supported, checked operational graph grounds a meaning.
+            let declared = options
+                .formal_definitions
+                .as_ref()
+                .and_then(|definitions| definitions.get(&alias))
+                .filter(|definition| !definition.is_null())
+                .or_else(|| {
+                    record.and_then(|record| {
+                        options
+                            .formal_definitions
+                            .as_ref()
+                            .and_then(|definitions| {
+                                record["id"].as_str().and_then(|id| definitions.get(id))
+                            })
+                            .filter(|definition| !definition.is_null())
+                            .or_else(|| record.get("formalDefinition"))
+                    })
                 });
-                canonical(
-                    &json!({"id":record["id"],"definition":record["definition"],"constraints":constraints}),
-                )
-            } else {
-                format!("unproved:{}", canonical(&origin))
-            };
+            let mut meaning = format!("unproved:{}", canonical(&origin));
+            if meanings.len() <= 1
+                && let Some(declared) = declared
+                && let Ok(prepared) = read_formal_concept_definition(declared)
+                && let Some(links) = declared["links"].as_str()
+                && let Ok(network) = LinkNetwork::from_lino(links)
+                && let Some(root) = declared["root"].as_u64()
+            {
+                meaning = canonical(&prepared);
+                formal.insert(
+                    alias.clone(),
+                    json!({"links":network.to_lino(),"root":root}),
+                );
+            }
             aliases.insert(alias, nodes.len());
             nodes.push(Node {
                 source: source_index,
@@ -660,7 +677,7 @@ fn create_global_concept_space_in(
     }
     let sources: Vec<_> = ordered.iter().enumerate().map(|(index, source)| json!({"id":source["id"],"language":source["language"],"edition":source["edition"],"start":source["grammar"].get("start").unwrap_or(&Value::Null),"ruleOrder":source["grammar"]["rules"].as_array().map(|rules| rules.iter().map(|rule| rule["name"].clone()).collect::<Vec<_>>()).unwrap_or_default(),"context":contexts[index]})).collect();
     Ok((
-        json!({"schemaVersion":1,"sources":sources,"concepts":concepts,"mappings":mappings,"proofs":proofs,"failures":failures,"ambiguities":ambiguities,"redirects":redirects}),
+        json!({"schemaVersion":1,"sources":sources,"concepts":concepts,"mappings":mappings,"proofs":proofs,"failures":failures,"ambiguities":ambiguities,"redirects":redirects,"formalDefinitions":formal}),
         graph,
         aliases,
     ))
