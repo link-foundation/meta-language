@@ -2,31 +2,9 @@
 
 use super::{Expr, Node, Prelude, Result, RustEmitter};
 
-pub(super) const ARRAY_PRELUDE: &str = r#"/// Reads of JavaScript arrays, which the portable core never mutates.
-pub mod ml_array {
-    /// The element at an index; a read outside the array, undefined in
-    /// JavaScript, aborts.
-    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
-    }
-
-    /// The index a Number names: a non-negative integer, -0 included.
-    pub fn number_index(index: f64) -> Option<usize> {
-        if index >= 0.0 && index.fract() == 0.0 && index < 9007199254740992.0 {
-            Some(index as usize)
-        } else {
-            None
-        }
-    }
-
-    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
-        left.extend(right);
-        left
-    }
-}"#;
+// Generated from the JavaScript emitter; source adaptations are performed by
+// its normal pipeline before a runtime string reaches either host adapter.
+pub(super) const ARRAY_PRELUDE: &str = include_str!("../runtime/array-legacy.txt");
 
 impl RustEmitter<'_> {
     /// An array literal, an append, an element read or a length.

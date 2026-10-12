@@ -604,14 +604,12 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
     let preludes: Vec<String> = emitter
         .preludes
         .iter()
-        .map(|prelude| {
-            match prelude {
-                Prelude::Big => PRELUDE,
-                Prelude::Number => NUMBER_PRELUDE,
-                Prelude::Math => MATH_PRELUDE,
-                Prelude::Array => ARRAY_PRELUDE,
-            }
-            .to_owned()
+        .map(|prelude| match prelude {
+            Prelude::Big => PRELUDE.to_owned(),
+            Prelude::Number => NUMBER_PRELUDE.to_owned(),
+            Prelude::Math => MATH_PRELUDE.to_owned(),
+            Prelude::Array => ARRAY_PRELUDE.to_owned(),
+            Prelude::Optional => super::structured_type_rules::read_rust_optional_prelude(),
         })
         .collect();
     let mut output = emitter.state.finish(

@@ -610,6 +610,11 @@ function camel(name) {
 const COPY = new Set(['bool', 'fixed', 'float', 'unit']);
 const OPTIONAL_PRELUDE = readRustOptionalPrelude();
 
+/** The exact target runtime data shared with the native Rust host adapter. */
+export function readRustArrayPrelude(standard = false) {
+  return standard ? ARRAY_PRELUDE : LEGACY_ARRAY_PRELUDE;
+}
+
 export function emitRust(program) {
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data',
@@ -656,7 +661,7 @@ export function emitRustConstants(program) {
     ...(emitter.usesBig ? [PRELUDE] : []),
     ...(emitter.usesNumber ? [NUMBER_PRELUDE] : []),
     ...(emitter.usesMath ? [MATH_PRELUDE] : []),
-    ...(emitter.usesArray ? [(emitter.usesStandardArray ? ARRAY_PRELUDE : LEGACY_ARRAY_PRELUDE)] : []),
+    ...(emitter.usesArray ? [readRustArrayPrelude(emitter.usesStandardArray)] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
@@ -705,7 +710,7 @@ class RustEmitter {
       ...(this.usesBig ? [PRELUDE, ''] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE, ''] : []),
       ...(this.usesMath ? [MATH_PRELUDE, ''] : []),
-      ...(this.usesArray ? [(this.usesStandardArray ? ARRAY_PRELUDE : LEGACY_ARRAY_PRELUDE), ''] : []),
+      ...(this.usesArray ? [readRustArrayPrelude(this.usesStandardArray), ''] : []),
       ...(this.utf16Strings ? [STRING_PRELUDE, ''] : []),
       ...(this.usesOptional ? [OPTIONAL_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
@@ -715,7 +720,7 @@ class RustEmitter {
       ...(this.usesBig ? [PRELUDE] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE] : []),
       ...(this.usesMath ? [MATH_PRELUDE] : []),
-      ...(this.usesArray ? [(this.usesStandardArray ? ARRAY_PRELUDE : LEGACY_ARRAY_PRELUDE)] : []),
+      ...(this.usesArray ? [readRustArrayPrelude(this.usesStandardArray)] : []),
       ...(this.utf16Strings ? [STRING_PRELUDE] : []),
       ...(this.usesOptional ? [OPTIONAL_PRELUDE] : []),
     ];
