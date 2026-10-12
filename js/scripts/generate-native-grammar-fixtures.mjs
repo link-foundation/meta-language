@@ -7,6 +7,9 @@
 //
 //   node scripts/generate-native-grammar-fixtures.mjs           write the fixtures
 //   node scripts/generate-native-grammar-fixtures.mjs --check   fail when one is stale
+//   node scripts/generate-native-grammar-fixtures.mjs --language agda
+// Regeneration can be limited to a changed grammar without executing the
+// unrelated corpora. The default still checks every committed fixture.
 //
 // `matches` are sources whose native rows equal the oracle rows. `divergences`
 // are sources one merged source accepts and the oracle does not; the native
@@ -1324,14 +1327,34 @@ export function nativeDefaultLanguages(entry) {
 }
 
 /** Every native default expectation and the shared embedded-region fixtures. */
-export function buildNativeDefaultCstExpected() {
-  const languages = Object.fromEntries(NATIVE_GRAMMARS.flatMap((entry) => nativeDefaultLanguages(entry).map((language) => [language, buildNativeDefaultLanguageExpected({ ...entry, language })])));
+export function buildNativeDefaultCstExpected(only = null) {
+  const previous = only ? JSON.parse(readFileSync(path.join(root, DEFAULT_CST_PATH), 'utf8')) : null;
+  const entries = only ? NATIVE_GRAMMARS.filter(({ id }) => only.includes(id)) : NATIVE_GRAMMARS;
+  const languages = { ...previous?.languages,
+    ...Object.fromEntries(entries.flatMap((entry) => nativeDefaultLanguages(entry).map((language) => [language, buildNativeDefaultLanguageExpected({ ...entry, language })]))),
+  };
+  let embeddedFixtures = buildNativeEmbeddedFixtures(only);
+  if (previous) {
+    const selectedLanguages = new Set(entries.flatMap(nativeDefaultLanguages));
+    const retainUnchangedRegions = (fresh, old) => {
+      if (!old || old.sourceSha256 !== fresh.sourceSha256) return fresh;
+      return { ...fresh, embedded: fresh.embedded.map((region) => selectedLanguages.has(region.language)
+        ? region : old.embedded.find((candidate) => candidate.path === region.path && candidate.language === region.language
+          && candidate.startByte === region.startByte && candidate.endByte === region.endByte) ?? region) };
+    };
+    embeddedFixtures = { ...previous.embeddedFixtures, ...Object.fromEntries(Object.entries(embeddedFixtures).map(([label, fresh]) => {
+      const old = previous.embeddedFixtures[label];
+      return [label, { positive: retainUnchangedRegions(fresh.positive, old?.positive),
+        recovery: retainUnchangedRegions(fresh.recovery, old?.recovery),
+        spellings: fresh.spellings.map((spelling, index) => retainUnchangedRegions(spelling, old?.spellings[index])) }];
+    })) };
+  }
   return {
     description:
       'Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default, and of the embedded regions in those languages of the shared embedded-language fixtures. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
     generator: { script: 'js/scripts/generate-native-grammar-fixtures.mjs' },
     languages,
-    embeddedFixtures: buildNativeEmbeddedFixtures(),
+    embeddedFixtures,
   };
 }
 
@@ -1397,11 +1420,21 @@ export function renderFixture(fixture) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
+  const only = [];
+  for (let index = 2; index < process.argv.length; index += 1) {
+    if (process.argv[index] === '--language') {
+      const id = process.argv[++index];
+      if (!NATIVE_GRAMMARS.some((entry) => entry.id === id)) throw new Error(`unknown native grammar: ${id ?? '(missing)'}`);
+      if (!only.includes(id)) only.push(id);
+    } else if (process.argv[index] !== '--check') throw new Error(`unknown argument: ${process.argv[index]}`);
+  }
+  const entries = only.length ? NATIVE_GRAMMARS.filter(({ id }) => only.includes(id)) : NATIVE_GRAMMARS;
   let stale = 0;
   const outputs = [
-    ...NATIVE_GRAMMARS.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
-    ...['odin', 'xml', 'dtd', 'r', 'python', 'dart', 'nix', 'cmake', 'lua', 'toml', 'zig', 'pascal', 'vb', 'css', 'powershell', 'erlang', 'groovy'].map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
-    [DEFAULT_CST_PATH, buildNativeDefaultCstExpected],
+    ...entries.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
+    ...['odin', 'xml', 'dtd', 'r', 'python', 'dart', 'nix', 'cmake', 'lua', 'toml', 'zig', 'pascal', 'vb', 'css', 'powershell', 'erlang', 'groovy']
+      .filter((id) => !only.length || only.includes(id)).map((id) => [`parity/fixtures/native-grammars/${id}-corpus.json`, () => buildNativeGrammarCorpusSources(id)]),
+    [DEFAULT_CST_PATH, () => buildNativeDefaultCstExpected(only.length ? only : null)],
   ];
   for (const [relative, build] of outputs) {
     const file = path.join(root, relative);
