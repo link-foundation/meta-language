@@ -67,8 +67,28 @@
       "name": "documented-optional-string",
       "source": "/** @param {string} [value] @returns {string} */\nexport function identity(value) { return value; }\n",
       "call": "identity('ready')",
-      "rustCall": "identity(String::from(\"ready\"))",
-      "expected": "ready\n"
+      "rustCall": "identity(Some(String::from(\"ready\"))).unwrap_or_else(|| String::from(\"undefined\"))",
+      "expected": "ready\n",
+      "additionalCalls": [
+        {
+          "name": "omitted",
+          "call": "identity()",
+          "rustCall": "identity(None).unwrap_or_else(|| String::from(\"undefined\"))",
+          "expected": "undefined\n"
+        },
+        {
+          "name": "explicit-undefined",
+          "call": "identity(undefined)",
+          "rustCall": "identity(None).unwrap_or_else(|| String::from(\"undefined\"))",
+          "expected": "undefined\n"
+        },
+        {
+          "name": "present-empty-string",
+          "call": "identity('')",
+          "rustCall": "identity(Some(String::new())).unwrap_or_else(|| String::from(\"undefined\"))",
+          "expected": "\n"
+        }
+      ]
     },
     {
       "name": "type-query-number",
