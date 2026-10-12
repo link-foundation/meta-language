@@ -27,6 +27,7 @@ use super::lean_root_names::LEAN_ROOT_NAMES;
 use super::output::thread_output;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
+use super::typed_program_link_rules::accept_program_tuple_product_model;
 use super::types::Type;
 
 mod arrays;
@@ -297,15 +298,6 @@ impl LeanEmitter<'_> {
             return Err(unsupported(
                 "mutable structural value",
                 "shared reference state needs an explicit target state model",
-                None,
-            ));
-        }
-        if self.program.source_language == Language::Rust
-            && matches!(ty, Type::Tuple { elements } if elements.len() < 2)
-        {
-            return Err(unsupported(
-                "immutable tuple arity",
-                "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
                 None,
             ));
         }
@@ -583,7 +575,19 @@ impl LeanEmitter<'_> {
                 e.span,
             ));
         }
-        if matches!(&e.node, Node::Tuple { frozen: true, .. }) {
+        if let Node::Tuple {
+            frozen,
+            product_model: Some(model),
+            ..
+        } = &e.node
+        {
+            if !accept_program_tuple_product_model(model, *frozen) {
+                return Err(unsupported(
+                    "immutable tuple product model",
+                    "the tuple model must be immutable value product with explicit frozen evidence",
+                    e.span,
+                ));
+            }
             let mut pending = vec![&e.ty];
             while let Some(ty) = pending.pop() {
                 if let Type::Tuple { elements } = ty {
@@ -629,13 +633,6 @@ impl LeanEmitter<'_> {
                         e.span,
                     ));
                 };
-                if self.program.source_language == Language::Rust && elements.len() < 2 {
-                    return Err(unsupported(
-                        "immutable tuple arity",
-                        "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
-                        e.span,
-                    ));
-                }
                 let value = self.expr(object, depth)?;
                 if elements.len() == 1 {
                     value

@@ -8,6 +8,7 @@ import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExp
 // so an assertion about Numbers is checked when `main` runs, as in the source.
 
 import { unsupported } from './diagnostics.js';
+import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
@@ -240,7 +241,6 @@ class LeanEmitter {
 
   type(type) {
     if (type.reference || type.kind === 'cell') throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model');
-    if (this.program.sourceLanguage === 'Rust' && type.kind === 'tuple' && type.elements.length < 2) throw unsupported('immutable tuple arity', 'this target needs a nominal product representation to distinguish unit and single-element tuple arities');
     switch (type.kind) {
       case 'nat':
         return 'Nat';
@@ -402,7 +402,8 @@ class LeanEmitter {
 
   expr(e, depth) {
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
-    if (e.k === 'tuple' && e.frozen) {
+    if (e.k === 'tuple' && Object.hasOwn(e, 'productModel')) {
+      if (!acceptProgramTupleProductModel(e.productModel, e.frozen)) throw unsupported('immutable tuple product model', 'the tuple model must be immutable value product with explicit frozen evidence', e.span);
       const pending = [e.type];
       while (pending.length) {
         const type = pending.pop();
@@ -438,7 +439,6 @@ class LeanEmitter {
       case 'recordField':
       case 'tupleIndex': {
         const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
-        if (e.k === 'tupleIndex' && this.program.sourceLanguage === 'Rust' && count < 2) throw unsupported('immutable tuple arity', 'this target needs a nominal product representation to distinguish unit and single-element tuple arities', e.span);
         return count === 1 ? this.expr(e.object, depth) : `(${this.expr(e.object, depth)})${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
       }
       case 'tuple':

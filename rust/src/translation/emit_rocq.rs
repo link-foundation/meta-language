@@ -27,6 +27,7 @@ use super::ir::{
 use super::output::thread_output;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
+use super::typed_program_link_rules::accept_program_tuple_product_model;
 use super::types::Type;
 
 mod arrays;
@@ -478,15 +479,6 @@ impl RocqEmitter<'_> {
             return Err(unsupported(
                 "mutable structural value",
                 "shared reference state needs an explicit target state model",
-                None,
-            ));
-        }
-        if self.program.source_language == Language::Rust
-            && matches!(ty, Type::Tuple { elements } if elements.len() < 2)
-        {
-            return Err(unsupported(
-                "immutable tuple arity",
-                "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
                 None,
             ));
         }

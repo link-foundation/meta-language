@@ -2,8 +2,8 @@
 
 use super::{
     BinaryOp, ByZero, Case, Effect, Expr, Flavor, Helper, LitValue, Main, Node, Pattern, Rc,
-    Result, RocqEmitter, Rounding, Semantics, Type, UnaryOp, ident, internal, op_name, rename_main,
-    unsupported, unthreaded,
+    Result, RocqEmitter, Rounding, Semantics, Type, UnaryOp, accept_program_tuple_product_model,
+    ident, internal, op_name, rename_main, unsupported, unthreaded,
 };
 
 impl RocqEmitter<'_> {
@@ -17,7 +17,19 @@ impl RocqEmitter<'_> {
                 e.span,
             ));
         }
-        if matches!(&e.node, Node::Tuple { frozen: true, .. }) {
+        if let Node::Tuple {
+            frozen,
+            product_model: Some(model),
+            ..
+        } = &e.node
+        {
+            if !accept_program_tuple_product_model(model, *frozen) {
+                return Err(unsupported(
+                    "immutable tuple product model",
+                    "the tuple model must be immutable value product with explicit frozen evidence",
+                    e.span,
+                ));
+            }
             let mut pending = vec![&e.ty];
             while let Some(ty) = pending.pop() {
                 if let Type::Tuple { elements } = ty {
@@ -58,15 +70,6 @@ impl RocqEmitter<'_> {
                         e.span,
                     ));
                 };
-                if self.program.source_language == crate::translation::Language::Rust
-                    && elements.len() < 2
-                {
-                    return Err(unsupported(
-                        "immutable tuple arity",
-                        "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
-                        e.span,
-                    ));
-                }
                 let mut value = self.expr(object)?;
                 for _ in (*index + 1)..elements.len() {
                     value = format!("(fst {value})");
