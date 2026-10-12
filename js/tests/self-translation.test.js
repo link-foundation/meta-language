@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import vm from 'node:vm';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -20,6 +21,9 @@ import {
 import { caseDecorators, readSelfTranslationCorpus } from '../scripts/generate-self-translation-cases.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { compileRustTranslation } from './support/self-translation-rust.js';
+import { checkProgram } from '../src/translation/check.js';
+import { emitJavaScript } from '../src/translation/emit-javascript.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
 
 const FIXTURE = 'parity/self-translation/cases.lino';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -235,7 +239,7 @@ test('a translated item whose definitions carry attributes translates back to it
   assert.equal(selfTranslate(translation.code, 'Rust', 'JavaScript').code, source);
 });
 
-test('a sibling that does not translate leaves its callers carried', () => {
+test('sibling cycles and supported callbacks translate while unsupported siblings leave their callers carried', () => {
   const source = [
     '/** @param {bigint} n @returns {boolean} */',
     'function isEven(n) {',
@@ -259,12 +263,35 @@ test('a sibling that does not translate leaves its callers carried', () => {
     '',
   ].join('\n');
   const translation = selfTranslate(source, 'JavaScript', 'Rust');
-  // Mutually recursive siblings are a cycle, which stays unbound.
-  assert.equal(statusOf(translation, source, 'function isEven'), 'carried');
-  assert.equal(statusOf(translation, source, 'function isOdd'), 'carried');
-  assert.equal(statusOf(translation, source, 'function opaque'), 'carried');
-  assert.equal(statusOf(translation, source, 'function caller'), 'carried');
-  assert.equal(translation.items.find(({ start }) => source.slice(start).startsWith('function caller')).reason, 'type');
+  // The complete binding scope checks mutually recursive siblings together.
+  assert.equal(statusOf(translation, source, 'function isEven'), 'translated');
+  assert.equal(statusOf(translation, source, 'function isOdd'), 'translated');
+  assert.equal(statusOf(translation, source, 'function opaque'), 'translated');
+  assert.equal(statusOf(translation, source, 'function caller'), 'translated');
+  assert.equal(translation.items.find(({ start }) => source.slice(start).startsWith('function caller')).reason, null);
+  const rust = emittedRust(translation);
+  assert.match(rust, /pub fn opaque\(x: f64\) -> Option<f64>/u);
+  assert.match(rust, /pub fn caller\(x: f64\) -> f64/u);
+  assert.match(rust, /crate::opaque\(x\)/u);
+  assert.match(rust, /pub fn is_even\(/u);
+  assert.match(rust, /pub fn is_odd\(/u);
+  const runnable = `${source}\nconsole.log(isEven(0n), isEven(4n), isOdd(5n), isEven(5n), caller(0), caller(1), caller(-1));`;
+  const emitted = translateProgram(runnable, 'JavaScript', 'Rust');
+  assert.equal(emitted.diagnostic, null);
+  const run = (code) => {
+    const output = [];
+    vm.runInNewContext(code, { console: { log: (...values) => output.push(values.map(String).join(' ')) }, process: { argv: [] } }, { timeout: 1000 });
+    return output;
+  };
+  assert.deepEqual(run(runnable), ['true true true false 1 2 0']);
+  assert.deepEqual(run(emitJavaScript(checkProgram(parseJavaScript(runnable))).text), ['true true true false 1 2 0']);
+  assert.equal(selfTranslate(translation.code, 'Rust', 'JavaScript').code, source);
+
+  const unsupported = '/** @param {number} x @returns {number} */\nfunction opaqueRegex(x) { return /./u.test(String(x)) ? x : 0; }\n/** @param {number} x @returns {number} */\nfunction regexCaller(x) { return opaqueRegex(x) + 1; }\n';
+  const carried = selfTranslate(unsupported, 'JavaScript', 'Rust');
+  assert.equal(statusOf(carried, unsupported, 'function opaqueRegex'), 'carried');
+  assert.equal(statusOf(carried, unsupported, 'function regexCaller'), 'carried');
+  assert.equal(carried.items.find(({ start }) => unsupported.slice(start).startsWith('function regexCaller')).reason, 'type');
 });
 
 test('a relative import of items of the crate translates as a use declaration', () => {
