@@ -2,9 +2,9 @@
 
 use super::{
     Alias, BinaryOp, Flavor, Options, Result, RustParser, SExpr, SNode, SPattern, SPatternNode,
-    SRow, Span, Token, TokenKind, UnaryOp, additive_op, binary, comparison_op, describe, format,
-    is_if_or_match, joined, method_call, multiplicative_op, operator, pattern_value,
-    rust_fixed_type, rust_macro_message, span, type_error, unsupported,
+    SRow, STRING, SourceOrigin, Span, Token, TokenKind, UnaryOp, additive_op, binary,
+    comparison_op, describe, format, is_if_or_match, joined, method_call, multiplicative_op,
+    operator, pattern_value, rust_fixed_type, rust_macro_message, span, type_error, unsupported,
 };
 
 impl RustParser {
@@ -136,7 +136,7 @@ impl RustParser {
                 ));
             }
         }
-        // References and dereferences of immutable values denote the value.
+        // Source evidence proves immutable indirection before projecting its value.
         if self.cursor.is("&") || self.cursor.is("&&") {
             self.cursor.advance();
             if self.cursor.is("mut") {
@@ -146,10 +146,18 @@ impl RustParser {
                     span(&token, self.cursor.peek()),
                 ));
             }
-            return self.unary(path, Options::default());
+            let arg = self.unary(path, Options::default())?;
+            if token.value == "&&" {
+                self.origins.wrap(&arg, path, "reference");
+            }
+            self.origins.wrap(&arg, path, "reference");
+            return Ok(arg);
         }
         if self.cursor.eat("*").is_some() {
-            return self.unary(path, Options::default());
+            let arg = self.unary(path, Options::default())?;
+            self.origins
+                .dereference(&arg, path, span(&token, self.cursor.peek()))?;
+            return Ok(arg);
         }
         self.postfix(path, options)
     }
@@ -171,7 +179,23 @@ impl RustParser {
                 self.cursor.advance();
                 let args = self.call_arguments(path)?;
                 self.cursor.expect(")", Some(&method.value))?;
+                let mut origin = self.origins.origin(&value, path);
+                let method_name = method.value.as_str();
+                if ["clone", "to_owned"].contains(&method_name)
+                    && origin
+                        .wrappers
+                        .first()
+                        .is_some_and(|layer| layer == "reference")
+                {
+                    origin.wrappers.remove(0);
+                }
+                if method_name == "as_str" {
+                    origin = SourceOrigin::with_type(STRING, path, vec!["reference".to_owned()]);
+                }
                 value = method_call(value, &method, args, span(&token, self.cursor.peek()))?;
+                if ["clone", "to_owned", "as_str"].contains(&method_name) {
+                    self.origins.mark(&value, origin);
+                }
                 continue;
             }
             if self.cursor.is("?") {
@@ -235,12 +259,17 @@ impl RustParser {
         }
         if token.kind == TokenKind::String {
             self.cursor.advance();
-            return Ok(SExpr::new(
+            let result = SExpr::new(
                 SNode::Str {
                     value: token.value.clone(),
                 },
                 span(&token, &token),
-            ));
+            );
+            self.origins.mark(
+                &result,
+                SourceOrigin::with_type(STRING, path, vec!["reference".to_owned()]),
+            );
+            return Ok(result);
         }
         if token.kind == TokenKind::Macro {
             self.cursor.advance();
@@ -353,11 +382,16 @@ impl RustParser {
         let mut args = self.call_arguments(path)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
-        if name == "Box::new" {
+        if ["Box::new", "std::boxed::Box::new", "alloc::boxed::Box::new"].contains(&name.as_str()) {
             if args.len() != 1 {
                 return Err(type_error("Box::new expects 1 argument", range));
             }
-            return Ok(args.remove(0));
+            let owner = &segments[..segments.len() - 1];
+            self.origins
+                .box_owner(owner, &self.resolve(owner, path), path, range)?;
+            let result = args.remove(0);
+            self.origins.wrap(&result, path, "box");
+            return Ok(result);
         }
         if name == "String::from" {
             if args.len() != 1 {
@@ -399,6 +433,7 @@ impl RustParser {
             ));
         }
         let callee = self.resolve(&segments, path);
+        self.origins.call(&callee, &args, path, range)?;
         if args.is_empty() {
             return Ok(SExpr::new(SNode::Name { path: callee }, range));
         }
@@ -520,7 +555,14 @@ impl RustParser {
                 ));
             }
             self.cursor.expect("=>", Some("match arm"))?;
+            let scope = self.origins.cases(&alternatives, &scrutinee, path);
+            let previous = self.origins.enter(Some(scope));
+            for alias in &aliases {
+                self.origins.bind(&alias.name, &alias.value, path, None)?;
+            }
             let mut body = self.expr(path, Options::default())?;
+            let body_origin = self.origins.origin(&body, path);
+            self.origins.scope = previous;
             if body.block || is_if_or_match(&body) {
                 self.cursor.eat(",");
             } else if !self.cursor.is("}") {
@@ -545,6 +587,7 @@ impl RustParser {
                     body_span,
                 );
             }
+            self.origins.mark(&body, body_origin);
             // `A | B => e` is one row per alternative with the same body.
             let row_span = span(&arm_start, self.cursor.peek());
             for pattern in alternatives {
@@ -563,13 +606,27 @@ impl RustParser {
                 span(&token, self.cursor.peek()),
             ));
         }
-        Ok(SExpr::new(
+        let origins = rows
+            .iter()
+            .map(|row| self.origins.origin(&row.body, path))
+            .collect::<Vec<_>>();
+        let origin = if origins
+            .iter()
+            .all(|origin| self.origins.same_origin(origin, &origins[0]))
+        {
+            origins[0].clone()
+        } else {
+            SourceOrigin::unknown()
+        };
+        let result = SExpr::new(
             SNode::Match {
                 scrutinees: vec![scrutinee],
                 rows,
             },
             span(&token, self.cursor.peek()),
-        ))
+        );
+        self.origins.mark(&result, origin);
+        Ok(result)
     }
 
     /// Patterns: `_`, bindings, literals, `Enum::Variant(p, …)`, `&p` and `name @ p`.
@@ -581,7 +638,9 @@ impl RustParser {
     ) -> Result<SPattern> {
         let token = self.peek();
         if self.cursor.eat("&").is_some() {
-            return self.pattern(path, aliases);
+            let pattern = self.pattern(path, aliases)?;
+            self.origins.reference_pattern(&pattern);
+            return Ok(pattern);
         }
         if self.cursor.eat("_").is_some() {
             return Ok(SPattern {

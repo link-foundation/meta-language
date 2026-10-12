@@ -24,7 +24,11 @@ use super::types::{BOOL, FLOAT, STRING, Type, UNIT, rust_fixed_type};
 use super::{Language, Span};
 
 mod expressions;
+mod indirection_rules;
 mod items;
+mod source_origins;
+
+use source_origins::{SourceDeclaration, SourceOrigin, SourceOrigins};
 
 const ACCEPTED_DERIVES: [&str; 8] = [
     "Clone",
@@ -88,7 +92,13 @@ fn multiplicative_op(value: &str) -> Option<BinaryOp> {
 /// On syntax errors and on constructs outside the portable core.
 pub fn parse_rust(source: &str) -> Result<SProgram> {
     let tokens = tokenize(source, Language::Rust)?.tokens;
-    RustParser::new(tokens).file()
+    let mut declarations = RustParser::new(tokens.clone(), SourceOrigins::new(None));
+    declarations.file()?;
+    let mut origins = std::mem::replace(&mut declarations.origins, SourceOrigins::new(None));
+    origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
+    let mut parser = RustParser::new(tokens, SourceOrigins::new(Some(origins.catalog)));
+    parser.aliases = declarations.aliases;
+    parser.file()
 }
 
 /// Where a sequence of items ends: at the end of the file or at a module's `}`.
@@ -127,15 +137,17 @@ struct RustParser {
     aliases: HashMap<String, HashMap<String, Vec<String>>>,
     module_path: Vec<String>,
     main: Option<SMain>,
+    origins: SourceOrigins,
 }
 
 impl RustParser {
-    fn new(tokens: Vec<Token>) -> Self {
+    fn new(tokens: Vec<Token>, origins: SourceOrigins) -> Self {
         Self {
             cursor: TokenCursor::new(tokens, Language::Rust),
             aliases: HashMap::new(),
             module_path: Vec::new(),
             main: None,
+            origins,
         }
     }
 

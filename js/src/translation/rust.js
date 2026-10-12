@@ -11,6 +11,7 @@ import { rustMacroMessage } from './aborts.js';
 import { TranslationError, unsupported } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, STRING, UNIT, rustFixedType } from './types.js';
+import { RustSourceOrigins } from './rust-source-origins.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -21,15 +22,21 @@ const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 't
 
 export function parseRust(source) {
   const { tokens } = tokenize(source, 'Rust');
-  return new RustParser(tokens).file();
+  const declarations = new RustParser(tokens);
+  declarations.file();
+  declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
+  const parser = new RustParser(tokens, declarations.origins.catalog);
+  parser.aliases = declarations.aliases;
+  return parser.file();
 }
 
 class RustParser {
-  constructor(tokens) {
+  constructor(tokens, catalog = null) {
     this.cursor = new TokenCursor(tokens, 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
+    this.origins = new RustSourceOrigins(catalog);
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -100,6 +107,7 @@ class RustParser {
         if (c.is(';')) throw unsupported('out-of-line module', 'the program must be a single file', span(start, c.peek()));
         c.expect('{', 'mod');
         const module = { k: 'module', name, items: [], span: span(start, c.peek()) };
+        this.origins.declaration(name, path, { k: 'module' });
         items.push(module);
         this.items(root, module.items, [...path, name], () => c.is('}'));
         c.expect('}', 'mod');
@@ -110,7 +118,7 @@ class RustParser {
         continue;
       }
       if (c.is('enum')) {
-        items.push(this.enumItem());
+        items.push(this.enumItem(path));
         continue;
       }
       if (c.is('fn') || c.is('const')) {
@@ -182,20 +190,24 @@ class RustParser {
     return aliases?.has(segments[0]) ? [...aliases.get(segments[0]), ...segments.slice(1)] : segments;
   }
 
-  enumItem() {
+  enumItem(path) {
     const c = this.cursor;
     const start = c.next();
     const name = c.identifier('enum').value;
     if (c.is('<')) throw unsupported('generic enum', 'type parameters are outside the portable core', span(start, c.peek()));
     c.expect('{', 'enum');
     const ctors = [];
+    const owner = [...path, name].join('.');
+    this.origins.declaration(name, path, { k: 'data' });
     while (!c.is('}')) {
       this.attributes();
       const variant = c.identifier('variant');
       const fields = [];
+      const sourceFields = [];
       if (c.eat('(')) {
         while (!c.is(')')) {
           fields.push({ type: this.type() });
+          sourceFields.push(this.origins.type);
           if (!c.eat(',')) break;
         }
         c.expect(')', 'variant');
@@ -205,6 +217,7 @@ class RustParser {
         throw unsupported('explicit discriminant', 'discriminant values are outside the portable core', span(variant, c.peek()));
       }
       ctors.push({ name: variant.value, fields });
+      this.origins.declaration(variant.value, [...path, name], { k: 'ctor', owner, fields: sourceFields, result: { wrappers: [], type: { kind: 'named', path: ['crate', ...path, name] }, path: [] } });
       if (!c.eat(',')) break;
     }
     c.expect('}', 'enum');
@@ -228,32 +241,34 @@ class RustParser {
       if (c.is('mut')) throw unsupported('mutable reference', 'mutation is outside the portable core', span(token, c.peek()));
       if (c.is('str')) {
         c.next();
-        return STRING;
+        return this.origins.typed(STRING, this.modulePath, ['reference']);
       }
-      return this.type();
+      const inner = this.type();
+      return this.origins.typed(inner, this.origins.type.path, ['reference', ...this.origins.type.wrappers]);
     }
     if (c.eat('(')) {
-      if (c.eat(')')) return UNIT;
+      if (c.eat(')')) return this.origins.typed(UNIT, this.modulePath);
       throw unsupported('tuple type', 'tuples are outside the portable core', span(token, c.peek()));
     }
     const segments = this.pathSegments('type');
     const name = segments.join('::');
-    if (name === 'Box') {
+    if (['Box', 'std::boxed::Box', 'alloc::boxed::Box'].includes(name)) {
+      this.origins.box(segments, this.resolve(segments, this.modulePath), this.modulePath, span(token, c.peek()));
       c.expect('<', 'Box');
       const inner = this.type();
       c.expect('>', 'Box');
-      return inner;
+      return this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers]);
     }
     if (c.is('<')) throw unsupported(`type ${name}<…>`, 'generic types are outside the portable core', span(token, c.peek()));
     const fixed = segments.length === 1 ? rustFixedType(name) : undefined;
-    if (fixed) return fixed;
-    if (name === 'bool') return BOOL;
-    if (name === 'String') return STRING;
-    if (name === 'f64') return FLOAT;
+    if (fixed) return this.origins.typed(fixed, this.modulePath);
+    if (name === 'bool') return this.origins.typed(BOOL, this.modulePath);
+    if (name === 'String') return this.origins.typed(STRING, this.modulePath);
+    if (name === 'f64') return this.origins.typed(FLOAT, this.modulePath);
     if (['str', 'char', 'f32', 'Vec', 'Option', 'Result', 'Rc', 'Arc', 'HashMap', 'Self'].includes(name)) {
       throw unsupported(`Rust type ${name}`, 'outside the portable core', span(token, token));
     }
-    return { kind: 'named', path: this.resolve(segments, this.modulePath), span: span(token, token) };
+    return this.origins.typed({ kind: 'named', path: this.resolve(segments, this.modulePath), span: span(token, token) }, this.modulePath);
   }
 
   pathSegments(context) {
@@ -273,6 +288,7 @@ class RustParser {
     if (c.is('<')) throw unsupported('generic function', 'type parameters are outside the portable core', span(start, c.peek()));
     c.expect('(', 'fn');
     const params = [];
+    const sourceParams = [];
     while (!c.is(')')) {
       const paramToken = c.peek();
       if (c.is('mut')) throw unsupported('mutable parameter', 'mutation is outside the portable core', span(paramToken, paramToken));
@@ -280,13 +296,19 @@ class RustParser {
       const paramName = c.identifier('parameter').value;
       c.expect(':', 'parameter');
       params.push({ name: paramName, type: this.type(), span: span(paramToken, c.peek()) });
+      sourceParams.push(this.origins.type);
       if (!c.eat(',')) break;
     }
     c.expect(')', 'fn');
     if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
     const ret = this.type();
+    const sourceResult = this.origins.type;
+    this.origins.declaration(name, path, { k: 'fn', parameters: sourceParams, result: sourceResult });
     if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
+    const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
     const body = this.block(path);
+    this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
+    this.origins.scope = previous;
     return { k: 'fn', name, params, ret, body, span: span(start, c.peek()) };
   }
 
@@ -297,8 +319,11 @@ class RustParser {
     const name = c.identifier('const').value;
     c.expect(':', 'const');
     const ret = this.type();
+    const sourceResult = this.origins.type;
+    this.origins.declaration(name, path, { k: 'fn', parameters: [], result: sourceResult });
     c.expect('=', 'const');
     const body = this.expr(path);
+    this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
     c.expect(';', 'const');
     return { k: 'fn', name, params: [], ret, body, span: span(start, c.peek()) };
   }
@@ -310,6 +335,7 @@ class RustParser {
   block(path) {
     const c = this.cursor;
     const open = c.expect('{', 'block');
+    const previous = this.origins.enter();
     const lets = [];
     let tail = null;
     while (!c.is('}')) {
@@ -338,7 +364,10 @@ class RustParser {
     }
     const close = c.expect('}', 'block');
     if (!tail) throw unsupported('block without a value', 'the block evaluates to (), which is not a portable result', span(open, close));
-    return lets.reduceRight((body, binding) => ({ k: 'let', ...binding, body, span: binding.span }), tail);
+    const origin = this.origins.origin(tail, path);
+    const result = lets.reduceRight((body, binding) => ({ k: 'let', ...binding, body, span: binding.span }), tail);
+    this.origins.scope = previous;
+    return this.origins.mark(result, origin);
   }
 
   letStatement(path) {
@@ -348,10 +377,12 @@ class RustParser {
     if (c.is('(')) throw unsupported('destructuring let', 'tuples are outside the portable core', span(start, c.peek()));
     const name = c.identifier('let').value;
     const type = c.eat(':') ? this.type() : undefined;
+    const sourceType = type ? this.origins.type : null;
     if (!c.eat('=')) throw unsupported('uninitialised binding', 'every binding needs its value', span(start, c.peek()));
     const value = this.expr(path);
     if (c.is('else')) throw unsupported('let-else', 'refutable bindings are outside the portable core', span(start, c.peek()));
     c.expect(';', 'let');
+    this.origins.bind(name, value, path, sourceType);
     return { name, type, value, span: span(start, c.peek()) };
   }
 
@@ -363,6 +394,7 @@ class RustParser {
     c.expect(')', 'fn main');
     if (c.is('->')) throw unsupported('main with a result', 'main must return ()', span(start, c.peek()));
     this.modulePath = [];
+    const previous = this.origins.enter(new Map());
     c.expect('{', 'fn main');
     const effects = [];
     while (!c.is('}')) {
@@ -380,6 +412,7 @@ class RustParser {
       throw unsupported('main statement', 'main may only print, bind and assert', span(token, token));
     }
     c.expect('}', 'fn main');
+    this.origins.scope = previous;
     return { effects, span: span(start, c.peek()) };
   }
 
@@ -565,13 +598,15 @@ class RustParser {
       const arg = this.unary(path, {});
       return { k: 'unary', op: 'not', arg, span: span(token, c.peek()) };
     }
-    // References and dereferences of immutable values denote the value.
+    // Source evidence proves immutable indirection before projecting its value.
     if (c.is('&') || c.is('&&')) {
       c.next();
       if (c.is('mut')) throw unsupported('mutable reference', 'mutation is outside the portable core', span(token, c.peek()));
-      return this.unary(path, {});
+      const arg = this.unary(path, {});
+      if (token.value === '&&') this.origins.wrap(arg, path, 'reference');
+      return this.origins.wrap(arg, path, 'reference');
     }
-    if (c.eat('*')) return this.unary(path, {});
+    if (c.eat('*')) return this.origins.dereference(this.unary(path, {}), path, span(token, c.peek()));
     return this.postfix(path, options);
   }
 
@@ -620,10 +655,15 @@ class RustParser {
         expect(0);
         return { k: 'stringMap', op: readStringMapOperation('Rust', method.value), object: receiver, span: range };
       case 'clone':
-      case 'to_owned':
+      case 'to_owned': {
+        expect(0);
+        const origin = this.origins.origin(receiver, this.modulePath);
+        if (origin.wrappers[0] === 'reference') origin.wrappers.shift();
+        return this.origins.mark(receiver, origin);
+      }
       case 'as_str':
         expect(0);
-        return receiver;
+        return this.origins.mark(receiver, { type: STRING, path: [...this.modulePath], wrappers: ['reference'] });
       case 'to_string':
         expect(0);
         return { k: 'toString', arg: receiver, span: range };
@@ -651,7 +691,7 @@ class RustParser {
     }
     if (token.kind === 'string') {
       c.next();
-      return { k: 'str', value: token.value, span: span(token, token) };
+      return this.origins.mark({ k: 'str', value: token.value, span: span(token, token) }, { type: STRING, path: [...path], wrappers: ['reference'] });
     }
     if (token.kind === 'macro') {
       c.next();
@@ -666,7 +706,10 @@ class RustParser {
       c.expect(')', 'parenthesised expression');
       return inner;
     }
-    if (c.is('{')) return { ...this.block(path), block: true };
+    if (c.is('{')) {
+      const block = this.block(path);
+      return this.origins.mark({ ...block, block: true }, this.origins.origin(block, path));
+    }
     if (c.is('if')) return this.ifExpr(path);
     if (c.is('match')) return this.match(path);
     if (c.is('|') || c.is('||') || c.is('move')) throw unsupported('closure', 'higher-order values are outside the portable core', span(token, token));
@@ -693,9 +736,10 @@ class RustParser {
       }
       c.expect(')', 'call');
       const range = span(token, c.peek());
-      if (name === 'Box::new') {
+      if (['Box::new', 'std::boxed::Box::new', 'alloc::boxed::Box::new'].includes(name)) {
         if (args.length !== 1) throw new TranslationError('type', 'Box::new expects 1 argument', range);
-        return args[0];
+        this.origins.box(segments.slice(0, -1), this.resolve(segments.slice(0, -1), path), path, range);
+        return this.origins.wrap(args[0], path, 'box');
       }
       if (name === 'String::from') {
         if (args.length !== 1) throw new TranslationError('type', 'String::from expects 1 argument', range);
@@ -709,6 +753,7 @@ class RustParser {
         throw unsupported(`${name}`, 'outside the portable core', range);
       }
       if (['std', 'core', 'alloc'].includes(segments[0])) throw unsupported(name, 'the standard library is outside the portable core', range);
+      this.origins.call(this.resolve(segments, path), args, path, range);
       if (!args.length) return { k: 'name', path: this.resolve(segments, path), span: range };
       return { k: 'app', fn: { k: 'name', path: this.resolve(segments, path), span: span(token, token) }, args, span: range };
     }
@@ -759,26 +804,33 @@ class RustParser {
       while (c.eat('|')) alternatives.push(this.pattern(path, aliases));
       if (c.is('if')) throw unsupported('match guard', 'guards are outside the portable pattern language', span(armStart, c.peek()));
       c.expect('=>', 'match arm');
+      const previous = this.origins.enter(this.origins.cases(alternatives, scrutinee, path));
+      for (const alias of aliases) this.origins.bind(alias.name, alias.value, path);
       let body = this.expr(path);
+      const bodyOrigin = this.origins.origin(body, path);
+      this.origins.scope = previous;
       if (body.block || body.k === 'if' || body.k === 'match') c.eat(',');
       else if (!c.is('}')) c.expect(',', 'match arm');
       if (alternatives.length > 1 && aliases.length) {
         throw unsupported('binding in an or-pattern', 'bind the value in each alternative separately', span(armStart, c.peek()));
       }
       for (const alias of aliases.reverse()) body = { k: 'let', name: alias.name, value: alias.value, body, span: body.span };
+      this.origins.mark(body, bodyOrigin);
       // `A | B => e` is one row per alternative with the same body.
       for (const pattern of alternatives) rows.push({ patterns: [pattern], body, span: span(armStart, c.peek()) });
     }
     c.expect('}', 'match');
     if (!rows.length) throw unsupported('empty match', 'uninhabited types are outside the portable core', span(token, c.peek()));
-    return { k: 'match', scrutinees: [scrutinee], rows, span: span(token, c.peek()) };
+    const origins = rows.map(row => this.origins.origin(row.body, path));
+    const result = { k: 'match', scrutinees: [scrutinee], rows, span: span(token, c.peek()) };
+    return this.origins.mark(result, origins.every(origin => this.origins.same(origin, origins[0])) ? origins[0] : { wrappers: [], type: null, path: [] });
   }
 
   /** Patterns: `_`, bindings, literals, `Enum::Variant(p, …)`, `&p` and `name @ p`. */
   pattern(path, aliases) {
     const c = this.cursor;
     const token = c.peek();
-    if (c.eat('&')) return this.pattern(path, aliases);
+    if (c.eat('&')) return this.origins.referencePattern(this.pattern(path, aliases));
     if (c.eat('_')) return { k: 'wild' };
     if (c.is('ref') || c.is('mut')) throw unsupported(`${token.value} binding`, 'bindings are by value in the portable core', span(token, token));
     if (c.is('-') && c.isKind('number', 1)) {

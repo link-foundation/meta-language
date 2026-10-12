@@ -3,13 +3,13 @@
 use super::{
     ACCEPTED_DERIVES, ACCEPTED_LINTS, BOOL, Binding, ItemsEnd, Language, Options, RESERVED_ITEMS,
     Result, RustParser, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain,
-    SModule, SNode, SParam, SProgram, SProp, SPropNode, STRING, ShowStyle, Token, TokenKind,
-    TranslationError, Type, UNIT, UNSUPPORTED_TYPES, absolute, format, is_if_or_match, prop_of,
-    rust_fixed_type, span, unsupported,
+    SModule, SNode, SParam, SProgram, SProp, SPropNode, STRING, ShowStyle, SourceDeclaration,
+    SourceOrigin, Token, TokenKind, TranslationError, Type, UNIT, UNSUPPORTED_TYPES, absolute,
+    format, is_if_or_match, prop_of, rust_fixed_type, span, unsupported,
 };
 
 impl RustParser {
-    pub(super) fn file(mut self) -> Result<SProgram> {
+    pub(super) fn file(&mut self) -> Result<SProgram> {
         self.inner_attributes()?;
         let items = self.items(&[], ItemsEnd::File)?;
         let Some(main) = self.main.take() else {
@@ -114,6 +114,8 @@ impl RustParser {
                 }
                 c.expect("{", Some("mod"))?;
                 let module_span = span(&start, c.peek());
+                self.origins
+                    .declaration(&name, path, SourceDeclaration::Module);
                 let mut inner = path.to_vec();
                 inner.push(name.clone());
                 let module_items = self.items(&inner, ItemsEnd::Module)?;
@@ -130,7 +132,7 @@ impl RustParser {
                 continue;
             }
             if c.is("enum") {
-                items.push(self.enum_item()?);
+                items.push(self.enum_item(path)?);
                 continue;
             }
             if c.is("fn") || c.is("const") {
@@ -254,7 +256,7 @@ impl RustParser {
             )
     }
 
-    pub(super) fn enum_item(&mut self) -> Result<SItem> {
+    pub(super) fn enum_item(&mut self, path: &[String]) -> Result<SItem> {
         let start = self.cursor.advance();
         let name = self.cursor.identifier(Some("enum"))?.value;
         if self.cursor.is("<") {
@@ -266,10 +268,19 @@ impl RustParser {
         }
         self.cursor.expect("{", Some("enum"))?;
         let mut ctors = Vec::new();
+        let owner = path
+            .iter()
+            .chain(std::iter::once(&name))
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(".");
+        self.origins
+            .declaration(&name, path, SourceDeclaration::Data);
         while !self.cursor.is("}") {
             self.attributes()?;
             let variant = self.cursor.identifier(Some("variant"))?;
             let mut fields = Vec::new();
+            let mut source_fields = Vec::new();
             if self.cursor.eat("(").is_some() {
                 while !self.cursor.is(")") {
                     fields.push(SField {
@@ -278,6 +289,7 @@ impl RustParser {
                         rocq_type: None,
                         span: None,
                     });
+                    source_fields.push(self.origins.current_type.clone());
                     if self.cursor.eat(",").is_none() {
                         break;
                     }
@@ -296,6 +308,26 @@ impl RustParser {
                     span(&variant, self.cursor.peek()),
                 ));
             }
+            let mut constructor_path = path.to_vec();
+            constructor_path.push(name.clone());
+            let mut type_path = vec!["crate".to_owned()];
+            type_path.extend(&constructor_path);
+            self.origins.declaration(
+                &variant.value,
+                &constructor_path,
+                SourceDeclaration::Constructor {
+                    owner: owner.clone(),
+                    fields: source_fields,
+                    result: SourceOrigin::with_type(
+                        Type::Named {
+                            path: type_path,
+                            span: None,
+                        },
+                        &[],
+                        Vec::new(),
+                    ),
+                },
+            );
             ctors.push(SCtor {
                 name: variant.value,
                 fields,
@@ -339,13 +371,21 @@ impl RustParser {
             }
             if self.cursor.is("str") {
                 self.cursor.advance();
-                return Ok(STRING);
+                return Ok(self.origins.typed(
+                    STRING,
+                    &self.module_path,
+                    vec!["reference".to_owned()],
+                ));
             }
-            return self.parse_type();
+            let inner = self.parse_type()?;
+            let origin = self.origins.current_type.clone();
+            let mut wrappers = vec!["reference".to_owned()];
+            wrappers.extend(origin.wrappers);
+            return Ok(self.origins.typed(inner, &origin.path, wrappers));
         }
         if self.cursor.eat("(").is_some() {
             if self.cursor.eat(")").is_some() {
-                return Ok(UNIT);
+                return Ok(self.origins.typed(UNIT, &self.module_path, Vec::new()));
             }
             return Err(unsupported(
                 "tuple type",
@@ -355,11 +395,21 @@ impl RustParser {
         }
         let segments = self.path_segments("type")?;
         let name = segments.join("::");
-        if name == "Box" {
+        if ["Box", "std::boxed::Box", "alloc::boxed::Box"].contains(&name.as_str()) {
+            let resolved = self.resolve(&segments, &self.module_path);
+            self.origins.box_owner(
+                &segments,
+                &resolved,
+                &self.module_path,
+                span(&token, self.cursor.peek()),
+            )?;
             self.cursor.expect("<", Some("Box"))?;
             let inner = self.parse_type()?;
             self.cursor.expect(">", Some("Box"))?;
-            return Ok(inner);
+            let origin = self.origins.current_type.clone();
+            let mut wrappers = vec!["box".to_owned()];
+            wrappers.extend(origin.wrappers);
+            return Ok(self.origins.typed(inner, &origin.path, wrappers));
         }
         if self.cursor.is("<") {
             return Err(unsupported(
@@ -371,16 +421,18 @@ impl RustParser {
         if segments.len() == 1
             && let Some(fixed) = rust_fixed_type(&name)
         {
-            return Ok(fixed);
+            return Ok(self.origins.typed(fixed, &self.module_path, Vec::new()));
         }
         if name == "f64" {
-            return Ok(super::FLOAT);
+            return Ok(self
+                .origins
+                .typed(super::FLOAT, &self.module_path, Vec::new()));
         }
         if name == "bool" {
-            return Ok(BOOL);
+            return Ok(self.origins.typed(BOOL, &self.module_path, Vec::new()));
         }
         if name == "String" {
-            return Ok(STRING);
+            return Ok(self.origins.typed(STRING, &self.module_path, Vec::new()));
         }
         if UNSUPPORTED_TYPES.contains(&name.as_str()) {
             return Err(unsupported(
@@ -389,10 +441,11 @@ impl RustParser {
                 span(&token, &token),
             ));
         }
-        Ok(Type::Named {
+        let ty = Type::Named {
             path: self.resolve(&segments, &self.module_path),
             span: span(&token, &token),
-        })
+        };
+        Ok(self.origins.typed(ty, &self.module_path, Vec::new()))
     }
 
     pub(super) fn path_segments(&mut self, context: &str) -> Result<Vec<String>> {
@@ -417,6 +470,7 @@ impl RustParser {
         }
         self.cursor.expect("(", Some("fn"))?;
         let mut params = Vec::new();
+        let mut source_params = Vec::new();
         while !self.cursor.is(")") {
             let param_token = self.peek();
             if self.cursor.is("mut") {
@@ -436,6 +490,7 @@ impl RustParser {
             let param_name = self.cursor.identifier(Some("parameter"))?.value;
             self.cursor.expect(":", Some("parameter"))?;
             let ty = self.parse_type()?;
+            source_params.push(self.origins.current_type.clone());
             params.push(SParam {
                 name: param_name,
                 default_value: None,
@@ -457,6 +512,15 @@ impl RustParser {
             ));
         }
         let ret = self.parse_type()?;
+        let source_result = self.origins.current_type.clone();
+        self.origins.declaration(
+            &name,
+            path,
+            SourceDeclaration::Function {
+                parameters: source_params.clone(),
+                result: source_result.clone(),
+            },
+        );
         if self.cursor.is("where") {
             return Err(unsupported(
                 "where clause",
@@ -464,7 +528,16 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        let scope = params
+            .iter()
+            .zip(source_params)
+            .map(|(parameter, origin)| (parameter.name.clone(), origin))
+            .collect();
+        let previous = self.origins.enter(Some(scope));
         let body = self.block(path)?;
+        self.origins
+            .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
+        self.origins.scope = previous;
         Ok(SFn {
             name,
             params,
@@ -481,8 +554,19 @@ impl RustParser {
         let name = self.cursor.identifier(Some("const"))?.value;
         self.cursor.expect(":", Some("const"))?;
         let ret = self.parse_type()?;
+        let source_result = self.origins.current_type.clone();
+        self.origins.declaration(
+            &name,
+            path,
+            SourceDeclaration::Function {
+                parameters: Vec::new(),
+                result: source_result.clone(),
+            },
+        );
         self.cursor.expect("=", Some("const"))?;
         let body = self.expr(path, Options::default())?;
+        self.origins
+            .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
         self.cursor.expect(";", Some("const"))?;
         Ok(SFn {
             name,
@@ -498,6 +582,7 @@ impl RustParser {
     /// expression. Statements with effects are not values of the portable core.
     pub(super) fn block(&mut self, path: &[String]) -> Result<SExpr> {
         let open = self.cursor.expect("{", Some("block"))?;
+        let previous = self.origins.enter(None);
         let mut lets = Vec::new();
         let mut tail: Option<SExpr> = None;
         while !self.cursor.is("}") {
@@ -562,7 +647,8 @@ impl RustParser {
                 span(&open, &close),
             ));
         };
-        Ok(lets.into_iter().rev().fold(tail, |body, binding| {
+        let origin = self.origins.origin(&tail, path);
+        let result = lets.into_iter().rev().fold(tail, |body, binding| {
             SExpr::new(
                 SNode::Let {
                     name: binding.name,
@@ -572,7 +658,10 @@ impl RustParser {
                 },
                 binding.span,
             )
-        }))
+        });
+        self.origins.mark(&result, origin);
+        self.origins.scope = previous;
+        Ok(result)
     }
 
     pub(super) fn let_statement(&mut self, path: &[String]) -> Result<Binding> {
@@ -597,6 +686,7 @@ impl RustParser {
         } else {
             None
         };
+        let source_type = ty.as_ref().map(|_| self.origins.current_type.clone());
         if self.cursor.eat("=").is_none() {
             return Err(unsupported(
                 "uninitialised binding",
@@ -613,6 +703,8 @@ impl RustParser {
             ));
         }
         self.cursor.expect(";", Some("let"))?;
+        self.origins
+            .bind(&name, &value, path, source_type.as_ref())?;
         Ok(Binding {
             name,
             ty,
@@ -634,6 +726,7 @@ impl RustParser {
             ));
         }
         self.module_path = Vec::new();
+        let previous = self.origins.enter(Some(std::collections::HashMap::new()));
         self.cursor.expect("{", Some("fn main"))?;
         let mut effects = Vec::new();
         while !self.cursor.is("}") {
@@ -661,6 +754,7 @@ impl RustParser {
             ));
         }
         self.cursor.expect("}", Some("fn main"))?;
+        self.origins.scope = previous;
         Ok(SMain {
             effects,
             span: span(&start, self.cursor.peek()),
