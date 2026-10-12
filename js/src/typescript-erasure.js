@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { Parser } from 'links-notation';
 import { parseProgrammingLanguage } from './programming-language-parser.js';
 import { TranslationError } from './translation/diagnostics.js';
+import { eraseExportedDeclaration, eraseOptionalParameterMarker, retainFirstErasureChild, renderErasedTypeScriptScalar } from './typescript-erasure-rules.js';
 
 const definitions = new Parser().parse(readFileSync(new URL('./data/typescript-erasure.lino', import.meta.url), 'utf8'));
 const operations = new Map();
@@ -40,13 +41,13 @@ export function eraseTypeScript(source, parsed = parseProgrammingLanguage(source
     const operation = operations.get(node.term);
     const range = node.span.byteRange;
     if (operation === 'span' || operation === 'declaration') {
-      const owner = operation === 'declaration' && parent?.term === 'export_statement' ? parent : node;
+      const owner = eraseExportedDeclaration(operation, parent?.term === 'export_statement') ? parent : node;
       erase(owner.span.byteRange.start, owner.span.byteRange.end, node.term);
       return;
     }
     if (operation === 'suffix' || operation === 'prefix') {
       const children = node.children.filter((child) => child.named && !child.flags.isExtra);
-      const retained = operation === 'suffix' ? children[0] : children.at(-1);
+      const retained = retainFirstErasureChild(operation) ? children[0] : children.at(-1);
       if (!retained) unsupported(node, 'the erasure has no retained expression');
       if (operation === 'suffix') erase(retained.span.byteRange.end, range.end, node.term);
       else erase(range.start, retained.span.byteRange.start, node.term);
@@ -55,7 +56,7 @@ export function eraseTypeScript(source, parsed = parseProgrammingLanguage(source
     }
     // A question mark belongs to the optional-parameter form; a conditional
     // expression's question mark is a runtime operator and is retained.
-    if (node.term === '?' && parent?.term === 'optional_parameter') erase(range.start, range.end, parent.term);
+    if (eraseOptionalParameterMarker(node.term, parent?.term ?? '')) erase(range.start, range.end, parent.term);
     else if (node.term === 'import_statement' && node.children.some((child) => child.term === 'type')) {
       erase(range.start, range.end, 'type_import');
       return;
@@ -81,7 +82,8 @@ export function eraseTypeScript(source, parsed = parseProgrammingLanguage(source
     output.push(bytes.subarray(cursor, erasure.start));
     // Retain line boundaries so erasing a type never changes automatic
     // semicolon insertion or joins adjacent runtime tokens.
-    output.push(Buffer.from(bytes.subarray(erasure.start, erasure.end).toString().replace(/[^\r\n]/gu, ' ')));
+    output.push(Buffer.from([...bytes.subarray(erasure.start, erasure.end).toString()]
+      .map((scalar) => renderErasedTypeScriptScalar(scalar === '\r', scalar === '\n')).join('')));
     cursor = erasure.end;
   }
   output.push(bytes.subarray(cursor));

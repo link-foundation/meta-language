@@ -153,7 +153,13 @@ fn collect_literal_bindings(
             let GroupKind::Item { text, .. } = &group.kind else {
                 continue;
             };
-            let Ok(parsed) = parse_javascript(text) else {
+            let erased = (from == "TypeScript").then(|| super::project_type_script_typing(text));
+            let source = match &erased {
+                Some(Ok(erased)) => erased.as_str(),
+                Some(Err(_)) => continue,
+                None => text,
+            };
+            let Ok(parsed) = parse_javascript(source) else {
                 continue;
             };
             let Some(main) = &parsed.main else {

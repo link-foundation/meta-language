@@ -51,6 +51,26 @@ fn rust_ships_the_language_catalog_the_javascript_package_ships() {
 }
 
 #[test]
+fn rust_catalog_retains_source_provenance_embedding_and_edition_metadata() {
+    let catalog: Value =
+        serde_json::from_str(&repository_file("js/src/data/language-catalog.json")).unwrap();
+    for language in catalog["languages"].as_array().unwrap() {
+        let entry = language_entry(language["name"].as_str().unwrap()).unwrap();
+        assert_eq!(
+            entry.grammar_sources,
+            *language["grammarSources"].as_array().unwrap()
+        );
+        assert_eq!(
+            entry.embedded_languages,
+            strings(&language["embeddedLanguages"])
+        );
+        assert_eq!(entry.versions.as_ref(), language.get("versions"));
+        assert_eq!(entry.editions.as_ref(), language.get("editions"));
+        assert_eq!(entry.dialects.as_ref(), language.get("dialects"));
+    }
+}
+
+#[test]
 fn every_inventory_name_and_alias_resolves_case_insensitively() {
     for language in inventory()["languages"].as_array().expect("languages") {
         let name = language["name"].as_str().expect("name");

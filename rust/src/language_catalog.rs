@@ -39,6 +39,16 @@ pub struct LanguageEntry {
     pub extensions: Vec<String>,
     /// Grammars that parse the language by default, primary grammar first.
     pub grammars: Vec<GrammarProvenance>,
+    /// Pinned grammar sources, licenses, scanners and independent corpora.
+    pub grammar_sources: Vec<Value>,
+    /// Language targets embedded in this host language's native regions.
+    pub embedded_languages: Vec<String>,
+    /// Explicit inventoried language versions, separate from grammar releases.
+    pub versions: Option<Value>,
+    /// Explicit inventoried editions, retained without joining their coverage.
+    pub editions: Option<Value>,
+    /// Explicit inventoried dialect boundaries.
+    pub dialects: Option<Value>,
 }
 
 /// Returns every registered language in inventory order.
@@ -222,6 +232,16 @@ fn parse_catalog() -> Vec<LanguageEntry> {
             aliases: strings(&language["aliases"]),
             extensions: strings(&language["extensions"]),
             grammars: provenance(&language["grammars"]),
+            grammar_sources: language["grammarSources"]
+                .as_array()
+                .cloned()
+                .unwrap_or_default(),
+            embedded_languages: language["embeddedLanguages"]
+                .as_array()
+                .map_or_else(Vec::new, |_| strings(&language["embeddedLanguages"])),
+            versions: language.get("versions").cloned(),
+            editions: language.get("editions").cloned(),
+            dialects: language.get("dialects").cloned(),
         })
         .collect()
 }

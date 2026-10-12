@@ -176,6 +176,7 @@
     "FORMER_CONCEPT_IDS": { "rust": "FORMER_CONCEPT_IDS", "kind": "constant" },
     "FORMER_CONCEPT_ID_VOCABULARY": { "rust": "FORMER_CONCEPT_ID_VOCABULARY", "kind": "constant" },
     "FluentPipeline": { "rust": "FluentPipeline", "kind": "type" },
+    "GLOBAL_CONCEPT_PROOF_METHOD": { "rust": "GLOBAL_CONCEPT_PROOF_METHOD", "kind": "constant" },
     "GRAMMAR_COMMAND_USAGE": { "rust": "GRAMMAR_COMMAND_USAGE", "kind": "constant" },
     "GRAMMAR_DIAGNOSTIC_KINDS": { "rust": "GRAMMAR_DIAGNOSTIC_KINDS", "kind": "constant" },
     "GRAMMAR_EXPORT_FORMATS": { "rust": "GRAMMAR_EXPORT_FORMATS", "kind": "constant" },
@@ -309,6 +310,7 @@
     "conceptRecordsForSourceName": { "rust": "concept_records_for_source_name", "kind": "function" },
     "constructProgram": { "rust": "construct_program", "kind": "function" },
     "constructProgramFromFragments": { "rust": "construct_program_from_fragments", "kind": "function" },
+    "createGlobalConceptSpace": { "rust": "create_global_concept_space", "kind": "function" },
     "createGrammarParser": { "rust": "compile_feature_grammar", "kind": "function" },
     "createProgramSnapshot": { "rust": "ProgramRepresentation::serialize_snapshot", "kind": "method" },
     "currentConceptId": { "rust": "current_concept_id", "kind": "function" },
@@ -341,8 +343,10 @@
     "emit_lark": { "rust": "emit_lark", "kind": "function" },
     "emit_pest": { "rust": "emit_pest", "kind": "function" },
     "emit_tree_sitter_json": { "rust": "emit_tree_sitter_json", "kind": "function" },
+    "eraseTypeScript": { "rust": "erase_type_script", "kind": "function" },
     "fourLanguageSupport": { "rust": "FOUR_LANGUAGE_SUPPORT", "kind": "constant" },
     "freeze": { "rust": "LinkNetwork::freeze", "kind": "method" },
+    "globalConceptSpaceToLinks": { "rust": "global_concept_space_to_links", "kind": "function" },
     "grammarEmitter": { "rust": "grammar_emitter", "kind": "function" },
     "grammarExprConceptId": { "rust": "grammar_expr_concept_id", "kind": "function" },
     "grammarImporter": { "rust": "grammar_importer", "kind": "function" },
@@ -399,6 +403,7 @@
     "percentDecodeLinksText": { "rust": "percent_decode_links_text", "kind": "function" },
     "percentEncodeLinksText": { "rust": "percent_encode_links_text", "kind": "function" },
     "queryByConceptTerm": { "rust": "query_by_concept_term", "kind": "function" },
+    "readGlobalConceptSpaceLinks": { "rust": "read_global_concept_space_links", "kind": "function" },
     "readProgramSnapshot": { "rust": "ProgramRepresentation::from_snapshot", "kind": "method" },
     "readTranslationProvenance": { "rust": "read_translation_provenance", "kind": "function" },
     "reconstructGrammar": { "rust": "reconstruct_grammar", "kind": "function" },
@@ -428,12 +433,14 @@
     "sourceMeanings": { "rust": "source_meanings_in", "kind": "function" },
     "sourceTextPredicateHost": { "rust": "SourceTextPredicateHost", "kind": "type" },
     "splitGrammarSource": { "rust": "split_grammar_source", "kind": "function" },
+    "translateGlobalConstruct": { "rust": "translate_global_construct", "kind": "function" },
     "translateNativeConstruct": { "rust": "translate_native_construct", "kind": "function" },
     "translateNativeConstructTree": { "rust": "translate_native_construct_tree", "kind": "function" },
     "translateProgram": { "rust": "translate_program", "kind": "function" },
     "translationContract": { "rust": "translation_contract", "kind": "function" },
     "translationContracts": { "rust": "translation_contracts", "kind": "function" },
-    "validateGrammar": { "rust": "validate", "kind": "function" }
+    "validateGrammar": { "rust": "validate", "kind": "function" },
+    "verifyGlobalConceptCorrespondence": { "rust": "verify_global_concept_correspondence", "kind": "function" }
   },
   "features": [
     {
@@ -518,7 +525,15 @@
           "parity/fixtures/translation-array-construction.json",
           "parity/fixtures/self-translation-line-endings.json",
           "parity/fixtures/translation-corpus/string-length.mjs",
-          "rust/tests/unit/translation_string_length.rs"
+          "rust/tests/unit/translation_string_length.rs",
+          "rust/src/self_translation/typescript_erasure.rs",
+          "rust/src/self_translation/typescript_erasure_rules.rs",
+          "rust/src/data/typescript-erasure.lino",
+          "rust/tests/unit/typescript_erasure.rs",
+          "parity/self-translation/typescript-erasure-rules-decorators.lino",
+          "parity/fixtures/typescript-erasure.json",
+          "rust/src/self_translation/typescript_portable_typing.rs",
+          "rust/src/data/typescript-portable-typing.lino"
         ]
       },
       "javascript": {
@@ -550,7 +565,16 @@
           "parity/fixtures/translation-array-construction.json",
           "parity/fixtures/self-translation-line-endings.json",
           "parity/fixtures/translation-corpus/string-length.mjs",
-          "js/tests/translation-string-length.test.js"
+          "js/tests/translation-string-length.test.js",
+          "js/src/typescript-erasure.js",
+          "js/src/typescript-erasure-rules.js",
+          "js/src/data/typescript-erasure.lino",
+          "js/scripts/generate-typescript-erasure-rules.mjs",
+          "js/tests/typescript-erasure.test.js",
+          "parity/self-translation/typescript-erasure-rules-decorators.lino",
+          "parity/fixtures/typescript-erasure.json",
+          "js/src/typescript-portable-typing.js",
+          "js/src/data/typescript-portable-typing.lino"
         ]
       }
     },
@@ -702,14 +726,25 @@
           "rust/src/source.rs",
           "rust/src/source_generation.rs",
           "rust/tests/unit/link_network.rs",
-          "rust/tests/unit/source_generation.rs"
+          "rust/tests/unit/source_generation.rs",
+          "rust/src/structured_text_parser.rs",
+          "rust/tests/unit/native_text_grammars.rs",
+          "parity/grammars/native-text-specification.json",
+          "parity/grammars/native-text.lino",
+          "parity/fixtures/native-text-grammars.json"
         ]
       },
       "javascript": {
         "status": "implemented",
         "evidence": [
           "js/src/network.js",
-          "js/tests/core.test.js"
+          "js/tests/core.test.js",
+          "js/src/text-grammar.js",
+          "js/scripts/build-native-text-grammars.mjs",
+          "js/tests/native-text-grammars.test.js",
+          "parity/grammars/native-text-specification.json",
+          "parity/grammars/native-text.lino",
+          "parity/fixtures/native-text-grammars.json"
         ]
       }
     },
@@ -1133,7 +1168,12 @@
           "parity/grammars/native/agda.lino",
           "parity/fixtures/native-grammars/agda.json",
           "parity/fixtures/native-grammars/agda-corpus.json",
-          "rust/tests/unit/issue_195_grammar_native_agda.rs"
+          "rust/tests/unit/issue_195_grammar_native_agda.rs",
+          "rust/src/structured_text_parser.rs",
+          "rust/tests/unit/native_text_grammars.rs",
+          "parity/grammars/native-text-specification.json",
+          "parity/grammars/native-text.lino",
+          "parity/fixtures/native-text-grammars.json"
         ]
       },
       "javascript": {
@@ -1238,7 +1278,13 @@
           "parity/grammars/native/agda.lino",
           "parity/fixtures/native-grammars/agda.json",
           "parity/fixtures/native-grammars/agda-corpus.json",
-          "js/tests/issue-195-grammar-native-agda.test.js"
+          "js/tests/issue-195-grammar-native-agda.test.js",
+          "js/src/text-grammar.js",
+          "js/scripts/build-native-text-grammars.mjs",
+          "js/tests/native-text-grammars.test.js",
+          "parity/grammars/native-text-specification.json",
+          "parity/grammars/native-text.lino",
+          "parity/fixtures/native-text-grammars.json"
         ]
       }
     },

@@ -186,6 +186,11 @@ impl Binder<'_, '_> {
             .groups
             .iter()
             .map(|group| match &group.kind {
+                GroupKind::Item { text, .. } if self.from == "TypeScript" => {
+                    super::erase_type_script(text)
+                        .ok()
+                        .and_then(|erased| scan_item(&erased.code))
+                }
                 GroupKind::Item { text, .. } => scan_item(text),
                 _ => None,
             })

@@ -41,9 +41,15 @@ use crate::{LinkNetwork, ParseConfiguration};
 
 mod binding;
 mod scope;
+mod typescript_erasure;
+mod typescript_erasure_rules;
+mod typescript_portable_typing;
 use scope::translate_binding_groups;
 
 use self::binding::{Binder, declared_signatures};
+use typescript_erasure::requires_type_script_erasure;
+pub use typescript_erasure::{ErasedTypeScript, Erasure, erase_type_script};
+use typescript_portable_typing::project_type_script_typing;
 
 /// The signature of an exported item of a JavaScript or TypeScript module.
 ///
@@ -285,7 +291,9 @@ fn translate_module(
         });
     }
     let items = top_level_items(source, from);
-    if family(from) == family(to) {
+    let kept_family =
+        from == "JavaScript" || (from == "TypeScript" && !requires_type_script_erasure(source));
+    if family(from) == family(to) && (from == to || (kept_family && !source.starts_with(HEADER))) {
         let items = items
             .iter()
             .map(|item| SelfTranslationItem {
@@ -618,6 +626,19 @@ fn group_items<'a>(items: &[Item<'a>], text: &'a str) -> Vec<Group<'a>> {
             };
             let lines_end = lines_after(index);
             let count = field("items").and_then(|count| count.parse::<usize>().ok());
+            if count == Some(0) && field("sha256") == Some(sha256("").as_str()) {
+                let lines = source_lines(&items[index + 1..=lines_end]);
+                groups.push(Group {
+                    kind: GroupKind::Carried {
+                        language: first_word(rest),
+                        lines,
+                    },
+                    items: items[index..=lines_end].to_vec(),
+                    after: items[lines_end].after,
+                });
+                index = lines_end + 1;
+                continue;
+            }
             count
                 .and_then(|count| definitions_end(items, lines_end, count))
                 .map_or_else(
@@ -684,7 +705,7 @@ fn definitions_end(items: &[Item<'_>], after: usize, count: usize) -> Option<usi
     }
     let mut left = count;
     for (at, item) in items.iter().enumerate().skip(after + 1) {
-        if item.term != "attribute_item" {
+        if item.term != "attribute_item" && !item.comment {
             left -= 1;
         }
         if left == 0 {
@@ -770,10 +791,42 @@ fn translate_group_bound(
     if term == "ERROR" {
         return carry(text, term, from, "syntax");
     }
+    if from == "TypeScript" && to == "JavaScript" {
+        let erased = match erase_type_script(text) {
+            Ok(erased) => erased,
+            Err(error) => return carry(text, term, from, &error.reason),
+        };
+        let erased_code = erased.code.trim();
+        let count = top_level_items(erased_code, "JavaScript")
+            .iter()
+            .filter(|item| !item.comment)
+            .count();
+        let code = if count == 0 { "" } else { erased_code };
+        let mut lines = vec![format!(
+            "{TRANSLATED}{from} {term} items={count} sha256={}",
+            sha256(code)
+        )];
+        lines.extend(LINE_BREAK.split(text).map(source_line));
+        if !code.is_empty() {
+            lines.push(code.to_owned());
+        }
+        return done(lines.join("\n"), "translated");
+    }
     let (emitted, signatures) = match emit_item(text, from, to, context, literal_bindings) {
         Ok(Some(emitted)) => emitted,
         Ok(None) => return carry(text, term, from, "top-level statement"),
-        Err(error) => return carry(text, term, from, error.kind.as_str()),
+        Err(error) => {
+            return carry(
+                text,
+                term,
+                from,
+                if from == "TypeScript" {
+                    &error.reason
+                } else {
+                    error.kind.as_str()
+                },
+            );
+        }
     };
     if emitted.definitions.is_empty() {
         return carry(text, term, from, "no definition");
@@ -835,7 +888,15 @@ fn emit_item(
             parse_rust(&format!("{text}\nfn main() {{}}\n"))?
         }
     } else {
-        parse_javascript_bound_in(text, context, literal_bindings)?
+        if from == "TypeScript" {
+            parse_javascript_bound_in(
+                &project_type_script_typing(text)?,
+                context,
+                literal_bindings,
+            )?
+        } else {
+            parse_javascript_bound_in(text, context, literal_bindings)?
+        }
     };
     let program = check_program(&surface)?;
     // A top-level constant is a Rust constant; other top-level statements run
