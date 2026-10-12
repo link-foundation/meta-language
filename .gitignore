@@ -78,6 +78,19 @@ Makefile.coq.conf
 # (regenerable; cleaned by scripts/clean-caches.mjs)
 /.grammar-cache/
 
+# Upstream grammar sources and compiled oracles are temporary downloads.
+# Acquisition receipts, licenses, notices and our patches remain tracked.
+/.external-grammars/
+/js/src/vendor/grammars/
+/js/oracles/grammars/
+/rust/vendor/
+/parity/grammars/sources/
+/parity/grammars/candidates/elm/
+/parity/grammars/reconcile/
+/parity/grammars/links-notation-0.22.0.pegjs
+/rust/benches/corpora/arvada/lark-examples/
+/rust/benches/corpora/treevada/lark-examples/
+
 # Compiled parser intermediates of vendored grammars
 *.o
 *.obj
