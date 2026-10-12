@@ -504,7 +504,8 @@ export function transformNativeSource(source, transformations = []) {
       if (choice?.type !== 'CHOICE' || !Array.isArray(variants) || variants.length < 2) throw new TypeError('ordered variants need a choice and at least two alternatives');
       const selector = (node) => {
         while (['PREC', 'PREC_LEFT', 'PREC_RIGHT'].includes(node.type)) node = node.content;
-        return node.type === 'SYMBOL' ? node.name : node.type === 'ALIAS' ? `alias:${node.value}` : null;
+        return node.type === 'SYMBOL' ? node.name : node.type === 'ALIAS' ? `alias:${node.value}`
+          : node.type === 'SEQ' && node.members[0]?.type === 'SYMBOL' ? `prefix:${node.members[0].name}` : null;
       };
       const indices = variants.map((name) => choice.members.findIndex((node) => selector(node) === name));
       if (indices.some((index) => index < 0) || new Set(indices).size !== indices.length) throw new TypeError('ordered variants must identify distinct existing alternatives');

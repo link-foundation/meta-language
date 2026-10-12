@@ -1,0 +1,849 @@
+{
+  "schemaVersion": 1,
+  "language": "csharp",
+  "revision": "cac6d5fb595f5811a076336682d5d595ac1c9e85",
+  "sourceSha256": "143aeac9b44ab76868c59b601d0d67a475dddd77ab782fa7db79ce30372ecd14",
+  "corpusSha256": "c243af49eb1f5fbeb572cebb114a20d3c6a3d282a5eacf3a09ed731517d9847a",
+  "cases": [
+    {
+      "file": "attributes.txt",
+      "title": "Attribute targets",
+      "source": "\n[assembly: Single]\n[module: A, C()]\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "Attributes",
+      "source": "\n[A(B.C)]\nclass D {}\n\n[NS.A(B.C)]\nclass D {}\n\n[One][Two]\n[Three]\nclass A { }\n\n[A,B()][C]\nstruct A { }\n\nclass Zzz {\n  [A,B()][C]\n  public int Z;\n}\n\nclass Methods {\n  [ValidatedContract]\n  int Method1() { return 0; }\n\n  [method: ValidatedContract]\n  int Method2() { return 0; }\n\n  [return: ValidatedContract]\n  int Method3() { return 0; }\n}\n\n[Single]\nenum A { B, C }\n\nclass Zzz {\n  [A,B()][C]\n  public event EventHandler SomeEvent { add { } remove { } }\n}\n\nclass Class<[A, B][C()]T1> {\n  void Method<[E] [F, G(1)] T2>() {\n  }\n}\n\nclass Zzz {\n  public event EventHandler SomeEvent {\n    [A,B()][C] add { }\n    [A,B()][C] remove { }\n  }\n}\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "Attribute targets (non-global)",
+      "source": "\n[type: Obsolete]\nclass A<[typevar: B] TC>\n{\n  [field:JsonIgnore]\n  [property: JsonIgnore]\n  public int D { get; set; }\n\n  [method: Obsolete]\n  [return: MaybeNull]\n  public void E([param: AllowNull] int f) { }\n\n  [event: Obsolete]\n  public event EventHandler OnG;\n}\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "Attribute quirks",
+      "source": "\n[Theory,]\nvoid A() { }\n\n[Theory<About,Life>]\nvoid A() { }\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "Lambda with attribute",
+      "source": "\nvar greeting = [Hello] () => Console.WriteLine(\"hello\");\n"
+    },
+    {
+      "file": "attributes.txt",
+      "title": "Attribute named arguments with colon",
+      "source": "\n[RegularExpression(pattern: \"/.+\", ErrorMessage = \"The Callback Path Must start with a forward slash '/' followed by one or more characters\")]\nclass Validator { }\n\n[Route(Name: \"default\", Template = \"/api/{id}\")]\n[Obsolete(message: \"Use NewMethod instead\", error: true)]\nclass Example { }\n"
+    },
+    {
+      "file": "classes.txt",
+      "title": "Class Definitions",
+      "source": "\npublic class F {}\n\npublic class F : object, IAlpha, IOmega { }\n\npublic partial class F<T> {}\n\ninternal class F<in T1, out T2> {}\n\npublic class F<T> where T:struct {}\n\npublic class F<T> where T:unmanaged {}\n\npublic class F<T> where T:class?, notnull, Mine? {}\n\npublic class F<T> where T: new() {}\n\npublic class F<T> where T: I, new() {}\n\nprivate class F<T1,T2> where T1 : I1, I2, new() where T2 : I2 { }\n\nclass Foo {\n  public Foo() {}\n\n  // expression bodied constructor\n  public Foo(string name) => Name = name;\n\n  // static constructor\n  static Foo() {}\n  static extern Foo() {}\n  extern static Foo() {}\n\n  // extern destructor\n  extern ~Foo() {}\n\n  // expression bodied destructor\n  ~Foo() => DoSomething();\n\n  // constants\n  private const int a = 1;\n  const string b = $\"hello\";\n\n  // indexer\n  public bool this[int index] {\n    get { return a; }\n    set { a = value; }\n  }\n\n  // expression bodied indexer\n  public bool this[int index] => a[index];\n\n  public string this[int index]\n  {\n    get => a[index];\n    set => a[index] = value;\n  }\n\n  public int this[params string[] arguments] {\n    get { return 1; }\n  }\n\n  B.C d() {\n    return null;\n  }\n}\n\nclass Bar(int a, int b) {\n  int add() {\n    return a + b;\n  }\n}\n\n// unicode class name\nclass Ωµ {\n  B.C d() {\n    return null;\n  }\n}\n\n// file scoped class\nfile class A {}\n\nclass Baz(int a, int b) : Bar(a, b) { }\n\npublic class NoBody;\n\nprivate class NoBodyPrimary(int a, int b);\n\npublic class NoBodyPrimaryWithBase(int x) : Base(x);\n"
+    },
+    {
+      "file": "contextual-keywords.txt",
+      "title": "From keyword can be a variable",
+      "source": "\nvar a = Assert.Range(from, to);\n"
+    },
+    {
+      "file": "contextual-keywords.txt",
+      "title": "File keyword in invocation",
+      "source": "\nfile.Method(1, 2);\n"
+    },
+    {
+      "file": "contextual-keywords.txt",
+      "title": "File contextual keyword",
+      "source": "\nvoid file() { }\nvoid m(file p) { }\nvoid m(int file) { }\nvoid m()\n{\n    file v = null;\n    int file = file;\n\n    file();\n    m(file);\n\n    var x = file + 1;\n}\n\nfile class file { }\n"
+    },
+    {
+      "file": "contextual-keywords.txt",
+      "title": "Scoped contextual keyword",
+      "source": "\nvoid scoped() { }\nvoid m(scoped p) { }\nvoid m(scoped ref int p) { }\nvoid m(scoped ref scoped p) { }\nvoid m(int scoped) { }\nvoid m()\n{\n    scoped v = null;\n    scoped ref int v = null;\n    scoped ref scoped v = null;\n    int scoped = null;\n\n    scoped();\n    m(scoped);\n\n    var x = scoped + 1;\n    var l = scoped => null;\n    var l = (scoped i) => null;\n    var l = (scoped, i) => null;\n    var l = scoped (int i, int j) => null;\n}\n\nclass scoped { }\n"
+    },
+    {
+      "file": "contextual-keywords.txt",
+      "title": "Set contextual keyword",
+      "source": "\nvoid set() { }\nvoid m(set p) { }\nvoid m(int set) { }\nvoid m()\n{\n    set v = null;\n    int set = set;\n\n    set();\n    m(set);\n\n    var x = set + 1;\n}\n\nclass set { }\n"
+    },
+    {
+      "file": "contextual-keywords.txt",
+      "title": "Var contextual keyword",
+      "source": "\nvoid var() { }\nvoid m(var p) { }\nvoid m(int var) { }\nvoid m()\n{\n    var v = null;\n    int var = var;\n    var var = 1;\n\n    var();\n    m(var);\n\n    var x = var + 1;\n}\n\nclass var { }\n"
+    },
+    {
+      "file": "contextual-keywords.txt",
+      "title": "Nameof contextual keyword",
+      "source": "\nvoid nameof() { }\nvoid m(nameof p) { }\nvoid m(int nameof) { }\nvoid m()\n{\n    nameof v = null;\n    int nameof = nameof;\n\n    nameof();\n    nameof(a, b);\n    m(nameof);\n\n    var x = nameof + 1;\n}\n\nclass nameof { }\n"
+    },
+    {
+      "file": "enums.txt",
+      "title": "global enum with one option",
+      "source": "\nenum A: byte { One, Two = 2, Three = 0x03 }\n\nenum NoBody;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Assignment to Prefix Unary Expressions",
+      "source": "\na = +a;\na = -a;\na = !a;\na = ~a;\na = ++a;\na = --a;\na = a++;\na = a--;\na = a!;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Assignment to Binary Expressions",
+      "source": "\na = a + a;\na = a - a;\na = a * a;\na = a / a;\na = a % a;\na = a & a;\na = a | a;\na = a ^ a;\na = a >> a;\na = a << a;\na = a >>> a;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Assignment to Binary Equality Expressions",
+      "source": "\na = a == b;\na = a != b;\na = a < b;\na = a <= b;\na = a > b;\na = a >= b;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Assignment Binary Expressions",
+      "source": "\na += a;\na -= a;\na *= a;\na /= a;\na %= a;\na++;\na--;\na <<= a;\na >>= a;\na >>>= a;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Assignment LValue types",
+      "source": "\na = 1;\na.b = 1;\na[b] = 1;\n(a, b) = (1, 2);\n(var a, b) = (1, 2);\nvar x = new A\n{\n  a = 1,\n  [b] = 1\n};\n(a) = 1;\n*p = 0;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Ternary Expression",
+      "source": "\nclass Foo {\n  void Test() {\n    var y = x ? \"foo\" : \"bar\";\n  }\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Binary Expressions",
+      "source": "\nclass Foo {\n  void Test() {\n    var b = x == y;\n    var i = 1 + 2;\n  }\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Ternary expressions is type",
+      "source": "\nvar t = x is int\n  ? a\n  : b;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Ternary expressions is nullable type",
+      "source": "\nvar u = x is int?\n  ? a\n  : b;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Prefix-Unary Expressions",
+      "source": "\nclass Foo {\n  void Test() {\n    ++x;\n    --y;\n  }\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Cast expressions",
+      "source": "\nvoid Test() {\n  a = (B)c + (C)d;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Cast expression of array access",
+      "source": "\nb = (float)a[0];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Cast with parenthesized expression",
+      "source": "\nvar o = (A.A)(a.a.a);\nvar o = (Int32)(1);\nvar o = (Int32)(1);\nvar o = (Int32)((1));\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence of unary prefix operator and element access",
+      "source": "\nb = +a[0];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence of switch_expression and binary_expression",
+      "source": "\nb = 2 * a switch\n{\n    1 => 1,\n    _ => 0,\n};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Anonymous object creation with empty body",
+      "source": "\nvoid b() {\n  var x = new {\n  };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Target-type object creation",
+      "source": "\nvoid b() {\n  Friend friend = new(\"hi\");\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Anonymous object creation with single unnamed",
+      "source": "\nvoid b() {\n  var x = new {\n    args\n  };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Anonymous object creation with single named",
+      "source": "\nvoid b() {\n  var x = new {\n    test = \"This\"\n  };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Checked expressions",
+      "source": "\nvoid b() {\n  var three = checked(1 + 2);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Object creation expressions",
+      "source": "\nvoid b() {\n  new C.D(1, \"hi\");\n  a = new E\n  {\n    Foo = bar,\n  };\n\n  b = new E(1);\n\n  c = new E(1) { };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Named parameters in constructors",
+      "source": "\nvoid b() {\n  var z = new C(a: 1, b: \"hi\");\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Named parameters in method calls",
+      "source": "\nvoid b() {\n  z = A.B(a: 1, b: \"hi\");\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Named parameters using contextually reserved words",
+      "source": "\nvoid b() {\n  resultNode = B(from: 1, into: \"hi\");\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Anonymous method expressions",
+      "source": "\nvoid a() {\n  var d = delegate(int a) {\n    return a;\n  };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Anonymous method expression with discard parameters",
+      "source": "\nvoid a() {\n  var d = delegate(int _, int _) {\n    return a;\n  };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Anonymous method expression with modifiers",
+      "source": "\nvoid m() {\n  var a = static delegate(int a) { return a; };\n  var b = async delegate(int a) { return a; };\n  var c = async static delegate(int a) { return a; };\n  var d = static async delegate(int a) { return a; };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Lambda expressions",
+      "source": "\nvoid a() {\n  var l = x => x + 1;\n  var l = (A a, B b) => { return a.c(b); };\n  var l = RetType (A a, B b) => { return 1; };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Async Lambda",
+      "source": "\nvoid a()\n{\n    Do(async () => {});\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Lambda expression with modifiers",
+      "source": "\nvoid a() {\n  var lam = static x => x + 1;\n  var bda = async x => x + 1;\n  var syn = async static x => x + 1;\n  var txt = static async x => x + 1;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Lambda expression with discard parameters",
+      "source": "\nvoid a() {\n  var lam = (_, _) => 0;\n  var bda = (int _, int _) => 0;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Lambda expression with ref modifier",
+      "source": "\nMyIntDelegate a = (ref int i) => i + 1;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Invocation expressions",
+      "source": "\nvoid a() {\n  b(c, in d, out e, ref f, out var g);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Tuple expressions",
+      "source": "\nvoid a() {\n  b = (c, d: \"e\");\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Implicit array creation",
+      "source": "\nvoid b() {\n  var z = new [] { 1, 2, 3 };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Implicit multi array creation",
+      "source": "\nvoid b() {\n  var z = new [,] { { 1, 1 }, { 2, 2 }, { 3, 3 } };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Stackalloc implicit array",
+      "source": "\nvoid b() {\n  var z = stackalloc [] { 1, 2, 3 };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Stackalloc explicit array",
+      "source": "\nvoid b() {\n  var z = stackalloc int[] { 1, 2, 3 };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Explicit array creation",
+      "source": "\nvoid b() {\n  var z = new int[3] { 1, 2, 3 };\n  var b = new byte[,] { { 1, 2 }, { 2, 3 } };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Explicit multi array creation",
+      "source": "\nvoid b() {\n  var z = new int[3,2] { { 1, 1 }, { 2, 2 }, { 3, 3 } };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Array of named tuple",
+      "source": "\nvoid a() {\n  var z = new (string b, string c)[3];\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Makeref",
+      "source": "\nvoid b() {\n  var gp = __makeref(g);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Postfix unary",
+      "source": "\nvoid b() {\n  a--;\n  a++;\n  var b=a!;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "__reftype",
+      "source": "\nvoid b() {\n  var z = __reftype(g);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "__refvalue",
+      "source": "\nvoid b() {\n  var z = __refvalue(g, int);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "sizeof",
+      "source": "\nvoid b() {\n  var z = sizeof(int);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "typeof",
+      "source": "\nvoid b() {\n  var y = typeof(int);\n  var z = typeof(List<string>.Enumerator);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "switch expression",
+      "source": "\nvoid b() {\n  var r = operation switch {\n      1 => \"one\",\n      2 => \"two\",\n      _ => \"more\"\n  };\n\n  var t = obj.Parent.Parent switch {\n    A(S.G) { Parent: A { Parent: B baseProperty } } => baseProperty.Type,\n    _ => null,\n  };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "switch expression with trailing comma",
+      "source": "\nvoid b() {\n  var r = operation switch {\n      1 => \"one\",\n      2 => \"two\",\n      _ => \"more\",\n  };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "switch expression return",
+      "source": "\nstring b(Object operation) =>\n  operation switch {\n      1 => \"one\",\n      _ => \"more\",\n  };\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "switch expression with patterns",
+      "source": "\nstring b(Object operation) =>\n  operation switch {\n      Declaration d => \"declaration\",\n      Simple => \"simple (constant)\",\n      { } => \"nothing\",\n      var z => \"var\",\n      null => \"constant\",\n      int => \"type\"\n  };\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "await Expression",
+      "source": "\nclass Foo {\n  void Test() {\n    await x;\n  }\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "throw expression",
+      "source": "\nclass Foo {\n  void Test() {\n    x = x ?? throw y;\n  }\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Pecedence with OR and XOR",
+      "source": "\nb = 4 | 5 ^ 6;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "range expressions full",
+      "source": "\nclass Foo {\n  void Test() {\n    var a = b[1..4];\n    var c = 1..^4;\n  }\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "range expressions partial",
+      "source": "\nclass Foo {\n  void Test() {\n    var a = b[..4];\n    var c = ^1..;\n    var d = b[..];\n  }\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "cast expression",
+      "source": "\nclass Foo {\n  void Test() {\n    x = (int) y;\n      }\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Generic type name no type args",
+      "source": "\nvar d = typeof(Dictionary<,>);\nvar t = typeof(Tuple<,,,>);\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "default expression",
+      "source": "\nvar a = default(int);\nint b = default;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Ref local declaration and ref expression",
+      "source": "\nref VeryLargeStruct reflocal = ref veryLargeStruct;\nref var elementRef = ref arr[0];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Element binding expression",
+      "source": "\nvar x = new Dictionary<string,int> { [\"a\"] = 65 };\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Member access expression (methods)",
+      "source": "\nvoid Test(int value) {\n  value.ToString();\n  double.IsInfinity(value);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Member access expression (properties)",
+      "source": "\nvoid Test(int value) {\n  var x = string.Empty;\n  var z = B<int>.Something;\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "is expression",
+      "source": "\nvar b = s is string;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "is pattern",
+      "source": "\nvar b = s is string s2;\nvar c = s is \"test\";\nvar a = 1 is int.MaxValue;\nvar d = a is nameof(a);\nvar e = a is (int)b;\nvar f = b is A { E: C(S.C) bb } ? bb : null;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between is operator and conditional_expression",
+      "source": "\nint a = 1 is Object ? 1 : 2;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between is operator and as operator",
+      "source": "\n//var a = new object() is null as Object == false; // this parses with wrong precedence\nvar a = new object() is null as Object;\nvar b = true == 1 as int? is int;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Discard pattern",
+      "source": "\nvoid Do() {\n  DateTime.TryParse(dateString, out _);\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Null-forgiving operator",
+      "source": "\nvar x = name!.Length;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Negated pattern",
+      "source": "\nvar x = name is not null;\nif (a is not B { E: C(S.E) x }) {}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Parenthesized pattern",
+      "source": "\nvar x = name is (var a);\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Pattern Combinators and relational pattern",
+      "source": "\nvar x = c is < '0' or >= 'A' and <= 'Z';\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence of prefix_unary_expression and invocation_expression",
+      "source": "\nvar x = !this.Call();\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Property patterns",
+      "source": "\nvar x = operand is ILiteralOperation { ConstantValue: { HasValue: true, Value: null } };\nvar x = operand is ILiteralOperation { ConstantValue.HasValue: true, ConstantValue.Value: null};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Positional patterns",
+      "source": "\nvar a = p is var (x, y);\nvar c = p is (var x, var y) { x: 0 };\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Recursive patterns with variable designation (issue #282)",
+      "source": "\nvar x = expr is R(E.A) v0;\nvar y = expr is R(E.A or E.B) v1;\nvar z = expr is (E.A or E.B) v2;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Type patterns",
+      "source": "\nvar b = o is int or string; //is_pattern_expression with type_pattern\nvar c = o is int; //is_expression with type\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "List patterns",
+      "source": "\nvar a = p is [1,2,x,] and [] or [2,..];\nif (aa is [(name: A.B), ..]) { }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Conditional expression with member accesses",
+      "source": "\nvar a = b ? c.A + d.A : e.A + f.A;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Conditional access expression",
+      "source": "\nvar a = b?.Something;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Conditional access to element (should be implicit_element_access)",
+      "source": "\nvar x = dict?[\"a\"];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Conditional access expression with member binding",
+      "source": "\nif (a?.B != 1) { }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Conditional access expression with simple member access",
+      "source": "\nif ((p as Person[])?[0]._Age != 1) { }\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Null-coalescing operator is right-associative",
+      "source": "\nvar a = b ?? c ?? d;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between null-coalescing operator and conditional OR",
+      "source": "\nvar a = b ?? c || d ?? e;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between null-coalescing operator and conditional operator",
+      "source": "\nvar a = b ?? c ? d ?? e : f ?? g;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between range and switch",
+      "source": "\nvar a = 3..4 switch\n{\n    _ => true\n};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between unary and switch",
+      "source": "\nvar a = -3 switch\n{\n    _ => true\n};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between range and as operator",
+      "source": "\nvar a = 3..4 as Range;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between is and comparison operators",
+      "source": "\nvar allowedValuesList = someObj is null\n    ? default\n    : new object();\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Nameof expressions",
+      "source": "\nvar x = nameof(A);\nvar x = nameof(A<B>);\nvar x = nameof(A.B);\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Generic invocation expression",
+      "source": "\nMyFunction<A,B>(1);\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Dereference versus logical and",
+      "source": "\nbool c = (a) && b;\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "With expression typical basic form",
+      "source": "\nvoid A() {\n  var newFriend = friend with { LastName = \"Edwards\" };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "With expression using expressions",
+      "source": "\nvoid A() {\n  var friend = GetAFriend() with {\n      ForeName = RandomFirstName(),\n      LastName = RandomLastName()\n  };\n}\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between with and cast",
+      "source": "\nvar x = (Point) p1 with {X = 3};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between with and switch",
+      "source": "\nvar x = p1 with {X = 3} switch { _ => 3 };\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Precedence between with and equals",
+      "source": "\nvar x = p1 with {X = 3} == p1 with {X = 4};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Associativity of with expression",
+      "source": "\nvar x = p1 with {X = 3} with {X = 4} with {X = 5};\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Array with trailing comma",
+      "source": "\nvar x = [ y, ];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Empty collection expression",
+      "source": "\nvar empty = [];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Collection expression with elements",
+      "source": "\nvar numbers = [1, 2, 3];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Collection expression with spreads",
+      "source": "\nvar combined = [..first, ..second];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Mixed elements with trailing comma",
+      "source": "\nvar mixed = [1, ..others, 2,];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Nested collection expressions",
+      "source": "\nvar nested = [[1], [2]];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Collection expression in argument",
+      "source": "\nSomeMethod([1, 2]);\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Empty collection expression in argument",
+      "source": "\nSomeMethod([]);\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Collection expression in coalescing expression",
+      "source": "\nvar fallback = items ?? [];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Collection expression - nested",
+      "source": "\nint[][] x = [[1, 2], [3, 4]];\n"
+    },
+    {
+      "file": "expressions.txt",
+      "title": "Collection expression - cast with qualified member access",
+      "source": "\nclass C {\n    void M() {\n        foreach (var id in (int[])[\n            Constants.Region.US,\n            Constants.Region.EU,\n            Constants.Region.AP,\n        ])\n        {\n            Invalidate(key, id);\n        }\n    }\n}\n"
+    },
+    {
+      "file": "identifiers.txt",
+      "title": "Identifiers",
+      "source": "\nint x = y;\n\n// keyword names\nint @var = @const;\n\n// contextual keyword names\nint nint = 0;\nint nuint = 0;\n\n// unicode identifiers\nint under_score = 0;\nint with1number = 0;\nint varæble = 0;\nint Переменная = 0;\nint first‿letter = 0;\nint ග්‍රහලෝකය = 0;\nint _كوكبxxx = 0;\n"
+    },
+    {
+      "file": "interfaces.txt",
+      "title": "Interfaces",
+      "source": "\npublic interface IOne: ITwo, IThree {\n  byte Get { get; }\n  char Set { set; }\n  uint GetSet { get; set; }\n  long SetGet { set; get; }\n\n  void Nothing();\n  int Output();\n  void Input(string a);\n  int InputOutput(string a);\n};\n\n// generic\nprivate interface IOne<T1> : ITwo { }\n\n// constraint\nprivate interface IOne<T1> : ITwo where T1:T2 { }\n\nprivate interface IOne<T1, T3> : ITwo where T1:T2 where T3:new() { }\n\nnamespace A {\n  interface IOne : ITwo {\n    event EventHandler<T> SomeEvent;\n\n  bool this[int index] { get; set; }\n  }\n}\n\n\ninterface MyDefault {\n  void Log(string message) {\n    Console.WriteLine(message);\n  }\n}\n\npublic interface IGetNext<T> where T : IGetNext<T>\n{\n    static abstract T operator ++(T other);\n}\n\nprivate interface NoBody;\n"
+    },
+    {
+      "file": "literals.txt",
+      "title": "Literals",
+      "source": "\n// integer\n\nconst int dec = 1_2;\nconst long hex = 0xf_1l;\nconst long hex2 = 0Xffff;\nconst long hex3 = 0x_0_f;\nconst UInt64 dec = 1uL;\nconst UInt16 bin = 0b0100_100;\nconst UInt16 bin2 = 0B01010__10;\nconst long bin3 = 0b_0_10;\n\n// boolean\n\nconst bool t = true, u = false;\n\n// char\n\nconst char c = 'a';\nconst char esc = '\\n';\nconst char hex = '\\xf09a';\nconst char hex2 = '\\x9';\nconst char uni16 = '\\ua0bf';\nconst char uni32 = '\\UA0BFf9ca';\n\n// real\n\nconst float s = 012.23F;\nconst float e = 1e6f;\nconst Single en = 0e-1f;\nconst Single ep = 1_1e+12f;\nconst double d = 0.9_9d;\nconst double e = .4_9d;\nconst decimal m = 0_1_2.9m;\nconst Decimal m2 = 102.349M;\n\n// string\n\nString e = \"\";\nstring s = \"a\";\nstring m = \"abc\";\nstring esc = \"ab\\\"\\t\";\nstring hex = \"ab\\x22r\";\nstring hex2 = \"\\x22r\\x00\";\nstring u16 = \"\\ub0d0ok\";\nstring u32 = \"\\uF1D20ff0test\";\nstring ve = @\"\";\nstring v = @\"abcde\\ef\";\nstring quotes = @\"<TestClass xmlns=\"\"http://example.com/omg\"\" xmlns:i=\"\"http://www.w3.org/2001/XMLSchema-instance\"\"></TestClass>\";\nString e = @\"This\nis\na\nmulti-line\";\nstring s = \"//\\n//\";\nstring s = \"\\u0065/* \\u0065 */\\u0065\";\nstring s = @\"/* comment */\";\n\n// utf-8 string\n\nvar a = \"lower\"u8;\nvar b = \"upper\"U8;\nvar c = @\"lower\"u8;\nvar d = @\"upper\"U8;\n\nstring s = $\"This contains {\n  abc\n} a newline\";\n\n// interpolated string\n\nstring s = $\"hello\";\nstring esc = $\"ab\\\"\\t\";\nstring double = $\"{{nope}}\";\nstring s = $\"\\u0065/* \\u0065 */\\u0065\";\n\nstring s = $\"hello {name}, how are you?\";\nstring s = $\"hello {name:0.00}, how are you?\";\nstring s = $\"hello {name,25}, how are you?\";\nstring s = $@\"hello {name}, how are you?\";\nstring s = $@\"hello {name:g}, how are you?\";\nstring s = $@\"hello {name,-10}, how are you?\";\n\nstring s = $@\"hello\";\nstring s = @$\"hello\";\n\nvar s = $@\"Another\nmultiple\nline\";\n\nstring s = $@\"\nclass A\n{{\n    bool Method(int value)\n    {{\n        return value  is  {operatorText}  3  or  {operatorText}  5;\n    }}\n}}\n\";\nstring s = $@\"{a}/* comment */{a}\";\nvar x = $@\"/* {world} */\";\n\n// raw string\n\nvar x = \"\"\"Hello\"\"\";\nvar x = \"\"\"\n  Hello\n  \"\"\";\nvar x = \"\"\"\n  \"\"Hello\"\" \"there\"\n  \"\"\"u8;\n\nvar x = $\"\"\"The point \"{X}, {Y}\" is\n         \"\"{Math.Sqrt(X * X + Y * Y)}\"\" from the origin\n         \"\"\";\n\nvar x = $\"{{\";\n\nvar x = $\"\"\"{bar}\"\"\";\n\nvar x = \"\"\"\"baz\"\"\"\";\n\nvar x = $\"\"\"\"\n    [||]\n    \"\"\"\n\"\"\"\";\n\nvar x = $@\" \"\"hi\"\" \";\nvar x = @$\"\"\"Hello\"\" {world}!\";\n\nvar s = $$\"\"\"\n{{ $\" { 1 } \" }}\n\"\"\";\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "If, elif and else directives",
+      "source": "\n#if WIN32\n  string os = \"Win32\";\n#elif MACOS\n  string os = \"MacOS\";\n#else\n  string os = \"Unknown\";\n#endif\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "If conditions",
+      "source": "\n#if !MACOS\n#endif\n\n#if WIN32==true\n#endif\n\n#if !MACOS!=false\n#endif\n\n#if A && B || C\n#endif\n\n#if (A)\n#endif\n\n#if (A || B)\n#endif\n\n#if (A && B) || C\n#endif\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Define and undefine directives",
+      "source": "\n#define SOMETHING\n#undef BAD\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Line directives",
+      "source": "\nclass Of1879 {\n  void AMethod() {\n#line 2001 \"A Space\" // Comment\n#line hidden\n#line default\n#line (1, 1) - (1, 3) 1 \"a.cs\"\n#line (2, 1) - (2, 3) \"a.cs\"\n# line 2001 \"A Space\"\n#  line hidden\n#    line default\n  }\n}\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Directives not in strings or comments",
+      "source": "\nclass Of1879 {\n  void AMethod() {\n    var s = @\"Only a string\n    #if NOPE\n\";\n    /* Only a comment\n    #if NOPE\n    */\n  }\n}\n"
+    },
+    {
+      "file": "preprocessor.txt",
+      "title": "Shebang directive",
+      "source": "\n#!/usr/bin/env scriptcs\n"
+    },
+    {
+      "file": "query-syntax.txt",
+      "title": "Query from select",
+      "source": "\nvar x = from a in source select a.B() ? c : c * 2;\n\nvar x = from a in source select somevar = a;\n\nvar x = from a in source select new { Name = a.B };\n\nvar x = from a in source\n  where a.B == \"A\"\n  select new { Name = a.B };\n\nvar x = from a in source\n  orderby a.A descending\n  orderby a.C ascending\n  orderby 1\n  select a;\n\nvar x = from a in source\n  let z = new { a.A, a.B }\n  select z;\n\nvar x = from a in sourceA\n  join b in sourceB on a.FK equals b.PK\n  select new { A.A, B.B };\n\nvar x = from a in sourceA\n  from b in sourceB\n  where a.FK == b.FK\n  select new { A.A, B.B };\n\nvar x = from a in sourceA\n  group a by a.Country into g\n  select new { Country = g.Key, Population = g.Sum(p => p.Population) };\n"
+    },
+    {
+      "file": "records.txt",
+      "title": "Basic record declaration",
+      "source": "\nrecord F {\n  int Age { get; init; }\n}\n\nrecord struct F {\n  int Age { get; init; }\n}\n\nrecord class F {\n  int Age { get; init; }\n}\n\npublic record F<T> where T:struct {}\n\npublic record F<T> where T: new() {}\n\npublic record A : ISomething { }\n\n[Test]\nprivate record F<T1,T2> where T1 : I1, I2, new() where T2 : I2 { }\n\nrecord Person(string FirstName, string LastName);\n\nrecord Teacher(string FirstName, string LastName, string Subject) : Person(FirstName, LastName);\n\nrecord Teacher(string FirstName, string LastName, string Subject) : Person(FirstName, LastName), Ns.I1, I2;\n\nrecord Teacher() : Entity<Person>(), I1;\n\npublic record Person { };\n\npublic record struct Person2 { };\n\nrecord NoBody;\n"
+    },
+    {
+      "file": "source-file-structure.txt",
+      "title": "Using directives, extern alias, and namespace declarations",
+      "source": "\nglobal using A;\nglobal using static A.B;\n\nusing A;\nusing B.C;\nusing global::E.F;\nusing G = H.I;\nusing static J.K;\n\nusing Point = (int x, int y);\n\nextern alias A;\n\nnamespace Foo {\n  using A;\n}\n\nnamespace A {\n  namespace B.C.D {\n  }\n\n  namespace E.F {\n  }\n}\n"
+    },
+    {
+      "file": "source-file-structure.txt",
+      "title": "File scoped namespaces",
+      "source": "\nnamespace A;\n\nclass B {\n}\n"
+    },
+    {
+      "file": "source-file-structure.txt",
+      "title": "Delegates",
+      "source": "\npublic delegate int Global(ref char a = '\\n');\npublic delegate ref int Global(ref char a = '\\n');\npublic delegate ref readonly int Global(ref char a = '\\n');\n\ndelegate void A<T>() where T:class;\n\ndelegate void A(params int [] test);\n\nclass Z {\n  delegate void Zed();\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Common statements",
+      "source": "\n(string a, bool b) c = default;\nA<B> a = null;\nint x = 0;\n(x, int y) = point;\nvar result = list.Select(c => (c.f1, c.f2)).Where(t => t.f2 == 1);\n\nclass A {\n  int Sample() {\n    return 1;\n  }\n\n  void Sample2() {\n    return;\n  }\n\n  void Sample3() {\n    while (true) break;\n    while (false) continue;\n  }\n\n  void Sample4() {\n    throw;\n    throw ex;\n  }\n\n  void Sample5() {\n    do { } while (true);\n  }\n\n  void Sample6() {\n    goto end;\n    end:\n      return;\n  }\n\n  int Sample7() {\n    if (true) return 1;\n    else return 0;\n  }\n\n  int Sample8() {\n    switch (1) {\n      case 1:\n      case 2:\n        return 1;\n      default:\n        return 0;\n    }\n  }\n\n  M(out (int a, int b) c);\n\n  void M() {\n    (bool a, bool b) M2() {\n      return (true, false);\n    }\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Switch statements",
+      "source": "\nint Sample9(int a) {\n  switch (a, a) {\n    case (1, 1):\n      return 1;\n    default:\n      return 0;\n  }\n\n  switch (A, B) {\n      case (_, _) when !c:\n        break;\n  }\n\n  switch (A) {\n      case {Length: 2} when !c:\n        break;\n  }\n\n  int i = 123;\n  switch (i)\n  {\n      case int when i < 5:\n          break;\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Try catch finally statements",
+      "source": "\nclass A {\n  void Sample() {\n    try {\n    } finally {\n    }\n\n    try {\n    } catch (Exception ex) {\n    }\n\n    try {\n    } catch (Exception ex) {\n    } finally {\n    }\n\n    try {\n    } catch (Exception ex) {\n    } catch (OtherException ex) {\n    }\n\n    try {\n    } catch (Exception ex) when (a == 1) {\n    }\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Checked, unchecked, locked, & yield statements",
+      "source": "\nclass A {\n  void Sample() {\n    checked {\n      return;\n    }\n\n    unchecked {\n      return;\n    }\n\n    lock (this) {\n      return;\n    }\n\n    yield return 1;\n    yield break;\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Initializers",
+      "source": "\nclass A {\n  void Sample() {\n    int a;\n    int a = 1, b = 2;\n    const int a = 1;\n    const int a = 1, b = 2;\n    ref var value = ref data[i];\n    var g = args[0].Length;\n\n    numbers ??= new List<int>();\n    b = obj ?? a == 0;\n\n    person = new Person(null!, null!);\n\n    MyClass myVar = MyFunction<MyOtherClass>(\"MyArg\");\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Using statements",
+      "source": "\nclass A {\n  void Sample() {\n    using (var a = b) {\n      return;\n    }\n\n    using (Stream a = File.OpenRead(\"a\"), b = new BinaryReader(a)) {\n      return;\n    }\n\n    using var a = new A();\n\n    using (Object a = b) {\n      return;\n    }\n\n    using (this) {\n      return;\n    }\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Loops",
+      "source": "\nclass A {\n  void Sample() {\n    foreach(int x in y)\n      z += x;\n\n    foreach(x in y)\n      z += x;\n\n    foreach(var (x, y) in z)\n      q += x;\n\n    for(int x = 0; x < 100; x++) {\n      z += x;\n    }\n\n    for(;;) {\n    }\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Unsafe & fixed statements",
+      "source": "\nclass A {\n  void Sample() {\n    unsafe { x = y; }\n    fixed (double p = arr) { }\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Deconstruction",
+      "source": "\nclass A {\n  void Sample() {\n    (var a, var b) = c;\n    var (a, b) = c;\n    (a, b, _) = c;\n    (_, b) = c;\n    var (a, _) = c;\n    var (a, (b, _)) = c;\n  }\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Function with contextually reserved identifiers",
+      "source": "\nasync void Sample() {\n  var var = \"\";\n  int partial = from;\n  A into = select;\n  R await = get;\n  T set = let + yield + group + add + alias + ascending + notnull + descending + equals;\n}\n"
+    },
+    {
+      "file": "statements.txt",
+      "title": "Function conditional ref expression",
+      "source": "\nref T Choice(bool condition, ref T a, ref T b)\n{\n  ref var r = ref (condition ? ref a: ref b);\n}\n"
+    },
+    {
+      "file": "structs.txt",
+      "title": "Struct with a type parameter struct constraint",
+      "source": "\npublic struct F<T> where T:struct {}\n\npublic struct F<T> where T: new() {}\n\nreadonly public struct A : ISomething { }\n\nprivate struct F<T1,T2> where T1 : I1, I2, new() where T2 : I2 { }\n\nref struct Test { }\n\nstruct NoBody;\n\nprivate struct NoBodyWithPrimary(int g);"
+    },
+    {
+      "file": "type-events.txt",
+      "title": "Class event declarations",
+      "source": "\nclass A {\n  public event EventHandler<T> SomeEvent { add { } remove { } }\n}\n\nstruct A {\n  public event EventHandler<T> SomeEvent { add { } remove { } }\n}\n\nclass A {\n  public event EventHandler SomeEvent { add => addSomething(); remove => removeSomething(); }\n}\n"
+    },
+    {
+      "file": "type-fields.txt",
+      "title": "Class field declarations",
+      "source": "\nclass A {\n  public readonly int _B;\n  Int64 D_e_f, g;\n  Tuple<char, Nullable<int>> z;\n\n  public readonly int? i;\n  private Byte? b;\n\n  public readonly int* i;\n  private Byte* b;\n  private void* c;\n\n  // Function pointer equivalent without calling convention\n  delegate*<string, int> a;\n  delegate*<delegate*<in string, int>, delegate*<ref string, ref readonly int>> b;\n\n  // Function pointer equivalent with calling convention\n  delegate* managed<string, int> c;\n  delegate*<delegate* unmanaged[MyCallConv, YourCallConv]<string, int>, delegate*<string, int>> d;\n\n  ref readonly Point Origin => ref origin;\n  ref readonly Point* Origin;\n  ref readonly Point[] Origin;\n  ref readonly Point? Origin;\n\n  (int, string str) a;\n  (B b, C c, D d) a;\n\n  nint a;\n  nuint b;\n\n  public required int B;\n}\n\nstruct A {\n  private readonly int c_;\n}\n"
+    },
+    {
+      "file": "type-methods.txt",
+      "title": "Class method with single parameter",
+      "source": "\nclass A {\n  private int GetBack(int b) {\n    return b;\n  }\n\n  void Accept<T>(T accept) {\n  }\n\n  void Accept<T>(T accept) where T: new() {\n  }\n\n  void Accept<T1, T2>(T1 accept, T2 from)\n    where T1: new()\n    where T2: T1, new() {\n  }\n\n  void HasAnOut(out int a) {\n  }\n\n  void HasAnIn(in int a) {\n  }\n\n  void HasARef(ref int a) {\n  }\n\n  void M(this ref int a) { }\n  void M(this scoped ref int a) { }\n\n  void Keywords(int from, string partial) {\n  }\n\n  void Default(int a = 5) {\n  }\n\n  static int Static(int b) {\n    return b;\n  }\n\n  public readonly double Add => x + y;\n\n  DIn dIn = (ref readonly int p) => { };\n\n  public int Zero(params int[]? ints) => 0;\n}\n\nclass A : ISomething {\n  int ISomething.GetBack(int b) {\n    return b;\n  }\n}\n\nref struct S {\n    void M(scoped ref System.Span<int> p) {\n        scoped ref System.Span<int> i = ref p;\n        scoped System.Span<int> j = p;\n    }\n}\n"
+    },
+    {
+      "file": "type-methods.txt",
+      "title": "C# 13 params collections",
+      "source": "\nclass C {\n  void M1(params int[] args) { }\n  void M2(params Span<int> items) { }\n  void M3(params IEnumerable<string> values) { }\n  void M4(params List<double> numbers) { }\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "Operator declarations",
+      "source": "\nclass A\n{\n  [SomeAttribute]\n  public static int operator +(A a) { return 0; }\n\n  public static int operator +(A a, A b) { return 0; }\n\n  int operator -(A a) { return 0; }\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "boolean operator declarations",
+      "source": "\nclass A\n{\n  public static bool operator true(A a) { return true; }\n  bool operator false(A a) { return false; }\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "conversion operator declaration",
+      "source": "\nclass A\n{\n  public static implicit operator int (A a) { return 0; }\n  explicit operator int (A a) { return 0; }\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "conversion operator with expression body",
+      "source": "\nclass A\n{\n  public static implicit operator int (A a) => 0;\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "extern operators",
+      "source": "\nclass A\n{\n  public static extern int operator + (A a);\n  public static extern bool operator <(A a, A b);\n  public static explicit operator int (A a);\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "Class conversion operators with expression body",
+      "source": "\nclass A\n{\n  public static extern int operator + (A a) => 0;\n  public static extern bool operator <(A a, A b) => true;\n  public static explicit operator int (A a) => 0;\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "Unary operator overloads",
+      "source": "\nclass A\n{\n  public static A operator +(A a) { return a; }\n  public static A operator -(A a) { return a; }\n  public static A operator !(A a) { return a; }\n  public static A operator ~(A a) { return a; }\n  public static A operator ++(A a) { return a; }\n  public static A operator --(A a) { return a; }\n  public static bool operator true (A a) { return true; }\n  public static bool operator false(A a) { return true; }\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "Binary unpaired operator overloads",
+      "source": "\nclass A\n{\n  public static A operator +(A a, A b) { return a == b; }\n  public static A operator -(A a, A b) { return a != b; }\n  public static A operator *(A a, A b) { return a < b; }\n  public static A operator /(A a, A b) { return a <= b; }\n  public static A operator %(A a, A b) { return a > b; }\n  public static A operator &(A a, A b) { return a >= b; }\n  public static A operator |(A a, A b) { return a >= b; }\n  public static A operator ^(A a, A b) { return a >= b; }\n  public static A operator <<(A a, A b) { return a >= b; }\n  public static A operator >>(A a, A b) { return a >= b; }\n  public static A operator >>>(A a, A b) { return a >= b; }\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "Binary paired operator overloads",
+      "source": "\nclass A\n{\n  public static A operator ==(A a, A b) { return a == b; }\n  public static A operator !=(A a, A b) { return a != b; }\n  public static A operator <(A a, A b) { return a < b; }\n  public static A operator <=(A a, A b) { return a <= b; }\n  public static A operator >(A a, A b) { return a > b; }\n  public static A operator >=(A a, A b) { return a >= b; }\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "Explicit operator overloads",
+      "source": "\ninterface I\n{\n  static abstract int operator +(I i, I j);\n}\n\npublic class C : I\n{\n  static int I.operator +(I i, I j) { return 1; }\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "Checked operators",
+      "source": "\npublic class C\n{\n  public static int operator checked +(C i, C j) => throw null;\n  public static int operator +(C i, C j) => throw null;\n\n  public static explicit operator checked int(C c) => throw null;\n  public static explicit operator int(C c) => throw null;\n}\n"
+    },
+    {
+      "file": "type-operators.txt",
+      "title": "Explicit conversion operator overloads",
+      "source": "\npublic interface I<T> where T : I<T>\n{\n  static abstract explicit operator T(C c);\n  static abstract explicit operator checked T(C c);\n}\n\npublic class C : I<C>\n{\n  static explicit I<C>.operator C(C c) => throw null;\n  static explicit I<C>.operator checked C(C c) => throw null;\n}\n"
+    },
+    {
+      "file": "type-properties.txt",
+      "title": "Class with bodyless properties",
+      "source": "\nclass Foo {\n  byte Get { get; }\n  char Set { set; }\n  uint GetSet { get; set; }\n  long SetGet { set; get; }\n\n  public string FirstName { get; init; }\n\n  byte Get { get { return 0xFF; } }\n  char Set { set { x = value; } }\n}\n\nclass Foo {\n  uint GetSet {\n    get { return x; }\n    set { x = value; }\n  }\n  long SetGet {\n    set { x = value; }\n    get { return x; }\n  }\n\n  byte Get { get; } = 0x00;\n  uint GetSet { get; set; } = 1;\n  long SetGet { set; get; } = 2;\n}\n\nclass Foo: IFoo {\n  byte IFoo.Get { get; }\n  public required int B { get; set; }\n}\n"
+    }
+  ]
+}

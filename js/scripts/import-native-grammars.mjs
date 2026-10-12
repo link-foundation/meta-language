@@ -25,6 +25,7 @@ import { gunzipSync } from 'node:zlib';
 
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { transformNativeSource } from './native-grammar-transforms.mjs';
+import { nativeScannerProfile } from './generate-native-scanner-profiles.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const GRAMMAR_SOURCES = 'parity/grammars/sources.json';
@@ -149,10 +150,14 @@ export function ruleConcept(rule, decisions = {}) {
 /** Imports one source: the native grammar text, its rules with their concepts, and its report. */
 export function importSource(entry, expansions, decisions = {}) {
   const grammar = transformNativeSource(JSON.parse(sourceText(entry)), decisions.sourceTransforms);
+  const scanners = scannerText(entry);
+  if (decisions.scannerFamilies && scanners !== nativeScannerProfile(decisions.scannerFamilies)) {
+    throw new Error(`${entry.language}: pinned native scanner does not match its recorded family profile`);
+  }
   const imported = importTreeSitterNative(grammar, {
     nameOf: (name) => nativeName(name, expansions, decisions),
     wordRule: WORD_RULE,
-    scanners: scannerText(entry),
+    scanners,
     immediate: entry.scanner?.immediate ?? [],
   });
   const rules = imported.rules.map((rule) => ({ ...rule, concept: ruleConcept(rule, decisions) }));

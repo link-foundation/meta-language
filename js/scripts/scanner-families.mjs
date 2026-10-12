@@ -5,6 +5,7 @@ import { templateContextScanner } from './template-context-scanner.mjs';
 import { scopedLayoutScanner } from './scoped-layout-scanner.mjs';
 import { quotedCountedScanner } from './quoted-counted-scanner.mjs';
 import { hereDocumentScanner, interpolatedQuotedScanner, fencedBlockScanner, offsideLayoutScanner } from './structured-scanner-families.mjs';
+import { countedInterpolationScanner } from './counted-interpolation-scanner.mjs';
 const encode = (text) => [...Buffer.from(text)].map((byte) => (
   (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122)
   || (byte >= 48 && byte <= 57) || [45, 46, 95].includes(byte)
@@ -345,7 +346,8 @@ export function scannerFamilies(descriptors) {
   const names = new Set();
   const tokens = new Set();
   const generated = descriptors.map(({ family, ...options }) => {
-    const declared = family === 'here-document' ? [options.startToken, options.contentToken, options.endToken]
+    const declared = family === 'counted-interpolation' ? [options.optionalToken, options.regularStartToken, options.verbatimStartToken, options.rawStartToken, options.startQuoteToken, options.endQuoteToken, options.openBraceToken, options.closeBraceToken, options.contentToken, options.rawQuoteStartToken, options.rawQuoteEndToken, options.rawContentToken]
+      : family === 'here-document' ? [options.startToken, options.contentToken, options.endToken]
       : family === 'interpolated-quoted' ? [options.startToken, options.contentToken, options.endToken, options.interpolationStartToken, options.interpolationEndToken, options.braceOpenToken, options.braceCloseToken]
       : family === 'offside-layout' ? [options.openToken, options.separatorToken, options.closeToken]
       : family === 'paired-name' ? [options.startToken, options.endToken, options.emptyToken]
@@ -361,6 +363,7 @@ export function scannerFamilies(descriptors) {
     if (names.has(options.name) || new Set(declared).size !== declared.length || declared.some((token) => tokens.has(token))) throw new TypeError('duplicate scanner name or token');
     names.add(options.name);
     for (const token of declared) tokens.add(token);
+    if (family === 'counted-interpolation') return countedInterpolationScanner(options);
     if (family === 'here-document') return hereDocumentScanner(options);
     if (family === 'interpolated-quoted') return interpolatedQuotedScanner(options);
     if (family === 'fenced-block') return fencedBlockScanner(options);

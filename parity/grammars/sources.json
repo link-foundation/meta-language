@@ -1166,6 +1166,45 @@
         "mode": "process",
         "reason": "The pinned scanner changes the circular token queue modulus during growth without relocating queued entries; fresh-process snapshots isolate its allocator-dependent missing-dedent diagnostics. The oracle source and assertions remain unchanged."
       }
+    },
+    {
+      "id": "tree-sitter-c-sharp",
+      "language": "csharp",
+      "native": "native-csharp",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-c-sharp 0.23.5",
+      "repository": "https://github.com/tree-sitter/tree-sitter-c-sharp",
+      "revision": "cac6d5fb595f5811a076336682d5d595ac1c9e85",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-c-sharp-0.23.5.grammar.json.gz",
+      "sha256": "143aeac9b44ab76868c59b601d0d67a475dddd77ab782fa7db79ce30372ecd14",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-c-sharp-0.23.5.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/csharp.lino",
+        "sha256": "1bf411fc6d0bf7161e3e9816afd1f3417fe243ca918c6957c5786a93a7603d14",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "00920daa0fdf3050d441475e8effe996b60ee8acc1bdbcbbc4c83d56a6987705"
+        },
+        "generator": "js/scripts/generate-native-scanner-profiles.mjs --language csharp",
+        "immediate": [
+          "_optional_semi",
+          "interpolation_start_quote",
+          "interpolation_end_quote",
+          "interpolation_open_brace",
+          "interpolation_close_brace",
+          "interpolation_string_content",
+          "raw_string_end",
+          "raw_string_content"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-c-sharp-0.23.5.corpus.json.gz",
+        "sha256": "c243af49eb1f5fbeb572cebb114a20d3c6a3d282a5eacf3a09ed731517d9847a"
+      },
+      "oracle": "csharp"
     }
   ]
 }

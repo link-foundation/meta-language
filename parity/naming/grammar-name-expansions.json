@@ -4019,6 +4019,80 @@
         "application": "application",
         "attribute": "program.attributes"
       }
+    },
+    "csharp": {
+      "names": {
+        "_optional_semi": "optional_semicolon",
+        "_attribute_list": "attribute_list_body",
+        "nullable_type": "null_capable_type",
+        "_nullable_base_type": "null_capable_base_type",
+        "ref_type": "reference_type",
+        "_ref_base_type": "reference_base_type",
+        "subpattern": "subsidiary_pattern",
+        "non_lvalue_expression": "value_expression",
+        "lvalue_expression": "assignable_expression",
+        "when_clause": "guard_clause",
+        "_parenthesized_lvalue_expression": "parenthesized_assignable_expression",
+        "_lambda_expression_init": "initialized_lambda_expression",
+        "_lambda_parameters": "lambda_parameter_sequence",
+        "implicit_stackalloc_expression": "implicit_stack_allocation_expression",
+        "typeof_expression": "type_query_expression",
+        "makeref_expression": "reference_creation_expression",
+        "ref_expression": "reference_expression",
+        "reftype_expression": "reference_type_query_expression",
+        "refvalue_expression": "reference_value_access_expression",
+        "stackalloc_expression": "stack_allocation_expression",
+        "preproc_if": "preprocessor_conditional_directive",
+        "preproc_else": "preprocessor_alternative_directive",
+        "preproc_elif": "preprocessor_conditional_alternative_directive",
+        "preproc_endregion": "preprocessor_region_end_directive",
+        "preproc_nullable": "preprocessor_null_policy_directive",
+        "preproc_define": "preprocessor_definition_directive",
+        "preproc_undef": "preprocessor_removal_directive"
+      },
+      "scannerFamilies": [
+        {
+          "family": "counted-interpolation",
+          "name": "counted_interpolation",
+          "optionalToken": "optional_semicolon",
+          "regularStartToken": "interpolation_regular_start",
+          "verbatimStartToken": "interpolation_verbatim_start",
+          "rawStartToken": "interpolation_raw_start",
+          "startQuoteToken": "interpolation_start_quote",
+          "endQuoteToken": "interpolation_end_quote",
+          "openBraceToken": "interpolation_open_brace",
+          "closeBraceToken": "interpolation_close_brace",
+          "contentToken": "interpolation_string_content",
+          "rawQuoteStartToken": "raw_string_start",
+          "rawQuoteEndToken": "raw_string_end",
+          "rawContentToken": "raw_string_content",
+          "quote": "\"",
+          "prefix": "$",
+          "verbatimPrefix": "@",
+          "openBrace": "{",
+          "closeBrace": "}",
+          "escape": "\\",
+          "semicolon": ";",
+          "countModulo": 256,
+          "minimumRawQuotes": 3
+        }
+      ],
+      "sourceTransforms": [
+        {
+          "family": "ordered-variants",
+          "rule": "_anonymous_object_member_declarator",
+          "variants": [
+            "prefix:identifier",
+            "expression"
+          ],
+          "reason": "Prefer the explicit anonymous-object member initializer over parsing its equals sign as an assignment expression, preserving both complete source alternatives."
+        }
+      ],
+      "concepts": {
+        "attribute": "program.attributes",
+        "parameter": "parameter",
+        "argument": "argument"
+      }
     }
   },
   "concepts": {
