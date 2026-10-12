@@ -353,13 +353,16 @@ function loadInContext(grammar, context) {
     checkExpression(extra, 'an extra');
     // The scanner and lexer use the source identity of a labelled extra;
     // its outer alias changes only the concrete node or token it produces.
-    // Anonymous aliases still identify extras rather than separators.
     let source = extra;
     let projectionName = null;
     while (['alias', 'capture', 'token', 'immediateToken', 'precedence', 'namedPrecedence', 'dynamicPrecedence', 'lexicalPrecedence'].includes(source.kind)) {
       if (source.kind === 'alias' && projectionName === null) projectionName = source.name;
       source = source.item;
     }
+    // An anonymous terminal extra is a separator, even when the imported
+    // token is aliased to its literal spelling (Make's continued newline).
+    // Aliased references retain their source identity and projection.
+    if (source.kind !== 'ref' && projectionName?.startsWith("'")) projectionName = null;
     program.trivia.push({ expression: extra, kind: source.kind === 'ref' ? source.name : projectionName, projectionName, modes: null });
   }
   let index = 0;

@@ -191,3 +191,111 @@ fn odin_aliased_scanner_extras_preserve_the_original_invalid_comment_recovery() 
         .collect();
     assert_eq!(recovered, input);
 }
+
+#[test]
+fn anonymous_extra_fixtures_preserve_names_state_prefixes_and_exact_spans() {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/grammar-extra-projection.json"
+    ))
+    .unwrap();
+    for case in fixture["cases"].as_array().unwrap() {
+        let name = case["name"].as_str().unwrap();
+        let parser = parser(case["listing"].as_str().unwrap());
+        for input in case["reject"].as_array().unwrap() {
+            assert!(parse(&parser, input.as_str().unwrap()).is_none(), "{name}");
+        }
+        let input = case["source"].as_str().unwrap();
+        let tree = parse(&parser, input).unwrap_or_else(|| panic!("{name}: {input:?}"));
+        assert_eq!(tree.render(), case["tree"].as_str().unwrap(), "{name}");
+        assert_eq!(rebuilt(&tree), input, "{name}");
+        let actual: Vec<Value> = leaves(&tree)
+            .into_iter()
+            .map(|leaf| match leaf {
+                SyntaxTree::Token {
+                    kind,
+                    start,
+                    end,
+                    trivia,
+                    text: value,
+                    ..
+                } => json!([kind, start, end, trivia, text(value)]),
+                other => panic!("{name}: unexpected accepted leaf {other:?}"),
+            })
+            .collect();
+        assert_eq!(Value::Array(actual), case["tokens"], "{name}");
+    }
+}
+
+#[test]
+fn make_continuation_extras_preserve_the_original_oracle_rows() {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/native-grammars/make.json"
+    ))
+    .unwrap();
+    let input = "target: foo \\\n\tbar | baz \\\nfoobar\n";
+    let case = fixture["matches"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["source"].as_str() == Some(input))
+        .expect("the original Make CI source remains present");
+    let (expected, recovers) = oracle_rows(&tree_sitter_make::LANGUAGE.into(), input);
+    assert!(!recovers);
+    assert_eq!(Value::Array(expected), case["rows"]);
+    let tree = parse(
+        &parser(include_str!("../../../parity/grammars/native/make.lino")),
+        input,
+    )
+    .expect("the continued prerequisite list is accepted");
+    assert_eq!(
+        Value::Array(Rows::new(&fixture).rows(&tree, input)),
+        case["rows"]
+    );
+    assert_eq!(rebuilt(&tree), input);
+    let continuations: Vec<_> = leaves(&tree)
+        .into_iter()
+        .filter_map(|leaf| match leaf {
+            SyntaxTree::Token {
+                kind,
+                start,
+                end,
+                trivia,
+                text: value,
+                ..
+            } if text(value) == "\\\n" => Some((kind.clone(), *start, *end, *trivia)),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        continuations,
+        vec![(None, 12, 14, true), (None, 25, 27, true)]
+    );
+}
+
+#[test]
+fn pascal_roots_preserve_leading_separators_and_independent_syntax_spans() {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/native-grammars/pascal.json"
+    ))
+    .unwrap();
+    assert_eq!(fixture["rootIncludesLeadingTrivia"], true);
+    let parser = parser(include_str!("../../../parity/grammars/native/pascal.lino"));
+    for input in [
+        "\nvar x: Integer;",
+        "\r\nvar x: Integer;",
+        " \t\nvar x: Integer;",
+        "var x: Integer;",
+    ] {
+        let (expected, recovers) = oracle_rows(&tree_sitter_pascal::LANGUAGE.into(), input);
+        assert!(!recovers);
+        let tree = parse(&parser, input).expect("the leading separator source is accepted");
+        assert_eq!(
+            Rows::new(&fixture).rows(&tree, input),
+            expected,
+            "{input:?}"
+        );
+        assert_eq!(tree.start(), 0);
+        assert_eq!(expected[0][4], 0);
+        assert_eq!(rebuilt(&tree), input);
+    }
+}

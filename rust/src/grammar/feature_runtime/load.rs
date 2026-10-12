@@ -789,6 +789,15 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
                 _ => break,
             }
         }
+        // Anonymous terminal extras are separators. A referenced extra
+        // still keeps its source identity and declared alias after lexing.
+        if !matches!(source, Expr::Ref(_))
+            && projection_name
+                .as_ref()
+                .is_some_and(|name| name.starts_with('\''))
+        {
+            projection_name = None;
+        }
         let kind = match source {
             Expr::Ref(Target::Rule(index)) => Some(Arc::from(instances.items[*index].0.as_str())),
             Expr::Ref(Target::External(name)) => Some(name.clone()),
