@@ -55,6 +55,17 @@ console.log(label({ name: '' }));
 console.log(label({ name: 'name' }));`);
 });
 
+test('optional JSDoc parameters preserve omitted arguments and the source default', () => {
+  assertSameOutput(`/** @param {number} [count] @returns {number} */
+function optional(count) { return count ?? 1; }
+/** @param {number} [count=1] @returns {number} */
+function defaulted(count = 1) { return count; }
+console.log(optional());
+console.log(optional(0));
+console.log(defaulted());
+console.log(defaulted(0));`);
+});
+
 test('record spreads infer their full input shape from callers and keep later overrides', () => {
   assertSameOutput(`function entry(name, count) { return { name, count }; }
 function updated(item) { return { ...item, count: 2 }; }
