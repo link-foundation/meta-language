@@ -24,6 +24,7 @@ test('structural type identity keeps field names, element types and distinct abs
   assert.equal(sameType(first, reordered), true);
   assert.equal(sameType(first, record([{ name: 'name', type: STRING }])), false);
   assert.equal(sameType(option(STRING, 'null'), option(STRING, 'undefined')), false);
+  assert.equal(sameType(option(option(STRING, 'null'), 'undefined'), option(STRING, 'both')), true);
   assert.equal(sameType(tuple([STRING, FLOAT]), tuple([FLOAT, STRING])), false);
   assert.equal(sameType(map(STRING, FLOAT), map(FLOAT, STRING)), false);
   assert.equal(sameType(set(STRING), set(FLOAT)), false);
@@ -40,6 +41,18 @@ console.log(absent(false) === undefined);`;
   assert.equal(fn.ret.kind, 'option');
   assert.equal(fn.ret.absence, 'both');
   assertSameOutput(source);
+});
+
+test('nullish coalescing infers optional callers and evaluates the fallback only on absence', () => {
+  assertSameOutput(`function choose(value) { return value ?? fallback(); }
+function fallback() { console.log('fallback'); return 'value'; }
+console.log(choose(''));
+console.log(choose(null));`);
+  assertSameOutput(`/** @param {{name: string}|null} item @returns {string} */
+function label(item) { return item?.name ?? 'default'; }
+console.log(label(null));
+console.log(label({ name: '' }));
+console.log(label({ name: 'name' }));`);
 });
 
 test('record spreads infer their full input shape from callers and keep later overrides', () => {
@@ -94,4 +107,20 @@ test('function JSDoc accepts named arrow parameters and nested callable results'
 function apply(test, name) { return test(name)(2); }`;
   const fn = parseJavaScript(source).items[0];
   assert.deepEqual(fn.params[0].type, { kind: 'function', params: [STRING], ret: { kind: 'function', params: [FLOAT], ret: BOOL } });
+});
+
+test('named function callbacks retain the same parameter constraints as closures', () => {
+  assertSameOutput(`function isLong(text) { return text.length > 2; }
+function selected(items) { return items.filter(isLong).join(':'); }
+console.log(selected(['a', 'long']));`);
+});
+
+test('readonly collection construction keeps Map insertion order and Set deduplication', () => {
+  assertSameOutput(`function keys() {
+  const values = new Map([['second', 2], ['first', 1], ['second', 3]]);
+  return Array.from(values.keys()).join(':');
+}
+function count() { const values = new Set([1, 1, 2]); return values.size; }
+console.log(keys());
+console.log(count());`);
 });

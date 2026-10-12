@@ -28,6 +28,9 @@ export function array(element) {
 
 /** Absence keeps the distinction between JavaScript null and undefined. */
 export function option(element, absence = 'both') {
+  if (element.kind === 'option') {
+    return option(element.element, absence === (element.absence ?? 'both') ? absence : 'both');
+  }
   return Object.freeze({ kind: 'option', element, absence });
 }
 
@@ -60,8 +63,10 @@ export function typeKey(type) {
       return `data:${type.name}`;
     case 'array':
       return `array:${typeKey(type.element)}`;
-    case 'option':
-      return `option:${type.absence ?? 'both'}:${typeKey(type.element)}`;
+    case 'option': {
+      const normalized = option(type.element, type.absence ?? 'both');
+      return `option:${normalized.absence}:${typeKey(normalized.element)}`;
+    }
     case 'tuple':
       return `tuple:[${type.elements.map(typeKey).join(',')}]`;
     case 'record':

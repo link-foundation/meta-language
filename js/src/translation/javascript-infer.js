@@ -8,7 +8,7 @@
 
 import { typeError } from './diagnostics.js';
 import { acceptArgumentCount } from './frontend-rules.js';
-import { BOOL, FLOAT, INT, STRING, UNIT } from './types.js';
+import { BOOL, FLOAT, INT, STRING, UNIT, option } from './types.js';
 
 const ROOT = 'crate';
 const LOGICAL = new Set(['and', 'or']);
@@ -36,7 +36,7 @@ function collectFunctions(items, path, into) {
 function hasStructuralInference(node) {
   if (!node || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(hasStructuralInference);
-  if (['none', 'coalesce', 'optionalField', 'record', 'lambda', 'method', 'map', 'set', 'stringPoints'].includes(node.k)) return true;
+  if (['none', 'coalesce', 'optionalField', 'record', 'lambda', 'method', 'map', 'set', 'arrayFrom', 'arrayIsArray', 'stringPoints', 'functionValue'].includes(node.k)) return true;
   if (['option', 'tuple', 'record', 'map', 'set', 'function'].includes(node.kind)) return true;
   return Object.entries(node).some(([key, value]) => key !== 'span' && hasStructuralInference(value));
 }
@@ -62,6 +62,8 @@ class Inference {
     this.methods = [];
     this.coalesces = [];
     this.recordSpreads = [];
+    this.collections = new Map();
+    this.iterables = [];
   }
 
   fresh(bigint = false) {
@@ -238,6 +240,7 @@ class Inference {
     for (const [field, term] of this.fieldTerms) field.type = this.surface(term, field.span);
     for (const [node, term] of this.emptyArrays) node.element = this.surface(term, node.span);
     for (const [node, term] of this.records) node.type = this.surface(term, node.span);
+    for (const [node, term] of this.collections) node.type = this.surface(term, node.span);
     for (const [node, term] of this.lambdas) {
       node.params.forEach((param, index) => { if (!param.type) param.type = this.surface(term.params[index], param.span ?? node.span); });
       node.ret = this.surface(term.ret, node.span);
@@ -273,6 +276,17 @@ class Inference {
         this.coalesces.splice(this.coalesces.indexOf(constraint), 1);
         progress = true;
       }
+      for (const constraint of [...this.iterables]) {
+        const object = this.resolve(constraint.object);
+        const element = object.kind === 'string' ? STRING
+          : object.kind === 'array' || object.kind === 'set' ? object.element
+          : object.kind === 'map' ? { kind: 'tuple', elements: [object.key, object.value] } : null;
+        if (!element) continue;
+        if (constraint.mapper) this.callback(constraint.mapper, [element, FLOAT], constraint.result.element, constraint.where);
+        else this.unify(constraint.result.element, element, constraint.where);
+        this.iterables.splice(this.iterables.indexOf(constraint), 1);
+        progress = true;
+      }
       for (const constraint of [...this.recordSpreads]) {
         if (constraint.entries.some((entry) => entry.spread && this.resolve(entry.type).kind === 'var')) continue;
         const fields = new Map();
@@ -304,6 +318,13 @@ class Inference {
         const coalesced = this.coalesces.shift();
         this.unify(coalesced.left, { kind: 'option', element: coalesced.right, absence: 'both' }, coalesced.where);
         progress = true;
+      }
+      if (!progress && this.iterables.length) {
+        const iterable = this.iterables.find((constraint) => this.resolve(constraint.object).kind === 'var');
+        if (iterable) {
+          this.unify(iterable.object, { kind: 'array', element: this.fresh() }, iterable.where);
+          progress = true;
+        }
       }
       if (!progress && this.plus.length) {
         this.plusStep(this.plus.shift(), true);
@@ -363,7 +384,8 @@ class Inference {
     if (type.kind === 'var') return this.bigints.has(type.id) ? INT : FLOAT;
     if (type.kind === 'data') return { kind: 'named', path: [ROOT, type.name], span: where };
     if (type.kind === 'array') return { kind: 'array', element: this.surface(type.element, where) };
-    if (type.kind === 'option' || type.kind === 'set') return { ...type, element: this.surface(type.element, where) };
+    if (type.kind === 'option') return option(this.surface(type.element, where), type.absence ?? 'both');
+    if (type.kind === 'set') return { ...type, element: this.surface(type.element, where) };
     if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.surface(element, where)) };
     if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.surface(field.type, where) })) };
     if (type.kind === 'map') return { ...type, key: this.surface(type.key, where), value: this.surface(type.value, where) };
@@ -399,6 +421,10 @@ class Inference {
       case 'name': {
         if (node.path.length === 1 && env.has(node.path[0])) return env.get(node.path[0]);
         return this.call(node.path, [], env, node.span);
+      }
+      case 'functionValue': {
+        const signature = this.signature(node.path);
+        return signature ? { kind: 'function', params: signature.params, ret: signature.ret } : this.fresh();
       }
       case 'app': {
         const local = node.fn.k === 'name' && node.fn.path.length === 1 ? env.get(node.fn.path[0]) : null;
@@ -511,14 +537,18 @@ class Inference {
       case 'set': {
         const element = expected?.kind === 'set' ? expected.element : this.fresh();
         if (node.items) this.unify(this.expr(node.items, env, { kind: 'array', element }), { kind: 'array', element }, node.span);
-        return { kind: 'set', element };
+        const term = { kind: 'set', element };
+        this.collections.set(node, term);
+        return term;
       }
       case 'map': {
         const key = expected?.kind === 'map' ? expected.key : this.fresh();
         const value = expected?.kind === 'map' ? expected.value : this.fresh();
         const pair = { kind: 'tuple', elements: [key, value] };
         if (node.entries) this.unify(this.expr(node.entries, env, { kind: 'array', element: pair }), { kind: 'array', element: pair }, node.span);
-        return { kind: 'map', key, value };
+        const term = { kind: 'map', key, value };
+        this.collections.set(node, term);
+        return term;
       }
       case 'method': {
         const object = this.expr(node.object, env);
@@ -530,6 +560,16 @@ class Inference {
       case 'stringPoints':
         this.unify(this.expr(node.object, env), STRING, node.span);
         return { kind: 'array', element: STRING };
+      case 'arrayFrom': {
+        const args = node.args.map((arg) => this.expr(arg, env));
+        const result = { kind: 'array', element: expected?.kind === 'array' ? expected.element : this.fresh() };
+        if (args[0]) this.iterables.push({ object: args[0], mapper: args[1], result, where: node.span });
+        this.collections.set(node, result);
+        return result;
+      }
+      case 'arrayIsArray':
+        this.expr(node.arg, env);
+        return BOOL;
       case 'math':
         // Math takes Numbers: an argument of no known type is one, and the checker refuses any other.
         for (const item of node.args) {
@@ -556,7 +596,11 @@ class Inference {
     const signature = this.signature(path);
     const argTypes = args.map((arg, index) => this.expr(arg, env, signature?.params[index]));
     if (!signature || !acceptArgumentCount(signature.defaults, args.length)) return this.fresh();
-    argTypes.forEach((type, index) => this.unify(type, signature.params[index], args[index].span ?? where));
+    argTypes.forEach((type, index) => {
+      const param = signature.params[index];
+      this.unify(type, param, args[index].span ?? where);
+      if (param.kind === 'var' && this.resolve(type).kind === 'option') this.bindings[param.id] = this.resolve(type);
+    });
     return signature.ret;
   }
 
@@ -673,20 +717,28 @@ class Inference {
     if (receiver.kind === 'var') {
       if (['map', 'flatMap', 'filter', 'find', 'findIndex', 'some', 'every', 'reduce', 'join'].includes(op)) {
         this.unify(object, { kind: 'array', element: this.fresh() }, where);
-      } else if (['split', 'trim', 'trimStart', 'trimEnd', 'toLowerCase', 'toUpperCase', 'startsWith', 'endsWith', 'charAt', 'charCodeAt', 'substring', 'repeat', 'replace', 'replaceAll'].includes(op)) {
+      } else if (['split', 'trim', 'trimStart', 'trimEnd', 'toLowerCase', 'toUpperCase', 'startsWith', 'endsWith', 'charAt', 'charCodeAt', 'codePointAt', 'substring', 'repeat', 'padStart', 'padEnd', 'replace', 'replaceAll'].includes(op)) {
         this.unify(object, STRING, where);
       } else return false;
       receiver = this.resolve(object);
     }
     if (receiver.kind === 'string') {
+      if (['slice', 'substring', 'repeat', 'charAt', 'charCodeAt', 'codePointAt', 'padStart', 'padEnd'].includes(op) && args[0]) this.unify(args[0], FLOAT, where);
+      if (['slice', 'substring'].includes(op) && args[1]) this.unify(args[1], FLOAT, where);
+      if (['padStart', 'padEnd'].includes(op) && args[1]) this.unify(args[1], STRING, where);
       if (['includes', 'startsWith', 'endsWith'].includes(op)) {
         if (args[0]) this.unify(args[0], STRING, where);
+        if (args[1]) this.unify(args[1], FLOAT, where);
         this.unify(result, BOOL, where);
       } else if (['indexOf', 'lastIndexOf', 'charCodeAt'].includes(op)) {
         if (op !== 'charCodeAt' && args[0]) this.unify(args[0], STRING, where);
+        if (args[1]) this.unify(args[1], FLOAT, where);
         this.unify(result, FLOAT, where);
+      } else if (op === 'codePointAt') {
+        this.unify(result, { kind: 'option', element: FLOAT, absence: 'undefined' }, where);
       } else if (op === 'split') {
         if (args[0]) this.unify(args[0], STRING, where);
+        if (args[1]) this.unify(args[1], FLOAT, where);
         this.unify(result, { kind: 'array', element: STRING }, where);
       } else this.unify(result, STRING, where);
       return true;
@@ -711,7 +763,14 @@ class Inference {
         this.unify(result, STRING, where);
       } else if (['includes', 'indexOf', 'lastIndexOf'].includes(op)) {
         if (args[0]) this.unify(args[0], receiver.element, where);
+        if (args[1]) this.unify(args[1], FLOAT, where);
         this.unify(result, op === 'includes' ? BOOL : FLOAT, where);
+      } else if (op === 'at') {
+        if (args[0]) this.unify(args[0], FLOAT, where);
+        this.unify(result, { kind: 'option', element: receiver.element, absence: 'undefined' }, where);
+      } else if (op === 'slice') {
+        for (const arg of args) this.unify(arg, FLOAT, where);
+        this.unify(result, receiver, where);
       } else this.unify(result, receiver, where);
       return true;
     }

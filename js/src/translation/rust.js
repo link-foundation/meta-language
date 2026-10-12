@@ -10,7 +10,7 @@ import { readStringMapOperation, readStringTestOperation } from './frontend-rule
 import { rustMacroMessage } from './aborts.js';
 import { TranslationError, unsupported } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
-import { BOOL, STRING, UNIT, rustFixedType } from './types.js';
+import { BOOL, FLOAT, STRING, UNIT, rustFixedType } from './types.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -249,7 +249,8 @@ class RustParser {
     if (fixed) return fixed;
     if (name === 'bool') return BOOL;
     if (name === 'String') return STRING;
-    if (['str', 'char', 'f32', 'f64', 'Vec', 'Option', 'Result', 'Rc', 'Arc', 'HashMap', 'Self'].includes(name)) {
+    if (name === 'f64') return FLOAT;
+    if (['str', 'char', 'f32', 'Vec', 'Option', 'Result', 'Rc', 'Arc', 'HashMap', 'Self'].includes(name)) {
       throw unsupported(`Rust type ${name}`, 'outside the portable core', span(token, token));
     }
     return { kind: 'named', path: this.resolve(segments, this.modulePath), span: span(token, token) };
@@ -603,6 +604,11 @@ class RustParser {
     const expect = (count) => {
       if (args.length !== count) throw new TranslationError('type', `${method.value} expects ${count} arguments but got ${args.length}`, range);
     };
+    const mapOperation = readStringMapOperation('Rust', method.value);
+    if (mapOperation) {
+      expect(0);
+      return { k: 'stringMap', op: mapOperation, object: receiver, span: range };
+    }
     switch (method.value) {
       case 'starts_with':
       case 'ends_with':
@@ -637,10 +643,10 @@ class RustParser {
       c.next();
       const node = { k: 'num', value: token.value, span: span(token, token) };
       if (token.suffix) {
-        const type = rustFixedType(token.suffix);
-        if (!type) throw unsupported(`literal suffix ${token.suffix}`, 'only integer literals are portable', span(token, token));
+        const type = token.suffix === 'f64' ? FLOAT : rustFixedType(token.suffix);
+        if (!type) throw unsupported(`literal suffix ${token.suffix}`, 'portable numeric literals are integers and IEEE-754 binary64 values', span(token, token));
         node.type = type;
-      }
+      } else if (token.floating) node.type = FLOAT;
       return node;
     }
     if (token.kind === 'string') {
