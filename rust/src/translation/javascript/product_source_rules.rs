@@ -6,7 +6,11 @@
     unreachable_patterns,
     non_snake_case,
     non_camel_case_types,
-    invalid_nan_comparisons
+    invalid_nan_comparisons,
+    clippy::float_cmp,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
 )]
 
 /// The Math functions that Rust's f64 methods do not share with JavaScript.
@@ -77,7 +81,7 @@ pub mod ml_math {
     }
 
     pub fn is_safe_integer(x: f64) -> bool {
-        is_integer(x) && x.abs() <= 9007199254740991.0
+        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0
     }
 }
 
@@ -97,7 +101,7 @@ pub mod ml_array {
 
     /// The index a Number names: a non-negative integer, -0 included.
     pub fn number_index(index: f64) -> Option<usize> {
-        if index >= 0.0 && index.fract() == 0.0 && index < 9007199254740992.0 {
+        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
             Some(index as usize)
         } else {
             None
@@ -262,6 +266,8 @@ pub enum MlClosure1Loop2Result {
     MlClosure1Loop2Done(bool, bool, bool),
 }
 
+// Checked closure lowering passes its captured state explicitly.
+#[allow(clippy::too_many_arguments)]
 pub fn ml_closure1_loop2(
     mut targets: Vec<f64>,
     mut previous: Vec<bool>,

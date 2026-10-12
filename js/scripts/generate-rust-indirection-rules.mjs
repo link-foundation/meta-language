@@ -49,6 +49,28 @@ if (process.argv.includes('--update-styles')) {
     const to = '(operation == "eq" || operation == "ne") && ((left_direct_string && right_borrowed_slice) || (right_direct_string && left_borrowed_slice))';
     if (from !== to) actions.push({ op: 'replace', field: 'source', from, to });
   }
+  const intermediate = new DecoratorSet([{ id: 'rust-indirection-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).decorate('emitter', { format: 'Rust', source: raw }).source;
+  const sourceClassifier = /^pub fn read_rust_source_expression_origin\([\s\S]*?^\}/mu.exec(intermediate)?.[0];
+  if (!sourceClassifier) throw new Error('generated source origin classifier is absent');
+  const normalizedClassifier = sourceClassifier.split('\n').map(line => {
+    const condition = /^(\s*if )(.+)( \{)$/u.exec(line);
+    if (!condition) return line;
+    let expression = condition[2];
+    for (;;) {
+      if (!expression.startsWith('(') || !expression.endsWith(')')) break;
+      let depth = 0;
+      let closing = -1;
+      for (let index = 0; index < expression.length; index += 1) {
+        if (expression[index] === '(') depth += 1;
+        if (expression[index] === ')') depth -= 1;
+        if (depth === 0) { closing = index; break; }
+      }
+      if (closing !== expression.length - 1) break;
+      expression = expression.slice(1, -1);
+    }
+    return condition[1] + expression + condition[3];
+  }).join('\n');
+  if (normalizedClassifier !== sourceClassifier) actions.push({ op: 'replace', field: 'source', from: sourceClassifier, to: normalizedClassifier });
   writeFileSync(style, new DecoratorSet([{ id: 'rust-indirection-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
 }
 const decorated = DecoratorSet.fromLino(readFileSync(style, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;

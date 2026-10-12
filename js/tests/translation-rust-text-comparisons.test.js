@@ -5,6 +5,10 @@ import { runInNewContext } from 'node:vm';
 
 import { translateProgram } from '../src/program-translation.js';
 import { selfTranslate } from '../src/self-translation.js';
+import { DecoratorSet } from '../src/decorators.js';
+import { checkProgram } from '../src/translation/check.js';
+import { emitRust } from '../src/translation/emit-rust.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
 import { acceptRustSourceTextEquality } from '../src/translation/rust-indirection-rules.js';
 
 test('owned String equality against a string slice retains valid original declaration and outcomes', () => {
@@ -63,4 +67,22 @@ test('shared equality decision requires the actual direct String and borrowed sl
     assert.equal(acceptRustSourceTextEquality(operation, false, false, true, true), false);
   }
   for (const operation of ['lt', 'le', 'add', 'and']) assert.equal(acceptRustSourceTextEquality(operation, true, false, false, true), false);
+});
+
+test('source classifier parenthesis style is scoped to the exact generated classifier', () => {
+  const source = readFileSync(new URL('../src/translation/rust-indirection-rules.js', import.meta.url), 'utf8');
+  const raw = emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
+  const styles = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/rust-indirection-rules-decorators.lino', import.meta.url), 'utf8'));
+  const normalized = styles.decorators.flatMap(decorator => decorator.actions).filter(action => action.from.startsWith('pub fn read_rust_source_expression_origin('));
+  assert.equal(normalized.length, 1);
+  assert.equal(normalized[0].op, 'replace');
+  assert.equal(normalized[0].field, 'source');
+  assert.ok(normalized[0].to.startsWith('pub fn read_rust_source_expression_origin('));
+  assert.equal(normalized[0].from.replace(/[()]/gu, ''), normalized[0].to.replace(/[()]/gu, ''));
+  assert.match(normalized[0].to, /kind == "toString" && \(operation == "from"\)/u);
+  const adapted = styles.decorate('emitter', { format: 'Rust', source: raw }).source;
+  assert.doesNotMatch(adapted, /^\s*if \(kind == "toString"/mu);
+  const generated = readFileSync(new URL('../../rust/src/translation/rust/indirection_rules.rs', import.meta.url), 'utf8');
+  assert.match(generated, /if kind == "toString" && \(operation == "from"\)/u);
+  assert.doesNotMatch(generated, /clippy::(?:all|pedantic|nursery)\b/u);
 });

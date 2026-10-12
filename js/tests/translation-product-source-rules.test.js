@@ -64,7 +64,8 @@ test('checked semantic emission retains source constraint outcomes without resto
 
 test('native solver keeps emitted helper dependencies and relocates exact generated declarations', () => {
   const emitted = emitRust(checkProgram(parseJavaScript(source, { referenceSemantics: false })));
-  const raw = [...emitted.preludes, ...emitted.definitions].join('\n\n');
+  const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
+  const raw = [header, ...emitted.preludes, ...emitted.definitions].join('\n\n');
   assert.match(raw, /pub mod ml_math/u);
   assert.match(raw, /pub mod ml_array/u);
   assert.match(raw, /pub enum MlClosure1Loop2Result/u);
@@ -77,6 +78,27 @@ test('native solver keeps emitted helper dependencies and relocates exact genera
   for (const decorator of style.decorators) {
     for (const action of decorator.actions) {
       assert.equal(action.op, 'replace');
+      if (action.from === header) {
+        assert.equal(action.to, header.replace(')]', ', clippy::float_cmp, clippy::cast_precision_loss, clippy::cast_possible_truncation, clippy::cast_sign_loss)]'));
+        assert.match(raw, /pub mod ml_math/u);
+        assert.match(raw, /pub mod ml_array/u);
+        assert.match(raw, /Some\(index as usize\)/u);
+        continue;
+      }
+      if (action.from.startsWith('pub fn ')) {
+        const name = action.from.slice('pub fn '.length);
+        const parameters = new RegExp(`^pub fn ${name}\\(([^)]*)\\)`, 'mu').exec(raw)?.[1];
+        assert.ok(parameters);
+        assert.ok(parameters.split(',').length > 7);
+        assert.equal(action.to, `// Checked closure lowering passes its captured state explicitly.\n#[allow(clippy::too_many_arguments)]\npub fn ${name}`);
+        continue;
+      }
+      if (/^\d+\.0$/u.test(action.from)) {
+        assert.ok(raw.includes(action.from));
+        assert.ok(['9007199254740991.0', '9007199254740992.0'].includes(action.from));
+        assert.equal(action.to.replaceAll('_', ''), action.from);
+        continue;
+      }
       const name = action.from.slice('crate::'.length);
       assert.match(raw, new RegExp(`^pub (?:fn|enum|struct|mod) ${name}\\b`, 'mu'));
       assert.equal(action.to, `self::${name}`);
@@ -87,5 +109,10 @@ test('native solver keeps emitted helper dependencies and relocates exact genera
   assert.match(generated, /pub fn solve_product_source_facts/u);
   assert.match(generated, /pub mod ml_math/u);
   assert.match(generated, /pub mod ml_array/u);
+  for (const allowance of ['float_cmp', 'cast_precision_loss', 'cast_possible_truncation', 'cast_sign_loss']) assert.match(generated, new RegExp(`clippy::${allowance}\\b`, 'u'));
+  assert.match(generated, /#\[allow\(clippy::too_many_arguments\)\]\npub fn ml_closure1_loop2/u);
+  assert.doesNotMatch(generated, /clippy::(?:all|pedantic|nursery)\b/u);
+  assert.match(generated, /9_007_199_254_740_991\.0/u);
+  assert.match(generated, /9_007_199_254_740_992\.0/u);
   assert.doesNotMatch(generated, /\bcrate::/u);
 });

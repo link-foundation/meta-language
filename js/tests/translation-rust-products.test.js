@@ -154,4 +154,6 @@ test('shared source product rules separate scalar Copy evidence and decimal inde
   const generated = readFileSync(new URL('../../rust/src/translation/rust/product_rules.rs', import.meta.url), 'utf8');
   assert.match(generated, /Generated from rust-product-rules\.js by the checked translator/u);
   assert.match(generated, /pub fn accept_rust_tuple_index_spelling\(text: &str\)/u);
+  assert.match(generated, /text\.starts_with\('0'\)/u);
+  assert.doesNotMatch(generated, /text\.starts_with\("0"\)/u);
 });

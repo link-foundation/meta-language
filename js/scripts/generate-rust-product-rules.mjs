@@ -28,10 +28,11 @@ if (process.argv.includes('--update-styles')) {
   actions.push({ op: 'replace', field: 'source', from: '.length()', to: '.len()' });
   for (const value of ['0', '1']) actions.push({ op: 'replace', field: 'source', from: `${value}f64`, to: value });
   actions.push({ op: 'replace', field: 'source', from: '.starts_with(&"0")', to: '.starts_with("0")' });
+  actions.push({ op: 'replace', field: 'source', from: '.starts_with("0")', to: ".starts_with('0')" });
   for (let digit = 0; digit <= 9; digit += 1) actions.push({ op: 'replace', field: 'source', from: `.replace(&"${digit}", &"", true)`, to: `.replace("${digit}", "")` });
   const nativeBodies = [
     '!indirected && (kind == "bool" || kind == "float" || kind == "fixed" || kind == "unit" || (kind == "tuple" && children_accepted))',
-    'if text.is_empty() || (text.len() > 1 && text.starts_with("0")) {',
+    "if text.is_empty() || (text.len() > 1 && text.starts_with('0')) {",
     `text.replace([${Array.from({ length: 10 }, (_, digit) => `'${digit}'`).join(', ')}], "").is_empty()`,
   ];
   const intermediate = new DecoratorSet([{ id: 'rust-product-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).decorate('emitter', { format: 'Rust', source: raw }).source;

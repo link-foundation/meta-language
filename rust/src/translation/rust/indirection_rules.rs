@@ -35,7 +35,7 @@ pub fn read_rust_source_expression_origin(kind: &str, operation: &str) -> String
     if kind == "abort" {
         String::from("diverging")
     } else {
-        if (kind == "toString" && (operation == "from")) {
+        if kind == "toString" && (operation == "from") {
             String::from("unboxed-conversion")
         } else {
             if kind == "cast" {
@@ -61,12 +61,11 @@ pub fn read_rust_source_expression_origin(kind: &str, operation: &str) -> String
                             }
                         }
                     } else {
-                        if (((kind == "num" || kind == "bool") || kind == "unit") || kind == "str")
-                        {
+                        if ((kind == "num" || kind == "bool") || kind == "unit") || kind == "str" {
                             String::from("value")
                         } else {
-                            if (((kind == "toString" || kind == "show") || kind == "stringMap")
-                                || kind == "stringTest")
+                            if ((kind == "toString" || kind == "show") || kind == "stringMap")
+                                || kind == "stringTest"
                             {
                                 String::from("derived-value")
                             } else {
