@@ -3,11 +3,16 @@
 //! This adapter validates record ownership before removing namespace prefixes
 //! and delegates all value semantics to the shared structured-data codec.
 
-use std::collections::HashSet;
+use std::collections::hash_map::RandomState;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
+use std::hash::{BuildHasher, Hasher};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 use crate::structured_data_link_rules::{
     accept_structured_data_record_field, accept_structured_data_record_shape,
@@ -17,6 +22,7 @@ use crate::structured_data_links::{
     encode_structured_data_links, encode_structured_data_links_ordered,
     read_structured_data_lino_ordered_with_limits, read_structured_data_lino_with_limits,
 };
+use crate::{LinkId, LinkNetwork};
 
 fn fail(message: &str) -> String {
     format!("structured data record: {message}")
@@ -34,6 +40,39 @@ fn accept_record_namespace(namespace: &str) -> bool {
         })
         && (b'1'..=b'8').contains(&bytes[14])
         && matches!(bytes[19], b'8' | b'9' | b'a' | b'b')
+}
+
+fn create_record_namespace() -> String {
+    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
+    let sequence = SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let mut seed = RandomState::new().build_hasher();
+    seed.write_u64(sequence);
+    let mut digest = Sha256::new();
+    digest.update(seed.finish().to_le_bytes());
+    digest.update(std::process::id().to_le_bytes());
+    digest.update(sequence.to_le_bytes());
+    digest.update(
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+            .to_le_bytes(),
+    );
+    let digest = digest.finalize();
+    let mut bytes = [0_u8; 16];
+    bytes.copy_from_slice(&digest[..16]);
+    // Version 8 declares this application-selected namespace construction;
+    // the variant retains the RFC UUID layout. Readers reject collisions.
+    bytes[6] = (bytes[6] & 0x0f) | 0x80;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    let mut namespace = String::with_capacity(36);
+    for (index, byte) in bytes.iter().enumerate() {
+        if matches!(index, 4 | 6 | 8 | 10) {
+            namespace.push('-');
+        }
+        write!(namespace, "{byte:02x}").expect("writing a string succeeds");
+    }
+    namespace
 }
 
 fn encode_record_frame(graph: &StructuredDataLinks, namespace: &str) -> Result<String, String> {
@@ -59,12 +98,15 @@ fn encode_record_frame(graph: &StructuredDataLinks, namespace: &str) -> Result<S
         output.push_str(metadata);
     }
     output.push_str(" (meta: (t: semantic) (n: 1) (term: structured%20data%20record) (def: 1) (lang: meta-language%20structured%20data)))\n");
+    if output.len() > StructuredDataLinksLimits::default().byte_limit {
+        return Err(fail("serialized frame byte resource limit exceeded"));
+    }
     Ok(output)
 }
 
 /// Encode a JSON-compatible observation with a fresh globally unique namespace.
 pub fn structured_data_record_to_lino(value: &Value) -> Result<String, String> {
-    structured_data_record_to_lino_with_namespace(value, &uuid::Uuid::new_v4().to_string())
+    structured_data_record_to_lino_with_namespace(value, &create_record_namespace())
 }
 
 /// Encode an observation with an explicitly selected record namespace.
@@ -79,7 +121,7 @@ pub fn structured_data_record_to_lino_with_namespace(
 pub fn structured_data_record_to_lino_ordered(
     value: &StructuredDataValue,
 ) -> Result<String, String> {
-    structured_data_record_to_lino_ordered_with_namespace(value, &uuid::Uuid::new_v4().to_string())
+    structured_data_record_to_lino_ordered_with_namespace(value, &create_record_namespace())
 }
 
 /// Encode ordered data with a reproducible explicit namespace.
@@ -142,7 +184,7 @@ fn read_local_frame(
     frame: &LiNo<String>,
     namespaces: &mut HashSet<String>,
     limits: StructuredDataLinksLimits,
-) -> Result<String, String> {
+) -> Result<(String, LinkId), String> {
     let LiNo::Link {
         id: Some(identity),
         values,
@@ -224,7 +266,7 @@ fn read_local_frame(
                 };
                 label == "meta" && values.iter().any(|field| {
                     matches!(field, LiNo::Link { id: Some(label), values }
-                        if label == "term" && values.as_slice() == [LiNo::Ref("structured%20data".to_owned())])
+                        if label == "term" && matches!(values.as_slice(), [LiNo::Ref(term)] if term == "structured%20data"))
                 })
             });
         }
@@ -244,7 +286,45 @@ fn read_local_frame(
     if !declared_root {
         return Err(fail("frame root is not a declared schema root"));
     }
-    Ok(output)
+    Ok((
+        output,
+        LinkId::from_u64(root.parse().map_err(|_| fail("invalid root identity"))?),
+    ))
+}
+
+fn read_record_graph_cost(
+    network: &LinkNetwork,
+    root: LinkId,
+    limits: StructuredDataLinksLimits,
+) -> Result<(usize, usize), String> {
+    fn visit(
+        network: &LinkNetwork,
+        id: LinkId,
+        depth: usize,
+        limits: StructuredDataLinksLimits,
+        costs: &mut HashMap<LinkId, (usize, usize)>,
+    ) -> Result<(usize, usize), String> {
+        if depth > limits.depth_limit {
+            return Err(fail("depth resource limit exceeded"));
+        }
+        if let Some(cost) = costs.get(&id) {
+            return Ok(*cost);
+        }
+        let link = network.link(id).ok_or_else(|| fail("dangling reference"))?;
+        let mut cost = (1_usize, link.metadata().definition().map_or(0, str::len));
+        for reference in link.references() {
+            let child = visit(network, *reference, depth + 1, limits, costs)?;
+            cost.0 = cost.0.saturating_add(child.0);
+            cost.1 = cost.1.saturating_add(child.1);
+            if cost.0 > limits.node_limit || cost.1 > limits.byte_limit {
+                return Err(fail("expanded data resource limit exceeded"));
+            }
+        }
+        costs.insert(id, cost);
+        Ok(cost)
+    }
+    // The shared decoder has already rejected cycles and malformed graphs.
+    visit(network, root, 0, limits, &mut HashMap::new())
 }
 
 fn read_record_frames<T>(
@@ -264,10 +344,21 @@ fn read_record_frames<T>(
         return Err(fail("record resource limit exceeded"));
     }
     let mut namespaces = HashSet::new();
-    frames
-        .iter()
-        .map(|frame| decode(&read_local_frame(frame, &mut namespaces, limits)?, limits))
-        .collect()
+    let mut records = Vec::new();
+    let mut used = (0_usize, 0_usize);
+    for frame in &frames {
+        let (local, root) = read_local_frame(frame, &mut namespaces, limits)?;
+        let value = decode(&local, limits)?;
+        let network = LinkNetwork::from_lino(&local).map_err(|error| fail(&error.to_string()))?;
+        let cost = read_record_graph_cost(&network, root, limits)?;
+        used.0 = used.0.saturating_add(cost.0);
+        used.1 = used.1.saturating_add(cost.1);
+        if used.0 > limits.node_limit || used.1 > limits.byte_limit {
+            return Err(fail("aggregate record resource limit exceeded"));
+        }
+        records.push(value);
+    }
+    Ok(records)
 }
 
 /// Read a bounded record document as JSON-compatible values.

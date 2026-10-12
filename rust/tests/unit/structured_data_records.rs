@@ -39,6 +39,51 @@ fn javascript_frames_reload_and_serialize_with_identical_inspectable_data() {
         read_structured_data_records(&fresh).unwrap(),
         vec![values[0].clone()]
     );
+    assert_eq!(fresh.as_bytes()[15], b'8');
+    let second_fresh = structured_data_record_to_lino(&values[0]).unwrap();
+    assert_eq!(
+        read_structured_data_records(&(fresh + &second_fresh))
+            .unwrap()
+            .len(),
+        2
+    );
+}
+
+#[test]
+fn eager_records_bound_aggregate_expansion_and_repeated_scalar_bytes() {
+    let first = structured_data_record_to_lino_with_namespace(&json!([0, 0]), FIRST).unwrap();
+    let second = structured_data_record_to_lino_with_namespace(&json!([0, 0]), SECOND).unwrap();
+    let limits = StructuredDataLinksLimits {
+        node_limit: 5,
+        ..Default::default()
+    };
+    assert_eq!(
+        read_structured_data_records_with_limits(&first, limits).unwrap(),
+        vec![json!([0, 0])]
+    );
+    assert!(
+        read_structured_data_records_with_limits(&(first + &second), limits)
+            .unwrap_err()
+            .contains("aggregate")
+    );
+
+    let value = json!(vec!["x".repeat(256); 64]);
+    let first = structured_data_record_to_lino_with_namespace(&value, FIRST).unwrap();
+    let second = structured_data_record_to_lino_with_namespace(&value, SECOND).unwrap();
+    let limits = StructuredDataLinksLimits {
+        byte_limit: 20_000,
+        ..Default::default()
+    };
+    assert!(first.len() + second.len() < limits.byte_limit);
+    assert_eq!(
+        read_structured_data_records_with_limits(&first, limits).unwrap(),
+        vec![value]
+    );
+    assert!(
+        read_structured_data_records_with_limits(&(first + &second), limits)
+            .unwrap_err()
+            .contains("aggregate")
+    );
 }
 
 #[test]
