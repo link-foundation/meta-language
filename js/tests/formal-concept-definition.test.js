@@ -146,6 +146,7 @@ test('shared formal archives preserve primitives, recursive references and check
     assert.equal(proveFormalConceptEquivalence(fixture.definitions[0].archive, rejection.archive), null, rejection.name);
   }
   for (const certificate of fixture.invalidCertificates) assert.equal(verifyFormalConceptEquivalence(fixture.definitions[certificate.first].archive, fixture.definitions[certificate.second].archive, certificate.certificate), false, certificate.name);
+  for (const pair of fixture.negativeEquivalences ?? []) assert.equal(proveFormalConceptEquivalence(fixture.definitions[pair.first].archive, fixture.definitions[pair.second].archive), null, pair.name);
   const assertions = {
     'I195-FORMAL-CONCEPT-DEFINITIONS': ['definitionsAreInspectableLinks', 'foundationalPrimitivesExplicit'],
     'I195-FORMAL-CONCEPT-REFERENCES': ['recursiveConceptReferencesPreserved', 'sharedAndCyclicDefinitionsReloaded', 'definitionAssumptionsPreserved'],
