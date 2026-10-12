@@ -351,7 +351,16 @@ function loadInContext(grammar, context) {
   // rule on a channel other than `default`, each limited to its modes.
   for (const extra of extras) {
     checkExpression(extra, 'an extra');
-    program.trivia.push({ expression: extra, kind: extra.kind === 'ref' ? extra.name : null, modes: null });
+    // The scanner and lexer use the source identity of a labelled extra;
+    // its outer alias changes only the concrete node or token it produces.
+    // Anonymous aliases still identify extras rather than separators.
+    let source = extra;
+    let projectionName = null;
+    while (['alias', 'capture', 'token', 'immediateToken', 'precedence', 'namedPrecedence', 'dynamicPrecedence', 'lexicalPrecedence'].includes(source.kind)) {
+      if (source.kind === 'alias' && projectionName === null) projectionName = source.name;
+      source = source.item;
+    }
+    program.trivia.push({ expression: extra, kind: source.kind === 'ref' ? source.name : projectionName, projectionName, modes: null });
   }
   let index = 0;
   for (const [name, rule] of rules) {

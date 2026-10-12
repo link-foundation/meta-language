@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "aliased external extras retain skipped prefixes and scanner state",
+      "listing": "(grammar (start source))\n(extra (alias hidden_fragment (ref drop)))\n(scanner endings (tokens drop) (operations (if (equal (depth pending) (integer 0)) (then fail)) (while (next (literal %20)) (do (skip (literal %20)))) (consume (literal %C3%A9%F0%9F%98%80)) (pop pending) (emit drop)))\n(rule opening token (literal %5B) (action (push pending (integer 1))))\n(rule source normal (seq (ref opening) (predicate (literal x) (equal (depth pending) (integer 0)))))\n",
+      "source": "[  é😀x",
+      "reject": ["[  éx", "[  é😀é😀x"],
+      "tree": "(source (opening \"[\") ~\" \" ~\" \" ~(hidden_fragment \"é😀\") \"x\")",
+      "extra": {"kind": "hidden_fragment", "start": 3, "end": 9, "text": "é😀"}
+    },
+    {
+      "name": "aliased composite extras retain their fields and child spans",
+      "listing": "(grammar (start document) (matching longest))\n(extra (alias renamed_note (ref note)))\n(extra (literal %20))\n(rule note normal (seq (literal %5B) (capture labeled words (token (literal x))) (literal %5D)))\n(rule document normal (literal z))\n",
+      "source": "[x] z",
+      "reject": ["[y] z"],
+      "tree": "(document ~(renamed_note \"[\" words:\"x\" \"]\") ~\" \" \"z\")",
+      "extra": {"kind": "renamed_note", "start": 0, "end": 3},
+      "field": {"name": "words", "start": 1, "end": 2, "text": "x"}
+    },
+    {
+      "name": "silent extra aliases retain source identity when syntax retakes their token",
+      "listing": "(grammar (start document) (matching longest))\n(extra (alias renamed_break (ref padding)))\n(rule padding silent (literal %0A))\n(rule document normal (seq (token (literal %0A)) (literal x)))\n",
+      "source": "\nx",
+      "reject": ["x"],
+      "tree": "(document \"\\n\" \"x\")"
+    },
+    {
+      "name": "anonymous extra aliases remain distinct from significant anonymous syntax",
+      "listing": "(grammar (start document) (matching longest))\n(extra (alias unnamed_token (ref padding)))\n(rule padding silent (literal %0A))\n(rule document normal (seq (alias unnamed_token (token (literal %3B))) (literal x)))\n",
+      "source": "\n;x",
+      "reject": ["\nx"],
+      "tree": "(document ~(unnamed_token \"\\n\") (unnamed_token \";\") \"x\")",
+      "projection": {"anonymous": ["unnamed_token"]},
+      "rows": [[0, null, "document", 1, 1, 3, ""], [1, null, "x", 0, 2, 3, ""]]
+    }
+  ]
+}

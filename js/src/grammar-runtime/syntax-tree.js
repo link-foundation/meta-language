@@ -16,7 +16,7 @@ function withText(target, bytes, start, end) {
 export function publicTree(node, bytes) {
   switch (node.type) {
     case 'node': {
-      const copy = { type: 'node', kind: node.kind };
+      const copy = { type: 'node', kind: node.projectionName ?? node.kind };
       if (node.field !== undefined) copy.field = node.field;
       if (node.trivia) copy.trivia = true;
       Object.assign(copy, { start: node.start, end: node.end, children: node.children.map((child) => publicTree(child, bytes)) });
@@ -24,7 +24,7 @@ export function publicTree(node, bytes) {
       return copy;
     }
     case 'token': {
-      const copy = { type: 'token', kind: node.kind };
+      const copy = { type: 'token', kind: node.projectionName ?? node.kind };
       if (node.field !== undefined) copy.field = node.field;
       if (node.trivia) copy.trivia = true;
       Object.assign(copy, { start: node.start, end: node.end });

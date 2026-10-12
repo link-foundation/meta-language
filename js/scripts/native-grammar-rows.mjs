@@ -127,7 +127,7 @@ export function nativeRows(tree, source, { hidden = [], anonymous = [], extras =
   const hiddenKinds = new Set(hidden);
   const anonymousKinds = new Set(anonymous);
   const extraKinds = new Set(extras);
-  const invisible = (node) => node.type === 'token' && ((node.trivia && node.kind === null) || hiddenKinds.has(node.kind));
+  const invisible = (node) => node.type === 'token' && ((node.trivia && (node.kind === null || anonymousKinds.has(node.kind))) || hiddenKinds.has(node.kind));
   const trivia = (node) => invisible(node) || node.trivia === true || (node.type === 'node' && extraKinds.has(node.kind));
   const hoist = (node) => {
     if (node.type !== 'node') return [node];
