@@ -4093,6 +4093,433 @@
         "parameter": "parameter",
         "argument": "argument"
       }
+    },
+    "elixir": {
+      "names": {
+        "_quoted_content_i_single": "interpolated_single_quoted_content",
+        "_quoted_content_i_double": "interpolated_double_quoted_content",
+        "_quoted_content_i_heredoc_single": "interpolated_here_document_single_quoted_content",
+        "_quoted_content_i_heredoc_double": "interpolated_here_document_double_quoted_content",
+        "_quoted_content_i_parenthesis": "interpolated_parenthesis_quoted_content",
+        "_quoted_content_i_curly": "interpolated_brace_quoted_content",
+        "_quoted_content_i_square": "interpolated_square_quoted_content",
+        "_quoted_content_i_angle": "interpolated_angle_quoted_content",
+        "_quoted_content_i_bar": "interpolated_bar_quoted_content",
+        "_quoted_content_i_slash": "interpolated_slash_quoted_content",
+        "_quoted_content_single": "single_quoted_content",
+        "_quoted_content_double": "double_quoted_content",
+        "_quoted_content_heredoc_single": "here_document_single_quoted_content",
+        "_quoted_content_heredoc_double": "here_document_double_quoted_content",
+        "_quoted_content_parenthesis": "parenthesis_quoted_content",
+        "_quoted_content_curly": "brace_quoted_content",
+        "_quoted_content_square": "square_quoted_content",
+        "_quoted_content_angle": "angle_quoted_content",
+        "_quoted_content_bar": "bar_quoted_content",
+        "_quoted_content_slash": "slash_quoted_content",
+        "_newline_before_do": "newline_before_block_keyword",
+        "_newline_before_binary_operator": "newline_before_binary_operator",
+        "_newline_before_comment": "newline_before_comment",
+        "_before_unary_op": "unary_operator_boundary",
+        "_not_in": "membership_negation_operator",
+        "_quoted_atom_start": "quoted_atom_start",
+        "_atom": "atom_body",
+        "_keyword": "keyword_body",
+        "boolean": "boolean_value",
+        "_call_arguments_with_parentheses_immediate": "immediate_parenthesized_call_arguments",
+        "_quoted_i_single": "interpolated_single_quoted_expression",
+        "_quoted_i_double": "interpolated_double_quoted_expression",
+        "_quoted_i_heredoc_single": "interpolated_here_document_single_quoted_expression",
+        "_quoted_i_heredoc_double": "interpolated_here_document_double_quoted_expression",
+        "_quoted_i_parenthesis": "interpolated_parenthesis_quoted_expression",
+        "_quoted_i_curly": "interpolated_brace_quoted_expression",
+        "_quoted_i_square": "interpolated_square_quoted_expression",
+        "_quoted_i_angle": "interpolated_angle_quoted_expression",
+        "_quoted_i_bar": "interpolated_bar_quoted_expression",
+        "_quoted_i_slash": "interpolated_slash_quoted_expression",
+        "_quoted_single": "single_quoted_expression",
+        "_quoted_double": "double_quoted_expression",
+        "_quoted_heredoc_single": "here_document_single_quoted_expression",
+        "_quoted_heredoc_double": "here_document_double_quoted_expression",
+        "_quoted_parenthesis": "parenthesis_quoted_expression",
+        "_quoted_curly": "brace_quoted_expression",
+        "_quoted_square": "square_quoted_expression",
+        "_quoted_angle": "angle_quoted_expression",
+        "_quoted_bar": "bar_quoted_expression",
+        "_quoted_slash": "slash_quoted_expression",
+        "charlist": "character_list",
+        "keywords": "keyword_list",
+        "_keywords_with_trailing_separator": "keyword_list_with_trailing_separator",
+        "bitstring": "bit_string",
+        "_nullary_operator": "zero_operand_operator",
+        "_call_without_parentheses": "bare_call",
+        "_call_with_parentheses": "parenthesized_call",
+        "_local_call_without_parentheses": "local_bare_call",
+        "_local_call_with_parentheses": "local_parenthesized_call",
+        "_remote_call_without_parentheses": "remote_bare_call",
+        "_remote_call_with_parentheses": "remote_parenthesized_call",
+        "_call_arguments_with_parentheses": "parenthesized_call_argument_list",
+        "_call_arguments_without_parentheses": "bare_call_argument_list",
+        "_stab_clause_arguments_with_parentheses": "parenthesized_arrow_clause_argument_list",
+        "_stab_clause_arguments_without_parentheses": "bare_arrow_clause_argument_list",
+        "_stab_clause_arguments_with_parentheses_with_guard": "guarded_parenthesized_arrow_clause_argument_list",
+        "_stab_clause_arguments_without_parentheses_with_guard": "guarded_bare_arrow_clause_argument_list",
+        "stab_clause": "arrow_clause",
+        "_stab_body": "arrow_clause_body",
+        "integer": "integer_literal",
+        "char": "character_literal",
+        "source": "source_document",
+        "map": "map_literal",
+        "nil": "absence_literal"
+      },
+      "scannerFamilies": [
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_single_quoted_content_scanner",
+          "token": "interpolated_single_quoted_content",
+          "closing": "'",
+          "supportsInterpolation": true,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_double_quoted_content_scanner",
+          "token": "interpolated_double_quoted_content",
+          "closing": "\"",
+          "supportsInterpolation": true,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_here_document_single_quoted_content_scanner",
+          "token": "interpolated_here_document_single_quoted_content",
+          "closing": "'''",
+          "supportsInterpolation": true,
+          "closingAfterNewline": true
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_here_document_double_quoted_content_scanner",
+          "token": "interpolated_here_document_double_quoted_content",
+          "closing": "\"\"\"",
+          "supportsInterpolation": true,
+          "closingAfterNewline": true
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_parenthesis_quoted_content_scanner",
+          "token": "interpolated_parenthesis_quoted_content",
+          "closing": ")",
+          "supportsInterpolation": true,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_brace_quoted_content_scanner",
+          "token": "interpolated_brace_quoted_content",
+          "closing": "}",
+          "supportsInterpolation": true,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_square_quoted_content_scanner",
+          "token": "interpolated_square_quoted_content",
+          "closing": "]",
+          "supportsInterpolation": true,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_angle_quoted_content_scanner",
+          "token": "interpolated_angle_quoted_content",
+          "closing": ">",
+          "supportsInterpolation": true,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_bar_quoted_content_scanner",
+          "token": "interpolated_bar_quoted_content",
+          "closing": "|",
+          "supportsInterpolation": true,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "interpolated_slash_quoted_content_scanner",
+          "token": "interpolated_slash_quoted_content",
+          "closing": "/",
+          "supportsInterpolation": true,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "single_quoted_content_scanner",
+          "token": "single_quoted_content",
+          "closing": "'",
+          "supportsInterpolation": false,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "double_quoted_content_scanner",
+          "token": "double_quoted_content",
+          "closing": "\"",
+          "supportsInterpolation": false,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "here_document_single_quoted_content_scanner",
+          "token": "here_document_single_quoted_content",
+          "closing": "'''",
+          "supportsInterpolation": false,
+          "closingAfterNewline": true
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "here_document_double_quoted_content_scanner",
+          "token": "here_document_double_quoted_content",
+          "closing": "\"\"\"",
+          "supportsInterpolation": false,
+          "closingAfterNewline": true
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "parenthesis_quoted_content_scanner",
+          "token": "parenthesis_quoted_content",
+          "closing": ")",
+          "supportsInterpolation": false,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "brace_quoted_content_scanner",
+          "token": "brace_quoted_content",
+          "closing": "}",
+          "supportsInterpolation": false,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "square_quoted_content_scanner",
+          "token": "square_quoted_content",
+          "closing": "]",
+          "supportsInterpolation": false,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "angle_quoted_content_scanner",
+          "token": "angle_quoted_content",
+          "closing": ">",
+          "supportsInterpolation": false,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "bar_quoted_content_scanner",
+          "token": "bar_quoted_content",
+          "closing": "|",
+          "supportsInterpolation": false,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "quoted-fragment",
+          "name": "slash_quoted_content_scanner",
+          "token": "slash_quoted_content",
+          "closing": "/",
+          "supportsInterpolation": false,
+          "closingAfterNewline": false
+        },
+        {
+          "family": "operator-line",
+          "name": "operator_line_context",
+          "keywordToken": "newline_before_block_keyword",
+          "operatorToken": "newline_before_binary_operator",
+          "commentToken": "newline_before_comment",
+          "operators": [
+            "&&",
+            "&&&",
+            "=",
+            "==",
+            "===",
+            "=~",
+            "=>",
+            "::",
+            "++",
+            "+++",
+            "--",
+            "---",
+            "->",
+            "<",
+            "<=",
+            "<-",
+            "<>",
+            "<~",
+            "<~>",
+            "<|>",
+            "<<<",
+            "<<~",
+            ">",
+            ">=",
+            ">>>",
+            "^^^",
+            "!=",
+            "!==",
+            "~>",
+            "~>>",
+            "|",
+            "||",
+            "|||",
+            "|>",
+            "*",
+            "**",
+            "/",
+            "//",
+            ".",
+            "..",
+            "\\\\"
+          ],
+          "wordOperators": [
+            "when",
+            "and",
+            "or",
+            "in"
+          ],
+          "separatedOperator": [
+            "not",
+            "in"
+          ],
+          "rejectedSuffixes": {
+            "::": [
+              ":"
+            ],
+            "..": [
+              "."
+            ]
+          },
+          "tokenTerminators": [
+            "@",
+            ".",
+            "+",
+            "-",
+            "^",
+            "*",
+            "/",
+            "<",
+            ">",
+            "|",
+            "~",
+            "=",
+            "&",
+            "\\",
+            "%",
+            "{",
+            "}",
+            "[",
+            "]",
+            "(",
+            ")",
+            "\"",
+            "'",
+            ",",
+            ";",
+            "#"
+          ]
+        },
+        {
+          "family": "unary-operator-boundary",
+          "name": "unary_context",
+          "token": "unary_operator_boundary",
+          "operators": [
+            {
+              "text": "+",
+              "rejectedAfter": [
+                "+",
+                ":",
+                "/"
+              ]
+            },
+            {
+              "text": "-",
+              "rejectedAfter": [
+                "-",
+                ">",
+                ":",
+                "/"
+              ]
+            }
+          ]
+        },
+        {
+          "family": "pattern-token",
+          "name": "membership_operator_context",
+          "token": "membership_negation_operator",
+          "pattern": "not[ \\t]*in",
+          "before": "[@.+\\-\\^*/<>|~=&\\\\%{}\\[\\]()\"',;# \\t\\r\\n]"
+        },
+        {
+          "family": "pattern-token",
+          "name": "quoted_atom_context",
+          "token": "quoted_atom_start",
+          "pattern": ":",
+          "before": "[\"']"
+        }
+      ],
+      "sourceTransforms": [
+        {
+          "family": "immediate-literal",
+          "rules": [
+            "interpolation"
+          ],
+          "literal": "#{",
+          "count": 1,
+          "reason": "The interpolation introducer is a literal inside quoted content, so comment extras cannot consume its hash before the introducer is matched."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "_local_call_with_parentheses",
+          "value": 201,
+          "associativity": "left",
+          "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "_remote_call_with_parentheses",
+          "value": 201,
+          "associativity": "left",
+          "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "_anonymous_call",
+          "value": 201,
+          "associativity": "left",
+          "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "_double_call",
+          "value": 201,
+          "associativity": "left",
+          "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
+        },
+        {
+          "family": "symbol-kind-alias",
+          "rule": "unary_operator",
+          "symbol": "_before_unary_op",
+          "alias": "unary_operator_padding",
+          "count": 4,
+          "reason": "Retain the private zero-width scanner marker as typed layout trivia; its skipped prefix cannot become the first concrete span of a unary argument."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "_call_arguments_without_parentheses",
+          "pattern": "[+-][ \\t\\r\\n]",
+          "reason": "A bare plus or minus followed by whitespace remains a binary operator; the pinned scanner only permits whitespace-prefixed unary call arguments when the operand follows the sign immediately."
+        }
+      ]
     }
   },
   "concepts": {

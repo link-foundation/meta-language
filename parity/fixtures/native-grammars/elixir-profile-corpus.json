@@ -1,0 +1,1474 @@
+{
+  "schemaVersion": 1,
+  "language": "elixir",
+  "revision": "e2d9e6e0e76b0c436fa48a0b8c32a031d0cbdf49",
+  "sourceSha256": "320c4af03d6d34085c744ac9923d9b963848bd639a97c5f04401472931b059c4",
+  "corpusSha256": "cc122680b1ad28fb92af8c104197536506d5f4aca5472dc927df072d0c2d76ac",
+  "cases": [
+    {
+      "file": "comment.txt",
+      "title": "empty",
+      "source": "\n#\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "single line",
+      "source": "\n# single comment\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "multiple start symbols",
+      "source": "\n### multiple \"#\"\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "many consecutive lines",
+      "source": "\n# many\n# consecutive\n1\n# lines\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "in the same line as regular code",
+      "source": "\n1 # comment\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "matches inside a nested structure",
+      "source": "\n[ 1 ## inside a list\n, { 2 # and a tuple, too!\n  , 3 }\n]\n"
+    },
+    {
+      "file": "comment.txt",
+      "title": "does not match inside a string",
+      "source": "\n\"# string\"\n\"this is #{interpolation}\"\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "call without arguments",
+      "source": "\nfun do\n  a\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "call with arguments in parentheses",
+      "source": "\nfun(a, b) do\n  c\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "call with arguments without parentheses",
+      "source": "\nfun a, b do\n  c\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "remote call",
+      "source": "\nMod.fun do\n  a\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "sticks to the outermost call",
+      "source": "\nouter_fun inner_fun arg do\n  a\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "newline before do",
+      "source": "\nfun x\ndo\n  x\nend\n\nfun x\n# comment\ndo\n  x\nend\n\nfun()\ndo\n  x\nend\n\nMod.fun x\ndo\n  x\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / no arguments",
+      "source": "\nfun do\n () -> x\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / no arguments without parentheses",
+      "source": "\nfun do\n  -> x\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / one argument",
+      "source": "\nfun do\n  x -> x\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / many arguments",
+      "source": "\nfun do\n  x, y, 1 -> :ok\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / arguments in parentheses",
+      "source": "\nfun do\n  (x, y) -> :ok\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / many clauses",
+      "source": "\nfun do\n  1 -> :yes\n  2 -> :no\n  other -> :maybe\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / multiline expression",
+      "source": "\nfun do\n  x ->\n    y\n    x\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / with guard / no arguments",
+      "source": "\nfun do\n  () when node() == :nonode@nohost -> true\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / with guard / one argument",
+      "source": "\nfun do\n  x when x == [] -> x\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / with guard / multiple arguments",
+      "source": "\nfun do\n  x, y when x == [] -> x\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / with guard / arguments in parentheses",
+      "source": "\nfun do\n  (x, y) when y == [] -> y\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / with guard / multiple guards",
+      "source": "\nfun do\n  x when x > 10 when x < 5 -> x\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / edge cases / no stab",
+      "source": "\nfoo do\n  a when a\nend\n\nfoo do\n  ([])\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / edge cases / \"when\" in arguments",
+      "source": "\nfoo do\n  a when b, c when d == e -> 1\n  (a, a when b) -> 1\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / edge cases / block argument",
+      "source": "\nfoo do\n  (x; y) -> 1\n  ((x; y)) -> 1\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / edge cases / operator with lower precedence than \"when\"",
+      "source": "\nfoo do\n  x <- y when x -> y\nend\n\nfoo do\n  (x <- y) when x -> y\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / edge cases / empty",
+      "source": "\nfun do->end\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / edge cases / trailing call in multiline clause",
+      "source": "\nfun do\n  1 ->\n    1\n    x\n\n  1 ->\n    1\nend\n\nfun do\n  1 ->\n    1\n    Mod.fun\n\n  1 ->\n    1\nend\n\nfun do\n  1 ->\n    1\n    mod.fun\n\n  1 ->\n    1\nend\n\nfun do\n  1 ->\n    1\n\n  x 1 ->\n    1\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "stab clause / edge cases / empty right-hand-side",
+      "source": "\nfun do\n  x ->\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "pattern matching",
+      "source": "\nfun do\n  [h | tail] -> {h, tail}\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "child blocks / after",
+      "source": "\nfun do\n  x\nafter\n  y\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "child blocks / catch",
+      "source": "\nfun do\n  x\ncatch\n  y\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "child blocks / else",
+      "source": "\nfun do\n  x\nelse\n  y\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "child blocks / rescue",
+      "source": "\nfun do\n  x\nrescue\n  y\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "child blocks / duplicated",
+      "source": "\nfun do\n  x\nafter\n  y\nafter\n  z\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "child blocks / mixed",
+      "source": "\nfun do\n  x\nelse\n  y\nafter\n  z\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "child blocks / stab clause",
+      "source": "\nfun do\n  x\nrescue\n  y -> y\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "child blocks / keyword pattern with child block start token",
+      "source": "\nfun do\n  x\nafter\nafter\n  after: 1 -> y\nend\n"
+    },
+    {
+      "file": "do_end.txt",
+      "title": "[field names]",
+      "source": "\nfun do\n  x -> x\n  x when x == [] -> x\nend\n"
+    },
+    {
+      "file": "edge_syntax.txt",
+      "title": "operator with arity (valid and supported by IEx.Helpers.h)",
+      "source": "\n::/2\n@ / 1\n& / 1\nnot / 1\nnot in / 2\n* / 2\nh +/2\n"
+    },
+    {
+      "file": "edge_syntax.txt",
+      "title": "stab and slash ambiguity",
+      "source": "\n(-> / 2)\n(-> / / 2)\n"
+    },
+    {
+      "file": "edge_syntax.txt",
+      "title": "unary operator and slash ambiguity",
+      "source": "\n& / 2\n& / / 2"
+    },
+    {
+      "file": "edge_syntax.txt",
+      "title": "map with identifiers",
+      "source": "\n%{a}\n%{a, b}\n"
+    },
+    {
+      "file": "edge_syntax.txt",
+      "title": "def with remote call",
+      "source": "\ndef Mod.fun(x), do: 1\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "no arguments",
+      "source": "\nfn() -> 1 end\nfn () -> 1 end\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "no arguments without parentheses",
+      "source": "\nfn -> 1 end\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "one argument",
+      "source": "\nfn(x) -> x end\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "one argument without parentheses",
+      "source": "\nfn x -> x end\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "many arguments",
+      "source": "\nfn(x, y, z) -> x + y end\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "many arguments without parentheses",
+      "source": "\nfn x, y -> x + y end\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "multiline body",
+      "source": "\nfn x, y ->\n  y\n  x\nend\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "multiline body with extra newlines",
+      "source": "\nfn x, y ->\n  y\n\n  x\n\nend\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "many clauses",
+      "source": "\nfn\n  1 -> :yes\n  2 -> :no\n  other -> :maybe\nend\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "no clauses",
+      "source": "\nfn\nend\n\nfn end\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "with guard / no arguments",
+      "source": "\nfn\n  () when node() == :nonode@nohost -> true\nend\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "with guard / one argument",
+      "source": "\nfn\n  x when x == [] -> x\nend\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "with guard / multiple arguments",
+      "source": "\nfn\n  x, y when x == [] -> x\nend\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "with guard / arguments in parentheses",
+      "source": "\nfn\n  (x, y) when y == [] -> y\nend\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "with guard / multiple guards",
+      "source": "\nfn\n  x when x > 10 when x < 5 -> x\nend\n"
+    },
+    {
+      "file": "expression/anonymous_function.txt",
+      "title": "pattern matching",
+      "source": "\nfn\n  [h | tail] -> {h, tail}\n  %{x: x} when x == 1 -> 1\nend\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "empty",
+      "source": "\n()\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "single expression",
+      "source": "\n(1)\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "multiple expressions separated by newline",
+      "source": "\n(\n  1\n  2\n)\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "multiple expressions separated by semicolon",
+      "source": "\n(1;2)\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "multiple expressions separated by mixed separators",
+      "source": "\n(\n  1\n\n  ;\n\n  2\n)\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "leading semicolon",
+      "source": "\n(;1;2)\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "trailing semicolon",
+      "source": "\n(1;2;)\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "stab clause / multiple clauses",
+      "source": "\n(x -> x; y -> y\n z -> z)\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "stab clause / multiple arguments",
+      "source": "\n(x, y, z -> x)\n((x, y, z) -> x)\n"
+    },
+    {
+      "file": "expression/block.txt",
+      "title": "stab clause / guard",
+      "source": "\n(x, y when x == y -> 1)\n((x, y when x == y -> 1))\n((x, y when x == y) -> 1)\n(x, y when x, z -> 1)\n((x, y when x, z -> 1))\n((x, y when x, z) -> 1)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "local call / no arguments",
+      "source": "\nfun()\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "local call / arguments in parentheses",
+      "source": "\nfun(a)\nfun([1, 2], option: true, other: 5)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "local call / arguments without parentheses",
+      "source": "\nfun a\nfun {}\nfun [1, 2], option: true, other: 5\nfun +: 1\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "local call / arguments without parentheses / multiline",
+      "source": "\nfun [1, 2],\n  option: true,\n  other: 5\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "local call / nested with parentheses",
+      "source": "\nouter_fun(inner_fun(a))\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "local call / nested without parentheses (right associativity)",
+      "source": "\nouter_fun inner_fun a, b\nouter_fun inner_fun do: 1\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "local call / precedence with operator",
+      "source": "\nouter_fun 1 + 1\n1 + inner_fun 1\nouter_fun 1 + inner_fun 1\nfun 1, 2 |> other_fun\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "local call / treats nonimmediate parentheses as a block argument",
+      "source": "\nfun (x)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / no arguments",
+      "source": "\nMod.fun()\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / no arguments without parentheses",
+      "source": "\nMod.fun\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / arguments in parentheses",
+      "source": "\nMod.fun(a)\nMod.fun([1, 2], option: true, other: 5)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / arguments without parentheses",
+      "source": "\nMod.fun a\nMod.fun [1, 2], option: true, other: 5\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / nested with parentheses",
+      "source": "\nMod.outer_fun(Mod.inner_fun(a))\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / nested without parentheses (right associativity)",
+      "source": "\nMod.outer_fun Mod.inner_fun a\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / precedence with operator",
+      "source": "\nMod.outer_fun 1 + 1\n1 + Mod.inner_fun 1\nMod.outer_fun 1 + Mod.inner_fun 1\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / treats nonimmediate parentheses as a block argument",
+      "source": "\nMod.fun (x)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / multi-level alias",
+      "source": "\nMod1.Mod2.Mod3.fun(a)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / operator",
+      "source": "\nKernel.+(a, b)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / quoted function name",
+      "source": "\nMod.\"fun\"(a)\nMod.'fun'(a)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "remote call / atom literal module",
+      "source": "\n:mod.fun(a)\n:\"Elixir.Mod\".fun(a)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "anonymous call / no arguments",
+      "source": "\nfun.()\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "anonymous call / arguments in parentheses",
+      "source": "\nfun.(a)\nfun.([1, 2], option: true, other: 5)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "anonymous call / nested with parentheses",
+      "source": "\nouter_fun.(inner_fun.(a))\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "mixed call types",
+      "source": "\nMod.outer_fun mid_fun inner_fun.(a)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "identifier call",
+      "source": "\nmod.fun(a)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "nested identifier call",
+      "source": "\nmap.mod.fun(a)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "reserved word call",
+      "source": "\na.and\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "range call",
+      "source": "\n(1..2).step\n(1..2//3).step\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "multi-expression block call",
+      "source": "\n(\n  x\n  1..2\n).step\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "map call",
+      "source": "\n%{}.field\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "struct call",
+      "source": "\n%Mod{}.field\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "arbitrary term call",
+      "source": "\n1.(1, 2)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "escaped newline call",
+      "source": "\nfun \\\na\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "keyword list trailing separator",
+      "source": "\nfun(option: true, other: 5,)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "newline before dot",
+      "source": "\nMod\n  .fun(a)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "newline after dot",
+      "source": "\nMod.\n  fun(a)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "access syntax",
+      "source": "\nmap[key]\nmap[:key]\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "access syntax / does not allow whitespace",
+      "source": "\nmap [key]\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "access syntax / precedence with dot call",
+      "source": "\nmap.map[:key]\nmap[:mod].fun\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "access syntax / precedence with operators",
+      "source": "\n-x[:key]\n@x[:key]\n&x[:key]\n&1[:key]\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "double parenthesised call",
+      "source": "\nfun()()\nfun() ()\nfun(1)(1)\nMod.fun()()\nfun.()()\n\nunquote(name)()\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "[field names]",
+      "source": "\nfun()\nfun a\nMod.fun a\nfun()()\nfun.()\nmap[key]\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "[error] leading argument separator",
+      "source": "\nfun(, a)\n"
+    },
+    {
+      "file": "expression/call.txt",
+      "title": "[error] trailing argument separator",
+      "source": "\nfun(a,)\n"
+    },
+    {
+      "file": "expression/capture.txt",
+      "title": "anonymous function",
+      "source": "\n& &1 + &2\n&(&1 + &2)\n&foo(&1, a, &2)\n"
+    },
+    {
+      "file": "expression/capture.txt",
+      "title": "argument call",
+      "source": "\n& &1.some_fun\n&(&1.some_fun)\n& &1.(&2)\n"
+    },
+    {
+      "file": "expression/capture.txt",
+      "title": "remote MFA",
+      "source": "\n&Mod.fun/1\n"
+    },
+    {
+      "file": "expression/capture.txt",
+      "title": "remote operator MFA",
+      "source": "\n&Kernel.>=/2\n"
+    },
+    {
+      "file": "expression/capture.txt",
+      "title": "local MFA",
+      "source": "\n&fun/1\n"
+    },
+    {
+      "file": "expression/capture.txt",
+      "title": "local operator MFA",
+      "source": "\n&>=/2\n&//2\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "unary",
+      "source": "\n@arg\n\n+arg\n-arg\n!arg\n^arg\nnot arg\n~~~arg\n\n&arg\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "binary left associative",
+      "source": "\na ** b ** c\n\na * b * c\na / b / c\n\na + b + c\na - b - c\n\na ^^^ b ^^^ c\n\na in b in c\na not in b not in c\n\na |> b |> c\na <<< b <<< c\na >>> b >>> c\na <<~ b <<~ c\na ~>> b ~>> c\na <~ b <~ c\na ~> b ~> c\na <~> b <~> c\na <|> b <|> c\n\na < b < c\na > b > c\na <= b <= c\na >= b >= c\n\na == b == c\na != b != c\na =~ b =~ c\na === b === c\na !== b !== c\n\na && b && c\na &&& b &&& c\na and b and c\n\na || b || c\na ||| b ||| c\na or b or c\n\na <- b <- c\na \\\\ b \\\\ c\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "binary right associative",
+      "source": "\na ++ b ++ c\na -- b -- c\na +++ b +++ c\na --- b --- c\na .. b .. c\na <> b <> c\n\na = b = c\n\na | b | c\n\na :: b :: c\n\na when b when c\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "precedence on the same level falls back to associativity",
+      "source": "\na * b / c\na + b - c\na in b not in c\na <<< b >>> c\na < b > c\na == b != c\na &&& b && c\na ||| b || c\na <- b \\\\ c\n\na ++ b -- c\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "precedence on different levels",
+      "source": "\n& @ a - b\na -- b + c\na - b ++ c\na = b <<< c\n\na + b * c - d\na ** b + c ** d\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "precedence determined by parentheses",
+      "source": "\n(& a) - b\n\n(a + b) * (c - d)\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "\"not in\" spacing",
+      "source": "\na not    in b\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "\"not in\" boundary",
+      "source": "\nfun not inARG\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "multiline / unary",
+      "source": "\n@\narg\n\n+\narg\n\n-\narg\n\n!\narg\n\n^\narg\n\nnot\narg\n\n~~~\narg\n\n&\narg\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "multiline / binary",
+      "source": "\na\n**\nb\n\na\n*\nb\n\na\n/\nb\n\na\n++\nb\n\na\n--\nb\n\na\n+++\nb\n\na\n---\nb\n\na\n..\nb\n\na\n<>\nb\n\n\na\n^^^\nb\n\na\nin\nb\n\na\nnot in\nb\n\na\n|>\nb\n\na\n<<<\nb\n\na\n>>>\nb\n\na\n<<~\nb\n\na\n~>>\nb\n\na\n<~\nb\n\na\n~>\nb\n\na\n<~>\nb\n\na\n<|>\nb\n\na\n<\nb\n\na\n>\nb\n\na\n<=\nb\n\na\n>=\nb\n\na\n==\nb\n\na\n!=\nb\n\na\n=~\nb\n\na\n===\nb\n\na\n!==\nb\n\na\n&&\nb\n\na\n&&&\nb\n\na\nand\nb\n\na\n||\nb\n\na\n|||\nb\n\na\nor\nb\n\na\n=\nb\n\na\n|\nb\n\na\n::\nb\n\na\nwhen\nb\n\na\n<-\nb\n\na\n\\\\\nb\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "multiline / unary over binary",
+      "source": "\na\n+\nb\n\na\n-\nb\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "multiline / right operands",
+      "source": "\nx\nnot in\n[y]\n\nx\nnot in[y]\n\n:a\n++:b\n\n:a++\n:b\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "multiline / unary over binary (precedence)",
+      "source": "\nx\n-\ny\n\nx\n+\ny\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "plus minus",
+      "source": "\nx+y\nx + y\nx+ y\n\nx +y\nx +y +z\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "nullary range",
+      "source": "\n..\nEnum.to_list(..)\nnot ..\nrange = ..\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "stepped range",
+      "source": "\n1 .. 2 // 3\n1..2//3\n0..1//-1\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "stepped range / multiline",
+      "source": "\n1..2\n// 4\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "stepped ranges / blocks",
+      "source": "\nfoo do end..bar do end//baz do end\n1..(2//3)\n(1..2)//3\n(1..2)//(3)\n"
+    },
+    {
+      "file": "expression/operator.txt",
+      "title": "[field names]",
+      "source": "\na + b\n@a\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "simple literal",
+      "source": "\n~s(content)\n~r{content}\n~w[content]\n~a<content>\n~b\"content\"\n~c'content'\n~d|content|\n~e/content/\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "multiple lines",
+      "source": "\n~s\"line 1\nline 2\"\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "interpolation",
+      "source": "\n~s\"hey #{name}!\"\n~r/hey #{\n  name\n}!/\n~w{##{name}#}\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "nested interpolation",
+      "source": "\n~s{this is #{~s{number #{1}}}!}\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "escape sequence",
+      "source": "\n~s{_\\}_\\n_\\t_\\r_\\e_\\\\_\\1_\\x3f_\\u0065\\u0301_}\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "escaped interpolation",
+      "source": "\n~s/\\#{1}/\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "upper sigil / no interpolation",
+      "source": "\n~S\"hey #{name}!\"\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "upper sigil / no escape sequence",
+      "source": "\n~S\"\\n\"\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "upper sigil / escape terminator",
+      "source": "\n~S\"content \\\" content\"\n~S{content \\} content}\n~S/content \\/ content/\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "upper sigil / multiple characters",
+      "source": "\n~MAT\"1 2\"\n~I18N\"text\"\n~A1B2\"text\"\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "heredoc delimiter",
+      "source": "\n~s\"\"\"\ntext\nwith \"quotes\"\n\"\"\"\n\n~s'''\ntext\nwith 'quotes'\n'''\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "modifiers",
+      "source": "\n~r/left|right/i\n~r/left|right/iUx\n~r/left|right/0\n~r/left|right/u8\n"
+    },
+    {
+      "file": "expression/sigil.txt",
+      "title": "[error] accepts only a single character",
+      "source": "\n~mysigil\"content\"\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / no arguments",
+      "source": "\ndef fun() do\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / no arguments without parentheses",
+      "source": "\ndef fun do\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / one argument",
+      "source": "\ndef fun(x) do\n  x\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / one argument without parentheses",
+      "source": "\ndef fun x do\n  x\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / many arguments",
+      "source": "\ndef fun(x, y) do\n  x + y\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / many arguments without parentheses",
+      "source": "\ndef fun x, y do\n  x + y\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / default arguments",
+      "source": "\ndef fun x, y \\\\ 1 do\n  x + y\nend\n\ndef fun(x, y \\\\ 1) do\n  x + y\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / keyword do block",
+      "source": "\ndef fun(), do: 1\ndef fun(x), do: x\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / pattern matching",
+      "source": "\ndef fun([{x, y} | tail]) do\n  x + y\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / with guard",
+      "source": "\ndef fun(x) when x == 1 do\n  x\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def / with guard / multiple guards",
+      "source": "\ndef fun(x) when x > 10 when x < 5 do\n  x\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "defp",
+      "source": "\ndefp fun(x) do\n  x\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "defmacro",
+      "source": "\ndefmacro fun(x) do\n  quote do\n    [unquote(x)]\n  end\nend\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "defguard",
+      "source": "\ndefguard is_even(term) when is_integer(term) and rem(term, 2) == 0\n"
+    },
+    {
+      "file": "integration/function_definition.txt",
+      "title": "def in macro",
+      "source": "\ndef unquote(name)(unquote_splicing(args)) do\n  unquote(compiled)\nend\n"
+    },
+    {
+      "file": "integration/kernel.txt",
+      "title": "for / enumerable",
+      "source": "\nfor n <- [1, 2], do: n * 2\n"
+    },
+    {
+      "file": "integration/kernel.txt",
+      "title": "for / enumerable / with options and block",
+      "source": "\nfor line <- IO.stream(), into: IO.stream() do\n  String.upcase(line)\nend\n"
+    },
+    {
+      "file": "integration/kernel.txt",
+      "title": "for / binary",
+      "source": "\nfor <<c <- \" hello world \">>, c != ?\\s, into: \"\", do: <<c>>\n"
+    },
+    {
+      "file": "integration/kernel.txt",
+      "title": "for / reduce",
+      "source": "\nfor x <- [1, 2, 1], reduce: %{} do\n  acc -> Map.update(acc, x, 1, & &1 + 1)\nend\n"
+    },
+    {
+      "file": "integration/module_definition.txt",
+      "title": "empty module definition",
+      "source": "\ndefmodule Mod do\nend\n\ndefmodule Mod.Child do\nend\n"
+    },
+    {
+      "file": "integration/module_definition.txt",
+      "title": "module definition with atom literal",
+      "source": "\ndefmodule :mod do\nend\n"
+    },
+    {
+      "file": "integration/module_definition.txt",
+      "title": "full module definition",
+      "source": "\ndefmodule Mod do\n  @moduledoc \"\"\"\n  Example module\n  \"\"\"\n\n  use UseMod\n\n  @attribute 1\n\n  @doc \"\"\"\n  Example function\n  \"\"\"\n  @spec func(integer) :: integer\n  def func(x) when is_integer(x) do\n    priv(x) + priv(x)\n  end\n\n  defp priv(x), do: x * x\nend\n"
+    },
+    {
+      "file": "integration/spec.txt",
+      "title": "without type parentheses",
+      "source": "\n@spec fun(atom, integer, keyword) :: string\n"
+    },
+    {
+      "file": "integration/spec.txt",
+      "title": "with type parentheses",
+      "source": "\n@spec fun(atom(), integer(), keyword()) :: string()\n"
+    },
+    {
+      "file": "integration/spec.txt",
+      "title": "with literals",
+      "source": "\n@spec fun(%{key: atom}) :: {:ok, atom} | {:error, binary}\n"
+    },
+    {
+      "file": "integration/spec.txt",
+      "title": "with function reference",
+      "source": "\n@spec fun((-> atom), (atom -> integer)) :: integer\n"
+    },
+    {
+      "file": "integration/spec.txt",
+      "title": "with remote type",
+      "source": "\n@spec fun(Keyword.t()) :: String.t()\n"
+    },
+    {
+      "file": "integration/spec.txt",
+      "title": "with type guard",
+      "source": "\n@spec fun(arg1, arg2) :: {arg1, arg2} when arg1: atom, arg2: integer\n"
+    },
+    {
+      "file": "integration/spec.txt",
+      "title": "with named arguments",
+      "source": "\n@spec days_since_epoch(year :: integer, month :: integer, day :: integer) :: integer\n"
+    },
+    {
+      "file": "integration/spec.txt",
+      "title": "nonempty list",
+      "source": "\n@spec fun() :: [integer, ...]\n"
+    },
+    {
+      "file": "integration/spec.txt",
+      "title": "[error] type guard cannot end with keyword separator",
+      "source": "\n@spec fun(arg) :: arg when arg: atom,\n"
+    },
+    {
+      "file": "semicolon.txt",
+      "title": "separates expressions in the same line",
+      "source": "\n1 ; 1\n"
+    },
+    {
+      "file": "semicolon.txt",
+      "title": "trailing",
+      "source": "\n1;\n2;\n"
+    },
+    {
+      "file": "semicolon.txt",
+      "title": "with comment",
+      "source": "\n1 ; # comment\n"
+    },
+    {
+      "file": "term/alias.txt",
+      "title": "single part",
+      "source": "\nMod\nAZ_az_19_\n"
+    },
+    {
+      "file": "term/alias.txt",
+      "title": "multiple parts",
+      "source": "\nMod.Child\nMod.Child.Child\n"
+    },
+    {
+      "file": "term/alias.txt",
+      "title": "spacing",
+      "source": "\nMod . Child\n\nMod\n.\nChild\n"
+    },
+    {
+      "file": "term/alias.txt",
+      "title": "qualified tuples",
+      "source": "\nMod.{Child1, Child2}\n"
+    },
+    {
+      "file": "term/alias.txt",
+      "title": "dot on identifier",
+      "source": "\nname.Mod\nname.Mod.Child\n"
+    },
+    {
+      "file": "term/alias.txt",
+      "title": "dot on special identifier",
+      "source": "\n__MODULE__.Child\n\n(source\n  (dot\n    (identifier)\n    (alias)))\n"
+    },
+    {
+      "file": "term/atom.txt",
+      "title": "simple literal",
+      "source": "\n:atom\n:_az_AZ_19_\n:nonode@nohost\n:bang!\n:question?\n"
+    },
+    {
+      "file": "term/atom.txt",
+      "title": "operators",
+      "source": "\n[:~~~, :~>>, :~>, :|||, :||, :|>, :|, :>>>, :>=, :>, :=~, :===, :==, :=, :<~>, :<~, :<|>, :<>, :<=, :<<~, :<<<, :<-, :<, :+++, :++, :+, :^^^, :^, :&&&, :&&, :&, :\\\\, :/, :**, :*, :@, :.., :., :!==, :!=, :!, :::, :->, :---, :--, :-]\n"
+    },
+    {
+      "file": "term/atom.txt",
+      "title": "special operator-like atoms",
+      "source": "\n[:..., :%{}, :{}, :%, :<<>>, :..//]\n"
+    },
+    {
+      "file": "term/atom.txt",
+      "title": "quoted atom",
+      "source": "\n:\"atom ?? !! ' \\n\"\n:'atom ?? !! \" \\n'\n"
+    },
+    {
+      "file": "term/atom.txt",
+      "title": "interpolation",
+      "source": "\n:\"hey #{name}!\"\n:'hey #{name}!'\n"
+    },
+    {
+      "file": "term/bitstring.txt",
+      "title": "single item",
+      "source": "\n<<>>\n<<10>>\n<<10.0>>\n<<\"string\">>\n"
+    },
+    {
+      "file": "term/bitstring.txt",
+      "title": "multiple items",
+      "source": "\n<<\n  10,\n  10.0,\n  \"string\"\n>>\n"
+    },
+    {
+      "file": "term/bitstring.txt",
+      "title": "size modifiers",
+      "source": "\n<<10::4>>\n<<10::size(4)>>\n"
+    },
+    {
+      "file": "term/bitstring.txt",
+      "title": "multiple modifiers",
+      "source": "\n<<\"string\"::utf8-big>>\n<<\"string\"::utf16-big>>\n<<\"string\"::utf32-big>>\n<<10::32-little-unsigned>>\n<<10::integer-signed-big>>\n<<10.10::float-signed-native>>\n"
+    },
+    {
+      "file": "term/bitstring.txt",
+      "title": "multiple components with modifiers",
+      "source": "\n<<10::8-native, \"string\", 3.14::float, a::8, b::binary-size(known_size)>>\n"
+    },
+    {
+      "file": "term/bitstring.txt",
+      "title": "spacing",
+      "source": "\n<<\n  10 :: 8-native,\n  b :: binary - size(known_size)\n>>\n"
+    },
+    {
+      "file": "term/bitstring.txt",
+      "title": "trailing separator",
+      "source": "\n<<1,>>\n"
+    },
+    {
+      "file": "term/boolean.txt",
+      "title": "simple literal",
+      "source": "\ntrue\nfalse\n"
+    },
+    {
+      "file": "term/char.txt",
+      "title": "regular character",
+      "source": "\n?a\n?Z\n?0\n?9\n?_\n??\n"
+    },
+    {
+      "file": "term/char.txt",
+      "title": "escaped character",
+      "source": "\n?\\n\n?\\t\n?\\s\n?\\\\\n?\\a\n?\\b\n"
+    },
+    {
+      "file": "term/char.txt",
+      "title": "list of char literals",
+      "source": "\n[?a, ?b, ?c]\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "single line",
+      "source": "\n'Hello, 123!'\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "multiple lines",
+      "source": "\n'line 1\nline 2'\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "interpolation",
+      "source": "\n'hey #{name}!'\n'hey #{\n  name\n}!'\n'##{name}#'\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "nested interpolation",
+      "source": "\n'this is #{'number #{1}'}!'\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "escape sequence",
+      "source": "\n'_\\'_\\n_\\t_\\r_\\e_\\\\_\\1_\\x3f_\\u0065\\u0301_'\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "escaped interpolation",
+      "source": "\n'\\#{1}'\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "heredoc / charlist",
+      "source": "\n'''\ntext\nwith 'quotes'\n'''\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "heredoc / interpolation",
+      "source": "\n'''\nhey #{name}!\n'''\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "heredoc / nested interpolation",
+      "source": "\n'''\nthis is #{\n  '''\n  number #{1}\n  '''\n}!\n'''\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "heredoc / escaped delimiter",
+      "source": "\n'''\n\\'''\n'''\n\n'''\n\\'\\'\\'\n'''\n"
+    },
+    {
+      "file": "term/charlist.txt",
+      "title": "heredoc / escaped interpolation",
+      "source": "\n'''\n\\#{1}\n'''\n"
+    },
+    {
+      "file": "term/float.txt",
+      "title": "simple literal",
+      "source": "\n1234567890.1234567890\n-1234567890.1234567890\n-1_234_567_890.123_456_789_0\n"
+    },
+    {
+      "file": "term/float.txt",
+      "title": "scientific notation",
+      "source": "\n1.0e6\n1.0e+6\n1.0e-6\n-1.0e6\n-1.0e+6\n-1.0e-6\n1.0E6\n1.0E+6\n1.0E-6\n1_234_567_890.123_456_789_0e1_234_567_890\n"
+    },
+    {
+      "file": "term/integer.txt",
+      "title": "decimal",
+      "source": "\n1234567890\n-1234567890\n1_234_567_890\n019\n"
+    },
+    {
+      "file": "term/integer.txt",
+      "title": "binary",
+      "source": "\n0b0101011\n-0b0101011\n0b0_10_10_11\n"
+    },
+    {
+      "file": "term/integer.txt",
+      "title": "octal",
+      "source": "\n0o1234567\n-0o1234567\n0o1_23_45_67\n"
+    },
+    {
+      "file": "term/integer.txt",
+      "title": "hexadecimal",
+      "source": "\n0x123456789abcdefABCDEF\n-0x123456789abcdefABCDEF\n0x123456789_abcdef_ABCDEF\n"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "simple literal",
+      "source": "\n[a: 1, a_b@12?: 2, A_B@12!: 3, Mod: 4, __struct__: 5]\n"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "trailing separator",
+      "source": "\n[a: 1,]\n"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "with leading items",
+      "source": "\n[1, {:c, 1}, a: 1, b: 2]\n"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "operator key",
+      "source": "\n[~~~: 1, ==: 2, >: 3]\n"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "special atom key",
+      "source": "\n[...: 1, %{}: 2, {}: 3, %: 4, <<>>: 5, ..//: 6]\n"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "reserved token key",
+      "source": "\n[not: 1, and: 2]\n[nil: 1, true: 2]\n"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "quoted key",
+      "source": "\n[\n  \"key1 ?? !! ' \\n\": 1,\n  'key2 ?? !! \" \\n': 2\n]\n"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "key interpolation",
+      "source": "\n[\n  \"hey #{name}!\": 1,\n  'hey #{name}!': 2\n]\n"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "[field names]",
+      "source": "\n[a: 1, b: 2]"
+    },
+    {
+      "file": "term/keyword_list.txt",
+      "title": "[error] with trailing items",
+      "source": "\n[a: 1, b: 2, 1 => 1]\n"
+    },
+    {
+      "file": "term/list.txt",
+      "title": "simple literal",
+      "source": "\n[]\n[a]\n[A]\n[1]\n[1, 2]\n[1,2]\n[ 1 , 2 ]\n"
+    },
+    {
+      "file": "term/list.txt",
+      "title": "nested",
+      "source": "\n[[1], 1]\n"
+    },
+    {
+      "file": "term/list.txt",
+      "title": "trailing separator",
+      "source": "\n[1,]\n[1,2,]\n"
+    },
+    {
+      "file": "term/list.txt",
+      "title": "[error] missing element",
+      "source": "\n[, 1]\n"
+    },
+    {
+      "file": "term/list.txt",
+      "title": "[error] missing separator",
+      "source": "\n[1 2]\n"
+    },
+    {
+      "file": "term/map.txt",
+      "title": "empty",
+      "source": "\n%{}\n"
+    },
+    {
+      "file": "term/map.txt",
+      "title": "from keywords",
+      "source": "\n%{a: 1, b: 2}\n"
+    },
+    {
+      "file": "term/map.txt",
+      "title": "from arrow entries",
+      "source": "\n%{:a => 1, \"b\" => 2, c => 3}\n"
+    },
+    {
+      "file": "term/map.txt",
+      "title": "from both arrow entries and keywords",
+      "source": "\n%{\"a\" => 1, b: 2, c: 3}\n"
+    },
+    {
+      "file": "term/map.txt",
+      "title": "trailing separator",
+      "source": "\n%{\"a\" => 1,}\n"
+    },
+    {
+      "file": "term/map.txt",
+      "title": "update syntax",
+      "source": "\n%{user | name: \"Jane\", email: \"jane@example.com\"}\n%{user | \"name\" => \"Jane\"}\n"
+    },
+    {
+      "file": "term/map.txt",
+      "title": "[error] ordering",
+      "source": "\n%{b: 2, c: 3, 1 => 1}\n"
+    },
+    {
+      "file": "term/map.txt",
+      "title": "[error] missing separator",
+      "source": "\n%{\"a\" => 1 \"b\" => 2}\n"
+    },
+    {
+      "file": "term/nil.txt",
+      "title": "simple literal",
+      "source": "\nnil\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "empty",
+      "source": "\n\"\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "single line",
+      "source": "\n\"Hello, 123!\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "multiple lines",
+      "source": "\n\"line 1\nline 2\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "interpolation",
+      "source": "\n\"hey #{name}!\"\n\"hey #{\n  name\n}!\"\n\"##{name}#\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "nested interpolation",
+      "source": "\n\"this is #{\"number #{1}\"}!\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "empty interpolation",
+      "source": "\n\"#{}\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "escape sequence",
+      "source": "\n\"_\\\"_\\n_\\t_\\r_\\e_\\\\_\\1_\\x3f_\\u0065\\u0301_\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "escaped interpolation",
+      "source": "\n\"\\#{1}\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "heredoc / string",
+      "source": "\n\"\"\"\ntext\nwith \"quotes\"\n\"\"\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "heredoc / interpolation",
+      "source": "\n\"\"\"\nhey #{name}!\n\"\"\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "heredoc / nested interpolation",
+      "source": "\n\"\"\"\nthis is #{\n  \"\"\"\n  number #{1}\n  \"\"\"\n}!\n\"\"\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "heredoc / delimiter in the middle",
+      "source": "\n\"\"\"\nhey \"\"\"\n\"\"\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "heredoc / escaped newline (ignored)",
+      "source": "\n\"\"\"\nhey \\\n\"\"\"\n\n  \"\"\"\n  hey \\\n  \"\"\"\n\n\"\"\"\nhey \\\nthere\n\"\"\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "heredoc / escaped delimiter",
+      "source": "\n\"\"\"\n\\\"\"\"\n\"\"\"\n\n\"\"\"\n\\\"\\\"\\\"\n\"\"\"\n"
+    },
+    {
+      "file": "term/string.txt",
+      "title": "heredoc / escaped interpolation",
+      "source": "\n\"\"\"\n\\#{1}\n\"\"\"\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "empty",
+      "source": "\n%User{}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "from keywords",
+      "source": "\n%User{a: 1, b: 2}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "from arrow entries",
+      "source": "\n%User{:a => 1, \"b\" => 2, c => 3}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "from both arrow entries and keywords",
+      "source": "\n%User{\"a\" => 1, b: 2, c: 3}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "trailing separator",
+      "source": "\n%User{\"a\" => 1,}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "update syntax",
+      "source": "\n%User{user | name: \"Jane\", email: \"jane@example.com\"}\n%User{user | \"name\" => \"Jane\"}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "unused struct identifier",
+      "source": "\n%_{}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "matching struct identifier",
+      "source": "\n%name{}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "pinned struct identifier",
+      "source": "\n%^name{}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "with special identifier",
+      "source": "\n%__MODULE__{}\n%__MODULE__.Child{}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "with atom",
+      "source": "\n%:\"Elixir.Mod\"{}\n"
+    },
+    {
+      "file": "term/struct.txt",
+      "title": "with call",
+      "source": "\n%fun(){}\n%Mod.fun(){}\n%fun.(){}\n"
+    },
+    {
+      "file": "term/tuple.txt",
+      "title": "simple literal",
+      "source": "\n{}\n{1}\n{1, 2}\n{1,2}\n{ 1 , 2 }\n"
+    },
+    {
+      "file": "term/tuple.txt",
+      "title": "nested",
+      "source": "\n{{1}, 1}\n"
+    },
+    {
+      "file": "term/tuple.txt",
+      "title": "trailing separator",
+      "source": "\n{1,}\n{1,2,}\n"
+    },
+    {
+      "file": "term/tuple.txt",
+      "title": "[error] missing element",
+      "source": "\n{, 1}\n"
+    },
+    {
+      "file": "term/tuple.txt",
+      "title": "[error] missing separator",
+      "source": "\n{1 2}\n"
+    },
+    {
+      "file": "unicode.txt",
+      "title": "atom",
+      "source": "\n:time_μs\n:\"£\"\n:'£'\n:こんにちは世界\n:Ólá\n:olá\n:Olá\n"
+    },
+    {
+      "file": "unicode.txt",
+      "title": "string",
+      "source": "\n\"time_μs\"\n\"£\"\n\"こんにちは世界\"\n\"Ólá\"\n\"olá\"\n\"Olá\"\n"
+    },
+    {
+      "file": "unicode.txt",
+      "title": "charlist",
+      "source": "\n'time_μs'\n'£'\n'こんにちは世界'\n'Ólá'\n'olá'\n'Olá'"
+    },
+    {
+      "file": "unicode.txt",
+      "title": "char",
+      "source": "\n?ł\n?μ\n?£\n?こ\n"
+    },
+    {
+      "file": "unicode.txt",
+      "title": "variable",
+      "source": "\ntime_μs\nこんにちは世界\nolá\n"
+    },
+    {
+      "file": "variable.txt",
+      "title": "regular",
+      "source": "\nsnake_case\ncamelCase\naz_AZ_19\nbang!\nquestion?\ndoctest\nnot1\nnotfalse\n"
+    },
+    {
+      "file": "variable.txt",
+      "title": "unused",
+      "source": "\n_\n_number\n__TEST__\n"
+    },
+    {
+      "file": "variable.txt",
+      "title": "three dots identifier",
+      "source": "\n...\n"
+    },
+    {
+      "file": "variable.txt",
+      "title": "special identifier",
+      "source": "\n__MODULE__\n__DIR__\n"
+    }
+  ]
+}

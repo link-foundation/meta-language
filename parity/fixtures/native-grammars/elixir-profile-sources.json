@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "language": "Elixir",
+  "grammar": "parity/grammars/native/elixir.lino",
+  "source": "tree-sitter-elixir",
+  "hidden": [
+    "unary_operator_boundary",
+    "unary_operator_padding"
+  ],
+  "anonymous": [
+    "unnamed_token",
+    "whitespace"
+  ],
+  "extras": [
+    "comment"
+  ],
+  "matches": [
+    "",
+    "x = 1",
+    "x = 1 + 2",
+    "x = \"leaf\"",
+    "x = \"leaf #{seed}\"",
+    "x = \"#{seed}\"",
+    "x = \"leaf\\nseed\"",
+    "x = 'leaf #{seed}'",
+    "x = ~r/leaf/",
+    "x = ~r/leaf #{seed}/i",
+    "x = ~S\"leaf #{seed}\"",
+    "x = ~s(leaf #{seed})",
+    "x = ~s{leaf #{seed}}",
+    "x = ~s[leaf #{seed}]",
+    "x = ~s<leaf #{seed}>",
+    "x = ~s|leaf #{seed}|",
+    "x = \"\"\"\nleaf\n\"\"\"",
+    "x = \"\"\"\nleaf #{seed}\n  \"\"\"",
+    "x = \"leaf #{\"seed #{root}\"}\"",
+    "x = :leaf",
+    "x = :\"leaf #{seed}\"",
+    "x = [leaf: 1, seed: 2]",
+    "x = %{leaf: 1}",
+    "x = {1, 2}",
+    "x = fn seed -> seed end",
+    "x = 1\n|> f()",
+    "x = 1\n# leaf\n|> f()",
+    "f seed do\n  seed\nend",
+    "f seed\ndo\n  seed\nend",
+    "x = seed not in leaves",
+    "f +seed",
+    "f -seed",
+    "defmodule Grove do\n  def identity(seed), do: seed\nend",
+    "#{ordinary comment}\nx = 1\n",
+    "x = \"café 🌱 #{leaf}\"",
+    "f + seed",
+    "f - seed",
+    "x = \"\"\"\nleaf \"\"\" stem\n\"\"\"",
+    "x = ~S\"leaf \\\"seed\"",
+    "x = 1\n== 2",
+    "x = 1\n# stem\n+ 2"
+  ],
+  "rejections": [
+    "x = \"leaf",
+    "x = \"leaf #{seed\"",
+    "x = ~r/leaf",
+    "x = \"\"\"\nleaf\n",
+    "x = fn seed ->",
+    "x = %{",
+    "x = 1 |>",
+    "x = ("
+  ]
+}

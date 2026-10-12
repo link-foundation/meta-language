@@ -1,0 +1,540 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "elixir",
+  "native": "native-elixir",
+  "sources": [
+    {
+      "id": "tree-sitter-elixir",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-elixir 0.3.5",
+      "repository": "https://github.com/elixir-lang/tree-sitter-elixir",
+      "revision": "e2d9e6e0e76b0c436fa48a0b8c32a031d0cbdf49",
+      "path": "src/grammar.json",
+      "sha256": "320c4af03d6d34085c744ac9923d9b963848bd639a97c5f04401472931b059c4",
+      "license": "Apache-2.0"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/elixir.lino",
+    "sha256": "594696f11f67b9343868485d7879f714c4bdb7e5b1af70ec11aefdb72c01dc05",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "2d49d8974f7fdf0d38bdb7ed792f7a60aa87dd087b0c0bb469cd5b138b08ba57"
+    },
+    "scanners": [
+      {
+        "name": "interpolated_single_quoted_content_scanner",
+        "tokens": [
+          "interpolated_single_quoted_content"
+        ]
+      },
+      {
+        "name": "interpolated_double_quoted_content_scanner",
+        "tokens": [
+          "interpolated_double_quoted_content"
+        ]
+      },
+      {
+        "name": "interpolated_here_document_single_quoted_content_scanner",
+        "tokens": [
+          "interpolated_here_document_single_quoted_content"
+        ]
+      },
+      {
+        "name": "interpolated_here_document_double_quoted_content_scanner",
+        "tokens": [
+          "interpolated_here_document_double_quoted_content"
+        ]
+      },
+      {
+        "name": "interpolated_parenthesis_quoted_content_scanner",
+        "tokens": [
+          "interpolated_parenthesis_quoted_content"
+        ]
+      },
+      {
+        "name": "interpolated_brace_quoted_content_scanner",
+        "tokens": [
+          "interpolated_brace_quoted_content"
+        ]
+      },
+      {
+        "name": "interpolated_square_quoted_content_scanner",
+        "tokens": [
+          "interpolated_square_quoted_content"
+        ]
+      },
+      {
+        "name": "interpolated_angle_quoted_content_scanner",
+        "tokens": [
+          "interpolated_angle_quoted_content"
+        ]
+      },
+      {
+        "name": "interpolated_bar_quoted_content_scanner",
+        "tokens": [
+          "interpolated_bar_quoted_content"
+        ]
+      },
+      {
+        "name": "interpolated_slash_quoted_content_scanner",
+        "tokens": [
+          "interpolated_slash_quoted_content"
+        ]
+      },
+      {
+        "name": "single_quoted_content_scanner",
+        "tokens": [
+          "single_quoted_content"
+        ]
+      },
+      {
+        "name": "double_quoted_content_scanner",
+        "tokens": [
+          "double_quoted_content"
+        ]
+      },
+      {
+        "name": "here_document_single_quoted_content_scanner",
+        "tokens": [
+          "here_document_single_quoted_content"
+        ]
+      },
+      {
+        "name": "here_document_double_quoted_content_scanner",
+        "tokens": [
+          "here_document_double_quoted_content"
+        ]
+      },
+      {
+        "name": "parenthesis_quoted_content_scanner",
+        "tokens": [
+          "parenthesis_quoted_content"
+        ]
+      },
+      {
+        "name": "brace_quoted_content_scanner",
+        "tokens": [
+          "brace_quoted_content"
+        ]
+      },
+      {
+        "name": "square_quoted_content_scanner",
+        "tokens": [
+          "square_quoted_content"
+        ]
+      },
+      {
+        "name": "angle_quoted_content_scanner",
+        "tokens": [
+          "angle_quoted_content"
+        ]
+      },
+      {
+        "name": "bar_quoted_content_scanner",
+        "tokens": [
+          "bar_quoted_content"
+        ]
+      },
+      {
+        "name": "slash_quoted_content_scanner",
+        "tokens": [
+          "slash_quoted_content"
+        ]
+      },
+      {
+        "name": "operator_line_context",
+        "tokens": [
+          "newline_before_block_keyword",
+          "newline_before_binary_operator",
+          "newline_before_comment"
+        ]
+      },
+      {
+        "name": "unary_context",
+        "tokens": [
+          "unary_operator_boundary"
+        ]
+      }
+    ],
+    "immediate": [
+      "_quoted_content_i_single",
+      "_quoted_content_i_double",
+      "_quoted_content_i_heredoc_single",
+      "_quoted_content_i_heredoc_double",
+      "_quoted_content_i_parenthesis",
+      "_quoted_content_i_curly",
+      "_quoted_content_i_square",
+      "_quoted_content_i_angle",
+      "_quoted_content_i_bar",
+      "_quoted_content_i_slash",
+      "_quoted_content_single",
+      "_quoted_content_double",
+      "_quoted_content_heredoc_single",
+      "_quoted_content_heredoc_double",
+      "_quoted_content_parenthesis",
+      "_quoted_content_curly",
+      "_quoted_content_square",
+      "_quoted_content_angle",
+      "_quoted_content_bar",
+      "_quoted_content_slash",
+      "_newline_before_do",
+      "_newline_before_binary_operator",
+      "_newline_before_comment",
+      "_before_unary_op"
+    ]
+  },
+  "rules": 90,
+  "keywords": [],
+  "renamed": [
+    {
+      "source": "source",
+      "native": "source_document"
+    },
+    {
+      "source": "_terminator",
+      "native": "terminator"
+    },
+    {
+      "source": "_expression",
+      "native": "expression"
+    },
+    {
+      "source": "integer",
+      "native": "integer_literal"
+    },
+    {
+      "source": "char",
+      "native": "character_literal"
+    },
+    {
+      "source": "boolean",
+      "native": "boolean_value"
+    },
+    {
+      "source": "nil",
+      "native": "absence_literal"
+    },
+    {
+      "source": "_atom",
+      "native": "atom_body"
+    },
+    {
+      "source": "_quoted_i_double",
+      "native": "interpolated_double_quoted_expression"
+    },
+    {
+      "source": "_quoted_double",
+      "native": "double_quoted_expression"
+    },
+    {
+      "source": "_quoted_i_single",
+      "native": "interpolated_single_quoted_expression"
+    },
+    {
+      "source": "_quoted_single",
+      "native": "single_quoted_expression"
+    },
+    {
+      "source": "_quoted_i_heredoc_single",
+      "native": "interpolated_here_document_single_quoted_expression"
+    },
+    {
+      "source": "_quoted_heredoc_single",
+      "native": "here_document_single_quoted_expression"
+    },
+    {
+      "source": "_quoted_i_heredoc_double",
+      "native": "interpolated_here_document_double_quoted_expression"
+    },
+    {
+      "source": "_quoted_heredoc_double",
+      "native": "here_document_double_quoted_expression"
+    },
+    {
+      "source": "_quoted_i_parenthesis",
+      "native": "interpolated_parenthesis_quoted_expression"
+    },
+    {
+      "source": "_quoted_parenthesis",
+      "native": "parenthesis_quoted_expression"
+    },
+    {
+      "source": "_quoted_i_curly",
+      "native": "interpolated_brace_quoted_expression"
+    },
+    {
+      "source": "_quoted_curly",
+      "native": "brace_quoted_expression"
+    },
+    {
+      "source": "_quoted_i_square",
+      "native": "interpolated_square_quoted_expression"
+    },
+    {
+      "source": "_quoted_square",
+      "native": "square_quoted_expression"
+    },
+    {
+      "source": "_quoted_i_angle",
+      "native": "interpolated_angle_quoted_expression"
+    },
+    {
+      "source": "_quoted_angle",
+      "native": "angle_quoted_expression"
+    },
+    {
+      "source": "_quoted_i_bar",
+      "native": "interpolated_bar_quoted_expression"
+    },
+    {
+      "source": "_quoted_bar",
+      "native": "bar_quoted_expression"
+    },
+    {
+      "source": "_quoted_i_slash",
+      "native": "interpolated_slash_quoted_expression"
+    },
+    {
+      "source": "_quoted_slash",
+      "native": "slash_quoted_expression"
+    },
+    {
+      "source": "charlist",
+      "native": "character_list"
+    },
+    {
+      "source": "sigil",
+      "native": "modifier"
+    },
+    {
+      "source": "keywords",
+      "native": "keyword_list"
+    },
+    {
+      "source": "_keywords_with_trailing_separator",
+      "native": "keyword_list_with_trailing_separator"
+    },
+    {
+      "source": "_keyword",
+      "native": "keyword_body"
+    },
+    {
+      "source": "bitstring",
+      "native": "bit_string"
+    },
+    {
+      "source": "map",
+      "native": "map_literal"
+    },
+    {
+      "source": "struct",
+      "native": "structure"
+    },
+    {
+      "source": "_items_with_trailing_separator",
+      "native": "items_with_trailing_separator"
+    },
+    {
+      "source": "_nullary_operator",
+      "native": "zero_operand_operator"
+    },
+    {
+      "source": "_capture_expression",
+      "native": "capture_expression"
+    },
+    {
+      "source": "_call_without_parentheses",
+      "native": "bare_call"
+    },
+    {
+      "source": "_call_with_parentheses",
+      "native": "parenthesized_call"
+    },
+    {
+      "source": "_local_call_without_parentheses",
+      "native": "local_bare_call"
+    },
+    {
+      "source": "_local_call_with_parentheses",
+      "native": "local_parenthesized_call"
+    },
+    {
+      "source": "_local_call_just_do_block",
+      "native": "local_call_just_do_block"
+    },
+    {
+      "source": "_remote_call_without_parentheses",
+      "native": "remote_bare_call"
+    },
+    {
+      "source": "_remote_call_with_parentheses",
+      "native": "remote_parenthesized_call"
+    },
+    {
+      "source": "_remote_dot",
+      "native": "remote_dot"
+    },
+    {
+      "source": "_anonymous_call",
+      "native": "anonymous_call"
+    },
+    {
+      "source": "_anonymous_dot",
+      "native": "anonymous_dot"
+    },
+    {
+      "source": "_double_call",
+      "native": "double_call"
+    },
+    {
+      "source": "_call_arguments_with_parentheses",
+      "native": "parenthesized_call_argument_list"
+    },
+    {
+      "source": "_call_arguments_with_parentheses_immediate",
+      "native": "immediate_parenthesized_call_arguments"
+    },
+    {
+      "source": "_call_arguments_with_trailing_separator",
+      "native": "call_arguments_with_trailing_separator"
+    },
+    {
+      "source": "_call_arguments_without_parentheses",
+      "native": "bare_call_argument_list"
+    },
+    {
+      "source": "stab_clause",
+      "native": "arrow_clause"
+    },
+    {
+      "source": "_stab_clause_left",
+      "native": "stab_clause_left"
+    },
+    {
+      "source": "_stab_clause_arguments_with_parentheses",
+      "native": "parenthesized_arrow_clause_argument_list"
+    },
+    {
+      "source": "_stab_clause_arguments_without_parentheses",
+      "native": "bare_arrow_clause_argument_list"
+    },
+    {
+      "source": "_stab_clause_arguments_with_parentheses_with_guard",
+      "native": "guarded_parenthesized_arrow_clause_argument_list"
+    },
+    {
+      "source": "_stab_clause_arguments_without_parentheses_with_guard",
+      "native": "guarded_bare_arrow_clause_argument_list"
+    },
+    {
+      "source": "_not_in",
+      "native": "membership_negation_operator"
+    },
+    {
+      "source": "_quoted_atom_start",
+      "native": "quoted_atom_start"
+    }
+  ],
+  "expandedWords": [
+    "char",
+    "sigil",
+    "struct"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "character_literal",
+        "concept": "grammar.character-literal"
+      },
+      {
+        "rule": "boolean_value",
+        "concept": "grammar.boolean-value"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "keyword",
+        "concept": "grammar.keyword"
+      },
+      {
+        "rule": "list",
+        "concept": "grammar.list"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 81
+  },
+  "sourceTransforms": [
+    {
+      "family": "immediate-literal",
+      "rules": [
+        "interpolation"
+      ],
+      "literal": "#{",
+      "count": 1,
+      "reason": "The interpolation introducer is a literal inside quoted content, so comment extras cannot consume its hash before the introducer is matched."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "_local_call_with_parentheses",
+      "value": 201,
+      "associativity": "left",
+      "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "_remote_call_with_parentheses",
+      "value": 201,
+      "associativity": "left",
+      "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "_anonymous_call",
+      "value": 201,
+      "associativity": "left",
+      "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
+    },
+    {
+      "family": "rule-precedence",
+      "rule": "_double_call",
+      "value": 201,
+      "associativity": "left",
+      "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
+    },
+    {
+      "family": "symbol-kind-alias",
+      "rule": "unary_operator",
+      "symbol": "_before_unary_op",
+      "alias": "unary_operator_padding",
+      "count": 4,
+      "reason": "Retain the private zero-width scanner marker as typed layout trivia; its skipped prefix cannot become the first concrete span of a unary argument."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "_call_arguments_without_parentheses",
+      "pattern": "[+-][ \\t\\r\\n]",
+      "reason": "A bare plus or minus followed by whitespace remains a binary operator; the pinned scanner only permits whitespace-prefixed unary call arguments when the operand follows the sign immediately."
+    }
+  ],
+  "approximations": [],
+  "unsupported": []
+}

@@ -1205,6 +1205,61 @@
         "sha256": "c243af49eb1f5fbeb572cebb114a20d3c6a3d282a5eacf3a09ed731517d9847a"
       },
       "oracle": "csharp"
+    },
+    {
+      "id": "tree-sitter-elixir",
+      "language": "elixir",
+      "native": "native-elixir",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-elixir 0.3.5",
+      "repository": "https://github.com/elixir-lang/tree-sitter-elixir",
+      "revision": "e2d9e6e0e76b0c436fa48a0b8c32a031d0cbdf49",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-elixir-0.3.5.grammar.json.gz",
+      "sha256": "320c4af03d6d34085c744ac9923d9b963848bd639a97c5f04401472931b059c4",
+      "license": "Apache-2.0",
+      "licenseFile": "parity/grammars/sources/tree-sitter-elixir-0.3.5.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/elixir.lino",
+        "sha256": "594696f11f67b9343868485d7879f714c4bdb7e5b1af70ec11aefdb72c01dc05",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "2d49d8974f7fdf0d38bdb7ed792f7a60aa87dd087b0c0bb469cd5b138b08ba57"
+        },
+        "generator": "js/scripts/generate-native-scanner-profiles.mjs --language elixir",
+        "immediate": [
+          "_quoted_content_i_single",
+          "_quoted_content_i_double",
+          "_quoted_content_i_heredoc_single",
+          "_quoted_content_i_heredoc_double",
+          "_quoted_content_i_parenthesis",
+          "_quoted_content_i_curly",
+          "_quoted_content_i_square",
+          "_quoted_content_i_angle",
+          "_quoted_content_i_bar",
+          "_quoted_content_i_slash",
+          "_quoted_content_single",
+          "_quoted_content_double",
+          "_quoted_content_heredoc_single",
+          "_quoted_content_heredoc_double",
+          "_quoted_content_parenthesis",
+          "_quoted_content_curly",
+          "_quoted_content_square",
+          "_quoted_content_angle",
+          "_quoted_content_bar",
+          "_quoted_content_slash",
+          "_newline_before_do",
+          "_newline_before_binary_operator",
+          "_newline_before_comment",
+          "_before_unary_op"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-elixir-0.3.5.corpus.json.gz",
+        "sha256": "cc122680b1ad28fb92af8c104197536506d5f4aca5472dc927df072d0c2d76ac"
+      },
+      "oracle": "elixir"
     }
   ]
 }

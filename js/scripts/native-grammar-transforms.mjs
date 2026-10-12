@@ -3,6 +3,43 @@
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'symbol-kind-alias') {
+      const { rule, symbol, alias, count } = decision;
+      const declared = Object.hasOwn(grammar.rules, symbol) || (grammar.externals ?? []).some(external => external.name === symbol);
+      if (!Object.hasOwn(grammar.rules, rule) || !declared || typeof alias !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$/u.test(alias)
+        || !Number.isSafeInteger(count) || count <= 0) throw new TypeError('symbol kind aliases need a rule, symbol, named kind and exact count');
+      let changes = 0;
+      const rewrite = node => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'SYMBOL' && node.name === symbol) {
+          changes += 1;
+          return { type: 'ALIAS', named: true, value: alias, content: node };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, rewrite(value)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== count) throw new TypeError('symbol kind aliases must match exactly their recorded occurrences');
+      continue;
+    }
+    if (decision.family === 'immediate-literal') {
+      const { rules, literal, count } = decision;
+      if (!Array.isArray(rules) || !rules.length || rules.some(rule => !Object.hasOwn(grammar.rules, rule))
+        || typeof literal !== 'string' || !literal || !Number.isSafeInteger(count) || count <= 0) throw new TypeError('immediate literals need existing rules, a literal and an exact occurrence count');
+      let changes = 0;
+      const rewrite = node => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'STRING' && node.value === literal) {
+          changes += 1;
+          return { type: 'IMMEDIATE_TOKEN', content: node };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, rewrite(value)]));
+      };
+      for (const rule of rules) grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== count) throw new TypeError('immediate literals must match exactly the recorded occurrences');
+      continue;
+    }
     if (decision.family === 'lexical-literal-rule') {
       const { rule, literal } = decision;
       if (typeof rule !== 'string' || !Object.hasOwn(grammar.rules, rule)
