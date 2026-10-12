@@ -207,6 +207,9 @@ jobs:
         run: cargo fetch --locked
         working-directory: rust
 
+      - name: Provision the pinned external grammar inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
+
       - name: Run the bulk grammar pipeline
         run: node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir grammar-bulk --jobs 4 --timeout 240
 
@@ -220,6 +223,11 @@ jobs:
         with:
           name: grammar-bulk-matrix
           path: grammar-bulk/
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() }}
@@ -256,6 +264,13 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: js
 
+      # The package remains install-script-free and parses offline. Its current
+      # compiled fallback grammars are staged from authenticated temporary
+      # inputs; upstream sources and independent oracles are never published.
+      - name: Provision the pinned package grammar binaries
+        if: ${{ github.event_name != 'release' }}
+        run: node js/scripts/external-grammar-cache.mjs --group wasm --materialize
+
       - name: Pack candidates or download the published release
         env:
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -272,6 +287,11 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -570,6 +590,9 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: js
 
+      - name: Provision the pinned runtime comparison grammars
+        run: node js/scripts/external-grammar-cache.mjs --group wasm --materialize
+
       - name: Compare the JavaScript and Rust runtimes
         env:
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -595,6 +618,11 @@ jobs:
             issue-195-results/runtime-parity/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -903,6 +931,9 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: js
 
+      - name: Provision the pinned external grammar test inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
+
       - name: Download the relative-meta-logic workload report
         # A missing report leaves I195-DOWNSTREAM-RML-WORKLOADS unobserved instead of stopping the stage.
         continue-on-error: true
@@ -965,6 +996,11 @@ jobs:
             issue-195-results/runtime-parity/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -1029,6 +1065,9 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: js
 
+      - name: Provision the pinned external grammar test inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
+
       - name: Download the relative-meta-logic workload report
         # A missing report leaves I195-DOWNSTREAM-RML-WORKLOADS unobserved instead of stopping the stage.
         continue-on-error: true
@@ -1087,6 +1126,11 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
+
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
@@ -1117,6 +1161,9 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
         working-directory: js
+
+      - name: Provision the pinned external grammar package binaries
+        run: node js/scripts/external-grammar-cache.mjs --group wasm --materialize
 
       - name: Download delivery candidates
         uses: actions/download-artifact@v8
@@ -1162,6 +1209,11 @@ jobs:
             issue-195-results/runtime-parity/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}

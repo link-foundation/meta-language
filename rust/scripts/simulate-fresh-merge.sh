@@ -52,6 +52,9 @@ cd "${REPO_ROOT}/js"
 # Rust's shared self-translation report executes the JavaScript runtime.
 # Install from the simulated merge's lockfile before running its checks.
 npm ci --ignore-scripts
+# Provision against the simulated merge's pinned manifest before compiling
+# development oracle dependencies or executing the JavaScript parity checks.
+node scripts/external-grammar-cache.mjs --all --materialize
 cd "${REPO_ROOT}/rust"
 
 status=0
@@ -77,5 +80,6 @@ if [ "${status}" -ne 0 ]; then
   echo "::error::Checks failed on the simulated merge with origin/${BASE_REF} even though they pass on the pull request head. This is a semantic merge conflict."
 fi
 
+node ../js/scripts/external-grammar-cache.mjs --clean-materialized || status=1
 git checkout --force - >/dev/null 2>&1 || true
 exit "${status}"

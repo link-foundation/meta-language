@@ -272,6 +272,21 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Node.js for independent grammar sources
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install the linked grammar manifest reader dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
+
+      - name: Provision the pinned independent grammar sources
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --group native-oracles --materialize
+
       - name: Cache cargo registry
         uses: actions/cache@v6
         with:
@@ -285,6 +300,11 @@ jobs:
 
       - name: Check every target with every feature
         run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo check --locked --all-targets --all-features
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -325,6 +345,21 @@ jobs:
         with:
           toolchain: ${{ steps.msrv.outputs.version }}
 
+      - name: Setup Node.js for independent grammar sources
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install the linked grammar manifest reader dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
+
+      - name: Provision the pinned independent grammar sources
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --group native-oracles --materialize
+
       - name: Cache cargo registry
         uses: actions/cache@v6
         with:
@@ -338,6 +373,11 @@ jobs:
 
       - name: Check with the minimum supported Rust version
         run: cargo check --locked --all-features --all-targets
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -383,6 +423,21 @@ jobs:
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
+
+      - name: Setup Node.js for independent grammar sources
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install the linked grammar manifest reader dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
+
+      - name: Provision the pinned independent grammar sources
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --group native-oracles --materialize
 
       - name: Cache cargo registry
         uses: actions/cache@v6
@@ -448,6 +503,11 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: ${{ github.workspace }}
         run: node js/scripts/check-js-rust-parity.mjs --manifest-only
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -519,6 +579,10 @@ jobs:
       - name: Install shared JavaScript test dependencies
         working-directory: js
         run: npm ci --ignore-scripts
+
+      - name: Provision the pinned external grammar test inputs
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
 
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
@@ -622,6 +686,11 @@ jobs:
         shell: bash
         run: cargo check --examples --all-features
 
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
+
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
@@ -684,6 +753,10 @@ jobs:
         working-directory: js
         run: npm ci --ignore-scripts
 
+      - name: Provision the pinned external grammar test inputs
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
+
       - name: Cache cargo registry
         uses: actions/cache@v6
         with:
@@ -711,6 +784,11 @@ jobs:
           name: coverage-${{ matrix.suite }}
           path: rust/lcov.info
           retention-days: 1
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
