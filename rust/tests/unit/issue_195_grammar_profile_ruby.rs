@@ -13,6 +13,32 @@ const EXPRESSIONS: &str =
     include_str!("../../../parity/fixtures/native-grammars/ruby-expression-contexts.json");
 const HEREDOC_CALLS: &str =
     include_str!("../../../parity/fixtures/native-grammars/ruby-heredoc-call-context-ci.json");
+const METHOD_DECLARATIONS: &str = include_str!(
+    "../../../parity/fixtures/native-grammars/ruby-method-declaration-context-ci.json"
+);
+
+#[test]
+fn ruby_complete_method_statements_preserve_default_budget_and_shared_contexts() {
+    let profile: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = serde_json::from_str(METHOD_DECLARATIONS).unwrap();
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&profile);
+    let language = tree_sitter_ruby::LANGUAGE.into();
+    assert_eq!(cases(&fixture, "cases").len(), 1);
+    assert_eq!(source(&cases(&fixture, "cases")[0]).len(), 317);
+    assert_eq!(cases(&fixture, "controls").len(), 23);
+    for case in cases(&fixture, "cases")
+        .iter()
+        .chain(cases(&fixture, "controls").iter())
+    {
+        let (expected, recovers) = oracle_rows(&language, source(case));
+        assert!(!recovers, "{:?}", source(case));
+        assert_eq!(Value::Array(expected), case["rows"]);
+        let tree = parse(&parser, source(case)).expect("native accepts default-budget definition");
+        assert_eq!(Value::Array(rows.rows(&tree, source(case))), case["rows"]);
+        assert_eq!(rebuilt(&tree), source(case));
+    }
+}
 
 #[test]
 fn ruby_heredoc_call_contexts_match_shared_ci_sources_and_neighboring_controls() {

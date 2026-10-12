@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Select only the four reported heredoc ambiguities and frozen call controls.
+// Select only reported Ruby CI sources and frozen contextual controls.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
@@ -7,11 +7,14 @@ import { grammarSourceOf, importSource } from './import-native-grammars.mjs';
 import { nativeRows, oracleSnapshot } from './native-grammar-rows.mjs';
 
 const read = file => JSON.parse(readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8'));
-const target = new URL('../../parity/fixtures/native-grammars/ruby-heredoc-call-context-ci.json', import.meta.url);
-const fixture = read('parity/fixtures/native-grammars/ruby-heredoc-call-context-ci.json');
+const argument = process.argv.indexOf('--fixture');
+const fixtureName = argument < 0 ? 'ruby-heredoc-call-context-ci' : process.argv[argument + 1];
+if (!/^ruby-[a-z]+(?:-[a-z]+)*-ci$/u.test(fixtureName ?? '')) throw new TypeError('select a Ruby source context CI fixture name');
+const target = new URL(`../../parity/fixtures/native-grammars/${fixtureName}.json`, import.meta.url);
+const fixture = read(`parity/fixtures/native-grammars/${fixtureName}.json`);
 const naming = read('parity/naming/grammar-name-expansions.json');
 for (const decision of fixture.sourceTransforms) {
-  assert.ok(naming.grammars.ruby.sourceTransforms.some(other => JSON.stringify(other) === JSON.stringify(decision)), 'heredoc call preferences must be registered source data');
+  assert.ok(naming.grammars.ruby.sourceTransforms.some(other => JSON.stringify(other) === JSON.stringify(decision)), 'Ruby context preferences must be registered source data');
 }
 const entry = grammarSourceOf('native-ruby');
 const imported = importSource(entry, new Map(naming.words.map(({ word, replacement }) => [word, replacement])), naming.grammars.ruby);
@@ -34,8 +37,8 @@ const cases = fixture.cases.map(({ file, title }) => {
   assert.ok(item, 'each ambiguity reproduction is retained verbatim from the pinned corpus');
   return snapshot(item);
 });
-const controls = fixture.controls.map(({ source }) => snapshot({ source }));
+const controls = fixture.controls.map(({ rows: _rows, ...item }) => snapshot(item));
 const result = { ...fixture, grammarSource: entry.id, revision: entry.revision, sourceSha256: entry.sha256, corpus: entry.corpus, cases, controls };
 const rendered = `${JSON.stringify(result, null, 2)}\n`;
-if (process.argv.includes('--check')) assert.equal(readFileSync(target, 'utf8'), rendered, 'Ruby heredoc call fixture drift');
+if (process.argv.includes('--check')) assert.equal(readFileSync(target, 'utf8'), rendered, 'Ruby context fixture drift');
 else writeFileSync(target, rendered);
