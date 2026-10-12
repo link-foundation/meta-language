@@ -374,7 +374,9 @@ export function missingFeatures(row) {
     if (source.sample === 'rejected') add(`${stage} sample`, source.rejection);
   }
   if (merge?.error) add('merge', merge.error);
-  if (merge?.sample === 'rejected') add('merge sample', merge.rejection);
+  if (merge?.sample === 'rejected' && !(merge.sources?.length === 1 && tree.sample === 'rejected' && merge.rejection === tree.rejection)) {
+    add('merge sample', merge.rejection);
+  }
   // A merge of two or more sources that shares no rule only concatenates them
   // (I195-MERGE-REAL-RECONCILIATION).
   if (merge?.stage === 'done' && merge.sources.length > 1 && merge.sharedRules === 0) {
