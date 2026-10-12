@@ -267,10 +267,10 @@ class RustParser {
       if (c.is('mut')) throw unsupported('mutable reference', 'mutation is outside the portable core', span(token, c.peek()));
       if (c.is('str')) {
         c.next();
-        return this.origins.typed(STRING, this.modulePath, ['reference']);
+        return this.origins.typed(STRING, this.modulePath, ['reference'], null, 'string slice');
       }
       const inner = this.type();
-      return this.origins.typed(inner, this.origins.type.path, ['reference', ...this.origins.type.wrappers], this.origins.type.fields);
+      return this.origins.typed(inner, this.origins.type.path, ['reference', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);
     }
     if (c.eat('(')) {
       if (c.eat(')')) return this.origins.typed(UNIT, this.modulePath);
@@ -301,7 +301,7 @@ class RustParser {
       c.expect('<', 'Box');
       const inner = this.type();
       c.expect('>', 'Box');
-      return this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers], this.origins.type.fields);
+      return this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);
     }
     if (c.is('<')) throw unsupported(`type ${name}<…>`, 'generic types are outside the portable core', span(token, c.peek()));
     const fixed = segments.length === 1 ? rustFixedType(name) : undefined;
@@ -803,11 +803,12 @@ class RustParser {
         expect(0);
         const origin = this.origins.origin(receiver, this.modulePath);
         if (origin.wrappers[0] === 'reference') origin.wrappers.shift();
+        if (method.value === 'to_owned' && origin.type?.kind === 'string') origin.textSourceModel = 'owned string';
         return this.origins.mark(receiver, origin);
       }
       case 'as_str':
         expect(0);
-        return this.origins.mark(receiver, { ...this.origins.origin(receiver, this.modulePath), type: STRING, path: [...this.modulePath], wrappers: ['reference'] });
+        return this.origins.mark(receiver, { ...this.origins.origin(receiver, this.modulePath), type: STRING, textSourceModel: 'string slice', path: [...this.modulePath], wrappers: ['reference'] });
       case 'to_string':
         expect(0);
         return { k: 'toString', arg: receiver, span: range };
@@ -836,7 +837,7 @@ class RustParser {
     }
     if (token.kind === 'string') {
       c.next();
-      return this.origins.mark({ k: 'str', value: token.value, span: span(token, token) }, { type: STRING, path: [...path], wrappers: ['reference'] });
+      return this.origins.mark({ k: 'str', value: token.value, span: span(token, token) }, { type: STRING, textSourceModel: 'string slice', path: [...path], wrappers: ['reference'] });
     }
     if (token.kind === 'macro') {
       c.next();

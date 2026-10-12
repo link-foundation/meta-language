@@ -3,11 +3,11 @@
 // type, path and pattern records rather than inferring a second typed program.
 import { unsupported } from './diagnostics.js';
 import { rustFixedType } from './types.js';
-import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
+import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, acceptRustSourceTextEquality, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
 import { acceptRustImmutableProductType } from './rust-product-rules.js';
 
-const unknown = (uncertain = false) => ({ wrappers: [], type: null, path: [], fields: null, copyEvidence: false, proven: false, diverging: false, uncertain });
-const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type });
+const unknown = (uncertain = false) => ({ wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
+const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
 const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null });
 
 export class RustSourceOrigins {
@@ -26,9 +26,9 @@ export class RustSourceOrigins {
     return previous;
   }
 
-  typed(type, path, wrappers = [], fields = null) {
+  typed(type, path, wrappers = [], fields = null, textSourceModel = type.kind === 'string' ? 'owned string' : null) {
     fields ??= type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
-    this.type = { type, path: [...path], wrappers, fields, copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
+    this.type = { type, path: [...path], wrappers, fields, textSourceModel, copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
     return type;
   }
 
@@ -102,7 +102,7 @@ export class RustSourceOrigins {
   }
 
   same(left, right) {
-    if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
+    if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || left.textSourceModel !== right.textSourceModel || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
     if (Boolean(left.fields) !== Boolean(right.fields) || (left.fields && (left.fields.length !== right.fields.length || left.fields.some((field, index) => !this.same(field, right.fields[index]))))) return false;
     if (left.type?.kind === 'named' && right.type?.kind === 'named') {
       const leftOwner = this.lookup(left.type.path, left.path);
@@ -149,18 +149,22 @@ export class RustSourceOrigins {
     if (form === 'derived-value') {
       const operands = [node.arg ?? node.object, ...(node.search ? [node.search] : [])].map(operand => this.origin(operand, path));
       if (operands.some(operand => !operand.proven)) return unknown(operands.some(operand => operand.uncertain));
-      return value(node.k === 'stringTest', node.k === 'stringTest' ? { kind: 'bool' } : null);
+      return value(node.k === 'stringTest', node.k === 'stringTest' ? { kind: 'bool' } : { kind: 'string' });
     }
     if (['numeric-cast', 'primitive-operation', 'comparison', 'boolean-operation'].includes(form)) {
       const operands = (node.arg ? [node.arg] : [node.left, node.right]).map(operand => this.origin(operand, path));
       if (!this.collecting) {
         if (operands.some(operand => !operand.proven)) return unknown(operands.some(operand => operand.uncertain || operand.wrappers.length));
-        if (form === 'comparison' && JSON.stringify(operands[0].wrappers) !== JSON.stringify(operands[1].wrappers)) return unknown(true);
+        if (form === 'comparison' && JSON.stringify(operands[0].wrappers) !== JSON.stringify(operands[1].wrappers)) {
+          const directString = operand => operand.textSourceModel === 'owned string' && operand.wrappers.length === 0;
+          const borrowedSlice = operand => operand.textSourceModel === 'string slice' && operand.wrappers.length === 1 && operand.wrappers[0] === 'reference';
+          if (!acceptRustSourceTextEquality(node.op, directString(operands[0]), directString(operands[1]), borrowedSlice(operands[0]), borrowedSlice(operands[1]))) return unknown(true);
+        }
         if (form === 'primitive-operation' && operands.some(operand => operand.wrappers.includes('box'))) return unknown(true);
         if (['numeric-cast', 'boolean-operation'].includes(form) && operands.some(operand => operand.wrappers.length > 0)) return unknown(true);
       }
       const copyEvidence = form !== 'primitive-operation' || (node.op !== 'concat' && operands.every(operand => operand.copyEvidence));
-      return value(copyEvidence, node.to ?? (['comparison', 'boolean-operation'].includes(form) ? { kind: 'bool' } : null));
+      return value(copyEvidence, node.to ?? (['comparison', 'boolean-operation'].includes(form) ? { kind: 'bool' } : node.op === 'concat' ? { kind: 'string' } : null));
     }
     return unknown();
   }
@@ -173,7 +177,8 @@ export class RustSourceOrigins {
     if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {
       const fields = returning.every(origin => origin.fields?.length === first.fields?.length) && first.fields
         ? first.fields.map((_, index) => this.join(returning.map(origin => origin.fields[index]))) : null;
-      return { ...value(returning.every(origin => origin.copyEvidence)), wrappers: [...first.wrappers], fields };
+      const textSourceModel = returning.every(origin => origin.textSourceModel === first.textSourceModel) ? first.textSourceModel : null;
+      return { ...value(returning.every(origin => origin.copyEvidence), textSourceModel ? { kind: 'string' } : null), wrappers: [...first.wrappers], fields, textSourceModel };
     }
     return unknown(returning.some(origin => origin.uncertain || origin.wrappers.length > 0));
   }
@@ -235,7 +240,7 @@ export class RustSourceOrigins {
     const operand = this.origin(node.arg, path);
     const form = readRustSourceExpressionOrigin(node.k, 'from');
     if (!this.collecting && form === 'unboxed-conversion' && operand.wrappers.includes('box')) return this.mark(node, unknown(true));
-    return this.mark(node, operand.proven ? value() : unknown(operand.uncertain));
+    return this.mark(node, operand.proven ? value(false, { kind: 'string' }) : unknown(operand.uncertain));
   }
 
   // Keep Box ownership contracts until source admission has checked a call;

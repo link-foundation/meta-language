@@ -85,3 +85,17 @@ pub fn read_rust_source_expression_origin(kind: &str, operation: &str) -> String
 pub fn accept_rust_source_box_availability(owner: &str, declared: bool) -> bool {
     owner != "alloc::boxed::Box" || declared
 }
+
+/// Admit the corresponding immutable Rust source projection.
+#[must_use]
+pub fn accept_rust_source_text_equality(
+    operation: &str,
+    left_direct_string: bool,
+    right_direct_string: bool,
+    left_borrowed_slice: bool,
+    right_borrowed_slice: bool,
+) -> bool {
+    (operation == "eq" || operation == "ne")
+        && ((left_direct_string && right_borrowed_slice)
+            || (right_direct_string && left_borrowed_slice))
+}

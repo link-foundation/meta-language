@@ -403,17 +403,19 @@ impl RustParser {
             }
             if self.cursor.is("str") {
                 self.cursor.advance();
-                return Ok(self.origins.typed(
-                    STRING,
-                    &self.module_path,
-                    vec!["reference".to_owned()],
-                ));
+                let result =
+                    self.origins
+                        .typed(STRING, &self.module_path, vec!["reference".to_owned()]);
+                self.origins.current_type.text_source_model = Some("string slice");
+                return Ok(result);
             }
             let inner = self.parse_type()?;
             let origin = self.origins.current_type.clone();
             let mut wrappers = vec!["reference".to_owned()];
             wrappers.extend(origin.wrappers);
-            return Ok(self.origins.typed(inner, &origin.path, wrappers));
+            let result = self.origins.typed(inner, &origin.path, wrappers);
+            self.origins.current_type.text_source_model = origin.text_source_model;
+            return Ok(result);
         }
         if self.cursor.eat("(").is_some() {
             if self.cursor.eat(")").is_some() {
@@ -468,7 +470,9 @@ impl RustParser {
             let origin = self.origins.current_type.clone();
             let mut wrappers = vec!["box".to_owned()];
             wrappers.extend(origin.wrappers);
-            return Ok(self.origins.typed(inner, &origin.path, wrappers));
+            let result = self.origins.typed(inner, &origin.path, wrappers);
+            self.origins.current_type.text_source_model = origin.text_source_model;
+            return Ok(result);
         }
         if self.cursor.is("<") {
             return Err(unsupported(

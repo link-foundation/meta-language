@@ -232,8 +232,12 @@ impl RustParser {
                 {
                     origin.wrappers.remove(0);
                 }
+                if method_name == "to_owned" && origin.ty == Some(STRING) {
+                    origin.text_source_model = Some("owned string");
+                }
                 if method_name == "as_str" {
                     origin.ty = Some(STRING);
+                    origin.text_source_model = Some("string slice");
                     origin.path = path.to_vec();
                     origin.wrappers = vec!["reference".to_owned()];
                 }
@@ -361,10 +365,9 @@ impl RustParser {
                 },
                 span(&token, &token),
             );
-            self.origins.mark(
-                &result,
-                SourceOrigin::with_type(STRING, path, vec!["reference".to_owned()]),
-            );
+            let mut origin = SourceOrigin::with_type(STRING, path, vec!["reference".to_owned()]);
+            origin.text_source_model = Some("string slice");
+            self.origins.mark(&result, origin);
             return Ok(result);
         }
         if token.kind == TokenKind::Macro {

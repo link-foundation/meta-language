@@ -8,7 +8,8 @@ use std::collections::{HashMap, VecDeque};
 use super::indirection_rules::{
     accept_rust_immutable_indirection_layer, accept_rust_source_box_availability,
     accept_rust_source_box_coercion_layer, accept_rust_source_box_owner,
-    accept_rust_source_indirection_argument, read_rust_source_expression_origin,
+    accept_rust_source_indirection_argument, accept_rust_source_text_equality,
+    read_rust_source_expression_origin,
 };
 use super::product_rules::accept_rust_immutable_product_type;
 use super::{Result, SExpr, SNode, SPattern, SPatternNode, Span, Type, unsupported};
@@ -24,6 +25,7 @@ pub(super) struct SourceOrigin {
     /// Source Copy evidence does not choose the checker's numeric width.
     pub(super) copy_evidence: bool,
     pub(super) fields: Option<Vec<Self>>,
+    pub(super) text_source_model: Option<&'static str>,
 }
 
 impl SourceOrigin {
@@ -37,6 +39,7 @@ impl SourceOrigin {
             uncertain: false,
             copy_evidence: false,
             fields: None,
+            text_source_model: None,
         }
     }
 
@@ -54,6 +57,7 @@ impl SourceOrigin {
             .as_ref()
             .is_none_or(|fields| fields.iter().all(Self::direct_copy_value));
         let copy_evidence = accept_rust_immutable_product_type(ty.kind(), children_accepted, false);
+        let text_source_model = (ty == super::STRING).then_some("owned string");
         Self {
             ty: Some(ty),
             path: path.to_vec(),
@@ -63,6 +67,7 @@ impl SourceOrigin {
             uncertain: false,
             copy_evidence,
             fields,
+            text_source_model,
         }
     }
 
@@ -89,6 +94,24 @@ impl SourceOrigin {
             copy_evidence: true,
             ..Self::value()
         }
+    }
+
+    fn text_value() -> Self {
+        Self {
+            ty: Some(super::STRING),
+            text_source_model: Some("owned string"),
+            ..Self::value()
+        }
+    }
+
+    fn direct_string_value(&self) -> bool {
+        self.text_source_model == Some("owned string") && self.wrappers.is_empty()
+    }
+
+    fn borrowed_string_slice(&self) -> bool {
+        self.text_source_model == Some("string slice")
+            && self.wrappers.len() == 1
+            && self.wrappers[0] == "reference"
     }
 
     const fn uncertain() -> Self {
@@ -359,6 +382,7 @@ impl SourceOrigins {
             || left.uncertain != right.uncertain
             || left.wrappers != right.wrappers
             || left.copy_evidence != right.copy_evidence
+            || left.text_source_model != right.text_source_model
         {
             return false;
         }
@@ -486,7 +510,15 @@ impl SourceOrigins {
                     };
                 }
                 if !self.collecting
-                    && ((form == "comparison" && operands[0].wrappers != operands[1].wrappers)
+                    && ((form == "comparison"
+                        && operands[0].wrappers != operands[1].wrappers
+                        && !accept_rust_source_text_equality(
+                            operation,
+                            operands[0].direct_string_value(),
+                            operands[1].direct_string_value(),
+                            operands[0].borrowed_string_slice(),
+                            operands[1].borrowed_string_slice(),
+                        ))
                         || (form == "primitive-operation"
                             && operands.iter().any(|operand| {
                                 operand.wrappers.iter().any(|layer| layer == "box")
@@ -500,11 +532,12 @@ impl SourceOrigins {
                     if matches!(node.node, SNode::StringTest { .. }) {
                         return SourceOrigin::scalar_copy_value(Some(super::BOOL));
                     }
-                    return SourceOrigin::value();
+                    return SourceOrigin::text_value();
                 }
                 let ty = match &node.node {
                     SNode::Cast { to, .. } => Some(to.clone()),
                     _ if form == "comparison" || form == "boolean-operation" => Some(super::BOOL),
+                    _ if operation == "concat" => Some(super::STRING),
                     _ => None,
                 };
                 let copy_evidence = form != "primitive-operation"
@@ -513,6 +546,7 @@ impl SourceOrigins {
                 SourceOrigin {
                     ty,
                     copy_evidence,
+                    text_source_model: (operation == "concat").then_some("owned string"),
                     ..SourceOrigin::value()
                 }
             }
@@ -562,10 +596,17 @@ impl SourceOrigins {
                             .collect()
                     })
             });
+            let text_source_model = returning
+                .iter()
+                .all(|origin| origin.text_source_model == first.text_source_model)
+                .then_some(first.text_source_model)
+                .flatten();
             return SourceOrigin {
                 wrappers: first.wrappers.clone(),
                 copy_evidence: returning.iter().all(|origin| origin.copy_evidence),
                 fields,
+                ty: text_source_model.map(|_| super::STRING),
+                text_source_model,
                 ..SourceOrigin::value()
             };
         }
@@ -700,7 +741,7 @@ impl SourceOrigins {
         {
             SourceOrigin::uncertain()
         } else if operand.proven {
-            SourceOrigin::value()
+            SourceOrigin::text_value()
         } else if operand.uncertain {
             SourceOrigin::uncertain()
         } else {

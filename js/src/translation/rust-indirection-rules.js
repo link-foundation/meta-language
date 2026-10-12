@@ -40,3 +40,8 @@ export function readRustSourceExpressionOrigin(kind, operation) {
 export function acceptRustSourceBoxAvailability(owner, declared) {
   return owner !== 'alloc::boxed::Box' || declared;
 }
+
+/** @param {string} operation @param {boolean} leftDirectString @param {boolean} rightDirectString @param {boolean} leftBorrowedSlice @param {boolean} rightBorrowedSlice @returns {boolean} */
+export function acceptRustSourceTextEquality(operation, leftDirectString, rightDirectString, leftBorrowedSlice, rightBorrowedSlice) {
+  return (operation === 'eq' || operation === 'ne') && ((leftDirectString && rightBorrowedSlice) || (rightDirectString && leftBorrowedSlice));
+}
