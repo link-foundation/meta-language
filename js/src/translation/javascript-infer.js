@@ -64,6 +64,7 @@ class Inference {
     this.recordSpreads = [];
     this.collections = new Map();
     this.iterables = [];
+    this.indices = [];
   }
 
   fresh(bigint = false) {
@@ -287,6 +288,18 @@ class Inference {
         this.iterables.splice(this.iterables.indexOf(constraint), 1);
         progress = true;
       }
+      for (const constraint of [...this.indices]) {
+        const object = this.resolve(constraint.object);
+        if (object.kind === 'var') continue;
+        if (object.kind === 'array') this.unify(constraint.result, object.element, constraint.where);
+        else if (object.kind === 'tuple' && constraint.index.k === 'num') {
+          const at = Number(constraint.index.value);
+          if (!Number.isInteger(at) || at < 0 || at >= object.elements.length) throw typeError('tuple index out of range', constraint.where);
+          this.unify(constraint.result, object.elements[at], constraint.where);
+        }
+        this.indices.splice(this.indices.indexOf(constraint), 1);
+        progress = true;
+      }
       for (const constraint of [...this.recordSpreads]) {
         if (constraint.entries.some((entry) => entry.spread && this.resolve(entry.type).kind === 'var')) continue;
         const fields = new Map();
@@ -326,6 +339,13 @@ class Inference {
           progress = true;
         }
       }
+      if (!progress && this.indices.length) {
+        const indexed = this.indices.find((constraint) => this.resolve(constraint.object).kind === 'var');
+        if (indexed) {
+          this.unify(indexed.object, { kind: 'array', element: indexed.result }, indexed.where);
+          progress = true;
+        }
+      }
       if (!progress && this.plus.length) {
         this.plusStep(this.plus.shift(), true);
         progress = true;
@@ -349,7 +369,7 @@ class Inference {
 
   fieldStep({ object, field, result, where }) {
     const type = this.resolve(object);
-    if ((type.kind === 'array' || type.kind === 'string') && field === 'length') {
+    if ((type.kind === 'array' || type.kind === 'string' || type.kind === 'tuple') && field === 'length') {
       this.unify(result, FLOAT, where);
       return true;
     }
@@ -580,7 +600,7 @@ class Inference {
         return ['isInteger', 'isSafeInteger', 'isFinite', 'isNaN'].includes(node.op) ? BOOL : FLOAT;
       case 'index': {
         const element = this.fresh();
-        this.unify(this.expr(node.object, env), { kind: 'array', element }, node.object.span ?? node.span);
+        this.indices.push({ object: this.expr(node.object, env), index: node.index, result: element, where: node.object.span ?? node.span });
         this.expr(node.index, env);
         return element;
       }

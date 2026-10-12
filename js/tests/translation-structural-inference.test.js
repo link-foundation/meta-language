@@ -100,6 +100,9 @@ function firstWithCount(names, count) { return [names[0], count]; }`;
   assert.deepEqual(fn.ret.elements, [STRING, FLOAT]);
   const checked = checkProgram(parseJavaScript(source));
   assert.equal(checked.declarations.get('firstWithCount').body.k, 'tuple');
+  assertSameOutput(`${source}
+console.log(firstWithCount(['name'], 2)[0]);
+console.log(firstWithCount(['name'], 2)[1]);`);
 });
 
 test('function JSDoc accepts named arrow parameters and nested callable results', () => {
