@@ -131,7 +131,11 @@ export async function importAdditionalGrammar(source) {
     const importer = await import('../src/grammar-importers/yacc.js');
     const method = ['lex', 'lexer'].includes(source.format) ? 'importLex' : 'importYacc';
     const tokenRules = source.lexerText ? [...importer.importLex(source.lexerText).rules.values()] : undefined;
-    grammar = importer[method](source.text, { ...(tokenRules ? { tokenRules } : {}), ...source.options });
+    grammar = importer[method](source.text, {
+      ...(source.format === 'menhir' ? { dialect: 'menhir' } : {}),
+      ...(tokenRules ? { tokenRules } : {}),
+      ...source.options,
+    });
   } else throw new Error(`unsupported additional grammar format ${source.format}`);
   if (source.entryPoint && !grammar.rule(source.entryPoint)) throw new Error(`${source.id}: no entry point ${source.entryPoint}`);
   return startingAt(grammar, source.entryPoint ?? null);
