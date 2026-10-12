@@ -64,6 +64,21 @@ test('logical negation infers Number input and preserves JavaScript truthiness',
   preservesTranslationBehavior(source, 'false\ntrue\ntrue\ntrue\nfalse\nfalse\n');
 });
 
+test('recursive inferred records produce a type diagnostic without overflowing the host stack', () => {
+  const sources = [
+    'function width(expression){return expression.kind === "repeat" ? width(expression.item) * expression.min : 0;}',
+    'function width(expression){switch(expression.kind){case "repeat": return width(expression.item) * expression.min; default:return 0;}}',
+    'function identity(x){x.child=x;return x;}',
+  ];
+  for (const source of sources) {
+    assert.throws(() => parseJavaScript(source), (error) => error.kind === 'type' && /^a recursive inferred type needs an explicit data type at \d+\.\.\d+$/u.test(error.message), source);
+  }
+});
+
+test('sharing an inferred record type between sibling fields remains finite', () => {
+  preservesTranslationBehavior('function pair(x){return {left:x,right:x};}\nconsole.log(pair({value:1}).left.value);', '1\n');
+});
+
 test('an unannotated program is a semantic translation in every target', () => {
   const source = 'function answer() { return 42; } console.log(answer());';
   for (const target of ['Rust', 'Lean', 'Rocq']) {

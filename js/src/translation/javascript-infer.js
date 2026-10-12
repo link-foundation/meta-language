@@ -162,12 +162,12 @@ class Inference {
       for (const field of a.fields) {
         const matching = b.fields.find((candidate) => candidate.name === field.name);
         if (matching) this.unify(field.type, matching.type, where);
-        else if (b.open) b.fields.push({ ...field });
+        else if (b.open) this.addInferredField(b, field, where);
         else throw typeError(`record field ${field.name} is missing`, where);
       }
       for (const field of b.fields) {
         if (a.fields.some((candidate) => candidate.name === field.name)) continue;
-        if (a.open) a.fields.push({ ...field });
+        if (a.open) this.addInferredField(a, field, where);
         else throw typeError(`record field ${field.name} is missing`, where);
       }
       return;
@@ -193,7 +193,11 @@ class Inference {
   }
 
   contains(term, id, seen = new Set()) {
+    // A rebinding must inspect the variable itself before following its old
+    // binding: pointing it back through that binding would create a cycle.
+    if (term.kind === 'var' && term.id === id) return true;
     const type = this.resolve(term);
+    if (type === id) return true;
     if (type.kind === 'var') return type.id === id;
     if (seen.has(type)) return false;
     seen.add(type);
@@ -203,6 +207,11 @@ class Inference {
       : type.kind === 'map' ? [type.key, type.value]
       : type.kind === 'function' ? [...type.params, type.ret] : [];
     return children.some((child) => this.contains(child, id, seen));
+  }
+
+  addInferredField(record, field, where) {
+    if (this.contains(field.type, record)) throw typeError('a recursive inferred type needs an explicit data type', where);
+    record.fields.push({ ...field });
   }
 
   run(functions, main, externals) {
@@ -511,7 +520,7 @@ class Inference {
       let declared = type.fields.find((candidate) => candidate.name === field);
       if (!declared && type.open) {
         declared = { name: field, type: result };
-        type.fields.push(declared);
+        this.addInferredField(type, declared, where);
       }
       if (declared) this.unify(result, declared.type, where);
       return true;
@@ -533,18 +542,24 @@ class Inference {
   }
 
   /** The inferred type as a surface type; an unconstrained BigInt is `bigint`, anything else unconstrained a Number. */
-  surface(term, where) {
+  surface(term, where, active = new Set()) {
     const type = this.resolve(term);
     if (type.kind === 'var') return this.bigints.has(type.id) ? INT : FLOAT;
     if (type.kind === 'data') return { kind: 'named', path: [ROOT, type.name], span: where };
-    if (type.kind === 'array') return { kind: 'array', element: this.surface(type.element, where) };
-    if (type.kind === 'option') return option(this.surface(type.element, where), type.absence ?? 'both');
-    if (type.kind === 'set' || type.kind === 'cell') return { ...type, element: this.surface(type.element, where) };
-    if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.surface(element, where)) };
-    if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.surface(field.type, where) })) };
-    if (type.kind === 'map') return { ...type, key: this.surface(type.key, where), value: this.surface(type.value, where) };
-    if (type.kind === 'function') return { ...type, params: type.params.map((param) => this.surface(param, where)), ret: this.surface(type.ret, where) };
-    return type;
+    if (active.has(type)) throw typeError('a recursive inferred type needs an explicit data type', where);
+    active.add(type);
+    try {
+      if (type.kind === 'array') return { kind: 'array', element: this.surface(type.element, where, active) };
+      if (type.kind === 'option') return option(this.surface(type.element, where, active), type.absence ?? 'both');
+      if (type.kind === 'set' || type.kind === 'cell') return { ...type, element: this.surface(type.element, where, active) };
+      if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.surface(element, where, active)) };
+      if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.surface(field.type, where, active) })) };
+      if (type.kind === 'map') return { ...type, key: this.surface(type.key, where, active), value: this.surface(type.value, where, active) };
+      if (type.kind === 'function') return { ...type, params: type.params.map((param) => this.surface(param, where, active)), ret: this.surface(type.ret, where, active) };
+      return type;
+    } finally {
+      active.delete(type);
+    }
   }
 
   signature(path) {
