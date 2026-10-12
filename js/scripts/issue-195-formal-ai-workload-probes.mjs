@@ -235,6 +235,7 @@ export async function buildFormalAiInputs(checkout) {
     linkEditRulesText: data.linkEditRules,
     linkEdits: [...LINK_EDIT_CASES, ...linoLinkEditCases(data.programGrammars)],
     projections: PROJECTION_CASES,
+    semanticProjections: JSON.parse(await readFile(new URL('../../parity/fixtures/formal-ai-semantic-projections.json', import.meta.url), 'utf8')).cases,
   };
 }
 

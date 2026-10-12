@@ -19,6 +19,7 @@ import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
 import { tokenize } from './translation/lexer.js';
+import { eraseTypeScript, requiresTypeScriptErasure } from './typescript-erasure.js';
 import { parseRust } from './translation/rust.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 
@@ -110,7 +111,7 @@ export function selfTranslationSignatures(source, language, options = {}) {
   return translateModule(source, language, 'Rust', options, true).signatures;
 }
 
-function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {} } = {}, signaturesOnly = false) {
+function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false } = {}, signaturesOnly = false) {
   const from = required(sourceLanguage);
   const to = required(targetLanguage);
   const set = decoratorSet(decorators);
@@ -124,7 +125,13 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     throw new SelfTranslationError(`the ${from} links of the source do not reproduce it`);
   }
   const items = topLevelItems(bytes, parsed);
-  if (family(from) === family(to)) {
+  const stringMethods = new Set(['split', 'slice', 'indexOf', 'lastIndexOf', 'replace', 'replaceAll', 'codePointAt', 'repeat', 'padStart', 'padEnd']);
+  const usesStringMethods = (node) => (node.term === 'member_expression' && node.children.some((child) =>
+    child.field === 'property' && stringMethods.has(bytes.subarray(child.span.byteRange.start, child.span.byteRange.end).toString('utf8'))))
+    || node.children.some(usesStringMethods);
+  const representation = utf16Strings || (family(from) === 'JavaScript' && usesStringMethods(parsed.tree));
+  const keptFamily = from === 'JavaScript' || (from === 'TypeScript' && !requiresTypeScriptErasure(parsed));
+  if (family(from) === family(to) && (from === to || (keptFamily && !text.startsWith(HEADER)))) {
     return { translation: freeze(from, to, reconstructed, items.map(({ term, start, end }) => ({ term, start, end, status: 'kept', reason: null }))), signatures: [] };
   }
   const blocks = [];
@@ -133,9 +140,9 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   let gap = '';
   const groups = groupItems(items, bytes);
   const { outs, scans } = family(to) === 'Rust'
-    ? translateBound(groups, from, to, set, { moduleDirectory, imports })
-    : { outs: groups.map((group) => translateGroup(group, from, to, set)), scans: [] };
-  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory });
+    ? translateBound(groups, from, to, set, { moduleDirectory, imports, utf16Strings: representation })
+    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation })), scans: [] };
+  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, utf16Strings: representation });
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
   const signatures = results.flatMap(({ out }) => out.status === 'translated' ? (out.signatures ?? []).filter(signature => exportedNames.has(signature.name)) : []);
   if (signaturesOnly) return { signatures };
@@ -199,7 +206,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
  * name that a cycle of items leaves untranslated stays unbound, so its
  * callers are carried with the checker's diagnostic.
  */
-function translateBound(groups, from, to, decorators, { moduleDirectory, imports }) {
+function translateBound(groups, from, to, decorators, { moduleDirectory, imports, utf16Strings }) {
   const scans = groups.map((group) => (group.kind === 'item' ? scanItem(group.text) : null));
   const owners = new Map();
   scans.forEach((scan, index) => {
@@ -212,7 +219,7 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
     if (outs[index] || visiting.has(index)) return;
     const scan = scans[index];
     if (!scan) {
-      outs[index] = translateGroup(groups[index], from, to, decorators);
+      outs[index] = translateGroup(groups[index], from, to, decorators, { utf16Strings });
       return;
     }
     visiting.add(index);
@@ -234,7 +241,7 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
         if (signature && acceptDeclarationSignature(signature.k === 'const', signature.literal ?? false)) externals.push(signature);
       }
     }
-    outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory });
+    outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory, utf16Strings });
     visiting.delete(index);
   };
   groups.forEach((_, index) => visit(index));
@@ -377,6 +384,11 @@ function groupItems(items, bytes) {
     } else if (item.comment && item.text.startsWith(TRANSLATED)) {
       const fields = Object.fromEntries(item.text.slice(TRANSLATED.length).split(' ').slice(2).map((field) => field.split('=')));
       const linesEnd = linesAfter(index);
+      if (fields.items === '0' && fields.sha256 === sha256('')) {
+        const [language] = item.text.slice(TRANSLATED.length).split(' ');
+        take(linesEnd, { kind: 'carried', language, lines: sourceLines(items.slice(index + 1, linesEnd + 1)) });
+        continue;
+      }
       const last = definitionsEnd(items, linesEnd, Number(fields.items));
       if (last >= 0) {
         const code = textBetween(items[linesEnd + 1], items[last]);
@@ -410,7 +422,7 @@ function definitionsEnd(items, after, count) {
   if (!Number.isSafeInteger(count) || count <= 0) return -1;
   let left = count;
   for (let at = after + 1; at < items.length; at += 1) {
-    if (items[at].term !== 'attribute_item') left -= 1;
+    if (items[at].term !== 'attribute_item' && !items[at].comment) left -= 1;
     if (left === 0) return at;
   }
   return -1;
@@ -455,7 +467,7 @@ function collectLiteralBindings(groups, bind, from, to, decorators) {
   if (bind) for (const group of groups) {
     if (group.kind !== 'item') continue;
     try {
-      const parsed = parseJavaScript(group.text);
+      const parsed = parseJavaScript(from === 'TypeScript' ? eraseTypeScript(group.text).code : group.text);
       const effects = parsed.main.effects;
       const effect = effects[0];
       if (effect && acceptLiteralBinding(effect.value?.k ?? '', effect.constant ?? false, effects.length, parsed.items.length)) {
@@ -485,10 +497,22 @@ function translateGroup(group, from, to, decorators, context = {}) {
   let emitted;
   let signatures;
   try {
+    if (from === 'TypeScript' && to === 'JavaScript') {
+      const erased = eraseTypeScript(text);
+      const erasedCode = erased.code.trim();
+      const count = topLevelItems(Buffer.from(erasedCode), parseProgrammingLanguage(erasedCode, 'JavaScript')).filter((item) => !item.comment).length;
+      const code = count === 0 ? '' : erasedCode;
+      return {
+        code: [`${TRANSLATED}${from} ${term} items=${count} sha256=${sha256(code)}`,
+          ...text.split(/\r?\n/u).map(sourceLine), ...(code ? [code] : [])].join('\n'),
+        status: 'translated',
+      };
+    }
     // The Rust frontend reads a program, so an item alone gets an empty main.
     const program = checkProgram(family(from) === 'Rust'
       ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`)
-      : parseJavaScript(text, context));
+      : parseJavaScript(from === 'TypeScript' ? eraseTypeScript(text).code : text, context));
+    if (context.utf16Strings) program.utf16Strings = true;
     // A top-level constant is a Rust constant; other top-level statements run once, as a program.
     const constants = family(to) === 'Rust' ? emitRustConstants(program) : null;
     if (!constants && program.main.effects.length > 0) return carry(text, term, from, 'top-level statement');
@@ -496,7 +520,7 @@ function translateGroup(group, from, to, decorators, context = {}) {
     signatures = program.imports ? context.externals : declaredSignatures(program, constants);
   } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
-    return carry(text, term, from, error.kind);
+    return carry(text, term, from, from === 'TypeScript' ? error.reason : error.kind);
   }
   if (emitted.definitions.length === 0) return carry(text, term, from, 'no definition');
   const exported = family(to) === 'JavaScript' && (family(from) === 'Rust' ? /^pub(\([^)]*\))?\s/mu : /^export\s/mu).test(text);

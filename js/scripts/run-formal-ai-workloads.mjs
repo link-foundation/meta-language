@@ -147,6 +147,8 @@ async function main() {
       rules: inputs.rules.length,
       linkEdits: inputs.linkEdits.length,
       projections: inputs.projections.length,
+      semanticProjections: inputs.semanticProjections.length,
+      semanticProjectionFixtureSha256: sha256(await readFile(path.join(root, 'parity/fixtures/formal-ai-semantic-projections.json'))),
     };
     report.npm = await guarded(() => javascriptWorkloads(formalAi.directory, inputsPath, outputs));
     report.crate = skipRust
@@ -320,6 +322,7 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
     counts: countOutcomes(tests),
     exit: testRun.code,
     outputs: await outputsFile('javascript', probe.outputs),
+    semanticProjectionObservations: probe.semanticProjectionObservations ?? [],
     probe: probeAssertions(probe, probeRun),
   };
 }
