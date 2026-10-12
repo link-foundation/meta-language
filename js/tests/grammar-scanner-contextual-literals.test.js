@@ -48,14 +48,19 @@ test('contextual line continuations retain their source and separate lexical wor
 
 // Exercise generated scanner decisions without rewriting the shared generated
 // Ruby files while a grammar author prepares the rest of the batch.
-const rubyGrammar = parseGrammarLinks(read('parity/grammars/native/ruby.lino'));
+const rubyListing = read('parity/grammars/native/ruby.lino');
 const rubyProfile = JSON.parse(read('parity/naming/grammar-name-expansions.json')).grammars.ruby.scannerFamilies;
-const generated = parseGrammarLinks(`(grammar (start unused))\n${nativeScannerProfile(rubyProfile)}(rule unused normal (literal x))\n`);
-rubyGrammar.declarations.scanners = generated.declarations.scanners;
-for (const [name, rule] of generated.rules) {
-  if (name !== 'unused') rubyGrammar.rules.set(name, { ...rubyGrammar.rules.get(name), ...rule });
+function rubyScannerParser(changes = {}) {
+  const rubyGrammar = parseGrammarLinks(rubyListing);
+  const profiles = rubyProfile.map((entry, index) => index === 0 ? { ...entry, ...changes } : entry);
+  const generated = parseGrammarLinks(`(grammar (start unused))\n${nativeScannerProfile(profiles)}(rule unused normal (literal x))\n`);
+  rubyGrammar.declarations.scanners = generated.declarations.scanners;
+  for (const [name, rule] of generated.rules) {
+    if (name !== 'unused') rubyGrammar.rules.set(name, { ...rubyGrammar.rules.get(name), ...rule });
+  }
+  return compileGrammar(rubyGrammar);
 }
-const rubyParser = compileGrammar(rubyGrammar);
+const rubyParser = rubyScannerParser();
 const rubyProjection = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile.json'));
 
 test('shared contextual literal behavior preserves nested strings, balanced delimiters and regular expression suffixes', () => {
@@ -80,4 +85,23 @@ test('Ruby scanner dispatch parses the pinned empty method within the unchanged 
   assert.deepEqual(native.ambiguities, []);
   assert.deepEqual(nativeRows(native.tree, source, rubyProjection), oracle.rows);
   assert.equal(leaves(native.tree).map(({ text }) => text).join(''), source);
+});
+
+test('shared lexical decisions distinguish adjacent operators from command arguments', () => {
+  const parser = rubyScannerParser({ sharedLexicalDecisions: [
+    ['binary_star', 'splat_star'], ['binary_star_star', 'hash_splat_star_star'],
+  ] });
+  for (const source of ['foo-a', '@ivar-1', 'a *b', 'a*b']) {
+    const oracle = oracleSnapshot(source, 'ruby');
+    assert.equal(oracle.recovers, false, source);
+    const native = parser.parseTree(source);
+    assert.equal(native.ok, true, source);
+    assert.deepEqual(native.ambiguities, [], source);
+    assert.deepEqual(nativeRows(native.tree, source, rubyProjection), oracle.rows, source);
+    assert.equal(leaves(native.tree).map(({ text }) => text).join(''), source);
+  }
+  const lexical = [{ token: 'operator', pattern: '\\*' }, { token: 'word', pattern: '[A-Za-z]+' }];
+  for (const sharedLexicalDecisions of [1, [['operator']], [['operator', 'operator']], [['operator', 'unknown']], [['operator', 'word'], ['word', 'operator']]]) {
+    assert.throws(() => contextualLiteralScanner({ ...descriptor, lexical, sharedLexicalDecisions }), TypeError);
+  }
 });

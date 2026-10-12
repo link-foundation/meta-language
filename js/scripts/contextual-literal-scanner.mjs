@@ -25,12 +25,18 @@ export function contextualLiteralScanner({ name, tokens, contentToken, endToken,
   literals, delimiters = [], lexical = [], lineBreakToken, noLineBreakToken, shortInterpolationToken,
   interpolation = '#{', shortInterpolationPattern, escape = '\\', whitespace = '[ \\t\\r\\n]',
   heredoc, interpolationStartToken = null, interpolationEndToken = null, interpolationClosing = '}',
-  lineContinuationPattern = null }) {
+  lineContinuationPattern = null, sharedLexicalDecisions = [] }) {
   const identifiers = [name, ...tokens, contentToken, endToken, openGateToken, lineBreakToken, noLineBreakToken, shortInterpolationToken];
   if (identifiers.some((value) => typeof value !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$/u.test(value)) || new Set(tokens).size !== tokens.length) throw new TypeError('contextual literal policies need valid unique token names');
   if (!Array.isArray(literals) || !literals.length || !Array.isArray(lexical) || !Array.isArray(delimiters)) throw new TypeError('contextual literals need literal and lexical policy lists');
   for (const entry of literals) {
     if (!tokens.includes(entry.token) || typeof entry.prefix !== 'string' || typeof entry.interpolated !== 'boolean' || typeof entry.words !== 'boolean' || (entry.delimiter !== undefined && typeof entry.delimiter !== 'string')) throw new TypeError('invalid contextual literal opening policy');
+  }
+  if (!Array.isArray(sharedLexicalDecisions)) throw new TypeError('shared lexical decisions need token groups');
+  const lexicalGroups = new Map();
+  for (const group of sharedLexicalDecisions) {
+    if (!Array.isArray(group) || group.length < 2 || group.some((token) => !tokens.includes(token) || !lexical.some((entry) => entry.token === token) || lexicalGroups.has(token)) || new Set(group).size !== group.length) throw new TypeError('shared lexical decisions need distinct disjoint lexical token groups');
+    for (const token of group) lexicalGroups.set(token, group);
   }
   const contexts = `${name}_contexts`;
   const openingsStack = `${name}_openings`;
@@ -87,14 +93,27 @@ export function contextualLiteralScanner({ name, tokens, contentToken, endToken,
     const choices = modes.filter((mode) => mode.prefix === entry.prefix && mode.token === entry.token && mode.context === entry.context && (entry.delimiter === undefined || mode.opening === entry.delimiter)).map((mode) => branch(next(literal(mode.prefix + mode.opening)), `(consume ${literal(mode.prefix + mode.opening)}) (push ${contexts} (integer ${mode.context})) (push ${openingsStack} (text ${encode(mode.opening)})) (push ${closingsStack} (text ${encode(mode.closing)})) (push ${levels} (integer 1)) ${emit(mode.token)}`)).join(' ');
     return branch(condition, choices);
   }).join(' ');
-  const lexicalDecisions = lexical.map((entry) => {
+  const lexicalDecision = (entry, shared = false) => {
     if (!tokens.includes(entry.token) || typeof entry.pattern !== 'string') throw new TypeError('invalid contextual lexical policy');
     const tokenPattern = pattern(entry.pattern);
     const suffix = entry.markBeforeSuffix ? ` ${literal(entry.markBeforeSuffix)}` : '';
     // Applicability must not consume or fail the whole scanner: a later
     // lexical policy may be the fallback for the same token and spelling.
     const probe = entry.following ? `(seq ${tokenPattern}${suffix} (and ${pattern(entry.following)}))` : tokenPattern;
-    return branch(all(valid(entry.token), next(probe), ...(entry.guard ? [entry.guard.replaceAll('$leading', variable(leading)).replace(/\(valid ([A-Za-z_]+)\)/gu, (_, token) => available(token))] : [])), `(consume ${tokenPattern})${entry.markBeforeSuffix ? ` mark (consume ${literal(entry.markBeforeSuffix)})` : ''}${entry.after ? ` (if (not ${entry.after}) (then fail))` : ''} ${emit(entry.token)}`);
+    const eligibility = shared ? [next(probe), available(entry.token)] : [valid(entry.token), next(probe)];
+    return branch(all(...eligibility, ...(entry.guard ? [entry.guard.replaceAll('$leading', variable(leading)).replace(/\(valid ([A-Za-z_]+)\)/gu, (_, token) => available(token))] : [])), `(consume ${tokenPattern})${entry.markBeforeSuffix ? ` mark (consume ${literal(entry.markBeforeSuffix)})` : ''}${entry.after ? ` (if (not ${entry.after}) (then fail))` : ''} ${emit(entry.token)}`);
+  };
+  const emittedGroups = new Set();
+  const lexicalDecisions = lexical.map((entry) => {
+    const group = lexicalGroups.get(entry.token);
+    if (!group) return lexicalDecision(entry);
+    if (emittedGroups.has(group)) return '';
+    emittedGroups.add(group);
+    // A competing parser request must observe the same ordered decision.
+    // Emitting the preferred available token also rejects a request for a
+    // lower-priority alternative, as a scanner with shared validity bits does.
+    const decisions = lexical.filter((candidate) => group.includes(candidate.token)).map((candidate) => lexicalDecision(candidate, true)).join(' ');
+    return branch(some(...group.map(valid)), `${decisions} fail`);
   }).join(' ');
   const line = branch(all(valid(lineBreakToken), not(available(noLineBreakToken))), `mark (consume ${literal('\n')}) (while (next ${spaces}) (do advance)) ${branch(next(literal('.')), `advance ${branch(not(next(literal('.'))), 'fail')}`)} ${branch(some(next(literal('&')), next(literal('#'))), 'fail')} ${emit(lineBreakToken)}`);
   let hereRules = '';
