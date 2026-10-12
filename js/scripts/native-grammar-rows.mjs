@@ -28,8 +28,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { Parser } from 'web-tree-sitter';
+import '../src/tree-sitter-runtime.js';
 
-import { languageEntry } from '../src/index.js';
+import { languageEntry } from '../src/language-catalog.js';
 import { loadGrammarLanguage } from '../src/grammar-tiering.js';
 import { treeSitterNodeKind } from '../src/tree-sitter-node-kind.js';
 import { grammarFile } from './grammar-files.mjs';

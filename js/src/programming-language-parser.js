@@ -1,4 +1,5 @@
 import { Parser as WebTreeSitterParser } from 'web-tree-sitter';
+import './tree-sitter-runtime.js';
 
 import { isToken } from './builtin-grammar.js';
 import { canonicalLanguageName, languageEntry } from './language-catalog.js';
@@ -29,14 +30,6 @@ export const GRAMMAR_LOCK = Object.freeze(
 // vendor/web-tree-sitter/runtime-lock.json). The published build reads UTF-16,
 // which doubles tree-sitter's per-byte error-recovery costs, so malformed input
 // recovered differently than in the native runtime, which parses UTF-8.
-await WebTreeSitterParser.init({
-  wasmBinary: readCompressedGrammarAsset(
-    'js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz',
-    new URL('./vendor/web-tree-sitter/web-tree-sitter.wasm.gz', import.meta.url),
-    readRuntimeProjectData(new URL('./vendor/web-tree-sitter/runtime-lock.json', import.meta.url)).wasmSha256,
-  ),
-});
-
 // Each grammar is compiled on its first use and kept for the process: every
 // loaded grammar stays in the runtime's WebAssembly memory, so loading all of
 // them up front cost every importer the memory of every grammar. See
