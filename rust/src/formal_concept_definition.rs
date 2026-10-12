@@ -103,8 +103,10 @@ impl From<&str> for FormalConceptDefinitionOptions {
 fn models() -> &'static Value {
     static MODELS: OnceLock<Value> = OnceLock::new();
     MODELS.get_or_init(|| {
-        serde_json::from_str(include_str!("data/formal-concept-models.json"))
-            .expect("shared formal primitive declarations are JSON")
+        crate::structured_data_links::read_structured_data_lino(include_str!(
+            "data/formal-concept-models.lino"
+        ))
+        .expect("shared formal primitive declarations are Links Notation")
     })
 }
 

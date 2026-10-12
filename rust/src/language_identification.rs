@@ -1,6 +1,6 @@
 //! Trigram language identification shared with the JavaScript runtime.
 //!
-//! This is franc's algorithm over `data/language-trigrams.json`, which
+//! This is franc's algorithm over `data/language-trigrams.lino`, which
 //! `js/scripts/build-language-identification.mjs` generates from franc-min
 //! together with the JavaScript copy. Both runtimes count Unicode scalar
 //! values, so they reach the same verdict for the same text.
@@ -10,7 +10,7 @@ use std::sync::OnceLock;
 
 use serde_json::Value;
 
-const LANGUAGE_TRIGRAMS_JSON: &str = include_str!("data/language-trigrams.json");
+const LANGUAGE_TRIGRAMS_LINKS: &str = include_str!("data/language-trigrams.lino");
 const MAX_LENGTH: usize = 2048;
 const MAX_DIFFERENCE: usize = 300;
 
@@ -38,7 +38,8 @@ fn trigram_data() -> &'static TrigramData {
 
 fn parse_trigram_data() -> TrigramData {
     let value: Value =
-        serde_json::from_str(LANGUAGE_TRIGRAMS_JSON).expect("language trigram data is valid JSON");
+        crate::structured_data_links::read_structured_data_lino(LANGUAGE_TRIGRAMS_LINKS)
+            .expect("language trigram data is valid Links Notation");
     let languages = value["languages"]
         .as_object()
         .expect("languages object")

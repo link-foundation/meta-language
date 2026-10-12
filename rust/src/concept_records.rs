@@ -1,6 +1,6 @@
 //! The concept records shared with the JavaScript runtime.
 //!
-//! `src/data/concept-records.json` is generated from
+//! `src/data/concept-records.lino` is generated from
 //! `parity/naming/canonical-concepts.json` by
 //! `js/scripts/build-concept-records.mjs`; the npm package ships the same
 //! file, so both runtimes agree on every canonical identity, its readable
@@ -11,7 +11,7 @@ use std::sync::OnceLock;
 
 use serde::Deserialize;
 
-const CONCEPT_RECORDS_JSON: &str = include_str!("data/concept-records.json");
+const CONCEPT_RECORDS_LINKS: &str = include_str!("data/concept-records.lino");
 
 /// Whether a canonical name is a concept (a noun phrase) or an operation (a verb phrase).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -77,9 +77,12 @@ struct ConceptRecordFile {
 pub fn concept_records() -> &'static [ConceptRecord] {
     static RECORDS: OnceLock<Vec<ConceptRecord>> = OnceLock::new();
     RECORDS.get_or_init(|| {
-        serde_json::from_str::<ConceptRecordFile>(CONCEPT_RECORDS_JSON)
-            .expect("the embedded concept records are valid")
-            .concepts
+        serde_json::from_value::<ConceptRecordFile>(
+            crate::structured_data_links::read_structured_data_lino(CONCEPT_RECORDS_LINKS)
+                .expect("the embedded concept links are valid"),
+        )
+        .expect("the embedded concept records are valid")
+        .concepts
     })
 }
 

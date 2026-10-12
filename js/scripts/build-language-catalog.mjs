@@ -19,6 +19,9 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { parseGrammarLinks } from '../src/grammar-links.js';
+import { readGrammarLicense } from './grammar-files.mjs';
+import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { checkProjectData, readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const inventoryPath = join(root, 'parity/language-grammar-inventory.json');
@@ -36,7 +39,8 @@ export const NATIVE_GRAMMAR_DIRECTORIES = Object.freeze([
 
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
-export function buildLanguageCatalog(inventory, lock, sourceRegister = JSON.parse(readFileSync(sourcePath, 'utf8'))) {
+export function buildLanguageCatalog(inventory, lock, sourceRegister = readProjectData(sourcePath)) {
+  const externalAssets = readProjectData(join(root, 'parity/grammars/external-assets.lino')).assets;
   const languages = inventory.languages.map((language) => {
     const lockedGrammars = (language.grammars ?? []).map((id) => {
       const locked = lock.grammars[id];
@@ -56,7 +60,8 @@ export function buildLanguageCatalog(inventory, lock, sourceRegister = JSON.pars
       const id = language.builtinGrammar;
       const builtin = inventory.builtinGrammars?.[id];
       if (!builtin) throw new Error(`${language.name} uses undeclared built-in grammar ${id}`);
-      const specification = readFileSync(join(root, builtin.specification));
+      const specification = Object.hasOwn(externalAssets, builtin.specification)
+        ? readExternalGrammarAsset(builtin.specification) : readProjectFileBytes(join(root, builtin.specification));
       grammars.push({
         id,
         version: builtin.version,
@@ -106,7 +111,7 @@ export function catalogGrammarSource(source) {
   const metadata = Object.fromEntries(fields.filter((field) => source[field] !== undefined).map((field) => [field, source[field]]));
   if (source.licenseFile) {
     metadata.licenseFile = source.licenseFile;
-    metadata.licenseSha256 = sha256(readFileSync(join(root, source.licenseFile)));
+    metadata.licenseSha256 = sha256(readGrammarLicense(source.licenseFile));
   }
   for (const field of ['corpus', 'additionalCorpora', 'scanner', 'patch']) {
     if (source[field] !== undefined) metadata[field] = structuredClone(source[field]);
@@ -176,15 +181,18 @@ export function formatLanguageCatalog(catalog) {
 }
 
 async function main() {
-  const [inventory, lock] = await Promise.all(
-    [inventoryPath, lockPath].map(async (path) => JSON.parse(await readFile(path, 'utf8'))),
-  );
+  const [inventory, lock] = [inventoryPath, lockPath].map(path => readProjectData(path));
   const text = formatLanguageCatalog(buildLanguageCatalog(inventory, lock));
   const files = [...CATALOG_PATHS.map((path) => [path, text]), ...nativeGrammarCopies(inventory),
     [join(root, 'rust/src/data/native-grammar-texts.rs'), nativeGrammarRustSource(inventory)]];
   if (process.argv.includes('--check')) {
     const stale = [];
     for (const [path, wanted] of files) {
+      if (path.endsWith('.json')) {
+        try { checkProjectData(path, JSON.parse(wanted)); }
+        catch { stale.push(path.slice(root.length + 1)); }
+        continue;
+      }
       const current = await readFile(path, 'utf8').catch(() => '');
       if (current !== wanted) stale.push(path.slice(root.length + 1));
     }
@@ -197,7 +205,8 @@ async function main() {
     return;
   }
   await Promise.all(NATIVE_GRAMMAR_DIRECTORIES.map((directory) => mkdir(directory, { recursive: true })));
-  await Promise.all(files.map(([path, wanted]) => writeFile(path, wanted)));
+  await Promise.all(files.map(([path, wanted]) => path.endsWith('.json')
+    ? writeProjectData(path, JSON.parse(wanted)) : writeFile(path, wanted)));
   console.log(`wrote the language catalog for ${inventory.languages.length} languages`);
 }
 

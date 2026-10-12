@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readRuntimeProjectData } from './project-data-loader.js';
 
 /**
  * The record of every canonical concept and operation meta-language defines:
@@ -9,7 +9,7 @@ import { readFile } from 'node:fs/promises';
  * js/scripts/build-concept-records.mjs; the Rust runtime embeds the same file.
  */
 export const CONCEPT_RECORDS = deepFreeze(
-  JSON.parse(await readFile(new URL('./data/concept-records.json', import.meta.url), 'utf8')).concepts,
+  readRuntimeProjectData(new URL('./data/concept-records.lino', import.meta.url)).concepts,
 );
 
 /** The vocabulary of the alias links that keep a concept's former names. */

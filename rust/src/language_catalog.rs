@@ -1,6 +1,6 @@
 //! The registered language catalog shared with the JavaScript runtime.
 //!
-//! `src/data/language-catalog.json` is generated from
+//! `src/data/language-catalog.lino` is generated from
 //! `parity/language-grammar-inventory.json` by
 //! `js/scripts/build-language-catalog.mjs`; the npm package ships the same
 //! file, so both runtimes agree on every alias, file extension, and default
@@ -11,7 +11,7 @@ use std::sync::OnceLock;
 
 use serde_json::Value;
 
-const LANGUAGE_CATALOG_JSON: &str = include_str!("data/language-catalog.json");
+const LANGUAGE_CATALOG_LINKS: &str = include_str!("data/language-catalog.lino");
 
 /// A grammar that parses a registered language by default.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -204,7 +204,8 @@ pub fn native_grammar(id: &str) -> Option<&'static NativeGrammarEntry> {
 fn catalog_value() -> &'static Value {
     static VALUE: OnceLock<Value> = OnceLock::new();
     VALUE.get_or_init(|| {
-        serde_json::from_str(LANGUAGE_CATALOG_JSON).expect("language catalog is valid JSON")
+        crate::structured_data_links::read_structured_data_lino(LANGUAGE_CATALOG_LINKS)
+            .expect("language catalog is valid Links Notation")
     })
 }
 

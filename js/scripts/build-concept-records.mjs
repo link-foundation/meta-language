@@ -10,12 +10,13 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectData, serializeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const registerPath = join(root, 'parity/naming/canonical-concepts.json');
 export const CONCEPT_RECORD_PATHS = Object.freeze([
-  join(root, 'js/src/data/concept-records.json'),
-  join(root, 'rust/src/data/concept-records.json'),
+  join(root, 'js/src/data/concept-records.lino'),
+  join(root, 'rust/src/data/concept-records.lino'),
 ]);
 
 const RECORD_FIELDS = Object.freeze([
@@ -59,9 +60,9 @@ export function formatConceptRecords(records) {
 }
 
 async function main() {
-  const register = JSON.parse(await readFile(registerPath, 'utf8'));
-  const text = formatConceptRecords(buildConceptRecords(register));
-  const distinctions = JSON.parse(await readFile(join(root, 'parity/required-concept-distinctions.json'), 'utf8'));
+  const register = readProjectData(registerPath);
+  const text = serializeProjectData(buildConceptRecords(register), CONCEPT_RECORD_PATHS[0]);
+  const distinctions = readProjectData(join(root, 'parity/required-concept-distinctions.json'));
   const identities = new Set(register.concepts.map(({ id }) => id));
   const pairs = new Set();
   for (const { concepts, reason } of distinctions) {
@@ -71,7 +72,7 @@ async function main() {
     pairs.add(pair);
   }
   const generated = [
-    [join(root, 'js/src/data/required-concept-distinctions.json'), JSON.stringify(distinctions, null, 2) + '\n'],
+    [join(root, 'js/src/data/required-concept-distinctions.lino'), serializeProjectData(distinctions, join(root, 'js/src/data/required-concept-distinctions.lino'))],
     [join(root, 'rust/src/data/required-concept-distinctions.rs'), '&[\n' + distinctions.map(({ concepts, reason }) => '    RequiredDistinction {\n        concepts: [' + concepts.map((id) => JSON.stringify(id)).join(', ') + '],\n        reason: ' + JSON.stringify(reason) + ',\n    },').join('\n') + '\n]\n'],
   ];
   const outputs = [...CONCEPT_RECORD_PATHS.map((path) => [path, text]), ...generated];

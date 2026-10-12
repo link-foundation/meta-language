@@ -20,8 +20,8 @@ fn native_text_grammar_files_are_identical_in_both_packages() {
         include_str!("../../src/data/native-text-grammar.lino")
     );
     assert_eq!(
-        include_str!("../../../js/src/data/native-text-grammar.json"),
-        include_str!("../../src/data/native-text-grammar.json")
+        include_str!("../../../js/src/data/native-text-metadata.lino"),
+        include_str!("../../src/data/native-text-metadata.lino")
     );
 }
 

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readProjectData } from '../scripts/project-data.mjs';
 import test from 'node:test';
 import vm from 'node:vm';
 import { rustSourceIndirectionFixture } from '../scripts/generate-rust-source-indirection-fixtures.mjs';
@@ -7,7 +7,7 @@ import { parseRust } from '../src/translation/rust.js';
 import { checkProgram } from '../src/translation/check.js';
 import { acceptRustImmutableIndirectionLayer, acceptRustSourceBoxOwner, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer } from '../src/translation/rust-indirection-rules.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/rust-source-indirection.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/rust-source-indirection.json', import.meta.url));
 
 test('source Box and reference proofs preserve recursive values, forward owners and lexical scopes', () => {
   assert.deepEqual(rustSourceIndirectionFixture(), fixture);

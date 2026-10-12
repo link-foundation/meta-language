@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { readProjectData } from '../scripts/project-data.mjs';
 import test from 'node:test';
 import { generateNativeTextGrammars } from '../scripts/build-native-text-grammars.mjs';
 import { compileGrammar, GrammarBuilder } from '../src/grammar.js';
@@ -9,13 +10,13 @@ import { parseNaturalLanguageCst, parsePlainTextCst } from '../src/text-grammar.
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixturePath = 'parity/fixtures/native-text-grammars.json';
-const fixture = JSON.parse(await readFile(new URL(`../../${fixturePath}`, import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL(`../../${fixturePath}`, import.meta.url));
 const grammarText = await readFile(new URL('../src/data/native-text-grammar.lino', import.meta.url), 'utf8');
-const metadata = JSON.parse(await readFile(new URL('../src/data/native-text-grammar.json', import.meta.url), 'utf8'));
+const metadata = readProjectData(new URL('../src/data/native-text-metadata.lino', import.meta.url));
 
 test('native text adapters retain every independent built-in concrete tree expectation', async () => {
-  const inventory = JSON.parse(await readFile(new URL('../../parity/language-grammar-inventory.json', import.meta.url), 'utf8'));
-  const expected = JSON.parse(await readFile(new URL('../../parity/fixtures/builtin-cst-expected.json', import.meta.url), 'utf8'));
+  const inventory = readProjectData(new URL('../../parity/language-grammar-inventory.json', import.meta.url));
+  const expected = readProjectData(new URL('../../parity/fixtures/builtin-cst-expected.json', import.meta.url));
   for (const language of inventory.languages.filter(({ name, family }) => name === 'txt' || family === 'natural')) {
     for (const [part, field] of [['positive', 'source'], ['recovery', 'recoverySource']]) {
       const source = language[field];
@@ -36,7 +37,7 @@ test('native text adapters retain every independent built-in concrete tree expec
 test('native text grammars are reproducible and shipped identically to both executors', async () => {
   await generateNativeTextGrammars({ check: true });
   assert.equal(await readFile(new URL('../../rust/src/data/native-text-grammar.lino', import.meta.url), 'utf8'), grammarText);
-  assert.deepEqual(JSON.parse(await readFile(new URL('../../rust/src/data/native-text-grammar.json', import.meta.url), 'utf8')), metadata);
+  assert.deepEqual(readProjectData(new URL('../../rust/src/data/native-text-metadata.lino', import.meta.url)), metadata);
 });
 
 test('native plain text preserves inclusive lines, lexemes, Unicode and diagnostics', () => {

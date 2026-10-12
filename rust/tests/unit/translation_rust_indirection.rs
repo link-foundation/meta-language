@@ -13,10 +13,10 @@ use serde_json::Value;
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 
 fn fixture() -> Value {
-    serde_json::from_str(include_str!(
-        "../../../parity/fixtures/rust-source-indirection.json"
+    meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-source-indirection.lino"
     ))
-    .expect("the shared Rust indirection fixture is valid JSON")
+    .expect("the shared Rust indirection fixture is valid Links Notation")
 }
 
 #[test]

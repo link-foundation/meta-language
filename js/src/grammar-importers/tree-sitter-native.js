@@ -38,7 +38,7 @@
 //                one with the token tree-sitter's lexer prefers first wins:
 //                the higher lexical precedence, the longer, a literal over a
 //                pattern, the earlier
-import { readFileSync } from 'node:fs';
+import { readRuntimeProjectData } from '../project-data-loader.js';
 import { compileGrammar } from '../grammar.js';
 import { parseGrammarLinks, renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from '../grammar-links.js';
 import { grammarDeclarations } from '../grammar-feature-forms.js';
@@ -60,7 +60,7 @@ export class UnsupportedTreeSitterPattern extends Error {}
 
 // tree-sitter patterns are JavaScript regular expression sources. The parser
 // below reads the subset grammars use into {alt|seq|repeat|class|char|and|not}.
-const IDENTIFIER_PROPERTIES = JSON.parse(readFileSync(new URL('../data/unicode-identifier-properties.json', import.meta.url), 'utf8')).properties;
+const IDENTIFIER_PROPERTIES = readRuntimeProjectData(new URL('../data/unicode-identifier-properties.lino', import.meta.url)).properties;
 const ID_START = ['Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl'];
 const PROPERTY_CATEGORIES = {
   Alphabetic: [...ID_START], Letter: ['L'], L: ['L'], Lu: ['Lu'], Ll: ['Ll'], Lt: ['Lt'], Lm: ['Lm'], Lo: ['Lo'],

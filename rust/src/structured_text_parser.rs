@@ -224,8 +224,10 @@ pub fn parse_natural_language_cst(text: &str) -> GrammarNode {
 fn text_grammar_metadata() -> &'static Value {
     static METADATA: OnceLock<Value> = OnceLock::new();
     METADATA.get_or_init(|| {
-        serde_json::from_str(include_str!("data/native-text-grammar.json"))
-            .expect("generated native text metadata is valid JSON")
+        crate::structured_data_links::read_structured_data_lino(include_str!(
+            "data/native-text-metadata.lino"
+        ))
+        .expect("generated native text metadata is valid Links Notation")
     })
 }
 

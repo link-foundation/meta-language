@@ -4,12 +4,13 @@
  * This module only projects native byte spans into the built-in tree shape.
  */
 import { readFileSync } from 'node:fs';
+import { readRuntimeProjectData } from './project-data-loader.js';
 import { errorNode, extra, node, propagateErrors } from './builtin-grammar.js';
 import { compileGrammar } from './grammar.js';
 import { parseGrammarLinks } from './grammar-links.js';
 import { sourceBoundaries } from './source-boundaries.js';
 
-const metadata = JSON.parse(readFileSync(new URL('./data/native-text-grammar.json', import.meta.url), 'utf8'));
+const metadata = readRuntimeProjectData(new URL('./data/native-text-metadata.lino', import.meta.url));
 let parser;
 
 function textParser() {

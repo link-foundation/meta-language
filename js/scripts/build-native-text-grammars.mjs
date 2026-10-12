@@ -5,13 +5,14 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectData, readProjectFileBytes, serializeProjectData } from './project-data.mjs';
 import { Grammar, GrammarBuilder as expression } from '../src/grammar.js';
 import { renderGrammarLinks } from '../src/grammar-links.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const NATIVE_TEXT_SPECIFICATION = 'parity/grammars/native-text-specification.json';
 export const NATIVE_TEXT_GRAMMAR_FILES = ['parity/grammars/native-text.lino', 'js/src/data/native-text-grammar.lino', 'rust/src/data/native-text-grammar.lino'];
-export const NATIVE_TEXT_METADATA_FILES = ['js/src/data/native-text-grammar.json', 'rust/src/data/native-text-grammar.json'];
+export const NATIVE_TEXT_METADATA_FILES = ['js/src/data/native-text-metadata.lino', 'rust/src/data/native-text-metadata.lino'];
 
 function characterClass(specification, negated = false) {
   return expression.charClass([
@@ -63,13 +64,13 @@ export function buildNativeTextGrammar(specification) {
 }
 
 export async function generateNativeTextGrammars({ check = false } = {}) {
-  const specificationBytes = await readFile(join(root, NATIVE_TEXT_SPECIFICATION));
-  const specification = JSON.parse(specificationBytes);
+  const specificationBytes = readProjectFileBytes(join(root, NATIVE_TEXT_SPECIFICATION));
+  const specification = readProjectData(join(root, NATIVE_TEXT_SPECIFICATION));
   const grammar = renderGrammarLinks(buildNativeTextGrammar(specification));
-  const metadata = JSON.stringify({ generatedBy: 'js/scripts/build-native-text-grammars.mjs',
+  const metadata = serializeProjectData({ generatedBy: 'js/scripts/build-native-text-grammars.mjs',
     source: NATIVE_TEXT_SPECIFICATION, sourceSha256: createHash('sha256').update(specificationBytes).digest('hex'),
     grammarSha256: createHash('sha256').update(grammar).digest('hex'),
-    starts: specification.starts, validation: specification.validation, projection: specification.projection }, null, 2) + '\n';
+    starts: specification.starts, validation: specification.validation, projection: specification.projection }, join(root, NATIVE_TEXT_METADATA_FILES[0]));
   const outputs = [...NATIVE_TEXT_GRAMMAR_FILES.map((path) => [path, grammar]), ...NATIVE_TEXT_METADATA_FILES.map((path) => [path, metadata])];
   for (const [path, expected] of outputs) {
     if (check) {

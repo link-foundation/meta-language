@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readRuntimeProjectData } from './project-data-loader.js';
 // Equality of rooted operational definitions under declared shared primitives.
 // The correspondence and its two premises are themselves inspectable links.
 import { LinkNetwork } from './network.js';
@@ -12,7 +12,7 @@ const ROOT = 'formal concept definition';
 const CERTIFICATE = 'formal equivalence certificate';
 const PAIRS = 'formal node correspondence list';
 const PAIR = 'formal node correspondence';
-const MODELS = Object.freeze(JSON.parse(readFileSync(new URL('./data/formal-concept-models.json', import.meta.url), 'utf8')));
+const MODELS = Object.freeze(readRuntimeProjectData(new URL('./data/formal-concept-models.lino', import.meta.url)));
 const key = (id) => LinkId.from(id).asU64();
 const canonical = (value) => JSON.stringify(value);
 const metadata = (term, definition) => LinkMetadata.new().withLinkType(LinkType.Semantic).withLanguage(LANGUAGE).withNamed(true).withTerm(term).withDefinition(definition);

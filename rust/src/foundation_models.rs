@@ -1,7 +1,7 @@
 //! The foundations meta-language knows, as data.
 //!
-//! `src/data/foundation-models.json` is written from
-//! `parity/foundation-models.json` by `js/scripts/build-foundation-models.mjs`;
+//! `src/data/foundation-models.lino` is written from
+//! `parity/foundation-models.lino` by `js/scripts/build-foundation-models.mjs`;
 //! the npm package ships the same file. It records integer, overflow,
 //! universe, effect, proof and logic models, the models each language uses,
 //! and the explicit correspondences between distinct models. No model is the
@@ -17,7 +17,7 @@ use serde_json::{Map, Value};
 
 use crate::SourceAlias;
 
-const FOUNDATION_MODELS_JSON: &str = include_str!("data/foundation-models.json");
+const FOUNDATION_MODELS_LINKS: &str = include_str!("data/foundation-models.lino");
 
 /// The kinds of correspondence between two distinct models; none of them claims the models are the same.
 pub const CORRESPONDENCE_KINDS: [&str; 4] = ["embedding", "conditional", "encoding", "restatement"];
@@ -95,7 +95,7 @@ pub struct LanguageFoundation {
     pub models: Vec<String>,
 }
 
-/// A foundation register: the shape of `parity/foundation-models.json`.
+/// A foundation register: the shape of `parity/foundation-models.lino`.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FoundationRegister {
@@ -129,8 +129,11 @@ pub struct FoundationProblem {
 pub fn foundation_register() -> &'static FoundationRegister {
     static REGISTER: OnceLock<FoundationRegister> = OnceLock::new();
     REGISTER.get_or_init(|| {
-        serde_json::from_str(FOUNDATION_MODELS_JSON)
-            .expect("the embedded foundation models are valid")
+        serde_json::from_value(
+            crate::structured_data_links::read_structured_data_lino(FOUNDATION_MODELS_LINKS)
+                .expect("the embedded foundation links are valid"),
+        )
+        .expect("the embedded foundation models are valid")
     })
 }
 

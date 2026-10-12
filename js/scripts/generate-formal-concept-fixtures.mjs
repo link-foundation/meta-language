@@ -1,6 +1,7 @@
 // Small cross-runtime archives measured through the public JavaScript APIs.
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { LinkNetwork } from '../src/network.js';
 import { LinkId } from '../src/primitives.js';
 import { createTypedProgramLinks } from '../src/typed-program-links.js';
@@ -122,8 +123,7 @@ const negativeEquivalences = [[0, 1], [2, 8], [13, 14], [15, 16], [17, 18]].map(
 });
 const fixture = { schemaVersion: 1, definitions, proofs, rejections, invalidCertificates, negativeEquivalences };
 const path = new URL('../../parity/fixtures/formal-concept-definitions.json', import.meta.url);
-const expected = `${JSON.stringify(fixture, null, 2)}\n`;
-if (process.argv.includes('--check')) assert.ok(readFileSync(path, 'utf8') === expected, 'formal concept fixtures are stale');
-else writeFileSync(path, expected);
-assert.equal(readFileSync(new URL('../src/data/formal-concept-models.json', import.meta.url), 'utf8'), readFileSync(new URL('../../rust/src/data/formal-concept-models.json', import.meta.url), 'utf8'), 'formal primitive declarations differ between runtimes');
+if (process.argv.includes('--check')) checkProjectData(path, fixture);
+else writeProjectData(path, fixture);
+assert.equal(readFileSync(new URL('../src/data/formal-concept-models.lino', import.meta.url), 'utf8'), readFileSync(new URL('../../rust/src/data/formal-concept-models.lino', import.meta.url), 'utf8'), 'formal primitive declarations differ between runtimes');
 process.stdout.write(`Verified ${definitions.length} formal definitions, ${proofs.length} proofs, ${rejections.length} basis rejections and ${invalidCertificates.length} invalid certificates.\n`);

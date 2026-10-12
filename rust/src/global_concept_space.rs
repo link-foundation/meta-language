@@ -350,16 +350,18 @@ fn create_global_concept_space_in(
     sources: &[Value],
     options: &GlobalConceptOptions,
 ) -> Result<(Value, Graph, BTreeMap<String, usize>), String> {
-    let default_records: Value = serde_json::from_str(include_str!("data/concept-records.json"))
-        .map_err(|error| error.to_string())?;
+    let default_records: Value = crate::structured_data_links::read_structured_data_lino(
+        include_str!("data/concept-records.lino"),
+    )?;
     let records = array(
         options
             .records
             .as_ref()
             .unwrap_or(&default_records["concepts"]),
     )?;
-    let catalog: Value = serde_json::from_str(include_str!("data/language-catalog.json"))
-        .map_err(|error| error.to_string())?;
+    let catalog: Value = crate::structured_data_links::read_structured_data_lino(include_str!(
+        "data/language-catalog.lino"
+    ))?;
     let mut records_by_alias: BTreeMap<(String, String), Vec<usize>> = BTreeMap::new();
     let mut records_by_id = BTreeMap::new();
     for (index, record) in records.iter().enumerate() {

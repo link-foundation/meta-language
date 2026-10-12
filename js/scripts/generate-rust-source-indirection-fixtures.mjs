@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { fileURLToPath } from 'node:url';
 import { parseRust } from '../src/translation/rust.js';
 import { checkProgram } from '../src/translation/check.js';
@@ -85,8 +85,8 @@ export function rustSourceIndirectionFixture() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const file = new URL('../../parity/fixtures/rust-source-indirection.json', import.meta.url);
-  const text = JSON.stringify(rustSourceIndirectionFixture(), null, 2) + '\n';
+  const value = rustSourceIndirectionFixture();
   if (process.argv.includes('--check')) {
-    if (readFileSync(file, 'utf8') !== text) throw new Error('Rust source indirection fixtures are stale');
-  } else writeFileSync(file, text);
+    checkProjectData(file, value);
+  } else writeProjectData(file, value);
 }

@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readRuntimeProjectData } from './project-data-loader.js';
 import { CONCEPT_RECORDS, conceptRecord, conceptRecordsForSourceName } from './concept-records.js';
 import { FOUNDATION_MODELS } from './foundation-models.js';
 
@@ -13,8 +13,8 @@ import { FOUNDATION_MODELS } from './foundation-models.js';
  */
 
 /** The concept pairs that stay distinct in every grammar and program, with the reason. */
-export const REQUIRED_CONCEPT_DISTINCTIONS = Object.freeze(JSON.parse(
-  await readFile(new URL('./data/required-concept-distinctions.json', import.meta.url), 'utf8'),
+export const REQUIRED_CONCEPT_DISTINCTIONS = Object.freeze(readRuntimeProjectData(
+  new URL('./data/required-concept-distinctions.lino', import.meta.url),
 ).map((entry) => Object.freeze({ ...entry, concepts: Object.freeze(entry.concepts) })));
 
 /** The foundation model pairs that stay distinct; the register records the reason for each. */
