@@ -176,6 +176,36 @@ impl RustParser {
             let token = self.peek();
             if self.cursor.is(".") {
                 self.cursor.advance();
+                if self.cursor.is_kind(TokenKind::Number) {
+                    let field = self.product_index_token()?;
+                    let index = field.raw.parse::<usize>().map_err(|_| {
+                        unsupported(
+                            "tuple index",
+                            "the positional index exceeds the exact supported integer range",
+                            Some(field.span()),
+                        )
+                    })?;
+                    if index as u64 > 9_007_199_254_740_991 {
+                        return Err(unsupported(
+                            "tuple index",
+                            "the positional index exceeds the exact supported integer range",
+                            Some(field.span()),
+                        ));
+                    }
+                    let range = Some(super::Span::new(
+                        value.span.map_or(token.start, |range| range.start),
+                        field.end,
+                    ));
+                    value = SExpr::new(
+                        SNode::TupleIndex {
+                            object: Box::new(value),
+                            index,
+                        },
+                        range,
+                    );
+                    self.origins.product_projection(&value, path, range)?;
+                    continue;
+                }
                 let method = self.cursor.identifier(Some("method"))?;
                 if !self.cursor.is("(") {
                     return Err(unsupported(
@@ -234,6 +264,52 @@ impl RustParser {
             }
             return Ok(value);
         }
+    }
+
+    /// In postfix context `0.1` is two positional fields, with exact spans.
+    fn product_index_token(&mut self) -> Result<Token> {
+        use super::product_rules::accept_rust_tuple_index_spelling;
+
+        let token = self.peek();
+        if let Some((first, second)) = token.raw.split_once('.')
+            && accept_rust_tuple_index_spelling(first)
+            && accept_rust_tuple_index_spelling(second)
+        {
+            let middle = token.start + first.len();
+            let mut first_token = token.clone();
+            first_token.value = first.to_owned();
+            first_token.raw = first.to_owned();
+            first_token.suffix.clear();
+            first_token.floating = false;
+            first_token.end = middle;
+            let mut separator = token.clone();
+            separator.kind = TokenKind::Punct;
+            separator.value = ".".to_owned();
+            separator.raw = ".".to_owned();
+            separator.suffix.clear();
+            separator.floating = false;
+            separator.start = middle;
+            separator.end = middle + 1;
+            let mut second_token = token.clone();
+            second_token.value = second.to_owned();
+            second_token.raw = second.to_owned();
+            second_token.suffix.clear();
+            second_token.floating = false;
+            second_token.start = middle + 1;
+            self.cursor.tokens.splice(
+                self.cursor.index..=self.cursor.index,
+                [first_token, separator, second_token],
+            );
+        }
+        let field = self.cursor.advance();
+        if !accept_rust_tuple_index_spelling(&field.raw) {
+            return Err(unsupported(
+                "tuple index spelling",
+                "Rust tuple indices are decimal digits without leading zeros, separators or suffixes",
+                Some(field.span()),
+            ));
+        }
+        Ok(field)
     }
 
     /// Comma-separated expressions up to (not including) the closing `)`.
@@ -309,12 +385,26 @@ impl RustParser {
                 return Ok(SExpr::new(SNode::Unit, span(&token, &token)));
             }
             let inner = self.expr(path, Options::default())?;
-            if self.cursor.is(",") {
-                return Err(unsupported(
-                    "tuple",
-                    "tuples are outside the portable core",
-                    span(&token, self.cursor.peek()),
-                ));
+            if self.cursor.eat(",").is_some() {
+                let mut items = vec![inner];
+                while !self.cursor.is(")") {
+                    items.push(self.expr(path, Options::default())?);
+                    if self.cursor.eat(",").is_none() {
+                        break;
+                    }
+                }
+                let close = self.cursor.expect(")", Some("tuple expression"))?;
+                let range = Some(super::Span::new(token.start, close.end));
+                let result = SExpr::new(
+                    SNode::Tuple {
+                        items,
+                        frozen: true,
+                        product_model: Some("immutable value product".to_owned()),
+                    },
+                    range,
+                );
+                self.origins.product(&result, path, range)?;
+                return Ok(result);
             }
             self.cursor.expect(")", Some("parenthesised expression"))?;
             return Ok(inner);
@@ -727,8 +817,8 @@ impl RustParser {
         }
         if self.cursor.is("(") {
             return Err(unsupported(
-                "tuple pattern",
-                "tuples are outside the portable core",
+                "tuple match pattern",
+                "tuple match coverage is not represented; use an immutable destructuring let",
                 span(&token, &token),
             ));
         }

@@ -10,6 +10,7 @@ use super::indirection_rules::{
     accept_rust_source_box_coercion_layer, accept_rust_source_box_owner,
     accept_rust_source_indirection_argument, read_rust_source_expression_origin,
 };
+use super::product_rules::accept_rust_immutable_product_type;
 use super::{Result, SExpr, SNode, SPattern, SPatternNode, Span, Type, unsupported};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -20,6 +21,9 @@ pub(super) struct SourceOrigin {
     pub(super) proven: bool,
     pub(super) diverging: bool,
     pub(super) uncertain: bool,
+    /// Source Copy evidence does not choose the checker's numeric width.
+    pub(super) copy_evidence: bool,
+    pub(super) fields: Option<Vec<Self>>,
 }
 
 impl SourceOrigin {
@@ -31,10 +35,25 @@ impl SourceOrigin {
             proven: false,
             diverging: false,
             uncertain: false,
+            copy_evidence: false,
+            fields: None,
         }
     }
 
     pub(super) fn with_type(ty: Type, path: &[String], wrappers: Vec<String>) -> Self {
+        let fields = match &ty {
+            Type::Tuple { elements } => Some(
+                elements
+                    .iter()
+                    .map(|element| Self::with_type(element.clone(), path, Vec::new()))
+                    .collect::<Vec<_>>(),
+            ),
+            _ => None,
+        };
+        let children_accepted = fields
+            .as_ref()
+            .is_none_or(|fields| fields.iter().all(Self::direct_copy_value));
+        let copy_evidence = accept_rust_immutable_product_type(ty.kind(), children_accepted, false);
         Self {
             ty: Some(ty),
             path: path.to_vec(),
@@ -42,6 +61,8 @@ impl SourceOrigin {
             proven: true,
             diverging: false,
             uncertain: false,
+            copy_evidence,
+            fields,
         }
     }
 
@@ -49,6 +70,24 @@ impl SourceOrigin {
         Self {
             proven: true,
             ..Self::unknown()
+        }
+    }
+
+    pub(super) fn direct_copy_value(&self) -> bool {
+        self.proven
+            && self.copy_evidence
+            && self.wrappers.is_empty()
+            && self
+                .fields
+                .as_ref()
+                .is_none_or(|fields| fields.iter().all(Self::direct_copy_value))
+    }
+
+    fn scalar_copy_value(ty: Option<Type>) -> Self {
+        Self {
+            ty,
+            copy_evidence: true,
+            ..Self::value()
         }
     }
 
@@ -118,6 +157,62 @@ impl SourceOrigins {
     pub(super) fn typed(&mut self, ty: Type, path: &[String], wrappers: Vec<String>) -> Type {
         self.current_type = SourceOrigin::with_type(ty.clone(), path, wrappers);
         ty
+    }
+
+    pub(super) fn require_product_origin(
+        &self,
+        origin: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<()> {
+        if !self.collecting && (origin.fields.is_none() || !origin.direct_copy_value()) {
+            return Err(unsupported(
+                "immutable Rust tuple product",
+                "every field requires a direct recursively immutable scalar Copy source value",
+                span,
+            ));
+        }
+        Ok(())
+    }
+
+    pub(super) fn product(
+        &mut self,
+        node: &SExpr,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<()> {
+        let SNode::Tuple { items, .. } = &node.node else {
+            return Ok(());
+        };
+        let fields: Vec<_> = items.iter().map(|item| self.origin(item, path)).collect();
+        let origin = SourceOrigin {
+            copy_evidence: fields.iter().all(SourceOrigin::direct_copy_value),
+            fields: Some(fields),
+            ..SourceOrigin::value()
+        };
+        self.require_product_origin(&origin, span)?;
+        self.mark(node, origin);
+        Ok(())
+    }
+
+    pub(super) fn product_projection(
+        &mut self,
+        node: &SExpr,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<()> {
+        let SNode::TupleIndex { object, index } = &node.node else {
+            return Ok(());
+        };
+        let origin = self.origin(object, path);
+        self.require_product_origin(&origin, span)?;
+        let field = origin
+            .fields
+            .as_ref()
+            .and_then(|fields| fields.get(*index))
+            .cloned()
+            .unwrap_or_else(SourceOrigin::unknown);
+        self.mark(node, field);
+        Ok(())
     }
 
     pub(super) fn declaration(
@@ -263,8 +358,23 @@ impl SourceOrigins {
             || left.diverging != right.diverging
             || left.uncertain != right.uncertain
             || left.wrappers != right.wrappers
+            || left.copy_evidence != right.copy_evidence
         {
             return false;
+        }
+        match (&left.fields, &right.fields) {
+            (Some(left), Some(right)) => {
+                if left.len() != right.len()
+                    || !left
+                        .iter()
+                        .zip(right)
+                        .all(|(left, right)| self.same_origin(left, right))
+                {
+                    return false;
+                }
+            }
+            (None, None) => {}
+            _ => return false,
         }
         match (&left.ty, &right.ty) {
             (
@@ -320,7 +430,7 @@ impl SourceOrigins {
                 && super::rust_fixed_type(&names[0]).is_some()
                 && ["MIN", "MAX"].contains(&names[1].as_str())
             {
-                return SourceOrigin::value();
+                return SourceOrigin::scalar_copy_value(super::rust_fixed_type(&names[0]));
             }
         }
         if let SNode::If {
@@ -335,7 +445,12 @@ impl SourceOrigins {
         };
         let form = read_rust_source_expression_origin(node.node.kind(), operation);
         match form.as_str() {
-            "value" => SourceOrigin::value(),
+            "value" => match &node.node {
+                SNode::Num { ty, .. } => SourceOrigin::scalar_copy_value(ty.clone()),
+                SNode::Bool { .. } => SourceOrigin::scalar_copy_value(Some(super::BOOL)),
+                SNode::Unit => SourceOrigin::scalar_copy_value(Some(super::UNIT)),
+                _ => SourceOrigin::value(),
+            },
             "diverging" => SourceOrigin {
                 diverging: true,
                 ..SourceOrigin::value()
@@ -381,7 +496,25 @@ impl SourceOrigins {
                 {
                     return SourceOrigin::uncertain();
                 }
-                SourceOrigin::value()
+                if form == "derived-value" {
+                    if matches!(node.node, SNode::StringTest { .. }) {
+                        return SourceOrigin::scalar_copy_value(Some(super::BOOL));
+                    }
+                    return SourceOrigin::value();
+                }
+                let ty = match &node.node {
+                    SNode::Cast { to, .. } => Some(to.clone()),
+                    _ if form == "comparison" || form == "boolean-operation" => Some(super::BOOL),
+                    _ => None,
+                };
+                let copy_evidence = form != "primitive-operation"
+                    || (operation != "concat"
+                        && operands.iter().all(|operand| operand.copy_evidence));
+                SourceOrigin {
+                    ty,
+                    copy_evidence,
+                    ..SourceOrigin::value()
+                }
             }
             _ => SourceOrigin::unknown(),
         }
@@ -405,8 +538,34 @@ impl SourceOrigins {
             .iter()
             .all(|origin| origin.proven && origin.wrappers == first.wrappers)
         {
+            let fields = first.fields.as_ref().and_then(|fields| {
+                returning
+                    .iter()
+                    .all(|origin| {
+                        origin
+                            .fields
+                            .as_ref()
+                            .is_some_and(|candidate| candidate.len() == fields.len())
+                    })
+                    .then(|| {
+                        (0..fields.len())
+                            .map(|index| {
+                                let values: Vec<_> = returning
+                                    .iter()
+                                    .map(|origin| {
+                                        origin.fields.as_ref().expect("matched field count")[index]
+                                            .clone()
+                                    })
+                                    .collect();
+                                self.join(&values)
+                            })
+                            .collect()
+                    })
+            });
             return SourceOrigin {
                 wrappers: first.wrappers.clone(),
+                copy_evidence: returning.iter().all(|origin| origin.copy_evidence),
+                fields,
                 ..SourceOrigin::value()
             };
         }
