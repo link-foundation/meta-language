@@ -13,7 +13,9 @@
 
 use std::collections::BTreeSet;
 
-use crate::concept_records::{ConceptRecord, SourceAlias, concept_records};
+use crate::concept_records::{
+    ConceptRecord, SourceAlias, concept_record, concept_records, concept_records_for_source_name,
+};
 use crate::foundation_models::{FoundationRegister, foundation_register};
 use crate::grammar::{Grammar, GrammarExpr, RuleKind};
 
@@ -141,12 +143,20 @@ pub fn source_meanings_in(
     alias: &SourceAlias,
     within: Option<&str>,
 ) -> Vec<String> {
-    let concepts = records.iter().filter(|record| {
-        record
-            .source_aliases
+    // Only the immutable embedded register has a process-local alias index.
+    // Caller-owned slices are inspected anew, including nested alias changes.
+    let concepts: Vec<&ConceptRecord> = if std::ptr::eq(records, concept_records()) {
+        concept_records_for_source_name(&alias.source, &alias.name)
+    } else {
+        records
             .iter()
-            .any(|candidate| candidate.source == alias.source && candidate.name == alias.name)
-    });
+            .filter(|record| {
+                record.source_aliases.iter().any(|candidate| {
+                    candidate.source == alias.source && candidate.name == alias.name
+                })
+            })
+            .collect()
+    };
     let models = register.models.iter().filter(|model| {
         model.source_aliases.iter().any(|candidate| {
             candidate.source == alias.source
@@ -157,6 +167,7 @@ pub fn source_meanings_in(
         })
     });
     concepts
+        .into_iter()
         .map(|record| record.id.clone())
         .chain(models.map(|model| model.id.clone()))
         .filter(|id| within_matches(id, within))
@@ -174,17 +185,18 @@ fn meaning_definition(
     register: &FoundationRegister,
     id: &str,
 ) -> Option<String> {
-    records
-        .iter()
-        .find(|record| record.id == id)
-        .map(|record| record.definition.clone())
-        .or_else(|| {
-            register
-                .models
-                .iter()
-                .find(|model| model.id == id)
-                .map(|model| model.definition.clone())
-        })
+    let concept = if std::ptr::eq(records, concept_records()) {
+        concept_record(id).filter(|record| record.id == id)
+    } else {
+        records.iter().find(|record| record.id == id)
+    };
+    concept.map(|record| record.definition.clone()).or_else(|| {
+        register
+            .models
+            .iter()
+            .find(|model| model.id == id)
+            .map(|model| model.definition.clone())
+    })
 }
 
 /// Relates two source spellings through the given records and foundation register.

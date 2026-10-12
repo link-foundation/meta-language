@@ -55,6 +55,49 @@ fn register() -> FoundationRegister {
     foundation_register().clone()
 }
 
+#[test]
+fn custom_record_alias_and_definition_changes_remain_visible() {
+    let first = SourceAlias {
+        source: "custom source".to_owned(),
+        name: "first".to_owned(),
+    };
+    let second = SourceAlias {
+        source: "custom source".to_owned(),
+        name: "second".to_owned(),
+    };
+    let mut records = concept_records()
+        .iter()
+        .filter(|record| matches!(record.id.as_str(), "binding" | "assignment"))
+        .cloned()
+        .collect::<Vec<_>>();
+    records[0].source_aliases = vec![first.clone(), first.clone()];
+    records[1].source_aliases = vec![second.clone()];
+    let register = register();
+    assert_eq!(
+        source_meanings_in(&records, &register, &first, None),
+        ["binding"]
+    );
+    records[1].source_aliases.push(first.clone());
+    assert_eq!(
+        source_meanings_in(&records, &register, &first, None),
+        ["binding", "assignment"]
+    );
+    assert_eq!(
+        concept_correspondence_in(&records, &register, &first, &second, None).relation,
+        CorrespondenceRelation::Ambiguous
+    );
+    records.remove(0);
+    records[0].definition = "The revised declared meaning.".to_owned();
+    let shared = concept_correspondence_in(&records, &register, &first, &second, None);
+    assert_eq!(shared.shared.as_deref(), Some("assignment"));
+    assert_eq!(
+        shared.justification.as_deref(),
+        Some("The revised declared meaning.")
+    );
+    records[0].source_aliases.pop();
+    assert!(source_meanings_in(&records, &register, &first, None).is_empty());
+}
+
 fn kinds(records: &[ConceptRecord], register: &FoundationRegister) -> Vec<&'static str> {
     check_concept_distinctions(records, register)
         .into_iter()

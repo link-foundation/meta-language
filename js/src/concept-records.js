@@ -38,8 +38,16 @@ export const FORMER_CONCEPT_IDS = Object.freeze([
 
 const FORMER_IDS = new Map(FORMER_CONCEPT_IDS);
 const BY_NAME = new Map();
+const BY_SOURCE_NAME = new Map();
 for (const record of CONCEPT_RECORDS) {
   for (const name of [record.id, ...record.formerNames]) BY_NAME.set(name, record);
+  for (const { source, name } of record.sourceAliases) {
+    let names = BY_SOURCE_NAME.get(source);
+    if (!names) BY_SOURCE_NAME.set(source, names = new Map());
+    let records = names.get(name);
+    if (!records) names.set(name, records = []);
+    if (records.at(-1) !== record) records.push(record);
+  }
 }
 
 /** The current identity of a concept: `id` itself, or the identity that replaced it. */
@@ -59,8 +67,9 @@ export function conceptRecord(name) {
 
 /** The records a source (such as `ebnf` or `Rust`) names `name`, in register order. */
 export function conceptRecordsForSourceName(source, name) {
-  return CONCEPT_RECORDS.filter(({ sourceAliases }) =>
-    sourceAliases.some((alias) => alias.source === source && alias.name === name));
+  // Only the deeply frozen shipped register is indexed. A fresh result keeps
+  // callers' array edits separate from the process-local derived lookup.
+  return [...(BY_SOURCE_NAME.get(source)?.get(name) ?? [])];
 }
 
 /**

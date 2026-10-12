@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { CONCEPT_RECORDS } from './concept-records.js';
+import { CONCEPT_RECORDS, conceptRecord, conceptRecordsForSourceName } from './concept-records.js';
 import { FOUNDATION_MODELS } from './foundation-models.js';
 
 /**
@@ -37,9 +37,11 @@ const withinMatches = (id, within) => within === undefined || id === within || i
  * lists the name among its comma-separated spellings.
  */
 export function sourceMeanings(alias, { within, records = CONCEPT_RECORDS, register = FOUNDATION_MODELS } = {}) {
-  const concepts = records.filter((record) =>
-    record.sourceAliases.some((candidate) => candidate.source === alias.source && candidate.name === alias.name),
-  );
+  const concepts = records === CONCEPT_RECORDS
+    ? conceptRecordsForSourceName(alias.source, alias.name)
+    : records.filter((record) =>
+      record.sourceAliases.some((candidate) => candidate.source === alias.source && candidate.name === alias.name),
+    );
   const models = register.models.filter((model) =>
     model.sourceAliases.some((candidate) => candidate.source === alias.source && candidate.name.split(', ').includes(alias.name)),
   );
@@ -69,7 +71,8 @@ export function conceptCorrespondence(first, second, options = {}) {
   const [one] = firstMeanings;
   const [other] = secondMeanings;
   if (one === other) {
-    const meaning = records.find(({ id }) => id === one) ?? register.models.find(({ id }) => id === one);
+    const meaning = (records === CONCEPT_RECORDS ? conceptRecord(one) : records.find(({ id }) => id === one))
+      ?? register.models.find(({ id }) => id === one);
     return { ...result, relation: 'shared', shared: one, justification: meaning?.definition ?? null };
   }
   const reason =

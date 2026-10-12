@@ -47,6 +47,32 @@ fn phrase_of(id: &str) -> String {
     id.rsplit(['.', ':']).next().unwrap_or(id).replace('-', " ")
 }
 
+#[test]
+fn source_name_lookup_preserves_order_and_returns_independent_vectors() {
+    let expected: Vec<_> = concept_records()
+        .iter()
+        .filter(|record| {
+            record
+                .source_aliases
+                .iter()
+                .any(|alias| alias.source == "Python" && alias.name == "=")
+        })
+        .collect();
+    assert_eq!(
+        expected
+            .iter()
+            .map(|record| record.id.as_str())
+            .collect::<Vec<_>>(),
+        ["binding", "assignment"]
+    );
+    let mut first = concept_records_for_source_name("Python", "=");
+    assert_eq!(first, expected);
+    first.reverse();
+    first.pop();
+    assert_eq!(concept_records_for_source_name("Python", "="), expected);
+    assert!(concept_records_for_source_name("absent source", "absent name").is_empty());
+}
+
 fn has_alias(network: &LinkNetwork, concept: &str, vocabulary: &str, name: &str) -> bool {
     let concept = network.find_term(concept).expect("the concept is present");
     network
