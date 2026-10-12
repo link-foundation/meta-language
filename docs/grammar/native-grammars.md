@@ -193,7 +193,7 @@ and
 
 [`js/scripts/import-native-grammars.mjs`](../../js/scripts/import-native-grammars.mjs)
 is the automatic merge pipeline. It reads each pinned upstream grammar of
-[`parity/grammars/sources.json`](../../parity/grammars/sources.json), which
+[`parity/grammars/sources.lino`](../../parity/grammars/sources.lino), which
 records the package, repository, revision, path, license and SHA-256 of the
 gzipped copy under
 [`parity/grammars/sources/`](../../parity/grammars/sources/), and fails when
@@ -213,14 +213,14 @@ a copy does not match its hash. For each grammar it:
   `IMMEDIATE_TOKEN` rule an immediate token of the rule's content, as the
   renamed token it is (a string fragment);
 - renames every rule to readable English through
-  [`parity/naming/grammar-name-expansions.json`](../../parity/naming/grammar-name-expansions.json),
+  [`parity/naming/grammar-name-expansions.lino`](../../parity/naming/grammar-name-expansions.lino),
   which holds each word replacement and each name or concept a reviewer
   decided by hand with its reason; the tree-sitter name stays as a
   `source-names` alias;
 - gives every rule a concept record, shared by name with the other native
   grammars only where the construct means the same;
 - writes the merge report
-  [`parity/grammars/merge-reports/<language>.json`](../../parity/grammars/merge-reports/):
+  [`parity/grammars/merge-reports/<language>.lino`](../../parity/grammars/merge-reports/):
   the sources, the rule count, the keywords, every rename and expanded word,
   the shared and generated concepts, and the constructs it approximated or
   could not import.
@@ -236,7 +236,7 @@ For C the source is the `src/grammar.json` of
 
 - [`parity/grammars/native/c.lino`](../../parity/grammars/native/c.lino) has
   183 rules, 106 keywords and the 17 conflicts tree-sitter-c declares. The
-  [merge report](../../parity/grammars/merge-reports/c.json) lists 93
+  [merge report](../../parity/grammars/merge-reports/c.lino) lists 93
   renamed rules and 24 expanded words, such as `preproc_include` to
   `preprocessor_include` and `sizeof` to `size_of`, and no approximated or
   unsupported construct. tree-sitter-c has no external scanner.
@@ -249,7 +249,7 @@ For C the source is the `src/grammar.json` of
   statement), and a shift/reduce choice follows precedence and associativity
   (a case statement keeps the statements after it). Both executors parse every
   corpus source with no ambiguity.
-- [`parity/fixtures/native-grammars/c.json`](../../parity/fixtures/native-grammars/c.json)
+- [`parity/fixtures/native-grammars/c.lino`](../../parity/fixtures/native-grammars/c.lino)
   holds 100 matches (the 85 cases of the upstream `test/corpus` at the same
   revision and 15 more), no divergence and 30 rejections.
 - The ISO C standard is not a merged source yet: the grammar accepts what
@@ -264,7 +264,7 @@ For JavaScript the source is the `src/grammar.json` of
 
 - [`parity/grammars/native/javascript.lino`](../../parity/grammars/native/javascript.lino)
   has 143 rules, 49 keywords and the 18 conflicts tree-sitter-javascript
-  declares. The [merge report](../../parity/grammars/merge-reports/javascript.json)
+  declares. The [merge report](../../parity/grammars/merge-reports/javascript.lino)
   lists 25 renamed rules and 2 expanded words (`lhs` and `regex`), and no
   approximated or unsupported construct.
 - [`parity/grammars/scanners/javascript.lino`](../../parity/grammars/scanners/javascript.lino),
@@ -273,7 +273,7 @@ For JavaScript the source is the `src/grammar.json` of
   scanners: the automatic semicolon at a line break, the characters of a
   template up to a substitution, the ternary question mark, the HTML-like
   comment of ECMA-262 annex B.1.1 and JSX text.
-- [`parity/fixtures/native-grammars/javascript.json`](../../parity/fixtures/native-grammars/javascript.json)
+- [`parity/fixtures/native-grammars/javascript.lino`](../../parity/fixtures/native-grammars/javascript.lino)
   holds 146 matches (the 115 cases of the upstream `test/corpus` at the same
   revision that the oracle accepts and 31 more, Unicode white space and line
   terminators included), no divergence and 24 rejections: the one corpus case
@@ -290,8 +290,8 @@ For TypeScript and TSX the sources are the `typescript/src/grammar.json` and
   and [`parity/grammars/native/tsx.lino`](../../parity/grammars/native/tsx.lino)
   have 230 rules and 80 keywords each, and the 48 and 49 conflicts the two
   upstream grammars declare. Their merge reports,
-  [`typescript.json`](../../parity/grammars/merge-reports/typescript.json) and
-  [`tsx.json`](../../parity/grammars/merge-reports/tsx.json), list 44 renamed
+  [`typescript.lino`](../../parity/grammars/merge-reports/typescript.lino) and
+  [`tsx.lino`](../../parity/grammars/merge-reports/tsx.lino), list 44 renamed
   rules and 3 expanded words (`enum`, `lhs` and `regex`), and no approximated
   or unsupported construct.
 - [`parity/grammars/scanners/typescript.lino`](../../parity/grammars/scanners/typescript.lino),
@@ -300,10 +300,10 @@ For TypeScript and TSX the sources are the `typescript/src/grammar.json` and
   grammars include, to seven native scanners: the five of JavaScript, and the
   automatic semicolon after a function signature and the error recovery
   sentinel, which fail because the C scanner never returns them.
-- [`parity/fixtures/native-grammars/typescript.json`](../../parity/fixtures/native-grammars/typescript.json)
+- [`parity/fixtures/native-grammars/typescript.lino`](../../parity/fixtures/native-grammars/typescript.lino)
   holds 155 matches (the 111 cases of the upstream `test/corpus` at the same
   revision for TypeScript and 44 more), no divergence and 15 rejections;
-  [`parity/fixtures/native-grammars/tsx.json`](../../parity/fixtures/native-grammars/tsx.json)
+  [`parity/fixtures/native-grammars/tsx.lino`](../../parity/fixtures/native-grammars/tsx.lino)
   holds 157 matches (the 111 corpus cases for TSX and 46 more, JSX elements
   included), no divergence and 16 rejections. Where TypeScript reads
   `<string>y` as a type assertion, TSX reads JSX, and `x = <div>;` is a TSX
@@ -312,7 +312,7 @@ For TypeScript and TSX the sources are the `typescript/src/grammar.json` and
 ## Concepts
 
 Every rule has a readable English name and names a canonical concept record
-in [`parity/naming/canonical-concepts.json`](../../parity/naming/canonical-concepts.json)
+in [`parity/naming/canonical-concepts.lino`](../../parity/naming/canonical-concepts.lino)
 with `(concept ID)`. A rule that replaces a differently named tree-sitter kind
 keeps that name as `(source-names (tree-sitter NAME))`, and the catalog's
 `oracleKinds` maps the rule back to it for the oracle comparison. The record
@@ -340,15 +340,15 @@ every construct the target grammar has no rule for. The per-language counts of
 shared and language-specific rules are in the generated
 [concept reuse report](native-grammar-concept-reuse.md), which
 `npm run check:concept-reuse` keeps current. The fixtures are
-[`parity/fixtures/grammar-shared-concepts.json`](../../parity/fixtures/grammar-shared-concepts.json)
+[`parity/fixtures/grammar-shared-concepts.lino`](../../parity/fixtures/grammar-shared-concepts.lino)
 and
-[`parity/fixtures/native-grammar-concept-reuse.json`](../../parity/fixtures/native-grammar-concept-reuse.json).
+[`parity/fixtures/native-grammar-concept-reuse.lino`](../../parity/fixtures/native-grammar-concept-reuse.lino).
 
 ## Checking against the oracle
 
 [`js/scripts/generate-native-grammar-fixtures.mjs`](../../js/scripts/generate-native-grammar-fixtures.mjs)
 lists each native grammar with its corpus and writes
-[`parity/fixtures/native-grammars/<id>.json`](../../parity/fixtures/native-grammars/).
+[`parity/fixtures/native-grammars/<id>.lino`](../../parity/fixtures/native-grammars/).
 The corpus has three parts:
 
 | Part | Meaning |
@@ -367,7 +367,7 @@ a line break at the end of the input, that no row shows. `oracleRecovers` in
 checks both.
 
 Rows have the shape of
-[`parity/fixtures/default-cst-expected.json`](../../parity/fixtures/default-cst-expected.json):
+[`parity/fixtures/default-cst-expected.lino`](../../parity/fixtures/default-cst-expected.lino):
 `[depth, field, kind, named, startByte, endByte, flags]`.
 [`js/scripts/native-grammar-rows.mjs`](../../js/scripts/native-grammar-rows.mjs)
 projects a native tree the way tree-sitter places nodes:
@@ -436,10 +436,10 @@ the oracle. An embedded region in a native language and an incremental
 reparse use the native grammar too; an incremental reparse parses the edited
 text again.
 
-[`parity/fixtures/native-default-cst-expected.json`](../../parity/fixtures/native-default-cst-expected.json)
+[`parity/fixtures/native-default-cst-expected.lino`](../../parity/fixtures/native-default-cst-expected.lino)
 holds each native language's default CST rows. For valid input the rows and
 digests equal those of the oracle in
-[`parity/fixtures/builtin-cst-expected.json`](../../parity/fixtures/builtin-cst-expected.json);
+[`parity/fixtures/builtin-cst-expected.lino`](../../parity/fixtures/builtin-cst-expected.lino);
 for invalid input they hold the native repair, which
 [`default-cst-expectations.test.js`](../../js/tests/default-cst-expectations.test.js)
 and
@@ -448,7 +448,7 @@ check in both runtimes. `node scripts/generate-native-grammar-fixtures.mjs`
 writes the file with the per-grammar fixtures. Its `embeddedFixtures` give
 the rows of the regions in a native language of the shared embedded-language
 fixtures of
-[`parity/fixtures/default-cst-expected.json`](../../parity/fixtures/default-cst-expected.json):
+[`parity/fixtures/default-cst-expected.lino`](../../parity/fixtures/default-cst-expected.lino):
 the oracle's rows for valid input and the native repair for invalid input, at
 the bounds the host grammar places. The Markdown fenced Rust region of the
 recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
@@ -466,7 +466,7 @@ recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
   not where tree-sitter's LR recovery places them. Each conformance and
   generative case whose native tree differs from the tree-sitter oracle for
   that reason is recorded in
-  [`native-recovery.json`](../../parity/fixtures/native-recovery.json)
+  [`native-recovery.lino`](../../parity/fixtures/native-recovery.lino)
   (written by
   [`generate-native-recovery.mjs`](../../js/scripts/generate-native-recovery.mjs))
   with the digests and repair sites of both trees and one of four categories,

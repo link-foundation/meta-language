@@ -31,11 +31,11 @@ export const TEST_GROUPS = Object.freeze({
     /^(?!self-translation-report-artifacts$)(?:translation|typed-program-|typescript-erasure$|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation(?:-|$))/u,
   'report-artifacts': /^self-translation-report-artifacts$/u,
   conformance:
-    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|global-concept-space$|formal-concept-definition$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
+    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|structured-data-(?:links|records)$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|global-concept-space$|formal-concept-definition$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
   downstream:
     /^(?:downstream-|formal-ai-semantic-projections$|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
   tooling:
-    /^(?:cache-|issue-195-self-translation-report$|issue-195-associative-stack-sources$|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-inventory$|dependency-upgrades$|test-groups$|ci-workflow-structure$|export-parity$)/u,
+    /^(?:cache-|project-data(?:-|$)|external-grammar-|issue-195-(?:observation-links|record-storage|report-storage)$|issue-195-self-translation-report$|issue-195-associative-stack-sources$|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-(?:inventory|upgrades|downloaded-grammar-assets)$|test-groups$|ci-workflow-structure$|export-parity$)/u,
 });
 
 export function testFiles(root = packageRoot) {

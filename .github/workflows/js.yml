@@ -160,6 +160,9 @@ jobs:
         run: npm ci
         working-directory: js
 
+      - name: Provision the pinned external grammar test inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
+
       - name: Build the independently corrected Agda layout oracle
         if: contains(fromJSON('["grammar", "grammar-native", "grammar-recovery"]'), matrix.group)
         run: node scripts/build-agda-layout-oracle.mjs
@@ -194,6 +197,11 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: ${{ matrix.group == 'translation' && '1' || '0' }}
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"
         working-directory: js
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -230,6 +238,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
         working-directory: js
+
+      - name: Provision the pinned external grammar check inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
 
       - name: Check that every test file is in exactly one test group
         run: node scripts/test-groups.mjs --check
@@ -332,14 +343,14 @@ jobs:
 
       - name: Run grammar conversion cycles under the actual Peggy target tool
         if: ${{ !cancelled() }}
-        run: node js/scripts/run-grammar-interchange-tools.mjs --out issue-195-artifacts/grammar-interchange-tools.json
+        run: node js/scripts/run-grammar-interchange-tools.mjs --out issue-195-artifacts/grammar-interchange-tools.lino
 
       - name: Upload the grammar conversion target-tool report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: grammar-interchange-tools-${{ github.sha }}
-          path: issue-195-artifacts/grammar-interchange-tools.json
+          path: issue-195-artifacts/grammar-interchange-tools.lino
           retention-days: 7
           if-no-files-found: error
 
@@ -349,14 +360,14 @@ jobs:
 
       - name: Run grammar conversion cycles under the actual Lark target tool
         if: ${{ !cancelled() }}
-        run: node js/scripts/run-grammar-interchange-lark.mjs --out issue-195-artifacts/grammar-interchange-lark.json
+        run: node js/scripts/run-grammar-interchange-lark.mjs --out issue-195-artifacts/grammar-interchange-lark.lino
 
       - name: Upload the independent Lark conversion report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: grammar-interchange-lark-${{ github.sha }}
-          path: issue-195-artifacts/grammar-interchange-lark.json
+          path: issue-195-artifacts/grammar-interchange-lark.lino
           retention-days: 7
           if-no-files-found: error
 
@@ -409,6 +420,11 @@ jobs:
         run: npm run check:naming
         working-directory: js
 
+      - name: Check associative data storage and necessary external JSON interfaces
+        if: ${{ !cancelled() }}
+        run: node scripts/check-project-data-storage.mjs
+        working-directory: js
+
       - name: Check that the documentation agrees with the requirement ledger
         if: ${{ !cancelled() }}
         run: npm run check:documentation
@@ -458,9 +474,17 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-typed-program-link-rules.mjs --check
 
+      - name: Check the generated Rust source indirection rules against JavaScript
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-indirection-rules.mjs --check
+
       - name: Check shared source-free typed program fixtures
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-typed-program-links-fixtures.mjs --check
+
+      - name: Check shared editable algebraic program fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-typed-program-algebraic-fixtures.mjs --check
 
       - name: Check shared formal definition and certificate fixtures
         if: ${{ !cancelled() }}
@@ -521,6 +545,11 @@ jobs:
             exit 1
           fi
 
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
+
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
@@ -568,6 +597,15 @@ jobs:
         id: npm
         run: node scripts/release-publication.mjs --preflight
         working-directory: js
+
+      - name: Install the linked grammar manifest reader dependencies
+        if: steps.npm.outputs.already_published != 'true'
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Provision the pinned package grammar binaries
+        if: steps.npm.outputs.already_published != 'true'
+        run: node js/scripts/external-grammar-cache.mjs --group wasm --materialize
 
       # actions/setup-node writes `_authToken=${NODE_AUTH_TOKEN}` and exports the
       # placeholder `XXXXX-XXXXX-XXXXX-XXXXX` whenever no token is supplied. npm
@@ -625,6 +663,11 @@ jobs:
       - name: Verify published package
         run: node scripts/release-publication.mjs --published
         working-directory: js
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}

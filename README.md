@@ -34,7 +34,7 @@ badges, and its own CI/CD workflow.
 | --- | --- |
 | [`rust/`](rust/README.md) | Rust crate `meta-language` — the reference implementation. Built and tested by [`.github/workflows/rust.yml`](.github/workflows/rust.yml). |
 | [`js/`](js/README.md) | JavaScript package `meta-language`. Built and tested by [`.github/workflows/js.yml`](.github/workflows/js.yml). |
-| [`parity/`](parity/language-features.json) | Cross-language feature manifest. Every feature must be present in both languages (see [Feature parity](#feature-parity)). |
+| [`parity/`](parity/language-features.lino) | Cross-language feature manifest. Every feature must be present in both languages (see [Feature parity](#feature-parity)). |
 | [`docs/`](docs) | Shared documentation: the grammar subsystem, fidelity matrices, the project website source, and per-issue case studies. |
 | [`.github/`](.github/workflows) | Shared CI/CD workflows (`rust.yml`, `js.yml`). |
 
@@ -46,7 +46,7 @@ The versioned JavaScript, Rust, Lean, and Rocq parser/emitter capability and
 translation boundaries are documented in
 [`docs/four-language-contracts.md`](docs/four-language-contracts.md).
 The full issue #195 delivery target is defined by the executable
-[`parity/issue-195-requirements.json`](parity/issue-195-requirements.json)
+[`parity/issue-195-requirements.lino`](parity/issue-195-requirements.lino)
 manifest. Its generated evidence report and remaining per-runtime gaps are
 tracked in
 [`docs/issue-195-requirement-ledger.md`](docs/issue-195-requirement-ledger.md).
@@ -100,7 +100,7 @@ and retain the caller-supplied media type or format identifier. Calling
 
 The core requirement of this project is that **every feature present in Rust is
 also present in JavaScript, and vice versa**. This is encoded as data in
-[`parity/language-features.json`](parity/language-features.json) and enforced by
+[`parity/language-features.lino`](parity/language-features.lino) and enforced by
 [`js/scripts/check-js-rust-parity.mjs`](js/scripts/check-js-rust-parity.mjs):
 
 - The manifest lists each feature with its Rust and JavaScript implementation

@@ -9,8 +9,8 @@ specification. Read it before changing the grammar, parsing, semantics,
 translation, dependency or acceptance code: a change that contradicts it must
 update the vision in the same pull request rather than add a competing
 description elsewhere. Requirements come from the sources registered in
-[`parity/issue-195-sources.json`](parity/issue-195-sources.json) and are tracked
-row by row in [`parity/issue-195-requirements.json`](parity/issue-195-requirements.json);
+[`parity/issue-195-sources.lino`](parity/issue-195-sources.lino) and are tracked
+row by row in [`parity/issue-195-requirements.lino`](parity/issue-195-requirements.lino);
 see [AGENTS.md](AGENTS.md) for the rules that automated contributors follow.
 
 ## Development Setup

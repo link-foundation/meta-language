@@ -41,5 +41,7 @@ export { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLin
 export * from './semantics.js';
 export * from './sql-adapter.js';
 export * from './substitution.js';
+export { encodeStructuredDataLinks, decodeStructuredDataLinks, structuredDataToLino, readStructuredDataLino } from './structured-data-links.js';
+export { structuredDataRecordToLino, readStructuredDataRecords } from './structured-data-records.js';
 export * from './transform.js';
 export * from './translation.js';

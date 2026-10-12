@@ -16,7 +16,7 @@ Status: both packages implement this page. The JavaScript package does so in
 native executor [`rust/src/grammar/feature_runtime/`](../../rust/src/grammar/feature_runtime/)
 (`compile_feature_grammar`, `FeatureGrammarParser`), which uses no parser
 generator. The shared fixture
-[`parity/fixtures/grammar-feature-union.json`](../../parity/fixtures/grammar-feature-union.json)
+[`parity/fixtures/grammar-feature-union.lino`](../../parity/fixtures/grammar-feature-union.lino)
 is the executable check both ports pass byte for byte
 ([`js/tests/issue-195-grammar-feature-union.test.js`](../../js/tests/issue-195-grammar-feature-union.test.js),
 [`rust/tests/unit/issue_195_grammar_feature_union.rs`](../../rust/tests/unit/issue_195_grammar_feature_union.rs)
@@ -34,7 +34,7 @@ class, or a call of a parameterized rule) by its native listing over
 equivalent references, written `feature(...)` in the merge decision: two
 such bodies merge only when they are the same form over rules the merge
 proves equivalent
-([`parity/fixtures/grammar-merge-features.json`](../../parity/fixtures/grammar-merge-features.json)).
+([`parity/fixtures/grammar-merge-features.lino`](../../parity/fixtures/grammar-merge-features.lino)).
 
 Known gaps: the merge does not normalize inside a feature form, so
 `alias(x, choice(a, b))` and `alias(x, choice(b, a))` stay apart. In the Rust crate,
@@ -862,7 +862,7 @@ Peggy, which is only a development dependency of tests that compare against it.
 
 ## Fixture and tests
 
-[`parity/fixtures/grammar-feature-union.json`](../../parity/fixtures/grammar-feature-union.json)
+[`parity/fixtures/grammar-feature-union.lino`](../../parity/fixtures/grammar-feature-union.lino)
 lists, per feature, a native listing, optional parser options, positive cases
 (`input` or `inputHex`, and the expected `tree` in the tree notation),
 negative cases (a `rejection`, with the `tree` and `ambiguities` when one was

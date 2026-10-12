@@ -42,6 +42,7 @@ mod pdf_grammar;
 mod pdf_parser;
 pub mod program_representation;
 pub mod program_translation;
+pub mod project_data;
 pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
@@ -55,6 +56,9 @@ pub mod source;
 mod source_generation;
 pub mod sql_adapter;
 pub mod storage;
+mod structured_data_link_rules;
+pub mod structured_data_links;
+pub mod structured_data_records;
 mod structured_text_parser;
 pub mod substitution;
 pub mod transform;
@@ -260,6 +264,10 @@ pub use program_translation::{
     DecodedProgramTranslation, ProgramTranslation, ProgramTranslationError,
     decode_program_translation, read_translation_provenance, translate_program,
 };
+pub use project_data::{
+    ProjectDataFormat, read_project_data_file, read_project_data_file_with_format,
+    read_project_file_bytes, resolve_project_data_path, resolve_project_data_path_with_format,
+};
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryIndex, QueryMatch, QueryParseError,
     QueryPredicate, QueryPredicateArgument, QueryPredicateHost, RejectPredicateHost,
@@ -299,6 +307,22 @@ pub use sql_adapter::{
 #[cfg(feature = "doublets")]
 pub use storage::DoubletsLinkStore;
 pub use storage::{EngineLinkStore, LinkStore, LinkStoreBackend, LinkStoreQuery, StorageError};
+pub use structured_data_links::{
+    StructuredDataLinks, StructuredDataLinksLimits, StructuredDataValue,
+    decode_structured_data_links, decode_structured_data_links_ordered,
+    decode_structured_data_links_ordered_with_limits, decode_structured_data_links_with_limits,
+    encode_structured_data_links, encode_structured_data_links_ordered, read_structured_data_lino,
+    read_structured_data_lino_ordered, read_structured_data_lino_ordered_with_limits,
+    read_structured_data_lino_with_limits, structured_data_to_lino,
+    structured_data_to_lino_ordered,
+};
+pub use structured_data_records::{
+    read_structured_data_records, read_structured_data_records_ordered,
+    read_structured_data_records_ordered_with_limits, read_structured_data_records_with_limits,
+    structured_data_record_to_lino, structured_data_record_to_lino_ordered,
+    structured_data_record_to_lino_ordered_with_namespace,
+    structured_data_record_to_lino_with_namespace,
+};
 pub use substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, SubstitutionValue,
     VariableSubstitutionRule,

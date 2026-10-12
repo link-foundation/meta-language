@@ -1827,6 +1827,19 @@ export const GRAMMAR_EXPORT_FORMATS: readonly GrammarInterchangeFormat[];
 export function grammarImporter(format: string): ((source: string) => Grammar) | null;
 export function grammarEmitter(format: string): ((grammar: Grammar) => GrammarEmitResult) | null;
 export function renderNativeGrammar(grammar: Grammar): string;
+export type StructuredDataValue = null | boolean | number | string | StructuredDataValue[] | { [key: string]: StructuredDataValue };
+export interface StructuredDataLinksLimits { nodeLimit?: number; depthLimit?: number; byteLimit?: number; }
+export interface StructuredDataLinksArchive {
+  network: { link(id: LinkId): Link | undefined; links(): Link[]; toLino(): string };
+  root: LinkId;
+}
+export function encodeStructuredDataLinks(value: StructuredDataValue, limits?: StructuredDataLinksLimits): StructuredDataLinksArchive;
+export function decodeStructuredDataLinks(network: StructuredDataLinksArchive['network'], root: LinkId, limits?: StructuredDataLinksLimits): StructuredDataValue;
+export function structuredDataToLino(value: StructuredDataValue, limits?: StructuredDataLinksLimits): string;
+export function readStructuredDataLino(source: string, limits?: StructuredDataLinksLimits): StructuredDataValue;
+export function structuredDataRecordToLino(value: StructuredDataValue, namespace?: string, limits?: StructuredDataLinksLimits): string;
+export function readStructuredDataRecords(source: string, limits?: StructuredDataLinksLimits): StructuredDataValue[];
+
 export function renderNativeExpression(expression: GrammarExpression): string;
 export function parseNativeGrammar(source: string): Grammar;
 export const GRAMMAR_COMMAND_USAGE: string;
