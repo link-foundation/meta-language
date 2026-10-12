@@ -218,6 +218,11 @@ test('required JavaScript CI retains bounded memory regressions and actual targe
   const report = parsed.get('test').steps.find((step) => step.name === 'Upload the grammar conversion target-tool report');
   assert.ok(report?.afterFailure, 'the target-tool report is retained after check failures');
   assert.match(report.text, /grammar-interchange-tools-\$\{\{ github\.sha \}\}/u);
+  const lark = parsed.get('test').steps.find((step) => /run-grammar-interchange-lark\.mjs/u.test(step.run));
+  assert.ok(lark?.afterFailure, 'the independent Python target still runs after other failures');
+  assert.doesNotMatch(lark.text, /continue-on-error/u);
+  const install = parsed.get('test').steps.find((step) => /pip install/u.test(step.run));
+  assert.match(install.run, /--no-cache-dir lark==1\.3\.1/u);
 });
 
 test('the acceptance workflow runs each Rust stage only after the matching JavaScript stage passes', () => {
