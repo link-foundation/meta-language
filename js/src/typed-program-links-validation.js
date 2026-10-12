@@ -86,7 +86,9 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
       const binder = environment.get(node.name);
       if (!binder) throw new TypeError(`the linked variable ${node.name} is unbound`);
       if (references.get(node)?.target && references.get(node).target !== binder) throw new TypeError('the linked variable targets a declaration outside its scope');
-      same(node.type, binder.type ?? binder.value?.type, 'variable type');
+      // A let expression has its body's result type; the variable is bound to
+      // the initializer, including when an escaping closure captures a cell.
+      same(node.type, binder.k === 'let' ? binder.value?.type : binder.type, 'variable type');
       return;
     }
     if (node.k === 'call' || node.k === 'functionValue') {
@@ -108,13 +110,33 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
     if (node.k === 'let') {
       expression(node.value, environment);
       expression(node.body, new Map(environment).set(node.name, node));
+      same(node.type, node.body.type, 'let result type');
       return;
     }
     if (node.k === 'lambda') {
       const inner = new Map(environment);
       for (const parameter of node.params) { type(parameter.type); inner.set(parameter.name, parameter); }
       expression(node.body, inner);
+      same(node.type, { kind: 'function', params: node.params.map((parameter) => parameter.type), ret: node.body.type }, 'lambda type');
       return;
+    }
+    if (node.k === 'apply') {
+      if (node.fn.type?.kind !== 'function') throw new TypeError('a linked application does not target a function');
+      if (node.args.length !== node.fn.type.params.length) throw new TypeError('a linked application has the wrong number of arguments');
+      node.args.forEach((argument, index) => same(argument.type, node.fn.type.params[index], 'application argument type'));
+      same(node.type, node.fn.type.ret, 'application return type');
+    }
+    if (node.k === 'cellAllocate') {
+      if (node.type?.kind !== 'cell') throw new TypeError('a linked cell allocation does not produce a reference cell');
+      same(node.value.type, node.type.element, 'cell initializer type');
+    }
+    if (node.k === 'cellRead' || node.k === 'cellWrite') {
+      if (node.cell.type?.kind !== 'cell') throw new TypeError('a linked cell operation does not target a reference cell');
+      if (node.k === 'cellRead') same(node.type, node.cell.type.element, 'cell read type');
+      else {
+        same(node.value.type, node.cell.type.element, 'cell write type');
+        same(node.type, node.body.type, 'cell write result type');
+      }
     }
     if (node.k === 'binary') {
       same(node.left.type, node.right.type, 'binary operand types');

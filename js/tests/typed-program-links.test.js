@@ -61,6 +61,36 @@ test('sequential effects and lexical shadowing remain structured after source-fr
   assert.equal(effects.length, 1);
 });
 
+test('let binding types survive when the body returns a different type', () => {
+  const archive = roundTrip(createTypedProgramLinks('function positive(value){const doubled=value*2;return doubled>0;}console.log(positive(3));', 'JavaScript'));
+  assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), ['true']);
+  assert.match(emitTypedProgramLinks(archive.network, archive.root, 'Rust').code, /fn positive\(value: f64\) -> bool/u);
+});
+
+for (const [description, source, expected] of [
+  ['escaping counter', 'function counter(){let n=0;return ()=>{n=n+1;return n;};}const next=counter();console.log(next(),next());', '1 2'],
+  ['shared closure cell', 'function f(){let n=0;const add=()=>{n=n+1;return n;};const read=()=>n;add();add();return read();}console.log(f());', '2'],
+  ['independent closure cells', 'function counter(){let n=0;return ()=>{n=n+1;return n;};}const first=counter();const second=counter();console.log(first(),first(),second());', '1 2 1'],
+]) {
+  test(`${description} retains mutable binding identity in source-free links`, () => {
+    const archive = roundTrip(createTypedProgramLinks(source, 'JavaScript'));
+    assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), [expected]);
+    assert.match(emitTypedProgramLinks(archive.network, archive.root, 'Rust').code, /RefCell/u);
+    assert.ok(archive.network.links().every((link) => !link.metadata().definition?.includes(source)));
+  });
+}
+
+test('editing a captured-cell increment changes source-free behavior and rejects invalid cell types', () => {
+  const archive = roundTrip(createTypedProgramLinks('function counter(){let n=0;return ()=>{n=n+1;return n;};}const next=counter();console.log(next(),next());', 'JavaScript'));
+  const increment = scalarByField(archive.network, 'value', '1');
+  archive.network.link(increment).setMetadata(archive.network.link(increment).metadata().withDefinition('2'));
+  assert.deepEqual(run(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), ['2 4']);
+  assert.match(emitTypedProgramLinks(archive.network, archive.root, 'Rust').code, /\+ 2f64/u);
+  const cellKind = scalarByField(archive.network, 'kind', 'cell');
+  archive.network.link(cellKind).setMetadata(archive.network.link(cellKind).metadata().withDefinition('array'));
+  assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, 'JavaScript'), /reference cell/u);
+});
+
 test('declaration retargeting preserves checked call signatures and uses actual linked identity', () => {
   const archive = roundTrip(createTypedProgramLinks('function add(a,b){return a+b;} function multiply(a,b){return a*b;} console.log(add(2,3));', 'JavaScript'));
   const reference = archive.network.fieldRelations().find(({ label }) => label === 'declaration reference');
