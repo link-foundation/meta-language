@@ -60,6 +60,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
                                 .map(|entry| (entry.ir.clone(), named(&entry.ir, place)))
                                 .collect(),
                             frozen: false,
+                            prototype_definition: None,
                         },
                         place,
                     );

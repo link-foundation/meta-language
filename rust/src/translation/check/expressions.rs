@@ -336,7 +336,15 @@ impl Checker {
                 tag,
                 fields,
                 frozen,
+                prototype_definition,
             } => {
+                if let Some(definition) = prototype_definition {
+                    return Err(unsupported(
+                        "object prototype definition",
+                        "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
+                        Some(definition.span),
+                    ));
+                }
                 let mut value = self.ctor_object(tag, fields, span, env, path, expected)?;
                 if let Node::Ctor {
                     frozen: checked_frozen,

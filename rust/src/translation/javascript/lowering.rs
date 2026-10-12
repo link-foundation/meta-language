@@ -548,13 +548,20 @@ pub(super) fn children(expr: &SExpr) -> Vec<&SExpr> {
             out.extend(scrutinees);
             out.extend(rows.iter().map(|row| &row.body));
         }
-        SNode::CtorObject { fields, .. } => {
+        SNode::CtorObject {
+            fields,
+            prototype_definition,
+            ..
+        } => {
             out.extend(
                 fields
                     .iter()
                     .filter(|(name, _)| name != "span" && name != "type")
                     .map(|(_, value)| value),
             );
+            if let Some(definition) = prototype_definition {
+                out.push(&definition.value);
+            }
         }
         _ => {}
     }
@@ -613,13 +620,20 @@ pub(super) fn children_mut(expr: &mut SExpr) -> Vec<&mut SExpr> {
             out.extend(scrutinees);
             out.extend(rows.iter_mut().map(|row| &mut row.body));
         }
-        SNode::CtorObject { fields, .. } => {
+        SNode::CtorObject {
+            fields,
+            prototype_definition,
+            ..
+        } => {
             out.extend(
                 fields
                     .iter_mut()
                     .filter(|(name, _)| name != "span" && name != "type")
                     .map(|(_, value)| value),
             );
+            if let Some(definition) = prototype_definition {
+                out.push(&mut definition.value);
+            }
         }
         _ => {}
     }

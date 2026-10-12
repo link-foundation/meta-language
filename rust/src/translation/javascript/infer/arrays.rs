@@ -115,9 +115,16 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                     walk(&mut case.body, arrays);
                 }
             }
-            SNode::CtorObject { fields, .. } => {
+            SNode::CtorObject {
+                fields,
+                prototype_definition,
+                ..
+            } => {
                 for (_, value) in fields {
                     walk(value, arrays);
+                }
+                if let Some(definition) = prototype_definition {
+                    walk(&mut definition.value, arrays);
                 }
             }
             SNode::List { items } => {

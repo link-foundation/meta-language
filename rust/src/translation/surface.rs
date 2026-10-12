@@ -302,6 +302,8 @@ pub enum SNode {
         fields: Vec<(String, SExpr)>,
         #[serde(default, skip_serializing_if = "is_false")]
         frozen: bool,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        prototype_definition: Option<ConstructorPrototypeDefinition>,
     },
     /// A JavaScript array literal `[a, ...xs, b]`.
     Array {
@@ -388,6 +390,18 @@ impl SNode {
 pub struct SArrayItem {
     pub spread: bool,
     pub value: SExpr,
+}
+
+/// A source prototype definition, preserved until the checker refuses it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConstructorPrototypeDefinition {
+    /// The complete initializer expression.
+    pub value: Box<SExpr>,
+    /// The uncomputed property key's source range.
+    pub span: Span,
+    /// The original property position, including the constructor tag.
+    pub index: usize,
 }
 
 /// An object whose keys keep their insertion order, as JavaScript objects do.
