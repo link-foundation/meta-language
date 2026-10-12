@@ -327,6 +327,7 @@ impl Threader<'_> {
                 ctor: format!("{name}_mk"),
                 data: name.clone(),
                 args: vec![out, value],
+                frozen: false,
             },
             data(name),
         )
@@ -345,6 +346,7 @@ impl Threader<'_> {
                 ctor: format!("{name}_abort"),
                 data: name.clone(),
                 args: vec![out, message],
+                frozen: false,
             },
             data(name),
         )
@@ -365,6 +367,7 @@ impl Threader<'_> {
                 data: entry.full_name.clone(),
                 ctor: format!("{}_abort", entry.full_name),
                 args: vec![out, message],
+                frozen: false,
             },
             pair_type.clone(),
         )

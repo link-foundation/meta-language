@@ -300,6 +300,8 @@ pub enum SNode {
         tag: String,
         #[serde(with = "ordered_fields")]
         fields: Vec<(String, SExpr)>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        frozen: bool,
     },
     /// A JavaScript array literal `[a, ...xs, b]`.
     Array {

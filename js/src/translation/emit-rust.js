@@ -1138,6 +1138,7 @@ class RustEmitter {
   }
 
   expr(e) {
+    if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
     const statefulReceiver = e.array?.type.reference || e.object?.type.reference;
     if (statefulReceiver && ['index', 'optionalIndex', 'length', 'recordField', 'tupleIndex', 'method', 'collectionSize', 'collectionRead', 'collectionItems'].includes(e.k)) throw unsupported('reference operation', 'this operation needs the shared reference and slot runtime before target emission', e.span);
     if (e.type?.reference && ['array', 'record', 'map', 'set', 'append'].includes(e.k)) throw unsupported('reference allocation', 'this allocation needs the shared reference and slot runtime before target emission', e.span);

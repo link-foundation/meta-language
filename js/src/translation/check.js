@@ -1128,7 +1128,9 @@ class Checker {
     if (names.length !== expectedNames.length || names.some((name) => !expectedNames.includes(name))) {
       throw typeError(`${node.tag} expects fields ${expectedNames.join(', ')}`, node.span);
     }
-    return this.construct(entry, ctor, expectedNames.map((name) => node.fields[name]), env, path, node.span);
+    const value = this.construct(entry, ctor, expectedNames.map((name) => node.fields[name]), env, path, node.span);
+    if (Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw typeError('constructor immutability must be Boolean', node.span);
+    return node.frozen ? { ...value, frozen: true } : value;
   }
 
   /**

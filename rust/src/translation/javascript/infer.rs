@@ -639,7 +639,7 @@ impl Inference {
                 self.expr(arg, env)?;
                 Ok(Term::Known(STRING))
             }
-            SNode::CtorObject { tag, fields } => self.ctor_object(tag, fields, expr.span, env),
+            SNode::CtorObject { tag, fields, .. } => self.ctor_object(tag, fields, expr.span, env),
             SNode::Print { expr, body, .. } => {
                 self.expr(expr, env)?;
                 self.expr(body, env)

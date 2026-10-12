@@ -5,6 +5,8 @@ import { runInNewContext } from 'node:vm';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
+import { translateProgram } from '../src/program-translation.js';
+import { requireDataObjectFreeze } from '../src/translation/primitive-value-rules.js';
 
 const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-constructor-tags.json', import.meta.url), 'utf8'));
 const { tags } = fixture;
@@ -47,4 +49,20 @@ test('constructor fields keep arbitrary names as own data properties during cons
     const actual = runInNewContext(`${emitted}\n(() => { const item = make(); const supplied = { $: 'one', [field]: 9 }; return [Object.hasOwn(item, field), item[field], read(item), read(supplied), Object.getPrototypeOf(item) === Object.prototype]; })()`, context);
     assert.deepEqual(Array.from(actual), [true, 7, 7, 9, true], field);
   }
+});
+
+test('constructor descriptors retain their declared source model and explicit immutability', () => {
+  for (const { language, frozen: explicitFrozen, descriptors } of fixture.models) {
+    const program = checkProgram(parseJavaScript(source));
+    program.sourceLanguage = language;
+    if (explicitFrozen) program.declarations.get('make').body.frozen = true;
+    const frozen = requireDataObjectFreeze(language, explicitFrozen);
+    assert.equal(frozen, explicitFrozen || language !== 'JavaScript');
+    const emitted = emitJavaScript(program).text;
+    const actual = runInNewContext(`${emitted}\n(() => { const item = make(); const descriptor = Object.getOwnPropertyDescriptor(item, '$'); return [Object.isFrozen(item), Object.isExtensible(item), descriptor.writable, descriptor.configurable, Reflect.set(item, '$', 'two')]; })()`);
+    assert.deepEqual(Array.from(actual), descriptors, `${language}:${explicitFrozen}`);
+  }
+  const frozenSource = "/** @typedef {{ $: 'one' } | { $: 'two' }} Tag */\n/** @returns {Tag} */ function make() { return Object.freeze({ $: 'one' }); }";
+  assert.equal(checkProgram(parseJavaScript(frozenSource)).declarations.get('make').body.frozen, true);
+  for (const target of ['Rust', 'Lean', 'Rocq']) assert.match(translateProgram(frozenSource, 'JavaScript', target).diagnostic?.message ?? '', /^explicit data object freeze:/u, target);
 });

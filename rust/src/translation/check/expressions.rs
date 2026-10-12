@@ -332,8 +332,20 @@ impl Checker {
                     expected.clone(),
                 ))
             }
-            SNode::CtorObject { tag, fields } => {
-                self.ctor_object(tag, fields, span, env, path, expected)
+            SNode::CtorObject {
+                tag,
+                fields,
+                frozen,
+            } => {
+                let mut value = self.ctor_object(tag, fields, span, env, path, expected)?;
+                if let Node::Ctor {
+                    frozen: checked_frozen,
+                    ..
+                } = &mut value.node
+                {
+                    *checked_frozen = *frozen;
+                }
+                Ok(value)
             }
             SNode::Print { expr, style, body } => {
                 let text = self.show(expr, env, path, *style)?;
@@ -883,6 +895,7 @@ impl Checker {
                 data: data_name.to_owned(),
                 ctor: ctor.name.clone(),
                 args: checked,
+                frozen: false,
             },
             data(data_name),
         ))

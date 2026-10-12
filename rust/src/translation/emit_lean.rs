@@ -554,6 +554,15 @@ impl LeanEmitter<'_> {
     }
 
     fn expr(&mut self, e: &Expr, depth: usize) -> Result<String> {
+        if self.program.source_language == crate::translation::Language::JavaScript
+            && matches!(&e.node, Node::Ctor { frozen: true, .. })
+        {
+            return Err(unsupported(
+                "explicit data object freeze",
+                "this target needs a JavaScript property descriptor model to retain explicit constructor freezing",
+                e.span,
+            ));
+        }
         Ok(match &e.node {
             Node::Lit { value } => {
                 if e.ty.is_float() {
@@ -575,7 +584,9 @@ impl LeanEmitter<'_> {
                 let head = self.state.reference(func, ".");
                 self.application(head, args, depth)?
             }
-            Node::Ctor { data, ctor, args } => {
+            Node::Ctor {
+                data, ctor, args, ..
+            } => {
                 let head = self.state.ctor_ref(data, ctor, ".");
                 self.application(head, args, depth)?
             }

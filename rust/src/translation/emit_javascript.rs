@@ -65,7 +65,7 @@ fn malformed(message: String) -> TranslationError {
     type_error(message, None)
 }
 
-fn ctor_object(ctor: &Ctor, args: &[String]) -> String {
+fn ctor_object(ctor: &Ctor, args: &[String], language: Language, explicit_frozen: bool) -> String {
     let fields: Vec<String> = ctor
         .fields
         .iter()
@@ -80,10 +80,15 @@ fn ctor_object(ctor: &Ctor, args: &[String]) -> String {
     } else {
         format!(", {}", fields.join(", "))
     };
-    format!(
-        "Object.freeze({{ $: {}{fields} }})",
-        json_string(&ctor.name)
-    )
+    let object = format!("{{ $: {}{fields} }}", json_string(&ctor.name));
+    if super::primitive_value_rules::require_data_object_freeze(
+        language.as_str().to_owned(),
+        explicit_frozen,
+    ) {
+        format!("Object.freeze({object})")
+    } else {
+        format!("({object})")
+    }
 }
 
 /// Emits a checked program as JavaScript.
@@ -256,7 +261,11 @@ impl<'p> JavaScriptEmitter<'p> {
             Decl::Data(data) => {
                 let name = self.state.local_name(&data.full_name).to_owned();
                 self.state.map(entry, &name);
-                self.state.encode("data", "a data value is a frozen object whose $ property names its constructor and whose other properties are its fields");
+                self.state.encode("data", if self.program.source_language == Language::JavaScript {
+                    "a JavaScript data value is an object whose $ property names its constructor and whose other properties retain their own field names; explicit source freezing is preserved"
+                } else {
+                    "a data value is a frozen object whose $ property names its constructor and whose other properties are its fields"
+                });
                 Ok(None)
             }
             Decl::Fn(function) => self.function(entry, function).map(Some),
@@ -406,7 +415,10 @@ impl<'p> JavaScriptEmitter<'p> {
                 fields.push(self.domain(&field.ty, field_depth)?);
             }
             if fields.is_empty() {
-                values.push(format!("[{}]", ctor_object(ctor, &[])));
+                values.push(format!(
+                    "[{}]",
+                    ctor_object(ctor, &[], self.program.source_language, false)
+                ));
             } else {
                 let args: Vec<String> = (0..ctor.fields.len())
                     .map(|index| format!("args[{index}]"))
@@ -414,7 +426,7 @@ impl<'p> JavaScriptEmitter<'p> {
                 values.push(format!(
                     "ml_product([{}]).map((args) => {})",
                     fields.join(", "),
-                    ctor_object(ctor, &args)
+                    ctor_object(ctor, &args, self.program.source_language, false)
                 ));
             }
         }
@@ -665,7 +677,12 @@ impl<'p> JavaScriptEmitter<'p> {
                 let args = self.exprs(args)?;
                 Ok(format!("{target}({})", args.join(", ")))
             }
-            Node::Ctor { data, ctor, args } => {
+            Node::Ctor {
+                data,
+                ctor,
+                args,
+                frozen,
+            } => {
                 let entry = self.program.data(data);
                 let ctor = entry
                     .ctors
@@ -673,7 +690,12 @@ impl<'p> JavaScriptEmitter<'p> {
                     .find(|candidate| candidate.name == *ctor)
                     .unwrap_or_else(|| panic!("{data} has no constructor {ctor}"));
                 let args = self.exprs(args)?;
-                Ok(ctor_object(ctor, &args))
+                Ok(ctor_object(
+                    ctor,
+                    &args,
+                    self.program.source_language,
+                    *frozen,
+                ))
             }
             Node::Unary { op, arg, .. } => {
                 let arg = self.expr(arg)?;

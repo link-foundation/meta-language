@@ -14,5 +14,15 @@
     "a-b",
     "line\nbreak",
     "quote\"and\\backslash"
+  ],
+  "models": [
+    { "language": "JavaScript", "frozen": false, "descriptors": [false, true, true, true, true] },
+    { "language": "JavaScript", "frozen": true, "descriptors": [true, false, false, false, false] },
+    { "language": "Rust", "frozen": false, "descriptors": [true, false, false, false, false] },
+    { "language": "Rust", "frozen": true, "descriptors": [true, false, false, false, false] },
+    { "language": "Lean", "frozen": false, "descriptors": [true, false, false, false, false] },
+    { "language": "Lean", "frozen": true, "descriptors": [true, false, false, false, false] },
+    { "language": "Rocq", "frozen": false, "descriptors": [true, false, false, false, false] },
+    { "language": "Rocq", "frozen": true, "descriptors": [true, false, false, false, false] }
   ]
 }

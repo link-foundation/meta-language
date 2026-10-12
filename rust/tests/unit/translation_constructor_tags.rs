@@ -1,6 +1,7 @@
+use meta_language::translation::Language;
 use meta_language::translation::check::check_program;
 use meta_language::translation::emit_javascript::emit_javascript;
-use meta_language::translation::ir::Program;
+use meta_language::translation::ir::{Decl, Node, Program};
 use meta_language::translation::javascript::parse_javascript;
 use serde_json::Value;
 use std::process::Command;
@@ -115,5 +116,71 @@ fn constructor_fields_preserve_exact_own_property_names_in_javascript_output() {
         );
         let actual: Value = serde_json::from_slice(&output.stdout).unwrap();
         assert_eq!(actual, serde_json::json!([true, 7, 7, 9, true]), "{name}");
+    }
+}
+
+#[test]
+fn constructor_immutability_preserves_its_source_model_and_checked_marker() {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/translation-constructor-tags.json"
+    ))
+    .unwrap();
+    let source = "/** @typedef {{ $: 'one' } | { $: 'two' }} Tag */\n/** @returns {Tag} */ function make() { return { $: 'one' }; }";
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    for model in fixture["models"].as_array().unwrap() {
+        let mut program = checked.clone();
+        program.source_language = Language::parse(model["language"].as_str().unwrap()).unwrap();
+        let make = program
+            .declarations
+            .iter_mut()
+            .find_map(|declaration| match declaration {
+                Decl::Fn(function) if function.name == "make" => Some(function),
+                _ => None,
+            })
+            .unwrap();
+        let Node::Ctor { frozen, .. } = &mut make.body.node else {
+            panic!("the source returns a constructor");
+        };
+        *frozen = model["frozen"].as_bool().unwrap();
+        let serialized = serde_json::to_value(&program).unwrap();
+        let restored: Program = serde_json::from_value(serialized).unwrap();
+        let emitted = emit_javascript(&restored).unwrap();
+        let script = format!(
+            "{}\nconst item = make(); const descriptor = Object.getOwnPropertyDescriptor(item, '$'); console.log(JSON.stringify([Object.isFrozen(item), Object.isExtensible(item), descriptor.writable, descriptor.configurable, Reflect.set(item, '$', 'two')]));",
+            emitted.text
+        );
+        let output = Command::new("node")
+            .args(["--input-type=module", "-e", &script])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let actual: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(
+            actual, model["descriptors"],
+            "{}:{}",
+            model["language"], model["frozen"]
+        );
+    }
+    let explicit = "/** @typedef {{ $: 'one' } | { $: 'two' }} Tag */\n/** @returns {Tag} */ function make() { return Object.freeze({ $: 'one' }); }";
+    let checked = check_program(&parse_javascript(explicit).unwrap()).unwrap();
+    let make = checked
+        .declarations
+        .iter()
+        .find_map(|declaration| match declaration {
+            Decl::Fn(function) if function.name == "make" => Some(function),
+            _ => None,
+        })
+        .unwrap();
+    assert!(matches!(make.body.node, Node::Ctor { frozen: true, .. }));
+    for target in ["Rust", "Lean", "Rocq"] {
+        let result = meta_language::translate_program(explicit, "JavaScript", target).unwrap();
+        assert_eq!(
+            result.diagnostic().unwrap().construct.as_deref(),
+            Some("explicit data object freeze")
+        );
     }
 }

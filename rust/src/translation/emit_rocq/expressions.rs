@@ -8,6 +8,15 @@ use super::{
 
 impl RocqEmitter<'_> {
     pub(super) fn expr(&mut self, e: &Expr) -> Result<String> {
+        if self.program.source_language == crate::translation::Language::JavaScript
+            && matches!(&e.node, Node::Ctor { frozen: true, .. })
+        {
+            return Err(unsupported(
+                "explicit data object freeze",
+                "this target needs a JavaScript property descriptor model to retain explicit constructor freezing",
+                e.span,
+            ));
+        }
         match &e.node {
             Node::Lit { value } => self.literal(&e.ty, value),
             Node::Unit => Ok("tt".to_owned()),
@@ -58,7 +67,9 @@ impl RocqEmitter<'_> {
                 };
                 self.application(head, args)
             }
-            Node::Ctor { data, ctor, args } => {
+            Node::Ctor {
+                data, ctor, args, ..
+            } => {
                 let head = self.state.ctor_ref(data, ctor, ".");
                 self.application(head, args)
             }

@@ -201,10 +201,16 @@ impl Expr {
                 func: func.clone(),
                 args: args.iter().map(&mut *visit).collect(),
             },
-            Node::Ctor { data, ctor, args } => Node::Ctor {
+            Node::Ctor {
+                data,
+                ctor,
+                args,
+                frozen,
+            } => Node::Ctor {
                 data: data.clone(),
                 ctor: ctor.clone(),
                 args: args.iter().map(&mut *visit).collect(),
+                frozen: *frozen,
             },
             Node::Unary { op, arg, semantics } => Node::Unary {
                 op: *op,
@@ -322,6 +328,8 @@ pub enum Node {
         data: String,
         ctor: String,
         args: Vec<Expr>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        frozen: bool,
     },
     Unary {
         op: UnaryOp,

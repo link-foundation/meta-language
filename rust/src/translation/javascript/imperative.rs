@@ -181,6 +181,7 @@ impl Alternative {
             SNode::CtorObject {
                 tag: self.ctor.clone(),
                 fields: self.variables.iter().cloned().zip(values).collect(),
+                frozen: false,
             },
             self.place,
         )

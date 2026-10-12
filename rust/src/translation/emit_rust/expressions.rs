@@ -9,6 +9,15 @@ use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_me
 
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
+        if self.program.source_language == crate::translation::Language::JavaScript
+            && matches!(&expr.node, Node::Ctor { frozen: true, .. })
+        {
+            return Err(unsupported(
+                "explicit data object freeze",
+                "this target needs a JavaScript property descriptor model to retain explicit constructor freezing",
+                expr.span,
+            ));
+        }
         match &expr.node {
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),
@@ -63,7 +72,9 @@ impl RustEmitter<'_> {
                 }
                 Ok(format!("{head}({})", texts.join(", ")))
             }
-            Node::Ctor { data, ctor, args } => {
+            Node::Ctor {
+                data, ctor, args, ..
+            } => {
                 let program = self.program;
                 let entry = program.data(data);
                 let declared = entry

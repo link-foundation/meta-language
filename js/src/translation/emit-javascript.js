@@ -8,6 +8,7 @@ import { renderStringMapExpression, renderStringTestExpression } from './fronten
 // proof obligation stays discharged by the source language's kernel.
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
+import { requireDataObjectFreeze } from './primitive-value-rules.js';
 import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -177,7 +178,9 @@ class JavaScriptEmitter {
   declaration(entry) {
     if (entry.k === 'data') {
       this.state.map(entry, this.state.localName(entry.fullName));
-      this.state.encode('data', 'a data value is a frozen object whose $ property names its constructor and whose other properties are its fields');
+      this.state.encode('data', this.program.sourceLanguage === 'JavaScript'
+        ? 'a JavaScript data value is an object whose $ property names its constructor and whose other properties retain their own field names; explicit source freezing is preserved'
+        : 'a data value is a frozen object whose $ property names its constructor and whose other properties are its fields');
       return null;
     }
     if (entry.k === 'fn') return this.fn(entry);
@@ -260,9 +263,10 @@ class JavaScriptEmitter {
     }
   }
 
-  ctorObject(entry, ctor, args) {
+  ctorObject(entry, ctor, args, explicitFrozen = false) {
     const fields = ctor.fields.map((field, index) => `[${fieldKey(field.name)}]: ${args[index]}`);
-    return `Object.freeze({ $: ${JSON.stringify(ctor.name)}${fields.length ? `, ${fields.join(', ')}` : ''} })`;
+    const object = `{ $: ${JSON.stringify(ctor.name)}${fields.length ? `, ${fields.join(', ')}` : ''} }`;
+    return requireDataObjectFreeze(this.program.sourceLanguage, explicitFrozen) ? `Object.freeze(${object})` : `(${object})`;
   }
 
   prop(prop) {
@@ -457,7 +461,7 @@ class JavaScriptEmitter {
       case 'ctor': {
         const entry = this.program.declarations.get(e.data);
         const ctor = entry.ctors.find((candidate) => candidate.name === e.ctor);
-        return this.ctorObject(entry, ctor, e.args.map((arg) => this.expr(arg)));
+        return this.ctorObject(entry, ctor, e.args.map((arg) => this.expr(arg)), Boolean(e.frozen));
       }
       case 'unary':
         if (e.op === 'not') return `!${this.expr(e.arg)}`;
