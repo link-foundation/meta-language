@@ -8,7 +8,7 @@
 
 import { typeError } from './diagnostics.js';
 import { acceptArgumentCount } from './frontend-rules.js';
-import { BOOL, FLOAT, INT, STRING, UNIT, option } from './types.js';
+import { BOOL, FLOAT, INT, STRING, UNIT, option, sameType } from './types.js';
 import { markSharedReferenceTypes } from './javascript-cells.js';
 
 const ROOT = 'crate';
@@ -50,6 +50,7 @@ class Inference {
       if (item.k === 'data') this.data.set(item.name, item.ctors);
     }
     this.bindings = [];
+    this.unificationChanges = 0;
     this.bigints = new Set();
     this.plus = [];
     this.fields = [];
@@ -87,6 +88,26 @@ class Inference {
     return current;
   }
 
+  /** Compare logical types, retaining distinct unresolved variable identities. */
+  sameTerm(left, right) {
+    if (this.resolve(left) === this.resolve(right)) return true;
+    const normalize = (term, active = new Set()) => {
+      const type = this.resolve(term);
+      if (active.has(type)) throw typeError('a recursive inferred type needs an explicit data type');
+      active.add(type);
+      let normalized = type;
+      const child = (value) => normalize(value, active);
+      if (['array', 'option', 'set', 'cell'].includes(type.kind)) normalized = { ...type, element: child(type.element) };
+      else if (type.kind === 'tuple') normalized = { ...type, elements: type.elements.map(child) };
+      else if (type.kind === 'record') normalized = { ...type, fields: type.fields.map((field) => ({ ...field, type: child(field.type) })) };
+      else if (type.kind === 'map') normalized = { ...type, key: child(type.key), value: child(type.value) };
+      else if (type.kind === 'function') normalized = { ...type, params: type.params.map(child), ret: child(type.ret) };
+      active.delete(type);
+      return normalized;
+    };
+    return sameType(normalize(left), normalize(right));
+  }
+
   /** The type of a constructor field as a term, one per field even when it is not declared. */
   field(field) {
     if (field.type) return this.declared(field.type);
@@ -121,6 +142,7 @@ class Inference {
       if (a.id === b.id) return;
       if (this.bigints.has(a.id)) this.bigints.add(b.id);
       this.bindings[a.id] = b;
+      this.unificationChanges += 1;
       return;
     }
     if (a.kind === 'var' || b.kind === 'var') {
@@ -134,6 +156,7 @@ class Inference {
       }
       if (this.contains(type, variable.id)) throw typeError('a recursive inferred type needs an explicit data type', where);
       this.bindings[variable.id] = type;
+      this.unificationChanges += 1;
       return;
     }
     if (isInteger(a) && isInteger(b)) return;
@@ -145,6 +168,7 @@ class Inference {
       if (a.kind === 'option' && b.kind === 'option') {
         this.unify(a.element, b.element, where);
         const absence = a.absence === b.absence ? a.absence : 'both';
+        if (a.absence !== absence || b.absence !== absence) this.unificationChanges += 1;
         a.absence = absence;
         b.absence = absence;
       } else {
@@ -212,6 +236,7 @@ class Inference {
   addInferredField(record, field, where) {
     if (this.contains(field.type, record)) throw typeError('a recursive inferred type needs an explicit data type', where);
     record.fields.push({ ...field });
+    this.unificationChanges += 1;
   }
 
   run(functions, main, externals) {
@@ -345,7 +370,7 @@ class Inference {
         if (signature.declaredRet && !this.additionalAbsence(body, signature.declaredRet)) continue;
         const actual = this.resolve(body);
         if (actual.kind === 'var') continue;
-        if (signature.ret.kind === 'var' && this.resolve(signature.ret) !== actual) {
+        if (signature.ret.kind === 'var' && !this.sameTerm(signature.ret, actual)) {
           if (!this.contains(actual, signature.ret.id)) {
             this.bindings[signature.ret.id] = actual;
             progress = true;
@@ -477,6 +502,7 @@ class Inference {
   joinStep({ left, right, result, where }) {
     const a = this.resolve(left);
     const b = this.resolve(right);
+    const before = this.unificationChanges;
     let value;
     if ((a.kind === 'unit') !== (b.kind === 'unit')) {
       const element = a.kind === 'unit' ? right : left;
@@ -487,7 +513,7 @@ class Inference {
       value = this.resolve(b.kind === 'option' ? right : left);
     }
     if (value === result || (value.kind === 'var' && value.id === result.id)) return false;
-    if (this.bindings[result.id] === value) return false;
+    if (this.sameTerm(result, value)) return this.unificationChanges !== before;
     if (this.contains(value, result.id)) return false;
     this.bindings[result.id] = value;
     return true;

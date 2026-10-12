@@ -67,6 +67,8 @@ export function typeKey(type) {
 
 function ordinaryTypeKey(type) {
   switch (type.kind) {
+    case 'var':
+      return renderPortableTypeIdentity(type.kind, String(type.id), []);
     case 'fixed':
       return renderPortableTypeIdentity(type.kind, `${type.signed ? 'i' : 'u'}${type.bits}`, []);
     case 'data':

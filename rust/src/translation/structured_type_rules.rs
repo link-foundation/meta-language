@@ -157,33 +157,19 @@ pub fn render_portable_type_identity(
     detail: String,
     children: Vec<String>,
 ) -> String {
-    if (kind == "fixed") {
-        detail.clone()
+    if (kind == "var") {
+        format!("{}{}", (String::from("var:")), detail)
     } else {
-        if (kind == "data") {
-            format!("{}{}", (String::from("data:")), detail)
+        if (kind == "fixed") {
+            detail.clone()
         } else {
-            if (((kind == "array") || (kind == "set")) || (kind == "cell")) {
-                format!(
-                    "{}{}",
-                    (format!("{}{}", kind, (String::from(":")))),
-                    (match crate::translation::structured_type_rules::ml_array::optional_at(
-                        &children,
-                        crate::translation::structured_type_rules::ml_array::number_index(0f64)
-                    ) {
-                        Some(ml_present) => ml_present.clone(),
-                        None => String::from("undefined"),
-                    })
-                )
+            if (kind == "data") {
+                format!("{}{}", (String::from("data:")), detail)
             } else {
-                if (kind == "option") {
+                if (((kind == "array") || (kind == "set")) || (kind == "cell")) {
                     format!(
                         "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("option:")), detail)),
-                            (String::from(":"))
-                        )),
+                        (format!("{}{}", kind, (String::from(":")))),
                         (match crate::translation::structured_type_rules::ml_array::optional_at(
                             &children,
                             crate::translation::structured_type_rules::ml_array::number_index(0f64)
@@ -193,30 +179,31 @@ pub fn render_portable_type_identity(
                         })
                     )
                 } else {
-                    if (kind == "tuple") {
+                    if (kind == "option") {
                         format!(
                             "{}{}",
                             (format!(
                                 "{}{}",
-                                (String::from("tuple:[")),
-                                (crate::translation::structured_type_rules::join_type_names(
-                                    children.clone(),
-                                    String::from(",")
-                                ))
+                                (format!("{}{}", (String::from("option:")), detail)),
+                                (String::from(":"))
                             )),
-                            (String::from("]"))
+                            (match crate::translation::structured_type_rules::ml_array::optional_at(
+                                &children,
+                                crate::translation::structured_type_rules::ml_array::number_index(
+                                    0f64
+                                )
+                            ) {
+                                Some(ml_present) => ml_present.clone(),
+                                None => String::from("undefined"),
+                            })
                         )
                     } else {
-                        if (kind == "record") {
+                        if (kind == "tuple") {
                             format!(
                                 "{}{}",
                                 (format!(
                                     "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (format!("{}{}", (String::from("record:")), detail)),
-                                        (String::from("["))
-                                    )),
+                                    (String::from("tuple:[")),
                                     (crate::translation::structured_type_rules::join_type_names(
                                         children.clone(),
                                         String::from(",")
@@ -225,13 +212,17 @@ pub fn render_portable_type_identity(
                                 (String::from("]"))
                             )
                         } else {
-                            if (kind == "map") {
-                                format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("map:")), (match crate::translation::structured_type_rules::ml_array::optional_at(&children, crate::translation::structured_type_rules::ml_array::number_index(0f64)) { Some(ml_present) => ml_present.clone(), None => String::from("undefined") }))), (String::from(":")))), (match crate::translation::structured_type_rules::ml_array::optional_at(&children, crate::translation::structured_type_rules::ml_array::number_index(1f64)) { Some(ml_present) => ml_present.clone(), None => String::from("undefined") }))
+                            if (kind == "record") {
+                                format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("record:")), detail)), (String::from("[")))), (crate::translation::structured_type_rules::join_type_names(children.clone(), String::from(","))))), (String::from("]")))
                             } else {
-                                if (kind == "function") {
-                                    format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("function:(")), (crate::translation::structured_type_rules::join_type_names(children.clone(), String::from(","))))), (String::from("):")))), detail)
+                                if (kind == "map") {
+                                    format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("map:")), (match crate::translation::structured_type_rules::ml_array::optional_at(&children, crate::translation::structured_type_rules::ml_array::number_index(0f64)) { Some(ml_present) => ml_present.clone(), None => String::from("undefined") }))), (String::from(":")))), (match crate::translation::structured_type_rules::ml_array::optional_at(&children, crate::translation::structured_type_rules::ml_array::number_index(1f64)) { Some(ml_present) => ml_present.clone(), None => String::from("undefined") }))
                                 } else {
-                                    kind.clone()
+                                    if (kind == "function") {
+                                        format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("function:(")), (crate::translation::structured_type_rules::join_type_names(children.clone(), String::from(","))))), (String::from("):")))), detail)
+                                    } else {
+                                        kind.clone()
+                                    }
                                 }
                             }
                         }

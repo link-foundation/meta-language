@@ -3,8 +3,9 @@ use meta_language::translation::emit_lean::emit_lean;
 use meta_language::translation::emit_rocq::emit_rocq;
 use meta_language::translation::emit_rust::emit_rust;
 use meta_language::translation::structured_type_rules::{
-    accept_optional_absence, merge_optional_absence, read_rust_optional_prelude,
-    render_rust_compound_type, render_rust_reference_type, wrap_portable_reference_identity,
+    accept_optional_absence, accept_type_identity, merge_optional_absence,
+    read_rust_optional_prelude, render_portable_type_identity, render_rust_compound_type,
+    render_rust_reference_type, wrap_portable_reference_identity,
 };
 use meta_language::translation::surface::SProgram;
 use meta_language::translation::types::{Type, option};
@@ -134,4 +135,29 @@ fn compound_identity_functions_match_the_complete_shared_rust_target_source() {
         read_rust_optional_prelude(),
         data["optionalPrelude"].as_str().unwrap()
     );
+}
+
+#[test]
+fn portable_identity_decisions_retain_distinct_inference_variable_keys() {
+    let data = fixture();
+    for entry in data["inferenceIdentities"].as_array().unwrap() {
+        let children = entry["children"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|child| child.as_str().unwrap().to_owned())
+            .collect();
+        assert_eq!(
+            render_portable_type_identity(
+                entry["kind"].as_str().unwrap().to_owned(),
+                entry["detail"].as_str().unwrap().to_owned(),
+                children
+            ),
+            entry["identity"].as_str().unwrap()
+        );
+    }
+    assert!(!accept_type_identity(
+        "var:0".to_owned(),
+        "var:1".to_owned()
+    ));
 }

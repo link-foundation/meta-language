@@ -36,6 +36,7 @@ export function acceptOptionalAbsence(expected, actual) {
  * @returns {string}
  */
 export function renderPortableTypeIdentity(kind, detail, children) {
+  if (kind === 'var') return 'var:' + detail;
   if (kind === 'fixed') return detail;
   if (kind === 'data') return 'data:' + detail;
   if (kind === 'array' || kind === 'set' || kind === 'cell') return kind + ':' + children[0];

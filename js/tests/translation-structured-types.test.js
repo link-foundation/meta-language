@@ -5,7 +5,7 @@ import { checkProgram, coerce } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { emitLean } from '../src/translation/emit-lean.js';
 import { emitRocq } from '../src/translation/emit-rocq.js';
-import { acceptOptionalAbsence, mergeOptionalAbsence, readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceType, wrapPortableReferenceIdentity } from '../src/translation/structured-type-rules.js';
+import { renderPortableTypeIdentity, acceptOptionalAbsence, mergeOptionalAbsence, readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceType, wrapPortableReferenceIdentity } from '../src/translation/structured-type-rules.js';
 import { BOOL, option, sameType, typeKey } from '../src/translation/types.js';
 
 const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-structured-types.json', import.meta.url), 'utf8'));
@@ -59,4 +59,12 @@ test('pure targets refuse shared reference signatures until their state model is
       assert.throws(() => emit(checkProgram(entry.surface)), /mutable structural value: shared reference state needs an explicit target state model/, entry.name);
     }
   }
+});
+
+
+test('shared type identities retain distinct unresolved inference variables', () => {
+  for (const entry of fixture.inferenceIdentities) assert.equal(renderPortableTypeIdentity(entry.kind, entry.detail, entry.children), entry.identity);
+  assert.equal(typeKey({ kind: 'var', id: 0 }), 'var:0');
+  assert.equal(typeKey({ kind: 'var', id: 1 }), 'var:1');
+  assert.equal(sameType({ kind: 'array', element: { kind: 'var', id: 0 } }, { kind: 'array', element: { kind: 'var', id: 1 } }), false);
 });

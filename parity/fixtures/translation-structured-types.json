@@ -1329,5 +1329,43 @@
     ],
     "main": null
   },
-  "optionalPrelude": "/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }"
+  "optionalPrelude": "/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }",
+  "inferenceIdentities": [
+    {
+      "kind": "var",
+      "detail": "0",
+      "children": [],
+      "identity": "var:0"
+    },
+    {
+      "kind": "var",
+      "detail": "1",
+      "children": [],
+      "identity": "var:1"
+    },
+    {
+      "kind": "array",
+      "detail": "",
+      "children": [
+        "var:0"
+      ],
+      "identity": "array:var:0"
+    },
+    {
+      "kind": "option",
+      "detail": "undefined",
+      "children": [
+        "var:1"
+      ],
+      "identity": "option:undefined:var:1"
+    },
+    {
+      "kind": "record",
+      "detail": "",
+      "children": [
+        "[\"value\",\"var:0\"]"
+      ],
+      "identity": "record:[[\"value\",\"var:0\"]]"
+    }
+  ]
 }
