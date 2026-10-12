@@ -130,7 +130,11 @@ pub(super) fn graph(
             .collect::<Vec<_>>();
         shapes.push(
             json!([
-                value.link_type().map(|kind| kind.to_string()),
+                value.link_type().map(|kind| match kind {
+                    LinkType::Link => "Dynamic".to_owned(),
+                    LinkType::Token => "SourceToken".to_owned(),
+                    _ => format!("{kind:?}"),
+                }),
                 value.language(),
                 value.term(),
                 value.definition(),

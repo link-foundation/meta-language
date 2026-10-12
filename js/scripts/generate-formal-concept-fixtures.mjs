@@ -68,7 +68,7 @@ for (const change of ['removed pair', 'duplicate pair', 'retargeted pair', 'stal
 const fixture = { schemaVersion: 1, definitions, proofs, rejections, invalidCertificates };
 const path = new URL('../../parity/fixtures/formal-concept-definitions.json', import.meta.url);
 const expected = `${JSON.stringify(fixture, null, 2)}\n`;
-if (process.argv.includes('--check')) assert.equal(readFileSync(path, 'utf8'), expected, 'formal concept fixtures are stale');
+if (process.argv.includes('--check')) assert.ok(readFileSync(path, 'utf8') === expected, 'formal concept fixtures are stale');
 else writeFileSync(path, expected);
 assert.equal(readFileSync(new URL('../src/data/formal-concept-models.json', import.meta.url), 'utf8'), readFileSync(new URL('../../rust/src/data/formal-concept-models.json', import.meta.url), 'utf8'), 'formal primitive declarations differ between runtimes');
 process.stdout.write(`Verified ${definitions.length} formal definitions, ${proofs.length} proofs, ${rejections.length} basis rejections and ${invalidCertificates.length} invalid certificates.\n`);

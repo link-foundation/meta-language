@@ -9,7 +9,7 @@ import { createGlobalConceptSpace, globalConceptSpaceToLinks } from '../src/glob
 const path = new URL('../../parity/fixtures/global-concept-space.json', import.meta.url);
 const fixture = JSON.parse(readFileSync(path, 'utf8'));
 const sources = fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammar: deserializeGrammar(grammar) }));
-const space = createGlobalConceptSpace(sources, { records: fixture.records, equivalences: fixture.equivalences });
+const space = createGlobalConceptSpace(sources, { records: fixture.records, equivalences: fixture.equivalences, formalDefinitions: fixture.formalDefinitions });
 const links = globalConceptSpaceToLinks(space);
 if (process.argv.includes('--check')) {
   if (JSON.stringify(fixture.expectedSpace) !== JSON.stringify(space) || fixture.expectedLinks !== links) throw new Error('global concept fixture drift; run node js/scripts/generate-global-concept-space-fixture.mjs');

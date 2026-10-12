@@ -7,11 +7,12 @@ import { deserializeGrammar, Grammar } from '../src/grammar.js';
 import { parseGrammarLinks } from '../src/grammar-links.js';
 import { GLOBAL_CONCEPT_PROOF_METHOD, createGlobalConceptSpace, globalConceptSpaceToLinks, readGlobalConceptSpaceLinks, translateGlobalConstruct } from '../src/global-concept-space.js';
 import { verifyGlobalConceptCorrespondence } from '../src/global-concept-rules.js';
+import { encodeFormalConceptDefinition } from '../src/formal-concept-definition.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/global-concept-space.json', import.meta.url), 'utf8'));
 const sources = () => fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammar: deserializeGrammar(grammar) }));
-const options = (extra = {}) => ({ records: fixture.records, equivalences: fixture.equivalences, ...extra });
+const options = (extra = {}) => ({ records: fixture.records, equivalences: fixture.equivalences, formalDefinitions: fixture.formalDefinitions, ...extra });
 const build = (input = sources(), extra = {}) => createGlobalConceptSpace(input, options(extra));
 const rewritten = (source, transform, declarations = source.grammar.declarations) => ({ ...source, grammar: new Grammar(source.grammar.start, [...source.grammar.rules].map(([name, rule]) => [name, transform(rule)]), source.grammar.sourceFormat, declarations) });
 const observe = (requirementId, assertions, testName) => recordIssue195Observations({
@@ -63,6 +64,10 @@ test('names, equal accepted text and unregistered concept claims cannot prove sh
   const claimed = build(sources(), { records: [] });
   assert.equal(claimed.proofs.length, 0);
   assert.equal(claimed.concepts.length, 6);
+  const prose = build(sources(), { formalDefinitions: {} });
+  assert.equal(prose.proofs.length, 0, 'matching catalog identifiers and glosses do not prove operational meaning');
+  const counterfeit = build(sources(), { formalDefinitions: { 'fixture.letter': { links: '(claim same-meaning)', root: 1 } } });
+  assert.equal(counterfeit.proofs.length, 0, 'unsupported linked claims are unknown');
   observe('I195-GLOBAL-CONCEPT-UNPROVED', ['rejectUnprovedEquivalence'], 'names, equal accepted text and unregistered concept claims cannot prove shared meaning');
 });
 
@@ -112,7 +117,8 @@ test('proofs cannot collapse a many-to-one recursive rule correspondence', () =>
     ['root', { kind: 'normal', concept: 'fixture.root', expression: { kind: 'seq', items: references.map((name) => ({ kind: 'ref', name })) } }],
     ...names.map((name) => [name, leaf]),
   ]) });
-  const space = createGlobalConceptSpace([make('one', ['leaf', 'leaf'], ['leaf']), make('two', ['first', 'second'], ['first', 'second'])], { records, equivalences: [['one:root', 'two:root']] });
+  const primitive = fixture.formalDefinitions['fixture.letter'];
+  const space = createGlobalConceptSpace([make('one', ['leaf', 'leaf'], ['leaf']), make('two', ['first', 'second'], ['first', 'second'])], { records, formalDefinitions: { 'fixture.root': primitive, 'fixture.leaf': primitive }, equivalences: [['one:root', 'two:root']] });
   assert.notEqual(space.mappings['one:root'], space.mappings['two:root']);
   assert.deepEqual(space.failures, [{ members: ['one:root', 'two:root'], reason: 'no-one-to-one-proof' }]);
 });
@@ -187,12 +193,13 @@ test('source-free reload preserves explicit and implicit starts, rule order and 
 test('automatic proof discovery uses catalog source identities for real native grammar concepts', () => {
   const imported = ['scheme', 'racket'].map((language) => {
     const grammar = parseGrammarLinks(readFileSync(new URL(`../src/data/native-grammars/${language}.lino`, import.meta.url), 'utf8'));
-    // Raw source imports have no preassigned concept metadata. The registered
-    // native aliases provide semantic premises, with the actual definitions
-    // and complete parser context supplying the correspondence proof.
+    // Raw source imports have no preassigned concept metadata. Native aliases
+    // nominate candidates; explicit trivia interpretation is the semantic
+    // premise, alongside the complete production and parser context.
     return { id: `pinned-${language}`, language: language === 'scheme' ? 'Scheme' : 'Racket', grammar: rewritten({ grammar }, (rule) => ({ ...rule, concept: undefined })).grammar };
   });
-  const space = createGlobalConceptSpace(imported);
+  const trivia = encodeFormalConceptDefinition(undefined, { model: 'source trivia interpretation' });
+  const space = createGlobalConceptSpace(imported, { formalDefinitions: { 'pinned-scheme:block_comment': trivia, 'pinned-racket:block_comment': trivia } });
   const first = space.mappings['pinned-scheme:block_comment'];
   const second = space.mappings['pinned-racket:block_comment'];
   assert.equal(first, second);

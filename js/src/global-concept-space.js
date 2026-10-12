@@ -10,6 +10,9 @@ import { parseGrammarLinks, percentDecodeLinksText, percentEncodeLinksText, rend
 import { compareText } from './grammar-merge-normalize.js';
 import { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
 import { LANGUAGE_CATALOG, languageEntry } from './language-catalog.js';
+import { LinkNetwork } from './network.js';
+import { LinkId } from './primitives.js';
+import { readFormalConceptDefinition } from './formal-concept-definition.js';
 
 /** The decision procedure used for every shared global identity. */
 export const GLOBAL_CONCEPT_PROOF_METHOD = 'recursive-structural-bijection';
@@ -22,7 +25,7 @@ const canonical = (value) => {
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 const copy = (value) => JSON.parse(JSON.stringify(value));
 
-function prepare(sources, records) {
+function prepare(sources, records, formalDefinitions = {}) {
   if (!Array.isArray(sources)) throw new TypeError('global concept sources must be an array');
   const recordsByAlias = new Map();
   const recordsById = new Map();
@@ -38,6 +41,7 @@ function prepare(sources, records) {
   const aliases = new Map();
   const nodes = [];
   const ambiguities = [];
+  const formal = {};
   const ordered = [...sources].sort((first, second) => compareText(first.id ?? '', second.id ?? ''));
   for (const source of ordered) {
     if (typeof source.id !== 'string' || source.id === '' || typeof source.language !== 'string' || source.language === '' || (source.edition !== undefined && typeof source.edition !== 'string') || !(source.grammar instanceof Grammar)) throw new TypeError('a global concept source needs an identity, language, edition and imported grammar');
@@ -61,15 +65,20 @@ function prepare(sources, records) {
       if (meanings.length > 1) ambiguities.push({ alias, meanings });
       aliases.set(alias, nodes.length);
       const record = meanings.length === 1 ? recordsById.get(meanings[0]) : null;
-      // A name or two identical parsers do not establish the meaning of an
-      // unannotated construct. Only a grounded unique semantic record permits
-      // sharing; the copied origin remains usable while its meaning is unknown.
-      const grounded = record && typeof record.definition === 'string' && record.definition.trim() !== '' && Array.isArray(record.constraints) && record.constraints.length > 0;
-      const meaning = grounded ? canonical({ id: record.id, definition: record.definition, constraints: [...record.constraints].sort(compareText) }) : `unproved:${canonical(origin)}`;
+      // Catalog identifiers and prose identify candidates, never semantic
+      // premises. Sharing requires an explicit supported operational graph.
+      const declared = formalDefinitions[alias] ?? (record ? formalDefinitions[record.id] ?? record.formalDefinition : undefined);
+      let meaning = `unproved:${canonical(origin)}`;
+      if (declared && meanings.length <= 1) {
+        try {
+          meaning = canonical(readFormalConceptDefinition(declared));
+          formal[alias] = { links: declared.network instanceof LinkNetwork ? declared.network.toLino() : LinkNetwork.fromLino(declared.links).toLino(), root: LinkId.from(declared.root).asU64() };
+        } catch { /* Missing or counterfeit operational premises stay unknown. */ }
+      }
       nodes.push({ source, rule, origin, meaning });
     }
   }
-  return { ordered, aliases, nodes, ambiguities };
+  return { ordered, aliases, nodes, ambiguities, formal };
 }
 
 // Replace only actual rule references. Capture labels, external token names,
@@ -147,7 +156,7 @@ function candidate(graph, first, second) {
  * `previous` preserves established identities during incremental import.
  */
 export function createGlobalConceptSpace(sources, options = {}) {
-  const { ordered, aliases, nodes, ambiguities } = prepare(sources, options.records ?? CONCEPT_RECORDS);
+  const { ordered, aliases, nodes, ambiguities, formal } = prepare(sources, options.records ?? CONCEPT_RECORDS, options.formalDefinitions);
   const graph = graphOf(nodes, aliases);
   const parents = nodes.map((_, index) => index);
   const find = (index) => { while (parents[index] !== index) index = parents[index]; return index; };
@@ -208,7 +217,7 @@ export function createGlobalConceptSpace(sources, options = {}) {
     if (members.some((alias) => !aliases.has(alias))) return [{ members: [...members], reason: 'unknown-origin' }];
     return mappings[members[0]] === mappings[members[1]] ? [] : [{ members: [...members], reason: 'no-one-to-one-proof' }];
   });
-  return { schemaVersion: 1, sources: ordered.map(({ id, language, edition, grammar }) => ({ id, language, edition: edition ?? '', start: grammar.start, ruleOrder: grammar.ruleNames(), context: copy(grammarDeclarations(grammar)) })), concepts, mappings, proofs, failures, ambiguities, redirects };
+  return { schemaVersion: 1, sources: ordered.map(({ id, language, edition, grammar }) => ({ id, language, edition: edition ?? '', start: grammar.start, ruleOrder: grammar.ruleNames(), context: copy(grammarDeclarations(grammar)) })), concepts, mappings, proofs, failures, ambiguities, redirects, formalDefinitions: formal };
 }
 
 /** Resolve a construct through its proven global identity, retaining target alternatives. */
@@ -235,6 +244,7 @@ export function globalConceptSpaceToLinks(space) {
     if (source.context.settling !== null) lines.push(`(grammar-context ${word(source.id)} (settling ${source.context.settling.map(word).join(' ')}))`);
     for (const declaration of renderDeclarationLinks(source.context)) lines.push(`(grammar-context ${word(source.id)} ${declaration})`);
   }
+  for (const [alias, definition] of Object.entries(space.formalDefinitions ?? {})) lines.push(`(formal-origin-definition ${word(alias)} ${definition.root} (links ${definition.links.trim().replaceAll('\n', ' ')}))`);
   for (const { id, origins, definitions } of space.concepts) {
     lines.push(`(global-concept ${word(id)})`);
     for (const origin of origins) {
@@ -262,11 +272,12 @@ const linkWord = (value) => {
   return percentDecodeLinksText(value.id);
 };
 const printLink = (value) => value.values.length === 0 ? value.id : `(${value.values.map(printLink).join(' ')})`;
+const printNetworkLink = (value) => value.values.length === 0 ? value.id : `(${value.id === null ? '' : `${value.id}: `}${value.values.map(printNetworkLink).join(' ')})`;
 
 /** Reload source-free links and recheck every recorded shared concept proof. */
 export function readGlobalConceptSpaceLinks(source, options = {}) {
   const statements = new Parser({ comments: false }).parse(source);
-  const space = { schemaVersion: 1, sources: [], concepts: [], mappings: {}, proofs: [], failures: [], ambiguities: [], redirects: {} };
+  const space = { schemaVersion: 1, sources: [], concepts: [], mappings: {}, proofs: [], failures: [], ambiguities: [], redirects: {}, formalDefinitions: {} };
   const sourcesById = new Map();
   const conceptsById = new Map();
   const originsByAlias = new Map();
@@ -295,6 +306,14 @@ export function readGlobalConceptSpaceLinks(source, options = {}) {
     } else if (head === 'grammar-context') {
       if (args.length !== 2 || !sourcesById.has(linkWord(args[0]))) throw new TypeError('unknown grammar context origin');
       contexts.get(linkWord(args[0])).push(args[1]);
+    } else if (head === 'formal-origin-definition') {
+      if (args.length !== 3 || Object.hasOwn(space.formalDefinitions, linkWord(args[0]))) throw new TypeError('invalid or duplicated formal origin definition');
+      const [tag, links] = linkParts(args[2]);
+      if (tag !== 'links') throw new TypeError('a formal origin needs actual linked definitions');
+      const network = LinkNetwork.fromLino(`${links.map(printNetworkLink).join('\n')}\n`);
+      const definition = { root: Number(linkWord(args[1])), links: network.toLino() };
+      readFormalConceptDefinition(definition);
+      space.formalDefinitions[linkWord(args[0])] = definition;
     } else if (head === 'global-concept') {
       if (args.length !== 1) throw new TypeError('a global concept has one identity');
       const id = linkWord(args[0]);
@@ -373,7 +392,8 @@ export function readGlobalConceptSpaceLinks(source, options = {}) {
     return { id: entry.id, language: entry.language, edition: entry.edition, grammar: new Grammar(entry.start, orderedRules, null, entry.context) };
   });
   if (space.concepts.some((concept) => concept.origins.length === 0 || concept.definitions.length !== concept.origins.length)) throw new TypeError('a copied global origin needs exactly one production');
-  const { nodes, aliases } = prepare(imported, options.records ?? CONCEPT_RECORDS);
+  if (Object.keys(space.formalDefinitions).some((alias) => !originsByAlias.has(alias))) throw new TypeError('unknown formal definition origin');
+  const { nodes, aliases } = prepare(imported, options.records ?? CONCEPT_RECORDS, space.formalDefinitions);
   const graph = graphOf(nodes, aliases);
   const witnessed = nodes.map((_, index) => index);
   const witnessRoot = (index) => { while (witnessed[index] !== index) index = witnessed[index]; return index; };
@@ -389,7 +409,7 @@ export function readGlobalConceptSpaceLinks(source, options = {}) {
       witnessed[Math.max(oneRoot, otherRoot)] = Math.min(oneRoot, otherRoot);
     });
   }
-  const checked = createGlobalConceptSpace(imported, { records: options.records, previous: space, equivalences: space.failures.map(({ members }) => members) });
+  const checked = createGlobalConceptSpace(imported, { records: options.records, previous: space, equivalences: space.failures.map(({ members }) => members), formalDefinitions: space.formalDefinitions });
   if (canonical(checked.mappings) !== canonical(space.mappings)) throw new TypeError('shared global identity lacks a current one-to-one proof');
   if (canonical(checked.failures) !== canonical(space.failures) || canonical(checked.ambiguities) !== canonical(space.ambiguities)) throw new TypeError('global concept uncertainty disagrees with current definitions');
   for (const concept of space.concepts) {
