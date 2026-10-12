@@ -114,7 +114,7 @@ fn native_agda_upstream_corpus_matches_the_independent_oracle() {
     let corpus: Value = serde_json::from_str(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
-    let language = tree_sitter_agda::LANGUAGE.into();
+    let language = agda_layout_source_oracle::LANGUAGE.into();
     let inputs = corpus["cases"].as_array().unwrap();
     assert_ne!(inputs.as_slice(), &[] as &[Value]);
     let mut failures = Vec::new();

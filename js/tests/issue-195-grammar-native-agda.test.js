@@ -4,6 +4,8 @@ import test from 'node:test';
 import { LinkNetwork, compileGrammar, parseGrammarLinks, renderGrammarLinks, renderSyntaxTree } from '../src/index.js';
 import { NATIVE_GRAMMARS, buildNativeGrammarCorpusSources, buildNativeGrammarFixture, fixturePath, renderFixture } from '../scripts/generate-native-grammar-fixtures.mjs';
 import { nativeRows, oracleRows, oracleRecovers, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
+import { agdaLayoutOracleSnapshot } from '../scripts/agda-layout-oracle.mjs';
+import { checkAgdaLayoutOracleSources } from '../scripts/build-agda-layout-oracle.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
@@ -21,6 +23,7 @@ const observe = (assertions, testName) => recordIssue195Observations({
 test('native Agda grammar and scanners are canonical generated Links Notation', (context) => {
   assert.equal(renderGrammarLinks(parseGrammarLinks(listing)), listing);
   assert.deepEqual(fixture, buildNativeGrammarFixture(entry));
+  checkAgdaLayoutOracleSources();
   observe(['nativeAgdaGrammarIsCanonicalLinks'], context.name);
 });
 
@@ -63,11 +66,12 @@ test('native Agda matches the independent oracle on every pinned upstream corpus
     const label = `${sourceFile}: ${title}`;
     try {
       const outcome = parser.parseTree(source);
-      if (oracleRecovers(source, 'Agda')) assert.equal(outcome.ok, false, label);
+      const oracle = agdaLayoutOracleSnapshot(source);
+      if (oracle.recovers) assert.equal(outcome.ok, false, label);
       else {
         assert.equal(outcome.ok, true, label);
         assert.deepEqual(outcome.ambiguities, [], label);
-        assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'Agda'), label);
+        assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracle.rows, label);
         assert.equal(text(outcome.tree), source, label);
       }
     } catch (error) { failures.push(nativeCorpusFailure(label, error)); }

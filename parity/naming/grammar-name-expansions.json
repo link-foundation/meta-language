@@ -3987,10 +3987,12 @@
           "rule": "untyped_binding",
           "symbol": "bid",
           "keywords": [
-            "where"
+            "where",
+            "->",
+            "→"
           ],
           "wordRule": "id",
-          "reason": "Keep the lambda-clause introducer where separate from an untyped binding at a complete keyword boundary; longer identifiers retain the source binding alternative.",
+          "reason": "Keep the lambda-clause introducer and function-type arrows separate from untyped bindings at complete keyword boundaries; longer identifiers retain the source binding alternative.",
           "count": 3
         },
         {

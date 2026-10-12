@@ -73,7 +73,7 @@ function oracleLanguage(language) {
 /** Calls `use` with the oracle's tree of `source`, and frees the tree. */
 function withOracleTree(source, language, use) {
   const parser = new Parser();
-  parser.setLanguage(oracleLanguage(language));
+  parser.setLanguage(typeof language === 'string' ? oracleLanguage(language) : language);
   const bytes = encoder.encode(source);
   const tree = parser.parse((index) => {
     let end = Math.min(bytes.length, index + 4096);
@@ -98,6 +98,11 @@ function oracleTreeRows(root) {
   };
   walk(root, 0, null);
   return rows;
+}
+
+/** Snapshot an explicitly loaded independent grammar without altering a catalog oracle. */
+export function oracleSnapshotFromGrammar(source, grammar) {
+  return withOracleTree(source, grammar, root => ({ rows: oracleTreeRows(root), recovers: root.hasError }));
 }
 
 /** One independent parse provides both the rows and recovery diagnostics. */
