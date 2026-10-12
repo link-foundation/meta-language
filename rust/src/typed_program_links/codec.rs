@@ -544,6 +544,7 @@ impl Decoder<'_> {
         environment: &BTreeMap<String, LinkId>,
         declarations: &BTreeMap<String, LinkId>,
         remaining: &mut usize,
+        identities: &mut BTreeSet<LinkId>,
     ) -> Result<()> {
         *remaining = remaining.checked_sub(1).ok_or_else(|| {
             error("the linked program exceeds its semantic traversal resource limit")
@@ -558,10 +559,12 @@ impl Decoder<'_> {
                         &inner,
                         declarations,
                         remaining,
+                        identities,
                     )?;
+                    identities.insert(*effect);
                     inner.insert(self.name(*effect)?, *effect);
                 } else {
-                    self.bindings(*effect, &inner, declarations, remaining)?;
+                    self.bindings(*effect, &inner, declarations, remaining, identities)?;
                 }
             }
             return Ok(());
@@ -608,7 +611,9 @@ impl Decoder<'_> {
                 environment,
                 declarations,
                 remaining,
+                identities,
             )?;
+            identities.insert(id);
             let mut inner = environment.clone();
             inner.insert(self.name(id)?, id);
             return self.bindings(
@@ -617,19 +622,20 @@ impl Decoder<'_> {
                 &inner,
                 declarations,
                 remaining,
+                identities,
             );
         }
         match self.values.get(&id) {
             Some(Data::Record(fields)) => {
                 for (field, child) in fields {
                     if !matches!(field.as_str(), "type" | "domain" | "span" | "from" | "to") {
-                        self.bindings(*child, environment, declarations, remaining)?;
+                        self.bindings(*child, environment, declarations, remaining, identities)?;
                     }
                 }
             }
             Some(Data::Array(values)) => {
                 for child in values {
-                    self.bindings(*child, environment, declarations, remaining)?;
+                    self.bindings(*child, environment, declarations, remaining, identities)?;
                 }
             }
             _ => {}
@@ -700,6 +706,14 @@ pub(super) fn decode(
     root: LinkId,
     limits: TypedProgramLinksLimits,
 ) -> Result<Program> {
+    Ok(decode_with_binding_identities(network, root, limits)?.0)
+}
+
+pub(super) fn decode_with_binding_identities(
+    network: &LinkNetwork,
+    root: LinkId,
+    limits: TypedProgramLinksLimits,
+) -> Result<(Program, Vec<LinkId>)> {
     let link = network
         .link(root)
         .ok_or_else(|| error("the linked program root or schema is invalid"))?;
@@ -759,18 +773,26 @@ pub(super) fn decode(
         declarations.insert(name, *entry);
     }
     let mut traversal_remaining = limits.node_limit;
+    let mut identities = BTreeSet::new();
     for entry in declarations.values() {
         let mut environment = BTreeMap::new();
         if let Some(parameters) = decoder.field(*entry, "params") {
             for parameter in decoder.array(parameters)? {
                 environment.insert(decoder.name(*parameter)?, *parameter);
+                identities.insert(*parameter);
             }
         }
         if let Some(body) = decoder
             .field(*entry, "body")
             .or_else(|| decoder.field(*entry, "value"))
         {
-            decoder.bindings(body, &environment, &declarations, &mut traversal_remaining)?;
+            decoder.bindings(
+                body,
+                &environment,
+                &declarations,
+                &mut traversal_remaining,
+                &mut identities,
+            )?;
         }
     }
     if let Some(main) = decoder.field(body, "main") {
@@ -779,6 +801,7 @@ pub(super) fn decode(
             &BTreeMap::new(),
             &declarations,
             &mut traversal_remaining,
+            &mut identities,
         )?;
     }
     let mut remaining = limits.node_limit;
@@ -810,5 +833,5 @@ pub(super) fn decode(
         &value,
         &serde_json::to_value(&program).map_err(|failure| error(failure.to_string()))?,
     )?;
-    Ok(program)
+    Ok((program, identities.into_iter().collect()))
 }

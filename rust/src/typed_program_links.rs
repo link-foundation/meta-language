@@ -180,6 +180,16 @@ pub fn decode_typed_program_links_with_limits(
     checked::validate(&program)?;
     Ok(program)
 }
+
+pub(crate) fn read_typed_program_binding_identities(
+    network: &LinkNetwork,
+    root: LinkId,
+) -> Result<Vec<LinkId>> {
+    let (program, identities) =
+        codec::decode_with_binding_identities(network, root, TypedProgramLinksLimits::default())?;
+    checked::validate(&program)?;
+    Ok(identities)
+}
 /// Import JavaScript or Rust through its existing typed frontend.
 ///
 /// # Errors
