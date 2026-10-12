@@ -143,7 +143,8 @@ test('full tooling inventory validates original migration, Git isolation and ass
     assert.equal(snapshots.scope, 'complete registered native inventory');
     assert.equal(snapshots.snapshots.length, Object.keys(options.inventory.nativeGrammars).length);
     const migration = validateStructuredDataMigration({ repository: root,
-      baselineFile: join(root, contract.migrationBaselineFile), originalGitRevision: contract.originalGitRevision });
+      baselineFile: join(root, contract.migrationBaselineFile), originalGitRevision: contract.originalGitRevision,
+      migrationRevisionFile: join(root, contract.migrationRevisionFile), currentFreshnessChecks: contract.currentFreshnessChecks });
     assert.equal(migration.baselineCount, contract.migrationBaselineCount);
     assert.equal(migration.verifiedCount, contract.migrationBaselineCount);
     const agda = readProjectData(join(root, contract.agdaCorpus));
@@ -170,6 +171,6 @@ test('full tooling inventory validates original migration, Git isolation and ass
       jsonBoundaryFiles: storage.files, agdaCorpusCases: agda.cases.length,
     }, { format: 'lino' });
     context.diagnostic(`verified ${migration.verifiedCount} immutable Git originals, ${lifecycle.verifiedAssets} authenticated assets, `
-      + `${snapshots.snapshots.length} asset-free native snapshots, ${storage.files.length} JSON boundaries and both scope baselines`);
+      + `${snapshots.snapshots.length} asset-free native snapshots, ${storage.files.length} JSON boundaries and ${scopeComparisons.length} protected scope baselines`);
   } finally { rmSync(base, { recursive: true, force: true }); }
 });

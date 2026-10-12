@@ -435,8 +435,8 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'typed linked program operations',
-    files: ['js/src/typed-program-links.js', 'js/src/typed-program-links-validation.js', 'js/src/typed-program-link-rules.js', 'rust/src/translation/typed_program_link_rules.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
+    files: ['js/src/typed-program-links.js', 'js/src/typed-program-links-validation.js', 'js/src/typed-program-link-rules.js', 'js/src/typed-program-checked-projection.js', 'rust/src/translation/typed_program_link_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name === 'is-unsafe-program-field' ? 'detect-unsafe-program-field' : name}`,
   },
@@ -750,10 +750,31 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'project data storage operations',
-    files: ['js/src/project-data-files.js', 'js/scripts/convert-structured-data.mjs', 'js/scripts/project-data-storage.mjs', 'rust/src/project_data.rs'],
+    files: ['js/src/project-data-files.js', 'js/scripts/convert-structured-data.mjs', 'js/scripts/project-data-storage.mjs', 'js/scripts/project-data-tooling-evidence.mjs', 'js/scripts/validate-structured-data-migration.mjs', 'js/scripts/generate-structured-data-migration-revisions.mjs', 'rust/src/project_data.rs'],
     extract: (text) => captures(text, /^(?:export (?:async )?function|pub fn|pub enum) ([a-zA-Z][a-zA-Z_]+)\b/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `repository.${name}`,
+  },
+  {
+    inventory: 'lazy shipped concept operations',
+    files: ['js/src/lazy-shipped-data.js', 'js/src/concept-records.js'],
+    extract: (text) => captures(text, /^(?:export )?function (createLazyFrozenArray|loadConceptRecords|ensureConceptIndexes)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `operation.${name}`,
+  },
+  {
+    inventory: 'grammar report storage operations',
+    files: ['js/scripts/grammar-report-files.mjs', 'js/scripts/grammar-report-fragments.mjs'],
+    extract: (text) => captures(text, /^export function (writeGrammarReport|writeFactoredGrammarReport|readFactoredGrammarReport)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `repository.${name}`,
+  },
+  {
+    inventory: 'native grammar fixture execution operations',
+    files: ['js/scripts/native-grammar-fixture.mjs', 'js/scripts/generate-native-grammar-fixtures.mjs'],
+    extract: (text) => captures(text, /^export function (buildNativeGrammarFixtureFromParser|refreshNativeDefaultProvenance)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.${name}`,
   },
   {
     inventory: 'temporary external grammar asset operations',
@@ -820,6 +841,22 @@ export const NAME_INVENTORIES = Object.freeze([
     extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'immutable product decisions',
+    files: ['js/src/translation/product-emission-rules.js', 'js/src/translation/rust-product-rules.js', 'js/src/translation/product-source-rules.js', 'rust/src/translation/product_emission_rules.rs', 'rust/src/translation/rust/product_rules.rs', 'rust/src/translation/javascript/product_source_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|function|pub(?: const)? fn) (joinProductItems|[a-zA-Z][a-zA-Z_]+)\(/gmu)
+      .filter((name) => !name.startsWith('ml_'))
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name === 'render-java-script-unit' ? 'render-javascript-unit-value' : name}`,
+  },
+  {
+    inventory: 'JavaScript product source operations',
+    files: ['js/src/translation/javascript-products.js'],
+    extract: (text) => captures(text, /^export function (readJavaScriptProductIndex|requiresJavaScriptProductProof|validateJavaScriptProducts)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase().replace('java-script', 'javascript')),
+    recordOf: (name) => `translation.${({ 'requires-javascript-product-proof': 'require-javascript-product-proof',
+      'validate-javascript-products': 'validate-javascript-product-source' })[name] ?? name}`,
   },
   {
     inventory: 'source constructor prototype definitions',

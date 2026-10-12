@@ -120,6 +120,35 @@ export function compareStructuredDataMigrationValues(original, migrated, label =
   return { collectionCount, scalarCount };
 }
 
+/** Preserve historical trees while explicitly refreshing provider fingerprints. */
+export function normalizeMigrationProviderReceipts(historical, current, receipts) {
+  if (!Array.isArray(receipts) || receipts.length === 0) throw new Error('provider receipt refresh needs explicit identities');
+  const normalized = structuredClone(current);
+  const seen = new Set();
+  for (const { language, provider } of receipts) {
+    if (typeof language !== 'string' || !language || typeof provider !== 'string' || !provider.startsWith('native-')) {
+      throw new Error('provider receipt refresh has an invalid identity');
+    }
+    const identity = `${language}\0${provider}`;
+    if (seen.has(identity)) throw new Error('provider receipt refresh repeats an identity');
+    seen.add(identity);
+    const read = value => {
+      if (!value?.languages || !Object.hasOwn(value.languages, language)
+        || !value.languages[language]?.grammars || !Object.hasOwn(value.languages[language].grammars, provider)) {
+        throw new Error('provider receipt refresh cannot add a language or provider');
+      }
+      return value.languages[language].grammars[provider];
+    };
+    const before = read(historical);
+    const after = read(normalized);
+    if (!digest.test(before.parserSha256 ?? '') || !digest.test(after.parserSha256 ?? '')
+      || before.version !== after.version) throw new Error('provider receipt refresh cannot change a provider version');
+    after.parserSha256 = before.parserSha256;
+  }
+  compareStructuredDataMigrationValues(historical, normalized, 'protected current migration fields');
+  return normalized;
+}
+
 /**
  * Authenticate the recorded baseline with original Git JSON, then replay the
  * actual converter against the committed historical LiNo. Changed current
@@ -265,6 +294,9 @@ export function validateStructuredDataMigration({
       if (!migratedBytes.equals(historicalBytes)) {
         const check = checksByPath.get(entry.logicalPath);
         if (!check) throw new Error('changed current output has no independently executed registered generator freshness check');
+        if (check.providerReceiptRefresh) {
+          normalizeMigrationProviderReceipts(historical, migrated, check.providerReceiptRefresh);
+        }
         freshness = verifyFreshness(check);
         if (freshness instanceof Error) throw freshness;
         checkProjectData(logical, migrated);

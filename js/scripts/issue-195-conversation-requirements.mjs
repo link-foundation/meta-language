@@ -12,6 +12,7 @@ const projectSource = capture('multi-project-translation-reuse');
 const externalGrammarSource = capture('temporary-external-grammar-inputs');
 const externalGrammarIgnoreSource = capture('ignored-external-grammar-folders');
 const associativeDataSource = capture('associative-data-storage');
+const agentReductionSource = capture('gradual-agent-reduction');
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 // Entry points identify executable implementations. Their presence is not an
@@ -75,6 +76,11 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
 }
 
 export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
+  ...rows('agentReductionRequest', agentReductionSource, 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-GRADUAL-AGENT-REDUCTION', 'gradual conclusion of agent work followed by coordinator-only implementation',
+      'After the later user steering, active contributors finish their existing scoped work and agent activity gradually concludes. Once all active contributors finish, the coordinator continues implementation and CI follow-up alone. The earlier parallel drafting phase remains recorded, and no inherited project scope is removed.',
+      ['existingAgentWorkConcludesGradually', 'coordinatorWorksAloneAfterAgentCompletion', 'inheritedProjectScopeRetained']],
+  ], true),
   ...rows('associativeDataStorageRequest', associativeDataSource, 'associative-data-storage', 'associative-data-storage', [
     ['I195-ASSOCIATIVE-DATA-STORAGE', 'project-owned structured data stored through the associative Links stack',
       'Project-owned structured records, including native grammar corpus fixtures such as the Agda corpus, use inspectable Links Notation through the relevant associative stack by default. Generated native grammars, fixture records and shared package data remain reconstructable and usable through the existing public algorithms without hidden authoritative JSON side tables.',

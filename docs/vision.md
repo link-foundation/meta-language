@@ -211,6 +211,10 @@ work, and reserves pushing for one coordinator. That coordinator verifies prior
 CI is finished and every prior error has a concrete fix before the next reviewed
 batch push. Local validation uses targeted JavaScript checks and never compiles
 Rust; compiled parity and expensive workloads belong to CI.
+The later instruction to gradually reduce agents is retained as a separate
+hashed source and critical workflow obligation. Active contributors finish their
+existing work, after which the coordinator continues alone. This changes the
+remaining coordination phase and preserves every earlier project requirement.
 
 ### Associative data storage
 
@@ -248,6 +252,16 @@ and byte limits. The native global concept snapshot remains a direct semantic
 graph. Shipped concept records retain their frozen array interface while loading
 and authenticating the complete register on first use; a generated count and
 digest keep ordinary package imports within their existing memory budget.
+
+Historical conversion checks authenticate the original Git JSON and the exact
+committed conversion separately from current generator freshness. The earlier
+Odin provider receipt adjustment has an explicit
+[metadata correction record](../parity/fixtures/structured-data-migration-corrections.lino).
+It authenticates the unchanged original fields and the provider digest against
+the recorded later grammar snapshot; it does not claim that snapshot existed at
+conversion time. Frozen migration hashes remain unchanged. Current generated
+fixtures must pass their own registered checks before the conversion witness
+can accept an updated output.
 
 ## Links Notation fitness
 
@@ -690,11 +704,13 @@ The current editable typed-program model represents immutable value products
 with explicit ordered items, a frozen flag and an `immutable value product`
 model. Fixed projections retain natural-number positions. Rust tuple source
 admission preserves empty, singleton and nested arities; JavaScript admission
-checks fresh dense `Object.freeze` arrays, actual element types, lexical origins
-and closed callers. A finite source dependency solver refuses ungrounded cycles.
+checks fresh dense `Object.freeze` arrays, actual element types, lexical origins,
+parameter defaults and closed callers. A finite source dependency solver refuses
+ungrounded cycles.
 Const bindings or declared types alone do not prove immutability, and arbitrary
-arrays, identity observations, mutable aliases, unknown escapes, sparse products
-and dynamic positions require additional operational support.
+arrays, identity observations, whole-product conditions, mutable aliases,
+unknown escapes, sparse products and dynamic positions require additional
+operational support.
 
 Shared link rules validate these products during reload and compare the complete
 rechecked semantic program before emission. Edits to the model, frozen flag,

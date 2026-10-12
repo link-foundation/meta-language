@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 55 | 54 | 1 | 0 |
+| Generators | 62 | 61 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -561,23 +561,30 @@ they are.
 | `js/scripts/generate-native-scanner-profiles.mjs` | `js/scripts/generate-native-scanner-profiles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-primitive-value-rules.mjs` | `js/scripts/generate-primitive-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-product-emission-rules.mjs` | `js/scripts/generate-product-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-product-source-rules.mjs` | `js/scripts/generate-product-source-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-product-unit-fixture.mjs` | `js/scripts/generate-product-unit-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-project-data-tooling-fixture.mjs` | `js/scripts/generate-project-data-tooling-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-pattern-fixture.mjs` | `js/scripts/generate-ruby-pattern-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-runtime.mjs` | `js/scripts/generate-rust-array-runtime.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-indirection-rules.mjs` | `js/scripts/generate-rust-indirection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-product-rules.mjs` | `js/scripts/generate-rust-product-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-link-rules.mjs` | `js/scripts/generate-structured-data-link-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-data-migration-revisions.mjs` | `js/scripts/generate-structured-data-migration-revisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-scanner-fixtures.mjs` | `js/scripts/generate-structured-scanner-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-type-fixtures.mjs` | `js/scripts/generate-structured-type-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-type-rules.mjs` | `js/scripts/generate-structured-type-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-links-fixtures.mjs` | `js/scripts/generate-typed-program-links-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |

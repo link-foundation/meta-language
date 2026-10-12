@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { convertStructuredData } from '../scripts/convert-structured-data.mjs';
 import { createFixtureSourceLayout } from '../scripts/fixture-source-bytes.mjs';
-import { compareStructuredDataMigrationValues, validateStructuredDataMigration } from '../scripts/validate-structured-data-migration.mjs';
+import { compareStructuredDataMigrationValues, normalizeMigrationProviderReceipts, validateStructuredDataMigration } from '../scripts/validate-structured-data-migration.mjs';
 import { generateStructuredDataMigrationRevisions } from '../scripts/generate-structured-data-migration-revisions.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
@@ -305,4 +305,35 @@ test('graph comparison preserves sharing and distinct identities beyond the JSON
   assert.throws(() => compareStructuredDataMigrationValues(original, split), /shared collection identity was split/u);
   const merged = readStructuredDataLino(structuredDataToLino({ first: shared, second: shared, distinct: shared }));
   assert.throws(() => compareStructuredDataMigrationValues(original, merged), /distinct collection identities were merged/u);
+});
+
+test('provider fingerprint refresh preserves every protected tree, source, order and identity', () => {
+  const rows = [[0, '', 'program', true, 0, 5, '']];
+  const historical = { languages: { R: {
+    grammars: { 'native-r': { version: '1.3.0', parserSha256: 'a'.repeat(64) } },
+    oracleGrammars: { r: { version: '1.3.0', parserSha256: 'c'.repeat(64) } },
+    sourceSha256: 'd'.repeat(64), positive: rows, recovery: rows,
+  } }, embeddedFixtures: {} };
+  const current = structuredClone(historical);
+  current.languages.R.grammars['native-r'].parserSha256 = 'b'.repeat(64);
+  const receipts = [{ language: 'R', provider: 'native-r' }];
+  const normalized = normalizeMigrationProviderReceipts(historical, current, receipts);
+  assert.deepEqual(normalized, historical);
+  assert.equal(normalized.languages.R.positive, normalized.languages.R.recovery);
+  assert.equal(current.languages.R.grammars['native-r'].parserSha256, 'b'.repeat(64));
+  for (const edit of [
+    value => { value.languages.R.positive[0][5] = 6; },
+    value => { value.languages.R.sourceSha256 = 'e'.repeat(64); },
+    value => { value.languages.R.oracleGrammars.r.parserSha256 = 'f'.repeat(64); },
+    value => { value.languages.R.grammars['native-r'].version = '2.0.0'; },
+    value => { value.languages.R.recovery = structuredClone(value.languages.R.recovery); },
+    value => { value.languages.R = { ...value.languages.R, extra: true }; },
+    value => { value.languages.R = Object.fromEntries(Object.entries(value.languages.R).reverse()); },
+  ]) {
+    const forged = structuredClone(current);
+    edit(forged);
+    assert.throws(() => normalizeMigrationProviderReceipts(historical, forged, receipts), /migration|provider|collection order/u);
+  }
+  assert.throws(() => normalizeMigrationProviderReceipts(historical, current, [...receipts, ...receipts]), /repeats/u);
+  assert.throws(() => normalizeMigrationProviderReceipts(historical, current, [{ language: 'Rust', provider: 'native-r' }]), /cannot add/u);
 });

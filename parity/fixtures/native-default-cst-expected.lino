@@ -981,7 +981,7 @@
 (981: (meta: (t: semantic) (n: 1) (term: string%20value) (def: native-r) (lang: meta-language%20structured%20data)))
 (982: 983 985 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (983: 19 20 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(984: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 1fbc6325135108d36e8f3450996f48720683146e4274209559760abdc3a90995) (lang: meta-language%20structured%20data)))
+(984: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 2dad3e3789c92acccab84919d7a06249945070d23ea22ce89a2a46ba105a53b8) (lang: meta-language%20structured%20data)))
 (985: 22 984 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (986: 981 982 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (987: 15 980 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))

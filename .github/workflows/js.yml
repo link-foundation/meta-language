@@ -510,6 +510,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-project-data-tooling-fixture.mjs --check
 
+      - name: Check the recorded original structured data conversion revisions
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-structured-data-migration-revisions.mjs --check
+
       - name: Check shared formal definition and certificate fixtures
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-formal-concept-fixtures.mjs --check

@@ -81,6 +81,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/ignored-external-grammar-folders-2026-10-12.txt',
   associativeDataStorageRequest:
     'parity/sources/associative-data-storage-2026-10-12.txt',
+  agentReductionRequest:
+    'parity/sources/gradual-agent-reduction-2026-10-12.txt',
   grammarInferenceIssue:
     'https://github.com/link-foundation/meta-language/issues/224',
 });
