@@ -176,6 +176,7 @@ mod translation_stages;
 mod translation_structured_types;
 mod translation_top_level_statements;
 mod translation_void_functions;
+mod typed_program_links;
 mod typescript_erasure;
 mod unicode_input_chunks;
 

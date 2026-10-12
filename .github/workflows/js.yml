@@ -326,6 +326,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-typed-program-link-rules.mjs --check
 
+      - name: Check shared source-free typed program fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-typed-program-links-fixtures.mjs --check
+
+      - name: Check shared formal definition and certificate fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-formal-concept-fixtures.mjs --check
+
       - name: Check generated frontend rule compilation and style
         if: ${{ !cancelled() }}
         run: npm run check:frontend-rule-styles

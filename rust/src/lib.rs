@@ -100,9 +100,9 @@ pub use document_formatting::{
     render_pdf_document,
 };
 pub use formal_concept_definition::{
-    FormalConceptArchive, FormalConceptDefinitionInput, encode_formal_concept_definition,
-    prove_formal_concept_equivalence, read_formal_concept_definition,
-    verify_formal_concept_equivalence,
+    FormalConceptArchive, FormalConceptDefinitionInput, FormalConceptDefinitionOptions,
+    encode_formal_concept_definition, prove_formal_concept_equivalence,
+    read_formal_concept_definition, verify_formal_concept_equivalence,
 };
 pub use foundation_models::{
     CORRESPONDENCE_KINDS, FoundationCorrespondence, FoundationDistinction, FoundationFamily,
