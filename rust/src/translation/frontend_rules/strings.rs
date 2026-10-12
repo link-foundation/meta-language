@@ -143,9 +143,9 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
                         {
                             let member = false;
                             {
-                                let member_3 = if ((at_2 + 1f64) < (units.len() as f64)) {
+                                let member_3 = if (at_2 + 1f64 < (units.len() as f64)) {
                                     {
-                                        let next = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index((at_2 + 1f64)));
+                                        let next = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(at_2 + 1f64));
                                         {
                                             let member_2 = (((match (next.clone(), 46f64) {
                                                 (Some(ml_left), ml_right) => ml_left == ml_right,
@@ -179,7 +179,7 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
                                     {
                                         let floating_2 = true;
                                         {
-                                            let at_3 = (at_2 + 1f64);
+                                            let at_3 = at_2 + 1f64;
                                             {
                                                 let at_4 = crate::translation::frontend_rules::ml_read_rust_number_bounds_loop27(units, at_3);
                                                 crate::translation::frontend_rules::MlReadRustNumberBoundsJoin23::MlReadRustNumberBoundsJoin23Next(at_4, floating_2)
@@ -245,7 +245,7 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
                                                     at_8
                                                 };
                                                 {
-                                                    let floating_7 = if (((((at_11 - suffix)) == (3f64)) && match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(suffix)), 102f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) && ((match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index((suffix + 1f64))), 51f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } && match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index((suffix + 2f64))), 50f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) || (match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index((suffix + 1f64))), 54f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } && match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index((suffix + 2f64))), 52f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }))) {
+                                                    let floating_7 = if ((((at_11 - suffix) == (3f64)) && match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(suffix)), 102f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) && ((match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(suffix + 1f64)), 51f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } && match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(suffix + 2f64)), 50f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) || (match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(suffix + 1f64)), 54f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } && match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(suffix + 2f64)), 52f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }))) {
                                                         {
                                                             let floating_6 = true;
                                                             floating_6

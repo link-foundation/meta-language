@@ -24,13 +24,13 @@ pub mod ml_array {
     /// The element at an index; a read outside the array, undefined in
     /// JavaScript, aborts.
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
+    #[must_use]
     pub fn number_index(index: f64) -> Option<usize> {
         if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
             Some(index as usize)
@@ -39,11 +39,12 @@ pub mod ml_array {
         }
     }
 
+    #[must_use]
     pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -125,6 +126,7 @@ pub mod ml_array {
     }
 }
 
+#[must_use]
 pub fn verify_global_concept_correspondence(
     shapes: Vec<String>,
     meanings: Vec<String>,
@@ -144,15 +146,9 @@ pub fn verify_global_concept_correspondence(
             {
                 let ml_s1 =
                     crate::global_concept_rules::ml_verify_global_concept_correspondence_loop1(
-                        shapes.clone(),
-                        meanings.clone(),
-                        offsets.clone(),
-                        edges.clone(),
-                        first.clone(),
-                        second.clone(),
-                        at,
+                        shapes, meanings, offsets, edges, first, second, at,
                     );
-                match ml_s1.clone() {
+                match ml_s1 {
                     crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop1Result::MlVerifyGlobalConceptCorrespondenceLoop1Done => {
                         true
                     }
@@ -177,6 +173,7 @@ pub enum MlVerifyGlobalConceptCorrespondenceLoop3Result {
     MlVerifyGlobalConceptCorrespondenceLoop3Return(bool),
 }
 
+#[must_use]
 pub fn ml_verify_global_concept_correspondence_loop4(
     mut first: Vec<f64>,
     mut second: Vec<f64>,
@@ -193,7 +190,7 @@ pub fn ml_verify_global_concept_correspondence_loop4(
                         &first,
                         crate::global_concept_rules::ml_array::number_index(pair),
                     ),
-                    left_target.clone(),
+                    left_target,
                 ) {
                     (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
                     (None, None) => true,
@@ -203,16 +200,13 @@ pub fn ml_verify_global_concept_correspondence_loop4(
                         &second,
                         crate::global_concept_rules::ml_array::number_index(pair),
                     ),
-                    right_target.clone(),
+                    right_target,
                 ) {
                     (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
                     (None, None) => true,
                     _ => false,
                 }) {
-                    {
-                        let found_2 = true;
-                        found_2
-                    }
+                    { true }
                 } else {
                     found
                 };
@@ -230,6 +224,7 @@ pub fn ml_verify_global_concept_correspondence_loop4(
     }
 }
 
+#[must_use]
 pub fn ml_verify_global_concept_correspondence_loop3(
     mut edges: Vec<f64>,
     mut first: Vec<f64>,
@@ -245,20 +240,14 @@ pub fn ml_verify_global_concept_correspondence_loop3(
                 let left_target = crate::global_concept_rules::ml_array::optional_at(
                     &edges,
                     crate::global_concept_rules::ml_array::number_index(
-                        (match left_start.clone() {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        } + edge),
+                        (left_start.unwrap_or(f64::NAN) + edge),
                     ),
                 );
                 {
                     let right_target = crate::global_concept_rules::ml_array::optional_at(
                         &edges,
                         crate::global_concept_rules::ml_array::number_index(
-                            (match right_start.clone() {
-                                Some(ml_present) => ml_present,
-                                None => f64::NAN,
-                            } + edge),
+                            (right_start.unwrap_or(f64::NAN) + edge),
                         ),
                     );
                     {
@@ -266,10 +255,8 @@ pub fn ml_verify_global_concept_correspondence_loop3(
                         {
                             let found = false;
                             {
-                                let found_2 = crate::global_concept_rules::ml_verify_global_concept_correspondence_loop4(first.clone(), second.clone(), left_target.clone(), right_target.clone(), pair, found);
-                                if !found_2 {
-                                    crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop3Result::MlVerifyGlobalConceptCorrespondenceLoop3Return(false)
-                                } else {
+                                let found_2 = crate::global_concept_rules::ml_verify_global_concept_correspondence_loop4(first.clone(), second.clone(), left_target, right_target, pair, found);
+                                if found_2 {
                                     {
                                         let edge_2 = (edge + 1f64);
                                         {
@@ -277,6 +264,8 @@ pub fn ml_verify_global_concept_correspondence_loop3(
                                             continue;
                                         }
                                     }
+                                } else {
+                                    crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop3Result::MlVerifyGlobalConceptCorrespondenceLoop3Return(false)
                                 }
                             }
                         }
@@ -295,6 +284,7 @@ pub enum MlVerifyGlobalConceptCorrespondenceLoop2Result {
     MlVerifyGlobalConceptCorrespondenceLoop2Return(bool),
 }
 
+#[must_use]
 pub fn ml_verify_global_concept_correspondence_loop2(
     mut first: Vec<f64>,
     mut second: Vec<f64>,
@@ -310,7 +300,7 @@ pub fn ml_verify_global_concept_correspondence_loop2(
                     &first,
                     crate::global_concept_rules::ml_array::number_index(other),
                 ),
-                left.clone(),
+                left,
             ) {
                 (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
                 (None, None) => true,
@@ -320,7 +310,7 @@ pub fn ml_verify_global_concept_correspondence_loop2(
                     &second,
                     crate::global_concept_rules::ml_array::number_index(other),
                 ),
-                right.clone(),
+                right,
             ) {
                 (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
                 (None, None) => true,
@@ -342,6 +332,7 @@ pub fn ml_verify_global_concept_correspondence_loop2(
     }
 }
 
+#[must_use]
 pub fn ml_verify_global_concept_correspondence_loop1(
     mut shapes: Vec<String>,
     mut meanings: Vec<String>,
@@ -363,103 +354,70 @@ pub fn ml_verify_global_concept_correspondence_loop1(
                         &second,
                         crate::global_concept_rules::ml_array::number_index(at),
                     );
-                    if (((((((match left.clone() {
-                        Some(ml_present) => ml_present,
-                        None => f64::NAN,
-                    }) < (0f64))
-                        || ((match right.clone() {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        }) < (0f64)))
-                        || ((match left.clone() {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        } % 1f64)
-                            != (0f64)))
-                        || ((match right.clone() {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        } % 1f64)
-                            != (0f64)))
-                        || ((match left.clone() {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        }) >= (shapes.len() as f64)))
-                        || ((match right.clone() {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        }) >= (shapes.len() as f64)))
+                    if (((((((left.unwrap_or(f64::NAN)) < (0f64))
+                        || ((right.unwrap_or(f64::NAN)) < (0f64)))
+                        || ((left.unwrap_or(f64::NAN) % 1f64) != (0f64)))
+                        || ((right.unwrap_or(f64::NAN) % 1f64) != (0f64)))
+                        || ((left.unwrap_or(f64::NAN)) >= (shapes.len() as f64)))
+                        || ((right.unwrap_or(f64::NAN)) >= (shapes.len() as f64)))
                     {
                         crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop1Result::MlVerifyGlobalConceptCorrespondenceLoop1Return(false)
+                    } else if (!(match (
+                        crate::global_concept_rules::ml_array::optional_at(
+                            &shapes,
+                            crate::global_concept_rules::ml_array::number_index(
+                                left.unwrap_or(f64::NAN),
+                            ),
+                        ),
+                        crate::global_concept_rules::ml_array::optional_at(
+                            &shapes,
+                            crate::global_concept_rules::ml_array::number_index(
+                                right.unwrap_or(f64::NAN),
+                            ),
+                        ),
+                    ) {
+                        (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
+                        (None, None) => true,
+                        _ => false,
+                    }) || !(match (
+                        crate::global_concept_rules::ml_array::optional_at(
+                            &meanings,
+                            crate::global_concept_rules::ml_array::number_index(
+                                left.unwrap_or(f64::NAN),
+                            ),
+                        ),
+                        crate::global_concept_rules::ml_array::optional_at(
+                            &meanings,
+                            crate::global_concept_rules::ml_array::number_index(
+                                right.unwrap_or(f64::NAN),
+                            ),
+                        ),
+                    ) {
+                        (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
+                        (None, None) => true,
+                        _ => false,
+                    })) {
+                        crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop1Result::MlVerifyGlobalConceptCorrespondenceLoop1Return(false)
                     } else {
-                        if (!(match (
-                            crate::global_concept_rules::ml_array::optional_at(
-                                &shapes,
-                                crate::global_concept_rules::ml_array::number_index(
-                                    match left.clone() {
-                                        Some(ml_present) => ml_present,
-                                        None => f64::NAN,
-                                    },
-                                ),
-                            ),
-                            crate::global_concept_rules::ml_array::optional_at(
-                                &shapes,
-                                crate::global_concept_rules::ml_array::number_index(
-                                    match right.clone() {
-                                        Some(ml_present) => ml_present,
-                                        None => f64::NAN,
-                                    },
-                                ),
-                            ),
-                        ) {
-                            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
-                            (None, None) => true,
-                            _ => false,
-                        }) || !(match (
-                            crate::global_concept_rules::ml_array::optional_at(
-                                &meanings,
-                                crate::global_concept_rules::ml_array::number_index(
-                                    match left.clone() {
-                                        Some(ml_present) => ml_present,
-                                        None => f64::NAN,
-                                    },
-                                ),
-                            ),
-                            crate::global_concept_rules::ml_array::optional_at(
-                                &meanings,
-                                crate::global_concept_rules::ml_array::number_index(
-                                    match right.clone() {
-                                        Some(ml_present) => ml_present,
-                                        None => f64::NAN,
-                                    },
-                                ),
-                            ),
-                        ) {
-                            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
-                            (None, None) => true,
-                            _ => false,
-                        })) {
-                            crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop1Result::MlVerifyGlobalConceptCorrespondenceLoop1Return(false)
-                        } else {
+                        {
+                            let other = 0f64;
                             {
-                                let other = 0f64;
-                                {
-                                    let ml_s2 = crate::global_concept_rules::ml_verify_global_concept_correspondence_loop2(first.clone(), second.clone(), at, left.clone(), right.clone(), other);
-                                    match ml_s2.clone() {
+                                let ml_s2 = crate::global_concept_rules::ml_verify_global_concept_correspondence_loop2(first.clone(), second.clone(), at, left, right, other);
+                                match ml_s2.clone() {
                                         crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop2Result::MlVerifyGlobalConceptCorrespondenceLoop2Done => {
                                             {
-                                                let left_start = crate::global_concept_rules::ml_array::optional_at(&offsets, crate::global_concept_rules::ml_array::number_index(match left.clone() { Some(ml_present) => ml_present, None => f64::NAN }));
+                                                let left_start = crate::global_concept_rules::ml_array::optional_at(&offsets, crate::global_concept_rules::ml_array::number_index(left.unwrap_or(f64::NAN)));
                                                 {
-                                                    let right_start = crate::global_concept_rules::ml_array::optional_at(&offsets, crate::global_concept_rules::ml_array::number_index(match right.clone() { Some(ml_present) => ml_present, None => f64::NAN }));
+                                                    let right_start = crate::global_concept_rules::ml_array::optional_at(&offsets, crate::global_concept_rules::ml_array::number_index(right.unwrap_or(f64::NAN)));
                                                     {
-                                                        let count = (match crate::global_concept_rules::ml_array::optional_at(&offsets, crate::global_concept_rules::ml_array::number_index((match left.clone() { Some(ml_present) => ml_present, None => f64::NAN } + 1f64))) { Some(ml_present) => ml_present, None => f64::NAN } - match left_start.clone() { Some(ml_present) => ml_present, None => f64::NAN });
-                                                        if ((((((((((match left_start.clone() { Some(ml_present) => ml_present, None => f64::NAN }) < (0f64)) || ((match right_start.clone() { Some(ml_present) => ml_present, None => f64::NAN }) < (0f64))) || (((match left_start.clone() { Some(ml_present) => ml_present, None => f64::NAN } % 1f64)) != (0f64))) || (((match right_start.clone() { Some(ml_present) => ml_present, None => f64::NAN } % 1f64)) != (0f64))) || (count < (0f64))) || (((count % 1f64)) != (0f64))) || (count != ((match crate::global_concept_rules::ml_array::optional_at(&offsets, crate::global_concept_rules::ml_array::number_index((match right.clone() { Some(ml_present) => ml_present, None => f64::NAN } + 1f64))) { Some(ml_present) => ml_present, None => f64::NAN } - match right_start.clone() { Some(ml_present) => ml_present, None => f64::NAN })))) || (((match left_start.clone() { Some(ml_present) => ml_present, None => f64::NAN } + count)) > ((edges.len() as f64)))) || (((match right_start.clone() { Some(ml_present) => ml_present, None => f64::NAN } + count)) > ((edges.len() as f64)))) {
+                                                        let count = (crate::global_concept_rules::ml_array::optional_at(&offsets, crate::global_concept_rules::ml_array::number_index(left.unwrap_or(f64::NAN) + 1f64)).unwrap_or(f64::NAN) - left_start.unwrap_or(f64::NAN));
+                                                        if ((((((((((left_start.unwrap_or(f64::NAN)) < (0f64)) || ((right_start.unwrap_or(f64::NAN)) < (0f64))) || ((left_start.unwrap_or(f64::NAN) % 1f64) != (0f64))) || ((right_start.unwrap_or(f64::NAN) % 1f64) != (0f64))) || (count < (0f64))) || ((count % 1f64) != (0f64))) || (count != (crate::global_concept_rules::ml_array::optional_at(&offsets, crate::global_concept_rules::ml_array::number_index(right.unwrap_or(f64::NAN) + 1f64)).unwrap_or(f64::NAN) - right_start.unwrap_or(f64::NAN)))) || ((left_start.unwrap_or(f64::NAN) + count) > (edges.len() as f64))) || ((right_start.unwrap_or(f64::NAN) + count) > (edges.len() as f64))) {
                                                             crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop1Result::MlVerifyGlobalConceptCorrespondenceLoop1Return(false)
                                                         } else {
                                                             {
                                                                 let edge = 0f64;
                                                                 {
-                                                                    let ml_s3 = crate::global_concept_rules::ml_verify_global_concept_correspondence_loop3(edges.clone(), first.clone(), second.clone(), left_start.clone(), right_start.clone(), count, edge);
+                                                                    let ml_s3 = crate::global_concept_rules::ml_verify_global_concept_correspondence_loop3(edges.clone(), first.clone(), second.clone(), left_start, right_start, count, edge);
                                                                     match ml_s3.clone() {
                                                                         crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop3Result::MlVerifyGlobalConceptCorrespondenceLoop3Done => {
                                                                             {
@@ -485,7 +443,6 @@ pub fn ml_verify_global_concept_correspondence_loop1(
                                             crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop1Result::MlVerifyGlobalConceptCorrespondenceLoop1Return(ml_result4)
                                         }
                                     }
-                                }
                             }
                         }
                     }

@@ -8,8 +8,16 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DecoratorSet } from '../src/decorators.js';
+import { applyRecordedCompilerFeedback, retainCompilerFeedback } from './compiler-style-feedback.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const feedbackIndex = process.argv.indexOf('--feedback');
+if (feedbackIndex !== -1) {
+  if (!process.argv[feedbackIndex + 1]) throw new Error('--feedback needs a raw compiler feedback file');
+  applyRecordedCompilerFeedback({ root, feedbackFile: process.argv[feedbackIndex + 1],
+    decoratorFile: 'parity/self-translation/global-concept-rules-decorators.lino', allowedPaths: ['rust/src/global_concept_rules.rs'] });
+  process.exit(0);
+}
 const directory = mkdtempSync(join(tmpdir(), 'global-concept-rule-styles-'));
 const paths = ['global_concept_rules.rs'];
 const actions = [];
@@ -25,6 +33,8 @@ try {
       join(directory, 'check.rs'), '-o', join(directory, 'check.rmeta'),
     ], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, timeout: 60000 });
     if (result.error) throw result.error;
+    const diagnostics = retainCompilerFeedback({ root, group: 'global-concept-rules', round, stderr: result.stderr,
+      inputs: paths.map((path) => ({ path: join(directory, path), relativePath: `rust/src/${path}` })) });
     if (result.status === 0) {
       if (actions.length === 0) {
         console.log('generated global concept rules pass Clippy without new style replacements');
@@ -48,7 +58,6 @@ try {
       console.log(`recorded ${actions.length} compiler style replacements`);
       break;
     }
-    const diagnostics = result.stderr.trim().split('\n').map((line) => JSON.parse(line));
     if (process.argv.includes('--check')) {
       throw new Error(diagnostics.filter(({ level }) => level === 'error').map(({ rendered, message }) => rendered ?? message).join('\n'));
     }
