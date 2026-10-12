@@ -650,6 +650,7 @@ enum Prelude {
     Number,
     Math,
     Array,
+    Optional,
 }
 
 struct RustEmitter<'p> {

@@ -1,0 +1,789 @@
+{
+  "cases": [
+    {
+      "name": "boolean",
+      "type": {
+        "kind": "bool"
+      },
+      "identity": "bool"
+    },
+    {
+      "name": "float",
+      "type": {
+        "kind": "float"
+      },
+      "identity": "float"
+    },
+    {
+      "name": "signed integer",
+      "type": {
+        "kind": "fixed",
+        "bits": 32,
+        "signed": true
+      },
+      "identity": "i32"
+    },
+    {
+      "name": "nullable boolean",
+      "type": {
+        "kind": "option",
+        "element": {
+          "kind": "bool"
+        },
+        "absence": "null"
+      },
+      "identity": "option:null:bool"
+    },
+    {
+      "name": "undefined boolean",
+      "type": {
+        "kind": "option",
+        "element": {
+          "kind": "bool"
+        },
+        "absence": "undefined"
+      },
+      "identity": "option:undefined:bool"
+    },
+    {
+      "name": "mixed nested absence",
+      "type": {
+        "kind": "option",
+        "element": {
+          "kind": "option",
+          "element": {
+            "kind": "bool"
+          },
+          "absence": "null"
+        },
+        "absence": "undefined"
+      },
+      "identity": "option:both:bool"
+    },
+    {
+      "name": "equal nested absence",
+      "type": {
+        "kind": "option",
+        "element": {
+          "kind": "option",
+          "element": {
+            "kind": "bool"
+          },
+          "absence": "null"
+        },
+        "absence": "null"
+      },
+      "identity": "option:null:bool"
+    },
+    {
+      "name": "empty tuple",
+      "type": {
+        "kind": "tuple",
+        "elements": []
+      },
+      "identity": "tuple:[]"
+    },
+    {
+      "name": "singleton tuple",
+      "type": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "bool"
+          }
+        ]
+      },
+      "identity": "tuple:[bool]"
+    },
+    {
+      "name": "ordered tuple",
+      "type": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "bool"
+          },
+          {
+            "kind": "string"
+          }
+        ]
+      },
+      "identity": "tuple:[bool,string]"
+    },
+    {
+      "name": "empty record",
+      "type": {
+        "kind": "record",
+        "fields": []
+      },
+      "identity": "record:[]"
+    },
+    {
+      "name": "open record",
+      "type": {
+        "kind": "record",
+        "fields": [],
+        "open": true
+      },
+      "identity": "record:open:[]"
+    },
+    {
+      "name": "sorted record",
+      "type": {
+        "kind": "record",
+        "fields": [
+          {
+            "name": "z",
+            "type": {
+              "kind": "bool"
+            }
+          },
+          {
+            "name": "a",
+            "type": {
+              "kind": "string"
+            }
+          }
+        ]
+      },
+      "identity": "record:[[\"a\",\"string\"],[\"z\",\"bool\"]]"
+    },
+    {
+      "name": "quoted record field",
+      "type": {
+        "kind": "record",
+        "fields": [
+          {
+            "name": "a\"b\\c",
+            "type": {
+              "kind": "bool"
+            }
+          }
+        ]
+      },
+      "identity": "record:[[\"a\\\"b\\\\c\",\"bool\"]]"
+    },
+    {
+      "name": "UTF-16 record field order",
+      "type": {
+        "kind": "record",
+        "fields": [
+          {
+            "name": "",
+            "type": {
+              "kind": "bool"
+            }
+          },
+          {
+            "name": "😀",
+            "type": {
+              "kind": "string"
+            }
+          }
+        ]
+      },
+      "identity": "record:[[\"😀\",\"string\"],[\"\",\"bool\"]]"
+    },
+    {
+      "name": "readonly map",
+      "type": {
+        "kind": "map",
+        "key": {
+          "kind": "string"
+        },
+        "value": {
+          "kind": "bool"
+        }
+      },
+      "identity": "map:string:bool"
+    },
+    {
+      "name": "readonly set",
+      "type": {
+        "kind": "set",
+        "element": {
+          "kind": "string"
+        }
+      },
+      "identity": "set:string"
+    },
+    {
+      "name": "zero parameter function",
+      "type": {
+        "kind": "function",
+        "params": [],
+        "ret": {
+          "kind": "bool"
+        }
+      },
+      "identity": "function:():bool"
+    },
+    {
+      "name": "callable function",
+      "type": {
+        "kind": "function",
+        "params": [
+          {
+            "kind": "string"
+          },
+          {
+            "kind": "bool"
+          }
+        ],
+        "ret": {
+          "kind": "string"
+        }
+      },
+      "identity": "function:(string,bool):string"
+    },
+    {
+      "name": "array of nullable records",
+      "type": {
+        "kind": "array",
+        "element": {
+          "kind": "option",
+          "element": {
+            "kind": "record",
+            "fields": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "bool"
+                }
+              }
+            ]
+          },
+          "absence": "both"
+        }
+      },
+      "identity": "array:option:both:record:[[\"value\",\"bool\"]]"
+    }
+  ],
+  "emissionCases": [
+    {
+      "name": "nullable boolean",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "option",
+                  "element": {
+                    "kind": "bool"
+                  },
+                  "absence": "null"
+                }
+              }
+            ],
+            "ret": {
+              "kind": "option",
+              "element": {
+                "kind": "bool"
+              },
+              "absence": "null"
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: Option<bool>) -> Option<bool> {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "undefined boolean",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "option",
+                  "element": {
+                    "kind": "bool"
+                  },
+                  "absence": "undefined"
+                }
+              }
+            ],
+            "ret": {
+              "kind": "option",
+              "element": {
+                "kind": "bool"
+              },
+              "absence": "undefined"
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: Option<bool>) -> Option<bool> {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "empty tuple",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "tuple",
+                  "elements": []
+                }
+              }
+            ],
+            "ret": {
+              "kind": "tuple",
+              "elements": []
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: ()) -> () {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "singleton tuple",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "bool"
+                    }
+                  ]
+                }
+              }
+            ],
+            "ret": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "bool"
+                }
+              ]
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: (bool,)) -> (bool,) {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "ordered tuple",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "bool"
+                    },
+                    {
+                      "kind": "string"
+                    }
+                  ]
+                }
+              }
+            ],
+            "ret": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "bool"
+                },
+                {
+                  "kind": "string"
+                }
+              ]
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: (bool, String)) -> (bool, String) {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "empty record",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "record",
+                  "fields": []
+                }
+              }
+            ],
+            "ret": {
+              "kind": "record",
+              "fields": []
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: ()) -> () {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "sorted record",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "record",
+                  "fields": [
+                    {
+                      "name": "z",
+                      "type": {
+                        "kind": "bool"
+                      }
+                    },
+                    {
+                      "name": "a",
+                      "type": {
+                        "kind": "string"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "ret": {
+              "kind": "record",
+              "fields": [
+                {
+                  "name": "z",
+                  "type": {
+                    "kind": "bool"
+                  }
+                },
+                {
+                  "name": "a",
+                  "type": {
+                    "kind": "string"
+                  }
+                }
+              ]
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: (String, bool)) -> (String, bool) {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "readonly map",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "map",
+                  "key": {
+                    "kind": "string"
+                  },
+                  "value": {
+                    "kind": "bool"
+                  }
+                }
+              }
+            ],
+            "ret": {
+              "kind": "map",
+              "key": {
+                "kind": "string"
+              },
+              "value": {
+                "kind": "bool"
+              }
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: Vec<(String, bool)>) -> Vec<(String, bool)> {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "readonly set",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "set",
+                  "element": {
+                    "kind": "string"
+                  }
+                }
+              }
+            ],
+            "ret": {
+              "kind": "set",
+              "element": {
+                "kind": "string"
+              }
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: Vec<String>) -> Vec<String> {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "zero parameter function",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "function",
+                  "params": [],
+                  "ret": {
+                    "kind": "bool"
+                  }
+                }
+              }
+            ],
+            "ret": {
+              "kind": "function",
+              "params": [],
+              "ret": {
+                "kind": "bool"
+              }
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: std::rc::Rc<dyn Fn() -> bool>) -> std::rc::Rc<dyn Fn() -> bool> {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "callable function",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "function",
+                  "params": [
+                    {
+                      "kind": "string"
+                    },
+                    {
+                      "kind": "bool"
+                    }
+                  ],
+                  "ret": {
+                    "kind": "string"
+                  }
+                }
+              }
+            ],
+            "ret": {
+              "kind": "function",
+              "params": [
+                {
+                  "kind": "string"
+                },
+                {
+                  "kind": "bool"
+                }
+              ],
+              "ret": {
+                "kind": "string"
+              }
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn identity(value: std::rc::Rc<dyn Fn(String, bool) -> String>) -> std::rc::Rc<dyn Fn(String, bool) -> String> {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "name": "array of nullable records",
+      "surface": {
+        "language": "JavaScript",
+        "items": [
+          {
+            "k": "fn",
+            "name": "identity",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "array",
+                  "element": {
+                    "kind": "option",
+                    "element": {
+                      "kind": "record",
+                      "fields": [
+                        {
+                          "name": "value",
+                          "type": {
+                            "kind": "bool"
+                          }
+                        }
+                      ]
+                    },
+                    "absence": "both"
+                  }
+                }
+              }
+            ],
+            "ret": {
+              "kind": "array",
+              "element": {
+                "kind": "option",
+                "element": {
+                  "kind": "record",
+                  "fields": [
+                    {
+                      "name": "value",
+                      "type": {
+                        "kind": "bool"
+                      }
+                    }
+                  ]
+                },
+                "absence": "both"
+              }
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "main": null
+      },
+      "rust": "// Translated from JavaScript by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\n/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }\n\npub fn identity(value: Vec<crate::MlOptional<(bool,)>>) -> Vec<crate::MlOptional<(bool,)>> {\n    value.clone()\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || {  })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    }
+  ],
+  "optionalPrelude": "/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }"
+}

@@ -2,6 +2,7 @@
 // `nat` and `int` are unbounded, `fixed` is a Rust machine integer whose
 // arithmetic aborts on overflow, `float` is a JavaScript Number (an IEEE-754
 // binary64). Data types are named by their qualified path.
+import { acceptTypeIdentity, mergeOptionalAbsence, renderPortableTypeIdentity } from './structured-type-rules.js';
 
 export const NAT = Object.freeze({ kind: 'nat' });
 export const INT = Object.freeze({ kind: 'int' });
@@ -29,7 +30,7 @@ export function array(element) {
 /** Absence keeps the distinction between JavaScript null and undefined. */
 export function option(element, absence = 'both') {
   if (element.kind === 'option') {
-    return option(element.element, absence === (element.absence ?? 'both') ? absence : 'both');
+    return option(element.element, mergeOptionalAbsence(element.absence ?? 'both', absence));
   }
   return Object.freeze({ kind: 'option', element, absence });
 }
@@ -58,32 +59,32 @@ export function callable(params, ret) {
 export function typeKey(type) {
   switch (type.kind) {
     case 'fixed':
-      return `${type.signed ? 'i' : 'u'}${type.bits}`;
+      return renderPortableTypeIdentity(type.kind, `${type.signed ? 'i' : 'u'}${type.bits}`, []);
     case 'data':
-      return `data:${type.name}`;
+      return renderPortableTypeIdentity(type.kind, type.name, []);
     case 'array':
-      return `array:${typeKey(type.element)}`;
+      return renderPortableTypeIdentity(type.kind, '', [typeKey(type.element)]);
     case 'option': {
       const normalized = option(type.element, type.absence ?? 'both');
-      return `option:${normalized.absence}:${typeKey(normalized.element)}`;
+      return renderPortableTypeIdentity(type.kind, normalized.absence, [typeKey(normalized.element)]);
     }
     case 'tuple':
-      return `tuple:[${type.elements.map(typeKey).join(',')}]`;
+      return renderPortableTypeIdentity(type.kind, '', type.elements.map(typeKey));
     case 'record':
-      return `record:${type.open ? 'open:' : ''}${JSON.stringify([...type.fields].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0).map(({ name, type: fieldType }) => [name, typeKey(fieldType)]))}`;
+      return renderPortableTypeIdentity(type.kind, type.open ? 'open:' : '', [...type.fields].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0).map(({ name, type: fieldType }) => JSON.stringify([name, typeKey(fieldType)])));
     case 'map':
-      return `map:${typeKey(type.key)}:${typeKey(type.value)}`;
+      return renderPortableTypeIdentity(type.kind, '', [typeKey(type.key), typeKey(type.value)]);
     case 'set':
-      return `set:${typeKey(type.element)}`;
+      return renderPortableTypeIdentity(type.kind, '', [typeKey(type.element)]);
     case 'function':
-      return `function:(${type.params.map(typeKey).join(',')}):${typeKey(type.ret)}`;
+      return renderPortableTypeIdentity(type.kind, typeKey(type.ret), type.params.map(typeKey));
     default:
-      return type.kind;
+      return renderPortableTypeIdentity(type.kind, '', []);
   }
 }
 
 export function sameType(left, right) {
-  return typeKey(left) === typeKey(right);
+  return acceptTypeIdentity(typeKey(left), typeKey(right));
 }
 
 export function isNumeric(type) {

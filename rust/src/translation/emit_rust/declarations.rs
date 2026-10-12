@@ -1,5 +1,8 @@
 //! Modules, data, functions, theorem runners and propositions.
 
+use crate::translation::structured_type_rules::{
+    read_rust_optional_prelude, render_rust_compound_type,
+};
 use std::collections::BTreeSet;
 
 use super::{
@@ -52,14 +55,12 @@ impl<'p> RustEmitter<'p> {
         let preludes: Vec<String> = self
             .preludes
             .iter()
-            .map(|prelude| {
-                match prelude {
-                    Prelude::Big => PRELUDE,
-                    Prelude::Number => NUMBER_PRELUDE,
-                    Prelude::Math => MATH_PRELUDE,
-                    Prelude::Array => ARRAY_PRELUDE,
-                }
-                .to_owned()
+            .map(|prelude| match prelude {
+                Prelude::Big => PRELUDE.to_owned(),
+                Prelude::Number => NUMBER_PRELUDE.to_owned(),
+                Prelude::Math => MATH_PRELUDE.to_owned(),
+                Prelude::Array => ARRAY_PRELUDE.to_owned(),
+                Prelude::Optional => read_rust_optional_prelude(),
             })
             .collect();
         for prelude in &preludes {
@@ -134,7 +135,37 @@ impl<'p> RustEmitter<'p> {
                     "arrays",
                     "a JavaScript array, which the portable core never mutates, is a Rust Vec; a read outside it panics",
                 );
-                format!("Vec<{}>", self.ty(element))
+                render_rust_compound_type("array".to_owned(), String::new(), vec![self.ty(element)])
+            }
+            Type::Option { element, absence } => {
+                if absence == "both" {
+                    self.preludes.insert(Prelude::Optional);
+                }
+                render_rust_compound_type(
+                    "option".to_owned(),
+                    absence.clone(),
+                    vec![self.ty(element)],
+                )
+            }
+            Type::Tuple { elements } => {
+                let children = elements.iter().map(|child| self.ty(child)).collect();
+                render_rust_compound_type("tuple".to_owned(), String::new(), children)
+            }
+            Type::Record { fields, .. } => {
+                let children = fields.iter().map(|field| self.ty(&field.ty)).collect();
+                render_rust_compound_type("record".to_owned(), String::new(), children)
+            }
+            Type::Set { element } => {
+                render_rust_compound_type("set".to_owned(), String::new(), vec![self.ty(element)])
+            }
+            Type::Map { key, value } => {
+                let children = vec![self.ty(key), self.ty(value)];
+                render_rust_compound_type("map".to_owned(), String::new(), children)
+            }
+            Type::Function { params, ret } => {
+                let children = params.iter().map(|param| self.ty(param)).collect();
+                let result = self.ty(ret);
+                render_rust_compound_type("function".to_owned(), result, children)
             }
             other => unreachable!("no Rust type for {}", other.kind()),
         }

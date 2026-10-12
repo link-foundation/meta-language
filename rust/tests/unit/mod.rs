@@ -170,6 +170,7 @@ mod translation_mutual_recursion;
 mod translation_printing;
 mod translation_rocq;
 mod translation_rules;
+mod translation_structured_types;
 mod translation_rust_frontend;
 mod translation_stages;
 mod translation_top_level_statements;

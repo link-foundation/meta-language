@@ -484,8 +484,11 @@ fn type_dependencies(ty: &Type, found: &mut HashSet<String>) {
         Type::Data { name } => {
             found.insert(name.clone());
         }
-        Type::Array { element } => type_dependencies(element, found),
-        _ => {}
+        _ => {
+            for child in ty.children() {
+                type_dependencies(child, found);
+            }
+        }
     }
 }
 

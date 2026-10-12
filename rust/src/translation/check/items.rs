@@ -5,7 +5,7 @@ use super::{
     BOOL, BinaryOp, Binder, Checker, Comparison, Ctor, DataDecl, Decl, Effect, Entry, Env, Expr,
     Field, FnDecl, HashMap, Hints, INT, Item, Language, Main, NAT, Node, Param, Plan, Proof,
     ProofScope, Prop, Result, SEffect, SExpr, SItem, SMain, SProp, SPropNode, STRING, Scope,
-    ShowStyle, Span, TheoremDecl, TheoremHead, Type, UNIT, array, build_items, coerce, data, fixed,
+    ShowStyle, Span, TheoremDecl, TheoremHead, Type, UNIT, build_items, coerce, data, fixed,
     flatten, full, normalise_proof, plain_binary, text_lit, type_error, unsupported,
 };
 
@@ -265,8 +265,8 @@ impl Checker {
         let Some(ty) = ty else {
             return Err(type_error("missing type annotation", span));
         };
-        if let Some(element) = ty.element() {
-            return Ok(array(self.resolve_type(Some(element), path, span)?));
+        if !ty.children().is_empty() {
+            return ty.map_children(|child| self.resolve_type(Some(child), path, span));
         }
         let Type::Named {
             path: segments,

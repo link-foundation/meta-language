@@ -8,6 +8,7 @@
 import { typeError, unsupported } from './diagnostics.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
+import { acceptOptionalAbsence } from './structured-type-rules.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, isFloat, isNatural, isNumeric, sameType, typeKey,
 } from './types.js';
@@ -1455,7 +1456,7 @@ export function coerce(value, type, language, span, flavor = undefined) {
   if (sameType(value.type, type)) return value;
   if (value.k === 'abort') return { ...value, type };
   if (type.kind === 'option' && value.k === 'none') {
-    if (type.absence !== 'both' && type.absence !== value.absence) throw typeError(`expected ${type.absence} absence but found ${value.absence}`, span);
+    if (!acceptOptionalAbsence(type.absence, value.absence)) throw typeError(`expected ${type.absence} absence but found ${value.absence}`, span);
     return { ...value, type };
   }
   if (type.kind === 'option' && sameType(value.type, type.element)) return { k: 'some', value, type };
