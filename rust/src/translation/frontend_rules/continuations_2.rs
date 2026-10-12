@@ -2,41 +2,6 @@
 // js/scripts/generate-frontend-rules.mjs. Do not edit by hand.
 use super::*;
 
-pub fn ml_find_documentation_parameter_range_loop21(mut units: Vec<f64>, mut after: f64) -> f64 {
-    loop {
-        return if ((after < (units.len() as f64))
-            && (match (
-                crate::translation::frontend_rules::ml_array::optional_at(
-                    &units,
-                    crate::translation::frontend_rules::ml_array::number_index(after),
-                ),
-                32f64,
-            ) {
-                (Some(ml_left), ml_right) => ml_left == ml_right,
-                _ => false,
-            } || match (
-                crate::translation::frontend_rules::ml_array::optional_at(
-                    &units,
-                    crate::translation::frontend_rules::ml_array::number_index(after),
-                ),
-                9f64,
-            ) {
-                (Some(ml_left), ml_right) => ml_left == ml_right,
-                _ => false,
-            })) {
-            {
-                let after_2 = (after + 1f64);
-                {
-                    after = after_2;
-                    continue;
-                }
-            }
-        } else {
-            after
-        };
-    }
-}
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlFindDocumentationParameterRangeJoin18 {
     MlFindDocumentationParameterRangeJoin18Next(f64, bool),

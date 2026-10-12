@@ -42,7 +42,7 @@ pub fn ml_decode_unicode_escape_loop6(
                                     Some(ml_present) => ml_present,
                                     None => f64::NAN,
                                 } - 48f64);
-                                (unit - 48f64)
+                                digit_2
                             }
                         } else {
                             if (((match unit.clone() {
@@ -59,7 +59,7 @@ pub fn ml_decode_unicode_escape_loop6(
                                         Some(ml_present) => ml_present,
                                         None => f64::NAN,
                                     } - 55f64);
-                                    (unit - 55f64)
+                                    digit_3
                                 }
                             } else {
                                 if (((match unit.clone() {
@@ -76,7 +76,7 @@ pub fn ml_decode_unicode_escape_loop6(
                                             Some(ml_present) => ml_present,
                                             None => f64::NAN,
                                         } - 87f64);
-                                        (unit - 87f64)
+                                        digit_4
                                     }
                                 } else {
                                     digit
@@ -150,7 +150,7 @@ pub fn ml_decode_unicode_escape_loop3(
                                     Some(ml_present) => ml_present,
                                     None => f64::NAN,
                                 } - 48f64);
-                                (unit - 48f64)
+                                digit_2
                             }
                         } else {
                             if (((match unit.clone() {
@@ -167,7 +167,7 @@ pub fn ml_decode_unicode_escape_loop3(
                                         Some(ml_present) => ml_present,
                                         None => f64::NAN,
                                     } - 55f64);
-                                    (unit - 55f64)
+                                    digit_3
                                 }
                             } else {
                                 if (((match unit.clone() {
@@ -184,7 +184,7 @@ pub fn ml_decode_unicode_escape_loop3(
                                             Some(ml_present) => ml_present,
                                             None => f64::NAN,
                                         } - 87f64);
-                                        (unit - 87f64)
+                                        digit_4
                                     }
                                 } else {
                                     digit
@@ -509,7 +509,6 @@ pub fn ml_regular_expression_end_loop13(mut units: Vec<f64>, mut index: f64) -> 
                         }
                     }
                 }
-                index
             }
         } else {
             index
@@ -867,4 +866,39 @@ pub fn ml_find_documentation_parameter_range_loop19(
 pub enum MlFindDocumentationParameterRangeJoin20 {
     MlFindDocumentationParameterRangeJoin20Next,
     MlFindDocumentationParameterRangeJoin20Return(Vec<f64>),
+}
+
+pub fn ml_find_documentation_parameter_range_loop21(mut units: Vec<f64>, mut after: f64) -> f64 {
+    loop {
+        return if ((after < (units.len() as f64))
+            && (match (
+                crate::translation::frontend_rules::ml_array::optional_at(
+                    &units,
+                    crate::translation::frontend_rules::ml_array::number_index(after),
+                ),
+                32f64,
+            ) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            } || match (
+                crate::translation::frontend_rules::ml_array::optional_at(
+                    &units,
+                    crate::translation::frontend_rules::ml_array::number_index(after),
+                ),
+                9f64,
+            ) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            })) {
+            {
+                let after_2 = (after + 1f64);
+                {
+                    after = after_2;
+                    continue;
+                }
+            }
+        } else {
+            after
+        };
+    }
 }

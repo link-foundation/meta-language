@@ -6,6 +6,8 @@ import { acceptArgumentCount, decodeUnicodeEscape, findDocumentationParameterRan
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
+import { DecoratorSet } from '../src/decorators.js';
+import { decorateEmitted } from '../src/grammar-emitters/common.js';
 
 const units = (text) => Array.from({ length: text.length }, (_, index) => text.charCodeAt(index));
 
@@ -55,6 +57,23 @@ test('the complete frontend decision module translates through meta-language', (
   const emitted = emitRust(checkProgram(parseJavaScript(source)));
   for (const name of ['decode_unicode_escape', 'accept_argument_count', 'find_default_parameter_reference', 'start_regular_expression', 'regular_expression_end', 'find_binding_run_end', 'accept_binding_scope', 'accept_literal_binding', 'constant_binding_form', 'accept_constant_emission', 'render_constant_binding', 'accept_module_binding_scope', 'find_documentation_parameter_range', 'accept_type_query_operand', 'read_type_query_result', 'read_array_method_form', 'accept_root_syntax_item', 'accept_source_prefix_restoration', 'accept_declaration_signature', 'read_string_test_operation', 'render_string_test_expression', 'read_string_test_helper', 'read_string_test_support', 'read_string_map_operation', 'render_string_map_expression', 'render_string_length_expression', 'read_string_map_refusal', 'accept_checked_type_query_operand', 'read_scanner_continuation_action', 'accept_source_envelope_restoration', 'accept_array_method_arguments']) {
     assert.ok(emitted.text.includes(`pub fn ${name}(`), name);
+  }
+});
+
+test('frontend Rust decorators retain checked nullable arithmetic and loop result branches', () => {
+  const source = readFileSync(new URL('../src/translation/frontend-rules.js', import.meta.url), 'utf8');
+  const raw = emitRust(checkProgram(parseJavaScript(source))).text;
+  const decorators = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino', import.meta.url), 'utf8'));
+  const adapted = decorateEmitted('Rust', { source: raw }, decorators).source;
+  const styled = decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: adapted }).source;
+  for (const text of [raw, styled]) {
+    // The Unicode digit value is already computed with undefined -> NaN.
+    // A style rule must retain that value instead of substituting old source arithmetic.
+    assert.doesNotMatch(text, /\(unit - (?:48|55|87)f64\)/u);
+    for (const name of ['digit_2', 'digit_3', 'digit_4']) assert.equal((text.match(new RegExp(`^\\s+${name}$`, 'gmu')) ?? []).length, 2, name);
+    const loops = text.split(/(?=^pub fn )/gmu).filter((body) => /^pub fn ml_regular_expression_end_loop\d+\([^\n]+\) -> f64 \{/u.test(body) && body.includes('let flag ='));
+    assert.equal(loops.length, 1);
+    assert.equal((loops[0].match(/^\s+index$/gmu) ?? []).length, 2, 'each loop exit supplies its Number result without an extra tail expression');
   }
 });
 
