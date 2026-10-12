@@ -97,6 +97,12 @@ const attribute = {
   _local_call_without_parentheses: '_attribute_local_unparenthesized_call', _local_call_just_do_block: '_attribute_block_call',
   _local_call_with_parentheses: '_attribute_local_parenthesized_call', _double_call: '_attribute_repeated_call',
 };
+const postfixAttribute = {
+  ...attribute,
+  call: '_postfix_attribute_call',
+  _call_without_parentheses: '_postfix_attribute_unparenthesized_call',
+  _call_with_parentheses: '_postfix_attribute_parenthesized_call',
+};
 const references = map => ({ ...map, unary_operator: '_postfix_unary_operand' });
 const contextDecision = {
   clones: [
@@ -108,9 +114,13 @@ const contextDecision = {
       ...(rule === '_call_without_parentheses' ? { exclude: { _remote_call_without_parentheses: 1 } } : {}),
       ...(['_call_with_parentheses', '_double_call'].includes(rule) ? { exclude: { _remote_call_with_parentheses: 1, _anonymous_call: 1 } } : {}),
     })),
+    ...['call', '_call_without_parentheses', '_call_with_parentheses'].map(rule => ({ rule, helper: postfixAttribute[rule], references: postfixAttribute,
+      ...(rule === '_call_without_parentheses' ? { exclude: { _local_call_without_parentheses: 1, _remote_call_without_parentheses: 1 } } : {}),
+      ...(rule === '_call_with_parentheses' ? { exclude: { _remote_call_with_parentheses: 1, _anonymous_call: 1 } } : {}),
+    })),
     { rule: '_expression', helper: '_postfix_expression', references: references(postfix), exclude: { binary_operator: 1 } },
     { rule: '_expression', helper: '_attribute_expression', references: attribute, exclude: { binary_operator: 1, dot: 1, access_call: 1 } },
-    { rule: '_expression', helper: '_postfix_attribute_expression', references: references(attribute), exclude: { binary_operator: 1, dot: 1, access_call: 1 } },
+    { rule: '_expression', helper: '_postfix_attribute_expression', references: references(postfixAttribute), exclude: { binary_operator: 1, dot: 1, access_call: 1 } },
     { rule: 'unary_operator', helper: '_postfix_unary_operand', precedences: { values: [220, 235], count: 2 }, fields: [{ field: 'operand', symbol: '_expression', helper: '_postfix_attribute_expression', precedence: 220, count: 1 }] },
   ],
   fields: [
@@ -132,6 +142,7 @@ test('postfix operand projections preserve remote calls, grouping, capture place
     'a+b[c]', 'outer Mod.inner arg do\n a\nend', '@foo(1).bar', '@foo Mod.fun', '@spec fun(atom) :: string', '@foo+1', '@foo[1]',
     '@Mod.foo 1', '@foo value.bar', '@foo().bar + 1', '@foo(1) + 2', 'foo() do\n x\nend.bar',
     '@-1', '@!true', '@not false', '@&1', '@foo -1', '@foo !true', '@foo(1)(2).bar', '@foo.bar.baz', '@((1+2)).bar', '@1+2', '@-mod.foo',
+    '@spec fun(Keyword.t()) :: String.t()', '@spec foo() :: String.t()', '@type name :: String.t()',
   ]) {
     const oracle = oracleSnapshot(source, 'elixir');
     assert.equal(oracle.recovers, false, source);
