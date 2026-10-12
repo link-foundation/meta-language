@@ -760,8 +760,8 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'recorded source context boundaries',
-    files: ['js/scripts/native-source-contexts.mjs', 'js/scripts/native-source-boundaries.mjs'],
-    extract: (text) => captures(text, /^export function (transformFieldFollowingContext|transformTriviaContinuationBoundary)\(/gmu)
+    files: ['js/scripts/native-source-contexts.mjs', 'js/scripts/native-source-boundaries.mjs', 'js/scripts/native-source-preferences.mjs', 'js/scripts/native-optional-call-context.mjs', 'js/scripts/native-argument-suffix-context.mjs', 'js/scripts/native-field-expression-context.mjs'],
+    extract: (text) => captures(text, /^export function (transformFieldFollowingContext|transformTriviaContinuationBoundary|applySourceContextPreference|transformOptionalCallContext|transformArgumentSuffixContext|transformFieldExpressionContext)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
     recordOf: (name) => `grammar.${name}`,
   },

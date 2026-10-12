@@ -81782,6 +81782,80 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "grammar.apply-source-context-preference",
+      "phrase": "apply source context preference",
+      "role": "operation",
+      "definition": "Apply a recorded complete source production preference at selected grammar symbol contexts.",
+      "constraints": [
+        "Existing rules, symbols, selected fields, complete boundaries and exact occurrence counts must match the recorded decision.",
+        "Every original production remains available outside the complete preferred context.",
+        "A restricted preferred production uses an explicitly named hidden source helper and source aliases rather than a runtime language callback.",
+        "Unknown decision families are not changed by this operation."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar complete source contexts",
+          "name": "applySourceContextPreference"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.transform-optional-call-context",
+      "phrase": "transform optional call context",
+      "role": "operation",
+      "definition": "Apply a recorded separator assertion only to the present optional argument branch of a source call production.",
+      "constraints": [
+        "The source rule, target field, optional argument symbol and exact occurrence count must match the recorded decision.",
+        "The absent argument branch retains the original target and subsequent call suffixes.",
+        "The present argument branch checks its immediate separator without consuming source text or replacing the source arguments."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar optional call contexts",
+          "name": "transformOptionalCallContext"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.transform-argument-suffix-context",
+      "phrase": "transform argument suffix context",
+      "role": "operation",
+      "definition": "Project bare argument call productions without consuming a suffix reserved for their enclosing source call.",
+      "constraints": [
+        "Source rules, distinct hidden helper identities, selected references and exact suffix and exclusion counts must match the recorded decision.",
+        "The projected bare argument expressions retain original named source aliases and hidden rule identities.",
+        "Parenthesized argument productions and the original source call productions remain available."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar argument suffix contexts",
+          "name": "transformArgumentSuffixContext"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.transform-field-expression-context",
+      "phrase": "transform field expression context",
+      "role": "operation",
+      "definition": "Project selected source expression fields through explicitly declared hidden grammar contexts.",
+      "constraints": [
+        "Existing source rules, fresh distinct helper identities, field selectors and exact occurrence counts must match the recorded decision.",
+        "Recorded reference, alternative exclusion and precedence selections retain source aliases and explicit grouping in the context projections.",
+        "The original grammar productions remain available to their other source contexts.",
+        "The operation adds ordinary source grammar expressions, preserving shared runtime execution without a language callback."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar source field expression contexts",
+          "name": "transformFieldExpressionContext"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }
