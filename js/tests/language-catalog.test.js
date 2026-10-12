@@ -46,6 +46,45 @@ test('language catalog is generated from the inventory and shipped identically t
   );
 });
 
+test('the catalog keeps immutable sources, licenses, independent corpora and embedded paths', async () => {
+  const registered = JSON.parse(await readFile(new URL('../../parity/grammars/sources.json', import.meta.url), 'utf8')).sources;
+  for (const language of inventory.languages) {
+    const entry = languageEntry(language.name);
+    const sources = registered.filter((source) => source.native === language.nativeGrammar || (language.grammars ?? []).includes(source.language));
+    assert.deepEqual(entry.grammarSources.map(({ id }) => id), sources.map(({ id }) => id), language.name);
+    for (const [index, source] of sources.entries()) {
+      const recorded = entry.grammarSources[index];
+      for (const field of ['repository', 'revision', 'sha256', 'license', 'corpus', 'scanner', 'patch']) {
+        assert.deepEqual(recorded[field], source[field], `${language.name} ${source.id} ${field}`);
+      }
+      if (source.licenseFile) {
+        const bytes = await readFile(new URL(`../../${source.licenseFile}`, import.meta.url));
+        assert.equal(recorded.licenseSha256, createHash('sha256').update(bytes).digest('hex'));
+      }
+    }
+    assert.deepEqual(entry.embeddedLanguages, inventory.embeddedLanguagePaths
+      .filter(({ host }) => host === language.name).flatMap(({ targets }) => targets));
+  }
+});
+
+test('language editions remain separate from grammar releases and dialect boundaries', () => {
+  const sample = structuredClone(inventory);
+  const language = sample.languages.find(({ name }) => name === 'JavaScript');
+  language.versions = ['specified language version'];
+  language.editions = ['specified language edition'];
+  language.dialects = ['specified language dialect'];
+  const catalog = buildLanguageCatalog(sample, GRAMMAR_LOCK);
+  const generated = catalog.languages.find(({ name }) => name === 'JavaScript');
+  assert.deepEqual(generated.versions, language.versions);
+  assert.deepEqual(generated.editions, language.editions);
+  assert.deepEqual(generated.dialects, language.dialects);
+  assert.equal(generated.grammars[0].version, inventory.nativeGrammars[language.nativeGrammar].version);
+  generated.editions.push('consumer edit');
+  assert.equal(language.editions.length, 1);
+  assert.equal(catalog.languages.filter(({ family }) => family === 'sql').length,
+    inventory.languages.filter(({ family }) => family === 'sql').length);
+});
+
 test('every inventory name and alias resolves case-insensitively to its language', () => {
   for (const language of inventory.languages) {
     for (const alias of [language.name, ...language.aliases]) {

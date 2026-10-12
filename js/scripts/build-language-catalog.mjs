@@ -23,6 +23,7 @@ import { parseGrammarLinks } from '../src/grammar-links.js';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const inventoryPath = join(root, 'parity/language-grammar-inventory.json');
 const lockPath = join(root, 'js/src/vendor/grammars/grammar-lock.json');
+const sourcePath = join(root, 'parity/grammars/sources.json');
 export const CATALOG_PATHS = Object.freeze([
   join(root, 'js/src/data/language-catalog.json'),
   join(root, 'rust/src/data/language-catalog.json'),
@@ -35,7 +36,7 @@ export const NATIVE_GRAMMAR_DIRECTORIES = Object.freeze([
 
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
-export function buildLanguageCatalog(inventory, lock) {
+export function buildLanguageCatalog(inventory, lock, sourceRegister = JSON.parse(readFileSync(sourcePath, 'utf8'))) {
   const languages = inventory.languages.map((language) => {
     const lockedGrammars = (language.grammars ?? []).map((id) => {
       const locked = lock.grammars[id];
@@ -69,6 +70,14 @@ export function buildLanguageCatalog(inventory, lock) {
       extensions: inventory.extensionDispatch[language.name] ?? [],
       grammars,
       ...(oracleGrammars ? { oracleGrammars } : {}),
+      grammarSources: sourceRegister.sources
+        .filter((source) => source.native === language.nativeGrammar || (language.grammars ?? []).includes(source.language))
+        .map(catalogGrammarSource),
+      embeddedLanguages: (inventory.embeddedLanguagePaths ?? [])
+        .filter(({ host }) => host === language.name)
+        .flatMap(({ targets }) => targets),
+      ...Object.fromEntries(['versions', 'editions', 'dialects'].filter((key) => language[key] !== undefined)
+        .map((key) => [key, structuredClone(language[key])])),
     };
   });
   const owners = new Map();
@@ -89,6 +98,20 @@ export function buildLanguageCatalog(inventory, lock) {
     nativeGrammars: nativeGrammarCatalog(inventory),
     languages,
   };
+}
+
+/** Immutable upstream evidence is shipped with the grammar it describes. */
+export function catalogGrammarSource(source) {
+  const fields = ['id', 'language', 'native', 'format', 'package', 'repository', 'revision', 'path', 'file', 'sha256', 'license'];
+  const metadata = Object.fromEntries(fields.filter((field) => source[field] !== undefined).map((field) => [field, source[field]]));
+  if (source.licenseFile) {
+    metadata.licenseFile = source.licenseFile;
+    metadata.licenseSha256 = sha256(readFileSync(join(root, source.licenseFile)));
+  }
+  for (const field of ['corpus', 'additionalCorpora', 'scanner', 'patch']) {
+    if (source[field] !== undefined) metadata[field] = structuredClone(source[field]);
+  }
+  return metadata;
 }
 
 /**
