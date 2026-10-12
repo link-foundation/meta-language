@@ -66591,6 +66591,10 @@
         {
           "source": "native:xml",
           "name": "whitespace"
+        },
+        {
+          "source": "native:native-text",
+          "name": "whitespace"
         }
       ],
       "formerNames": []
@@ -71035,6 +71039,180 @@
         {
           "source": "native:agda",
           "name": "qualified_identifier_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.text-document",
+      "phrase": "text document",
+      "role": "concept",
+      "definition": "The entire plain text source represented by inclusive line regions and lossless lexical units.",
+      "constraints": [
+        "The empty document contains one empty line.",
+        "Unbalanced parentheses flag the document as an error without discarding its source."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:native-text",
+          "name": "text_document"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.text-line",
+      "phrase": "text line",
+      "role": "concept",
+      "definition": "An inclusive line feed terminated plain text region or the nonempty final region at end of input.",
+      "constraints": [
+        "Carriage returns remain lexical whitespace within the region.",
+        "A source ending with a line feed does not acquire an additional empty trailing line."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:native-text",
+          "name": "text_line"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.natural-language-document",
+      "phrase": "natural language document",
+      "role": "concept",
+      "definition": "A lossless natural language source organized into native sentence regions and lexical units.",
+      "constraints": [
+        "An empty source has no sentence regions.",
+        "Language specific morphology, syntax and meaning are separate linked annotations and remain distinct from lexical structure."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:native-text",
+          "name": "natural_language_document"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.natural-language-sentence",
+      "phrase": "natural language sentence",
+      "role": "concept",
+      "definition": "A region ending with a run of sentence terminal punctuation, closing marks and following whitespace, or a nonempty trailing fragment.",
+      "constraints": [
+        "Terminals include ASCII, Arabic, Devanagari, Chinese and full width punctuation.",
+        "This lexical boundary is distinct from the Rocq grammar sentence production."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:native-text",
+          "name": "natural_language_sentence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lexical-document",
+      "phrase": "lexical document",
+      "role": "concept",
+      "definition": "A source region segmented into maximal Unicode whitespace, word, prohibited control and punctuation runs.",
+      "constraints": [
+        "Every source byte belongs to exactly one lexical unit.",
+        "The native grammar defines all character classes and their ordered selection."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:native-text",
+          "name": "lexical_document"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lexical-word",
+      "phrase": "lexical word",
+      "role": "concept",
+      "definition": "A maximal run of Unicode letter, number or mark characters, underscores, apostrophes and hyphens in plain or natural language text.",
+      "constraints": [
+        "This lexical unit is distinct from the Make grammar word production.",
+        "No language specific dictionary or morphosyntactic conclusion is implied by lexical membership."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:native-text",
+          "name": "lexical_word"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lexical-punctuation",
+      "phrase": "lexical punctuation",
+      "role": "concept",
+      "definition": "A maximal run of source characters outside the shared lexical whitespace, word and prohibited control classes.",
+      "constraints": [
+        "Emoji and format characters remain exact source text.",
+        "Punctuation runs are bounded by their containing line or sentence region."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:native-text",
+          "name": "lexical_punctuation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.rejected-control",
+      "phrase": "rejected control",
+      "role": "concept",
+      "definition": "A maximal run of prohibited control characters represented as a recoverable concrete syntax error.",
+      "constraints": [
+        "The native rule records ranges U+0000 through U+0008, U+000E through U+001F, U+007F through U+0084 and U+0086 through U+009F.",
+        "Error nodes preserve the full offending source span."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:native-text",
+          "name": "rejected_control"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.balanced-parenthesis-sequence",
+      "phrase": "balanced parenthesis sequence",
+      "role": "concept",
+      "definition": "An executable native validation production recognizing correctly nested opening and closing parentheses throughout source text.",
+      "constraints": [
+        "A closing parenthesis must have a preceding unmatched opening parenthesis.",
+        "All unmatched openings must be closed at end of source."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:native-text",
+          "name": "balanced_parenthesis_sequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-statement-brace",
+      "phrase": "accept statement brace",
+      "role": "operation",
+      "definition": "Determine whether an opening brace starts a JavaScript statement block rather than an expression or pattern.",
+      "constraints": [
+        "Statement and expression braces retain distinct lexical contexts.",
+        "The shared frontend decision is translated into Rust and reused in template substitution scanning."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript frontend decisions",
+          "name": "acceptStatementBrace"
+        },
+        {
+          "source": "Rust frontend decisions",
+          "name": "accept_statement_brace"
         }
       ],
       "formerNames": []

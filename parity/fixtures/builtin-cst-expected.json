@@ -58,8 +58,8 @@
     "txt": {
       "grammars": {
         "plain-text": {
-          "version": "1.0.0",
-          "parserSha256": "0c63bf89373001d981e0254be32b5179bbcd17e6630dd232644335bacaa911d2"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "a6b84d30b7ec6aafba0566b9ff76a66e05650c4799ddee7ee8cd476d7510fe16",
@@ -196,8 +196,8 @@
     "English": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "1edb4aa7d05976bb943de8ccc815123875af80e0aaf23b4ca603e750d5c2227a",
@@ -258,8 +258,8 @@
     "Mandarin Chinese": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "7d906fa843b21e1eff02c7002af9946a47674cc5979cd7534445d3db263b2a89",
@@ -284,8 +284,8 @@
     "Hindi": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "42765b1ead97c8385e57a92dc648a150db4a40505f5039f9746a1b5f07422645",
@@ -311,8 +311,8 @@
     "Spanish": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "76c2a038866d64f5e4cd2057fce8ae21f66a6558e2261acfbf7ae81af14fe406",
@@ -349,8 +349,8 @@
     "Modern Standard Arabic": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "04949745d6ca8e754d640a0cc7534668836d4e89cee2a1a68fe57e3f5abfc473",
@@ -376,8 +376,8 @@
     "French": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "9f0b1ef81835789353f095299a36bc04782b5f73bab88b3d387b58797a3c5bd5",
@@ -414,8 +414,8 @@
     "Bengali": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "f89f009533a4cb6485f53f9a7274afcccc5848975553cf507ef3799a7699fd17",
@@ -441,8 +441,8 @@
     "Portuguese": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "ae710d889717e1d74e287644eaf5409cd3f23be78650c0fe72d35ae2a157d1c7",
@@ -479,8 +479,8 @@
     "Russian": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "709b864297bac3597fe1d358acc89901c1d12ff22544408c8226ad2b3780c721",
@@ -513,8 +513,8 @@
     "Urdu": {
       "grammars": {
         "natural-language": {
-          "version": "1.0.0",
-          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+          "version": "1.1.0",
+          "parserSha256": "708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8"
         }
       },
       "sourceSha256": "647fb4dcbc1000f28a2280583f99d46f420d2e27747a2ff2603ec61b1cf1c8b4",

@@ -132,6 +132,7 @@ mod lino_grammar_scaling;
 mod lino_serialization;
 mod native_recovery_records;
 mod natural_language_grammar;
+mod native_text_grammars;
 mod parity_corpora;
 mod parity_manifest;
 mod parse_scaling;

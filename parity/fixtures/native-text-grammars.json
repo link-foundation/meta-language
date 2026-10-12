@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "provenance": "Repository authored cases, Unlicense. Expected region boundaries and lexemes are independent of the generator.",
+  "plain": [
+    {"source": "", "regions": [""], "hasError": false},
+    {"source": "one\n\ntwo\r\n", "regions": ["one\n", "\n", "two\r\n"], "hasError": false},
+    {"source": "café (你好) é 👩‍💻\n", "regions": ["café (你好) é 👩‍💻\n"], "hasError": false},
+    {"source": "(open\n", "regions": ["(open\n"], "hasError": true},
+    {"source": ")closed(\n", "regions": [")closed(\n"], "hasError": true},
+    {"source": "a\u0000\u0001b\u0085c", "regions": ["a\u0000\u0001b\u0085c"], "hasError": true}
+  ],
+  "natural": [
+    {"language": "English", "source": "Hello!?\"  Next. tail", "regions": ["Hello!?\"  ", "Next. ", "tail"]},
+    {"language": "Mandarin Chinese", "source": "你好。 世界！\n", "regions": ["你好。 ", "世界！\n"]},
+    {"language": "Hindi", "source": "नमस्ते। फिर?\n", "regions": ["नमस्ते। ", "फिर?\n"]},
+    {"language": "Spanish", "source": "¿Hola? Sí.\n", "regions": ["¿Hola? ", "Sí.\n"]},
+    {"language": "Modern Standard Arabic", "source": "مرحبا؟ التالي.\n", "regions": ["مرحبا؟ ", "التالي.\n"]},
+    {"language": "French", "source": "Café. Bonjour !\n", "regions": ["Café. ", "Bonjour !\n"]},
+    {"language": "Bengali", "source": "নমস্কার। আবার।\n", "regions": ["নমস্কার। ", "আবার।\n"]},
+    {"language": "Portuguese", "source": "Olá. Próximo!\n", "regions": ["Olá. ", "Próximo!\n"]},
+    {"language": "Russian", "source": "Привет. Далее!\n", "regions": ["Привет. ", "Далее!\n"]},
+    {"language": "Urdu", "source": "سلام۔ اگلا؟\n", "regions": ["سلام۔ ", "اگلا؟\n"]},
+    {"language": "English", "source": "é 👩‍💻.\u0085尾\u0000\u0001.", "regions": ["é 👩‍💻.\u0085", "尾\u0000\u0001."], "hasError": true},
+    {"language": "English", "source": "", "regions": []}
+  ],
+  "lexical": {
+    "source": "café é 你好 _x-\t!?\u0000\u0001👩‍💻",
+    "tokens": [
+      ["word", "café"], ["whitespace", " "], ["word", "é"], ["whitespace", " "],
+      ["word", "你好"], ["whitespace", " "], ["word", "_x-"], ["whitespace", "\t"],
+      ["punctuation", "!?"], ["ERROR", "\u0000\u0001"], ["punctuation", "👩‍💻"]
+    ]
+  }
+}

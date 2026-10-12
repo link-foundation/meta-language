@@ -346,6 +346,7 @@ const NATIVE_GRAMMAR_FILES = readdirSync(path.join(repositoryRoot, NATIVE_GRAMMA
   .filter((file) => file.endsWith('.lino'))
   .sort()
   .map((file) => `${NATIVE_GRAMMAR_DIRECTORY}/${file}`);
+NATIVE_GRAMMAR_FILES.push('parity/grammars/native-text.lino');
 
 /** The source a native grammar file gives its rule names: `native:json` for parity/grammars/native/json.lino. */
 export const nativeGrammarSource = (file) => `native:${path.basename(file, '.lino')}`;

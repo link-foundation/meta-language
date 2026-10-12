@@ -278,14 +278,22 @@
       "reference": "ISO 32000-2:2020 section 7"
     },
     "plain-text": {
-      "version": "1.0.0",
-      "specification": "parity/grammars/plain-text.ebnf",
-      "reference": "Unicode White_Space and general categories"
+      "version": "1.1.0",
+      "specification": "parity/grammars/native-text.lino",
+      "reference": "Unicode White_Space and general categories",
+      "authoringSpecifications": [
+        "parity/grammars/plain-text.ebnf"
+      ],
+      "ruleSpecification": "parity/grammars/native-text-specification.json"
     },
     "natural-language": {
-      "version": "1.0.0",
-      "specification": "parity/grammars/natural-language.ebnf",
-      "reference": "Unicode White_Space, general categories and sentence terminals"
+      "version": "1.1.0",
+      "specification": "parity/grammars/native-text.lino",
+      "reference": "Unicode White_Space, general categories and sentence terminals",
+      "authoringSpecifications": [
+        "parity/grammars/natural-language.ebnf"
+      ],
+      "ruleSpecification": "parity/grammars/native-text-specification.json"
     }
   },
   "nativeGrammars": {
