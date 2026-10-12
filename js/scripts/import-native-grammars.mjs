@@ -10,6 +10,8 @@
 //
 //   node js/scripts/import-native-grammars.mjs          # write the grammars, concepts and reports
 //   node js/scripts/import-native-grammars.mjs --check  # fail on drift
+//   node js/scripts/import-native-grammars.mjs --language agda [--check]
+//     # regenerate one language within the local resource budget
 //   node js/scripts/import-native-grammars.mjs --character-class-fixtures [--check]
 //     # bounded shared fixtures; the same importer compiles the catalog in CI
 //
@@ -304,12 +306,17 @@ export function importCharacterClassFixtures() {
   })]];
 }
 
-/** Every file the pipeline produces, `[path, text]`. */
-export function importNativeGrammars() {
+/** Selected pipeline outputs, or every language by default, `[path, text]`. */
+export function importNativeGrammars(languages = null) {
   const registry = readJson(GRAMMAR_SOURCES);
   const naming = readJson(NAME_EXPANSIONS);
   const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
-  const imports = registry.sources.map((entry) => importSource(entry, words, naming.grammars[entry.language]));
+  if (languages !== null && (!Array.isArray(languages) || !languages.length
+    || languages.some((language) => !registry.sources.some((entry) => entry.language === language)))) {
+    throw new TypeError('select existing native grammar languages');
+  }
+  const selected = languages === null ? registry.sources : registry.sources.filter((entry) => languages.includes(entry.language));
+  const imports = selected.map((entry) => importSource(entry, words, naming.grammars[entry.language]));
   const register = mergeConcepts(readJson(CONCEPT_REGISTER), imports, naming.concepts);
   return [
     ...imports.map((result) => [`${NATIVE_DIRECTORY}/${result.entry.language}.lino`, result.text]),
@@ -319,7 +326,9 @@ export function importNativeGrammars() {
 }
 
 function main() {
-  const files = process.argv.includes('--character-class-fixtures') ? importCharacterClassFixtures() : importNativeGrammars();
+  const languageIndex = process.argv.indexOf('--language');
+  const languages = languageIndex < 0 ? null : [process.argv[languageIndex + 1]];
+  const files = process.argv.includes('--character-class-fixtures') ? importCharacterClassFixtures() : importNativeGrammars(languages);
   if (process.argv.includes('--check')) {
     const stale = files.filter(([file, text]) => {
       try {

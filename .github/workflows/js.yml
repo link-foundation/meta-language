@@ -77,7 +77,7 @@ jobs:
 
       - name: Export issue 199 debugging workspace
         if: matrix.group == 'tooling'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: issue-199-workspace
           path: /tmp/issue-199-workspace.tgz

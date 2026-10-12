@@ -412,6 +412,31 @@ export function transformNativeSource(source, transformations = []) {
       for (const name of insertInto) grammar.rules[name] = rewrite(grammar.rules[name]);
       continue;
     }
+    if (decision.family === 'prefer-optional-symbol') {
+      const { rule, symbol, excludedRules = [], excludedKeywords = [], wordRule = null } = decision;
+      if (![rule, symbol].every((name) => Object.hasOwn(grammar.rules, name))) throw new TypeError('an optional symbol preference needs existing rules');
+      if (!Array.isArray(excludedRules) || excludedRules.some((name) => !Object.hasOwn(grammar.rules, name))) throw new TypeError('optional symbol boundaries need existing rules');
+      if (!Array.isArray(excludedKeywords) || excludedKeywords.some((word) => typeof word !== 'string' || !word)
+        || (excludedKeywords.length && !Object.hasOwn(grammar.rules, wordRule))) throw new TypeError('optional symbol keywords need nonempty words and an existing word rule');
+      let changes = 0;
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (!node || typeof node !== 'object') return node;
+        if (node.type === 'CHOICE' && node.members.length === 2
+          && node.members.some((member) => member.type === 'BLANK')
+          && node.members.some((member) => member.type === 'SYMBOL' && member.name === symbol)) {
+          changes += 1;
+          const selected = node.members.find((member) => member.type === 'SYMBOL');
+          let present = excludedRules.length ? { type: 'NATIVE_PREFIX_EXCLUSION', content: selected, prefixes: { type: 'CHOICE', members: excludedRules.map((name) => ({ type: 'SYMBOL', name })) } } : selected;
+          if (excludedKeywords.length) present = { type: 'NATIVE_KEYWORD_EXCLUSION', content: present, keywords: { type: 'CHOICE', members: excludedKeywords.map((value) => ({ type: 'STRING', value })) }, word: grammar.rules[wordRule] };
+          return { type: 'NATIVE_ORDERED_CHOICE', members: [present, node.members.find((member) => member.type === 'BLANK')] };
+        }
+        return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
+      };
+      grammar.rules[rule] = rewrite(grammar.rules[rule]);
+      if (changes !== 1) throw new TypeError('an optional symbol preference must identify exactly one existing optional symbol');
+      continue;
+    }
     if (decision.family === 'prefer-optional-literal') {
       const { rule, literal, value } = decision;
       if (!Object.hasOwn(grammar.rules, rule) || typeof literal !== 'string' || !literal || !Number.isSafeInteger(value) || value <= 0) throw new TypeError('an optional literal preference needs an existing rule, literal and positive integer weight');

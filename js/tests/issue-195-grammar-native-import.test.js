@@ -14,6 +14,31 @@ import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
 const rule = (character, length = 80) => character.repeat(length);
 
+test('optional symbol shifts retain the absent branch and reject stale decisions', () => {
+  const source = { name: 'universe', rules: {
+    document: { type: 'SYMBOL', name: 'universe' },
+    universe: { type: 'SEQ', members: [{ type: 'STRING', value: 'Set' }, { type: 'CHOICE', members: [{ type: 'BLANK' }, { type: 'SYMBOL', name: 'atom' }] }] },
+    atom: { type: 'PATTERN', value: '[a-z]+' },
+  }, extras: [{ type: 'PATTERN', value: '\\s+' }] };
+  const decision = { family: 'prefer-optional-symbol', rule: 'universe', symbol: 'atom' };
+  const changed = transformNativeSource(source, [decision]);
+  assert.equal(source.rules.universe.members[1].type, 'CHOICE');
+  assert.equal(changed.rules.universe.members[1].type, 'NATIVE_ORDERED_CHOICE');
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(changed))));
+  for (const text of ['Set', 'Set leaf']) assert.equal(parser.parseTree(text).ok, true, text);
+  assert.equal(parser.parseTree('Set 7').ok, false);
+  assert.throws(() => transformNativeSource(source, [{ ...decision, symbol: 'missing' }]), /existing rules/);
+  assert.throws(() => transformNativeSource(changed, [decision]), /exactly one/);
+  const guarded = { ...source, rules: { ...source.rules,
+    document: { type: 'SEQ', members: [{ type: 'SYMBOL', name: 'universe' }, { type: 'STRING', value: 'where' }] },
+  } };
+  const guardedDecision = { ...decision, excludedKeywords: ['where'], wordRule: 'atom' };
+  const guardedParser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformNativeSource(guarded, [guardedDecision])))));
+  for (const text of ['Set where', 'Set leaf where', 'Set whereabouts where']) assert.equal(guardedParser.parseTree(text).ok, true, text);
+  assert.throws(() => transformNativeSource(source, [{ ...decision, excludedRules: ['missing'] }]), /existing rules/);
+  assert.throws(() => transformNativeSource(source, [{ ...guardedDecision, wordRule: 'missing' }]), /existing word rule/);
+});
+
 test('the native concept merge keeps stable record order and prunes only unused generated identities', () => {
   const entry = { language: 'fixture' };
   const generated = {

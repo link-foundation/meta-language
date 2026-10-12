@@ -3967,6 +3967,20 @@
           "rule": "lambda",
           "value": 1,
           "reason": "Preserve the pinned parser shift at an arrow: prefer the full lambda body over reducing bare absurd-lambda bindings and treating the same arrow as an outer function type."
+        },
+        {
+          "family": "prefer-optional-symbol",
+          "rule": "SetN",
+          "symbol": "atom",
+          "reason": "Preserve the pinned parser shift into the optional universe argument: Set c is one universe atom, rather than an application of the bare Set atom to c. The absent argument remains available.",
+          "excludedRules": [
+            "_ARROW"
+          ],
+          "excludedKeywords": [
+            "where",
+            "in"
+          ],
+          "wordRule": "id"
         }
       ],
       "concepts": {

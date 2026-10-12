@@ -8497,6 +8497,7 @@
       "name": "actions/upload-artifact",
       "declaredIn": [
         ".github/workflows/ci.yml",
+        ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
       ],
       "pinned": "v7",
