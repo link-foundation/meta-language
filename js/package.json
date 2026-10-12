@@ -43,6 +43,8 @@
     "check:builtin-cst": "node scripts/generate-builtin-cst-expectations.mjs --check",
     "check:language-catalog": "node scripts/build-language-catalog.mjs --check",
     "check:concept-records": "node scripts/build-concept-records.mjs --check",
+    "check:global-concepts": "node scripts/generate-global-concept-rules.mjs --check && node scripts/generate-global-concept-space-fixture.mjs --check",
+    "check:merge-decisions": "node scripts/generate-grammar-merge-decisions.mjs --check",
     "check:concept-reuse": "node scripts/build-native-grammar-concept-reuse.mjs --check",
     "check:merge-quality": "node scripts/build-merge-quality-evidence.mjs --check",
     "check:foundations": "node scripts/build-foundation-models.mjs --check",

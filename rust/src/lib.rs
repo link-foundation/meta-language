@@ -12,6 +12,8 @@ pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
 mod foundation_models;
+mod global_concept_rules;
+mod global_concept_space;
 pub mod grammar;
 mod grammar_concepts;
 pub mod graphql_adapter;
@@ -100,6 +102,12 @@ pub use foundation_models::{
     FoundationModel, FoundationProblem, FoundationRegister, LOGIC_FAMILIES, LanguageFoundation,
     check_foundation_models, foundation_correspondences, foundation_model, foundation_register,
     language_foundation_models,
+};
+pub use global_concept_rules::verify_global_concept_correspondence;
+pub use global_concept_space::{
+    GLOBAL_CONCEPT_PROOF_METHOD, GlobalConceptOptions, GlobalConceptSource,
+    create_global_concept_space, global_concept_space_to_links, read_global_concept_space_links,
+    translate_global_construct,
 };
 pub use grammar::feature_runtime::{
     Ambiguity, FeatureGrammarParser, FeatureParseOptions, GrammarParseError, GrammarResolver,
@@ -265,9 +273,10 @@ pub use rust_codec::{
     RustTypeKind, RustTypeShape, ToLinks,
 };
 pub use self_translation::{
-    SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError, SelfTranslationItem,
-    SelfTranslationOptions, SelfTranslationSignature, self_translate, self_translate_decorated,
-    self_translate_with, self_translation_language, self_translation_signatures,
+    ErasedTypeScript, Erasure, SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError,
+    SelfTranslationItem, SelfTranslationOptions, SelfTranslationSignature, erase_type_script,
+    self_translate, self_translate_decorated, self_translate_with, self_translation_language,
+    self_translation_signatures,
 };
 pub use semantic_translation::{
     ReadTranslationProvenance, SEMANTIC_ENCODING, SEMANTIC_OBSERVATION, SemanticTranslation,

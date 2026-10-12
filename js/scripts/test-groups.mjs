@@ -24,7 +24,7 @@ export const TEST_GROUPS = Object.freeze({
   conformance:
     /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|global-concept-space$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
   downstream:
-    /^(?:downstream-|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
+    /^(?:downstream-|formal-ai-semantic-projections$|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
   tooling:
     /^(?:cache-|issue-195-self-translation-report$|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-inventory$|dependency-upgrades$|test-groups$|ci-workflow-structure$|export-parity$)/u,
 });

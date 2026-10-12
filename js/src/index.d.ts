@@ -113,6 +113,8 @@ export type SelfTranslationSignature =
   | { readonly k: 'const'; readonly name: string; readonly type: SelfTranslationType; readonly literal: boolean };
 
 export interface SelfTranslationOptions {
+  /** Uses one UTF-16 string representation across all emitted module items. */
+  readonly utf16Strings?: boolean;
   /** Emitter decorators applied to each translated item. */
   readonly decorators?: unknown;
   /** The module's directory inside its crate, as path segments; the crate root by default. */
@@ -120,6 +122,16 @@ export interface SelfTranslationOptions {
   /** The signatures `selfTranslationSignatures` gives for each imported module, by import specifier. */
   readonly imports?: Readonly<Record<string, readonly SelfTranslationSignature[]>>;
 }
+export interface TypeScriptErasure {
+  start: number;
+  end: number;
+  term: string;
+}
+export interface ErasedTypeScript {
+  code: string;
+  erasures: TypeScriptErasure[];
+}
+export function eraseTypeScript(source: string): ErasedTypeScript;
 
 /**
  * Translates one of meta-language's own modules between JavaScript,
@@ -840,6 +852,7 @@ export function translateProgram(
   source: string,
   sourceLanguage: string,
   targetLanguage: string,
+  options?: { utf16Strings?: boolean },
 ): ProgramTranslation;
 export function decodeProgramTranslation(
   code: string,
@@ -1526,7 +1539,8 @@ export interface GlobalConceptProof {
 }
 export interface GlobalConceptSpace {
   schemaVersion: 1;
-  sources: Array<{ id: string; language: string; edition: string; context: GrammarDeclarations }>;
+  sources: Array<{ id: string; language: string; edition: string; start: string | null;
+    ruleOrder: string[]; context: GrammarDeclarations }>;
   concepts: Array<{ id: string; origins: GlobalConceptOrigin[]; definition: Omit<GrammarRuleValue, 'name'>;
     definitions: Array<{ origin: string; definition: Omit<GrammarRuleValue, 'name'> }>; proofs: number[] }>;
   mappings: Record<string, string>;
@@ -1543,7 +1557,17 @@ export interface GlobalConceptOptions {
 export const GLOBAL_CONCEPT_PROOF_METHOD: 'recursive-structural-bijection';
 export function createGlobalConceptSpace(sources: readonly GlobalConceptSource[], options?: GlobalConceptOptions): GlobalConceptSpace;
 export function globalConceptSpaceToLinks(space: GlobalConceptSpace): string;
-export function parseGlobalConceptSpaceLinks(source: string, options?: GlobalConceptOptions): GlobalConceptSpace;
+export function readGlobalConceptSpaceLinks(source: string, options?: GlobalConceptOptions): GlobalConceptSpace;
+export function verifyGlobalConceptCorrespondence(shapes: readonly string[], meanings: readonly string[],
+  offsets: readonly number[], edges: readonly number[], first: readonly number[], second: readonly number[]): boolean;
+export interface GlobalConstructTranslation {
+  relation: 'translated' | 'ambiguous' | 'untranslatable' | 'unknown';
+  concept: string | null;
+  origins: GlobalConceptOrigin[];
+  proofs: number[];
+}
+export function translateGlobalConstruct(space: GlobalConceptSpace, alias: string,
+  language: string, options?: { edition?: string }): GlobalConstructTranslation;
 export interface GrammarMergeSource {
   id: string;
   language: string;

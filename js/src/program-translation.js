@@ -53,7 +53,7 @@ const JS_RESERVED = new Set([
  * carried in a reversible source envelope whose contract names the construct
  * that kept them out of the portable core.
  */
-export function translateProgram(source, sourceLanguage, targetLanguage) {
+export function translateProgram(source, sourceLanguage, targetLanguage, options = {}) {
   const sourceSupport = requiredLanguage(sourceLanguage);
   const targetSupport = requiredLanguage(targetLanguage);
   const contract = translationContract(sourceSupport.name, targetSupport.name);
@@ -63,7 +63,9 @@ export function translateProgram(source, sourceLanguage, targetLanguage) {
   const text = String(source);
   let emitted;
   try {
-    emitted = EMITTERS[targetSupport.name](checkProgram(FRONTENDS[sourceSupport.name](text)));
+    const program = checkProgram(FRONTENDS[sourceSupport.name](text));
+    if (options.utf16Strings === true) program.utf16Strings = true;
+    emitted = EMITTERS[targetSupport.name](program);
   } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
     return envelopeTranslation(text, sourceSupport, targetSupport, contract, Object.freeze({

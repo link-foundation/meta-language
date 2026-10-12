@@ -219,6 +219,23 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+      - name: Install the pinned independent Lark grammar target tool
+        if: ${{ !cancelled() }}
+        run: python3 -m pip install --disable-pip-version-check --no-cache-dir lark==1.3.1
+
+      - name: Run grammar conversion cycles under the actual Lark target tool
+        if: ${{ !cancelled() }}
+        run: node js/scripts/run-grammar-interchange-lark.mjs --out issue-195-artifacts/grammar-interchange-lark.json
+
+      - name: Upload the independent Lark conversion report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: grammar-interchange-lark-${{ github.sha }}
+          path: issue-195-artifacts/grammar-interchange-lark.json
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Check the foundation models are neutral data
         if: ${{ !cancelled() }}
         run: npm run check:foundations
@@ -292,6 +309,10 @@ jobs:
       - name: Check the generated global concept rules against JavaScript
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-global-concept-rules.mjs --check
+
+      - name: Check the generated grammar merge decisions against JavaScript
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-grammar-merge-decisions.mjs --check
 
       - name: Check generated frontend rule compilation and style
         if: ${{ !cancelled() }}
