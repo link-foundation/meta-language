@@ -49,3 +49,38 @@ test('compiler feedback replays exact byte ranges in unique contexts and refuses
     assert.equal(readFileSync(join(root, relativePath), 'utf8'), source, 'offline replay records data and never edits generated Rust');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('compiler feedback keeps multipart suggestions atomic when nested alternatives overlap', () => {
+  const root = mkdtempSync(join(tmpdir(), 'meta-language-compiler-feedback-multipart-'));
+  try {
+    mkdirSync(join(root, 'rust/src'), { recursive: true });
+    const relativePath = 'rust/src/generated.rs';
+    const source = 'fn sample() -> i32 {\n    let result = 1 + (2);\n    result\n}\n';
+    const bytes = Buffer.from(source);
+    const span = (start, end, replacement) => ({ file_name: '/ci/generated.rs',
+      byte_start: start, byte_end: end, suggested_replacement: replacement,
+      suggestion_applicability: 'MachineApplicable' });
+    const bindingStart = bytes.indexOf(Buffer.from('let result'));
+    const bindingEnd = bytes.indexOf(Buffer.from(';')) + 1;
+    const returnStart = bytes.lastIndexOf(Buffer.from('result'));
+    const parenthesesStart = bytes.indexOf(Buffer.from('(2)'));
+    const multipart = { spans: [span(bindingStart, bindingEnd, ''),
+      span(returnStart, returnStart + 6, '1 + (2)')], children: [] };
+    const nested = { spans: [span(parenthesesStart, parenthesesStart + 3, '2')], children: [] };
+    for (const [diagnostics, expected] of [
+      [[multipart, nested], 'fn sample() -> i32 {\n\n    1 + (2)\n}\n'],
+      [[nested, multipart], source.replace('(2)', '2')],
+    ]) {
+      writeFileSync(join(root, relativePath), source);
+      writeFileSync(join(root, 'styles.lino'), '');
+      const feedbackFile = join(root, 'feedback.json');
+      writeFileSync(feedbackFile, JSON.stringify({ schemaVersion: 1, diagnostics,
+        sources: { '/ci/generated.rs': { relativePath, sha256: sha256(source), text: source } } }));
+      const result = applyRecordedCompilerFeedback({ root, feedbackFile,
+        decoratorFile: 'styles.lino', allowedPaths: [relativePath] });
+      const styles = DecoratorSet.fromLino(readFileSync(join(root, 'styles.lino'), 'utf8'));
+      assert.equal(styles.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source }).source, expected);
+      assert.equal(result.deferred, 1, 'the conflicting complete suggestion is deferred');
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

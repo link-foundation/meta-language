@@ -264,9 +264,8 @@ pub fn ml_verify_global_concept_correspondence_loop3(
                                             continue;
                                         }
                                     }
-                                } else {
-                                    crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop3Result::MlVerifyGlobalConceptCorrespondenceLoop3Return(false)
                                 }
+                                crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop3Result::MlVerifyGlobalConceptCorrespondenceLoop3Return(false)
                             }
                         }
                     }
@@ -454,14 +453,14 @@ pub fn ml_verify_global_concept_correspondence_loop1(
     }
 }
 
-fn ml_main() {}
+const fn ml_main() {}
 
 // Deep recursion in the source is not bounded by a small native stack.
 fn main() {
     let check = std::env::args().any(|argument| argument == "--ml-check-theorems");
     let worker = std::thread::Builder::new()
         .stack_size(1 << 28)
-        .spawn(move || ml_main())
+        .spawn(ml_main)
         .expect("spawn the program thread");
     if worker.join().is_err() {
         std::process::exit(101);

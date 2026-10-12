@@ -28,59 +28,50 @@ pub fn ml_decode_unicode_escape_loop6(
                 {
                     let digit = (-1f64);
                     {
-                        let digit_5 = if (((match unit.clone() {
+                        let digit_5 = if ((unit.clone().unwrap_or(f64::NAN) >= (48f64))
+                            && (unit.clone().unwrap_or(f64::NAN) <= (57f64)))
+                        {
+                            {
+                                (match unit.clone() {
+                                    Some(ml_present) => ml_present,
+                                    None => f64::NAN,
+                                } - 48f64)
+                            }
+                        } else if (((match unit.clone() {
                             Some(ml_present) => ml_present,
                             None => f64::NAN,
-                        }) >= (48f64))
+                        }) >= (65f64))
                             && ((match unit.clone() {
                                 Some(ml_present) => ml_present,
                                 None => f64::NAN,
-                            }) <= (57f64)))
+                            }) <= (70f64)))
                         {
                             {
-                                let digit_2 = (match unit.clone() {
+                                let digit_3 = (match unit.clone() {
                                     Some(ml_present) => ml_present,
                                     None => f64::NAN,
-                                } - 48f64);
-                                digit_2
+                                } - 55f64);
+                                digit_3
                             }
                         } else {
                             if (((match unit.clone() {
                                 Some(ml_present) => ml_present,
                                 None => f64::NAN,
-                            }) >= (65f64))
+                            }) >= (97f64))
                                 && ((match unit.clone() {
                                     Some(ml_present) => ml_present,
                                     None => f64::NAN,
-                                }) <= (70f64)))
+                                }) <= (102f64)))
                             {
                                 {
-                                    let digit_3 = (match unit.clone() {
+                                    let digit_4 = (match unit.clone() {
                                         Some(ml_present) => ml_present,
                                         None => f64::NAN,
-                                    } - 55f64);
-                                    digit_3
+                                    } - 87f64);
+                                    digit_4
                                 }
                             } else {
-                                if (((match unit.clone() {
-                                    Some(ml_present) => ml_present,
-                                    None => f64::NAN,
-                                }) >= (97f64))
-                                    && ((match unit.clone() {
-                                        Some(ml_present) => ml_present,
-                                        None => f64::NAN,
-                                    }) <= (102f64)))
-                                {
-                                    {
-                                        let digit_4 = (match unit.clone() {
-                                            Some(ml_present) => ml_present,
-                                            None => f64::NAN,
-                                        } - 87f64);
-                                        digit_4
-                                    }
-                                } else {
-                                    digit
-                                }
+                                digit
                             }
                         };
                         if (digit_5 < (0f64)) {
@@ -136,59 +127,50 @@ pub fn ml_decode_unicode_escape_loop3(
                 {
                     let digit = (-1f64);
                     {
-                        let digit_5 = if (((match unit.clone() {
+                        let digit_5 = if ((unit.clone().unwrap_or(f64::NAN) >= (48f64))
+                            && (unit.clone().unwrap_or(f64::NAN) <= (57f64)))
+                        {
+                            {
+                                (match unit.clone() {
+                                    Some(ml_present) => ml_present,
+                                    None => f64::NAN,
+                                } - 48f64)
+                            }
+                        } else if (((match unit.clone() {
                             Some(ml_present) => ml_present,
                             None => f64::NAN,
-                        }) >= (48f64))
+                        }) >= (65f64))
                             && ((match unit.clone() {
                                 Some(ml_present) => ml_present,
                                 None => f64::NAN,
-                            }) <= (57f64)))
+                            }) <= (70f64)))
                         {
                             {
-                                let digit_2 = (match unit.clone() {
+                                let digit_3 = (match unit.clone() {
                                     Some(ml_present) => ml_present,
                                     None => f64::NAN,
-                                } - 48f64);
-                                digit_2
+                                } - 55f64);
+                                digit_3
                             }
                         } else {
                             if (((match unit.clone() {
                                 Some(ml_present) => ml_present,
                                 None => f64::NAN,
-                            }) >= (65f64))
+                            }) >= (97f64))
                                 && ((match unit.clone() {
                                     Some(ml_present) => ml_present,
                                     None => f64::NAN,
-                                }) <= (70f64)))
+                                }) <= (102f64)))
                             {
                                 {
-                                    let digit_3 = (match unit.clone() {
+                                    let digit_4 = (match unit.clone() {
                                         Some(ml_present) => ml_present,
                                         None => f64::NAN,
-                                    } - 55f64);
-                                    digit_3
+                                    } - 87f64);
+                                    digit_4
                                 }
                             } else {
-                                if (((match unit.clone() {
-                                    Some(ml_present) => ml_present,
-                                    None => f64::NAN,
-                                }) >= (97f64))
-                                    && ((match unit.clone() {
-                                        Some(ml_present) => ml_present,
-                                        None => f64::NAN,
-                                    }) <= (102f64)))
-                                {
-                                    {
-                                        let digit_4 = (match unit.clone() {
-                                            Some(ml_present) => ml_present,
-                                            None => f64::NAN,
-                                        } - 87f64);
-                                        digit_4
-                                    }
-                                } else {
-                                    digit
-                                }
+                                digit
                             }
                         };
                         if (digit_5 < (0f64)) {
@@ -241,15 +223,13 @@ pub fn ml_accept_argument_count_loop7(
 ) -> crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result {
     loop {
         return if (index < (defaults.len() as f64)) {
-            if !(match crate::translation::frontend_rules::ml_array::optional_at(
+            if (match crate::translation::frontend_rules::ml_array::optional_at(
                 &defaults,
                 crate::translation::frontend_rules::ml_array::number_index(index),
             ) {
                 Some(ml_present) => ml_present,
                 None => false,
             }) {
-                crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result::MlAcceptArgumentCountLoop7Return(false)
-            } else {
                 {
                     let index_2 = (index + 1f64);
                     {
@@ -258,6 +238,7 @@ pub fn ml_accept_argument_count_loop7(
                     }
                 }
             }
+            crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result::MlAcceptArgumentCountLoop7Return(false)
         } else {
             crate::translation::frontend_rules::MlAcceptArgumentCountLoop7Result::MlAcceptArgumentCountLoop7Done
         };
@@ -373,10 +354,7 @@ pub fn ml_find_default_parameter_reference_loop8(
                         (Some(ml_left), ml_right) => ml_left == ml_right,
                         _ => false,
                     }) {
-                        {
-                            let depth_2 = (depth + 1f64);
-                            depth_2
-                        }
+                        { (depth + 1f64) }
                     } else {
                         depth
                     };
@@ -391,10 +369,7 @@ pub fn ml_find_default_parameter_reference_loop8(
                             (Some(ml_left), ml_right) => ml_left == ml_right,
                             _ => false,
                         }) {
-                            {
-                                let depth_4 = (depth_3 - 1f64);
-                                depth_4
-                            }
+                            { (depth_3 - 1f64) }
                         } else {
                             depth_3
                         };
@@ -482,7 +457,7 @@ pub fn ml_regular_expression_end_loop13(mut units: Vec<f64>, mut index: f64) -> 
                     &units,
                     crate::translation::frontend_rules::ml_array::number_index(index),
                 );
-                if !((((match flag.clone() {
+                if ((((match flag.clone() {
                     Some(ml_present) => ml_present,
                     None => f64::NAN,
                 }) >= (65f64))
@@ -499,8 +474,6 @@ pub fn ml_regular_expression_end_loop13(mut units: Vec<f64>, mut index: f64) -> 
                             None => f64::NAN,
                         }) <= (122f64))))
                 {
-                    index
-                } else {
                     {
                         let index_2 = (index + 1f64);
                         {
@@ -508,6 +481,8 @@ pub fn ml_regular_expression_end_loop13(mut units: Vec<f64>, mut index: f64) -> 
                             continue;
                         }
                     }
+                } else {
+                    index
                 }
             }
         } else {
@@ -529,16 +504,16 @@ pub fn ml_regular_expression_end_loop11(
                     &units,
                     crate::translation::frontend_rules::ml_array::number_index(index),
                 );
-                if (((match (unit.clone(), 10f64) {
+                if (((match (unit, 10f64) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
-                } || match (unit.clone(), 13f64) {
+                } || match (unit, 13f64) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
-                }) || match (unit.clone(), 8232f64) {
+                }) || match (unit, 8232f64) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
-                }) || match (unit.clone(), 8233f64) {
+                }) || match (unit, 8233f64) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
                 }) {
@@ -550,49 +525,47 @@ pub fn ml_regular_expression_end_loop11(
                                 let escaped_2 = false;
                                 crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped_2, character_class)
                             }
+                        } else if match (unit.clone(), 92f64) {
+                            (Some(ml_left), ml_right) => ml_left == ml_right,
+                            _ => false,
+                        } {
+                            {
+                                let escaped_3 = true;
+                                crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped_3, character_class)
+                            }
                         } else {
-                            if match (unit.clone(), 92f64) {
+                            if match (unit.clone(), 91f64) {
                                 (Some(ml_left), ml_right) => ml_left == ml_right,
                                 _ => false,
                             } {
                                 {
-                                    let escaped_3 = true;
-                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped_3, character_class)
+                                    let character_class_2 = true;
+                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class_2)
                                 }
                             } else {
-                                if match (unit.clone(), 91f64) {
+                                if match (unit.clone(), 93f64) {
                                     (Some(ml_left), ml_right) => ml_left == ml_right,
                                     _ => false,
                                 } {
                                     {
-                                        let character_class_2 = true;
-                                        crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class_2)
+                                        let character_class_3 = false;
+                                        crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class_3)
                                     }
                                 } else {
-                                    if match (unit.clone(), 93f64) {
+                                    if (match (unit.clone(), 47f64) {
                                         (Some(ml_left), ml_right) => ml_left == ml_right,
                                         _ => false,
-                                    } {
+                                    } && !character_class)
+                                    {
                                         {
-                                            let character_class_3 = false;
-                                            crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class_3)
+                                            let index_2 = (index + 1f64);
+                                            {
+                                                let index_3 = crate::translation::frontend_rules::ml_regular_expression_end_loop13(units.clone(), index_2);
+                                                crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Return(index_3)
+                                            }
                                         }
                                     } else {
-                                        if (match (unit.clone(), 47f64) {
-                                            (Some(ml_left), ml_right) => ml_left == ml_right,
-                                            _ => false,
-                                        } && !character_class)
-                                        {
-                                            {
-                                                let index_2 = (index + 1f64);
-                                                {
-                                                    let index_3 = crate::translation::frontend_rules::ml_regular_expression_end_loop13(units.clone(), index_2);
-                                                    crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Return(index_3)
-                                                }
-                                            }
-                                        } else {
-                                            crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class)
-                                        }
+                                        crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class)
                                     }
                                 }
                             }
@@ -721,10 +694,18 @@ pub fn ml_accept_module_binding_scope_loop16(
                     &terms,
                     crate::translation::frontend_rules::ml_array::number_index(index),
                 );
-                if !(match (term.clone(), String::from("")) {
+                if (match (term.clone(), String::from("")) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
                 }) {
+                    {
+                        let index_3 = (index + 1f64);
+                        {
+                            index = index_3;
+                            continue;
+                        }
+                    }
+                } else {
                     if ((!(match (term.clone(), String::from("function_declaration")) {
                         (Some(ml_left), ml_right) => ml_left == ml_right,
                         _ => false,
@@ -746,14 +727,6 @@ pub fn ml_accept_module_binding_scope_loop16(
                                     continue;
                                 }
                             }
-                        }
-                    }
-                } else {
-                    {
-                        let index_3 = (index + 1f64);
-                        {
-                            index = index_3;
-                            continue;
                         }
                     }
                 }
@@ -811,39 +784,20 @@ pub fn ml_find_documentation_parameter_range_loop19(
                     &units,
                     crate::translation::frontend_rules::ml_array::number_index(end),
                 );
-                if (((((((match code.clone() {
-                    Some(ml_present) => ml_present,
-                    None => f64::NAN,
-                }) >= (65f64))
-                    && ((match code.clone() {
-                        Some(ml_present) => ml_present,
-                        None => f64::NAN,
-                    }) <= (90f64)))
-                    || (((match code.clone() {
-                        Some(ml_present) => ml_present,
-                        None => f64::NAN,
-                    }) >= (97f64))
-                        && ((match code.clone() {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        }) <= (122f64))))
-                    || match (code.clone(), 95f64) {
+                if ((((((code.clone().unwrap_or(f64::NAN) >= (65f64))
+                    && (code.clone().unwrap_or(f64::NAN) <= (90f64)))
+                    || ((code.clone().unwrap_or(f64::NAN) >= (97f64))
+                        && (code.clone().unwrap_or(f64::NAN) <= (122f64))))
+                    || match (code, 95f64) {
                         (Some(ml_left), ml_right) => ml_left == ml_right,
                         _ => false,
                     })
-                    || match (code.clone(), 36f64) {
+                    || match (code, 36f64) {
                         (Some(ml_left), ml_right) => ml_left == ml_right,
                         _ => false,
                     })
-                    || (((end > start)
-                        && ((match code.clone() {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        }) >= (48f64)))
-                        && ((match code.clone() {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        }) <= (57f64))))
+                    || (((end > start) && (code.clone().unwrap_or(f64::NAN) >= (48f64)))
+                        && (code.clone().unwrap_or(f64::NAN) <= (57f64))))
                 {
                     {
                         let end_2 = (end + 1f64);
@@ -852,9 +806,8 @@ pub fn ml_find_documentation_parameter_range_loop19(
                             continue;
                         }
                     }
-                } else {
-                    end
                 }
+                end
             }
         } else {
             end
@@ -899,6 +852,50 @@ pub fn ml_find_documentation_parameter_range_loop21(mut units: Vec<f64>, mut aft
             }
         } else {
             after
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlFindDocumentationParameterRangeJoin18 {
+    MlFindDocumentationParameterRangeJoin18Next(f64, bool),
+}
+
+pub fn ml_read_rust_number_bounds_loop22(units: &[f64], mut at: f64) -> f64 {
+    loop {
+        return if ((at < (units.len() as f64))
+            && (((crate::translation::frontend_rules::ml_array::optional_at(
+                &units,
+                crate::translation::frontend_rules::ml_array::number_index(at),
+            )
+            .unwrap_or(f64::NAN)
+                >= (48f64))
+                && (crate::translation::frontend_rules::ml_array::optional_at(
+                    &units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )
+                .unwrap_or(f64::NAN)
+                    <= (57f64)))
+                || match (
+                    crate::translation::frontend_rules::ml_array::optional_at(
+                        units,
+                        crate::translation::frontend_rules::ml_array::number_index(at),
+                    ),
+                    95f64,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }))
+        {
+            {
+                let at_2 = (at + 1f64);
+                {
+                    at = at_2;
+                    continue;
+                }
+            }
+        } else {
+            at
         };
     }
 }

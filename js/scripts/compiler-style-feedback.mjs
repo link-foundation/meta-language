@@ -25,29 +25,52 @@ export function retainCompilerFeedback({ root, group, round, stderr, inputs }) {
 export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFile, allowedPaths }) {
   const feedback = JSON.parse(readFileSync(feedbackFile, 'utf8'));
   if (feedback.schemaVersion !== 1 || !Array.isArray(feedback.diagnostics) || !feedback.sources) throw new Error('compiler feedback requires raw diagnostics and exact source snapshots');
-  const edits = new Map();
+  const suggestions = [];
   const visit = (diagnostic) => {
     const spans = (diagnostic.spans ?? []).filter(({ suggested_replacement: replacement }) => replacement !== null && replacement !== undefined);
     if (spans.length && spans.every((span) => span.suggestion_applicability === 'MachineApplicable'
       && allowedPaths.includes(feedback.sources[span.file_name]?.relativePath))) {
-      for (const span of spans) {
-        const list = edits.get(span.file_name) ?? [];
-        list.push(span); edits.set(span.file_name, list);
-      }
+      suggestions.push(spans);
     }
     for (const child of diagnostic.children ?? []) visit(child);
   };
   for (const diagnostic of feedback.diagnostics) visit(diagnostic.reason === 'compiler-message' ? diagnostic.message : diagnostic);
+  const inputs = new Map();
+  for (const spans of suggestions) for (const span of spans) {
+    const input = feedback.sources[span.file_name];
+    if (!inputs.has(span.file_name)) {
+      const source = Buffer.from(input.text);
+      if (digest(source) !== input.sha256 || !readFileSync(join(root, input.relativePath)).equals(source)) throw new Error(`compiler feedback is stale for ${input.relativePath}`);
+      inputs.set(span.file_name, source);
+    }
+    if (!Number.isSafeInteger(span.byte_start) || !Number.isSafeInteger(span.byte_end)
+      || span.byte_start < 0 || span.byte_end < span.byte_start || span.byte_end > inputs.get(span.file_name).length) throw new Error('compiler feedback has an invalid source range');
+  }
+  const overlaps = (left, right) => {
+    if (left.file_name !== right.file_name) return false;
+    if (left.byte_start === left.byte_end && right.byte_start === right.byte_end) return left.byte_start === right.byte_start;
+    if (left.byte_start === left.byte_end) return right.byte_start <= left.byte_start && left.byte_start < right.byte_end;
+    if (right.byte_start === right.byte_end) return left.byte_start <= right.byte_start && right.byte_start < left.byte_end;
+    return left.byte_start < right.byte_end && right.byte_start < left.byte_end;
+  };
+  const edits = new Map();
+  const accepted = [];
+  let deferred = 0;
+  // Multipart suggestions are indivisible. A conflicting alternative must
+  // never leave a binding deletion or a replacement expression half applied.
+  for (const spans of suggestions) {
+    if (spans.some((span, index) => spans.slice(index + 1).some((other) => overlaps(span, other)))) throw new Error('compiler suggestion contains overlapping source ranges');
+    if (spans.some((span) => accepted.some((other) => overlaps(span, other)))) { deferred += 1; continue; }
+    accepted.push(...spans);
+    for (const span of spans) {
+      const list = edits.get(span.file_name) ?? [];
+      list.push(span); edits.set(span.file_name, list);
+    }
+  }
   const actions = [];
   for (const [path, spans] of edits) {
-    const input = feedback.sources[path];
-    let source = Buffer.from(input.text);
-    if (digest(source) !== input.sha256 || !readFileSync(join(root, input.relativePath)).equals(source)) throw new Error(`compiler feedback is stale for ${input.relativePath}`);
-    let boundary = source.length;
+    let source = inputs.get(path);
     for (const span of spans.sort((a, b) => b.byte_start - a.byte_start || b.byte_end - a.byte_end)) {
-      if (!Number.isSafeInteger(span.byte_start) || !Number.isSafeInteger(span.byte_end)
-        || span.byte_start < 0 || span.byte_end < span.byte_start || span.byte_end > source.length) throw new Error('compiler feedback has an invalid source range');
-      if (span.byte_end > boundary) continue;
       const before = source;
       const replacement = Buffer.from(span.suggested_replacement);
       if (before.subarray(span.byte_start, span.byte_end).equals(replacement)) continue;
@@ -68,7 +91,6 @@ export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFil
       }
       actions.push({ op: 'replace', field: 'source', from: before.subarray(start, end).toString('utf8'),
         to: source.subarray(start, end + delta).toString('utf8').replace(/[ \t]+$/gmu, '') });
-      boundary = span.byte_start;
     }
   }
   if (!actions.length) throw new Error('compiler feedback contains no applicable machine suggestions; rendered logs require separate reviewed corrections');
@@ -79,5 +101,6 @@ export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFil
     when: [['format', 'Rust'], ['scope', 'formatted-module']], actions: [...(previous?.actions ?? []), ...actions] }]).toLino();
   const lines = existing.split('\n').filter((line) => !line.startsWith('(decorator compiler-feedback-style '));
   writeFileSync(path, `${lines.join('\n').trimEnd()}\n\n${data}`);
-  process.stdout.write(`Recorded ${actions.length} machine-applicable compiler suggestions; CI must verify regenerated output.\n`);
+  process.stdout.write(`Recorded ${actions.length} machine-applicable compiler spans; deferred ${deferred} complete overlapping suggestions. CI must verify regenerated output.\n`);
+  return { actions: actions.length, deferred };
 }

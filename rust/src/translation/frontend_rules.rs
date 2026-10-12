@@ -42,7 +42,7 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -173,7 +173,7 @@ pub fn decode_unicode_escape(
             {
                 let ml_s1 = if match (
                     crate::translation::frontend_rules::ml_array::optional_at(
-                        &units,
+                        units,
                         crate::translation::frontend_rules::ml_array::number_index(1f64),
                     ),
                     120f64,
@@ -639,7 +639,7 @@ pub fn find_documentation_parameter_range(units: &[f64]) -> Vec<f64> {
                                                     let after = end_2;
                                                     {
                                                         let after_2 = crate::translation::frontend_rules::ml_find_documentation_parameter_range_loop21(units.to_vec(), after);
-                                                        if ((after_2 >= (units.len() as f64)) || (!(match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(after_2)), 93f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) && !(match (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(after_2)), 61f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }))) {
+                                                        if ((after_2 >= (units.len() as f64)) || (!(match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(after_2)), 93f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) && !(match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(after_2)), 61f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }))) {
                                                             crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Return(Vec::<f64>::new())
                                                         } else {
                                                             crate::translation::frontend_rules::MlFindDocumentationParameterRangeJoin20::MlFindDocumentationParameterRangeJoin20Next
