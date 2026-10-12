@@ -25,6 +25,7 @@ fn main() {
   const parsed = parseRust(source);
   assert.equal(parsed.items[0].body.k, 'tuple');
   assert.equal(parsed.items[0].body.frozen, true);
+  assert.equal(parsed.items[0].body.productModel, 'immutable value product');
   const checked = checkProgram(parsed);
   assert.equal(checked.declarations.get('make').body.frozen, true);
   const translated = translateProgram(source, 'Rust', 'JavaScript');

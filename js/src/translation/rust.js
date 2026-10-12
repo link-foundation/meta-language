@@ -857,7 +857,7 @@ class RustParser {
         if (!c.eat(',')) break;
       }
       const close = c.expect(')', 'tuple expression');
-      return this.origins.product({ k: 'tuple', items, frozen: true, span: { start: token.start, end: close.end } }, path);
+      return this.origins.product({ k: 'tuple', items, frozen: true, productModel: 'immutable value product', span: { start: token.start, end: close.end } }, path);
     }
     if (c.is('{')) {
       const block = this.block(path);
