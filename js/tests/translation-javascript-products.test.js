@@ -124,4 +124,5 @@ test('default initializers cannot substitute global constants for current or lat
       assert.throws(() => parseJavaScript(`function make(${params}){return Object.freeze([5,true]);}make();`), /default reading parameter|temporal dead zone/u);
     }
   }
+  equivalent('function value(x=((x)=>x)(5)){return x;}console.log(value());', ['5']);
 });

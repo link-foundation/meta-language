@@ -518,7 +518,7 @@ class JavaScriptParser {
       // A default is filled in where a call leaves the argument out; it reads no parameter.
       if (c.eat('=')) {
         const remaining = c.tokens.slice(c.index);
-        const reference = findDefaultParameterReference(remaining.map((token) => token.kind), remaining.map((token) => token.value), names);
+        const reference = findDefaultParameterReference(remaining.map((token) => token.kind), remaining.map((token) => token.value), tokens.map((token) => token.value));
         if (reference >= 0) {
           const token = c.peek(reference);
           throw unsupported(`default reading parameter ${token.value}`, 'a call fills in a default where it leaves the argument out, so a default reads no parameter', span(token, token));
