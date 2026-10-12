@@ -81397,6 +81397,155 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "translation.accept-program-machine-integer-width",
+      "phrase": "accept program machine integer width",
+      "role": "operation",
+      "definition": "Accept an explicitly supported machine integer width in the shared typed program schema.",
+      "constraints": [
+        "The accepted string widths are exactly 8, 16, 32, 64 and 128.",
+        "Admission of a width does not determine its signedness, overflow behavior or native execution evidence."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript typed linked program decisions",
+          "name": "acceptProgramMachineIntegerWidth"
+        },
+        {
+          "source": "Rust typed linked program decisions",
+          "name": "accept_program_machine_integer_width"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.accept-program-optional-absence",
+      "phrase": "accept program optional absence",
+      "role": "operation",
+      "definition": "Accept an explicitly declared optional absence policy in the shared typed program schema.",
+      "constraints": [
+        "The accepted policies are exactly null, undefined and both.",
+        "Policy admission preserves distinct absence meanings rather than conflating their values."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript typed linked program decisions",
+          "name": "acceptProgramOptionalAbsence"
+        },
+        {
+          "source": "Rust typed linked program decisions",
+          "name": "accept_program_optional_absence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-absent-number-value",
+      "phrase": "read absent number value",
+      "role": "operation",
+      "definition": "Read the numeric interpretation of an absent value for a selected arithmetic or array property operation.",
+      "constraints": [
+        "Arithmetic interprets null as zero and undefined as not a number.",
+        "Array property selection interprets both absence keys as a missing non-index result rather than selecting element zero.",
+        "Unsupported operations and absence kinds retain an empty decision."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript primitive value decisions",
+          "name": "readAbsentNumberValue"
+        },
+        {
+          "source": "Rust primitive value decisions",
+          "name": "read_absent_number_value"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.render-absent-number-expression",
+      "phrase": "render absent number expression",
+      "role": "operation",
+      "definition": "Render an admitted absent numeric interpretation in the selected target syntax.",
+      "constraints": [
+        "The target renderings cover JavaScript, Rust, Lean and Rocq for the explicitly supported absence decisions.",
+        "Host adapters preserve checked types and expression evaluation order.",
+        "A target expression rendering does not constitute native execution evidence."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript primitive value decisions",
+          "name": "renderAbsentNumberExpression"
+        },
+        {
+          "source": "Rust primitive value decisions",
+          "name": "render_absent_number_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-number-display-refusal",
+      "phrase": "read number display refusal",
+      "role": "operation",
+      "definition": "Read the precise refusal when Rust floating point display requires an unsupported operational formatter.",
+      "constraints": [
+        "The diagnostic retains Rust negative zero, infinity spelling and exponent expansion obligations.",
+        "An unsupported source display model is not silently replaced by the JavaScript display model."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript primitive value decisions",
+          "name": "readNumberDisplayRefusal"
+        },
+        {
+          "source": "Rust primitive value decisions",
+          "name": "read_number_display_refusal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-number-display-function",
+      "phrase": "read number display function",
+      "role": "operation",
+      "definition": "Read the selected JavaScript floating point display primitive for ordinary or console formatting.",
+      "constraints": [
+        "Floating point values select the existing ordinary or console primitive according to the explicit style.",
+        "Nonfloating values retain an empty decision rather than acquiring an incorrect display model."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript primitive value decisions",
+          "name": "readNumberDisplayFunction"
+        },
+        {
+          "source": "Rust primitive value decisions",
+          "name": "read_number_display_function"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-scalar-cell-operation",
+      "phrase": "read scalar cell operation",
+      "role": "operation",
+      "definition": "Read the existing linked reference operation identity associated with a checked scalar cell expression.",
+      "constraints": [
+        "Allocation, read and write expressions select their existing executable reference operation identities.",
+        "Unknown expressions retain an empty decision rather than inventing an operation."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript primitive value decisions",
+          "name": "readScalarCellOperation"
+        },
+        {
+          "source": "Rust primitive value decisions",
+          "name": "read_scalar_cell_operation"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

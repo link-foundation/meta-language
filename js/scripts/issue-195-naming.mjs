@@ -710,6 +710,13 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `translation.${name === 'requires-reference-semantics' ? 'require-reference-semantics' : 'find-structural-identity'}`,
   },
   {
+    inventory: 'primitive value decisions',
+    files: ['js/src/translation/primitive-value-rules.js', 'rust/src/translation/primitive_value_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
     inventory: 'structured type decisions',
     files: ['js/src/translation/structured-type-rules.js', 'rust/src/translation/structured_type_rules.rs'],
     extract: (text) => captures(text, /^(?:export function|pub fn) (mergeOptionalAbsence|acceptTypeIdentity|acceptOptionalAbsence|renderPortableTypeIdentity|renderRustCompoundType|readRustOptionalPrelude|wrapPortableReferenceIdentity|renderRustReferenceType|merge_optional_absence|accept_type_identity|accept_optional_absence|render_portable_type_identity|render_rust_compound_type|read_rust_optional_prelude|wrap_portable_reference_identity|render_rust_reference_type)\(/gmu)
