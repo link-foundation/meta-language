@@ -19,6 +19,7 @@ import { readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceTyp
 import { acceptConstantEmission, constantBindingForm, renderConstantBinding } from './frontend-rules.js';
 import { readNumberDisplayFunction, renderAbsentNumberExpression } from './primitive-value-rules.js';
 import { acceptTupleCopyType, renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
+import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 
 const KEYWORDS = new Set([
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
@@ -608,9 +609,9 @@ function camel(name) {
   return ident(parts.map((part) => part[0].toUpperCase() + part.slice(1)).join('') || 'T');
 }
 
-function isCopyType(type, tupleCopy) {
-  if (type.kind === 'tuple' && !tupleCopy) return false;
-  return acceptTupleCopyType(type.kind, type.kind === 'tuple' ? type.elements.map(item => isCopyType(item, true)) : []);
+function isCopyType(type, productModel) {
+  if (type.kind === 'tuple' && productModel !== 'immutable value product') return false;
+  return acceptTupleCopyType(type.kind, type.kind === 'tuple' ? type.elements.map(item => isCopyType(item, productModel)) : []);
 }
 const OPTIONAL_PRELUDE = readRustOptionalPrelude();
 
@@ -760,9 +761,9 @@ class RustEmitter {
   external(e, { k, literal }) {
     if (k === 'fn') return `${externalName(k, e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
     // A literal Number, boolean or machine integer is a const, a literal string a &str const, and any other value a static.
-    if (literal && isCopyType(e.type, this.program.sourceLanguage === 'Rust')) return e.fn;
+    if (literal && isCopyType(e.type, e.productModel)) return e.fn;
     if (literal && e.type.kind === 'string') return this.utf16Strings ? `crate::ml_string::Text::from_text(${e.fn})` : `String::from(${e.fn})`;
-    return isCopyType(e.type, this.program.sourceLanguage === 'Rust') ? `*${e.fn}` : `${e.fn}.clone()`;
+    return isCopyType(e.type, e.productModel) ? `*${e.fn}` : `${e.fn}.clone()`;
   }
 
   moduleBody(node, path) {
@@ -990,7 +991,7 @@ class RustEmitter {
 
   /** An owned copy of a variable. */
   own(name, type) {
-    return isCopyType(type, this.program.sourceLanguage === 'Rust') ? name : `${name}.clone()`;
+    return isCopyType(type) ? name : `${name}.clone()`;
   }
 
   /** An expression whose value is only read: variables are borrowed, not cloned. */
@@ -1010,6 +1011,18 @@ class RustEmitter {
   /** A method receiver: `&self` methods borrow a variable in place. */
   receiver(e) {
     return e.k === 'var' ? e.name : `(${this.expr(e)})`;
+  }
+
+  /** Read nested product fields in place; clone only an ownership-bearing result. */
+  tuplePlace(e) {
+    const object = e.object.k === 'tupleIndex' ? this.tuplePlace(e.object)
+      : e.object.k === 'var' ? e.object.name : this.expr(e.object);
+    return renderTupleProjection('Rust', object, String(e.index));
+  }
+
+  tupleProjection(e) {
+    const text = this.tuplePlace(e);
+    return isCopyType(e.type, e.productModel) ? text : `(${text}).clone()`;
   }
 
   lambda(e) {
@@ -1186,9 +1199,10 @@ class RustEmitter {
       case 'recordField':
         return `(${this.expr(e.object)}).${e.index}`;
       case 'tuple':
+        if (Object.hasOwn(e, 'productModel') && !acceptProgramTupleProductModel(e.productModel, e.frozen === true)) throw unsupported('immutable tuple product model', 'the declared immutable value product requires its retained frozen facet', e.span);
         return renderTupleValue('Rust', e.items.map((item) => this.expr(item)), e.frozen === true);
       case 'tupleIndex':
-        return renderTupleProjection('Rust', this.expr(e.object), String(e.index));
+        return this.tupleProjection(e);
       case 'none':
         if (e.type.absence === 'both') {
           this.usesOptional = true;

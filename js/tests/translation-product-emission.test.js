@@ -17,8 +17,8 @@ function valueProgram(frozen) {
   const result = tupleType([inner, BOOL]);
   return checkProgram({ language: 'JavaScript', items: [{
     k: 'fn', name: 'value', params: [], ret: result,
-    body: { k: 'tuple', frozen, items: [
-      { k: 'tuple', frozen, items: [number(5)] }, { k: 'bool', value: true },
+    body: { k: 'tuple', frozen, ...(frozen && { productModel: 'immutable value product' }), items: [
+      { k: 'tuple', frozen, ...(frozen && { productModel: 'immutable value product' }), items: [number(5)] }, { k: 'bool', value: true },
     ] },
   }], main: null });
 }
@@ -66,5 +66,22 @@ test('Copy decisions keep ownership-bearing values outside the scalar product mo
   assert.equal(acceptTupleCopyType('tuple', [true, false]), false);
   for (const kind of ['string', 'array', 'map', 'option', 'cell', 'data']) {
     assert.equal(acceptTupleCopyType(kind, [true]), false, kind);
+  }
+});
+
+test('a tuple parameter alone retains conservative ownership without selected model evidence', () => {
+  const type = tupleType([FLOAT, BOOL]);
+  const program = checkProgram({ language: 'Rust', items: [{
+    k: 'fn', name: 'identity', params: [{ name: 'value', type }], ret: type, body: name('value'),
+  }], main: null });
+  assert.ok(emitRust(program).text.includes('value.clone()'));
+});
+
+test('each executable target refuses a retained product model with missing immutability evidence', () => {
+  for (const emit of [emitJavaScript, emitRust]) for (const model of ['immutable value product', 'unknown model', null, undefined]) {
+    const program = valueProgram(true);
+    const declaration = program.declarations.get('value');
+    declaration.body = { ...declaration.body, productModel: model, frozen: false };
+    assert.throws(() => emit(program), /immutable tuple product model/, String(model));
   }
 });

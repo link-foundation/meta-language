@@ -663,12 +663,15 @@ struct RustEmitter<'p> {
     loop_params: Option<(String, Vec<String>)>,
 }
 
-fn is_copy(ty: &Type, tuple_copy: bool) -> bool {
-    if matches!(ty, Type::Tuple { .. }) && !tuple_copy {
+fn is_copy(ty: &Type, product_model: Option<&str>) -> bool {
+    if matches!(ty, Type::Tuple { .. }) && product_model != Some("immutable value product") {
         return false;
     }
     let fields = match ty {
-        Type::Tuple { elements } => elements.iter().map(|item| is_copy(item, true)).collect(),
+        Type::Tuple { elements } => elements
+            .iter()
+            .map(|item| is_copy(item, product_model))
+            .collect(),
         _ => Vec::new(),
     };
     super::product_emission_rules::accept_tuple_copy_type(ty.kind().to_owned(), fields)
@@ -698,8 +701,8 @@ const fn rounding_text(rounding: Option<Rounding>) -> &'static str {
 impl RustEmitter<'_> {}
 
 /// An owned copy of a variable.
-fn own(name: &str, ty: &Type, tuple_copy: bool) -> String {
-    if is_copy(ty, tuple_copy) {
+fn own(name: &str, ty: &Type) -> String {
+    if is_copy(ty, None) {
         name.to_owned()
     } else {
         format!("{name}.clone()")

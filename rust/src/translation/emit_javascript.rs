@@ -663,7 +663,22 @@ impl<'p> JavaScriptEmitter<'p> {
         match &e.node {
             Node::Lit { value } => literal(&e.ty, value),
             Node::Unit => Ok("null".to_owned()),
-            Node::Tuple { items, frozen } => {
+            Node::Tuple {
+                items,
+                frozen,
+                product_model,
+            } => {
+                if product_model.as_ref().is_some_and(|model| {
+                    !super::typed_program_link_rules::accept_program_tuple_product_model(
+                        model, *frozen,
+                    )
+                }) {
+                    return Err(unsupported(
+                        "immutable tuple product model",
+                        "the declared immutable value product requires its retained frozen facet",
+                        e.span,
+                    ));
+                }
                 let texts = self.exprs(items)?;
                 Ok(
                     crate::translation::product_emission_rules::render_tuple_value(

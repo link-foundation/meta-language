@@ -10,6 +10,7 @@ import { renderStringMapExpression, renderStringTestExpression } from './fronten
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { requireDataObjectFreeze } from './primitive-value-rules.js';
 import { renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
+import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -413,6 +414,7 @@ class JavaScriptEmitter {
       case 'recordField':
         return `(${this.expr(e.object)})[${JSON.stringify(e.field)}]`;
       case 'tuple':
+        if (Object.hasOwn(e, 'productModel') && !acceptProgramTupleProductModel(e.productModel, e.frozen === true)) throw unsupported('immutable tuple product model', 'the declared immutable value product requires its retained frozen facet', e.span);
         return renderTupleValue('JavaScript', e.items.map((item) => this.expr(item)), e.frozen === true);
       case 'tupleIndex':
         return renderTupleProjection('JavaScript', this.expr(e.object), String(e.index));

@@ -2,8 +2,8 @@
 
 use super::{
     BinaryOp, ByZero, Decimal, Effect, Expr, Flavor, LitValue, Node, Pattern, Prelude, Result,
-    Rounding, RustEmitter, Semantics, Type, UnaryOp, block, comparison_operator, indent, own,
-    rename_main, rounding_text, rust_string, snake, unsupported,
+    Rounding, RustEmitter, Semantics, Type, UnaryOp, block, comparison_operator, indent, is_copy,
+    own, rename_main, rounding_text, rust_string, snake, unsupported,
 };
 use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_message};
 
@@ -21,7 +21,14 @@ impl RustEmitter<'_> {
         match &expr.node {
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),
-            Node::Tuple { items, frozen } => {
+            Node::Tuple {
+                items,
+                frozen,
+                product_model,
+            } => {
+                if product_model.as_ref().is_some_and(|model| !crate::translation::typed_program_link_rules::accept_program_tuple_product_model(model, *frozen)) {
+                    return Err(unsupported("immutable tuple product model", "the declared immutable value product requires its retained frozen facet", expr.span));
+                }
                 let mut texts = Vec::with_capacity(items.len());
                 for item in items {
                     texts.push(self.expr(item)?);
@@ -34,21 +41,15 @@ impl RustEmitter<'_> {
                     ),
                 )
             }
-            Node::TupleIndex { object, index } => {
-                let text = self.expr(object)?;
-                Ok(
-                    crate::translation::product_emission_rules::render_tuple_projection(
-                        "Rust".to_owned(),
-                        text,
-                        index.to_string(),
-                    ),
-                )
+            Node::TupleIndex { .. } => {
+                let text = self.tuple_place(expr)?;
+                Ok(if is_copy(&expr.ty, None) {
+                    text
+                } else {
+                    format!("({text}).clone()")
+                })
             }
-            Node::Var { name } => Ok(own(
-                name,
-                &expr.ty,
-                self.program.source_language == crate::translation::Language::Rust,
-            )),
+            Node::Var { name } => Ok(own(name, &expr.ty)),
             Node::Print { text, body } => {
                 let text = self.expr(text)?;
                 let body = self.expr(body)?;
@@ -208,6 +209,24 @@ impl RustEmitter<'_> {
             }
             Node::Math { .. } => self.math(expr),
         }
+    }
+
+    fn tuple_place(&mut self, expr: &Expr) -> Result<String> {
+        let Node::TupleIndex { object, index } = &expr.node else {
+            unreachable!("a tuple projection place")
+        };
+        let text = match &object.node {
+            Node::TupleIndex { .. } => self.tuple_place(object)?,
+            Node::Var { name } => name.clone(),
+            _ => self.expr(object)?,
+        };
+        Ok(
+            crate::translation::product_emission_rules::render_tuple_projection(
+                "Rust".to_owned(),
+                text,
+                index.to_string(),
+            ),
+        )
     }
 
     pub(super) fn literal(&mut self, expr: &Expr, value: &LitValue) -> String {
