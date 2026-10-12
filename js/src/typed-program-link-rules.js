@@ -51,6 +51,18 @@ export function readProgramExpressionProjection(term) {
   return "";
 }
 
+/** @param {string} kind @param {string} operation @returns {boolean} */
+export function acceptProgramExpressionOperation(kind, operation) {
+  if (kind === "math") return operation === "abs" || operation === "floor" || operation === "ceil" || operation === "trunc" || operation === "round" || operation === "sign" || operation === "sqrt" || operation === "max" || operation === "min" || operation === "maxOf" || operation === "minOf" || operation === "isInteger" || operation === "isSafeInteger" || operation === "isFinite" || operation === "isNaN";
+  if (kind === "stringMap") return operation === "toLowerCase" || operation === "toUpperCase" || operation === "trim" || operation === "trimStart" || operation === "trimEnd" || operation === "rustTrim" || operation === "rustTrimStart" || operation === "rustTrimEnd";
+  if (kind === "stringTest") return operation === "startsWith" || operation === "endsWith" || operation === "includes";
+  if (kind === "method") return operation === "split" || operation === "slice" || operation === "indexOf" || operation === "lastIndexOf" || operation === "replace" || operation === "replaceAll" || operation === "repeat" || operation === "padStart" || operation === "padEnd" || operation === "codePointAt" || operation === "map" || operation === "filter" || operation === "find" || operation === "findIndex" || operation === "some" || operation === "every" || operation === "flatMap" || operation === "forEach" || operation === "reduce" || operation === "join" || operation === "includes";
+  if (kind === "collectionRead") return operation === "get" || operation === "has";
+  if (kind === "collectionItems") return operation === "keys" || operation === "values" || operation === "entries";
+  if (kind === "optionalPredicate") return operation === "isInteger" || operation === "isSafeInteger" || operation === "isFinite" || operation === "isNaN";
+  return false;
+}
+
 /** @param {string} label @returns {boolean} */
 export function acceptProgramReferenceField(label) {
   return label === "binding reference" || label === "declaration reference";
@@ -74,4 +86,9 @@ export function acceptProgramMachineIntegerWidth(width) {
 /** @param {string} absence @returns {boolean} */
 export function acceptProgramOptionalAbsence(absence) {
   return absence === "null" || absence === "undefined" || absence === "both";
+}
+
+/** @param {string} rounding @returns {boolean} */
+export function acceptProgramDivisionRounding(rounding) {
+  return rounding === "trunc" || rounding === "euclid" || rounding === "floor";
 }

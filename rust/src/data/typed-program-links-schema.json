@@ -4,6 +4,16 @@
   "root": "typed program",
   "machineIntegerWidths": [8, 16, 32, 64, 128],
   "optionalAbsences": ["null", "undefined", "both"],
+  "divisionRoundingPolicies": ["trunc", "euclid", "floor"],
+  "expressionOperations": {
+    "math": ["abs", "floor", "ceil", "trunc", "round", "sign", "sqrt", "max", "min", "maxOf", "minOf", "isInteger", "isSafeInteger", "isFinite", "isNaN"],
+    "stringMap": ["toLowerCase", "toUpperCase", "trim", "trimStart", "trimEnd", "rustTrim", "rustTrimStart", "rustTrimEnd"],
+    "stringTest": ["startsWith", "endsWith", "includes"],
+    "method": ["split", "slice", "indexOf", "lastIndexOf", "replace", "replaceAll", "repeat", "padStart", "padEnd", "codePointAt", "map", "filter", "find", "findIndex", "some", "every", "flatMap", "forEach", "reduce", "join", "includes"],
+    "collectionRead": ["get", "has"],
+    "collectionItems": ["keys", "values", "entries"],
+    "optionalPredicate": ["isInteger", "isSafeInteger", "isFinite", "isNaN"]
+  },
   "expressionProjections": {
     "lit": { "construct": "", "variant": ["type", "kind"], "fields": [] },
     "lit:bool": { "construct": "bool", "fields": [["value", "copy", "value"]] },

@@ -98,6 +98,67 @@ pub fn read_program_expression_projection(term: &str) -> String {
 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
+pub fn accept_program_expression_operation(kind: &str, operation: &str) -> bool {
+    if kind == "math" {
+        ((((((((((((((operation == "abs" || operation == "floor")
+            || operation == "ceil")
+            || operation == "trunc")
+            || operation == "round")
+            || operation == "sign")
+            || operation == "sqrt")
+            || operation == "max")
+            || operation == "min")
+            || operation == "maxOf")
+            || operation == "minOf")
+            || operation == "isInteger")
+            || operation == "isSafeInteger")
+            || operation == "isFinite")
+            || operation == "isNaN")
+    } else if kind == "stringMap" {
+        (((((((operation == "toLowerCase" || operation == "toUpperCase")
+            || operation == "trim")
+            || operation == "trimStart")
+            || operation == "trimEnd")
+            || operation == "rustTrim")
+            || operation == "rustTrimStart")
+            || operation == "rustTrimEnd")
+    } else if kind == "stringTest" {
+        ((operation == "startsWith" || operation == "endsWith") || operation == "includes")
+    } else if kind == "method" {
+        ((((((((((((((((((((operation == "split" || operation == "slice")
+            || operation == "indexOf")
+            || operation == "lastIndexOf")
+            || operation == "replace")
+            || operation == "replaceAll")
+            || operation == "repeat")
+            || operation == "padStart")
+            || operation == "padEnd")
+            || operation == "codePointAt")
+            || operation == "map")
+            || operation == "filter")
+            || operation == "find")
+            || operation == "findIndex")
+            || operation == "some")
+            || operation == "every")
+            || operation == "flatMap")
+            || operation == "forEach")
+            || operation == "reduce")
+            || operation == "join")
+            || operation == "includes")
+    } else if kind == "collectionRead" {
+        (operation == "get" || operation == "has")
+    } else if kind == "collectionItems" {
+        ((operation == "keys" || operation == "values") || operation == "entries")
+    } else if kind == "optionalPredicate" {
+        (((operation == "isInteger" || operation == "isSafeInteger") || operation == "isFinite")
+            || operation == "isNaN")
+    } else {
+        false
+    }
+}
+
+/// Read the corresponding decision of the shared typed program links schema.
+#[must_use]
 pub fn accept_program_reference_field(label: &str) -> bool {
     label == "binding reference" || label == "declaration reference"
 }
@@ -124,4 +185,10 @@ pub fn accept_program_machine_integer_width(width: &str) -> bool {
 #[must_use]
 pub fn accept_program_optional_absence(absence: &str) -> bool {
     absence == "null" || absence == "undefined" || absence == "both"
+}
+
+/// Read the corresponding decision of the shared typed program links schema.
+#[must_use]
+pub fn accept_program_division_rounding(rounding: &str) -> bool {
+    rounding == "trunc" || rounding == "euclid" || rounding == "floor"
 }

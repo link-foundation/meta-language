@@ -1,10 +1,11 @@
 //! Adapt the supported typed IR to the existing checker, preserving policies.
 use super::projection::project as expression;
-use super::{Result, error};
+use super::{Result, error, typed_program_links_schema};
 use crate::translation::check::check_program;
 use crate::translation::ir::{Decl, Effect, Item, Program};
 use crate::translation::surface::{SEffect, SFn, SItem, SMain, SParam, SProgram, ShowStyle};
 use crate::translation::typed_program_link_rules::{
+    accept_program_division_rounding, accept_program_expression_operation,
     accept_program_machine_integer_width, accept_program_optional_absence,
 };
 use regex::Regex;
@@ -16,7 +17,7 @@ fn valid_float(value: &str) -> bool {
     SPELLING
         .get_or_init(|| {
             Regex::new(
-                r"(?i)^(?:-?(?:[0-9]+(?:\.[0-9]+)?)(?:e[+-]?[0-9]+)?|NaN|Infinity|-Infinity)$",
+                r"^(?:-?(?:[0-9]+(?:\.[0-9]+)?)(?:[eE][+-]?[0-9]+)?|NaN|Infinity|-Infinity)$",
             )
             .unwrap()
         })
@@ -25,6 +26,26 @@ fn valid_float(value: &str) -> bool {
 
 fn validate_type_records(value: &Value) -> Result<()> {
     if let Some(fields) = value.as_object() {
+        if value["k"] == "binary"
+            && value
+                .get("rounding")
+                .is_some_and(|rounding| !rounding.is_null())
+            && !accept_program_division_rounding(value["rounding"].as_str().unwrap_or_default())
+        {
+            return Err(error(
+                "the linked program contains an unrecognized division rounding policy",
+            ));
+        }
+        let kind = value["k"].as_str().unwrap_or_default();
+        if typed_program_links_schema()["expressionOperations"]
+            .get(kind)
+            .is_some()
+            && !accept_program_expression_operation(kind, value["op"].as_str().unwrap_or_default())
+        {
+            return Err(error(
+                "the linked program contains an unrecognized expression operation",
+            ));
+        }
         if value["k"] == "lit"
             && value["type"]["kind"] == "float"
             && !value["value"].as_str().is_some_and(valid_float)

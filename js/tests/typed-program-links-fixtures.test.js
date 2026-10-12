@@ -42,6 +42,50 @@ test('machine integer width edits are refused before target emission', () => {
   }
 });
 
+test('linked operation edits remain admitted decisions rather than host source', () => {
+  for (const entry of fixture.operationMutations) {
+    const network = LinkNetwork.fromLino(entry.lino);
+    const operation = network.fieldRelations().find((relation) => relation.label === 'operation'
+      && network.link(relation.child).metadata().definition === entry.operation).child;
+    const value = network.link(operation);
+    value.setMetadata(value.metadata().withDefinition(entry.replacement));
+    for (const target of entry.runtimes) assert.throws(() => emitTypedProgramLinks(network, LinkId.fromU64(entry.root), target), /expression operation/u);
+  }
+});
+
+test('division rounding edits cannot enter quoted target source', () => {
+  for (const entry of fixture.roundingMutations) {
+    const network = LinkNetwork.fromLino(entry.lino);
+    const rounding = network.fieldRelations().find((relation) => relation.label === 'rounding').child;
+    const value = network.link(rounding);
+    value.setMetadata(value.metadata().withDefinition(entry.replacement));
+    for (const target of ['JavaScript', 'Rust']) assert.throws(() => emitTypedProgramLinks(network, LinkId.fromU64(entry.root), target), /rounding/u);
+  }
+});
+
+test('floating-point spellings retain canonical special values', () => {
+  for (const replacement of fixture.invalidFloatingPointSpellings) {
+    const network = LinkNetwork.fromLino(fixture.cases[0].lino);
+    const literal = network.fieldRelations().find((relation) => relation.label === 'value'
+      && network.link(relation.child).metadata().definition === '2').child;
+    const value = network.link(literal);
+    value.setMetadata(value.metadata().withDefinition(replacement));
+    for (const target of ['JavaScript', 'Rust']) assert.throws(() => emitTypedProgramLinks(network, LinkId.fromU64(fixture.cases[0].root), target), /floating-point literal/u);
+  }
+  for (const entry of fixture.validFloatingPointSpellings) {
+    const network = LinkNetwork.fromLino(fixture.cases[0].lino);
+    const literal = network.fieldRelations().find((relation) => relation.label === 'value'
+      && network.link(relation.child).metadata().definition === '2').child;
+    const value = network.link(literal);
+    value.setMetadata(value.metadata().withDefinition(entry.value));
+    const emitted = emitTypedProgramLinks(network, LinkId.fromU64(fixture.cases[0].root), 'JavaScript');
+    const output = [];
+    vm.runInNewContext(emitted.code, { console: { log: (...values) => output.push(values.map(String).join(' ')) }, process: { argv: [] } }, { timeout: 1000 });
+    assert.deepEqual(output, entry.output);
+    assert.ok(emitTypedProgramLinks(network, LinkId.fromU64(fixture.cases[0].root), 'Rust').code.length > 0);
+  }
+});
+
 function normalized(value) {
   if (value instanceof Map) return [...value].map(([name, value]) => [name, normalized(value)]);
   if (Array.isArray(value)) return value.map(normalized);

@@ -295,3 +295,77 @@ fn machine_integer_width_edits_return_a_diagnostic_before_emission() {
         );
     }
 }
+
+#[test]
+fn linked_operation_and_rounding_edits_cannot_enter_target_source() {
+    let fixtures = fixture();
+    for case in fixtures["operationMutations"].as_array().unwrap() {
+        if !case["runtimes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|runtime| runtime.as_str() == Some("Rust"))
+        {
+            continue;
+        }
+        let graph = LinkNetwork::from_lino(case["lino"].as_str().unwrap()).unwrap();
+        let root = LinkId::from_u64(case["root"].as_u64().unwrap());
+        let operation = scalar(&graph, "operation", case["operation"].as_str().unwrap());
+        let changed = edit_definition(&graph, operation, case["replacement"].as_str().unwrap());
+        for target in ["JavaScript", "Rust"] {
+            assert!(
+                emit_typed_program_links(&changed, root, target)
+                    .unwrap_err()
+                    .message
+                    .contains("expression operation")
+            );
+        }
+    }
+    for case in fixtures["roundingMutations"].as_array().unwrap() {
+        let graph = LinkNetwork::from_lino(case["lino"].as_str().unwrap()).unwrap();
+        let root = LinkId::from_u64(case["root"].as_u64().unwrap());
+        let rounding = scalar(&graph, "rounding", "trunc");
+        let changed = edit_definition(&graph, rounding, case["replacement"].as_str().unwrap());
+        for target in ["JavaScript", "Rust"] {
+            assert!(emit_typed_program_links(&changed, root, target).is_err());
+        }
+    }
+}
+
+#[test]
+fn floating_point_special_spellings_cannot_become_undefined_identifiers() {
+    let fixtures = fixture();
+    let case = &fixtures["cases"][0];
+    let graph = LinkNetwork::from_lino(case["lino"].as_str().unwrap()).unwrap();
+    let root = LinkId::from_u64(case["root"].as_u64().unwrap());
+    let literal = scalar(&graph, "value", "2");
+    for replacement in fixtures["invalidFloatingPointSpellings"]
+        .as_array()
+        .unwrap()
+    {
+        let changed = edit_definition(&graph, literal, replacement.as_str().unwrap());
+        assert!(
+            emit_typed_program_links(&changed, root, "Rust")
+                .unwrap_err()
+                .message
+                .contains("floating-point literal")
+        );
+    }
+    for entry in fixtures["validFloatingPointSpellings"].as_array().unwrap() {
+        let changed = edit_definition(&graph, literal, entry["value"].as_str().unwrap());
+        let emitted = emit_typed_program_links(&changed, root, "JavaScript").unwrap();
+        let expected = entry["output"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_str().unwrap().to_owned())
+            .collect::<Vec<_>>();
+        assert_eq!(run_javascript(&emitted.code), expected);
+        assert!(
+            !emit_typed_program_links(&changed, root, "Rust")
+                .unwrap()
+                .code
+                .is_empty()
+        );
+    }
+}

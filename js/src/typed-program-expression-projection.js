@@ -1,10 +1,12 @@
 // Host JSON boundary adapter. Projection instructions and admission decisions
 // are shared data; the existing checker still owns types and semantics.
 import { TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
-import { readProgramExpressionProjection } from './typed-program-link-rules.js';
+import { acceptProgramExpressionOperation, readProgramExpressionProjection } from './typed-program-link-rules.js';
 
 export function projectLinkedProgramExpression(value) {
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;
+  if (Object.hasOwn(TYPED_PROGRAM_LINKS_SCHEMA.expressionOperations, value?.k)
+    && !acceptProgramExpressionOperation(value.k, value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
   let key = value?.k;
   const base = plans[key];
   if (base?.variant) {

@@ -11,3 +11,5 @@ Shared projection instructions also recheck native string, array, index, length,
 math, cast, abort and local print expressions through the existing portable
 checker. The instructions replace the codec's separate expression match and are
 exercised by the same source-free archives in both packages.
+Edited operation names and division rounding policies pass generated admission
+rules before emission. Operator-like strings inside user literals remain data.
