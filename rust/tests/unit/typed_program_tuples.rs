@@ -369,3 +369,40 @@ fn chained_rust_product_projections_keep_exact_utf16_ranges_after_unicode() {
     assert_eq!(outer["object"]["index"], 0);
     assert_eq!(outer["object"]["span"], witness["inner"]);
 }
+
+#[test]
+fn linked_zero_tuple_positions_accept_equivalent_numeric_spellings() {
+    let fixture = fixture();
+    let case = fixture["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["id"] == "javascript-copy-choice")
+        .unwrap();
+    let (original, root) = graph(case);
+    let index = original
+        .links()
+        .find_map(|link| {
+            let kind = field(&original, link.id(), "construct kind")?;
+            if original.link(kind)?.metadata().definition() != Some("tupleIndex") {
+                return None;
+            }
+            let index = field(&original, link.id(), "index")?;
+            (original.link(index)?.metadata().definition() == Some("0")).then_some(index)
+        })
+        .expect("the authentic tuple projection has a zero position");
+    for spelling in ["-0", "0.0", "0e0"] {
+        let edited = apply_edits(
+            LinkNetwork::from_lino(&original.to_lino()).unwrap(),
+            &serde_json::json!([{ "kind": "definition", "link": index.as_u64(), "value": spelling }]),
+        );
+        decode_typed_program_links(&edited, root)
+            .expect("the equivalent spelling still denotes position zero");
+        let javascript = emit_typed_program_links(&edited, root, "JavaScript").unwrap();
+        assert_eq!(
+            run_javascript(&javascript.code),
+            expected(case),
+            "{spelling}"
+        );
+    }
+}
