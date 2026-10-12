@@ -1,0 +1,476 @@
+//! Source ownership evidence retained while Rust indirection projects to values.
+//!
+//! Mirrors `js/src/translation/rust-source-origins.js`. Declarations and lexical
+//! scopes come from the existing parser; value typing remains in the checker.
+
+use std::collections::HashMap;
+
+use super::indirection_rules::{
+    accept_rust_immutable_indirection_layer, accept_rust_source_box_owner,
+    accept_rust_source_indirection_argument,
+};
+use super::{Result, SExpr, SNode, SPattern, SPatternNode, Span, Type, unsupported};
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(super) struct SourceOrigin {
+    pub(super) ty: Option<Type>,
+    pub(super) path: Vec<String>,
+    pub(super) wrappers: Vec<String>,
+}
+
+impl SourceOrigin {
+    pub(super) const fn unknown() -> Self {
+        Self {
+            ty: None,
+            path: Vec::new(),
+            wrappers: Vec::new(),
+        }
+    }
+
+    pub(super) fn with_type(ty: Type, path: &[String], wrappers: Vec<String>) -> Self {
+        Self {
+            ty: Some(ty),
+            path: path.to_vec(),
+            wrappers,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(super) enum SourceDeclaration {
+    Module,
+    Data,
+    Constructor {
+        owner: String,
+        fields: Vec<SourceOrigin>,
+        result: SourceOrigin,
+    },
+    Function {
+        parameters: Vec<SourceOrigin>,
+        result: SourceOrigin,
+    },
+}
+
+pub(super) struct SourceLookup {
+    pub(super) declaration: SourceDeclaration,
+    pub(super) full_name: String,
+}
+
+pub(super) struct SourceOrigins {
+    pub(super) collecting: bool,
+    pub(super) catalog: HashMap<String, SourceDeclaration>,
+    pub(super) scope: HashMap<String, SourceOrigin>,
+    pub(super) current_type: SourceOrigin,
+    // Source ranges survive the copies used to construct let chains and rows.
+    // Erased wrapper expressions deliberately retain their operand's range, so
+    // successive wraps and dereferences update the same source evidence.
+    expressions: HashMap<Span, SourceOrigin>,
+    pattern_references: HashMap<Span, usize>,
+}
+
+impl SourceOrigins {
+    pub(super) fn new(catalog: Option<HashMap<String, SourceDeclaration>>) -> Self {
+        Self {
+            collecting: catalog.is_none(),
+            catalog: catalog.unwrap_or_default(),
+            scope: HashMap::new(),
+            current_type: SourceOrigin::unknown(),
+            expressions: HashMap::new(),
+            pattern_references: HashMap::new(),
+        }
+    }
+
+    pub(super) fn enter(
+        &mut self,
+        scope: Option<HashMap<String, SourceOrigin>>,
+    ) -> HashMap<String, SourceOrigin> {
+        let next = scope.unwrap_or_else(|| self.scope.clone());
+        std::mem::replace(&mut self.scope, next)
+    }
+
+    pub(super) fn typed(&mut self, ty: Type, path: &[String], wrappers: Vec<String>) -> Type {
+        self.current_type = SourceOrigin::with_type(ty.clone(), path, wrappers);
+        ty
+    }
+
+    pub(super) fn declaration(&mut self, name: &str, path: &[String], entry: SourceDeclaration) {
+        if self.collecting {
+            let mut full_path = path.to_vec();
+            full_path.push(name.to_owned());
+            self.catalog.insert(full_path.join("."), entry);
+        }
+    }
+
+    /// Resolve forward aliases with the completed parser's existing resolver.
+    pub(super) fn resolve_catalog_types<F>(&mut self, mut resolve: F)
+    where
+        F: FnMut(&[String], &[String]) -> Vec<String>,
+    {
+        let mut resolve_origin = |origin: &mut SourceOrigin| {
+            if let Some(Type::Named { path, .. }) = &mut origin.ty {
+                *path = resolve(path, &origin.path);
+            }
+        };
+        for declaration in self.catalog.values_mut() {
+            match declaration {
+                SourceDeclaration::Function { parameters, result } => {
+                    parameters.iter_mut().for_each(&mut resolve_origin);
+                    resolve_origin(result);
+                }
+                SourceDeclaration::Constructor { fields, result, .. } => {
+                    fields.iter_mut().for_each(&mut resolve_origin);
+                    resolve_origin(result);
+                }
+                SourceDeclaration::Module | SourceDeclaration::Data => {}
+            }
+        }
+    }
+
+    pub(super) fn lookup(&self, segments: &[String], path: &[String]) -> Option<SourceLookup> {
+        let mut names = segments.to_vec();
+        let mut start = path.to_vec();
+        let mut absolute = false;
+        match names.first().map(String::as_str) {
+            Some("crate") => {
+                names.remove(0);
+                start.clear();
+                absolute = true;
+            }
+            Some("self") => {
+                names.remove(0);
+                absolute = true;
+            }
+            Some("super") => {
+                while names.first().is_some_and(|name| name == "super") {
+                    names.remove(0);
+                    start.pop();
+                }
+                absolute = true;
+            }
+            _ => {}
+        }
+        for depth in (0..=start.len()).rev() {
+            let full_name = start[..depth]
+                .iter()
+                .chain(names.iter())
+                .cloned()
+                .collect::<Vec<_>>()
+                .join(".");
+            if let Some(declaration) = self.catalog.get(&full_name) {
+                return Some(SourceLookup {
+                    declaration: declaration.clone(),
+                    full_name,
+                });
+            }
+            if absolute {
+                break;
+            }
+        }
+        None
+    }
+
+    pub(super) fn box_owner(
+        &self,
+        segments: &[String],
+        resolved: &[String],
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<()> {
+        if self.collecting {
+            return Ok(());
+        }
+        let shadowed = segments != resolved
+            || segments
+                .first()
+                .is_some_and(|name| self.lookup(std::slice::from_ref(name), path).is_some());
+        if !accept_rust_source_box_owner(&segments.join("::"), shadowed) {
+            return Err(unsupported(
+                "Box owner",
+                "only the unshadowed standard immutable Box is portable",
+                span,
+            ));
+        }
+        Ok(())
+    }
+
+    /// Compare retained source types by their existing declaration identities.
+    pub(super) fn same_origin(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
+        if left.wrappers != right.wrappers {
+            return false;
+        }
+        match (&left.ty, &right.ty) {
+            (
+                Some(Type::Named {
+                    path: left_path, ..
+                }),
+                Some(Type::Named {
+                    path: right_path, ..
+                }),
+            ) => {
+                match (
+                    self.lookup(left_path, &left.path),
+                    self.lookup(right_path, &right.path),
+                ) {
+                    (Some(left), Some(right)) => left.full_name == right.full_name,
+                    _ => left_path == right_path && left.path == right.path,
+                }
+            }
+            _ => left.ty == right.ty,
+        }
+    }
+
+    pub(super) fn origin(&self, node: &SExpr, path: &[String]) -> SourceOrigin {
+        if let Some(origin) = node.span.and_then(|span| self.expressions.get(&span)) {
+            return origin.clone();
+        }
+        if let SNode::Name { path: names } = &node.node
+            && names.len() == 1
+            && let Some(origin) = self.scope.get(&names[0])
+        {
+            return origin.clone();
+        }
+        let names = match &node.node {
+            SNode::Name { path } => Some(path),
+            SNode::App { func, .. } => match &func.node {
+                SNode::Name { path } => Some(path),
+                _ => None,
+            },
+            _ => None,
+        };
+        if let Some(entry) = names.and_then(|names| self.lookup(names, path)) {
+            match entry.declaration {
+                SourceDeclaration::Function { result, .. }
+                | SourceDeclaration::Constructor { result, .. } => return result,
+                SourceDeclaration::Module | SourceDeclaration::Data => {}
+            }
+        }
+        if let SNode::If {
+            then, otherwise, ..
+        } = &node.node
+        {
+            let left = self.origin(then, path);
+            let right = self.origin(otherwise, path);
+            if self.same_origin(&left, &right) {
+                return left;
+            }
+        }
+        SourceOrigin::unknown()
+    }
+
+    pub(super) fn mark(&mut self, node: &SExpr, origin: SourceOrigin) {
+        if let Some(span) = node.span {
+            self.expressions.insert(span, origin);
+        }
+    }
+
+    pub(super) fn wrap(&mut self, node: &SExpr, path: &[String], layer: &str) {
+        let mut origin = self.origin(node, path);
+        origin.wrappers.insert(0, layer.to_owned());
+        self.mark(node, origin);
+    }
+
+    pub(super) fn dereference(
+        &mut self,
+        node: &SExpr,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<()> {
+        let mut origin = self.origin(node, path);
+        let layer = origin.wrappers.first().map_or("", String::as_str);
+        if !self.collecting && !accept_rust_immutable_indirection_layer(layer) {
+            return Err(unsupported(
+                "dereference",
+                "the operand must have a proven immutable reference or standard Box source type",
+                span,
+            ));
+        }
+        if !origin.wrappers.is_empty() {
+            origin.wrappers.remove(0);
+        }
+        self.mark(node, origin);
+        Ok(())
+    }
+
+    pub(super) fn bind(
+        &mut self,
+        name: &str,
+        node: &SExpr,
+        path: &[String],
+        declared: Option<&SourceOrigin>,
+    ) -> Result<()> {
+        let actual = self.origin(node, path);
+        if let Some(declared) = declared {
+            self.argument(&actual, declared, node.span)?;
+        }
+        self.scope
+            .insert(name.to_owned(), declared.cloned().unwrap_or(actual));
+        Ok(())
+    }
+
+    pub(super) fn argument(
+        &self,
+        actual: &SourceOrigin,
+        expected: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<()> {
+        if self.collecting {
+            return Ok(());
+        }
+        let actual = &actual.wrappers;
+        let want = &expected.wrappers;
+        let indirected = !actual.is_empty() || !want.is_empty();
+        let exact = actual == want;
+        let borrowed = actual.first().is_some_and(|layer| layer == "reference")
+            && want.first().is_some_and(|layer| layer == "reference");
+        let coerced = actual
+            .iter()
+            .filter(|layer| layer.as_str() != "box")
+            .eq(want.iter());
+        if !accept_rust_source_indirection_argument(indirected, exact, borrowed, coerced) {
+            return Err(unsupported(
+                "source indirection",
+                "source ownership requires an explicit dereference or matching immutable reference or Box type",
+                span,
+            ));
+        }
+        Ok(())
+    }
+
+    pub(super) fn call(
+        &self,
+        segments: &[String],
+        args: &[SExpr],
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<()> {
+        if self.collecting {
+            return Ok(());
+        }
+        let expected = match self.lookup(segments, path).map(|entry| entry.declaration) {
+            Some(SourceDeclaration::Function { parameters, .. }) => parameters,
+            Some(SourceDeclaration::Constructor { fields, .. }) => fields,
+            _ => return Ok(()),
+        };
+        if args.len() != expected.len() {
+            return Ok(());
+        }
+        // References can coerce through Box; owned Box cannot become its owned
+        // inner value until the source explicitly dereferences it.
+        for (argument, expected) in args.iter().zip(&expected) {
+            self.argument(&self.origin(argument, path), expected, span)?;
+        }
+        Ok(())
+    }
+
+    pub(super) fn reference_pattern(&mut self, pattern: &SPattern) {
+        if let Some(span) = pattern.span {
+            *self.pattern_references.entry(span).or_default() += 1;
+        }
+    }
+
+    fn pattern(
+        &self,
+        pattern: &SPattern,
+        origin: &SourceOrigin,
+        path: &[String],
+        result: &mut HashMap<String, SourceOrigin>,
+    ) {
+        let mut origin = origin.clone();
+        let references = pattern
+            .span
+            .and_then(|span| self.pattern_references.get(&span))
+            .copied()
+            .unwrap_or_default();
+        for _ in 0..references {
+            if origin
+                .wrappers
+                .first()
+                .is_some_and(|layer| layer == "reference")
+            {
+                origin.wrappers.remove(0);
+            } else {
+                origin = SourceOrigin::unknown();
+            }
+        }
+        match &pattern.node {
+            SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
+                if !self
+                    .lookup(std::slice::from_ref(name), path)
+                    .is_some_and(|entry| {
+                        matches!(entry.declaration, SourceDeclaration::Constructor { .. })
+                    })
+                {
+                    result.insert(name.clone(), origin);
+                }
+            }
+            SPatternNode::Ctor { path: names, args } => {
+                let entry = self.lookup(names, path);
+                let type_entry = match &origin.ty {
+                    Some(Type::Named { path: names, .. }) => self.lookup(names, &origin.path),
+                    _ => None,
+                };
+                let borrowed = !origin.wrappers.is_empty()
+                    && origin.wrappers.iter().all(|layer| layer == "reference");
+                let fields = match (entry, type_entry) {
+                    (
+                        Some(SourceLookup {
+                            declaration: SourceDeclaration::Constructor { owner, fields, .. },
+                            ..
+                        }),
+                        Some(SourceLookup {
+                            declaration: SourceDeclaration::Data,
+                            full_name,
+                        }),
+                    ) if owner == full_name && (origin.wrappers.is_empty() || borrowed) => {
+                        Some(fields)
+                    }
+                    _ => None,
+                };
+                for (index, argument) in args.iter().enumerate() {
+                    let mut field = fields
+                        .as_ref()
+                        .and_then(|fields| fields.get(index))
+                        .cloned()
+                        .unwrap_or_else(SourceOrigin::unknown);
+                    if borrowed && fields.is_some() {
+                        field.wrappers.insert(0, "reference".to_owned());
+                    }
+                    self.pattern(argument, &field, path, result);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub(super) fn cases(
+        &self,
+        patterns: &[SPattern],
+        scrutinee: &SExpr,
+        path: &[String],
+    ) -> HashMap<String, SourceOrigin> {
+        let origin = self.origin(scrutinee, path);
+        let maps: Vec<_> = patterns
+            .iter()
+            .map(|pattern| {
+                let mut scope = HashMap::new();
+                self.pattern(pattern, &origin, path, &mut scope);
+                scope
+            })
+            .collect();
+        let mut scope = self.scope.clone();
+        if let Some(first) = maps.first() {
+            for (name, origin) in first {
+                let origin = if maps.iter().all(|map| {
+                    map.get(name)
+                        .is_some_and(|candidate| self.same_origin(origin, candidate))
+                }) {
+                    origin.clone()
+                } else {
+                    SourceOrigin::unknown()
+                };
+                scope.insert(name.clone(), origin);
+            }
+        }
+        scope
+    }
+}
