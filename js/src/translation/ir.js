@@ -39,6 +39,16 @@ export function renameExpr(expr, env, scope) {
       const name = scope.fresh(expr.name);
       return { ...expr, name, value, body: renameExpr(expr.body, new Map(env).set(expr.name, name), scope) };
     }
+    case 'lambda': {
+      const inner = new Map(env);
+      const child = scope.child();
+      const params = expr.params.map((param) => {
+        const name = child.fresh(param.name);
+        inner.set(param.name, name);
+        return { ...param, name };
+      });
+      return { ...expr, params, body: renameExpr(expr.body, inner, child) };
+    }
     case 'match':
       return {
         ...expr,

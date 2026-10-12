@@ -128,6 +128,21 @@ export function startRegularExpression(kind, value) {
     && value !== '?.' && value !== '++' && value !== '--';
 }
 
+/**
+ * A statement block permits a new expression after its closing brace;
+ * an object literal or function value instead ends the current expression.
+ * @param {string} kind
+ * @param {string} value
+ * @param {boolean} controlClosed
+ * @param {boolean} declarationBody
+ * @returns {boolean}
+ */
+export function acceptStatementBrace(kind, value, controlClosed, declarationBody) {
+  if (declarationBody || controlClosed || kind === '') return true;
+  if (kind === 'identifier') return value === 'else' || value === 'do' || value === 'try' || value === 'finally';
+  return kind === 'punct' && (value === ';' || value === '{' || value === '}');
+}
+
 /** @param {string} kind @param {string} value @param {boolean} qualified @returns {boolean} */
 export function acceptControlParenthesis(kind, value, qualified) {
   if (qualified || kind !== 'identifier') return false;
@@ -387,6 +402,9 @@ export function readStringMapOperation(language, method) {
   if (language === 'Rust') {
     if (method === 'to_lowercase') return 'toLowerCase';
     if (method === 'to_uppercase') return 'toUpperCase';
+    if (method === 'trim') return 'rustTrim';
+    if (method === 'trim_start') return 'rustTrimStart';
+    if (method === 'trim_end') return 'rustTrimEnd';
     return '';
   }
   return '';
@@ -394,6 +412,18 @@ export function readStringMapOperation(language, method) {
 
 /** @param {string} target @param {string} operation @param {string} object @returns {string} */
 export function renderStringMapExpression(target, operation, object) {
+  if (operation === 'rustTrim') {
+    if (target === 'JavaScript') return object + ".replace(/^\\p{White_Space}+|\\p{White_Space}+$/gu, '')";
+    return object + '.trim().to_string()';
+  }
+  if (operation === 'rustTrimStart') {
+    if (target === 'JavaScript') return object + ".replace(/^\\p{White_Space}+/gu, '')";
+    return object + '.trim_start().to_string()';
+  }
+  if (operation === 'rustTrimEnd') {
+    if (target === 'JavaScript') return object + ".replace(/\\p{White_Space}+$/gu, '')";
+    return object + '.trim_end().to_string()';
+  }
   if (target === 'JavaScript') return object + '.' + operation + '()';
   if (operation === 'toLowerCase') return object + '.to_lowercase()';
   if (operation === 'toUpperCase') return object + '.to_uppercase()';

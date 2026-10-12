@@ -4,7 +4,7 @@
 // part of the JavaScript frontend's input.
 
 import { TranslationError } from './diagnostics.js';
-import { acceptControlParenthesis, decodeUnicodeEscape, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
+import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -37,7 +37,9 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
   // Encode once, on the first regular expression. Copying each remaining
   // suffix makes a module with many literals take quadratic time and space.
   const scopes = [];
+  const braces = [];
   let closed = false;
+  let declarationBody = false;
   let depth = 0;
   let index = startIndex;
   while (index < source.length) {
@@ -70,6 +72,7 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       closed = false;
       continue;
     }
+    const controlClosed = closed;
     closed = false;
     if (language === 'JavaScript' && char === '`') {
       tokens.push(templateToken(source, index, encoding));
@@ -95,8 +98,17 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       continue;
     }
     if (/[0-9]/u.test(char)) {
-      const match = /^[0-9][0-9_]*(?:[a-z][a-z0-9]*)?/u.exec(source.slice(index));
+      const pattern = language === 'Rust' ? /^[0-9][0-9_]*(\.(?![.A-Za-z_])[0-9_]*)?([eE][+-]?[0-9][0-9_]*)?([a-z][a-z0-9]*)?/u : /^[0-9][0-9_]*(?:[a-z][a-z0-9]*)?/u;
+      const match = pattern.exec(source.slice(index));
       const raw = match[0];
+      const floating = language === 'Rust' && Boolean(match[1] || match[2] || /^f(?:32|64)$/u.test(match[3] ?? ''));
+      if (floating) {
+        const suffix = match[3] ?? '';
+        const text = suffix ? raw.slice(0, -suffix.length) : raw;
+        tokens.push({ kind: 'number', floating: true, value: String(Number(text.replaceAll('_', ''))), suffix, raw, start, end: start + raw.length });
+        index += raw.length;
+        continue;
+      }
       const digits = /^[0-9_]*/u.exec(raw)[0];
       if (digits.endsWith('_')) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end: start + raw.length });
       tokens.push({
@@ -134,8 +146,19 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
     if (braced && text === '{') depth += 1;
     if (braced && text === '}') depth -= 1;
     if (language === 'JavaScript') {
-      if (text === '(') scopes.push(acceptControlParenthesis(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '', ['.', '?.'].includes(tokens.at(-2)?.value)));
-      if (text === ')') closed = scopes.pop() ?? false;
+      if (text === '(') {
+        const declaration = tokens.at(-2)?.value === 'function' && (tokens.length === 2 || [';', '{', '}', 'export', 'async'].includes(tokens.at(-3)?.value));
+        scopes.push({ control: acceptControlParenthesis(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '', ['.', '?.'].includes(tokens.at(-2)?.value)), declaration });
+      }
+      if (text === ')') {
+        const scope = scopes.pop();
+        closed = scope?.control ?? false;
+        declarationBody = scope?.declaration ?? false;
+      } else if (text === '{') {
+        braces.push(acceptStatementBrace(tokens.at(-1)?.kind ?? (braced ? 'expression' : ''), tokens.at(-1)?.value ?? '', controlClosed, declarationBody));
+        declarationBody = false;
+      } else if (text === '}') closed = braces.pop() ?? false;
+      else declarationBody = false;
     }
     tokens.push({ kind: 'punct', value: text, start, end: start + text.length, raw: text });
     index += text.length;

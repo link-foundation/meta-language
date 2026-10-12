@@ -30,13 +30,17 @@
     "with (context) /9A/.test(text);",
     "switch (value) { case 1: /9A/.test(text); }",
     "if (value) action(); else /9A/.test(text);",
-    "do /9A/.test(text); while (false);"
+    "do /9A/.test(text); while (false);",
+    "if (value) {} /9A/.test(text);",
+    "function ready() {} /9A/.test(text);"
   ],
   "qualifiedDivisionPrograms": [
     "function f(x) { return obj.if(x) / 2; }",
     "function f(x) { return obj?.while(x) / 2; }",
     "function f(x) { return obj.return / 2; }",
-    "function f(x) { return obj?.do / 2; }"
+    "function f(x) { return obj?.do / 2; }",
+    "const object = { value: 1 } / 2;",
+    "const value = function named() {} / 2;"
   ],
   "templateBoundaries": [
     {
@@ -66,6 +70,10 @@
     {
       "source": "`head ${{text: \"}\"}.text} tail`",
       "expression": "{text: \"}\"}.text"
+    },
+    {
+      "source": "`head ${{} / 2} tail`",
+      "expression": "{} / 2"
     }
   ],
   "malformedTemplates": [

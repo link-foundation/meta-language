@@ -11,7 +11,7 @@ import { DecoratorSet } from '../src/decorators.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const directory = mkdtempSync(join(tmpdir(), 'frontend-rule-styles-'));
-const paths = ['frontend_rules.rs', 'frontend_rules/continuations.rs'];
+const paths = ['frontend_rules.rs', 'frontend_rules/strings.rs', 'frontend_rules/continuations.rs'];
 const actions = [];
 try {
   mkdirSync(join(directory, 'translation/frontend_rules'), { recursive: true });

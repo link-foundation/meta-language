@@ -1,0 +1,122 @@
+// Generated from js/src/translation/frontend-rules.js by
+// js/scripts/generate-frontend-rules.mjs. Do not edit by hand.
+use super::*;
+
+pub fn read_string_map_operation(language: &str, method: &str) -> String {
+    match (language, method) {
+        ("JavaScript", "toLowerCase" | "toUpperCase" | "trim" | "trimStart" | "trimEnd") => {
+            method.to_owned()
+        }
+        ("Rust", "to_lowercase") => "toLowerCase".to_owned(),
+        ("Rust", "to_uppercase") => "toUpperCase".to_owned(),
+        ("Rust", "trim") => "rustTrim".to_owned(),
+        ("Rust", "trim_start") => "rustTrimStart".to_owned(),
+        ("Rust", "trim_end") => "rustTrimEnd".to_owned(),
+        _ => String::new(),
+    }
+}
+
+pub fn render_string_map_expression(target: &str, operation: &str, object: &str) -> String {
+    let method = match operation {
+        "rustTrim" => {
+            if target == "JavaScript" {
+                ".replace(/^\\p{White_Space}+|\\p{White_Space}+$/gu, '')"
+            } else {
+                ".trim().to_string()"
+            }
+        }
+        "rustTrimStart" => {
+            if target == "JavaScript" {
+                ".replace(/^\\p{White_Space}+/gu, '')"
+            } else {
+                ".trim_start().to_string()"
+            }
+        }
+        "rustTrimEnd" => {
+            if target == "JavaScript" {
+                ".replace(/\\p{White_Space}+$/gu, '')"
+            } else {
+                ".trim_end().to_string()"
+            }
+        }
+        "toLowerCase" if target != "JavaScript" => ".to_lowercase()",
+        "toUpperCase" if target != "JavaScript" => ".to_uppercase()",
+        _ if target == "JavaScript" => return format!("{object}.{operation}()"),
+        _ => {
+            let method = match operation {
+                "trim" => "trim_matches",
+                "trimStart" => "trim_start_matches",
+                "trimEnd" => "trim_end_matches",
+                _ => "",
+            };
+            return format!(
+                "{object}.{method}(|c: char| (c.is_whitespace() && c != '\\u{{85}}') || c == '\\u{{feff}}').to_string()"
+            );
+        }
+    };
+    format!("{object}{method}")
+}
+
+pub fn read_string_map_refusal(target: &str, operation: &str) -> String {
+    if matches!(operation, "trim" | "trimStart" | "trimEnd") {
+        format!(
+            "JavaScript whitespace trimming has no {target} library counterpart; {target} trims ASCII whitespace only"
+        )
+    } else {
+        format!(
+            "Unicode case mapping has no {target} library counterpart; {target} maps ASCII letters only"
+        )
+    }
+}
+
+pub fn accept_checked_type_query_operand(kind: &str, constant_reference: bool) -> bool {
+    (crate::translation::frontend_rules::accept_type_query_operand(kind)
+        || ((kind == "call") && constant_reference))
+}
+
+pub const fn read_scanner_continuation_action(
+    widthless: bool,
+    starts_after: bool,
+    ends_after: bool,
+) -> f64 {
+    if widthless {
+        0f64
+    } else if starts_after && ends_after {
+        1f64
+    } else {
+        -1f64
+    }
+}
+
+pub const fn accept_source_envelope_restoration(
+    source_matches: bool,
+    body_matches: bool,
+    original_matches: bool,
+) -> bool {
+    source_matches && body_matches && original_matches
+}
+
+pub fn accept_array_method_arguments(
+    form: &str,
+    has_arguments: bool,
+    has_single_argument: bool,
+) -> bool {
+    form == "concatenate"
+        || form == "construct"
+        || (form == "copy" && !has_arguments)
+        || (form == "copy-from" && has_single_argument)
+}
+
+pub fn render_string_length_expression(target: &str, object: &str) -> String {
+    match target {
+        "JavaScript" => format!("{object}.length"),
+        "Rust" => format!("({object}.encode_utf16().count() as f64)"),
+        "Lean" => format!(
+            "(Float.ofNat (String.foldl (fun (count : Nat) c => count + (if c.toNat > 65535 then 2 else 1)) 0 {object}))"
+        ),
+        _ => format!(
+            "(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat ((fix ml_utf16_length (s : string) : nat := match s with EmptyString => 0%nat | String c rest => ((if Nat.ltb (Ascii.nat_of_ascii c) 128 then 1 else if Nat.ltb (Ascii.nat_of_ascii c) 192 then 0 else if Nat.ltb (Ascii.nat_of_ascii c) 240 then 1 else 2) + ml_utf16_length rest)%nat end) {object}))))"
+        ),
+    }
+}
+

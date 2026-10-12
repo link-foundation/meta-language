@@ -18,6 +18,9 @@
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
+    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
+        index.and_then(|index| values.get(index)).cloned()
+    }
     /// The element at an index; a read outside the array, undefined in
     /// JavaScript, aborts.
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
@@ -38,6 +41,86 @@ pub mod ml_array {
     pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
         left.extend(right);
         left
+    }
+    fn integer(value: f64) -> f64 {
+        if value.is_nan() { 0.0 } else { value.trunc() }
+    }
+    fn relative(value: f64, length: usize) -> usize {
+        let value = integer(value);
+        if value < 0.0 {
+            (length as f64 + value).max(0.0) as usize
+        } else {
+            value.min(length as f64) as usize
+        }
+    }
+    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
+        let start = relative(start, values.len());
+        let end = relative(end, values.len());
+        values[start..end.max(start)].to_vec()
+    }
+    pub fn index_of<T, F: Fn(&T, &T) -> bool>(
+        values: &[T],
+        search: &T,
+        from: f64,
+        reverse: bool,
+        equal: F,
+    ) -> f64 {
+        if values.is_empty() {
+            return -1.0;
+        }
+        let from = integer(from);
+        if reverse {
+            if from < -(values.len() as f64) {
+                return -1.0;
+            }
+            let start = if from < 0.0 {
+                (values.len() as f64 + from) as usize
+            } else {
+                from.min((values.len() - 1) as f64) as usize
+            };
+            (0..=start)
+                .rev()
+                .find(|&index| equal(&values[index], search))
+                .map_or(-1.0, |index| index as f64)
+        } else {
+            let start = if from < 0.0 {
+                (values.len() as f64 + from).max(0.0) as usize
+            } else {
+                from.min(values.len() as f64) as usize
+            };
+            (start..values.len())
+                .find(|&index| equal(&values[index], search))
+                .map_or(-1.0, |index| index as f64)
+        }
+    }
+    pub fn includes<T, F: Fn(&T, &T) -> bool>(
+        values: &[T],
+        search: &T,
+        from: f64,
+        reverse: bool,
+        equal: F,
+    ) -> bool {
+        index_of(values, search, from, reverse, equal) >= 0.0
+    }
+    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
+        let mut out = Vec::new();
+        for value in values {
+            if !out.iter().any(|previous| equal(previous, &value)) {
+                out.push(value);
+            }
+        }
+        out
+    }
+    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
+        let mut out: Vec<(K, V)> = Vec::new();
+        for (key, value) in values {
+            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {
+                out[index].1 = value;
+            } else {
+                out.push((key, value));
+            }
+        }
+        out
     }
 }
 
@@ -282,6 +365,19 @@ pub fn start_regular_expression(kind: &str, value: &str) -> bool {
     } else {
         false
     }
+}
+
+pub fn accept_statement_brace(
+    kind: &str,
+    value: &str,
+    control_closed: bool,
+    declaration_body: bool,
+) -> bool {
+    declaration_body
+        || control_closed
+        || kind.is_empty()
+        || (kind == "identifier" && matches!(value, "else" | "do" | "try" | "finally"))
+        || (kind == "punct" && matches!(value, ";" | "{" | "}"))
 }
 
 pub fn accept_control_parenthesis(kind: &str, value: &str, qualified: bool) -> bool {
@@ -821,175 +917,7 @@ pub fn read_string_test_support(target: &str, operation: &str) -> String {
     }
 }
 
-pub fn read_string_map_operation(language: &str, method: &str) -> String {
-    if (language == "JavaScript") {
-        if (((((method == "toLowerCase") || (method == "toUpperCase")) || (method == "trim"))
-            || (method == "trimStart"))
-            || (method == "trimEnd"))
-        {
-            method.to_owned()
-        } else {
-            String::new()
-        }
-    } else {
-        if (language == "Rust") {
-            if (method == "to_lowercase") {
-                String::from("toLowerCase")
-            } else if (method == "to_uppercase") {
-                String::from("toUpperCase")
-            } else {
-                String::new()
-            }
-        } else {
-            String::new()
-        }
-    }
-}
-
-pub fn render_string_map_expression(target: &str, operation: &str, object: &str) -> String {
-    if (target == "JavaScript") {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!("{}{}", object, (String::from(".")))),
-                operation
-            )),
-            (String::from("()"))
-        )
-    } else if (operation == "toLowerCase") {
-        format!("{}{}", object, (String::from(".to_lowercase()")))
-    } else if (operation == "toUpperCase") {
-        format!("{}{}", object, (String::from(".to_uppercase()")))
-    } else {
-        {
-            let method = String::new();
-            {
-                let method_3 = if (operation == "trim") {
-                    { String::from("trim_matches") }
-                } else {
-                    method
-                };
-                {
-                    let method_5 = if (operation == "trimStart") {
-                        { String::from("trim_start_matches") }
-                    } else {
-                        method_3
-                    };
-                    {
-                        let method_7 = if (operation == "trimEnd") {
-                            { String::from("trim_end_matches") }
-                        } else {
-                            method_5
-                        };
-                        format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!("{}{}", object, (String::from(".")))),
-                                method_7
-                            )),
-                            (String::from(
-                                "(|c: char| (c.is_whitespace() && c != '\\u{85}') || c == '\\u{feff}').to_string()"
-                            ))
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-pub fn read_string_map_refusal(target: &str, operation: &str) -> String {
-    if (((operation == "trim") || (operation == "trimStart")) || (operation == "trimEnd")) {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (String::from("JavaScript whitespace trimming has no ")),
-                        target
-                    )),
-                    (String::from(" library counterpart; "))
-                )),
-                target
-            )),
-            (String::from(" trims ASCII whitespace only"))
-        )
-    } else {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (String::from("Unicode case mapping has no ")),
-                        target
-                    )),
-                    (String::from(" library counterpart; "))
-                )),
-                target
-            )),
-            (String::from(" maps ASCII letters only"))
-        )
-    }
-}
-
-pub fn accept_checked_type_query_operand(kind: &str, constant_reference: bool) -> bool {
-    (crate::translation::frontend_rules::accept_type_query_operand(kind)
-        || ((kind == "call") && constant_reference))
-}
-
-pub const fn read_scanner_continuation_action(
-    widthless: bool,
-    starts_after: bool,
-    ends_after: bool,
-) -> f64 {
-    if widthless {
-        0f64
-    } else if starts_after && ends_after {
-        1f64
-    } else {
-        -1f64
-    }
-}
-
-pub const fn accept_source_envelope_restoration(
-    source_matches: bool,
-    body_matches: bool,
-    original_matches: bool,
-) -> bool {
-    source_matches && body_matches && original_matches
-}
-
-pub fn accept_array_method_arguments(
-    form: &str,
-    has_arguments: bool,
-    has_single_argument: bool,
-) -> bool {
-    form == "concatenate"
-        || form == "construct"
-        || (form == "copy" && !has_arguments)
-        || (form == "copy-from" && has_single_argument)
-}
-
-pub fn render_string_length_expression(target: &str, object: &str) -> String {
-    match target {
-        "JavaScript" => format!("{object}.length"),
-        "Rust" => format!("({object}.encode_utf16().count() as f64)"),
-        "Lean" => format!(
-            "(Float.ofNat (String.foldl (fun (count : Nat) c => count + (if c.toNat > 65535 then 2 else 1)) 0 {object}))"
-        ),
-        _ => format!(
-            "(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat ((fix ml_utf16_length (s : string) : nat := match s with EmptyString => 0%nat | String c rest => ((if Nat.ltb (Ascii.nat_of_ascii c) 128 then 1 else if Nat.ltb (Ascii.nat_of_ascii c) 192 then 0 else if Nat.ltb (Ascii.nat_of_ascii c) 240 then 1 else 2) + ml_utf16_length rest)%nat end) {object}))))"
-        ),
-    }
-}
-
+mod strings;
+pub use strings::*;
 mod continuations;
 pub use continuations::*;

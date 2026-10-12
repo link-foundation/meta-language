@@ -41,8 +41,11 @@ const notice = `// Generated from js/src/translation/frontend-rules.js by
 // generated Rust files obey the repository source-file size limit.
 const boundary = final.stdout.search(/#\[derive\(Clone, Debug, PartialEq\)\]\npub enum Ml/u);
 if (boundary < 0) throw new Error('generated continuation boundary is missing');
+const strings = final.stdout.indexOf('pub fn read_string_map_operation(');
+if (strings < 0 || strings >= boundary) throw new Error('generated string mapping boundary is missing');
 const outputs = [
-  [outputPath, notice + final.stdout.slice(0, boundary) + 'mod continuations;\npub use continuations::*;\n'],
+  [outputPath, notice + final.stdout.slice(0, strings) + 'mod strings;\npub use strings::*;\nmod continuations;\npub use continuations::*;\n'],
+  [new URL('../../rust/src/translation/frontend_rules/strings.rs', import.meta.url), notice + 'use super::*;\n\n' + final.stdout.slice(strings, boundary)],
   [new URL('../../rust/src/translation/frontend_rules/continuations.rs', import.meta.url), notice + 'use super::*;\n\n' + final.stdout.slice(boundary)],
 ];
 if (process.argv.includes('--check')) {
