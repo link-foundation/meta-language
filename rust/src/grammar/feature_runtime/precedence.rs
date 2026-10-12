@@ -500,6 +500,26 @@ impl Executor<'_> {
         let (Some(owner), Some(index)) = (owner, self.own_rule(kind)) else {
             return true;
         };
+        let owner_contexts = Rc::clone(self.precedence_context_memo.entry(owner).or_insert_with(
+            || {
+                Rc::new(super::precedence_contexts::complete_rule_contexts(
+                    program, owner,
+                ))
+            },
+        ));
+        let child_contexts = Rc::clone(self.precedence_context_memo.entry(index).or_insert_with(
+            || {
+                Rc::new(super::precedence_contexts::complete_rule_contexts(
+                    program, index,
+                ))
+            },
+        ));
+        if !crate::translation::frontend_rules::accept_precedence_operand_context(
+            owner_contexts.as_ref().clone(),
+            child_contexts.as_ref().clone(),
+        ) {
+            return false;
+        }
         let key = (kind.clone(), side);
         let names = if let Some(names) = self.edge_memo.get(&key) {
             Rc::clone(names)
