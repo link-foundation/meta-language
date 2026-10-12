@@ -81709,6 +81709,79 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "grammar.transform-field-following-context",
+      "phrase": "transform field following context",
+      "role": "operation",
+      "definition": "Add a recorded immediate following context assertion to an existing source grammar field.",
+      "constraints": [
+        "The selected source rule, field and exact occurrence count must match the recorded decision.",
+        "The assertion inspects following source text without consuming it or changing the original field production.",
+        "The generated grammar expresses the context with shared lookahead operations rather than a language callback."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar source field contexts",
+          "name": "transformFieldFollowingContext"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.transform-trivia-continuation-boundary",
+      "phrase": "transform trivia continuation boundary",
+      "role": "operation",
+      "definition": "Exclude a recorded continuation prefix across registered source trivia from a terminating grammar pattern.",
+      "constraints": [
+        "The source rule, registered trivia rules, continuation patterns and exact occurrence count must match the recorded decision.",
+        "The immediate assertion inspects comments, blank lines and the continuation word boundary without consuming the source trivia.",
+        "The original termination production remains available outside the complete recorded continuation context."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Native grammar source continuation boundaries",
+          "name": "transformTriviaContinuationBoundary"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.retain-compiler-feedback",
+      "phrase": "retain compiler feedback",
+      "role": "operation",
+      "definition": "Retain actual structured compiler diagnostics with their exact generated source snapshots and content hashes.",
+      "constraints": [
+        "The artifact preserves the diagnostic payload, compiler identity and available commit, run and job provenance.",
+        "Every retained generated input carries its exact bytes and content hash.",
+        "Rendered help text does not acquire invented suggestion applicability or execution evidence."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Compiler feedback artifacts",
+          "name": "retainCompilerFeedback"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.apply-recorded-compiler-feedback",
+      "phrase": "apply recorded compiler feedback",
+      "role": "operation",
+      "definition": "Record applicable compiler source replacements as convergent shared emitter decorators against verified generated inputs.",
+      "constraints": [
+        "Only explicit machine applicable suggestions for allowed paths and matching exact source hashes can supply automatic edits.",
+        "Byte ranges must be valid; replacements retain unique literal contexts, and stale or unproven feedback is rejected.",
+        "Offline replay writes shared decorator data and leaves generated Rust source unchanged until ordinary regeneration.",
+        "Recording a suggestion does not replace subsequent compiler verification of regenerated output."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Compiler feedback replay",
+          "name": "applyRecordedCompilerFeedback"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

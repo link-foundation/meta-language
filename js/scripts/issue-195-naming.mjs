@@ -759,6 +759,20 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `grammar.${name}`,
   },
   {
+    inventory: 'recorded source context boundaries',
+    files: ['js/scripts/native-source-contexts.mjs', 'js/scripts/native-source-boundaries.mjs'],
+    extract: (text) => captures(text, /^export function (transformFieldFollowingContext|transformTriviaContinuationBoundary)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.${name}`,
+  },
+  {
+    inventory: 'recorded compiler feedback',
+    files: ['js/scripts/compiler-style-feedback.mjs'],
+    extract: (text) => captures(text, /^export function (retainCompilerFeedback|applyRecordedCompilerFeedback)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
     inventory: 'structured and counted scanner generators',
     files: ['js/scripts/structured-scanner-families.mjs', 'js/scripts/counted-interpolation-scanner.mjs', 'js/scripts/generate-native-scanner-profiles.mjs'],
     extract: (text) => captures(text, /^export function (hereDocumentScanner|interpolatedQuotedScanner|fencedBlockScanner|offsideLayoutScanner|countedInterpolationScanner|nativeScannerProfile)\(/gmu)
