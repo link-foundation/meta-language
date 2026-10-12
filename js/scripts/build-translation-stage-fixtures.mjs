@@ -65,6 +65,17 @@ if (process.argv.includes('--check')) {
   }
   if (committed !== text) {
     console.error('translation stage fixtures are stale; run `node js/scripts/build-translation-stage-fixtures.mjs`');
+    if (committed) {
+      const previous = JSON.parse(committed);
+      const before = new Map(previous.programs.map((entry) => [entry.name, entry]));
+      const changed = programs.filter((entry) => JSON.stringify(before.get(entry.name)) !== JSON.stringify(entry));
+      for (const entry of changed.slice(0,10)) {
+        const old = before.get(entry.name);
+        const stages = ['parse', 'check', 'emit'].filter((stage) => JSON.stringify(old?.[stage]) !== JSON.stringify(entry[stage]));
+        console.error(`changed translation fixture: ${entry.name} (${stages.join(', ') || 'source or metadata'})`);
+      }
+      if (changed.length > 10) console.error(`and ${changed.length - 10} more changed translation fixtures`);
+    }
     process.exit(1);
   }
   console.log(`translation stage fixtures match the JavaScript pipeline for ${summary}`);

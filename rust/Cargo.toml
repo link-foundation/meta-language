@@ -31,6 +31,7 @@ include = [
     "src/data/reference-operations.lino",
     "src/data/typed-program-links-schema.json",
     "src/data/formal-concept-models.json",
+    "src/translation/runtime/array-*.txt",
     "src/data/language-trigrams.json",
     "examples/**/*.rs",
     "README.md",

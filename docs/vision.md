@@ -1032,6 +1032,9 @@ keeps every run within that bound instead of relying on a larger machine:
 - CI splits the Rust tests by test target and filter, and the JavaScript tests
   by file group, into matrix jobs with their own timeouts. Every JavaScript test
   file belongs to exactly one group.
+  Full C#, Elixir and Ruby candidate corpora run in separate JavaScript jobs
+  with the same time and memory limits, keeping every corpus input and assertion
+  while preventing their combined work from cancelling the general grammar job.
 - The issue #195 evidence runs as separate stage jobs: the JavaScript suite,
   the Rust suite, runtime parity, each native translation target and delivery.
   The merge-enforcement report runs as its own post-merge job on `main`. Each

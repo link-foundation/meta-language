@@ -18,9 +18,12 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 /** Test groups, each a pattern over the test file name without `.test.js`. */
 export const TEST_GROUPS = Object.freeze({
   grammar:
-    /^(?:grammar-|native-development-oracles$|native-text-grammars$|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|issue-195-merge-real-reconciliation$|unicode-input-|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
+    /^(?!issue-195-grammar-profile-)(?:grammar-|native-development-oracles$|native-text-grammars$|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|issue-195-merge-real-reconciliation$|unicode-input-|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
+  'grammar-csharp': /^issue-195-grammar-profile-csharp$/u,
+  'grammar-elixir': /^issue-195-grammar-profile-elixir$/u,
+  'grammar-ruby': /^issue-195-grammar-profile-ruby$/u,
   translation:
-    /^(?:translation|typed-program-links|typescript-erasure$|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation$)/u,
+    /^(?:translation|typed-program-links|typescript-erasure$|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation(?:-|$))/u,
   conformance:
     /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|global-concept-space$|formal-concept-definition$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
   downstream:

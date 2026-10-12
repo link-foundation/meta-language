@@ -46,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [grammar, translation, conformance, downstream, tooling]
+        group: [grammar, grammar-csharp, grammar-elixir, grammar-ruby, translation, conformance, downstream, tooling]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -93,6 +93,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           TEST_GROUP: ${{ matrix.group }}
+          TRANSLATION_CHECK_RUST: ${{ matrix.group == 'translation' && '1' || '0' }}
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"
         working-directory: js
 
@@ -317,6 +318,14 @@ jobs:
       - name: Check the generated structural type rules against JavaScript
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-structured-type-rules.mjs --check
+
+      - name: Check the generated primitive value rules against JavaScript
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-primitive-value-rules.mjs --check
+
+      - name: Check the shared Rust array runtime artifacts
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-array-runtime.mjs --check
 
       - name: Check the generated TypeScript erasure rules against JavaScript
         if: ${{ !cancelled() }}
