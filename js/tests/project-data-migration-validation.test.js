@@ -9,6 +9,7 @@ import test from 'node:test';
 import { convertStructuredData } from '../scripts/convert-structured-data.mjs';
 import { createFixtureSourceLayout } from '../scripts/fixture-source-bytes.mjs';
 import { compareStructuredDataMigrationValues, validateStructuredDataMigration } from '../scripts/validate-structured-data-migration.mjs';
+import { generateStructuredDataMigrationRevisions } from '../scripts/generate-structured-data-migration-revisions.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
 
@@ -19,7 +20,7 @@ const sources = [
   '{"values":[-0,0,1.25,5e-324,1.7976931348623157e308,"\\ud800",null,false],"first":{"id":"equal"},"second":{"id":"equal"},"__proto__":{"owned":true}}\n',
 ];
 
-function synthetic(t, { separateOriginals = false } = {}) {
+function synthetic(t, { separateOriginals = false, historicalMutation } = {}) {
   const directory = mkdtempSync(join(tmpdir(), 'meta-migration-validation-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const git = arguments_ => execFileSync('git', arguments_, { cwd: directory, encoding: 'utf8', timeout: 10_000, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -44,7 +45,10 @@ function synthetic(t, { separateOriginals = false } = {}) {
   }));
   const layouts = { [paths[0]]: createFixtureSourceLayout(sources[0]) };
   for (const [index, path] of paths.entries()) {
-    writeFileSync(join(directory, path.replace(/\.json$/u, '.lino')), convertStructuredData(sources[index]));
+    let value = JSON.parse(sources[index]);
+    if (historicalMutation && index === 0) value = historicalMutation(value) ?? value;
+    writeFileSync(join(directory, path.replace(/\.json$/u, '.lino')), historicalMutation && index === 0
+      ? structuredDataToLino(value) : convertStructuredData(sources[index]));
     unlinkSync(join(directory, path));
   }
   const saveBaselines = () => writeFileSync(join(directory, 'migration-baselines.lino'), structuredDataToLino(baselines));
@@ -52,7 +56,8 @@ function synthetic(t, { separateOriginals = false } = {}) {
   saveBaselines(); saveLayouts();
   const migratedGitRevision = commit('Automatic Links storage migration');
   const replace = (index, value) => writeFileSync(join(directory, paths[index].replace(/\.json$/u, '.lino')), structuredDataToLino(value));
-  const options = { repository: directory, baselineFile: 'migration-baselines.lino', layoutsFile: 'source-layouts.lino', originalGitRevision };
+  const options = { repository: directory, baselineFile: 'migration-baselines.lino', layoutsFile: 'source-layouts.lino', originalGitRevision,
+    migrationRevision: migratedGitRevision };
   return { directory, options, baselines, layouts, replace, saveBaselines, saveLayouts, migratedGitRevision, sourceRevisions };
 }
 
@@ -65,6 +70,7 @@ test('independent original Git replay preserves scope, references, ordering, exa
   assert.deepEqual(report.results.map(row => row.logicalPath), paths);
   for (const [index, result] of report.results.entries()) {
     assert.equal(result.originalGitRevision, fixture.options.originalGitRevision);
+    assert.equal(result.migrationRevision, fixture.migratedGitRevision);
     assert.equal(result.decodedSha256, fixture.baselines[index].decodedSha256);
     assert.equal(result.originalSourceSha256, hash(sources[index]));
     assert.equal(result.migratedLinoSha256, hash(readFileSync(join(fixture.directory, paths[index].replace(/\.json$/u, '.lino')))));
@@ -109,7 +115,6 @@ test('a recaptured current-data hash cannot authenticate itself as the original 
 });
 
 test('fixture identities, obligations, aliases and cross-record references cannot be reduced by migration', t => {
-  const fixture = synthetic(t);
   const mutations = [
     value => { value.requirements[0].id = 'replacement requirement'; },
     value => { delete value.requirements[0].scope.version; },
@@ -120,7 +125,7 @@ test('fixture identities, obligations, aliases and cross-record references canno
     value => { value.records.reverse(); },
   ];
   for (const mutate of mutations) {
-    const changed = JSON.parse(sources[0]); mutate(changed); fixture.replace(0, changed);
+    const fixture = synthetic(t, { historicalMutation: mutate });
     assert.throws(() => validateStructuredDataMigration(fixture.options), error => {
       assert.equal(error.report.verifiedCount, 1);
       assert.match(error.report.failures[0].reason, /migrated values or semantic identity fields differ/u);
@@ -130,11 +135,10 @@ test('fixture identities, obligations, aliases and cross-record references canno
 });
 
 test('collection field order is checked independently of deep value equality', t => {
-  const fixture = synthetic(t);
   const original = JSON.parse(sources[0]);
   const reordered = { source: original.source, requirements: original.requirements, records: original.records, number: original.number };
   assert.deepEqual(reordered, original);
-  fixture.replace(0, reordered);
+  const fixture = synthetic(t, { historicalMutation: () => reordered });
   assert.throws(() => validateStructuredDataMigration(fixture.options), error => {
     assert.match(error.report.failures[0].reason, /collection order differs from the original/u);
     return true;
@@ -164,6 +168,9 @@ test('each original may use its independently recorded full revision and duplica
   for (const [index, row] of fixture.baselines.entries()) row.sourceRevision = fixture.sourceRevisions[index];
   fixture.saveBaselines();
   assert.equal(validateStructuredDataMigration({ ...fixture.options, originalGitRevision: undefined }).verifiedCount, 2);
+  const revisions = generateStructuredDataMigrationRevisions({ repository: fixture.directory, baselineFile: fixture.options.baselineFile });
+  assert.deepEqual(revisions.map(row => row.logicalPath), paths);
+  assert.ok(revisions.every(row => row.originalGitRevision === fixture.options.originalGitRevision && row.migrationRevision === fixture.migratedGitRevision));
   fixture.baselines[1].logicalPath = fixture.baselines[0].logicalPath;
   fixture.saveBaselines();
   assert.throws(() => validateStructuredDataMigration(fixture.options), /duplicate migration baseline identity/u);
@@ -174,7 +181,7 @@ test('CI command emits actual verified Links results and bulk function replay re
   const script = new URL('../scripts/validate-structured-data-migration.mjs', import.meta.url);
   const replay = spawnSync(process.execPath, [fileURLToPath(script), '--repository', fixture.directory,
     '--baseline', 'migration-baselines.lino', '--layouts', 'source-layouts.lino',
-    '--original-revision', fixture.options.originalGitRevision], {
+    '--original-revision', fixture.options.originalGitRevision, '--migration-revision', fixture.migratedGitRevision], {
     encoding: 'utf8', timeout: 30_000, env: { ...process.env, CI: 'true' },
   });
   assert.equal(replay.status, 0, replay.stderr);
@@ -192,6 +199,99 @@ test('CI command emits actual verified Links results and bulk function replay re
   });
   assert.equal(local.status, 0, local.stderr);
   assert.match(local.stdout, /bulk structured data migration replay runs only in CI/u);
+});
+
+test('changed current outputs require a separately executed generator without replacing historical evidence', t => {
+  const fixture = synthetic(t);
+  const generated = JSON.parse(sources[1]); generated.values.push('added fixture');
+  fixture.replace(1, generated);
+  assert.throws(() => validateStructuredDataMigration(fixture.options), error => {
+    assert.equal(error.report.verifiedCount, 1);
+    assert.match(error.report.failures[0].reason, /changed current output has no independently executed/u);
+    return true;
+  });
+  const codec = new URL('../src/structured-data-links.js', import.meta.url).href;
+  const script = `import{readFileSync}from'node:fs';import{structuredDataToLino}from${JSON.stringify(codec)};const expected=JSON.parse(${JSON.stringify(sources[1])});expected.values.push('added fixture');if(readFileSync('fixtures/values.lino','utf8')!==structuredDataToLino(expected))throw Error('current generator output is stale');`;
+  writeFileSync(join(fixture.directory, 'check-current-values.mjs'), script);
+  const command = ['node', 'check-current-values.mjs', '--check'];
+  const options = { ...fixture.options, currentFreshnessChecks: [{ logicalPaths: [paths[1]], command }] };
+  const report = validateStructuredDataMigration(options);
+  assert.equal(report.verifiedCount, 2);
+  assert.deepEqual(report.results[1].currentFreshness.command, command);
+  assert.notEqual(report.results[1].historicalLinoSha256, report.results[1].migratedLinoSha256);
+  assert.equal(report.results[1].decodedSha256, fixture.baselines[1].decodedSha256, 'the historical baseline hash was not recaptured from generated data');
+  generated.values.pop(); fixture.replace(1, generated);
+  assert.equal(validateStructuredDataMigration(options).verifiedCount, 2, 'unchanged historical output needs no generator witness');
+  generated.values.pop(); fixture.replace(1, generated);
+  assert.throws(() => validateStructuredDataMigration(options), error => {
+    assert.match(error.report.failures[0].reason, /current generator freshness failed/u);
+    return true;
+  });
+});
+
+test('an explicit later grammar snapshot authenticates only a recorded provider fingerprint correction', t => {
+  const directory = mkdtempSync(join(tmpdir(), 'meta-migration-correction-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const git = arguments_ => execFileSync('git', arguments_, { cwd: directory, encoding: 'utf8', timeout: 10_000, stdio: ['ignore', 'pipe', 'pipe'] });
+  const write = (path, text) => { mkdirSync(dirname(join(directory, path)), { recursive: true }); writeFileSync(join(directory, path), text); };
+  const commit = message => {
+    git(['add', '--all']);
+    git(['-c', 'user.name=Migration fixture', '-c', 'user.email=migration-fixture@example.invalid',
+      'commit', '--quiet', '--no-gpg-sign', '--no-verify', '-m', message]);
+    return git(['rev-parse', 'HEAD']).trim();
+  };
+  git(['init', '-q']);
+  const oldGrammar = '(1: old grammar)\n'; const laterGrammar = '(1: canonical grammar)\n';
+  const previousSha256 = hash(oldGrammar); const grammarSha256 = hash(laterGrammar);
+  const logicalPath = 'fixtures/default.json'; const grammarFile = 'parity/grammars/native/demonstration.lino';
+  const original = { languages: { Demonstration: { grammars: { 'native-demonstration': { version: '1', parserSha256: previousSha256 } },
+    sourceSha256: hash('original source'), positive: [[0, 'root', 0, 4]], recovery: [[0, 'ERROR', 0, 1]], embedded: [] } },
+  aliases: ['first', 'second'], assertions: ['same rows', 'same source'] };
+  write(logicalPath, JSON.stringify(original)); write(grammarFile, oldGrammar);
+  const originalGitRevision = commit('Independent original receipt and golden rows');
+  const corrected = structuredClone(original); corrected.languages.Demonstration.grammars['native-demonstration'].parserSha256 = grammarSha256;
+  write('fixtures/default.lino', structuredDataToLino(corrected)); unlinkSync(join(directory, logicalPath));
+  const baseline = [{ logicalPath, decodedSha256: hash(JSON.stringify(corrected)) }];
+  write('baselines.lino', structuredDataToLino(baseline));
+  const migrationRevision = commit('Historical conversion with one uncommitted receipt correction');
+  write(grammarFile, laterGrammar);
+  write('js/src/data/native-grammars/demonstration.lino', laterGrammar);
+  write('rust/src/data/native-grammars/demonstration.lino', laterGrammar);
+  const catalogFile = 'js/src/data/language-catalog.lino';
+  write(catalogFile, structuredDataToLino({ nativeGrammars: { 'native-demonstration': { file: 'native-grammars/demonstration.lino' } },
+    languages: [{ name: 'Demonstration', grammars: [{ id: 'native-demonstration', version: '1', parserSha256: grammarSha256 }] }] }));
+  const grammarRevision = commit('Later committed canonical grammar and both runtime copies');
+  const correction = { logicalPath, kind: 'grammar parser fingerprint receipt correction', language: 'Demonstration', provider: 'native-demonstration',
+    previousSha256, originalDecodedSha256: hash(JSON.stringify(original)), grammarFile, grammarRevision, grammarSha256, catalogFile,
+    temporalRelation: 'later committed canonical grammar snapshot' };
+  const entry = { logicalPath, originalGitRevision, migrationRevision, corrections: [correction] };
+  const save = () => write('revisions.lino', structuredDataToLino([entry]));
+  save();
+  const options = { repository: directory, baselineFile: 'baselines.lino', migrationRevisionFile: 'revisions.lino' };
+  const report = validateStructuredDataMigration(options);
+  assert.equal(report.verifiedCount, 1);
+  assert.equal(report.results[0].originalDecodedSha256, correction.originalDecodedSha256);
+  assert.equal(report.results[0].decodedSha256, baseline[0].decodedSha256);
+  assert.equal(report.results[0].metadataCorrections[0].grammarRevision, grammarRevision);
+  assert.deepEqual(readProjectData(join(directory, 'fixtures/default.lino')).languages.Demonstration.positive, original.languages.Demonstration.positive);
+  entry.corrections = []; save();
+  assert.throws(() => validateStructuredDataMigration(options), error => {
+    assert.match(error.report.failures[0].reason, /baseline hash differs from the original Git value/u); return true;
+  });
+  entry.corrections = [{ ...correction, grammarRevision: migrationRevision }]; save();
+  assert.throws(() => validateStructuredDataMigration(options), error => {
+    assert.match(error.report.failures[0].reason, /must be explicitly later/u); return true;
+  });
+  entry.corrections = [{ ...correction, grammarSha256: '0'.repeat(64) }]; save();
+  assert.throws(() => validateStructuredDataMigration(options), error => {
+    assert.match(error.report.failures[0].reason, /fingerprint differs from its immutable grammar bytes/u); return true;
+  });
+  write('rust/src/data/native-grammars/demonstration.lino', oldGrammar);
+  const badRuntimeRevision = commit('Counterfeit divergent runtime snapshot');
+  entry.corrections = [{ ...correction, grammarRevision: badRuntimeRevision }]; save();
+  assert.throws(() => validateStructuredDataMigration(options), error => {
+    assert.match(error.report.failures[0].reason, /differs between its immutable runtime copies/u); return true;
+  });
 });
 
 test('graph comparison preserves sharing and distinct identities beyond the JSON tree model', () => {
