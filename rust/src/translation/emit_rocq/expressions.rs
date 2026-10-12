@@ -17,12 +17,65 @@ impl RocqEmitter<'_> {
                 e.span,
             ));
         }
+        if matches!(&e.node, Node::Tuple { frozen: true, .. }) {
+            let mut pending = vec![&e.ty];
+            while let Some(ty) = pending.pop() {
+                if let Type::Tuple { elements } = ty {
+                    if elements.len() < 2 {
+                        return Err(unsupported(
+                            "immutable tuple arity",
+                            "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
+                            e.span,
+                        ));
+                    }
+                    pending.extend(elements);
+                }
+            }
+        }
         match &e.node {
             Node::Lit { value } => self.literal(&e.ty, value),
             Node::Unit => Ok("tt".to_owned()),
             Node::OutNil => Ok("(@nil string)".to_owned()),
             Node::OutCons { head, tail } => {
                 Ok(format!("({} :: {})", self.expr(head)?, self.expr(tail)?))
+            }
+            Node::Tuple { items, .. } => {
+                let mut parts = Vec::new();
+                for item in items {
+                    parts.push(self.expr(item)?);
+                }
+                Ok(if parts.is_empty() {
+                    "tt".to_owned()
+                } else {
+                    format!("({})", parts.join(", "))
+                })
+            }
+            Node::TupleIndex { object, index } => {
+                let Type::Tuple { elements } = &object.ty else {
+                    return Err(unsupported(
+                        "tuple projection",
+                        "the projection needs a checked tuple layout",
+                        e.span,
+                    ));
+                };
+                if self.program.source_language == crate::translation::Language::Rust
+                    && elements.len() < 2
+                {
+                    return Err(unsupported(
+                        "immutable tuple arity",
+                        "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
+                        e.span,
+                    ));
+                }
+                let mut value = self.expr(object)?;
+                for _ in (*index + 1)..elements.len() {
+                    value = format!("(fst {value})");
+                }
+                Ok(if *index == 0 {
+                    value
+                } else {
+                    format!("(snd {value})")
+                })
             }
             // Output threading leaves no `print` node.
             Node::Print { .. } => Err(internal("print with its output not threaded".to_owned())),
@@ -201,6 +254,17 @@ impl RocqEmitter<'_> {
             Type::Unit => "tt".to_owned(),
             Type::Output => "(@nil string)".to_owned(),
             Type::Array { element, .. } => format!("(@nil {})", self.ty(element)?),
+            Type::Tuple { elements } => {
+                let mut parts = Vec::new();
+                for element in elements {
+                    parts.push(self.inhabitant(element)?);
+                }
+                if parts.is_empty() {
+                    "tt".to_owned()
+                } else {
+                    format!("({})", parts.join(", "))
+                }
+            }
             Type::Data { name } => {
                 let program = self.program;
                 let entry = program.data(name);

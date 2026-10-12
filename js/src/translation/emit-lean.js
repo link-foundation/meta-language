@@ -240,6 +240,7 @@ class LeanEmitter {
 
   type(type) {
     if (type.reference || type.kind === 'cell') throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model');
+    if (this.program.sourceLanguage === 'Rust' && type.kind === 'tuple' && type.elements.length < 2) throw unsupported('immutable tuple arity', 'this target needs a nominal product representation to distinguish unit and single-element tuple arities');
     switch (type.kind) {
       case 'nat':
         return 'Nat';
@@ -401,6 +402,15 @@ class LeanEmitter {
 
   expr(e, depth) {
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
+    if (e.k === 'tuple' && e.frozen) {
+      const pending = [e.type];
+      while (pending.length) {
+        const type = pending.pop();
+        if (type.kind !== 'tuple') continue;
+        if (type.elements.length < 2) throw unsupported('immutable tuple arity', 'this target needs a nominal product representation to distinguish unit and single-element tuple arities', e.span);
+        pending.push(...type.elements);
+      }
+    }
     if (['cellAllocate', 'cellRead', 'cellWrite', 'referenceAllocate', 'referenceRead', 'referenceWrite'].includes(e.k)) throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model', e.span);
     switch (e.k) {
       case 'lit':
@@ -428,6 +438,7 @@ class LeanEmitter {
       case 'recordField':
       case 'tupleIndex': {
         const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
+        if (e.k === 'tupleIndex' && this.program.sourceLanguage === 'Rust' && count < 2) throw unsupported('immutable tuple arity', 'this target needs a nominal product representation to distinguish unit and single-element tuple arities', e.span);
         return count === 1 ? this.expr(e.object, depth) : `(${this.expr(e.object, depth)})${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
       }
       case 'tuple':

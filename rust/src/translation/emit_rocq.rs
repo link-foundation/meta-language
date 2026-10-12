@@ -481,6 +481,15 @@ impl RocqEmitter<'_> {
                 None,
             ));
         }
+        if self.program.source_language == Language::Rust
+            && matches!(ty, Type::Tuple { elements } if elements.len() < 2)
+        {
+            return Err(unsupported(
+                "immutable tuple arity",
+                "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
+                None,
+            ));
+        }
         Ok(match ty {
             Type::Nat => "N".to_owned(),
             Type::Int => "Z".to_owned(),
@@ -504,6 +513,17 @@ impl RocqEmitter<'_> {
                     "a JavaScript array, which the portable core never mutates, is a Rocq list; a read walks it to the index",
                 );
                 format!("(list {})", self.ty(element)?)
+            }
+            Type::Tuple { elements } => {
+                let mut parts = Vec::new();
+                for element in elements {
+                    parts.push(self.ty(element)?);
+                }
+                if parts.is_empty() {
+                    "unit".to_owned()
+                } else {
+                    format!("({})%type", parts.join(" * "))
+                }
             }
             other => return Err(internal(format!("no Rocq type for {}", other.kind()))),
         })

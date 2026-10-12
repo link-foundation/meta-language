@@ -300,6 +300,15 @@ impl LeanEmitter<'_> {
                 None,
             ));
         }
+        if self.program.source_language == Language::Rust
+            && matches!(ty, Type::Tuple { elements } if elements.len() < 2)
+        {
+            return Err(unsupported(
+                "immutable tuple arity",
+                "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
+                None,
+            ));
+        }
         Ok(match ty {
             Type::Nat => "Nat".to_owned(),
             Type::Int => "Int".to_owned(),
@@ -326,6 +335,17 @@ impl LeanEmitter<'_> {
                     "a JavaScript array, which the portable core never mutates, is a Lean Array; a read outside it panics",
                 );
                 format!("(Array {})", self.ty(element)?)
+            }
+            Type::Tuple { elements } => {
+                let mut parts = Vec::new();
+                for element in elements {
+                    parts.push(self.ty(element)?);
+                }
+                if parts.is_empty() {
+                    "Unit".to_owned()
+                } else {
+                    format!("({})", parts.join(" × "))
+                }
             }
             other => {
                 return Err(type_error(
@@ -563,6 +583,21 @@ impl LeanEmitter<'_> {
                 e.span,
             ));
         }
+        if matches!(&e.node, Node::Tuple { frozen: true, .. }) {
+            let mut pending = vec![&e.ty];
+            while let Some(ty) = pending.pop() {
+                if let Type::Tuple { elements } = ty {
+                    if elements.len() < 2 {
+                        return Err(unsupported(
+                            "immutable tuple arity",
+                            "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
+                            e.span,
+                        ));
+                    }
+                    pending.extend(elements);
+                }
+            }
+        }
         Ok(match &e.node {
             Node::Lit { value } => {
                 if e.ty.is_float() {
@@ -578,6 +613,43 @@ impl LeanEmitter<'_> {
                     self.expr(head, depth)?,
                     self.expr(tail, depth)?
                 )
+            }
+            Node::Tuple { items, .. } => {
+                let mut parts = Vec::new();
+                for item in items {
+                    parts.push(self.expr(item, depth)?);
+                }
+                format!("({})", parts.join(", "))
+            }
+            Node::TupleIndex { object, index } => {
+                let Type::Tuple { elements } = &object.ty else {
+                    return Err(unsupported(
+                        "tuple projection",
+                        "the projection needs a checked tuple layout",
+                        e.span,
+                    ));
+                };
+                if self.program.source_language == Language::Rust && elements.len() < 2 {
+                    return Err(unsupported(
+                        "immutable tuple arity",
+                        "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
+                        e.span,
+                    ));
+                }
+                let value = self.expr(object, depth)?;
+                if elements.len() == 1 {
+                    value
+                } else {
+                    format!(
+                        "({value}){}{}",
+                        ".2".repeat(*index),
+                        if *index < elements.len() - 1 {
+                            ".1"
+                        } else {
+                            ""
+                        }
+                    )
+                }
             }
             Node::Var { name } => self.successors.get(name).unwrap_or(name).clone(),
             Node::Call { func, args } => {

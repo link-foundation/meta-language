@@ -72,6 +72,9 @@ impl LeanEmitter<'_> {
         match ty {
             Type::Float => true,
             Type::Array { element, .. } => self.undecidable_type(element, true, seen),
+            Type::Tuple { elements } => elements
+                .iter()
+                .any(|element| self.undecidable_type(element, nested, seen)),
             Type::Data { name } => nested || self.undecidable(name, seen),
             _ => false,
         }
