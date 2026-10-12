@@ -11,6 +11,30 @@ const CORPUS: &str =
     include_str!("../../../parity/fixtures/native-grammars/ruby-profile-corpus.json");
 const EXPRESSIONS: &str =
     include_str!("../../../parity/fixtures/native-grammars/ruby-expression-contexts.json");
+const HEREDOC_CALLS: &str =
+    include_str!("../../../parity/fixtures/native-grammars/ruby-heredoc-call-context-ci.json");
+
+#[test]
+fn ruby_heredoc_call_contexts_match_shared_ci_sources_and_neighboring_controls() {
+    let profile: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = serde_json::from_str(HEREDOC_CALLS).unwrap();
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&profile);
+    let language = tree_sitter_ruby::LANGUAGE.into();
+    assert_eq!(cases(&fixture, "cases").len(), 4);
+    assert_eq!(cases(&fixture, "controls").len(), 11);
+    for case in cases(&fixture, "cases")
+        .iter()
+        .chain(cases(&fixture, "controls").iter())
+    {
+        let (expected, recovers) = oracle_rows(&language, source(case));
+        assert!(!recovers, "{:?}", source(case));
+        assert_eq!(Value::Array(expected), case["rows"]);
+        let tree = parse(&parser, source(case)).expect("native accepts unambiguous heredoc call");
+        assert_eq!(Value::Array(rows.rows(&tree, source(case))), case["rows"]);
+        assert_eq!(rebuilt(&tree), source(case));
+    }
+}
 
 #[test]
 fn ruby_operator_and_call_contexts_match_the_independent_oracle() {
