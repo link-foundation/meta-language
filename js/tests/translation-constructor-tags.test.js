@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { parseJavaScript } from '../src/translation/javascript.js';
@@ -8,7 +9,7 @@ import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { translateProgram } from '../src/program-translation.js';
 import { requireDataObjectFreeze } from '../src/translation/primitive-value-rules.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-constructor-tags.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/translation-constructor-tags.json', import.meta.url));
 const { tags } = fixture;
 const source = "/** @typedef {{ $: 'one' } | { $: 'two' }} Tag */\n/** @returns {Tag} */ function make() { return { $: 'one' }; }\n/** @param {Tag} value @returns {number} */ function read(value) { if (value.$ === 'one') return 1; return 2; }";
 

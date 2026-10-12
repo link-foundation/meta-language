@@ -8,11 +8,12 @@ use serde_json::Value;
 use super::issue_195_observations::{Observation, record};
 
 const FIXTURE_FILE: &str = "parity/fixtures/native-character-class-grammars.json";
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-character-class-grammars.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-character-class-grammars.lino");
 
 #[test]
 fn character_class_sets_match_fixtures_and_independent_regex_oracle() {
-    let fixture: Value = serde_json::from_str(FIXTURE).expect("shared fixture is JSON");
+    let fixture: Value =
+        super::project_data::read_project_data(FIXTURE).expect("shared fixture is JSON");
     for entry in fixture["cases"].as_array().expect("cases") {
         let id = entry["id"].as_str().expect("case identity");
         let listing = entry["grammar"].as_str().expect("compiled Links grammar");

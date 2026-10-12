@@ -9,8 +9,9 @@
 // when a rule is changed or renamed. Pairs that drop a rule, drop
 // documentation or swap a sequence are reported as different. The Rust twin is
 // rust/tests/unit/issue_195_interchange_reverse_conversion.rs.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import { test } from 'node:test';
 
 import {
@@ -33,7 +34,7 @@ import {
 } from '../src/index.js';
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
 
-const corpus = JSON.parse(await readFile(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url)));
+const corpus = readProjectData(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url));
 
 const REQUIREMENT_ID = 'I195-INTERCHANGE-REVERSE-CONVERSION';
 

@@ -96,9 +96,12 @@ fn root() -> PathBuf {
 }
 
 fn read_json(path: &Path) -> Value {
-    let text = fs::read_to_string(path)
-        .unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()));
-    serde_json::from_str(&text)
+    let text = fs::read_to_string(
+        super::project_data::resolve_project_data_path(path)
+            .expect("one project data storage format"),
+    )
+    .unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()));
+    super::project_data::read_project_data(&text)
         .unwrap_or_else(|error| panic!("{} is JSON: {error}", path.display()))
 }
 

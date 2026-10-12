@@ -43,8 +43,12 @@ fn repository() -> PathBuf {
 }
 
 fn register_copy() -> Value {
-    let text = std::fs::read_to_string(repository().join(REGISTER)).expect("the register reads");
-    serde_json::from_str(&text).expect("the register is JSON")
+    let text = std::fs::read_to_string(
+        super::project_data::resolve_project_data_path(repository().join(REGISTER))
+            .expect("one project data storage format"),
+    )
+    .expect("the register reads");
+    super::project_data::read_project_data(&text).expect("the register is JSON")
 }
 
 /// The problem kinds of a register, or `parse` when the runtime refuses to read it.
@@ -79,8 +83,12 @@ fn ids(language: &str) -> Vec<&'static str> {
 #[test]
 fn foundations_are_data_and_every_language_records_its_own() {
     let register = foundation_register();
-    let embedded = include_str!("../../src/data/foundation-models.json");
-    let canonical = std::fs::read_to_string(repository().join(REGISTER)).expect("register");
+    let embedded = include_str!("../../src/data/foundation-models.lino");
+    let canonical = std::fs::read_to_string(
+        super::project_data::resolve_project_data_path(repository().join(REGISTER))
+            .expect("one project data storage format"),
+    )
+    .expect("register");
     assert_eq!(embedded, canonical, "the embedded copy is the register");
     assert_eq!(check_foundation_models(register), []);
     let families: Vec<&str> = register
@@ -195,9 +203,14 @@ fn distinct_models_stay_distinct_and_translation_encodings_are_justified() {
     unconditioned["correspondences"][0]["condition"] = "".into();
     assert_eq!(kinds(unconditioned), ["unconditioned-correspondence"]);
 
-    let stages: Value = serde_json::from_str(
-        &std::fs::read_to_string(repository().join("parity/fixtures/translation-stages.json"))
-            .expect("translation stages"),
+    let stages: Value = super::project_data::read_project_data(
+        &std::fs::read_to_string(
+            super::project_data::resolve_project_data_path(
+                repository().join("parity/fixtures/translation-stages.json"),
+            )
+            .expect("one project data storage format"),
+        )
+        .expect("translation stages"),
     )
     .expect("translation stages are JSON");
     let lean = stages["programs"]
@@ -344,7 +357,10 @@ fn consumer_references(base: &Path, directory: &Path, found: &mut Vec<String>) {
         if !scanned || CONSUMER_REGISTRIES.contains(&relative.as_str()) {
             continue;
         }
-        let Ok(text) = std::fs::read_to_string(&path) else {
+        let Ok(text) = std::fs::read_to_string(
+            super::project_data::resolve_project_data_path(&path)
+                .expect("one project data storage format"),
+        ) else {
             continue;
         };
         for (index, line) in text.lines().enumerate() {

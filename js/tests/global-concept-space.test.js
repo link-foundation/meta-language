@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -10,7 +12,7 @@ import { verifyGlobalConceptCorrespondence } from '../src/global-concept-rules.j
 import { encodeFormalConceptDefinition } from '../src/formal-concept-definition.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/global-concept-space.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/global-concept-space.json', import.meta.url));
 const sources = () => fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammar: deserializeGrammar(grammar) }));
 const options = (extra = {}) => ({ records: fixture.records, equivalences: fixture.equivalences, formalDefinitions: fixture.formalDefinitions, ...extra });
 const build = (input = sources(), extra = {}) => createGlobalConceptSpace(input, options(extra));
@@ -192,7 +194,7 @@ test('source-free reload preserves explicit and implicit starts, rule order and 
 
 test('automatic proof discovery uses catalog source identities for real native grammar concepts', () => {
   const imported = ['scheme', 'racket'].map((language) => {
-    const grammar = parseGrammarLinks(readFileSync(new URL(`../src/data/native-grammars/${language}.lino`, import.meta.url), 'utf8'));
+    const grammar = parseGrammarLinks(readFileSync(resolveProjectDataPath(new URL(`../src/data/native-grammars/${language}.lino`, import.meta.url)), 'utf8'));
     // Raw source imports have no preassigned concept metadata. Native aliases
     // nominate candidates; explicit trivia interpretation is the semantic
     // premise, alongside the complete production and parser context.

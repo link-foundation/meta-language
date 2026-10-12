@@ -2,7 +2,7 @@
 use meta_language::{erase_type_script, self_translate};
 use serde_json::{Value, json};
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/typescript-erasure.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/typescript-erasure.lino");
 
 #[test]
 fn linked_typescript_erasure_matches_javascript_byte_spans_and_refusals() {
@@ -10,7 +10,7 @@ fn linked_typescript_erasure_matches_javascript_byte_spans_and_refusals() {
         include_str!("../../src/data/typescript-erasure.lino"),
         include_str!("../../../js/src/data/typescript-erasure.lino")
     );
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     for case in fixture["cases"].as_array().unwrap() {
         let source = case["source"].as_str().unwrap();
         match erase_type_script(source) {
@@ -47,7 +47,7 @@ fn linked_typescript_erasure_matches_javascript_byte_spans_and_refusals() {
 
 #[test]
 fn typescript_translations_restore_from_artifacts_without_original_source() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     for case in fixture["cases"].as_array().unwrap() {
         let source = case["source"].as_str().unwrap();
         let translated = self_translate(source, "TypeScript", "JavaScript").unwrap();
@@ -103,7 +103,7 @@ fn typed_function_translates_to_the_rust_portable_core() {
 
 #[test]
 fn native_typescript_annotations_preserve_string_and_boolean_types() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     for case in fixture["cases"]
         .as_array()
         .unwrap()

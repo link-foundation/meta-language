@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -8,8 +10,8 @@ import { test } from 'node:test';
 import { translateProgram } from '../src/program-translation.js';
 import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
-const corpusBytes = await readFile(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url));
-const cases = JSON.parse(corpusBytes).translationBehaviorCases;
+const corpusBytes = await readFile(resolveProjectDataPath(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)));
+const cases = readProjectData(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)).translationBehaviorCases;
 
 test('Rust function translation exports an executable JavaScript function', async () => {
   const fixture = cases.find(({ sourceLanguage, targetLanguage }) =>

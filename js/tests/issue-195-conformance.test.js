@@ -7,6 +7,9 @@
 // CLI, the public tree must equal it too. Where a language parses with its native grammar,
 // a malformed case whose native recovery differs from tree-sitter's must instead match its
 // justified record in parity/fixtures/native-recovery.json (support/native-recovery.js).
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
+import { readFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -31,12 +34,12 @@ import { nativeRecovery } from './support/native-recovery.js';
 const MANIFEST_FILE = 'parity/fixtures/issue-195-conformance/manifest.json';
 const fixtureRoot = new URL('../../parity/fixtures/issue-195-conformance/', import.meta.url);
 const repositoryRoot = new URL('../../', import.meta.url);
-const read = (path) => readFileSync(new URL(path, fixtureRoot));
+const read = (path) => readFixtureSourceBytes(new URL(path, fixtureRoot));
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
-const manifest = JSON.parse(read('manifest.json'));
-const inputs = JSON.parse(read('cases.json'));
-const errorRecovery = JSON.parse(read('error-recovery.json'));
-const lock = JSON.parse(readFileSync(new URL('js/src/vendor/grammars/grammar-lock.json', repositoryRoot)));
+const manifest = readProjectData(new URL('manifest.json', fixtureRoot));
+const inputs = readProjectData(new URL('cases.json', fixtureRoot));
+const errorRecovery = readProjectData(new URL('error-recovery.json', fixtureRoot));
+const lock = readProjectData(new URL('js/src/vendor/grammars/grammar-lock.json', repositoryRoot));
 
 const ASSERTIONS = [
   'claimedConstructInventoryMapped',
@@ -94,13 +97,13 @@ function regionProblems(language, entry, host) {
 }
 
 test('the conformance fixtures record their provenance and match their pinned inputs', () => {
-  const readRepository = (path) => readFileSync(new URL(path, repositoryRoot));
+  const readRepository = (path) => readFileSync(resolveProjectDataPath(new URL(path, repositoryRoot)));
   assert.deepEqual(conformanceOracleProblems(manifest, { lock, read, readRepository }), []);
 });
 
 test('the comparison rejects a tree that differs from the oracle', () => {
   const language = 'JavaScript';
-  const oracle = JSON.parse(read(manifest.languages[language].oracle));
+  const oracle = readProjectData(new URL(manifest.languages[language].oracle, fixtureRoot));
   const malformed = oracle.cases.find((entry) => entry.kind === 'malformed');
   const source = malformed.source;
   const cleanOracle = malformed.cst.replaceAll('•', '').replace(/ERROR /u, 'program ');
@@ -112,7 +115,7 @@ test('the comparison rejects a tree that differs from the oracle', () => {
 for (const [language, details] of Object.entries(manifest.languages)) {
   const testName = `${language} matches the native CLI trees of its upstream corpus, real projects, Unicode, malformed and mixed-language cases`;
   test(testName, () => {
-    const oracle = JSON.parse(read(details.oracle));
+    const oracle = readProjectData(new URL(details.oracle, fixtureRoot));
     assert.equal(oracle.language, language);
     const sources = caseSources(language, details);
     const recovery = nativeRecovery('conformance', language);

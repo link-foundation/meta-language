@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
@@ -8,8 +10,8 @@ import { importCharacterClassFixtures } from '../scripts/import-native-grammars.
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtureFile = 'parity/fixtures/native-character-class-grammars.json';
-const fixtureText = readFileSync(new URL(`../../${fixtureFile}`, import.meta.url), 'utf8');
-const fixture = JSON.parse(fixtureText);
+const fixtureText = readFileSync(resolveProjectDataPath(new URL(`../../${fixtureFile}`, import.meta.url)), 'utf8');
+const fixture = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
 
 test('native pattern imports execute character-class intersection, difference and symmetric difference', () => {
   for (const [pattern, accepts, rejects] of [

@@ -1,6 +1,7 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -11,7 +12,7 @@ import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
-const fixtures = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-lexical-boundaries.json', import.meta.url), 'utf8'));
+const fixtures = readProjectData(new URL('../../parity/fixtures/translation-lexical-boundaries.json', import.meta.url));
 
 test('regex bodies are indivisible tokens and retain the honest unsupported diagnostic', () => {
   for (const literal of fixtures.regexLiterals) {
@@ -68,7 +69,6 @@ test('many regex literals encode the source only once and keep absolute Unicode 
   }
 });
 
-
 test('template substitutions ignore braces in opaque lexical tokens', () => {
   for (const { source, expression } of fixtures.templateBoundaries) {
     const tokens = tokenize(`${source}; const following = 1;`, 'JavaScript').tokens;
@@ -82,7 +82,6 @@ test('template substitutions ignore braces in opaque lexical tokens', () => {
   }
   for (const source of fixtures.malformedTemplates) assert.throws(() => tokenize(source, 'JavaScript'), (error) => error.kind === 'syntax', source);
 });
-
 
 test('template boundary corrections preserve emitted program behavior', () => {
   const source = fixtures.templateBoundaryProgram;
@@ -110,7 +109,6 @@ test('template regex substitutions share one source encoding', () => {
   for (const template of templates) assert.equal(template.parts[0].expression.source, literal);
 });
 
-
 test('template and string escapes use the shared scalar decoder', () => {
   for (const { source, value } of fixtures.escapedLiterals) {
     const program = `console.log(${source});`;
@@ -126,7 +124,6 @@ test('template and string escapes use the shared scalar decoder', () => {
     assert.throws(() => tokenize(source, 'JavaScript'), (error) => error.kind === 'unsupported', source);
   }
 });
-
 
 test('escaped literal programs compile and preserve output in Rust', () => {
   const source = fixtures.escapedLiterals.map(({ source }) => `console.log(${source});`).join('\n');

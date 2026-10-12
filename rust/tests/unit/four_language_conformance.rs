@@ -16,15 +16,27 @@ use sha2::{Digest, Sha256};
 fn corpus() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/four-language-conformance.json");
-    serde_json::from_str(&fs::read_to_string(path).expect("shared corpus is readable"))
-        .expect("shared corpus is valid JSON")
+    super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("shared corpus is readable"),
+    )
+    .expect("shared corpus is valid JSON")
 }
 
 fn grammar_inventory() -> Value {
     let path =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json");
-    serde_json::from_str(&fs::read_to_string(path).expect("grammar inventory is readable"))
-        .expect("grammar inventory is valid JSON")
+    super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("grammar inventory is readable"),
+    )
+    .expect("grammar inventory is valid JSON")
 }
 
 fn record_negative_cst_observation(language: &str, assertion_id: &str, fixture_digest: &str) {
@@ -329,7 +341,11 @@ fn every_rust_inventory_frontend_retains_whitespace_around_the_grammar_root() {
 fn every_rust_grammar_inventory_frontend_retains_and_diagnoses_prohibited_nul_input() {
     let inventory_path =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json");
-    let inventory_bytes = fs::read(&inventory_path).expect("grammar inventory is readable");
+    let inventory_bytes = fs::read(
+        super::project_data::resolve_project_data_path(&inventory_path)
+            .expect("one project data storage format"),
+    )
+    .expect("grammar inventory is readable");
     let fixture_digest =
         Sha256::digest(&inventory_bytes)
             .iter()
@@ -339,7 +355,8 @@ fn every_rust_grammar_inventory_frontend_retains_and_diagnoses_prohibited_nul_in
                 hex
             });
     let inventory: Value =
-        serde_json::from_slice(&inventory_bytes).expect("grammar inventory is valid JSON");
+        super::project_data::read_project_data(&String::from_utf8_lossy(&inventory_bytes))
+            .expect("grammar inventory is valid JSON");
     for fixture in inventory["languages"].as_array().unwrap() {
         let language = fixture["name"].as_str().unwrap();
         let source = format!("{}\0", fixture["source"].as_str().unwrap());
@@ -820,7 +837,8 @@ fn structured_programs_survive_snapshots_without_an_original_source_buffer() {
         );
 
         let serialized = constructed.serialize_snapshot();
-        let snapshot: Value = serde_json::from_str(&serialized).expect("snapshot JSON");
+        let snapshot: Value =
+            super::project_data::read_project_data(&serialized).expect("snapshot JSON");
         assert!(
             snapshot.get("source").is_none(),
             "{language} source omitted"

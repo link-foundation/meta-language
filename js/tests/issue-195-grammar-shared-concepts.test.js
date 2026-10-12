@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Shared concepts of the native grammars: every rule of every native grammar
 // names a concept record, a construct that corresponds one to one across
 // native grammars resolves to one concept identity, lookalike constructs stay
@@ -8,6 +9,7 @@
 // readable English with their tree-sitter names kept as aliases
 // (I195-NAMING-NATIVE-GRAMMARS). The Rust twin is
 // rust/tests/unit/issue_195_grammar_shared_concepts.rs.
+
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -39,7 +41,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 const FIXTURE = 'parity/fixtures/grammar-shared-concepts.json';
 const NAMING_FIXTURE = 'parity/naming/canonical-concepts.json';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const fixture = JSON.parse(readFileSync(path.join(root, FIXTURE), 'utf8'));
+const fixture = readProjectData(path.join(root, FIXTURE));
 
 function observe(requirementId, fixtureFile, assertions, testName) {
   recordIssue195Observations({
@@ -57,7 +59,7 @@ const conceptOf = (grammar, rule) => nativeGrammarRuleConcepts(grammar).find((en
 const shape = (tree) => [tree.kind, ...tree.children.map(shape)];
 
 test('published correspondences include every concept shared by at least three native grammars', () => {
-  const report = JSON.parse(readFileSync(path.join(root, CONCEPT_REUSE_FIXTURE), 'utf8'));
+  const report = readProjectData(path.join(root, CONCEPT_REUSE_FIXTURE));
   const listed = new Set(fixture.sharedConstructs.map(({ concept }) => concept));
   for (const entry of report.concepts) {
     if (entry.languages.length >= 3) assert.ok(listed.has(entry.concept), entry.concept);
@@ -228,14 +230,14 @@ test('a shared construct translates between two native grammars through its conc
 
 test('the per-language concept reuse report is current and published', () => {
   const report = nativeGrammarConceptReuse();
-  assert.equal(readFileSync(path.join(root, CONCEPT_REUSE_FIXTURE), 'utf8'), formatConceptReuse(report));
-  const document = readFileSync(path.join(root, CONCEPT_REUSE_DOCUMENT), 'utf8');
+  assert.equal(readFileSync(resolveProjectDataPath(path.join(root, CONCEPT_REUSE_FIXTURE)), 'utf8'), formatConceptReuse(report));
+  const document = readFileSync(resolveProjectDataPath(path.join(root, CONCEPT_REUSE_DOCUMENT)), 'utf8');
   assert.equal(document, renderConceptReuseDocument(report));
   assert.match(document, /I195-MERGE-QUALITY-EVIDENCE/u);
   for (const { grammar, shared, specific } of report.grammars) {
     assert.match(document, new RegExp(`\\| \`${grammar}\` \\| ${shared.length + specific.length} \\| ${shared.length} \\| ${specific.length} \\|`, 'u'));
   }
-  const index = readFileSync(path.join(root, 'docs/grammar/native-grammars.md'), 'utf8');
+  const index = readFileSync(resolveProjectDataPath(path.join(root, 'docs/grammar/native-grammars.md')), 'utf8');
   assert.match(index, /native-grammar-concept-reuse\.md/u, 'the native grammar guide links the report');
   observe('I195-GRAMMAR-CONCEPT-REUSE-REPORT', CONCEPT_REUSE_FIXTURE,
     ['reuseReportCurrent', 'sharedAndSpecificRulesListed', 'reportPublishedWithMergeQualityEvidence', 'runtimesAgreeOnReport'],
@@ -274,7 +276,7 @@ test('native rule names are readable English and keep their tree-sitter names as
     'naming checks every authored source, including candidates and shared text rules');
   let authoredRuleCount = 0;
   for (const file of authoredFiles) {
-    const grammar = parseGrammarLinks(readFileSync(path.join(root, file), 'utf8'));
+    const grammar = parseGrammarLinks(readFileSync(resolveProjectDataPath(path.join(root, file)), 'utf8'));
     const expected = [...grammar.rules].map(([name, rule]) => ({ name, concept: rule.concept }));
     assert.ok(expected.length > 0, `${file} defines native rules`);
     assert.ok(expected.every(({ concept }) => typeof concept === 'string'), `${file} retains every concept reference`);

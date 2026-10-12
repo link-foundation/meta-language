@@ -11,6 +11,8 @@
 // source envelope, no assumption and no escape hatch of a proof target. A
 // fault-injected translation that aborts with another message is told apart.
 // The Rust twin is rust/tests/unit/issue_195_faithful_behavior.rs.
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -23,7 +25,7 @@ import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/i
 import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const root = new URL('../../', import.meta.url);
-const fixture = JSON.parse(await readFile(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root), 'utf8'));
+const fixture = readProjectData(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root));
 const { faithfulBehavior, translationCorpus } = fixture;
 const directory = new URL(`${faithfulBehavior.directory}/`, root);
 const LANGUAGES = ['JavaScript', 'Rust', 'Lean', 'Rocq'];
@@ -111,7 +113,7 @@ async function withWorkspace(prefix, body) {
   }
 }
 
-const sourceText = (entry) => readFile(new URL(entry.file, directory), 'utf8');
+const sourceText = (entry) => readFile(resolveProjectDataPath(new URL(entry.file, directory)), 'utf8');
 const expected = (entry) => ({ lines: entry.lines, abort: entry.abort });
 const outcome = ({ lines, abort }) => ({ lines, abort });
 

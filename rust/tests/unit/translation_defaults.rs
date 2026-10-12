@@ -149,8 +149,8 @@ fn lexical_boundaries_keep_regular_expression_bodies_and_division_distinct() {
     use meta_language::translation::Language;
     use meta_language::translation::diagnostics::ErrorKind;
     use meta_language::translation::lexer::{TokenKind, tokenize};
-    let fixtures: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/translation-lexical-boundaries.json"
+    let fixtures: serde_json::Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/translation-lexical-boundaries.lino"
     ))
     .unwrap();
     for literal in fixtures["regexLiterals"].as_array().unwrap() {

@@ -22,7 +22,7 @@ use serde_json::Value;
 use super::grammar_render::render_rule;
 use super::issue_195_observations as observations;
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-importers.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-importers.lino");
 const REQUIREMENT_ID: &str = "I195-INTERCHANGE-MUTATION-GUARDS";
 
 type Importer = fn(&str) -> Result<Grammar, GrammarImportError>;
@@ -40,7 +40,7 @@ fn pair(format: &str) -> (Importer, Emitter) {
 }
 
 fn corpus() -> Value {
-    serde_json::from_str(FIXTURE).expect("shared importer fixture is JSON")
+    super::project_data::read_project_data(FIXTURE).expect("shared importer fixture is JSON")
 }
 
 fn strings(value: &Value, key: &str) -> Vec<String> {

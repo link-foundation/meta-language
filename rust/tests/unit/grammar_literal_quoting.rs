@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use super::grammar_render::render_rule;
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-literal-quoting.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-literal-quoting.lino");
 
 fn import(format: &str, source: &str) -> Result<Grammar, GrammarImportError> {
     match format {
@@ -24,7 +24,7 @@ fn field<'case>(case: &'case Value, key: &str) -> &'case str {
 
 #[test]
 fn shared_literal_quoting_imports_match_javascript() {
-    let fixture: Value = serde_json::from_str(FIXTURE).expect("fixture parses");
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).expect("fixture parses");
     for case in fixture["imports"].as_array().expect("import cases") {
         let id = field(case, "id");
         let result = import(field(case, "format"), field(case, "source"));
@@ -40,7 +40,7 @@ fn shared_literal_quoting_imports_match_javascript() {
 
 #[test]
 fn shared_literal_quoting_emits_reimport_in_the_same_format() {
-    let fixture: Value = serde_json::from_str(FIXTURE).expect("fixture parses");
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).expect("fixture parses");
     for case in fixture["emits"].as_array().expect("emit cases") {
         let id = field(case, "id");
         let format = field(case, "format");

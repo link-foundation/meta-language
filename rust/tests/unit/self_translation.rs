@@ -26,11 +26,11 @@ const HEADER: &str = "// meta-language:self-translation:v1 ";
 
 #[test]
 fn sibling_binding_runs_match_javascript_and_restore_their_source() {
-    let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/self-translation-bindings.json"
+    let fixture: serde_json::Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/self-translation-bindings.lino"
     ))
     .unwrap();
-    let script = "import fs from 'node:fs'; import {selfTranslate} from './js/src/self-translation.js'; const fixture=JSON.parse(fs.readFileSync('parity/fixtures/self-translation-bindings.json')); process.stdout.write(JSON.stringify(fixture.cases.map(entry=>selfTranslate(entry.module ? fs.readFileSync(entry.module,'utf8') : entry.source,'JavaScript','Rust').code)));";
+    let script = "import fs from 'node:fs'; import {readProjectData} from './js/scripts/project-data.mjs'; import {selfTranslate} from './js/src/self-translation.js'; const fixture=readProjectData('parity/fixtures/self-translation-bindings.json'); process.stdout.write(JSON.stringify(fixture.cases.map(entry=>selfTranslate(entry.module ? fs.readFileSync(entry.module,'utf8') : entry.source,'JavaScript','Rust').code)));";
     let output = Command::new("node")
         .current_dir(root())
         .args(["--input-type=module", "-e", script])
@@ -44,7 +44,15 @@ fn sibling_binding_runs_match_javascript_and_restore_their_source() {
     let expected: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
     for (index, entry) in fixture["cases"].as_array().unwrap().iter().enumerate() {
         let source = entry["source"].as_str().map_or_else(
-            || fs::read_to_string(root().join(entry["module"].as_str().unwrap())).unwrap(),
+            || {
+                fs::read_to_string(
+                    super::project_data::resolve_project_data_path(
+                        root().join(entry["module"].as_str().unwrap()),
+                    )
+                    .expect("one project data storage format"),
+                )
+                .unwrap()
+            },
             str::to_owned,
         );
         let translated = self_translate(&source, "JavaScript", "Rust").unwrap();
@@ -114,7 +122,11 @@ fn root() -> PathBuf {
 
 fn read(name: &str) -> String {
     let path = root().join("parity/self-translation").join(name);
-    fs::read_to_string(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
+    fs::read_to_string(
+        super::project_data::resolve_project_data_path(&path)
+            .expect("one project data storage format"),
+    )
+    .unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
 fn observe(requirement_id: &str, assertions: &[&str], test_name: &str) {
@@ -474,7 +486,11 @@ fn meta_languages_own_modules_round_trip_byte_for_byte() {
         ("rust/src/binary_format.rs", "Rust", "TypeScript"),
         ("js/src/primitives.js", "JavaScript", "Rust"),
     ] {
-        let source = fs::read_to_string(root().join(file)).expect("the module reads");
+        let source = fs::read_to_string(
+            super::project_data::resolve_project_data_path(root().join(file))
+                .expect("one project data storage format"),
+        )
+        .expect("the module reads");
         let same = self_translate(&source, language, language).expect("translates");
         assert_eq!(same.code, source, "{file}");
         let there = self_translate(&source, language, other).expect("translates");
@@ -613,11 +629,16 @@ fn the_rust_suite_checks_the_published_per_module_difference_report() {
         "the report generator succeeds:\n{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    let report: serde_json::Value = serde_json::from_str(
-        &fs::read_to_string(directory.join("self-translation-report.json"))
-            .expect("the JSON report is published"),
+    let report: serde_json::Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(
+                directory.join("self-translation-report.lino"),
+            )
+            .expect("one project data storage format"),
+        )
+        .expect("the Links Notation report is published"),
     )
-    .expect("the JSON report parses");
+    .expect("the Links Notation report parses");
     assert_eq!(report["failures"], serde_json::json!([]));
     let modules = report["modules"]
         .as_array()
@@ -634,8 +655,13 @@ fn the_rust_suite_checks_the_published_per_module_difference_report() {
         assert!(row["sharedLines"].as_u64().is_some());
         assert!(row["decorated"]["sharedLines"].as_u64().is_some());
     }
-    let markdown = fs::read_to_string(directory.join("self-translation-report.md"))
-        .expect("the Markdown report is published");
+    let markdown = fs::read_to_string(
+        super::project_data::resolve_project_data_path(
+            directory.join("self-translation-report.md"),
+        )
+        .expect("one project data storage format"),
+    )
+    .expect("the Markdown report is published");
     for name in names {
         assert!(
             markdown.contains(&format!("| {name} |")),

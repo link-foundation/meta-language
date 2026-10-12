@@ -38,7 +38,7 @@ test('the crate package includes every file the Rust sources embed', () => {
       path.relative(rust, path.resolve(path.dirname(file), target)).split(path.sep).join('/'),
     ),
   );
-  assert.ok(embedded.includes('src/data/foundation-models.json'));
+  assert.ok(embedded.includes('src/data/foundation-models.lino'));
   assert.deepEqual(embedded.filter((file) => !include.some((pattern) => pattern.test(file))), []);
   assert.ok(include.some((pattern) => pattern.test('src/lib.rs')), 'the library entry point is packaged');
 assert.ok(include.some((pattern) => pattern.test('src/main.rs')), 'the CLI entry point is packaged');

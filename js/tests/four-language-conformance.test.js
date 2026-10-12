@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -25,13 +27,11 @@ import {
   translateProgram,
 } from '../src/index.js';
 
-const corpus = JSON.parse(
-  readFileSync(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)),
-);
+const corpus = readProjectData(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url));
 const grammarInventoryBytes = readFileSync(
-  new URL('../../parity/language-grammar-inventory.json', import.meta.url),
+  resolveProjectDataPath(new URL('../../parity/language-grammar-inventory.json', import.meta.url)),
 );
-const grammarInventory = JSON.parse(grammarInventoryBytes);
+const grammarInventory = readProjectData(new URL('../../parity/language-grammar-inventory.json', import.meta.url));
 const grammarInventoryDigest = createHash('sha256').update(grammarInventoryBytes).digest('hex');
 
 async function recordNegativeCstObservation(language, assertionId) {

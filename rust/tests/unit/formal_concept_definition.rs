@@ -43,8 +43,8 @@ fn contains_cycle(prepared: &Value) -> bool {
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(include_str!(
-        "../../../parity/fixtures/formal-concept-definitions.json"
+    super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/formal-concept-definitions.lino"
     ))
     .unwrap()
 }

@@ -12,7 +12,7 @@ use serde_json::Value;
 type Importer = fn(&str) -> Result<Grammar, GrammarImportError>;
 type Emitter = fn(&Grammar) -> Result<(String, EmitReport), GrammarEmitError>;
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-importers.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-importers.lino");
 const TARGETS: [(&str, Emitter, Importer); 2] = [
     ("antlr", emit_antlr, import_antlr),
     ("lark", emit_lark, import_lark),
@@ -799,7 +799,7 @@ fn fixture_importer(format: &str) -> Importer {
 
 #[test]
 fn shared_importer_fixtures_round_trip_through_antlr_and_lark() {
-    let fixture: Value = serde_json::from_str(FIXTURE).expect("fixture is JSON");
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).expect("fixture is JSON");
     let cases = fixture["cases"].as_array().expect("cases");
     assert_ne!(cases.as_slice(), [] as [Value; 0]);
     for case in cases {

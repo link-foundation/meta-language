@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 
 import {
@@ -13,9 +14,7 @@ import {
 import { renderGrammarRule } from './support/render-grammar-expression.js';
 
 // Shared with rust/tests/unit/grammar_literal_quoting.rs.
-const fixture = JSON.parse(
-  readFileSync(new URL('../../parity/fixtures/grammar-literal-quoting.json', import.meta.url)),
-);
+const fixture = readProjectData(new URL('../../parity/fixtures/grammar-literal-quoting.json', import.meta.url));
 const importers = { bnf: importBnf, ebnf: importEbnf };
 const emitters = { bnf: emitBnf, ebnf: emitEbnf };
 

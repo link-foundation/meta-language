@@ -6,8 +6,8 @@ use std::process::Command;
 
 #[test]
 fn array_construction_matches_javascript_and_preserves_order_nesting_and_effects() {
-    let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/translation-array-construction.json"
+    let fixture: serde_json::Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/translation-array-construction.lino"
     ))
     .unwrap();
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

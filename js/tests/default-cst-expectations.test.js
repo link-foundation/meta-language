@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { appendFile, readFile } from 'node:fs/promises';
@@ -13,9 +15,9 @@ import {
 } from '../src/index.js';
 
 const parityJson = async (name) =>
-  JSON.parse(await readFile(new URL(`../../parity/${name}`, import.meta.url), 'utf8'));
-const inventoryBytes = await readFile(new URL('../../parity/language-grammar-inventory.json', import.meta.url));
-const inventory = JSON.parse(inventoryBytes);
+  readProjectData(new URL(`../../parity/${name}`, import.meta.url));
+const inventoryBytes = await readFile(resolveProjectDataPath(new URL('../../parity/language-grammar-inventory.json', import.meta.url)));
+const inventory = readProjectData(new URL('../../parity/language-grammar-inventory.json', import.meta.url));
 const inventoryDigest = createHash('sha256').update(inventoryBytes).digest('hex');
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 // Tree-sitter languages and built-in grammar languages together cover the
@@ -367,7 +369,7 @@ test(TEST_NAME, async () => {
   assert.deepEqual(failures, []);
 });
 
-const evidenceBytes = await readFile(new URL('../../parity/fixtures/issue-195-evidence.json', import.meta.url));
+const evidenceBytes = await readFile(resolveProjectDataPath(new URL('../../parity/fixtures/issue-195-evidence.json', import.meta.url)));
 const evidenceDigest = createHash('sha256').update(evidenceBytes).digest('hex');
 // A region in a language a native grammar parses by default takes the native
 // expectation, whose recovery region is the native repair.
@@ -385,7 +387,7 @@ const EMBEDDED_TEST_NAME = 'every JavaScript embedded-language path parses to it
 
 test(EMBEDDED_TEST_NAME, async () => {
   const failures = [];
-  for (const fixture of JSON.parse(evidenceBytes).embedded) {
+  for (const fixture of readProjectData(new URL('../../parity/fixtures/issue-195-evidence.json', import.meta.url)).embedded) {
     const label = `${fixture.host} -> ${fixture.target}`;
     const want = embeddedExpectations[label];
     const host = inventory.languages.find(({ name }) => name === fixture.parseLanguage);

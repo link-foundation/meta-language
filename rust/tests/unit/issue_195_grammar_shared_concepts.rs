@@ -58,11 +58,15 @@ fn read(file: &str) -> String {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(file);
-    std::fs::read_to_string(path).expect("the fixture reads")
+    std::fs::read_to_string(
+        super::project_data::resolve_project_data_path(path)
+            .expect("one project data storage format"),
+    )
+    .expect("the fixture reads")
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(&read(FIXTURE)).expect("the fixture is JSON")
+    super::project_data::read_project_data(&read(FIXTURE)).expect("the fixture is JSON")
 }
 
 fn text(value: &Value) -> &str {
@@ -411,7 +415,7 @@ fn the_rust_reuse_report_equals_the_published_report() {
         .map(|entry| json!({ "concept": entry.concept, "languages": entry.languages, "shared": entry.shared }))
         .collect();
     let mut published: Value =
-        serde_json::from_str(&read(REUSE_FIXTURE)).expect("the report is JSON");
+        super::project_data::read_project_data(&read(REUSE_FIXTURE)).expect("the report is JSON");
     published
         .as_object_mut()
         .expect("an object")

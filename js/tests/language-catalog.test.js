@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -19,13 +21,11 @@ import {
   languageForPath,
 } from '../src/index.js';
 
-const inventory = JSON.parse(
-  await readFile(new URL('../../parity/language-grammar-inventory.json', import.meta.url), 'utf8'),
-);
+const inventory = readProjectData(new URL('../../parity/language-grammar-inventory.json', import.meta.url));
 
 test('the Rust native grammar embedding is generated for every inventory entry', async () => {
   const generated = nativeGrammarRustSource(inventory);
-  assert.equal(await readFile(new URL('../../rust/src/data/native-grammar-texts.rs', import.meta.url), 'utf8'), generated);
+  assert.equal(await readFile(resolveProjectDataPath(new URL('../../rust/src/data/native-grammar-texts.rs', import.meta.url)), 'utf8'), generated);
   const files = [...generated.matchAll(/include_str!\("([^"]+)"\)/gu)].map(([, file]) => file);
   assert.deepEqual(files, Object.values(inventory.nativeGrammars).map(({ grammar }) => `native-grammars/${grammar.split('/').pop()}`).sort());
   assert.throws(() => nativeGrammarRustSource({ nativeGrammars: { one: { grammar: 'one/a.lino' }, two: { grammar: 'two/a.lino' } } }), /unique/u);
@@ -33,12 +33,12 @@ test('the Rust native grammar embedding is generated for every inventory entry',
 
 test('language catalog is generated from the inventory and shipped identically to Rust', async () => {
   const generated = formatLanguageCatalog(buildLanguageCatalog(inventory, GRAMMAR_LOCK));
-  const shipped = await readFile(new URL('../src/data/language-catalog.json', import.meta.url), 'utf8');
+  const shipped = await readFile(resolveProjectDataPath(new URL('../src/data/language-catalog.json', import.meta.url)), 'utf8');
   const rust = await readFile(
-    new URL('../../rust/src/data/language-catalog.json', import.meta.url),
+    resolveProjectDataPath(new URL('../../rust/src/data/language-catalog.json', import.meta.url)),
     'utf8',
   );
-  assert.equal(shipped, generated);
+  assert.deepEqual(readProjectData(new URL('../src/data/language-catalog.json', import.meta.url)), JSON.parse(generated));
   assert.equal(rust, shipped);
   assert.deepEqual(
     LANGUAGE_CATALOG.languages.map(({ name }) => name),
@@ -47,7 +47,7 @@ test('language catalog is generated from the inventory and shipped identically t
 });
 
 test('the catalog keeps immutable sources, licenses, independent corpora and embedded paths', async () => {
-  const registered = JSON.parse(await readFile(new URL('../../parity/grammars/sources.json', import.meta.url), 'utf8')).sources;
+  const registered = readProjectData(new URL('../../parity/grammars/sources.json', import.meta.url)).sources;
   for (const language of inventory.languages) {
     const entry = languageEntry(language.name);
     const sources = registered.filter((source) => source.native === language.nativeGrammar || (language.grammars ?? []).includes(source.language));
@@ -58,7 +58,7 @@ test('the catalog keeps immutable sources, licenses, independent corpora and emb
         assert.deepEqual(recorded[field], source[field], `${language.name} ${source.id} ${field}`);
       }
       if (source.licenseFile) {
-        const bytes = await readFile(new URL(`../../${source.licenseFile}`, import.meta.url));
+        const bytes = await readFile(resolveProjectDataPath(new URL(`../../${source.licenseFile}`, import.meta.url)));
         assert.equal(recorded.licenseSha256, createHash('sha256').update(bytes).digest('hex'));
       }
     }
@@ -140,7 +140,7 @@ test('grammar provenance names the locked grammar versions and parser digests', 
       // A native grammar is recorded with the digest of its Links Notation
       // text, and its tree-sitter grammars stay pinned as its oracles.
       const declared = inventory.nativeGrammars[language.nativeGrammar];
-      const text = await readFile(new URL(`../../${declared.grammar}`, import.meta.url));
+      const text = await readFile(resolveProjectDataPath(new URL(`../../${declared.grammar}`, import.meta.url)));
       assert.equal(provenance[0].version, declared.version);
       assert.equal(provenance[0].parserSha256, createHash('sha256').update(text).digest('hex'));
       assert.deepEqual(
@@ -154,7 +154,7 @@ test('grammar provenance names the locked grammar versions and parser digests', 
       if (grammar.id === language.builtinGrammar) {
         // A built-in grammar is recorded with the digest of its specification.
         const declared = inventory.builtinGrammars[grammar.id];
-        const specification = await readFile(new URL(`../../${declared.specification}`, import.meta.url));
+        const specification = await readFile(resolveProjectDataPath(new URL(`../../${declared.specification}`, import.meta.url)));
         assert.equal(grammar.version, declared.version);
         assert.equal(grammar.parserSha256, createHash('sha256').update(specification).digest('hex'));
         continue;
@@ -176,9 +176,9 @@ test('the catalog ships each native grammar as the text the inventory declares',
   assert.deepEqual(inventory.languages.filter(({ nativeGrammar }) => nativeGrammar === 'native-xml').map(({ name }) => name).sort(), ['DOCX', 'XML']);
   for (const [id, declared] of Object.entries(inventory.nativeGrammars)) {
     const shipped = LANGUAGE_CATALOG.nativeGrammars[id];
-    const text = await readFile(new URL(`../../${declared.grammar}`, import.meta.url), 'utf8');
-    assert.equal(await readFile(new URL(`../src/data/${shipped.file}`, import.meta.url), 'utf8'), text, id);
-    assert.equal(await readFile(new URL(`../../rust/src/data/${shipped.file}`, import.meta.url), 'utf8'), text, id);
+    const text = await readFile(resolveProjectDataPath(new URL(`../../${declared.grammar}`, import.meta.url)), 'utf8');
+    assert.equal(await readFile(resolveProjectDataPath(new URL(`../src/data/${shipped.file}`, import.meta.url)), 'utf8'), text, id);
+    assert.equal(await readFile(resolveProjectDataPath(new URL(`../../rust/src/data/${shipped.file}`, import.meta.url)), 'utf8'), text, id);
     assert.deepEqual(
       [shipped.hidden, shipped.anonymous, shipped.extras],
       [declared.hidden, declared.anonymous, declared.extras],

@@ -152,9 +152,14 @@ fn stage_metadata_retains_constant_bindings_and_absent_parameter_defaults() {
 
 #[test]
 fn every_translation_stage_matches_the_javascript_pipeline() {
-    let fixtures: Value = serde_json::from_str(
-        &fs::read_to_string(repository_path("parity/fixtures/translation-stages.json"))
-            .expect("translation stage fixtures are readable"),
+    let fixtures: Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(repository_path(
+                "parity/fixtures/translation-stages.json",
+            ))
+            .expect("one project data storage format"),
+        )
+        .expect("translation stage fixtures are readable"),
     )
     .expect("translation stage fixtures are valid JSON");
     let programs = fixtures["programs"].as_array().expect("programs");
@@ -168,7 +173,13 @@ fn every_translation_stage_matches_the_javascript_pipeline() {
         let extension = program["extension"].as_str().expect("extension");
         let source = program["path"].as_str().map_or_else(
             || program["source"].as_str().expect("source").to_owned(),
-            |path| fs::read_to_string(repository_path(path)).expect("corpus source is readable"),
+            |path| {
+                fs::read_to_string(
+                    super::project_data::resolve_project_data_path(repository_path(path))
+                        .expect("one project data storage format"),
+                )
+                .expect("corpus source is readable")
+            },
         );
         let surface = parse(extension, &source);
         let Some(surface) = compare(

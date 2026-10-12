@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { selfTranslate } from '../src/self-translation.js';
@@ -7,7 +8,7 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/self-translation-bindings.json', import.meta.url), 'utf8')).cases.find(({ name }) => name === 'documented-optional-string');
+const fixture = readProjectData(new URL('../../parity/fixtures/self-translation-bindings.json', import.meta.url)).cases.find(({ name }) => name === 'documented-optional-string');
 
 test('optional sibling bindings keep their presence in the Rust ABI and every source observation', () => {
   const rust = selfTranslate(fixture.source, 'JavaScript', 'Rust');

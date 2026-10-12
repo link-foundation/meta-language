@@ -8,7 +8,7 @@ use super::issue_195_native_grammar_rows::{
 use meta_language::{FeatureParseOptions, SyntaxTree};
 use serde_json::{Value, json};
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-aliased-extras.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-aliased-extras.lino");
 
 fn nodes(tree: &SyntaxTree) -> Vec<&SyntaxTree> {
     let mut found = vec![tree];
@@ -30,7 +30,7 @@ fn kind(tree: &SyntaxTree) -> Option<&str> {
 
 #[test]
 fn aliased_extra_fixtures_preserve_state_fields_spans_and_source_retake() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let cases = fixture["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 4);
     for case in cases {
@@ -125,8 +125,8 @@ fn aliased_extra_fixtures_preserve_state_fields_spans_and_source_retake() {
 
 #[test]
 fn r_aliased_scanner_extras_preserve_the_original_comment_before_else_oracle() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/native-grammars/r.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/native-grammars/r.lino"
     ))
     .unwrap();
     let input = "{if(x) y\n# note\nelse z}\n";
@@ -150,8 +150,8 @@ fn r_aliased_scanner_extras_preserve_the_original_comment_before_else_oracle() {
 
 #[test]
 fn odin_aliased_scanner_extras_preserve_the_original_invalid_comment_recovery() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/native-grammars/odin.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/native-grammars/odin.lino"
     ))
     .unwrap();
     let input = "package garden\n/*\"not a comment*/\n";
@@ -194,8 +194,8 @@ fn odin_aliased_scanner_extras_preserve_the_original_invalid_comment_recovery() 
 
 #[test]
 fn anonymous_extra_fixtures_preserve_names_state_prefixes_and_exact_spans() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/grammar-extra-projection.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/grammar-extra-projection.lino"
     ))
     .unwrap();
     for case in fixture["cases"].as_array().unwrap() {
@@ -255,8 +255,8 @@ fn anonymous_extra_fixtures_preserve_names_state_prefixes_and_exact_spans() {
 
 #[test]
 fn make_continuation_extras_preserve_the_original_oracle_rows() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/native-grammars/make.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/native-grammars/make.lino"
     ))
     .unwrap();
     let input = "target: foo \\\n\tbar | baz \\\nfoobar\n";
@@ -301,8 +301,8 @@ fn make_continuation_extras_preserve_the_original_oracle_rows() {
 
 #[test]
 fn pascal_roots_preserve_leading_separators_and_independent_syntax_spans() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/native-grammars/pascal.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/native-grammars/pascal.lino"
     ))
     .unwrap();
     assert_eq!(fixture["rootIncludesLeadingTrivia"], true);
@@ -329,12 +329,12 @@ fn pascal_roots_preserve_leading_separators_and_independent_syntax_spans() {
 
 #[test]
 fn odin_anonymous_scanner_extras_preserve_the_original_default_recovery_rows() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/native-grammars/odin.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/native-grammars/odin.lino"
     ))
     .unwrap();
-    let inventory: Value = serde_json::from_str(include_str!(
-        "../../../parity/language-grammar-inventory.json"
+    let inventory: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/language-grammar-inventory.lino"
     ))
     .unwrap();
     let input = inventory["languages"]
@@ -345,8 +345,8 @@ fn odin_anonymous_scanner_extras_preserve_the_original_default_recovery_rows() {
         .unwrap()["recoverySource"]
         .as_str()
         .unwrap();
-    let expected: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/native-default-cst-expected.json"
+    let expected: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/native-default-cst-expected.lino"
     ))
     .unwrap();
     assert!(oracle_rows(&tree_sitter_odin::LANGUAGE.into(), input).1);

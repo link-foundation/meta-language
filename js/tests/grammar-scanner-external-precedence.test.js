@@ -1,11 +1,12 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { renderSyntaxTree } from '../src/grammar-runtime/syntax-tree.js';
 import { nativeRows } from '../scripts/native-grammar-rows.mjs';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/scanner-external-precedence.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/scanner-external-precedence.json', import.meta.url));
 const text = tree => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 
 for (const entry of fixture) test(entry.name, () => {

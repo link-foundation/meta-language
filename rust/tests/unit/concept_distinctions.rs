@@ -36,8 +36,12 @@ fn fixture() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(FIXTURE);
-    let text = std::fs::read_to_string(path).expect("the fixture reads");
-    serde_json::from_str(&text).expect("the fixture is JSON")
+    let text = std::fs::read_to_string(
+        super::project_data::resolve_project_data_path(path)
+            .expect("one project data storage format"),
+    )
+    .expect("the fixture reads");
+    super::project_data::read_project_data(&text).expect("the fixture is JSON")
 }
 
 fn alias(value: &Value) -> SourceAlias {

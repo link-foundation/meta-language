@@ -7,8 +7,8 @@ use serde_json::Value;
 
 #[test]
 fn tagged_prototype_definition_preserves_original_fixture_and_key_location() {
-    let fixtures: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/translation-stages.json"
+    let fixtures: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/translation-stages.lino"
     ))
     .unwrap();
     let source = fixtures["programs"]

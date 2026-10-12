@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { format } from 'node:util';
@@ -19,8 +21,8 @@ test('failed evidence child commands retain both output streams in the test erro
 });
 
 test('Rust corpus constructor mappings name the serialized JavaScript tags and preserve output', () => {
-  const corpus = JSON.parse(readFileSync(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url), 'utf8')).translationCorpus;
-  const read = (file) => readFileSync(new URL(`../../${corpus.directory}/${file}`, import.meta.url), 'utf8');
+  const corpus = readProjectData(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)).translationCorpus;
+  const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${corpus.directory}/${file}`, import.meta.url)), 'utf8');
   const source = read(corpus.sources.Rust.file);
   const result = translateProgram(source, 'Rust', 'JavaScript');
   assert.equal(result.diagnostic, null);

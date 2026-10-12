@@ -4,8 +4,8 @@ use std::process::Command;
 
 #[test]
 fn trim_predicates_preserve_each_languages_unicode_boundaries() {
-    let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/string-trim-semantics.json"
+    let fixture: serde_json::Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/string-trim-semantics.lino"
     ))
     .unwrap();
     let source = "pub fn trimmed(s: &str) -> String { s.trim().to_string() }\npub fn start(s: &str) -> String { s.trim_start().to_string() }\npub fn end(s: &str) -> String { s.trim_end().to_string() }\nfn main() {}\n";

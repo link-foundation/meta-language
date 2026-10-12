@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -6,7 +8,7 @@ import { releaseLexicalCaches, retainLexicalCache } from '../src/grammar-runtime
 import { acceptLexicalCacheReservation } from '../src/translation/frontend-rules.js';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 
-const read = file => JSON.parse(readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8'));
+const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const fixture = read('parity/fixtures/lexical-cache-memory.json');
 const text = tree => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 
@@ -58,7 +60,7 @@ test('the original Zig diagnostic-comment CI input fits the unchanged default me
     .find(value => value.file.endsWith('undef_arith_is_illegal.zig'));
   assert.ok(selected);
   assert.equal(Buffer.byteLength(selected.source), 495499);
-  const grammar = readFileSync(new URL('../../parity/grammars/native/zig.lino', import.meta.url), 'utf8');
+  const grammar = readFileSync(resolveProjectDataPath(new URL('../../parity/grammars/native/zig.lino', import.meta.url)), 'utf8');
   const projection = read('parity/fixtures/native-grammars/zig.json');
   const parser = compileGrammar(parseGrammarLinks(grammar));
   const expected = oracleSnapshot(selected.source, 'Zig');

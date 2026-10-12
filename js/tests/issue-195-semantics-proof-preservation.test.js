@@ -9,6 +9,8 @@
 // source-kernel proof, which a restatement true only on the bounded domain
 // passes while every kernel rejects it. The Rust twin is
 // rust/tests/unit/issue_195_semantics_proof_preservation.rs.
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -23,7 +25,7 @@ import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/i
 import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const root = new URL('../../', import.meta.url);
-const corpus = JSON.parse(await readFile(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root), 'utf8')).translationCorpus;
+const corpus = readProjectData(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root)).translationCorpus;
 const corpusDirectory = new URL(`${corpus.directory}/`, root);
 const LANGUAGES = Object.keys(corpus.sources);
 const PROOF_SOURCES = LANGUAGES.filter((language) => corpus.sources[language].theorems.length > 0);
@@ -63,7 +65,7 @@ async function toolchainsPresent(t) {
   return false;
 }
 
-const sourceText = (language) => readFile(new URL(corpus.sources[language].file, corpusDirectory), 'utf8');
+const sourceText = (language) => readFile(resolveProjectDataPath(new URL(corpus.sources[language].file, corpusDirectory)), 'utf8');
 
 function mutate(text, { find, replace }) {
   assert.equal(text.split(find).length, 2, `the mutation site ${JSON.stringify(find)} is unique`);
@@ -281,7 +283,7 @@ test('issue 195 Rocq proof steps rewrite with each rule a bounded number of time
   // be rejected in seconds rather than after minutes of search.
   let steps = 0;
   for (const source of PROOF_SOURCES.filter((language) => language !== 'Rocq')) {
-    const text = readFileSync(new URL(corpus.sources[source].file, corpusDirectory), 'utf8');
+    const text = readFileSync(resolveProjectDataPath(new URL(corpus.sources[source].file, corpusDirectory)), 'utf8');
     for (const variant of [text, ...corpus.sources[source].theoremMutations.map((mutation) => mutate(text, mutation))]) {
       const { code } = translateProgram(variant, source, 'Rocq');
       for (const [, , rules] of code.matchAll(/\((rewrite(?: <-)?) ([^;]*); ml_close\)/gu)) {

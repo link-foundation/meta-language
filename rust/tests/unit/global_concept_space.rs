@@ -8,8 +8,8 @@ use serde_json::{Value, json};
 use super::issue_195_observations::{Observation, record};
 
 fn fixture() -> Value {
-    serde_json::from_str(include_str!(
-        "../../../parity/fixtures/global-concept-space.json"
+    super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/global-concept-space.lino"
     ))
     .unwrap()
 }

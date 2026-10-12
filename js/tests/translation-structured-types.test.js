@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 import { checkProgram, coerce } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
@@ -8,7 +9,7 @@ import { emitRocq } from '../src/translation/emit-rocq.js';
 import { renderPortableTypeIdentity, acceptOptionalAbsence, mergeOptionalAbsence, readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceType, wrapPortableReferenceIdentity } from '../src/translation/structured-type-rules.js';
 import { BOOL, option, sameType, typeKey } from '../src/translation/types.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-structured-types.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/translation-structured-types.json', import.meta.url));
 
 test('structural identities preserve named fields, nesting and UTF-16 field order', () => {
   for (const entry of fixture.cases) assert.equal(typeKey(entry.type), entry.identity, entry.name);
@@ -60,7 +61,6 @@ test('pure targets refuse shared reference signatures until their state model is
     }
   }
 });
-
 
 test('shared type identities retain distinct unresolved inference variables', () => {
   for (const entry of fixture.inferenceIdentities) assert.equal(renderPortableTypeIdentity(entry.kind, entry.detail, entry.children), entry.identity);

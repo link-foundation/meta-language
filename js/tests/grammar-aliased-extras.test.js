@@ -1,11 +1,13 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { compileGrammar, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const fixture = JSON.parse(read('parity/fixtures/grammar-aliased-extras.json'));
+const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const fixture = readProjectData(new URL(`../../${'parity/fixtures/grammar-aliased-extras.json'}`, import.meta.url));
 const leaves = node => node.children ? node.children.flatMap(leaves) : [node];
 const nodes = node => [node, ...((node.children ?? []).flatMap(nodes))];
 
@@ -37,7 +39,7 @@ for (const entry of fixture.cases) test(entry.name, () => {
 });
 
 test('R anonymous scanner extras preserve the existing comment-before-else oracle', () => {
-  const fixture = JSON.parse(read('parity/fixtures/native-grammars/r.json'));
+  const fixture = readProjectData(new URL(`../../${'parity/fixtures/native-grammars/r.json'}`, import.meta.url));
   const source = fixture.matches.find(entry => entry.source === '{if(x) y\n# note\nelse z}\n')?.source;
   assert.ok(source, 'the original focused fixture remains present');
   const oracle = oracleSnapshot(source, 'R');
@@ -51,7 +53,7 @@ test('R anonymous scanner extras preserve the existing comment-before-else oracl
 });
 
 test('Odin anonymous scanner extras preserve the original invalid-comment recovery', () => {
-  const fixture = JSON.parse(read('parity/fixtures/native-grammars/odin.json'));
+  const fixture = readProjectData(new URL(`../../${'parity/fixtures/native-grammars/odin.json'}`, import.meta.url));
   const entry = fixture.rejections.find(entry => entry.source === 'package garden\n/*"not a comment*/\n');
   assert.ok(entry, 'the original recovery fixture remains present');
   assert.equal(oracleSnapshot(entry.source, 'Odin').recovers, true);

@@ -2,8 +2,8 @@ use meta_language::{FeatureParseOptions, compile_feature_grammar, parse_grammar_
 
 #[test]
 fn indentation_scanners_keep_block_boundaries_across_virtual_newlines() {
-    let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/scanner-indentation.json"
+    let fixture: serde_json::Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/scanner-indentation.lino"
     ))
     .unwrap();
     let parser = compile_feature_grammar(

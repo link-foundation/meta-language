@@ -31,7 +31,11 @@ fn path(file: &str) -> PathBuf {
 }
 
 fn read(file: &str) -> String {
-    std::fs::read_to_string(super::project_data::resolve_project_data_path(path(file)).expect("one project data storage format")).unwrap_or_else(|error| panic!("{file} reads: {error}"))
+    std::fs::read_to_string(
+        super::project_data::resolve_project_data_path(path(file))
+            .expect("one project data storage format"),
+    )
+    .unwrap_or_else(|error| panic!("{file} reads: {error}"))
 }
 
 fn read_json(file: &str) -> Value {

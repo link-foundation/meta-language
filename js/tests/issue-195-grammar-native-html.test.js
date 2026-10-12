@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -6,9 +8,9 @@ import { NATIVE_GRAMMARS, buildNativeGrammarCorpusSources, buildNativeGrammarFix
 import { nativeRows, oracleRows, oracleRecovers, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
 const entry = NATIVE_GRAMMARS.find(({ id }) => id === 'html');
-const fixture = JSON.parse(read(fixturePath(entry)));
+const fixture = readProjectData(new URL(`../../${fixturePath(entry)}`, import.meta.url));
 const listing = read(entry.grammar);
 const parser = compileGrammar(parseGrammarLinks(listing));
 const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
@@ -56,7 +58,7 @@ test('native HTML rejects and losslessly recovers invalid focused sources', (con
 test('native HTML matches the independent oracle on every pinned upstream corpus input', (context) => {
   const file = 'parity/fixtures/native-grammars/html-corpus.json';
   assert.equal(read(file), renderFixture(buildNativeGrammarCorpusSources('html')));
-  const { cases } = JSON.parse(read(file));
+  const { cases } = readProjectData(new URL(`../../${file}`, import.meta.url));
   assert.ok(cases.length > 0);
   const failures = [];
   for (const { file: sourceFile, title, source } of cases) {
@@ -87,10 +89,10 @@ test('native HTML focused embedded raw text preserves leading whitespace', () =>
 });
 
 test('native HTML focused default CST retains independent embedded boundaries', () => {
-  const inventory = JSON.parse(read('parity/language-grammar-inventory.json'));
+  const inventory = readProjectData(new URL(`../../${'parity/language-grammar-inventory.json'}`, import.meta.url));
   const source = inventory.languages.find(entry => entry.name === 'HTML').source;
-  const oracle = JSON.parse(read('parity/fixtures/default-cst-expected.json')).languages.HTML;
-  const expected = JSON.parse(read('parity/fixtures/native-default-cst-expected.json')).languages.HTML;
+  const oracle = readProjectData(new URL(`../../${'parity/fixtures/default-cst-expected.json'}`, import.meta.url)).languages.HTML;
+  const expected = readProjectData(new URL(`../../${'parity/fixtures/native-default-cst-expected.json'}`, import.meta.url)).languages.HTML;
   assert.deepEqual(expected.embedded, oracle.embedded);
   const network = LinkNetwork.parse(source, 'HTML');
   const regions = network.links().filter(link => link.metadata().linkType === LinkType.Region && link.metadata().language !== 'HTML');

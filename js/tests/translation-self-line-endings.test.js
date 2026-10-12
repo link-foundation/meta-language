@@ -1,9 +1,10 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 import { selfTranslate } from '../src/self-translation.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/self-translation-line-endings.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/self-translation-line-endings.json', import.meta.url));
 
 test('carried and translated sources retain mixed line endings and layout byte for byte', () => {
   for (const entry of fixture.cases) {

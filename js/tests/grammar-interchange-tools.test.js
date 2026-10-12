@@ -1,12 +1,13 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 import peggy from 'peggy';
 import { checkIndependentGrammarCycle, importIndependentPeggyAst } from '../scripts/grammar-interchange-tools.mjs';
 import { importPest } from '../src/grammar-importers.js';
 import { emitPeggy } from '../src/grammar.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/grammar-interchange-tools.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/grammar-interchange-tools.json', import.meta.url));
 
 for (const entry of fixture.cases) {
   test(`${entry.id} executes the independent target and reimports its actual AST`, () => {

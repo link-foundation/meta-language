@@ -5,8 +5,9 @@
 // and lookalike spellings with different meanings stay distinct
 // (requirement I195-GRAMMAR-CONCEPT-DISTINCTIONS). The Rust twin is
 // rust/tests/unit/concept_distinctions.rs.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -31,7 +32,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 const REQUIREMENT = 'I195-GRAMMAR-CONCEPT-DISTINCTIONS';
 const FIXTURE = 'parity/fixtures/concept-distinctions.json';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const fixture = JSON.parse(readFileSync(path.join(root, FIXTURE), 'utf8'));
+const fixture = readProjectData(path.join(root, FIXTURE));
 const IMPORTERS = { pest: importPest, bnf: importBnf, abnf: importAbnf };
 
 function observe(assertions, testName) {

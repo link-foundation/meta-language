@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { translateProgram } from '../src/program-translation.js';
@@ -7,7 +8,7 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 
-const fixtures = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-array-absence.json', import.meta.url), 'utf8')).cases;
+const fixtures = readProjectData(new URL('../../parity/fixtures/translation-array-absence.json', import.meta.url)).cases;
 const execute = (source) => {
   const lines = [];
   runInNewContext(source, { console: { log: (...values) => lines.push(values.map((value) => Object.is(value, -0) ? '-0' : String(value)).join(' ')) } });

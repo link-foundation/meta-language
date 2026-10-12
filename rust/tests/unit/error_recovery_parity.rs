@@ -11,8 +11,14 @@ use crate::native_recovery_records::read_native_recovery;
 fn malformed_input_recovers_to_the_same_tree_as_the_native_tree_sitter_runtime() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/issue-195-conformance/error-recovery.json");
-    let recovery: Value =
-        serde_json::from_str(&fs::read_to_string(path).expect("recovery fixture")).expect("JSON");
+    let recovery: Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("recovery fixture"),
+    )
+    .expect("JSON");
     // A case whose native recovery differs from tree-sitter's, where its
     // language parses with its native grammar, has a justified record that the
     // conformance suite checks its tree against (`native_recovery_records`);

@@ -38,11 +38,16 @@ fn read(file: &str) -> String {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(file);
-    fs::read_to_string(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
+    fs::read_to_string(
+        super::project_data::resolve_project_data_path(&path)
+            .expect("one project data storage format"),
+    )
+    .unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
 fn pairs() -> Vec<Value> {
-    let fixture: Value = serde_json::from_str(&read(FIXTURE)).expect("the pairs are JSON");
+    let fixture: Value =
+        super::project_data::read_project_data(&read(FIXTURE)).expect("the pairs are JSON");
     fixture["pairs"].as_array().expect("pairs").clone()
 }
 
@@ -325,7 +330,7 @@ fn the_name_tier_compares_rule_names_without_a_leading_name_of_their_language() 
 
 #[test]
 fn shared_source_production_union_preserves_syntax_and_distinct_meanings() {
-    let fixture: Value = serde_json::from_str(&read(
+    let fixture: Value = super::project_data::read_project_data(&read(
         "parity/fixtures/grammar-source-production-union.json",
     ))
     .expect("source union fixture");
@@ -400,8 +405,9 @@ fn shared_source_production_union_preserves_syntax_and_distinct_meanings() {
 
 #[test]
 fn the_merge_forwards_formal_operational_premises_and_retains_unknown_origins() {
-    let fixture: Value = serde_json::from_str(&read("parity/fixtures/global-concept-space.json"))
-        .expect("formal premise fixture");
+    let fixture: Value =
+        super::project_data::read_project_data(&read("parity/fixtures/global-concept-space.json"))
+            .expect("formal premise fixture");
     let list: Vec<GrammarMergeSource> = fixture["sources"]
         .as_array()
         .expect("sources")

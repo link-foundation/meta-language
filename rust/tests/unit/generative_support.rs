@@ -296,17 +296,21 @@ fn conformance_text(path: &str) -> String {
     let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/issue-195-conformance")
         .join(path);
-    std::fs::read_to_string(&path)
-        .unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()))
+    std::fs::read_to_string(
+        super::project_data::resolve_project_data_path(&path)
+            .expect("one project data storage format"),
+    )
+    .unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()))
 }
 
 /// The seed sources of one language: its small conformance inputs, in the
 /// order of the JavaScript support.
 pub fn seed_sources(language: &str) -> Vec<SeedSource> {
     let manifest: serde_json::Value =
-        serde_json::from_str(&conformance_text("manifest.json")).expect("conformance manifest");
+        super::project_data::read_project_data(&conformance_text("manifest.json"))
+            .expect("conformance manifest");
     let details = &manifest["languages"][language];
-    let oracle: serde_json::Value = serde_json::from_str(&conformance_text(
+    let oracle: serde_json::Value = super::project_data::read_project_data(&conformance_text(
         details["oracle"].as_str().expect("oracle"),
     ))
     .expect("conformance oracle");

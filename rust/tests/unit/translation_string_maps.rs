@@ -6,8 +6,8 @@ use std::process::Command;
 
 #[test]
 fn string_maps_match_javascript_emission_and_preserve_unicode_and_whitespace() {
-    let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/self-translation-bindings.json"
+    let fixture: serde_json::Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/self-translation-bindings.lino"
     ))
     .unwrap();
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

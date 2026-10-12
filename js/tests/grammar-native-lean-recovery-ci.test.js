@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -8,11 +10,11 @@ import { stepBudget } from '../src/grammar-runtime/executor.js';
 import { documentGrammarRoots, renderCstLines } from './support/cst-lines.js';
 import { applyEdit } from './support/generative.js';
 
-const read = (path) => JSON.parse(readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8'));
+const read = (path) => readProjectData(new URL(`../../${path}`, import.meta.url));
 const fixture = read('parity/fixtures/native-grammars/lean.json');
 const generative = read('parity/fixtures/issue-195-generative/lean.json');
 const recovery = read('parity/fixtures/native-recovery.json').cases;
-const grammar = compileGrammar(parseGrammarLinks(readFileSync(new URL('../../parity/grammars/native/lean.lino', import.meta.url), 'utf8')));
+const grammar = compileGrammar(parseGrammarLinks(readFileSync(resolveProjectDataPath(new URL('../../parity/grammars/native/lean.lino', import.meta.url)), 'utf8')));
 
 function preservesSignature(id, suite, source, bytes, hash) {
   assert.equal(Buffer.byteLength(source), bytes, id);
@@ -60,7 +62,6 @@ for (const [index, step] of edit.steps.entries()) {
     preservesSignature(`edit/7 step ${index}`, 'generative', source, ...expected);
   });
 }
-
 
 test('Lean malformed property/4 does not apply the next command across a repaired layout boundary', () => {
   const entry = generative.cases.find((value) => value.id === 'property/4');

@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 import vm from 'node:vm';
 import { LinkNetwork } from '../src/network.js';
@@ -156,7 +157,7 @@ test('a certificate refuses removed, duplicated, retargeted or stale corresponde
 
 test('shared formal archives preserve primitives, recursive references and checked correspondence premises', () => {
   const fixtureFile = 'parity/fixtures/formal-concept-definitions.json';
-  const fixture = JSON.parse(readFileSync(new URL(`../../${fixtureFile}`, import.meta.url), 'utf8'));
+  const fixture = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
   let recursive = 0;
   const hasCycle = (graph) => {
     const active = new Set();

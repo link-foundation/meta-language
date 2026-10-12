@@ -1,6 +1,7 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { readProjectData } from '../scripts/project-data.mjs';
+
 import test from 'node:test';
 import { generateNativeTextGrammars } from '../scripts/build-native-text-grammars.mjs';
 import { compileGrammar, GrammarBuilder } from '../src/grammar.js';
@@ -11,7 +12,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 
 const fixturePath = 'parity/fixtures/native-text-grammars.json';
 const fixture = readProjectData(new URL(`../../${fixturePath}`, import.meta.url));
-const grammarText = await readFile(new URL('../src/data/native-text-grammar.lino', import.meta.url), 'utf8');
+const grammarText = await readFile(resolveProjectDataPath(new URL('../src/data/native-text-grammar.lino', import.meta.url)), 'utf8');
 const metadata = readProjectData(new URL('../src/data/native-text-metadata.lino', import.meta.url));
 
 test('native text adapters retain every independent built-in concrete tree expectation', async () => {
@@ -36,7 +37,7 @@ test('native text adapters retain every independent built-in concrete tree expec
 
 test('native text grammars are reproducible and shipped identically to both executors', async () => {
   await generateNativeTextGrammars({ check: true });
-  assert.equal(await readFile(new URL('../../rust/src/data/native-text-grammar.lino', import.meta.url), 'utf8'), grammarText);
+  assert.equal(await readFile(resolveProjectDataPath(new URL('../../rust/src/data/native-text-grammar.lino', import.meta.url)), 'utf8'), grammarText);
   assert.deepEqual(readProjectData(new URL('../../rust/src/data/native-text-metadata.lino', import.meta.url)), metadata);
 });
 

@@ -14,8 +14,14 @@ fn parity_json(name: &str) -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity")
         .join(name);
-    serde_json::from_str(&fs::read_to_string(path).expect("parity file is readable"))
-        .expect("parity file is valid JSON")
+    super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("parity file is readable"),
+    )
+    .expect("parity file is valid JSON")
 }
 
 /// Grammar rows of every inventory language: tree-sitter languages from
@@ -741,10 +747,16 @@ fn embedded_problems(
 #[test]
 fn every_rust_inventory_language_parses_to_its_complete_lossless_default_cst() {
     let inventory_bytes = fs::read(
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json"),
+        super::project_data::resolve_project_data_path(
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("../parity/language-grammar-inventory.json"),
+        )
+        .expect("one project data storage format"),
     )
     .expect("inventory is readable");
-    let inventory: Value = serde_json::from_slice(&inventory_bytes).expect("inventory is JSON");
+    let inventory: Value =
+        super::project_data::read_project_data(&String::from_utf8_lossy(&inventory_bytes))
+            .expect("inventory is JSON");
     let digest =
         Sha256::digest(&inventory_bytes)
             .iter()
@@ -796,9 +808,16 @@ const EMBEDDED_TEST_NAME: &str =
 fn every_rust_embedded_language_path_parses_to_its_complete_lossless_default_cst() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..");
     let inventory: Value = parity_json("language-grammar-inventory.json");
-    let evidence_bytes = fs::read(root.join("parity/fixtures/issue-195-evidence.json"))
-        .expect("evidence fixtures are readable");
-    let evidence: Value = serde_json::from_slice(&evidence_bytes).expect("evidence is JSON");
+    let evidence_bytes = fs::read(
+        super::project_data::resolve_project_data_path(
+            root.join("parity/fixtures/issue-195-evidence.json"),
+        )
+        .expect("one project data storage format"),
+    )
+    .expect("evidence fixtures are readable");
+    let evidence: Value =
+        super::project_data::read_project_data(&String::from_utf8_lossy(&evidence_bytes))
+            .expect("evidence is JSON");
     let digest =
         Sha256::digest(&evidence_bytes)
             .iter()

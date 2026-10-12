@@ -19,6 +19,9 @@ use meta_language::{
 };
 use serde_json::{Value, json};
 
+#[path = "unit/project_data.rs"]
+mod project_data;
+
 #[allow(dead_code)]
 #[path = "unit/issue_195_observations.rs"]
 mod issue_195_observations;
@@ -82,7 +85,7 @@ static ALLOCATOR: CountingAllocator = CountingAllocator;
 
 /// The fixture of the requirement; the measurements are its published part.
 const FIXTURE_FILE: &str = "parity/fixtures/merge-quality-evidence.json";
-const MEASUREMENTS: &str = include_str!("../../parity/fixtures/merge-quality-measurements.json");
+const MEASUREMENTS: &str = include_str!("../../parity/fixtures/merge-quality-measurements.lino");
 
 /// A native grammar: its id, links, corpus fixture and, where its grammar
 /// crate is a development dependency, the oracle.
@@ -101,7 +104,7 @@ macro_rules! native {
             fixture: include_str!(concat!(
                 "../../parity/fixtures/native-grammars/",
                 $file,
-                ".json"
+                ".lino"
             )),
             oracle: $oracle,
         }
@@ -369,7 +372,8 @@ fn issue_195_merge_quality_time_and_memory_are_measured() {
     let print = std::env::var_os("MERGE_QUALITY_PRINT").is_some();
     // `--measure --only` measures one grammar.
     let only = std::env::var("MERGE_QUALITY_ONLY").ok();
-    let published: Value = serde_json::from_str(MEASUREMENTS).expect("the measurements are JSON");
+    let published: Value =
+        project_data::read_project_data(MEASUREMENTS).expect("the measurement Links data reads");
     let published = published["grammars"].as_array().expect("measured grammars");
     let natives = natives();
     // Measurement rows have identities; their order does not define a pairing.
@@ -406,7 +410,8 @@ fn issue_195_merge_quality_time_and_memory_are_measured() {
         // corpus again, as the JavaScript test does, and checks the others
         // are published.
         if print || native.id == "native-json" {
-            let fixture: Value = serde_json::from_str(native.fixture).expect("the fixture is JSON");
+            let fixture: Value = project_data::read_project_data(native.fixture)
+                .expect("the fixture Links data reads");
             let matches = sources(&fixture, "matches");
             let rejections = sources(&fixture, "rejections");
             let measured = native_side(native, &matches, &rejections);

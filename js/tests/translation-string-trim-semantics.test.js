@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { translateProgram } from '../src/program-translation.js';
@@ -9,7 +10,7 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtureFile = 'parity/fixtures/string-trim-semantics.json';
-const fixtures = JSON.parse(readFileSync(new URL('../../' + fixtureFile, import.meta.url), 'utf8')).cases;
+const fixtures = readProjectData(new URL('../../' + fixtureFile, import.meta.url)).cases;
 const observe = (assertions, testName) => recordIssue195Observations({
   requirementId: 'I195-STRING-TRIM-SEMANTICS', suffix: 'behavior', fixtureId: 'string-trim-semantics', fixtureFile, assertions, testName,
 });

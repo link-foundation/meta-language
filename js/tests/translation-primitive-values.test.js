@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { translateProgram } from '../src/program-translation.js';
@@ -8,7 +9,7 @@ import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition, readAbsentNu
 import { checkProgram } from '../src/translation/check.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-primitive-values.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/translation-primitive-values.json', import.meta.url));
 
 test('shared source admission distinguishes prototype definitions from actual data property forms', () => {
   for (const entry of fixture.objectProperties) {

@@ -16,7 +16,7 @@ use serde_json::{Value, json};
 
 use super::issue_195_observations as observations;
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/four-language-conformance.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/four-language-conformance.lino");
 
 const ASSERTIONS: &[&str] = &[
     "projectContextLoaded",
@@ -27,7 +27,7 @@ const ASSERTIONS: &[&str] = &[
 ];
 
 fn corpus() -> Value {
-    serde_json::from_str(FIXTURE).expect("four-language fixture is JSON")
+    super::project_data::read_project_data(FIXTURE).expect("four-language fixture is JSON")
 }
 
 fn text(value: &Value, key: &str) -> String {

@@ -44,8 +44,14 @@ fn fixture() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(FIXTURE);
-    serde_json::from_str(&fs::read_to_string(path).expect("grammar merge fixture"))
-        .expect("valid grammar merge fixture")
+    super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("grammar merge fixture"),
+    )
+    .expect("valid grammar merge fixture")
 }
 
 fn text(value: &Value) -> &str {
@@ -958,9 +964,14 @@ fn malformed_merge_input_is_rejected() {
 fn feature_union_expressions_merge_by_their_native_listing_over_equivalent_references() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/grammar-merge-features.json");
-    let features: Value =
-        serde_json::from_str(&fs::read_to_string(path).expect("feature merge fixture"))
-            .expect("valid feature merge fixture");
+    let features: Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("feature merge fixture"),
+    )
+    .expect("valid feature merge fixture");
     let language = text(&features["language"]);
     let sources: Vec<GrammarMergeSource> = features["sources"]
         .as_array()

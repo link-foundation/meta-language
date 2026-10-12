@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -7,8 +9,8 @@ import { test } from 'node:test';
 import { selfTranslate } from '../src/self-translation.js';
 import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/self-translation-bindings.json', import.meta.url), 'utf8'));
-fixture.cases = fixture.cases.map((entry) => entry.module ? { ...entry, source: readFileSync(new URL(`../../${entry.module}`, import.meta.url), 'utf8') } : entry);
+const fixture = readProjectData(new URL('../../parity/fixtures/self-translation-bindings.json', import.meta.url));
+fixture.cases = fixture.cases.map((entry) => entry.module ? { ...entry, source: readFileSync(resolveProjectDataPath(new URL(`../../${entry.module}`, import.meta.url)), 'utf8') } : entry);
 
 test('sibling bindings share a checked scope, execute faithfully and restore their source', () => {
   const directory = nativeRustChecksEnabled() ? mkdtempSync(path.join(tmpdir(), 'self-translation-bindings-')) : null;
@@ -42,7 +44,6 @@ test('a carried sibling and its caller stay carried without poisoning an indepen
   assert.ok(!translated.code.includes('pub fn caller('));
   assert.equal(selfTranslate(translated.code, 'Rust', 'JavaScript').code, source);
 });
-
 
 test('mutable, nonliteral and temporal-dead-zone bindings stay unbound', () => {
   for (const entry of fixture.refusals) {

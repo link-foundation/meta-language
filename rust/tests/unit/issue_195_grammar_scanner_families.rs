@@ -16,8 +16,8 @@ fn observe_scanner_state(assertions: &[&str], test_name: &str) {
 
 #[test]
 fn scanner_values_normalize_single_uppercase_scalars_without_expanding_names() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/scanner-state-semantics.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/scanner-state-semantics.lino"
     ))
     .unwrap();
     let listing = fixture[0]["listing"].as_str().unwrap();
@@ -44,8 +44,8 @@ fn scanner_values_normalize_single_uppercase_scalars_without_expanding_names() {
 
 #[test]
 fn scanner_lookahead_predicates_observe_preceding_state_mutations() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/scanner-state-semantics.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/scanner-state-semantics.lino"
     ))
     .unwrap();
     let listing = fixture[1]["listing"].as_str().unwrap();
@@ -94,7 +94,7 @@ fn external_extras_keep_skipped_prefixes_outside_their_named_token_span() {
 }
 
 fn check_cases(text: &str) {
-    let fixtures: Value = serde_json::from_str(text).unwrap();
+    let fixtures: Value = super::project_data::read_project_data(text).unwrap();
     for fixture in fixtures.as_array().unwrap() {
         let grammar = parse_grammar_links(fixture["listing"].as_str().unwrap()).unwrap();
         let parser =
@@ -134,14 +134,14 @@ fn check_cases(text: &str) {
 #[test]
 fn wrapped_scanner_tokens_keep_trivia_and_consumed_text_after_a_mark() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-token-spans.json"
+        "../../../parity/fixtures/scanner-token-spans.lino"
     ));
 }
 
 #[test]
 fn remembered_delimiter_text_matches_shared_trees_and_clears_state() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-remembered-delimiters.json"
+        "../../../parity/fixtures/scanner-remembered-delimiters.lino"
     ));
     record(&Observation {
         requirement_id: "I195-GRAMMAR-SCANNER-REMEMBERED-DELIMITERS",
@@ -156,7 +156,7 @@ fn remembered_delimiter_text_matches_shared_trees_and_clears_state() {
 #[test]
 fn generated_scanner_families_preserve_text_and_reject_truncated_delimiters() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-families.json"
+        "../../../parity/fixtures/scanner-families.lino"
     ));
     record(&Observation {
         requirement_id: "I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES",
@@ -177,7 +177,7 @@ fn generated_scanner_families_preserve_text_and_reject_truncated_delimiters() {
 #[test]
 fn counted_scanner_delimiters_preserve_content_and_clear_state_between_tokens() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-counted-delimiters.json"
+        "../../../parity/fixtures/scanner-counted-delimiters.lino"
     ));
     record(&Observation {
         requirement_id: "I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS",
@@ -192,7 +192,7 @@ fn counted_scanner_delimiters_preserve_content_and_clear_state_between_tokens() 
 #[test]
 fn generated_delimiter_runs_and_line_boundaries_match_shared_trees() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-delimiter-runs.json"
+        "../../../parity/fixtures/scanner-delimiter-runs.lino"
     ));
     record(&Observation {
         requirement_id: "I195-GRAMMAR-SCANNER-DELIMITER-RUNS",
@@ -207,7 +207,7 @@ fn generated_delimiter_runs_and_line_boundaries_match_shared_trees() {
 #[test]
 fn generated_context_tokens_and_counted_line_delimiters_match_shared_trees() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-context-tokens.json"
+        "../../../parity/fixtures/scanner-context-tokens.lino"
     ));
     record(&Observation {
         requirement_id: "I195-GRAMMAR-SCANNER-CONTEXT-TOKENS",
@@ -226,7 +226,7 @@ fn generated_context_tokens_and_counted_line_delimiters_match_shared_trees() {
 #[test]
 fn remembered_content_matches_shared_trees_and_clears_state() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-remembered-content.json"
+        "../../../parity/fixtures/scanner-remembered-content.lino"
     ));
     record(&Observation {
         requirement_id: "I195-GRAMMAR-SCANNER-REMEMBERED-CONTENT",
@@ -241,7 +241,7 @@ fn remembered_content_matches_shared_trees_and_clears_state() {
 #[test]
 fn fragment_contexts_and_counted_content_match_shared_trees() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-fragments.json"
+        "../../../parity/fixtures/scanner-fragments.lino"
     ));
     record(&Observation {
         requirement_id: "I195-GRAMMAR-SCANNER-FRAGMENTS",
@@ -262,7 +262,7 @@ fn fragment_contexts_and_counted_content_match_shared_trees() {
 #[test]
 fn structured_scanner_contexts_match_shared_trees_and_reject_malformed_boundaries() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-structured-contexts.json"
+        "../../../parity/fixtures/scanner-structured-contexts.lino"
     ));
     for (requirement_id, fixture_id, assertion) in [
         (
@@ -300,17 +300,17 @@ fn structured_scanner_contexts_match_shared_trees_and_reject_malformed_boundarie
 #[test]
 fn stateful_extras_preserve_committed_state_and_restore_retaken_prefixes() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-stateful-extras.json"
+        "../../../parity/fixtures/scanner-stateful-extras.lino"
     ));
 }
 
 #[test]
 fn requested_scanners_precede_internal_extras_and_composite_extras_keep_separators() {
     check_cases(include_str!(
-        "../../../parity/fixtures/scanner-external-precedence.json"
+        "../../../parity/fixtures/scanner-external-precedence.lino"
     ));
-    let fixtures: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/scanner-external-precedence.json"
+    let fixtures: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/scanner-external-precedence.lino"
     ))
     .unwrap();
     let input = "#define VALUE\nx";

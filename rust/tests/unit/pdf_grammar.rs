@@ -232,9 +232,14 @@ fn terms<'a>(node: &'a Node, seen: &mut HashSet<&'a str>) {
 fn pdf_grammar_cst_describes_the_indirect_objects_pdf_lib_reads() {
     let path =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/fixtures/pdf-grammar-cases.json");
-    let fixture: Value =
-        serde_json::from_str(&fs::read_to_string(path).expect("PDF grammar cases are readable"))
-            .expect("PDF grammar cases are valid JSON");
+    let fixture: Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("PDF grammar cases are readable"),
+    )
+    .expect("PDF grammar cases are valid JSON");
     let mut seen = HashSet::new();
     let mut clean = 0;
     let cases = fixture["cases"].as_array().expect("cases");

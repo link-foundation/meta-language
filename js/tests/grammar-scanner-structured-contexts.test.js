@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 import { scannerFamilies } from '../scripts/scanner-families.mjs';
 import { compileGrammar } from '../src/grammar.js';
@@ -7,7 +8,7 @@ import { parseGrammarLinks } from '../src/grammar-links.js';
 import { renderSyntaxTree } from '../src/grammar-runtime/syntax-tree.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const fixtures = JSON.parse(readFileSync(new URL('../../parity/fixtures/scanner-structured-contexts.json', import.meta.url), 'utf8'));
+const fixtures = readProjectData(new URL('../../parity/fixtures/scanner-structured-contexts.json', import.meta.url));
 const leaves = (node) => node.type === 'token' ? [node] : node.children.flatMap(leaves);
 
 const families = [

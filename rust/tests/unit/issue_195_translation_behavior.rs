@@ -13,8 +13,14 @@ static TEMP_DIRECTORIES: AtomicU64 = AtomicU64::new(0);
 fn corpus() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/four-language-conformance.json");
-    serde_json::from_str(&fs::read_to_string(path).expect("shared corpus is readable"))
-        .expect("shared corpus is valid JSON")
+    super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("shared corpus is readable"),
+    )
+    .expect("shared corpus is valid JSON")
 }
 
 #[test]

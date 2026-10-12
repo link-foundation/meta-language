@@ -1,13 +1,14 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 
 import { sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
 import { selfTranslate } from '../src/self-translation.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/self-translation-report-source-ci.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/self-translation-report-source-ci.json', import.meta.url));
 
 test('the authentic report CI module retains native source items and positive translation at default limits', () => {
   assert.equal(fixture.provenance.runId, 38240388521);

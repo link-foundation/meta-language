@@ -12,8 +12,8 @@ use meta_language::translation::types::{Type, option};
 use serde_json::Value;
 
 fn fixture() -> Value {
-    serde_json::from_str(include_str!(
-        "../../../parity/fixtures/translation-structured-types.json"
+    super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/translation-structured-types.lino"
     ))
     .unwrap()
 }

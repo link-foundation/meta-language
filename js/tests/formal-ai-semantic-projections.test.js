@@ -1,11 +1,12 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 import * as api from '../src/index.js';
 import { formalAiSemanticProjections } from '../scripts/formal-ai-semantic-projections.mjs';
 import { consumerHelpersModule, JAVASCRIPT_WORKLOAD_TESTS, JAVASCRIPT_PROBE } from '../scripts/issue-195-formal-ai-consumer.mjs';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/formal-ai-semantic-projections.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/formal-ai-semantic-projections.json', import.meta.url));
 
 test('all six projection directions execute numeric examples from independent fixtures', async () => {
   const observations = await formalAiSemanticProjections(api, fixture.cases);

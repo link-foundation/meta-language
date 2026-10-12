@@ -3,11 +3,11 @@ use super::issue_195_native_grammar_rows::{Rows, oracle_rows, parser, rebuilt};
 use meta_language::FeatureParseOptions;
 use serde_json::Value;
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/lexical-cache-memory.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/lexical-cache-memory.lino");
 
 #[test]
 fn optional_lexical_cache_reservations_preserve_the_unchanged_memory_limit() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     for entry in fixture["reservations"].as_array().unwrap() {
         assert_eq!(
             meta_language::translation::frontend_rules::accept_lexical_cache_reservation(
@@ -23,7 +23,7 @@ fn optional_lexical_cache_reservations_preserve_the_unchanged_memory_limit() {
 
 #[test]
 fn long_lexical_extras_preserve_the_tree_when_optional_caches_exhaust_a_small_budget() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(fixture["grammar"].as_str().unwrap());
     let source = format!(
         "#{}\nx;",
@@ -60,8 +60,8 @@ fn long_lexical_extras_preserve_the_tree_when_optional_caches_exhaust_a_small_bu
 
 #[test]
 fn original_zig_diagnostic_comment_ci_input_fits_the_unchanged_default_memory_budget() {
-    let corpus: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/native-grammars/zig-corpus.json"
+    let corpus: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/native-grammars/zig-corpus.lino"
     ))
     .unwrap();
     let selected = corpus["cases"]
@@ -78,8 +78,8 @@ fn original_zig_diagnostic_comment_ci_input_fits_the_unchanged_default_memory_bu
     let source = selected["source"].as_str().unwrap();
     assert_eq!(source.len(), 495499);
     let parser = parser(include_str!("../../../parity/grammars/native/zig.lino"));
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/native-grammars/zig.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/native-grammars/zig.lino"
     ))
     .unwrap();
     let (expected, recovers) = oracle_rows(&tree_sitter_zig::LANGUAGE.into(), source);

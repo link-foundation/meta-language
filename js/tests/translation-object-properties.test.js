@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 import { format } from 'node:util';
 import { runInNewContext } from 'node:vm';
@@ -28,7 +29,7 @@ const ownProperty = `(() => {
     Object.getOwnPropertyDescriptor(item, '__proto__')];
 })()`;
 const descriptor = { value: 7, writable: true, enumerable: true, configurable: true };
-const primitiveFixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-primitive-values.json', import.meta.url), 'utf8'));
+const primitiveFixture = readProjectData(new URL('../../parity/fixtures/translation-primitive-values.json', import.meta.url));
 
 test('prototype-definition object entries are refused without treating them as data properties', () => {
   for (const [literal, nullPrototype, inherited] of [
@@ -98,7 +99,6 @@ test('nonliteral computed names remain a precise source admission gap', () => {
   assert.throws(() => parseJavaScript("function make(key) { return {[key]: 7}; }"),
     error => error.kind === 'unsupported' && error.details.construct === 'computed object key');
 });
-
 
 test('the original accepted constructor fixture retains its prototype source expression', () => {
   const source = frontendCases['frontend-javascript-accept-ctor-proto-field'][1];

@@ -53,8 +53,8 @@ fn rename_field(value: &mut Value, name: &str) {
 
 #[test]
 fn constructor_tag_strings_keep_their_data_value_in_javascript_output() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/translation-constructor-tags.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/translation-constructor-tags.lino"
     ))
     .unwrap();
     let source = "/** @typedef {{ $: 'one' } | { $: 'two' }} Tag */\n/** @returns {Tag} */ function make() { return { $: 'one' }; }\n/** @param {Tag} value @returns {number} */ function read(value) { if (value.$ === 'one') return 1; return 2; }";
@@ -88,8 +88,8 @@ fn constructor_tag_strings_keep_their_data_value_in_javascript_output() {
 
 #[test]
 fn constructor_fields_preserve_exact_own_property_names_in_javascript_output() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/translation-constructor-tags.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/translation-constructor-tags.lino"
     ))
     .unwrap();
     let source = "/** @typedef {{ $: 'one', payload: number } | { $: 'two' }} Tag */\n/** @returns {Tag} */ function make() { return { $: 'one', payload: 7 }; }\n/** @param {Tag} value @returns {number} */ function read(value) { if (value.$ === 'one') return value.payload; return 2; }";
@@ -121,8 +121,8 @@ fn constructor_fields_preserve_exact_own_property_names_in_javascript_output() {
 
 #[test]
 fn constructor_immutability_preserves_its_source_model_and_checked_marker() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/translation-constructor-tags.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/translation-constructor-tags.lino"
     ))
     .unwrap();
     let source = "/** @typedef {{ $: 'one' } | { $: 'two' }} Tag */\n/** @returns {Tag} */ function make() { return { $: 'one' }; }";

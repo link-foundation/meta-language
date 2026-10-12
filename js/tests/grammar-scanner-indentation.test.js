@@ -1,11 +1,12 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 import { scannerFamilies } from '../scripts/scanner-families.mjs';
 import { compileGrammar, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
 import { readScannerContinuationAction } from '../src/translation/frontend-rules.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/scanner-indentation.json', import.meta.url), 'utf8'));
+const fixture = readProjectData(new URL('../../parity/fixtures/scanner-indentation.json', import.meta.url));
 const parser = compileGrammar(parseGrammarLinks(fixture.listing));
 function blockStructure(tree) {
   return tree.children.filter((child) => child.kind === 'statement').map((statement) => {

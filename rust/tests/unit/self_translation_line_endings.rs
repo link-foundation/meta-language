@@ -4,15 +4,15 @@ use std::path::Path;
 use std::process::Command;
 
 fn fixture() -> Value {
-    serde_json::from_str(include_str!(
-        "../../../parity/fixtures/self-translation-line-endings.json"
+    super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/self-translation-line-endings.lino"
     ))
     .unwrap()
 }
 
 #[test]
 fn source_envelopes_preserve_line_endings_and_match_javascript() {
-    let script = "import fs from 'node:fs'; import {selfTranslate} from './js/src/self-translation.js'; const f=JSON.parse(fs.readFileSync('parity/fixtures/self-translation-line-endings.json')); process.stdout.write(JSON.stringify(f.cases.map(e=>selfTranslate(e.source,e.language,e.target).code)));";
+    let script = "import fs from 'node:fs'; import {readProjectData} from './js/scripts/project-data.mjs'; import {selfTranslate} from './js/src/self-translation.js'; const f=readProjectData('parity/fixtures/self-translation-line-endings.json'); process.stdout.write(JSON.stringify(f.cases.map(e=>selfTranslate(e.source,e.language,e.target).code)));";
     let result = Command::new("node")
         .current_dir(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())
         .args(["--input-type=module", "-e", script])

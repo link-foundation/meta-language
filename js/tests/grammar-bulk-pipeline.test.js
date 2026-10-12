@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 
 import {
@@ -22,7 +23,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 // The pipeline over all 57 languages runs in CI (the grammar-bulk-pipeline
 // job), which publishes the matrix; these tests check what it reads and
 // writes on a pinned source that needs no download.
-const read = (relative) => JSON.parse(readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8'));
+const read = (relative) => readProjectData(new URL(`../../${relative}`, import.meta.url));
 const inventory = read('parity/language-grammar-inventory.json');
 const pinned = read('parity/grammars/sources.json').sources;
 const v4 = read(GRAMMARS_V4_SOURCES);

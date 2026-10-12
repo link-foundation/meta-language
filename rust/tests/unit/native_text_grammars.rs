@@ -7,7 +7,7 @@ use meta_language::{
 use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native-text.lino");
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-text-grammars.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-text-grammars.lino");
 
 #[test]
 fn native_text_grammar_files_are_identical_in_both_packages() {
@@ -27,7 +27,7 @@ fn native_text_grammar_files_are_identical_in_both_packages() {
 
 #[test]
 fn native_natural_language_rules_execute_with_lossless_spans_and_diagnostics() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let grammar = parse_grammar_links(GRAMMAR).unwrap();
     let parser = compile_feature_grammar(&grammar, None, FeatureParseOptions::default()).unwrap();
     for case in fixture["natural"].as_array().unwrap() {
@@ -101,7 +101,7 @@ fn native_natural_language_rules_execute_with_lossless_spans_and_diagnostics() {
 
 #[test]
 fn native_plain_text_retains_every_source_byte_and_control_errors() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     for case in fixture["plain"].as_array().unwrap() {
         let source = case["source"].as_str().unwrap();
         let network = LinkNetwork::parse(source, "txt", ParseConfiguration::default());
