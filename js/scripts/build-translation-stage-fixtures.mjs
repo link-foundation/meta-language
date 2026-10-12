@@ -7,11 +7,12 @@
 // sources and requires the same digests and errors, so the two runtimes stay
 // in parity stage by stage.
 // Usage: node scripts/build-translation-stage-fixtures.mjs [--check]
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { CORPUS_DIRECTORY, digest, loadCases, runStages } from './translation-stage-lib.mjs';
+import { readProjectData, readProjectFileBytes, serializeProjectData, writeProjectData } from './project-data.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const output = join(root, 'parity', 'fixtures', 'translation-stages.json');
@@ -48,10 +49,11 @@ for (const { name } of programs) {
   names.add(name);
 }
 
-const text = `${JSON.stringify({
+const fixture = {
   generator: 'js/scripts/build-translation-stage-fixtures.mjs',
   programs,
-}, null, 2)}\n`;
+};
+const text = serializeProjectData(fixture, output);
 
 const count = (predicate) => programs.filter(predicate).length;
 const summary = `${programs.length} programs: ${count((entry) => entry.parse.error)} rejected by a frontend, ${count((entry) => entry.check?.error)} by the checker, ${count((entry) => entry.emit)} emitted`;
@@ -59,14 +61,14 @@ const summary = `${programs.length} programs: ${count((entry) => entry.parse.err
 if (process.argv.includes('--check')) {
   let committed = '';
   try {
-    committed = readFileSync(output, 'utf8');
+    committed = readProjectFileBytes(output).toString('utf8');
   } catch {
     // A missing fixture is stale.
   }
   if (committed !== text) {
     console.error('translation stage fixtures are stale; run `node js/scripts/build-translation-stage-fixtures.mjs`');
     if (committed) {
-      const previous = JSON.parse(committed);
+      const previous = readProjectData(output);
       const before = new Map(previous.programs.map((entry) => [entry.name, entry]));
       const changed = programs.filter((entry) => JSON.stringify(before.get(entry.name)) !== JSON.stringify(entry));
       for (const entry of changed.slice(0,10)) {
@@ -80,6 +82,6 @@ if (process.argv.includes('--check')) {
   }
   console.log(`translation stage fixtures match the JavaScript pipeline for ${summary}`);
 } else {
-  writeFileSync(output, text);
+  writeProjectData(output, fixture);
   console.log(`wrote translation stage fixtures for ${summary}`);
 }

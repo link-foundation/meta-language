@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Bounded lexical fixtures. These exercise reusable scanner semantics; they
 // are not declarations of complete native language grammar support.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { scannerFamilies } from './scanner-families.mjs';
 import { compileGrammar } from '../src/grammar.js';
 import { parseGrammarLinks } from '../src/grammar-links.js';
@@ -50,8 +50,8 @@ export function structuredScannerFixtures() {
 
 if (process.argv[1]?.endsWith('generate-structured-scanner-fixtures.mjs')) {
   const target = new URL('../../parity/fixtures/scanner-structured-contexts.json', import.meta.url);
-  const content = `${JSON.stringify(structuredScannerFixtures(), null, 2)}\n`;
+  const fixtures = structuredScannerFixtures();
   if (process.argv.includes('--check')) {
-    if (readFileSync(target, 'utf8') !== content) throw new Error('structured scanner fixtures have drifted');
-  } else writeFileSync(target, content);
+    checkProjectData(target, fixtures);
+  } else writeProjectData(target, fixtures);
 }

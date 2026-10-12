@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Bounded native CST/runtime parity cases for the shared TypeScript eraser.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { eraseTypeScript } from '../src/typescript-erasure.js';
 import { selfTranslate } from '../src/self-translation.js';
 import { projectTypeScriptTyping } from '../src/typescript-portable-typing.js';
@@ -36,7 +36,7 @@ export function typeScriptErasureFixture() {
 }
 
 const path = new URL('../../parity/fixtures/typescript-erasure.json', import.meta.url);
-const text = JSON.stringify(typeScriptErasureFixture(), null, 2) + '\n';
+const fixture = typeScriptErasureFixture();
 if (process.argv.includes('--check')) {
-  if (readFileSync(path, 'utf8') !== text) throw new Error('TypeScript erasure fixtures are stale');
-} else writeFileSync(path, text);
+  checkProjectData(path, fixture);
+} else writeProjectData(path, fixture);

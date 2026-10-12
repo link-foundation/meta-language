@@ -1,10 +1,18 @@
 #!/usr/bin/env node
 // Bounded host-adapter fixtures, including independently specified identities
 // and complete emitted identity functions for every compound signature kind.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { typeKey } from '../src/translation/types.js';
+
+// Fixture occurrences retain the independent records of the original snapshot;
+// sharing a host type constant while computing them does not add graph aliases.
+function independentOccurrences(value) {
+  if (Array.isArray(value)) return value.map(independentOccurrences);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([name, entry]) => [name, independentOccurrences(entry)]));
+  return value;
+}
 
 const bool = { kind: 'bool' };
 const string = { kind: 'string' };
@@ -71,8 +79,20 @@ const traitCases = [
   return { name, surface, rust, totalEquality };
 });
 const callableData = { language: 'JavaScript', items: [{ k: 'data', name: 'Box', ctors: [{ name: 'Wrap', fields: [{ type: optional(record([['callback', { kind: 'function', params: [], ret: bool }]]), 'both') }] }] }], main: null };
-const data = `${JSON.stringify({ cases, emissionCases, traitCases, callableData, optionalPrelude: '/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }' }, null, 2)}\n`;
+const firstVariable = { kind: 'var', id: 0 };
+const secondVariable = { kind: 'var', id: 1 };
+const inferenceIdentities = [
+  ['var', '0', [], firstVariable, 'var:0'],
+  ['var', '1', [], secondVariable, 'var:1'],
+  ['array', '', ['var:0'], { kind: 'array', element: firstVariable }, 'array:var:0'],
+  ['option', 'undefined', ['var:1'], optional(secondVariable, 'undefined'), 'option:undefined:var:1'],
+  ['record', '', ['["value","var:0"]'], record([['value', firstVariable]]), 'record:[["value","var:0"]]'],
+].map(([kind, detail, children, type, identity]) => {
+  if (typeKey(type) !== identity) throw new Error(`${kind}: inference identity differs from independently specified fixture`);
+  return { kind, detail, children, identity };
+});
+const data = independentOccurrences({ cases, emissionCases, traitCases, callableData, optionalPrelude: '/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }', inferenceIdentities });
 const target = new URL('../../parity/fixtures/translation-structured-types.json', import.meta.url);
 if (process.argv.includes('--check')) {
-  if (readFileSync(target, 'utf8') !== data) throw new Error('structured type fixtures have drifted');
-} else writeFileSync(target, data);
+  checkProjectData(target, data);
+} else writeProjectData(target, data);

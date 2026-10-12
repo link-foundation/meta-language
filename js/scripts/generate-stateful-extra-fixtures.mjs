@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from 'node:fs';
+import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { compileGrammar } from '../src/grammar.js';
 import { parseGrammarLinks } from '../src/grammar-links.js';
 import { renderSyntaxTree } from '../src/grammar-runtime/syntax-tree.js';
@@ -84,7 +84,6 @@ for (const entry of cases) {
   for (const input of entry.reject) if (parser.parseTree(input).ok) throw new Error(`${entry.name}: accepted ${JSON.stringify(input)}`);
 }
 const target = new URL('../../parity/fixtures/scanner-stateful-extras.json', import.meta.url);
-const content = `${JSON.stringify(cases, null, 2)}\n`;
 if (process.argv.includes('--check')) {
-  if (readFileSync(target, 'utf8') !== content) throw new Error('stateful extra fixtures have drifted');
-} else writeFileSync(target, content);
+  checkProjectData(target, cases);
+} else writeProjectData(target, cases);
