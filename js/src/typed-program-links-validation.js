@@ -1,6 +1,7 @@
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
+import { readTuplePosition } from './translation/primitive-value-rules.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
 import { acceptProgramDivisionRounding, acceptProgramExpressionField, acceptProgramExpressionOperation, acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence, acceptProgramTupleProductModel, readProgramReferenceRole } from './typed-program-link-rules.js';
 
@@ -289,6 +290,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if (node.k === 'tupleIndex' || node.k === 'recordField' || node.k === 'optionalField') {
       if (!Number.isSafeInteger(node.index) || node.index < 0) throw new TypeError('a linked positional field index is invalid');
       if (node.k === 'tupleIndex' && node.object?.type?.kind !== 'tuple') throw new TypeError('a linked tuple index requires a tuple receiver');
+      if (node.k === 'tupleIndex') node.index = readTuplePosition(node.index);
       const object = node.k === 'optionalField' ? node.object.type?.element : node.object.type;
       const entry = node.k === 'tupleIndex' ? object?.elements?.[node.index] : object?.fields?.[node.index];
       if (!entry || (node.k !== 'tupleIndex' && entry.name !== node.field)) throw new TypeError('a linked positional field index differs from its layout');

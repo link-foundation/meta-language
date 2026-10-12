@@ -3,6 +3,7 @@ use super::{
     Result, TypedProgramLinks, TypedProgramLinksLimits, error, field_of, typed_program_links_schema,
 };
 use crate::translation::ir::Program;
+use crate::translation::primitive_value_rules::{accept_tuple_index, read_tuple_position};
 use crate::translation::typed_program_link_rules::{
     accept_program_container_fields, accept_program_reference_field, accept_program_schema_root,
     is_unsafe_program_field, read_program_container_kind, read_program_neutral_field_default,
@@ -270,6 +271,22 @@ impl Decoder<'_> {
                             ));
                         }
                     }
+                }
+                // A tuple position is a natural integer. Its scalar record
+                // can use a floating spelling such as -0 or 0e0; normalize
+                // only this owned role before serde reads the usize field.
+                if self.kind(id) == "tupleIndex"
+                    && let Some(object) = record.get("object")
+                    && object["type"]["kind"] == "tuple"
+                    && let Some(elements) = object["type"]["elements"].as_array()
+                    && let Some(index) = record.get("index").and_then(Value::as_f64)
+                    && accept_tuple_index(index, elements.len() as f64)
+                {
+                    let position = read_tuple_position(index)
+                        .to_string()
+                        .parse::<u64>()
+                        .map_err(|_| error("a linked tuple position is not a natural integer"))?;
+                    record.insert("index".to_owned(), Value::from(position));
                 }
                 Ok(Value::Object(record))
             }

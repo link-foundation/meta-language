@@ -114,3 +114,26 @@ test('the mechanical recheck rejects structural cycles and excessively deep prog
   deep.metadata = value;
   assert.throws(() => recheckLinkedTypedProgram(deep), /resource limit/u);
 });
+
+test('tuple position zero is canonical while floating literal negative zero survives', () => {
+  const program = productProgram();
+  program.main.effects[0].expr.arg.index = -0;
+  const archive = encodeTypedProgramLinks(program);
+  assert.equal(Object.is(program.main.effects[0].expr.arg.index, -0), false);
+  const index = archive.network.fieldRelations().find(relation => relation.label === 'index').child;
+  const literal = archive.network.fieldRelations().find(relation => relation.label === 'value'
+    && archive.network.link(relation.child).metadata().definition === '5').child;
+  const scalar = archive.network.link(literal);
+  scalar.setMetadata(scalar.metadata().withDefinition('-0'));
+  for (const spelling of ['-0', '0.0', '0e0']) {
+    const position = archive.network.link(index);
+    position.setMetadata(position.metadata().withDefinition(spelling));
+    const decoded = decodeTypedProgramLinks(archive.network, archive.root);
+    assert.equal(Object.is(decoded.main.effects[0].expr.arg.index, -0), false);
+    assert.equal(decoded.declarations.get('make').body.items[0].value, '-0');
+    const output = [];
+    vm.runInNewContext(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code,
+      { console: { log: value => output.push(value) } }, { timeout: 1000 });
+    assert.deepEqual(output, ['-0']);
+  }
+});
