@@ -25,12 +25,13 @@ function preservesSignature(id, suite, source, bytes, hash) {
   assert.equal(createHash('sha256').update(text).digest('hex'), hash, id);
 }
 
-// These are the five exact inputs that regressed in CI 38227158183. Their
+// These exact inputs regressed in CI 38227158183 or 38240388521. Their
 // signatures precede scanner-cache changes; they must never be regenerated to
 // accept a larger ERROR suffix after a recovery round exhausts its budget.
 for (const [label, prefix, id, bytes, hash] of [
   ['Macro Rules', '\nmacro_rules', 'corpus/syntax.txt/1', 99, '914d57e5e7b29b2fa3c4194fed719c8f8cdcf53071d75fd552a61ed9b405bdcd'],
   ['Scoped / Local', '\nscoped elab', 'corpus/syntax.txt/6', 574, '9dc6050a5d80a6ecf5a7981a70541c2a94302ed1ea5a1fc6f2db3538452861e9'],
+  ['Inline Namespaced', '\ndef foo.bar.baz := 12', 'corpus/declarations_attrs.txt/17', 223, 'f1096907f18cee586b76e289afa4e9abc9aaff74c4c80b5de4a5301490cb304e'],
 ]) test(`Lean ${label} retains its original recovered tree within the original step budget`, () => {
   const { source, recovered } = fixture.rejections.find((entry) => entry.source.startsWith(prefix));
   const result = grammar.parseTree(source, { errorRecovery: true, stepLimit: 200_000 + 2000 * bytes });
@@ -59,3 +60,11 @@ for (const [index, step] of edit.steps.entries()) {
     preservesSignature(`edit/7 step ${index}`, 'generative', source, ...expected);
   });
 }
+
+
+test('Lean malformed property/4 does not apply the next command across a repaired layout boundary', () => {
+  const entry = generative.cases.find((value) => value.id === 'property/4');
+  const result = grammar.parseTree(entry.source, { errorRecovery: true });
+  assert.deepEqual(renderSyntaxTree(result.tree).match(/ERROR@\d+\.\.\d+/gu), ['ERROR@123..140']);
+  preservesSignature(entry.id, 'generative', entry.source, 141, '4ebcb21e176fd3a4dce51af95474473a42cf112505724f7c9560a9b3e1e6cfb6');
+});

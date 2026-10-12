@@ -60,3 +60,22 @@ fn fixed_lexical_matching_preserves_neighboring_ruby_token_contexts() {
     assert!(oracle_rows(&language, invalid).1);
     assert!(parse(&parser, invalid).is_none());
 }
+
+#[test]
+fn fixed_lexical_cache_context_retains_automatic_repair_work_accounting() {
+    let contexts: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/lexical-cache-contexts.json"
+    ))
+    .unwrap();
+    for entry in contexts.as_array().unwrap() {
+        assert_eq!(
+            meta_language::translation::frontend_rules::accept_lexical_cache_context(
+                entry["inToken"].as_bool().unwrap(),
+                entry["quiet"].as_bool().unwrap(),
+                entry["repairing"].as_bool().unwrap()
+            ),
+            entry["accepted"].as_bool().unwrap(),
+            "{entry}"
+        );
+    }
+}

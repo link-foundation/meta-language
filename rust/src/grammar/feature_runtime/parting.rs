@@ -117,11 +117,11 @@ pub(super) fn ends_missing(children: &Children) -> bool {
 
 /// Whether `children` hold the token `last` and go on past it with a token
 /// the lexer lexed, not one the external scanner scanned of no width.
-fn lexed_past(children: &Children, last: &Tree) -> bool {
+fn lexed_past(children: &Children, last: &Tree, equal_repair_cost: bool) -> bool {
     let mut after: Option<Rc<Tree>> = None;
     leaves_backward(children, &mut |leaf| {
         if !crate::translation::frontend_rules::accept_scanner_preemption_boundary(
-            widthless(leaf),
+            widthless(leaf) && equal_repair_cost,
             leaf.start == last.end,
         ) {
             return Some(false);
@@ -173,7 +173,7 @@ fn preempted(continued: &[(&Res, Vec<Res>)]) -> Vec<bool> {
                 && other.state == left.state
                 && other.cost >= left.cost
                 && !pruned[index]
-                && lexed_past(&other.children, &last)
+                && lexed_past(&other.children, &last, other.cost == left.cost)
             {
                 pruned[index] = true;
             }

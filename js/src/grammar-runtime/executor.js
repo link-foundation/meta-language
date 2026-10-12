@@ -20,7 +20,7 @@ import {
 import { columnOf, decodeAt, encodeText, quoteText, textOf, utf16View } from './text.js';
 import { acceptFixedLexicalExpression } from './lexical-cache.js';
 import { completeRuleContexts } from './precedence-contexts.js';
-import { acceptPrecedenceOperandContext, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
+import { acceptLexicalCacheContext, acceptPrecedenceOperandContext, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -1621,10 +1621,10 @@ function startsWidthless(result) {
 
 // Whether `result` holds the token `last` and goes on past it with a token
 // its lexer lexed, not one the external scanner scanned of no width.
-function lexedPast(result, last) {
+function lexedPast(result, last, baseCost) {
   let after = null;
   for (const leaf of leavesBackward(result.children)) {
-    if (!acceptScannerPreemptionBoundary(widthless(leaf), leaf.start === last.end)) return false;
+    if (!acceptScannerPreemptionBoundary(widthless(leaf) && result.cost === baseCost, leaf.start === last.end)) return false;
     const action = readScannerContinuationAction(widthless(leaf), leaf.start >= last.end, leaf.end > last.end);
     if (action === 1) after = leaf;
     else if (action === -1) return after !== null && oneLeaf(leaf, last);
@@ -1661,7 +1661,7 @@ function preempted(continued) {
     }
     if (last === undefined) continue;
     for (const [other] of continued) {
-      if (other.end > left.end && other.state.key === left.state.key && other.cost >= left.cost && !pruned?.has(other) && lexedPast(other, last)) {
+      if (other.end > left.end && other.state.key === left.state.key && other.cost >= left.cost && !pruned?.has(other) && lexedPast(other, last, left.cost)) {
         (pruned ??= new Set()).add(other);
         globalThis.__preemptTrace?.(left, other);
       }
@@ -2763,7 +2763,7 @@ export class Executor {
     // Fixed lexical trees read input and retain the supplied state. In token
     // context they neither skip extras nor request syntax expectations; quiet
     // evaluation also has no diagnostic or recovery effects to replay.
-    const cacheable = inToken && this.suppressed > 0
+    const cacheable = acceptLexicalCacheContext(inToken, this.suppressed > 0, this.repairPoints !== null)
       && acceptFixedLexicalExpression(expression, this.lexicalCacheForms);
     if (!cacheable) return this.evaluateCase(expression, position, state, inToken);
     let cache = this.lexicalCache.get(expression);

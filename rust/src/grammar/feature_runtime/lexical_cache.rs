@@ -3,7 +3,9 @@ use super::executor::{Executor, FRAME_LIMIT, Run};
 use super::operations::{Abort, State};
 use super::program::Expr;
 use super::results::Res;
-use crate::translation::frontend_rules::read_lexical_cache_expression_form;
+use crate::translation::frontend_rules::{
+    accept_lexical_cache_context, read_lexical_cache_expression_form,
+};
 
 impl Executor<'_> {
     pub(super) fn accept_fixed_lexical_expression(&mut self, expression: &Expr) -> bool {
@@ -87,8 +89,12 @@ impl Executor<'_> {
     ) -> Run<Vec<Res>> {
         // Quiet token context has no trivia, syntax expectations or diagnostic
         // effects. References, scanners and operations are never cacheable.
-        let key = (in_token && self.suppressed > 0 && self.accept_fixed_lexical_expression(expr))
-            .then(|| (expr as *const Expr as usize, position, state.clone()));
+        let key = (accept_lexical_cache_context(
+            in_token,
+            self.suppressed > 0,
+            self.repair_points.is_some(),
+        ) && self.accept_fixed_lexical_expression(expr))
+        .then(|| (expr as *const Expr as usize, position, state.clone()));
         if let Some(cached) = key.as_ref().and_then(|key| self.lexical_cache.get(key)) {
             return Ok(cached.clone());
         }

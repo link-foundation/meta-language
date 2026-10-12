@@ -1,0 +1,50 @@
+[
+  {
+    "inToken": false,
+    "quiet": false,
+    "repairing": false,
+    "accepted": false
+  },
+  {
+    "inToken": false,
+    "quiet": false,
+    "repairing": true,
+    "accepted": false
+  },
+  {
+    "inToken": false,
+    "quiet": true,
+    "repairing": false,
+    "accepted": false
+  },
+  {
+    "inToken": false,
+    "quiet": true,
+    "repairing": true,
+    "accepted": false
+  },
+  {
+    "inToken": true,
+    "quiet": false,
+    "repairing": false,
+    "accepted": false
+  },
+  {
+    "inToken": true,
+    "quiet": false,
+    "repairing": true,
+    "accepted": false
+  },
+  {
+    "inToken": true,
+    "quiet": true,
+    "repairing": false,
+    "accepted": true
+  },
+  {
+    "inToken": true,
+    "quiet": true,
+    "repairing": true,
+    "accepted": false
+  }
+]

@@ -581,3 +581,13 @@ export function acceptPrecedenceOperandContext(ownerContexts, childContexts) {
   }
   return false;
 }
+
+/**
+ * Automatic repair rounds retain their recorded work budget and partial tree;
+ * fixed lexical caching must not refund their speculative work.
+ * @param {boolean} inToken @param {boolean} quiet @param {boolean} repairing
+ * @returns {boolean}
+ */
+export function acceptLexicalCacheContext(inToken, quiet, repairing) {
+  return inToken && quiet && !repairing;
+}
