@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { applyRecordedCompilerFeedback } from '../scripts/compiler-style-feedback.mjs';
+import { applyRecordedCompilerFeedback, readCompilerFeedbackCorrections } from '../scripts/compiler-style-feedback.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 
 const sha256 = (source) => createHash('sha256').update(source).digest('hex');
@@ -89,4 +89,94 @@ test('compiler feedback keeps multipart suggestions atomic when nested alternati
       }
     }
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a unique body correction still retains its complete owning signature', () => {
+  const relativePath = 'rust/src/generated.rs';
+  const source = 'pub fn borrowed(\n    units: &[f64],\n) -> Option<f64> {\n    optional_at(&units, 0)\n}\n';
+  const start = Buffer.from(source).indexOf(Buffer.from('&units'));
+  const feedback = { schemaVersion: 1,
+    diagnostics: [{ spans: [{ file_name: '/ci/generated.rs', byte_start: start, byte_end: start + 1,
+      suggested_replacement: '', suggestion_applicability: 'MachineApplicable' }] }],
+    sources: { '/ci/generated.rs': { relativePath, sha256: sha256(source), text: source } } };
+  const { actions } = readCompilerFeedbackCorrections({ feedback, allowedPaths: [relativePath] });
+  assert.equal(actions.length, 1);
+  assert.ok(actions[0].from.startsWith('pub fn borrowed(\n    units: &[f64],\n) -> Option<f64> {\n'));
+  const styles = new DecoratorSet([{ id: 'ownership-regression', level: 'emitter', actions }]);
+  const changed = styles.decorate('emitter', { source }).source;
+  assert.equal(changed, source.replace('&units', 'units'));
+  const owned = source.replace('units: &[f64]', 'units: Vec<f64>');
+  assert.equal(styles.decorate('emitter', { source: owned }).source, owned,
+    'the same function body with an owned parameter must retain its borrow');
+  const other = owned.replace('fn borrowed(', 'fn owned(');
+  assert.equal(styles.decorate('emitter', { source: other + source }).source, other + changed,
+    'adding an identical body in another owned function cannot acquire the old correction');
+});
+
+test('compiler corrections refuse byte ranges that split UTF-8 source characters', () => {
+  const source = '// α\nfn sample() {}\n';
+  const start = Buffer.from(source).indexOf(Buffer.from('α')) + 1;
+  const feedback = { schemaVersion: 1,
+    diagnostics: [{ spans: [{ file_name: '/ci/generated.rs', byte_start: start, byte_end: start,
+      suggested_replacement: 'x', suggestion_applicability: 'MachineApplicable' }] }],
+    sources: { '/ci/generated.rs': { relativePath: 'rust/src/generated.rs', sha256: sha256(source), text: source } } };
+  assert.throws(() => readCompilerFeedbackCorrections({ feedback, allowedPaths: ['rust/src/generated.rs'] }), /UTF-8 source boundary/u);
+});
+
+test('several signature edits preserve full contexts after descending byte offsets shift', () => {
+  const source = 'pub fn sample(\n    first: i64,\n    mut units: &[f64],\n) -> Option<f64> {\n    optional_at(units, 0)\n}\n';
+  const relativePath = 'rust/src/generated.rs';
+  const bytes = Buffer.from(source);
+  const span = (from, to) => {
+    const start = bytes.indexOf(Buffer.from(from));
+    return { file_name: '/ci/generated.rs', byte_start: start, byte_end: start + Buffer.byteLength(from),
+      suggested_replacement: to, suggestion_applicability: 'MachineApplicable' };
+  };
+  const feedback = { schemaVersion: 1,
+    diagnostics: [{ spans: [span('i64', 'i32')] }, { spans: [span('mut ', '')] }],
+    sources: { '/ci/generated.rs': { relativePath, sha256: sha256(source), text: source } } };
+  const { actions } = readCompilerFeedbackCorrections({ feedback, allowedPaths: [relativePath] });
+  assert.equal(actions.length, 2);
+  assert.ok(actions.every(action => action.from.startsWith('pub fn sample(\n')));
+  assert.ok(actions.every(action => action.from.endsWith(') -> Option<f64> {')), 'the complete signatures use adjusted source offsets');
+  const styles = new DecoratorSet([{ id: 'signature-offsets', level: 'emitter', actions }]);
+  assert.equal(styles.decorate('emitter', { source }).source, source.replace('i64', 'i32').replace('mut ', ''));
+});
+
+test('the retained CI borrow correction is machine-applicable and bound to the owned Unicode decoder', () => {
+  const raw = readFileSync(new URL('../../parity/self-translation/ci-38240388521-frontend-rules-feedback.json', import.meta.url));
+  const review = JSON.parse(readFileSync(new URL('../../parity/self-translation/ci-38240388521-frontend-rule-style-correction.json', import.meta.url), 'utf8'));
+  assert.equal(sha256(raw), review.compilerFeedbackSha256);
+  assert.equal(review.kind, 'reviewed decorator collision correction');
+  const feedback = JSON.parse(raw);
+  assert.equal(feedback.runId, '38240388521');
+  assert.equal(feedback.head, '688b2f376011d1504623c422c734fc26135f0f66');
+  const { actions, spans } = readCompilerFeedbackCorrections({ feedback,
+    allowedPaths: Object.values(feedback.sources).map(source => source.relativePath) });
+  assert.equal(spans, 1);
+  assert.equal(actions.length, 1);
+  assert.ok(actions[0].from.startsWith('pub fn decode_unicode_escape(\n    units: Vec<f64>,\n'));
+  assert.ok(actions[0].to.includes('optional_at(\n                        &units,'));
+  const original = Object.values(feedback.sources).find(source => source.relativePath === 'rust/src/translation/frontend_rules.rs').text;
+  const styles = new DecoratorSet([{ id: 'actual-borrow-correction', level: 'emitter', actions }]);
+  const changed = styles.decorate('emitter', { source: original }).source;
+  assert.notEqual(changed, original);
+  const differentOwnership = original.replace('pub fn decode_unicode_escape(\n    units: Vec<f64>,', 'pub fn decode_unicode_escape(\n    units: &[f64],');
+  assert.equal(styles.decorate('emitter', { source: differentOwnership }).source, differentOwnership);
+  const recorded = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino', import.meta.url), 'utf8'));
+  assert.ok(!recorded.decorators.find(entry => entry.id === 'compiler-feedback-style').actions
+    .some(action => action.from === review.removedAction.from && action.to === review.removedAction.to));
+});
+
+test('reviewed slice corrections cannot remove borrows after the parameter becomes owned', () => {
+  const review = JSON.parse(readFileSync(new URL('../../parity/self-translation/ci-38240388521-frontend-rule-style-correction.json', import.meta.url), 'utf8'));
+  const actions = review.reviewedStyleActions.filter(action => action.from.startsWith('pub fn ml_read_rust_number_bounds_'));
+  assert.equal(actions.length, 3);
+  const styles = new DecoratorSet([{ id: 'reviewed-slice-regression', level: 'emitter', actions }]);
+  for (const action of actions) {
+    assert.ok(action.from.includes('(units: &[f64],'));
+    assert.equal(styles.decorate('emitter', { source: action.from }).source, action.to);
+    const owned = action.from.replace('(units: &[f64],', '(units: Vec<f64>,');
+    assert.equal(styles.decorate('emitter', { source: owned }).source, owned);
+  }
 });

@@ -37,6 +37,16 @@ test('Unicode escape decisions include fixed, braced, surrogate-pair and rejecte
   ]) assert.deepEqual(decodeUnicodeEscape(units(text), allowFixed), expected, text);
 });
 
+test('generated Unicode decoding borrows its owned vector at every shared array accessor', () => {
+  const generated = readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8');
+  const decoder = generated.split(/(?=^pub fn )/gmu).find(item => item.startsWith('pub fn decode_unicode_escape('));
+  assert.ok(decoder);
+  assert.match(decoder, /^pub fn decode_unicode_escape\(\n    units: Vec<f64>,/u);
+  const accesses = [...decoder.matchAll(/ml_array::optional_at\(\s*(&?)units,/gu)];
+  assert.ok(accesses.length > 0);
+  assert.ok(accesses.every(access => access[1] === '&'), 'an owned Vec must be borrowed for the shared &[T] accessor');
+});
+
 test('omitted arguments require a default for every omitted parameter', () => {
   assert.equal(acceptArgumentCount([false, true, true], 1), true);
   assert.equal(acceptArgumentCount([false, true, true], 3), true);
@@ -104,6 +114,8 @@ test('reviewed Boolean helper styles preserve boundary flags, bounded context ov
   ]) assert.equal(acceptPrecedenceOperandContext(owner, child), expected);
   const strings = readFileSync(new URL('../../rust/src/translation/frontend_rules/strings.rs', import.meta.url), 'utf8');
   assert.match(strings, /pub const fn accept_scanner_preemption_boundary\(virtual_token: bool, at_boundary: bool\) -> bool/u);
+  assert.match(strings, /pub const fn accept_lexical_cache_context\(in_token: bool, quiet: bool, repairing: bool\) -> bool/u);
+  assert.match(strings, /pub const fn accept_lexical_cache_reservation\(cells: f64, count: f64, limit: f64\) -> bool/u);
   const entry = strings.slice(strings.indexOf('pub fn accept_precedence_operand_context('));
   assert.doesNotMatch(entry, /(?:owner_contexts|child_contexts|ml_s17)\.clone\(\)/u);
   const continuations = readFileSync(new URL('../../rust/src/translation/frontend_rules/continuations_2.rs', import.meta.url), 'utf8');

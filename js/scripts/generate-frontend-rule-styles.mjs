@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DecoratorSet } from '../src/decorators.js';
-import { applyRecordedCompilerFeedback, retainCompilerFeedback } from './compiler-style-feedback.mjs';
+import { applyRecordedCompilerFeedback, readCompilerFeedbackCorrections, retainCompilerFeedback } from './compiler-style-feedback.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const paths = ['frontend_rules.rs', ...readdirSync(join(root, 'rust/src/translation/frontend_rules'))
@@ -64,46 +64,16 @@ try {
     if (process.argv.includes('--check')) {
       throw new Error(diagnostics.filter(({ level }) => level === 'error').map(({ rendered, message }) => rendered ?? message).join('\n'));
     }
-    const edits = new Map();
-    const visit = (diagnostic) => {
-      const spans = (diagnostic.spans ?? []).filter(({ suggested_replacement: replacement }) => replacement !== null);
-      if (spans.length > 0 && spans.every((span) => span.suggestion_applicability === 'MachineApplicable' && paths.some((path) => span.file_name === join(directory, 'translation', path)))) {
-        for (const span of spans) {
-          const list = edits.get(span.file_name) ?? [];
-          list.push(span);
-          edits.set(span.file_name, list);
-        }
-      }
-      for (const child of diagnostic.children ?? []) visit(child);
-    };
-    diagnostics.forEach(visit);
-    let changed = false;
-    for (const [path, spans] of edits) {
-      let source = readFileSync(path);
-      let boundary = source.length;
-      // Apply non-overlapping edits in descending order; alternatives are
-      // re-evaluated by the next compiler round rather than corrupting offsets.
-      for (const span of spans.sort((a, b) => b.byte_start - a.byte_start || b.byte_end - a.byte_end)) {
-        if (span.byte_end > boundary) continue;
-        const before = source;
-        const replacement = Buffer.from(span.suggested_replacement);
-        if (before.subarray(span.byte_start, span.byte_end).equals(replacement)) continue;
-        source = Buffer.concat([before.subarray(0, span.byte_start), replacement, before.subarray(span.byte_end)]);
-        // Literal replacements need line context: replacing an identifier
-        // alone could also rewrite its declaration or an enum pattern.
-        const start = before.lastIndexOf(10, Math.max(0, span.byte_start - 1)) + 1;
-        const next = before.indexOf(10, span.byte_end);
-        const end = next < 0 ? before.length : next + 1;
-        const from = before.subarray(start, end).toString('utf8');
-        const length = replacement.length - (span.byte_end - span.byte_start);
-        const to = source.subarray(start, end + length).toString('utf8').replace(/[ \t]+$/gmu, '');
-        actions.push({ op: 'replace', field: 'source', from, to });
-        boundary = span.byte_start;
-        changed = true;
-      }
-      writeFileSync(path, source);
+    const feedback = JSON.parse(readFileSync(join(root,
+      'issue-195-artifacts/compiler-feedback/frontend-rules', `round-${round}.json`), 'utf8'));
+    const corrections = readCompilerFeedbackCorrections({ feedback,
+      allowedPaths: paths.map(path => `rust/src/translation/${path}`) });
+    for (const [path, source] of corrections.inputs) {
+      if (!readFileSync(path).equals(source)) throw new Error('the online compiler feedback source changed before replay');
     }
-    if (!changed || round === 19) {
+    for (const [path, source] of corrections.outputs) writeFileSync(path, source);
+    actions.push(...corrections.actions);
+    if (!corrections.actions.length || round === 19) {
       throw new Error(`Clippy needs a reviewed style resolution:\n${diagnostics.filter(({ level }) => level === 'error').map(({ message, spans }) => `${message}: ${(spans ?? []).filter(({ is_primary }) => is_primary).map(({ text }) => text.map(({ text }) => text).join(' ')).join('; ')}`).join('\n')}`);
     }
   }

@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DecoratorSet } from '../src/decorators.js';
+import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
 
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
@@ -22,8 +23,27 @@ export function retainCompilerFeedback({ root, group, round, stderr, inputs }) {
   return diagnostics;
 }
 
-export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFile, allowedPaths }) {
-  const feedback = JSON.parse(readFileSync(feedbackFile, 'utf8'));
+function readCompilerFunctionContexts(source) {
+  const tree = parseProgrammingLanguage(source.toString('utf8'), 'Rust')?.tree;
+  if (!tree || tree.flags.hasError) throw new Error('compiler feedback needs a valid Rust syntax snapshot');
+  const contexts = [];
+  const pending = [tree];
+  while (pending.length) {
+    const node = pending.pop();
+    if (node.term === 'function_item' || node.term === 'function_signature_item') {
+      const range = node.span.byteRange;
+      const body = node.children.find(child => child.field === 'body');
+      contexts.push({ start: range.start, end: range.end, signatureEnd: body ? body.span.byteRange.start + 1 : range.end });
+    }
+    for (const child of node.children) pending.push(child);
+  }
+  return contexts.sort((left, right) => (left.end - left.start) - (right.end - right.start));
+}
+
+// The online compiler loop and offline replay share transaction boundaries and
+// source contexts. A function's signature is part of a literal action even if
+// its changed body line happens to be unique in today's generated module.
+export function readCompilerFeedbackCorrections({ feedback, allowedPaths }) {
   if (feedback.schemaVersion !== 1 || !Array.isArray(feedback.diagnostics) || !feedback.sources) throw new Error('compiler feedback requires raw diagnostics and exact source snapshots');
   const suggestions = [];
   const visit = (diagnostic) => {
@@ -40,11 +60,13 @@ export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFil
     const input = feedback.sources[span.file_name];
     if (!inputs.has(span.file_name)) {
       const source = Buffer.from(input.text);
-      if (digest(source) !== input.sha256 || !readFileSync(join(root, input.relativePath)).equals(source)) throw new Error(`compiler feedback is stale for ${input.relativePath}`);
+      if (digest(source) !== input.sha256) throw new Error(`compiler feedback is stale for ${input.relativePath}`);
       inputs.set(span.file_name, source);
     }
     if (!Number.isSafeInteger(span.byte_start) || !Number.isSafeInteger(span.byte_end)
       || span.byte_start < 0 || span.byte_end < span.byte_start || span.byte_end > inputs.get(span.file_name).length) throw new Error('compiler feedback has an invalid source range');
+    const source = inputs.get(span.file_name);
+    if ([span.byte_start, span.byte_end].some(offset => offset < source.length && (source[offset] & 0xc0) === 0x80)) throw new Error('compiler feedback has an invalid UTF-8 source boundary');
   }
   const overlaps = (left, right) => {
     if (left.file_name !== right.file_name) return false;
@@ -74,8 +96,11 @@ export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFil
     recordedSpans += spans.length;
   }
   const actions = [];
+  const outputs = new Map();
   for (const [path, transactions] of edits) {
     let source = inputs.get(path);
+    const contexts = readCompilerFunctionContexts(source);
+    const shifts = [];
     for (const transaction of transactions.sort((a, b) => b.byte_start - a.byte_start || b.byte_end - a.byte_end)) {
       const before = source;
       let replacement = before.subarray(transaction.byte_start, transaction.byte_end);
@@ -88,6 +113,15 @@ export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFil
       let start = before.lastIndexOf(10, Math.max(0, transaction.byte_start - 1)) + 1;
       const next = before.indexOf(10, transaction.byte_end);
       let end = next < 0 ? before.length : next + 1;
+      for (const span of transaction.spans) {
+        const context = contexts.find(context => context.start <= span.byte_start
+          && span.byte_start < context.end && span.byte_end <= context.end);
+        if (!context) continue;
+        start = Math.min(start, before.lastIndexOf(10, Math.max(0, context.start - 1)) + 1);
+        const signatureEnd = context.signatureEnd + shifts.reduce((delta, shift) =>
+          shift.end <= context.signatureEnd ? delta + shift.delta : delta, 0);
+        end = Math.max(end, signatureEnd);
+      }
       const delta = replacement.length - (transaction.byte_end - transaction.byte_start);
       for (;;) {
         const from = before.subarray(start, end).toString('utf8');
@@ -101,7 +135,20 @@ export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFil
       }
       actions.push({ op: 'replace', field: 'source', from: before.subarray(start, end).toString('utf8'),
         to: source.subarray(start, end + delta).toString('utf8').replace(/[ \t]+$/gmu, '') });
+      for (const span of transaction.spans) shifts.push({ end: span.byte_end,
+        delta: Buffer.byteLength(span.suggested_replacement) - (span.byte_end - span.byte_start) });
     }
+    outputs.set(path, source);
+  }
+  return { actions, spans: recordedSpans, deferred, inputs, outputs };
+}
+
+export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFile, allowedPaths }) {
+  const feedback = JSON.parse(readFileSync(feedbackFile, 'utf8'));
+  const { actions, spans: recordedSpans, deferred, inputs } = readCompilerFeedbackCorrections({ feedback, allowedPaths });
+  for (const [path, source] of inputs) {
+    const input = feedback.sources[path];
+    if (!readFileSync(join(root, input.relativePath)).equals(source)) throw new Error(`compiler feedback is stale for ${input.relativePath}`);
   }
   if (!actions.length) throw new Error('compiler feedback contains no applicable machine suggestions; rendered logs require separate reviewed corrections');
   const path = join(root, decoratorFile);

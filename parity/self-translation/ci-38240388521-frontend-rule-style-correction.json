@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed decorator collision correction",
+  "compilerFeedback": "parity/self-translation/ci-38240388521-frontend-rules-feedback.json",
+  "compilerFeedbackSha256": "9f0deb329ed5406ec3f7e04d2a00bdf821ea6063e4aea408574e38589eaa8fe0",
+  "head": "688b2f376011d1504623c422c734fc26135f0f66",
+  "runId": "38240388521",
+  "job": "test",
+  "decoratorFile": "parity/self-translation/frontend-rules-decorators.lino",
+  "decorator": "compiler-feedback-style",
+  "removedActionIndex": 136,
+  "removedAction": {
+    "op": "replace",
+    "field": "source",
+    "from": "                    crate::translation::frontend_rules::ml_array::optional_at(\n                        &units,\n",
+    "to": "                    crate::translation::frontend_rules::ml_array::optional_at(\n                        units,\n"
+  },
+  "reason": "The body-only borrow removal also matched decode_unicode_escape, whose units parameter is an owned Vec<f64>. Remove this legacy collision; retain the compiler borrowing suggestion with its complete owning function signature.",
+  "reviewedStyleDecorator": "reviewed-frontend-function-ownership",
+  "reviewedStyleActions": [
+    {
+      "op": "replace",
+      "field": "source",
+      "from": "pub fn ml_read_rust_number_bounds_loop26(units: &[f64], mut at: f64) -> f64 {\n    loop {\n        return if ((at < (units.len() as f64))\n            && (((crate::translation::frontend_rules::ml_array::optional_at(\n                units,\n                crate::translation::frontend_rules::ml_array::number_index(at),\n            )\n            .unwrap_or(f64::NAN)\n                >= (48f64))\n                && (crate::translation::frontend_rules::ml_array::optional_at(\n                    units,\n                    crate::translation::frontend_rules::ml_array::number_index(at),\n                )\n                .unwrap_or(f64::NAN)\n                    <= (57f64)))\n                || match (\n                    crate::translation::frontend_rules::ml_array::optional_at(\n                        &units,\n                        crate::translation::frontend_rules::ml_array::number_index(at),\n                    ),\n                    95f64,\n                ) {\n                    (Some(ml_left), ml_right) => ml_left == ml_right,\n                    _ => false,\n                }))\n        {\n            {\n                let at_2 = (at + 1f64);\n                {\n                    at = at_2;\n                    continue;\n                }\n            }\n        } else {\n            at\n        };\n    }\n}\n",
+      "to": "pub fn ml_read_rust_number_bounds_loop26(units: &[f64], mut at: f64) -> f64 {\n    loop {\n        return if ((at < (units.len() as f64))\n            && (((crate::translation::frontend_rules::ml_array::optional_at(\n                units,\n                crate::translation::frontend_rules::ml_array::number_index(at),\n            )\n            .unwrap_or(f64::NAN)\n                >= (48f64))\n                && (crate::translation::frontend_rules::ml_array::optional_at(\n                    units,\n                    crate::translation::frontend_rules::ml_array::number_index(at),\n                )\n                .unwrap_or(f64::NAN)\n                    <= (57f64)))\n                || match (\n                    crate::translation::frontend_rules::ml_array::optional_at(\n                        units,\n                        crate::translation::frontend_rules::ml_array::number_index(at),\n                    ),\n                    95f64,\n                ) {\n                    (Some(ml_left), ml_right) => ml_left == ml_right,\n                    _ => false,\n                }))\n        {\n            {\n                let at_2 = (at + 1f64);\n                {\n                    at = at_2;\n                    continue;\n                }\n            }\n        } else {\n            at\n        };\n    }\n}\n"
+    },
+    {
+      "op": "replace",
+      "field": "source",
+      "from": "pub fn ml_read_rust_number_bounds_loop27(units: &[f64], mut at: f64) -> f64 {\n    loop {\n        return if ((at < (units.len() as f64))\n            && (((crate::translation::frontend_rules::ml_array::optional_at(\n                units,\n                crate::translation::frontend_rules::ml_array::number_index(at),\n            )\n            .unwrap_or(f64::NAN)\n                >= (48f64))\n                && (crate::translation::frontend_rules::ml_array::optional_at(\n                    units,\n                    crate::translation::frontend_rules::ml_array::number_index(at),\n                )\n                .unwrap_or(f64::NAN)\n                    <= (57f64)))\n                || match (\n                    crate::translation::frontend_rules::ml_array::optional_at(\n                        &units,\n                        crate::translation::frontend_rules::ml_array::number_index(at),\n                    ),\n                    95f64,\n                ) {\n                    (Some(ml_left), ml_right) => ml_left == ml_right,\n                    _ => false,\n                }))\n        {\n            {\n                let at_2 = (at + 1f64);\n                {\n                    at = at_2;\n                    continue;\n                }\n            }\n        } else {\n            at\n        };\n    }\n}\n",
+      "to": "pub fn ml_read_rust_number_bounds_loop27(units: &[f64], mut at: f64) -> f64 {\n    loop {\n        return if ((at < (units.len() as f64))\n            && (((crate::translation::frontend_rules::ml_array::optional_at(\n                units,\n                crate::translation::frontend_rules::ml_array::number_index(at),\n            )\n            .unwrap_or(f64::NAN)\n                >= (48f64))\n                && (crate::translation::frontend_rules::ml_array::optional_at(\n                    units,\n                    crate::translation::frontend_rules::ml_array::number_index(at),\n                )\n                .unwrap_or(f64::NAN)\n                    <= (57f64)))\n                || match (\n                    crate::translation::frontend_rules::ml_array::optional_at(\n                        units,\n                        crate::translation::frontend_rules::ml_array::number_index(at),\n                    ),\n                    95f64,\n                ) {\n                    (Some(ml_left), ml_right) => ml_left == ml_right,\n                    _ => false,\n                }))\n        {\n            {\n                let at_2 = (at + 1f64);\n                {\n                    at = at_2;\n                    continue;\n                }\n            }\n        } else {\n            at\n        };\n    }\n}\n"
+    },
+    {
+      "op": "replace",
+      "field": "source",
+      "from": "pub fn accept_lexical_cache_context(in_token: bool, quiet: bool, repairing: bool) -> bool {\n    ((in_token && quiet) && !repairing)\n}\n",
+      "to": "pub const fn accept_lexical_cache_context(in_token: bool, quiet: bool, repairing: bool) -> bool {\n    ((in_token && quiet) && !repairing)\n}\n"
+    },
+    {
+      "op": "replace",
+      "field": "source",
+      "from": "pub fn accept_lexical_cache_reservation(cells: f64, count: f64, limit: f64) -> bool {\n    (count <= (limit - cells))\n}\n",
+      "to": "pub const fn accept_lexical_cache_reservation(cells: f64, count: f64, limit: f64) -> bool {\n    (count <= (limit - cells))\n}\n"
+    },
+    {
+      "op": "replace",
+      "field": "source",
+      "from": "pub fn ml_read_rust_number_bounds_loop22(units: &[f64], mut at: f64) -> f64 {\n    loop {\n        return if ((at < (units.len() as f64))\n            && (((crate::translation::frontend_rules::ml_array::optional_at(\n                units,\n                crate::translation::frontend_rules::ml_array::number_index(at),\n            )\n            .unwrap_or(f64::NAN)\n                >= (48f64))\n                && (crate::translation::frontend_rules::ml_array::optional_at(\n                    units,\n                    crate::translation::frontend_rules::ml_array::number_index(at),\n                )\n                .unwrap_or(f64::NAN)\n                    <= (57f64)))\n                || match (\n                    crate::translation::frontend_rules::ml_array::optional_at(\n                        &units,\n                        crate::translation::frontend_rules::ml_array::number_index(at),\n                    ),\n                    95f64,\n                ) {\n                    (Some(ml_left), ml_right) => ml_left == ml_right,\n                    _ => false,\n                }))\n        {\n            {\n                let at_2 = (at + 1f64);\n                {\n                    at = at_2;\n                    continue;\n                }\n            }\n        } else {\n            at\n        };\n    }\n}\n",
+      "to": "pub fn ml_read_rust_number_bounds_loop22(units: &[f64], mut at: f64) -> f64 {\n    loop {\n        return if ((at < (units.len() as f64))\n            && (((crate::translation::frontend_rules::ml_array::optional_at(\n                units,\n                crate::translation::frontend_rules::ml_array::number_index(at),\n            )\n            .unwrap_or(f64::NAN)\n                >= (48f64))\n                && (crate::translation::frontend_rules::ml_array::optional_at(\n                    units,\n                    crate::translation::frontend_rules::ml_array::number_index(at),\n                )\n                .unwrap_or(f64::NAN)\n                    <= (57f64)))\n                || match (\n                    crate::translation::frontend_rules::ml_array::optional_at(\n                        units,\n                        crate::translation::frontend_rules::ml_array::number_index(at),\n                    ),\n                    95f64,\n                ) {\n                    (Some(ml_left), ml_right) => ml_left == ml_right,\n                    _ => false,\n                }))\n        {\n            {\n                let at_2 = (at + 1f64);\n                {\n                    at = at_2;\n                    continue;\n                }\n            }\n        } else {\n            at\n        };\n    }\n}\n"
+    }
+  ],
+  "reviewedStyleReason": "Restore the legacy borrow simplification only inside immutable slice parameter functions; mark the new pure scalar helper functions const without changing their translated bodies. These are reviewed style corrections, not new compiler suggestions."
+}

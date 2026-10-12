@@ -342,3 +342,11 @@ pub fn accept_precedence_operand_context(
         }
     }
 }
+
+pub const fn accept_lexical_cache_context(in_token: bool, quiet: bool, repairing: bool) -> bool {
+    ((in_token && quiet) && !repairing)
+}
+
+pub const fn accept_lexical_cache_reservation(cells: f64, count: f64, limit: f64) -> bool {
+    (count <= (limit - cells))
+}

@@ -173,7 +173,7 @@ pub fn decode_unicode_escape(
             {
                 let ml_s1 = if match (
                     crate::translation::frontend_rules::ml_array::optional_at(
-                        units,
+                        &units,
                         crate::translation::frontend_rules::ml_array::number_index(1f64),
                     ),
                     120f64,
