@@ -143,6 +143,28 @@ fn json_convenience_preserves_integer_consumers_and_finite_float_bits() {
 }
 
 #[test]
+fn primary_reader_preserves_recorded_object_entry_order() {
+    let ordered = object(vec![
+        ("z", StructuredDataValue::Number(1.0)),
+        ("a", StructuredDataValue::Number(2.0)),
+    ]);
+    let source = structured_data_to_lino_ordered(&ordered).unwrap();
+    let value = read_structured_data_lino(&source).unwrap();
+    assert_eq!(
+        value
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        vec!["z", "a"]
+    );
+    assert_eq!(value["z"].as_u64(), Some(1));
+    assert_eq!(value["a"].as_u64(), Some(2));
+    assert_eq!(structured_data_to_lino(&value).unwrap(), source);
+}
+
+#[test]
 fn ordered_objects_preserve_integer_key_order_and_exact_surrogate_keys() {
     let value = StructuredDataValue::Object(vec![
         ("10".encode_utf16().collect(), string("first")),
