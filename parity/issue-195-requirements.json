@@ -1619,7 +1619,7 @@
     "planned:repository-directive:i195-grammar-native-agda": {
       "path": "parity/fixtures/native-grammars/agda.json",
       "selector": "docs/vision.md#native-merged-grammars: generated native Agda grammar and pinned independent source corpus",
-      "sha256": "0aea9bb1bc47059d12ac1e16cafe68b747f1bc2df4a0ee335b4d886f306562ea"
+      "sha256": "8637d8651a321de5a5eaff179e380a2c4a822383740df673a365d1d9182c1e23"
     },
     "planned:repository-directive:i195-grammar-native-html": {
       "path": "parity/fixtures/native-grammars/html.json",
@@ -1989,7 +1989,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "20eff7cd7a85e241b45f82109fb73661f2dcfec3ff750172b2bf5892f0f64719"
+      "sha256": "7fd3511bbf5b7c5848c81cf03fc2e0808bd22bcec13db09c9b7a6afa8027ad79"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
       "path": "parity/grammars/reconcile/pairs.json",

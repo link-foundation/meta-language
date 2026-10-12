@@ -15,7 +15,7 @@
       "mergeReport": "parity/grammars/merge-reports/agda.json",
       "coverage": {"rules": {"normal": 70, "atomic": 0, "silent": 46, "token": 5}, "visibleRules": 70, "exercisedRules": 32, "checkedKinds": 39, "checkedFields": 0, "renamed": 74, "expandedWords": 5, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 1, "conflict": 0, "precedences": 0, "extra": 3, "kind": 6},
-      "correctness": {"matches": 41, "rows": 556, "bytes": 894, "divergences": 4, "rejections": 7},
+      "correctness": {"matches": 43, "rows": 616, "bytes": 988, "divergences": 4, "rejections": 7},
       "recovery": {"repaired": 7, "errorNodes": 1, "missingNodes": 6, "categories": {}},
       "reuse": {"shared": 35, "specific": 86}
     },

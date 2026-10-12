@@ -3992,6 +3992,19 @@
           "wordRule": "id",
           "reason": "Keep the lambda-clause introducer where separate from an untyped binding at a complete keyword boundary; longer identifiers retain the source binding alternative.",
           "count": 3
+        },
+        {
+          "family": "prefer-optional-symbol",
+          "rule": "module",
+          "symbol": "_declaration_block",
+          "reason": "Prefer an indentation-scoped module body when the source layout scanner opens it, while preserving empty modules."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "forall",
+          "associativity": "right",
+          "value": 0,
+          "reason": "Universal quantification retains the complete function-type body instead of reducing before its final arrow, matching the source parser shift."
         }
       ],
       "concepts": {
