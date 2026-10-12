@@ -217,3 +217,4 @@ mod self_translation_line_endings;
 mod native_development_oracles;
 mod translation_array_construction;
 mod translation_rust_floating_literals;
+mod grammar_elm_layout_candidate;

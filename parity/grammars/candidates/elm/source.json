@@ -1,0 +1,50 @@
+{
+  "language": "elm",
+  "catalogLanguage": "Elm",
+  "native": "native-elm-candidate",
+  "repository": "https://github.com/elm-tooling/tree-sitter-elm",
+  "revision": "34815684e37cf299477e86a7d1e10d3ecb5486f9",
+  "crate": {
+    "name": "tree-sitter-elm",
+    "version": "5.9.4",
+    "checksum": "807f387a83c88d894b978edeff024f26a2935505de83237f57c77f9aa2de4ee7"
+  },
+  "license": "MIT",
+  "files": [
+    {
+      "path": "src/scanner.c",
+      "url": "https://raw.githubusercontent.com/elm-tooling/tree-sitter-elm/34815684e37cf299477e86a7d1e10d3ecb5486f9/src/scanner.c",
+      "file": "parity/grammars/candidates/elm/src-scanner.c.gz",
+      "sha256": "494e93226c0e366d2c1eaefcfd10fc4dfa0d95e87586bcb09c894003b6bb4b99",
+      "bytes": 24649
+    },
+    {
+      "path": "src/grammar.json",
+      "url": "https://raw.githubusercontent.com/elm-tooling/tree-sitter-elm/34815684e37cf299477e86a7d1e10d3ecb5486f9/src/grammar.json",
+      "file": "parity/grammars/candidates/elm/src-grammar.json.gz",
+      "sha256": "f7835295067daab21ff1754a7970fb54a1d245c2b0feaacd7989062b8779edc2",
+      "bytes": 99925
+    },
+    {
+      "path": "LICENSE.md",
+      "url": "https://raw.githubusercontent.com/elm-tooling/tree-sitter-elm/34815684e37cf299477e86a7d1e10d3ecb5486f9/LICENSE.md",
+      "file": "parity/grammars/candidates/elm/LICENSE.md.gz",
+      "sha256": "26f7bf09693dd895ea64777316bad0133b131a8478a660b4785d4b9d1322f9a1",
+      "bytes": 1078
+    },
+    {
+      "path": "test/corpus/let.txt",
+      "url": "https://raw.githubusercontent.com/elm-tooling/tree-sitter-elm/34815684e37cf299477e86a7d1e10d3ecb5486f9/test/corpus/let.txt",
+      "file": "parity/grammars/candidates/elm/test-corpus-let.txt.gz",
+      "sha256": "25692fa871ad777e2cb91c6a94cc7cf2f05c3654584aa02b2a76388669719467",
+      "bytes": 28652
+    },
+    {
+      "path": "test/corpus/case.txt",
+      "url": "https://raw.githubusercontent.com/elm-tooling/tree-sitter-elm/34815684e37cf299477e86a7d1e10d3ecb5486f9/test/corpus/case.txt",
+      "file": "parity/grammars/candidates/elm/test-corpus-case.txt.gz",
+      "sha256": "7f6aac0a156d5b11d1a9cb23b1ce76dc1a32475fb46e3bb4e86bbc7219abbd1e",
+      "bytes": 37626
+    }
+  ]
+}
