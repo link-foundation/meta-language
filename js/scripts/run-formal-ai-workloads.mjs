@@ -16,13 +16,13 @@
 // into a clean consumer (empty node_modules, fresh cache) and runs formal-ai's
 // data through the public API (js/scripts/issue-195-formal-ai-consumer.mjs).
 // Both runtimes write the same outputs from one inputs file; their comparison
-// joins both sharedConceptsReused observations. The JSON report is validated by
+// joins both sharedConceptsReused observations. The linked report is validated by
 // js/scripts/issue-195-formal-ai-workloads.mjs; the exit status is non-zero when
 // a run runtime has a problem.
 //
 // Usage:
 //   node js/scripts/run-formal-ai-workloads.mjs --npm-tarball <meta-language-x.y.z.tgz>
-//     --crate <meta-language-x.y.z.crate> --work-dir <directory> --out <report.json>
+//     --crate <meta-language-x.y.z.crate> --work-dir <directory> --out <report.lino>
 //     [--formal-ai-checkout <git checkout holding the pinned revision>] [--skip-rust]
 // The tarball and the crate are each expected next to a `<artifact>.sha256`
 // file ("<digest>  <name>"), as the delivery candidates are published.
@@ -49,7 +49,8 @@ import { mkdir, readFile, readdir, rm, statfs, writeFile } from 'node:fs/promise
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readProjectFileBytes } from './project-data.mjs';
+import { readProjectFileBytes, writeProjectData } from './project-data.mjs';
+import { consumeWorkloadWireData, consumeWorkloadWireEvents } from './workload-wire-data.mjs';
 
 import { gitBlob } from './issue-195-rml-pr184.mjs';
 import {
@@ -108,6 +109,7 @@ const tarball = path.resolve(required('--npm-tarball'));
 const crate = skipRust ? null : path.resolve(required('--crate'));
 const workDirectory = path.resolve(required('--work-dir'));
 const output = path.resolve(required('--out'));
+const inputsWirePath = path.join(workDirectory, 'formal-ai-inputs.wire.json');
 const formalAiCheckout = option('--formal-ai-checkout', null);
 const fixture = loadFormalAiWorkloadFixture(root);
 // The cargo test targets of formal-ai's workload tests, by the file cargo announces each under.
@@ -137,9 +139,12 @@ async function main() {
     report.npm = skipped(reason);
     report.crate = skipped(reason);
   } else {
-    const inputsPath = path.join(workDirectory, 'formal-ai-inputs.json');
+    const inputsPath = path.join(workDirectory, 'formal-ai-inputs.lino');
     const inputs = await buildFormalAiInputs(formalAi.directory);
-    await writeFile(inputsPath, `${JSON.stringify(inputs)}\n`);
+    writeProjectData(inputsPath, inputs);
+    // The probe programs consume a temporary JSON interoperability projection;
+    // the retained input and its report digest refer to the linked document.
+    await writeFile(inputsWirePath, `${JSON.stringify(inputs)}\n`);
     report.inputs = {
       file: path.basename(inputsPath),
       sha256: sha256(await readFile(inputsPath)),
@@ -151,10 +156,10 @@ async function main() {
       semanticProjections: inputs.semanticProjections.length,
       semanticProjectionFixtureSha256: sha256(readProjectFileBytes(path.join(root, 'parity/fixtures/formal-ai-semantic-projections.json'))),
     };
-    report.npm = await guarded(() => javascriptWorkloads(formalAi.directory, inputsPath, outputs));
+    report.npm = await guarded(() => javascriptWorkloads(formalAi.directory, inputsWirePath, outputs));
     report.crate = skipRust
       ? skipped('--skip-rust: the Rust workloads were not run')
-      : await guarded(() => rustWorkloads(formalAi.directory, inputsPath, outputs));
+      : await guarded(() => rustWorkloads(formalAi.directory, inputsWirePath, outputs));
     // The two runtimes reuse the same concepts only when they produced the same links and projections.
     const comparison = compareRuntimeOutputs(outputs.javascript, outputs.rust);
     report.comparison = comparison;
@@ -167,7 +172,7 @@ async function main() {
   }
   report.logs = logs;
   await mkdir(path.dirname(output), { recursive: true });
-  await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
+  writeProjectData(output, report);
   console.log(`formal-ai workloads: wrote ${output}`);
 
   let failed = mismatched.length > 0;
@@ -277,7 +282,7 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
   };
 
   const dataFiles = new Set(Object.values(FORMAL_AI_DATA_FILES));
-  const events = path.join(workDirectory, 'javascript-test-events.jsonl');
+  const events = path.join(workDirectory, 'javascript-test-events.wire.jsonl');
   await writeFile(path.join(directory, 'formal-ai-helpers.mjs'), consumerHelpersModule());
   await writeFile(path.join(directory, 'formal-ai-workloads.test.mjs'), JAVASCRIPT_WORKLOAD_TESTS);
   await writeFile(path.join(directory, 'issue-195-test-events.mjs'), TEST_EVENT_REPORTER);
@@ -289,7 +294,7 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
   ], { cwd: directory, env: environment, allowFailure: true });
   // Each test name starts with the formal-ai data file it ran; a test without one is kept unattributed.
   const tests = existsSync(events)
-    ? (await readFile(events, 'utf8')).split('\n').filter(Boolean).map((line) => JSON.parse(line))
+    ? (await consumeWorkloadWireEvents(events, path.join(workDirectory, 'javascript-test-events.lino')))
       .filter(({ kind }) => kind === 'test')
       .map(({ name, outcome, error, process: child }) => {
         const [prefix, ...rest] = name.split(TEST_NAME_SEPARATOR);
@@ -304,14 +309,15 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
       })
     : [];
 
-  const probePath = path.join(workDirectory, 'javascript-probe.json');
+  const probePath = path.join(workDirectory, 'javascript-probe.wire.json');
   await writeFile(path.join(directory, 'issue-195-meta-language-probe.mjs'), JAVASCRIPT_PROBE);
   const probeRun = await run('javascript-probe', process.execPath, ['issue-195-meta-language-probe.mjs', probePath, inputsPath], {
     cwd: directory,
     env: environment,
     allowFailure: true,
   });
-  const probe = existsSync(probePath) ? JSON.parse(await readFile(probePath, 'utf8')) : {};
+  const probe = existsSync(probePath)
+    ? await consumeWorkloadWireData(probePath, path.join(workDirectory, 'javascript-probe.lino')) : {};
   outputs.javascript = probe.outputs;
   return {
     skipped: false,
@@ -429,13 +435,15 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
   const outcome = (name) => probeTests.find((entry) => entry.name === name)?.outcome ?? 'not run';
   const evidence = async (name) => {
     const file = path.join(probeDirectory, `${name}.json`);
-    return existsSync(file) ? JSON.parse(await readFile(file, 'utf8')) : null;
+    return existsSync(file)
+      ? consumeWorkloadWireData(file, path.join(probeDirectory, `${name}.lino`)) : null;
   };
   const probeFailure = (name) => check(`probe test ${name}`, {
     holds: false,
     detail: `the probe test ${outcome(name)}; see ${testRun.log}`,
   });
-  outputs.rust = outcome(RUST_PROBE_TESTS.outputs) === 'passed' ? await evidence('rust-outputs') ?? undefined : undefined;
+  const capturedOutputs = await evidence('rust-outputs');
+  outputs.rust = outcome(RUST_PROBE_TESTS.outputs) === 'passed' ? capturedOutputs ?? undefined : undefined;
   const distinctions = await evidence('distinctionsPreserved');
   const distinctionChecks = distinctions?.checks ?? [];
   if (distinctionChecks.length === 0 ||
@@ -530,8 +538,8 @@ function check(name, { holds, detail }) {
 // The outputs of one runtime are kept beside the logs; the report names the file and its digest.
 async function outputsFile(runtime, value) {
   if (!value) return null;
-  const file = path.join(workDirectory, `${runtime}-outputs.json`);
-  await writeFile(file, `${JSON.stringify(value, null, 2)}\n`);
+  const file = path.join(workDirectory, `${runtime}-outputs.lino`);
+  writeProjectData(file, value);
   return { file: path.basename(file), sha256: sha256(await readFile(file)) };
 }
 
@@ -750,4 +758,8 @@ function required(name) {
   return value;
 }
 
-await main();
+try {
+  await main();
+} finally {
+  await rm(inputsWirePath, { force: true });
+}

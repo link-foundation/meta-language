@@ -218,7 +218,7 @@ jobs:
         run: cat grammar-bulk/grammar-bulk-matrix.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the matrix
-        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.json') != '' }}
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.lino') != '' }}
         uses: actions/upload-artifact@v7
         with:
           name: grammar-bulk-matrix
@@ -317,6 +317,14 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      # Only the repository reporting tools use these dependencies. Installed
+      # consumers still resolve and execute their exact candidate artifacts.
+      - name: Install the linked report reader dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
@@ -369,7 +377,7 @@ jobs:
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
           --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-consumer"
-          --out issue-195-artifacts/platform/report.json
+          --out issue-195-artifacts/platform/report.lino
 
       # The delivery gate: every retained item is current or at its verified
       # newest compatible release, and the clean consumer resolves the audited
@@ -397,7 +405,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: issue-195-platform-${{ matrix.os }}-${{ github.sha }}
-          path: issue-195-artifacts/platform/report.json
+          path: issue-195-artifacts/platform/report.lino
           if-no-files-found: error
           retention-days: 30
 
@@ -432,6 +440,14 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      # Only the repository reporting tools use these dependencies. Installed
+      # consumers still resolve and execute their exact candidate artifacts.
+      - name: Install the linked report reader dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
@@ -448,7 +464,7 @@ jobs:
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
           --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-rml-workloads"
-          --out issue-195-artifacts/rml-workloads/report.json
+          --out issue-195-artifacts/rml-workloads/report.lino
 
       # The report is uploaded even when a workload fails: the aggregate validates it and
       # records nothing for the assertions it does not support.
@@ -457,7 +473,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: issue-195-rml-workloads-${{ github.sha }}
-          path: issue-195-artifacts/rml-workloads/report.json
+          path: issue-195-artifacts/rml-workloads/report.lino
           if-no-files-found: error
           retention-days: 30
 
@@ -492,6 +508,14 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      # Only the repository reporting tools use these dependencies. Installed
+      # consumers still resolve and execute their exact candidate artifacts.
+      - name: Install the linked report reader dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
@@ -515,7 +539,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-formal-ai-${{ hashFiles('parity/fixtures/formal-ai-workloads.json', 'rust/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-formal-ai-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'rust/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-formal-ai-
 
@@ -531,7 +555,7 @@ jobs:
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
           --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
-          --out issue-195-artifacts/formal-ai-workloads/report.json
+          --out issue-195-artifacts/formal-ai-workloads/report.lino
 
       # The report is uploaded even when a workload fails: the aggregate validates it and
       # records nothing for the assertions it does not support.
@@ -540,7 +564,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: issue-195-formal-ai-workloads-${{ github.sha }}
-          path: issue-195-artifacts/formal-ai-workloads/report.json
+          path: issue-195-artifacts/formal-ai-workloads/report.lino
           if-no-files-found: error
           retention-days: 30
 
@@ -551,7 +575,8 @@ jobs:
           name: issue-195-formal-ai-workload-logs-${{ github.sha }}
           path: |
             ${{ runner.temp }}/issue-195-formal-ai-workloads/*.log
-            ${{ runner.temp }}/issue-195-formal-ai-workloads/*-outputs.json
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*-outputs.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/formal-ai-inputs.lino
           if-no-files-found: ignore
           retention-days: 30
 
@@ -966,8 +991,8 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
-          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
-          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
+          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.lino
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.lino
           GH_TOKEN: ${{ github.token }}
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -1095,8 +1120,8 @@ jobs:
       - name: Produce the stage evidence
         env:
           ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
-          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
-          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
+          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.lino
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.lino
           GH_TOKEN: ${{ github.token }}
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -1179,8 +1204,8 @@ jobs:
 
       - name: Produce the stage evidence
         env:
-          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
-          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
+          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.lino
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.lino
           GH_TOKEN: ${{ github.token }}
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -1268,7 +1293,7 @@ jobs:
           --evaluate
           --checkpoint post-merge
           --results-dir issue-195-results
-          --json-report issue-195-artifacts/post-merge-report.json
+          --json-report issue-195-artifacts/post-merge-report.lino
           --markdown-report issue-195-artifacts/post-merge-report.md
 
       - name: Publish the post-merge report
@@ -1374,11 +1399,11 @@ jobs:
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
         run: >-
           node js/scripts/check-issue-195-acceptance.mjs
-          --produce-gate-results issue-195-results/gate-faults.json
+          --produce-gate-results issue-195-results/gate-faults.lino
           --evaluate
           --checkpoint "$ACCEPTANCE_CHECKPOINT"
           --results-dir issue-195-results
-          --json-report issue-195-artifacts/report.json
+          --json-report issue-195-artifacts/report.lino
           --markdown-report issue-195-artifacts/report.md
 
       - name: Publish per-requirement evidence report
