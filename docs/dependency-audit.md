@@ -67,12 +67,12 @@ they are.
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 44 | 43 | 1 | 0 |
+| Generators | 47 | 46 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 22 | 0 | 0 | 22 |
+| Published artifact contents | 23 | 0 | 0 | 23 |
 
 ## JavaScript engines
 
@@ -541,6 +541,7 @@ they are.
 | `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-web-tree-sitter-runtime.mjs` | `js/scripts/build-web-tree-sitter-runtime.mjs` | `script` |  | derived | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
 | `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-csharp-pattern-fixture.mjs` | `js/scripts/generate-csharp-pattern-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-default-cst-expectations.mjs` | `js/scripts/generate-default-cst-expectations.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-elm-candidate-fixtures.mjs` | `js/scripts/generate-elm-candidate-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-export-parity.mjs` | `js/scripts/generate-export-parity.mjs` | `script` |  | derived | current |  |
@@ -559,6 +560,8 @@ they are.
 | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-scanner-profiles.mjs` | `js/scripts/generate-native-scanner-profiles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-primitive-value-rules.mjs` | `js/scripts/generate-primitive-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-array-runtime.mjs` | `js/scripts/generate-rust-array-runtime.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
@@ -656,6 +659,7 @@ they are.
 | `src/data/typed-program-links-schema.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-portable-typing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/array-*.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 

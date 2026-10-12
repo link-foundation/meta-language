@@ -7990,6 +7990,20 @@
       ]
     },
     {
+      "category": "generator",
+      "name": "js/scripts/generate-csharp-pattern-fixture.mjs",
+      "declaredIn": [
+        "js/scripts/generate-csharp-pattern-fixture.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-csharp-pattern-fixture.mjs@script",
+      "dependsOn": []
+    },
+    {
       "id": "generator js/scripts/generate-default-cst-expectations.mjs@script",
       "category": "generator",
       "name": "js/scripts/generate-default-cst-expectations.mjs",
@@ -8259,6 +8273,34 @@
       "dependsOn": [
         "npm js/package-lock.json pdf-lib@1.17.1"
       ]
+    },
+    {
+      "category": "generator",
+      "name": "js/scripts/generate-primitive-value-rules.mjs",
+      "declaredIn": [
+        "js/scripts/generate-primitive-value-rules.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-primitive-value-rules.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
+      "name": "js/scripts/generate-rust-array-runtime.mjs",
+      "declaredIn": [
+        "js/scripts/generate-rust-array-runtime.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-rust-array-runtime.mjs@script",
+      "dependsOn": []
     },
     {
       "id": "generator js/scripts/generate-self-translation-cases.mjs@script",
@@ -9366,6 +9408,20 @@
         "type": "none"
       },
       "id": "published crate src/data/typescript-portable-typing.lino@include"
+    },
+    {
+      "category": "published",
+      "name": "src/translation/runtime/array-*.txt",
+      "scope": "crate",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "id": "published crate src/translation/runtime/array-*.txt@include"
     },
     {
       "id": "published npm README.md@files",
