@@ -85,7 +85,6 @@ const words = new Map(naming.words.map(({ word, replacement }) => [word, replace
 const entry = JSON.parse(read('parity/grammars/sources.json')).sources.find(({ language }) => language === 'elixir');
 const upstream = JSON.parse(gunzipSync(readFileSync(new URL(`../../${entry.file}`, import.meta.url))));
 const projection = JSON.parse(read('parity/fixtures/native-grammars/elixir-profile.json'));
-const candidate = transformNativeSource(upstream, profile.sourceTransforms.filter(({ family }) => family !== 'field-expression-context'));
 const postfix = {
   call: '_postfix_call', _call_without_parentheses: '_postfix_unparenthesized_call', _call_with_parentheses: '_postfix_parenthesized_call',
   _local_call_just_do_block: '_postfix_block_call', _remote_call_without_parentheses: '_postfix_remote_reference',
@@ -129,14 +128,29 @@ const contextDecision = {
     { rule: 'unary_operator', field: 'operand', symbol: '_expression', helper: '_attribute_expression', precedence: 220, count: 1 },
   ],
 };
-transformFieldExpressionContext(candidate, contextDecision);
-const imported = importTreeSitterNative(candidate, {
-  nameOf: name => nativeName(name, words, profile), scanners: nativeScannerProfile(profile.scannerFamilies), immediate: entry.scanner.immediate,
-});
-const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported)));
+function contextParser() {
+  const positions = profile.sourceTransforms.flatMap((decision, index) => decision.family === 'field-expression-context'
+    && decision.clones.some(clone => clone.helper === '_postfix_expression') ? [index] : []);
+  assert.equal(positions.length, 1, 'the postfix operand context is registered exactly once');
+  const [position] = positions;
+  const { family: _family, reason: _reason, ...registered } = profile.sourceTransforms[position];
+  assert.deepEqual(contextDecision, registered, 'the focused context matches its registered source policy');
+  const candidate = transformNativeSource(upstream, profile.sourceTransforms.slice(0, position));
+  transformFieldExpressionContext(candidate, contextDecision);
+  // Later contexts may consume helpers made here or by another field-context
+  // decision. Preserve their original order rather than filtering a family.
+  const complete = transformNativeSource(candidate, profile.sourceTransforms.slice(position + 1));
+  assert.deepEqual(complete, transformNativeSource(upstream, profile.sourceTransforms),
+    'replaying the focused context retains every other registered source decision');
+  const imported = importTreeSitterNative(complete, {
+    nameOf: name => nativeName(name, words, profile), scanners: nativeScannerProfile(profile.scannerFamilies), immediate: entry.scanner.immediate,
+  });
+  return compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported)));
+}
 const leaves = node => node.type === 'token' ? [node] : node.children.flatMap(leaves);
 
 test('postfix operand projections preserve remote calls, grouping, capture placeholders and attribute precedence', () => {
+  const parser = contextParser();
   for (const source of [
     '1 + Mod.inner_fun 1', 'Mod.outer_fun mid_fun inner_fun.(a)', '@mod.foo', '&1.foo', '-mod.foo', '(a+b).foo', 'foo(1).bar', 'foo x.foo',
     'a+b[c]', 'outer Mod.inner arg do\n a\nend', '@foo(1).bar', '@foo Mod.fun', '@spec fun(atom) :: string', '@foo+1', '@foo[1]',
