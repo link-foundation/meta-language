@@ -1042,6 +1042,11 @@ keeps every run within that bound instead of relying on a larger machine:
   Aggregate only merges and evaluates the stage outputs, and a failed or
   missing stage is one gate error naming it.
 - Every workflow cancels the runs a newer push supersedes.
+- Generated Rust compilation and style checks retain raw compiler diagnostics
+  alongside the exact generated source and its hash as CI artifacts. Offline
+  feedback applies only explicit machine-applicable suggestions against those
+  unchanged sources. Rendered suggestions require a reviewed correction and
+  cannot acquire invented applicability metadata.
 - A local evidence run executes the stages one after another, with
   `CARGO_BUILD_JOBS=2`, `RUST_TEST_THREADS=2` and `CARGO_INCREMENTAL=0` unless
   the caller set them, and builds only the default Rust features.
