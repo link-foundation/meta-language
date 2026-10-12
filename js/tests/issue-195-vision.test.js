@@ -180,6 +180,8 @@ test('every ledger row traces to its specification, inventories, sources, CI and
   const registeredKeys = new Set(sourceKeyByUrl.values());
   const packageFor = { javascript: 'npm:meta-language', rust: 'crates.io:meta-language', tooling: 'repository tooling, not packaged', aggregate: 'acceptance gate, not packaged' };
   for (const row of manifest.atomicRequirements) {
+    assert.equal(row.critical, true, `${row.id} is a critical obligation`);
+    assert.equal(row.fullScopeReleaseBlocker, true, `${row.id} blocks an unverified full-scope release claim`);
     const { traceability } = row;
     assert.ok(traceability, `${row.id} has a traceability record`);
     const [file, anchor] = traceability.specification.split('#');

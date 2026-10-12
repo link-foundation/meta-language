@@ -190,11 +190,12 @@ test('source discovery includes every original and follow-up discussion endpoint
   assert.deepEqual(endpoints.sort(), [
     'issues/195', 'issues/195/comments?per_page=100',
     'issues/199', 'issues/199/comments?per_page=100',
+    'issues/224', 'issues/224/comments?per_page=100',
     'issues/196/comments?per_page=100', 'pulls/196/comments?per_page=100', 'pulls/196/reviews?per_page=100',
     'issues/201/comments?per_page=100', 'pulls/201/comments?per_page=100', 'pulls/201/reviews?per_page=100',
   ].map((endpoint) => `repos/link-foundation/meta-language/${endpoint}`).sort());
   assert.equal(discussion.issue.number, 195);
-  assert.deepEqual(discussion.issues.map(({ number }) => number), [199]);
+  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224]);
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/199/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/201/comments')));
   const reviews = discussion.comments.filter(({ body }) => body === 'A reviewed requirement');
@@ -228,7 +229,9 @@ test('captured conversation instructions detect changed or missing committed byt
   const body = readFileSync(repositoryFile(instruction.url), 'utf8');
   try {
     await mkdir(path.join(temporaryRoot, 'parity', 'sources'), { recursive: true });
-    await writeFile(path.join(temporaryRoot, instruction.url), body);
+    for (const source of register.requirementSources.filter(({ kind }) => kind === 'direct-instruction')) {
+      await writeFile(path.join(temporaryRoot, source.url), readFileSync(repositoryFile(source.url), 'utf8'));
+    }
     assert.deepEqual(await validateDirectInstructions(register, temporaryRoot), []);
     await writeFile(path.join(temporaryRoot, instruction.url), `${body}Changed obligation.`);
     assert.match((await validateDirectInstructions(register, temporaryRoot))[0], /content hash or byte count/u);

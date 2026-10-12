@@ -6,6 +6,7 @@
 // that states the obligation. A runtime whose implementation does not exist yet
 // has a null entry point, and its cells stay failing until tests executed on
 // the exact commit record every assertion; nothing here is marked complete.
+import { CRITICAL_CONVERSATION_REQUIREMENTS } from './issue-195-conversation-requirements.mjs';
 
 export const VISION_SPECIFICATION = 'docs/vision.md';
 export const SOURCE_REGISTER = 'parity/issue-195-sources.json';
@@ -31,6 +32,7 @@ const JAVASCRIPT_LINO = ['js/src/lino-grammar.js', 'js/src/lino-semantics.js', '
 const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/Cargo.toml'];
 
 export const VISION_REQUIREMENTS = Object.freeze([
+  ...CRITICAL_CONVERSATION_REQUIREMENTS,
   ...[
     ['HERE-DOCUMENTS', 'line-anchored quoted and FIFO here-document scanner boundaries',
       'Shared scanner descriptors preserve quoted opening labels, whole-line closing labels and FIFO pending bodies. Both executors match the shared accepted concrete trees and reject malformed boundaries without leaking speculative label state.',

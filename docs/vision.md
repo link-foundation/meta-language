@@ -99,6 +99,92 @@ without the original grammar sources and yield identical decisions in both
 runtime packages. Shared identity simplifies translation by exposing a reusable
 meaning; target-specific syntax and faithful encodings remain explicit rules.
 
+### Recursive formal concept definitions
+
+Every concept has a deep recursive formal definition made of inspectable links.
+Definitions can use other concepts, including shared and mutually recursive
+references; identities, bindings, axioms, selected primitives and foundational
+assumptions remain explicit through serialization and reload. An English
+description or a declared meaning signature complements that formal definition
+and cannot substitute for it. Definition comparison checks obligations under
+the declared model and preserves an unknown result when a proof is unavailable.
+It does not promise to decide arbitrary program equivalence.
+
+### Ontology and taxonomy entry points
+
+The library exposes ontology and taxonomy as separate entry points into the
+same concept space, including concepts no grammar currently uses. The ontology
+organizes concepts, relationships and formal axioms; the taxonomy organizes
+classification and explicitly declared subsumption. General associative relations
+remain separate from classification edges. This terminology follows the
+[W3C ontology overview](https://www.w3.org/TR/owl2-overview/) and
+[SKOS distinction between hierarchical and associative links](https://www.w3.org/TR/skos-reference/#semantic-relations).
+
+A concept can participate in either entry point or both without losing its
+global identity or formal definition. Each view can have several independently
+selectable roots, all represented explicitly as links. A root may also be a type
+when the selected model declares that role; root membership does not imply a
+type role or a universal `Type : Type` axiom.
+
+### Links as fundamental entities and relationships
+
+Concepts, entities, relationships, roots and definitions are all links or
+compositions of links. The same link can occupy several of these roles without
+becoming disconnected host objects. A vertex can be represented by a link whose
+beginning and end refer to that same link; the self-reference and the chosen
+model remain explicit. Recursive composition preserves shared references and
+cycles across representation levels.
+
+The user's fractal and wave analogy is captured verbatim in the hashed
+conversation sources as modelling motivation and a hypothesis. Physical claims
+about waves and particles, mathematical self-similarity and absence of logical
+contradictions are not established by this representation or analogy. Any
+consistency or semantic equivalence claim requires its own explicit assumptions
+and checked proof.
+
+### Dynamic knowledge and language extension
+
+Full RDF and OWL representation, import, conversion and merging are required
+through the same links and concept space, retaining formal axioms, selected
+semantic profiles, identities, provenance, conflicts and unresolved obligations.
+Their semantics remain declared model choices.
+
+A shipped prepared snapshot is a starting point. Users can reconstruct the full
+CST and concept space dynamically through link-cli or text and binary Links
+Notation, then use the shared algorithms to extend meta-language with other
+languages. Reload retains complete trees and formal definitions rather than a
+token list or an opaque source envelope. Existing catalog behavior remains intact.
+Automatic grammar inference and discovery have the separately tracked
+[issue #224](https://github.com/link-foundation/meta-language/issues/224), with
+modern primary research, concrete algorithms, pinned assumptions and independent
+accepted and rejected observations. The issue records scope; it is not inference
+implementation evidence.
+The lexical inference, state merging, context-free discovery, structural priors,
+active learning and minimization already present in the Rust inference modules
+and their closed issues are audited and extended, with matching JavaScript
+behavior. Closed issues do not supply current implementation evidence.
+
+### Critical conversation requirements
+
+Every requirement-bearing conversation message is captured verbatim, hashed,
+registered and mapped to atomic ledger obligations. New messages append records;
+they do not overwrite earlier requests. All conversation and inherited ledger
+requirements are critical and block a full-scope delivery or release-completion
+claim while required exact-commit evidence is missing. Recording a requirement,
+a null implementation entry point or a contract capture does not prove behavior.
+The existing pre-merge, post-merge and release checkpoint order remains intact.
+
+The current implementation priority maximizes Rust ↔ editable meta-language and
+JavaScript ↔ editable meta-language translation, reusing the same algorithms
+across multiple real JavaScript and Rust projects. RDF, OWL, dynamic extension,
+formal definitions and every earlier language remain required scope.
+The authorized bulk workflow obtains the latest repository refs, uses the
+maximum useful independent agent delegation, commits every contributor's owned
+work, and reserves pushing for one coordinator. That coordinator verifies prior
+CI is finished and every prior error has a concrete fix before the next reviewed
+batch push. Local validation uses targeted JavaScript checks and never compiles
+Rust; compiled parity and expensive workloads belong to CI.
+
 ## Links Notation fitness
 
 Links Notation (LiNo) is the serialization of the common language. Both packages
@@ -559,6 +645,23 @@ execution policy and proof authority stay in
 Foundation choices are represented as data. No single logic is hard-coded as
 universal: integer and overflow models, universes, effects and proof systems are
 distinct concepts with explicit correspondences.
+
+### Associative stack and theoretical foundation
+
+The [formal-ai associative technology stack](https://github.com/link-assistant/formal-ai/blob/main/docs/associative-tech-stack.md)
+is audited across both runtime packages, code, grammars, translation, tooling,
+documentation and dependencies at an immutable recorded revision. Actual direct
+runtime providers, compatibility or theoretical alignment, and development tools
+have distinct roles. Relevant obligations need code and dependency traceability;
+adoption does not require blindly adding every formal-ai dependency here.
+
+[Meta-theory](https://github.com/link-foundation/meta-theory) supplies the
+philosophical and theoretical links foundation. Its adopted definitions and
+premises are traced to pinned sources, with archives and drafts identified
+separately, and applied throughout the common representation. That foundation
+remains distinct from consumer-owned proof authority, selectable logical
+semantics, execution policies and universal self-typing claims. A source citation
+or conceptual analogy alone does not prove project-wide adoption or consistency.
 
 ## Downstream consumers
 

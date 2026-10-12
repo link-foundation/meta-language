@@ -521,7 +521,8 @@
       "title": "Direct user request for one universal grammar concept space and proof-backed reuse",
       "role": "Direct conversation instruction: all languages and grammars share one global concept space, copy concepts from automated translation before deduplication, prove faithful one-to-one correspondence before merging, and reuse every unique equivalent concept everywhere it applies.",
       "ledgerCoverage": [
-        "I195-GLOBAL-CONCEPT-"
+        "I195-GLOBAL-CONCEPT-",
+        "I195-WORKFLOW-"
       ],
       "author": "konard",
       "createdAt": "2026-10-12T04:10:18.600Z",
@@ -529,6 +530,147 @@
       "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
       "bytes": 1765,
       "sha256": "3bd5a6f81194e4cd33d09c3fb95d176bdd2a319f84fdf44b6c589a245750af5f"
+    },
+    {
+      "key": "recursiveDefinitionsRequest",
+      "id": "recursive-formal-definitions-2026-10-12",
+      "kind": "direct-instruction",
+      "url": "parity/sources/recursive-formal-definitions-2026-10-12.txt",
+      "title": "Critical direct requirement: recursive formal concept definitions and separate ontology/taxonomy APIs",
+      "role": "Critical direct requirement: recursive formal concept definitions and separate ontology/taxonomy APIs",
+      "ledgerCoverage": [
+        "I195-FORMAL-CONCEPT-",
+        "I195-ONTOLOGY-",
+        "I195-TAXONOMY-",
+        "I195-CONVERSATION-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T04:56:53.797Z",
+      "updatedAt": "2026-10-12T04:56:53.797Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 802,
+      "sha256": "9f3da6c4bb82037ed74abfaab89ffd4a7b47f1742106299610be81445a05fe13"
+    },
+    {
+      "key": "linksFoundationRequest",
+      "id": "links-foundation-and-fractal-motivation-2026-10-12",
+      "kind": "direct-instruction",
+      "url": "parity/sources/links-foundation-and-fractal-motivation-2026-10-12.txt",
+      "title": "Critical direct requirement: all concepts, entities and relationships are links, self-loop vertices and recursive composition; physical wave/fractal statements are user hypotheses rather than established facts",
+      "role": "Critical direct requirement: all concepts, entities and relationships are links, self-loop vertices and recursive composition; physical wave/fractal statements are user hypotheses rather than established facts",
+      "ledgerCoverage": [
+        "I195-LINK-FOUNDATION-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T04:56:53.797Z",
+      "updatedAt": "2026-10-12T04:56:53.797Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 909,
+      "sha256": "2302aafaf4f3a103d0c7b8cabc1e52e053ff6cf4df95c98e253bbab4718df235"
+    },
+    {
+      "key": "recordConversationRequest",
+      "id": "record-conversation-requirements-2026-10-12",
+      "kind": "direct-instruction",
+      "url": "parity/sources/record-conversation-requirements-2026-10-12.txt",
+      "title": "Critical direct instruction: record every conversation requirement without replacing implementation or evidence with declarations",
+      "role": "Critical direct instruction: record every conversation requirement without replacing implementation or evidence with declarations",
+      "ledgerCoverage": [
+        "I195-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T04:56:53.797Z",
+      "updatedAt": "2026-10-12T04:56:53.797Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 25,
+      "sha256": "a94946ae7c6b41b44c577812f50ec6ecec0c7ea0370a744e485e3fab81b6e295"
+    },
+    {
+      "key": "associativeFoundationRequest",
+      "id": "associative-stack-and-theory-foundation-2026-10-12",
+      "kind": "direct-instruction",
+      "url": "parity/sources/associative-stack-and-theory-foundation-2026-10-12.txt",
+      "title": "Critical direct instruction: audit project-wide use of the referenced associative technology stack and adopt meta-theory as philosophical/theoretical foundation while preserving explicit provider, compatibility and consumer semantics boundaries",
+      "role": "Critical direct instruction: audit project-wide use of the referenced associative technology stack and adopt meta-theory as philosophical/theoretical foundation while preserving explicit provider, compatibility and consumer semantics boundaries",
+      "ledgerCoverage": [
+        "I195-ASSOCIATIVE-",
+        "I195-THEORY-FOUNDATION-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T04:56:53.797Z",
+      "updatedAt": "2026-10-12T04:56:53.797Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 220,
+      "sha256": "9397768454cfc1281c9c7525a3489cb3a24654801667b9c7b850565a0c2a23d1"
+    },
+    {
+      "key": "dynamicKnowledgeRequest",
+      "id": "dynamic-knowledge-and-grammar-inference-2026-10-12",
+      "kind": "direct-instruction",
+      "url": "parity/sources/dynamic-knowledge-and-grammar-inference-2026-10-12.txt",
+      "title": "Critical direct requirement: full RDF/OWL import, conversion and merge; optional dynamic full CST/concept reconstruction through link-cli and text or binary Links Notation; algorithmic extension and a separate modern grammar-inference issue",
+      "role": "Critical direct requirement: full RDF/OWL import, conversion and merge; optional dynamic full CST/concept reconstruction through link-cli and text or binary Links Notation; algorithmic extension and a separate modern grammar-inference issue",
+      "ledgerCoverage": [
+        "I195-KNOWLEDGE-",
+        "I195-DYNAMIC-",
+        "I195-GRAMMAR-INFERENCE-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T05:01:42.504Z",
+      "updatedAt": "2026-10-12T05:01:42.504Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 709,
+      "sha256": "2d18d9d8ca59821082208375584d793fb3220a963bb46d9ef914557870b27612"
+    },
+    {
+      "key": "translationPriorityRequest",
+      "id": "bidirectional-translation-priority-2026-10-12",
+      "kind": "direct-instruction",
+      "url": "parity/sources/bidirectional-translation-priority-2026-10-12.txt",
+      "title": "Critical direct priority: maximize bidirectional Rust/meta-language and JavaScript/meta-language translation while preserving all previously required scope",
+      "role": "Critical direct priority: maximize bidirectional Rust/meta-language and JavaScript/meta-language translation while preserving all previously required scope",
+      "ledgerCoverage": [
+        "I195-TRANSLATION-PRIORITY-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T05:01:42.504Z",
+      "updatedAt": "2026-10-12T05:01:42.504Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 156,
+      "sha256": "57ce0c168974f30fa7f76b7d4f65ca752f939962c66b0233aea8a02a7e29e581"
+    },
+    {
+      "key": "multiProjectTranslationRequest",
+      "id": "multi-project-translation-reuse-2026-10-12",
+      "kind": "direct-instruction",
+      "url": "parity/sources/multi-project-translation-reuse-2026-10-12.txt",
+      "title": "Critical direct requirement: reusable automated source translation across multiple JavaScript and Rust projects",
+      "role": "Critical direct requirement: reusable automated source translation across multiple JavaScript and Rust projects",
+      "ledgerCoverage": [
+        "I195-TRANSLATION-PRIORITY-MULTI-PROJECT"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T05:01:42.504Z",
+      "updatedAt": "2026-10-12T05:01:42.504Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 101,
+      "sha256": "892509e2c1999b6f8cc8287491a48fd53233764628f5dc09375b2b0bd4a86fc8"
+    },
+    {
+      "key": "grammarInferenceIssue",
+      "id": 224,
+      "kind": "issue",
+      "url": "https://github.com/link-foundation/meta-language/issues/224",
+      "title": "Automatic native grammar discovery and attributed semantics",
+      "role": "Critical separately requested grammar inference issue: preserve and audit existing inference; modern pinned research; public APIs, native grammars, recursive concepts, deterministic incremental discovery, dynamic snapshots, translation integration, independent holdouts, bounded comparative benchmarks, JavaScript-first CI and exact recorded evidence.",
+      "ledgerCoverage": [
+        "I195-GRAMMAR-INFERENCE-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T05:03:01Z",
+      "updatedAt": "2026-10-12T05:03:01Z",
+      "bytes": 5722,
+      "sha256": "74ca63f308a8b2c692a340f74d8a3bf4592f33575d69feb11da6ce1f3356d933"
     }
   ],
   "statusReports": [

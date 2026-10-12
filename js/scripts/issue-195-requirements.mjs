@@ -60,6 +60,22 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/issues/199#issuecomment-6101425254',
   globalConceptSpace:
     'parity/sources/global-concept-space-2026-10-12.txt',
+  recursiveDefinitionsRequest:
+    'parity/sources/recursive-formal-definitions-2026-10-12.txt',
+  linksFoundationRequest:
+    'parity/sources/links-foundation-and-fractal-motivation-2026-10-12.txt',
+  recordConversationRequest:
+    'parity/sources/record-conversation-requirements-2026-10-12.txt',
+  associativeFoundationRequest:
+    'parity/sources/associative-stack-and-theory-foundation-2026-10-12.txt',
+  dynamicKnowledgeRequest:
+    'parity/sources/dynamic-knowledge-and-grammar-inference-2026-10-12.txt',
+  translationPriorityRequest:
+    'parity/sources/bidirectional-translation-priority-2026-10-12.txt',
+  multiProjectTranslationRequest:
+    'parity/sources/multi-project-translation-reuse-2026-10-12.txt',
+  grammarInferenceIssue:
+    'https://github.com/link-foundation/meta-language/issues/224',
 });
 
 // The rows the audit of c39470d0 lists as open work.
@@ -268,6 +284,8 @@ function requirement({
 }) {
   return {
     id,
+    critical: true,
+    fullScopeReleaseBlocker: true,
     source,
     area,
     scope,
@@ -921,6 +939,8 @@ export async function buildIssue195Manifest(root) {
     ...buildVisionRequirements(fixtureCatalog, {
       requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.repositoryDirective,
       sourceByRequirement: {
+        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ sourceKey }) => sourceKey)
+          .map(({ id, sourceKey }) => [id, ISSUE_195_SOURCES[sourceKey]])),
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ id }) => id.startsWith('I195-GLOBAL-CONCEPT-'))
           .map(({ id }) => [id, ISSUE_195_SOURCES.globalConceptSpace])),
         'I195-GRAMMAR-NATURAL-LANGUAGE-REPRESENTATION': ISSUE_195_SOURCES.latestDeliveryAudit,

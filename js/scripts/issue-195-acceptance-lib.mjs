@@ -44,6 +44,14 @@ const SOURCE_LABELS = Object.freeze({
   formalAiSelfTranslation: 'Formal AI self-translation constructs and release request',
   reverseStringSemantics: 'Router reverse trimming and Unicode whitespace semantics',
   globalConceptSpace: 'Captured direct request for one global grammar concept space',
+  recursiveDefinitionsRequest: 'Captured recursive formal definitions and ontology/taxonomy requirements',
+  linksFoundationRequest: 'Captured links foundation and fractal modelling motivation',
+  recordConversationRequest: 'Captured instruction to record all conversation requirements',
+  associativeFoundationRequest: 'Captured project-wide associative stack and meta-theory adoption request',
+  dynamicKnowledgeRequest: 'Captured RDF/OWL, dynamic reconstruction and grammar inference requirements',
+  translationPriorityRequest: 'Captured immediate bidirectional Rust/JavaScript translation priority',
+  multiProjectTranslationRequest: 'Captured reusable translation across multiple real projects',
+  grammarInferenceIssue: 'Issue #224: automatic grammar discovery and attributed semantics',
 });
 
 function allKeys(value, prefix = '') {
