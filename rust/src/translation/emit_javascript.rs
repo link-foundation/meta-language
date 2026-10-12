@@ -72,7 +72,7 @@ fn ctor_object(ctor: &Ctor, args: &[String]) -> String {
         .enumerate()
         .map(|(index, field)| {
             let arg = args.get(index).map_or("undefined", String::as_str);
-            format!("{}: {arg}", field_key(&field.name))
+            format!("[{}]: {arg}", field_key(&field.name))
         })
         .collect();
     let fields = if fields.is_empty() {
@@ -619,7 +619,7 @@ impl<'p> JavaScriptEmitter<'p> {
                 .filter_map(|(index, bind)| {
                     bind.as_ref().map(|bind| {
                         format!(
-                            "const {bind} = {subject}.{};",
+                            "const {bind} = {subject}[{}];",
                             field_key(&ctor.fields[index].name)
                         )
                     })

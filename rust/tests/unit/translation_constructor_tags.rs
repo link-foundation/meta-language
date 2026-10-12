@@ -27,6 +27,29 @@ fn rename_tag(value: &mut Value, tag: &str) {
     }
 }
 
+fn rename_field(value: &mut Value, name: &str) {
+    match value {
+        Value::Array(children) => children
+            .iter_mut()
+            .for_each(|child| rename_field(child, name)),
+        Value::Object(fields) => {
+            if let Some(Value::Array(constructors)) = fields.get_mut("ctors") {
+                for ctor in constructors {
+                    for field in ctor["fields"].as_array_mut().unwrap() {
+                        if field["name"] == "payload" {
+                            field["name"] = Value::String(name.to_owned());
+                        }
+                    }
+                }
+            }
+            for child in fields.values_mut() {
+                rename_field(child, name);
+            }
+        }
+        _ => {}
+    }
+}
+
 #[test]
 fn constructor_tag_strings_keep_their_data_value_in_javascript_output() {
     let fixture: Value = serde_json::from_str(include_str!(
@@ -59,5 +82,38 @@ fn constructor_tag_strings_keep_their_data_value_in_javascript_output() {
             actual,
             serde_json::json!({ "tag": tag, "selected": 1, "other": 2, "injected": false })
         );
+    }
+}
+
+#[test]
+fn constructor_fields_preserve_exact_own_property_names_in_javascript_output() {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/translation-constructor-tags.json"
+    ))
+    .unwrap();
+    let source = "/** @typedef {{ $: 'one', payload: number } | { $: 'two' }} Tag */\n/** @returns {Tag} */ function make() { return { $: 'one', payload: 7 }; }\n/** @param {Tag} value @returns {number} */ function read(value) { if (value.$ === 'one') return value.payload; return 2; }";
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    for name in fixture["fields"].as_array().unwrap() {
+        let name = name.as_str().unwrap();
+        let mut graph = serde_json::to_value(&checked).unwrap();
+        rename_field(&mut graph, name);
+        let program: Program = serde_json::from_value(graph).unwrap();
+        let emitted = emit_javascript(&program).unwrap();
+        let script = format!(
+            "{}\nconst field = {}; const item = make(); const supplied = {{ $: 'one', [field]: 9 }}; console.log(JSON.stringify([Object.hasOwn(item, field), item[field], read(item), read(supplied), Object.getPrototypeOf(item) === Object.prototype]));",
+            emitted.text,
+            serde_json::to_string(name).unwrap()
+        );
+        let output = Command::new("node")
+            .args(["--input-type=module", "-e", &script])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let actual: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(actual, serde_json::json!([true, 7, 7, 9, true]), "{name}");
     }
 }

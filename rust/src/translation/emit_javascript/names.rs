@@ -97,5 +97,5 @@ pub(super) fn ident(name: &str) -> String {
 }
 
 pub(super) fn field_key(name: &str) -> String {
-    ident(name)
+    super::json_string(name)
 }

@@ -5,5 +5,14 @@
     "double\"quote\nand-line-break",
     "\\'); globalThis.injected = true; //",
     "Unicode \u2028 separator \u2029"
+  ],
+  "fields": [
+    "payload",
+    "__proto__",
+    "prototype",
+    "class",
+    "a-b",
+    "line\nbreak",
+    "quote\"and\\backslash"
   ]
 }

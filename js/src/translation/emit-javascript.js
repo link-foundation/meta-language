@@ -261,7 +261,7 @@ class JavaScriptEmitter {
   }
 
   ctorObject(entry, ctor, args) {
-    const fields = ctor.fields.map((field, index) => `${fieldKey(field.name)}: ${args[index]}`);
+    const fields = ctor.fields.map((field, index) => `[${fieldKey(field.name)}]: ${args[index]}`);
     return `Object.freeze({ $: ${JSON.stringify(ctor.name)}${fields.length ? `, ${fields.join(', ')}` : ''} })`;
   }
 
@@ -360,7 +360,7 @@ class JavaScriptEmitter {
       if (kase.pattern.k !== 'ctor') continue;
       const ctor = entry.ctors.find((candidate) => candidate.name === kase.pattern.ctor);
       const binds = kase.pattern.binds
-        .map((bind, index) => (bind ? `const ${bind} = ${subject}.${fieldKey(ctor.fields[index].name)};` : null))
+        .map((bind, index) => (bind ? `const ${bind} = ${subject}[${fieldKey(ctor.fields[index].name)}];` : null))
         .filter(Boolean);
       lines.push(`  case ${JSON.stringify(ctor.name)}: {`);
       lines.push(indent([...binds, ...this.statements(kase.body)].join('\n'), 2));
@@ -394,7 +394,7 @@ class JavaScriptEmitter {
       case 'method':
         return `(${this.expr(e.object)}).${e.op}(${e.args.map((arg) => arg === null ? 'undefined' : this.expr(arg)).join(', ')})`;
       case 'record':
-        return `({${e.entries.map((entry) => `${JSON.stringify(entry.name)}: ${this.expr(entry.value)}`).join(', ')}})`;
+        return `({${e.entries.map((entry) => `[${JSON.stringify(entry.name)}]: ${this.expr(entry.value)}`).join(', ')}})`;
       case 'cellAllocate':
         return `({ value: ${this.expr(e.value)} })`;
       case 'cellRead':
@@ -631,7 +631,7 @@ function negate(text) {
 }
 
 function fieldKey(name) {
-  return ident(name);
+  return JSON.stringify(name);
 }
 
 function indent(text, depth) {
