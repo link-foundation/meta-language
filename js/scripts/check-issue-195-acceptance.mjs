@@ -124,8 +124,8 @@ const gateResultsPath = option('--produce-gate-results');
 if (gateResultsPath) {
   const resolved = path.resolve(root, gateResultsPath);
   await mkdir(path.dirname(resolved), { recursive: true });
-  writeProjectData(resolved, runIssue195GateFaultInjections(manifest, commit));
-  console.log(`issue-195: wrote gate fault-injection evidence to ${path.relative(root, resolved)}`);
+  const actual = writeProjectData(resolved, runIssue195GateFaultInjections(manifest, commit), { format: 'lino' });
+  console.log(`issue-195: wrote gate fault-injection evidence to ${path.relative(root, actual)}`);
 }
 
 if (
@@ -151,7 +151,8 @@ const jsonReportPath = option('--json-report');
 if (jsonReportPath) {
   const resolved = path.resolve(root, jsonReportPath);
   await mkdir(path.dirname(resolved), { recursive: true });
-  writeProjectData(resolved, report);
+  const actual = writeProjectData(resolved, report, { format: 'lino' });
+  console.log(`issue-195: wrote acceptance report to ${path.relative(root, actual)}`);
 }
 const markdown = renderIssue195Markdown(manifest, report);
 const claimProblems = universalClaimProblems(manifest, markdown);

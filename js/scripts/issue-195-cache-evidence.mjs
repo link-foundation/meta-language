@@ -3,10 +3,11 @@
 // after and reclaimed, the budget, the tracked state and the evidence the gate
 // reads.
 import { execFileSync } from 'node:child_process';
-import { readdirSync, statSync, writeFileSync } from 'node:fs';
+import { readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 import { runCleanup } from '../../scripts/lib/cache-cleanup.mjs';
+import { writeProjectData } from './project-data.mjs';
 
 function trackedState(root) {
   // Tracked modifications and untracked, non-ignored files: none of them is a cache.
@@ -26,7 +27,7 @@ export function evidenceInventory(resultsDirectory) {
     for (const entry of entries) {
       const full = path.join(directory, entry.name);
       const relative = path.relative(resultsDirectory, full).split(path.sep).join('/');
-      if (relative.startsWith('work/') && !/^work\/(?:[^/]+\.(?:jsonl?|log)|native\/.*)$/u.test(relative) && relative !== 'work/native') continue;
+      if (relative.startsWith('work/') && !/^work\/(?:[^/]+\.(?:jsonl?|lino|log)|native\/.*)$/u.test(relative) && relative !== 'work/native') continue;
       if (entry.isDirectory()) walk(full);
       else if (entry.isFile()) files.set(relative, statSync(full).size);
     }
@@ -65,6 +66,7 @@ export function measureCacheCleanup({ root, resultsDirectory, reportPath, env = 
     trackedStateEntries: stateBefore.split('\0').filter(Boolean).length,
     report,
   };
-  writeFileSync(reportPath, `${JSON.stringify(measurement, null, 2)}\n`);
+  const actualReportPath = writeProjectData(reportPath, measurement, { format: 'lino' });
+  console.log(`issue-195: wrote cache cleanup evidence to ${path.relative(root, actualReportPath)}`);
   return measurement;
 }

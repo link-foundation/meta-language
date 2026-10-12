@@ -535,7 +535,7 @@ function buildContext(repository, options) {
     resultsDirectories,
     scratchExceptions: resultsDirectories.map((directory) => path.join(directory, 'work')),
     protectedPaths,
-    evidenceFiles: /\.(?:jsonl?|log)$/u,
+    evidenceFiles: /\.(?:jsonl?|lino|log)$/u,
     // Emitted translations and their reproducers, which native validation
     // records cite as artifacts.
     workEvidence: resultsDirectories.map((directory) => path.join(directory, 'work', 'native')),
