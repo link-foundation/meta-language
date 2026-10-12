@@ -11,6 +11,7 @@ import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
 import { LinkNetwork } from '../src/network.js';
 import { createModuleContext } from '../scripts/generate-self-translation-report.mjs';
+import { writeProjectData } from '../scripts/project-data.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const script = path.join(root, 'js/scripts/generate-self-translation-report.mjs');
@@ -95,7 +96,7 @@ function verify(report, markdown) {
   try {
     const shard = path.join(directory, 'shard');
     mkdirSync(shard);
-    writeFileSync(path.join(shard, 'self-translation-report.json'), JSON.stringify(report));
+    writeProjectData(path.join(shard, 'self-translation-report.lino'), report);
     writeFileSync(path.join(shard, 'self-translation-report.md'), markdown ?? report.modules.map(({ module }) => `| ${module} |`).join('\n'));
     return spawnSync(process.execPath, [script, '--verify-reports', directory, '--commit', commit], { encoding: 'utf8' });
   } finally {

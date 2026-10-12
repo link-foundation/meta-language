@@ -2,9 +2,9 @@
 // Measures, per module, how far the self-translation of each JavaScript module
 // of js/src into Rust is from its hand-written Rust counterpart
 // (rust/src/<path in snake case>.rs or .../mod.rs), and writes the report as
-// Markdown and JSON. CI runs it on every push and publishes both; it reads the
-// whole source tree, so it is not meant for a local run (pass --modules to
-// measure a few modules).
+// Markdown and inspectable Links Notation. CI runs it on every push and
+// publishes both; it reads the whole source tree, so it is not meant for a
+// local run (pass --modules to measure a few modules).
 //
 //   node js/scripts/generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js]
 //     [--decorators parity/self-translation/decorators.lino] [--shard K/N] [--list]
@@ -27,6 +27,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join, posix, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { readProjectData, writeProjectData } from './project-data.mjs';
 
 import { DecoratorSet } from '../src/decorators.js';
 import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
@@ -303,7 +304,7 @@ function verifyPublishedReports(directory, commit) {
   assert.match(commit ?? '', /^[0-9a-f]{40}$/u, 'the observed commit is required');
   const collect = (location) => readdirSync(location, { withFileTypes: true }).flatMap((entry) => {
     const file = join(location, entry.name);
-    return entry.isDirectory() ? collect(file) : entry.name === 'self-translation-report.json' ? [file] : [];
+    return entry.isDirectory() ? collect(file) : entry.name === 'self-translation-report.lino' ? [file] : [];
   });
   const expected = new Set(listSourceModules());
   const seen = new Set();
@@ -318,7 +319,7 @@ function verifyPublishedReports(directory, commit) {
   const files = collect(directory);
   assert.ok(files.length > 0, 'no published self-translation reports');
   for (const file of files) {
-    const report = JSON.parse(readFileSync(file, 'utf8'));
+    const report = readProjectData(file);
     assert.equal(report.schemaVersion, 1, `${file}: report schema`);
     assert.equal(report.commit, commit, `${file}: report commit`);
     assert.deepEqual(report.failures, [], `${file}: failed modules`);
@@ -380,7 +381,11 @@ function main() {
   mkdirSync(outDir, { recursive: true });
   const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '');
   writeFileSync(join(outDir, 'self-translation-report.md'), report);
-  writeFileSync(join(outDir, 'self-translation-report.json'), `${JSON.stringify({ schemaVersion: 1, commit: process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), decorators: decorators.ids(), modules: rows, failures }, null, 2)}\n`);
+  writeProjectData(join(outDir, 'self-translation-report.lino'), {
+    schemaVersion: 1,
+    commit: process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+    decorators: decorators.ids(), modules: rows, failures,
+  });
   // Refused modules are listed in the report; the tests hold self-translation to its contract.
   console.log(report);
 }

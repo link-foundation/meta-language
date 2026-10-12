@@ -6,6 +6,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FIXTURE = 'parity/self-translation/cases.lino';
@@ -16,7 +17,7 @@ test('the report measures each translated module against its hand-written Rust',
   const expectedCommit = process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   const collect = location => readdirSync(location, { withFileTypes: true }).flatMap(entry => {
     const file = path.join(location, entry.name);
-    return entry.isDirectory() ? collect(file) : entry.name === 'self-translation-report.json' ? [file] : [];
+    return entry.isDirectory() ? collect(file) : entry.name === 'self-translation-report.lino' ? [file] : [];
   });
   const files = collect(directory);
   assert.ok(files.length > 0, 'the published reports contain measurements');
@@ -24,7 +25,7 @@ test('the report measures each translated module against its hand-written Rust',
     path.join(root, 'js/scripts/generate-self-translation-report.mjs'),
     '--verify-reports', directory, '--commit', process.env.ISSUE_195_COMMIT ?? expectedCommit,
   ], { encoding: 'utf8' });
-  const reports = files.map(file => JSON.parse(readFileSync(file, 'utf8')));
+  const reports = files.map(file => readProjectData(file));
   const { schemaVersion, commit, decorators } = reports[0];
   const selected = ['js/src/language-support.js', 'js/src/self-translation.js'];
   const modules = reports.flatMap(report => report.modules)
