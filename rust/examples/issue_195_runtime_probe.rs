@@ -12,6 +12,9 @@ use meta_language::{
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
+#[path = "support/issue_195_probe_wire.rs"]
+mod probe_wire;
+
 fn main() {
     let corpus = corpus();
     let positive = corpus["languages"]
@@ -106,9 +109,15 @@ fn main() {
         ("translations", translations),
     ];
 
-    // Persist one inspectable LiNo record per section entry; stdout remains
-    // the process wire response when no artifact path is requested.
-    if let Some(path) = std::env::args_os().nth(1) {
+    // Wire modes use stdout; an artifact path selects inspectable LiNo storage.
+    let output = std::env::args_os().nth(1);
+    if output.as_deref() == Some(std::ffi::OsStr::new("--ndjson")) {
+        let stdout = std::io::stdout();
+        let mut out = BufWriter::new(stdout.lock());
+        probe_wire::write_runtime_probe_wire_records(&mut out, &fixture_digest, &sections)
+            .expect("probe wire records serialize");
+        out.flush().expect("probe output is writable");
+    } else if let Some(path) = output {
         let mut out = BufWriter::new(File::create(path).expect("probe output is writable"));
         let mut record = |section: &str, index: Value, value: &Value| {
             let frame = structured_data_record_to_lino(
