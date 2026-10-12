@@ -1,13 +1,13 @@
 // Runs the actual independent Lark tool in CI. This is authoring/oracle work;
 // ordinary installed parsing never launches Python or imports a grammar engine.
 import { createHash } from 'node:crypto';
-import { writeFile, mkdir } from 'node:fs/promises';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { grammarEmitter, grammarImporter } from '../src/grammar-interchange.js';
 import { parseWithGrammar } from '../src/grammar.js';
 import { readProjectData, readProjectFileBytes } from './project-data.mjs';
+import { writeGrammarReport } from './grammar-report-files.mjs';
 
 const expectedVersion = '1.3.1';
 const root = new URL('../../', import.meta.url);
@@ -15,7 +15,7 @@ const fixturePath = new URL('parity/fixtures/grammar-interchange-tools.json', ro
 const fixtureBytes = readProjectFileBytes(fixturePath);
 const fixture = readProjectData(fixturePath);
 const index = process.argv.indexOf('--out');
-if (index < 0 || !process.argv[index + 1]) throw new Error('provide --out REPORT.json');
+if (index < 0 || !process.argv[index + 1]) throw new Error('provide --out REPORT.lino');
 const output = path.resolve(process.argv[index + 1]);
 const digest = (source) => createHash('sha256').update(source).digest('hex');
 
@@ -76,11 +76,10 @@ for (const entry of fixture.cases) {
     results.push({ fixture: entry.id, failures: [...failures, String(error?.stack ?? error)] });
   }
 }
-await mkdir(path.dirname(output), { recursive: true });
-await writeFile(output, `${JSON.stringify({ schemaVersion: 1,
+const written = writeGrammarReport(output, { schemaVersion: 1,
   commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-  fixtureSha256: digest(fixtureBytes), targetTools: [{ name: 'lark', version: expectedVersion }], results }, null, 2)}\n`);
+  fixtureSha256: digest(fixtureBytes), targetTools: [{ name: 'lark', version: expectedVersion }], results });
 const failures = results.flatMap((entry) => entry.failures.map((failure) => `${entry.fixture}: ${failure}`));
 for (const failure of failures) console.error(failure);
-console.log(`independent Lark cycles: ${results.length} fixtures, ${failures.length} failures; ${output}`);
+console.log(`independent Lark cycles: ${results.length} fixtures, ${failures.length} failures; ${written}`);
 if (failures.length) process.exitCode = 1;

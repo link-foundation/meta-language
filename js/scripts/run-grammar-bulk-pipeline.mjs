@@ -10,7 +10,7 @@
 //
 //   node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir DIR [--only A,B] [--jobs N] [--timeout SECONDS] [--formal-definitions FILE]
 //
-// It writes DIR/grammar-bulk-matrix.json and DIR/grammar-bulk-matrix.md. Each
+// It writes DIR/grammar-bulk-matrix.lino and DIR/grammar-bulk-matrix.md. Each
 // language runs in its own process with a memory limit and a timeout, and
 // reports after every stage, so one slow grammar keeps the stages it finished
 // and never stops the others. Registry grammar.json files need `cargo fetch`
@@ -30,6 +30,7 @@ import { createGlobalConceptSpace, globalConceptSpaceToLinks } from '../src/glob
 import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
 import { readProjectData } from './project-data.mjs';
 import { readGrammarLicense } from './grammar-files.mjs';
+import { writeGrammarReport } from './grammar-report-files.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
@@ -512,8 +513,8 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   let formalDefinitionsFile;
   if (formalDefinitions !== undefined) {
     mkdirSync(outDir, { recursive: true });
-    formalDefinitionsFile = join(outDir, 'formal-concept-definitions.input.json');
-    writeFileSync(formalDefinitionsFile, `${JSON.stringify(formalDefinitions, null, 2)}\n`);
+    formalDefinitionsFile = join(outDir, 'formal-concept-definitions.input.lino');
+    writeGrammarReport(formalDefinitionsFile, formalDefinitions);
   }
   let next = 0;
   const worker = async () => {
@@ -531,10 +532,10 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   const matrix = { grammarsV4Revision: v4.revision, summary: summarize(rows, mapped), grammarsV4Notes: v4.notes, languages: rows };
   mkdirSync(outDir, { recursive: true });
   const decisionChanges = compareMergeDecisionReports(previousMatrix, matrix);
-  writeFileSync(join(outDir, 'grammar-merge-decision-changes.json'), `${JSON.stringify(decisionChanges, null, 2)}\n`);
+  writeGrammarReport(join(outDir, 'grammar-merge-decision-changes.lino'), decisionChanges);
   const importedSources = rows.flatMap((row) => row.conceptSources ?? []);
   const conceptSpace = createPipelineGlobalConceptSpace(importedSources, { formalDefinitions });
-  writeFileSync(join(outDir, 'global-concept-space.json'), `${JSON.stringify(conceptSpace, null, 2)}\n`);
+  writeGrammarReport(join(outDir, 'global-concept-space-data.lino'), conceptSpace);
   writeFileSync(join(outDir, 'global-concept-space.lino'), globalConceptSpaceToLinks(conceptSpace));
   matrix.globalConceptSpace = {
     copiedOrigins: Object.keys(conceptSpace.mappings).length,
@@ -550,7 +551,7 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
     delete row.nativeGrammar;
     delete row.conceptSources;
   }
-  writeFileSync(join(outDir, 'grammar-bulk-matrix.json'), `${JSON.stringify(matrix, null, 2)}\n`);
+  writeGrammarReport(join(outDir, 'grammar-bulk-matrix.lino'), matrix);
   writeFileSync(join(outDir, 'grammar-bulk-matrix.md'), renderMatrix(matrix));
   return matrix;
 }
@@ -579,7 +580,7 @@ async function main(args) {
     jobs: Number(option(args, '--jobs', 2)),
     timeout: Number(option(args, '--timeout', 300)),
     memory: Number(option(args, '--memory', 3072)),
-    previousMatrix: previousFile === null ? null : JSON.parse(readFileSync(resolve(previousFile), 'utf8')),
+    previousMatrix: previousFile === null ? null : readProjectData(resolve(previousFile)),
     formalDefinitions,
   });
   process.stdout.write(`${JSON.stringify(matrix.summary)}\n`);
