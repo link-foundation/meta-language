@@ -1,7 +1,7 @@
 use meta_language::{
-    FormalConceptArchive, FormalConceptDefinitionInput, encode_formal_concept_definition,
-    prove_formal_concept_equivalence, read_formal_concept_definition,
-    verify_formal_concept_equivalence,
+    FormalConceptArchive, FormalConceptDefinitionInput, FormalConceptDefinitionOptions,
+    encode_formal_concept_definition, prove_formal_concept_equivalence,
+    read_formal_concept_definition, verify_formal_concept_equivalence,
 };
 use serde_json::Value;
 
@@ -40,6 +40,25 @@ fn formal_archives_prepare_the_same_shared_cyclic_and_labeled_graphs() {
             expected["prepared"]
         );
     }
+    let provenance = serde_json::json!({"source": "first imported text"});
+    let archive = encode_formal_concept_definition(
+        FormalConceptDefinitionInput::Declaration(None),
+        FormalConceptDefinitionOptions {
+            model: "source text value".to_owned(),
+            provenance: Some(provenance),
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        read_formal_concept_definition(&archive.to_json()).unwrap(),
+        fixture["definitions"][0]["prepared"]
+    );
+    assert!(
+        archive
+            .network
+            .to_lino()
+            .contains("first%20imported%20text")
+    );
 }
 
 #[test]

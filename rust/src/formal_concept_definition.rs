@@ -10,7 +10,8 @@ use serde_json::{Value, json};
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::translation::ir::Program;
 use crate::typed_program_links::{
-    decode_typed_program_links, emit_typed_program_links, encode_typed_program_links,
+    decode_typed_program_links, emit_typed_program_links,
+    encode_typed_program_links_with_provenance,
 };
 
 mod graph;
@@ -68,6 +69,33 @@ pub enum FormalConceptDefinitionInput<'a> {
     },
     /// Exact shared source primitive declaration, or its implicit declaration.
     Declaration(Option<&'a Value>),
+}
+
+/// Supported interpretation model and separately inspectable provenance.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FormalConceptDefinitionOptions {
+    /// Exact key in the shared primitive declarations.
+    pub model: String,
+    /// Provenance recorded as linked data but excluded from semantic equality.
+    pub provenance: Option<Value>,
+}
+
+impl Default for FormalConceptDefinitionOptions {
+    fn default() -> Self {
+        Self {
+            model: "checked typed program".to_owned(),
+            provenance: None,
+        }
+    }
+}
+
+impl From<&str> for FormalConceptDefinitionOptions {
+    fn from(model: &str) -> Self {
+        Self {
+            model: model.to_owned(),
+            provenance: None,
+        }
+    }
 }
 
 fn models() -> &'static Value {
@@ -138,7 +166,7 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
     {
         return Err("the formal primitive model differs from its supported declaration".to_owned());
     }
-    let mut exclusions = std::collections::BTreeSet::new();
+    let mut exclusions = std::collections::BTreeSet::from([(value.root, "provenance".to_owned())]);
     if model == "checked typed program" {
         decode_typed_program_links(network, body).map_err(|error| error.to_string())?;
         // Supported operations must have both actual target interpretations.
@@ -176,16 +204,21 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
 /// Refuses unknown models, counterfeit primitive data or unsupported programs.
 pub fn encode_formal_concept_definition(
     value: FormalConceptDefinitionInput<'_>,
-    model: &str,
+    options: impl Into<FormalConceptDefinitionOptions>,
 ) -> Result<FormalConceptArchive, String> {
+    let options = options.into();
+    let model = options.model.as_str();
     let declaration = models()
         .get(model)
         .ok_or("unsupported formal primitive model")?;
     let (mut network, body) = if model == "checked typed program" {
         match value {
             FormalConceptDefinitionInput::Program(program) => {
-                let archive =
-                    encode_typed_program_links(program).map_err(|error| error.to_string())?;
+                let archive = encode_typed_program_links_with_provenance(
+                    program,
+                    options.provenance.as_ref(),
+                )
+                .map_err(|error| error.to_string())?;
                 (archive.network, archive.root)
             }
             FormalConceptDefinitionInput::LinkedProgram { network, root } => {
@@ -212,6 +245,10 @@ pub fn encode_formal_concept_definition(
         metadata("formal primitive model", Some(model)),
     );
     let root = network.insert_link([body, basis], metadata(ROOT, Some(SCHEMA)));
+    if let Some(provenance) = options.provenance.as_ref() {
+        let provenance = data(&mut network, provenance)?;
+        network.insert_field(root, "provenance", provenance);
+    }
     let result = FormalConceptArchive { network, root };
     checked(&result)?;
     Ok(result)

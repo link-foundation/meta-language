@@ -17,9 +17,11 @@ const inputs = [
   ['addition alpha binding', program('function add(first,second){return first+second;} console.log(add(2,3));')],
   ['recursive factorial definition', program('function factorial(n){return n<=1 ? 1 : n*factorial(n-1);} console.log(factorial(4));')],
   ['recursive factorial alpha binding', program('function factorial(value){return value<=1 ? 1 : value*factorial(value-1);} console.log(factorial(4));')],
+  ['source text first provenance', encodeFormalConceptDefinition(undefined, { model: 'source text value', provenance: { source: 'first imported text' } })],
+  ['source text second provenance', encodeFormalConceptDefinition(undefined, { model: 'source text value', provenance: { source: 'second imported text' } })],
 ];
 const definitions = inputs.map(([name, archive]) => ({ name, archive: portable(archive), prepared: readFormalConceptDefinition(archive) }));
-const proofs = [[0, 0], [1, 1], [2, 3], [4, 5]].map(([first, second]) => {
+const proofs = [[0, 0], [1, 1], [2, 3], [4, 5], [6, 7]].map(([first, second]) => {
   const proof = proveFormalConceptEquivalence(inputs[first][1], inputs[second][1]);
   assert.ok(proof, definitions[first].name);
   const certificate = portable(proof);
