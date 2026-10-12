@@ -5,6 +5,38 @@
   "machineIntegerWidths": [8, 16, 32, 64, 128],
   "optionalAbsences": ["null", "undefined", "both"],
   "divisionRoundingPolicies": ["trunc", "euclid", "floor"],
+  "patternBindingForms": { "wild": "none", "bind": "single", "natZero": "none", "natSucc": "single", "ctor": "fields" },
+  "referenceSourceFields": {
+    "binding": [["var", "", "name"]],
+    "declaration": [["call", "", "fn"], ["functionRef", "", "fn"]],
+    "datatype": [["", "data", "name"], ["ctor", "", "data"]],
+    "constructor": [["ctor", "", "ctor"]]
+  },
+  "referenceTargetFields": { "binding": "name", "declaration": "fullName", "datatype": "fullName", "constructor": "name" },
+  "neutralFieldDefaults": {
+    "program": { "imports": "empty-array", "externals": "empty-array", "outputThreaded": "false", "abortsThreaded": "false" },
+    "main": { "sequentialAsync": "false" },
+    "declaration:fn": { "mutual": "false", "generated": "false" },
+    "declaration:data": { "generated": "false", "output": "false" },
+    "expression:ctor": { "frozen": "false" },
+    "expression:toString": { "console": "false" }
+  },
+  "expressionOperands": {
+    "call": ["args"], "ctor": ["args"], "math": ["args"], "recur": ["args"],
+    "apply": ["fn", "args"], "method": ["object", "args"],
+    "cellAllocate": ["value"], "cellRead": ["cell"], "cellWrite": ["cell", "value", "body"],
+    "referenceAllocate": ["value"], "referenceRead": ["reference"],
+    "recordField": ["object"], "tupleIndex": ["object"], "tuple": ["items"], "array": ["items"],
+    "some": ["value"], "flattenOption": ["value"], "nullishNumber": ["arg"], "optionalIndexNumber": ["arg"],
+    "truthy": ["arg"], "strictEqual": ["left", "right"], "optionalTypeOf": ["arg"], "optionalText": ["arg"],
+    "unwrapOption": ["arg"], "optionalPredicate": ["arg"], "coalesce": ["left", "right"],
+    "optionalField": ["object"], "optionalProject": ["object"], "optionalIndex": ["array", "index"],
+    "stringPoints": ["object"], "set": ["items"], "map": ["entries"],
+    "collectionSize": ["object"], "collectionRead": ["object", "key"], "collectionItems": ["object"],
+    "unary": ["arg"], "binary": ["left", "right"], "if": ["cond", "then", "else"],
+    "print": ["text", "body"], "toString": ["arg"], "stringMap": ["string"], "stringTest": ["string", "search"],
+    "cast": ["arg"], "append": ["left", "right"], "index": ["array", "index"], "length": ["array"]
+  },
   "expressionOperations": {
     "math": ["abs", "floor", "ceil", "trunc", "round", "sign", "sqrt", "max", "min", "maxOf", "minOf", "isInteger", "isSafeInteger", "isFinite", "isNaN"],
     "stringMap": ["toLowerCase", "toUpperCase", "trim", "trimStart", "trimEnd", "rustTrim", "rustTrimStart", "rustTrimEnd"],
@@ -25,6 +57,9 @@
     "unit": { "construct": "unit", "fields": [] },
     "var": { "construct": "name", "fields": [["path", "name-path", "name"]] },
     "call": { "construct": "app", "fields": [["fn", "function-path", "fn"], ["args", "expressions", "args"]] },
+    "ctor": { "construct": "app", "variant": ["frozen"], "fields": [["fn", "constructor-path", "ctor"], ["args", "expressions", "args"]] },
+    "ctor:true": { "construct": "ctorObject", "fields": [["tag", "copy", "ctor"], ["fields", "constructor-fields", "args"], ["frozen", "copy", "frozen"]] },
+    "match": { "construct": "match1", "fields": [["scrutinee", "expression", "scrutinee"], ["cases", "match-cases", "cases"]] },
     "unary": { "construct": "unary", "fields": [["op", "copy", "op"], ["arg", "expression", "arg"]] },
     "binary": { "construct": "binary", "fields": [["op", "copy", "op"], ["left", "expression", "left"], ["right", "expression", "right"], ["rounding", "copy", "rounding"]] },
     "if": { "construct": "if", "fields": [["cond", "expression", "cond"], ["then", "expression", "then"], ["else", "expression", "else"]] },
@@ -51,7 +86,8 @@
     "fn": "function name", "ctors": "constructors", "ctor": "constructor", "params": "parameters",
     "recursive": "recursive definition", "declarations": "declaration mapping", "span": "source span",
     "frozen": "constructor immutability",
+    "binds": "pattern bindings",
     "sourceLanguage": "source language", "schemaVersion": "schema version", "utf16Strings": "Unicode code unit strings"
   },
-  "references": { "binding": "binding reference", "declaration": "declaration reference" }
+  "references": { "binding": "binding reference", "declaration": "declaration reference", "datatype": "datatype declaration reference", "constructor": "constructor declaration reference" }
 }

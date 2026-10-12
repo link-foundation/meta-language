@@ -9,7 +9,8 @@ import { checkProgram } from './translation/check.js';
 import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust } from './translation/emit-rust.js';
 import { validateLinkedTypedProgram } from './typed-program-links-validation.js';
-import { acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind } from './typed-program-link-rules.js';
+import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
+import { acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields } from './typed-program-link-rules.js';
 
 export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(JSON.parse(readFileSync(new URL('./data/typed-program-links-schema.json', import.meta.url), 'utf8')));
 const schema = TYPED_PROGRAM_LINKS_SCHEMA;
@@ -22,13 +23,40 @@ const metadata = (term, definition) => LinkMetadata.new().withLinkType(LinkType.
 
 function bindingTargets(program) {
   const targets = new WeakMap();
+  const patternOverrides = new WeakMap();
   const declarations = new Map(program.declarations);
+  let referenceVisits = 0;
   for (const external of program.externals ?? []) declarations.set(external.name, external);
+  function reference(node, field, label, target) {
+    const references = targets.get(node) ?? [];
+    if (references.some(value => value.field === field && value.label === label && value.target === target)) return;
+    if (references.some(value => value.field === field || value.label === label)) throw new TypeError('a typed program reference has duplicate field ownership');
+    references.push({ field, label, target });
+    targets.set(node, references);
+  }
+  const seenTypes = new WeakSet();
+  function walkType(type) {
+    if (!type || typeof type !== 'object' || seenTypes.has(type)) return;
+    seenTypes.add(type);
+    if (type.kind === 'data') reference(type, 'name', schema.references.datatype, declarations.get(type.name));
+    else if (['array', 'option', 'set', 'cell'].includes(type.kind)) walkType(type.element);
+    else if (type.kind === 'tuple') type.elements.forEach(walkType);
+    else if (type.kind === 'record') type.fields.forEach(field => walkType(field.type));
+    else if (type.kind === 'map') { walkType(type.key); walkType(type.value); }
+    else if (type.kind === 'function') { type.params.forEach(walkType); walkType(type.ret); }
+  }
   function walk(node, environment) {
     if (!node || typeof node !== 'object') return;
-    if (node.k === 'var' && environment.has(node.name)) targets.set(node, { label: schema.references.binding, target: environment.get(node.name), field: 'name' });
-    if (typeof node.fn === 'string' && declarations.has(node.fn)) targets.set(node, { label: schema.references.declaration, target: declarations.get(node.fn), field: 'fn' });
-    if (Array.isArray(node.effects)) {
+    if (++referenceVisits > 100_000) throw new TypeError('the linked program exceeds its reference resource limit');
+    for (const field of ['type', 'domain', 'from', 'to']) walkType(node[field]);
+    if (node.k === 'var' && environment.has(node.name)) reference(node, 'name', schema.references.binding, environment.get(node.name));
+    if (['call', 'functionRef'].includes(node.k) && declarations.has(node.fn)) reference(node, 'fn', schema.references.declaration, declarations.get(node.fn));
+    if (node.k === 'ctor') {
+      const datatype = declarations.get(node.data);
+      reference(node, 'data', schema.references.datatype, datatype);
+      reference(node, 'ctor', schema.references.constructor, datatype?.ctors.find(ctor => ctor.name === node.ctor));
+    }
+    if (node === program.main) {
       const inner = new Map(environment);
       for (const effect of node.effects) {
         if (effect.k === 'let') { walk(effect.value, inner); inner.set(effect.name, effect); }
@@ -53,6 +81,19 @@ function bindingTargets(program) {
       walk(node.body, inner);
       return;
     }
+    if (node.k === 'match') {
+      walk(node.scrutinee, environment);
+      for (const kase of node.cases) {
+        const previous = patternOverrides.get(kase.pattern);
+        const scope = readLinkedPatternBindingScope(previous ?? kase.pattern, node.scrutinee.type, declarations, { graph: previous !== undefined });
+        patternOverrides.set(kase.pattern, scope.graphPattern);
+        if (kase.pattern.k === 'ctor') walk(kase.pattern, environment);
+        const inner = new Map(environment);
+        for (const binding of scope.bindings) { walkType(binding.type); inner.set(binding.name, binding); }
+        walk(kase.body, inner);
+      }
+      return;
+    }
     for (const [key, value] of Object.entries(node)) {
       if (['type', 'domain', 'span', 'from', 'to'].includes(key)) continue;
       if (Array.isArray(value)) for (const child of value) walk(child, environment);
@@ -60,18 +101,21 @@ function bindingTargets(program) {
     }
   }
   for (const entry of program.declarations.values()) {
+    for (const parameter of entry.params ?? entry.binders ?? []) walkType(parameter.type);
+    walkType(entry.ret ?? entry.type);
+    for (const constructor of entry.ctors ?? []) for (const field of constructor.fields) walkType(field.type);
     const environment = new Map((entry.params ?? []).map((parameter) => [parameter.name, parameter]));
     walk(entry.body ?? entry.value, environment);
   }
   walk(program.main, new Map());
-  return targets;
+  return { targets, patternOverrides };
 }
 
 export function encodeTypedProgramLinks(program, { provenance } = {}) {
   validateLinkedTypedProgram(program);
   const network = new LinkNetwork();
   const identities = new WeakMap();
-  const targets = bindingTargets(program);
+  const { targets, patternOverrides } = bindingTargets(program);
   const pending = [];
   function encode(value) {
     if (value && typeof value === 'object') {
@@ -83,9 +127,10 @@ export function encodeTypedProgramLinks(program, { provenance } = {}) {
       if (kind === 'array') network.link(id).setReferences(value.map(encode));
       else if (kind === 'map') network.link(id).setReferences([...value].map(([key, item]) => encode([key, item])));
       else {
-        const target = targets.get(value);
-        for (const [name, item] of Object.entries(value)) {
-          if (target?.field === name) pending.push({ parent: id, ...target });
+        const references = targets.get(value) ?? [];
+        for (const [name, item] of Object.entries(patternOverrides.get(value) ?? value)) {
+          const target = references.find(reference => reference.field === name);
+          if (target) pending.push({ parent: id, ...target });
           else network.insertFieldRelation(id, labelOf(name), encode(item));
         }
       }
@@ -140,6 +185,7 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
           else {
             const name = fieldOf(relation.label);
             if (isUnsafeProgramField(name)) throw new TypeError('a linked program contains an unsafe property name');
+            if (Object.hasOwn(value, name)) throw new TypeError('a program record contains a duplicate normalized field');
             value[name] = decode(relation.child, depth + 1);
           }
         }
@@ -177,40 +223,29 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
   for (const reference of pending) {
     const target = objects.get(idOf(reference.target));
     if (!target || typeof target !== 'object') throw new TypeError('a program reference does not target an owned declaration');
-    if (reference.label === schema.references.binding) reference.owner.name = target.name;
-    else reference.owner.fn = target.fullName ?? target.name;
-    references.set(reference.owner, { target, label: reference.label });
+    const field = readProgramReferenceSourceField(reference.label, reference.owner.k ?? '', reference.owner.kind ?? '');
+    if (!field || Object.hasOwn(reference.owner, field)) throw new TypeError('a program reference has an invalid or duplicate source field');
+    const targetField = readProgramReferenceTargetField(reference.label);
+    const name = target[targetField] ?? (reference.label === schema.references.declaration ? target.name : undefined);
+    if (typeof name !== 'string' || !name) throw new TypeError('a program reference does not target a named declaration');
+    reference.owner[field] = name;
+    const owned = references.get(reference.owner) ?? new Map();
+    if (owned.has(reference.label)) throw new TypeError('a program reference has duplicate role ownership');
+    owned.set(reference.label, target);
+    references.set(reference.owner, owned);
   }
-  validateLinkedTypedProgram(program, references);
-  return { program, objects };
+  const patternScopes = new WeakMap();
+  validateLinkedTypedProgram(program, references, { graphPatterns: true, patternScopes });
+  return { program, objects, patternScopes };
 }
 
 export function decodeTypedProgramLinks(network, root, options) {
   return decodeTypedProgramLinksContext(network, root, options).program;
 }
 
-// Expression operands consumed by the existing emitters. This intentionally
-// does not walk arbitrary metadata, types, source spans or provenance fields.
-const expressionOperands = {
-  call: ['args'], ctor: ['args'], math: ['args'], recur: ['args'],
-  apply: ['fn', 'args'], method: ['object', 'args'],
-  cellAllocate: ['value'], cellRead: ['cell'], cellWrite: ['cell', 'value', 'body'],
-  referenceAllocate: ['value'], referenceRead: ['reference'],
-  recordField: ['object'], tupleIndex: ['object'], tuple: ['items'], array: ['items'],
-  some: ['value'], flattenOption: ['value'], nullishNumber: ['arg'], optionalIndexNumber: ['arg'],
-  truthy: ['arg'], strictEqual: ['left', 'right'], optionalTypeOf: ['arg'], optionalText: ['arg'],
-  unwrapOption: ['arg'], optionalPredicate: ['arg'], coalesce: ['left', 'right'],
-  optionalField: ['object'], optionalProject: ['object'], optionalIndex: ['array', 'index'],
-  stringPoints: ['object'], set: ['items'], map: ['entries'],
-  collectionSize: ['object'], collectionRead: ['object', 'key'], collectionItems: ['object'],
-  unary: ['arg'], binary: ['left', 'right'], if: ['cond', 'then', 'else'],
-  print: ['text', 'body'], toString: ['arg'], stringMap: ['string'], stringTest: ['string', 'search'],
-  cast: ['arg'], append: ['left', 'right'], index: ['array', 'index'], length: ['array'],
-};
-
 /** Internal formal bridge: identify owned lexical binder records, including unused binders. */
 export function readTypedProgramBindingIdentities(network, root) {
-  const { program, objects } = decodeTypedProgramLinksContext(network, root);
+  const { program, objects, patternScopes } = decodeTypedProgramLinksContext(network, root);
   const bindings = new WeakSet();
   const expressions = new WeakSet();
   const propositions = new WeakSet();
@@ -233,10 +268,12 @@ export function readTypedProgramBindingIdentities(network, root) {
       for (const entry of node.entries) expression(entry.value);
     } else if (node.k === 'match') {
       expression(node.scrutinee);
-      // Pattern variable spelling is still conservative in this codec.
-      for (const entry of node.cases) expression(entry.body);
+      for (const entry of node.cases) {
+        for (const binding of patternScopes.get(entry.pattern)?.bindings ?? []) bindings.add(binding);
+        expression(entry.body);
+      }
     } else {
-      for (const field of expressionOperands[node.k] ?? []) {
+      for (const field of readProgramExpressionOperandFields(node.k ?? '').split(' ').filter(Boolean)) {
         const value = node[field];
         if (Array.isArray(value)) value.forEach(expression);
         else expression(value);

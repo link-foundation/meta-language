@@ -1,15 +1,23 @@
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
-import { acceptProgramDivisionRounding, acceptProgramExpressionOperation, acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence } from './typed-program-link-rules.js';
+import { checkLinkedMatchCoverage } from './translation/check.js';
+import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
+import { acceptProgramDivisionRounding, acceptProgramExpressionOperation, acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence, readProgramReferenceRole } from './typed-program-link-rules.js';
 
 const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'output']);
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
 
-export function validateLinkedTypedProgram(program, references = new WeakMap()) {
+export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {
   if (!program || program.schemaVersion !== 1 || !['JavaScript', 'Rust', 'Lean', 'Rocq'].includes(program.sourceLanguage)
     || !(program.declarations instanceof Map) || !Array.isArray(program.items)) throw new TypeError('the linked value is not a checked typed program');
+  if (program.main != null && (typeof program.main !== 'object' || Array.isArray(program.main)
+    || program.main.k !== undefined || program.main.p !== undefined || !Array.isArray(program.main.effects))) throw new TypeError('a linked main has an invalid effect-container role');
   const active = new Set();
   const visited = new Set();
+  function targetOf(node, role) {
+    for (const [label, target] of references.get(node) ?? []) if (readProgramReferenceRole(label) === role) return target;
+    return undefined;
+  }
   function bounded(value, depth = 0) {
     if (!value || typeof value !== 'object') {
       if (typeof value === 'function' || typeof value === 'symbol') throw new TypeError('typed programs contain data, not host callbacks');
@@ -38,6 +46,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
       if (!Number.isSafeInteger(value.bits) || !acceptProgramMachineIntegerWidth(String(value.bits)) || typeof value.signed !== 'boolean') throw new TypeError('the linked program contains an invalid machine integer type');
     } else if (value.kind === 'data') {
       if (typeof value.name !== 'string' || !value.name) throw new TypeError('a linked data type has no name');
+      const declaration = declarations.get(value.name);
+      if (declaration?.k !== 'data') throw new TypeError('a linked data type does not target a datatype declaration');
+      const target = targetOf(value, 'datatype');
+      if (target && target !== declaration) throw new TypeError('a linked data type targets a different datatype declaration');
     } else if (['array', 'set', 'option', 'cell'].includes(value.kind)) {
       type(value.element);
       if (value.kind === 'option' && !acceptProgramOptionalAbsence(value.absence ?? 'both')) throw new TypeError('a linked optional type has an invalid absence policy');
@@ -48,11 +60,51 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
     else throw new TypeError(`the linked program contains unsupported type ${value.kind}`);
   }
   const declarations = new Map(program.declarations);
+  const orderedDeclarations = new Set();
+  function orderedItems(items, path = []) {
+    if (!Array.isArray(items)) throw new TypeError('a linked module has no ordered items');
+    for (const item of items) {
+      visit();
+      if (!item || typeof item.name !== 'string' || item.fullName !== [...path, item.name].join('.')) throw new TypeError('the linked ordered item has inconsistent qualified spelling');
+      if (item.k === 'module') orderedItems(item.items, [...path, item.name]);
+      else {
+        if (declarations.get(item.fullName) !== item || orderedDeclarations.has(item)) throw new TypeError('the linked ordered items contain a duplicate or unowned declaration');
+        if (!Array.isArray(item.modulePath) || item.modulePath.length !== path.length || item.modulePath.some((name, index) => name !== path[index])) throw new TypeError('the linked declaration has inconsistent module ownership');
+        orderedDeclarations.add(item);
+      }
+    }
+  }
+  orderedItems(program.items);
+  if (orderedDeclarations.size !== declarations.size) throw new TypeError('the linked declaration mapping and ordered items disagree');
+  const constructorOwners = new WeakMap();
+  const binderOwners = new WeakMap();
+  const patternOwners = new WeakMap();
+  function ownBinder(binder, owner, slot) {
+    const previous = binderOwners.get(binder);
+    if (previous && (previous.owner !== owner || previous.slot !== slot)) throw new TypeError('a linked binding record has multiple lexical owners');
+    binderOwners.set(binder, { owner, slot });
+  }
   for (const external of program.externals ?? []) declarations.set(external.name, external);
   for (const [name, entry] of program.declarations) {
     if (!entry || entry.fullName !== name || typeof entry.name !== 'string' || !Array.isArray(entry.modulePath)) throw new TypeError('the linked declaration mapping is inconsistent');
-    if (entry.k === 'fn') { entry.params.forEach((parameter) => type(parameter.type)); type(entry.ret); }
+    if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); }
     if (entry.k === 'const') type(entry.type);
+    if (entry.k === 'data') {
+      if (!Array.isArray(entry.ctors)) throw new TypeError('a linked datatype has malformed constructors');
+      const names = new Set();
+      for (const constructor of entry.ctors) {
+        if (!constructor || typeof constructor.name !== 'string' || !constructor.name || names.has(constructor.name) || !Array.isArray(constructor.fields)) throw new TypeError('a linked datatype has malformed or duplicate constructors');
+        names.add(constructor.name);
+        const owner = constructorOwners.get(constructor);
+        if (owner && owner !== entry) throw new TypeError('a linked constructor declaration has multiple datatype owners');
+        constructorOwners.set(constructor, entry);
+        const fields = new Set();
+        for (const field of constructor.fields) {
+          if (!field || typeof field.name !== 'string' || !field.name || fields.has(field.name)) throw new TypeError('a linked constructor has malformed or duplicate fields');
+          fields.add(field.name); type(field.type);
+        }
+      }
+    }
   }
   const same = (left, right, detail) => {
     type(left); type(right);
@@ -61,6 +113,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
   function expression(node, environment) {
     if (!node || typeof node !== 'object') return;
     visit();
+    if (node.k !== undefined && node.p !== undefined) throw new TypeError('a linked record has conflicting expression and proposition roles');
     if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
@@ -80,24 +133,26 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
         }
       }
     }
-    if (Array.isArray(node.effects)) {
+    if (node === program.main) {
+      if (node.k !== undefined || node.p !== undefined || !Array.isArray(node.effects)) throw new TypeError('a linked main has an invalid effect-container role');
       const inner = new Map(environment);
       for (const effect of node.effects) {
-        if (effect.k === 'let') { expression(effect.value, inner); inner.set(effect.name, effect); }
+        if (effect.k === 'let') { expression(effect.value, inner); ownBinder(effect, effect, 'self'); inner.set(effect.name, effect); }
         else expression(effect, inner);
       }
       return;
     }
     if (node.p === 'forall') {
       const inner = new Map(environment);
-      for (const binder of node.binders) { type(binder.type); inner.set(binder.name, binder); }
+      node.binders.forEach((binder, index) => { ownBinder(binder, node, index); type(binder.type); inner.set(binder.name, binder); });
       expression(node.body, inner);
       return;
     }
     if (node.k === 'var') {
       const binder = environment.get(node.name);
       if (!binder) throw new TypeError(`the linked variable ${node.name} is unbound`);
-      if (references.get(node)?.target && references.get(node).target !== binder) throw new TypeError('the linked variable targets a declaration outside its scope');
+      const target = targetOf(node, 'binding');
+      if (target && target !== binder) throw new TypeError('the linked variable targets a declaration outside its scope');
       // A let expression has its body's result type; the variable is bound to
       // the initializer, including when an escaping closure captures a cell.
       same(node.type, binder.k === 'let' ? binder.value?.type : binder.type, 'variable type');
@@ -106,7 +161,9 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
     if (node.k === 'call' || node.k === 'functionRef') {
       const declaration = declarations.get(node.fn);
       if (!declaration) throw new TypeError(`the linked declaration reference ${node.fn} is unresolved`);
-      if (references.get(node)?.target && references.get(node).target !== declaration) throw new TypeError('the linked declaration reference targets a different declaration');
+      if (!['fn', 'const'].includes(declaration.k)) throw new TypeError('a linked callable reference targets a datatype or theorem');
+      const target = targetOf(node, 'declaration');
+      if (target && target !== declaration) throw new TypeError('the linked declaration reference targets a different declaration');
       if (node.k === 'functionRef') {
         if (declaration.k === 'const') throw new TypeError('a linked function reference targets a constant');
         same(node.type, { kind: 'function', params: declaration.params.map((parameter) => parameter.type), ret: declaration.ret }, 'function reference type');
@@ -123,15 +180,29 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
       }
       return;
     }
+    if (node.k === 'ctor') {
+      const datatype = declarations.get(node.data);
+      if (datatype?.k !== 'data') throw new TypeError('a linked constructor does not target a datatype declaration');
+      const constructor = datatype.ctors.find(value => value.name === node.ctor);
+      if (!constructor) throw new TypeError('a linked constructor is not owned by its datatype declaration');
+      const datatypeTarget = targetOf(node, 'datatype');
+      const constructorTarget = targetOf(node, 'constructor');
+      if (datatypeTarget && datatypeTarget !== datatype || constructorTarget && constructorTarget !== constructor) throw new TypeError('a linked constructor reference targets a different declaration');
+      if (!Array.isArray(node.args) || node.args.length !== constructor.fields.length) throw new TypeError('a linked constructor has the wrong number of arguments');
+      node.args.forEach((argument, index) => { expression(argument, environment); same(argument.type, constructor.fields[index].type, 'constructor argument type'); });
+      same(node.type, { kind: 'data', name: datatype.fullName }, 'constructor result type');
+      return;
+    }
     if (node.k === 'let') {
       expression(node.value, environment);
+      ownBinder(node, node, 'self');
       expression(node.body, new Map(environment).set(node.name, node));
       same(node.type, node.body.type, 'let result type');
       return;
     }
     if (node.k === 'lambda') {
       const inner = new Map(environment);
-      for (const parameter of node.params) { type(parameter.type); inner.set(parameter.name, parameter); }
+      node.params.forEach((parameter, index) => { ownBinder(parameter, node, index); type(parameter.type); inner.set(parameter.name, parameter); });
       expression(node.body, inner);
       same(node.type, { kind: 'function', params: node.params.map((parameter) => parameter.type), ret: node.body.type }, 'lambda type');
       return;
@@ -229,12 +300,36 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
     }
     if (node.k === 'match') {
       expression(node.scrutinee, environment);
+      if (!Array.isArray(node.cases) || !node.cases.length) throw new TypeError('a linked match has no cases');
       for (const kase of node.cases) {
+        if (!kase || !kase.pattern || !kase.body) throw new TypeError('a linked match case is malformed');
+        const previous = patternScopes.get(kase.pattern);
+        const scope = readLinkedPatternBindingScope(graphPatterns && previous ? previous.graphPattern : kase.pattern,
+          node.scrutinee.type, declarations, { graph: graphPatterns });
+        if (scope.bindings.length) {
+          const owner = patternOwners.get(kase.pattern);
+          if (owner && owner !== kase) throw new TypeError('a linked pattern binding has multiple lexical owners');
+          patternOwners.set(kase.pattern, kase);
+        }
+        if (kase.pattern.k === 'ctor') {
+          const datatype = declarations.get(kase.pattern.data);
+          const datatypeTarget = references.get(kase.pattern)?.get('datatype declaration reference');
+          const constructorTarget = references.get(kase.pattern)?.get('constructor declaration reference');
+          if (datatypeTarget && datatypeTarget !== datatype) throw new TypeError('a linked pattern targets another datatype');
+          if (constructorTarget && constructorTarget !== datatype?.ctors.find(constructor => constructor.name === kase.pattern.ctor)) throw new TypeError('a linked pattern targets another constructor');
+        }
         const inner = new Map(environment);
-        if (kase.pattern.name) inner.set(kase.pattern.name, { type: node.scrutinee.type });
-        for (const bind of kase.pattern.binds ?? []) if (bind) inner.set(bind, { type: findVariableType(kase.body, bind) });
+        scope.bindings.forEach((binding, index) => {
+          ownBinder(binding, kase, index);
+          same(binding.type, scope.expectedBindings[index].type, 'pattern binding type');
+          inner.set(binding.name, binding);
+        });
+        patternScopes.set(kase.pattern, scope);
+        if (graphPatterns) Object.assign(kase.pattern, scope.pattern);
         expression(kase.body, inner);
+        same(node.type, kase.body.type, 'match result type');
       }
+      checkLinkedMatchCoverage(node.scrutinee.type, node.cases.map(kase => kase.pattern), declarations, node.span);
       return;
     }
     for (const [key, value] of Object.entries(node)) {
@@ -242,16 +337,6 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
       if (Array.isArray(value)) for (const child of value) expression(child, environment);
       else if (value && typeof value === 'object') expression(value, environment);
     }
-  }
-  function findVariableType(node, name) {
-    if (!node || typeof node !== 'object') return undefined;
-    visit();
-    if (node.k === 'var' && node.name === name) return node.type;
-    for (const value of Object.values(node)) {
-      if (Array.isArray(value)) { for (const child of value) { const found = findVariableType(child, name); if (found) return found; } }
-      else if (value && typeof value === 'object') { const found = findVariableType(value, name); if (found) return found; }
-    }
-    return undefined;
   }
   for (const entry of program.declarations.values()) {
     const environment = new Map((entry.params ?? []).map((parameter) => [parameter.name, parameter]));

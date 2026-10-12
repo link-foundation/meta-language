@@ -13,15 +13,33 @@ const schema = JSON.parse(schemaText);
 const classify = (name, table) => `/** @param {string} term @returns {string} */\nexport function ${name}(term) {\n`
   + Object.entries(table).map(([kind, term]) => `  if (term === ${JSON.stringify(term)}) return ${JSON.stringify(kind)};`).join('\n')
   + '\n  return "";\n}\n';
+const decide = (name, table, parameter = 'kind') => `/** @param {string} ${parameter} @returns {string} */\nexport function ${name}(${parameter}) {\n`
+  + Object.entries(table).map(([kind, value]) => `  if (${parameter} === ${JSON.stringify(kind)}) return ${JSON.stringify(value)};`).join('\n')
+  + '\n  return "";\n}\n';
+const referenceSource = '/** @param {string} label @param {string} constructKind @param {string} typeKind @returns {string} */\nexport function readProgramReferenceSourceField(label, constructKind, typeKind) {\n'
+  + Object.entries(schema.referenceSourceFields).flatMap(([role, selections]) => selections.map(([construct, type, field]) =>
+    `  if (label === ${JSON.stringify(schema.references[role])} && constructKind === ${JSON.stringify(construct)} && typeKind === ${JSON.stringify(type)}) return ${JSON.stringify(field)};`)).join('\n')
+  + '\n  return "";\n}\n';
+const neutralFields = '/** @param {string} context @param {string} field @returns {string} */\nexport function readProgramNeutralFieldDefault(context, field) {\n'
+  + Object.entries(schema.neutralFieldDefaults).flatMap(([context, fields]) => Object.entries(fields).map(([field, value]) =>
+    `  if (context === ${JSON.stringify(context)} && field === ${JSON.stringify(field)}) return ${JSON.stringify(value)};`)).join('\n')
+  + `\n  if (field === "span" && (${[...new Set(Object.keys(schema.expressionProjections).map(key => key.split(':')[0]))].map(kind => `context === ${JSON.stringify(`expression:${kind}`)}`).join(' || ')})) return "null";`
+  + '\n  return "";\n}\n';
 const source = '// Generated from data/typed-program-links-schema.json. Do not edit by hand.\n\n'
   + classify('readProgramContainerKind', schema.containers) + '\n'
   + classify('readProgramScalarKind', schema.scalars) + '\n'
+  + classify('readProgramReferenceRole', schema.references) + '\n'
+  + decide('readProgramPatternBindingForm', schema.patternBindingForms) + '\n'
+  + decide('readProgramExpressionOperandFields', Object.fromEntries(Object.entries(schema.expressionOperands).map(([kind, fields]) => [kind, fields.join(' ')]))) + '\n'
+  + referenceSource + '\n'
+  + decide('readProgramReferenceTargetField', Object.fromEntries(Object.entries(schema.referenceTargetFields).map(([role, field]) => [schema.references[role], field])), 'label') + '\n'
+  + neutralFields + '\n'
   + classify('readProgramExpressionProjection', Object.fromEntries(Object.keys(schema.expressionProjections).map((kind) => [kind, kind]))) + '\n'
   + '/** @param {string} kind @param {string} operation @returns {boolean} */\nexport function acceptProgramExpressionOperation(kind, operation) {\n'
   + Object.entries(schema.expressionOperations).map(([kind, operations]) => `  if (kind === ${JSON.stringify(kind)}) return ${operations.map((operation) => `operation === ${JSON.stringify(operation)}`).join(' || ')};`).join('\n')
   + '\n  return false;\n}\n\n'
   + '/** @param {string} label @returns {boolean} */\nexport function acceptProgramReferenceField(label) {\n'
-  + `  return label === ${JSON.stringify(schema.references.binding)} || label === ${JSON.stringify(schema.references.declaration)};\n}\n\n`
+  + `  return ${Object.values(schema.references).map(label => `label === ${JSON.stringify(label)}`).join(' || ')};\n}\n\n`
   + '/** @param {string} name @returns {boolean} */\nexport function isUnsafeProgramField(name) {\n'
   + '  return name === "__proto__" || name === "constructor" || name === "prototype";\n}\n\n'
   + '/** @param {string} term @param {string} revision @param {string} arity @returns {boolean} */\nexport function acceptProgramSchemaRoot(term, revision, arity) {\n'
@@ -39,7 +57,7 @@ if (process.argv.includes('--update-styles')) {
   const actions = [];
   let styled = raw;
   const replace = (from, to) => { if (styled.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); styled = styled.split(from).join(to); } };
-  for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence', 'kind', 'operation', 'rounding']) replace(`${name}: String`, `${name}: &str`);
+  for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence', 'kind', 'operation', 'rounding', 'construct_kind', 'type_kind', 'context', 'field']) replace(`${name}: String`, `${name}: &str`);
   for (const match of [...styled.matchAll(/\([a-z]+ == "[^"\n]*"\)/gu)]) replace(match[0], match[0].slice(1, -1));
   for (const name of ['accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
     const begin = styled.indexOf(`pub fn ${name}`);
@@ -67,7 +85,7 @@ if (process.argv.includes('--update-styles')) {
     const to = `} else ${styled.slice(opening + 1, cursor - 1).trim()}`;
     replace(from, to);
   }
-  for (const name of ['read_program_container_kind', 'read_program_scalar_kind', 'read_program_expression_projection', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
+  for (const name of ['read_program_container_kind', 'read_program_scalar_kind', 'read_program_reference_role', 'read_program_expression_projection', 'read_program_pattern_binding_form', 'read_program_expression_operand_fields', 'read_program_reference_source_field', 'read_program_reference_target_field', 'read_program_neutral_field_default', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
     replace(`pub fn ${name}`, `/// Read the corresponding decision of the shared typed program links schema.\n#[must_use]\npub fn ${name}`);
   }
   writeFileSync(styleFile, new DecoratorSet([{ id: 'typed-program-link-library-style', level: 'emitter', order: 0,
