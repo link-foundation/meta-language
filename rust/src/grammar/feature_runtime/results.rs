@@ -125,6 +125,7 @@ pub(super) struct Tree {
     pub(super) kind: Option<Name>,
     /// An extra's outer alias; internal lexer decisions keep `kind` unchanged.
     pub(super) projection_name: Option<Name>,
+    pub(super) projection_anonymous: bool,
     pub(super) rule: Option<Name>,
     pub(super) field: Option<Name>,
     pub(super) trivia: bool,
@@ -184,6 +185,7 @@ impl Tree {
             ty,
             kind,
             projection_name: None,
+            projection_anonymous: false,
             rule: None,
             field: None,
             trivia: false,

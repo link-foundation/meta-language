@@ -18,6 +18,12 @@ for (const entry of fixture.cases) test(entry.name, () => {
   const tokens = leaves(outcome.tree);
   assert.equal(tokens.map(leaf => leaf.text).join(''), entry.source);
   assert.deepEqual(tokens.map(({ kind, start, end, trivia, text }) => [kind, start, end, Boolean(trivia), text]), entry.tokens);
+  for (const recovery of entry.recover ?? []) {
+    const outcome = parser.parseTree(recovery.source, { errorRecovery: true });
+    assert.equal(outcome.rejection.reason, 'recovered');
+    assert.equal(renderSyntaxTree(outcome.tree), recovery.tree);
+    assert.equal(leaves(outcome.tree).map(leaf => leaf.text).join(''), recovery.source);
+  }
 });
 
 test('Make continuation extras match the unchanged independent oracle rows', () => {
@@ -54,4 +60,16 @@ test('Pascal roots retain leading separators while their children keep syntax sp
     assert.equal(outcome.tree.start, 0);
     assert.equal(oracle.rows[0][4], 0);
   }
+});
+
+test('Odin anonymous scanner extras retain the original default recovery rows', () => {
+  const fixture = JSON.parse(read('parity/fixtures/native-grammars/odin.json'));
+  const inventory = JSON.parse(read('parity/language-grammar-inventory.json'));
+  const source = inventory.languages.find(entry => entry.name === 'Odin').recoverySource;
+  const expected = JSON.parse(read('parity/fixtures/native-default-cst-expected.json')).languages.Odin;
+  assert.equal(oracleSnapshot(source, 'Odin').recovers, true);
+  const outcome = compileGrammar(parseGrammarLinks(read(fixture.grammar))).parseTree(source, { errorRecovery: true, recovery: 'accept' });
+  assert.equal(outcome.ok, true);
+  assert.deepEqual(nativeRows(outcome.tree, source, fixture), expected.recovery);
+  assert.equal(leaves(outcome.tree).map(leaf => leaf.text).join(''), source);
 });

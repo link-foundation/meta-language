@@ -2322,6 +2322,7 @@ export class Executor {
       let best = cursor;
       let bestKind = null;
       let bestProjectionName = null;
+      let bestProjectionAnonymous = false;
       let bestResult = null;
       let bestExtra = null;
       const mode = current.modes[current.modes.length - 1];
@@ -2341,6 +2342,7 @@ export class Executor {
             best = composite.end;
             bestKind = item.kind;
             bestProjectionName = item.projectionName ?? null;
+            bestProjectionAnonymous = item.projectionAnonymous === true;
             bestResult = composite;
             bestExtra = composite;
           }
@@ -2352,6 +2354,7 @@ export class Executor {
           best = end;
           bestKind = item.kind;
           bestProjectionName = item.projectionName ?? null;
+          bestProjectionAnonymous = item.projectionAnonymous === true;
           bestResult = result;
           bestExtra = null;
         }
@@ -2365,8 +2368,9 @@ export class Executor {
         ? this.runScanner(bestKind, cursor, current, position) : null;
       // Lexical comparisons still need the source token identity. Apply the
       // declared alias only when the selected tree becomes a public CST.
-      const project = (leaf) => bestProjectionName === null ? leaf : { ...leaf, projectionName: bestProjectionName };
-      if (scanned?.end === best) {
+      const project = (leaf) => bestProjectionAnonymous ? { ...leaf, projectionAnonymous: true }
+        : bestProjectionName === null ? leaf : { ...leaf, projectionName: bestProjectionName };
+      if (scanned?.end === best && !bestProjectionAnonymous) {
         leaves.push(...scanned.skipped, project({ type: 'token', kind: bestKind, start: scanned.tokenStart, end: best, trivia: true }));
       } else {
         leaves.push(project(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true }));

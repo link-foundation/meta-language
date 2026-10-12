@@ -223,6 +223,33 @@ fn anonymous_extra_fixtures_preserve_names_state_prefixes_and_exact_spans() {
             })
             .collect();
         assert_eq!(Value::Array(actual), case["tokens"], "{name}");
+        if let Some(recoveries) = case["recover"].as_array() {
+            for recovery in recoveries {
+                let input = recovery["source"].as_str().unwrap();
+                let outcome = parser
+                    .parse_tree(
+                        input.as_bytes(),
+                        &FeatureParseOptions {
+                            error_recovery: Some(true),
+                            ..FeatureParseOptions::default()
+                        },
+                    )
+                    .unwrap();
+                assert!(!outcome.ok);
+                let tree = outcome.tree.expect("recovered tree");
+                assert_eq!(tree.render(), recovery["tree"].as_str().unwrap(), "{name}");
+                let reconstructed: String = leaves(&tree)
+                    .into_iter()
+                    .map(|leaf| match leaf {
+                        SyntaxTree::Token { text: value, .. }
+                        | SyntaxTree::Error { text: value, .. } => text(value),
+                        SyntaxTree::Missing { .. } => "",
+                        other => panic!("unexpected recovered leaf {other:?}"),
+                    })
+                    .collect();
+                assert_eq!(reconstructed, input);
+            }
+        }
     }
 }
 
@@ -298,4 +325,46 @@ fn pascal_roots_preserve_leading_separators_and_independent_syntax_spans() {
         assert_eq!(expected[0][4], 0);
         assert_eq!(rebuilt(&tree), input);
     }
+}
+
+#[test]
+fn odin_anonymous_scanner_extras_preserve_the_original_default_recovery_rows() {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/native-grammars/odin.json"
+    ))
+    .unwrap();
+    let inventory: Value = serde_json::from_str(include_str!(
+        "../../../parity/language-grammar-inventory.json"
+    ))
+    .unwrap();
+    let input = inventory["languages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"] == "Odin")
+        .unwrap()["recoverySource"]
+        .as_str()
+        .unwrap();
+    let expected: Value = serde_json::from_str(include_str!(
+        "../../../parity/fixtures/native-default-cst-expected.json"
+    ))
+    .unwrap();
+    assert!(oracle_rows(&tree_sitter_odin::LANGUAGE.into(), input).1);
+    let parser = parser(include_str!("../../../parity/grammars/native/odin.lino"));
+    let outcome = parser
+        .parse_tree(
+            input.as_bytes(),
+            &FeatureParseOptions {
+                error_recovery: Some(true),
+                accept_recovery: Some(true),
+                ..FeatureParseOptions::default()
+            },
+        )
+        .unwrap();
+    assert!(outcome.ok);
+    let tree = outcome.tree.expect("recovered tree");
+    assert_eq!(
+        Value::Array(Rows::new(&fixture).rows(&tree, input)),
+        expected["languages"]["Odin"]["recovery"]
+    );
 }

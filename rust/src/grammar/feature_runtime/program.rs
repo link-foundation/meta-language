@@ -427,6 +427,8 @@ pub(super) struct Trivia {
     pub(super) kind: Option<Name>,
     /// The outer alias applied to the public tree after lexing and scanners.
     pub(super) projection_name: Option<Name>,
+    /// A private scanner extra keeps its source kind but exposes no name.
+    pub(super) projection_anonymous: bool,
     pub(super) modes: Option<Vec<Name>>,
 }
 

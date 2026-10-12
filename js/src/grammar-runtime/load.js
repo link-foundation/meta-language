@@ -363,7 +363,12 @@ function loadInContext(grammar, context) {
     // token is aliased to its literal spelling (Make's continued newline).
     // Aliased references retain their source identity and projection.
     if (source.kind !== 'ref' && projectionName?.startsWith("'")) projectionName = null;
-    program.trivia.push({ expression: extra, kind: source.kind === 'ref' ? source.name : projectionName, projectionName, modes: null });
+    // An anonymous scanner extra keeps its lexical source identity. It is
+    // still a scanner token during recovery, rather than ordinary padding.
+    const projectionAnonymous = projectionName === null && source.kind === 'seq' && source.items.length === 1
+      && source.items[0].kind === 'ref' && program.externalTokens.has(source.items[0].name);
+    if (projectionAnonymous) source = source.items[0];
+    program.trivia.push({ expression: extra, kind: source.kind === 'ref' ? source.name : projectionName, projectionName, projectionAnonymous, modes: null });
   }
   let index = 0;
   for (const [name, rule] of rules) {

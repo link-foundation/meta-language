@@ -306,7 +306,11 @@ pub(super) fn public_tree(node: &Tree, bytes: &[u8]) -> SyntaxTree {
             attributes: node.attributes.clone(),
         },
         TreeType::Token => SyntaxTree::Token {
-            kind: name(&node.projection_name).or_else(|| name(&node.kind)),
+            kind: if node.projection_anonymous {
+                None
+            } else {
+                name(&node.projection_name).or_else(|| name(&node.kind))
+            },
             field: name(&node.field),
             trivia: node.trivia,
             start: node.start,

@@ -24,7 +24,7 @@ export function publicTree(node, bytes) {
       return copy;
     }
     case 'token': {
-      const copy = { type: 'token', kind: node.projectionName ?? node.kind };
+      const copy = { type: 'token', kind: node.projectionAnonymous ? null : node.projectionName ?? node.kind };
       if (node.field !== undefined) copy.field = node.field;
       if (node.trivia) copy.trivia = true;
       Object.assign(copy, { start: node.start, end: node.end });

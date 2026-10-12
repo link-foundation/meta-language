@@ -145,6 +145,68 @@
         "[  x",
         "[  \ny"
       ]
+    },
+    {
+      "name": "private scanner extra identity remains inside terminal recovery errors",
+      "listing": "(grammar (start document))\n(extra (seq (ref _line)))\n(scanner line (tokens _line) (operations (consume (literal %0A)) (emit _line)))\n(rule document normal (literal x))\n",
+      "source": "x\n",
+      "tree": "(document \"x\" ~\"\\n\")",
+      "tokens": [
+        [
+          null,
+          0,
+          1,
+          false,
+          "x"
+        ],
+        [
+          null,
+          1,
+          2,
+          true,
+          "\n"
+        ]
+      ],
+      "reject": [
+        "x?\n"
+      ],
+      "recover": [
+        {
+          "source": "x?\n",
+          "tree": "(document \"x\" (ERROR@1..3 \"?\\n\"))"
+        }
+      ]
+    },
+    {
+      "name": "ordinary separator padding stays outside terminal recovery errors",
+      "listing": "(grammar (start document))\n(extra (literal %0A))\n(rule document normal (literal x))\n",
+      "source": "x\n",
+      "tree": "(document \"x\" ~\"\\n\")",
+      "tokens": [
+        [
+          null,
+          0,
+          1,
+          false,
+          "x"
+        ],
+        [
+          null,
+          1,
+          2,
+          true,
+          "\n"
+        ]
+      ],
+      "reject": [
+        "x?\n"
+      ],
+      "recover": [
+        {
+          "source": "x?\n",
+          "tree": "(document \"x\" (ERROR@1..2 \"?\") ~\"\\n\")"
+        }
+      ]
     }
   ]
 }

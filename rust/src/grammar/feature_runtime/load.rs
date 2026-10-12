@@ -8,6 +8,9 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt;
 use std::sync::Arc;
 
+#[path = "load_trivia.rs"]
+mod trivia;
+
 use super::compile::Compiler;
 use super::forking::GrammarFacts;
 use super::program::{
@@ -770,34 +773,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         let expression = compiler.expression(extra, "an extra")?;
         // Scanner and nesting decisions retain the source identity. An outer
         // alias is applied only when the selected tree becomes public.
-        let mut source = &expression;
-        let mut projection_name = None;
-        loop {
-            match source {
-                Expr::Alias { name, item } => {
-                    if projection_name.is_none() {
-                        projection_name = Some(name.clone());
-                    }
-                    source = item;
-                }
-                Expr::Capture { item, .. }
-                | Expr::Precedence { item, .. }
-                | Expr::DynamicPrecedence { item, .. }
-                | Expr::LexicalPrecedence { item, .. }
-                | Expr::Token(item)
-                | Expr::ImmediateToken(item) => source = item,
-                _ => break,
-            }
-        }
-        // Anonymous terminal extras are separators. A referenced extra
-        // still keeps its source identity and declared alias after lexing.
-        if !matches!(source, Expr::Ref(_))
-            && projection_name
-                .as_ref()
-                .is_some_and(|name| name.starts_with('\''))
-        {
-            projection_name = None;
-        }
+        let (source, projection_name, projection_anonymous) = trivia::extra_source(&expression);
         let kind = match source {
             Expr::Ref(Target::Rule(index)) => Some(Arc::from(instances.items[*index].0.as_str())),
             Expr::Ref(Target::External(name)) => Some(name.clone()),
@@ -807,6 +783,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
             expression,
             kind,
             projection_name,
+            projection_anonymous,
             modes: None,
         });
     }
@@ -860,6 +837,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
                 expression: super::program::Expr::Ref(Target::Rule(index)),
                 kind: Some(node_kind.clone()),
                 projection_name: None,
+                projection_anonymous: false,
                 modes: rule_modes.clone(),
             });
         }
