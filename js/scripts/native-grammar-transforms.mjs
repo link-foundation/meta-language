@@ -2,13 +2,39 @@
 // expressions; neither executor needs a language-specific callback.
 import { transformFieldFollowingContext } from './native-source-contexts.mjs';
 import { transformOptionalCallContext } from './native-optional-call-context.mjs';
+import { transformArgumentSuffixContext } from './native-argument-suffix-context.mjs';
+import { transformFieldExpressionContext } from './native-field-expression-context.mjs';
+import { transformTriviaContinuationBoundary } from './native-source-boundaries.mjs';
+import { transformSyntacticBoundaryContext } from './native-syntactic-boundary-context.mjs';
+import { transformOrderedFieldAlternatives } from './native-field-alternatives.mjs';
 import { applyDeclarationSourceTransform } from './native-csharp-declarations.mjs';
 import { applyRootSourceTransform } from './native-csharp-roots.mjs';
+import { applySourceContextPreference } from './native-source-preferences.mjs';
 
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
-    if (applyDeclarationSourceTransform(grammar, decision) || applyRootSourceTransform(grammar, decision)) continue;
+    if (decision.family === 'ordered-field-alternatives') {
+      transformOrderedFieldAlternatives(grammar, decision);
+      continue;
+    }
+    if (decision.family === 'syntactic-boundary-context') {
+      transformSyntacticBoundaryContext(grammar, decision);
+      continue;
+    }
+    if (decision.family === 'field-expression-context') {
+      transformFieldExpressionContext(grammar, decision);
+      continue;
+    }
+    if (decision.family === 'trivia-continuation-boundary') {
+      transformTriviaContinuationBoundary(grammar, decision);
+      continue;
+    }
+    if (decision.family === 'argument-suffix-context') {
+      transformArgumentSuffixContext(grammar, decision);
+      continue;
+    }
+    if (applyDeclarationSourceTransform(grammar, decision) || applyRootSourceTransform(grammar, decision) || applySourceContextPreference(grammar, decision)) continue;
     if (decision.family === 'split-character-separator') {
       const { pattern, count } = decision;
       if (typeof pattern !== 'string' || !/^\[(?:\\.|[^\]\\])+\]\+$/u.test(pattern) || !Number.isSafeInteger(count) || count <= 0) throw new TypeError('separator partitioning needs a repeated character class and exact occurrence count');
@@ -138,11 +164,15 @@ export function transformNativeSource(source, transformations = []) {
       continue;
     }
     if (decision.family === 'rule-prefix-exclusion') {
-      const { rule, pattern, continuationPattern = null, immediate = false } = decision;
-      if (!Object.hasOwn(grammar.rules, rule) || typeof pattern !== 'string' || !pattern) throw new TypeError('rule prefix exclusions need an existing rule and nonempty pattern');
+      const { rule, pattern = null, prefixSymbol = null, continuationPattern = null, immediate = false } = decision;
+      const declaredPrefix = prefixSymbol !== null && (Object.hasOwn(grammar.rules, prefixSymbol)
+        || (grammar.externals ?? []).some(external => external.name === prefixSymbol));
+      if (!Object.hasOwn(grammar.rules, rule) || (pattern === null) === (prefixSymbol === null)
+        || pattern !== null && (typeof pattern !== 'string' || !pattern)
+        || prefixSymbol !== null && (typeof prefixSymbol !== 'string' || !declaredPrefix)) throw new TypeError('rule prefix exclusions need an existing rule and exactly one pattern or declared prefix symbol');
       if (continuationPattern !== null && (typeof continuationPattern !== 'string' || !continuationPattern)) throw new TypeError('prefix continuations need a nonempty pattern');
       if (typeof immediate !== 'boolean') throw new TypeError('prefix immediacy must be boolean');
-      const prefix = { type: 'PATTERN', value: pattern };
+      const prefix = prefixSymbol === null ? { type: 'PATTERN', value: pattern } : { type: 'SYMBOL', name: prefixSymbol };
       grammar.rules[rule] = { type: 'NATIVE_PREFIX_EXCLUSION', content: grammar.rules[rule], prefixes: continuationPattern === null ? prefix : { type: 'NATIVE_WORD_BOUNDARY', content: prefix, word: { type: 'PATTERN', value: continuationPattern } }, ...(immediate ? { immediate } : {}) };
       continue;
     }
@@ -657,7 +687,12 @@ export function transformNativeSource(source, transformations = []) {
         return node.type === 'SYMBOL' ? node.name : node.type === 'ALIAS' ? `alias:${node.value}`
           : node.type === 'SEQ' && node.members[0]?.type === 'SYMBOL' ? `prefix:${node.members[0].name}` : null;
       };
-      const indices = variants.map((name) => choice.members.findIndex((node) => selector(node) === name));
+      const indices = variants.map((name) => choice.members.findIndex((node) => {
+        if (selector(node) === name) return true;
+        while (['PREC', 'PREC_LEFT', 'PREC_RIGHT'].includes(node.type)) node = node.content;
+        return node.type === 'ALIAS' && node.content?.type === 'SYMBOL'
+          && name === `alias:${node.value}:${node.content.name}`;
+      }));
       if (indices.some((index) => index < 0) || new Set(indices).size !== indices.length) throw new TypeError('ordered variants must identify distinct existing alternatives');
       for (const [name, pattern] of Object.entries(lookaheadPatterns)) if (!variants.includes(name) || typeof pattern !== 'string' || !pattern) throw new TypeError('ordered lookaheads need a selected variant and a nonempty pattern');
       const ordered = { type: 'NATIVE_ORDERED_CHOICE', members: indices.map((index, position) => {

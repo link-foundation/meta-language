@@ -4048,7 +4048,8 @@
         "preproc_endregion": "preprocessor_region_end_directive",
         "preproc_nullable": "preprocessor_null_policy_directive",
         "preproc_define": "preprocessor_definition_directive",
-        "preproc_undef": "preprocessor_removal_directive"
+        "preproc_undef": "preprocessor_removal_directive",
+        "_nullable_type_test_expression": "null_capable_type_test_expression"
       },
       "scannerFamilies": [
         {
@@ -4086,6 +4087,259 @@
             "expression"
           ],
           "reason": "Prefer the explicit anonymous-object member initializer over parsing its equals sign as an assignment expression, preserving both complete source alternatives."
+        },
+        {
+          "family": "split-character-separator",
+          "pattern": "[\\s\\u00A0\\uFEFF\\u3000]+",
+          "count": 1,
+          "reason": "Partition repeated whitespace into character separators so required directive newlines are claimed before indentation; trivia repetition preserves all accepted whitespace and source bytes."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "_top_level_item",
+          "variants": [
+            "_top_level_item_no_statement",
+            "global_statement"
+          ],
+          "reason": "Select a complete top-level declaration or directive before its statement wrapper; preserve both source alternatives and the statement fallback."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "non_lvalue_expression"
+          ],
+          "symbol": "collection_expression",
+          "value": 1,
+          "reason": "Prefer a complete collection value over the competing bracketed element-binding alias while preserving all source alternatives and conditional-access binding contexts."
+        },
+        {
+          "family": "optional-prefix-preference",
+          "rule": "attribute_argument",
+          "field": "name",
+          "count": 1,
+          "reason": "Prefer a complete named attribute argument prefix over interpreting its equals sign as an assignment; preserve positional and equality arguments."
+        },
+        {
+          "family": "alias-dynamic-precedence",
+          "rules": [
+            "_parameter_type_with_modifiers"
+          ],
+          "alias": "modifier",
+          "value": 1,
+          "count": 1,
+          "reason": "Prefer parameter modifier aliases over absorbing ref and scoped into the type, retaining unmodified contextual identifier alternatives."
+        },
+        {
+          "family": "repetition-member-precedence",
+          "rule": "_class_declaration_initializer",
+          "count": 1,
+          "precedences": [
+            {
+              "symbol": "parameter_list",
+              "value": -1
+            },
+            {
+              "symbol": "type_parameter_list",
+              "value": -1
+            }
+          ],
+          "reason": "Prefer continuation of an existing base type and its constructor arguments over splitting the same suffix into an additional class header type or parameter list. Preserve every original header production."
+        },
+        {
+          "family": "nested-complete-choice",
+          "rule": "switch_section",
+          "count": 1,
+          "alternatives": [
+            "expression",
+            "prefix:pattern"
+          ],
+          "preferred": "prefix:pattern",
+          "boundary": ":",
+          "reason": "The pinned parser selects a complete pattern and optional guard before a switch label colon. Retain the expression alternative when the complete pattern does not match."
+        },
+        {
+          "family": "symbol-pattern-exclusion",
+          "rule": "binary_expression",
+          "symbol": "expression",
+          "occurrence": 1,
+          "count": 1,
+          "sourceOperator": "&&",
+          "sourceField": "left",
+          "pattern": "\\([\\s\\u00A0\\uFEFF\\u3000]*@?(\\p{XID_Start}|_|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})(\\p{XID_Continue}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*([\\s\\u00A0\\uFEFF\\u3000]*\\.[\\s\\u00A0\\uFEFF\\u3000]*@?(\\p{XID_Start}|_|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})(\\p{XID_Continue}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*)*[\\s\\u00A0\\uFEFF\\u3000]*\\)[\\s\\u00A0\\uFEFF\\u3000]*&&",
+          "reason": "At the first source binary variant, a parenthesized simple or qualified type followed by doubled address-of tokens selects the existing cast and unary productions. Other conjunction operands and all other binary operators retain their source alternatives."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "_simple_name"
+          ],
+          "symbol": "generic_name",
+          "value": 1,
+          "reason": "Prefer a complete generic name in expression position over splitting its type argument delimiters into relational operators; retain identifier and ordinary relational alternatives."
+        },
+        {
+          "family": "rule-context-copy",
+          "rule": "constant_pattern",
+          "helper": "_constant_pattern_value_body",
+          "reason": "Copy the original constant alternatives into a private preferred context; retain the full source production as fallback and restrict primitive keywords only in value-name interpretations."
+        },
+        {
+          "family": "symbol-keyword-exclusion",
+          "rule": "_constant_pattern_value_body",
+          "symbol": "_simple_name",
+          "keywordRules": [
+            "predefined_type"
+          ],
+          "wordRule": "_identifier_token",
+          "count": 1,
+          "reason": "Keep primitive type keywords out of bare constant names while preserving primitive-qualified member access and every non-keyword identifier.",
+          "keywordPatterns": true
+        },
+        {
+          "family": "symbol-pattern-exclusion",
+          "symbol": "binary_expression",
+          "count": 1,
+          "reason": "Preserve a primitive type test before a binary operator while retaining constant binary expressions that begin with ordinary names or primitive-qualified member access; the keyword alternatives match the pinned predefined type rule.",
+          "pattern": "(?:bool|byte|char|decimal|double|float|int|long|object|sbyte|short|string|uint|ulong|ushort|nint|nuint|void)(?![\\p{XID_Continue}])(?![\\s\\u00A0\\uFEFF\\u3000]*\\.)",
+          "rule": "_constant_pattern_value_body"
+        },
+        {
+          "family": "symbol-complete-context",
+          "count": 1,
+          "rules": [
+            "expression"
+          ],
+          "symbol": "non_lvalue_expression",
+          "wholeRule": true,
+          "preferredSymbol": "is_pattern_expression",
+          "preferredField": "pattern",
+          "fieldSymbol": "_constant_pattern_value_body",
+          "helper": "_constant_pattern_test_expression",
+          "boundaries": [
+            ";",
+            "?",
+            ")",
+            ",",
+            "]",
+            "}"
+          ],
+          "reason": "Prefer a complete constant-pattern type test at an enclosing expression boundary; retain primitive and structured type tests and every original expression alternative.",
+          "fieldAlias": "constant_pattern"
+        },
+        {
+          "family": "rule-dynamic-precedence",
+          "value": 1,
+          "reason": "Retain the complete constant-pattern interpretation in nested expression contexts when equivalent recursive derivations also expose the type-test fallback.",
+          "rule": "_constant_pattern_test_expression"
+        },
+        {
+          "family": "symbol-complete-context",
+          "rules": [
+            "parenthesized_expression"
+          ],
+          "symbol": "non_lvalue_expression",
+          "preferredSymbol": "_constant_pattern_test_expression",
+          "alias": "is_pattern_expression",
+          "boundaries": [
+            ")"
+          ],
+          "count": 1,
+          "reason": "Preserve a complete constant type-test pattern inside a parenthesized expression before following member access, while retaining every original parenthesized expression."
+        },
+        {
+          "family": "symbol-complete-context",
+          "rules": [
+            "expression"
+          ],
+          "symbol": "non_lvalue_expression",
+          "wholeRule": true,
+          "preferredSymbol": "is_expression",
+          "preferredField": "right",
+          "fieldSymbol": "nullable_type",
+          "helper": "_nullable_type_test_expression",
+          "boundaries": [
+            ";",
+            ")",
+            ",",
+            "]",
+            "}"
+          ],
+          "count": 1,
+          "reason": "Preserve a complete nullable type test before an enclosing expression boundary instead of committing to its question mark as an incomplete conditional operator; retain every original expression alternative."
+        },
+        {
+          "family": "symbol-complete-context",
+          "count": 1,
+          "rules": [
+            "subpattern"
+          ],
+          "symbol": "pattern",
+          "preferredSymbol": "type_pattern",
+          "preferredField": "type",
+          "fieldSymbol": "qualified_name",
+          "helper": "_qualified_name_type_pattern",
+          "boundaries": [
+            ")",
+            ","
+          ],
+          "reason": "Preserve the qualified type interpretation of a complete positional subpattern without changing constant interpretations in ordinary expression patterns."
+        },
+        {
+          "family": "symbol-complete-context",
+          "count": 1,
+          "rules": [
+            "subpattern"
+          ],
+          "symbol": "pattern",
+          "preferredSymbol": "or_pattern",
+          "preferredField": "left",
+          "fieldSymbol": "_qualified_name_type_pattern",
+          "fieldAlias": "type_pattern",
+          "helper": "_qualified_name_disjunction_pattern",
+          "boundaries": [
+            ")",
+            ","
+          ],
+          "reason": "Keep a qualified type on the left of a complete positional disjunction while retaining the original right-hand pattern and all fallback interpretations."
+        },
+        {
+          "family": "symbol-complete-context",
+          "count": 1,
+          "rules": [
+            "pattern"
+          ],
+          "symbol": "recursive_pattern",
+          "preferredSymbol": "parenthesized_pattern",
+          "boundaries": [
+            ";",
+            ")",
+            ",",
+            "}",
+            "?",
+            "or",
+            "and"
+          ],
+          "reason": "Prefer complete parenthesized patterns over a competing positional-clause interpretation while retaining recursive patterns and following variable designations."
+        },
+        {
+          "family": "symbol-complete-context",
+          "count": 1,
+          "rules": [
+            "pattern"
+          ],
+          "symbol": "recursive_pattern",
+          "preferredSymbol": "_parenthesized_pattern_with_designation",
+          "alias": "recursive_pattern",
+          "boundaries": [
+            ";",
+            ")",
+            ",",
+            "}",
+            "?",
+            "or",
+            "and"
+          ],
+          "reason": "Preserve the original designated-parenthesis alias and its child layout before falling back to recursive positional patterns."
         }
       ],
       "concepts": {
@@ -4480,28 +4734,28 @@
         {
           "family": "rule-precedence",
           "rule": "_local_call_with_parentheses",
-          "value": 201,
+          "value": 240,
           "associativity": "left",
           "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
         },
         {
           "family": "rule-precedence",
           "rule": "_remote_call_with_parentheses",
-          "value": 201,
+          "value": 240,
           "associativity": "left",
           "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
         },
         {
           "family": "rule-precedence",
           "rule": "_anonymous_call",
-          "value": 201,
+          "value": 240,
           "associativity": "left",
           "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
         },
         {
           "family": "rule-precedence",
           "rule": "_double_call",
-          "value": 201,
+          "value": 240,
           "associativity": "left",
           "reason": "A parenthesized call is a complete atomic operand; the source zero precedence controls do-block attachment rather than reducing a binary operand before its parenthesized arguments."
         },
@@ -4518,6 +4772,668 @@
           "rule": "_call_arguments_without_parentheses",
           "pattern": "[+-][ \\t\\r\\n]",
           "reason": "A bare plus or minus followed by whitespace remains a binary operator; the pinned scanner only permits whitespace-prefixed unary call arguments when the operand follows the sign immediately."
+        },
+        {
+          "family": "field-following-context",
+          "rule": "_local_call_without_parentheses",
+          "field": "target",
+          "pattern": "[ \\t]",
+          "count": 1,
+          "reason": "An unparenthesized local call requires a separator after its target. Raw zero-width lookahead preserves adjacent arithmetic and does not register the separator as consumed lexer input."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "_local_call_without_parentheses",
+          "value": 240,
+          "associativity": "right",
+          "reason": "A separated bare call is a complete operand of a module attribute or capture. Its arguments associate to the right; the optional do suffix is resolved separately at its enclosing call."
+        },
+        {
+          "family": "literal-continuation-exclusion",
+          "rules": [
+            "unary_operator"
+          ],
+          "literal": "+",
+          "continuationPattern": "\\+",
+          "reason": "The single unary sign cannot consume the first character of a longer concatenation operator."
+        },
+        {
+          "family": "literal-continuation-exclusion",
+          "rules": [
+            "unary_operator"
+          ],
+          "literal": "-",
+          "continuationPattern": "[->]",
+          "reason": "The single unary sign cannot consume the first character of a longer subtraction or arrow operator."
+        },
+        {
+          "family": "literal-continuation-exclusion",
+          "rules": [
+            "operator_identifier"
+          ],
+          "literal": "/",
+          "continuationPattern": "/",
+          "reason": "An operator identifier slash does not split the stepped range operator."
+        },
+        {
+          "family": "keyword-context-variant",
+          "rule": "_expression",
+          "symbol": "anonymous_function",
+          "includedKeywords": [
+            "fn"
+          ],
+          "wordRule": "identifier",
+          "reason": "The fn keyword starts a complete anonymous function rather than a speculative local call whose parenthesized prefix consumes the clause introducer."
+        },
+        {
+          "family": "optional-call-context",
+          "rule": "_remote_call_without_parentheses",
+          "field": "target",
+          "optionalSymbol": "_call_arguments_without_parentheses",
+          "pattern": "[ \\t]",
+          "count": 1,
+          "reason": "An optional bare argument suffix requires separation while a remote call with no arguments remains a complete callable value or capture target."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "_remote_call_without_parentheses",
+          "value": 240,
+          "associativity": "right",
+          "reason": "A separated remote call is a complete operand; no-argument remote references keep their original optional suffix and operator arity behavior."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "_capture_expression",
+          "pattern": "[0-9]",
+          "reason": "Integer placeholders use the dedicated high-precedence integer capture production, so a general capture cannot swallow the surrounding arithmetic."
+        },
+        {
+          "family": "pattern-context-variant",
+          "rule": "_expression",
+          "symbol": "unary_operator",
+          "pattern": "&[ \\t\\r\\n]*[^0-9 \\t\\r\\n]",
+          "reason": "A noninteger capture operand is parsed completely before shorter operator-reference candidates, while integer placeholders keep their own postfix and arithmetic interpretation."
+        },
+        {
+          "family": "ordered-variants",
+          "rule": "_stab_clause_left",
+          "variants": [
+            "alias:binary_operator:_stab_clause_arguments_with_parentheses_with_guard",
+            "alias:binary_operator:_stab_clause_arguments_without_parentheses_with_guard",
+            "alias:arguments:_stab_clause_arguments_with_parentheses",
+            "alias:arguments:_stab_clause_arguments_without_parentheses"
+          ],
+          "reason": "A guarded clause preserves the binary guard node and its argument list. Parenthesized argument productions precede a generic block expression with the same delimiters."
+        },
+        {
+          "family": "argument-suffix-context",
+          "argumentRule": "_call_arguments_without_parentheses",
+          "expressionRule": "_expression",
+          "suffixRule": "do_block",
+          "expressionHelper": "_bare_argument_expression",
+          "ruleHelpers": {
+            "call": "_bare_argument_call",
+            "_call_without_parentheses": "_bare_argument_unparenthesized_call",
+            "_call_with_parentheses": "_bare_argument_parenthesized_call",
+            "_local_call_without_parentheses": "_bare_argument_local_unparenthesized_call",
+            "_remote_call_without_parentheses": "_bare_argument_remote_unparenthesized_call",
+            "_local_call_with_parentheses": "_bare_argument_local_parenthesized_call",
+            "_remote_call_with_parentheses": "_bare_argument_remote_parenthesized_call",
+            "_anonymous_call": "_bare_argument_anonymous_call",
+            "_double_call": "_bare_argument_repeated_call"
+          },
+          "excludedRules": [
+            "_local_call_just_do_block"
+          ],
+          "expressionCount": 2,
+          "expressionCallCount": 1,
+          "suffixCounts": {
+            "call": 0,
+            "_call_without_parentheses": 0,
+            "_call_with_parentheses": 0,
+            "_local_call_without_parentheses": 1,
+            "_remote_call_without_parentheses": 2,
+            "_local_call_with_parentheses": 1,
+            "_remote_call_with_parentheses": 1,
+            "_anonymous_call": 0,
+            "_double_call": 1
+          },
+          "exclusionCounts": {
+            "_local_call_just_do_block": 1
+          },
+          "reason": "A do suffix belongs to the enclosing bare call. Argument expressions reuse projected source call variants without that optional suffix; explicitly parenthesized arguments retain the original complete expression grammar."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "_terminator",
+          "prefixSymbol": "_newline_before_binary_operator",
+          "immediate": true,
+          "reason": "A registered newline operator scanner reserves its complete source prefix for the continuing expression instead of reducing a standalone statement. Reuse the scanner policy, including keyword, arity and unary distinctions, in a zero-width boundary assertion."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "_call_arguments_without_parentheses",
+          "pattern": "do(?![\\p{ID_Continue}?!:])",
+          "reason": "An unquoted do keyword starts the call block instead of an ordinary bare argument; do: remains a keyword argument and longer identifiers remain ordinary arguments."
+        },
+        {
+          "family": "rule-precedence",
+          "rule": "_local_call_just_do_block",
+          "value": 240,
+          "associativity": "left",
+          "reason": "A call with a fully closed block is a complete operand before following range and step operators."
+        },
+        {
+          "family": "trivia-continuation-boundary",
+          "rule": "_terminator",
+          "pattern": "\\r?\\n",
+          "triviaRules": [
+            "comment"
+          ],
+          "horizontalPattern": "[ \\t]",
+          "continuationLiteral": "do",
+          "continuationPattern": "[\\p{ID_Continue}?!]",
+          "continuationFlags": "u",
+          "count": 2,
+          "reason": "A newline before registered comment extras cannot terminate a call whose next noncomment source line is its do-block continuation. Preserve the actual comments as extras while retrying the existing newline boundary after them."
+        },
+        {
+          "family": "field-expression-context",
+          "clones": [
+            {
+              "rule": "call",
+              "helper": "_postfix_call",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              }
+            },
+            {
+              "rule": "_call_without_parentheses",
+              "helper": "_postfix_unparenthesized_call",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              },
+              "exclude": {
+                "_local_call_without_parentheses": 1
+              }
+            },
+            {
+              "rule": "_call_with_parentheses",
+              "helper": "_postfix_parenthesized_call",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              }
+            },
+            {
+              "rule": "_local_call_just_do_block",
+              "helper": "_postfix_block_call",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              }
+            },
+            {
+              "rule": "_remote_call_without_parentheses",
+              "helper": "_postfix_remote_reference",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              },
+              "exclude": {
+                "_call_arguments_without_parentheses": 1
+              }
+            },
+            {
+              "rule": "_local_call_with_parentheses",
+              "helper": "_postfix_local_parenthesized_call",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              }
+            },
+            {
+              "rule": "_remote_call_with_parentheses",
+              "helper": "_postfix_remote_parenthesized_call",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              }
+            },
+            {
+              "rule": "_anonymous_call",
+              "helper": "_postfix_anonymous_call",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              }
+            },
+            {
+              "rule": "_double_call",
+              "helper": "_postfix_repeated_call",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              }
+            },
+            {
+              "rule": "call",
+              "helper": "_attribute_call",
+              "references": {
+                "call": "_attribute_call",
+                "_call_without_parentheses": "_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              }
+            },
+            {
+              "rule": "_call_without_parentheses",
+              "helper": "_attribute_unparenthesized_call",
+              "references": {
+                "call": "_attribute_call",
+                "_call_without_parentheses": "_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              },
+              "exclude": {
+                "_remote_call_without_parentheses": 1
+              }
+            },
+            {
+              "rule": "_call_with_parentheses",
+              "helper": "_attribute_parenthesized_call",
+              "references": {
+                "call": "_attribute_call",
+                "_call_without_parentheses": "_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              },
+              "exclude": {
+                "_remote_call_with_parentheses": 1,
+                "_anonymous_call": 1
+              }
+            },
+            {
+              "rule": "_local_call_without_parentheses",
+              "helper": "_attribute_local_unparenthesized_call",
+              "references": {
+                "call": "_attribute_call",
+                "_call_without_parentheses": "_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              }
+            },
+            {
+              "rule": "_local_call_just_do_block",
+              "helper": "_attribute_block_call",
+              "references": {
+                "call": "_attribute_call",
+                "_call_without_parentheses": "_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              }
+            },
+            {
+              "rule": "_local_call_with_parentheses",
+              "helper": "_attribute_local_parenthesized_call",
+              "references": {
+                "call": "_attribute_call",
+                "_call_without_parentheses": "_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              }
+            },
+            {
+              "rule": "_double_call",
+              "helper": "_attribute_repeated_call",
+              "references": {
+                "call": "_attribute_call",
+                "_call_without_parentheses": "_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              },
+              "exclude": {
+                "_remote_call_with_parentheses": 1,
+                "_anonymous_call": 1
+              }
+            },
+            {
+              "rule": "call",
+              "helper": "_postfix_attribute_call",
+              "references": {
+                "call": "_postfix_attribute_call",
+                "_call_without_parentheses": "_postfix_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              }
+            },
+            {
+              "rule": "_call_without_parentheses",
+              "helper": "_postfix_attribute_unparenthesized_call",
+              "references": {
+                "call": "_postfix_attribute_call",
+                "_call_without_parentheses": "_postfix_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              },
+              "exclude": {
+                "_local_call_without_parentheses": 1,
+                "_remote_call_without_parentheses": 1
+              }
+            },
+            {
+              "rule": "_call_with_parentheses",
+              "helper": "_postfix_attribute_parenthesized_call",
+              "references": {
+                "call": "_postfix_attribute_call",
+                "_call_without_parentheses": "_postfix_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              },
+              "exclude": {
+                "_remote_call_with_parentheses": 1,
+                "_anonymous_call": 1
+              }
+            },
+            {
+              "rule": "_expression",
+              "helper": "_postfix_expression",
+              "references": {
+                "call": "_postfix_call",
+                "_call_without_parentheses": "_postfix_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_parenthesized_call",
+                "_local_call_just_do_block": "_postfix_block_call",
+                "_remote_call_without_parentheses": "_postfix_remote_reference",
+                "_local_call_with_parentheses": "_postfix_local_parenthesized_call",
+                "_remote_call_with_parentheses": "_postfix_remote_parenthesized_call",
+                "_anonymous_call": "_postfix_anonymous_call",
+                "_double_call": "_postfix_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              },
+              "exclude": {
+                "binary_operator": 1
+              }
+            },
+            {
+              "rule": "_expression",
+              "helper": "_attribute_expression",
+              "references": {
+                "call": "_attribute_call",
+                "_call_without_parentheses": "_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call"
+              },
+              "exclude": {
+                "binary_operator": 1,
+                "dot": 1,
+                "access_call": 1
+              }
+            },
+            {
+              "rule": "_expression",
+              "helper": "_postfix_attribute_expression",
+              "references": {
+                "call": "_postfix_attribute_call",
+                "_call_without_parentheses": "_postfix_attribute_unparenthesized_call",
+                "_call_with_parentheses": "_postfix_attribute_parenthesized_call",
+                "_local_call_without_parentheses": "_attribute_local_unparenthesized_call",
+                "_local_call_just_do_block": "_attribute_block_call",
+                "_local_call_with_parentheses": "_attribute_local_parenthesized_call",
+                "_double_call": "_attribute_repeated_call",
+                "unary_operator": "_postfix_unary_operand"
+              },
+              "exclude": {
+                "binary_operator": 1,
+                "dot": 1,
+                "access_call": 1
+              }
+            },
+            {
+              "rule": "unary_operator",
+              "helper": "_postfix_unary_operand",
+              "precedences": {
+                "values": [
+                  220,
+                  235
+                ],
+                "count": 2
+              },
+              "fields": [
+                {
+                  "field": "operand",
+                  "symbol": "_expression",
+                  "helper": "_postfix_attribute_expression",
+                  "precedence": 220,
+                  "count": 1
+                }
+              ]
+            }
+          ],
+          "fields": [
+            {
+              "rule": "_remote_dot",
+              "field": "left",
+              "symbol": "_expression",
+              "helper": "_postfix_expression",
+              "count": 1
+            },
+            {
+              "rule": "dot",
+              "field": "left",
+              "symbol": "_expression",
+              "helper": "_postfix_expression",
+              "count": 1
+            },
+            {
+              "rule": "_anonymous_dot",
+              "field": "left",
+              "symbol": "_expression",
+              "helper": "_postfix_expression",
+              "count": 1
+            },
+            {
+              "rule": "access_call",
+              "field": "target",
+              "symbol": "_expression",
+              "helper": "_postfix_expression",
+              "count": 1
+            },
+            {
+              "rule": "unary_operator",
+              "field": "operand",
+              "symbol": "_expression",
+              "helper": "_attribute_expression",
+              "precedence": 220,
+              "count": 1
+            }
+          ]
+        },
+        {
+          "family": "syntactic-boundary-context",
+          "rule": "body",
+          "symbol": "_terminator",
+          "occurrence": 4,
+          "count": 4,
+          "boundary": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_terminator"
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "_stab_clause_left"
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              },
+              {
+                "type": "STRING",
+                "value": "->"
+              }
+            ]
+          }
+        },
+        {
+          "family": "ordered-field-alternatives",
+          "rule": "_remote_dot",
+          "field": "right",
+          "variants": [
+            {
+              "alias": "identifier",
+              "named": true,
+              "literals": [
+                "and",
+                "in",
+                "not",
+                "or",
+                "when",
+                "true",
+                "false",
+                "nil",
+                "after",
+                "catch",
+                "do",
+                "else",
+                "end",
+                "fn",
+                "rescue"
+              ]
+            },
+            {
+              "symbol": "identifier"
+            },
+            {
+              "symbol": "operator_identifier"
+            },
+            {
+              "alias": "string",
+              "named": true,
+              "contentSymbol": "_quoted_i_double"
+            },
+            {
+              "alias": "charlist",
+              "named": true,
+              "contentSymbol": "_quoted_i_single"
+            }
+          ],
+          "count": 1,
+          "reason": "The source explicitly aliases reserved remote property words to identifiers. Prefer that exact source alternative over competing generic identifier and operator interpretations while preserving every ordinary, symbolic, string and character-list property production. Match complete source words so longer and suffixed identifiers retain the ordinary identifier alternative.",
+          "literalContinuationPattern": "[\\p{ID_Continue}?!]",
+          "literalContinuationFlags": "u"
         }
       ]
     },
@@ -4962,7 +5878,7 @@
             },
             {
               "token": "simple_symbol",
-              "pattern": ":(?:[@$]{0,2}[A-Za-z_][A-Za-z_0-9]*[!?]?=?|<=>|===|==|=~|!=|!~|<<|>>|<=|>=|\\[\\]=?|\\*\\*|\\.\\.?\\.?|[+~\\-&^|/%`*!<>]=?)(?!>)",
+              "pattern": ":(?:@{1,2}|\\$)?(?:[^\\0\\n\\r\\t :;`\"'@$#.,|^&<=>+*/\\\\%?!~()\\[\\]{}-]|<=>|===|==|=~|!=|!~|<<|>>|<=|>=|\\[\\]=?|\\*\\*|\\.\\.|[+~-]@?|[&^|/%`*!<>])[^\\0\\n\\r\\t :;`\"'@$#.,|^&<=>+*/\\\\%?!~()\\[\\]{}-]*[!?]?(?:=(?!>))?",
               "guard": "(valid symbol_start)"
             },
             {
@@ -5013,7 +5929,18 @@
             "labelPattern": "[A-Za-z_0-9]+",
             "quotedLabelPattern": "[^$quote\\r\\n]+",
             "allowEnd": true
-          }
+          },
+          "lineContinuationPattern": "\\\\(?:\\r?\\n|[ \\t\\v\\f])",
+          "sharedLexicalDecisions": [
+            [
+              "binary_star",
+              "splat_star"
+            ],
+            [
+              "binary_star_star",
+              "hash_splat_star_star"
+            ]
+          ]
         }
       ],
       "sourceTransforms": [
@@ -5064,13 +5991,73 @@
           "token": "_forward_slash",
           "count": 2,
           "reason": "Retain the anonymous slash kind while making its parser-validity bit visible to the native scanner for the pinned Ruby regular-expression/operator decision."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "_call_command_argument_list",
+          "pattern": "\\.{2}|-|[ \\t\\r]*\\n",
+          "immediate": true,
+          "reason": "An adjacent range or minus operator continues the preceding expression, and an unescaped line break ends a command; separated unary and beginless range arguments remain valid."
+        },
+        {
+          "family": "symbol-pattern-exclusion",
+          "rule": "chained_string",
+          "symbol": "string",
+          "occurrence": 2,
+          "pattern": "[ \\t\\r]*\\n",
+          "count": 1,
+          "immediate": true,
+          "reason": "Only strings on the same logical source line chain; newline-separated literals are separate statements."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "_statement",
+          "pattern": "(?:else|elsif|end|when|rescue|ensure)",
+          "continuationPattern": "(?:[^\\x00-\\x1F\\s:;`\"'@$#.,|^&<=>+\\-*/\\\\%?!~()\\[\\]{}]|[!?])",
+          "reason": "The pinned lexer reserves block continuation and closing keywords; prevent a competing identifier statement from retaining a rejected keyword interpretation as an ambiguity."
+        },
+        {
+          "family": "field-dependent-following",
+          "rule": "_call",
+          "selectorField": "operator",
+          "selectorRule": "_call_operator",
+          "selectorLiteral": "::",
+          "field": "method",
+          "symbol": "constant",
+          "followingPattern": "\\(|\\{|do(?![^\\x00-\\x1F\\s:;`\"'@$#.,|^&<=>+\\-*/\\\\%?!~()\\[\\]{}])",
+          "count": 1,
+          "reason": "A constant after a scope separator is the higher-precedence namespace production unless an argument or block follows; retain dot and safe navigation calls, as well as namespace calls with actual arguments."
+        },
+        {
+          "family": "rule-variant-precedence",
+          "rule": "command_call_with_block",
+          "fields": {
+            "block": "do_block"
+          },
+          "associativity": "none",
+          "value": -1,
+          "dynamic": 1,
+          "reason": "The pinned do-block production binds to the enclosing unparenthesized command when its argument also has a competing ordinary call interpretation."
+        },
+        {
+          "family": "rule-variant-precedence",
+          "rule": "call",
+          "fields": {
+            "block": "block"
+          },
+          "associativity": "none",
+          "value": 57,
+          "count": 2,
+          "reason": "The pinned parser shifts a curly block onto the closest ordinary call before reducing its receiver-only call prefix at binding level56. Record that continuation priority while retaining all two source alternatives and lower do-block binding.",
+          "dynamic": 1
         }
       ]
     }
   },
   "concepts": {
     "definitions": {
-      "grammar.collection-comprehension": "An expression that constructs a collection by mapping and optionally filtering the elements of another collection."
+      "grammar.collection-comprehension": "An expression that constructs a collection by mapping and optionally filtering the elements of another collection.",
+      "grammar.reference-type": "A type for access to another value through a reference, retaining the declared language lifetime and mutation permissions."
     },
     "distinctFrom": {
       "grammar.type-assertion": [
