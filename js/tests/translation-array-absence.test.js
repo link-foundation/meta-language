@@ -62,3 +62,13 @@ test('nullable format directives remain explicit until their source conversions 
   const source = '/** @param {string[]} values */ function print(values) { console.log(values[0], 4); }\n';
   assert.match(translateProgram(source, 'JavaScript', 'Rust').diagnostic?.message ?? '', /^console.log with a computed first string:/u);
 });
+
+test('implicit undefined branch conversion preserves the effects of a void-returning call', () => {
+  const source = 'function touch() { console.log(1); }\n/** @param {number} n @returns {number|undefined} */ function choose(n) { if (n > 0) return 7; return touch(); }\nconsole.log(choose(0));\n';
+  const emitted = emitJavaScript(checkProgram(parseJavaScript(source))).text;
+  assert.equal(execute(source), '1\nundefined\n');
+  assert.equal(execute(emitted), execute(source));
+  const rust = translateProgram(source, 'JavaScript', 'Rust');
+  assert.equal(rust.diagnostic, null);
+  assert.match(rust.code, /let ml_discarded_unit = crate::touch\(\);/u);
+});

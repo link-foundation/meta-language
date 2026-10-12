@@ -152,7 +152,11 @@ impl RustEmitter<'_> {
                     }
                     Type::Float => {
                         self.preludes.insert(Prelude::Number);
-                        let function = if *console { "js_console" } else { "js_number" };
+                        let function =
+                            crate::translation::primitive_value_rules::read_number_display_function(
+                                arg.ty.kind().to_owned(),
+                                *console,
+                            );
                         return Ok(format!("crate::ml_number::{function}({})", self.expr(arg)?));
                     }
                     _ => {}

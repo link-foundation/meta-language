@@ -28,6 +28,7 @@ pub mod lean;
 pub mod lean_root_names;
 pub mod lexer;
 pub mod output;
+pub mod primitive_value_rules;
 pub mod proof;
 pub mod rocq;
 pub mod rust;

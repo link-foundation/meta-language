@@ -9,6 +9,7 @@ import { typeError, unsupported } from './diagnostics.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
+import { readNumberDisplayRefusal, readScalarCellOperation } from './primitive-value-rules.js';
 import { acceptOptionalAbsence } from './structured-type-rules.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, isFloat, isNatural, isNumeric, sameType, typeKey,
@@ -267,7 +268,8 @@ class Checker {
 
   show(expr, env, path, style) {
     const value = this.expr(expr, env, path, undefined);
-    if (this.language === 'Rust' && value.type.kind === 'float') throw unsupported('Rust Float display', 'Rust formatting retains negative zero, spells infinities inf and expands exponents; it needs its own operational formatter', expr.span);
+    const displayRefusal = readNumberDisplayRefusal(this.language, value.type.kind);
+    if (displayRefusal) throw unsupported('Rust Float display', displayRefusal, expr.span);
     const bigint = value.type.kind === 'int' || value.type.kind === 'nat';
     if (value.type.kind === 'option') {
       if (!primitiveKey(value.type.element)) throw unsupported('output of nullable structured values', 'this output needs its source structured-value formatter', expr.span);
@@ -445,19 +447,19 @@ class Checker {
         const want = node.type?.element ? this.resolveType(node.type.element, path, node.span) : expected?.element;
         const raw = this.expr(node.value, env, path, want);
         const value = want ? coerce(raw, want, this.language, node.span) : raw;
-        return { k: 'cellAllocate', value, referenceOperation: referenceOperation('allocate-reference-cell').id, type: { kind: 'cell', element: want ?? value.type } };
+        return { k: 'cellAllocate', value, referenceOperation: referenceOperation(readScalarCellOperation(node.k)).id, type: { kind: 'cell', element: want ?? value.type } };
       }
       case 'cellRead': {
         const cell = this.expr(node.cell, env, path, undefined);
         if (cell.type.kind !== 'cell') throw typeError('reading a value requires a reference cell', node.span);
-        return { k: 'cellRead', cell, referenceOperation: referenceOperation('read-reference-cell').id, type: cell.type.element };
+        return { k: 'cellRead', cell, referenceOperation: referenceOperation(readScalarCellOperation(node.k)).id, type: cell.type.element };
       }
       case 'cellWrite': {
         const cell = this.expr(node.cell, env, path, undefined);
         if (cell.type.kind !== 'cell') throw typeError('writing a value requires a reference cell', node.span);
         const value = coerce(this.expr(node.value, env, path, cell.type.element), cell.type.element, this.language, node.span);
         const body = this.expr(node.body, env, path, expected);
-        return { k: 'cellWrite', cell, value, body, referenceOperation: referenceOperation('write-reference-cell').id, type: body.type };
+        return { k: 'cellWrite', cell, value, body, referenceOperation: referenceOperation(readScalarCellOperation(node.k)).id, type: body.type };
       }
       case 'referenceWrite':
         throw unsupported('reference mutation', 'this mutation requires its shared reference and slot operations to be represented', node.span);
@@ -636,7 +638,8 @@ class Checker {
         if (arg.type.kind === 'string') return arg;
         if (arg.type.kind === 'array') throw arrayText(node.span);
         if (arg.type.kind === 'option' && primitiveKey(arg.type.element)) return { k: 'optionalText', arg, console: false, type: STRING };
-        if (this.language === 'Rust' && arg.type.kind === 'float') throw unsupported('Rust Float display', 'Rust formatting retains negative zero, spells infinities inf and expands exponents; it needs its own operational formatter', node.span);
+        const displayRefusal = readNumberDisplayRefusal(this.language, arg.type.kind);
+        if (displayRefusal) throw unsupported('Rust Float display', displayRefusal, node.span);
         if (!isOrdered(arg.type) && arg.type.kind !== 'bool') throw typeError(`toString of ${typeKey(arg.type)}`, node.span);
         return { k: 'toString', arg, type: STRING };
       }
@@ -1565,6 +1568,10 @@ export function coerce(value, type, language, span, flavor = undefined) {
   if (type.kind === 'option' && value.k === 'none') {
     if (!acceptOptionalAbsence(type.absence, value.absence)) throw typeError(`expected ${type.absence} absence but found ${value.absence}`, span);
     return { ...value, type };
+  }
+  if (language === 'JavaScript' && type.kind === 'option' && value.type.kind === 'unit' && acceptOptionalAbsence(type.absence, 'undefined')) {
+    const absent = { k: 'none', absence: 'undefined', type };
+    return value.k === 'unit' ? absent : { k: 'let', name: 'ml_discarded_unit', value, body: absent, type };
   }
   if (type.kind === 'option' && sameType(value.type, type.element)) return { k: 'some', value, type };
   if (language === 'JavaScript' && value.type.kind === 'nat' && type.kind === 'int') {

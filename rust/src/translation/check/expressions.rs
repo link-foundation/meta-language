@@ -285,6 +285,14 @@ impl Checker {
             SNode::StringTest { .. } => self.string_test(node, env, path),
             SNode::ToString { arg } => {
                 let arg = self.expr(arg, env, path, None, false)?;
+                let refusal =
+                    crate::translation::primitive_value_rules::read_number_display_refusal(
+                        self.language.as_str().to_owned(),
+                        arg.ty.kind().to_owned(),
+                    );
+                if !refusal.is_empty() {
+                    return Err(unsupported("Rust Float display", &refusal, span));
+                }
                 if arg.ty == Type::String {
                     return Ok(arg);
                 }

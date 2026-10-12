@@ -1,0 +1,1 @@
+(decorator primitive-number-rule-module (level emitter) (order 0) (when (format Rust)) (replace line crate%3A%3Aread_absent_number_value crate%3A%3Atranslation%3A%3Aprimitive_value_rules%3A%3Aread_absent_number_value))

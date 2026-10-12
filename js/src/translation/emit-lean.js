@@ -13,6 +13,7 @@ import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
 import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations, typeContains, unthreaded } from './emit-common.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
+import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
   'abbrev', 'at', 'attribute', 'axiom', 'by', 'calc', 'class', 'def', 'deriving', 'do', 'else', 'end', 'example',
@@ -437,10 +438,10 @@ class LeanEmitter {
       case 'nullishNumber': {
         const element = e.arg.type.element;
         const present = element.kind === 'bool' ? '(if ml_present then (1 : Float) else (0 : Float))' : element.kind === 'unit' ? '(0 / 0 : Float)' : 'ml_present';
-        return this.optionalMatch(e.arg, 'ml_present', present, '(0 : Float)', '(0 / 0 : Float)', depth);
+        return this.optionalMatch(e.arg, 'ml_present', present, renderAbsentNumberExpression('Lean', 'arithmetic', 'null'), renderAbsentNumberExpression('Lean', 'arithmetic', 'undefined'), depth);
       }
       case 'optionalIndexNumber':
-        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? '(0 / 0 : Float)' : 'ml_present', '(0 / 0 : Float)', '(0 / 0 : Float)', depth);
+        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? '(0 / 0 : Float)' : 'ml_present', renderAbsentNumberExpression('Lean', 'array-index', 'null'), renderAbsentNumberExpression('Lean', 'array-index', 'undefined'), depth);
       case 'truthy':
         return this.truthy(e.arg, depth);
       case 'strictEqual':

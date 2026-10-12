@@ -425,6 +425,13 @@ impl Checker {
         style: ShowStyle,
     ) -> Result<Expr> {
         let value = self.expr(expr, env, path, None, false)?;
+        let refusal = crate::translation::primitive_value_rules::read_number_display_refusal(
+            self.language.as_str().to_owned(),
+            value.ty.kind().to_owned(),
+        );
+        if !refusal.is_empty() {
+            return Err(unsupported("Rust Float display", &refusal, expr.span));
+        }
         let bigint = matches!(value.ty, Type::Int | Type::Nat);
         refuse_format(style, &value.ty, bigint, expr.span)?;
         match value.ty {

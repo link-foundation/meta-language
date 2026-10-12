@@ -17,6 +17,7 @@ import { EmitState, typeContains, withParts } from './emit-common.js';
 import { STRING_PRELUDE } from './string-runtime.js';
 import { readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceType } from './structured-type-rules.js';
 import { acceptConstantEmission, constantBindingForm, renderConstantBinding } from './frontend-rules.js';
+import { readNumberDisplayFunction, renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
@@ -1193,10 +1194,10 @@ class RustEmitter {
       case 'nullishNumber': {
         const element = e.arg.type.element;
         const present = element.kind === 'bool' ? 'if ml_present { 1f64 } else { 0f64 }' : element.kind === 'unit' ? 'f64::NAN' : 'ml_present';
-        return this.optionalMatch(e.arg, 'ml_present', present, '0f64', 'f64::NAN');
+        return this.optionalMatch(e.arg, 'ml_present', present, renderAbsentNumberExpression('Rust', 'arithmetic', 'null'), renderAbsentNumberExpression('Rust', 'arithmetic', 'undefined'));
       }
       case 'optionalIndexNumber':
-        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? 'f64::NAN' : 'ml_present', 'f64::NAN', 'f64::NAN');
+        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? 'f64::NAN' : 'ml_present', renderAbsentNumberExpression('Rust', 'array-index', 'null'), renderAbsentNumberExpression('Rust', 'array-index', 'undefined'));
       case 'truthy':
         return this.truthy(e.arg);
       case 'strictEqual':
@@ -1309,7 +1310,7 @@ class RustEmitter {
         }
         if (e.arg.type.kind === 'float') {
           this.usesNumber = true;
-          const text = `crate::ml_number::${e.console ? 'js_console' : 'js_number'}(${this.expr(e.arg)})`;
+          const text = `crate::ml_number::${readNumberDisplayFunction(e.arg.type.kind, Boolean(e.console))}(${this.expr(e.arg)})`;
           return this.utf16Strings ? `crate::ml_string::Text::from_text(&${text})` : text;
         }
         return this.utf16Strings ? `crate::ml_string::Text::from_text(&${this.receiver(e.arg)}.to_string())` : `${this.receiver(e.arg)}.to_string()`;

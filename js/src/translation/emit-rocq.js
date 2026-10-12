@@ -8,6 +8,7 @@ import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExp
 // so assertions about Numbers are still theorems closed by computation.
 
 import { unsupported } from './diagnostics.js';
+import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
@@ -672,11 +673,11 @@ class RocqEmitter {
         const element = e.arg.type.element;
         const present = element.kind === 'bool' ? '(if ml_present then 1%float else 0%float)' : element.kind === 'unit' ? 'PrimFloat.nan' : 'ml_present';
         this.floats();
-        return this.optionalMatch(e.arg, 'ml_present', present, '0%float', 'PrimFloat.nan');
+        return this.optionalMatch(e.arg, 'ml_present', present, renderAbsentNumberExpression('Rocq', 'arithmetic', 'null'), renderAbsentNumberExpression('Rocq', 'arithmetic', 'undefined'));
       }
       case 'optionalIndexNumber':
         this.floats();
-        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? 'PrimFloat.nan' : 'ml_present', 'PrimFloat.nan', 'PrimFloat.nan');
+        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? 'PrimFloat.nan' : 'ml_present', renderAbsentNumberExpression('Rocq', 'array-index', 'null'), renderAbsentNumberExpression('Rocq', 'array-index', 'undefined'));
       case 'truthy':
         return this.truthy(e.arg);
       case 'strictEqual':
