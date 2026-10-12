@@ -9,6 +9,27 @@ const GRAMMAR: &str = include_str!("../../../parity/grammars/native/ruby.lino");
 const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/ruby-profile.json");
 const CORPUS: &str =
     include_str!("../../../parity/fixtures/native-grammars/ruby-profile-corpus.json");
+const EXPRESSIONS: &str =
+    include_str!("../../../parity/fixtures/native-grammars/ruby-expression-contexts.json");
+
+#[test]
+fn ruby_operator_and_call_contexts_match_the_independent_oracle() {
+    let profile: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = serde_json::from_str(EXPRESSIONS).unwrap();
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&profile);
+    let language = tree_sitter_ruby::LANGUAGE.into();
+    assert_eq!(cases(&fixture, "matches").len(), 16);
+    for case in cases(&fixture, "matches") {
+        let (expected, recovers) = oracle_rows(&language, source(case));
+        assert!(!recovers, "{:?}", source(case));
+        assert_eq!(Value::Array(expected), case["rows"]);
+        let tree =
+            parse(&parser, source(case)).expect("native accepts recorded expression context");
+        assert_eq!(Value::Array(rows.rows(&tree, source(case))), case["rows"]);
+        assert_eq!(rebuilt(&tree), source(case));
+    }
+}
 
 #[test]
 fn ruby_profile_focused_trees_match_the_independent_oracle() {
