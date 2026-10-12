@@ -42,6 +42,31 @@ export function checkProgram(surface) {
   return checker.program(surface);
 }
 
+// The linked checked-IR boundary reuses the source checker's pattern rules.
+// Graph adapters restore lexical spellings before calling this operation.
+export function readCheckedMatchPatternBindings(pattern, type, declarations) {
+  if (!pattern || typeof pattern !== 'object' || !['wild', 'bind', 'natZero', 'natSucc', 'ctor'].includes(pattern.k)) throw typeError('invalid checked match pattern');
+  if ((pattern.k === 'bind' || pattern.k === 'natSucc') && (typeof pattern.name !== 'string' || !pattern.name)) throw typeError('a checked pattern binding has no name');
+  if (pattern.k === 'ctor') {
+    if (pattern.data !== type?.name || type?.kind !== 'data') throw typeError('a checked constructor pattern belongs to another data type');
+    if (typeof pattern.ctor !== 'string' || !pattern.ctor || !Array.isArray(pattern.binds)
+      || pattern.binds.some(name => name !== null && (typeof name !== 'string' || !name || name === '_'))) throw typeError('a checked constructor pattern has invalid binding slots');
+  }
+  const checker = new Checker('JavaScript', []);
+  checker.items = declarations;
+  const environment = new Map();
+  const surface = pattern.k === 'ctor' ? { ...pattern, path: [pattern.ctor] } : pattern;
+  const checked = checker.pattern(surface, type, environment, [], undefined);
+  const names = checked.k === 'ctor' ? checked.binds.filter(name => name !== null)
+    : checked.k === 'bind' || checked.k === 'natSucc' ? [checked.name] : [];
+  if (new Set(names).size !== names.length) throw typeError('a checked pattern binds the same name twice');
+  return { pattern: checked, bindings: [...environment].map(([name, type]) => ({ name, type })) };
+}
+
+export function checkLinkedMatchCoverage(type, patterns, declarations, span) {
+  checkExhaustive(type, patterns, declarations, span);
+}
+
 /**
  * The checker's entry for another item of the module, which the program
  * calls or reads by name but does not declare: a function with its
