@@ -19,6 +19,7 @@ mod export_parity_corpus;
 mod foundation_models;
 mod four_language_conformance;
 mod generative_support;
+mod global_concept_space;
 mod grammar_docs;
 mod grammar_emit;
 mod grammar_emit_antlr_lark;
@@ -206,6 +207,7 @@ mod translation_string_length;
 mod translation_string_predicates;
 
 mod translation_string_maps;
+mod translation_string_trim_semantics;
 
 mod self_translation_line_endings;
 
