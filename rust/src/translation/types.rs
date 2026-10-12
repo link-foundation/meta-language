@@ -28,7 +28,11 @@ const fn is_false(value: &bool) -> bool {
 pub(crate) fn deserialize_tuple_product_model<'de, D: serde::Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Option<std::string::String>, D::Error> {
-    std::string::String::deserialize(deserializer).map(Some)
+    std::string::String::deserialize(deserializer)
+        .map(Some)
+        .map_err(|error| {
+            <D::Error as serde::de::Error>::custom(format!("invalid tuple product model: {error}"))
+        })
 }
 
 /// One named field of a structural record.

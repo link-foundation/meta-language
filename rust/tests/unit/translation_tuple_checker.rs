@@ -97,9 +97,14 @@ fn selected_product_model_is_retained_and_refuses_a_contradictory_freeze_edit() 
     assert!(checked(source.clone(), ty.clone()).is_err());
     source.as_object_mut().unwrap().remove("productModel");
     assert!(checked(source, ty).is_ok());
-    let mut malformed = serde_json::to_value(expression).unwrap();
-    malformed["productModel"] = Value::Null;
-    assert!(serde_json::from_value::<meta_language::translation::ir::Expr>(malformed).is_err());
+    for invalid in [Value::Null, json!(7), json!(true)] {
+        let mut malformed = serde_json::to_value(&expression).unwrap();
+        malformed["productModel"] = invalid;
+        let error = serde_json::from_value::<meta_language::translation::ir::Expr>(malformed)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("tuple product model"), "{error}");
+    }
 }
 
 #[test]
