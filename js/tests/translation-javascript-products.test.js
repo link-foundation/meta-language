@@ -38,6 +38,13 @@ function choose(){const [[value,flag],increment]=make();return flag?value+increm
 console.log(choose()===7);`, ['read', 'true']);
 });
 
+test('nested fresh freezes follow actual owned local bindings rather than tuple annotations', () => {
+  equivalent(`function make(){const inner=Object.freeze([5,true]);return Object.freeze([inner,2]);}
+const value=make();console.log(value[0][0]===5);console.log(value[0][1]===true);`, ['true', 'true']);
+  assert.throws(() => checkProgram(parseJavaScript(`/** @param {[number,boolean]} inner */ function make(inner){return Object.freeze([inner,2]);}
+const value=make([5,true]);console.log(value[0][0]);`)), /immutable tuple product/u);
+});
+
 test('product ownership requires every caller and refuses mutable arrays despite tuple annotations', () => {
   for (const source of [
     pair.replace('Object.freeze([5,true])', '[5,true]'),

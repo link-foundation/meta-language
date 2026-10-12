@@ -35,7 +35,7 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
     for (const item of items) {
       if (item.k === 'module') collect(item.items, [...path, item.name]);
       if (item.k === 'fn') functions.set([...path, item.name].join('.'), {
-        item, path, result: fact(item.ret), params: item.params.map(param => fact(param.type)),
+        item, path, result: fact(item.ret, item), params: item.params.map(param => fact(param.type, param)),
       });
     }
   };
