@@ -550,3 +550,34 @@ export function readLexicalCacheExpressionForm(kind) {
     || kind === 'lexicalPrecedence' || kind === 'token' || kind === 'immediateToken') return 3;
   return 0;
 }
+
+/**
+ * Read the shape of an alternative that can replace a whole source rule.
+ * Sequence parts and repeated parts require their surrounding production.
+ * @param {string} kind
+ * @returns {number}
+ */
+export function readUnitAlternativeExpressionForm(kind) {
+  if (kind === 'ref') return 1;
+  if (kind === 'choice') return 2;
+  if (kind === 'alias' || kind === 'capture' || kind === 'precedence'
+    || kind === 'namedPrecedence' || kind === 'dynamicPrecedence'
+    || kind === 'optional') return 3;
+  return 0;
+}
+
+/**
+ * Whether two constructs can replace a whole rule in a common source context.
+ * Precedence can regroup an operand only where the regrouped construct fits.
+ * @param {boolean[]} ownerContexts
+ * @param {boolean[]} childContexts
+ * @returns {boolean}
+ */
+export function acceptPrecedenceOperandContext(ownerContexts, childContexts) {
+  let index = 0;
+  while (index < ownerContexts.length && index < childContexts.length) {
+    if (ownerContexts[index] && childContexts[index]) return true;
+    index += 1;
+  }
+  return false;
+}
