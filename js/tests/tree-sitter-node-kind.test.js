@@ -9,8 +9,8 @@ import { parseProgrammingLanguage } from '../src/programming-language-parser.js'
 import { treeSitterNodeKind } from '../src/tree-sitter-node-kind.js';
 import { Parser } from 'web-tree-sitter';
 import { gunzipSync } from 'node:zlib';
-import { readFileSync } from 'node:fs';
 import { loadGrammarLanguage } from '../src/grammar-tiering.js';
+import { readExternalGrammarAsset } from '../scripts/external-grammar-cache.mjs';
 
 const terms = (node) => [node.term, ...(node.children ?? []).flatMap(terms)];
 
@@ -30,7 +30,7 @@ test('an aliased node keeps its alias', () => {
 });
 
 test('an empty grammar symbol keeps its native name and error flags', () => {
-  const language = loadGrammarLanguage(gunzipSync(readFileSync(new URL('../oracles/grammars/groovy.wasm.gz', import.meta.url))));
+  const language = loadGrammarLanguage(gunzipSync(readExternalGrammarAsset('js/oracles/grammars/groovy.wasm.gz')));
   const parser = new Parser();
   parser.setLanguage(language);
   const tree = parser.parse('def x = 1');

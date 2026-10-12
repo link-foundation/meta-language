@@ -1,23 +1,23 @@
 // Author one native Elm candidate from immutable source bytes and the shared
 // section-layout family. Promotion is a separate catalog change after corpus CI.
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { nativeName } from './import-native-grammars.mjs';
 import { sectionLayoutScanner } from './section-layout-scanner.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { parseGrammarLinks } from '../src/grammar-links.js';
+import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { readProjectData } from './project-data.mjs';
 
 const root = new URL('../../', import.meta.url);
-const read = (file) => readFileSync(new URL(file, root));
 const SOURCE = 'parity/grammars/candidates/elm/source.json';
 
 /** Read one pinned candidate source, including its exact byte-length contract. */
 export function elmCandidateSource(path) {
-  const register = JSON.parse(read(SOURCE));
+  const register = readProjectData(new URL(SOURCE, root));
   const entry = register.files.find((file) => file.path === path);
   if (!entry) throw new Error(`Elm candidate does not pin ${path}`);
-  const bytes = gunzipSync(read(entry.file));
+  const bytes = gunzipSync(readExternalGrammarAsset(entry.file));
   const digest = createHash('sha256').update(bytes).digest('hex');
   if (digest !== entry.sha256 || bytes.length !== entry.bytes) throw new Error(`Elm source ${path} differs from its immutable record`);
   return bytes.toString('utf8');
@@ -25,10 +25,10 @@ export function elmCandidateSource(path) {
 
 /** The full candidate grammar and its scanner, produced by authoring tools. */
 export function elmLayoutCandidate() {
-  const source = JSON.parse(read(SOURCE));
+  const source = readProjectData(new URL(SOURCE, root));
   const grammarSource = JSON.parse(elmCandidateSource('src/grammar.json'));
   const scannerSource = elmCandidateSource('src/scanner.c');
-  const naming = JSON.parse(read('parity/naming/grammar-name-expansions.json'));
+  const naming = readProjectData(new URL('parity/naming/grammar-name-expansions.json', root));
   const expansions = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
   const nameOf = (name) => nativeName(name, expansions, naming.grammars.elm ?? {});
   const externals = grammarSource.externals.map(({ name }) => name);

@@ -22,6 +22,8 @@ import { gunzipSync, gzipSync } from 'node:zlib';
 
 import { CONTAINER_LABEL } from '../../scripts/lib/cache-classes.mjs';
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
+import { externalGrammarDirectory, readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { readProjectData, writeProjectData } from './project-data.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -80,7 +82,7 @@ async function packageRuntime() {
 /** Verifies the vendored runtime against its lock and the installed package. */
 export async function checkRuntimeLock() {
   const problems = [];
-  const lock = JSON.parse(await readFile(lockPath, 'utf8'));
+  const lock = readProjectData(lockPath);
   const installed = await packageRuntime();
   for (const key of ['upstream', 'version', 'revision', 'emscripten', 'patch']) {
     if (lock[key] !== SOURCE[key]) problems.push(`lock ${key} is ${lock[key]}, the build pins ${SOURCE[key]}`);
@@ -92,7 +94,7 @@ export async function checkRuntimeLock() {
     problems.push('the installed web-tree-sitter wasm differs from the locked unpatched build');
   }
   if (sha256(await readFile(join(root, SOURCE.patch))) !== lock.patchSha256) problems.push('patch digest mismatch');
-  const wasm = gunzipSync(await readFile(join(vendorDir, 'web-tree-sitter.wasm.gz')));
+  const wasm = gunzipSync(readExternalGrammarAsset('js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz'));
   if (sha256(wasm) !== lock.wasmSha256) problems.push('vendored runtime wasm digest mismatch');
   return problems;
 }
@@ -122,7 +124,9 @@ async function main() {
     }
     await run('git', ['-C', checkout, 'apply', join(root, SOURCE.patch)]);
     const patched = await compile(checkout, join(work, 'patched'));
-    await writeFile(join(vendorDir, 'web-tree-sitter.wasm.gz'), gzipSync(patched, { level: 9 }));
+    const destination = externalGrammarDirectory('js/src/vendor/web-tree-sitter');
+    await mkdir(destination, { recursive: true });
+    await writeFile(join(destination, 'web-tree-sitter.wasm.gz'), gzipSync(patched, { level: 9 }));
     await writeFile(join(vendorDir, 'LICENSE'), await readFile(join(checkout, 'LICENSE')));
     const lock = {
       description: 'web-tree-sitter runtime patched to parse UTF-8 input, as the native runtime does.',
@@ -132,7 +136,7 @@ async function main() {
       wasmSha256: sha256(patched),
       license: 'LICENSE',
     };
-    await writeFile(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
+    writeProjectData(lockPath, lock);
     console.log(`built the UTF-8 web-tree-sitter ${SOURCE.version} runtime (${lock.wasmSha256})`);
   } finally {
     await rm(work, { recursive: true, force: true });

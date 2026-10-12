@@ -27,12 +27,15 @@ import { gunzipSync } from 'node:zlib';
 import { Grammar } from '../src/grammar.js';
 import { renderGrammarLinks, parseGrammarLinks } from '../src/grammar-links.js';
 import { createGlobalConceptSpace, globalConceptSpaceToLinks } from '../src/global-concept-space.js';
+import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { readProjectData } from './project-data.mjs';
+import { readGrammarLicense } from './grammar-files.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
 export const GRAMMARS_V4_SOURCES = 'parity/grammars-v4-sources.json';
 export const ADDITIONAL_GRAMMAR_SOURCES = 'parity/grammar-additional-sources.json';
-const readJson = (file) => JSON.parse(readFileSync(join(root, file), 'utf8'));
+const readJson = (file) => readProjectData(join(root, file));
 const cacheDir = process.env.GRAMMAR_BULK_CACHE ?? join(tmpdir(), 'meta-language-grammar-bulk');
 
 /** The inventory languages with a grammar, in inventory order. */
@@ -108,7 +111,7 @@ export function additionalGrammarTexts(language) {
       throw new Error(`${language}: additional source ${source.id} needs pinned provenance and a license`);
     }
     const verified = source.files.map((file) => {
-      const stored = readFileSync(join(root, file.file));
+      const stored = file.role === 'license' ? readGrammarLicense(file.file) : readExternalGrammarAsset(file.file);
       const bytes = file.file.endsWith('.gz') ? gunzipSync(stored) : stored;
       const digest = sha256(bytes);
       if (digest !== file.sha256 || bytes.length !== file.bytes) throw new Error(`${file.file}: pinned source bytes differ`);

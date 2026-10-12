@@ -3,6 +3,8 @@
 // of the languages a native grammar parses (lock entries with `oracle: true`)
 // are development files under js/oracles/grammars, which only the tests and
 // the fixture generators load.
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 /** The repository-relative directory of the grammars the package ships. */
 export const PACKAGED_GRAMMAR_DIRECTORY = 'js/src/vendor/grammars';
@@ -17,4 +19,9 @@ export function grammarDirectory(entry) {
 /** The repository-relative path of one file of a grammar-lock entry. */
 export function grammarFile(entry, file) {
   return `${grammarDirectory(entry)}/${file}`;
+}
+
+/** Licenses are tracked provenance metadata, separate from downloaded grammars. */
+export function readGrammarLicense(file) {
+  return readFileSync(fileURLToPath(new URL(`../../${file}`, import.meta.url)));
 }

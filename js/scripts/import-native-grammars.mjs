@@ -26,6 +26,8 @@ import { gunzipSync } from 'node:zlib';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { transformNativeSource } from './native-grammar-transforms.mjs';
 import { nativeScannerProfile } from './generate-native-scanner-profiles.mjs';
+import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const GRAMMAR_SOURCES = 'parity/grammars/sources.json';
@@ -39,11 +41,11 @@ export const GENERATED = 'js/scripts/import-native-grammars.mjs generates this r
 const ONLY = /^Only the native .+ grammar defines this construct\.$/u;
 const CATALOG = 'js/src/data/language-catalog.json';
 
-const readJson = (file) => JSON.parse(readFileSync(join(root, file), 'utf8'));
+const readJson = (file) => readProjectData(join(root, file));
 
 /** The bytes of a pinned source (or corpus), checked against its recorded hash. */
 export function sourceText(entry) {
-  const bytes = gunzipSync(readFileSync(join(root, entry.file)));
+  const bytes = gunzipSync(readExternalGrammarAsset(entry.file));
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   if (sha256 !== entry.sha256) throw new Error(`${entry.file}: sha256 ${sha256}, the registry pins ${entry.sha256}`);
   return bytes.toString('utf8');
@@ -366,6 +368,7 @@ function main() {
   if (process.argv.includes('--check')) {
     const stale = files.filter(([file, text]) => {
       try {
+        if (file.endsWith('.json')) return !checkProjectData(join(root, file), JSON.parse(text));
         return readFileSync(join(root, file), 'utf8') !== text;
       } catch {
         return true;
@@ -379,7 +382,10 @@ function main() {
     console.log(`imported native grammars match their pinned sources (${files.length} files)`);
     return;
   }
-  for (const [file, text] of files) writeFileSync(join(root, file), text);
+  for (const [file, text] of files) {
+    if (file.endsWith('.json')) writeProjectData(join(root, file), JSON.parse(text));
+    else writeFileSync(join(root, file), text);
+  }
   console.log(`wrote ${files.length} files`);
 }
 

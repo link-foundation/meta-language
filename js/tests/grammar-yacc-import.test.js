@@ -2,13 +2,15 @@
 // with unlowered C/OCaml actions remain explicit failures in the bulk report.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { test } from 'node:test';
 import { compileGrammar, GrammarBuilder } from '../src/grammar.js';
 import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { importYacc, importLex, lowerYaccAction } from '../src/grammar-importers/yacc.js';
 import { tokenizeYacc } from '../src/grammar-importers/yacc-lexer.js';
+import { readExternalGrammarAsset } from '../scripts/external-grammar-cache.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
+import { readGrammarLicense } from '../scripts/grammar-files.mjs';
 
 const scanner = () => importLex(`%option noyywrap nodefault
 DIGIT [0-9]
@@ -150,13 +152,13 @@ test('Lex exclusive modes change through returned tokens and survive native Link
 
 test('the pinned official Yacc sources retain actionable unlowered host-code failures', () => {
   for (const file of ['ruby-4.0.7-parse.y.gz', 'perl-5.44.0-perly.y.gz', 'bash-5.3-parse.y.gz']) {
-    const source = gunzipSync(readFileSync(new URL(`../../parity/grammars/sources/${file}`, import.meta.url))).toString('utf8');
+    const source = gunzipSync(readExternalGrammarAsset(`parity/grammars/sources/${file}`)).toString('utf8');
     assert.throws(() => importYacc(source), /Yacc import/u, file);
   }
 });
 
 test('official source pins retain verified grammar, license and independent corpus provenance', () => {
-  const manifest = JSON.parse(readFileSync(new URL('../../parity/grammar-additional-sources.json', import.meta.url)));
+  const manifest = readProjectData(new URL('../../parity/grammar-additional-sources.json', import.meta.url));
   for (const language of ['Ruby', 'Perl', 'Bash', 'OCaml', 'OCaml Interface']) {
     const [source] = manifest.languages[language];
     assert.match(source.revision, /^[a-f0-9]{40}$/u, language);
@@ -164,7 +166,8 @@ test('official source pins retain verified grammar, license and independent corp
     assert.ok(source.files.some(({ role }) => role === 'license'), language);
     assert.ok(source.corpora.some((corpus) => corpus.revision === source.revision && corpus.role === 'independent upstream tests'), language);
     for (const entry of source.files) {
-      const bytes = gunzipSync(readFileSync(new URL(`../../${entry.file}`, import.meta.url)));
+      const stored = entry.role === 'license' ? readGrammarLicense(entry.file) : readExternalGrammarAsset(entry.file);
+      const bytes = gunzipSync(stored);
       assert.equal(bytes.length, entry.bytes, entry.file);
       assert.equal(createHash('sha256').update(bytes).digest('hex'), entry.sha256, entry.file);
       assert.ok(entry.url.includes(source.revision), entry.file);

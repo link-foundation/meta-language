@@ -42,6 +42,8 @@ import { Parser } from 'web-tree-sitter';
 import { compileGrammar, languageEntry, parseGrammarLinks } from '../src/index.js';
 import { loadGrammarLanguage } from '../src/grammar-tiering.js';
 import { grammarFile } from './grammar-files.mjs';
+import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { checkProjectData, readProjectData, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const MERGE_QUALITY_FIXTURE = 'parity/fixtures/merge-quality-evidence.json';
@@ -56,7 +58,7 @@ const RULE_KINDS = ['normal', 'atomic', 'silent', 'token'];
 const isUpstreamCorpus = (source) => source.includes('/tree/') && source.endsWith('corpus');
 
 const read = (path) => readFileSync(join(root, path), 'utf8');
-const readJson = (path) => JSON.parse(read(path));
+const readJson = (path) => readProjectData(join(root, path));
 
 /** The native grammars of the inventory: `[id, entry]` by id. */
 export function nativeGrammarEntries() {
@@ -364,14 +366,14 @@ export function renderMergeQualityDocument(report, measurements) {
 
 // --- Measurement ---------------------------------------------------------
 
-const LOCK = JSON.parse(readFileSync(new URL('../src/vendor/grammars/grammar-lock.json', import.meta.url), 'utf8'));
+const LOCK = readProjectData(new URL('../src/vendor/grammars/grammar-lock.json', import.meta.url));
 
 /** The pinned tree-sitter grammar that is the oracle of `language`. */
 function oracleLanguage(language) {
   const entry = languageEntry(language);
   const id = (entry.oracleGrammars ?? entry.grammars)[0].id;
-  const file = new URL(`../../${grammarFile(LOCK.grammars[id], `${id}.wasm.gz`)}`, import.meta.url);
-  return loadGrammarLanguage(gunzipSync(readFileSync(file)));
+  const file = grammarFile(LOCK.grammars[id], `${id}.wasm.gz`);
+  return loadGrammarLanguage(gunzipSync(readExternalGrammarAsset(file)));
 }
 
 /** Milliseconds of a pass of `parse` over `sources`, after a pass to warm up. */
@@ -492,7 +494,9 @@ async function main() {
   if (process.argv.includes('--measure')) {
     const onlyAt = process.argv.indexOf('--only');
     measurements = measure(onlyAt >= 0 ? process.argv[onlyAt + 1] : undefined);
-    writeFileSync(join(root, MERGE_QUALITY_MEASUREMENTS), formatMeasurements(measurements));
+    const path = join(root, MERGE_QUALITY_MEASUREMENTS);
+    if (resolveProjectDataPath(path).endsWith('.lino')) writeProjectData(path, measurements);
+    else writeFileSync(path, formatMeasurements(measurements));
   } else {
     try {
       measurements = readJson(MERGE_QUALITY_MEASUREMENTS);
@@ -507,6 +511,9 @@ async function main() {
   if (process.argv.includes('--check')) {
     const stale = outputs.filter(([path, text]) => {
       try {
+        if (path.endsWith('.json') && resolveProjectDataPath(join(root, path)).endsWith('.lino')) {
+          return !checkProjectData(join(root, path), JSON.parse(text));
+        }
         return read(path) !== text;
       } catch {
         return true;
@@ -520,7 +527,11 @@ async function main() {
     console.log(`the merge quality evidence matches ${report.grammars.length} native grammars`);
     return;
   }
-  for (const [path, text] of outputs) writeFileSync(join(root, path), text);
+  for (const [path, text] of outputs) {
+    const target = join(root, path);
+    if (path.endsWith('.json') && resolveProjectDataPath(target).endsWith('.lino')) writeProjectData(target, JSON.parse(text));
+    else writeFileSync(target, text);
+  }
   console.log(`wrote the merge quality evidence of ${report.grammars.length} native grammars`);
 }
 

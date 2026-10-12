@@ -7,6 +7,7 @@
 // the same pair shares none, and `assertMergeShares` rejects it as a
 // concatenation. The Rust twin is
 // rust/tests/unit/issue_195_merge_real_reconciliation.rs.
+import { resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -23,11 +24,13 @@ import {
 } from '../src/index.js';
 import { Grammar, deserializeGrammar } from '../src/grammar.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readExternalGrammarAsset } from '../scripts/external-grammar-cache.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const FIXTURE = 'parity/grammars/reconcile/pairs.json';
 const root = new URL('../../', import.meta.url);
-const read = (file) => readFileSync(new URL(file, root), 'utf8');
-const { pairs } = JSON.parse(read(FIXTURE));
+const read = (file) => readFileSync(resolveProjectDataPath(new URL(file, root)), 'utf8');
+const { pairs } = readProjectData(new URL(FIXTURE, root));
 
 function observe(assertions, testName) {
   recordIssue195Observations({
@@ -41,7 +44,7 @@ function observe(assertions, testName) {
 }
 
 function sources(pair) {
-  const antlr = importAntlr(read(pair.grammarsV4));
+  const antlr = importAntlr(readExternalGrammarAsset(pair.grammarsV4).toString('utf8'));
   return [
     { id: 'native', language: pair.language, precedence: 0, grammar: parseGrammarLinks(read(pair.native)) },
     {
@@ -206,7 +209,7 @@ test('concept and source alias changes invalidate reused merge groups', () => {
   assert.deepEqual(alias.groups[0].grammar.rule('value').sourceNames, [{ source: 'upstream', name: 'renamed' }]);
 });
 
-for (const fixture of JSON.parse(read('parity/fixtures/grammar-source-production-union.json')).cases) {
+for (const fixture of readProjectData(new URL('parity/fixtures/grammar-source-production-union.json', root)).cases) {
   test(`shared source union: ${fixture.name}`, () => {
     const list = fixture.sources.map(({ id, text, format }, precedence) => ({
       id, language: 'Example', precedence,
@@ -224,7 +227,7 @@ for (const fixture of JSON.parse(read('parity/fixtures/grammar-source-production
 }
 
 test('the merge forwards explicit operational premises and retains unknown concepts without them', () => {
-  const fixture = JSON.parse(read('parity/fixtures/global-concept-space.json'));
+  const fixture = readProjectData(new URL('parity/fixtures/global-concept-space.json', root));
   const list = fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammar: deserializeGrammar(grammar) }));
   const options = { conceptRecords: fixture.records, globalEquivalences: fixture.equivalences };
   const grounded = mergeGrammars(list, { ...options, formalDefinitions: fixture.formalDefinitions });

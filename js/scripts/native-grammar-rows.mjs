@@ -24,7 +24,6 @@
 // imported anonymous alias, is an anonymous row TEXT. An ERROR leaf is a named
 // `ERROR` row with flag E and a MISSING leaf an empty row with flag M, named
 // unless it stands for a literal.
-import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
@@ -34,11 +33,13 @@ import { languageEntry } from '../src/index.js';
 import { loadGrammarLanguage } from '../src/grammar-tiering.js';
 import { treeSitterNodeKind } from '../src/tree-sitter-node-kind.js';
 import { grammarFile } from './grammar-files.mjs';
+import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { readProjectData } from './project-data.mjs';
 
 const encoder = new TextEncoder();
 const ORACLES = new Map();
-const LOCK = JSON.parse(readFileSync(new URL('../src/vendor/grammars/grammar-lock.json', import.meta.url), 'utf8'));
-const ISOLATED_ORACLES = new Set(JSON.parse(readFileSync(new URL('../../parity/grammars/sources.json', import.meta.url), 'utf8')).sources
+const LOCK = readProjectData(new URL('../src/vendor/grammars/grammar-lock.json', import.meta.url));
+const ISOLATED_ORACLES = new Set(readProjectData(new URL('../../parity/grammars/sources.json', import.meta.url)).sources
   .filter(source => source.oracleIsolation?.mode === 'process').map(source => source.oracle));
 
 function isolatedOracle(source, language) {
@@ -63,8 +64,8 @@ function oracleLanguage(language) {
   const id = (entry.oracleGrammars ?? entry.grammars)[0].id;
   let grammar = ORACLES.get(id);
   if (!grammar) {
-    const file = new URL(`../../${grammarFile(LOCK.grammars[id], `${id}.wasm.gz`)}`, import.meta.url);
-    grammar = loadGrammarLanguage(gunzipSync(readFileSync(file)));
+    const file = grammarFile(LOCK.grammars[id], `${id}.wasm.gz`);
+    grammar = loadGrammarLanguage(gunzipSync(readExternalGrammarAsset(file)));
     ORACLES.set(id, grammar);
   }
   return grammar;

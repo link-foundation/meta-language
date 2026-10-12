@@ -21,7 +21,9 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
-import { ORACLE_GRAMMAR_DIRECTORY, PACKAGED_GRAMMAR_DIRECTORY, grammarFile } from './grammar-files.mjs';
+import { ORACLE_GRAMMAR_DIRECTORY, PACKAGED_GRAMMAR_DIRECTORY, grammarDirectory, grammarFile } from './grammar-files.mjs';
+import { externalGrammarDirectory, readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { readProjectData, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -264,8 +266,8 @@ export async function grammarSource(id, versions) {
   if (source.vendored) {
     return {
       ...source,
-      crateDir: join(root, source.vendored),
-      parser: gunzipSync(await readFile(join(root, source.vendored, 'src/parser.c.gz'))),
+      crateDir: externalGrammarDirectory(source.vendored),
+      parser: gunzipSync(readExternalGrammarAsset(`${source.vendored}/src/parser.c.gz`)),
     };
   }
   const version = versions.get(source.crate);
@@ -308,8 +310,8 @@ export async function checkoutUpstream(source, checkout, treeSitter, { regenerat
 // headers the vendored copy keeps, so rust/build.rs compiles them.
 async function replaceVendoredParser(source, generated) {
   const parser = await readFile(join(generated, 'parser.c'));
-  await writeFile(join(root, source.vendored, 'src/parser.c.gz'), gzipSync(parser, { level: 9 }));
-  const headers = join(root, source.vendored, 'src/tree_sitter');
+  await writeFile(join(externalGrammarDirectory(`${source.vendored}/src`), 'parser.c.gz'), gzipSync(parser, { level: 9 }));
+  const headers = externalGrammarDirectory(`${source.vendored}/src/tree_sitter`);
   for (const header of await readdir(headers)) {
     if (existsSync(join(generated, 'tree_sitter', header))) await cp(join(generated, 'tree_sitter', header), join(headers, header));
   }
@@ -375,7 +377,9 @@ async function buildOne(id, versions, treeSitter, options) {
       maxBuffer: 64 * 1024 * 1024,
     });
     const wasm = await readFile(output);
-    await writeFile(join(root, grammarFile(source, `${id}.wasm.gz`)), compressWasm(wasm));
+    const destination = externalGrammarDirectory(grammarDirectory(source));
+    await mkdir(destination, { recursive: true });
+    await writeFile(join(destination, `${id}.wasm.gz`), compressWasm(wasm));
     const license = await licenseText(source.vendored ? join(work, 'crate') : source.crateDir);
     if (license) await writeFile(join(root, grammarFile(source, `${id}.LICENSE`)), license);
     return {
@@ -427,7 +431,7 @@ async function checkLock(lock, versions) {
     if (sha256(parser) !== entry.parserSha256) {
       problems.push(`${id}: parser.c digest differs from the Rust build input`);
     }
-    const wasm = gunzipSync(await readFile(join(root, grammarFile(source, `${id}.wasm.gz`))));
+    const wasm = gunzipSync(readExternalGrammarAsset(grammarFile(source, `${id}.wasm.gz`)));
     if (sha256(wasm) !== entry.wasmSha256) problems.push(`${id}: wasm digest mismatch`);
   }
   return problems;
@@ -489,20 +493,20 @@ ${table(true)}`;
 
 /** The lock ships in both packages: npm under src/vendor, the crate under src/data. */
 async function writeLock(lock) {
-  const text = `${JSON.stringify(lock, null, 2)}\n`;
-  await writeFile(lockPath, text);
-  await writeFile(rustLockPath, text);
+  writeProjectData(lockPath, lock);
+  writeProjectData(rustLockPath, lock);
   await writeNotice(lock);
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const versions = await cargoLockVersions();
-  const previous = existsSync(lockPath) ? JSON.parse(await readFile(lockPath, 'utf8')) : null;
+  const previous = existsSync(resolveProjectDataPath(lockPath)) ? readProjectData(lockPath) : null;
 
   if (args.includes('--check')) {
     const problems = await checkLock(previous, versions);
-    if (!existsSync(rustLockPath) || (await readFile(rustLockPath, 'utf8')) !== (await readFile(lockPath, 'utf8'))) {
+    if (!existsSync(resolveProjectDataPath(rustLockPath))
+      || JSON.stringify(readProjectData(rustLockPath)) !== JSON.stringify(previous)) {
       problems.push('rust/src/data/grammar-lock.json differs from the npm grammar lock');
     }
     if (problems.length) {

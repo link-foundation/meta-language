@@ -5,11 +5,13 @@ import { gunzipSync } from 'node:zlib';
 import { test } from 'node:test';
 
 import { parseCargoManifest } from '../scripts/dependency-inventory.mjs';
-import { grammarFile } from '../scripts/grammar-files.mjs';
+import { grammarFile, readGrammarLicense } from '../scripts/grammar-files.mjs';
+import { externalGrammarPath } from '../scripts/external-grammar-cache.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 import { releaseIdentity, releaseRegistryState, verifyPublishedRelease } from '../scripts/release-publication.mjs';
 
 async function readJson(url) {
-  return JSON.parse(await readFile(url, 'utf8'));
+  return readProjectData(url);
 }
 
 test('npm package metadata uses the public unscoped package name', async () => {
@@ -57,10 +59,10 @@ test('npm delivery is script-free and carries every locked portable grammar', as
   assert.equal(packageJson.bundleDependencies, undefined);
   assert.ok(packageJson.files.includes('src'));
   for (const [id, grammar] of Object.entries(lock.grammars)) {
-    const file = (name) => new URL(`../../${grammarFile(grammar, name)}`, import.meta.url);
+    const file = (name) => externalGrammarPath(grammarFile(grammar, name));
     const wasm = gunzipSync(await readFile(file(`${id}.wasm.gz`)));
     assert.equal(createHash('sha256').update(wasm).digest('hex'), grammar.wasmSha256, id);
-    const license = await readFile(file(`${id}.LICENSE`), 'utf8');
+    const license = readGrammarLicense(grammarFile(grammar, `${id}.LICENSE`)).toString('utf8');
     assert.ok(license.trim().length > 0, `${id} carries its license`);
   }
 });
