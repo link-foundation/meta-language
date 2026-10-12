@@ -81,6 +81,12 @@ test('compiler feedback keeps multipart suggestions atomic when nested alternati
       const styles = DecoratorSet.fromLino(readFileSync(join(root, 'styles.lino'), 'utf8'));
       assert.equal(styles.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source }).source, expected);
       assert.equal(result.deferred, 1, 'the conflicting complete suggestion is deferred');
+      if (diagnostics[0] === multipart) {
+        const misaligned = source.replace('let result =', 'let result  =');
+        assert.equal(styles.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: misaligned }).source, misaligned,
+          'a changed binding context refuses the entire multipart replacement');
+        assert.equal(result.actions, 1, 'a multipart suggestion remains one literal transaction');
+      }
     }
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

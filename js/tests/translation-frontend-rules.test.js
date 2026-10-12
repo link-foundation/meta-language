@@ -70,7 +70,14 @@ test('frontend Rust decorators retain checked nullable arithmetic and loop resul
     // The Unicode digit value is already computed with undefined -> NaN.
     // A style rule must retain that value instead of substituting old source arithmetic.
     assert.doesNotMatch(text, /\(unit - (?:48|55|87)f64\)/u);
-    for (const name of ['digit_2', 'digit_3', 'digit_4']) assert.equal((text.match(new RegExp(`^\\s+${name}$`, 'gmu')) ?? []).length, 2, name);
+    if (text === raw) {
+      for (const name of ['digit_2', 'digit_3', 'digit_4']) assert.equal((text.match(new RegExp(`^\\s+${name}$`, 'gmu')) ?? []).length, 2, name);
+    } else {
+      // Clippy can inline a checked local value. Both Unicode decoders still
+      // need each scalar subtraction, including its undefined -> NaN guard.
+      const scalar = String.raw`(?:match\s+unit(?:\.clone\(\))?\s*\{\s*Some\(ml_present\)\s*=>\s*ml_present,\s*None\s*=>\s*f64::NAN,?\s*\}|unit(?:\.clone\(\))?\.unwrap_or\(f64::NAN\))`;
+      for (const offset of [48, 55, 87]) assert.equal((text.match(new RegExp(`${scalar}\\s*-\\s*${offset}f64`, 'gu')) ?? []).length, 2, `checked digit subtraction ${offset}`);
+    }
     const loops = text.split(/(?=^pub fn )/gmu).filter((body) => /^pub fn ml_regular_expression_end_loop\d+\([^\n]+\) -> f64 \{/u.test(body) && body.includes('let flag ='));
     assert.equal(loops.length, 1);
     assert.equal((loops[0].match(/^\s+index$/gmu) ?? []).length, 2, 'each loop exit supplies its Number result without an extra tail expression');

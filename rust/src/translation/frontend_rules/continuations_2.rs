@@ -2,63 +2,17 @@
 // js/scripts/generate-frontend-rules.mjs. Do not edit by hand.
 use super::*;
 
-pub fn ml_read_rust_number_bounds_loop25(units: &[f64], mut at: f64) -> f64 {
-    loop {
-        return if ((at < (units.len() as f64))
-            && (((crate::translation::frontend_rules::ml_array::optional_at(
-                &units,
-                crate::translation::frontend_rules::ml_array::number_index(at),
-            )
-            .unwrap_or(f64::NAN)
-                >= (97f64))
-                && (crate::translation::frontend_rules::ml_array::optional_at(
-                    &units,
-                    crate::translation::frontend_rules::ml_array::number_index(at),
-                )
-                .unwrap_or(f64::NAN)
-                    <= (122f64)))
-                || ((crate::translation::frontend_rules::ml_array::optional_at(
-                    &units,
-                    crate::translation::frontend_rules::ml_array::number_index(at),
-                )
-                .unwrap_or(f64::NAN)
-                    >= (48f64))
-                    && (crate::translation::frontend_rules::ml_array::optional_at(
-                        &units,
-                        crate::translation::frontend_rules::ml_array::number_index(at),
-                    )
-                    .unwrap_or(f64::NAN)
-                        <= (57f64)))))
-        {
-            {
-                let at_2 = (at + 1f64);
-                {
-                    at = at_2;
-                    continue;
-                }
-            }
-        } else {
-            at
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadRustNumberBoundsJoin24 {
-    MlReadRustNumberBoundsJoin24Next(f64, bool),
-}
-
 pub fn ml_read_rust_number_bounds_loop26(units: &[f64], mut at: f64) -> f64 {
     loop {
         return if ((at < (units.len() as f64))
             && (((crate::translation::frontend_rules::ml_array::optional_at(
-                &units,
+                units,
                 crate::translation::frontend_rules::ml_array::number_index(at),
             )
             .unwrap_or(f64::NAN)
                 >= (48f64))
                 && (crate::translation::frontend_rules::ml_array::optional_at(
-                    &units,
+                    units,
                     crate::translation::frontend_rules::ml_array::number_index(at),
                 )
                 .unwrap_or(f64::NAN)
@@ -96,13 +50,13 @@ pub fn ml_read_rust_number_bounds_loop27(units: &[f64], mut at: f64) -> f64 {
     loop {
         return if ((at < (units.len() as f64))
             && (((crate::translation::frontend_rules::ml_array::optional_at(
-                &units,
+                units,
                 crate::translation::frontend_rules::ml_array::number_index(at),
             )
             .unwrap_or(f64::NAN)
                 >= (48f64))
                 && (crate::translation::frontend_rules::ml_array::optional_at(
-                    &units,
+                    units,
                     crate::translation::frontend_rules::ml_array::number_index(at),
                 )
                 .unwrap_or(f64::NAN)
@@ -127,6 +81,57 @@ pub fn ml_read_rust_number_bounds_loop27(units: &[f64], mut at: f64) -> f64 {
             }
         } else {
             at
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptPrecedenceOperandContextLoop28Result {
+    MlAcceptPrecedenceOperandContextLoop28Done,
+    MlAcceptPrecedenceOperandContextLoop28Return(bool),
+}
+
+pub fn ml_accept_precedence_operand_context_loop28(
+    mut owner_contexts: Vec<bool>,
+    mut child_contexts: Vec<bool>,
+    mut index: f64,
+) -> crate::translation::frontend_rules::MlAcceptPrecedenceOperandContextLoop28Result {
+    loop {
+        return if ((index < (owner_contexts.len() as f64))
+            && (index < (child_contexts.len() as f64)))
+        {
+            if match {
+                let ml_logical22 = crate::translation::frontend_rules::ml_array::optional_at(
+                    &owner_contexts,
+                    crate::translation::frontend_rules::ml_array::number_index(index),
+                );
+                if match ml_logical22.clone() {
+                    Some(ml_present) => ml_present,
+                    None => false,
+                } {
+                    crate::translation::frontend_rules::ml_array::optional_at(
+                        &child_contexts,
+                        crate::translation::frontend_rules::ml_array::number_index(index),
+                    )
+                } else {
+                    ml_logical22.clone()
+                }
+            } {
+                Some(ml_present) => ml_present,
+                None => false,
+            } {
+                crate::translation::frontend_rules::MlAcceptPrecedenceOperandContextLoop28Result::MlAcceptPrecedenceOperandContextLoop28Return(true)
+            } else {
+                {
+                    let index_2 = (index + 1f64);
+                    {
+                        index = index_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            crate::translation::frontend_rules::MlAcceptPrecedenceOperandContextLoop28Result::MlAcceptPrecedenceOperandContextLoop28Done
         };
     }
 }

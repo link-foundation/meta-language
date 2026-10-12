@@ -56,29 +56,39 @@ export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFil
   const edits = new Map();
   const accepted = [];
   let deferred = 0;
+  let recordedSpans = 0;
   // Multipart suggestions are indivisible. A conflicting alternative must
   // never leave a binding deletion or a replacement expression half applied.
   for (const spans of suggestions) {
     if (spans.some((span, index) => spans.slice(index + 1).some((other) => overlaps(span, other)))) throw new Error('compiler suggestion contains overlapping source ranges');
-    if (spans.some((span) => accepted.some((other) => overlaps(span, other)))) { deferred += 1; continue; }
-    accepted.push(...spans);
-    for (const span of spans) {
-      const list = edits.get(span.file_name) ?? [];
-      list.push(span); edits.set(span.file_name, list);
-    }
+    // One literal action cannot span independently generated source files.
+    // Keep that transaction for review rather than recording only one side.
+    if (new Set(spans.map((span) => span.file_name)).size !== 1) { deferred += 1; continue; }
+    const envelope = { file_name: spans[0].file_name,
+      byte_start: Math.min(...spans.map((span) => span.byte_start)),
+      byte_end: Math.max(...spans.map((span) => span.byte_end)) };
+    if (accepted.some((other) => overlaps(envelope, other))) { deferred += 1; continue; }
+    accepted.push(envelope);
+    const list = edits.get(envelope.file_name) ?? [];
+    list.push({ ...envelope, spans }); edits.set(envelope.file_name, list);
+    recordedSpans += spans.length;
   }
   const actions = [];
-  for (const [path, spans] of edits) {
+  for (const [path, transactions] of edits) {
     let source = inputs.get(path);
-    for (const span of spans.sort((a, b) => b.byte_start - a.byte_start || b.byte_end - a.byte_end)) {
+    for (const transaction of transactions.sort((a, b) => b.byte_start - a.byte_start || b.byte_end - a.byte_end)) {
       const before = source;
-      const replacement = Buffer.from(span.suggested_replacement);
-      if (before.subarray(span.byte_start, span.byte_end).equals(replacement)) continue;
-      source = Buffer.concat([before.subarray(0, span.byte_start), replacement, before.subarray(span.byte_end)]);
-      let start = before.lastIndexOf(10, Math.max(0, span.byte_start - 1)) + 1;
-      const next = before.indexOf(10, span.byte_end);
+      let replacement = before.subarray(transaction.byte_start, transaction.byte_end);
+      for (const span of [...transaction.spans].sort((a, b) => b.byte_start - a.byte_start || b.byte_end - a.byte_end)) {
+        replacement = Buffer.concat([replacement.subarray(0, span.byte_start - transaction.byte_start),
+          Buffer.from(span.suggested_replacement), replacement.subarray(span.byte_end - transaction.byte_start)]);
+      }
+      if (before.subarray(transaction.byte_start, transaction.byte_end).equals(replacement)) continue;
+      source = Buffer.concat([before.subarray(0, transaction.byte_start), replacement, before.subarray(transaction.byte_end)]);
+      let start = before.lastIndexOf(10, Math.max(0, transaction.byte_start - 1)) + 1;
+      const next = before.indexOf(10, transaction.byte_end);
       let end = next < 0 ? before.length : next + 1;
-      const delta = replacement.length - (span.byte_end - span.byte_start);
+      const delta = replacement.length - (transaction.byte_end - transaction.byte_start);
       for (;;) {
         const from = before.subarray(start, end).toString('utf8');
         const to = source.subarray(start, end + delta).toString('utf8');
@@ -101,6 +111,6 @@ export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFil
     when: [['format', 'Rust'], ['scope', 'formatted-module']], actions: [...(previous?.actions ?? []), ...actions] }]).toLino();
   const lines = existing.split('\n').filter((line) => !line.startsWith('(decorator compiler-feedback-style '));
   writeFileSync(path, `${lines.join('\n').trimEnd()}\n\n${data}`);
-  process.stdout.write(`Recorded ${actions.length} machine-applicable compiler spans; deferred ${deferred} complete overlapping suggestions. CI must verify regenerated output.\n`);
-  return { actions: actions.length, deferred };
+  process.stdout.write(`Recorded ${actions.length} atomic compiler transactions covering ${recordedSpans} machine-applicable spans; deferred ${deferred} complete suggestions. CI must verify regenerated output.\n`);
+  return { actions: actions.length, spans: recordedSpans, deferred };
 }

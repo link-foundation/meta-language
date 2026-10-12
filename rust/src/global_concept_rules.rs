@@ -359,43 +359,42 @@ pub fn ml_verify_global_concept_correspondence_loop1(
                         || ((right.unwrap_or(f64::NAN) % 1f64) != (0f64)))
                         || ((left.unwrap_or(f64::NAN)) >= (shapes.len() as f64)))
                         || ((right.unwrap_or(f64::NAN)) >= (shapes.len() as f64)))
+                        || (!(match (
+                            crate::global_concept_rules::ml_array::optional_at(
+                                &shapes,
+                                crate::global_concept_rules::ml_array::number_index(
+                                    left.unwrap_or(f64::NAN),
+                                ),
+                            ),
+                            crate::global_concept_rules::ml_array::optional_at(
+                                &shapes,
+                                crate::global_concept_rules::ml_array::number_index(
+                                    right.unwrap_or(f64::NAN),
+                                ),
+                            ),
+                        ) {
+                            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
+                            (None, None) => true,
+                            _ => false,
+                        }) || !(match (
+                            crate::global_concept_rules::ml_array::optional_at(
+                                &meanings,
+                                crate::global_concept_rules::ml_array::number_index(
+                                    left.unwrap_or(f64::NAN),
+                                ),
+                            ),
+                            crate::global_concept_rules::ml_array::optional_at(
+                                &meanings,
+                                crate::global_concept_rules::ml_array::number_index(
+                                    right.unwrap_or(f64::NAN),
+                                ),
+                            ),
+                        ) {
+                            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
+                            (None, None) => true,
+                            _ => false,
+                        }))
                     {
-                        crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop1Result::MlVerifyGlobalConceptCorrespondenceLoop1Return(false)
-                    } else if (!(match (
-                        crate::global_concept_rules::ml_array::optional_at(
-                            &shapes,
-                            crate::global_concept_rules::ml_array::number_index(
-                                left.unwrap_or(f64::NAN),
-                            ),
-                        ),
-                        crate::global_concept_rules::ml_array::optional_at(
-                            &shapes,
-                            crate::global_concept_rules::ml_array::number_index(
-                                right.unwrap_or(f64::NAN),
-                            ),
-                        ),
-                    ) {
-                        (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
-                        (None, None) => true,
-                        _ => false,
-                    }) || !(match (
-                        crate::global_concept_rules::ml_array::optional_at(
-                            &meanings,
-                            crate::global_concept_rules::ml_array::number_index(
-                                left.unwrap_or(f64::NAN),
-                            ),
-                        ),
-                        crate::global_concept_rules::ml_array::optional_at(
-                            &meanings,
-                            crate::global_concept_rules::ml_array::number_index(
-                                right.unwrap_or(f64::NAN),
-                            ),
-                        ),
-                    ) {
-                        (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
-                        (None, None) => true,
-                        _ => false,
-                    })) {
                         crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop1Result::MlVerifyGlobalConceptCorrespondenceLoop1Return(false)
                     } else {
                         {

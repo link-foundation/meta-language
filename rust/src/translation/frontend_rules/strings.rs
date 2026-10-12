@@ -151,28 +151,16 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
                                     {
                                         let next = crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(at_2 + 1f64));
                                         {
-                                            (((match (next.clone(), 46f64) {
+                                            (((match (next, 46f64) {
                                                 (Some(ml_left), ml_right) => ml_left == ml_right,
                                                 _ => false,
-                                            } || match (next.clone(), 95f64) {
+                                            } || match (next, 95f64) {
                                                 (Some(ml_left), ml_right) => ml_left == ml_right,
                                                 _ => false,
-                                            }) || (((match next.clone() {
-                                                Some(ml_present) => ml_present,
-                                                None => f64::NAN,
-                                            }) >= (65f64))
-                                                && ((match next.clone() {
-                                                    Some(ml_present) => ml_present,
-                                                    None => f64::NAN,
-                                                }) <= (90f64))))
-                                                || (((match next.clone() {
-                                                    Some(ml_present) => ml_present,
-                                                    None => f64::NAN,
-                                                }) >= (97f64))
-                                                    && ((match next.clone() {
-                                                        Some(ml_present) => ml_present,
-                                                        None => f64::NAN,
-                                                    }) <= (122f64))))
+                                            }) || ((next.unwrap_or(f64::NAN) >= (65f64))
+                                                && (next.unwrap_or(f64::NAN) <= (90f64))))
+                                                || ((next.unwrap_or(f64::NAN) >= (97f64))
+                                                    && (next.unwrap_or(f64::NAN) <= (122f64))))
                                         }
                                     }
                                 } else {
@@ -212,7 +200,7 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
                                             } else {
                                                 exponent
                                             };
-                                            if (((exponent_3 < (units.len() as f64)) && (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(exponent_3)).unwrap_or(f64::NAN) >= (48f64))) && (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(exponent_3)).unwrap_or(f64::NAN) <= (57f64))) {
+                                            if (((exponent_3 < (units.len() as f64)) && (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(exponent_3)).unwrap_or(f64::NAN) >= (48f64))) && (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(exponent_3)).unwrap_or(f64::NAN) <= (57f64))) {
                                                 {
                                                     let floating_4 = true;
                                                     {
@@ -236,7 +224,7 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
                                         {
                                             let suffix = at_8;
                                             {
-                                                let at_11 = if (((at_8 < (units.len() as f64)) && (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(at_8)).unwrap_or(f64::NAN) >= (97f64))) && (crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(at_8)).unwrap_or(f64::NAN) <= (122f64))) {
+                                                let at_11 = if (((at_8 < (units.len() as f64)) && (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(at_8)).unwrap_or(f64::NAN) >= (97f64))) && (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(at_8)).unwrap_or(f64::NAN) <= (122f64))) {
                                                     {
                                                         let at_9 = (at_8 + 1f64);
                                                         {
@@ -269,6 +257,86 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+pub fn read_lexical_cache_expression_form(kind: String) -> f64 {
+    if ((((((((kind == "empty") || (kind == "literal")) || (kind == "literalInsensitive"))
+        || (kind == "charRange"))
+        || (kind == "charClass"))
+        || (kind == "byteClass"))
+        || (kind == "any"))
+        || (kind == "regex"))
+    {
+        1f64
+    } else {
+        if (((kind == "seq") || (kind == "choice")) || (kind == "longest")) {
+            2f64
+        } else {
+            if ((((((((((((((kind == "optional") || (kind == "repeat0"))
+                || (kind == "repeat1"))
+                || (kind == "repeat"))
+                || (kind == "and"))
+                || (kind == "not"))
+                || (kind == "capture"))
+                || (kind == "alias"))
+                || (kind == "precedence"))
+                || (kind == "namedPrecedence"))
+                || (kind == "dynamicPrecedence"))
+                || (kind == "lexicalPrecedence"))
+                || (kind == "token"))
+                || (kind == "immediateToken"))
+            {
+                3f64
+            } else {
+                0f64
+            }
+        }
+    }
+}
+
+pub fn read_unit_alternative_expression_form(kind: String) -> f64 {
+    if (kind == "ref") {
+        1f64
+    } else {
+        if (kind == "choice") {
+            2f64
+        } else {
+            if ((((((kind == "alias") || (kind == "capture")) || (kind == "precedence"))
+                || (kind == "namedPrecedence"))
+                || (kind == "dynamicPrecedence"))
+                || (kind == "optional"))
+            {
+                3f64
+            } else {
+                0f64
+            }
+        }
+    }
+}
+
+pub fn accept_precedence_operand_context(
+    owner_contexts: Vec<bool>,
+    child_contexts: Vec<bool>,
+) -> bool {
+    {
+        let index = 0f64;
+        {
+            let ml_s17 =
+                crate::translation::frontend_rules::ml_accept_precedence_operand_context_loop28(
+                    owner_contexts.clone(),
+                    child_contexts.clone(),
+                    index,
+                );
+            match ml_s17.clone() {
+                crate::translation::frontend_rules::MlAcceptPrecedenceOperandContextLoop28Result::MlAcceptPrecedenceOperandContextLoop28Done => {
+                    false
+                }
+                crate::translation::frontend_rules::MlAcceptPrecedenceOperandContextLoop28Result::MlAcceptPrecedenceOperandContextLoop28Return(ml_result28) => {
+                    ml_result28
                 }
             }
         }
