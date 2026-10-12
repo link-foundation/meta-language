@@ -170,6 +170,7 @@ mod items {
     use meta_language::create_typed_program_links as _;
     use meta_language::current_concept_id as _;
     use meta_language::decode_program_translation as _;
+    use meta_language::decode_structured_data_links as _;
     use meta_language::decode_typed_program_links as _;
     use meta_language::decorate_grammar as _;
     use meta_language::decorate_syntax_tree as _;
@@ -191,6 +192,7 @@ mod items {
     use meta_language::emit_tree_sitter_json as _;
     use meta_language::emit_typed_program_links as _;
     use meta_language::encode_formal_concept_definition as _;
+    use meta_language::encode_structured_data_links as _;
     use meta_language::encode_typed_program_links as _;
     use meta_language::erase_type_script as _;
     use meta_language::global_concept_space_to_links as _;
@@ -238,6 +240,7 @@ mod items {
     use meta_language::query_by_concept_term as _;
     use meta_language::read_formal_concept_definition as _;
     use meta_language::read_global_concept_space_links as _;
+    use meta_language::read_structured_data_lino as _;
     use meta_language::read_translation_provenance as _;
     use meta_language::reconstruct_grammar as _;
     use meta_language::rename_grammar_rule as _;
@@ -263,6 +266,7 @@ mod items {
     use meta_language::sniff_language as _;
     use meta_language::source_meanings_in as _;
     use meta_language::split_grammar_source as _;
+    use meta_language::structured_data_to_lino as _;
     use meta_language::translate_global_construct as _;
     use meta_language::translate_native_construct as _;
     use meta_language::translate_native_construct_tree as _;
@@ -561,6 +565,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "decodeStructuredDataLinks",
+        "decode_structured_data_links",
+        "function",
+    ),
+    (
         "decodeTypedProgramLinks",
         "decode_typed_program_links",
         "function",
@@ -617,6 +626,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "encodeFormalConceptDefinition",
         "encode_formal_concept_definition",
+        "function",
+    ),
+    (
+        "encodeStructuredDataLinks",
+        "encode_structured_data_links",
         "function",
     ),
     (
@@ -773,6 +787,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "method",
     ),
     (
+        "readStructuredDataLino",
+        "read_structured_data_lino",
+        "function",
+    ),
+    (
         "readTranslationProvenance",
         "read_translation_provenance",
         "function",
@@ -833,6 +852,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("sourceTextPredicateHost", "SourceTextPredicateHost", "type"),
     ("splitGrammarSource", "split_grammar_source", "function"),
     (
+        "structuredDataToLino",
+        "structured_data_to_lino",
+        "function",
+    ),
+    (
         "translateGlobalConstruct",
         "translate_global_construct",
         "function",
@@ -867,12 +891,13 @@ const FIXTURE_ID: &str = "planned:repository-directive:i195-parity-feature-compl
 
 fn language_features() -> Value {
     let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    while !dir.join("parity/language-features.json").is_file() {
-        assert!(dir.pop(), "parity/language-features.json should exist");
+    while !dir.join("parity/language-features.lino").is_file() {
+        assert!(dir.pop(), "parity/language-features.lino should exist");
     }
-    let text = fs::read_to_string(dir.join("parity/language-features.json"))
-        .expect("parity/language-features.json should be readable");
-    serde_json::from_str(&text).expect("parity/language-features.json should be JSON")
+    let text = fs::read_to_string(dir.join("parity/language-features.lino"))
+        .expect("parity/language-features.lino should be readable");
+    meta_language::read_structured_data_lino(&text)
+        .expect("parity/language-features.lino should be linked structured data")
 }
 
 #[test]

@@ -3,9 +3,10 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { checkAssociativeStackSources } from '../scripts/associative-stack-sources.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const file = path => new URL(`../../${path}`, import.meta.url);
-const audit = JSON.parse(readFileSync(file('parity/associative-stack-audit.json'), 'utf8'));
+const audit = readProjectData(file('parity/associative-stack-audit.json'));
 const snapshots = new Map(audit.guides.flatMap(guide => [guide.commitVerification.metadataFile, ...guide.files.map(source => source.sourceFile)])
   .map(path => [path, readFileSync(file(path))]));
 

@@ -12,11 +12,12 @@ import { Parser } from 'links-notation';
 
 import * as javascript from '../src/index.js';
 import { exportParity } from '../scripts/generate-export-parity.mjs';
+import { readProjectData, readProjectFileBytes } from '../scripts/project-data.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const CASES_FILE = 'parity/fixtures/export-parity/cases.lino';
 const repositoryFile = (relative) => new URL(`../../${relative}`, import.meta.url);
-const features = JSON.parse(readFileSync(repositoryFile('parity/language-features.json'), 'utf8'));
+const features = readProjectData(repositoryFile('parity/language-features.json'));
 
 function observe(assertions, testName) {
   recordIssue195Observations({
@@ -107,7 +108,7 @@ test('export parity: every public export is listed with a public Rust item', asy
   const listed = features.javascriptExports;
   assert.deepEqual(Object.keys(listed).sort(), Object.keys(entries).sort(), 'the listed exports are the resolved exports');
   assert.equal(
-    readFileSync(repositoryFile('parity/language-features.json'), 'utf8'),
+    readProjectFileBytes(repositoryFile('parity/language-features.json')).toString('utf8'),
     generated,
     'parity/language-features.json is current: run node js/scripts/generate-export-parity.mjs',
   );

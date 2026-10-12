@@ -20,9 +20,11 @@ import {
   VISION_SPECIFICATION,
 } from '../scripts/issue-195-vision-requirements.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData, readProjectFileBytes, resolveProjectDataPath } from '../scripts/project-data.mjs';
 
 const repositoryFile = (relative) => new URL(`../../${relative}`, import.meta.url);
-const read = (relative) => readFileSync(repositoryFile(relative), 'utf8');
+const read = (relative) => relative.endsWith('.json')
+  ? JSON.stringify(readProjectData(repositoryFile(relative))) : readProjectFileBytes(repositoryFile(relative)).toString('utf8');
 const vision = read(VISION_SPECIFICATION);
 const manifest = JSON.parse(read('parity/issue-195-requirements.json'));
 const register = JSON.parse(read('parity/issue-195-sources.json'));
@@ -89,7 +91,7 @@ test('docs/vision.md specifies every section of the repository-wide directive', 
   }
   // Every relative link of the vision resolves.
   for (const [, target] of vision.matchAll(/\]\((?!https?:|#)([^)#]+)(?:#[^)]*)?\)/gu)) {
-    assert.ok(existsSync(new URL(target, repositoryFile(VISION_SPECIFICATION))), `docs/vision.md links to existing ${target}`);
+    assert.ok(existsSync(resolveProjectDataPath(new URL(target, repositoryFile(VISION_SPECIFICATION)))), `docs/vision.md links to existing ${target}`);
   }
   observe('I195-VISION-SPECIFICATION', ['specificationCommitted', 'everyDirectiveSectionSpecified'],
     'docs/vision.md specifies every section of the repository-wide directive');
@@ -188,7 +190,7 @@ test('every ledger row traces to its specification, inventories, sources, CI and
     assert.equal(file, VISION_SPECIFICATION);
     assert.ok(anchors.has(anchor), `${row.id} traces to the existing section ${anchor}`);
     assert.ok(traceability.inventories.length > 0, `${row.id} names its inventories`);
-    for (const inventory of traceability.inventories) assert.ok(existsSync(repositoryFile(inventory)), `${row.id} inventory ${inventory} exists`);
+    for (const inventory of traceability.inventories) assert.ok(existsSync(resolveProjectDataPath(repositoryFile(inventory))), `${row.id} inventory ${inventory} exists`);
     assert.ok(traceability.sources.includes(sourceKeyByUrl.get(row.source)), `${row.id} is covered by its own source`);
     for (const key of traceability.sources) assert.ok(registeredKeys.has(key), `${row.id} source ${key} is registered`);
     assert.ok(existsSync(repositoryFile(traceability.workflow)), `${row.id} workflow exists`);

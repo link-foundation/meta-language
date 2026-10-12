@@ -6,6 +6,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { scannerFamilies } from './scanner-families.mjs';
+import { readProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const namingFile = 'parity/naming/grammar-name-expansions.json';
@@ -20,7 +21,7 @@ export function nativeScannerProfile(profile) {
 function main(args) {
   const index = args.indexOf('--language');
   const wanted = index < 0 ? null : args[index + 1];
-  const naming = JSON.parse(readFileSync(join(root, namingFile), 'utf8'));
+  const naming = readProjectData(join(root, namingFile));
   const profiles = Object.entries(naming.grammars).filter(([language, data]) => data.scannerFamilies && (wanted === null || wanted === language));
   if (!profiles.length) throw new Error(`No native scanner profile for ${wanted ?? 'the catalog'}`);
   for (const [language, data] of profiles) {

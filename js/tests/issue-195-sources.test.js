@@ -20,11 +20,12 @@ import {
   validateDirectInstructions,
 } from '../scripts/issue-195-sources.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const REGISTER_FILE = 'parity/issue-195-sources.json';
 const repositoryFile = (relative) => new URL(`../../${relative}`, import.meta.url);
-const register = JSON.parse(readFileSync(repositoryFile(REGISTER_FILE), 'utf8'));
-const manifest = JSON.parse(readFileSync(repositoryFile('parity/issue-195-requirements.json'), 'utf8'));
+const register = readProjectData(repositoryFile(REGISTER_FILE));
+const manifest = readProjectData(repositoryFile('parity/issue-195-requirements.json'));
 
 function observeSourceRegister(assertions, testName) {
   recordIssue195Observations({

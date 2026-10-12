@@ -24,6 +24,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { areSynonyms, baseForms, PARTS_OF_SPEECH, partsOfSpeech } from './english-vocabulary.mjs';
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
 
 export const NAMING_DIRECTORY = 'parity/naming';
 export const CANONICAL_CONCEPTS = `${NAMING_DIRECTORY}/canonical-concepts.json`;
@@ -43,7 +44,15 @@ export const PROBLEM_KINDS = Object.freeze([
   'fixture',
 ]);
 
-const readJson = (root, file) => JSON.parse(readFileSync(path.join(root, file), 'utf8'));
+const readJson = (root, file) => readProjectData(path.join(root, file));
+
+// Inventory extractors inspect the same records independently of their storage
+// syntax. Executable grammar LiNo and host-language sources remain source text.
+const inventoryText = (root, file) => {
+  const actual = resolveProjectDataPath(path.join(root, file));
+  if (!existsSync(actual)) return '';
+  return file.endsWith('.json') ? JSON.stringify(readProjectData(actual)) : readFileSync(actual, 'utf8');
+};
 
 /** The committed concept records, technical vocabulary and abbreviation register. */
 export function loadNamingRegisters(root) {
@@ -709,6 +718,49 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `translation.${name}`,
   },
   {
+    inventory: 'Rust source indirection decisions',
+    files: ['js/src/translation/rust-indirection-rules.js', 'rust/src/translation/rust/indirection_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'structured data links',
+    files: ['js/src/structured-data-links.js', 'js/src/structured-data-link-rules.js', 'rust/src/structured_data_links.rs', 'rust/src/structured_data_link_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|export class|pub fn|pub struct|pub enum) ([a-zA-Z][a-zA-Z_]+)\b/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `structured-data.${({
+      'structured-data-to-lino': 'serialize-structured-data-as-links-notation',
+      'structured-data-to-lino-ordered': 'serialize-ordered-structured-data-as-links-notation',
+      'read-structured-data-lino': 'read-structured-data-links-notation',
+      'read-structured-data-lino-ordered': 'read-structured-data-links-notation-ordered',
+      'read-structured-data-lino-ordered-with-limits': 'read-structured-data-links-notation-ordered-with-limits',
+      'read-structured-data-lino-with-limits': 'read-structured-data-links-notation-with-limits',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'project data storage operations',
+    files: ['js/scripts/project-data.mjs', 'js/scripts/convert-structured-data.mjs'],
+    extract: (text) => captures(text, /^export (?:async )?function ([a-zA-Z][a-zA-Z]+)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `repository.${name}`,
+  },
+  {
+    inventory: 'temporary external grammar asset operations',
+    files: ['js/scripts/external-grammar-cache.mjs'],
+    extract: (text) => captures(text, /^export (?:async )?function ([a-zA-Z][a-zA-Z]+)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `grammar.${({ 'external-grammar-path': 'resolve-external-grammar-path',
+      'external-grammar-directory': 'resolve-external-grammar-directory' })[name] ?? name}`,
+  },
+  {
+    inventory: 'project and grammar asset readers',
+    files: ['js/src/project-data-loader.js', 'js/src/grammar-asset-path.js', 'js/scripts/grammar-files.mjs'],
+    extract: (text) => captures(text, /^export function (read[a-zA-Z]+)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `repository.${name}`,
+  },
+  {
     inventory: 'linked reference operation programs',
     files: ['js/src/data/reference-operations.lino', 'rust/src/data/reference-operations.lino'],
     extract: (text) => captures(text, /^\(([a-z-]+):/gmu),
@@ -797,7 +849,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'recorded compiler feedback',
     files: ['js/scripts/compiler-style-feedback.mjs'],
-    extract: (text) => captures(text, /^export function (retainCompilerFeedback|applyRecordedCompilerFeedback)\(/gmu)
+    extract: (text) => captures(text, /^export function (retainCompilerFeedback|applyRecordedCompilerFeedback|readCompilerFeedbackCorrections)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
     recordOf: (name) => `translation.${name}`,
   },
@@ -902,7 +954,7 @@ export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
   const names = [];
   for (const { inventory, files, extract, recordOf = (name) => name, words = false, occurrences = false } of inventories) {
     for (const file of files) {
-      const text = existsSync(path.join(root, file)) ? readFileSync(path.join(root, file), 'utf8') : '';
+      const text = inventoryText(root, file);
       for (const name of occurrences ? extract(text, file) : new Set(extract(text, file))) names.push({ inventory, file, name, record: words ? null : recordOf(name) });
     }
   }
@@ -915,7 +967,7 @@ export function extractSourceDescriptions(root, inventories = NAME_INVENTORIES) 
   for (const { inventory, files, describe, recordOf = (name) => name } of inventories) {
     if (!describe) continue;
     for (const file of files) {
-      const text = existsSync(path.join(root, file)) ? readFileSync(path.join(root, file), 'utf8') : '';
+      const text = inventoryText(root, file);
       for (const entry of describe(text, file)) descriptions.push({ inventory, file, ...entry, record: recordOf(entry.name) });
     }
   }
@@ -949,7 +1001,7 @@ export function checkSourceDescriptions(records, descriptions) {
 export function extractFormerNames(root, tables = FORMER_NAME_TABLES) {
   const formers = [];
   for (const { table, file, extract, recordOf = (name) => name } of tables) {
-    const text = existsSync(path.join(root, file)) ? readFileSync(path.join(root, file), 'utf8') : '';
+    const text = inventoryText(root, file);
     for (const [former, current] of extract(text)) formers.push({ table, file, former, current, record: recordOf(current) });
   }
   return formers;

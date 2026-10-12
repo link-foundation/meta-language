@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectData, writeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const auditFile = 'parity/associative-stack-audit.json';
@@ -89,7 +90,7 @@ async function githubJson(path) {
 }
 
 async function main(args) {
-  const audit = JSON.parse(await readFile(join(root, auditFile), 'utf8'));
+  const audit = readProjectData(join(root, auditFile));
   const snapshots = new Map();
   if (args.includes('--refresh')) {
     const results = await Promise.allSettled(audit.guides.map(async guide => {
@@ -137,7 +138,7 @@ async function main(args) {
       await mkdir(dirname(join(root, file)), { recursive: true });
       await writeFile(join(root, file), bytes);
     }
-    await writeFile(join(root, auditFile), `${JSON.stringify(audit, null, 2)}\n`);
+    writeProjectData(join(root, auditFile), audit);
   }
   console.log(`Associative foundation source provenance: ${audit.guides.length} immutable revisions, ${snapshots.size} exact snapshots; execution evidence remains separate`);
 }

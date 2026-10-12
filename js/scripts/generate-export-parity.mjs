@@ -16,6 +16,7 @@
 // method or carries another name. An export that resolves to nothing fails the
 // generator, so a new JavaScript export cannot land without its Rust feature.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readProjectData, resolveProjectDataPath, serializeProjectData } from './project-data.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -342,12 +343,13 @@ const FIXTURE_ID: &str = "planned:repository-directive:i195-parity-feature-compl
 
 fn language_features() -> Value {
     let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    while !dir.join("parity/language-features.json").is_file() {
-        assert!(dir.pop(), "parity/language-features.json should exist");
+    while !dir.join("parity/language-features.lino").is_file() {
+        assert!(dir.pop(), "parity/language-features.lino should exist");
     }
-    let text = fs::read_to_string(dir.join("parity/language-features.json"))
-        .expect("parity/language-features.json should be readable");
-    serde_json::from_str(&text).expect("parity/language-features.json should be JSON")
+    let text = fs::read_to_string(dir.join("parity/language-features.lino"))
+        .expect("parity/language-features.lino should be readable");
+    meta_language::read_structured_data_lino(&text)
+        .expect("parity/language-features.lino should be linked structured data")
 }
 
 #[test]
@@ -380,7 +382,9 @@ export async function exportParity() {
   const javascript = await import(path.join(root, 'js/src/index.js'));
   const exportNames = Object.keys(javascript);
   const { entries, missing } = resolveExports(exportNames, rustPublicSurface());
-  const features = withExportsBlock(readFileSync(featuresPath, 'utf8'), entries);
+  const features = serializeProjectData(JSON.parse(withExportsBlock(
+    `${JSON.stringify(readProjectData(featuresPath), null, 2)}\n`, entries,
+  )), featuresPath);
   return { exportNames, entries, missing, features, rustTest: renderRustTest(entries) };
 }
 
@@ -397,7 +401,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const outputs = [[featuresPath, features], [rustTestPath, rustTest]];
   if (process.argv.includes('--check')) {
     for (const [file, expected] of outputs) {
-      const actual = existsSync(file) ? readFileSync(file, 'utf8') : '';
+      const actualFile = resolveProjectDataPath(file);
+      const actual = existsSync(actualFile) ? readFileSync(actualFile, 'utf8') : '';
       if (actual !== expected) {
         console.error(`${path.relative(root, file)} is stale: run node js/scripts/generate-export-parity.mjs`);
         failed = true;
@@ -405,7 +410,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }
     if (!failed) console.log(`export parity is current: ${Object.keys(entries).length} JavaScript exports map to Rust`);
   } else {
-    for (const [file, expected] of outputs) writeFileSync(file, expected);
+    for (const [file, expected] of outputs) writeFileSync(resolveProjectDataPath(file), expected);
     console.log(`wrote ${Object.keys(entries).length} export mappings`);
   }
   if (failed) process.exit(1);

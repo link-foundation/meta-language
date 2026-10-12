@@ -22,12 +22,13 @@ import {
   nameProblems,
 } from '../scripts/issue-195-naming.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const wordnet = loadWordNet();
 const registers = loadNamingRegisters(root);
 const context = { wordnet, vocabulary: registers.vocabulary };
-const { fixtures } = JSON.parse(readFileSync(new URL(`../../${NAMING_FIXTURES}`, import.meta.url), 'utf8'));
+const { fixtures } = readProjectData(new URL(`../../${NAMING_FIXTURES}`, import.meta.url));
 const repository = checkRepositoryNames(root, wordnet);
 
 function observe(assertions, testName) {

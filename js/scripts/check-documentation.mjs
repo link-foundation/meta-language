@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { auditDocumentation, completionState, fetchExternalTexts } from './issue-195-documentation.mjs';
+import { readProjectData } from './project-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
@@ -20,7 +21,7 @@ const option = (name) => {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : undefined;
 };
-const readJson = (file) => JSON.parse(readFileSync(path.resolve(file), 'utf8'));
+const readJson = (file) => readProjectData(path.resolve(file));
 
 const manifest = readJson(path.join(root, 'parity/issue-195-requirements.json'));
 const reportFile = option('--acceptance-report');

@@ -5,11 +5,11 @@
 //   node scripts/check-issue-195-sources.mjs --online   also against the live issue and PR comments
 //   node scripts/check-issue-195-sources.mjs --update   rewrite registered revisions from the live
 //                                                       discussion, after re-reading every edit
-import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { ISSUE_195_SOURCES, buildIssue195Manifest } from './issue-195-requirements.mjs';
+import { readProjectData, writeProjectData } from './project-data.mjs';
 import {
   ISSUE_195_SOURCE_REGISTER_PATH,
   compareWithLiveDiscussion,
@@ -23,11 +23,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const registerPath = path.join(root, ISSUE_195_SOURCE_REGISTER_PATH);
 const args = new Set(process.argv.slice(2));
 
-let register = JSON.parse(await readFile(registerPath, 'utf8'));
+let register = readProjectData(registerPath);
 if (args.has('--update')) {
   register = refreshRegister(register, await fetchLiveDiscussion());
   register.reconciledAt = new Date().toISOString().slice(0, 10);
-  await writeFile(registerPath, `${JSON.stringify(register, null, 2)}\n`);
+  writeProjectData(registerPath, register);
   console.log(`updated ${ISSUE_195_SOURCE_REGISTER_PATH}`);
 }
 

@@ -1,5 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { readProjectData, checkProjectData, resolveProjectDataPath } from './project-data.mjs';
 
 import {
   ASSERTION_PROFILES,
@@ -7,7 +8,7 @@ import {
   ISSUE_195_SOURCES,
   buildIssue195Manifest,
 } from './issue-195-requirements.mjs';
-import { buildLanguageCatalog, formatLanguageCatalog } from './build-language-catalog.mjs';
+import { buildLanguageCatalog } from './build-language-catalog.mjs';
 import { CHECKPOINTS, stageGateError } from './issue-195-evidence-stages.mjs';
 
 export {
@@ -168,7 +169,7 @@ export async function validateIssue195Manifest(manifest, root) {
       }
       for (const relativePath of paths) {
         try {
-          await access(path.join(root, relativePath));
+          await access(resolveProjectDataPath(path.join(root, relativePath)));
         } catch {
           errors.push(`${entry.id} ${runtime} entry point does not exist: ${relativePath}`);
         }
@@ -176,9 +177,7 @@ export async function validateIssue195Manifest(manifest, root) {
     }
   }
 
-  const inventory = JSON.parse(
-    await readFile(path.join(root, 'parity', 'language-grammar-inventory.json'), 'utf8'),
-  );
+  const inventory = readProjectData(path.join(root, 'parity', 'language-grammar-inventory.json'));
   const languageNames = new Set(inventory.languages.map(({ name }) => name));
   const extensionNames = new Set(Object.keys(inventory.extensionDispatch ?? {}));
   for (const name of languageNames) {
@@ -204,20 +203,19 @@ export async function validateIssue195Manifest(manifest, root) {
 
   // Both runtimes dispatch names, aliases, extensions, and default grammars
   // from the same generated catalog, so it must equal the inventory exactly.
-  const lock = JSON.parse(
-    await readFile(path.join(root, 'js', 'src', 'vendor', 'grammars', 'grammar-lock.json'), 'utf8'),
-  );
+  const lock = readProjectData(path.join(root, 'js', 'src', 'vendor', 'grammars', 'grammar-lock.json'));
   let expectedCatalog;
   try {
-    expectedCatalog = formatLanguageCatalog(buildLanguageCatalog(inventory, lock));
+    expectedCatalog = buildLanguageCatalog(inventory, lock);
   } catch (error) {
     errors.push(`language catalog cannot be generated: ${error.message}`);
   }
   if (expectedCatalog) {
     for (const runtime of ['js', 'rust']) {
       const catalogPath = path.join(root, runtime, 'src', 'data', 'language-catalog.json');
-      const shipped = await readFile(catalogPath, 'utf8').catch(() => undefined);
-      if (shipped !== expectedCatalog) {
+      try {
+        checkProjectData(catalogPath, expectedCatalog);
+      } catch {
         errors.push(`${runtime} language catalog does not match the inventory`);
       }
     }

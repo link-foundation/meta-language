@@ -6,6 +6,7 @@ import { buildCacheCleanupRequirements } from './issue-195-cache-requirements.mj
 import { CONSUMER_MATRIX, downstreamByRow, parseConsumerMatrix } from './issue-195-downstream.mjs';
 import { evidenceGroupFor } from './issue-195-evidence-plan.mjs';
 import { VISION_REQUIREMENTS, buildVisionRequirements, traceabilityFor } from './issue-195-vision-requirements.mjs';
+import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 
 export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
@@ -920,13 +921,13 @@ export async function buildIssue195Manifest(root) {
   const inventoryPath = path.join(root, 'parity', 'language-grammar-inventory.json');
   const corpusPath = path.join(root, 'parity', 'fixtures', 'four-language-conformance.json');
   const registerPath = path.join(root, 'parity', 'issue-195-sources.json');
-  const [inventoryText, corpusText, registerText, consumerMatrixText] = await Promise.all([
-    readFile(inventoryPath, 'utf8'),
-    readFile(corpusPath, 'utf8'),
-    readFile(registerPath, 'utf8'),
+  const [inventoryText, corpusText, register, consumerMatrixText] = await Promise.all([
+    readProjectFileBytes(inventoryPath),
+    readProjectFileBytes(corpusPath),
+    readProjectData(registerPath),
     readFile(path.join(root, CONSUMER_MATRIX), 'utf8'),
   ]);
-  const inventory = JSON.parse(inventoryText);
+  const inventory = readProjectData(inventoryPath);
   const fixtureCatalog = {};
   const requirements = [
     ...buildCstRequirements(inventory, fixtureCatalog),
@@ -1020,7 +1021,6 @@ export async function buildIssue195Manifest(root) {
       },
     }),
   ];
-  const register = JSON.parse(registerText);
   const consumersByRow = downstreamByRow(parseConsumerMatrix(consumerMatrixText));
   for (const entry of requirements) {
     entry.traceability = traceabilityFor(entry, { fixtureCatalog, register, evidenceGroupFor, consumersByRow });
@@ -1033,7 +1033,7 @@ export async function buildIssue195Manifest(root) {
   for (const fixture of Object.values(fixtureCatalog)) {
     if (fixture.path && !digests[fixture.path]) {
       try {
-        digests[fixture.path] = sha256(await readFile(path.join(root, fixture.path), 'utf8'));
+        digests[fixture.path] = sha256(readProjectFileBytes(path.join(root, fixture.path)));
       } catch {
         // The manifest keeps a null digest so the aggregate gate fails closed.
       }
