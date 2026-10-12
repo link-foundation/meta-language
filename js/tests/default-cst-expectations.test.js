@@ -3,6 +3,7 @@ import { readProjectData, resolveProjectDataPath } from '../scripts/project-data
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { appendFile, readFile } from 'node:fs/promises';
+import { structuredDataRecordToLino } from '../src/structured-data-records.js';
 import { test } from 'node:test';
 
 import {
@@ -210,7 +211,7 @@ const languageSlug = (name) => name.normalize('NFKD').toLowerCase()
 
 async function recordPositiveCstObservations(language, testName) {
   if (!process.env.ISSUE_195_OBSERVATION_FILE) return;
-  const records = CST_POSITIVE_ASSERTIONS.map((assertionId) => JSON.stringify({
+  const records = CST_POSITIVE_ASSERTIONS.map((assertionId) => structuredDataRecordToLino({
     testId: `i195-cst-${languageSlug(language)}-javascript-positive`,
     assertionId,
     fixtureId: `inventory:${language}`,
@@ -220,7 +221,7 @@ async function recordPositiveCstObservations(language, testName) {
     outcome: 'passed',
     testName,
   }));
-  await appendFile(process.env.ISSUE_195_OBSERVATION_FILE, `${records.join('\n')}\n`);
+  await appendFile(process.env.ISSUE_195_OBSERVATION_FILE, records.join(''));
 }
 
 /** The Syntax links below `root` with their child Syntax and SourceToken links. */
@@ -446,7 +447,7 @@ test(EMBEDDED_TEST_NAME, async () => {
 
 async function recordEmbeddedCstObservations({ host, target }) {
   if (!process.env.ISSUE_195_OBSERVATION_FILE) return;
-  const records = CST_POSITIVE_ASSERTIONS.map((assertionId) => JSON.stringify({
+  const records = CST_POSITIVE_ASSERTIONS.map((assertionId) => structuredDataRecordToLino({
     testId: `i195-embed-${languageSlug(host)}-${languageSlug(target)}-javascript-positive`,
     assertionId,
     fixtureId: `planned:embedded:${host}:${target}`,
@@ -456,5 +457,5 @@ async function recordEmbeddedCstObservations({ host, target }) {
     outcome: 'passed',
     testName: EMBEDDED_TEST_NAME,
   }));
-  await appendFile(process.env.ISSUE_195_OBSERVATION_FILE, `${records.join('\n')}\n`);
+  await appendFile(process.env.ISSUE_195_OBSERVATION_FILE, records.join(''));
 }

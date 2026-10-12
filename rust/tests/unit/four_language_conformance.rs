@@ -3,6 +3,7 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
+use meta_language::structured_data_records::structured_data_record_to_lino;
 use meta_language::{
     LANGUAGE_REPRESENTATION_SCHEMA_VERSION, LinkId, LinkNetwork, LinkQuery, LinkType,
     ParseConfiguration, ProgramConstructStatus, ProgramProjectContext, ProgramRepresentation,
@@ -62,7 +63,8 @@ fn record_negative_cst_observation(language: &str, assertion_id: &str, fixture_d
     });
     // One `write` call, so records of the concurrently running JavaScript and
     // Rust suites never interleave.
-    let line = format!("{record}\n");
+    let line =
+        structured_data_record_to_lino(&record).expect("observation Links record serializes");
     let mut file = fs::OpenOptions::new()
         .append(true)
         .create(true)

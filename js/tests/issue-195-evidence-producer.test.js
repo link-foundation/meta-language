@@ -13,6 +13,7 @@ import {
   observedEvidenceForCell,
 } from '../scripts/issue-195-evidence-plan.mjs';
 import { runTestCommand } from './support/child-test-output.js';
+import { readStructuredDataRecords } from '../src/structured-data-records.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -101,7 +102,7 @@ test('executed translation callbacks reach the evaluator; green no-op and missin
     atomicRequirements: [{ ...requirement, verifications: [cell] }],
   };
   const directory = await mkdtemp(path.join(tmpdir(), 'issue-195-execution-'));
-  const observations = path.join(directory, 'records.jsonl');
+  const observations = path.join(directory, 'records.lino');
   const commit = 'observed-commit';
   const documentFromRecords = (records) => {
     const observed = observedEvidenceForCell(cell, records);
@@ -116,7 +117,7 @@ test('executed translation callbacks reach the evaluator; green no-op and missin
         command: 'node --test tests/issue-195-translation-pairs.test.js',
         toolchainVersions: { node: process.version },
         grammarVersions: { manifest: 'test' },
-        evidenceArtifacts: ['execution-records.jsonl'],
+        evidenceArtifacts: ['execution-records.lino'],
         failureLogs: [],
         assertionsPassed: observed.assertionsPassed,
         executionRecords: observed.executionRecords,
@@ -142,8 +143,7 @@ test('executed translation callbacks reach the evaluator; green no-op and missin
       stdio: 'pipe',
     }).toString();
     assert.match(testOutput, /Rust -> JavaScript translation of the project corpus/u);
-    const records = (await readFile(observations, 'utf8')).trim().split('\n')
-      .map(JSON.parse).filter((record) => record.testId === cell.testId
+    const records = readStructuredDataRecords(await readFile(observations, 'utf8')).filter((record) => record.testId === cell.testId
         && cell.assertions.includes(record.assertionId));
     assert.equal(records.length, cell.assertions.length * cell.fixtureIds.length);
     assert.equal(evaluate(records).passed, true);
@@ -172,7 +172,7 @@ test('executed translation callbacks reach the evaluator; green no-op and missin
 test('inventory malformed-input checks emit observed evidence for each JavaScript CST cell', async () => {
   const manifest = await buildIssue195Manifest(root);
   const directory = await mkdtemp(path.join(tmpdir(), 'issue-195-cst-negative-'));
-  const observations = path.join(directory, 'records.jsonl');
+  const observations = path.join(directory, 'records.lino');
   const commit = 'observed-cst-commit';
   try {
     const childEnvironment = {
@@ -184,7 +184,7 @@ test('inventory malformed-input checks emit observed evidence for each JavaScrip
       '--test', '--test-name-pattern=every JavaScript grammar inventory frontend retains',
       'tests/four-language-conformance.test.js',
     ], { cwd: path.join(root, 'js'), env: childEnvironment, stdio: 'pipe' });
-    const records = (await readFile(observations, 'utf8')).trim().split('\n').map(JSON.parse);
+    const records = readStructuredDataRecords(await readFile(observations, 'utf8'));
     const cells = manifest.atomicRequirements
       .filter(({ area }) => area === 'default-cst')
       .flatMap(({ verifications }) => verifications)
@@ -216,7 +216,7 @@ test('inventory malformed-input checks emit observed evidence for each JavaScrip
           command: 'node --test tests/four-language-conformance.test.js',
           toolchainVersions: { node: process.version },
           grammarVersions: { inventory: 'schema-1' },
-          evidenceArtifacts: ['execution-records.jsonl'],
+          evidenceArtifacts: ['execution-records.lino'],
           failureLogs: [],
           assertionsPassed: observed.assertionsPassed,
           executionRecords: observed.executionRecords,

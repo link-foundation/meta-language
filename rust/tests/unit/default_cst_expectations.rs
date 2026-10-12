@@ -3,6 +3,7 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
+use meta_language::structured_data_records::structured_data_record_to_lino;
 use meta_language::{
     LinkId, LinkNetwork, LinkType, ParseConfiguration, grammar_names, grammar_provenance,
     language_candidates_for_path, language_for_path, oracle_grammar_provenance,
@@ -412,8 +413,9 @@ fn record_positive_cst_observations(language: &str, fixture_digest: &str) {
             "outcome": "passed",
             "testName": POSITIVE_TEST_NAME,
         });
-        records.push_str(&record.to_string());
-        records.push('\n');
+        records.push_str(
+            &structured_data_record_to_lino(&record).expect("observation Links record serializes"),
+        );
     }
     append_observations(&path, &records);
 }
@@ -973,8 +975,9 @@ fn record_embedded_cst_observations(host: &str, target: &str, fixture_digest: &s
             "outcome": "passed",
             "testName": EMBEDDED_TEST_NAME,
         });
-        records.push_str(&record.to_string());
-        records.push('\n');
+        records.push_str(
+            &structured_data_record_to_lino(&record).expect("observation Links record serializes"),
+        );
     }
     append_observations(&path, &records);
 }

@@ -8,6 +8,7 @@
 import { createHash } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
 import { readProjectFileBytes } from '../../scripts/project-data.mjs';
+import { structuredDataRecordToLino } from '../../src/structured-data-records.js';
 
 const repositoryRoot = new URL('../../../', import.meta.url);
 
@@ -57,7 +58,7 @@ export function recordIssue195Observations({
     const key = `${testId}\u0000${assertionId}\u0000${fixtureId}`;
     if (recorded.has(key)) continue;
     recorded.add(key);
-    lines.push(JSON.stringify({
+    lines.push(structuredDataRecordToLino({
       testId, assertionId, fixtureId, fixtureDigest,
       runtime, commit: process.env.ISSUE_195_COMMIT,
       outcome: 'passed', testName,
@@ -65,7 +66,7 @@ export function recordIssue195Observations({
   }
   // One append per call, so records of concurrently running suites never
   // interleave within a line.
-  if (lines.length > 0) appendFileSync(path, `${lines.join('\n')}\n`);
+  if (lines.length > 0) appendFileSync(path, lines.join(''));
 }
 
 // Records a tooling cell of a repository-directive row, whose fixture is the
