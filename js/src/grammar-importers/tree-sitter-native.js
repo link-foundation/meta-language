@@ -550,10 +550,10 @@ export function importTreeSitterNative(source, options = {}) {
       }
       case 'NATIVE_PREFIX_EXCLUSION': {
         const prefix = expr(node.prefixes, true, keywords);
-        // An immediate exclusion is a raw, zero-width assertion. Put the
-        // negation inside token context so its inspected text is never
-        // registered as a consumed lexical separator.
-        const guard = node.immediate ? `(and (immediateToken (not ${prefix})))` : `(not (token ${prefix}))`;
+        // Keep the tested prefix zero-width, while retaining an exclusion's
+        // negative semantics when an immediate token retries after extras.
+        // The inspected text is never a consumed lexical separator.
+        const guard = node.immediate ? `(not (immediateToken (and ${prefix})))` : `(not (token ${prefix}))`;
         return `(seq ${guard} ${expr(node.content, inToken, keywords, aliased)})`;
       }
       case 'NATIVE_KEYWORD_CONTEXT_VARIANT': return `(choice ordered ${expr(node.preferred, inToken, keywords, aliased)} ${expr(node.content, inToken, keywords, aliased)})`;

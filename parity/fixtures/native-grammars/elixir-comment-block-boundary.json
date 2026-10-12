@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "language": "Elixir",
+  "source": "tree-sitter-elixir",
+  "corpus": { "file": "do_end.txt", "title": "newline before do" },
+  "decision": {
+    "family": "trivia-continuation-boundary",
+    "rule": "_terminator",
+    "pattern": "\\r?\\n",
+    "triviaRules": ["comment"],
+    "horizontalPattern": "[ \\t]",
+    "continuationLiteral": "do",
+    "continuationPattern": "[\\p{ID_Continue}?!]",
+    "continuationFlags": "u",
+    "count": 2,
+    "reason": "A newline before registered comment extras cannot terminate a call whose next noncomment source line is its do-block continuation. Preserve the actual comments as extras while retrying the existing newline boundary after them."
+  },
+  "matches": [
+    "fun x\n# comment\ndo\n x\nend\n",
+    "fun x\n# one\n\n# two\n  do\n x\nend\n"
+  ]
+}
