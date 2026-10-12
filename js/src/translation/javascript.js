@@ -19,6 +19,7 @@ import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 import { bindArrayElements, isLiteralBinding, readArrayBinding, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
 import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './primitive-value-rules.js';
+import { validateJavaScriptProducts } from './javascript-products.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
@@ -107,6 +108,7 @@ class JavaScriptParser {
     this.inAsync = true;
     this.unawaited = [];
     this.sequentialAsync = false;
+    this.exportedNames = new Set();
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -150,6 +152,8 @@ class JavaScriptParser {
         if (!c.is('function') && !c.is('const') && !(c.is('async') && c.is('function', 1))) {
           throw unsupported(`export ${describe(c.peek())}`, 'only function and const declarations are exported', span(start, c.peek()));
         }
+        const name = c.is('async') ? c.peek(2) : c.peek(1);
+        if (name.kind === 'identifier') this.exportedNames.add(name.value);
       }
       if (c.is('async') && c.is('function', 1)) {
         c.next();
@@ -204,6 +208,7 @@ class JavaScriptParser {
     if (this.imports.length) program.imports = this.imports;
     if (this.externals.size) program.externals = [...this.externals.values()];
     const inferred = inferJavaScriptTypes(program);
+    validateJavaScriptProducts(inferred, this.exportedNames);
     if (this.referenceSemanticsEnabled && hasStructuralIdentity(inferred)) inferred.referenceSemantics = true;
     return inferred;
   }
@@ -1954,10 +1959,15 @@ class JavaScriptParser {
     }
     if (name === 'String' && args.length === 1) return { k: 'toString', arg: args[0], span: called };
     if (name === 'Object.freeze' && args.length === 1) {
+      if (this.functionNames.has('Object') || this.externals.has('Object')) throw unsupported('shadowed Object.freeze', 'immutable products require the actual unshadowed Object.freeze built-in', called);
       const value = args[0];
       const literalArray = (item) => ['num', 'bool', 'str', 'none'].includes(item.k)
         || item.k === 'array' && item.items.every((entry) => !entry.spread && literalArray(entry.value));
       const readonlyLiteral = this.readonlyConstantInitializer && value.k === 'array' && literalArray(value);
+      if (!readonlyLiteral && value.k === 'array') {
+        if (!value.items.length || value.items.some((item) => item.spread || item.value.k === 'array')) throw unsupported('immutable tuple product', 'a fresh nonempty dense array needs scalar Copy elements or separately frozen nested products', called);
+        return { k: 'tuple', items: value.items.map(item => item.value), frozen: true, productModel: 'immutable value product', span: called };
+      }
       if (!acceptObjectFreezeOperand(value.k, readonlyLiteral)) throw unsupported('Object.freeze operand',
         'freezing this value needs an explicit property-descriptor operation; only direct tagged objects and readonly literal module constants are represented', called);
       return { ...value, ...(value.k === 'ctorObject' && { frozen: true }), span: called };

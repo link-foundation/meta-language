@@ -140,7 +140,7 @@ function flat(statements) {
 }
 
 /** The body of the function `name` of `params` from its statements. */
-export function lowerImperative(parser, name, params, statements, where, externalCells = new Set()) {
+export function lowerImperative(parser, name, params, statements, where, externalCells = new Set(), externalBindings = new Set()) {
   const cells = union(mutableClosureCells(statements), externalCells);
   if (cells.size) parser.referenceSemantics = true;
   const lowering = new Lowering(parser, name, cells);
@@ -152,7 +152,9 @@ export function lowerImperative(parser, name, params, statements, where, externa
     cont: () => internal('continue outside a loop', where),
     ...dead(),
   };
-  const scope = [...externalCells].filter((cell) => !params.some((param) => param.name === cell)).map((cell) => ({ source: cell, ir: cell, reference: true }));
+  const captured = new Set([...externalCells, ...externalBindings]);
+  const scope = [...captured].filter((name) => !params.some((param) => param.name === name))
+    .map((name) => ({ source: name, ir: name, ...(externalCells.has(name) && { reference: true }) }));
   for (const param of params) scope.push({ source: param.name, ir: cells.has(param.name) ? `ml_cell_${param.name}` : param.name, ...(cells.has(param.name) && { reference: true }) });
   let body = lowering.seq(flat(statements), 0, ctx, scope);
   for (const param of [...params].reverse()) {

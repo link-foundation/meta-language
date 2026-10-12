@@ -29,8 +29,9 @@ export function readClosure(parser, method = false) {
     const { assigned, free } = statementUses(statements, new Set(names));
     const assignedCaptures = [...assigned].filter((name) => outer.locals.has(name));
     if (assignedCaptures.length && !parser.referenceSemantics) throw unsupported('mutable closure capture', 'captured assignments require a shared cell across calls', where);
-    const body = imperative(statements) ? lowerImperative(parser, `closure${++parser.generatedCount}`, params, statements, where, new Set(assignedCaptures)) : parser.lower(statements, where);
-    return { k: 'lambda', params, ret: null, captures: [...free].filter((name) => outer.locals.has(name)), ...(assignedCaptures.length ? { assignedCaptures } : {}), body, span: where };
+    const captures = [...free].filter((name) => outer.locals.has(name));
+    const body = imperative(statements) ? lowerImperative(parser, `closure${++parser.generatedCount}`, params, statements, where, new Set(assignedCaptures), new Set(captures)) : parser.lower(statements, where);
+    return { k: 'lambda', params, ret: null, captures, ...(assignedCaptures.length ? { assignedCaptures } : {}), body, span: where };
   } finally {
     parser.scope = outer;
     parser.jumps = outerJumps;
@@ -56,7 +57,7 @@ export function validateClosureCaptures(statements, references = false) {
   }
 }
 
-export function readArrayBinding(parser) {
+export function readArrayBinding(parser, path = []) {
   const c = parser.cursor;
   c.expect('[', 'array binding');
   const bindings = [];
@@ -64,10 +65,16 @@ export function readArrayBinding(parser) {
   while (!c.is(']')) {
     if (c.eat(',')) { index += 1; continue; }
     if (c.is('...')) throw unsupported('array rest binding', 'rest binding needs an array suffix operation', c.peek());
+    if (c.is('[')) {
+      bindings.push(...readArrayBinding(parser, [...path, index]));
+      index += 1;
+      if (!c.eat(',')) break;
+      continue;
+    }
     const token = c.identifier('array binding');
     if (token.value.startsWith('ml_')) throw unsupported('reserved identifier', `${token.value} uses the translator's reserved ml_ prefix`, token);
     if (c.is('=')) throw unsupported('array binding default', 'a missing element needs an undefined-aware default', token);
-    bindings.push({ name: token.value, index, span: { start: token.start, end: token.end } });
+    bindings.push({ name: token.value, index, ...(path.length ? { path: [...path, index] } : {}), span: { start: token.start, end: token.end } });
     index += 1;
     if (!c.eat(',')) break;
   }
@@ -78,7 +85,7 @@ export function readArrayBinding(parser) {
 export function bindArrayElements(bindings, object, binding, where) {
   return bindings.map((entry) => ({
     s: binding, name: entry.name,
-    value: { k: 'index', object, index: { k: 'num', value: String(entry.index), span: entry.span }, span: entry.span },
+    value: (entry.path ?? [entry.index]).reduce((value, index) => ({ k: 'index', object: value, index: { k: 'num', value: String(index), span: entry.span }, ...(entry.path && { productBinding: true }), span: entry.span }), object),
     span: where,
   }));
 }

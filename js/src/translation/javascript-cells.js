@@ -28,6 +28,8 @@ export function mutableClosureCells(statements) {
 export function markSharedReferenceTypes(program) {
   if (!program.referenceSemantics) return program;
   const copies = new WeakMap();
+  const inferredTypes = program.inferredExpressionTypes;
+  const copiedTypes = inferredTypes ? new WeakMap() : null;
   function visit(node) {
     if (!node || typeof node !== 'object') return node;
     if (copies.has(node)) return copies.get(node);
@@ -42,7 +44,10 @@ export function markSharedReferenceTypes(program) {
     copies.set(node, copy);
     for (const [key, value] of Object.entries(node)) copy[key] = visit(value);
     if (['array', 'record', 'map', 'set'].includes(node.kind)) copy.reference = true;
+    if (inferredTypes?.has(node)) copiedTypes.set(copy, visit(inferredTypes.get(node)));
     return copy;
   }
-  return visit(program);
+  const result = visit(program);
+  if (copiedTypes) Object.defineProperty(result, 'inferredExpressionTypes', { value: copiedTypes });
+  return result;
 }

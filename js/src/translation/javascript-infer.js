@@ -10,6 +10,7 @@ import { typeError } from './diagnostics.js';
 import { acceptArgumentCount } from './frontend-rules.js';
 import { BOOL, FLOAT, INT, STRING, UNIT, option, sameType } from './types.js';
 import { markSharedReferenceTypes } from './javascript-cells.js';
+import { requiresJavaScriptProductProof } from './javascript-products.js';
 
 const ROOT = 'crate';
 const LOGICAL = new Set(['and', 'or']);
@@ -22,8 +23,9 @@ export function inferJavaScriptTypes(program) {
   collectFunctions(program.items, [ROOT], functions);
   const untyped = program.items.some((item) => item.k === 'data' && item.ctors.some((ctor) => ctor.fields.some((field) => !field.type)));
   if (!untyped && functions.every(({ fn }) => fn.ret && fn.params.every((param) => param.type)) && !hasStructuralInference(program)) return markSharedReferenceTypes(program);
-  const inference = new Inference(program.items);
+  const inference = new Inference(program.items, requiresJavaScriptProductProof(program));
   inference.run(functions, program.main, program.externals ?? []);
+  if (inference.recordExpressionTypes) Object.defineProperty(program, 'inferredExpressionTypes', { value: inference.expressionTypes });
   return markSharedReferenceTypes(program);
 }
 
@@ -37,13 +39,13 @@ function collectFunctions(items, path, into) {
 function hasStructuralInference(node) {
   if (!node || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(hasStructuralInference);
-  if (['none', 'coalesce', 'optionalField', 'record', 'lambda', 'method', 'map', 'set', 'arrayFrom', 'arrayIsArray', 'copySlice', 'forOfIterable', 'stringPoints', 'functionValue', 'cellAllocate', 'cellRead', 'cellWrite', 'referenceWrite', 'index'].includes(node.k)) return true;
+  if (['none', 'coalesce', 'optionalField', 'record', 'lambda', 'method', 'map', 'set', 'arrayFrom', 'arrayIsArray', 'copySlice', 'forOfIterable', 'stringPoints', 'functionValue', 'cellAllocate', 'cellRead', 'cellWrite', 'referenceWrite', 'index', 'tuple', 'tupleIndex'].includes(node.k)) return true;
   if (['option', 'tuple', 'record', 'map', 'set', 'function'].includes(node.kind)) return true;
   return Object.entries(node).some(([key, value]) => key !== 'span' && hasStructuralInference(value));
 }
 
 class Inference {
-  constructor(items) {
+  constructor(items, recordExpressionTypes = false) {
     // Constructors of every data type, by tag.
     this.data = new Map();
     for (const item of items) {
@@ -73,6 +75,9 @@ class Inference {
     this.joins = [];
     this.results = [];
     this.calls = [];
+    this.expressionTerms = new Map();
+    this.expressionTypes = new WeakMap();
+    this.recordExpressionTypes = recordExpressionTypes;
   }
 
   fresh(bigint = false) {
@@ -281,6 +286,7 @@ class Inference {
       else if (effect.k === 'assert') this.prop(effect.prop, env);
     }
     this.solve();
+    for (const [node, term] of this.expressionTerms) this.expressionTypes.set(node, this.surface(term, node.span));
     for (const { path, fn } of functions) {
       const signature = this.signatures.get(path.join('.'));
       fn.params.forEach((param, index) => {
@@ -600,6 +606,12 @@ class Inference {
   }
 
   expr(node, env, expected = undefined) {
+    const term = this.inferExpression(node, env, expected);
+    if (this.recordExpressionTypes) this.expressionTerms.set(node, term);
+    return term;
+  }
+
+  inferExpression(node, env, expected = undefined) {
     switch (node.k) {
       case 'num':
         // The 1 of `x++` has the type of `x`, a Number or a BigInt.
@@ -749,6 +761,12 @@ class Inference {
         return this.expr(node.body, env, expected);
       case 'ctorObject':
         return this.ctorObject(node, env);
+      case 'tuple': {
+        const want = expected && this.resolve(expected);
+        const term = { kind: 'tuple', elements: node.items.map((item, index) => this.expr(item, env, want?.kind === 'tuple' ? want.elements[index] : undefined)) };
+        if (want) this.unify(term, want, node.span);
+        return term;
+      }
       case 'array': {
         const want = expected && this.resolve(expected);
         if (want?.kind === 'tuple' && !node.items.some((item) => item.spread)) {
@@ -823,10 +841,12 @@ class Inference {
           if (unknown) this.unify(type, item.spread ? { kind: 'array', element: FLOAT } : FLOAT, item.value.span ?? node.span);
         }
         return ['isInteger', 'isSafeInteger', 'isFinite', 'isNaN'].includes(node.op) ? BOOL : FLOAT;
+      case 'tupleIndex':
       case 'index': {
         const element = this.fresh();
-        this.indices.push({ object: this.expr(node.object, env), index: node.index, node, result: element, where: node.object.span ?? node.span });
-        this.expr(node.index, env);
+        const index = node.k === 'tupleIndex' ? { k: 'num', value: String(node.index), span: node.span } : node.index;
+        this.indices.push({ object: this.expr(node.object, env), index, node, result: element, where: node.object.span ?? node.span });
+        if (node.k === 'index') this.expr(node.index, env);
         return element;
       }
       case 'length':
