@@ -158,7 +158,7 @@ pub(super) struct Executor<'c> {
     pub(super) immediate_memo: HashMap<usize, Option<Rc<ImmediateLiterals>>>,
     /// The reach of each lexical expression's match from an offset, by the
     /// expression's address and the offset (see `prefix_reach`).
-    pub(super) prefix_reaches: HashMap<(usize, usize), usize>,
+    pub(super) prefix_reaches: HashMap<(usize, usize, State), usize>,
 }
 
 /// An element whose scan a repair point keeps (see `element_failed`): an
@@ -499,7 +499,7 @@ impl<'c> Executor<'c> {
                 let starts = if matches!(expr, Expr::Token(_)) {
                     let skipped = self.terminal_start(position, state, in_token)?;
                     if self.lexing.is_some() && !skipped.leaves.is_empty() {
-                        vec![self.token_before_extra(item, skipped, state)?]
+                        vec![self.token_before_extra(item, skipped)?]
                     } else {
                         vec![skipped]
                     }
@@ -538,7 +538,7 @@ impl<'c> Executor<'c> {
                 }
                 let lexed = (|| -> Run<()> {
                     for skipped in &starts {
-                        for result in self.token_leaf(item, skipped, state, in_token)? {
+                        for result in self.token_leaf(item, skipped, &skipped.state, in_token)? {
                             if let Some(keywords) = keywords {
                                 let call =
                                     self.call_stack.last().and_then(|frame| frame.borrow().call);
@@ -571,6 +571,7 @@ impl<'c> Executor<'c> {
                     return Ok(results);
                 }
                 let skipped = &starts[0];
+                let state = &skipped.state;
                 let (kind, literal) = missing_of(item);
                 self.element_failed(
                     skipped.end,
@@ -873,6 +874,7 @@ impl<'c> Executor<'c> {
             return Ok(results);
         }
         let skipped = self.terminal_start(position, state, in_token)?;
+        let state = &skipped.state;
         let start = skipped.end;
         let mut cursor = start;
         while cursor < self.end {
@@ -906,6 +908,7 @@ impl<'c> Executor<'c> {
     ) -> Run<Vec<Res>> {
         let program_index = self.compiled.languages[&**language];
         let skipped = self.terminal_start(position, state, in_token)?;
+        let state = &skipped.state;
         let start = skipped.end;
         let regions = self.evaluate(item, start, state, true)?;
         let mut results = Vec::new();

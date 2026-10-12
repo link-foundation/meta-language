@@ -2278,7 +2278,8 @@ export class Executor {
   }
 
   // Skips trivia: repeatedly the longest match of any trivia expression
-  // allowed in the current mode. Returns the new offset and the trivia leaves.
+  // allowed in the current mode. State follows the selected parse, with a
+  // snapshot at each leaf boundary for tokens that retake an extra's text.
   // Inside an extra that builds a node, only the extras that are no rule
   // (white space) are trivia, unless the extra's rule reaches no scanner
   // token: then every extra nests in it, as a tree-sitter lexer lexes extras
@@ -2286,7 +2287,7 @@ export class Executor {
   // the extra is its own rule's first token.
   skipTrivia(position, state) {
     const { trivia } = this.program;
-    if (trivia.length === 0) return { end: position, leaves: NO_CHILDREN };
+    if (trivia.length === 0) return { end: position, leaves: NO_CHILDREN, state, states: [state] };
     const outrank = this.lexFrame(position)?.outranks?.get(position) ?? 0;
     // A separator an immediate token takes there is lexed, not skipped (see
     // `KeywordLexing`).
@@ -2295,12 +2296,14 @@ export class Executor {
     const key = `${position}|${state.key}|${this.inExtra}|${atExtra}|${outrank}`;
     const cached = this.triviaMemo.get(key);
     if (cached) return cached;
-    const mode = state.modes[state.modes.length - 1];
+    let current = state;
     const leaves = [];
+    const states = [state];
     let cursor = position;
     // A tree-sitter lexer skips a byte order mark at the start of the input.
     if (position === 0 && this.longestTokens && this.bytes[0] === 0xef && this.bytes[1] === 0xbb && this.bytes[2] === 0xbf) {
       leaves.push({ type: 'token', kind: null, start: 0, end: 3, trivia: true });
+      states.push(current);
       cursor = 3;
     }
     const context = this.scanContext;
@@ -2309,35 +2312,42 @@ export class Executor {
     for (;;) {
       let best = cursor;
       let bestKind = null;
+      let bestResult = null;
+      const mode = current.modes[current.modes.length - 1];
       for (const item of trivia) {
         if (item.modes && !item.modes.includes(mode)) continue;
         if (item.kind !== null && (this.inExtra === true || (atExtra && cursor === position))) continue;
         if (cursor === position && outrank > 0 && this.priorityOf(item.expression) < outrank) continue;
         if (cursor === position && lexed && item.kind === null) continue;
-        const end = this.quietly(() => longestResult(this.evaluate(item.expression, cursor, state, true))?.end ?? -1);
+        const result = this.quietly(() => longestResult(this.evaluate(item.expression, cursor, current, true)));
+        const end = result?.end ?? -1;
         if (end > best) {
           best = end;
           bestKind = item.kind;
+          bestResult = result;
         }
       }
       if (best === cursor) break;
-      const extra = this.extraNode(bestKind, cursor, best, state);
+      const extra = this.extraNode(bestKind, cursor, best, current);
       if (extra === NO_EXTRA) break;
       // An external extra may skip a prefix before its named token. Keep the
       // prefix as separate whitespace, as scannerToken does for syntax tokens.
       const scanned = extra === null && this.program.externalTokens.has(bestKind)
-        ? this.runScanner(bestKind, cursor, state, position) : null;
+        ? this.runScanner(bestKind, cursor, current, position) : null;
       if (scanned?.end === best) {
         leaves.push(...scanned.skipped, { type: 'token', kind: bestKind, start: scanned.tokenStart, end: best, trivia: true });
       } else {
         leaves.push(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true });
       }
       cursor = extra?.end ?? best;
+      while (states.length <= leaves.length) states.push(current);
+      current = extra?.state ?? bestResult.state;
+      states[leaves.length] = current;
     }
     } finally {
       this.scanContext = context;
     }
-    const skipped = { end: cursor, leaves };
+    const skipped = { end: cursor, leaves, state: current, states };
     this.triviaMemo.set(key, skipped);
     return skipped;
   }
@@ -2375,7 +2385,7 @@ export class Executor {
         if (order > 0 || (order === 0 && result.end > best.end)) best = result;
       }
       const node = best?.children.find((child) => child.type === 'node');
-      return node ? { node: { ...node, trivia: true }, end: best.end } : null;
+      return node ? { node: { ...node, trivia: true }, end: best.end, state: best.state } : null;
     } finally {
       this.inExtra = outer;
       this.extraStart = outerStart;
@@ -2412,7 +2422,7 @@ export class Executor {
 
   // The start of a terminal: after trivia in syntactic context, at once in token context.
   terminalStart(position, state, inToken) {
-    return inToken ? { end: position, leaves: NO_CHILDREN } : this.skipTrivia(position, state);
+    return inToken ? { end: position, leaves: NO_CHILDREN, state, states: [state] } : this.skipTrivia(position, state);
   }
 
   // The starts of an immediate token: at once, or, in syntactic context under
@@ -2420,11 +2430,11 @@ export class Executor {
   // (such as a comment): a lexer skips no separator before an immediate token,
   // but lexes an extra token before it as before any other.
   immediateStarts(position, state, inToken) {
-    const starts = [{ end: position, leaves: NO_CHILDREN }];
+    const starts = [{ end: position, leaves: NO_CHILDREN, state, states: [state] }];
     if (inToken || !this.lexing) return starts;
-    const { leaves } = this.skipTrivia(position, state);
+    const { leaves, states } = this.skipTrivia(position, state);
     leaves.forEach((leaf, index) => {
-      if (leaf.kind !== null) starts.push({ end: leaf.end, leaves: leaves.slice(0, index + 1) });
+      if (leaf.kind !== null) starts.push({ end: leaf.end, leaves: leaves.slice(0, index + 1), state: states[index + 1], states: states.slice(0, index + 2) });
     });
     return starts;
   }
@@ -2480,18 +2490,18 @@ export class Executor {
   // lexical conflict with it, lexing longer at no lower precedence or matching a
   // nonempty token at a higher one: Make's `raw_line` of a define directive, `#comment\n`,
   // is no comment of a lower precedence.
-  tokenBeforeExtra(item, start, leaves, state) {
+  tokenBeforeExtra(item, start, leaves, states) {
     const level = this.priorityOf(item);
-    const at = leaves.findIndex((leaf) => {
+    const at = leaves.findIndex((leaf, index) => {
       const plain = isSeparator(leaf) || this.silentExtra(leaf);
       const rule = !plain && leaf.type === 'token' && leaf.trivia === true && leaf.kind !== null ? this.program.rules.get(leaf.kind) : null;
       if (!plain && rule?.kind !== 'token') return false;
-      const reach = this.quietly(() => longestResult(this.evaluate(item, leaf.start, state, true))?.end ?? -1);
+      const reach = this.quietly(() => longestResult(this.evaluate(item, leaf.start, states[index], true))?.end ?? -1);
       if (plain) return reach >= leaf.end;
       const other = rule.lexicalPriority ?? 0;
       return (reach > leaf.end && level >= other) || (reach > leaf.start && level > other);
     });
-    if (at >= 0 && isSeparator(leaves[at]) && this.quietly(() => longestResult(this.evaluate(item, leaves[at].start, state, true))?.end ?? -1) > start) {
+    if (at >= 0 && isSeparator(leaves[at]) && this.quietly(() => longestResult(this.evaluate(item, leaves[at].start, states[at], true))?.end ?? -1) > start) {
       const chain = this.callStack.filter((entry) => entry.rule.kind === 'normal').map((entry) => [entry.rule.nodeKind, entry.position]);
       const chains = this.separatorTaken.get(leaves[at].start) ?? new Map();
       this.separatorTaken.set(leaves[at].start, chains.set(chain.join('>'), chain));
@@ -2503,13 +2513,13 @@ export class Executor {
       // only the separator goes on (Make's `\\` before a newline); one alive
       // at the separator's end reads on from the lexer's start state.
       const call = this.callStack[this.callStack.length - 1] ?? null;
-      for (const leaf of leaves.slice(0, at < 0 ? leaves.length : at)) {
+      for (const [index, leaf] of leaves.slice(0, at < 0 ? leaves.length : at).entries()) {
         if (!isSeparator(leaf)) continue;
-        const reach = this.prefixReach(item, leaf.start, state);
+        const reach = this.prefixReach(item, leaf.start, states[index]);
         if (reach >= leaf.end) this.keywords.matchJoin(leaf.start, reach, call);
       }
     }
-    return at < 0 ? { end: start, leaves } : { end: leaves[at].start, leaves: leaves.slice(0, at) };
+    return at < 0 ? { end: start, leaves, state: states[leaves.length], states } : { end: leaves[at].start, leaves: leaves.slice(0, at), state: states[at], states: states.slice(0, at + 1) };
   }
 
   // The farthest offset to which the text from `position` begins a match of
@@ -2518,8 +2528,9 @@ export class Executor {
     this.prefixReaches ??= new Map();
     let reaches = this.prefixReaches.get(expression);
     if (!reaches) this.prefixReaches.set(expression, reaches = new Map());
-    if (!reaches.has(position)) reaches.set(position, this.prefixReachOf(expression, position, state));
-    return reaches.get(position);
+    const key = `${position}|${state.key}`;
+    if (!reaches.has(key)) reaches.set(key, this.prefixReachOf(expression, position, state));
+    return reaches.get(key);
   }
 
   prefixReachOf(expression, position, state) {
@@ -2656,9 +2667,10 @@ export class Executor {
 
   terminal(expression, position, state, inToken) {
     if (!inToken) this.requestItem(expression, position);
-    let { end: start, leaves } = this.terminalStart(position, state, inToken);
+    let { end: start, leaves, states } = this.terminalStart(position, state, inToken);
     let end = -1;
     if (this.lexing && leaves.length > 0) ({ start, end, leaves } = this.beforeSeparator(expression, start, leaves));
+    state = states[leaves.length];
     if (end < 0) end = this.matchTerminal(expression, start);
     // A literal the grammar also takes as an immediate token (see
     // `KeywordLexing`) is not lexed plainly where the immediate one outranks it.
@@ -2748,7 +2760,7 @@ export class Executor {
           ? [this.terminalStart(position, state, inToken)]
           : this.immediateStarts(position, state, inToken);
         if (expression.kind === 'token' && this.lexing && starts[0].leaves.length > 0) {
-          starts = [this.tokenBeforeExtra(expression.item, starts[0].end, starts[0].leaves, state)];
+          starts = [this.tokenBeforeExtra(expression.item, starts[0].end, starts[0].leaves, starts[0].states)];
         }
         const found = new Map();
         const keyword = this.keywords !== null && !inToken && isKeyword(expression.item);
@@ -2769,8 +2781,8 @@ export class Executor {
         const context = this.scanContext;
         if (!inToken) this.scanContext = position;
         try {
-          for (const { end, leaves } of starts) {
-            for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) {
+          for (const { end, leaves, state: afterTrivia } of starts) {
+            for (const result of this.tokenLeaf(expression.item, end, leaves, afterTrivia, inToken, null)) {
               if (keyword || immediate) this.keywords.match(`${end}|${result.end}`, this.callStack[this.callStack.length - 1] ?? null, immediate);
               if (separating && end === position && this.separatorText(end, result.end)) this.keywords.matchSeparator(end, this.callStack[this.callStack.length - 1] ?? null);
               addResult(found, result, this.longestTokens, this.settling);
@@ -2783,7 +2795,7 @@ export class Executor {
         const results = [...found.values()];
         const { end: start, leaves } = starts[0];
         if (results.length > 0 || inToken) return results;
-        return this.elementFailed(start, leaves, state, missingOf(expression.item), expression, scanned ? null : (cursor) => this.evaluate(expression, cursor, state, false));
+        return this.elementFailed(start, leaves, starts[0].state, missingOf(expression.item), expression, scanned ? null : (cursor) => this.evaluate(expression, cursor, starts[0].state, false));
       }
       case 'predicate': return this.predicate(expression, position, state, inToken);
       case 'recover': return this.recover(expression, position, state, inToken);
@@ -3365,7 +3377,8 @@ export class Executor {
   // Lexical longest match: the alternative with the longest match wins, a
   // tie goes to the higher lexical priority and then to the first.
   longest(expression, position, state, inToken) {
-    const { end: start, leaves } = this.terminalStart(position, state, inToken);
+    const { end: start, leaves, state: afterTrivia } = this.terminalStart(position, state, inToken);
+    state = afterTrivia;
     let best = null;
     for (const item of expression.items) {
       const result = longestResult(this.evaluate(item, start, state, true));
@@ -3418,7 +3431,8 @@ export class Executor {
   recover(expression, position, state, inToken) {
     const results = this.evaluate(expression.item, position, state, inToken);
     if (results.length > 0) return results;
-    const { end: start, leaves } = this.terminalStart(position, state, inToken);
+    const { end: start, leaves, state: afterTrivia } = this.terminalStart(position, state, inToken);
+    state = afterTrivia;
     for (let cursor = start; cursor < this.end;) {
       cursor += decodeAt(this.bytes, cursor, this.end).length;
       const synchronized = this.quietly(() => this.evaluate(expression.synchronize, cursor, state, inToken).length > 0);
@@ -3444,7 +3458,8 @@ export class Executor {
   // bytes, so its offsets stay absolute.
   embed(expression, position, state, inToken) {
     const language = this.program.language(expression.language);
-    const { end: start, leaves } = this.terminalStart(position, state, inToken);
+    const { end: start, leaves, state: afterTrivia } = this.terminalStart(position, state, inToken);
+    state = afterTrivia;
     const regions = this.evaluate(expression.item, start, state, true);
     const results = [];
     for (const region of regions) {
@@ -3609,7 +3624,7 @@ export class Executor {
 
   ruleBody(rule, position, state, inToken) {
     if (rule.kind === 'token' || rule.kind === 'atomic') {
-      let { end: start, leaves } = this.terminalStart(position, state, inToken);
+      let { end: start, leaves, states } = this.terminalStart(position, state, inToken);
       // An extra token is the token of a rule that names it where the rule
       // asks for it: a tree-sitter parser takes a token as an extra only in
       // a parse state with no action on it (GraphQL's `comma`, an extra that
@@ -3620,8 +3635,9 @@ export class Executor {
         // A token rule that matches a separator before it takes it, as a
         // token does (see `tokenBeforeExtra`): Make's `raw_line` of a define
         // directive keeps its indentation.
-        else if (rule.kind === 'token') ({ end: start, leaves } = this.tokenBeforeExtra(rule.expression, start, leaves, state));
+        else if (rule.kind === 'token') ({ end: start, leaves, states } = this.tokenBeforeExtra(rule.expression, start, leaves, states));
       }
+      state = states[leaves.length];
       let results = this.quietly(() => this.evaluate(rule.expression, start, state, true));
       if (rule.kind === 'token' || this.peg) results = results.length > 0 ? [longestResult(results)] : [];
       const built = [];
@@ -3742,7 +3758,8 @@ export class Executor {
   // An external scanner run for one requested token: a cursor over the
   // input, a token start that `skip` moves, and an optional end `mark`.
   scannerToken(name, position, state, inToken, rawStart = false) {
-    const { end: start, leaves } = rawStart ? { end: position, leaves: NO_CHILDREN } : this.terminalStart(position, state, inToken);
+    const { end: start, leaves, state: afterTrivia } = rawStart ? { end: position, leaves: NO_CHILDREN, state } : this.terminalStart(position, state, inToken);
+    state = afterTrivia;
     const scanner = this.program.scanners.get(name);
     const context = inToken || rawStart ? (this.scanContext ?? start) : position;
     const key = scanner.consults ? `${name}|${start}|${context}|${state.key}` : `${name}|${start}|${state.key}`;

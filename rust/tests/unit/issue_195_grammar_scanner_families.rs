@@ -296,3 +296,10 @@ fn structured_scanner_contexts_match_shared_trees_and_reject_malformed_boundarie
         });
     }
 }
+
+#[test]
+fn stateful_extras_preserve_committed_state_and_restore_retaken_prefixes() {
+    check_cases(include_str!(
+        "../../../parity/fixtures/scanner-stateful-extras.json"
+    ));
+}

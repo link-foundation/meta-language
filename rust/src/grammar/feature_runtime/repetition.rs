@@ -200,6 +200,7 @@ impl Executor<'_> {
         in_token: bool,
     ) -> Run<Vec<Res>> {
         let skipped = self.terminal_start(position, state, in_token)?;
+        let state = &skipped.state;
         let start = skipped.end;
         let mut best: Option<(Res, i64, &Expr)> = None;
         for item in items {

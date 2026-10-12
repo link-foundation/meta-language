@@ -624,6 +624,9 @@ pub(super) struct Entry {
 pub(super) struct Skipped {
     pub(super) end: usize,
     pub(super) leaves: Children,
+    pub(super) state: State,
+    /// The initial state, then the state after each retained trivia leaf.
+    pub(super) states: Vec<State>,
 }
 
 /// One run of an external scanner.

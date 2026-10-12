@@ -341,7 +341,8 @@ impl Executor<'_> {
         let mut built = Vec::new();
         if matches!(rule.kind, RuleKind::Token | RuleKind::Atomic) {
             let skipped = self.terminal_start(position, state, in_token)?;
-            let skipped = self.own_extra(rule, skipped, state, in_token)?;
+            let skipped = self.own_extra(rule, skipped, in_token)?;
+            let state = &skipped.state;
             let start = skipped.end;
             let mut results =
                 self.quietly(|this| this.evaluate(&rule.expression, start, state, true))?;
@@ -540,11 +541,14 @@ impl Executor<'_> {
             Rc::new(Skipped {
                 end: position,
                 leaves: no_children(),
+                state: state.clone(),
+                states: vec![state.clone()],
             })
         } else {
             self.terminal_start(position, state, in_token)?
         };
         let start = skipped.end;
+        let state = &skipped.state;
         let program = self.program;
         let consults = program.scanners[program.external[&**name]].consults;
         // Where the scanner answers `expected` for (see `Expectations`).

@@ -54,7 +54,7 @@ const BYTE_ORDER_MARK: &[u8] = b"\xef\xbb\xbf";
 /// What an extra's text is where it starts (see `extra_node`).
 pub(super) enum Extra {
     /// The node an extra of a rule that builds one makes, and its end.
-    Node(Rc<Tree>, usize),
+    Node(Rc<Tree>, usize, State),
     /// A trivia leaf.
     Leaf,
     /// No extra.
@@ -74,6 +74,8 @@ impl Executor<'_> {
             return Ok(Rc::new(Skipped {
                 end: position,
                 leaves: no_children(),
+                state: state.clone(),
+                states: vec![state.clone()],
             }));
         }
         let outrank = self
@@ -85,15 +87,17 @@ impl Executor<'_> {
         if let Some(cached) = self.trivia_memo.get(&key) {
             return Ok(cached.clone());
         }
-        let mode = state.mode().to_owned();
         let mut leaves = Vec::new();
         // A scanner in the trivia answers `expected` for where they start.
         let context = self.scan_context.replace(position);
-        let end = self.skip_from(position, &mut leaves, &mode, state, outrank, at_extra);
+        let skipped = self.skip_from(position, &mut leaves, state, outrank, at_extra);
         self.scan_context = context;
+        let (end, state, states) = skipped?;
         let skipped = Rc::new(Skipped {
-            end: end?,
+            end,
             leaves: children_of(leaves),
+            state,
+            states,
         });
         self.trivia_memo.insert(key, skipped.clone());
         Ok(skipped)
@@ -105,12 +109,13 @@ impl Executor<'_> {
         &mut self,
         position: usize,
         leaves: &mut Vec<Rc<Tree>>,
-        mode: &str,
         state: &State,
         outrank: i64,
         at_extra: bool,
-    ) -> Run<usize> {
+    ) -> Run<(usize, State, Vec<State>)> {
         let trivia = &self.program.trivia;
+        let mut current = state.clone();
+        let mut states = vec![state.clone()];
         // A separator an immediate token takes there is lexed, not skipped
         // (see `KeywordLexing`).
         let lexed = self
@@ -122,6 +127,7 @@ impl Executor<'_> {
             && self.bytes.starts_with(BYTE_ORDER_MARK)
         {
             leaves.push(Rc::new(Tree::trivia_leaf(None, 0, BYTE_ORDER_MARK.len())));
+            states.push(current.clone());
             BYTE_ORDER_MARK.len()
         } else {
             position
@@ -129,11 +135,13 @@ impl Executor<'_> {
         loop {
             let mut best = cursor;
             let mut best_kind = None;
+            let mut best_state = current.clone();
+            let mode = current.mode().to_owned();
             for item in trivia {
                 if item
                     .modes
                     .as_ref()
-                    .is_some_and(|modes| !modes.iter().any(|allowed| **allowed == *mode))
+                    .is_some_and(|modes| !modes.iter().any(|allowed| &**allowed == mode.as_str()))
                     || (item.kind.is_some()
                         && (self.in_extra == InExtra::Flat || (at_extra && cursor == position)))
                     || (cursor == position
@@ -144,21 +152,24 @@ impl Executor<'_> {
                     continue;
                 }
                 let end =
-                    self.quietly(|this| this.evaluate(&item.expression, cursor, state, true))?;
-                if let Some(end) = longest_result(end).map(|result| result.end)
-                    && end > best
+                    self.quietly(|this| this.evaluate(&item.expression, cursor, &current, true))?;
+                if let Some(result) = longest_result(end)
+                    && result.end > best
                 {
-                    best = end;
+                    best = result.end;
+                    best_state = result.state;
                     best_kind.clone_from(&item.kind);
                 }
             }
             if best == cursor {
                 break;
             }
-            match self.extra_node(best_kind.as_ref(), cursor, best, state)? {
-                Extra::Node(node, end) => {
+            let before = current.clone();
+            match self.extra_node(best_kind.as_ref(), cursor, best, &current)? {
+                Extra::Node(node, end, state) => {
                     leaves.push(node);
                     cursor = end;
+                    current = state;
                 }
                 Extra::Leaf => {
                     // Match scannerToken's separation of skipped whitespace
@@ -166,7 +177,7 @@ impl Executor<'_> {
                     let scanned = if let Some(kind) = &best_kind
                         && self.program.external.contains_key(&**kind)
                     {
-                        self.run_scanner(kind, cursor, position, state)?
+                        self.run_scanner(kind, cursor, position, &current)?
                     } else {
                         None
                     };
@@ -181,11 +192,16 @@ impl Executor<'_> {
                         leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
                     }
                     cursor = best;
+                    current = best_state;
                 }
                 Extra::None => break,
             }
+            while states.len() <= leaves.len() {
+                states.push(before.clone());
+            }
+            states[leaves.len()] = current.clone();
         }
-        Ok(cursor)
+        Ok((cursor, current, states))
     }
 
     /// A lexer takes a valid token of a raised lexical precedence over an
@@ -311,7 +327,7 @@ impl Executor<'_> {
                     .find(|child| child.ty == TreeType::Node)?;
                 let mut extra = (**node).clone();
                 extra.trivia = true;
-                Some(Extra::Node(Rc::new(extra), best.end))
+                Some(Extra::Node(Rc::new(extra), best.end, best.state))
             })
             .unwrap_or(Extra::Leaf))
     }
@@ -327,6 +343,8 @@ impl Executor<'_> {
             Ok(Rc::new(Skipped {
                 end: position,
                 leaves: no_children(),
+                state: state.clone(),
+                states: vec![state.clone()],
             }))
         } else {
             self.skip_trivia(position, state)
@@ -342,7 +360,6 @@ impl Executor<'_> {
         &mut self,
         rule: &Rule,
         skipped: Rc<Skipped>,
-        state: &State,
         in_token: bool,
     ) -> Run<Rc<Skipped>> {
         if self.lexing.is_none() || in_token {
@@ -360,12 +377,14 @@ impl Executor<'_> {
             Some(at) => Ok(Rc::new(Skipped {
                 end: skipped.leaves[at].start,
                 leaves: children_of(skipped.leaves[..at].to_vec()),
+                state: skipped.states[at].clone(),
+                states: skipped.states[..=at].to_vec(),
             })),
             // A token rule that matches a separator before it takes it, as a
             // token does (see `token_before_extra`): Make's `raw_line` of a
             // define directive keeps its indentation.
             None if rule.kind == RuleKind::Token && !skipped.leaves.is_empty() => {
-                self.token_before_extra(&rule.expression, skipped, state)
+                self.token_before_extra(&rule.expression, skipped)
             }
             None => Ok(skipped),
         }
@@ -385,6 +404,8 @@ impl Executor<'_> {
         let mut starts = vec![Rc::new(Skipped {
             end: position,
             leaves: no_children(),
+            state: state.clone(),
+            states: vec![state.clone()],
         })];
         if in_token || self.lexing.is_none() {
             return Ok(starts);
@@ -395,6 +416,8 @@ impl Executor<'_> {
                 starts.push(Rc::new(Skipped {
                     end: leaf.end,
                     leaves: children_of(skipped.leaves[..=index].to_vec()),
+                    state: skipped.states[index + 1].clone(),
+                    states: skipped.states[..=index + 1].to_vec(),
                 }));
             }
         }
@@ -503,6 +526,7 @@ impl Executor<'_> {
         } else {
             None
         };
+        let state = &skipped.states[leaves.len()];
         // A literal the grammar also takes as an immediate token (see
         // `KeywordLexing`) is not lexed plainly where the immediate one
         // outranks it.
@@ -619,7 +643,6 @@ impl Executor<'_> {
         &mut self,
         item: &Expr,
         skipped: Rc<Skipped>,
-        state: &State,
     ) -> Run<Rc<Skipped>> {
         let level = self.priority_of(item);
         for (at, leaf) in skipped.leaves.iter().enumerate() {
@@ -637,9 +660,10 @@ impl Executor<'_> {
             if !plain && other.is_none() {
                 continue;
             }
-            let reach =
-                longest_result(self.quietly(|this| this.evaluate(item, leaf.start, state, true))?)
-                    .map(|result| result.end);
+            let reach = longest_result(
+                self.quietly(|this| this.evaluate(item, leaf.start, &skipped.states[at], true))?,
+            )
+            .map(|result| result.end);
             let takes = match (plain, other, reach) {
                 (true, _, Some(reach)) => reach >= leaf.end,
                 (false, Some(other), Some(reach)) => {
@@ -664,13 +688,15 @@ impl Executor<'_> {
                     .or_default()
                     .insert(chain);
             }
-            self.record_joins(item, &skipped.leaves[..at], state)?;
+            self.record_joins(item, &skipped.leaves[..at], &skipped.states[..=at])?;
             return Ok(Rc::new(Skipped {
                 end: leaf.start,
                 leaves: children_of(skipped.leaves[..at].to_vec()),
+                state: skipped.states[at].clone(),
+                states: skipped.states[..=at].to_vec(),
             }));
         }
-        self.record_joins(item, &skipped.leaves, state)?;
+        self.record_joins(item, &skipped.leaves, &skipped.states)?;
         Ok(skipped)
     }
 
