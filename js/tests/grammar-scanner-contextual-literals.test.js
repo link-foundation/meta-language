@@ -105,3 +105,21 @@ test('shared lexical decisions distinguish adjacent operators from command argum
     assert.throws(() => contextualLiteralScanner({ ...descriptor, lexical, sharedLexicalDecisions }), TypeError);
   }
 });
+
+test('guarded whitespace delimiters preserve input-ended literals and percent operators', () => {
+  const whitespace = ['\r', '\n', ' ', '\t'];
+  const parser = rubyScannerParser({ delimiters: [
+    ...rubyProfile[0].delimiters.filter(({ opening }) => !whitespace.includes(opening)),
+    ...whitespace.map(opening => ({ opening, closing: '', guard: '(not (valid forward_slash))' })),
+  ] });
+  for (const source of [...whitespace.map(opening => `%${opening}foo`), '"hello" %\n[foo]']) {
+    const oracle = oracleSnapshot(source, 'ruby');
+    assert.equal(oracle.recovers, false, source);
+    const native = parser.parseTree(source);
+    assert.equal(native.ok, true, source);
+    assert.deepEqual(native.ambiguities, [], source);
+    assert.deepEqual(nativeRows(native.tree, source, rubyProjection), oracle.rows, source);
+    assert.equal(leaves(native.tree).map(({ text }) => text).join(''), source);
+  }
+  assert.equal(parser.parseTree('%q(hello').ok, false);
+});

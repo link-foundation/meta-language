@@ -70,7 +70,7 @@ export function contextualLiteralScanner({ name, tokens, contentToken, endToken,
     }
     return { ...entry, context };
   });
-  const modes = policies.flatMap((entry) => entry.delimiter === undefined ? delimiters.map((delimiter) => ({ ...entry, ...delimiter })) : [{ ...entry, opening: entry.delimiter, closing: entry.delimiter }]);
+  const modes = policies.flatMap((entry) => entry.delimiter === undefined ? delimiters.map((delimiter) => ({ ...entry, ...delimiter, delimiterGuard: delimiter.guard })) : [{ ...entry, opening: entry.delimiter, closing: entry.delimiter }]);
   const closingExpression = `(predicate any (equal matched (top ${closingsStack})))`;
   const openingExpression = `(predicate any (equal matched (top ${openingsStack})))`;
   const body = bodyModes.map((mode) => {
@@ -79,13 +79,15 @@ export function contextualLiteralScanner({ name, tokens, contentToken, endToken,
     const decrement = `(push ${levels} (subtract (top ${levels}) (integer 1)))`;
     const increment = `(push ${levels} (add (top ${levels}) (integer 1)))`;
     const replaceLevel = (operation) => `${set(`${name}_level`, top(levels))} (pop ${levels}) ${operation.replace(`(top ${levels})`, variable(`${name}_level`))}`;
-    const finish = `mark ${branch(haveContent, emit(contentToken))} (consume ${closingExpression})${mode.suffixPattern ? ` (consume (repeat0 ${pattern(mode.suffixPattern)}))` : ''} mark (pop ${contexts}) (pop ${levels}) (pop ${openingsStack}) (pop ${closingsStack}) ${emit(endToken)}`;
+    const emitEnd = `${mode.suffixPattern ? `(consume (repeat0 ${pattern(mode.suffixPattern)})) ` : ''}mark (pop ${contexts}) (pop ${levels}) (pop ${openingsStack}) (pop ${closingsStack}) ${emit(endToken)}`;
+    const finish = `mark ${branch(haveContent, emit(contentToken))} (consume ${closingExpression}) ${emitEnd}`;
+    const finishAtInputEnd = branch(equal(top(closingsStack), `(text %)`), `mark ${branch(haveContent, emit(contentToken))} ${emitEnd}`);
     const special = mode.interpolated ? `${branch(next(literal(interpolation)), contentOrFail)} ${branch(next(literal(escape)), contentOrFail)} ` : '';
     const escaped = mode.interpolated ? 'advance' : branch(next(literal(escape)), `advance (if atEnd (then fail)) advance`, 'advance');
     const move = branch(all(nested, close), `${replaceLevel(decrement)} advance`, branch(all(nested, next(openingExpression)), `${replaceLevel(increment)} advance`, escaped));
     const wordBoundary = mode.words ? `${branch(next(spaces), contentOrFail)} ` : '';
     const contentMove = mode.interpolated ? branch(next(literal('#')), `mark advance ${branch(next(short), `${branch(haveContent, emit(contentToken))} mark ${emit(shortInterpolationToken)}`)}`, move) : move;
-    return branch(equal(top(contexts), integer(mode.context)), `${clearSeen} (while (not atEnd) (do ${wordBoundary}${branch(all(close, equal(top(levels), integer(1))), finish)} ${special}${contentMove} ${set(seen, integer(1))})) fail`);
+    return branch(equal(top(contexts), integer(mode.context)), `${clearSeen} (while (not atEnd) (do ${wordBoundary}${branch(all(close, equal(top(levels), integer(1))), finish)} ${special}${contentMove} ${set(seen, integer(1))})) ${finishAtInputEnd} fail`);
   }).join(' ');
   // Check token/context eligibility once per policy, before selecting a
   // delimiter. Repeating parser expectation queries for each punctuation
@@ -93,7 +95,13 @@ export function contextualLiteralScanner({ name, tokens, contentToken, endToken,
   const openingDecision = (entry) => {
     const prefix = entry.prefix + (entry.delimiter ?? '');
     const condition = all(...(prefix ? [next(literal(prefix))] : []), ...(interpolationStartToken ? [some(not(present(contexts)), equal(top(contexts), integer(0)))] : []), ...(entry.gate === false ? [] : [available(openGateToken)]), ...(entry.guard ? [entry.guard.replaceAll('$leading', variable(leading)).replace(/\(valid ([A-Za-z_]+)\)/gu, (_, token) => available(token))] : []));
-    const choices = modes.filter((mode) => mode.prefix === entry.prefix && mode.token === entry.token && mode.context === entry.context && (entry.delimiter === undefined || mode.opening === entry.delimiter)).map((mode) => branch(next(literal(mode.prefix + mode.opening)), `(consume ${literal(mode.prefix + mode.opening)}) (push ${contexts} (integer ${mode.context})) (push ${openingsStack} (text ${encode(mode.opening)})) (push ${closingsStack} (text ${encode(mode.closing)})) (push ${levels} (integer 1)) ${emit(mode.token)}`)).join(' ');
+    const choices = modes.filter((mode) => mode.prefix === entry.prefix && mode.token === entry.token && mode.context === entry.context && (entry.delimiter === undefined || mode.opening === entry.delimiter)).map((mode) => {
+      const condition = all(next(literal(mode.prefix + mode.opening)), ...(mode.delimiterGuard ? [mode.delimiterGuard.replaceAll('$leading', variable(leading)).replace(/\(valid ([A-Za-z_]+)\)/gu, (_, token) => available(token))] : []));
+      // An empty closing delimiter describes an input-ended literal. Its
+      // opening whitespace must not create a nested delimiter context.
+      const rememberedOpening = mode.closing === '' ? '' : mode.opening;
+      return branch(condition, `(consume ${literal(mode.prefix + mode.opening)}) (push ${contexts} (integer ${mode.context})) (push ${openingsStack} (text ${encode(rememberedOpening)})) (push ${closingsStack} (text ${encode(mode.closing)})) (push ${levels} (integer 1)) ${emit(mode.token)}`);
+    }).join(' ');
     return branch(condition, choices);
   };
   const openingGroups = new Map();
