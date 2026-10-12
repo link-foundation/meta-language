@@ -10,17 +10,27 @@ export function applySourceContextPreference(grammar, decision) {
   }
   if (decision.family !== 'symbol-complete-context') return false;
   const { rules, symbol, preferredSymbol, preferredField = null, fieldSymbol = null,
-    sourceField = null, alias = null, boundaries, count, helper = null, wholeRule = false, fieldAlias = null } = decision;
+    sourceField = null, alias = null, boundaries, count, helper = null, wholeRule = false, fieldAlias = null,
+    outerContext = false } = decision;
   if (!Array.isArray(rules) || !rules.length || rules.some(rule => !Object.hasOwn(grammar.rules, rule))
     || !Object.hasOwn(grammar.rules, symbol) || !Object.hasOwn(grammar.rules, preferredSymbol)
-    || !Array.isArray(boundaries) || !boundaries.length || boundaries.some(boundary => typeof boundary !== 'string' || !boundary)
+    || !Array.isArray(boundaries) || !boundaries.length || boundaries.some(boundary => typeof boundary === 'string' ? !boundary
+      : !boundary || typeof boundary !== 'object' || Array.isArray(boundary) || typeof boundary.type !== 'string')
     || !Number.isSafeInteger(count) || count <= 0 || (sourceField !== null && typeof sourceField !== 'string')
     || (alias !== null && (typeof alias !== 'string' || !alias))
     || (fieldAlias !== null && (typeof fieldAlias !== 'string' || !fieldAlias || preferredField === null))
-    || typeof wholeRule !== 'boolean'
+    || typeof wholeRule !== 'boolean' || typeof outerContext !== 'boolean'
     || (helper !== null && (typeof helper !== 'string' || !/^_[A-Za-z_]+$/u.test(helper)))
     || (preferredField === null) !== (fieldSymbol === null)
     || (fieldSymbol !== null && !Object.hasOwn(grammar.rules, fieldSymbol))) throw new TypeError('complete symbol contexts need existing rules, symbols, fields and exact counts');
+  const declared = new Set([...Object.keys(grammar.rules), ...(grammar.externals ?? []).map(node => node.name)]);
+  const checkBoundary = node => {
+    if (Array.isArray(node)) return node.forEach(checkBoundary);
+    if (!node || typeof node !== 'object') return;
+    if (node.type === 'SYMBOL' && !declared.has(node.name)) throw new TypeError('complete context boundaries need declared source symbols');
+    Object.values(node).forEach(checkBoundary);
+  };
+  boundaries.forEach(checkBoundary);
   let preferred = { type: 'SYMBOL', name: preferredSymbol };
   let helperBody = null;
   if (preferredField !== null) {
@@ -44,14 +54,22 @@ export function applySourceContextPreference(grammar, decision) {
     helperBody = body;
   } else if (alias !== null) preferred = { type: 'ALIAS', named: true, value: alias, content: preferred };
   const originals = rules.map(rule => [rule, grammar.rules[rule]]);
+  const contextual = content => boundaries.reduce((fallback, boundary) => ({
+    type: typeof boundary === 'string' ? 'NATIVE_COMPLETE_CONTEXT_VARIANT' : 'NATIVE_SYNTACTIC_CONTEXT_VARIANT',
+    content: fallback, boundary: structuredClone(boundary), preferred: structuredClone(preferred),
+  }), content);
   let changes = 0;
+  const selected = node => {
+    let target = node;
+    if (outerContext) while (['NATIVE_COMPLETE_CONTEXT_VARIANT', 'NATIVE_SYNTACTIC_CONTEXT_VARIANT'].includes(target.type)) target = target.content;
+    return target.type === 'SYMBOL' && target.name === symbol;
+  };
   const replace = (node, field = null) => {
     if (Array.isArray(node)) return node.map(child => replace(child, field));
     if (!node || typeof node !== 'object') return node;
-    if (node.type === 'SYMBOL' && node.name === symbol && (sourceField === null || field === sourceField)) {
+    if (selected(node) && (sourceField === null || field === sourceField)) {
       changes += 1;
-      return boundaries.reduce((content, boundary) => ({ type: 'NATIVE_COMPLETE_CONTEXT_VARIANT',
-        content, boundary, preferred: structuredClone(preferred) }), node);
+      return contextual(node);
     }
     return Object.fromEntries(Object.entries(node).map(([key, child]) => [key,
       replace(child, node.type === 'FIELD' && key === 'content' ? node.name : field)]));
@@ -59,7 +77,7 @@ export function applySourceContextPreference(grammar, decision) {
   const updated = originals.map(([rule, node]) => {
     if (!wholeRule) return [rule, replace(node)];
     changes += 1;
-    return [rule, boundaries.reduce((content, boundary) => ({ type: 'NATIVE_COMPLETE_CONTEXT_VARIANT', content, boundary, preferred: structuredClone(preferred) }), node)];
+    return [rule, contextual(node)];
   });
   if (changes !== count) throw new TypeError('complete symbol contexts must select exactly their recorded source occurrences');
   if (helperBody !== null) grammar.rules[helper] = helperBody;

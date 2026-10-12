@@ -11,6 +11,27 @@ const CORPUS: &str =
     include_str!("../../../parity/fixtures/native-grammars/csharp-profile-corpus.json");
 const PATTERN_REGRESSIONS: &str =
     include_str!("../../../parity/fixtures/native-grammars/csharp-pattern-ci.json");
+const PATTERN_CONTEXT_REGRESSIONS: &str =
+    include_str!("../../../parity/fixtures/native-grammars/csharp-pattern-context-ci.json");
+
+#[test]
+fn csharp_profile_enclosing_pattern_contexts_match_shared_ci_snapshots() {
+    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let regressions: Value = serde_json::from_str(PATTERN_CONTEXT_REGRESSIONS).unwrap();
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&fixture);
+    let language = tree_sitter_c_sharp::LANGUAGE.into();
+    assert_eq!(cases(&regressions, "cases").len(), 3);
+    for case in cases(&regressions, "cases") {
+        let (expected, recovers) = oracle_rows(&language, source(case));
+        assert!(!recovers, "{}", case["title"]);
+        assert_eq!(Value::Array(expected), case["rows"], "{}", case["title"]);
+        let tree =
+            parse(&parser, source(case)).expect("native accepts unambiguous pattern context");
+        assert_eq!(Value::Array(rows.rows(&tree, source(case))), case["rows"]);
+        assert_eq!(rebuilt(&tree), source(case));
+    }
+}
 
 #[test]
 fn csharp_profile_pattern_ci_sources_and_neighboring_contexts_match_shared_snapshots() {
