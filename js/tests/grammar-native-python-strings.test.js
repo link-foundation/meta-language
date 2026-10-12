@@ -1,12 +1,14 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-grammar-rows.mjs';
 
-const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const fixture = JSON.parse(read('parity/fixtures/native-grammars/python.json'));
-const corpus = JSON.parse(read('parity/fixtures/native-grammars/python-corpus.json'));
+const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = (file) => readProjectData(new URL(`../../${file}`, import.meta.url));
+const fixture = readData('parity/fixtures/native-grammars/python.json');
+const corpus = readData('parity/fixtures/native-grammars/python-corpus.json');
 const parser = compileGrammar(parseGrammarLinks(read('parity/grammars/native/python.lino')));
 const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { structuredDataToLino } from '../src/structured-data-links.js';
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
 // Select only reported Ruby CI sources and frozen contextual controls.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -6,7 +8,7 @@ import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { grammarSourceOf, importSource } from './import-native-grammars.mjs';
 import { nativeRows, oracleSnapshot } from './native-grammar-rows.mjs';
 
-const read = file => JSON.parse(readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8'));
+const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const argument = process.argv.indexOf('--fixture');
 const fixtureName = argument < 0 ? 'ruby-heredoc-call-context-ci' : process.argv[argument + 1];
 if (!/^ruby-[a-z]+(?:-[a-z]+)*-ci$/u.test(fixtureName ?? '')) throw new TypeError('select a Ruby source context CI fixture name');
@@ -39,6 +41,6 @@ const cases = fixture.cases.map(({ file, title }) => {
 });
 const controls = fixture.controls.map(({ rows: _rows, ...item }) => snapshot(item));
 const result = { ...fixture, grammarSource: entry.id, revision: entry.revision, sourceSha256: entry.sha256, corpus: entry.corpus, cases, controls };
-const rendered = `${JSON.stringify(result, null, 2)}\n`;
-if (process.argv.includes('--check')) assert.equal(readFileSync(target, 'utf8'), rendered, 'Ruby context fixture drift');
-else writeFileSync(target, rendered);
+const rendered = structuredDataToLino(result);
+if (process.argv.includes('--check')) assert.equal(readFileSync(resolveProjectDataPath(target), 'utf8'), rendered, 'Ruby context fixture drift');
+else writeFileSync(resolveProjectDataPath(target), rendered);

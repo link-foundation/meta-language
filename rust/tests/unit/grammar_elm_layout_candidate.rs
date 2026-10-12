@@ -7,7 +7,7 @@ use meta_language::{parse_grammar_links, render_grammar_links};
 use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/candidates/elm/native.lino");
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/elm-candidate.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/elm-candidate.lino");
 
 #[test]
 fn elm_candidate_is_canonical_native_links_with_every_source_scanner_token() {
@@ -18,7 +18,8 @@ fn elm_candidate_is_canonical_native_links_with_every_source_scanner_token() {
 
 #[test]
 fn elm_candidate_focused_layout_queues_and_lexical_content_match_independent_oracle() {
-    let fixture: Value = serde_json::from_str(FIXTURE).expect("Elm candidate fixture");
+    let fixture: Value =
+        super::project_data::read_project_data(FIXTURE).expect("Elm candidate fixture");
     oracle_agrees(&tree_sitter_elm::LANGUAGE.into(), &fixture);
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);

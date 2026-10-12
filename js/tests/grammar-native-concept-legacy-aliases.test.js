@@ -1,3 +1,4 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -50,7 +51,7 @@ test('legacy decisions reject unknown concepts, conflicting identities and reviv
 });
 
 test('the seven reviewed Elixir migrations resolve old identities and spellings through shipped concept records', () => {
-  const naming = JSON.parse(readFileSync(new URL('../../parity/naming/grammar-name-expansions.json', import.meta.url), 'utf8')).concepts;
+  const naming = readProjectData(new URL('../../parity/naming/grammar-name-expansions.json', import.meta.url)).concepts;
   const migrations = [
     ['bare-argument-unparenthesized-call', 'bare-argument-call-without-parentheses'],
     ['bare-argument-local-unparenthesized-call', 'bare-argument-local-call-without-parentheses'],

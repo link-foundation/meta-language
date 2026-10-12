@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Requirement I195-GRAMMAR-NATIVE-TSX: the native merged TSX grammar,
 // parity/grammars/native/tsx.lino, which js/scripts/import-native-grammars.mjs
 // imports from the pinned tree-sitter-typescript TSX grammar with its
@@ -22,9 +23,10 @@ import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-gramma
 import { corpusCases, grammarSourceOf } from '../scripts/import-native-grammars.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => readFileSync(resolveProjectDataPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
+const readData = (relative) => readProjectData(new URL(`../../${relative}`, import.meta.url));
 const entry = NATIVE_GRAMMARS.find(({ id }) => id === 'tsx');
-const fixture = JSON.parse(read(fixturePath(entry)));
+const fixture = readData(fixturePath(entry));
 const links = read(entry.grammar);
 const parser = compileGrammar(parseGrammarLinks(links));
 

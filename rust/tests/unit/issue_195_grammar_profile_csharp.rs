@@ -6,18 +6,19 @@ use meta_language::{FeatureParseOptions, parse_grammar_links, render_grammar_lin
 use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/csharp.lino");
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/csharp-profile.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/csharp-profile.lino");
 const CORPUS: &str =
-    include_str!("../../../parity/fixtures/native-grammars/csharp-profile-corpus.json");
+    include_str!("../../../parity/fixtures/native-grammars/csharp-profile-corpus.lino");
 const PATTERN_REGRESSIONS: &str =
-    include_str!("../../../parity/fixtures/native-grammars/csharp-pattern-ci.json");
+    include_str!("../../../parity/fixtures/native-grammars/csharp-pattern-ci.lino");
 const PATTERN_CONTEXT_REGRESSIONS: &str =
-    include_str!("../../../parity/fixtures/native-grammars/csharp-pattern-context-ci.json");
+    include_str!("../../../parity/fixtures/native-grammars/csharp-pattern-context-ci.lino");
 
 #[test]
 fn csharp_profile_enclosing_pattern_contexts_match_shared_ci_snapshots() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let regressions: Value = serde_json::from_str(PATTERN_CONTEXT_REGRESSIONS).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let regressions: Value =
+        super::project_data::read_project_data(PATTERN_CONTEXT_REGRESSIONS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let language = tree_sitter_c_sharp::LANGUAGE.into();
@@ -35,8 +36,8 @@ fn csharp_profile_enclosing_pattern_contexts_match_shared_ci_snapshots() {
 
 #[test]
 fn csharp_profile_pattern_ci_sources_and_neighboring_contexts_match_shared_snapshots() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let regressions: Value = serde_json::from_str(PATTERN_REGRESSIONS).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let regressions: Value = super::project_data::read_project_data(PATTERN_REGRESSIONS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let language = tree_sitter_c_sharp::LANGUAGE.into();
@@ -61,7 +62,7 @@ fn csharp_profile_focused_trees_match_the_independent_oracle() {
         render_grammar_links(&parse_grammar_links(GRAMMAR).unwrap()),
         GRAMMAR
     );
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     oracle_agrees(&tree_sitter_c_sharp::LANGUAGE.into(), &fixture);
@@ -89,8 +90,8 @@ fn csharp_profile_focused_trees_match_the_independent_oracle() {
 // CI executes the complete pinned corpus; local work uses focused JavaScript.
 #[test]
 fn csharp_profile_upstream_corpus_matches_the_independent_oracle() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let corpus: Value = serde_json::from_str(CORPUS).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let language = tree_sitter_c_sharp::LANGUAGE.into();

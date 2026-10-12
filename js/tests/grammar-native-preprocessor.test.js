@@ -1,3 +1,4 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
@@ -6,7 +7,7 @@ import { grammarSourceOf, importSource } from '../scripts/import-native-grammars
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
 
-const read = path => JSON.parse(readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8'));
+const read = path => readProjectData(new URL(`../../${path}`, import.meta.url));
 
 test('recorded separator partitioning preserves characters and validates its exact source selection', () => {
   const source = { rules: { source: { type: 'STRING', value: 'x' } }, extras: [{ type: 'PATTERN', value: '[\\s\\u00A0]+' }] };

@@ -10,8 +10,8 @@ use meta_language::{
 use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/hcl.lino");
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/hcl.json");
-const CORPUS: &str = include_str!("../../../parity/fixtures/native-grammars/hcl-corpus.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/hcl.lino");
+const CORPUS: &str = include_str!("../../../parity/fixtures/native-grammars/hcl-corpus.lino");
 
 fn observe(assertions: &[&str], test_name: &str) {
     record(&Observation {
@@ -47,7 +47,7 @@ fn native_hcl_and_terraform_use_the_ordinary_catalog_parser() {
 
 #[test]
 fn native_hcl_root_spans_include_leading_trivia() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     for source in ["\na=1\n", "  a=1\n", "\n\t\n"] {
@@ -81,7 +81,7 @@ fn native_hcl_grammar_is_canonical_links_notation() {
 
 #[test]
 fn native_hcl_focused_trees_match_oracle_and_preserve_every_byte() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     oracle_agrees(&tree_sitter_hcl::LANGUAGE.into(), &fixture);
@@ -103,8 +103,8 @@ fn native_hcl_focused_trees_match_oracle_and_preserve_every_byte() {
 
 #[test]
 fn native_hcl_long_heredoc_identifier_fits_the_unchanged_default_budget() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let corpus: Value = serde_json::from_str(CORPUS).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let case = corpus["cases"]
         .as_array()
         .unwrap()
@@ -125,7 +125,7 @@ fn native_hcl_long_heredoc_identifier_fits_the_unchanged_default_budget() {
 
 #[test]
 fn native_hcl_focused_invalid_sources_are_rejected_and_recovered_losslessly() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     for case in cases(&fixture, "rejections") {
         assert!(parse(&parser, source(case)).is_none());
@@ -165,8 +165,8 @@ fn native_hcl_focused_invalid_sources_are_rejected_and_recovered_losslessly() {
 // CI executes the upstream corpus; local checks select the focused tests.
 #[test]
 fn native_hcl_upstream_corpus_matches_the_independent_oracle() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let corpus: Value = serde_json::from_str(CORPUS).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let language = tree_sitter_hcl::LANGUAGE.into();

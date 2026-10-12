@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -7,9 +8,10 @@ import { sectionLayoutScanner } from '../scripts/section-layout-scanner.mjs';
 import { compileGrammar, parseGrammarLinks, renderGrammarLinks } from '../src/index.js';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 
-const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = (file) => readProjectData(new URL(`../../${file}`, import.meta.url));
 const candidate = elmLayoutCandidate();
-const fixture = JSON.parse(read('parity/fixtures/native-grammars/elm-candidate.json'));
+const fixture = readData('parity/fixtures/native-grammars/elm-candidate.json');
 const parser = compileGrammar(candidate.grammar);
 const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 

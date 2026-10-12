@@ -1,3 +1,4 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -6,7 +7,7 @@ import { grammarSourceOf, importSource, corpusCases } from '../scripts/import-na
 import { nativeOracleKinds } from '../scripts/build-language-catalog.mjs';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 
-const read = file => JSON.parse(readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8'));
+const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const naming = read('parity/naming/grammar-name-expansions.json');
 const entry = grammarSourceOf('native-ruby');
 const imported = importSource(entry, new Map(naming.words.map(({ word, replacement }) => [word, replacement])), naming.grammars.ruby);

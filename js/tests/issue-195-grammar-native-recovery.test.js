@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Requirement I195-GRAMMAR-NATIVE-RECOVERY: automatic error recovery in the
 // native executor. With `errorRecovery` a parse the grammar rejects is
 // repaired into a tree of ERROR and MISSING leaves, with no recovery rules in
@@ -13,10 +14,11 @@ import { NATIVE_GRAMMARS, fixturePath } from '../scripts/generate-native-grammar
 import { normalize, renderNetwork } from './support/cst-sexpression.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => readFileSync(resolveProjectDataPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
+const readData = (relative) => readProjectData(new URL(`../../${relative}`, import.meta.url));
 const grammars = NATIVE_GRAMMARS.map((entry) => ({
   entry,
-  fixture: JSON.parse(read(fixturePath(entry))),
+  fixture: readData(fixturePath(entry)),
   parser: compileGrammar(parseGrammarLinks(read(entry.grammar))),
 }));
 const RECOVER = { errorRecovery: true };

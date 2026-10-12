@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
@@ -62,13 +63,14 @@ test('optional argument contexts validate selectors and exact counts before repl
   }
 });
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const naming = JSON.parse(read('parity/naming/grammar-name-expansions.json'));
+const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
+const naming = readData('parity/naming/grammar-name-expansions.json');
 const profile = naming.grammars.elixir;
 const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
-const entry = JSON.parse(read('parity/grammars/sources.json')).sources.find(({ language }) => language === 'elixir');
+const entry = readData('parity/grammars/sources.json').sources.find(({ language }) => language === 'elixir');
 const upstream = JSON.parse(gunzipSync(readFileSync(new URL(`../../${entry.file}`, import.meta.url))));
-const projection = JSON.parse(read('parity/fixtures/native-grammars/elixir-profile.json'));
+const projection = readData('parity/fixtures/native-grammars/elixir-profile.json');
 // These bounded source decisions exercise the generic context operation on
 // its pinned optional-call production without rewriting generated artifacts.
 const contexts = [

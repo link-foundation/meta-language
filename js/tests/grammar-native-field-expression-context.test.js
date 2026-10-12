@@ -1,14 +1,13 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { gunzipSync } from 'node:zlib';
 import test from 'node:test';
 import { transformFieldExpressionContext } from '../scripts/native-field-expression-context.mjs';
 import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
-import { nativeName } from '../scripts/import-native-grammars.mjs';
+import { nativeName, sourceText } from '../scripts/import-native-grammars.mjs';
 import { nativeScannerProfile } from '../scripts/generate-native-scanner-profiles.mjs';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const symbol = name => ({ type: 'SYMBOL', name });
 const field = (name, rule) => ({ type: 'FIELD', name, content: symbol(rule) });
@@ -78,13 +77,13 @@ test('field expression contexts validate all identities and occurrence counts be
   }
 });
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const naming = JSON.parse(read('parity/naming/grammar-name-expansions.json'));
+const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
+const naming = read('parity/naming/grammar-name-expansions.json');
 const profile = naming.grammars.elixir;
 const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
-const entry = JSON.parse(read('parity/grammars/sources.json')).sources.find(({ language }) => language === 'elixir');
-const upstream = JSON.parse(gunzipSync(readFileSync(new URL(`../../${entry.file}`, import.meta.url))));
-const projection = JSON.parse(read('parity/fixtures/native-grammars/elixir-profile.json'));
+const entry = read('parity/grammars/sources.json').sources.find(({ language }) => language === 'elixir');
+const upstream = JSON.parse(sourceText(entry));
+const projection = read('parity/fixtures/native-grammars/elixir-profile.json');
 const postfix = {
   call: '_postfix_call', _call_without_parentheses: '_postfix_unparenthesized_call', _call_with_parentheses: '_postfix_parenthesized_call',
   _local_call_just_do_block: '_postfix_block_call', _remote_call_without_parentheses: '_postfix_remote_reference',

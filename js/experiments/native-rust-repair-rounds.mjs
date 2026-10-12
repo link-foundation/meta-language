@@ -1,3 +1,4 @@
+import { resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Traces the repair rounds of the native Rust grammar on the corpus cases the
 // oracle recovers from: the repair points, the steps each round takes and the
 // outcome, under a large step limit, to see which round exhausts the budget.
@@ -13,7 +14,7 @@ Executor.prototype.run = function run(startRule) {
   rounds.push({ points: this.repairPoints ? [...this.repairPoints] : null, steps: this.budget.steps, ok: outcome.ok, farthest: outcome.farthest, elementFarthest: outcome.elementFarthest });
   return outcome;
 };
-const parser = compileGrammar(parseGrammarLinks(readFileSync(new URL('../../parity/grammars/native/rust.lino', import.meta.url), 'utf8')));
+const parser = compileGrammar(parseGrammarLinks(readFileSync(resolveProjectDataPath(new URL('../../parity/grammars/native/rust.lino', import.meta.url)), 'utf8')));
 const titles = (process.env.TITLES ?? 'Unexpected string literal prefixes,Longer json macro contents').split(',');
 for (const { title, source } of corpusCases(grammarSourceOf('native-rust')).filter((c) => titles.includes(c.title))) {
   rounds.length = 0;

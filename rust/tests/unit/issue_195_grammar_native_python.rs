@@ -10,8 +10,8 @@ use meta_language::{
 use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/python.lino");
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/python.json");
-const CORPUS: &str = include_str!("../../../parity/fixtures/native-grammars/python-corpus.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/python.lino");
+const CORPUS: &str = include_str!("../../../parity/fixtures/native-grammars/python-corpus.lino");
 
 fn observe(assertions: &[&str], test_name: &str) {
     record(&Observation {
@@ -37,7 +37,7 @@ fn native_python_grammar_is_canonical_links_notation() {
 
 #[test]
 fn native_python_focused_trees_match_oracle_and_preserve_every_byte() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     oracle_agrees(&tree_sitter_python::LANGUAGE.into(), &fixture);
@@ -71,7 +71,7 @@ fn native_python_focused_trees_match_oracle_and_preserve_every_byte() {
 
 #[test]
 fn native_python_focused_invalid_sources_are_rejected_and_recovered_losslessly() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     for case in cases(&fixture, "rejections") {
         assert!(parse(&parser, source(case)).is_none());
@@ -111,8 +111,8 @@ fn native_python_focused_invalid_sources_are_rejected_and_recovered_losslessly()
 // CI executes the upstream corpus; local checks select the focused tests.
 #[test]
 fn native_python_upstream_corpus_matches_the_independent_oracle() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let corpus: Value = serde_json::from_str(CORPUS).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let language = tree_sitter_python::LANGUAGE.into();

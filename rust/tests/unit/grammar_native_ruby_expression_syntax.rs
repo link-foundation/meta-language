@@ -4,14 +4,14 @@ use meta_language::FeatureParseOptions;
 use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/ruby.lino");
-const PROJECTION: &str = include_str!("../../../parity/fixtures/native-grammars/ruby-profile.json");
+const PROJECTION: &str = include_str!("../../../parity/fixtures/native-grammars/ruby-profile.lino");
 const FIXTURE: &str =
-    include_str!("../../../parity/fixtures/native-grammars/ruby-expression-syntax-ci.json");
+    include_str!("../../../parity/fixtures/native-grammars/ruby-expression-syntax-ci.lino");
 
 #[test]
 fn ruby_assignment_and_regex_syntax_match_exact_oracle_rows_with_default_limits() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let projection: Value = serde_json::from_str(PROJECTION).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let projection: Value = super::project_data::read_project_data(PROJECTION).unwrap();
     let rows = Rows::new(&projection);
     let parser = parser(GRAMMAR);
     let language = tree_sitter_ruby::LANGUAGE.into();

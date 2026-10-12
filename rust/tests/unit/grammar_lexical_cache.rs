@@ -3,14 +3,14 @@ use super::issue_195_native_grammar_rows::{Rows, oracle_rows, parse, parser, reb
 use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/ruby.lino");
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/ruby-profile.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/ruby-profile.lino");
 const CORPUS: &str =
-    include_str!("../../../parity/fixtures/native-grammars/ruby-profile-corpus.json");
+    include_str!("../../../parity/fixtures/native-grammars/ruby-profile-corpus.lino");
 
 #[test]
 fn fixed_lexical_matching_preserves_original_ruby_default_budgets() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let corpus: Value = serde_json::from_str(CORPUS).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let language = tree_sitter_ruby::LANGUAGE.into();
@@ -38,7 +38,7 @@ fn fixed_lexical_matching_preserves_original_ruby_default_budgets() {
 
 #[test]
 fn fixed_lexical_matching_preserves_neighboring_ruby_token_contexts() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let language = tree_sitter_ruby::LANGUAGE.into();
@@ -63,8 +63,8 @@ fn fixed_lexical_matching_preserves_neighboring_ruby_token_contexts() {
 
 #[test]
 fn fixed_lexical_cache_context_retains_automatic_repair_work_accounting() {
-    let contexts: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/lexical-cache-contexts.json"
+    let contexts: serde_json::Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/lexical-cache-contexts.lino"
     ))
     .unwrap();
     for entry in contexts.as_array().unwrap() {

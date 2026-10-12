@@ -76,6 +76,8 @@ fn fixture_digest(journal: &mut Journal, fixture_file: &'static str) -> String {
             let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("..")
                 .join(fixture_file);
+            let path = super::project_data::resolve_project_data_path(path)
+                .expect("observation fixture storage resolves");
             let bytes = fs::read(&path)
                 .unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()));
             Sha256::digest(bytes)

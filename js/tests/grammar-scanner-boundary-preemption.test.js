@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
@@ -23,10 +24,10 @@ test('an already shifted scanner boundary stays compatible while other continuat
 });
 
 test('Ruby shifted boundaries preserve three root statements and the original CI declaration cases', () => {
-  const listing = readFileSync(new URL('../../parity/grammars/native/ruby.lino', import.meta.url), 'utf8');
+  const listing = readFileSync(resolveProjectDataPath(new URL('../../parity/grammars/native/ruby.lino', import.meta.url)), 'utf8');
   const parser = compileGrammar(parseGrammarLinks(listing));
-  const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/native-grammars/ruby-profile.json', import.meta.url), 'utf8'));
-  const corpus = JSON.parse(readFileSync(new URL('../../parity/fixtures/native-grammars/ruby-profile-corpus.json', import.meta.url), 'utf8'));
+  const fixture = readProjectData(new URL('../../parity/fixtures/native-grammars/ruby-profile.json', import.meta.url));
+  const corpus = readProjectData(new URL('../../parity/fixtures/native-grammars/ruby-profile-corpus.json', import.meta.url));
   const projection = { ...fixture, oracleKinds: nativeOracleKinds(listing) };
   const sources = ['case expr\n in 5\nend\n'.repeat(3),
     ...['empty class', 'for', 'rescue modifier'].map(title => {

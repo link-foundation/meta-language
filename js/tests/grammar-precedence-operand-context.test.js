@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -39,10 +40,11 @@ test('shared source contexts retain regrouping only when both constructs fit a c
 });
 
 test('Ruby rescue assignment retains the complete pinned CI input and independent oracle', () => {
-  const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+  const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
   const parser = compileGrammar(parseGrammarLinks(read('parity/grammars/native/ruby.lino')));
-  const fixture = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile.json'));
-  const corpus = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile-corpus.json'));
+  const fixture = readData('parity/fixtures/native-grammars/ruby-profile.json');
+  const corpus = readData('parity/fixtures/native-grammars/ruby-profile-corpus.json');
   const entry = corpus.cases.find(value => value.file === 'control-flow.txt' && value.title === 'rescue modifier in assignments');
   assert.ok(entry);
   const actual = parser.parseTree(entry.source);

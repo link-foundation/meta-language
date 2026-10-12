@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
@@ -51,13 +52,14 @@ test('syntactic boundary contexts reject changed counts and nonoptional occurren
   }
 });
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const naming = JSON.parse(read('parity/naming/grammar-name-expansions.json'));
+const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
+const naming = readData('parity/naming/grammar-name-expansions.json');
 const profile = naming.grammars.elixir;
 const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
-const entry = JSON.parse(read('parity/grammars/sources.json')).sources.find(({ language }) => language === 'elixir');
+const entry = readData('parity/grammars/sources.json').sources.find(({ language }) => language === 'elixir');
 const upstream = JSON.parse(gunzipSync(readFileSync(new URL(`../../${entry.file}`, import.meta.url))));
-const projection = JSON.parse(read('parity/fixtures/native-grammars/elixir-profile.json'));
+const projection = readData('parity/fixtures/native-grammars/elixir-profile.json');
 const candidate = transformNativeSource(upstream, profile.sourceTransforms.filter(({ family }) => family !== 'syntactic-boundary-context'));
 const contextDecision = { rule: 'body', symbol: '_terminator', occurrence: 4, count: 4,
   boundary: { type: 'SEQ', members: [symbol('_terminator'), optional('_stab_clause_left'), literal('->')] } };
@@ -66,7 +68,7 @@ const imported = importTreeSitterNative(candidate, {
   nameOf: name => nativeName(name, words, profile), scanners: nativeScannerProfile(profile.scannerFamilies), immediate: entry.scanner.immediate,
 });
 const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported)));
-const corpus = JSON.parse(read('parity/fixtures/native-grammars/elixir-profile-corpus.json'));
+const corpus = readData('parity/fixtures/native-grammars/elixir-profile-corpus.json');
 const trailingCalls = corpus.cases.find(({ file, title }) => file === 'do_end.txt' && title === 'stab clause / edge cases / trailing call in multiline clause');
 
 test('arrow clause bodies retain their exact spans before further clauses and closing keywords', () => {

@@ -6,9 +6,9 @@ use meta_language::{FeatureParseOptions, parse_grammar_links, render_grammar_lin
 use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/elixir.lino");
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/elixir-profile.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/elixir-profile.lino");
 const CORPUS: &str =
-    include_str!("../../../parity/fixtures/native-grammars/elixir-profile-corpus.json");
+    include_str!("../../../parity/fixtures/native-grammars/elixir-profile-corpus.lino");
 
 #[test]
 fn elixir_profile_focused_trees_match_the_independent_oracle() {
@@ -16,7 +16,7 @@ fn elixir_profile_focused_trees_match_the_independent_oracle() {
         render_grammar_links(&parse_grammar_links(GRAMMAR).unwrap()),
         GRAMMAR
     );
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     oracle_agrees(&tree_sitter_elixir::LANGUAGE.into(), &fixture);
@@ -44,8 +44,8 @@ fn elixir_profile_focused_trees_match_the_independent_oracle() {
 // CI executes the complete pinned corpus; local work uses focused JavaScript.
 #[test]
 fn elixir_profile_upstream_corpus_matches_the_independent_oracle() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let corpus: Value = serde_json::from_str(CORPUS).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let language = tree_sitter_elixir::LANGUAGE.into();

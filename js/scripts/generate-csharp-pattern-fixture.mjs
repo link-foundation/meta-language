@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { structuredDataToLino } from '../src/structured-data-links.js';
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
 // Only reported CI sources and their bounded pattern controls.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -6,7 +8,7 @@ import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { grammarSourceOf, importSource } from './import-native-grammars.mjs';
 import { nativeRows, oracleSnapshot } from './native-grammar-rows.mjs';
 
-const read = file => JSON.parse(readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8'));
+const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const argument = process.argv.indexOf('--fixture');
 const fixtureName = argument < 0 ? 'csharp-pattern-ci' : process.argv[argument + 1];
 if (!/^csharp-pattern(?:-[a-z]+)*-ci$/u.test(fixtureName ?? '')) throw new TypeError('select a CSharp pattern CI fixture name');
@@ -39,6 +41,6 @@ const cases = fixture.selections.map(selection => {
 });
 const controls = fixture.controls?.map(entry => snapshot(typeof entry === 'string' ? { source: entry } : { source: entry.source }));
 const result = { ...fixture, grammarSource: source.id, revision: source.revision, sourceSha256: source.sha256, corpus: source.corpus, cases, ...(controls ? { controls } : {}) };
-const expected = `${JSON.stringify(result, null, 2)}\n`;
-if (process.argv.includes('--check')) assert.equal(readFileSync(target, 'utf8'), expected, 'bounded pattern fixture drift');
-else writeFileSync(target, expected);
+const expected = structuredDataToLino(result);
+if (process.argv.includes('--check')) assert.equal(readFileSync(resolveProjectDataPath(target), 'utf8'), expected, 'bounded pattern fixture drift');
+else writeFileSync(resolveProjectDataPath(target), expected);

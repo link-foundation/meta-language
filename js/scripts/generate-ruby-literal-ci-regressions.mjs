@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { structuredDataToLino } from '../src/structured-data-links.js';
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
 // Exact independent-oracle regression inputs from Ruby CI run 38227158183.
 // Fixture generation records the oracle, never a native implementation result.
 import assert from 'node:assert/strict';
@@ -9,7 +11,7 @@ import { oracleSnapshot } from './native-grammar-rows.mjs';
 import { sourceText } from './import-native-grammars.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const read = file => JSON.parse(readFileSync(join(root, file), 'utf8'));
+const read = file => readProjectData(join(root, file));
 const ciTitles = ['global variables', 'complex', 'newline-delimited strings', 'basic heredocs',
   'heredocs with interpolation', 'heredocs with in args, pairs, and arrays'];
 const controls = [
@@ -42,7 +44,7 @@ export function rubyLiteralCIRegressionFixture() {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const file = join(root, 'parity/fixtures/native-grammars/ruby-literal-ci-regressions.json');
-  const expected = `${JSON.stringify(rubyLiteralCIRegressionFixture(), null, 2)}\n`;
-  if (process.argv.includes('--check')) assert.equal(readFileSync(file, 'utf8'), expected);
-  else writeFileSync(file, expected);
+  const expected = structuredDataToLino(rubyLiteralCIRegressionFixture());
+  if (process.argv.includes('--check')) assert.equal(readFileSync(resolveProjectDataPath(file), 'utf8'), expected);
+  else writeFileSync(resolveProjectDataPath(file), expected);
 }

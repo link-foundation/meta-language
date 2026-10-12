@@ -1,3 +1,4 @@
+import { resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Declared settling: how two parses of one text that end alike are settled
 // is grammar data, `(settling STEP...)`, which the executor reads for every
 // grammar, whatever format it was imported from.
@@ -87,7 +88,7 @@ test('every importer settles through the same declared steps', (context) => {
   const directory = new URL('js/src/data/native-grammars/', repositoryRoot);
   const declaredBy = new Map();
   for (const file of readdirSync(directory).filter((name) => name.endsWith('.lino'))) {
-    const header = readFileSync(new URL(file, directory), 'utf8').split('\n', 1)[0];
+    const header = readFileSync(resolveProjectDataPath(new URL(file, directory)), 'utf8').split('\n', 1)[0];
     if (header.includes('(matching longest)')) declaredBy.set(file, /\(settling ([^)]*)\)/u.exec(header)?.[1] ?? null);
   }
   assert.ok(declaredBy.size >= 6);
@@ -108,12 +109,12 @@ test('every importer settles through the same declared steps', (context) => {
 test('the executor settles by the declared steps, not by source format', (context) => {
   const runtime = new URL('js/src/grammar-runtime/', repositoryRoot);
   for (const file of readdirSync(runtime)) {
-    const source = readFileSync(new URL(file, runtime), 'utf8');
+    const source = readFileSync(resolveProjectDataPath(new URL(file, runtime)), 'utf8');
     // No settling decided by the format a grammar was imported from.
     assert.doesNotMatch(source, /sourceFormat\s*===\s*'(?!peg')/u, file);
     assert.doesNotMatch(source, /'tree-sitter'|'antlr'|'lark'/u, file);
   }
-  const executor = readFileSync(new URL('executor.js', runtime), 'utf8');
+  const executor = readFileSync(resolveProjectDataPath(new URL('executor.js', runtime)), 'utf8');
   for (const step of SETTLING_STEPS.filter((name) => name !== 'first')) assert.match(executor, new RegExp(`'${step}'|settling\\.${step}`, 'u'), step);
   observe(['noHostCodeSettling'], context.name);
 });

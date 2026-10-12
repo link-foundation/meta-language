@@ -12,7 +12,7 @@ fn native_languages_retain_independent_development_oracles() {
             "def answer : Nat := 42\n",
             native_source_oracles::LEAN,
             include_str!("../../../parity/grammars/native/lean.lino"),
-            include_str!("../../../parity/fixtures/native-grammars/lean.json"),
+            include_str!("../../../parity/fixtures/native-grammars/lean.lino"),
         ),
         (
             "rocq",
@@ -20,11 +20,12 @@ fn native_languages_retain_independent_development_oracles() {
             "Definition answer : nat := 42.\n",
             native_source_oracles::ROCQ,
             include_str!("../../../parity/grammars/native/rocq.lino"),
-            include_str!("../../../parity/fixtures/native-grammars/rocq.json"),
+            include_str!("../../../parity/fixtures/native-grammars/rocq.lino"),
         ),
     ] {
         assert!(grammar_names(id).is_none());
-        let fixture: Value = serde_json::from_str(fixture).expect("fixture reads");
+        let fixture: Value =
+            super::project_data::read_project_data(fixture).expect("fixture reads");
         let tree = parse(&parser(grammar), source).expect("native parse succeeds");
         let (oracle, recovers) = oracle_rows(&oracle.into(), source);
         assert!(!recovers);

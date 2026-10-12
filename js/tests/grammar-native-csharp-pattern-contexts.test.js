@@ -1,3 +1,4 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -7,7 +8,7 @@ import { grammarSourceOf, importSource } from '../scripts/import-native-grammars
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { applySourceContextPreference } from '../scripts/native-source-preferences.mjs';
 
-const read = file => JSON.parse(readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8'));
+const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const fixture = read('parity/fixtures/native-grammars/csharp-pattern-context-ci.json');
 const naming = read('parity/naming/grammar-name-expansions.json');
 const entry = grammarSourceOf('native-csharp');

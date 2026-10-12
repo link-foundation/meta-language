@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -41,10 +42,11 @@ test('field expression projections retain aliases surrounding a selected source 
   assert.deepEqual(grammar.rules.argument, { type: 'STRING', value: 'a' });
 });
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const fixture = JSON.parse(read('parity/fixtures/native-grammars/elixir-guard-precedence-context.json'));
-const naming = JSON.parse(read('parity/naming/grammar-name-expansions.json'));
-const entry = JSON.parse(read('parity/grammars/sources.json')).sources.find(source => source.language === 'elixir');
+const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
+const fixture = readData('parity/fixtures/native-grammars/elixir-guard-precedence-context.json');
+const naming = readData('parity/naming/grammar-name-expansions.json');
+const entry = readData('parity/grammars/sources.json').sources.find(source => source.language === 'elixir');
 const profile = structuredClone(naming.grammars.elixir);
 profile.sourceTransforms = profile.sourceTransforms.filter(decision => !(decision.family === 'field-expression-context' && decision.clones.some(clone => clone.helper === '_guard_argument_list'))
   && !(decision.family === 'literal-continuation-exclusion' && decision.rules.includes('_guard_binary_expression')));
@@ -53,7 +55,7 @@ ordering.followingPatterns = fixture.followingPatterns;
 profile.sourceTransforms.push(fixture.context, fixture.boundary);
 const imported = importSource(entry, new Map(naming.words.map(({ word, replacement }) => [word, replacement])), profile);
 const parser = compileGrammar(parseGrammarLinks(imported.text));
-const projection = { ...JSON.parse(read('parity/fixtures/native-grammars/elixir-profile-sources.json')), oracleKinds: nativeOracleKinds(imported.text) };
+const projection = { ...readData('parity/fixtures/native-grammars/elixir-profile-sources.json'), oracleKinds: nativeOracleKinds(imported.text) };
 const originalCases = corpusCases(entry).filter(item => fixture.corpus.some(({ file, title }) => item.file === file && item.title === title));
 const text = node => node.type === 'node' ? node.children.map(text).join('') : node.text;
 

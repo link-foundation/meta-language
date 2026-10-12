@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -5,10 +6,11 @@ import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { rubyLiteralCIRegressionFixture } from '../scripts/generate-ruby-literal-ci-regressions.mjs';
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const parser = compileGrammar(parseGrammarLinks(read('parity/grammars/native/ruby.lino')));
-const fixture = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile.json'));
-const regression = JSON.parse(read('parity/fixtures/native-grammars/ruby-literal-ci-regressions.json'));
+const fixture = readData('parity/fixtures/native-grammars/ruby-profile.json');
+const regression = readData('parity/fixtures/native-grammars/ruby-literal-ci-regressions.json');
 const text = tree => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 
 // These exact pinned inputs failed CI run 38227158183. Keep their entire

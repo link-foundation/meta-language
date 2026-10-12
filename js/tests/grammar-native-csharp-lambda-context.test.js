@@ -1,3 +1,4 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -9,7 +10,7 @@ import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
-const read = (file) => JSON.parse(readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8'));
+const read = (file) => readProjectData(new URL(`../../${file}`, import.meta.url));
 const fixture = read('parity/fixtures/native-grammars/csharp-lambda-ref-context.json');
 const declarations = read('parity/fixtures/native-grammars/csharp-declarations-regressions.json');
 const naming = read('parity/naming/grammar-name-expansions.json');

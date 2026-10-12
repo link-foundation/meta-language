@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { structuredDataToLino } from '../src/structured-data-links.js';
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
 // Only the authored focused sources and two explicitly named pinned cases run
 // here. Whole upstream corpus execution remains a CI promotion requirement.
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -49,7 +51,7 @@ export function elmCandidateFixtures(candidate = elmLayoutCandidate()) {
     if (!oracleSnapshot(source, 'Elm').recovers) throw new Error(`the independent Elm oracle accepts invalid source ${name}`);
     return { name, source };
   });
-  const lock = JSON.parse(readFileSync(new URL('js/src/vendor/grammars/grammar-lock.json', root), 'utf8')).grammars.elm;
+  const lock = readProjectData(new URL('js/src/vendor/grammars/grammar-lock.json', root)).grammars.elm;
   if (lock.version !== candidate.source.crate.version) throw new Error('Elm candidate and independent oracle versions differ');
   return {
     language: 'Elm', grammar: ELM_CANDIDATE_GRAMMAR,
@@ -63,7 +65,7 @@ export function elmCandidateFixtures(candidate = elmLayoutCandidate()) {
 export function elmCandidateOutputs() {
   const candidate = elmLayoutCandidate();
   return [
-    [ELM_CANDIDATE_FIXTURE, `${JSON.stringify(elmCandidateFixtures(candidate), null, 2)}\n`],
+    [ELM_CANDIDATE_FIXTURE, structuredDataToLino(elmCandidateFixtures(candidate))],
     [ELM_CANDIDATE_GRAMMAR, candidate.text],
     [ELM_CANDIDATE_SCANNER, candidate.scanner],
   ];
@@ -73,7 +75,7 @@ if (process.argv[1] && new URL(process.argv[1], 'file:').href === import.meta.ur
   for (const [file, text] of elmCandidateOutputs()) {
     const path = new URL(file, root);
     if (process.argv.includes('--check')) {
-      if (readFileSync(path, 'utf8') !== text) throw new Error(`${file}: Elm candidate generation drift`);
-    } else writeFileSync(path, text);
+      if (readFileSync(resolveProjectDataPath(path), 'utf8') !== text) throw new Error(`${file}: Elm candidate generation drift`);
+    } else writeFileSync(resolveProjectDataPath(path), text);
   }
 }

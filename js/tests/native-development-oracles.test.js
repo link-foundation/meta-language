@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
@@ -5,8 +6,9 @@ import { test } from 'node:test';
 import { LinkNetwork, compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-grammar-rows.mjs';
 
-const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const lock = JSON.parse(read('js/src/vendor/grammars/grammar-lock.json'));
+const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = (file) => readProjectData(new URL(`../../${file}`, import.meta.url));
+const lock = readData('js/src/vendor/grammars/grammar-lock.json');
 
 for (const [id, language, source] of [
   ['lean', 'Lean', 'def answer : Nat := 42\n'],
@@ -14,7 +16,7 @@ for (const [id, language, source] of [
 ]) {
   test(`native ${language} retains its independent development oracle`, () => {
     assert.equal(lock.grammars[id].oracle, true);
-    const fixture = JSON.parse(read(`parity/fixtures/native-grammars/${id}.json`));
+    const fixture = readData(`parity/fixtures/native-grammars/${id}.json`);
     const parser = compileGrammar(parseGrammarLinks(read(`parity/grammars/native/${id}.lino`)));
     assert.equal(oracleRecovers(source, language), false);
     const outcome = parser.parseTree(source);

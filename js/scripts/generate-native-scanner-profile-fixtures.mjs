@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { structuredDataToLino } from '../src/structured-data-links.js';
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
 // Focused exact independent-oracle fixtures for native grammar candidates.
 // A candidate is promoted only after its full CI corpus and parity checks.
 import assert from 'node:assert/strict';
@@ -13,12 +15,12 @@ import { corpusCases, sourceText } from './import-native-grammars.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 export function nativeScannerProfileFixture(language) {
-  const spec = JSON.parse(readFileSync(join(root, `parity/fixtures/native-grammars/${language}-profile-sources.json`), 'utf8'));
-  const registry = JSON.parse(readFileSync(join(root, 'parity/grammars/sources.json'), 'utf8'));
+  const spec = readProjectData(join(root, `parity/fixtures/native-grammars/${language}-profile-sources.json`));
+  const registry = readProjectData(join(root, 'parity/grammars/sources.json'));
   const entry = registry.sources.find(source => source.id === spec.source);
   assert.ok(entry, 'the fixture source is independently pinned');
   sourceText(entry);
-  const grammar = readFileSync(join(root, spec.grammar), 'utf8');
+  const grammar = readFileSync(resolveProjectDataPath(join(root, spec.grammar)), 'utf8');
   const parser = compileGrammar(parseGrammarLinks(grammar));
   const projection = { ...spec, oracleKinds: nativeOracleKinds(grammar) };
   const text = tree => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
@@ -44,7 +46,7 @@ export function nativeScannerProfileFixture(language) {
 }
 
 export function nativeScannerProfileCorpus(language) {
-  const registry = JSON.parse(readFileSync(join(root, 'parity/grammars/sources.json'), 'utf8'));
+  const registry = readProjectData(join(root, 'parity/grammars/sources.json'));
   const entry = registry.sources.find(source => source.language === language);
   assert.ok(entry?.corpus, 'the complete upstream corpus is independently pinned');
   return { schemaVersion: 1, language, revision: entry.revision, sourceSha256: entry.sha256,
@@ -61,9 +63,9 @@ function main(args) {
   };
   for (const [name, value] of Object.entries(outputs)) {
     const file = join(root, `parity/fixtures/native-grammars/${name}`);
-    const expected = `${JSON.stringify(value, null, 2)}\n`;
-    if (args.includes('--check')) assert.equal(readFileSync(file, 'utf8'), expected, 'generated profile fixture differs');
-    else writeFileSync(file, expected);
+    const expected = structuredDataToLino(value);
+    if (args.includes('--check')) assert.equal(readFileSync(resolveProjectDataPath(file), 'utf8'), expected, 'generated profile fixture differs');
+    else writeFileSync(resolveProjectDataPath(file), expected);
   }
 }
 

@@ -6,21 +6,21 @@ use meta_language::{FeatureParseOptions, parse_grammar_links, render_grammar_lin
 use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/ruby.lino");
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/ruby-profile.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/ruby-profile.lino");
 const CORPUS: &str =
-    include_str!("../../../parity/fixtures/native-grammars/ruby-profile-corpus.json");
+    include_str!("../../../parity/fixtures/native-grammars/ruby-profile-corpus.lino");
 const EXPRESSIONS: &str =
-    include_str!("../../../parity/fixtures/native-grammars/ruby-expression-contexts.json");
+    include_str!("../../../parity/fixtures/native-grammars/ruby-expression-contexts.lino");
 const HEREDOC_CALLS: &str =
-    include_str!("../../../parity/fixtures/native-grammars/ruby-heredoc-call-context-ci.json");
+    include_str!("../../../parity/fixtures/native-grammars/ruby-heredoc-call-context-ci.lino");
 const METHOD_DECLARATIONS: &str = include_str!(
-    "../../../parity/fixtures/native-grammars/ruby-method-declaration-context-ci.json"
+    "../../../parity/fixtures/native-grammars/ruby-method-declaration-context-ci.lino"
 );
 
 #[test]
 fn ruby_complete_method_statements_preserve_default_budget_and_shared_contexts() {
-    let profile: Value = serde_json::from_str(FIXTURE).unwrap();
-    let fixture: Value = serde_json::from_str(METHOD_DECLARATIONS).unwrap();
+    let profile: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(METHOD_DECLARATIONS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&profile);
     let language = tree_sitter_ruby::LANGUAGE.into();
@@ -42,8 +42,8 @@ fn ruby_complete_method_statements_preserve_default_budget_and_shared_contexts()
 
 #[test]
 fn ruby_heredoc_call_contexts_match_shared_ci_sources_and_neighboring_controls() {
-    let profile: Value = serde_json::from_str(FIXTURE).unwrap();
-    let fixture: Value = serde_json::from_str(HEREDOC_CALLS).unwrap();
+    let profile: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(HEREDOC_CALLS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&profile);
     let language = tree_sitter_ruby::LANGUAGE.into();
@@ -64,8 +64,8 @@ fn ruby_heredoc_call_contexts_match_shared_ci_sources_and_neighboring_controls()
 
 #[test]
 fn ruby_operator_and_call_contexts_match_the_independent_oracle() {
-    let profile: Value = serde_json::from_str(FIXTURE).unwrap();
-    let fixture: Value = serde_json::from_str(EXPRESSIONS).unwrap();
+    let profile: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(EXPRESSIONS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&profile);
     let language = tree_sitter_ruby::LANGUAGE.into();
@@ -87,7 +87,7 @@ fn ruby_profile_focused_trees_match_the_independent_oracle() {
         render_grammar_links(&parse_grammar_links(GRAMMAR).unwrap()),
         GRAMMAR
     );
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     oracle_agrees(&tree_sitter_ruby::LANGUAGE.into(), &fixture);
@@ -115,8 +115,8 @@ fn ruby_profile_focused_trees_match_the_independent_oracle() {
 // CI executes the complete pinned corpus; local work uses focused JavaScript.
 #[test]
 fn ruby_profile_upstream_corpus_matches_the_independent_oracle() {
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
-    let corpus: Value = serde_json::from_str(CORPUS).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let language = tree_sitter_ruby::LANGUAGE.into();

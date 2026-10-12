@@ -1,14 +1,13 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { gunzipSync } from 'node:zlib';
 import test from 'node:test';
 import { transformSymbolChoiceContext } from '../scripts/native-symbol-choice-context.mjs';
 import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
-import { nativeName } from '../scripts/import-native-grammars.mjs';
+import { nativeName, sourceText } from '../scripts/import-native-grammars.mjs';
 import { nativeScannerProfile } from '../scripts/generate-native-scanner-profiles.mjs';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const symbol = name => ({ type: 'SYMBOL', name });
 const miniature = () => ({
@@ -52,13 +51,13 @@ test('symbol choice contexts validate source identities and exact occurrences be
   }
 });
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const naming = JSON.parse(read('parity/naming/grammar-name-expansions.json'));
+const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
+const naming = read('parity/naming/grammar-name-expansions.json');
 const profile = naming.grammars.elixir;
 const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
-const entry = JSON.parse(read('parity/grammars/sources.json')).sources.find(({ language }) => language === 'elixir');
-const upstream = JSON.parse(gunzipSync(readFileSync(new URL(`../../${entry.file}`, import.meta.url))));
-const projection = JSON.parse(read('parity/fixtures/native-grammars/elixir-profile.json'));
+const entry = read('parity/grammars/sources.json').sources.find(({ language }) => language === 'elixir');
+const upstream = JSON.parse(sourceText(entry));
+const projection = read('parity/fixtures/native-grammars/elixir-profile.json');
 // The generic scanner boundary already reserves newline continuations. A
 // blanket slash guard would also reject valid local and remote operator arity.
 const decisions = profile.sourceTransforms.filter(decision => decision.family !== 'symbol-choice-context'
@@ -73,7 +72,7 @@ const imported = importTreeSitterNative(candidate, {
   nameOf: name => nativeName(name, words, profile), scanners: nativeScannerProfile(profile.scannerFamilies), immediate: entry.scanner.immediate,
 });
 const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(imported)));
-const corpus = JSON.parse(read('parity/fixtures/native-grammars/elixir-profile-corpus.json'));
+const corpus = read('parity/fixtures/native-grammars/elixir-profile-corpus.json');
 const fixtures = [
   corpus.cases.find(({ file, title }) => file === 'expression/capture.txt' && title === 'local operator MFA'),
   corpus.cases.find(({ file, title }) => file === 'expression/operator.txt' && title === 'nullary range'),

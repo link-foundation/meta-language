@@ -1,3 +1,4 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
@@ -7,7 +8,7 @@ import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs'
 import { nativeOracleKinds } from '../scripts/build-language-catalog.mjs';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 
-const read = path => JSON.parse(readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8'));
+const read = path => readProjectData(new URL(`../../${path}`, import.meta.url));
 const fixture = read('parity/fixtures/native-grammars/elixir-comment-block-boundary.json');
 
 test('registered trivia continuation boundaries preserve productions and reject source drift', () => {

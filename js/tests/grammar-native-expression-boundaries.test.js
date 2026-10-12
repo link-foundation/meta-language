@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -21,12 +22,13 @@ test('prefix boundaries reuse a declared scanner or production without replacing
   assert.deepEqual(source.rules.document, { type: 'STRING', value: 'x' });
 });
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const naming = JSON.parse(read('parity/naming/grammar-name-expansions.json'));
-const entry = JSON.parse(read('parity/grammars/sources.json')).sources.find(source => source.language === 'elixir');
+const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
+const naming = readData('parity/naming/grammar-name-expansions.json');
+const entry = readData('parity/grammars/sources.json').sources.find(source => source.language === 'elixir');
 const imported = importSource(entry, new Map(naming.words.map(({ word, replacement }) => [word, replacement])), naming.grammars.elixir);
 const parser = compileGrammar(parseGrammarLinks(imported.text));
-const projection = { ...JSON.parse(read('parity/fixtures/native-grammars/elixir-profile-sources.json')), oracleKinds: nativeOracleKinds(imported.text) };
+const projection = { ...readData('parity/fixtures/native-grammars/elixir-profile-sources.json'), oracleKinds: nativeOracleKinds(imported.text) };
 const leaves = node => node.type === 'token' ? [node] : node.children.flatMap(leaves);
 
 test('registered Elixir expression boundaries preserve operator continuations and complete block operands', () => {

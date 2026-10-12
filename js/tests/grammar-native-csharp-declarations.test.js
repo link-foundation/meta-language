@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -9,9 +10,10 @@ import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-i
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 
-const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const fixture = JSON.parse(read('parity/fixtures/native-grammars/csharp-declarations-regressions.json'));
-const naming = JSON.parse(read('parity/naming/grammar-name-expansions.json'));
+const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = (file) => readProjectData(new URL(`../../${file}`, import.meta.url));
+const fixture = readData('parity/fixtures/native-grammars/csharp-declarations-regressions.json');
+const naming = readData('parity/naming/grammar-name-expansions.json');
 const decisions = naming.grammars.csharp;
 const entry = grammarSourceOf('native-csharp');
 const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
@@ -39,7 +41,7 @@ const links = renderTreeSitterNative({ ...imported, rules }, {
   ],
 });
 const parser = compileGrammar(parseGrammarLinks(links));
-const profile = JSON.parse(read('parity/fixtures/native-grammars/csharp-profile.json'));
+const profile = readData('parity/fixtures/native-grammars/csharp-profile.json');
 const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 
 function exactCase({ source, rows, title }) {
@@ -59,7 +61,7 @@ test('the five declaration regressions retain their exact CI sources and pinned 
   assert.equal(fixture.provenance.sourceSha256, entry.sha256);
   assert.equal(fixture.provenance.corpusFile, entry.corpus.file);
   assert.equal(fixture.provenance.corpusSha256, entry.corpus.sha256);
-  const corpus = JSON.parse(read('parity/fixtures/native-grammars/csharp-profile-corpus.json'));
+  const corpus = readData('parity/fixtures/native-grammars/csharp-profile-corpus.json');
   for (const row of fixture.cases) {
     const original = corpus.cases.find(({ file, title }) => file === row.file && title === row.title);
     assert.equal(row.source, original.source, row.title);

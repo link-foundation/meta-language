@@ -1,3 +1,4 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -8,7 +9,7 @@ import { transformTokenPrefixExclusion } from '../scripts/native-token-prefix-co
 import { nativeName, scannerText, sourceText } from '../scripts/import-native-grammars.mjs';
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 
-const read = file => JSON.parse(readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8'));
+const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const token = content => ({ type: 'TOKEN', content });
 const precedence = content => ({ type: 'PREC', value: -2, content });
 const input = { name: 'token_prefix', rules: {

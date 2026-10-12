@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
+import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
 // Generates parity/fixtures/native-grammars/<language>.json: the corpus a
 // native merged grammar in parity/grammars/native/ is checked against, with
 // the rows of the pinned tree-sitter grammar the language's default parse
@@ -34,14 +36,14 @@ import { corpusCases, grammarSourceOf } from './import-native-grammars.mjs';
 import { hasRecovery, nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const inventory = JSON.parse(readFileSync(path.join(root, 'parity/language-grammar-inventory.json'), 'utf8'));
+const inventory = readProjectData(path.join(root, 'parity/language-grammar-inventory.json'));
 
 // The id of a native grammar in the language inventory, with the kinds its
 // default tree places as the oracle does, which both runtimes read from the
 // language catalog.
 function nativeGrammar(id) {
   const { grammar, hidden, anonymous, extras, rootIncludesLeadingTrivia } = inventory.nativeGrammars[id];
-  const oracleKinds = nativeOracleKinds(readFileSync(path.join(root, grammar), 'utf8'));
+  const oracleKinds = nativeOracleKinds(readFileSync(resolveProjectDataPath(path.join(root, grammar)), 'utf8'));
   return { nativeGrammar: id, hidden, anonymous, extras, oracleKinds, ...(rootIncludesLeadingTrivia ? { rootIncludesLeadingTrivia } : {}) };
 }
 
@@ -1177,7 +1179,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
 ]);
 
 function grammarParser(entry) {
-  return compileGrammar(parseGrammarLinks(readFileSync(path.join(root, entry.grammar), 'utf8')));
+  return compileGrammar(parseGrammarLinks(readFileSync(resolveProjectDataPath(path.join(root, entry.grammar)), 'utf8')));
 }
 
 /** The fixture of `entry`, computed from the oracle and the native grammar. */
@@ -1307,7 +1309,7 @@ export function buildNativeDefaultLanguageExpected(entry) {
   if (!hasRecovery(recovery)) throw new Error(`${entry.grammar} repairs the ${entry.language} recovery source without an ERROR or MISSING node`);
   // Keep independent host-region boundaries while native rows replace the
   // host parser. Their source identity must still match the inventory source.
-  const oracle = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/default-cst-expected.json'), 'utf8')).languages[entry.language];
+  const oracle = readProjectData(path.join(root, 'parity/fixtures/default-cst-expected.json')).languages[entry.language];
   if (oracle?.embedded?.length && oracle.sourceSha256 !== sha256(language.source)) throw new Error(`the independent embedded-region source of ${entry.language} is stale`);
   const versions = (grammars) => Object.fromEntries(grammars.map(({ id, version, parserSha256 }) => [id, { version, parserSha256 }]));
   return {
@@ -1328,7 +1330,7 @@ export function nativeDefaultLanguages(entry) {
 
 /** Every native default expectation and the shared embedded-region fixtures. */
 export function buildNativeDefaultCstExpected(only = null) {
-  const previous = only ? JSON.parse(readFileSync(path.join(root, DEFAULT_CST_PATH), 'utf8')) : null;
+  const previous = only ? readProjectData(path.join(root, DEFAULT_CST_PATH)) : null;
   const entries = only ? NATIVE_GRAMMARS.filter(({ id }) => only.includes(id)) : NATIVE_GRAMMARS;
   const languages = { ...previous?.languages,
     ...Object.fromEntries(entries.flatMap((entry) => nativeDefaultLanguages(entry).map((language) => [language, buildNativeDefaultLanguageExpected({ ...entry, language })]))),
@@ -1367,8 +1369,8 @@ export function buildNativeDefaultCstExpected(only = null) {
  * the oracle's. Only fixtures with such a region are listed.
  */
 export function buildNativeEmbeddedFixtures(only = null) {
-  const oracle = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/default-cst-expected.json'), 'utf8')).embeddedFixtures;
-  const evidence = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/issue-195-evidence.json'), 'utf8')).embedded;
+  const oracle = readProjectData(path.join(root, 'parity/fixtures/default-cst-expected.json')).embeddedFixtures;
+  const evidence = readProjectData(path.join(root, 'parity/fixtures/issue-195-evidence.json')).embedded;
   const fixtures = {};
   for (const fixture of evidence) {
     const label = `${fixture.host} -> ${fixture.target}`;
@@ -1408,14 +1410,9 @@ export function buildNativeEmbeddedFixtures(only = null) {
   return Object.fromEntries(Object.entries(fixtures).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
 }
 
-const ROW_KEYS = new Set(['rows', 'positive', 'recovery']);
-
-// One row per line, and invisible characters escaped so the fixture reads unambiguously.
+// Fixture values and rows are inspectable links, generated from the same oracle data.
 export function renderFixture(fixture) {
-  const text = JSON.stringify(fixture, (key, value) => (ROW_KEYS.has(key) && Array.isArray(value) ? value.map((row) => `@@${JSON.stringify(row)}@@`) : value), 2)
-    .replace(/"@@((?:[^"\\]|\\.)*)@@"/gu, (_, row) => JSON.parse(`"${row}"`))
-    .replace(/[\u00a0\u2028\u2029\ufeff]/gu, (character) => `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`);
-  return `${text}\n`;
+  return structuredDataToLino(fixture);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -1437,12 +1434,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     [DEFAULT_CST_PATH, () => buildNativeDefaultCstExpected(only.length ? only : null)],
   ];
   for (const [relative, build] of outputs) {
-    const file = path.join(root, relative);
+    const file = resolveProjectDataPath(path.join(root, relative));
     const text = renderFixture(build());
     if (check) {
       let current = null;
       try {
-        current = readFileSync(file, 'utf8');
+        current = readFileSync(resolveProjectDataPath(file), 'utf8');
       } catch {
         // A missing fixture is stale.
       }
@@ -1450,8 +1447,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
         stale += 1;
         console.error(`${relative} is stale; run node scripts/generate-native-grammar-fixtures.mjs`);
         if (relative === DEFAULT_CST_PATH && current !== null) {
-          const before = JSON.parse(current);
-          const after = JSON.parse(text);
+          const before = readStructuredDataLino(current);
+          const after = readStructuredDataLino(text);
           for (const [language, expected] of Object.entries(after.languages)) {
             if (JSON.stringify(before.languages[language]) !== JSON.stringify(expected)) console.error(`  changed language: ${language}`);
           }

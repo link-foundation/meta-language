@@ -21,7 +21,7 @@ use super::issue_195_observations::{Observation, record};
 #[test]
 fn native_lean_explicit_application_arguments_are_left_associated() {
     let source = "#check @plant Tree rain\n";
-    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = super::issue_195_native_grammar_rows::parser(GRAMMAR);
     let tree = parse(&parser, source).unwrap();
     let rows = Rows::new(&fixture).rows(&tree, source);
@@ -37,7 +37,7 @@ fn native_lean_explicit_application_arguments_are_left_associated() {
 }
 
 const FIXTURE_FILE: &str = "parity/fixtures/native-grammars/lean.json";
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/lean.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/lean.lino");
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/lean.lino");
 
 fn observe(assertions: &[&str], test_name: &str) {
@@ -52,7 +52,7 @@ fn observe(assertions: &[&str], test_name: &str) {
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(FIXTURE).expect("the native Lean fixture is JSON")
+    super::project_data::read_project_data(FIXTURE).expect("the native Lean fixture is JSON")
 }
 
 fn parser() -> FeatureGrammarParser {

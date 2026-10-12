@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -21,10 +22,11 @@ test('a composite extra owns its scanner priority independently of the following
 });
 
 test('heredoc extras preserve the complete pinned argument, mapping and array CI case', () => {
-  const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+  const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
   const parser = compileGrammar(parseGrammarLinks(read('parity/grammars/native/ruby.lino')));
-  const fixture = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile.json'));
-  const corpus = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile-corpus.json'));
+  const fixture = readData('parity/fixtures/native-grammars/ruby-profile.json');
+  const corpus = readData('parity/fixtures/native-grammars/ruby-profile-corpus.json');
   const entry = corpus.cases.find(value => value.file === 'literals.txt' && value.title === 'heredocs with in args, pairs, and arrays');
   assert.ok(entry);
   const actual = parser.parseTree(entry.source);

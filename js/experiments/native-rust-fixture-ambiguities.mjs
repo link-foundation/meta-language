@@ -1,10 +1,11 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Prints every ambiguity the native Rust grammar reports on the sources of
 // its fixture's matches, with the text it covers.
 import { readFileSync } from 'node:fs';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
-const parser = compileGrammar(parseGrammarLinks(readFileSync(new URL('../../parity/grammars/native/rust.lino', import.meta.url), 'utf8')));
-const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/native-grammars/rust.json', import.meta.url), 'utf8'));
+const parser = compileGrammar(parseGrammarLinks(readFileSync(resolveProjectDataPath(new URL('../../parity/grammars/native/rust.lino', import.meta.url)), 'utf8')));
+const fixture = readProjectData(new URL('../../parity/fixtures/native-grammars/rust.json', import.meta.url));
 let count = 0;
 for (const [index, { source }] of fixture.matches.entries()) {
   const { ambiguities } = parser.parseTree(source);

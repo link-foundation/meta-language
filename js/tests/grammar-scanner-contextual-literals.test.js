@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -6,7 +7,8 @@ import { nativeScannerProfile } from '../scripts/generate-native-scanner-profile
 import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const leaves = node => node.type === 'token' ? [node] : node.children.flatMap(leaves);
 
 const descriptor = {
@@ -49,7 +51,7 @@ test('contextual line continuations retain their source and separate lexical wor
 // Exercise generated scanner decisions without rewriting the shared generated
 // Ruby files while a grammar author prepares the rest of the batch.
 const rubyListing = read('parity/grammars/native/ruby.lino');
-const rubyProfile = JSON.parse(read('parity/naming/grammar-name-expansions.json')).grammars.ruby.scannerFamilies;
+const rubyProfile = readData('parity/naming/grammar-name-expansions.json').grammars.ruby.scannerFamilies;
 function rubyScannerParser(changes = {}) {
   const rubyGrammar = parseGrammarLinks(rubyListing);
   const profiles = rubyProfile.map((entry, index) => index === 0 ? { ...entry, ...changes } : entry);
@@ -61,7 +63,7 @@ function rubyScannerParser(changes = {}) {
   return compileGrammar(rubyGrammar);
 }
 const rubyParser = rubyScannerParser();
-const rubyProjection = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile.json'));
+const rubyProjection = readData('parity/fixtures/native-grammars/ruby-profile.json');
 
 test('shared contextual literal behavior preserves nested strings, balanced delimiters and regular expression suffixes', () => {
   for (const source of ['"#{[1, "c #{2} d", 3]}"', '%r(a(b)c)im', '%W(one #{2} three)', 'foo /bar/']) {
@@ -76,7 +78,7 @@ test('shared contextual literal behavior preserves nested strings, balanced deli
 });
 
 test('Ruby scanner dispatch parses the pinned empty method within the unchanged default budget', () => {
-  const corpus = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile-corpus.json'));
+  const corpus = readData('parity/fixtures/native-grammars/ruby-profile-corpus.json');
   const source = corpus.cases.find(({ file, title }) => file === 'declarations.txt' && title === 'empty method').source;
   const oracle = oracleSnapshot(source, 'ruby');
   assert.equal(oracle.recovers, false);

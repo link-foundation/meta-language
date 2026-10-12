@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -8,9 +9,10 @@ import { NATIVE_GRAMMARS, buildNativeGrammarCorpusSources, buildNativeGrammarFix
 import { nativeRows, oracleRows, oracleRecovers, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = (file) => readProjectData(new URL(`../../${file}`, import.meta.url));
 const entry = NATIVE_GRAMMARS.find(({ id }) => id === 'python');
-const fixture = JSON.parse(read(fixturePath(entry)));
+const fixture = readData(fixturePath(entry));
 const listing = read(entry.grammar);
 const parser = compileGrammar(parseGrammarLinks(listing));
 const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
@@ -21,7 +23,7 @@ const observe = (assertions, testName) => recordIssue195Observations({
 });
 
 test('native Python grammar and scanners are canonical generated Links Notation', (context) => {
-  const lock = JSON.parse(read('js/src/vendor/grammars/grammar-lock.json'));
+  const lock = readData('js/src/vendor/grammars/grammar-lock.json');
   assert.equal(lock.grammars.python.oracle, true);
   const manifest = read('rust/Cargo.toml');
   const production = manifest.split('[dependencies]')[1].split('[dev-dependencies]')[0];
@@ -109,7 +111,7 @@ test('native Python interpolation retains expression lists and splatted pattern 
 test('native Python matches the independent oracle on every pinned upstream corpus input', (context) => {
   const file = 'parity/fixtures/native-grammars/python-corpus.json';
   assert.equal(read(file), renderFixture(buildNativeGrammarCorpusSources('python')));
-  const { cases } = JSON.parse(read(file));
+  const { cases } = readData(file);
   assert.ok(cases.length > 0);
   const failures = [];
   for (const { file: sourceFile, title, source } of cases) {

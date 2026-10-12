@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -9,9 +10,10 @@ import { nativeRows, oracleRows, oracleRecovers } from '../scripts/native-gramma
 import { parseNative } from '../src/native-grammar-parser.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = (file) => readProjectData(new URL(`../../${file}`, import.meta.url));
 const entry = NATIVE_GRAMMARS.find(({ id }) => id === 'hcl');
-const fixture = JSON.parse(read(fixturePath(entry)));
+const fixture = readData(fixturePath(entry));
 const listing = read(entry.grammar);
 const parser = compileGrammar(parseGrammarLinks(listing));
 const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
@@ -62,7 +64,7 @@ test('native HCL focused trees match the independent oracle and preserve every b
 });
 
 test('native HCL parses the pinned long heredoc identifier within its unchanged default budget', () => {
-  const { source } = JSON.parse(read('parity/fixtures/native-grammars/hcl-corpus.json')).cases
+  const { source } = readData('parity/fixtures/native-grammars/hcl-corpus.json').cases
     .find(({ file, title }) => file === 'templates.txt' && title === 'heredoc with identifier that does not fit into the serialization buffer (should not crash)');
   assert.equal(oracleRecovers(source, 'HCL'), false);
   const outcome = parser.parseTree(source);
@@ -88,7 +90,7 @@ test('native HCL rejects and losslessly recovers invalid focused sources', (cont
 test('native HCL matches the independent oracle on every pinned upstream corpus input', (context) => {
   const file = 'parity/fixtures/native-grammars/hcl-corpus.json';
   assert.equal(read(file), renderFixture(buildNativeGrammarCorpusSources('hcl')));
-  const { cases } = JSON.parse(read(file));
+  const { cases } = readData(file);
   assert.ok(cases.length > 0);
   const failures = [];
   for (const { file: sourceFile, title, source } of cases) {

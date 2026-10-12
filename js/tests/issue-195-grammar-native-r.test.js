@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -9,9 +10,10 @@ import { nativeRows, oracleRows, oracleRecovers } from '../scripts/native-gramma
 import { parseNative } from '../src/native-grammar-parser.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = (file) => readProjectData(new URL(`../../${file}`, import.meta.url));
 const entry = NATIVE_GRAMMARS.find(({ id }) => id === 'r');
-const fixture = JSON.parse(read(fixturePath(entry)));
+const fixture = readData(fixturePath(entry));
 const listing = read(entry.grammar);
 const parser = compileGrammar(parseGrammarLinks(listing));
 const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
@@ -77,7 +79,7 @@ test('native R rejects and losslessly recovers invalid focused sources', (contex
 test('native R matches the independent oracle on every pinned upstream corpus input', (context) => {
   const file = 'parity/fixtures/native-grammars/r-corpus.json';
   assert.equal(read(file), renderFixture(buildNativeGrammarCorpusSources('r')));
-  const { cases } = JSON.parse(read(file));
+  const { cases } = readData(file);
   assert.ok(cases.length > 0);
   const failures = [];
   for (const { file: sourceFile, title, source } of cases) {

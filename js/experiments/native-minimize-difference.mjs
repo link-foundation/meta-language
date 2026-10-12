@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Shrinks SOURCE, word by word (white-space-separated runs), to a smallest
 // source the tree-sitter oracle parses clean and the native grammar parses
 // to different rows, a minimal case of a clean-oracle tree difference.
@@ -7,10 +8,11 @@ import { readFileSync } from 'node:fs';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-grammar-rows.mjs';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => readFileSync(resolveProjectDataPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
+const readData = (relative) => readProjectData(new URL(`../../${relative}`, import.meta.url));
 const grammar = process.env.GRAMMAR ?? 'rust';
 const language = process.env.ORACLE ?? 'Rust';
-const fixture = JSON.parse(read(`parity/fixtures/native-grammars/${grammar}.json`));
+const fixture = readData(`parity/fixtures/native-grammars/${grammar}.json`);
 const parser = compileGrammar(parseGrammarLinks(read(`parity/grammars/native/${grammar}.lino`)));
 
 function differs(source) {

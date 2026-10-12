@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -5,9 +6,10 @@ import { compileGrammar, parseGrammarLinks, renderGrammarLinks } from '../src/in
 import { nativeRows, oracleSnapshot, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { nativeScannerProfileFixture, nativeScannerProfileCorpus } from '../scripts/generate-native-scanner-profile-fixtures.mjs';
 
-const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
+const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const grammar = read('parity/grammars/native/ruby.lino');
-const fixture = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile.json'));
+const fixture = readData('parity/fixtures/native-grammars/ruby-profile.json');
 const parser = compileGrammar(parseGrammarLinks(grammar));
 const text = tree => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 
@@ -41,7 +43,7 @@ test('Ruby scanner profile focused invalid inputs reject and recover losslessly'
 
 // CI executes every pinned input. Local checks select the focused tests.
 test('Ruby scanner profile complete pinned upstream corpus matches its oracle', () => {
-  const corpus = JSON.parse(read('parity/fixtures/native-grammars/ruby-profile-corpus.json'));
+  const corpus = readData('parity/fixtures/native-grammars/ruby-profile-corpus.json');
   assert.deepEqual(corpus, nativeScannerProfileCorpus('ruby'));
   assert.ok(corpus.cases.length > 0);
   const failures = [];

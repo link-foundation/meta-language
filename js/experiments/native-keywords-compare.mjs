@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Compares the keywords each native grammar import extracts with those of
 // the upstream generated parser: the tokens `ts_lex_keywords` of its
 // src/parser.c accepts. PARSERS maps native grammar ids to parser.c paths:
@@ -6,14 +7,14 @@ import { readFileSync } from 'node:fs';
 
 import { importSource } from '../scripts/import-native-grammars.mjs';
 
-const read = (path) => JSON.parse(readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8'));
+const read = (path) => readProjectData(new URL(`../../${path}`, import.meta.url));
 const { sources } = read('parity/grammars/sources.json');
 const naming = read('parity/naming/grammar-name-expansions.json');
 const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
 const unescape = (text) => text.replace(/\\(.)/gu, '$1');
 
 function upstreamKeywords(parser) {
-  const text = readFileSync(parser, 'utf8');
+  const text = readFileSync(resolveProjectDataPath(parser), 'utf8');
   const names = text.slice(text.indexOf('ts_symbol_names'));
   const symbols = new Map([...names.slice(0, names.indexOf('};')).matchAll(/\[(\w+)\] = "((?:[^"\\]|\\.)*)"/gu)].map(([, symbol, name]) => [symbol, unescape(name)]));
   const start = text.indexOf('static bool ts_lex_keywords');
