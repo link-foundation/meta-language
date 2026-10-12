@@ -7,6 +7,9 @@ import { extractNameInventory } from '../js/scripts/issue-195-naming.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const definitions = {
+  'repository.read-temporary-grammar-inputs': 'Authenticate materialized foreign grammar JSON against exact byte pins and actual Git evidence that each registered input is ignored and untracked.',
+  'repository.read-portable-export-bindings': 'Read declaration names admitted by the existing checked source binder so imports with no callable candidates do not trigger unrelated dependency translation.',
+  'repository.partition-group-files': 'Divide one complete ordered test group into nonempty disjoint file partitions whose union preserves every original file exactly once.',
   'translation.accept-program-expression-field': 'Decide whether a semantic expression kind permits the requested field under its shared checked projection schema.',
   'translation.accept-program-tuple-product-model': 'Validate the explicit immutable value product model together with its frozen qualifier before semantic reload or emission.',
   'translation.recheck-linked-typed-program': 'Project a decoded linked program into the existing surface checker and compare the complete rechecked semantic program with its original records.',
@@ -55,7 +58,7 @@ for (const [id, definition] of Object.entries(definitions)) {
   if (!sources.length) throw new Error(`no implemented source defines ${id}`);
   const aliases = sources.flatMap(entry => {
     const source = readFileSync(new URL(`../${entry.file}`, import.meta.url), 'utf8');
-    const functions = [...source.matchAll(/^(?:export (?:async )?function|function|pub(?: const)? fn) ([a-zA-Z][a-zA-Z_]+)\b/gmu)];
+    const functions = [...source.matchAll(/^(?:(?:export )?(?:async )?function|pub(?: const)? fn) ([a-zA-Z][a-zA-Z_]+)\b/gmu)];
     return functions.filter(([, name]) => normalize(name).replace('java-script', 'javascript') === entry.name.replace('java-script', 'javascript'))
       .map(([, name]) => ({ source: entry.file, name }));
   });

@@ -1,7 +1,24 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { compareRustDefinitions, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { compareRustDefinitions, createModuleContext, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { selfTranslate } from '../src/self-translation.js';
+
+test('report import resolution checks callable candidates and avoids dependencies of carried classes', () => {
+  const modules = new Map([
+    ['consumer.js', "import { Box } from './class.js';import { plus as add } from './provider.js';export function twice(value){return add(value,value);}"],
+    ['class.js', "import { hidden } from './unused.js';export class Box { read(){return hidden();} }"],
+    ['provider.js', '/** @param {number} left @param {number} right @returns {number} */ export function plus(left,right){return left+right;}'],
+    ['unused.js', 'export function hidden(){return 3;}'],
+  ]);
+  const reads = [];
+  const context = createModuleContext(name => { reads.push(name); return modules.get(name) ?? null; })('consumer.js');
+  assert.deepEqual(context.imports['./class.js'], []);
+  assert.deepEqual(context.imports['./provider.js'].map(signature => signature.name), ['plus']);
+  assert.equal(reads.includes('unused.js'), false);
+  const source = modules.get('consumer.js');
+  const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
+  assert.equal(translation.items.find(item => source.slice(item.start, item.end).includes('function twice')).status, 'translated');
+});
 
 test('self-translation report reads individual UTF-8 function ranges and exact CST names', () => {
   const source = '// café 😀\nfn first() -> i64 { 1 }\nfn café() -> i64 { 2 }\npub fn r#type() { }\n';

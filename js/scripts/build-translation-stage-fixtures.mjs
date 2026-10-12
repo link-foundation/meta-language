@@ -6,7 +6,7 @@
 // `tests/unit/translation_stages.rs` runs the Rust pipeline on the same
 // sources and requires the same digests and errors, so the two runtimes stay
 // in parity stage by stage.
-// Usage: node scripts/build-translation-stage-fixtures.mjs [--check]
+// Usage: node scripts/build-translation-stage-fixtures.mjs [--check] [--only name1,name2]
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,10 +16,24 @@ import { readProjectData, readProjectFileBytes, serializeProjectData, writeProje
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const output = join(root, 'parity', 'fixtures', 'translation-stages.json');
+const onlyIndex = process.argv.indexOf('--only');
+const onlyValue = onlyIndex < 0 ? null : process.argv[onlyIndex + 1];
+if (onlyIndex >= 0 && (!onlyValue || onlyValue.startsWith('--'))) throw new Error('--only needs exact comma-separated program names');
+const selected = onlyValue === null ? null : new Set(onlyValue.split(','));
+if (selected?.has('')) throw new Error('--only program names cannot be empty');
+const previousPrograms = selected ? readProjectData(output).programs : null;
+const previousByName = new Map((previousPrograms ?? []).map(entry => [entry.name, entry]));
 
 const record = (result) => (result.error ? { error: result.error } : { sha256: digest(result.value) });
 
 function program(entry, extension, text) {
+  if (selected && !selected.has(entry.name)) {
+    const previous = previousByName.get(entry.name);
+    if (!previous) throw new Error(`unselected translation program is new: ${entry.name}`);
+    const { parse, check, emit, ...descriptor } = previous;
+    if (JSON.stringify(descriptor) !== JSON.stringify(entry)) throw new Error(`unselected translation source or metadata changed: ${entry.name}`);
+    return previous;
+  }
   const stages = runStages(extension, text);
   const result = { ...entry, parse: record(stages.parse) };
   if (stages.check) result.check = record(stages.check);
@@ -48,6 +62,12 @@ for (const { name } of programs) {
   if (names.has(name)) throw new Error(`duplicate translation stage program ${name}`);
   names.add(name);
 }
+if (selected) {
+  for (const name of selected) if (!names.has(name)) throw new Error(`unknown selected translation program: ${name}`);
+  if (programs.length !== previousPrograms.length || programs.some((entry, index) => entry.name !== previousPrograms[index].name)) {
+    throw new Error('a selected refresh must preserve every program and its original order');
+  }
+}
 
 const fixture = {
   generator: 'js/scripts/build-translation-stage-fixtures.mjs',
@@ -57,6 +77,7 @@ const text = serializeProjectData(fixture, output);
 
 const count = (predicate) => programs.filter(predicate).length;
 const summary = `${programs.length} programs: ${count((entry) => entry.parse.error)} rejected by a frontend, ${count((entry) => entry.check?.error)} by the checker, ${count((entry) => entry.emit)} emitted`;
+const selection = selected ? `; refreshed only ${[...selected].join(', ')}` : '';
 
 if (process.argv.includes('--check')) {
   let committed = '';
@@ -80,8 +101,8 @@ if (process.argv.includes('--check')) {
     }
     process.exit(1);
   }
-  console.log(`translation stage fixtures match the JavaScript pipeline for ${summary}`);
+  console.log(`translation stage fixtures match the JavaScript pipeline for ${summary}${selection}`);
 } else {
   writeProjectData(output, fixture);
-  console.log(`wrote translation stage fixtures for ${summary}`);
+  console.log(`wrote translation stage fixtures for ${summary}${selection}`);
 }

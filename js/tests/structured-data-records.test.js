@@ -6,9 +6,30 @@ import { spawn } from 'node:child_process';
 import test from 'node:test';
 import { Parser } from 'links-notation';
 import { createStructuredDataRecordReader, readStructuredDataRecords, structuredDataRecordToLino } from '../src/structured-data-records.js';
+import { percentDecode, percentEncode } from '../src/lino-serialization-write.js';
 
 const first = '00000000-0000-4000-8000-000000000001';
 const second = '00000000-0000-4000-8000-000000000002';
+
+test('large unreserved scalar tokens keep canonical bytes and incremental record boundaries', () => {
+  const plain = 'j'.repeat(96 * 1024);
+  const other = 'r'.repeat(96 * 1024);
+  const encodeBytes = value => value === '' ? '%' : Array.from(Buffer.from(value), byte =>
+    byte >= 48 && byte <= 57 || byte >= 65 && byte <= 90 || byte >= 97 && byte <= 122 || [45, 46, 95].includes(byte)
+      ? String.fromCharCode(byte) : '%' + byte.toString(16).toUpperCase().padStart(2, '0')).join('');
+  for (const value of [plain, 'ABC-xyz_012.9', '', 'λ 😀\n\0', 'a%b', '\ufeff']) {
+    assert.equal(percentEncode(value), encodeBytes(value));
+    assert.equal(percentDecode(percentEncode(value)), value);
+  }
+  for (const token of ['%0', '%GG', '%FF']) assert.throws(() => percentDecode(token), /percent escape/u);
+  const records = [];
+  const reader = createStructuredDataRecordReader(value => records.push(value));
+  const text = structuredDataRecordToLino({ source: plain }, first)
+    + structuredDataRecordToLino({ source: other }, second);
+  for (let offset = 0; offset < text.length; offset += 4096) reader.write(text.slice(offset, offset + 4096));
+  reader.end();
+  assert.deepEqual(records, [{ source: plain }, { source: other }]);
+});
 
 test('records have explicit distinct data namespaces and preserve values incrementally', () => {
   const values = [{ runtime: 'javascript', commit: 'a'.repeat(40), value: [1, 'λ', -0] }, { runtime: 'rust', value: [1, false, null] }];

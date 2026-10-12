@@ -38,6 +38,8 @@ test('fixture builds share one fresh oracle snapshot per source while retaining 
     divergences: [{ source: 'd', reason: 'independent rejection', rows: rows('d') }],
     rejections: [{ source: 'r', recovered: '(source (ERROR@0..1 "r"))' }, { source: 'r', recovered: '(source (ERROR@0..1 "r"))' }],
   });
+  assert.notEqual(fixture.matches[0].rows, fixture.matches[1].rows, 'equal source occurrences retain distinct original row identities');
+  assert.notEqual(fixture.matches[0].rows[0], fixture.matches[1].rows[0]);
   assert.deepEqual(build(), fixture);
   assert.equal(calls.length, 6, 'another build cannot reuse another isolated oracle history');
 });

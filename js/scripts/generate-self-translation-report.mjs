@@ -187,6 +187,7 @@ export function createModuleContext(readSource) {
   };
   const contexts = new Map();
   const signatures = new Map();
+  const portableExports = new Map();
   const visiting = new Set();
   const context = (module) => {
     if (contexts.has(module)) return contexts.get(module);
@@ -202,6 +203,18 @@ export function createModuleContext(readSource) {
       const tree = parseProgrammingLanguage(source, 'JavaScript')?.tree;
       for (const item of tree?.children ?? []) {
         if (item.term !== 'import_statement') continue;
+        const range = item.span.byteRange;
+        const tokens = tokenize(bytes.subarray(range.start, range.end).toString('utf8'), 'JavaScript').tokens;
+        // The checked binder accepts named imports. Default, namespace and
+        // side-effect imports remain carried and cannot supply signatures.
+        if (tokens[1]?.value !== '{') continue;
+        const requested = [];
+        for (let index = 2; tokens[index]?.kind === 'identifier';) {
+          requested.push(tokens[index].value);
+          index += tokens[index + 1]?.value === 'as' ? 3 : 1;
+          if (tokens[index]?.value !== ',') break;
+          index += 1;
+        }
         const name = item.children.find((child) => child.field === 'source');
         if (!name) continue;
         const text = bytes.subarray(name.span.byteRange.start, name.span.byteRange.end).toString('utf8');
@@ -209,10 +222,19 @@ export function createModuleContext(readSource) {
         if (!specifier || !/^\.\.?\//u.test(specifier)) continue;
         const target = posix.normalize(posix.join(directory, specifier));
         if (target === '..' || target.startsWith('../') || visiting.has(target)) continue;
+        const provider = read(target);
+        if (provider === null) continue;
+        if (!portableExports.has(target)) portableExports.set(target, readPortableExportBindings(provider));
+        if (!requested.some(name => portableExports.get(target).has(name))) {
+          imports[specifier] = [];
+          continue;
+        }
         if (!signatures.has(target)) {
-          const provider = read(target);
-          if (provider === null) continue;
-          signatures.set(target, selfTranslationSignatures(provider, 'JavaScript', context(target)));
+          const started = performance.now();
+          const providerContext = context(target);
+          if (process.env.META_LANGUAGE_REPORT_PROGRESS === '1') console.error(`self-translation report: signatures ${target}`);
+          signatures.set(target, selfTranslationSignatures(provider, 'JavaScript', providerContext));
+          if (process.env.META_LANGUAGE_REPORT_PROGRESS === '1') console.error(`self-translation report: signatures recorded ${target} (${Math.round(performance.now() - started)} ms)`);
         }
         imports[specifier] = signatures.get(target);
       }
@@ -223,6 +245,27 @@ export function createModuleContext(readSource) {
     }
   };
   return context;
+}
+
+// Match the declaration names used by self-translation's checked binder.
+// Classes and export forwarding have no declared callable signature today.
+// This is only an absence check; every candidate still undergoes full checking.
+function readPortableExportBindings(source) {
+  const bytes = Buffer.from(source);
+  const tree = parseProgrammingLanguage(source, 'JavaScript')?.tree;
+  const names = new Set();
+  for (const item of tree?.children ?? []) {
+    if (item.term !== 'export_statement') continue;
+    const range = item.span.byteRange;
+    const tokens = tokenize(bytes.subarray(range.start, range.end).toString('utf8'), 'JavaScript').tokens;
+    let index = 1;
+    if (tokens[index]?.value === 'async' && tokens[index + 1]?.value === 'function') index += 1;
+    if (tokens[index]?.value === 'function' && tokens[index + 1]?.kind === 'identifier'
+      || tokens[index]?.value === 'const' && tokens[index + 1]?.kind === 'identifier' && tokens[index + 2]?.value === '=') {
+      names.add(tokens[index + 1].value);
+    }
+  }
+  return names;
 }
 
 function measure(module, decorators, context) {
@@ -372,8 +415,13 @@ function main() {
     return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
   });
   for (const module of selectedModules()) {
+    const started = performance.now();
+    console.error(`self-translation report: resolving ${module}`);
     try {
-      rows.push(measure(module, decorators, context(posix.relative('js/src', module))));
+      const moduleContext = context(posix.relative('js/src', module));
+      console.error(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
+      rows.push(measure(module, decorators, moduleContext));
+      console.error(`self-translation report: recorded ${module} (${Math.round(performance.now() - started)} ms)`);
     } catch (error) {
       failures.push({ module, error: String(error?.message ?? error) });
     }

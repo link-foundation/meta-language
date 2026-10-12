@@ -263,7 +263,7 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
     }
 }
 
-pub fn read_lexical_cache_expression_form(kind: String) -> f64 {
+pub fn read_lexical_cache_expression_form(kind: &str) -> f64 {
     if ((((((((kind == "empty") || (kind == "literal")) || (kind == "literalInsensitive"))
         || (kind == "charRange"))
         || (kind == "charClass"))
@@ -272,49 +272,41 @@ pub fn read_lexical_cache_expression_form(kind: String) -> f64 {
         || (kind == "regex"))
     {
         1f64
+    } else if (((kind == "seq") || (kind == "choice")) || (kind == "longest")) {
+        2f64
+    } else if ((((((((((((((kind == "optional") || (kind == "repeat0"))
+        || (kind == "repeat1"))
+        || (kind == "repeat"))
+        || (kind == "and"))
+        || (kind == "not"))
+        || (kind == "capture"))
+        || (kind == "alias"))
+        || (kind == "precedence"))
+        || (kind == "namedPrecedence"))
+        || (kind == "dynamicPrecedence"))
+        || (kind == "lexicalPrecedence"))
+        || (kind == "token"))
+        || (kind == "immediateToken"))
+    {
+        3f64
     } else {
-        if (((kind == "seq") || (kind == "choice")) || (kind == "longest")) {
-            2f64
-        } else {
-            if ((((((((((((((kind == "optional") || (kind == "repeat0"))
-                || (kind == "repeat1"))
-                || (kind == "repeat"))
-                || (kind == "and"))
-                || (kind == "not"))
-                || (kind == "capture"))
-                || (kind == "alias"))
-                || (kind == "precedence"))
-                || (kind == "namedPrecedence"))
-                || (kind == "dynamicPrecedence"))
-                || (kind == "lexicalPrecedence"))
-                || (kind == "token"))
-                || (kind == "immediateToken"))
-            {
-                3f64
-            } else {
-                0f64
-            }
-        }
+        0f64
     }
 }
 
-pub fn read_unit_alternative_expression_form(kind: String) -> f64 {
+pub fn read_unit_alternative_expression_form(kind: &str) -> f64 {
     if (kind == "ref") {
         1f64
+    } else if (kind == "choice") {
+        2f64
+    } else if ((((((kind == "alias") || (kind == "capture")) || (kind == "precedence"))
+        || (kind == "namedPrecedence"))
+        || (kind == "dynamicPrecedence"))
+        || (kind == "optional"))
+    {
+        3f64
     } else {
-        if (kind == "choice") {
-            2f64
-        } else {
-            if ((((((kind == "alias") || (kind == "capture")) || (kind == "precedence"))
-                || (kind == "namedPrecedence"))
-                || (kind == "dynamicPrecedence"))
-                || (kind == "optional"))
-            {
-                3f64
-            } else {
-                0f64
-            }
-        }
+        0f64
     }
 }
 

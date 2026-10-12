@@ -581,6 +581,21 @@ mod product_tests {
     }
 
     #[test]
+    fn translation_javascript_products_preserve_legacy_arrays_and_require_actual_callers() {
+        let source = "/** @param {[number,number]} pair */function first(pair){return pair[0];}console.log(first([2,3]));";
+        let surface = parse_javascript(source).expect("legacy homogeneous positional arrays parse");
+        super::super::check::check_program(&surface).expect("legacy positional reads check");
+        for source in [
+            "function make(){return Object.freeze([1,2]);}",
+            "function make(){return Object.freeze([5,true]);}",
+        ] {
+            let error =
+                parse_javascript(source).expect_err("a product return needs actual callers");
+            assert!(error.to_string().contains("Object.freeze operand"));
+        }
+    }
+
+    #[test]
     fn translation_javascript_recursive_product_inference_has_a_finite_refusal() {
         let error = parse_javascript("function make(){return Object.freeze([make(),true]);}")
             .expect_err("a recursive inferred product needs a declared data type");

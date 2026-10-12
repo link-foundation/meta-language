@@ -1,10 +1,12 @@
 // Scan source storage itself, including untracked files. Dependency installations
 // and disposable build/work directories are outside the source-data boundary.
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { createReadStream } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
 import { basename, join, posix } from 'node:path';
 import { tokenize } from '../src/translation/lexer.js';
+import { readProjectData } from './project-data.mjs';
 
 const directoryNames = new Set(['.git', 'node_modules', '__pycache__', '.venv', 'venv', '.lake']);
 const rootDirectories = new Set(['.external-grammars', '.grammar-cache', '.issue-195-work',
@@ -51,6 +53,46 @@ async function digestFile(path) {
   let bytes = 0;
   for await (const chunk of createReadStream(path)) { hash.update(chunk); bytes += chunk.length; }
   return { bytes, sha256: hash.digest('hex') };
+}
+
+// Downloaded inputs qualify individually: an exact registered pin, authentic
+// materialized bytes, and Git proof that the input is ignored and untracked.
+// Unknown files in a vendor directory remain inside the source-data audit.
+async function readTemporaryGrammarInputs(root, files) {
+  const verified = [];
+  const problems = [];
+  let manifest;
+  try { manifest = readProjectData(join(root, 'parity/grammars/external-assets.lino')); }
+  catch (error) { if (error.code === 'ENOENT') return { verified, problems }; throw error; }
+  if (manifest.schemaVersion !== 1 || !manifest.assets || Array.isArray(manifest.assets)) {
+    return { verified, problems: ['temporary grammar inputs need the registered external asset manifest'] };
+  }
+  const candidates = files.filter(path => Object.hasOwn(manifest.assets, path));
+  if (!candidates.length) return { verified, problems };
+  const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8',
+    stdio: ['pipe', 'pipe', 'pipe'], input: candidates.join('\0') + '\0' }).split('\0');
+  let tracked, ignored;
+  try {
+    tracked = new Set(git(['ls-files', '-z', '--', ...candidates]));
+    try { ignored = new Set(git(['check-ignore', '--no-index', '-z', '--stdin'])); }
+    catch (error) { if (error.status === 1) ignored = new Set(); else throw error; }
+  } catch {
+    return { verified, problems: ['temporary grammar inputs need Git evidence that they are ignored and untracked'] };
+  }
+  for (const path of candidates) {
+    const asset = manifest.assets[path];
+    if (!isRelativeFile(path) || !Number.isSafeInteger(asset?.bytes) || asset.bytes < 0
+      || !/^[a-f0-9]{64}$/u.test(asset?.sha256 ?? '')) {
+      problems.push(`temporary grammar input has an invalid byte pin: ${path}`);
+    } else if (tracked.has(path)) problems.push(`temporary grammar input must be untracked: ${path}`);
+    else if (!ignored.has(path)) problems.push(`temporary grammar input must be ignored: ${path}`);
+    else {
+      const actual = await digestFile(join(root, path));
+      if (actual.bytes !== asset.bytes || actual.sha256 !== asset.sha256) problems.push(`temporary grammar input checksum changed: ${path}`);
+      else verified.push(path);
+    }
+  }
+  return { verified, problems };
 }
 
 async function validateRuntimeProtocols(root, entries) {
@@ -128,7 +170,12 @@ function readFunctionContexts(source) {
 
 export async function validateProjectDataStorage(root, registry) {
   const problems = [];
-  const { files, symbolicLinks } = await collectProjectDataStorageFiles(root);
+  const storage = await collectProjectDataStorageFiles(root);
+  const temporary = await readTemporaryGrammarInputs(root, storage.files);
+  const temporaryPaths = new Set(temporary.verified);
+  const files = storage.files.filter(path => !temporaryPaths.has(path));
+  const symbolicLinks = storage.symbolicLinks;
+  problems.push(...temporary.problems);
   if (registry?.schemaVersion !== 1 || !Array.isArray(registry.exceptions)) {
     return { files, problems: ['JSON storage exceptions need schemaVersion 1 and an ordered exceptions array'] };
   }
@@ -174,5 +221,5 @@ export async function validateProjectDataStorage(root, registry) {
     } catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
   for (const path of files) if (!declared.has(path)) problems.push(`unregistered JSON source storage; use structured LiNo or record its required boundary: ${path}`);
-  return { files, problems: problems.sort() };
+  return { files, temporaryInputs: temporary.verified, problems: problems.sort() };
 }

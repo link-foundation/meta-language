@@ -859,6 +859,13 @@ export const NAME_INVENTORIES = Object.freeze([
       'validate-javascript-products': 'validate-javascript-product-source' })[name] ?? name}`,
   },
   {
+    inventory: 'bounded repository input and CI operations',
+    files: ['js/scripts/project-data-storage.mjs', 'js/scripts/generate-self-translation-report.mjs', 'js/scripts/test-groups.mjs'],
+    extract: (text) => captures(text, /^(?:export )?(?:async )?function (readTemporaryGrammarInputs|readPortableExportBindings|partitionGroupFiles)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `repository.${name}`,
+  },
+  {
     inventory: 'source constructor prototype definitions',
     files: ['js/src/translation/javascript.js', 'rust/src/translation/surface.rs'],
     extract: (text) => captures(text, /(?:let |^pub struct )(prototypeDefinition|ConstructorPrototypeDefinition)(?: = null;| \{)/gmu)

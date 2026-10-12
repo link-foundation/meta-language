@@ -2001,6 +2001,8 @@ class JavaScriptParser {
       const literalArray = (item) => ['num', 'bool', 'str', 'none'].includes(item.k)
         || item.k === 'array' && item.items.every((entry) => !entry.spread && literalArray(entry.value));
       const readonlyLiteral = this.readonlyConstantInitializer && value.k === 'array' && literalArray(value);
+      if (this.readonlyConstantInitializer && value.k === 'array' && !readonlyLiteral) throw unsupported('Object.freeze operand',
+        'readonly module constants require literal values; evaluated elements need a separate module initialization model', called);
       if (!readonlyLiteral && value.k === 'array') {
         if (!value.items.length || value.items.some((item) => item.spread || item.value.k === 'array')) throw unsupported('immutable tuple product', 'a fresh nonempty dense array needs scalar Copy elements or separately frozen nested products', called);
         return { k: 'tuple', items: value.items.map(item => item.value), frozen: true, productModel: 'immutable value product', span: called };

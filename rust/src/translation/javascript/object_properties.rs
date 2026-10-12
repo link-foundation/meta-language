@@ -164,6 +164,13 @@ impl JavaScriptParser {
         let readonly_literal = self.readonly_constant_initializer
             && expression == "array"
             && literal_array_value(&arg);
+        if self.readonly_constant_initializer && expression == "array" && !readonly_literal {
+            return Err(unsupported(
+                "Object.freeze operand",
+                "readonly module constants require literal values; evaluated elements need a separate module initialization model",
+                Some(called),
+            ));
+        }
         if !readonly_literal && let SNode::Array { items, .. } = arg.node {
             if items.is_empty()
                 || items

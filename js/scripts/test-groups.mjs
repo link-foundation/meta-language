@@ -5,6 +5,7 @@
 //   node scripts/test-groups.mjs --check        every test file is in exactly one group
 //   node scripts/test-groups.mjs --list GROUP   print the files of GROUP
 //   node scripts/test-groups.mjs --run GROUP    run GROUP with node --test
+//     [--shard K/N] (or TEST_GROUP_SHARD=K/N) partitions files exactly once
 //
 // A new test file that no group claims fails --check (and every --run), so a
 // file can never silently drop out of CI.
@@ -67,8 +68,18 @@ export function partitionProblems({ groups, unassigned, ambiguous }) {
   ];
 }
 
+export function partitionGroupFiles(files, shard = '1/1') {
+  const match = /^([1-9][0-9]*)\/([1-9][0-9]*)$/u.exec(shard);
+  const index = Number(match?.[1]), count = Number(match?.[2]);
+  if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
+    throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
+  }
+  return files.filter((_, offset) => offset % count === index - 1);
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const [mode, group] = process.argv.slice(2);
+  const [mode, group, ...options] = process.argv.slice(2);
+  if (options.length && (options.length !== 2 || options[0] !== '--shard')) throw new Error('only --shard K/N is accepted after the group');
   const partition = partitionTests(testFiles());
   const problems = partitionProblems(partition);
   if (problems.length > 0) {
@@ -79,7 +90,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const counts = Object.entries(partition.groups).map(([name, files]) => `${name} ${files.length}`);
     console.log(`JavaScript test groups cover every test file: ${counts.join(', ')}`);
   } else if ((mode === '--list' || mode === '--run') && group in partition.groups) {
-    const files = partition.groups[group].map((file) => path.join('tests', file));
+    const files = partitionGroupFiles(partition.groups[group], options[1] ?? process.env.TEST_GROUP_SHARD ?? '1/1')
+      .map((file) => path.join('tests', file));
     if (mode === '--list') {
       console.log(files.join('\n'));
     } else {

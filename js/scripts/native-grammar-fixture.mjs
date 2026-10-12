@@ -21,7 +21,9 @@ export function buildNativeGrammarFixtureFromParser(entry, parser, snapshot = or
     if (JSON.stringify(native(source)) !== JSON.stringify(rows)) {
       throw new Error(`${entry.grammar} and ${entry.oracle} disagree on ${JSON.stringify(source)}`);
     }
-    return { source, rows };
+    // Snapshot computation is shared; original fixture occurrences own their
+    // distinct row collections even when their source text is identical.
+    return { source, rows: structuredClone(rows) };
   });
   const divergences = entry.divergences.map(({ source, reason }) => {
     if (!oracle(source).recovers) {

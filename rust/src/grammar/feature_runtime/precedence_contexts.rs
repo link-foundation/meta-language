@@ -22,9 +22,8 @@ pub(super) fn complete_rule_contexts(program: &Program, name: usize) -> Vec<bool
                 } => "optional",
                 _ => "",
             };
-            let form = crate::translation::frontend_rules::read_unit_alternative_expression_form(
-                kind.to_owned(),
-            );
+            let form =
+                crate::translation::frontend_rules::read_unit_alternative_expression_form(kind);
             match (form, expression) {
                 (1.0, Expr::Ref(Target::Rule(index))) => parents[*index].push(owner),
                 (2.0, Expr::Choice { items, .. }) => pending.extend(items.iter()),

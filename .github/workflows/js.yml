@@ -67,6 +67,8 @@ jobs:
         working-directory: js
 
       - name: Report self-translation against the hand-written Rust
+        env:
+          META_LANGUAGE_REPORT_PROGRESS: '1'
         run: |
           node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --out-dir ../self-translation-report > /dev/null
           cat ../self-translation-report/self-translation-report.md >> "$GITHUB_STEP_SUMMARY"
@@ -128,16 +130,23 @@ jobs:
   # suite in one process. scripts/test-groups.mjs fails when a test file is in
   # no group or in more than one.
   tests:
-    name: JavaScript Tests (${{ matrix.group }})
+    name: JavaScript Tests (${{ matrix.group }}, ${{ matrix.partition }}/${{ matrix.shards || 1 }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: check-js-${{ github.ref }}-javascript-tests-${{ matrix.group }}
+      group: check-js-${{ github.ref }}-javascript-tests-${{ matrix.group }}-${{ matrix.partition }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
         group: [grammar, grammar-native, grammar-recovery, grammar-scaling, grammar-csharp, grammar-elixir, grammar-ruby, translation, conformance, downstream, tooling]
+        partition: [1]
+        include:
+          - {group: grammar-native, partition: 1, shards: 3}
+          - {group: grammar-native, partition: 2, shards: 3}
+          - {group: grammar-native, partition: 3, shards: 3}
+          - {group: conformance, partition: 1, shards: 2}
+          - {group: conformance, partition: 2, shards: 2}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -193,6 +202,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           TEST_GROUP: ${{ matrix.group }}
+          TEST_GROUP_SHARD: ${{ matrix.partition }}/${{ matrix.shards || 1 }}
           TRANSLATION_CHECK_RUST: ${{ matrix.group == 'translation' && '1' || '0' }}
           SELF_TRANSLATION_CHECK_RUST: ${{ matrix.group == 'translation' && '1' || '0' }}
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"

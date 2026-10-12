@@ -16,6 +16,8 @@ export const projectDataToolingContract = Object.freeze({
       command: ['node', 'js/scripts/generate-native-grammar-fixtures.mjs', '--language', 'r', '--refresh-provenance', '--check'] },
     { logicalPaths: ['parity/fixtures/native-grammar-concept-reuse.json'],
       command: ['node', 'js/scripts/build-native-grammar-concept-reuse.mjs', '--check'] },
+    { logicalPaths: ['parity/fixtures/translation-stages.json'],
+      command: ['node', 'js/scripts/build-translation-stage-fixtures.mjs', '--check'] },
   ],
   protectedScopeBaselines: ['950efbee452da0853e272d841445eb85caa2d81f',
     '33ef0fd779316f56084652cde036872f26bda0c5',

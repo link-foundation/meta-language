@@ -118,6 +118,8 @@ jobs:
         working-directory: js
 
       - name: Report self-translation against the hand-written Rust
+        env:
+          META_LANGUAGE_REPORT_PROGRESS: '1'
         run: |
           node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --out-dir ../self-translation-report > /dev/null
           cat ../self-translation-report/self-translation-report.md >> "$GITHUB_STEP_SUMMARY"

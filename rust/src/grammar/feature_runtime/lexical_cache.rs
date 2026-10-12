@@ -39,7 +39,7 @@ impl Executor<'_> {
                 Expr::Missing { .. } => "missing",
                 Expr::Embed { .. } => "embed",
             };
-            let form = read_lexical_cache_expression_form(kind.to_owned());
+            let form = read_lexical_cache_expression_form(kind);
             if form <= 1.0 {
                 self.lexical_cache_forms.insert(identity, form > 0.0);
                 continue;

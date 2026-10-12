@@ -60,6 +60,7 @@ export function percentEncode(value) {
   if (source.length === 0) {
     return '%';
   }
+  if (/^[0-9A-Za-z_.-]+$/u.test(source)) return source;
   let encoded = '';
   for (const byte of textEncoder.encode(source)) {
     const unreserved = (byte >= 0x30 && byte <= 0x39)
@@ -78,6 +79,7 @@ export function percentDecode(value) {
   if (value === '%') {
     return '';
   }
+  if (typeof value === 'string' && /^[0-9A-Za-z_.-]+$/u.test(value)) return value;
   const bytes = [];
   for (let index = 0; index < value.length;) {
     if (value[index] === '%') {

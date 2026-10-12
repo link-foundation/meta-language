@@ -5,7 +5,18 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
-import { TEST_GROUPS, partitionProblems, partitionTests, testFiles } from '../scripts/test-groups.mjs';
+import { TEST_GROUPS, partitionGroupFiles, partitionProblems, partitionTests, testFiles } from '../scripts/test-groups.mjs';
+
+test('CI file partitions preserve every original native and conformance file exactly once', () => {
+  const groups = partitionTests(testFiles()).groups;
+  for (const [name, count] of [['grammar-native', 3], ['conformance', 2]]) {
+    const shards = Array.from({ length: count }, (_, index) => partitionGroupFiles(groups[name], `${index + 1}/${count}`));
+    assert.ok(shards.every(files => files.length > 0));
+    assert.equal(new Set(shards.flat()).size, groups[name].length);
+    assert.deepEqual(shards.flat().sort(), groups[name]);
+  }
+  for (const shard of ['0/3', '4/3', '1/0', '1/999', '1.5/3', '1/2x']) assert.throws(() => partitionGroupFiles(['a', 'b', 'c'], shard), /test group shard/u);
+});
 
 test('every JavaScript test file is in exactly one test group', () => {
   const files = testFiles();
@@ -65,6 +76,14 @@ test('the JavaScript workflow runs every test group and gates the package check 
   assert.deepEqual([...groups, 'report-artifacts'].sort(), Object.keys(TEST_GROUPS).sort());
   assert.match(tests, /timeout-minutes: 15\n/u);
   assert.match(tests, /fail-fast: false\n/u);
+  assert.match(tests, /partition: \[1\]\n/u);
+  for (const [group, count] of [['grammar-native', 3], ['conformance', 2]]) {
+    for (let partition = 1; partition <= count; partition += 1) {
+      assert.ok(tests.includes(`{group: ${group}, partition: ${partition}, shards: ${count}}`));
+    }
+  }
+  assert.ok(tests.includes('TEST_GROUP_SHARD: ${{ matrix.partition }}/${{ matrix.shards || 1 }}'));
+  assert.ok(tests.includes('javascript-tests-${{ matrix.group }}-${{ matrix.partition }}'));
   assert.match(
     tests,
     /run: node \.\.\/scripts\/with-cache-cleanup\.mjs --event test -- node scripts\/test-groups\.mjs --run "\$TEST_GROUP"\n/u,

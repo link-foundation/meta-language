@@ -406,9 +406,8 @@ pub fn ml_regular_expression_end_loop13(mut units: Vec<f64>, mut index: f64) -> 
                             continue;
                         }
                     }
-                } else {
-                    index
                 }
+                index
             }
         } else {
             index
@@ -624,27 +623,26 @@ pub fn ml_accept_module_binding_scope_loop16(
                             continue;
                         }
                     }
+                }
+                if ((!(match (term.clone(), String::from("function_declaration")) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }) && !(match (term.clone(), String::from("lexical_declaration")) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                })) && !(match (term.clone(), String::from("export_statement")) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                })) {
+                    crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop16Result::MlAcceptModuleBindingScopeLoop16Return(false)
                 } else {
-                    if ((!(match (term.clone(), String::from("function_declaration")) {
-                        (Some(ml_left), ml_right) => ml_left == ml_right,
-                        _ => false,
-                    }) && !(match (term.clone(), String::from("lexical_declaration")) {
-                        (Some(ml_left), ml_right) => ml_left == ml_right,
-                        _ => false,
-                    })) && !(match (term.clone(), String::from("export_statement")) {
-                        (Some(ml_left), ml_right) => ml_left == ml_right,
-                        _ => false,
-                    })) {
-                        crate::translation::frontend_rules::MlAcceptModuleBindingScopeLoop16Result::MlAcceptModuleBindingScopeLoop16Return(false)
-                    } else {
+                    {
+                        let declarations_2 = (declarations + 1f64);
                         {
-                            let declarations_2 = (declarations + 1f64);
+                            let index_2 = (index + 1f64);
                             {
-                                let index_2 = (index + 1f64);
-                                {
-                                    (declarations, index) = (declarations_2, index_2);
-                                    continue;
-                                }
+                                (declarations, index) = (declarations_2, index_2);
+                                continue;
                             }
                         }
                     }
@@ -863,4 +861,43 @@ pub fn ml_read_rust_number_bounds_loop25(units: &[f64], mut at: f64) -> f64 {
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlReadRustNumberBoundsJoin24 {
     MlReadRustNumberBoundsJoin24Next(f64, bool),
+}
+
+pub fn ml_read_rust_number_bounds_loop26(units: &[f64], mut at: f64) -> f64 {
+    loop {
+        return if ((at < (units.len() as f64))
+            && (((crate::translation::frontend_rules::ml_array::optional_at(
+                units,
+                crate::translation::frontend_rules::ml_array::number_index(at),
+            )
+            .unwrap_or(f64::NAN)
+                >= (48f64))
+                && (crate::translation::frontend_rules::ml_array::optional_at(
+                    units,
+                    crate::translation::frontend_rules::ml_array::number_index(at),
+                )
+                .unwrap_or(f64::NAN)
+                    <= (57f64)))
+                || match (
+                    crate::translation::frontend_rules::ml_array::optional_at(
+                        units,
+                        crate::translation::frontend_rules::ml_array::number_index(at),
+                    ),
+                    95f64,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }))
+        {
+            {
+                let at_2 = (at + 1f64);
+                {
+                    at = at_2;
+                    continue;
+                }
+            }
+        } else {
+            at
+        };
+    }
 }

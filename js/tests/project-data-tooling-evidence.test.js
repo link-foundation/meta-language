@@ -124,6 +124,36 @@ test('source JSON exceptions have exact external boundaries and cannot exempt pr
   complete('I195-ASSOCIATIVE-DATA-JSON-EXCEPTIONS', context.name);
 });
 
+test('materialized foreign JSON qualifies only with its exact pin and ignored untracked Git path', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'meta-tooling-json-input-'));
+  const path = 'vendor/grammar.json';
+  const bytes = Buffer.from('{"rules":{}}\n');
+  const registry = { schemaVersion: 1, exceptions: [] };
+  try {
+    git(directory, ['init', '--quiet']);
+    put(directory, '.gitignore', '/vendor/\n');
+    put(directory, path, bytes);
+    writeProjectData(join(directory, 'parity/grammars/external-assets.lino'), {
+      schemaVersion: 1, assets: { [path]: { bytes: bytes.length,
+        sha256: createHash('sha256').update(bytes).digest('hex'), encoding: 'identity' } },
+    });
+    const valid = await validateProjectDataStorage(directory, registry);
+    assert.deepEqual(valid.problems, []);
+    assert.deepEqual(valid.files, []);
+    assert.deepEqual(valid.temporaryInputs, [path]);
+    put(directory, 'vendor/project-owned.json', '{}');
+    assert.match((await validateProjectDataStorage(directory, registry)).problems.join('\n'), /unregistered.*project-owned\.json/u);
+    put(directory, path, '{"rules":{"changed":true}}\n');
+    assert.match((await validateProjectDataStorage(directory, registry)).problems.join('\n'), /checksum changed/u);
+    put(directory, path, bytes);
+    git(directory, ['add', '--force', '--', path]);
+    assert.match((await validateProjectDataStorage(directory, registry)).problems.join('\n'), /must be untracked/u);
+    git(directory, ['rm', '--cached', '--', path]);
+    put(directory, '.gitignore', '');
+    assert.match((await validateProjectDataStorage(directory, registry)).problems.join('\n'), /must be ignored/u);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
 test('full tooling inventory validates original migration, Git isolation and asset-free native execution in CI', {
   skip: process.env.META_LANGUAGE_TOOLING_FULL_SCOPE !== '1' ? 'full167 migration and native inventory execution run only in CI' : false,
 }, async context => {

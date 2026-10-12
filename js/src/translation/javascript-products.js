@@ -2,9 +2,13 @@
 // independent source facts below prove that every actual caller owns a product.
 import { unsupported } from './diagnostics.js';
 import { solveProductSourceFacts } from './product-source-rules.js';
+import { sameType } from './types.js';
 
 const scalar = type => ['bool', 'float', 'fixed', 'unit'].includes(type?.kind);
-const copyTuple = type => type?.kind === 'tuple' && type.elements.length > 0 && type.elements.every(element => scalar(element) || copyTuple(element));
+// Homogeneous positional annotations retain the existing array ABI. Mixed or
+// nested positions require the selected product ABI, with independent origins.
+const needsProductOrigin = type => type?.kind === 'tuple' && type.elements.length > 0
+  && type.elements.some(element => element.kind === 'tuple' || !sameType(element, type.elements[0]));
 
 export function readJavaScriptProductIndex(node) {
   if (node.k === 'num') return Number(node.value) * (node.negative ? -1 : 1);
@@ -14,7 +18,7 @@ export function readJavaScriptProductIndex(node) {
 
 export function requiresJavaScriptProductProof(program) {
   const relevant = value => value && typeof value === 'object' && (value.productModel === 'immutable value product' || value.productBinding === true
-    || value.k === 'fn' && (copyTuple(value.ret) || value.params.some(param => copyTuple(param.type)))
+    || value.k === 'fn' && (needsProductOrigin(value.ret) || value.params.some(param => needsProductOrigin(param.type)))
     || Object.entries(value).some(([key, child]) => key !== 'span' && key !== 'type' && (Array.isArray(child) ? child.some(relevant) : relevant(child))));
   return Boolean(relevant(program));
 }
@@ -42,14 +46,14 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
       if (item.k === 'module') collect(item.items, [...path, item.name]);
       if (item.k === 'fn') functions.set([...path, item.name].join('.'), {
         item, path, result: fact(item.ret, item), params: item.params.map(param => fact(param.type, param)),
-        defaults: item.params.map(param => param.default ? fact(param.type, param.default) : null),
+        defaults: item.params.map(param => param.default ? fact(param.type, param.default) : null), called: false,
       });
     }
   };
   collect(program.items);
   for (const fn of functions.values()) {
-    if (copyTuple(fn.item.ret)) potentialBases[fn.result] = true;
-    fn.params.forEach((id, index) => { if (copyTuple(fn.item.params[index].type)) potentialBases[id] = true; });
+    if (needsProductOrigin(fn.item.ret)) potentialBases[fn.result] = true;
+    fn.item.params.forEach((param, index) => { if (needsProductOrigin(param.type)) potentialBases[fn.params[index]] = true; });
   }
   const signature = (path, context) => {
     if (functions.has(path.join('.'))) return functions.get(path.join('.'));
@@ -63,6 +67,7 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
     const fn = signature(path, context);
     const values = args.map(arg => expression(arg, env, context));
     if (!fn) { uses.push({ node, values, reason: 'a product cannot escape to an unknown or external caller' }); return; }
+    fn.called = true;
     fn.params.forEach((param, index) => {
       // Omitted product arguments have no ownership proof. Scalar defaults are
       // handled by the existing callable signature and checker.
@@ -158,6 +163,9 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
     throw unsupported('immutable tuple product origin', 'every product position and every actual caller needs a fresh recursively immutable scalar Copy value', entry.node?.span);
   }
   for (const { node, values, reason } of uses) if (values.some(id => potential[id])) throw unsupported('immutable tuple product use', reason, node.span);
+  for (const fn of functions.values()) if (potential[fn.result] && !fn.called) {
+    throw unsupported('Object.freeze operand', 'a returned immutable product needs a closed set of actual callers', fn.item.body.span);
+  }
   for (const { node, fn } of functionValues) if (fn && [fn.result, ...fn.params].some(id => potential[id])) throw unsupported('immutable tuple function escape', 'the function needs a closed set of direct callers', node.span);
   for (const fn of functions.values()) if ([fn.item.name, fn.path[1]].some(name => exportedNames.has(name)) && [fn.result, ...fn.params].some(id => potential[id])) {
     throw unsupported('exported immutable tuple function', 'external callers cannot be proved to use the selected immutable value model', fn.item.span);

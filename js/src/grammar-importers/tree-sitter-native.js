@@ -746,11 +746,10 @@ export function importTreeSitterNative(source, options = {}) {
   const extras = [];
   for (const extra of grammar.extras ?? []) {
     try {
-      // A directly declared hidden external extra is whitespace, rather
-      // than syntax aliased to the anonymous-token placeholder. The sequence
-      // retains its scanner expression and state while remaining unnamed.
-      const hiddenExternal = extra.type === 'SYMBOL' && extra.name.startsWith('_') && scanned(extra.name);
-      extras.push(hiddenExternal ? `(seq ${expr(extra, true, keywords, true)})` : expr(extra, true, keywords));
+      // Hidden external scanner tokens are anonymous leaves, including when
+      // used as extras. Retain the same token alias and scanner state as syntax;
+      // the extra wrapper supplies trivia without losing the leaf's identity.
+      extras.push(expr(extra, true, keywords));
     } catch (error) {
       if (!(error instanceof UnsupportedTreeSitterPattern)) throw error;
       report.unsupported.push(`extra: ${error.message}`);

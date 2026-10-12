@@ -125,9 +125,9 @@ fn scalar(ty: &Type) -> bool {
     )
 }
 
-fn copy_tuple(ty: &Type) -> bool {
-    matches!(ty, Type::Tuple { elements } if !elements.is_empty()
-        && elements.iter().all(|element| scalar(element) || copy_tuple(element)))
+fn needs_product_origin(ty: &Type) -> bool {
+    matches!(ty, Type::Tuple { elements } if elements.first().is_some_and(|first|
+        elements.iter().any(|element| matches!(element, Type::Tuple { .. }) || element != first)))
 }
 
 fn children(node: &SExpr) -> Vec<&SExpr> {
@@ -207,11 +207,11 @@ pub(super) fn has_javascript_products(program: &SProgram, nested_bindings: &Hash
     fn items_relevant(items: &[SItem], nested_bindings: &HashSet<Span>) -> bool {
         items.iter().any(|item| match item {
             SItem::Fn(function) => {
-                function.ret.as_ref().is_some_and(copy_tuple)
+                function.ret.as_ref().is_some_and(needs_product_origin)
                     || function
                         .params
                         .iter()
-                        .any(|param| param.ty.as_ref().is_some_and(copy_tuple))
+                        .any(|param| param.ty.as_ref().is_some_and(needs_product_origin))
                     || function
                         .params
                         .iter()
@@ -287,6 +287,7 @@ struct Facts<'a> {
     types: &'a HashMap<*const SExpr, Type>,
     functions: HashMap<String, Function<'a>>,
     function_order: Vec<String>,
+    called_results: HashSet<usize>,
     bases: Vec<bool>,
     conjunctions: Vec<bool>,
     targets: Vec<f64>,
@@ -306,6 +307,7 @@ impl<'a> Facts<'a> {
             types,
             functions: HashMap::new(),
             function_order: Vec::new(),
+            called_results: HashSet::new(),
             bases: Vec::new(),
             conjunctions: Vec::new(),
             targets: Vec::new(),
@@ -369,12 +371,12 @@ impl<'a> Facts<'a> {
                                 .map(|value| self.fact(param.ty.clone(), Some(value)))
                         })
                         .collect();
-                    if function.ret.as_ref().is_some_and(copy_tuple) {
+                    if function.ret.as_ref().is_some_and(needs_product_origin) {
                         self.potential_bases[result] = true;
                     }
                     for (param, id) in function.params.iter().zip(&params) {
                         self.entries[*id].span = param.span;
-                        if param.ty.as_ref().is_some_and(copy_tuple) {
+                        if param.ty.as_ref().is_some_and(needs_product_origin) {
                             self.potential_bases[*id] = true;
                         }
                     }
@@ -432,6 +434,7 @@ impl<'a> Facts<'a> {
             });
             return;
         };
+        self.called_results.insert(function.result);
         for (index, param) in function.params.iter().enumerate() {
             let value = values
                 .get(index)
@@ -649,6 +652,15 @@ pub(super) fn validate_javascript_products(
                 "immutable tuple product use",
                 usage.reason,
                 usage.node.span,
+            ));
+        }
+    }
+    for function in &functions {
+        if potential[function.result] && !facts.called_results.contains(&function.result) {
+            return Err(unsupported(
+                "Object.freeze operand",
+                "a returned immutable product needs a closed set of actual callers",
+                function.item.body.span,
             ));
         }
     }
