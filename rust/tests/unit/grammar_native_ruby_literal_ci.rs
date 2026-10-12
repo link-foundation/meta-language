@@ -1,0 +1,52 @@
+//! Literal CI regressions and controls execute the same pinned fixture in Rust.
+use super::issue_195_native_grammar_rows::{Rows, oracle_rows, parser, rebuilt, source};
+use meta_language::FeatureParseOptions;
+use serde_json::Value;
+
+const GRAMMAR: &str = include_str!("../../../parity/grammars/native/ruby.lino");
+const PROJECTION: &str = include_str!("../../../parity/fixtures/native-grammars/ruby-profile.json");
+const FIXTURE: &str =
+    include_str!("../../../parity/fixtures/native-grammars/ruby-literal-ci-regressions.json");
+
+#[test]
+fn ruby_literal_ci_regressions_and_controls_preserve_exact_rows_with_default_limits() {
+    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let projection: Value = serde_json::from_str(PROJECTION).unwrap();
+    let rows = Rows::new(&projection);
+    let parser = parser(GRAMMAR);
+    let language = tree_sitter_ruby::LANGUAGE.into();
+    assert_eq!(fixture["cases"].as_array().unwrap().len(), 11);
+    for case in fixture["cases"].as_array().unwrap() {
+        let source = source(case);
+        let (expected, recovers) = oracle_rows(&language, source);
+        assert_eq!(recovers, case["recovers"].as_bool().unwrap(), "{source}");
+        assert_eq!(Value::Array(expected), case["rows"], "{source}");
+        let actual = parser
+            .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
+            .unwrap();
+        if recovers {
+            assert!(!actual.ok, "{source}");
+            let recovered = parser
+                .parse_tree(
+                    source.as_bytes(),
+                    &FeatureParseOptions {
+                        error_recovery: Some(true),
+                        ..FeatureParseOptions::default()
+                    },
+                )
+                .unwrap();
+            assert_eq!(recovered.rejection.unwrap().reason, "recovered");
+            assert_eq!(rebuilt(&recovered.tree.unwrap()), source);
+        } else {
+            assert!(actual.ok, "{source}: {:?}", actual.rejection);
+            assert!(actual.ambiguities.is_empty(), "{source}");
+            let tree = actual.tree.unwrap();
+            assert_eq!(
+                Value::Array(rows.rows(&tree, source)),
+                case["rows"],
+                "{source}"
+            );
+            assert_eq!(rebuilt(&tree), source);
+        }
+    }
+}
