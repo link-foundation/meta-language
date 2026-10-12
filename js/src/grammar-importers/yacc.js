@@ -202,7 +202,7 @@ export function importYacc(source, options = {}) {
     if (tokenRule) tokenRule.sourceNames = [...tokenRule.sourceNames, { source: 'Yacc token alias', name: alias }];
   }
   const grammar = new Grammar(start, rules, 'meta-language', {
-    matching: 'longest', settling: ['tokens', 'precedence', 'dynamic', 'first'], extras: options.extras ?? [],
+    matching: 'longest', settling: ['tokens', 'precedence', 'dynamic', 'first'], extras: options.extras ?? [], modes: options.modes ?? [],
   });
   return decorateGrammar(grammar, options.decorators, 'importer');
 }
