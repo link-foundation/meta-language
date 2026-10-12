@@ -1,0 +1,1 @@
+Runtime parity artifacts and staged verification reports persist as inspectable Links Notation. Appended observation records qualify every data identity and reference with a unique namespace; decoded values and the existing digest hash domains are retained. The probe keeps its JSON stdout protocol and adds explicit streamed NDJSON stdout while file output uses LiNo.

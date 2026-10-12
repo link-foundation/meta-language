@@ -48,3 +48,27 @@ pub fn accept_structured_data_shape(kind: &str, arity: &str, has_definition: boo
         false
     }
 }
+
+/// Read a shared structured data graph decision.
+#[must_use]
+pub fn accept_structured_data_record_field(label: &str, value: &str) -> bool {
+    if label == "t" {
+        value == "semantic"
+    } else if label == "n" {
+        value == "1"
+    } else if label == "term" {
+        value == "structured%20data%20record"
+    } else if label == "def" {
+        value == "1"
+    } else if label == "lang" {
+        value == "meta-language%20structured%20data"
+    } else {
+        false
+    }
+}
+
+/// Read a shared structured data graph decision.
+#[must_use]
+pub fn accept_structured_data_record_shape(reference_count: &str, metadata_count: &str) -> bool {
+    reference_count == "1" && metadata_count == "1"
+}

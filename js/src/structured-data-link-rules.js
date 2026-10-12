@@ -24,3 +24,18 @@ export function acceptStructuredDataShape(kind, arity, hasDefinition) {
   if (kind === 'null') return arity === '0' && !hasDefinition;
   return false;
 }
+
+/** @param {string} label @param {string} value @returns {boolean} */
+export function acceptStructuredDataRecordField(label, value) {
+  if (label === 't') return value === 'semantic';
+  if (label === 'n') return value === '1';
+  if (label === 'term') return value === 'structured%20data%20record';
+  if (label === 'def') return value === '1';
+  if (label === 'lang') return value === 'meta-language%20structured%20data';
+  return false;
+}
+
+/** @param {string} referenceCount @param {string} metadataCount @returns {boolean} */
+export function acceptStructuredDataRecordShape(referenceCount, metadataCount) {
+  return referenceCount === '1' && metadataCount === '1';
+}

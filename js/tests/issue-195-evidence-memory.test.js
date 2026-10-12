@@ -9,6 +9,7 @@ import { test } from 'node:test';
 
 import { ndjson, parityDigests, PARITY_ARTIFACT_FILES, writeParityDigestArtifacts } from '../scripts/issue-195-parity-evidence.mjs';
 import { recordIssue195DirectiveObservation } from './support/issue-195-observations.js';
+import { readStructuredDataRecords } from '../src/structured-data-records.js';
 
 const observe = (assertion, name) => recordIssue195DirectiveObservation(
   'I195-RESOURCE-BOUNDED-MEMORY-REGRESSIONS', [assertion], name,
@@ -93,7 +94,9 @@ test('streamed parity artifacts preserve the existing digest and difference form
     const expected = parityDigests(observations);
     await writeParityDigestArtifacts(directory, observations);
     for (const name of ['digests', 'differences']) {
-      assert.equal(await readFile(path.join(directory, PARITY_ARTIFACT_FILES[name]), 'utf8'), ndjson(expected[name]));
+      const source = await readFile(path.join(directory, PARITY_ARTIFACT_FILES[name]), 'utf8');
+      assert.equal(ndjson(readStructuredDataRecords(source)), ndjson(expected[name]));
+      assert.match(source, /structured%20data%20record/u);
     }
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -104,7 +107,7 @@ test('parity artifacts larger than the heap stream even when every entry differs
   const { bytes, entries, digests } = boundedRun(`
     const { mkdtemp, rm, stat } = await import('node:fs/promises');
     const { createReadStream } = await import('node:fs');
-    const { createInterface } = await import('node:readline');
+    const { createStructuredDataRecordReader } = await import(${moduleUrl('../src/structured-data-records.js')});
     const { tmpdir } = await import('node:os');
     const path = await import('node:path');
     const { writeParityDigestArtifacts, PARITY_ARTIFACT_FILES } = await import(${moduleUrl('../scripts/issue-195-parity-evidence.mjs')});
@@ -115,23 +118,25 @@ test('parity artifacts larger than the heap stream even when every entry differs
       await writeParityDigestArtifacts(directory, { javascript, rust });
       const differences = path.join(directory, PARITY_ARTIFACT_FILES.differences);
       let entries = 0;
-      for await (const line of createInterface({ input: createReadStream(differences), crlfDelay: Infinity })) {
-        const record = JSON.parse(line);
+      const differenceReader = createStructuredDataRecordReader(record => {
         if (record.section !== 'positive' || record.index !== entries || record.javascript.source[0] !== 'j' || record.rust.source[0] !== 'r') {
           throw new Error('incorrect streamed difference');
         }
         entries++;
-      }
+      });
+      for await (const chunk of createReadStream(differences, { encoding: 'utf8' })) differenceReader.write(chunk);
+      differenceReader.end();
       let digests = 0;
-      for await (const line of createInterface({ input: createReadStream(path.join(directory, PARITY_ARTIFACT_FILES.digests)), crlfDelay: Infinity })) {
-        const record = JSON.parse(line);
+      const digestReader = createStructuredDataRecordReader(record => {
         if (record.section === 'positive') {
           if (record.index !== digests || record.javascript === record.rust || !/^[a-f0-9]{64}$/.test(record.javascript)) {
             throw new Error('incorrect streamed digest');
           }
           digests++;
         }
-      }
+      });
+      for await (const chunk of createReadStream(path.join(directory, PARITY_ARTIFACT_FILES.digests), { encoding: 'utf8' })) digestReader.write(chunk);
+      digestReader.end();
       console.log(JSON.stringify({ bytes: (await stat(differences)).size, entries, digests,
         peakMiB: process.resourceUsage().maxRSS / 1024 }));
     } finally {

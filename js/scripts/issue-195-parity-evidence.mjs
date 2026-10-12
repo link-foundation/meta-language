@@ -16,6 +16,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, open } from 'node:fs/promises';
 import path from 'node:path';
+import { structuredDataRecordToLino } from '../src/structured-data-records.js';
 
 export const PARITY_SECTIONS = Object.freeze([
   'schemaVersion',
@@ -137,7 +138,7 @@ export function* parityDigestRecords(observations) {
   }
 }
 
-/** Writes NDJSON evidence with backpressure; even an all-different corpus keeps only one encoded entry. */
+/** Writes inspectable LiNo evidence with backpressure, retaining one encoded entry. */
 export async function writeParityDigestArtifacts(directory, observations) {
   await mkdir(directory, { recursive: true });
   const digests = await open(path.join(directory, PARITY_ARTIFACT_FILES.digests), 'w');
@@ -145,8 +146,8 @@ export async function writeParityDigestArtifacts(directory, observations) {
     const differences = await open(path.join(directory, PARITY_ARTIFACT_FILES.differences), 'w');
     try {
       for (const { digest, difference } of parityDigestRecords(observations)) {
-        await digests.writeFile(`${JSON.stringify(digest)}\n`);
-        if (difference) await differences.writeFile(`${JSON.stringify(difference)}\n`);
+        await digests.writeFile(structuredDataRecordToLino(digest));
+        if (difference) await differences.writeFile(structuredDataRecordToLino(difference));
       }
     } finally {
       await differences.close();
@@ -158,9 +159,9 @@ export async function writeParityDigestArtifacts(directory, observations) {
 
 /** The runtime-parity artifacts: entry digests, differing entries, and each runtime's translations for the native stages. */
 export const PARITY_ARTIFACT_FILES = Object.freeze({
-  digests: 'digests.ndjson',
-  differences: 'differences.ndjson',
-  translations: (runtime) => `${runtime}-translations.json`,
+  digests: 'digests.lino',
+  differences: 'differences.lino',
+  translations: (runtime) => `${runtime}-translations.lino`,
 });
 
 export function ndjson(records) {

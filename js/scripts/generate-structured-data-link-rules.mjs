@@ -16,7 +16,7 @@ if (process.argv.includes('--update-styles')) {
   const replace = (from, to) => {
     if (styled.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); styled = styled.split(from).join(to); }
   };
-  for (const parameter of ['term', 'kind', 'arity']) replace(`${parameter}: String`, `${parameter}: &str`);
+  for (const parameter of ['term', 'kind', 'arity', 'label', 'value', 'reference_count', 'metadata_count']) replace(`${parameter}: String`, `${parameter}: &str`);
   for (const match of [...styled.matchAll(/\([a-z_]+ == "[^"\n]*"\)/gu)]) replace(match[0], match[0].slice(1, -1));
   for (const expression of [
     '(arity == "1" && has_definition)', '(arity == "2" && (!has_definition))',
@@ -24,6 +24,7 @@ if (process.argv.includes('--update-styles')) {
     '(arity == "0" && (!has_definition))', '(arity == "0" && !has_definition)',
     '((kind == "object" || kind == "array") || kind == "units")',
     '((kind == "number" || kind == "boolean") || kind == "unit")',
+    '(reference_count == "1" && metadata_count == "1")',
   ]) replace(expression, expression.replace(/[()]/gu, ''));
   for (;;) {
     const match = /\} else \{\n\s+if /u.exec(styled);
@@ -40,7 +41,7 @@ if (process.argv.includes('--update-styles')) {
     if (depth) throw new Error('a translated structured data decision has an unclosed branch');
     replace(styled.slice(match.index, cursor), `} else ${styled.slice(opening + 1, cursor - 1).trim()}`);
   }
-  for (const name of ['read_structured_data_kind', 'accept_structured_data_shape']) {
+  for (const name of ['read_structured_data_kind', 'accept_structured_data_shape', 'accept_structured_data_record_field', 'accept_structured_data_record_shape']) {
     replace(`pub fn ${name}`, `/// Read a shared structured data graph decision.\n#[must_use]\npub fn ${name}`);
   }
   writeFileSync(styleFile, new DecoratorSet([{ id: 'structured-data-link-library-style', level: 'emitter', order: 0,

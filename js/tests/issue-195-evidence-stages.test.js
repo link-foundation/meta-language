@@ -71,7 +71,7 @@ test('the stages and the aggregate together produce exactly the evidence plan gr
   assert.throws(() => evidenceStages('pull-request'), /unknown issue-195 evidence checkpoint/);
   assert.throws(() => evidenceStage('pre-merge', 'everything'), /unknown pre-merge evidence stage everything/);
   assert.deepEqual(stageFiles('rust-suite'), {
-    record: 'work/stage-rust-suite.json', observations: 'work/stage-rust-suite.jsonl',
+    record: 'work/stage-rust-suite.lino', observations: 'work/stage-rust-suite-observations.lino',
   });
 });
 

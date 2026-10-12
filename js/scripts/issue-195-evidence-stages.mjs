@@ -4,13 +4,13 @@
 // derives the groups that combine them, and writes the verification cells.
 // A local run without --stage runs the same stages one after another.
 //
-// Each stage writes `work/stage-<name>.json`:
+// Each stage writes `work/stage-<name>.lino`:
 //
 //   { schemaVersion: 1, issue: 195, stage, commit, checkpoint,
 //     toolchainVersions, groups: { <group>: { commands, artifacts, failureLogs } },
 //     error: null | string }
 //
-// and appends its execution records to `work/stage-<name>.jsonl`. A stage that
+// and appends scoped execution records to `work/stage-<name>-observations.lino`. A stage that
 // fails, or never reports, becomes one gate error naming it instead of
 // stopping the run. A stage that runs `after` another (each Rust stage after
 // its JavaScript counterpart) and never reported because that stage failed
@@ -98,7 +98,7 @@ export function evidenceStage(checkpoint, name) {
 
 /** Relative paths of a stage's record and execution records inside the results directory. */
 export function stageFiles(name) {
-  return { record: `work/stage-${name}.json`, observations: `work/stage-${name}.jsonl` };
+  return { record: `work/stage-${name}.lino`, observations: `work/stage-${name}-observations.lino` };
 }
 
 /** Problems with the declared toolchain versions among `versions`. */

@@ -38,7 +38,8 @@ import {
 } from './issue-195-evidence-stages.mjs';
 import { verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
 import { PARITY_ARTIFACT_FILES } from './issue-195-parity-evidence.mjs';
-import { readProjectData, readProjectFileBytes } from './project-data.mjs';
+import { readProjectData, readProjectFileBytes, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
+import { readStructuredDataRecords, structuredDataRecordToLino } from '../src/structured-data-records.js';
 import { TEST_GROUPS } from './test-groups.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -48,7 +49,7 @@ const checkpoint = option('--checkpoint', 'pre-merge');
 const resultsDirectory = safeResultsDirectory(option('--results-dir', 'issue-195-results'));
 const logsDirectory = path.join(resultsDirectory, 'logs');
 const workDirectory = path.join(resultsDirectory, 'work');
-const observationsPath = path.join(workDirectory, 'execution-records.jsonl');
+const observationsPath = path.join(workDirectory, 'execution-records.lino');
 const artifactsDirectory = path.join(resultsDirectory, 'artifacts');
 const parityDirectory = path.join(resultsDirectory, 'runtime-parity');
 const manifest = await buildIssue195Manifest(root);
@@ -139,7 +140,7 @@ async function runStage(stage) {
     // One write keeps runner records whole next to the suites' own callbacks.
     await appendFile(
       stageObservationsPath,
-      runnerObservations.map((record) => `${JSON.stringify(record)}\n`).join(''),
+      runnerObservations.map((record) => structuredDataRecordToLino(record)).join(''),
     );
   }
   const record = {
@@ -152,7 +153,7 @@ async function runStage(stage) {
     groups: Object.fromEntries(groups),
     error,
   };
-  await writeFile(recordPath, stableJson(record));
+  writeProjectData(recordPath, record, { format: 'lino' });
   // The stage log keeps logs/ next to work/ in every stage upload, so each
   // artifact unpacks at the results directory root.
   await writeFile(
@@ -233,10 +234,10 @@ function parityArtifacts() {
  */
 async function aggregateStages() {
   const records = new Map();
-  for (const name of (await readdir(workDirectory)).filter((file) => /^stage-.+\.json$/u.test(file)).sort()) {
-    const stage = name.slice('stage-'.length, -'.json'.length);
+  for (const name of (await readdir(workDirectory)).filter((file) => /^stage-.+\.lino$/u.test(file) && !file.endsWith('-observations.lino')).sort()) {
+    const stage = name.slice('stage-'.length, -'.lino'.length);
     try {
-      records.set(stage, JSON.parse(await readFile(path.join(workDirectory, name), 'utf8')));
+      records.set(stage, readProjectData(path.join(workDirectory, name), { format: 'lino' }));
     } catch (error) {
       records.set(stage, error);
     }
@@ -255,7 +256,7 @@ async function aggregateStages() {
   executionRecords.push(...runnerObservations);
   await writeFile(
     observationsPath,
-    executionRecords.map((record) => `${JSON.stringify(record)}\n`).join(''),
+    executionRecords.map((record) => structuredDataRecordToLino(record)).join(''),
   );
   const grammarVersions = readGrammarVersions();
 
@@ -270,13 +271,13 @@ async function aggregateStages() {
     }
     for (const { cell } of cells) {
       const observed = observedEvidenceForCell(cell, executionRecords);
-      const output = path.join(root, cell.evidenceArtifact.split('#')[0]);
+      const output = resolveProjectDataPath(path.join(root, cell.evidenceArtifact.split('#')[0]), { format: 'lino' });
       const fixtureDigests = Object.fromEntries(
         cell.fixtureIds.map((fixtureId) => [fixtureId, manifest.fixtureCatalog[fixtureId].sha256]),
       );
-      await writeFile(
+      writeProjectData(
         output,
-        stableJson({
+        {
           schemaVersion: 1,
           issue: 195,
           commit,
@@ -298,15 +299,15 @@ async function aggregateStages() {
               fixtureDigests,
             },
           ],
-        }),
+        }, { format: 'lino' },
       );
       written += 1;
       if (observed.complete) complete += 1;
     }
   }
-  await writeFile(
-    path.join(resultsDirectory, 'evidence-stages.json'),
-    stableJson({
+  writeProjectData(
+    path.join(resultsDirectory, 'evidence-stages.lino'),
+    {
       schemaVersion: 1,
       issue: 195,
       commit,
@@ -316,7 +317,7 @@ async function aggregateStages() {
       stages: [...records.keys()],
       absentGroups,
       stageErrors,
-    }),
+    }, { format: 'lino' },
   );
   for (const stageError of stageErrors) console.error(`issue-195 evidence: ${stageGateError(stageError)}`);
   if (absentGroups.length > 0) {
@@ -344,11 +345,17 @@ async function readStageExecutionRecords(records, stageErrors) {
       throw error;
     }
     const problems = [];
+    const namespaces = new Set();
     contents.split(/\r?\n/u).forEach((line, index) => {
       if (!line) return;
       let record;
       try {
-        record = JSON.parse(line);
+        const namespace = /^\(([^/\s]+)\/record:/u.exec(line)?.[1];
+        if (namespaces.has(namespace)) throw new Error('duplicate record namespace');
+        const decoded = readStructuredDataRecords(line);
+        if (decoded.length !== 1) throw new Error('one complete record per line is required');
+        namespaces.add(namespace);
+        [record] = decoded;
       } catch (error) {
         problems.push(`invalid execution record at line ${index + 1}: ${error.message}`);
         return;
@@ -396,7 +403,7 @@ async function prepareDirectories() {
   await mkdir(resultsDirectory, { recursive: true });
   if (!selectedStage) {
     for (const name of await readdir(resultsDirectory)) {
-      if (name.endsWith('.json')) await rm(path.join(resultsDirectory, name));
+      if (/\.(json|lino)$/u.test(name)) await rm(path.join(resultsDirectory, name));
     }
     await rm(observationsPath, { force: true });
   }
@@ -435,12 +442,12 @@ function readGrammarVersions() {
 }
 
 async function produceMergeEnforcementEvidence() {
-  const reportPath = path.join(artifactsDirectory, 'merge-enforcement.json');
+  const reportPath = path.join(artifactsDirectory, 'merge-enforcement.lino');
   const execution = await runCommand('merge-enforcement', 'node', [
     path.join(root, 'js/scripts/check-issue-195-merge-enforcement.mjs'),
     '--commit', commit, '--report', reportPath,
   ], { allowFailure: true });
-  const report = JSON.parse(await readFile(reportPath, 'utf8'));
+  const report = readProjectData(reportPath, { format: 'lino' });
   for (const [assertionId, holds] of Object.entries(report.checks)) {
     if (holds === true) observe(
       'i195-acceptance-required-merge-check-tooling-behavior', assertionId,
@@ -455,7 +462,7 @@ async function produceMergeEnforcementEvidence() {
  * artifacts and native evidence the cells cite, and records the measurement.
  */
 function produceCacheCleanupEvidence() {
-  const reportPath = path.join(artifactsDirectory, 'cache-cleanup.json');
+  const reportPath = path.join(artifactsDirectory, 'cache-cleanup.lino');
   const testId = 'i195-cache-cleanup-measured-tooling-measured';
   console.log('issue-195 evidence: cache-cleanup');
   const { checks, report } = measureCacheCleanup({ root, resultsDirectory, reportPath });
@@ -496,7 +503,7 @@ async function validateNativeTranslations(target) {
   for (const runtime of RUNTIMES) {
     const file = path.join(parityDirectory, PARITY_ARTIFACT_FILES.translations(runtime));
     try {
-      observations[runtime] = JSON.parse(await readFile(file, 'utf8'));
+      observations[runtime] = readProjectData(file, { format: 'lino' });
     } catch (error) {
       throw new Error(`the runtime-parity stage output ${relative(file)} cannot be read: ${error.message}`);
     }
@@ -515,13 +522,13 @@ async function validateNativeTranslations(target) {
     const label = `native-${runtime}-${target.toLowerCase()}`;
     const testId = `i195-native-${target.toLowerCase()}-${runtime}-positive`;
     const version = commandOutput(declaration.tool, ['--version']);
-    const toolchainPath = path.join(directory, 'toolchain.json');
-    await writeFile(toolchainPath, stableJson({
+    const toolchainPath = path.join(directory, 'toolchain.lino');
+    writeProjectData(toolchainPath, {
       tool: declaration.tool,
       declaredVersion: declaration.declaredVersion,
       version,
       platform: `${process.platform}-${process.arch}`,
-    }));
+    }, { format: 'lino' });
     const artifacts = [];
     for (const translation of translations) {
       const sourceName = translation.sourceLanguage.toLowerCase();
@@ -556,7 +563,7 @@ async function validateNativeTranslations(target) {
       ...artifacts.map(relative),
       relative(rejected),
     );
-    const toolchain = JSON.parse(await readFile(toolchainPath, 'utf8'));
+    const toolchain = readProjectData(toolchainPath, { format: 'lino' });
     if (version.includes(declaration.declaredVersion)) {
       observe(testId, 'declaredToolchainPresent', `${declaration.tool} ${declaration.declaredVersion} is installed`);
     }
@@ -612,11 +619,14 @@ async function prepareCandidates(directory) {
   const crate = path.join(directory, `meta-language-${version}.crate`);
   let record;
   if (checkpoint === 'release-delivery') {
-    const npmMetadata = path.join(directory, 'npm-registry.json');
-    const crateMetadata = path.join(directory, 'crates-io.json');
+    const npmMetadata = path.join(directory, 'npm-registry.lino');
+    const crateMetadata = path.join(directory, 'crates-io.lino');
+    // Registry responses are actual JSON wire inputs; retained metadata uses LiNo.
+    const npmWire = path.join(directory, 'npm-registry.wire.json');
+    const crateWire = path.join(directory, 'crates-io.wire.json');
     const userAgent = 'meta-language-issue-195-evidence (https://github.com/link-foundation/meta-language)';
     const metadata = await runCommandWithRetry('delivery-npm-published-metadata', 'curl', [
-      '--fail', '--location', '--silent', '--show-error', '--output', npmMetadata,
+      '--fail', '--location', '--silent', '--show-error', '--output', npmWire,
       `https://registry.npmjs.org/meta-language/${version}`,
     ]);
     const pack = await runCommandWithRetry('delivery-npm-published-pack', 'npm', [
@@ -624,18 +634,23 @@ async function prepareCandidates(directory) {
     ]);
     const crateInfo = await runCommandWithRetry('delivery-crate-published-metadata', 'curl', [
       '--fail', '--location', '--silent', '--show-error', '--user-agent', userAgent,
-      '--output', crateMetadata, `https://crates.io/api/v1/crates/meta-language/${version}`,
+      '--output', crateWire, `https://crates.io/api/v1/crates/meta-language/${version}`,
     ]);
     const download = await runCommandWithRetry('delivery-crate-published-download', 'curl', [
       '--fail', '--location', '--silent', '--show-error', '--user-agent', userAgent,
       '--output', crate, `https://crates.io/api/v1/crates/meta-language/${version}/download`,
     ]);
-    const integrity = JSON.parse(await readFile(npmMetadata, 'utf8')).dist?.integrity;
+    const npmDocument = JSON.parse(await readFile(npmWire, 'utf8'));
+    const crateDocument = JSON.parse(await readFile(crateWire, 'utf8'));
+    writeProjectData(npmMetadata, npmDocument, { format: 'lino' });
+    writeProjectData(crateMetadata, crateDocument, { format: 'lino' });
+    await Promise.all([rm(npmWire), rm(crateWire)]);
+    const integrity = npmDocument.dist?.integrity;
     const computedIntegrity = `sha512-${createHash('sha512').update(await readFile(tarball)).digest('base64')}`;
     if (integrity !== computedIntegrity) {
       throw new Error(`npm registry integrity ${integrity} does not match ${computedIntegrity}`);
     }
-    const checksum = JSON.parse(await readFile(crateMetadata, 'utf8')).version?.checksum;
+    const checksum = crateDocument.version?.checksum;
     if (checksum !== await sha256File(crate)) {
       throw new Error(`crates.io checksum ${checksum} does not match the downloaded crate`);
     }
@@ -669,7 +684,7 @@ async function produceDeliveryEvidence(kind) {
   const localReport = path.join(
     resultsDirectory,
     'platform-reports',
-    `${process.platform}-${process.arch}.json`,
+    `${process.platform}-${process.arch}.lino`,
   );
   const consumer = await runCommand('delivery-consumer', 'node', [
     consumerScript,
@@ -769,12 +784,12 @@ async function candidateArtifacts() {
 
 async function readPlatformReports(localReport) {
   const files = platformReportsDirectory
-    ? await jsonFiles(path.resolve(platformReportsDirectory))
+    ? await reportFiles(path.resolve(platformReportsDirectory))
     : [];
   if (localReport) files.push(localReport);
   const reports = [];
   for (const file of files) {
-    const report = JSON.parse(await readFile(file, 'utf8'));
+    const report = readProjectData(file, { format: 'lino' });
     const artifact = path.join(artifactsDirectory, 'platform-reports', path.basename(path.dirname(file)), path.basename(file));
     await mkdir(path.dirname(artifact), { recursive: true });
     await copyFile(file, artifact);
@@ -783,12 +798,12 @@ async function readPlatformReports(localReport) {
   return reports;
 }
 
-async function jsonFiles(directory) {
+async function reportFiles(directory) {
   const files = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const file = path.join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...await jsonFiles(file));
-    else if (entry.name.endsWith('.json')) files.push(file);
+    if (entry.isDirectory()) files.push(...await reportFiles(file));
+    else if (entry.name.endsWith('.lino')) files.push(file);
   }
   return files.sort();
 }
@@ -931,10 +946,6 @@ function git(args) {
 
 function relative(filename) {
   return path.relative(root, filename).split(path.sep).join('/');
-}
-
-function stableJson(value) {
-  return `${JSON.stringify(value, null, 2)}\n`;
 }
 
 async function sha256File(filename) {
