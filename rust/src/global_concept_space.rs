@@ -292,6 +292,54 @@ pub fn create_global_concept_space(
     create_global_concept_space_in(&source_values, options).map(|(space, _, _)| space)
 }
 
+/// Resolves a construct through its proven identity and preserves alternatives.
+/// Language aliases use the same catalog as ordinary public language parsing.
+#[must_use]
+pub fn translate_global_construct(
+    space: &Value,
+    alias: &str,
+    language: &str,
+    edition: Option<&str>,
+) -> Value {
+    let empty = |relation| json!({"relation":relation,"concept":null,"origins":[],"proofs":[]});
+    if space["ambiguities"]
+        .as_array()
+        .is_some_and(|entries| entries.iter().any(|entry| entry["alias"] == alias))
+    {
+        return empty("ambiguous");
+    }
+    let id = &space["mappings"][alias];
+    let Some(concept) = space["concepts"]
+        .as_array()
+        .and_then(|concepts| concepts.iter().find(|concept| concept["id"] == *id))
+    else {
+        return empty("unknown");
+    };
+    let canonical_language = |language: &str| {
+        crate::language_catalog::language_entry(language)
+            .map_or_else(|| language.to_owned(), |entry| entry.name.clone())
+    };
+    let target = canonical_language(language);
+    let origins: Vec<_> = concept["origins"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|origin| {
+            origin["language"]
+                .as_str()
+                .is_some_and(|language| canonical_language(language) == target)
+                && edition.is_none_or(|edition| origin["edition"] == edition)
+        })
+        .cloned()
+        .collect();
+    let relation = match origins.len() {
+        0 => "untranslatable",
+        1 => "translated",
+        _ => "ambiguous",
+    };
+    json!({"relation":relation,"concept":id,"origins":origins,"proofs":concept["proofs"]})
+}
+
 // JSON/grammar adaptation is host glue. The generated verifier is the sole
 // authority that accepts a correspondence and permits shared identities.
 fn create_global_concept_space_in(

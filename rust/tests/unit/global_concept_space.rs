@@ -1,6 +1,7 @@
 use meta_language::{
     GLOBAL_CONCEPT_PROOF_METHOD, GlobalConceptOptions, GlobalConceptSource,
     create_global_concept_space, global_concept_space_to_links, read_global_concept_space_links,
+    translate_global_construct,
 };
 use serde_json::{Value, json};
 
@@ -427,5 +428,130 @@ fn global_recursive_proofs_reject_many_to_one_reference_collapse() {
     assert_eq!(
         space["failures"],
         json!([{"members":["one:root","two:root"],"reason":"no-one-to-one-proof"}])
+    );
+}
+
+#[test]
+fn global_proof_discovery_resolves_catalog_aliases_of_real_native_grammars() {
+    let input: Vec<_> = [
+        (
+            "scheme",
+            "Scheme",
+            include_str!("../../src/data/native-grammars/scheme.lino"),
+        ),
+        (
+            "racket",
+            "Racket",
+            include_str!("../../src/data/native-grammars/racket.lino"),
+        ),
+    ]
+    .iter()
+    .map(|(identity, language, listing)| {
+        let original = meta_language::parse_grammar_links(listing).unwrap();
+        let mut grammar = meta_language::Grammar::new();
+        if let Some(start) = original.start() {
+            grammar.set_start(start);
+        }
+        grammar.set_declarations(original.declarations().clone());
+        grammar.set_kinds(original.kinds().to_vec());
+        for mut rule in original.rules().to_vec() {
+            rule.concept = None;
+            grammar.add_rule(rule);
+        }
+        GlobalConceptSource {
+            id: format!("pinned-{identity}"),
+            language: (*language).to_owned(),
+            edition: String::new(),
+            grammar,
+        }
+    })
+    .collect();
+    let options = GlobalConceptOptions::default();
+    let space = create_global_concept_space(&input, &options).unwrap();
+    let shared_id = &space["mappings"]["pinned-scheme:block_comment"];
+    assert_eq!(shared_id, &space["mappings"]["pinned-racket:block_comment"]);
+    let shared = space["concepts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|concept| &concept["id"] == shared_id)
+        .unwrap();
+    assert_eq!(shared["origins"].as_array().unwrap().len(), 2);
+    assert!(!shared["proofs"].as_array().unwrap().is_empty());
+    assert_eq!(
+        space["mappings"].as_object().unwrap().len(),
+        input
+            .iter()
+            .map(|source| source.grammar.rules().len())
+            .sum::<usize>()
+    );
+    assert_ne!(
+        space["mappings"]["pinned-scheme:program"],
+        space["mappings"]["pinned-racket:program"]
+    );
+    let translated = translate_global_construct(&space, "pinned-scheme:block_comment", "rkt", None);
+    assert_eq!(translated["relation"], "translated");
+    assert_eq!(&translated["concept"], shared_id);
+    assert_eq!(
+        translated["origins"][0]["alias"],
+        "pinned-racket:block_comment"
+    );
+    assert!(!translated["proofs"].as_array().unwrap().is_empty());
+    assert_eq!(
+        translate_global_construct(&space, "pinned-scheme:program", "Racket", None)["relation"],
+        "untranslatable"
+    );
+    assert_eq!(
+        read_global_concept_space_links(&global_concept_space_to_links(&space).unwrap(), &options)
+            .unwrap(),
+        space
+    );
+}
+
+#[test]
+fn global_construct_queries_preserve_meaning_ambiguity_and_target_editions() {
+    let data = fixture();
+    let mut input = sources(&data);
+    let mut third = input[1].clone();
+    third.id = "third".to_owned();
+    third.edition = "3".to_owned();
+    input.push(third);
+    let options = settings(&data);
+    let space = create_global_concept_space(&input, &options).unwrap();
+    let ambiguous = translate_global_construct(&space, "first:root", "second-language", None);
+    assert_eq!(ambiguous["relation"], "ambiguous");
+    assert_eq!(
+        ambiguous["origins"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|origin| origin["alias"].clone())
+            .collect::<Vec<_>>(),
+        vec![json!("second:page"), json!("third:page")]
+    );
+    let edition = translate_global_construct(&space, "first:root", "second-language", Some("3"));
+    assert_eq!(edition["relation"], "translated");
+    assert_eq!(edition["origins"][0]["alias"], "third:page");
+    assert_eq!(
+        translate_global_construct(&space, "first:unique", "second-language", None)["relation"],
+        "untranslatable"
+    );
+    assert_eq!(
+        translate_global_construct(&space, "missing:rule", "second-language", None),
+        json!({"relation":"unknown","concept":null,"origins":[],"proofs":[]})
+    );
+    let mut records = data["records"].as_array().unwrap().clone();
+    records.push(json!({"id":"fixture.other-letter","definition":"A separate meaning of the letter.","constraints":["The role is distinct."],"sourceAliases":[{"source":"first","name":"root"}]}));
+    let uncertain = create_global_concept_space(
+        &sources(&data),
+        &GlobalConceptOptions {
+            records: Some(json!(records)),
+            ..options
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        translate_global_construct(&uncertain, "first:root", "second-language", None),
+        json!({"relation":"ambiguous","concept":null,"origins":[],"proofs":[]})
     );
 }
