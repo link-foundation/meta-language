@@ -541,7 +541,11 @@
           "parity/self-translation/typescript-erasure-rules-decorators.lino",
           "parity/fixtures/typescript-erasure.json",
           "rust/src/self_translation/typescript_portable_typing.rs",
-          "rust/src/data/typescript-portable-typing.lino"
+          "rust/src/data/typescript-portable-typing.lino",
+          "rust/src/typed_program_links.rs",
+          "rust/src/typed_program_links/projection.rs",
+          "rust/tests/unit/typed_program_links.rs",
+          "parity/fixtures/typed-program-links.json"
         ]
       },
       "javascript": {
@@ -582,7 +586,11 @@
           "parity/self-translation/typescript-erasure-rules-decorators.lino",
           "parity/fixtures/typescript-erasure.json",
           "js/src/typescript-portable-typing.js",
-          "js/src/data/typescript-portable-typing.lino"
+          "js/src/data/typescript-portable-typing.lino",
+          "js/src/typed-program-links.js",
+          "js/src/typed-program-expression-projection.js",
+          "js/tests/typed-program-links-fixtures.test.js",
+          "parity/fixtures/typed-program-links.json"
         ]
       }
     },
