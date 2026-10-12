@@ -64,10 +64,10 @@ they are.
 | Rust package settings | 9 | 9 | 0 | 0 |
 | Rust crates | 309 | 282 | 24 | 3 |
 | Experiment manifests | 6 | 6 | 0 | 0 |
-| Vendored generated parsers | 5 | 5 | 0 | 0 |
+| Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
-| Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 51 | 50 | 1 | 0 |
+| Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
+| Generators | 55 | 54 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -441,86 +441,86 @@ they are.
 | `tree-sitter-language` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.1.8` | runtime |  | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
 | `tree-sitter` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.27.0` | runtime |  | 0.27.0 (crates.io, tree-sitter) | version | current |  |
 
-## Vendored generated parsers
+## Downloaded generated parser sources
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `rust/vendor/tree-sitter-cmake` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-cmake/NOTICE.md` | `v0.7.5` | v0.7.5 (GitHub release, uyha/tree-sitter-cmake (the pin is identical of it)) | revision | current |  |
-| `rust/vendor/tree-sitter-csv` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-csv/NOTICE.md` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` | v1.2.0 (GitHub release, tree-sitter-grammars/tree-sitter-csv (the pin is ahead of it)) | revision | current |  |
-| `rust/vendor/tree-sitter-lean` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-lean/NOTICE.md` | `bd942cd2795016239be02b3b3d5ef635645ddd38` | v0.2.2 (GitHub release, wvhulle/tree-sitter-lean (the pin is ahead of it)) | revision | current |  |
-| `rust/vendor/tree-sitter-rocq` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-rocq/NOTICE.md` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` | v0.2.0 (GitHub release, aruzdh/tree-sitter-rocq (the pin is ahead of it)) | revision | current |  |
-| `rust/vendor/tree-sitter-rust` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-rust/NOTICE.md` | `v0.24.2` | v0.24.2 (GitHub release, tree-sitter/tree-sitter-rust (the pin is identical of it)) | revision | current |  |
+| `aruzdh/tree-sitter-rocq` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-rocq/NOTICE.md` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` | v0.2.0 (GitHub release, aruzdh/tree-sitter-rocq (the pin is ahead of it)) | revision | current |  |
+| `tree-sitter-grammars/tree-sitter-csv` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-csv/NOTICE.md` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` | v1.2.0 (GitHub release, tree-sitter-grammars/tree-sitter-csv (the pin is ahead of it)) | revision | current |  |
+| `tree-sitter/tree-sitter-rust` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-rust/NOTICE.md` | `v0.24.2` | v0.24.2 (GitHub release, tree-sitter/tree-sitter-rust (the pin is identical of it)) | revision | current |  |
+| `uyha/tree-sitter-cmake` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-cmake/NOTICE.md` | `v0.7.5` | v0.7.5 (GitHub release, uyha/tree-sitter-cmake (the pin is identical of it)) | revision | current |  |
+| `wvhulle/tree-sitter-lean` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-lean/NOTICE.md` | `bd942cd2795016239be02b3b3d5ef635645ddd38` | v0.2.2 (GitHub release, wvhulle/tree-sitter-lean (the pin is ahead of it)) | revision | current |  |
 
 ## Vendored runtime
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz` | `js/src/vendor/web-tree-sitter/runtime-lock.json` | `0.27.0` | v0.27.0 (GitHub release, tree-sitter/tree-sitter) | version | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
+| `js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz` | `js/src/vendor/web-tree-sitter/runtime-lock.lino` | `0.27.0` | v0.27.0 (GitHub release, tree-sitter/tree-sitter) | version | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
 
-## Vendored WebAssembly grammars
+## Downloaded WebAssembly grammars
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `js/oracles/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.3` |  | derived | current |  |
-| `js/oracles/grammars/c.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.2` |  | derived | current |  |
-| `js/oracles/grammars/cmake.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `v0.7.5` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
-| `js/oracles/grammars/cpp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.4` |  | derived | current |  |
-| `js/oracles/grammars/css.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/csv.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` |  | derived | current |  |
-| `js/oracles/grammars/dart.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.2.0` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
-| `js/oracles/grammars/diff.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
-| `js/oracles/grammars/dtd.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
-| `js/oracles/grammars/erlang.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.20.0` |  | derived | current |  |
-| `js/oracles/grammars/go.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/graphql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.0` |  | derived | current |  |
-| `js/oracles/grammars/groovy.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.2` |  | derived | current |  |
-| `js/oracles/grammars/hcl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.0` |  | derived | current |  |
-| `js/oracles/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
-| `js/oracles/grammars/ini.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.4.0` |  | derived | current |  |
-| `js/oracles/grammars/java.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.5` |  | derived | current |  |
-| `js/oracles/grammars/javascript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/json.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.8` |  | derived | current |  |
-| `js/oracles/grammars/json5.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
-| `js/oracles/grammars/lean.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `bd942cd2795016239be02b3b3d5ef635645ddd38` |  | derived | current |  |
-| `js/oracles/grammars/lua.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.0` |  | derived | current |  |
-| `js/oracles/grammars/make.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.1` |  | derived | current |  |
-| `js/oracles/grammars/nix.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.0` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
-| `js/oracles/grammars/odin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.0` |  | derived | current |  |
-| `js/oracles/grammars/pascal.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.10.2` |  | derived | current |  |
-| `js/oracles/grammars/powershell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.4` |  | derived | current |  |
-| `js/oracles/grammars/proto.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.6.0` |  | derived | current |  |
-| `js/oracles/grammars/python.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/r.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.0` |  | derived | current |  |
-| `js/oracles/grammars/racket.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/regex.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/rocq.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` |  | derived | current |  |
-| `js/oracles/grammars/rust.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `v0.24.2` |  | derived | current |  |
-| `js/oracles/grammars/scheme.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.7` |  | derived | current |  |
-| `js/oracles/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.2.13` |  | derived | current |  |
-| `js/oracles/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.11` |  | derived | current |  |
-| `js/oracles/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
-| `js/oracles/grammars/tsx.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
-| `js/oracles/grammars/typescript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
-| `js/oracles/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
-| `js/oracles/grammars/xml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
-| `js/oracles/grammars/zig.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.2` |  | derived | current |  |
-| `js/src/vendor/grammars/bash.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.1` |  | derived | current |  |
-| `js/src/vendor/grammars/csharp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.5` |  | derived | current |  |
-| `js/src/vendor/grammars/elixir.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.5` |  | derived | current |  |
-| `js/src/vendor/grammars/elm.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `5.9.4` |  | derived | current |  |
-| `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.1` |  | derived | current |  |
-| `js/src/vendor/grammars/kotlin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.0` |  | derived | current |  |
-| `js/src/vendor/grammars/markdown_inline.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.6` |  | derived | current |  |
-| `js/src/vendor/grammars/markdown.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.6` |  | derived | current |  |
-| `js/src/vendor/grammars/matlab.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.1` |  | derived | current |  |
-| `js/src/vendor/grammars/ocaml_interface.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.0` |  | derived | current |  |
-| `js/src/vendor/grammars/ocaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.0` |  | derived | current |  |
-| `js/src/vendor/grammars/perl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `2.0.0` |  | derived | current |  |
-| `js/src/vendor/grammars/php.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.2` |  | derived | current |  |
-| `js/src/vendor/grammars/ruby.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.1` |  | derived | current |  |
-| `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.2` |  | derived | current |  |
-| `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.4` |  | derived | current |  |
-| `js/src/vendor/grammars/yaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.2` |  | derived | current |  |
+| `js/oracles/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.3` |  | derived | current |  |
+| `js/oracles/grammars/c.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.2` |  | derived | current |  |
+| `js/oracles/grammars/cmake.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `v0.7.5` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
+| `js/oracles/grammars/cpp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.4` |  | derived | current |  |
+| `js/oracles/grammars/css.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/csv.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` |  | derived | current |  |
+| `js/oracles/grammars/dart.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.2.0` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
+| `js/oracles/grammars/diff.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | current |  |
+| `js/oracles/grammars/dtd.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | current |  |
+| `js/oracles/grammars/erlang.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.20.0` |  | derived | current |  |
+| `js/oracles/grammars/go.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/graphql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.0` |  | derived | current |  |
+| `js/oracles/grammars/groovy.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.2` |  | derived | current |  |
+| `js/oracles/grammars/hcl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.0` |  | derived | current |  |
+| `js/oracles/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | current |  |
+| `js/oracles/grammars/ini.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.4.0` |  | derived | current |  |
+| `js/oracles/grammars/java.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.5` |  | derived | current |  |
+| `js/oracles/grammars/javascript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/json.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.8` |  | derived | current |  |
+| `js/oracles/grammars/json5.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | current |  |
+| `js/oracles/grammars/lean.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `bd942cd2795016239be02b3b3d5ef635645ddd38` |  | derived | current |  |
+| `js/oracles/grammars/lua.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.0` |  | derived | current |  |
+| `js/oracles/grammars/make.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.1` |  | derived | current |  |
+| `js/oracles/grammars/nix.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.0` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
+| `js/oracles/grammars/odin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.0` |  | derived | current |  |
+| `js/oracles/grammars/pascal.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.10.2` |  | derived | current |  |
+| `js/oracles/grammars/powershell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.4` |  | derived | current |  |
+| `js/oracles/grammars/proto.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.6.0` |  | derived | current |  |
+| `js/oracles/grammars/python.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/r.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.0` |  | derived | current |  |
+| `js/oracles/grammars/racket.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/regex.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/rocq.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` |  | derived | current |  |
+| `js/oracles/grammars/rust.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `v0.24.2` |  | derived | current |  |
+| `js/oracles/grammars/scheme.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.7` |  | derived | current |  |
+| `js/oracles/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.2.13` |  | derived | current |  |
+| `js/oracles/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.11` |  | derived | current |  |
+| `js/oracles/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | current |  |
+| `js/oracles/grammars/tsx.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | current |  |
+| `js/oracles/grammars/typescript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | current |  |
+| `js/oracles/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | current |  |
+| `js/oracles/grammars/xml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | current |  |
+| `js/oracles/grammars/zig.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.2` |  | derived | current |  |
+| `js/src/vendor/grammars/bash.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.1` |  | derived | current |  |
+| `js/src/vendor/grammars/csharp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.5` |  | derived | current |  |
+| `js/src/vendor/grammars/elixir.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.5` |  | derived | current |  |
+| `js/src/vendor/grammars/elm.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `5.9.4` |  | derived | current |  |
+| `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.1` |  | derived | current |  |
+| `js/src/vendor/grammars/kotlin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.0` |  | derived | current |  |
+| `js/src/vendor/grammars/markdown_inline.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.6` |  | derived | current |  |
+| `js/src/vendor/grammars/markdown.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.6` |  | derived | current |  |
+| `js/src/vendor/grammars/matlab.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.1` |  | derived | current |  |
+| `js/src/vendor/grammars/ocaml_interface.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.0` |  | derived | current |  |
+| `js/src/vendor/grammars/ocaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.0` |  | derived | current |  |
+| `js/src/vendor/grammars/perl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `2.0.0` |  | derived | current |  |
+| `js/src/vendor/grammars/php.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.2` |  | derived | current |  |
+| `js/src/vendor/grammars/ruby.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.1` |  | derived | current |  |
+| `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.2` |  | derived | current |  |
+| `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.4` |  | derived | current |  |
+| `js/src/vendor/grammars/yaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.2` |  | derived | current |  |
 
 ## Generators
 
@@ -566,12 +566,16 @@ they are.
 | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-pattern-fixture.mjs` | `js/scripts/generate-ruby-pattern-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-runtime.mjs` | `js/scripts/generate-rust-array-runtime.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-indirection-rules.mjs` | `js/scripts/generate-rust-indirection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-data-link-rules.mjs` | `js/scripts/generate-structured-data-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-scanner-fixtures.mjs` | `js/scripts/generate-structured-scanner-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-type-fixtures.mjs` | `js/scripts/generate-structured-type-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-type-rules.mjs` | `js/scripts/generate-structured-type-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-links-fixtures.mjs` | `js/scripts/generate-typed-program-links-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
@@ -597,7 +601,7 @@ they are.
 | `rocq-stdlib` |  | `.github/workflows/ci.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
 | `rust-script` |  | `rust/scripts/install-rust-script.sh` | `latest` |  | floating | current |  |
 | `secretlint` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.json`, `rust/src/data/grammar-lock.json` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
+| `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.lino`, `rust/src/data/grammar-lock.lino` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
 | `wasm-pack` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 
 ## GitHub Actions
@@ -629,7 +633,7 @@ they are.
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `emscripten/emsdk` | `js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json` | `4.0.15` | 6.0.11 (Docker Hub, emscripten/emsdk tags) | version | behind | Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. |
+| `emscripten/emsdk` | `js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino` | `4.0.15` | 6.0.11 (Docker Hub, emscripten/emsdk tags) | version | behind | Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. |
 
 ## Runners
 
@@ -649,18 +653,18 @@ they are.
 | `examples/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/concept-records.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/formal-concept-models.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/foundation-models.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-lock.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/language-catalog.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/language-trigrams.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/concept-records.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/formal-concept-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/foundation-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/language-catalog.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/language-trigrams.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-grammars/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/native-text-grammar.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-text-grammar.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/native-text-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/semantic-lexicon.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/typed-program-links-schema.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-portable-typing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/translation/runtime/array-*.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -698,4 +702,4 @@ they are.
 - `windows-sys` `0.52.0` → `0.61.2` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does. Delivered at its newest compatible release `0.52.0`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.52`).
 - `windows-targets` `0.52.6` → `0.53.5` (`rust/Cargo.lock`): Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-sys@0.52.0` (`^0.52.0`).
 - `ocaml` `5.4` → `5.5.1` (`.github/workflows/ci.yml`): Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. Delivered at its newest compatible release `5.4.1`, held by `opam ocamlfind 1.9.8` (`<5.5.0`).
-- `emscripten/emsdk` `4.0.15` → `6.0.11` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json`): Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Delivered at its newest compatible release `4.0.15`, held by `npm js/package-lock.json web-tree-sitter@0.27.0` (`=4.0.15`).
+- `emscripten/emsdk` `4.0.15` → `6.0.11` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino`): Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Delivered at its newest compatible release `4.0.15`, held by `npm js/package-lock.json web-tree-sitter@0.27.0` (`=4.0.15`).

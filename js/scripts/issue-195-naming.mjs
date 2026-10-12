@@ -726,10 +726,20 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'structured data links',
-    files: ['js/src/structured-data-links.js', 'js/src/structured-data-link-rules.js', 'rust/src/structured_data_links.rs', 'rust/src/structured_data_link_rules.rs'],
+    files: ['js/src/structured-data-links.js', 'js/src/structured-data-encode.js', 'js/src/structured-data-graph.js', 'js/src/structured-data-model.js', 'js/src/structured-data-link-rules.js', 'js/src/structured-data-records.js', 'js/src/structured-data-records-write.js', 'scripts/lib/structured-data-bootstrap.mjs', 'rust/src/structured_data_links.rs', 'rust/src/structured_data_link_rules.rs', 'rust/src/structured_data_records.rs'],
     extract: (text) => captures(text, /^(?:export function|export class|pub fn|pub struct|pub enum) ([a-zA-Z][a-zA-Z_]+)\b/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `structured-data.${({
+      'structured-data-graph-cost': 'measure-structured-data-graph-cost',
+      'limits-of': 'resolve-structured-data-limits',
+      'well-formed-string': 'accept-well-formed-string',
+      'read-bootstrap-structured-data-lino': 'read-bootstrap-structured-data-links-notation',
+      'structured-data-record-to-lino': 'serialize-structured-data-record-as-links-notation',
+      'structured-data-record-to-lino-with-namespace': 'serialize-structured-data-record-as-links-notation-with-namespace',
+      'structured-data-record-to-lino-ordered': 'serialize-ordered-structured-data-record-as-links-notation',
+      'structured-data-record-to-lino-ordered-with-namespace': 'serialize-ordered-structured-data-record-as-links-notation-with-namespace',
+      'read-structured-data-records-ordered': 'read-ordered-structured-data-records',
+      'read-structured-data-records-ordered-with-limits': 'read-ordered-structured-data-records-with-limits',
       'structured-data-to-lino': 'serialize-structured-data-as-links-notation',
       'structured-data-to-lino-ordered': 'serialize-ordered-structured-data-as-links-notation',
       'read-structured-data-lino': 'read-structured-data-links-notation',
@@ -740,9 +750,9 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'project data storage operations',
-    files: ['js/scripts/project-data.mjs', 'js/scripts/convert-structured-data.mjs'],
-    extract: (text) => captures(text, /^export (?:async )?function ([a-zA-Z][a-zA-Z]+)\(/gmu)
-      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    files: ['js/src/project-data-files.js', 'js/scripts/convert-structured-data.mjs', 'js/scripts/project-data-storage.mjs', 'rust/src/project_data.rs'],
+    extract: (text) => captures(text, /^(?:export (?:async )?function|pub fn|pub enum) ([a-zA-Z][a-zA-Z_]+)\b/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `repository.${name}`,
   },
   {

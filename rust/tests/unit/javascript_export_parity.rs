@@ -241,6 +241,7 @@ mod items {
     use meta_language::read_formal_concept_definition as _;
     use meta_language::read_global_concept_space_links as _;
     use meta_language::read_structured_data_lino as _;
+    use meta_language::read_structured_data_records as _;
     use meta_language::read_translation_provenance as _;
     use meta_language::reconstruct_grammar as _;
     use meta_language::rename_grammar_rule as _;
@@ -266,6 +267,7 @@ mod items {
     use meta_language::sniff_language as _;
     use meta_language::source_meanings_in as _;
     use meta_language::split_grammar_source as _;
+    use meta_language::structured_data_record_to_lino as _;
     use meta_language::structured_data_to_lino as _;
     use meta_language::translate_global_construct as _;
     use meta_language::translate_native_construct as _;
@@ -792,6 +794,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "readStructuredDataRecords",
+        "read_structured_data_records",
+        "function",
+    ),
+    (
         "readTranslationProvenance",
         "read_translation_provenance",
         "function",
@@ -851,6 +858,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("sourceMeanings", "source_meanings_in", "function"),
     ("sourceTextPredicateHost", "SourceTextPredicateHost", "type"),
     ("splitGrammarSource", "split_grammar_source", "function"),
+    (
+        "structuredDataRecordToLino",
+        "structured_data_record_to_lino",
+        "function",
+    ),
     (
         "structuredDataToLino",
         "structured_data_to_lino",
