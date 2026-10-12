@@ -332,6 +332,7 @@ class RocqEmitter {
   }
 
   type(type) {
+    if (type.reference || type.kind === 'cell') throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model');
     switch (type.kind) {
       case 'nat':
         return 'N';
@@ -617,6 +618,7 @@ class RocqEmitter {
   }
 
   expr(e) {
+    if (['cellAllocate', 'cellRead', 'cellWrite', 'referenceAllocate', 'referenceRead', 'referenceWrite'].includes(e.k)) throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model', e.span);
     switch (e.k) {
       case 'lit':
         return this.literal(e);
@@ -666,6 +668,33 @@ class RocqEmitter {
         return e.type.absence === 'both' && e.absence === 'undefined' ? `(Some (@None ${this.type(e.type.element)}))` : `(@None ${e.type.absence === 'both' ? `(option ${this.type(e.type.element)})` : this.type(e.type.element)})`;
       case 'some':
         return e.type.absence === 'both' ? `(Some (Some ${this.expr(e.value)}))` : `(Some ${this.expr(e.value)})`;
+      case 'nullishNumber': {
+        const element = e.arg.type.element;
+        const present = element.kind === 'bool' ? '(if ml_present then 1%float else 0%float)' : element.kind === 'unit' ? 'PrimFloat.nan' : 'ml_present';
+        this.floats();
+        return this.optionalMatch(e.arg, 'ml_present', present, '0%float', 'PrimFloat.nan');
+      }
+      case 'optionalIndexNumber':
+        this.floats();
+        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? 'PrimFloat.nan' : 'ml_present', 'PrimFloat.nan', 'PrimFloat.nan');
+      case 'truthy':
+        return this.truthy(e.arg);
+      case 'strictEqual':
+        return this.strictEqual(e);
+      case 'optionalText': {
+        const element = e.arg.type.element;
+        let present = element.kind === 'string' ? 'ml_present' : element.kind === 'unit' ? '"undefined"%string' : this.toText({ k: 'var', name: 'ml_present', type: element }, e.console);
+        if (e.console && ['int', 'nat', 'fixed'].includes(element.kind)) present = `(String.append ${present} "n"%string)`;
+        return this.optionalMatch(e.arg, 'ml_present', present, '"null"%string', '"undefined"%string');
+      }
+      case 'optionalTypeOf':
+        return this.optionalMatch(e.arg, 'ml_present', `"${e.present ?? 'undefined'}"%string`, '"object"%string', '"undefined"%string');
+      case 'unwrapOption':
+        return `(match ${this.expr(e.arg)} with | ${e.arg.type.absence === 'both' ? 'Some (Some ml_present)' : 'Some ml_present'} => ml_present | _ => ${this.inhabitant(e.type)} end)`;
+      case 'optionalPredicate': {
+        const present = e.arg.type.element.kind === 'float' ? this.math({ k: 'math', op: e.op, args: [{ k: 'var', name: 'ml_present', type: { kind: 'float' } }], type: { kind: 'bool' } }) : 'false';
+        return this.optionalMatch(e.arg, 'ml_present', present, 'false', 'false');
+      }
       case 'flattenOption': {
         const absent = (absence) => e.type.absence === 'both' && absence === 'undefined' ? '(Some None)' : 'None';
         const present = e.type.absence === 'both' ? '(Some (Some ml_present))' : '(Some ml_present)';
@@ -761,7 +790,7 @@ class RocqEmitter {
       case 'append':
         return `(List.app ${this.expr(e.left)} ${this.expr(e.right)})`;
       case 'index': {
-        this.state.arrayRead();
+        if (!e.provenInBounds) this.state.arrayRead();
         this.helpers.add('listAt');
         let index = this.expr(e.index);
         if (e.index.type.kind === 'float') {
@@ -814,6 +843,35 @@ class RocqEmitter {
     if (e.op === 'find') return `${head} option_map (@fst ${this.type(e.object.type.element)} nat) (List.find ${lambda} ${pairs}))`;
     if (e.op === 'findIndex') { this.floats(); return `${head} match List.find ${lambda} ${pairs} with Some ml_pair => ${number} | None => (PrimFloat.opp 1%float) end)`; }
     return `${head} List.fold_left (fun ml_accumulator ml_pair => ${call}) ${pairs} ${this.expr(e.args[1])})`;
+  }
+
+  optionalMatch(arg, binder, present, nullCase, undefinedCase) {
+    const cases = arg.type.absence === 'both' ? `| Some (Some ${binder}) => ${present} | None => ${nullCase} | Some None => ${undefinedCase}` : `| Some ${binder} => ${present} | None => ${arg.type.absence === 'null' ? nullCase : undefinedCase}`;
+    return `(match ${this.expr(arg)} with ${cases} end)`;
+  }
+
+  truthy(arg) {
+    if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }), 'false', 'false');
+    const value = this.expr(arg);
+    if (arg.type.kind === 'bool') return value;
+    if (arg.type.kind === 'float') { this.floats(); return `(let ml_value := ${value} in andb (negb (PrimFloat.eqb ml_value 0%float)) (negb (PrimFloat.is_nan ml_value)))`; }
+    if (arg.type.kind === 'int' || (arg.type.kind === 'fixed' && arg.type.signed)) return `(negb (Z.eqb ${value} 0))`;
+    if (arg.type.kind === 'nat' || arg.type.kind === 'fixed') return `(negb (N.eqb ${value} 0))`;
+    if (arg.type.kind === 'string') return `(negb (String.eqb ${value} EmptyString))`;
+    return `(let ml_ignored := ${value} in ${arg.type.kind !== 'unit'})`;
+  }
+
+  strictEqual(e) {
+    const a = e.left.type.kind === 'option' ? e.left.type.element : e.left.type;
+    const b = e.right.type.kind === 'option' ? e.right.type.element : e.right.type;
+    const pattern = (type, name) => type.kind !== 'option' ? name : type.absence === 'both' ? `Some (Some ${name})` : `Some ${name}`;
+    const absences = (type) => type.kind !== 'option' ? [] : type.absence === 'both' ? [['null', 'None'], ['undefined', 'Some None']] : [[type.absence, 'None']];
+    const compare = JSON.stringify(a) === JSON.stringify(b) ? a.kind === 'unit' ? 'true' : this.comparison('eq', a, 'ml_left', 'ml_right') : 'false';
+    const cases = [`| (${pattern(e.left.type, 'ml_left')}, ${pattern(e.right.type, 'ml_right')}) => ${compare}`];
+    for (const [aa, pa] of absences(e.left.type)) for (const [bb, pb] of absences(e.right.type)) cases.push(`| (${pa}, ${pb}) => ${aa === bb}`);
+    cases.push('| _ => false');
+    const result = `(match (${this.expr(e.left)}, ${this.expr(e.right)}) with ${cases.join(' ')} end)`;
+    return e.negate ? `(negb ${result})` : result;
   }
 
   math(e) {

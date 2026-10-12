@@ -13,9 +13,9 @@ import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
-import { EmitState, withParts } from './emit-common.js';
+import { EmitState, typeContains, withParts } from './emit-common.js';
 import { STRING_PRELUDE } from './string-runtime.js';
-import { readRustOptionalPrelude, renderRustCompoundType } from './structured-type-rules.js';
+import { readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceType } from './structured-type-rules.js';
 import { acceptConstantEmission, constantBindingForm, renderConstantBinding } from './frontend-rules.js';
 
 const KEYWORDS = new Set([
@@ -771,6 +771,7 @@ class RustEmitter {
   }
 
   type(type) {
+    if (type.reference) return renderRustReferenceType(this.type({ ...type, reference: false }), true);
     switch (type.kind) {
       case 'nat':
       case 'int':
@@ -802,6 +803,8 @@ class RustEmitter {
         return renderRustCompoundType('set', '', [this.type(type.element)]);
       case 'map':
         return renderRustCompoundType('map', '', [this.type(type.key), this.type(type.value)]);
+      case 'cell':
+        return renderRustCompoundType('cell', '', [this.type(type.element)]);
       case 'unit':
         return '()';
       case 'data':
@@ -819,6 +822,7 @@ class RustEmitter {
   }
 
   data(entry) {
+    if (typeContains(this.program, { kind: 'data', name: entry.fullName }, 'function')) throw unsupported('callable data field', 'callable fields need their own identity, debug and equality encodings before this target derives structural traits', entry.span);
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     this.state.encode('data', 'a data type is an enum with one tuple variant per constructor; data-typed fields are boxed, and values are compared structurally');
@@ -833,12 +837,7 @@ class RustEmitter {
   }
 
   holdsFloat(name, seen = new Set()) {
-    if (seen.has(name)) return false;
-    seen.add(name);
-    const entry = this.program.declarations.get(name);
-    const floats = (type) => type.kind === 'float' || (type.kind === 'array' && floats(type.element))
-      || (type.kind === 'data' && this.holdsFloat(type.name, seen));
-    return entry.ctors.some((ctor) => ctor.fields.some((field) => floats(field.type)));
+    return typeContains(this.program, { kind: 'data', name }, 'float', seen);
   }
 
   fn(entry) {
@@ -1037,6 +1036,39 @@ class RustEmitter {
     return copies.length ? `{ ${copies.join(' ')} ${closure} }` : closure;
   }
 
+  optionalMatch(arg, binder, present, nullCase, undefinedCase) {
+    if (arg.type.absence === 'both') {
+      this.usesOptional = true;
+      return `match ${this.expr(arg)} { crate::MlOptional::Value(${binder}) => ${present}, crate::MlOptional::Null => ${nullCase}, crate::MlOptional::Undefined => ${undefinedCase} }`;
+    }
+    return `match ${this.expr(arg)} { Some(${binder}) => ${present}, None => ${arg.type.absence === 'null' ? nullCase : undefinedCase} }`;
+  }
+
+  truthy(arg) {
+    if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }), 'false', 'false');
+    const value = this.receiver(arg);
+    if (arg.type.kind === 'bool') return this.expr(arg);
+    if (arg.type.kind === 'float') return `{ let ml_value = ${this.expr(arg)}; ml_value != 0f64 && !ml_value.is_nan() }`;
+    if (arg.type.kind === 'int' || arg.type.kind === 'nat') return `!${value}.is_zero()`;
+    if (arg.type.kind === 'fixed') return `(${value} != 0)`;
+    if (arg.type.kind === 'string') return this.utf16Strings ? `!${value}.0.is_empty()` : `!${value}.is_empty()`;
+    return `{ let _ = ${this.expr(arg)}; ${arg.type.kind !== 'unit'} }`;
+  }
+
+  strictEqual(e) {
+    const typeA = e.left.type.kind === 'option' ? e.left.type.element : e.left.type;
+    const typeB = e.right.type.kind === 'option' ? e.right.type.element : e.right.type;
+    const pattern = (type, name) => type.kind !== 'option' ? name : type.absence === 'both' ? `crate::MlOptional::Value(${name})` : `Some(${name})`;
+    const absences = (type) => type.kind !== 'option' ? [] : type.absence === 'both' ? [['null', 'crate::MlOptional::Null'], ['undefined', 'crate::MlOptional::Undefined']] : [[type.absence, 'None']];
+    if (e.left.type.absence === 'both' || e.right.type.absence === 'both') this.usesOptional = true;
+    const compare = typeKey(typeA) === typeKey(typeB) ? 'ml_left == ml_right' : 'false';
+    const cases = [`(${pattern(e.left.type, 'ml_left')}, ${pattern(e.right.type, 'ml_right')}) => ${compare}`];
+    for (const [a, pa] of absences(e.left.type)) for (const [b, pb] of absences(e.right.type)) cases.push(`(${pa}, ${pb}) => ${a === b}`);
+    cases.push('_ => false');
+    const result = `match (${this.expr(e.left)}, ${this.expr(e.right)}) { ${cases.join(', ')} }`;
+    return e.negate ? `!(${result})` : result;
+  }
+
   method(e) {
     if (e.object.type.kind === 'string') {
       const names = { indexOf: 'index_of', lastIndexOf: 'last_index_of', codePointAt: 'code_point_at' };
@@ -1100,6 +1132,9 @@ class RustEmitter {
   }
 
   expr(e) {
+    const statefulReceiver = e.array?.type.reference || e.object?.type.reference;
+    if (statefulReceiver && ['index', 'optionalIndex', 'length', 'recordField', 'tupleIndex', 'method', 'collectionSize', 'collectionRead', 'collectionItems'].includes(e.k)) throw unsupported('reference operation', 'this operation needs the shared reference and slot runtime before target emission', e.span);
+    if (e.type?.reference && ['array', 'record', 'map', 'set', 'append'].includes(e.k)) throw unsupported('reference allocation', 'this allocation needs the shared reference and slot runtime before target emission', e.span);
     switch (e.k) {
       case 'lit':
         return this.literal(e);
@@ -1120,6 +1155,23 @@ class RustEmitter {
         return this.method(e);
       case 'record':
         return `(${e.entries.map((entry) => this.expr(entry.value)).join(', ')}${e.entries.length === 1 ? ',' : ''})`;
+      case 'cellAllocate':
+        return `std::rc::Rc::new(std::cell::RefCell::new(${this.expr(e.value)}))`;
+      case 'cellRead':
+        return `{ let ml_cell_value = ${this.receiver(e.cell)}.borrow().clone(); ml_cell_value }`;
+      case 'cellWrite': {
+        this.temporaries += 1;
+        const cell = `ml_cell${this.temporaries}`;
+        const value = `ml_value${this.temporaries}`;
+        return `{ let ${cell} = ${this.expr(e.cell)}; let ${value} = ${this.expr(e.value)}; *${cell}.borrow_mut() = ${value}; ${this.expr(e.body)} }`;
+      }
+      case 'referenceAllocate':
+        return `std::rc::Rc::new(std::cell::RefCell::new(${this.expr(e.value)}))`;
+      case 'referenceRead': {
+        this.temporaries += 1;
+        const value = `ml_reference_value${this.temporaries}`;
+        return `{ let ${value} = ${this.receiver(e.reference)}.borrow().clone(); ${value} }`;
+      }
       case 'recordField':
         return `(${this.expr(e.object)}).${e.index}`;
       case 'tuple':
@@ -1138,6 +1190,32 @@ class RustEmitter {
           return `crate::MlOptional::Value(${this.expr(e.value)})`;
         }
         return `Some(${this.expr(e.value)})`;
+      case 'nullishNumber': {
+        const element = e.arg.type.element;
+        const present = element.kind === 'bool' ? 'if ml_present { 1f64 } else { 0f64 }' : element.kind === 'unit' ? 'f64::NAN' : 'ml_present';
+        return this.optionalMatch(e.arg, 'ml_present', present, '0f64', 'f64::NAN');
+      }
+      case 'optionalIndexNumber':
+        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? 'f64::NAN' : 'ml_present', 'f64::NAN', 'f64::NAN');
+      case 'truthy':
+        return this.truthy(e.arg);
+      case 'strictEqual':
+        return this.strictEqual(e);
+      case 'optionalText': {
+        const element = e.arg.type.element;
+        let present = element.kind === 'unit' ? this.literal({ type: { kind: 'string' }, value: 'undefined' }) : this.expr({ k: 'toString', arg: { k: 'var', name: 'ml_present', type: element }, console: e.console, type: { kind: 'string' } });
+        if (e.console && ['int', 'nat', 'fixed'].includes(element.kind)) present = this.utf16Strings ? `(${present}).concat(&crate::ml_string::Text::from_text("n"))` : `format!("{}n", ${present})`;
+        return this.optionalMatch(e.arg, 'ml_present', present, this.literal({ type: { kind: 'string' }, value: 'null' }), this.literal({ type: { kind: 'string' }, value: 'undefined' }));
+      }
+      case 'optionalTypeOf':
+        return this.optionalMatch(e.arg, 'ml_present', `{ let _ = ml_present; ${this.literal({ type: { kind: 'string' }, value: e.present ?? 'undefined' })} }`, this.literal({ type: { kind: 'string' }, value: 'object' }), this.literal({ type: { kind: 'string' }, value: 'undefined' }));
+      case 'unwrapOption':
+        if (e.arg.type.absence === 'both') { this.usesOptional = true; return `match ${this.expr(e.arg)} { crate::MlOptional::Value(ml_present) => ml_present, _ => unreachable!("a proven present value") }`; }
+        return `${this.receiver(e.arg)}.clone().expect("a proven present value")`;
+      case 'optionalPredicate': {
+        const present = e.arg.type.element.kind === 'float' ? this.math({ k: 'math', op: e.op, args: [{ k: 'var', name: 'ml_present', type: { kind: 'float' } }], type: { kind: 'bool' } }) : 'false';
+        return this.optionalMatch(e.arg, 'ml_present', present, 'false', 'false');
+      }
       case 'flattenOption': {
         if (e.type.absence === 'both') this.usesOptional = true;
         const absent = (absence) => e.type.absence === 'both' ? `crate::MlOptional::${absence === 'null' ? 'Null' : 'Undefined'}` : 'None';
@@ -1262,7 +1340,7 @@ class RustEmitter {
         return `crate::ml_array::append(${this.expr(e.left)}, ${this.expr(e.right)})`;
       case 'index': {
         this.usesArray = true;
-        this.state.arrayRead();
+        if (!e.provenInBounds) this.state.arrayRead();
         const index = e.index.type.kind === 'float'
           ? `crate::ml_array::number_index(${this.expr(e.index)})`
           : `${this.receiver(e.index)}.to_index()`;

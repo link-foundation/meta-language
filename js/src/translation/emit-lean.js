@@ -11,7 +11,7 @@ import { unsupported } from './diagnostics.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
-import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations, unthreaded } from './emit-common.js';
+import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations, typeContains, unthreaded } from './emit-common.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
 
 const KEYWORDS = new Set([
@@ -238,6 +238,7 @@ class LeanEmitter {
   }
 
   type(type) {
+    if (type.reference || type.kind === 'cell') throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model');
     switch (type.kind) {
       case 'nat':
         return 'Nat';
@@ -280,6 +281,7 @@ class LeanEmitter {
   }
 
   data(entry) {
+    if (typeContains(this.program, { kind: 'data', name: entry.fullName }, 'function')) throw unsupported('callable data field', 'callable fields need their own representation and equality encoding before deriving data instances', entry.span);
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const ctors = entry.ctors.map((ctor) => {
@@ -293,6 +295,7 @@ class LeanEmitter {
   }
 
   undecidable(name, seen = new Set()) {
+    if (typeContains(this.program, { kind: 'data', name }, 'float')) return true;
     if (seen.has(name)) return false;
     seen.add(name);
     const bad = (type, nested) => type.kind === 'float' || (type.kind === 'array' && bad(type.element, true))
@@ -396,6 +399,7 @@ class LeanEmitter {
   }
 
   expr(e, depth) {
+    if (['cellAllocate', 'cellRead', 'cellWrite', 'referenceAllocate', 'referenceRead', 'referenceWrite'].includes(e.k)) throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model', e.span);
     switch (e.k) {
       case 'lit':
         return this.literal(e);
@@ -430,6 +434,31 @@ class LeanEmitter {
         return e.type.absence === 'both' && e.absence === 'undefined' ? '(some none)' : 'none';
       case 'some':
         return e.type.absence === 'both' ? `(some (some ${this.expr(e.value, depth)}))` : `(some ${this.expr(e.value, depth)})`;
+      case 'nullishNumber': {
+        const element = e.arg.type.element;
+        const present = element.kind === 'bool' ? '(if ml_present then (1 : Float) else (0 : Float))' : element.kind === 'unit' ? '(0 / 0 : Float)' : 'ml_present';
+        return this.optionalMatch(e.arg, 'ml_present', present, '(0 : Float)', '(0 / 0 : Float)', depth);
+      }
+      case 'optionalIndexNumber':
+        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? '(0 / 0 : Float)' : 'ml_present', '(0 / 0 : Float)', '(0 / 0 : Float)', depth);
+      case 'truthy':
+        return this.truthy(e.arg, depth);
+      case 'strictEqual':
+        return this.strictEqual(e, depth);
+      case 'optionalText': {
+        const element = e.arg.type.element;
+        let present = element.kind === 'string' ? 'ml_present' : element.kind === 'unit' ? '"undefined"' : this.toText({ k: 'var', name: 'ml_present', type: element }, depth, e.console);
+        if (e.console && ['int', 'nat', 'fixed'].includes(element.kind)) present = `(${present} ++ "n")`;
+        return this.optionalMatch(e.arg, 'ml_present', present, '"null"', '"undefined"', depth);
+      }
+      case 'optionalTypeOf':
+        return this.optionalMatch(e.arg, 'ml_present', JSON.stringify(e.present ?? 'undefined'), '"object"', '"undefined"', depth);
+      case 'unwrapOption':
+        return e.arg.type.absence === 'both' ? `(match ${this.expr(e.arg, depth)} with | some (some ml_present) => ml_present | _ => default)` : `(${this.expr(e.arg, depth)}.get!)`;
+      case 'optionalPredicate': {
+        const present = e.arg.type.element.kind === 'float' ? this.math({ k: 'math', op: e.op, args: [{ k: 'var', name: 'ml_present', type: { kind: 'float' } }], type: { kind: 'bool' } }, depth) : 'false';
+        return this.optionalMatch(e.arg, 'ml_present', present, 'false', 'false', depth);
+      }
       case 'flattenOption': {
         const absent = (absence) => e.type.absence === 'both' && absence === 'undefined' ? '(some none)' : 'none';
         const present = e.type.absence === 'both' ? '(some (some ml_present))' : '(some ml_present)';
@@ -520,7 +549,7 @@ class LeanEmitter {
       case 'append':
         return `(${this.expr(e.left, depth)} ++ ${this.expr(e.right, depth)})`;
       case 'index': {
-        this.state.arrayRead();
+        if (!e.provenInBounds) this.state.arrayRead();
         this.helpers.add('arrayAt');
         const values = this.expr(e.array, depth);
         const index = this.expr(e.index, depth);
@@ -567,6 +596,34 @@ class LeanEmitter {
     if (e.op === 'find') return `${head} (${pairs}.find? ${lambda}).map (fun ml_pair => ml_pair.1))`;
     if (e.op === 'findIndex') return `${head} ((${pairs}.find? ${lambda}).map (fun ml_pair => Float.ofNat ml_pair.2)).getD (-1 : Float))`;
     return `${head} ${pairs}.foldl (fun ml_accumulator ml_pair => ${call}) ${this.expr(e.args[1], depth)})`;
+  }
+
+  optionalMatch(arg, binder, present, nullCase, undefinedCase, depth) {
+    const cases = arg.type.absence === 'both' ? `| some (some ${binder}) => ${present} | none => ${nullCase} | some none => ${undefinedCase}` : `| some ${binder} => ${present} | none => ${arg.type.absence === 'null' ? nullCase : undefinedCase}`;
+    return `(match ${this.expr(arg, depth)} with ${cases})`;
+  }
+
+  truthy(arg, depth) {
+    if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }, depth), 'false', 'false', depth);
+    const value = this.expr(arg, depth);
+    if (arg.type.kind === 'bool') return value;
+    if (arg.type.kind === 'float') return `(let ml_value := ${value}; ml_value != (0 : Float) && !ml_value.isNaN)`;
+    if (['int', 'nat', 'fixed'].includes(arg.type.kind)) return `(${value} != 0)`;
+    if (arg.type.kind === 'string') return `(!${value}.isEmpty)`;
+    return `(let ml_ignored := ${value}; ${arg.type.kind !== 'unit'})`;
+  }
+
+  strictEqual(e, depth) {
+    const a = e.left.type.kind === 'option' ? e.left.type.element : e.left.type;
+    const b = e.right.type.kind === 'option' ? e.right.type.element : e.right.type;
+    const pattern = (type, name) => type.kind !== 'option' ? name : type.absence === 'both' ? `some (some ${name})` : `some ${name}`;
+    const absences = (type) => type.kind !== 'option' ? [] : type.absence === 'both' ? [['null', 'none'], ['undefined', 'some none']] : [[type.absence, 'none']];
+    const compare = JSON.stringify(a) === JSON.stringify(b) ? '(ml_left == ml_right)' : 'false';
+    const cases = [`| (${pattern(e.left.type, 'ml_left')}, ${pattern(e.right.type, 'ml_right')}) => ${compare}`];
+    for (const [aa, pa] of absences(e.left.type)) for (const [bb, pb] of absences(e.right.type)) cases.push(`| (${pa}, ${pb}) => ${aa === bb}`);
+    cases.push('| _ => false');
+    const result = `(match (${this.expr(e.left, depth)}, ${this.expr(e.right, depth)}) with ${cases.join(' ')})`;
+    return e.negate ? `(!${result})` : result;
   }
 
   math(e, depth) {

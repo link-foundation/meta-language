@@ -67,6 +67,12 @@ function ml_divide(a, b, rounding, zero, remainder, bounds) {
 function ml_showNumber(value) {
   return Object.is(value, -0) ? '-0' : String(value);
 }`,
+  showOptional: `function ml_showOptional(value) {
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
+  if (typeof value === 'bigint') return String(value) + 'n';
+  return Object.is(value, -0) ? '-0' : String(value);
+}`,
   at: `// An element of an array; a read outside it, undefined in JavaScript, aborts.
 function ml_at(values, index) {
   const at = Number(index);
@@ -127,7 +133,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'at', 'forall', 'domains'];
+    const helperOrder = ['natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -374,7 +380,7 @@ class JavaScriptEmitter {
       case 'lit':
         return this.literal(e);
       case 'unit':
-        return 'null';
+        return this.program.sourceLanguage === 'JavaScript' ? 'undefined' : 'null';
       case 'var':
         return e.name;
       case 'call':
@@ -389,6 +395,16 @@ class JavaScriptEmitter {
         return `(${this.expr(e.object)}).${e.op}(${e.args.map((arg) => arg === null ? 'undefined' : this.expr(arg)).join(', ')})`;
       case 'record':
         return `({${e.entries.map((entry) => `${JSON.stringify(entry.name)}: ${this.expr(entry.value)}`).join(', ')}})`;
+      case 'cellAllocate':
+        return `({ value: ${this.expr(e.value)} })`;
+      case 'cellRead':
+        return `(${this.expr(e.cell)}).value`;
+      case 'cellWrite':
+        return `((${this.expr(e.cell)}).value = ${this.expr(e.value)}, ${this.expr(e.body)})`;
+      case 'referenceAllocate':
+        return this.expr(e.value);
+      case 'referenceRead':
+        return this.expr(e.reference);
       case 'recordField':
         return `(${this.expr(e.object)})[${JSON.stringify(e.field)}]`;
       case 'tuple':
@@ -401,6 +417,23 @@ class JavaScriptEmitter {
         return this.expr(e.value);
       case 'flattenOption':
         return this.expr(e.value);
+      case 'nullishNumber':
+        return `Number(${this.expr(e.arg)})`;
+      case 'optionalIndexNumber':
+        return this.expr(e.arg);
+      case 'truthy':
+        return `!!(${this.expr(e.arg)})`;
+      case 'strictEqual':
+        return `(${this.expr(e.left)} ${e.negate ? '!==' : '==='} ${this.expr(e.right)})`;
+      case 'optionalTypeOf':
+        return `(typeof ${this.expr(e.arg)})`;
+      case 'optionalText':
+        if (e.console) { this.helpers.add('showOptional'); return `ml_showOptional(${this.expr(e.arg)})`; }
+        return `String(${this.expr(e.arg)})`;
+      case 'unwrapOption':
+        return this.expr(e.arg);
+      case 'optionalPredicate':
+        return `Number.${e.op}(${this.expr(e.arg)})`;
       case 'coalesce':
         return `(${this.expr(e.left)} ?? ${this.expr(e.right)})`;
       case 'optionalField':
@@ -468,7 +501,7 @@ class JavaScriptEmitter {
       case 'index':
         this.arrays();
         this.helpers.add('at');
-        this.state.arrayRead();
+        if (!e.provenInBounds) this.state.arrayRead();
         return `ml_at(${this.expr(e.array)}, ${this.expr(e.index)})`;
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
