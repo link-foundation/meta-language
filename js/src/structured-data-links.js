@@ -52,12 +52,16 @@ export function encodeStructuredDataLinks(value, options = {}) {
   const scalarIds = new Map();
   const identities = new WeakMap();
   const active = new WeakSet();
+  const heights = new Map();
   let bytes = 0;
+  const heightOf = references => references.reduce((height, reference) => Math.max(height, 1 + heights.get(key(reference))), 0);
   const insert = (kind, definition, references = []) => {
     if (network._links.size >= limits.nodeLimit) fail('node resource limit exceeded');
     if (definition !== undefined) bytes += encoder.encode(definition).length;
     if (bytes > limits.byteLimit) fail('byte resource limit exceeded');
-    return network.insertLink(references, metadata(kind, definition));
+    const id = network.insertLink(references, metadata(kind, definition));
+    heights.set(key(id), heightOf(references));
+    return id;
   };
   function scalar(kind, definition) {
     const identity = `${kind}\u0000${definition ?? ''}`;
@@ -87,7 +91,11 @@ export function encodeStructuredDataLinks(value, options = {}) {
     }
     if (!item || typeof item !== 'object') fail('unsupported host value');
     if (active.has(item)) fail('structural cycle');
-    if (identities.has(item)) return identities.get(item);
+    if (identities.has(item)) {
+      const id = identities.get(item);
+      if (depth + heights.get(key(id)) > limits.depthLimit) fail('depth resource limit exceeded');
+      return id;
+    }
     const array = Array.isArray(item);
     if (!array && ![Object.prototype, null].includes(Object.getPrototypeOf(item))) fail('unsupported host object');
     const names = Reflect.ownKeys(item);
@@ -104,6 +112,7 @@ export function encodeStructuredDataLinks(value, options = {}) {
       : Object.keys(item).map(name => insert('pair', undefined, [string(name, depth + 2), encode(item[name], depth + 2)]));
     active.delete(item);
     network.link(id).setReferences(references);
+    heights.set(key(id), heightOf(references));
     return id;
   }
   const body = encode(value, 1);
@@ -127,11 +136,13 @@ export function decodeStructuredDataLinks(network, root, options = {}) {
     const initialBytes = bytes;
     if (depth > limits.depthLimit || ++visits > limits.nodeLimit) fail('traversal resource limit exceeded');
     const identity = key(id);
+    if (!Number.isSafeInteger(identity)) fail('invalid link identity');
     if (active.has(identity)) fail('structural cycle');
     const link = network.link(id);
     if (!link) fail('dangling reference');
     if (memo.has(identity)) {
       const cost = costs.get(identity);
+      if (depth + cost.height > limits.depthLimit) fail('depth resource limit exceeded');
       visits += cost.nodes - 1;
       bytes += cost.bytes;
       if (visits > limits.nodeLimit || bytes > limits.byteLimit) fail('expanded data resource limit exceeded');
@@ -194,7 +205,8 @@ export function decodeStructuredDataLinks(network, root, options = {}) {
     else fail('unknown structured data kind');
     active.delete(identity);
     memo.set(identity, value);
-    costs.set(identity, { nodes: visits - initialVisits, bytes: bytes - initialBytes });
+    costs.set(identity, { nodes: visits - initialVisits, bytes: bytes - initialBytes,
+      height: references.reduce((height, reference) => Math.max(height, 1 + costs.get(key(reference)).height), 0) });
     return value;
   }
   if (network.link(root)?.metadata().term !== terms.root) fail('missing schema root');

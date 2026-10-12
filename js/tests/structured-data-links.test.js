@@ -80,6 +80,11 @@ test('node, expanded sharing, depth and byte budgets reject bounded counterexamp
   assert.throws(() => encodeStructuredDataLinks({ key: 1 }, { depthLimit: 2 }), /resource limit/u);
   const boundary = encodeStructuredDataLinks({ key: 1 }, { depthLimit: 3 });
   assert.deepEqual(decodeStructuredDataLinks(boundary.network, boundary.root, { depthLimit: 3 }), { key: 1 });
+  const shared = [0];
+  const layered = [shared, [shared]];
+  assert.throws(() => encodeStructuredDataLinks(layered, { depthLimit: 3 }), /resource limit/u);
+  const layeredGraph = encodeStructuredDataLinks(layered);
+  assert.throws(() => decodeStructuredDataLinks(layeredGraph.network, layeredGraph.root, { depthLimit: 3 }), /resource limit/u);
   assert.throws(() => readStructuredDataLino(structuredDataToLino('long'), { byteLimit: 8 }), /resource limit/u);
   let repeated = 0;
   for (let index = 0; index < 12; index += 1) repeated = [repeated, repeated];
