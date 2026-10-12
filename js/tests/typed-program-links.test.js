@@ -221,6 +221,39 @@ test('positional index edits remain numeric fields rather than interpolated targ
   for (const target of ['JavaScript', 'Rust']) assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, target), /positional field index is invalid/u);
 });
 
+test('constructor immutability survives source-free replay and boolean edits change descriptors', () => {
+  const declaration = "/** @typedef {{ $:'value', value:number } | { $:'none' }} Choice */";
+  const literal = "{$:'value',value:1}";
+  const inspect = (code) => JSON.parse(vm.runInNewContext(`${code}\n(() => {
+    const value = make();
+    const descriptor = Object.getOwnPropertyDescriptor(value, 'value');
+    return JSON.stringify({ frozen: Object.isFrozen(value), extensible: Object.isExtensible(value),
+      writable: descriptor.writable, configurable: descriptor.configurable, enumerable: descriptor.enumerable,
+      assigned: Reflect.set(value, 'value', 2), value: value.value });
+  })()`, {}, { timeout: 1000 }));
+  const expected = (frozen) => ({ frozen, extensible: !frozen, writable: !frozen, configurable: !frozen,
+    enumerable: true, assigned: !frozen, value: frozen ? 1 : 2 });
+  const ordinary = `${declaration}function make(){return ${literal};}`;
+  const frozen = `${declaration}function make(){return Object.freeze(${literal});}`;
+  assert.deepEqual(inspect(ordinary), expected(false));
+  assert.deepEqual(inspect(frozen), expected(true));
+  const archive = roundTrip(createTypedProgramLinks(frozen, 'JavaScript'));
+  const program = decodeTypedProgramLinks(archive.network, archive.root);
+  assert.equal(program.sourceLanguage, 'JavaScript');
+  assert.equal(program.declarations.get('make').body.frozen, true);
+  assert.deepEqual(inspect(emitTypedProgramLinks(archive.network, archive.root, 'JavaScript').code), expected(true));
+  const immutability = field(archive.network, construct(archive.network, 'ctor'), 'constructor immutability');
+  assert.ok(immutability, 'constructor immutability is an inspectable boolean relation');
+  archive.network.link(immutability).setMetadata(archive.network.link(immutability).metadata().withDefinition('false'));
+  const edited = roundTrip(archive);
+  assert.equal(decodeTypedProgramLinks(edited.network, edited.root).declarations.get('make').body.frozen, false);
+  assert.deepEqual(inspect(emitTypedProgramLinks(edited.network, edited.root, 'JavaScript').code), expected(false));
+  const ordinaryArchive = roundTrip(createTypedProgramLinks(ordinary, 'JavaScript'));
+  assert.deepEqual(inspect(emitTypedProgramLinks(ordinaryArchive.network, ordinaryArchive.root, 'JavaScript').code), expected(false));
+  archive.network.link(immutability).setMetadata(archive.network.link(immutability).metadata().withTerm('string value').withDefinition('false'));
+  assert.throws(() => emitTypedProgramLinks(archive.network, archive.root, 'JavaScript'), /immutability flag must be a boolean/u);
+});
+
 test('shared type paths are bounded before canonical type equality expands them', () => {
   const program = checkProgram(parseJavaScript('function add(a,b){return a+b;}'));
   let shared = { kind: 'float' };

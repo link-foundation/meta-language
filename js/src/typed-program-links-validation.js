@@ -62,6 +62,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap()) 
     if (!node || typeof node !== 'object') return;
     visit();
     if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
+    if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
     if (node.span && (!Number.isSafeInteger(node.span.start) || !Number.isSafeInteger(node.span.end)
       || node.span.start < 0 || node.span.end < node.span.start)) throw new TypeError('a linked source span is invalid');
