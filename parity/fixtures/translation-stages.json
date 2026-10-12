@@ -6,23 +6,12 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/arrays.mjs",
       "parse": {
-        "sha256": "4119ed700e006cd9242c3fbc4885b6e0aa821cf401c48f902888f1487b427928"
+        "sha256": "4a01749238b96272301941448e69ee2ad73a4aeabc8226310968eb8a799ed563"
       },
       "check": {
-        "sha256": "9608ba9d58534ac79e104ab2b0f68c2ce6d3e440cda3c672a99544b30db76a15"
-      },
-      "emit": {
-        "javascript": {
-          "sha256": "fa2af9aff8dfe81fa03151c9b5d208116752d5b9be47fe7ecaaed7cd630d159d"
-        },
-        "rust": {
-          "sha256": "b83d71e9f9274778235273d689fe17e04d43e095ea8ece06f94a04fad6529be4"
-        },
-        "lean": {
-          "sha256": "b1de8a6b8cfd4a27d44389617422e8d0987e57425fe91c57c441d63ef5ec139a"
-        },
-        "rocq": {
-          "sha256": "82f3a50d72605753ab7b8682e45f9093335cde436a59957f8713fe56a0133ef4"
+        "error": {
+          "kind": "unsupported",
+          "message": "field access: field length is only portable inside a constructor match at 1442..1456"
         }
       }
     },
@@ -31,7 +20,7 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/async.mjs",
       "parse": {
-        "sha256": "bf227698fa1bf2b226a591d5ec8e57eaa73173c88af78ceac7b15c9c6068e160"
+        "sha256": "b0e927a9037ef95d8dbdb339d450e80f08acb2de5302211a3afcc0fd6da2731d"
       },
       "check": {
         "sha256": "05c051b1642715cb161ca1b31eecd9ab532bba84305aa04aa57c6b89e692903d"
@@ -81,7 +70,7 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/const-functions.mjs",
       "parse": {
-        "sha256": "c4033ebd72a15576dad1daf211f4707f9b98db5d321270bcc43fdc5b52f68622"
+        "sha256": "d14bee1b5a8ca452a3d54ed8f5c4d242ead64b4328af65bd55b9511ed2d914ad"
       },
       "check": {
         "sha256": "7d1df822dca530f8a3370cfa52aff4d2b7ce98cb3cdb37b4b9250807b11b6cd6"
@@ -106,7 +95,7 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/edge-semantics.mjs",
       "parse": {
-        "sha256": "6e9276dd81ef9d24867f9bf58d3d50b478265e49e33c57d2052543d275d27edd"
+        "sha256": "43f039354c3617379a6b97ad8b12f4796c9a100b8af2c807e72fb9c5766ea1b9"
       },
       "check": {
         "sha256": "4e9d6aa06d0a4b7333ef537f01d502b428d4fcc3b415b288e6ce56bf62e359d7"
@@ -556,23 +545,12 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/loops.mjs",
       "parse": {
-        "sha256": "260c0c653db9907e9b09da6afaeb03808b51b80038285c2e1abbe97a3f3666dc"
+        "sha256": "fc9232d93fb75ce691bb35032eb85ce3701fa8530857af8e078069969eccb538"
       },
       "check": {
-        "sha256": "44abf1ba44f8a031dc0e2534f5663c72d0ee794f7f65e61a6f20a040b6b4a1f6"
-      },
-      "emit": {
-        "javascript": {
-          "sha256": "4fd15b58eda4b34613a1c3ebf9e12ac8a7c8a7ed00d26784974543cd902bfb13"
-        },
-        "rust": {
-          "sha256": "58ad44a46ded70819e1b0b81c960d8c101639f1d6c9bad7902c4af5abdcc4ec7"
-        },
-        "lean": {
-          "sha256": "c066924625855ab1f711fa6d59ddfef8e546e37d27e1cb866d5c0cc32da9d641"
-        },
-        "rocq": {
-          "sha256": "72b2c1d074f05b4430bf0c56d80b1022af5d35e138cdf84c84b2b723aeeefd2b"
+        "error": {
+          "kind": "type",
+          "message": "expected float but found int at 1075..1076"
         }
       }
     },
@@ -581,7 +559,7 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/math.mjs",
       "parse": {
-        "sha256": "edded4401d608560831969d57b09fd4b45bd5835b35a858731231071e535b2a3"
+        "sha256": "02eb26a2fe1e38ba9d8c536beb71a183325a3ae30253afac20d7206cc4da8c1a"
       },
       "check": {
         "sha256": "b7ef3e135c9dc334ec3b6fc19af9798aa798ab4647689c02a7a66769eb16ebf9"
@@ -631,7 +609,7 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/numbers.mjs",
       "parse": {
-        "sha256": "1e4670d103e7c1df2ffbe82bf82c50b0099de7f6dca7c8f586d5d885d973472d"
+        "sha256": "8050a79c0abbdbaa4cef179466e31affcffa3014a6b64d637cd9ce4a2b873ffc"
       },
       "check": {
         "sha256": "e643ae47d79c00d608bde13fc71012ab1962cf705040e7fc6ba6ac3b2d97cbc9"
@@ -706,7 +684,7 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/project.mjs",
       "parse": {
-        "sha256": "8f7945381aa2397c649da9988fbe4a8643d85836c7a604a31def4f71007b50ad"
+        "sha256": "b26728644fd98ffd79094debc13aae37fe07ccf31fe4955fd1f94550454b2369"
       },
       "check": {
         "sha256": "cae21df213a773c0731567a06a2f5d5830281cb88e566d61a2c88baf4abdb8bf"
@@ -831,23 +809,12 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/void-functions.mjs",
       "parse": {
-        "sha256": "009e745d9635ba4534dc8e0ae11834e4ef60e8ef59c8f2ec008ee4e3abbfcbe2"
+        "sha256": "e35da9a3297a0c39cda7ac93b8293fe3bd8661b12958d4ae9b2cd5ef3bf7ab0f"
       },
       "check": {
-        "sha256": "c4a982ce77d8d9fc8a146932a02b8a2c2d65ad550c702b84bf0a0c4ce7a6c5b0"
-      },
-      "emit": {
-        "javascript": {
-          "sha256": "d203db557ac4ae79c5964c5eec409d7bbed158cf786efb662cef2012ceab61d1"
-        },
-        "rust": {
-          "sha256": "059bbe90485a809007b251544d1a50ae6b2db6136bb3725f85cad0d9ff9dfac4"
-        },
-        "lean": {
-          "sha256": "40664035ba91619c53468e4eb30cbf4f9387d5e9de3b2b5611c6cc5ffc6e830a"
-        },
-        "rocq": {
-          "sha256": "8e7de39c21a2687b38aee2e9e8fa50edbd373c71daae2dd82ed9f925f6caecd3"
+        "error": {
+          "kind": "type",
+          "message": "expected float but found unit at 496..520"
         }
       }
     },
@@ -2141,7 +2108,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  if (n < 0n) throw new RangeError('f expects a natural number');\n  return -n + (n - 1n);\n}\n",
       "parse": {
-        "sha256": "dd9327c965c1b3d949e88b6c9c980333a3ccf0b8b8f288400f3b63bb0ee45ea4"
+        "sha256": "182d8956f0ca0abc9ed91c3b140905305b53f309c3205aeee04594b20ce5c3fc"
       },
       "check": {
         "sha256": "34a086b2b4a4c589c05e42894181427df8741baccb7ac5b82de438b215e8496d"
@@ -2241,9 +2208,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {string} s\n * @returns {bigint}\n */\nfunction f(s) {\n  switch (s) {\n    case 'a':\n      return 1n;\n    default:\n      return 2n;\n  }\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "case test: the cases of a value switch are BigInt or boolean literals at 90..93"
+        "sha256": "026dd7e24880d80a3b3312cbf030f4cb6dd874cf249ba780cb6dcc68717208a2"
+      },
+      "check": {
+        "sha256": "9aa5981b06233924af6d0ab033406c72963def1272a27772e7c56425b05ff31a"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "42d1c95820bfd584fd2a52a803c2df800bbee132c5ab27c6b6cf1943e503f812"
+        },
+        "rust": {
+          "sha256": "e6cd707ae9cd3aaf0c3d41e90f17322b07daef813f751d9519a6b2c1b0c5c022"
+        },
+        "lean": {
+          "sha256": "b53e840ae4ed9512662791b9f662fd446e52b23b8d2807fc554683798b153985"
+        },
+        "rocq": {
+          "sha256": "74f9d4d9b3fbd6862d78dbaf2b36a414bc871d53b6be41808f40d109bd73df68"
         }
       }
     },
@@ -2375,9 +2356,12 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} g\n * @returns {bigint}\n */\nfunction f(g) {\n  return g(1n);\n}\n",
       "parse": {
+        "sha256": "732ebce72128f487e89ea65b5aaaf9ad7b55fa1251ffad9d4805c275b82095ae"
+      },
+      "check": {
         "error": {
           "kind": "unsupported",
-          "message": "call of a computed function: only named functions can be called at 76..77"
+          "message": "higher-order application: local g is not a function in the portable core at 75..81"
         }
       }
     },
@@ -4592,7 +4576,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  if (n < 0n) throw new RangeError('f expects a natural number');\n  return -n + (n - 1n);\n}\n",
       "parse": {
-        "sha256": "dd9327c965c1b3d949e88b6c9c980333a3ccf0b8b8f288400f3b63bb0ee45ea4"
+        "sha256": "182d8956f0ca0abc9ed91c3b140905305b53f309c3205aeee04594b20ce5c3fc"
       },
       "check": {
         "sha256": "34a086b2b4a4c589c05e42894181427df8741baccb7ac5b82de438b215e8496d"
@@ -6945,7 +6929,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {string}\n */\nfunction label(n) {\n  return 'n=' + n + ', positive=' + (n > 0n) + '!';\n}\nconsole.log(label(5n));\nconsole.log('quote \\\" backslash \\\\\\\\ tab\\tend');\nconsole.log(`nested ${`inner ${1n + 2n}`} done`);\nconsole.log();\n",
       "parse": {
-        "sha256": "01263c5a745687dad8f1949f51b9580b663abb72ab162f9c3af22eb19bf9be4f"
+        "sha256": "98e19ad736205466038a7b6b42f3b9dce3f0a903bb8f1f1a135fcaca4c74d374"
       },
       "check": {
         "sha256": "f282da5e253b42afe0183610837eb8a71fdc7e8b2247bb3b732b4f7d488379c1"
@@ -10548,7 +10532,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {string}\n */\nfunction label(n) {\n  return 'n=' + n + ', positive=' + (n > 0n) + '!';\n}\nconsole.log(label(5n));\nconsole.log(`nested ${`inner ${1n + 2n}`} done`);\n",
       "parse": {
-        "sha256": "af6285f4a6180c020e3efe5663337b6cea50c553684e3f95b77f3b3ecc804e0b"
+        "sha256": "82b0a77e640620de54f86e5c343accb301940d014374ffe01451bd0baee61c81"
       },
       "check": {
         "sha256": "f93f18d5bf38dcae0404efd3ca997e13f6b3717cce158e185544bc851b147910"
@@ -12754,7 +12738,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  if (n < 0n) throw new RangeError('f expects a natural number');\n  return -n + (n - 1n);\n}\n",
       "parse": {
-        "sha256": "dd9327c965c1b3d949e88b6c9c980333a3ccf0b8b8f288400f3b63bb0ee45ea4"
+        "sha256": "182d8956f0ca0abc9ed91c3b140905305b53f309c3205aeee04594b20ce5c3fc"
       },
       "check": {
         "sha256": "34a086b2b4a4c589c05e42894181427df8741baccb7ac5b82de438b215e8496d"
@@ -14040,9 +14024,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { return n ?? 0n; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "nullish coalescing: null and undefined are outside the portable core at 75..77"
+        "sha256": "922658f38e2b3c04b5ad307f0d4e4144f4f64b6ac78dea78f871aa9590ebb479"
+      },
+      "check": {
+        "sha256": "fd68d5c499acd868c67aa87a763259a689b66869f9a2ae550af7fd66575ad5ec"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "0af87efd887117d25771b0b867cb93158d3be8d75304498c7d7726af04b97971"
+        },
+        "rust": {
+          "sha256": "d8508bf8177f3d748cd5e2202bbf517fe478d771e3d4b110aa2622ac15671710"
+        },
+        "lean": {
+          "sha256": "5bb852194b99918dabc8b671ce34836d3a881d0fecf52846586df97838e64cf5"
+        },
+        "rocq": {
+          "sha256": "21a4b9d583f970fe2f3ee8a52a171f9ce76e7f73d1292bd931f0239a6e6a635a"
         }
       }
     },
@@ -14170,9 +14168,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { const g = (x) => x; return n; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "arrow function: functions as values are outside the portable core at 76..77"
+        "sha256": "0cd839c93175a98cde44b1397e400023011240c18a2adcaca15308aec59df8d2"
+      },
+      "check": {
+        "sha256": "669dbdcf085744ffcd8e1ab7844d8d2875b392d84fb52bde9cafc45137fde99b"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "bb01aef82a21a65cb8b707bdefb2174d746a3315c3c6439667e507b458572630"
+        },
+        "rust": {
+          "sha256": "678fbcf8426f6ecbbafc64195e300581270e37d9020f5fbb152d754b92e99638"
+        },
+        "lean": {
+          "sha256": "2a2a274da56000d44ade512b9c60791243770ed96b438c0283897b09cd9940ed"
+        },
+        "rocq": {
+          "sha256": "6936f6a964b5b3fd17bc81eb2010b69b06d4815db61e78059df1a433160e73ca"
         }
       }
     },
@@ -14181,9 +14193,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { const g = f; return n; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "function value f: functions and namespaces are only portable when a function is called at 76..77"
+        "sha256": "2d63ccbc77729259955f4cd2584df06cb627eed7cc4b04e7ea0ed93ea5a51532"
+      },
+      "check": {
+        "sha256": "d5833b87ba2bd5998af612d6c2402abf4d3d1a61cc3c21e91815d6c1284e07a1"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "eebb248fa791532ce997f9fb49f90c8704e1a060b546fc0a7a002af01533c54e"
+        },
+        "rust": {
+          "sha256": "8ec3b8b7968a97231c93b553dfe6285a90b40d974e9e4a5fd7caf83ce7b2ffcc"
+        },
+        "lean": {
+          "sha256": "65206eecfbd3ff6a29e62d65890cfd139934f8994531c36648dd68834f4b87f3"
+        },
+        "rocq": {
+          "sha256": "099150569161a79d43ce486031974e0fe61ec0b24629708ed7fb6dcc1430153b"
         }
       }
     },
@@ -14206,9 +14232,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { return null; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "null: outside the portable core at 73..77"
+        "sha256": "ae96fb032503632915f01e6f68e04c4e313aaed38e91a7731fc0269d682b0a77"
+      },
+      "check": {
+        "sha256": "169404e25c0beb5dd1dc661ee24da0ed64690b7f730f5d4aefa9b7bf6efb2d83"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "2de234b0fe00074d41c818261c4f4f1d17872901cf2faba984a43ac0b4ffa44f"
+        },
+        "rust": {
+          "sha256": "3614922820802cdf24c7ac9eb108b95300e19d67d00b830b0bc12aaac02d5d33"
+        },
+        "lean": {
+          "sha256": "52cccc01193b8bdb89ca6d153e1f92919b29759d2d271cc0fd22bc7682c06aa4"
+        },
+        "rocq": {
+          "sha256": "b0d495b5cc06ac6763e956eaa0eb2335974d718c3cc2f7cef052013c95ee95b8"
         }
       }
     },
@@ -14588,9 +14628,12 @@
       "extension": "mjs",
       "source": "/** @typedef {{ $: 'leaf' } | { $: 'node', value: bigint }} T */\n/**\n * @param {T} t\n * @returns {bigint}\n */\nfunction f(t) { switch (t?.$) { default: return 0n; } }",
       "parse": {
+        "sha256": "062a5e6cb218b002ee9427bef744b0377ebf663299f8170cb2a7a1180a75028b"
+      },
+      "check": {
         "error": {
           "kind": "unsupported",
-          "message": "optional chaining: null and undefined are outside the portable core at 135..137"
+          "message": "field access: field $ is only portable inside a constructor match at 134..138"
         }
       }
     },
@@ -14658,8 +14701,8 @@
       "source": "const A = { f };",
       "parse": {
         "error": {
-          "kind": "syntax",
-          "message": "expected ( or : after f but found \"}\" at 14..15"
+          "kind": "unsupported",
+          "message": "function value f: functions are only portable when called at 12..13"
         }
       }
     },
@@ -14890,7 +14933,7 @@
       "parse": {
         "error": {
           "kind": "syntax",
-          "message": "expected } in namespace but found end of input at 19..19"
+          "message": "expected } in object but found end of input at 19..19"
         }
       }
     },
@@ -14921,9 +14964,23 @@
       "extension": "mjs",
       "source": "/** @typedef {{ 'a': bigint }} A */\nconsole.log('x');",
       "parse": {
-        "error": {
-          "kind": "syntax",
-          "message": "expected identifier in object type but found \"'a'\" at 2..5"
+        "sha256": "744cbbf8b53ca8fdbd7bc1f4d2ccad20e6275bdf7d8f3a3d922d8c440b7aba98"
+      },
+      "check": {
+        "sha256": "5baea584f234fec8b2a81743ab44d927edc299b8b6fa7f5b20362deffd4c6826"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "6f9a50ea9a8ff04ee886bd89f373863a522af6991b8529b63ce69dafd4ca7f4c"
+        },
+        "rust": {
+          "sha256": "777f7c98336eee8688286e8ae666d58b19e661c37303e09699a1c22136a800c0"
+        },
+        "lean": {
+          "sha256": "322823fd478a036ba8f8edf532f95dc47e1c193ed56083da9b1a47fd195ea1f1"
+        },
+        "rocq": {
+          "sha256": "a1fd439e7ebe50a91b562a7e84d0110a3530a7d95acbe76d0d0c0d8bd35c185a"
         }
       }
     },
@@ -14932,9 +14989,23 @@
       "extension": "mjs",
       "source": "/** @typedef {{ $ 'a' }} A */\nconsole.log('x');",
       "parse": {
-        "error": {
-          "kind": "syntax",
-          "message": "expected : in object type but found \"'a'\" at 4..7"
+        "sha256": "e93ab3444a13c62c0673f9cefeb0ca2f15d11c99e4181c73b72663187a3b40a5"
+      },
+      "check": {
+        "sha256": "d1a8cac6ec6e48c653f01d862167b04b18fcd8b05c83b644f993610c969cdfc3"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "6f9a50ea9a8ff04ee886bd89f373863a522af6991b8529b63ce69dafd4ca7f4c"
+        },
+        "rust": {
+          "sha256": "777f7c98336eee8688286e8ae666d58b19e661c37303e09699a1c22136a800c0"
+        },
+        "lean": {
+          "sha256": "322823fd478a036ba8f8edf532f95dc47e1c193ed56083da9b1a47fd195ea1f1"
+        },
+        "rocq": {
+          "sha256": "a1fd439e7ebe50a91b562a7e84d0110a3530a7d95acbe76d0d0c0d8bd35c185a"
         }
       }
     },
@@ -15186,9 +15257,12 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  switch (n) { case 1: return n; default: return 0n; }\n}\n",
       "parse": {
+        "sha256": "04f08cffccb7e0b96739272271bffd69e82b5ff2bfb9897a032557798283194a"
+      },
+      "check": {
         "error": {
-          "kind": "unsupported",
-          "message": "case test on a Number: a value switch compares BigInt or boolean literals; compare Numbers with if and === at 86..87"
+          "kind": "type",
+          "message": "mixing BigInt and Number: JavaScript throws \"TypeError: Cannot mix BigInt and other types, use explicit conversions\" at 86..87"
         }
       }
     },
@@ -15559,9 +15633,23 @@
       "extension": "mjs",
       "source": "/** @typedef {bigint} N */\nconsole.log('x');",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "@typedef N: a portable data type is a union of { $: 'tag', … } object types at 0..26"
+        "sha256": "b864d6eb8b2cab31caecf6611e0e68d6751b24c78b0b9da2d4bb364707d206c0"
+      },
+      "check": {
+        "sha256": "e91cb9ea62f327d209d325a50c0d04ed6fb2ca4787d8e00c0fccfed8595b7f99"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "6f9a50ea9a8ff04ee886bd89f373863a522af6991b8529b63ce69dafd4ca7f4c"
+        },
+        "rust": {
+          "sha256": "777f7c98336eee8688286e8ae666d58b19e661c37303e09699a1c22136a800c0"
+        },
+        "lean": {
+          "sha256": "322823fd478a036ba8f8edf532f95dc47e1c193ed56083da9b1a47fd195ea1f1"
+        },
+        "rocq": {
+          "sha256": "a1fd439e7ebe50a91b562a7e84d0110a3530a7d95acbe76d0d0c0d8bd35c185a"
         }
       }
     },
@@ -15606,9 +15694,23 @@
       "extension": "mjs",
       "source": "/** @typedef {{ x: bigint }} A */\nconsole.log('x');",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "@typedef A: every alternative needs a $ tag at 0..33"
+        "sha256": "5ecdf00f041376928b01d990707a496ec6b649289c9ad4468752dbc1c11f52db"
+      },
+      "check": {
+        "sha256": "b79cee15e42c2aca3c2de5ce00e72a660921e49669004088eb3a261413133f14"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "6f9a50ea9a8ff04ee886bd89f373863a522af6991b8529b63ce69dafd4ca7f4c"
+        },
+        "rust": {
+          "sha256": "777f7c98336eee8688286e8ae666d58b19e661c37303e09699a1c22136a800c0"
+        },
+        "lean": {
+          "sha256": "322823fd478a036ba8f8edf532f95dc47e1c193ed56083da9b1a47fd195ea1f1"
+        },
+        "rocq": {
+          "sha256": "a1fd439e7ebe50a91b562a7e84d0110a3530a7d95acbe76d0d0c0d8bd35c185a"
         }
       }
     },
@@ -15722,9 +15824,32 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint | string} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return 1n;\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "JSDoc type {bigint | string}: portable types are number, bigint, boolean, string, arrays T[] of them and @typedef data types at 0..58"
+        "sha256": "807749de61887355f964605a8e8df1f43ee36b037c085fdb32804b1fef6138dd"
+      },
+      "check": {
+        "sha256": "126fd0c475047187c75be9a581c69657bf636024a2dd83474aebc6b90d8eb9b0"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "938e7eb7f839579ef3d7c030aeb1d540dcad89c2d8246d4fc9a8d36eb17e6ef6"
+        },
+        "rust": {
+          "error": {
+            "kind": "crash",
+            "message": "no Rust type for union"
+          }
+        },
+        "lean": {
+          "error": {
+            "kind": "crash",
+            "message": "no Lean type for union"
+          }
+        },
+        "rocq": {
+          "error": {
+            "kind": "crash",
+            "message": "no Rocq type for union"
+          }
         }
       }
     },
@@ -15888,9 +16013,23 @@
       "extension": "mjs",
       "source": "const A = { 'f'() { return 1n; } };",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "namespace member \"'f'\": members are methods or nested namespaces with identifier names at 12..15"
+        "sha256": "460d2eb740ca6a40f1ba45b5114d788af2e04fd202d7e01fc6f3f062ae544eba"
+      },
+      "check": {
+        "sha256": "e3071f1848df653546f6c362be9ff970a3de995f777eaf16ec07ef0032ed4f3e"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "669955397573ccff3a674c4312cf435cf79c044b58d79f862adabf39e36bb838"
+        },
+        "rust": {
+          "sha256": "da74f259d94b0654426358236956c0733dbac2e680c58823d61fcbea8c91862c"
+        },
+        "lean": {
+          "sha256": "e73213d74a0afff17506c10c6e7dff265168ea342522d442753f0ffbf0c8ed25"
+        },
+        "rocq": {
+          "sha256": "f4958388b5311a945819a747ed2f36d47ae2903956f0a014c416c5b66c615ad7"
         }
       }
     },
@@ -15932,9 +16071,23 @@
       "extension": "mjs",
       "source": "const A = { x: 1n };",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "namespace property x: namespaces hold methods, name(…) { … }, and nested namespaces only at 12..15"
+        "sha256": "d7cc2d5074d05715838ba695bee9106ebf626c44d4cebfa6f3395c90603ddcfc"
+      },
+      "check": {
+        "sha256": "76f335c1ed63ae9352abdae258fa2bbccfde4e8c8224c366267be006c61024c4"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "2245fee13a42ecb0fa369b9574cb6ca23071a962b40092aa2d6861defe5b2952"
+        },
+        "rust": {
+          "sha256": "c041f0ae5cd5d10b61cc0febec91ba0eab8e893a27970de011cdb96e85248c01"
+        },
+        "lean": {
+          "sha256": "1666a5be6144fe4b326404aca62ebc41f90af0d3442666cccda86b368aecdd25"
+        },
+        "rocq": {
+          "sha256": "c609e10dee45e443bf637e46631b58cbf90dd84de69cc9998242814bec8af0b5"
         }
       }
     },
@@ -15979,9 +16132,12 @@
       "extension": "mjs",
       "source": "const A = { /** @returns {bigint} */ f() { return 1n; } };\nconsole.log(String(A.f));",
       "parse": {
+        "sha256": "e7522f6dde64aebe5a33e10803fe781e6acf055d4899b3bd99f9d7701c7ce2cc"
+      },
+      "check": {
         "error": {
-          "kind": "unsupported",
-          "message": "function value A.f: functions and namespaces are only portable when a function is called at 78..81"
+          "kind": "type",
+          "message": "toString of function:():int at 71..82"
         }
       }
     },
@@ -16153,9 +16309,12 @@
       "extension": "mjs",
       "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @param {Tree} t\n * @returns {bigint}\n */\nfunction f(t) {\n  const [a] = t;\n  return a;\n}\n",
       "parse": {
+        "sha256": "29030abc34fe58ea7bf9bb80f2c556ad82573a1a6ea4373e0e3fa22f59ab82e8"
+      },
+      "check": {
         "error": {
           "kind": "unsupported",
-          "message": "array destructuring: bind each element by its index, const a = xs[0] at 163..169"
+          "message": "indexing of data:Tree: only arrays are indexed in the portable core at 170..171"
         }
       }
     },
@@ -16418,9 +16577,12 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  switch (n) { case 'a': return 0n; default: return 1n; }\n}\n",
       "parse": {
+        "sha256": "886fa5b0291543a34878f68caec695764e04aef0a69888e20c983e6c443783a0"
+      },
+      "check": {
         "error": {
-          "kind": "unsupported",
-          "message": "case test: the cases of a value switch are BigInt or boolean literals at 86..89"
+          "kind": "type",
+          "message": "expected int but found string at 86..89"
         }
       }
     },
@@ -16440,9 +16602,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  switch (n) { case n: return 0n; default: return 1n; }\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "case test: the cases of a value switch are BigInt or boolean literals at 86..87"
+        "sha256": "4138369cbed9999722f3711864b47af73147b61a46532f7382ead8f2ffb4a1b7"
+      },
+      "check": {
+        "sha256": "b4367cb73378a98767e3783cf5fa3e46da9446959755f7c1cbcc8f07a20c9c55"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "83b388f293c178751610f89da67231f2cacbde64991c44047d148f1de5c82020"
+        },
+        "rust": {
+          "sha256": "be85aed82df6dc544a6bf3a932031fe0c345c095d11722b74899a4041e0eb7eb"
+        },
+        "lean": {
+          "sha256": "9a401c72e3789797546f66c21a513784f9142dbb12c060d9c391f530f9400498"
+        },
+        "rocq": {
+          "sha256": "0cff044da0706fa98b9d7e141fc8a04b15bb9dcfe4ddbcd61922ebe95418ba46"
         }
       }
     },
@@ -16605,9 +16781,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return ((x) => x)(n);\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "arrow function: functions as values are outside the portable core at 76..77"
+        "sha256": "bcbe66b50342abf78afbad090716b0647816e5b5582dd67d0c3156f7b9e029d7"
+      },
+      "check": {
+        "sha256": "bcf24cd0e581f55f8fa33f854b428f220b264f03b041e618c02189b179ebf672"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "e550f531e79bb0ba56b062b8870f9b7ac1efa8695da548f9a2198f4e3952201d"
+        },
+        "rust": {
+          "sha256": "353147a7e6d17d2dcc1970e9c733b0a8e208851aec917b5efd2cae0516f947ff"
+        },
+        "lean": {
+          "sha256": "3e06a9b15ff7f65a48b2f9f662eba49551d3e76959b227164fc27ba5731d9491"
+        },
+        "rocq": {
+          "sha256": "d8808b89fe5e4c7b3a2d7f069f36c87278ad79ce67018bd8d74b50655ff486c0"
         }
       }
     },
@@ -16616,9 +16806,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  const g = x => x;\n  return n;\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "arrow function: functions as values are outside the portable core at 78..80"
+        "sha256": "fb705dceb94d6a9a20ba12bc2dc6d6e9d8866f0b89640b6d2c68d53f8cd80c5f"
+      },
+      "check": {
+        "sha256": "8e22772586ea5df6835ce806f6146a91ded7e2fc87509cbd74b4f2519252e146"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "bb01aef82a21a65cb8b707bdefb2174d746a3315c3c6439667e507b458572630"
+        },
+        "rust": {
+          "sha256": "678fbcf8426f6ecbbafc64195e300581270e37d9020f5fbb152d754b92e99638"
+        },
+        "lean": {
+          "sha256": "2a2a274da56000d44ade512b9c60791243770ed96b438c0283897b09cd9940ed"
+        },
+        "rocq": {
+          "sha256": "6936f6a964b5b3fd17bc81eb2010b69b06d4815db61e78059df1a433160e73ca"
         }
       }
     },
@@ -16627,9 +16831,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  const g = () => 1n;\n  return n;\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "arrow function: functions as values are outside the portable core at 78..79"
+        "sha256": "020bdd5db416da30126687dcda0dcd9d33e81aebc86814f363742c2d47942052"
+      },
+      "check": {
+        "sha256": "412cc1abec1c22c41449c085dd1af7c7848a6b1e989b4fb2133736e2536501ed"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "933e3b82f3e757b02a250196d63fe8e016b759d86b3a45859b9b330d575bdb74"
+        },
+        "rust": {
+          "sha256": "1b8f2052611abc3b9466ac3d6fc67f6bc46e66e80cc62a4189bd3c87aafeb873"
+        },
+        "lean": {
+          "sha256": "ba41ab7a4c286f92f93d8de46837003ba31b87489152b0a542b4cd12f14f12b1"
+        },
+        "rocq": {
+          "sha256": "f633d157fd044ff2ff782609ec1b199bf522e1fd63231f404c53989125568265"
         }
       }
     },
@@ -16639,8 +16857,8 @@
       "source": "console.log((1n)'=>');",
       "parse": {
         "error": {
-          "kind": "unsupported",
-          "message": "arrow function: functions as values are outside the portable core at 12..13"
+          "kind": "syntax",
+          "message": "expected identifier in parameter but found \"1n\" at 13..15"
         }
       }
     },
@@ -16909,8 +17127,8 @@
       "source": "/**\n * @param {string} s\n * @returns {string}\n */\nfunction f(s) {\n  return s.slice(1n);\n}\n",
       "parse": {
         "error": {
-          "kind": "unsupported",
-          "message": ".slice() with arguments: array copying takes no index arguments until their bounds are modeled at 76..86"
+          "kind": "type",
+          "message": "a BigInt is used as a number; JavaScript does not mix BigInt with other types at 75..86"
         }
       }
     },
@@ -16930,9 +17148,12 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return n?.toString();\n}\n",
       "parse": {
+        "sha256": "bb12256c2d0c15027be476fffc276f2d784eb692c5f3909d833f57dba220222d"
+      },
+      "check": {
         "error": {
           "kind": "unsupported",
-          "message": "optional chaining: null and undefined are outside the portable core at 76..78"
+          "message": "field access: field toString is only portable inside a constructor match at 75..86"
         }
       }
     },
@@ -16955,9 +17176,12 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return f(n)(n);\n}\n",
       "parse": {
+        "sha256": "9ddac3462b56036da963bbd1e3b492872fcf674fa9237fcd03583c499127e20e"
+      },
+      "check": {
         "error": {
-          "kind": "unsupported",
-          "message": "call of a computed function: only named functions can be called at 79..80"
+          "kind": "type",
+          "message": "the called value is not a function at 75..83"
         }
       }
     },
@@ -17018,7 +17242,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "object spread: name every field at 181..184"
+          "message": "tagged object spread: constructor spreads require a complete tagged field projection at 168..187"
         }
       }
     },
@@ -17027,9 +17251,12 @@
       "extension": "mjs",
       "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction f() {\n  return { $: 'node', 'value': 1n };\n}\n",
       "parse": {
+        "sha256": "988deaeb1a15159782af7b06dd48dc9a2fc8571c8678d6e5111a1f87773a18d4"
+      },
+      "check": {
         "error": {
-          "kind": "unsupported",
-          "message": "object key \"'value'\": keys are identifiers at 161..168"
+          "kind": "type",
+          "message": "node expects fields left, value, right at 148..174"
         }
       }
     },
@@ -17061,8 +17288,8 @@
       "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction f() {\n  return { $: 'node', value() { return 1n; } };\n}\n",
       "parse": {
         "error": {
-          "kind": "unsupported",
-          "message": "method in an object value: functions as values are outside the portable core at 161..166"
+          "kind": "type",
+          "message": "one value is used as function and as a bigint; declare the types of the function with JSDoc at 166..184"
         }
       }
     },
@@ -17072,8 +17299,8 @@
       "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction f() {\n  return { value: 1n };\n}\n",
       "parse": {
         "error": {
-          "kind": "unsupported",
-          "message": "object without a $ tag: a portable object is an alternative of a @typedef data type at 148..161"
+          "kind": "type",
+          "message": "one value is used as record and as a Tree; declare the types of the function with JSDoc at 124..132"
         }
       }
     },
@@ -17104,9 +17331,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return undefined;\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "undefined: outside the portable core at 75..84"
+        "sha256": "867806398ec004b4d69323afb8b344cfa57328be29b79ff853003ff271b41493"
+      },
+      "check": {
+        "sha256": "5cfe77b93185bbf1bbb9848d66a8f163ff10f382141307ab70bfbb40d34ade4d"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "fded46196066b44ab0e6b3d2941a95878ee13dcc559647a025b07538b5e361a5"
+        },
+        "rust": {
+          "sha256": "3614922820802cdf24c7ac9eb108b95300e19d67d00b830b0bc12aaac02d5d33"
+        },
+        "lean": {
+          "sha256": "52cccc01193b8bdb89ca6d153e1f92919b29759d2d271cc0fd22bc7682c06aa4"
+        },
+        "rocq": {
+          "sha256": "b0d495b5cc06ac6763e956eaa0eb2335974d718c3cc2f7cef052013c95ee95b8"
         }
       }
     },
@@ -17167,7 +17408,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "new expression: outside the portable core at 75..78"
+          "message": "new f: the constructor needs a registered portable type and construction rule at 75..83"
         }
       }
     },
@@ -17177,8 +17418,8 @@
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return function () {};\n}\n",
       "parse": {
         "error": {
-          "kind": "unsupported",
-          "message": "function expression: outside the portable core at 75..83"
+          "kind": "type",
+          "message": "one value is used as function and as a bigint; declare the types of the function with JSDoc at 50..58"
         }
       }
     },
@@ -17580,7 +17821,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return (n + 1n) * 2n - n / 3n % 4n;\n}\n",
       "parse": {
-        "sha256": "2f05d907f1a5688d3e583a4f90be53c1943a9bffb069c3812badf0fd947efe69"
+        "sha256": "d58ea8a54a4d38e233b78d0d0ba5e7a6731303c74dd5d7f3c5dc48a564db8649"
       },
       "check": {
         "sha256": "28c96f0513603be116d7e085eb90ade87d9ece4bee00ad453611bb0da2661b3f"
@@ -17630,7 +17871,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {boolean} p\n * @returns {boolean}\n */\nfunction f(p) {\n  return !p && !!p || !(p || p);\n}\n",
       "parse": {
-        "sha256": "cf2b92acffe804ddb84bdd975a0ac665bddad4ced7fa9a315314cee8e25024a3"
+        "sha256": "c79be54815f4b9b33c73517dd061b6631293c69970abe4597a0deffb40292b3a"
       },
       "check": {
         "sha256": "22471f2b15cbbeab2c71dc1802f7aba3873934cb8a23c8c7b229655ec0f14202"
@@ -17655,7 +17896,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return -n + - -n - (-1n);\n}\n",
       "parse": {
-        "sha256": "e2add7b278d8783be86acb379caad9fa8871200ef07c5a8b1b0871d878fa83f2"
+        "sha256": "b6e64c831f0866cfcf400e1d1634eda015281650b7baa28add08e821f5d69f47"
       },
       "check": {
         "sha256": "de03ff7b271d7344ce6baef202d5a073bbaf68e99211f4fadfe303dc9b268589"
@@ -17705,7 +17946,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return n > 0n ? (n > 10n ? 10n : n) : 0n;\n}\n",
       "parse": {
-        "sha256": "fe644af7dc4233602b8f44365e55ea52d8f45bce0da2daaaebb1d2c2db3c2edd"
+        "sha256": "daef7ebbb0316fd29bd0d37efe52bce0e792fd4e0babd3d7a64d656d34084ec6"
       },
       "check": {
         "sha256": "41f637fc0369687f016a6417dd5a0eaf9f89faee77d2abb41f4d94c143547aea"
@@ -17905,7 +18146,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {string}\n */\nfunction f(n) {\n  return n.toString() + (n + 1n).toString();\n}\n",
       "parse": {
-        "sha256": "56b7ee69ad5cf53ed70bc7b90ab65803c2cbf65859835e0b9b60c916f7c9e6bc"
+        "sha256": "1a84ceeb867cd81c7741263f9b3400895254310f6757046ed5978e6f72e7d792"
       },
       "check": {
         "sha256": "6f1431f629f372cf917fd56667e96aac510547fdce2c00def577d02cb22c079a"
@@ -18644,7 +18885,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return ((n));\n}\n",
       "parse": {
-        "sha256": "313b995a39d5e3e46e3c633649df4fbf2577eaa274cba1cc4fa567d0fa55e2da"
+        "sha256": "f1be002d12b3dadb72362149eeacb8065ccf1371d09b71a0c0ede9cda314e04c"
       },
       "check": {
         "sha256": "e173aa5e6e42cd3685461ef7c4b8718007503bbd54c04e93c0fb4494fea6ba80"
@@ -18669,9 +18910,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return (f)(n);\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "function value f: functions and namespaces are only portable when a function is called at 76..77"
+        "sha256": "6d2d12da8c82dd02573d08475385f7a919ff5afab6d89e67ccc72f3aaafa2ed0"
+      },
+      "check": {
+        "sha256": "b0d2db75b15ab85156bf8c8f11cd6a818c7e849f1c6a902ac5e028b95232693d"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "3dbac4b8f5d6250b4ca2a3a5ba7f8dda75e1529a1c83f9920d927da00cf8b27d"
+        },
+        "rust": {
+          "sha256": "976ef710f92a6e39d282376cc440caffdcf6dcc7056e44bc8b556a09371386f8"
+        },
+        "lean": {
+          "sha256": "46bf46224ef6ddde23c7b456680483191fec1f9f5230d10f5f3ba1d0240d9925"
+        },
+        "rocq": {
+          "sha256": "7d876c45c4fb740668929ac981179f04e1cc8cb6a4839f2a8f5e3771f35d4cf5"
         }
       }
     },
@@ -19516,7 +19771,7 @@
       "extension": "mjs",
       "source": "/** @typedef {{ $: 'leaf' } | { $: 'node', left: Tree }} Tree */\n/**\n * @param {Tree} t\n * @returns {boolean}\n */\nfunction isLeaf(t) { return (t.$ === 'leaf'); }\nconsole.log(String(isLeaf({ $: 'leaf' })));\n",
       "parse": {
-        "sha256": "1ea8329197cc2c33504b50bbfbb562de743a2dbf30a23895eb51680648c91bcb"
+        "sha256": "fe0c463506aacb1165b60c6bf8c8780e9c0479293af4ba6207c3b29e823968d6"
       },
       "check": {
         "sha256": "26ac58ca109a0e0634f2616cd9932c64f0e3a90b394fc56ce8da3e29b16afb59"
@@ -20180,23 +20435,9 @@
       "extension": "mjs",
       "source": "const A = {};\nconst B = { C: {} };\nconsole.log('x');",
       "parse": {
-        "sha256": "dafed64cab2926eead2131ec909ff73e8dec4a49aa4b2f793773486786e781bb"
-      },
-      "check": {
-        "sha256": "fcee7c7f1d81f07df7c11a3bf481e2be9480e20f4906541d6abaf5b05a486647"
-      },
-      "emit": {
-        "javascript": {
-          "sha256": "6f9a50ea9a8ff04ee886bd89f373863a522af6991b8529b63ce69dafd4ca7f4c"
-        },
-        "rust": {
-          "sha256": "777f7c98336eee8688286e8ae666d58b19e661c37303e09699a1c22136a800c0"
-        },
-        "lean": {
-          "sha256": "322823fd478a036ba8f8edf532f95dc47e1c193ed56083da9b1a47fd195ea1f1"
-        },
-        "rocq": {
-          "sha256": "a1fd439e7ebe50a91b562a7e84d0110a3530a7d95acbe76d0d0c0d8bd35c185a"
+        "error": {
+          "kind": "unsupported",
+          "message": "namespace after a top-level statement: the statements before const B would run before it is initialised; declare every namespace first at 14..20"
         }
       }
     },
@@ -20855,7 +21096,7 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  return (\n    n\n  );\n}\n",
       "parse": {
-        "sha256": "abd2f7901d72e58cc475b1bc2dcea5c3645c63078dde517b7c3ffccd5b39775c"
+        "sha256": "27f7dd7eee3ee71d6b49f47262c0955c9097f148f6ce70076f4fb81717b8863f"
       },
       "check": {
         "sha256": "581034002586f20471866ba793447cb3e195942b4ec2471dd8f17b958ef3b796"
@@ -29903,9 +30144,23 @@
       "extension": "rs",
       "source": "fn f(n: f64) -> f64 { n } fn main() { println!(\"x\"); }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "Rust type f64: outside the portable core at 8..11"
+        "sha256": "83d5f08e06996f87fa9e040011d32c2436acddc4ea85a42b6719e36d0de5c3f5"
+      },
+      "check": {
+        "sha256": "6ea8f873888b340cabe2bea6e174e68e04c731ec7ed3d2cd8d21dd07968ec642"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "ec02c476f49bd1363e21af83f020f1080786e38fe61a7b41d015437e09583009"
+        },
+        "rust": {
+          "sha256": "a0eb6123bc0af2393843cbfd2e655de8018d51cda4f0178c2e4a571f63c83611"
+        },
+        "lean": {
+          "sha256": "ee40165cfbc1c8fb70da50c257e5e3da341443fb4eafd52d6dface418502789c"
+        },
+        "rocq": {
+          "sha256": "2daeca82615d6ce06ae5a11e05639003a2b43189bcdcb46b7d9566064aab8861"
         }
       }
     },
@@ -32450,9 +32705,12 @@
       "extension": "rs",
       "source": "fn f(n: u64) -> u64 {\n  1f64\n}\nfn main() { println!(\"x\"); }\n",
       "parse": {
+        "sha256": "e55054490c74489be02c68291f77427133a8fd677f0f03b3fbf0c6fa7a6069de"
+      },
+      "check": {
         "error": {
-          "kind": "unsupported",
-          "message": "literal suffix f64: only integer literals are portable at 24..28"
+          "kind": "type",
+          "message": "expected u64 but found float at 0..31"
         }
       }
     },
@@ -32463,7 +32721,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "literal suffix abc: only integer literals are portable at 24..28"
+          "message": "literal suffix abc: portable numeric literals are integers and IEEE-754 binary64 values at 24..28"
         }
       }
     },

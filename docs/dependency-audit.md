@@ -67,12 +67,12 @@ they are.
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 42 | 41 | 1 | 0 |
+| Generators | 44 | 43 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 20 | 0 | 0 | 20 |
+| Published artifact contents | 22 | 0 | 0 | 22 |
 
 ## JavaScript engines
 
@@ -544,6 +544,7 @@ they are.
 | `js/scripts/generate-default-cst-expectations.mjs` | `js/scripts/generate-default-cst-expectations.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-elm-candidate-fixtures.mjs` | `js/scripts/generate-elm-candidate-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-export-parity.mjs` | `js/scripts/generate-export-parity.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-formal-concept-fixtures.mjs` | `js/scripts/generate-formal-concept-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-frontend-rule-styles.mjs` | `js/scripts/generate-frontend-rule-styles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-frontend-rules.mjs` | `js/scripts/generate-frontend-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-global-concept-rule-styles.mjs` | `js/scripts/generate-global-concept-rule-styles.mjs` | `script` |  | derived | current |  |
@@ -565,6 +566,7 @@ they are.
 | `js/scripts/generate-structured-type-fixtures.mjs` | `js/scripts/generate-structured-type-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-type-rules.mjs` | `js/scripts/generate-structured-type-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-program-links-fixtures.mjs` | `js/scripts/generate-typed-program-links-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
@@ -641,6 +643,7 @@ they are.
 | `README.md` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/concept-records.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/formal-concept-models.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/foundation-models.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lock.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-catalog.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -652,6 +655,7 @@ they are.
 | `src/data/semantic-lexicon.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-program-links-schema.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typescript-portable-typing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 

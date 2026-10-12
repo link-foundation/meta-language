@@ -3,7 +3,7 @@
 // Only temporary copies are edited; the generated Rust remains a translation
 // of JavaScript plus reviewed, reproducible Links Notation decorator data.
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,7 +11,8 @@ import { DecoratorSet } from '../src/decorators.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const directory = mkdtempSync(join(tmpdir(), 'frontend-rule-styles-'));
-const paths = ['frontend_rules.rs', 'frontend_rules/strings.rs', 'frontend_rules/continuations.rs'];
+const paths = ['frontend_rules.rs', ...readdirSync(join(root, 'rust/src/translation/frontend_rules'))
+  .filter((name) => name.endsWith('.rs')).sort().map((name) => `frontend_rules/${name}`)];
 const actions = [];
 try {
   mkdirSync(join(directory, 'translation/frontend_rules'), { recursive: true });

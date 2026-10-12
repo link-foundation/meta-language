@@ -43,10 +43,27 @@ const boundary = final.stdout.search(/#\[derive\(Clone, Debug, PartialEq\)\]\npu
 if (boundary < 0) throw new Error('generated continuation boundary is missing');
 const strings = final.stdout.indexOf('pub fn read_string_map_operation(');
 if (strings < 0 || strings >= boundary) throw new Error('generated string mapping boundary is missing');
+const continuationLines = final.stdout.slice(boundary).trimEnd().split('\n');
+const starts = [0];
+for (let index = 1; index < continuationLines.length; index += 1) {
+  if (!/^pub (?:fn|enum|struct|mod) /u.test(continuationLines[index])) continue;
+  let start = index;
+  while (start > starts.at(-1) && /^(?:\s*|\/\/\/.*|#\[[^\n]*\])$/u.test(continuationLines[start - 1])) start -= 1;
+  if (start > starts.at(-1)) starts.push(start);
+}
+starts.push(continuationLines.length);
+const continuations = [''];
+for (let index = 0; index < starts.length - 1; index += 1) {
+  const item = continuationLines.slice(starts[index], starts[index + 1]).join('\n');
+  const current = continuations.at(-1);
+  if (current && current.split('\n').length + item.split('\n').length > 900) continuations.push(item);
+  else continuations[continuations.length - 1] = current ? `${current}\n${item}` : item;
+}
+const modules = continuations.map((_, index) => index === 0 ? 'continuations' : `continuations_${index + 1}`);
 const outputs = [
-  [outputPath, notice + final.stdout.slice(0, strings) + 'mod strings;\npub use strings::*;\nmod continuations;\npub use continuations::*;\n'],
-  [new URL('../../rust/src/translation/frontend_rules/strings.rs', import.meta.url), notice + 'use super::*;\n\n' + final.stdout.slice(strings, boundary)],
-  [new URL('../../rust/src/translation/frontend_rules/continuations.rs', import.meta.url), notice + 'use super::*;\n\n' + final.stdout.slice(boundary)],
+  [outputPath, notice + final.stdout.slice(0, strings) + 'mod strings;\npub use strings::*;\n' + modules.map((name) => `mod ${name};\npub use ${name}::*;\n`).join('')],
+  [new URL('../../rust/src/translation/frontend_rules/strings.rs', import.meta.url), notice + 'use super::*;\n\n' + final.stdout.slice(strings, boundary).trimEnd() + '\n'],
+  ...modules.map((name, index) => [new URL(`../../rust/src/translation/frontend_rules/${name}.rs`, import.meta.url), notice + 'use super::*;\n\n' + continuations[index].trim() + '\n']),
 ];
 if (process.argv.includes('--check')) {
   for (const [path, text] of outputs) {

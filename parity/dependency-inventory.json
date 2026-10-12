@@ -8035,6 +8035,20 @@
       "dependsOn": []
     },
     {
+      "category": "generator",
+      "name": "js/scripts/generate-formal-concept-fixtures.mjs",
+      "declaredIn": [
+        "js/scripts/generate-formal-concept-fixtures.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-formal-concept-fixtures.mjs@script",
+      "dependsOn": []
+    },
+    {
       "id": "generator js/scripts/generate-frontend-rule-styles.mjs@script",
       "category": "generator",
       "name": "js/scripts/generate-frontend-rule-styles.mjs",
@@ -8342,6 +8356,20 @@
         "type": "none"
       },
       "id": "generator js/scripts/generate-typed-program-link-rules.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
+      "name": "js/scripts/generate-typed-program-links-fixtures.mjs",
+      "declaredIn": [
+        "js/scripts/generate-typed-program-links-fixtures.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-typed-program-links-fixtures.mjs@script",
       "dependsOn": []
     },
     {
@@ -9158,6 +9186,20 @@
       }
     },
     {
+      "category": "published",
+      "name": "src/data/formal-concept-models.json",
+      "scope": "crate",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "id": "published crate src/data/formal-concept-models.json@include"
+    },
+    {
       "id": "published crate src/data/foundation-models.json@include",
       "category": "published",
       "scope": "crate",
@@ -9310,6 +9352,20 @@
         "type": "none"
       },
       "id": "published crate src/data/typescript-erasure.lino@include"
+    },
+    {
+      "category": "published",
+      "name": "src/data/typescript-portable-typing.lino",
+      "scope": "crate",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      },
+      "id": "published crate src/data/typescript-portable-typing.lino@include"
     },
     {
       "id": "published npm README.md@files",
