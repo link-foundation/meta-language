@@ -19,6 +19,38 @@ export function readProgramScalarKind(term) {
   return "";
 }
 
+/** @param {string} term @returns {string} */
+export function readProgramExpressionProjection(term) {
+  if (term === "lit") return "lit";
+  if (term === "lit:bool") return "lit:bool";
+  if (term === "lit:string") return "lit:string";
+  if (term === "lit:nat") return "lit:nat";
+  if (term === "lit:int") return "lit:int";
+  if (term === "lit:fixed") return "lit:fixed";
+  if (term === "lit:float") return "lit:float";
+  if (term === "unit") return "unit";
+  if (term === "var") return "var";
+  if (term === "call") return "call";
+  if (term === "unary") return "unary";
+  if (term === "binary") return "binary";
+  if (term === "if") return "if";
+  if (term === "let") return "let";
+  if (term === "toString") return "toString";
+  if (term === "toString:true") return "toString:true";
+  if (term === "stringMap") return "stringMap";
+  if (term === "stringTest") return "stringTest";
+  if (term === "cast") return "cast";
+  if (term === "abort") return "abort";
+  if (term === "print") return "print";
+  if (term === "array") return "array";
+  if (term === "append") return "append";
+  if (term === "index") return "index";
+  if (term === "length") return "length";
+  if (term === "length:string") return "length:string";
+  if (term === "math") return "math";
+  return "";
+}
+
 /** @param {string} label @returns {boolean} */
 export function acceptProgramReferenceField(label) {
   return label === "binding reference" || label === "declaration reference";

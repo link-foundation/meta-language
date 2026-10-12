@@ -3,13 +3,23 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { createTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
+import { createTypedProgramLinks, decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
 
 const inputs = [
   ['javascript-add', 'JavaScript', 'function add(a,b){return a+b;} console.log(add(2,3));', ['5']],
   ['rust-add', 'Rust', 'fn add(a:i32,b:i32)->i32{a+b} fn main(){println!("{}",add(2,3));}', ['5']],
   ['javascript-two-functions', 'JavaScript', 'function add(a,b){return a+b;} function multiply(a,b){return a*b;} console.log(add(2,3));', ['5']],
   ['javascript-lexical-let', 'JavaScript', 'function calculate(value){const doubled=value*2;return doubled+1;} console.log(calculate(3));', ['7']],
+  ['javascript-string-map', 'JavaScript', '/** @param {string} value */ function trim(value){return value.trim();}console.log(trim(" hi "));', ['hi']],
+  ['javascript-string-test', 'JavaScript', '/** @param {string} value */ function starts(value){return value.startsWith("a");}console.log(starts("abc"));', ['true']],
+  ['javascript-array-length', 'JavaScript', 'function values(){return [1,2];}console.log(values().length);', ['2']],
+  ['javascript-array-append', 'JavaScript', 'function values(){return [1,...[2,3]];}console.log(values().length);', ['3']],
+  ['javascript-string-length', 'JavaScript', '/** @param {string} value */ function length(value){return value.length;}console.log(length("😀"));', ['2']],
+  ['javascript-math', 'JavaScript', 'function root(value){return Math.sqrt(value);}console.log(root(9));', ['3']],
+  ['javascript-math-spread', 'JavaScript', 'function maximum(){return Math.max(...[2,10]);}console.log(maximum());', ['10']],
+  ['javascript-function-print', 'JavaScript', 'function f(value){console.log(value);return value+1;}console.log(f(2));', ['2', '3']],
+  ['rust-exact-cast', 'Rust', 'fn widen(value:i32)->i64{value as i64}fn main(){println!("{}",widen(2));}', ['2']],
+  ['javascript-abort-branch', 'JavaScript', 'function f(value){if(value<0){throw new Error("negative");}return value;}console.log(f(2));', ['2']],
 ];
 
 function execute(code) {
@@ -43,6 +53,21 @@ function sharedDagFixture() {
   return { id: 'shared-dag-traversal', root: root.asU64(), lino: network.toLino(), rejection: 'resource limit' };
 }
 
+function derivedIndexFixture() {
+  const archive = createTypedProgramLinks(inputs[1][2], inputs[1][1]);
+  const program = decodeTypedProgramLinks(archive.network, archive.root);
+  const function_ = program.declarations.get('add');
+  const element = function_.ret;
+  function_.body = { k: 'index', array: { k: 'array', items: function_.params.map((parameter) => ({ k: 'var', name: parameter.name, type: parameter.type })), type: { kind: 'array', element } },
+    index: { k: 'lit', value: '0', type: { kind: 'float' } }, type: element };
+  const edited = encodeTypedProgramLinks(program);
+  const javascript = emitTypedProgramLinks(edited.network, edited.root, 'JavaScript').code;
+  const rust = emitTypedProgramLinks(edited.network, edited.root, 'Rust').code;
+  const output = ['2'];
+  if (JSON.stringify(execute(javascript)) !== JSON.stringify(output)) throw new Error('derived native array index changed its checked behavior');
+  return { id: 'native-array-index', derivedFrom: 'rust-add', root: edited.root.asU64(), lino: edited.network.toLino(), javascript, rust, output };
+}
+
 export function typedProgramLinksFixture() {
   return { schemaVersion: 1, generatedBy: 'js/scripts/generate-typed-program-links-fixtures.mjs',
     cases: inputs.map(([id, language, source, output]) => {
@@ -52,6 +77,7 @@ export function typedProgramLinksFixture() {
       if (JSON.stringify(execute(javascript)) !== JSON.stringify(output)) throw new Error(`${id} emitted the wrong observable result`);
       return { id, language, source, root: archive.root.asU64(), lino: archive.network.toLino(), javascript, rust, output };
     }),
+    derivedCases: [derivedIndexFixture()],
     resourceCases: [sharedDagFixture()],
     invalidMachineIntegerWidths: [0, 7, 129, 130],
     mutations: [

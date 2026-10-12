@@ -1,14 +1,12 @@
 //! Adapt the supported typed IR to the existing checker, preserving policies.
+use super::projection::project as expression;
 use super::{Result, error};
 use crate::translation::check::check_program;
-use crate::translation::ir::{Decl, Effect, Expr, Item, LitValue, Node, Program};
-use crate::translation::surface::{
-    SEffect, SExpr, SFn, SItem, SMain, SNode, SParam, SProgram, ShowStyle,
-};
+use crate::translation::ir::{Decl, Effect, Item, Program};
+use crate::translation::surface::{SEffect, SFn, SItem, SMain, SParam, SProgram, ShowStyle};
 use crate::translation::typed_program_link_rules::{
     accept_program_machine_integer_width, accept_program_optional_absence,
 };
-use crate::translation::types::Type;
 use regex::Regex;
 use serde_json::Value;
 use std::sync::OnceLock;
@@ -27,6 +25,12 @@ fn valid_float(value: &str) -> bool {
 
 fn validate_type_records(value: &Value) -> Result<()> {
     if let Some(fields) = value.as_object() {
+        if value["k"] == "lit"
+            && value["type"]["kind"] == "float"
+            && !value["value"].as_str().is_some_and(valid_float)
+        {
+            return Err(error("a linked floating-point literal is invalid"));
+        }
         if matches!(
             value["kind"].as_str(),
             Some("named" | "literal" | "hypothesis" | "output" | "data")
@@ -63,92 +67,6 @@ fn validate_type_records(value: &Value) -> Result<()> {
     Ok(())
 }
 
-fn expression(value: &Expr) -> Result<SExpr> {
-    if let Node::Lit {
-        value: LitValue::Text(text),
-    } = &value.node
-    {
-        if value.ty == Type::Float && !valid_float(text) {
-            return Err(error("a linked floating-point literal is invalid"));
-        }
-    }
-    let node = match &value.node {
-        Node::Lit {
-            value: LitValue::Bool(boolean),
-        } if value.ty == Type::Bool => SNode::Bool { value: *boolean },
-        Node::Lit {
-            value: LitValue::Text(text),
-        } if value.ty == Type::String => SNode::Str {
-            value: text.clone(),
-        },
-        Node::Lit {
-            value: LitValue::Text(text),
-        } if value.ty.is_ordered() => SNode::Num {
-            value: text.clone(),
-            ty: Some(value.ty.clone()),
-            negative: false,
-            unit: false,
-        },
-        Node::Unit => SNode::Unit,
-        Node::Var { name } => SNode::Name {
-            path: vec![name.clone()],
-        },
-        Node::Call { func, args } => SNode::App {
-            func: Box::new(SExpr::name(func)),
-            args: args.iter().map(expression).collect::<Result<_>>()?,
-        },
-        Node::Unary { op, arg, .. } => SNode::Unary {
-            op: *op,
-            arg: Box::new(expression(arg)?),
-        },
-        Node::Binary {
-            op,
-            left,
-            right,
-            rounding,
-            ..
-        } => SNode::Binary {
-            op: *op,
-            left: Box::new(expression(left)?),
-            right: Box::new(expression(right)?),
-            rounding: *rounding,
-        },
-        Node::If {
-            cond,
-            then,
-            otherwise,
-        } => SNode::If {
-            cond: Box::new(expression(cond)?),
-            then: Box::new(expression(then)?),
-            otherwise: Box::new(expression(otherwise)?),
-        },
-        Node::Let { name, value, body } => SNode::Let {
-            name: name.clone(),
-            ty: Some(value.ty.clone()),
-            value: Box::new(expression(value)?),
-            body: Box::new(expression(body)?),
-        },
-        Node::ToString { arg, console } => {
-            if *console {
-                SNode::Show {
-                    arg: Box::new(expression(arg)?),
-                    style: ShowStyle::JsConsole,
-                }
-            } else {
-                SNode::ToString {
-                    arg: Box::new(expression(arg)?),
-                }
-            }
-        }
-        _ => {
-            return Err(error(format!(
-                "the Rust typed links adapter does not yet recheck {} expressions",
-                value.kind()
-            )));
-        }
-    };
-    Ok(SExpr::new(node, value.span))
-}
 pub(super) fn validate(program: &Program) -> Result<()> {
     validate_type_records(
         &serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?,

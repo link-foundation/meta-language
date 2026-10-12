@@ -16,6 +16,7 @@ use std::sync::OnceLock;
 
 mod checked;
 mod codec;
+mod projection;
 
 /// A structural, unsupported or semantic defect in a linked program.
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -7,3 +7,7 @@ adapter diagnostics instead of falling back to a saved source envelope.
 Repeated paths through shared graphs have a traversal budget, and the shared
 schema admits only supported machine integer widths and optional absence policies
 before the Rust checker or emitter reads edited types.
+Shared projection instructions also recheck native string, array, index, length,
+math, cast, abort and local print expressions through the existing portable
+checker. The instructions replace the codec's separate expression match and are
+exercised by the same source-free archives in both packages.

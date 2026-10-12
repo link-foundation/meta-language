@@ -16,6 +16,7 @@ const classify = (name, table) => `/** @param {string} term @returns {string} */
 const source = '// Generated from data/typed-program-links-schema.json. Do not edit by hand.\n\n'
   + classify('readProgramContainerKind', schema.containers) + '\n'
   + classify('readProgramScalarKind', schema.scalars) + '\n'
+  + classify('readProgramExpressionProjection', Object.fromEntries(Object.keys(schema.expressionProjections).map((kind) => [kind, kind]))) + '\n'
   + '/** @param {string} label @returns {boolean} */\nexport function acceptProgramReferenceField(label) {\n'
   + `  return label === ${JSON.stringify(schema.references.binding)} || label === ${JSON.stringify(schema.references.declaration)};\n}\n\n`
   + '/** @param {string} name @returns {boolean} */\nexport function isUnsafeProgramField(name) {\n'
@@ -61,7 +62,7 @@ if (process.argv.includes('--update-styles')) {
     const to = `} else ${styled.slice(opening + 1, cursor - 1).trim()}`;
     replace(from, to);
   }
-  for (const name of ['read_program_container_kind', 'read_program_scalar_kind', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence']) {
+  for (const name of ['read_program_container_kind', 'read_program_scalar_kind', 'read_program_expression_projection', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence']) {
     replace(`pub fn ${name}`, `/// Read the corresponding decision of the shared typed program links schema.\n#[must_use]\npub fn ${name}`);
   }
   writeFileSync(styleFile, new DecoratorSet([{ id: 'typed-program-link-library-style', level: 'emitter', order: 0,

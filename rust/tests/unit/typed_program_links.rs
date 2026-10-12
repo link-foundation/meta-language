@@ -149,6 +149,22 @@ fn javascript_and_rust_sources_emit_from_reloaded_source_free_graphs() {
 }
 
 #[test]
+fn native_index_model_emits_from_an_edited_source_free_graph() {
+    let fixtures = fixture();
+    for case in fixtures["derivedCases"].as_array().unwrap() {
+        let graph = LinkNetwork::from_lino(case["lino"].as_str().unwrap()).unwrap();
+        let root = LinkId::from_u64(case["root"].as_u64().unwrap());
+        let emitted = emit_typed_program_links(&graph, root, "JavaScript").unwrap();
+        assert_eq!(emitted.code, case["javascript"].as_str().unwrap());
+        assert_eq!(run_javascript(&emitted.code), ["2"]);
+        assert_eq!(
+            emit_typed_program_links(&graph, root, "Rust").unwrap().code,
+            case["rust"].as_str().unwrap()
+        );
+    }
+}
+
+#[test]
 fn operation_and_binding_edits_change_the_actual_linked_program() {
     let fixtures = fixture();
     let case = &fixtures["cases"][0];
