@@ -3,6 +3,7 @@
 // arithmetic aborts on overflow, `float` is a JavaScript Number (an IEEE-754
 // binary64). Data types are named by their qualified path.
 import { acceptTypeIdentity, mergeOptionalAbsence, renderPortableTypeIdentity, wrapPortableReferenceIdentity } from './structured-type-rules.js';
+import { acceptImmutableProductKind } from './primitive-value-rules.js';
 
 export const NAT = Object.freeze({ kind: 'nat' });
 export const INT = Object.freeze({ kind: 'int' });
@@ -42,6 +43,12 @@ export function option(element, absence = 'both') {
 
 export function tuple(elements) {
   return Object.freeze({ kind: 'tuple', elements: Object.freeze([...elements]) });
+}
+
+/** Whether a type belongs to the admitted immutable Copy product model. */
+export function immutableProductType(type) {
+  return Boolean(type && acceptImmutableProductKind(type.kind))
+    && (type.kind !== 'tuple' || type.elements.every(immutableProductType));
 }
 
 /** Fields are named; their declaration order is not part of a record's shape. */

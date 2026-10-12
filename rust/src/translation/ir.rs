@@ -125,11 +125,13 @@ impl Expr {
             Node::Call { args, .. }
             | Node::Ctor { args, .. }
             | Node::Array { items: args }
+            | Node::Tuple { items: args, .. }
             | Node::Math { args, .. } => args.iter().collect(),
             Node::Unary { arg, .. }
             | Node::StringMap { string: arg, .. }
             | Node::ToString { arg, .. }
             | Node::Cast { arg, .. }
+            | Node::TupleIndex { object: arg, .. }
             | Node::Length { array: arg } => vec![arg],
             Node::StringTest {
                 string: left,
@@ -179,6 +181,14 @@ impl Expr {
             }
             Node::Array { items } => Node::Array {
                 items: items.iter().map(&mut *visit).collect(),
+            },
+            Node::Tuple { items, frozen } => Node::Tuple {
+                items: items.iter().map(&mut *visit).collect(),
+                frozen: *frozen,
+            },
+            Node::TupleIndex { object, index } => Node::TupleIndex {
+                object: Box::new(visit(object)),
+                index: *index,
             },
             Node::Append { left, right } => {
                 let left = Box::new(visit(left));
@@ -405,6 +415,17 @@ pub enum Node {
     Array {
         items: Vec<Expr>,
     },
+    /// Positionally typed elements; `frozen` marks the immutable product ABI.
+    Tuple {
+        items: Vec<Expr>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        frozen: bool,
+    },
+    /// A constant projection from a positional product.
+    TupleIndex {
+        object: Box<Expr>,
+        index: usize,
+    },
     /// The elements of `left`, then those of `right`.
     Append {
         left: Box<Expr>,
@@ -456,6 +477,8 @@ impl Node {
             Self::Abort { .. } => "abort",
             Self::Print { .. } => "print",
             Self::Array { .. } => "array",
+            Self::Tuple { .. } => "tuple",
+            Self::TupleIndex { .. } => "tupleIndex",
             Self::Append { .. } => "append",
             Self::Index { .. } => "index",
             Self::Length { .. } => "length",

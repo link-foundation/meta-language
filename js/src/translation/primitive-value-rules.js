@@ -58,3 +58,15 @@ export function requireDataObjectFreeze(language, explicitFrozen) {
 export function acceptObjectFreezeOperand(expression, readonlyLiteral) {
   return expression === 'ctorObject' || expression === 'array' && readonlyLiteral;
 }
+
+/** A scalar or recursive product in the selected immutable Copy value model.
+ * @param {string} kind @returns {boolean}
+ */
+export function acceptImmutableProductKind(kind) {
+  return kind === 'bool' || kind === 'float' || kind === 'fixed' || kind === 'unit' || kind === 'tuple';
+}
+
+/** @param {number} index @param {number} length @returns {boolean} */
+export function acceptTupleIndex(index, length) {
+  return index >= 0 && index <= 9007199254740991 && index % 1 === 0 && index < length;
+}

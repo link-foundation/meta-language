@@ -312,6 +312,17 @@ pub enum SNode {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         element: Option<Type>,
     },
+    /// An explicitly admitted positional product. The flag retains its value ABI.
+    Tuple {
+        items: Vec<SExpr>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        frozen: bool,
+    },
+    /// A constant positional projection, distinct from array indexing.
+    TupleIndex {
+        object: Box<SExpr>,
+        index: usize,
+    },
     /// `xs[i]`, a read of an array element.
     Index {
         object: Box<SExpr>,
@@ -373,6 +384,8 @@ impl SNode {
             Self::Print { .. } => "print",
             Self::CtorObject { .. } => "ctorObject",
             Self::Array { .. } => "array",
+            Self::Tuple { .. } => "tuple",
+            Self::TupleIndex { .. } => "tupleIndex",
             Self::Index { .. } => "index",
             Self::Length { .. } => "length",
             Self::Math { .. } => "math",

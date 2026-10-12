@@ -1,0 +1,1 @@
+Add positional product construction and constant projections to the native checked IR. Preserve the explicit frozen product value model, reject unsupported element types and unsafe indices, and retain ordinary contextual array tuples.

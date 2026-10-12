@@ -5,6 +5,35 @@ use super::{
     Checker, Env, Expr, FLOAT, INT, Language, Node, Result, SArrayItem, SExpr, Span,
     TranslationError, Type, array, type_error, unsupported,
 };
+use crate::translation::primitive_value_rules::accept_tuple_index;
+use std::collections::HashMap;
+
+/// A tuple-typed result needs an owned value proof; unknown call/parameter origins refuse.
+fn immutable_product_value(value: &Expr, bindings: &HashMap<String, bool>) -> bool {
+    if !matches!(value.ty, Type::Tuple { .. }) {
+        return true;
+    }
+    match &value.node {
+        Node::Tuple { items, frozen } => {
+            *frozen
+                && items
+                    .iter()
+                    .all(|item| immutable_product_value(item, bindings))
+        }
+        Node::Let { name, value, body } => {
+            let mut inner = bindings.clone();
+            inner.insert(name.clone(), immutable_product_value(value, bindings));
+            immutable_product_value(body, &inner)
+        }
+        Node::If {
+            then, otherwise, ..
+        } => {
+            immutable_product_value(then, bindings) && immutable_product_value(otherwise, bindings)
+        }
+        Node::Var { name } => bindings.get(name) == Some(&true),
+        _ => false,
+    }
+}
 
 impl Checker {
     /// `[a, ...xs, b]` is the array of the runs of elements between the spread
@@ -19,6 +48,29 @@ impl Checker {
         path: &[String],
         expected: Option<&Type>,
     ) -> Result<Expr> {
+        if let Some(ty @ Type::Tuple { elements }) = expected {
+            if items.len() != elements.len() || items.iter().any(|item| item.spread) {
+                return Err(type_error(
+                    "tuple literal has the wrong number of elements",
+                    span,
+                ));
+            }
+            let values = items
+                .iter()
+                .zip(elements)
+                .map(|(item, ty)| {
+                    let value = self.expr(&item.value, env, path, Some(ty), false)?;
+                    self.coerce(value, ty, item.value.span.or(span))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(Expr::new(
+                Node::Tuple {
+                    items: values,
+                    frozen: false,
+                },
+                ty.clone(),
+            ));
+        }
         let mut element = expected.and_then(Type::element).cloned();
         // Inference fixes the element type of an array literal with no element of its own.
         if element.is_none()
@@ -99,6 +151,103 @@ impl Checker {
         }))
     }
 
+    /// Check each positional item with its own expected type.
+    pub(super) fn tuple_literal(
+        &mut self,
+        items: &[SExpr],
+        frozen: bool,
+        span: Option<Span>,
+        env: &Env,
+        path: &[String],
+        expected: Option<&Type>,
+    ) -> Result<Expr> {
+        if frozen && items.is_empty() {
+            return Err(unsupported(
+                "empty immutable tuple product",
+                "an empty positional product is distinct from a unit value and needs its own target encoding",
+                span,
+            ));
+        }
+        let expected_elements = match expected {
+            Some(Type::Tuple { elements }) => {
+                if items.len() != elements.len() {
+                    return Err(type_error(
+                        "tuple literal has the wrong number of elements",
+                        span,
+                    ));
+                }
+                Some(elements)
+            }
+            Some(ty) => {
+                return Err(type_error(
+                    format!("tuple literal where {} is expected", ty.key()),
+                    span,
+                ));
+            }
+            None => None,
+        };
+        let values = items
+            .iter()
+            .enumerate()
+            .map(|(index, item)| {
+                let want = expected_elements.map(|elements| &elements[index]);
+                let value = self.expr(item, env, path, want, false)?;
+                match want {
+                    Some(ty) => self.coerce(value, ty, item.span.or(span)),
+                    None => Ok(value),
+                }
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let ty = expected.cloned().unwrap_or_else(|| Type::Tuple {
+            elements: values.iter().map(|value| value.ty.clone()).collect(),
+        });
+        if frozen
+            && (!ty.immutable_product_type()
+                || values
+                    .iter()
+                    .any(|value| !immutable_product_value(value, &HashMap::new())))
+        {
+            return Err(unsupported(
+                "immutable tuple product",
+                "every element needs the recursive scalar Copy value model; a mutable inner tuple cannot be frozen by its outer product",
+                span,
+            ));
+        }
+        Ok(Expr::new(
+            Node::Tuple {
+                items: values,
+                frozen,
+            },
+            ty,
+        ))
+    }
+
+    /// Check a constant product projection without array coercions.
+    pub(super) fn tuple_index(
+        &mut self,
+        object: &SExpr,
+        index: usize,
+        span: Option<Span>,
+        env: &Env,
+        path: &[String],
+    ) -> Result<Expr> {
+        let object = self.expr(object, env, path, None, false)?;
+        let Type::Tuple { elements } = &object.ty else {
+            return Err(type_error("tuple projection requires a tuple value", span));
+        };
+        if !accept_tuple_index(index as f64, elements.len() as f64) {
+            return Err(type_error("tuple index out of range", span));
+        }
+        let ty = elements[index].clone();
+        Ok(Expr::new(
+            Node::TupleIndex {
+                object: Box::new(object),
+                index,
+            },
+            ty,
+        ))
+    }
+
     /// `xs[i]`, whose index is a Number or a `BigInt`.
     pub(super) fn index(
         &mut self,
@@ -109,6 +258,27 @@ impl Checker {
         path: &[String],
     ) -> Result<Expr> {
         let array = self.expr(object, env, path, None, false)?;
+        if let Type::Tuple { elements } = &array.ty
+            && let super::SNode::Num {
+                value, negative, ..
+            } = &index.node
+        {
+            let index = value
+                .parse::<f64>()
+                .ok()
+                .map(|value| if *negative { -value } else { value })
+                .filter(|value| accept_tuple_index(*value, elements.len() as f64))
+                .ok_or_else(|| type_error("tuple index out of range", span))?
+                as usize;
+            let ty = elements[index].clone();
+            return Ok(Expr::new(
+                Node::TupleIndex {
+                    object: Box::new(array),
+                    index,
+                },
+                ty,
+            ));
+        }
         let Some(element) = array.ty.element().cloned() else {
             return Err(unsupported(
                 &format!("indexing of {}", array.ty.key()),

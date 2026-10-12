@@ -9,10 +9,10 @@ import { typeError, unsupported } from './diagnostics.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
-import { readNumberDisplayRefusal, readScalarCellOperation } from './primitive-value-rules.js';
+import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation } from './primitive-value-rules.js';
 import { acceptOptionalAbsence } from './structured-type-rules.js';
 import {
-  BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, isFloat, isNatural, isNumeric, sameType, typeKey,
+  BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
 } from './types.js';
 
 const COMPARISONS = new Set(['eq', 'ne', 'lt', 'le', 'gt', 'ge']);
@@ -34,6 +34,24 @@ function bindLocal(env, name, type) {
   const known = env.get(KNOWN);
   if (known && [...known].some(([variable, fact]) => variable === name || fact.binds.includes(name))) {
     env.set(KNOWN, new Map([...known].filter(([variable, fact]) => variable !== name && !fact.binds.includes(name))));
+  }
+}
+
+// A nested product needs a proof about the value returned, not only its type.
+// Unknown parameter/call origins remain unsupported by this local proof.
+function immutableProductValue(value, bindings = new Map()) {
+  if (value.type.kind !== 'tuple') return true;
+  switch (value.k) {
+    case 'tuple':
+      return value.frozen === true && value.items.every(item => immutableProductValue(item, bindings));
+    case 'let':
+      return immutableProductValue(value.body, new Map(bindings).set(value.name, immutableProductValue(value.value, bindings)));
+    case 'if':
+      return immutableProductValue(value.then, bindings) && immutableProductValue(value.else, bindings);
+    case 'var':
+      return bindings.get(value.name) === true;
+    default:
+      return false;
   }
 }
 
@@ -462,6 +480,28 @@ class Checker {
           return { k: 'tuple', items: node.items.map((item, index) => coerce(this.expr(item.value, env, path, expected.elements[index]), expected.elements[index], this.language, node.span)), type: expected };
         }
         return this.arrayLiteral(node, env, path, expected);
+      case 'tuple': {
+        if (node.frozen !== undefined && typeof node.frozen !== 'boolean') throw typeError('tuple frozen facet must be a boolean', node.span);
+        if (node.frozen && node.items.length === 0) throw unsupported('empty immutable tuple product', 'an empty positional product is distinct from a unit value and needs its own target encoding', node.span);
+        if (expected && expected.kind !== 'tuple') throw typeError(`tuple literal where ${typeKey(expected)} is expected`, node.span);
+        if (expected && node.items.length !== expected.elements.length) throw typeError('tuple literal has the wrong number of elements', node.span);
+        const items = node.items.map((item, index) => {
+          const want = expected?.elements[index];
+          const value = this.expr(item, env, path, want);
+          return want ? coerce(value, want, this.language, item.span ?? node.span) : value;
+        });
+        const type = expected ?? tuple(items.map(item => item.type));
+        if (node.frozen && (!immutableProductType(type) || items.some(item => !immutableProductValue(item)))) {
+          throw unsupported('immutable tuple product', 'every element needs the recursive scalar Copy value model; a mutable inner tuple cannot be frozen by its outer product', node.span);
+        }
+        return { k: 'tuple', items, ...(node.frozen && { frozen: true }), type };
+      }
+      case 'tupleIndex': {
+        const object = this.referenceValue(this.expr(node.object, env, path, undefined));
+        if (object.type.kind !== 'tuple') throw typeError('tuple projection requires a tuple value', node.span);
+        if (!acceptTupleIndex(node.index, object.type.elements.length)) throw typeError('tuple index out of range', node.span);
+        return { k: 'tupleIndex', object, index: node.index, type: object.type.elements[node.index] };
+      }
       case 'copySlice': {
         const object = this.expr(node.object, env, path, undefined);
         if (object.type.kind === 'array' || object.type.kind === 'string') return object;
@@ -572,8 +612,8 @@ class Checker {
       case 'index': {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
         if (object.type.kind === 'tuple' && node.index.k === 'num') {
-          const index = Number(node.index.value);
-          if (!Number.isInteger(index) || index < 0 || index >= object.type.elements.length) throw typeError('tuple index out of range', node.span);
+          const index = Number(node.index.value) * (node.index.negative ? -1 : 1);
+          if (!acceptTupleIndex(index, object.type.elements.length)) throw typeError('tuple index out of range', node.span);
           return { k: 'tupleIndex', object, index, type: object.type.elements[index] };
         }
         if (object.type.kind !== 'array') {

@@ -11,6 +11,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::Span;
+use super::primitive_value_rules::accept_immutable_product_kind;
 use super::structured_type_rules::{
     accept_optional_absence, accept_type_identity, merge_optional_absence,
     render_portable_type_identity, wrap_portable_reference_identity,
@@ -68,7 +69,7 @@ pub enum Type {
         #[serde(default = "default_absence")]
         absence: std::string::String,
     },
-    /// A positionally typed immutable tuple.
+    /// A positional product type; value nodes retain the explicit frozen facet.
     Tuple {
         elements: Vec<Self>,
     },
@@ -155,6 +156,16 @@ pub fn data(name: impl Into<std::string::String>) -> Type {
 }
 
 impl Type {
+    /// Membership in the selected recursive scalar Copy product model.
+    #[must_use]
+    pub fn immutable_product_type(&self) -> bool {
+        accept_immutable_product_kind(self.kind().to_owned())
+            && match self {
+                Self::Tuple { elements } => elements.iter().all(Self::immutable_product_type),
+                _ => true,
+            }
+    }
+
     /// Immediate child types, in representation order.
     #[must_use]
     pub fn children(&self) -> Vec<&Self> {

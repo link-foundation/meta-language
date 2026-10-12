@@ -371,6 +371,12 @@ impl Checker {
             SNode::Array { items, element } => {
                 self.array_literal(items, element.as_ref(), span, env, path, expected)
             }
+            SNode::Tuple { items, frozen } => {
+                self.tuple_literal(items, *frozen, span, env, path, expected)
+            }
+            SNode::TupleIndex { object, index } => {
+                self.tuple_index(object, *index, span, env, path)
+            }
             SNode::Index { object, index } => self.index(object, index, span, env, path),
             SNode::Math { op, name, args } => self.math(op, name, args, span, env, path),
             other => Err(type_error(

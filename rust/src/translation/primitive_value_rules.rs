@@ -129,6 +129,16 @@ pub fn accept_object_freeze_operand(expression: String, readonly_literal: bool) 
     ((expression == "ctorObject") || ((expression == "array") && readonly_literal))
 }
 
+pub fn accept_immutable_product_kind(kind: String) -> bool {
+    (((((kind == "bool") || (kind == "float")) || (kind == "fixed")) || (kind == "unit"))
+        || (kind == "tuple"))
+}
+
+pub fn accept_tuple_index(index: f64, length: f64) -> bool {
+    ((((index >= (0f64)) && (index <= (9007199254740991f64))) && ((index % 1f64) == (0f64)))
+        && (index < length))
+}
+
 fn ml_main() {}
 
 // Deep recursion in the source is not bounded by a small native stack.
