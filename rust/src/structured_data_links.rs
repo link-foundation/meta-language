@@ -611,7 +611,7 @@ fn preflight_statement(node: &LiNo<String>) -> Result<LinkId, String> {
     let mut metadata = None;
     for child in values {
         match child {
-            LiNo::Ref(_) if metadata.is_none() => {
+            LiNo::Ref(_) => {
                 link_id(child)?;
             }
             LiNo::Link {
@@ -669,8 +669,9 @@ pub fn read_structured_data_lino_ordered_with_limits(
     if text.len() > limits.byte_limit {
         return Err(fail("the text exceeds its resource limit"));
     }
-    let nodes = parse_lino_to_links_with_config(text, &ParserConfig::without_comments())
-        .map_err(|error| fail(&error.to_string()))?;
+    let nodes =
+        parse_lino_to_links_with_config(text, &ParserConfig::without_comments().with_max_depth(8))
+            .map_err(|error| fail(&error.to_string()))?;
     if nodes.len() > limits.node_limit {
         return Err(fail("the network exceeds its resource limit"));
     }
