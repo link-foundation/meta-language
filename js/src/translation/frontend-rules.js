@@ -532,3 +532,21 @@ export function readRustNumberBounds(units, start) {
   if (at - suffix === 3 && units[suffix] === 102 && ((units[suffix + 1] === 51 && units[suffix + 2] === 50) || (units[suffix + 1] === 54 && units[suffix + 2] === 52))) floating = true;
   return [at, suffix, floating ? 1 : 0];
 }
+
+/**
+ * Read the shape of a fixed lexical expression: leaf, list, wrapper, or none.
+ * References and stateful operations deliberately have no cacheable form.
+ * @param {string} kind
+ * @returns {number}
+ */
+export function readLexicalCacheExpressionForm(kind) {
+  if (kind === 'empty' || kind === 'literal' || kind === 'literalInsensitive'
+    || kind === 'charRange' || kind === 'charClass' || kind === 'byteClass'
+    || kind === 'any' || kind === 'regex') return 1;
+  if (kind === 'seq' || kind === 'choice' || kind === 'longest') return 2;
+  if (kind === 'optional' || kind === 'repeat0' || kind === 'repeat1' || kind === 'repeat'
+    || kind === 'and' || kind === 'not' || kind === 'capture' || kind === 'alias'
+    || kind === 'precedence' || kind === 'namedPrecedence' || kind === 'dynamicPrecedence'
+    || kind === 'lexicalPrecedence' || kind === 'token' || kind === 'immediateToken') return 3;
+  return 0;
+}
