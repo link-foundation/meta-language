@@ -1,6 +1,6 @@
 // The dependency inventory of docs/vision.md#dependencies: every retained
 // runtime, development, build and optional dependency, lockfile resolution,
-// vendored grammar asset, generator, toolchain, workflow action, build image
+// downloaded grammar asset, generator, toolchain, workflow action, build image
 // and published artifact entry, each with its current stable release on the
 // recorded audit date (requirement I195-DEPENDENCY-INVENTORY).
 //
@@ -16,6 +16,8 @@ import path from 'node:path';
 
 import { compareVersions, isPrerelease, newestStable, satisfies, versionParts } from './semver-range.mjs';
 import { grammarFile } from './grammar-files.mjs';
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
+import { collectGrammarAssetDependencies, relocatedGrammarDependency } from './dependency-grammar-assets.mjs';
 
 export const INVENTORY_FILE = 'parity/dependency-inventory.json';
 export const AUDIT_DOCUMENT = 'docs/dependency-audit.md';
@@ -27,9 +29,9 @@ export const CATEGORIES = [
   { id: 'setting', title: 'Rust package settings' },
   { id: 'crate', title: 'Rust crates' },
   { id: 'experiment', title: 'Experiment manifests' },
-  { id: 'vendored-parser', title: 'Vendored generated parsers' },
+  { id: 'downloaded-parser', title: 'Downloaded generated parser sources' },
   { id: 'vendored-runtime', title: 'Vendored runtime' },
-  { id: 'vendored-grammar', title: 'Vendored WebAssembly grammars' },
+  { id: 'downloaded-grammar', title: 'Downloaded WebAssembly grammars' },
   { id: 'generator', title: 'Generators' },
   { id: 'toolchain', title: 'Toolchains and tools' },
   { id: 'action', title: 'GitHub Actions' },
@@ -54,7 +56,8 @@ const WORKFLOWS = '.github/workflows';
 const PLACEHOLDER_REASON = /no recorded compatibility reason|must be updated|\bTODO\b|\bTBD\b|^\s*$/iu;
 
 const readText = (root, file) => readFileSync(path.join(root, file), 'utf8');
-const readJson = (root, file) => JSON.parse(readText(root, file));
+const readJson = (root, file) => readProjectData(path.join(root, file),
+  /(?:^|\/)(?:package|package-lock)\.json$/u.test(file) ? { format: 'json' } : undefined);
 const unique = (values) => [...new Set(values)].sort();
 
 function itemId({ category, scope, name, pinned }) {
@@ -299,64 +302,22 @@ const leanItem = (file, pinned) => ({
   source: { type: 'github-release', repository: 'leanprover/lean4' },
 });
 
-function collectVendored(root, items) {
-  const grammarLockFile = 'js/src/vendor/grammars/grammar-lock.json';
-  const runtimeLockFile = 'js/src/vendor/web-tree-sitter/runtime-lock.json';
-  const grammarLock = readJson(root, grammarLockFile);
-  const cli = versionParts(grammarLock.treeSitterCli) ? grammarLock.treeSitterCli.match(/\d+\.\d+\.\d+/u)[0] : grammarLock.treeSitterCli;
-  const cliItem = addItem(items, {
-    category: 'toolchain',
-    name: 'tree-sitter-cli',
-    declaredIn: [grammarLockFile, 'rust/src/data/grammar-lock.json'],
-    pinned: cli,
-    compare: 'version',
-    source: { type: 'npm', package: 'tree-sitter-cli' },
-  });
+function collectExternalGrammarDependencies(root, items) {
+  const resolved = (file) => path.relative(root, resolveProjectDataPath(path.join(root, file))).split(path.sep).join('/');
+  const grammarLockLogicalFile = 'js/src/vendor/grammars/grammar-lock.json';
+  const runtimeLockLogicalFile = 'js/src/vendor/web-tree-sitter/runtime-lock.json';
+  const grammarLockFile = resolved(grammarLockLogicalFile);
+  const runtimeLockFile = resolved(runtimeLockLogicalFile);
   const crateItems = [...items.values()].filter((item) => item.category === 'crate' && item.scope === 'rust/Cargo.lock');
-  for (const [id, grammar] of Object.entries(grammarLock.grammars).sort(([a], [b]) => a.localeCompare(b))) {
-    let parent;
-    if (grammar.vendored) {
-      parent = addItem(items, {
-        category: 'vendored-parser',
-        name: grammar.vendored,
-        declaredIn: [grammarLockFile, `${grammar.vendored}/NOTICE.md`],
-        pinned: grammar.version,
-        compare: 'revision',
-        source: { type: 'github-revision', repository: grammar.upstream },
-        ...(grammar.patch ? { patch: grammar.patch } : {}),
-      });
-    } else {
-      parent = crateItems.find((item) => item.name === grammar.crate && item.pinned === grammar.version);
-      if (!parent) throw new Error(`grammar ${id} names ${grammar.crate} ${grammar.version}, which rust/Cargo.lock does not lock`);
-    }
-    addItem(items, {
-      category: 'vendored-grammar',
-      name: grammarFile(grammar, `${id}.wasm.gz`),
-      declaredIn: grammarLockFile,
-      pinned: grammar.version,
-      compare: 'derived',
-      source: { type: 'none' },
-      dependsOn: [parent.id, cliItem.id],
-    });
-  }
-  const runtimeLock = readJson(root, runtimeLockFile);
-  const image = addItem(items, {
-    category: 'image',
-    name: 'emscripten/emsdk',
-    declaredIn: [runtimeLockFile, 'js/scripts/build-web-tree-sitter-runtime.mjs'],
-    pinned: runtimeLock.emscripten,
-    compare: 'version',
-    source: { type: 'docker-hub', repository: 'emscripten/emsdk' },
-  });
-  addItem(items, {
-    category: 'vendored-runtime',
-    name: 'js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz',
-    declaredIn: runtimeLockFile,
-    pinned: runtimeLock.version,
-    compare: 'version',
-    source: { type: 'github-release', repository: runtimeLock.upstream },
-    dependsOn: [image.id],
-    ...(runtimeLock.patch ? { patch: runtimeLock.patch } : {}),
+  collectGrammarAssetDependencies({
+    grammarLock: readJson(root, grammarLockLogicalFile),
+    runtimeLock: readJson(root, runtimeLockLogicalFile),
+    grammarLockFile,
+    rustGrammarLockFile: resolved('rust/src/data/grammar-lock.json'),
+    runtimeLockFile,
+    crateItems,
+    grammarFile,
+    addItem: (fields) => addItem(items, fields),
   });
 }
 
@@ -528,7 +489,7 @@ export function collectDependencies(root) {
   for (const manifest of trackedFiles(root, 'rust/oracles', /^Cargo\.toml$/u)) collectCargo(root, items, manifest, 'rust/Cargo.lock');
   collectExperiments(root, items);
   collectLeanToolchains(root, items);
-  collectVendored(root, items);
+  collectExternalGrammarDependencies(root, items);
   collectGenerators(root, items);
   collectWorkflows(root, items);
   collectPreCommit(root, items);
@@ -678,13 +639,15 @@ export function deliveredStatuses(items) {
 
 // --- Check ----------------------------------------------------------------
 
-const COLLECTED_FIELDS = ['category', 'name', 'scope', 'declaredIn', 'pinned', 'compare', 'source', 'role', 'kind', 'requirement', 'patch'];
+const COLLECTED_FIELDS = ['category', 'name', 'scope', 'declaredIn', 'pinned', 'compare', 'source', 'role', 'kind', 'requirement', 'patch', 'aliases', 'provenance'];
 
 /** Reconcile repository-owned declarations without changing registry audit evidence. */
 export function reconcileLocalDeclarations(inventory, collected) {
   const previous = new Map(inventory.items.map((item) => [item.id, item]));
+  const relocated = new Map(collected.map((item) => [item.id, previous.get(item.id) ?? relocatedGrammarDependency(item, previous)]));
+  const identities = new Map([...relocated].filter(([, old]) => old).map(([id, old]) => [old.id, id]));
   const items = collected.map((item) => {
-    const old = previous.get(item.id);
+    const old = relocated.get(item.id);
     if (old && JSON.stringify(old.source) !== JSON.stringify(item.source)) {
       throw new Error(`${item.id}: the release source changed; run a live dependency refresh`);
     }
@@ -697,6 +660,8 @@ export function reconcileLocalDeclarations(inventory, collected) {
       else entry[field] = item[field];
     }
     entry.id = item.id;
+    if (item.dependsOn) entry.dependsOn = item.dependsOn;
+    else if (entry.dependsOn) entry.dependsOn = entry.dependsOn.map((id) => identities.get(id) ?? id);
     if (!old && item.source.type === 'rust-edition') {
       entry.current = RUST_EDITIONS.at(-1);
       entry.evidence = 'Rust editions, the newest stable edition';
@@ -1173,15 +1138,19 @@ export function cargoDependents(metadata) {
  */
 export async function refreshInventory({ root, previous, collected, resolvers, cargoMetadata, today, onProgress = () => {} }) {
   const prior = new Map((previous?.items ?? []).map((item) => [item.id, item]));
+  const relocations = new Map(collected.flatMap((item) => {
+    const old = relocatedGrammarDependency(item, prior);
+    return old ? [[old.id, item.id]] : [];
+  }));
   const nameKey = (item) => `${item.category} ${item.scope ?? ''} ${item.name}`;
   const priorByName = new Map((previous?.items ?? []).map((item) => [nameKey(item), item]));
   // A generator names the tools it runs by id, and an id carries the pin: follow a tool to its new pin.
   const collectedByName = new Map(collected.map((item) => [nameKey(item), item]));
-  const followPin = (id) => (prior.has(id) ? (collectedByName.get(nameKey(prior.get(id)))?.id ?? id) : id);
+  const followPin = (id) => relocations.get(id) ?? (prior.has(id) ? (collectedByName.get(nameKey(prior.get(id)))?.id ?? id) : id);
   let done = 0;
   const releases = new Map();
   const items = await mapLimit(collected, 16, async (item) => {
-    const before = prior.get(item.id) ?? priorByName.get(nameKey(item));
+    const before = prior.get(item.id) ?? priorByName.get(nameKey(item)) ?? relocatedGrammarDependency(item, prior);
     const resolver = resolvers[item.source.type];
     if (!resolver && item.source.type !== 'rust-required') throw new Error(`${item.id}: no resolver for ${item.source.type}`);
     const { versions, ...resolved } = item.source.type === 'rust-required' ? requiredRustVersion(cargoMetadata(item.source.manifest)) : await resolver(item.source, item);

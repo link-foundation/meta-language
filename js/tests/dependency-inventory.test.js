@@ -1,5 +1,5 @@
 // The dependency inventory: every dependency, toolchain, action, image and
-// vendored asset the repository declares is in parity/dependency-inventory.json
+// downloaded asset the repository declares is in the dependency inventory
 // with its current stable release, the audit is dated, and a retained item
 // behind that release without a recorded compatibility reason fails the check
 // (requirement I195-DEPENDENCY-INVENTORY).
@@ -25,11 +25,12 @@ import {
   renderAuditDocument,
   statuses,
 } from '../scripts/dependency-inventory.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const REQUIREMENT = 'I195-DEPENDENCY-INVENTORY';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const inventory = JSON.parse(readFileSync(path.join(root, INVENTORY_FILE), 'utf8'));
+const inventory = readProjectData(path.join(root, INVENTORY_FILE));
 const TODAY = '2026-09-29';
 
 function observe(assertions, testName) {

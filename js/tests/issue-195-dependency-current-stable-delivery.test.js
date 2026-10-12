@@ -24,13 +24,16 @@ import {
   parseCargoLock,
 } from '../scripts/dependency-inventory.mjs';
 import { grammarFile } from '../scripts/grammar-files.mjs';
+import { externalGrammarPath } from '../scripts/external-grammar-cache.mjs';
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import { compareVersions, isPrerelease, satisfies } from '../scripts/semver-range.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const REQUIREMENT = 'I195-DEPENDENCY-CURRENT-STABLE-DELIVERY';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
-const readJson = (file) => JSON.parse(read(file));
+const readJson = (file) => readProjectData(path.join(root, file),
+  /(?:^|\/)(?:package|package-lock)\.json$/u.test(file) ? { format: 'json' } : undefined);
 const inventory = readJson(INVENTORY_FILE);
 const byId = new Map(inventory.items.map((item) => [item.id, item]));
 const verdicts = deliveredStatuses(inventory.items);
@@ -224,7 +227,8 @@ test('version-coupled artifacts are regenerated from the delivered pins', () => 
   const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
   const crates = new Map(inventory.items.filter(({ scope }) => scope === 'rust/Cargo.lock').map((entry) => [entry.name, entry]));
   const lock = readJson('rust/src/data/grammar-lock.json');
-  assert.equal(read('js/src/vendor/grammars/grammar-lock.json'), read('rust/src/data/grammar-lock.json'), 'both runtimes ship one grammar lock');
+  assert.equal(readFileSync(resolveProjectDataPath(path.join(root, 'js/src/vendor/grammars/grammar-lock.json')), 'utf8'),
+    readFileSync(resolveProjectDataPath(path.join(root, 'rust/src/data/grammar-lock.json')), 'utf8'), 'both runtimes ship one grammar lock');
   const cli = item(inventory.items, ({ category, name }) => category === 'toolchain' && name === 'tree-sitter-cli', 'the tree-sitter CLI');
   const runtime = item(inventory.items, ({ category, source }) => category === 'npm' && source.package === 'web-tree-sitter', 'web-tree-sitter');
   const binding = crates.get('tree-sitter');
@@ -234,14 +238,16 @@ test('version-coupled artifacts are regenerated from the delivered pins', () => 
   const grammars = Object.values(lock.grammars);
   assert.equal(grammars.length > 0, true);
   for (const grammar of grammars) {
-    const vendored = item(inventory.items, ({ category, name }) => category === 'vendored-grammar' && name === grammarFile(grammar, `${grammar.id}.wasm.gz`), `the ${grammar.id} grammar build`);
-    assert.equal(vendored.pinned, grammar.version);
-    const source = grammar.crate ? crates.get(grammar.crate) : byId.get(vendored.dependsOn.find((id) => id.startsWith(`vendored-parser ${grammar.vendored}@`)));
+    const downloaded = item(inventory.items, ({ category, name }) => category === 'downloaded-grammar' && name === grammarFile(grammar, `${grammar.id}.wasm.gz`), `the ${grammar.id} grammar build`);
+    assert.equal(downloaded.pinned, grammar.version);
+    const source = grammar.crate ? crates.get(grammar.crate) : byId.get(downloaded.dependsOn.find((id) => byId.get(id)?.category === 'downloaded-parser'));
     assert.ok(source, `${grammar.id} is built from an inventoried source`);
     assert.equal(source.pinned, grammar.version, `${grammar.id} is built from the delivered ${source.id}`);
-    assert.deepEqual([...vendored.dependsOn].sort(), [source.id, cli.id].sort());
-    assert.equal(verdicts.get(vendored.id).status, 'current', `${vendored.id}: ${verdicts.get(vendored.id).cause}`);
-    const wasm = gunzipSync(readFileSync(path.join(root, grammarFile(grammar, `${grammar.id}.wasm.gz`))));
+    assert.deepEqual([...downloaded.dependsOn].sort(), [source.id, cli.id].sort());
+    assert.equal(verdicts.get(downloaded.id).status, 'current', `${downloaded.id}: ${verdicts.get(downloaded.id).cause}`);
+    assert.equal(downloaded.provenance.parserSha256, grammar.parserSha256);
+    assert.equal(downloaded.provenance.wasmSha256, grammar.wasmSha256);
+    const wasm = gunzipSync(readFileSync(externalGrammarPath(grammarFile(grammar, `${grammar.id}.wasm.gz`))));
     assert.equal(sha256(wasm), grammar.wasmSha256, `${grammar.id}.wasm.gz is the recorded build`);
   }
   const runtimeLock = readJson('js/src/vendor/web-tree-sitter/runtime-lock.json');
