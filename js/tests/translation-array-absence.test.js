@@ -53,3 +53,12 @@ test('nullable computed indices retain missing property keys rather than coercin
     assert.equal(result.semantics.assumptions.some(({ id }) => id === 'in-bounds-array-reads'), false, target);
   }
 });
+
+test('nullable format directives remain explicit until their source conversions are modeled', () => {
+  for (const directive of ['%d', '%i']) {
+    const source = `/** @param {(number|null)[]} values */ function print(values) { console.log('${directive}', values[0]); }\n`;
+    assert.match(translateProgram(source, 'JavaScript', 'Rust').diagnostic?.message ?? '', /^numeric format of a nullable value:/u);
+  }
+  const source = '/** @param {string[]} values */ function print(values) { console.log(values[0], 4); }\n';
+  assert.match(translateProgram(source, 'JavaScript', 'Rust').diagnostic?.message ?? '', /^console.log with a computed first string:/u);
+});

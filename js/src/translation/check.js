@@ -271,6 +271,8 @@ class Checker {
     const bigint = value.type.kind === 'int' || value.type.kind === 'nat';
     if (value.type.kind === 'option') {
       if (!primitiveKey(value.type.element)) throw unsupported('output of nullable structured values', 'this output needs its source structured-value formatter', expr.span);
+      if (style === 'js-format-first' && value.type.element.kind === 'string') throw unsupported('console.log with a computed first string', 'util.format reads the % directives of a first string argument, which only the run knows; pass a literal format string, or print one template literal', expr.span);
+      if (style === 'js-format-number' || style === 'js-format-integer') throw unsupported('numeric format of a nullable value', 'the format directive converts each absent value before printing; this conversion needs its own operational formatter', expr.span);
       return { k: 'optionalText', arg: value, console: CONSOLE_STYLES.has(style), type: STRING };
     }
     if (style === 'js-format-first' && value.type.kind === 'string') {
@@ -947,7 +949,10 @@ class Checker {
         throw unsupported('string conversion of structured values', `String(${typeKey(checked.type)}) has no portable textual form`, surface.span);
       }
       if (checked.type.kind === 'array') throw arrayText(surface.span);
-      if (checked.type.kind === 'option') return { k: 'optionalText', arg: checked, console: false, type: STRING };
+      if (checked.type.kind === 'option') {
+        if (!primitiveKey(checked.type.element)) throw unsupported('string conversion of nullable structured values', 'this conversion needs its source structured-value formatter', surface.span);
+        return { k: 'optionalText', arg: checked, console: false, type: STRING };
+      }
       return { k: 'toString', arg: checked, type: STRING };
     };
     return { k: 'binary', op: 'concat', left: text(left, node.left), right: text(right, node.right), type: STRING };
