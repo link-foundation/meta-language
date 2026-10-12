@@ -9,6 +9,58 @@ use meta_language::structured_data_records::{
 use meta_language::{StructuredDataLinksLimits, StructuredDataValue};
 use serde_json::json;
 
+#[test]
+fn concurrent_native_record_appends_preserve_owned_namespaces() {
+    use std::io::Write;
+    use std::sync::{Arc, Barrier, Mutex};
+    let path = std::env::temp_dir().join(format!(
+        "meta-language-record-appends-{}-{}.lino",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos(),
+    ));
+    let file = Arc::new(Mutex::new(
+        std::fs::OpenOptions::new()
+            .create_new(true)
+            .append(true)
+            .open(&path)
+            .unwrap(),
+    ));
+    let barrier = Arc::new(Barrier::new(2));
+    let writers: Vec<_> = (1..=2)
+        .map(|writer| {
+            let file = Arc::clone(&file);
+            let barrier = Arc::clone(&barrier);
+            std::thread::spawn(move || {
+                let frame = meta_language::structured_data_records::structured_data_record_to_lino(
+                    &json!({ "writer": writer }),
+                )
+                .unwrap();
+                barrier.wait();
+                let written = file.lock().unwrap().write(frame.as_bytes()).unwrap();
+                assert_eq!(written, frame.len(), "one append writes the complete frame");
+            })
+        })
+        .collect();
+    for writer in writers {
+        writer.join().unwrap();
+    }
+    drop(file);
+    let source = std::fs::read_to_string(&path).unwrap();
+    let records =
+        meta_language::structured_data_records::read_structured_data_records(&source).unwrap();
+    let mut values: Vec<_> = records
+        .iter()
+        .map(|record| record["writer"].as_u64().unwrap())
+        .collect();
+    values.sort_unstable();
+    assert_eq!(values, vec![1, 2]);
+    assert_eq!(source.lines().count(), 2);
+    std::fs::remove_file(path).unwrap();
+}
+
 const FIRST: &str = "00000000-0000-4000-8000-000000000001";
 const SECOND: &str = "00000000-0000-4000-8000-000000000002";
 

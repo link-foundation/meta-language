@@ -56,3 +56,12 @@ test('concurrent atomic appends retain two complete records with identical local
     assert.equal(readStructuredDataRecords(readFileSync(file, 'utf8')).length, 3);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+
+test('incremental namespace bookkeeping rejects a third record before its callback', () => {
+  const third = '00000000-0000-4000-8000-000000000003';
+  const callbacks = [];
+  const reader = createStructuredDataRecordReader(value => callbacks.push(value), { nodeLimit: 2 });
+  const text = [first, second, third].map(namespace => structuredDataRecordToLino(null, namespace)).join('');
+  assert.throws(() => { reader.write(text); reader.end(); }, /namespace resource limit exceeded/u);
+  assert.deepEqual(callbacks, [null, null]);
+});
