@@ -74,6 +74,12 @@ jobs:
         run: node scripts/build-agda-layout-oracle.mjs
         working-directory: js
 
+      - name: Setup Rust for translation behavior and generated-code checks
+        if: matrix.group == 'translation'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
       # A short-lived, reproducible workspace snapshot makes parser failures
       # locally debuggable without changing the grammar assertions.
       - name: Pack issue 199 debugging workspace
@@ -94,6 +100,7 @@ jobs:
         env:
           TEST_GROUP: ${{ matrix.group }}
           TRANSLATION_CHECK_RUST: ${{ matrix.group == 'translation' && '1' || '0' }}
+          SELF_TRANSLATION_CHECK_RUST: ${{ matrix.group == 'translation' && '1' || '0' }}
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"
         working-directory: js
 
