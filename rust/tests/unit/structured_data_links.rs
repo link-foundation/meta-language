@@ -323,4 +323,38 @@ fn graph_decoder_checks_metadata_and_selected_root() {
     );
     assert!(decode_structured_data_links_ordered(&network, value).is_err());
     assert!(decode_structured_data_links_ordered(&network, LinkId::from_u64(99)).is_err());
+    let source = statement(1, "null value", None, &[])
+        + "(2: (meta: (t: semantic) (n: 1) (term: structured%20data) (def: 1) (lang: meta-language%20structured%20data)) 1)\n";
+    assert_eq!(
+        read_structured_data_lino(&source).unwrap(),
+        serde_json::Value::Null
+    );
+}
+
+#[test]
+fn a_shared_subtree_is_rechecked_at_its_deeper_occurrence() {
+    let mut network = LinkNetwork::new();
+    let scalar = network.insert_link([], metadata("number value", Some("0")));
+    let shared = network.insert_link([scalar], metadata("array value", None));
+    let nested = network.insert_link([shared], metadata("array value", None));
+    let body = network.insert_link([shared, nested], metadata("array value", None));
+    let root = network.insert_link([body], metadata("structured data", Some("1")));
+    let limits = StructuredDataLinksLimits {
+        depth_limit: 3,
+        ..StructuredDataLinksLimits::default()
+    };
+    assert!(decode_structured_data_links_ordered_with_limits(&network, root, limits).is_err());
+    let limits = StructuredDataLinksLimits {
+        depth_limit: 4,
+        ..StructuredDataLinksLimits::default()
+    };
+    assert_eq!(
+        decode_structured_data_links_ordered_with_limits(&network, root, limits).unwrap(),
+        StructuredDataValue::Array(vec![
+            StructuredDataValue::Array(vec![StructuredDataValue::Number(0.0)]),
+            StructuredDataValue::Array(vec![StructuredDataValue::Array(vec![
+                StructuredDataValue::Number(0.0)
+            ])])
+        ])
+    );
 }
