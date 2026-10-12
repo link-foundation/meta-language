@@ -414,7 +414,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'formal definition host inputs',
     files: ['rust/src/formal_concept_definition.rs'],
-    extract: (text) => captures(text, /^pub (?:struct|enum) (FormalConceptArchive|FormalConceptDefinitionInput)\b/gmu)
+    extract: (text) => captures(text, /^pub (?:struct|enum) (FormalConceptArchive|FormalConceptDefinitionInput|FormalConceptDefinitionOptions)\b/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
     recordOf: (name) => `grammar.${name}`,
   },

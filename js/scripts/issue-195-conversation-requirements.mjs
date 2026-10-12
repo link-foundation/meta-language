@@ -15,6 +15,9 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
   return declarations.map(([id, construct, expectedBehavior, assertions]) => ({
     id, construct, expectedBehavior, assertions, sourceKey, fixture,
     fixtureId: `conversation-contract:${sourceKey}`,
+    ...(area === 'formal-concept-definitions' ? {
+      additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
+    } : {}),
     specification, area,
     ...(tooling ? { tooling: null } : { javascript: null, rust: null }),
   }));

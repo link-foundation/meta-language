@@ -81380,6 +81380,23 @@
         }
       ],
       "formerNames": []
+    },
+    {
+      "id": "grammar.formal-concept-definition-options",
+      "phrase": "formal concept definition options",
+      "role": "concept",
+      "definition": "Typed host options selecting a supported formal primitive model and optional linked provenance.",
+      "constraints": [
+        "The model key selects an exact shared primitive declaration before definition validation.",
+        "Provenance remains linked data and is excluded from operational equality; it cannot authorize concept sharing."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust formal concept inputs",
+          "name": "FormalConceptDefinitionOptions"
+        }
+      ],
+      "formerNames": []
     }
   ]
 }

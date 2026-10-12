@@ -1594,6 +1594,11 @@
       "selector": "docs/vision.md#ontology-and-taxonomy-entry-points: multiple explicit taxonomy root links",
       "sha256": "9f3da6c4bb82037ed74abfaab89ffd4a7b47f1742106299610be81445a05fe13"
     },
+    "formal-concept-definitions": {
+      "path": "parity/fixtures/formal-concept-definitions.json",
+      "selector": "docs/vision.md#recursive-formal-concept-definitions: formal definitions as evidence of equal concept meaning",
+      "sha256": "32f41c00d45381cfe75d67e6f649f1245cb925f17c23e49ad5324673c5e1bd07"
+    },
     "conversation-contract:linksFoundationRequest": {
       "path": "parity/sources/links-foundation-and-fractal-motivation-2026-10-12.txt",
       "selector": "docs/vision.md#links-as-fundamental-entities-and-relationships: recorded wave and fractal motivation with an explicit epistemic boundary",
@@ -2077,12 +2082,12 @@
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "9095ebf6499f1af64fe3807e3da077bd3da1a25d14457e64809f467674aecd3d"
+      "sha256": "6ed5d7009bde3508b35426be7183fe8b21969769cdd3db6e7bc9fc6e3dc7e86e"
     },
     "planned:repository-directive:i195-naming-concept-records": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "9095ebf6499f1af64fe3807e3da077bd3da1a25d14457e64809f467674aecd3d"
+      "sha256": "6ed5d7009bde3508b35426be7183fe8b21969769cdd3db6e7bc9fc6e3dc7e86e"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -2092,7 +2097,7 @@
     "planned:repository-directive:i195-naming-native-grammars": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: readable English rule names in the native grammars",
-      "sha256": "9095ebf6499f1af64fe3807e3da077bd3da1a25d14457e64809f467674aecd3d"
+      "sha256": "6ed5d7009bde3508b35426be7183fe8b21969769cdd3db6e7bc9fc6e3dc7e86e"
     },
     "planned:repository-directive:i195-semantics-construct-inventory": {
       "path": "parity/fixtures/four-language-conformance.json",
@@ -19440,7 +19445,8 @@
           "kind": "positive",
           "checkpoint": "pre-merge",
           "fixtureIds": [
-            "conversation-contract:recursiveDefinitionsRequest"
+            "conversation-contract:recursiveDefinitionsRequest",
+            "formal-concept-definitions"
           ],
           "assertions": [
             "everyConceptFormallyDefined",
@@ -19455,7 +19461,8 @@
           "kind": "positive",
           "checkpoint": "pre-merge",
           "fixtureIds": [
-            "conversation-contract:recursiveDefinitionsRequest"
+            "conversation-contract:recursiveDefinitionsRequest",
+            "formal-concept-definitions"
           ],
           "assertions": [
             "everyConceptFormallyDefined",
@@ -19468,6 +19475,7 @@
       "traceability": {
         "specification": "docs/vision.md#recursive-formal-concept-definitions",
         "inventories": [
+          "parity/fixtures/formal-concept-definitions.json",
           "parity/sources/recursive-formal-definitions-2026-10-12.txt"
         ],
         "sources": [
@@ -19525,7 +19533,8 @@
           "kind": "positive",
           "checkpoint": "pre-merge",
           "fixtureIds": [
-            "conversation-contract:recursiveDefinitionsRequest"
+            "conversation-contract:recursiveDefinitionsRequest",
+            "formal-concept-definitions"
           ],
           "assertions": [
             "formalDefinitionsCompared",
@@ -19540,7 +19549,8 @@
           "kind": "positive",
           "checkpoint": "pre-merge",
           "fixtureIds": [
-            "conversation-contract:recursiveDefinitionsRequest"
+            "conversation-contract:recursiveDefinitionsRequest",
+            "formal-concept-definitions"
           ],
           "assertions": [
             "formalDefinitionsCompared",
@@ -19553,6 +19563,7 @@
       "traceability": {
         "specification": "docs/vision.md#recursive-formal-concept-definitions",
         "inventories": [
+          "parity/fixtures/formal-concept-definitions.json",
           "parity/sources/recursive-formal-definitions-2026-10-12.txt"
         ],
         "sources": [
@@ -19610,7 +19621,8 @@
           "kind": "positive",
           "checkpoint": "pre-merge",
           "fixtureIds": [
-            "conversation-contract:recursiveDefinitionsRequest"
+            "conversation-contract:recursiveDefinitionsRequest",
+            "formal-concept-definitions"
           ],
           "assertions": [
             "recursiveConceptReferencesPreserved",
@@ -19625,7 +19637,8 @@
           "kind": "positive",
           "checkpoint": "pre-merge",
           "fixtureIds": [
-            "conversation-contract:recursiveDefinitionsRequest"
+            "conversation-contract:recursiveDefinitionsRequest",
+            "formal-concept-definitions"
           ],
           "assertions": [
             "recursiveConceptReferencesPreserved",
@@ -19638,6 +19651,7 @@
       "traceability": {
         "specification": "docs/vision.md#recursive-formal-concept-definitions",
         "inventories": [
+          "parity/fixtures/formal-concept-definitions.json",
           "parity/sources/recursive-formal-definitions-2026-10-12.txt"
         ],
         "sources": [

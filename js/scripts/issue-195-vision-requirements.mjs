@@ -2003,6 +2003,11 @@ export function buildVisionRequirements(fixtureCatalog, { requirement, verificat
     fixtureCatalog[fixtureId] = row.fixture
       ? pinnedFixture(row.fixture, `${VISION_SPECIFICATION}#${row.specification}: ${row.construct}`)
       : pinnedFixture(VISION_SPECIFICATION, `#${row.specification}: ${row.construct}`);
+    const fixtureIds = [fixtureId];
+    for (const fixture of row.additionalFixtures ?? []) {
+      fixtureCatalog[fixture.id] = pinnedFixture(fixture.path, `${VISION_SPECIFICATION}#${row.specification}: ${row.construct}`);
+      fixtureIds.push(fixture.id);
+    }
     const requiredRuntimes = RUNTIMES.filter((runtime) => runtime in row);
     return requirement({
       id: row.id,
@@ -2022,7 +2027,7 @@ export function buildVisionRequirements(fixtureCatalog, { requirement, verificat
           requirementId: row.id,
           runtime,
           suffix: row.checkpoint === 'release-delivery' ? 'published' : 'behavior',
-          fixtureIds: [fixtureId],
+          fixtureIds,
           assertions: row.assertions,
           checkpoint: row.checkpoint ?? 'pre-merge',
         })),
