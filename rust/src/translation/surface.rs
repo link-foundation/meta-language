@@ -317,6 +317,13 @@ pub enum SNode {
         items: Vec<SExpr>,
         #[serde(default, skip_serializing_if = "is_false")]
         frozen: bool,
+        #[serde(
+            rename = "productModel",
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "super::types::deserialize_tuple_product_model"
+        )]
+        product_model: Option<String>,
     },
     /// A constant positional projection, distinct from array indexing.
     TupleIndex {

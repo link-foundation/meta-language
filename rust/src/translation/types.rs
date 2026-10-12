@@ -24,6 +24,13 @@ const fn is_false(value: &bool) -> bool {
     !*value
 }
 
+/// A present product model must be a string; null cannot erase its semantics.
+pub(crate) fn deserialize_tuple_product_model<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<std::string::String>, D::Error> {
+    std::string::String::deserialize(deserializer).map(Some)
+}
+
 /// One named field of a structural record.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TypeField {

@@ -14,7 +14,7 @@ fn immutable_product_value(value: &Expr, bindings: &HashMap<String, bool>) -> bo
         return true;
     }
     match &value.node {
-        Node::Tuple { items, frozen } => {
+        Node::Tuple { items, frozen, .. } => {
             *frozen
                 && items
                     .iter()
@@ -67,6 +67,7 @@ impl Checker {
                 Node::Tuple {
                     items: values,
                     frozen: false,
+                    product_model: None,
                 },
                 ty.clone(),
             ));
@@ -217,6 +218,7 @@ impl Checker {
             Node::Tuple {
                 items: values,
                 frozen,
+                product_model: None,
             },
             ty,
         ))

@@ -182,9 +182,14 @@ impl Expr {
             Node::Array { items } => Node::Array {
                 items: items.iter().map(&mut *visit).collect(),
             },
-            Node::Tuple { items, frozen } => Node::Tuple {
+            Node::Tuple {
+                items,
+                frozen,
+                product_model,
+            } => Node::Tuple {
                 items: items.iter().map(&mut *visit).collect(),
                 frozen: *frozen,
+                product_model: product_model.clone(),
             },
             Node::TupleIndex { object, index } => Node::TupleIndex {
                 object: Box::new(visit(object)),
@@ -420,6 +425,13 @@ pub enum Node {
         items: Vec<Expr>,
         #[serde(default, skip_serializing_if = "is_false")]
         frozen: bool,
+        #[serde(
+            rename = "productModel",
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "super::types::deserialize_tuple_product_model"
+        )]
+        product_model: Option<String>,
     },
     /// A constant projection from a positional product.
     TupleIndex {

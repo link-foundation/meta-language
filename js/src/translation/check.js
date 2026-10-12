@@ -11,6 +11,7 @@ import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
 import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation } from './primitive-value-rules.js';
 import { acceptOptionalAbsence } from './structured-type-rules.js';
+import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
 } from './types.js';
@@ -482,6 +483,7 @@ class Checker {
         return this.arrayLiteral(node, env, path, expected);
       case 'tuple': {
         if (node.frozen !== undefined && typeof node.frozen !== 'boolean') throw typeError('tuple frozen facet must be a boolean', node.span);
+        if (node.productModel !== undefined && !acceptProgramTupleProductModel(node.productModel, node.frozen === true)) throw typeError('unknown or contradictory tuple product model', node.span);
         if (node.frozen && node.items.length === 0) throw unsupported('empty immutable tuple product', 'an empty positional product is distinct from a unit value and needs its own target encoding', node.span);
         if (expected && expected.kind !== 'tuple') throw typeError(`tuple literal where ${typeKey(expected)} is expected`, node.span);
         if (expected && node.items.length !== expected.elements.length) throw typeError('tuple literal has the wrong number of elements', node.span);
@@ -494,7 +496,7 @@ class Checker {
         if (node.frozen && (!immutableProductType(type) || items.some(item => !immutableProductValue(item)))) {
           throw unsupported('immutable tuple product', 'every element needs the recursive scalar Copy value model; a mutable inner tuple cannot be frozen by its outer product', node.span);
         }
-        return { k: 'tuple', items, ...(node.frozen && { frozen: true }), type };
+        return { k: 'tuple', items, ...(node.frozen && { frozen: true }), ...(node.productModel !== undefined && { productModel: node.productModel }), type };
       }
       case 'tupleIndex': {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));

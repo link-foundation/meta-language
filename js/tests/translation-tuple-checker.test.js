@@ -56,6 +56,22 @@ test('tuple indices are safe nonnegative integers in range, with no array coerci
   assert.throws(() => checked({ k: 'index', object, index: { k: 'num', value: '1', negative: true } }, FLOAT), /tuple index out of range/);
 });
 
+test('selected product models survive checking and refuse contradictory facet edits independently of legacy tuples', () => {
+  const type = tuple([FLOAT, BOOL]);
+  const model = 'immutable value product';
+  const selected = { ...product([number(5), { k: 'bool', value: true }]), productModel: model };
+  assert.equal(checked(selected, type).productModel, model);
+  assert.equal(renameExpr(checked(selected, type), new Map(), new Scope(name => name)).productModel, model);
+  assert.throws(() => checked({ ...selected, frozen: false }, type), /contradictory tuple product model/);
+  assert.throws(() => checked({ ...selected, productModel: 'another value model' }, type), /unknown or contradictory/);
+  assert.throws(() => checked({ ...selected, productModel: null }, type), /unknown or contradictory/);
+  const honestEdit = { ...selected, frozen: false };
+  delete honestEdit.productModel;
+  const ordinary = checked(honestEdit, type);
+  assert.equal(Object.hasOwn(ordinary, 'productModel'), false);
+  assert.equal(Object.hasOwn(ordinary, 'frozen'), false);
+});
+
 test('nested product value proofs follow owned bindings and both branches rather than trusting tuple types', () => {
   const type = tuple([tuple([FLOAT])]);
   const inner = frozen => product([number(5)], frozen);

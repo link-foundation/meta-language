@@ -8,6 +8,7 @@ use super::{
     negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
 };
 use crate::translation::frontend_rules::accept_argument_count;
+use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
 
 impl Checker {
     pub(super) fn coerce(&self, value: Expr, ty: &Type, span: Option<Span>) -> Result<Expr> {
@@ -371,8 +372,29 @@ impl Checker {
             SNode::Array { items, element } => {
                 self.array_literal(items, element.as_ref(), span, env, path, expected)
             }
-            SNode::Tuple { items, frozen } => {
-                self.tuple_literal(items, *frozen, span, env, path, expected)
+            SNode::Tuple {
+                items,
+                frozen,
+                product_model,
+            } => {
+                if product_model
+                    .as_ref()
+                    .is_some_and(|model| !accept_program_tuple_product_model(model, *frozen))
+                {
+                    return Err(type_error(
+                        "unknown or contradictory tuple product model",
+                        span,
+                    ));
+                }
+                let mut value = self.tuple_literal(items, *frozen, span, env, path, expected)?;
+                if let Node::Tuple {
+                    product_model: checked_model,
+                    ..
+                } = &mut value.node
+                {
+                    *checked_model = product_model.clone();
+                }
+                Ok(value)
             }
             SNode::TupleIndex { object, index } => {
                 self.tuple_index(object, *index, span, env, path)

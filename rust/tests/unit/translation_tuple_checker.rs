@@ -39,7 +39,7 @@ fn product() -> Value {
 fn positional_products_preserve_types_and_safe_constant_projection() {
     let ret = json!({"kind": "tuple", "elements": [{"kind": "float"}, {"kind": "bool"}]});
     let expression = checked(product(), ret).unwrap();
-    let Node::Tuple { items, frozen } = &expression.node else {
+    let Node::Tuple { items, frozen, .. } = &expression.node else {
         panic!("not a product")
     };
     assert!(*frozen);
@@ -74,6 +74,32 @@ fn positional_products_preserve_types_and_safe_constant_projection() {
         .immutable_product_type()
     );
     assert_ne!(Type::Tuple { elements: vec![] }.key(), Type::Unit.key());
+}
+
+#[test]
+fn selected_product_model_is_retained_and_refuses_a_contradictory_freeze_edit() {
+    let ty = json!({"kind": "tuple", "elements": [{"kind": "float"}, {"kind": "bool"}]});
+    let mut source = product();
+    source["productModel"] = json!("immutable value product");
+    let expression = checked(source.clone(), ty.clone()).unwrap();
+    assert_eq!(
+        serde_json::to_value(&expression).unwrap()["productModel"],
+        "immutable value product"
+    );
+    assert_eq!(expression.map_children(&mut Clone::clone), expression);
+    assert!(
+        matches!(&expression.node, Node::Tuple { product_model: Some(model), .. } if model == "immutable value product")
+    );
+    let round_trip: meta_language::translation::ir::Expr =
+        serde_json::from_value(serde_json::to_value(&expression).unwrap()).unwrap();
+    assert_eq!(round_trip, expression);
+    source["frozen"] = json!(false);
+    assert!(checked(source.clone(), ty.clone()).is_err());
+    source.as_object_mut().unwrap().remove("productModel");
+    assert!(checked(source, ty).is_ok());
+    let mut malformed = serde_json::to_value(expression).unwrap();
+    malformed["productModel"] = Value::Null;
+    assert!(serde_json::from_value::<meta_language::translation::ir::Expr>(malformed).is_err());
 }
 
 #[test]
