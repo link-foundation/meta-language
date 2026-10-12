@@ -30,7 +30,7 @@ import { createGlobalConceptSpace, globalConceptSpaceToLinks } from '../src/glob
 import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
 import { readProjectData } from './project-data.mjs';
 import { readGrammarLicense } from './grammar-files.mjs';
-import { writeGrammarReport } from './grammar-report-files.mjs';
+import { readGrammarReport, writeGrammarReport } from './grammar-report-files.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
@@ -563,7 +563,7 @@ function option(args, name, fallback) {
 
 async function main(args) {
   const definitionsFile = option(args, '--formal-definitions', null);
-  const formalDefinitions = definitionsFile === null ? undefined : readProjectData(resolve(definitionsFile));
+  const formalDefinitions = definitionsFile === null ? undefined : readGrammarReport(resolve(definitionsFile));
   const worker = option(args, '--worker', null);
   if (worker) {
     const entry = bulkLanguages().find(({ name }) => name === worker);
@@ -580,7 +580,7 @@ async function main(args) {
     jobs: Number(option(args, '--jobs', 2)),
     timeout: Number(option(args, '--timeout', 300)),
     memory: Number(option(args, '--memory', 3072)),
-    previousMatrix: previousFile === null ? null : readProjectData(resolve(previousFile)),
+    previousMatrix: previousFile === null ? null : readGrammarReport(resolve(previousFile)),
     formalDefinitions,
   });
   process.stdout.write(`${JSON.stringify(matrix.summary)}\n`);

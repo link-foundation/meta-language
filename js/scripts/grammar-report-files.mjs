@@ -1,7 +1,9 @@
 // Persist authoring reports as structured Links data; external tool protocols
 // retain their own JSON wire formats.
-import { writeProjectData } from './project-data.mjs';
+import { readFactoredGrammarReport, writeFactoredGrammarReport } from './grammar-report-fragments.mjs';
 
-export function writeGrammarReport(file, report) {
-  return writeProjectData(file, report, { format: 'lino' });
+export function writeGrammarReport(file, report, options) {
+  return writeFactoredGrammarReport(file, report, options);
 }
+
+export const readGrammarReport = readFactoredGrammarReport;
