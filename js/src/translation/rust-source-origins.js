@@ -4,10 +4,11 @@
 import { unsupported } from './diagnostics.js';
 import { rustFixedType } from './types.js';
 import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
+import { acceptRustImmutableProductType } from './rust-product-rules.js';
 
-const unknown = (uncertain = false) => ({ wrappers: [], type: null, path: [], proven: false, diverging: false, uncertain });
-const value = () => ({ ...unknown(), proven: true });
-const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, ...origin, wrappers: [...origin.wrappers], path: [...origin.path] });
+const unknown = (uncertain = false) => ({ wrappers: [], type: null, path: [], fields: null, copyEvidence: false, proven: false, diverging: false, uncertain });
+const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type });
+const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null });
 
 export class RustSourceOrigins {
   constructor(catalog = null) {
@@ -25,9 +26,39 @@ export class RustSourceOrigins {
     return previous;
   }
 
-  typed(type, path, wrappers = []) {
-    this.type = { type, path: [...path], wrappers, proven: true, diverging: false, uncertain: false };
+  typed(type, path, wrappers = [], fields = null) {
+    fields ??= type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
+    this.type = { type, path: [...path], wrappers, fields, copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
     return type;
+  }
+
+  typeOrigin(type, path) {
+    const fields = type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
+    return { ...value(acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), type), path: [...path], fields };
+  }
+
+  immutableProduct(origin) {
+    return Boolean(origin?.proven && origin.copyEvidence && origin.wrappers.length === 0
+      && (!origin.fields || origin.fields.every(field => this.immutableProduct(field))));
+  }
+
+  requireProduct(origin, span) {
+    if (!this.collecting && (!origin.fields || !this.immutableProduct(origin))) {
+      throw unsupported('immutable Rust tuple product', 'every field requires a direct recursively immutable scalar Copy source value', span);
+    }
+  }
+
+  product(node, path, span = node.span) {
+    const fields = node.items.map(item => this.origin(item, path));
+    const origin = { ...value(fields.every(field => this.immutableProduct(field))), fields };
+    this.requireProduct(origin, span);
+    return this.mark(node, origin);
+  }
+
+  project(node, path, index, span = node.span) {
+    const origin = this.origin(node.object, path);
+    this.requireProduct(origin, span);
+    return this.mark(node, origin.fields?.[index] ?? unknown());
   }
 
   declaration(name, path, entry) {
@@ -71,7 +102,8 @@ export class RustSourceOrigins {
   }
 
   same(left, right) {
-    if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
+    if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
+    if (Boolean(left.fields) !== Boolean(right.fields) || (left.fields && (left.fields.length !== right.fields.length || left.fields.some((field, index) => !this.same(field, right.fields[index]))))) return false;
     if (left.type?.kind === 'named' && right.type?.kind === 'named') {
       const leftOwner = this.lookup(left.type.path, left.path);
       const rightOwner = this.lookup(right.type.path, right.path);
@@ -106,18 +138,18 @@ export class RustSourceOrigins {
       if (entry?.k === 'fn') return clone(entry.result);
       if (entry?.k === 'ctor') return clone(entry.result);
       if (node.k === 'name' && node.path.length === 2 && !this.lookup([node.path[0]], path)
-        && rustFixedType(node.path[0]) && ['MIN', 'MAX'].includes(node.path[1])) return value();
+        && rustFixedType(node.path[0]) && ['MIN', 'MAX'].includes(node.path[1])) return value(true, rustFixedType(node.path[0]));
     }
     if (node.k === 'if') {
       return this.join([this.origin(node.then, path), this.origin(node.else, path)]);
     }
     const form = readRustSourceExpressionOrigin(node.k, node.op ?? '');
-    if (form === 'value') return value();
+    if (form === 'value') return value(['num', 'bool', 'unit'].includes(node.k), node.type ?? (node.k === 'bool' ? { kind: 'bool' } : node.k === 'unit' ? { kind: 'unit' } : null));
     if (form === 'diverging') return { ...value(), diverging: true };
     if (form === 'derived-value') {
       const operands = [node.arg ?? node.object, ...(node.search ? [node.search] : [])].map(operand => this.origin(operand, path));
       if (operands.some(operand => !operand.proven)) return unknown(operands.some(operand => operand.uncertain));
-      return value();
+      return value(node.k === 'stringTest', node.k === 'stringTest' ? { kind: 'bool' } : null);
     }
     if (['numeric-cast', 'primitive-operation', 'comparison', 'boolean-operation'].includes(form)) {
       const operands = (node.arg ? [node.arg] : [node.left, node.right]).map(operand => this.origin(operand, path));
@@ -127,7 +159,8 @@ export class RustSourceOrigins {
         if (form === 'primitive-operation' && operands.some(operand => operand.wrappers.includes('box'))) return unknown(true);
         if (['numeric-cast', 'boolean-operation'].includes(form) && operands.some(operand => operand.wrappers.length > 0)) return unknown(true);
       }
-      return value();
+      const copyEvidence = form !== 'primitive-operation' || (node.op !== 'concat' && operands.every(operand => operand.copyEvidence));
+      return value(copyEvidence, node.to ?? (['comparison', 'boolean-operation'].includes(form) ? { kind: 'bool' } : null));
     }
     return unknown();
   }
@@ -138,7 +171,9 @@ export class RustSourceOrigins {
     const first = returning[0];
     if (returning.every(origin => this.same(origin, first))) return clone(first);
     if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {
-      return { ...value(), wrappers: [...first.wrappers] };
+      const fields = returning.every(origin => origin.fields?.length === first.fields?.length) && first.fields
+        ? first.fields.map((_, index) => this.join(returning.map(origin => origin.fields[index]))) : null;
+      return { ...value(returning.every(origin => origin.copyEvidence)), wrappers: [...first.wrappers], fields };
     }
     return unknown(returning.some(origin => origin.uncertain || origin.wrappers.length > 0));
   }

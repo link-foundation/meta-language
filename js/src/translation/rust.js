@@ -10,9 +10,10 @@ import { readStringMapOperation, readStringTestOperation } from './frontend-rule
 import { rustMacroMessage } from './aborts.js';
 import { TranslationError, unsupported } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
-import { BOOL, FLOAT, STRING, UNIT, rustFixedType } from './types.js';
+import { BOOL, FLOAT, STRING, UNIT, rustFixedType, tuple } from './types.js';
 import { RustSourceOrigins } from './rust-source-origins.js';
 import { acceptRustSourceBoxOwner } from './rust-indirection-rules.js';
+import { acceptRustTupleIndexSpelling } from './rust-product-rules.js';
 import { checkProgram } from './check.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -44,12 +45,14 @@ export function parseRust(source) {
 
 class RustParser {
   constructor(tokens, catalog = null) {
-    this.cursor = new TokenCursor(tokens, 'Rust');
+    this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
     this.crateDeclarations = new Set();
     this.origins = new RustSourceOrigins(catalog);
+    this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
+    this.productBindingCount = 0;
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -267,11 +270,28 @@ class RustParser {
         return this.origins.typed(STRING, this.modulePath, ['reference']);
       }
       const inner = this.type();
-      return this.origins.typed(inner, this.origins.type.path, ['reference', ...this.origins.type.wrappers]);
+      return this.origins.typed(inner, this.origins.type.path, ['reference', ...this.origins.type.wrappers], this.origins.type.fields);
     }
     if (c.eat('(')) {
       if (c.eat(')')) return this.origins.typed(UNIT, this.modulePath);
-      throw unsupported('tuple type', 'tuples are outside the portable core', span(token, c.peek()));
+      const first = this.type();
+      const fields = [this.origins.type];
+      if (!c.eat(',')) {
+        c.expect(')', 'parenthesised type');
+        return first;
+      }
+      const elements = [first];
+      while (!c.is(')')) {
+        elements.push(this.type());
+        fields.push(this.origins.type);
+        if (!c.eat(',')) break;
+      }
+      c.expect(')', 'tuple type');
+      const result = this.origins.typed(tuple(elements), this.modulePath, [], fields);
+      if (!this.origins.immutableProduct(this.origins.type)) {
+        throw unsupported('immutable Rust tuple product', 'every field requires a direct recursively immutable scalar Copy source value', span(token, c.peek()));
+      }
+      return result;
     }
     const segments = this.pathSegments('type');
     const name = segments.join('::');
@@ -281,7 +301,7 @@ class RustParser {
       c.expect('<', 'Box');
       const inner = this.type();
       c.expect('>', 'Box');
-      return this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers]);
+      return this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers], this.origins.type.fields);
     }
     if (c.is('<')) throw unsupported(`type ${name}<…>`, 'generic types are outside the portable core', span(token, c.peek()));
     const fixed = segments.length === 1 ? rustFixedType(name) : undefined;
@@ -365,7 +385,7 @@ class RustParser {
     while (!c.is('}')) {
       const token = c.peek();
       if (c.is('let')) {
-        lets.push(this.letStatement(path));
+        lets.push(...this.letStatement(path));
         continue;
       }
       if (c.is('return')) throw unsupported('early return', 'write the result as the tail expression of the block', span(token, token));
@@ -398,16 +418,91 @@ class RustParser {
     const c = this.cursor;
     const start = c.next();
     if (c.is('mut')) throw unsupported('mutable binding', 'mutation is outside the portable core', span(start, c.peek()));
-    if (c.is('(')) throw unsupported('destructuring let', 'tuples are outside the portable core', span(start, c.peek()));
-    const name = c.identifier('let').value;
+    const pattern = this.productBindingPattern();
+    const names = new Set();
+    const validateNames = binding => {
+      if (binding.k === 'name') {
+        if (names.has(binding.name)) throw unsupported('duplicate tuple binding', 'each name occurs only once in a destructuring pattern', binding.span);
+        names.add(binding.name);
+      }
+      for (const item of binding.items ?? []) validateNames(item);
+    };
+    validateNames(pattern);
     const type = c.eat(':') ? this.type() : undefined;
     const sourceType = type ? this.origins.type : null;
     if (!c.eat('=')) throw unsupported('uninitialised binding', 'every binding needs its value', span(start, c.peek()));
     const value = this.expr(path);
     if (c.is('else')) throw unsupported('let-else', 'refutable bindings are outside the portable core', span(start, c.peek()));
     c.expect(';', 'let');
+    const range = span(start, c.peek());
+    if (pattern.k === 'name') {
+      this.origins.bind(pattern.name, value, path, sourceType);
+      return [{ name: pattern.name, type, value, span: range }];
+    }
+    const bindings = [];
+    const name = this.freshProductBinding();
     this.origins.bind(name, value, path, sourceType);
-    return { name, type, value, span: span(start, c.peek()) };
+    bindings.push({ name, type, value, span: range });
+    this.lowerProductBinding(pattern, { k: 'name', path: [name], span: range }, path, bindings);
+    return bindings;
+  }
+
+  freshProductBinding() {
+    let name;
+    do { name = `ml_tuple_value${this.productBindingCount++}`; } while (this.reservedNames.has(name));
+    this.reservedNames.add(name);
+    return name;
+  }
+
+  productBindingPattern() {
+    const c = this.cursor;
+    const token = c.peek();
+    if (c.is('mut')) throw unsupported('mutable tuple binding', 'mutation is outside the immutable product model', span(token, token));
+    if (c.is('ref') || c.is('&')) throw unsupported('reference tuple binding', 'product bindings must retain direct Copy values', span(token, token));
+    if (c.eat('_')) return { k: 'wild', span: { start: token.start, end: token.end } };
+    if (c.eat('(')) {
+      if (c.eat(')')) return { k: 'unit', span: { start: token.start, end: c.tokens[c.index - 1].end } };
+      const first = this.productBindingPattern();
+      if (!c.eat(',')) {
+        c.expect(')', 'parenthesised binding');
+        return first;
+      }
+      const items = [first];
+      while (!c.is(')')) {
+        items.push(this.productBindingPattern());
+        if (!c.eat(',')) break;
+      }
+      const close = c.expect(')', 'tuple binding');
+      return { k: 'tuple', items, span: { start: token.start, end: close.end } };
+    }
+    const name = c.identifier('let');
+    if (name.value === 'true' || name.value === 'false') throw unsupported('refutable product binding', 'only immutable names, ignored fields and anonymous tuple products are admitted', { start: name.start, end: name.end });
+    if (c.is('::') || c.is('(') || c.is('{') || c.is('@')) throw unsupported('refutable product binding', 'only immutable names, ignored fields and anonymous tuple products are admitted', span(token, c.peek()));
+    return { k: 'name', name: name.value, span: { start: name.start, end: name.end } };
+  }
+
+  lowerProductBinding(pattern, value, path, bindings) {
+    if (pattern.k === 'wild') return;
+    if (pattern.k === 'name') {
+      this.origins.bind(pattern.name, value, path);
+      bindings.push({ name: pattern.name, value, span: pattern.span });
+      return;
+    }
+    const origin = this.origins.origin(value, path);
+    if (pattern.k === 'unit') {
+      if (!this.origins.collecting && (origin.type?.kind !== 'unit' || !this.origins.immutableProduct(origin))) {
+        throw unsupported('unit product binding', 'the unit pattern requires a direct unit source value', pattern.span);
+      }
+      return;
+    }
+    this.origins.requireProduct(origin, pattern.span);
+    if (!this.origins.collecting && pattern.items.length !== origin.fields.length) {
+      throw new TranslationError('type', 'tuple binding has the wrong number of fields', pattern.span);
+    }
+    for (const [index, item] of pattern.items.entries()) {
+      const projection = this.origins.project({ k: 'tupleIndex', object: value, index, span: item.span }, path, index, item.span);
+      this.lowerProductBinding(item, projection, path, bindings);
+    }
   }
 
   main() {
@@ -424,8 +519,7 @@ class RustParser {
     while (!c.is('}')) {
       const token = c.peek();
       if (c.is('let')) {
-        const binding = this.letStatement([]);
-        effects.push({ k: 'let', name: binding.name, type: binding.type, value: binding.value, span: binding.span });
+        for (const binding of this.letStatement([])) effects.push({ k: 'let', name: binding.name, type: binding.type, value: binding.value, span: binding.span });
         continue;
       }
       if (token.kind === 'macro') {
@@ -642,6 +736,13 @@ class RustParser {
       const token = c.peek();
       if (c.is('.')) {
         c.next();
+        if (c.isKind('number')) {
+          const number = this.tupleIndexToken();
+          const index = Number(number.raw);
+          if (!Number.isSafeInteger(index)) throw unsupported('tuple index', 'the positional index exceeds the exact supported integer range', { start: number.start, end: number.end });
+          value = this.origins.project({ k: 'tupleIndex', object: value, index, span: { start: value.span?.start ?? token.start, end: number.end } }, path, index);
+          continue;
+        }
         const method = c.identifier('method');
         if (!c.is('(')) throw unsupported('field access', `field ${method.value} is outside the portable core`, span(token, method));
         c.next();
@@ -658,6 +759,24 @@ class RustParser {
       if (c.is('[')) throw unsupported('indexing', 'collections are outside the portable core', span(token, token));
       return value;
     }
+  }
+
+  tupleIndexToken() {
+    const c = this.cursor;
+    const token = c.peek();
+    const parts = token.raw.split('.');
+    if (parts.length === 2 && parts.every(acceptRustTupleIndexSpelling)) {
+      const middle = token.start + parts[0].length;
+      c.tokens.splice(c.index, 1,
+        { kind: 'number', value: parts[0], suffix: '', raw: parts[0], start: token.start, end: middle },
+        { kind: 'punct', value: '.', raw: '.', start: middle, end: middle + 1 },
+        { kind: 'number', value: parts[1], suffix: '', raw: parts[1], start: middle + 1, end: token.end });
+    }
+    const number = c.next();
+    if (!acceptRustTupleIndexSpelling(number.raw)) {
+      throw unsupported('tuple index spelling', 'Rust tuple indices are decimal digits without leading zeros, separators or suffixes', { start: number.start, end: number.end });
+    }
+    return number;
   }
 
   method(receiver, method, args, range) {
@@ -728,9 +847,17 @@ class RustParser {
       c.next();
       if (c.eat(')')) return { k: 'unit', span: span(token, token) };
       const inner = this.expr(path);
-      if (c.is(',')) throw unsupported('tuple', 'tuples are outside the portable core', span(token, c.peek()));
-      c.expect(')', 'parenthesised expression');
-      return inner;
+      if (!c.eat(',')) {
+        c.expect(')', 'parenthesised expression');
+        return inner;
+      }
+      const items = [inner];
+      while (!c.is(')')) {
+        items.push(this.expr(path));
+        if (!c.eat(',')) break;
+      }
+      const close = c.expect(')', 'tuple expression');
+      return this.origins.product({ k: 'tuple', items, frozen: true, span: { start: token.start, end: close.end } }, path);
     }
     if (c.is('{')) {
       const block = this.block(path);
@@ -876,7 +1003,7 @@ class RustParser {
       c.next();
       return { k: 'boolLit', value: token.value === 'true', span: span(token, token) };
     }
-    if (c.is('(')) throw unsupported('tuple pattern', 'tuples are outside the portable core', span(token, token));
+    if (c.is('(')) throw unsupported('tuple match pattern', 'tuple match coverage is not represented; use an immutable destructuring let', span(token, token));
     if (token.kind !== 'identifier') throw unsupported('pattern', `${describe(token)} is outside the portable pattern language`, span(token, token));
     const segments = this.pathSegments('pattern');
     if (c.eat('@')) {
