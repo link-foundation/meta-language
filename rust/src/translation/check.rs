@@ -45,6 +45,58 @@ pub fn check_program(surface: &SProgram) -> Result<Program> {
     Checker::new(surface.language, surface.externals.clone()).program(surface)
 }
 
+/// Reuse checked pattern semantics at the source-free graph boundary.
+pub(crate) fn read_checked_match_pattern_bindings(
+    pattern: &Pattern,
+    ty: &Type,
+    declarations: &[Decl],
+) -> Result<Vec<Binder>> {
+    let surface = match pattern {
+        Pattern::Wild => SCasePattern::Wild,
+        Pattern::Bind { name } => SCasePattern::Bind { name: name.clone() },
+        Pattern::NatZero => SCasePattern::NatZero,
+        Pattern::NatSucc { name } => SCasePattern::NatSucc { name: name.clone() },
+        Pattern::Ctor { ctor, binds, .. } => SCasePattern::Ctor {
+            path: vec![ctor.clone()],
+            binds: binds.clone(),
+        },
+    };
+    let mut checker = Checker::new(Language::JavaScript, Vec::new());
+    checker.decls = declarations
+        .iter()
+        .map(|declaration| (declaration.full_name().to_owned(), declaration.clone()))
+        .collect();
+    let mut environment = Env::default();
+    let checked = checker.pattern(&surface, ty, &mut environment, None)?;
+    if checked != *pattern {
+        return Err(type_error(
+            "a checked pattern has inconsistent ownership",
+            None,
+        ));
+    }
+    let mut names = HashSet::new();
+    checked
+        .bound()
+        .into_iter()
+        .map(|name| {
+            if name.is_empty() || !names.insert(name) {
+                return Err(type_error(
+                    "a checked pattern binds the same name twice",
+                    None,
+                ));
+            }
+            let ty = environment
+                .vars
+                .get(name)
+                .ok_or_else(|| type_error("a checked pattern binding is unresolved", None))?;
+            Ok(Binder {
+                name: name.to_owned(),
+                ty: ty.clone(),
+            })
+        })
+        .collect()
+}
+
 /// Inserts the source language's implicit conversions, which only JavaScript has.
 ///
 /// # Errors
