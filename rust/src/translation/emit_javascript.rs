@@ -662,7 +662,9 @@ impl<'p> JavaScriptEmitter<'p> {
         }
         match &e.node {
             Node::Lit { value } => literal(&e.ty, value),
-            Node::Unit => Ok("null".to_owned()),
+            Node::Unit => Ok(super::product_emission_rules::render_java_script_unit(
+                self.program.source_language.as_str().to_owned(),
+            )),
             Node::Tuple {
                 items,
                 frozen,

@@ -9,7 +9,7 @@ import { renderStringMapExpression, renderStringTestExpression } from './fronten
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { requireDataObjectFreeze } from './primitive-value-rules.js';
-import { renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
+import { renderJavaScriptUnit, renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
@@ -386,7 +386,7 @@ class JavaScriptEmitter {
       case 'lit':
         return this.literal(e);
       case 'unit':
-        return this.program.sourceLanguage === 'JavaScript' ? 'undefined' : 'null';
+        return renderJavaScriptUnit(this.program.sourceLanguage);
       case 'var':
         return e.name;
       case 'call':

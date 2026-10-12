@@ -41,3 +41,10 @@ export function acceptTupleCopyType(kind, fields) {
   }
   return true;
 }
+
+/** The existing source Unit representation in the JavaScript target.
+ * @param {string} language @returns {string}
+ */
+export function renderJavaScriptUnit(language) {
+  return language === 'JavaScript' ? 'undefined' : 'null';
+}

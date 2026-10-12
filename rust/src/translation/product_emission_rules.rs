@@ -246,6 +246,14 @@ pub fn accept_tuple_copy_type(kind: String, fields: Vec<bool>) -> bool {
     }
 }
 
+pub fn render_java_script_unit(language: String) -> String {
+    if (language == "JavaScript") {
+        String::from("undefined")
+    } else {
+        String::from("null")
+    }
+}
+
 pub fn ml_join_product_items_loop1(
     mut items: Vec<String>,
     mut text: String,
