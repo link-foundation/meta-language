@@ -12,26 +12,7 @@ pub(super) fn read_project_data<T: DeserializeOwned>(text: &str) -> Result<T, St
 }
 
 pub(super) fn resolve_project_data_path(file: impl AsRef<Path>) -> Result<PathBuf, String> {
-    let logical = file.as_ref();
-    if !matches!(
-        logical.extension().and_then(|value| value.to_str()),
-        Some("json" | "lino")
-    ) {
-        return Ok(logical.to_path_buf());
-    }
-    let json = logical.with_extension("json");
-    let lino = logical.with_extension("lino");
-    if json.exists() && lino.exists() {
-        return Err(format!(
-            "project data has duplicate JSON and LiNo storage: {}",
-            logical.display()
-        ));
-    }
-    if logical.extension().is_some_and(|value| value == "lino") || lino.exists() || !json.exists() {
-        Ok(lino)
-    } else {
-        Ok(json)
-    }
+    meta_language::project_data::resolve_project_data_path(file)
 }
 
 #[test]
