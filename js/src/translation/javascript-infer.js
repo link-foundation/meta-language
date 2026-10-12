@@ -20,7 +20,7 @@ export function inferJavaScriptTypes(program) {
   const functions = [];
   collectFunctions(program.items, [ROOT], functions);
   const untyped = program.items.some((item) => item.k === 'data' && item.ctors.some((ctor) => ctor.fields.some((field) => !field.type)));
-  if (!untyped && functions.every(({ fn }) => fn.ret && fn.params.every((param) => param.type))) return program;
+  if (!untyped && functions.every(({ fn }) => fn.ret && fn.params.every((param) => param.type)) && !hasStructuralInference(program)) return program;
   const inference = new Inference(program.items);
   inference.run(functions, program.main, program.externals ?? []);
   return program;
@@ -31,6 +31,14 @@ function collectFunctions(items, path, into) {
     if (item.k === 'fn') into.push({ path: [...path, item.name], fn: item });
     else if (item.k === 'module') collectFunctions(item.items, [...path, item.name], into);
   }
+}
+
+function hasStructuralInference(node) {
+  if (!node || typeof node !== 'object') return false;
+  if (Array.isArray(node)) return node.some(hasStructuralInference);
+  if (['none', 'coalesce', 'optionalField', 'record', 'lambda', 'method', 'map', 'set', 'stringPoints'].includes(node.k)) return true;
+  if (['option', 'tuple', 'record', 'map', 'set', 'function'].includes(node.kind)) return true;
+  return Object.entries(node).some(([key, value]) => key !== 'span' && hasStructuralInference(value));
 }
 
 class Inference {
@@ -49,6 +57,11 @@ class Inference {
     this.fieldTerms = new Map();
     // Array literals with no element of their own, whose element type the rest of the program fixes.
     this.emptyArrays = new Map();
+    this.lambdas = new Map();
+    this.records = new Map();
+    this.methods = [];
+    this.coalesces = [];
+    this.recordSpreads = [];
   }
 
   fresh(bigint = false) {
@@ -77,6 +90,11 @@ class Inference {
     if (type.kind === 'named') return { kind: 'data', name: type.path.at(-1) };
     if (type.kind === 'nat') return INT;
     if (type.kind === 'array') return { kind: 'array', element: this.declared(type.element) };
+    if (type.kind === 'option' || type.kind === 'set') return { ...type, element: this.declared(type.element) };
+    if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.declared(element)) };
+    if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.declared(field.type) })) };
+    if (type.kind === 'map') return { ...type, key: this.declared(type.key), value: this.declared(type.value) };
+    if (type.kind === 'function') return { ...type, params: type.params.map((param) => this.declared(param.type ?? param)), ret: this.declared(type.ret) };
     return type;
   }
 
@@ -100,6 +118,7 @@ class Inference {
       if (this.bigints.has(variable.id) && !isInteger(type)) {
         throw typeError(`a BigInt is used as ${describe(type)}; JavaScript does not mix BigInt with other types`, where);
       }
+      if (this.contains(type, variable.id)) throw typeError('a recursive inferred type needs an explicit data type', where);
       this.bindings[variable.id] = type;
       return;
     }
@@ -108,9 +127,68 @@ class Inference {
       this.unify(a.element, b.element, where);
       return;
     }
+    if (a.kind === 'option' || b.kind === 'option') {
+      if (a.kind === 'option' && b.kind === 'option') {
+        this.unify(a.element, b.element, where);
+        const absence = a.absence === b.absence ? a.absence : 'both';
+        a.absence = absence;
+        b.absence = absence;
+      } else {
+        const optional = a.kind === 'option' ? a : b;
+        this.unify(optional.element, a.kind === 'option' ? b : a, where);
+      }
+      return;
+    }
+    if (a.kind === 'tuple' && b.kind === 'tuple') {
+      if (a.elements.length !== b.elements.length) throw typeError('one tuple is used with two different lengths', where);
+      a.elements.forEach((element, index) => this.unify(element, b.elements[index], where));
+      return;
+    }
+    if (a.kind === 'record' && b.kind === 'record') {
+      for (const field of a.fields) {
+        const matching = b.fields.find((candidate) => candidate.name === field.name);
+        if (matching) this.unify(field.type, matching.type, where);
+        else if (b.open) b.fields.push({ ...field });
+        else throw typeError(`record field ${field.name} is missing`, where);
+      }
+      for (const field of b.fields) {
+        if (a.fields.some((candidate) => candidate.name === field.name)) continue;
+        if (a.open) a.fields.push({ ...field });
+        else throw typeError(`record field ${field.name} is missing`, where);
+      }
+      return;
+    }
+    if (a.kind === 'map' && b.kind === 'map') {
+      this.unify(a.key, b.key, where);
+      this.unify(a.value, b.value, where);
+      return;
+    }
+    if (a.kind === 'set' && b.kind === 'set') {
+      this.unify(a.element, b.element, where);
+      return;
+    }
+    if (a.kind === 'function' && b.kind === 'function') {
+      if (a.params.length !== b.params.length) throw typeError('one function is used with two different parameter counts', where);
+      a.params.forEach((param, index) => this.unify(param, b.params[index], where));
+      this.unify(a.ret, b.ret, where);
+      return;
+    }
     if (a.kind !== b.kind || (a.kind === 'data' && a.name !== b.name) || (a.kind === 'fixed' && (a.bits !== b.bits || a.signed !== b.signed))) {
       throw typeError(`one value is used as ${describe(a)} and as ${describe(b)}; declare the types of the function with JSDoc`, where);
     }
+  }
+
+  contains(term, id, seen = new Set()) {
+    const type = this.resolve(term);
+    if (type.kind === 'var') return type.id === id;
+    if (seen.has(type)) return false;
+    seen.add(type);
+    const children = type.kind === 'array' || type.kind === 'option' || type.kind === 'set' ? [type.element]
+      : type.kind === 'tuple' ? type.elements
+      : type.kind === 'record' ? type.fields.map((field) => field.type)
+      : type.kind === 'map' ? [type.key, type.value]
+      : type.kind === 'function' ? [...type.params, type.ret] : [];
+    return children.some((child) => this.contains(child, id, seen));
   }
 
   run(functions, main, externals) {
@@ -123,7 +201,7 @@ class Inference {
     for (const { path, fn } of functions) {
       this.signatures.set(path.join('.'), {
         params: fn.params.map((param) => this.declared(param.type)),
-        defaults: fn.params.map((param) => Boolean(param.default)),
+        defaults: fn.params.map((param) => Boolean(param.default || param.optional)),
         ret: this.declared(fn.ret),
       });
     }
@@ -138,7 +216,9 @@ class Inference {
       const signature = this.signatures.get(path.join('.'));
       const env = new Map(fn.params.map((param, index) => [param.name, signature.params[index]]));
       this.context = path.slice(0, -1);
-      this.unify(this.expr(fn.body, env), signature.ret, fn.span);
+      const body = this.expr(fn.body, env, signature.ret);
+      this.unify(body, signature.ret, fn.span);
+      if (!fn.ret && signature.ret.kind === 'var' && this.resolve(body).kind === 'option') this.bindings[signature.ret.id] = body;
     }
     this.context = [ROOT];
     const env = new Map();
@@ -157,6 +237,11 @@ class Inference {
     }
     for (const [field, term] of this.fieldTerms) field.type = this.surface(term, field.span);
     for (const [node, term] of this.emptyArrays) node.element = this.surface(term, node.span);
+    for (const [node, term] of this.records) node.type = this.surface(term, node.span);
+    for (const [node, term] of this.lambdas) {
+      node.params.forEach((param, index) => { if (!param.type) param.type = this.surface(term.params[index], param.span ?? node.span); });
+      node.ret = this.surface(term.ret, node.span);
+    }
   }
 
   /** Deferred `+` and field constraints, until nothing more is known; then `+` of unknowns adds numbers. */
@@ -175,10 +260,49 @@ class Inference {
           progress = true;
         }
       }
+      for (const constraint of [...this.methods]) {
+        if (this.methodStep(constraint)) {
+          this.methods.splice(this.methods.indexOf(constraint), 1);
+          progress = true;
+        }
+      }
+      for (const constraint of [...this.coalesces]) {
+        const left = this.resolve(constraint.left);
+        if (left.kind === 'var') continue;
+        this.unify(left.kind === 'option' ? left.element : left, constraint.right, constraint.where);
+        this.coalesces.splice(this.coalesces.indexOf(constraint), 1);
+        progress = true;
+      }
+      for (const constraint of [...this.recordSpreads]) {
+        if (constraint.entries.some((entry) => entry.spread && this.resolve(entry.type).kind === 'var')) continue;
+        const fields = new Map();
+        for (const entry of constraint.entries) {
+          if (entry.spread) {
+            const source = this.resolve(entry.type);
+            if (source.kind !== 'record') throw typeError('an object spread needs a known record shape', constraint.where);
+            for (const field of source.fields) fields.set(field.name, field.type);
+          } else fields.set(entry.name, entry.type);
+        }
+        const shape = { kind: 'record', fields: [...fields].map(([name, type]) => ({ name, type })) };
+        this.unify(constraint.term, shape, constraint.where);
+        constraint.term.open = false;
+        this.recordSpreads.splice(this.recordSpreads.indexOf(constraint), 1);
+        progress = true;
+      }
       // `.length` of a value nothing else fixes reads an array.
       const length = this.fields.find(({ object, field }) => field === 'length' && this.resolve(object).kind === 'var');
       if (!progress && length) {
         this.unify(length.object, { kind: 'array', element: this.fresh() }, length.where);
+        progress = true;
+      }
+      const field = this.fields.find(({ object, field: name }) => name !== 'length' && this.resolve(object).kind === 'var');
+      if (!progress && field) {
+        this.unify(field.object, { kind: 'record', fields: [{ name: field.field, type: field.result }], open: true }, field.where);
+        progress = true;
+      }
+      if (!progress && this.coalesces.length) {
+        const coalesced = this.coalesces.shift();
+        this.unify(coalesced.left, { kind: 'option', element: coalesced.right, absence: 'both' }, coalesced.where);
         progress = true;
       }
       if (!progress && this.plus.length) {
@@ -186,6 +310,7 @@ class Inference {
         progress = true;
       }
     }
+    if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
   }
 
   plusStep({ left, right, result, where }, force) {
@@ -207,9 +332,23 @@ class Inference {
       this.unify(result, FLOAT, where);
       return true;
     }
+    if (type.kind === 'record') {
+      let declared = type.fields.find((candidate) => candidate.name === field);
+      if (!declared && type.open) {
+        declared = { name: field, type: result };
+        type.fields.push(declared);
+      }
+      if (declared) this.unify(result, declared.type, where);
+      return true;
+    }
+    if ((type.kind === 'map' || type.kind === 'set') && field === 'size') {
+      this.unify(result, FLOAT, where);
+      return true;
+    }
     if (type.kind !== 'data') {
       const owners = [...this.data].filter(([, ctors]) => ctors.some((ctor) => ctor.fields.some((candidate) => candidate.name === field)));
-      if (type.kind !== 'var' || owners.length !== 1) return false;
+      if (type.kind !== 'var') return false;
+      if (owners.length !== 1) return false;
       this.unify(object, { kind: 'data', name: owners[0][0] }, where);
       return this.fieldStep({ object, field, result, where });
     }
@@ -224,6 +363,11 @@ class Inference {
     if (type.kind === 'var') return this.bigints.has(type.id) ? INT : FLOAT;
     if (type.kind === 'data') return { kind: 'named', path: [ROOT, type.name], span: where };
     if (type.kind === 'array') return { kind: 'array', element: this.surface(type.element, where) };
+    if (type.kind === 'option' || type.kind === 'set') return { ...type, element: this.surface(type.element, where) };
+    if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.surface(element, where)) };
+    if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.surface(field.type, where) })) };
+    if (type.kind === 'map') return { ...type, key: this.surface(type.key, where), value: this.surface(type.value, where) };
+    if (type.kind === 'function') return { ...type, params: type.params.map((param) => this.surface(param, where)), ret: this.surface(type.ret, where) };
     return type;
   }
 
@@ -238,7 +382,7 @@ class Inference {
     return null;
   }
 
-  expr(node, env) {
+  expr(node, env, expected = undefined) {
     switch (node.k) {
       case 'num':
         // The 1 of `x++` has the type of `x`, a Number or a BigInt.
@@ -250,16 +394,54 @@ class Inference {
         return STRING;
       case 'unit':
         return UNIT;
+      case 'none':
+        return { kind: 'option', element: this.fresh(), absence: node.absence ?? 'both' };
       case 'name': {
         if (node.path.length === 1 && env.has(node.path[0])) return env.get(node.path[0]);
         return this.call(node.path, [], env, node.span);
       }
-      case 'app':
-        return this.call(node.fn.path, node.args, env, node.span);
+      case 'app': {
+        const local = node.fn.k === 'name' && node.fn.path.length === 1 ? env.get(node.fn.path[0]) : null;
+        if (!local && node.fn.k === 'name') return this.call(node.fn.path, node.args, env, node.span);
+        const fn = local ?? this.expr(node.fn, env);
+        const args = node.args.map((arg) => this.expr(arg, env));
+        const ret = this.fresh();
+        this.unify(fn, { kind: 'function', params: args, ret }, node.span);
+        return ret;
+      }
       case 'field': {
         const result = this.fresh();
         this.fields.push({ object: this.expr(node.object, env), field: node.field, result, where: node.span });
         return result;
+      }
+      case 'optionalField': {
+        const object = this.expr(node.object, env);
+        const resolved = this.resolve(object);
+        const element = resolved.kind === 'option' ? resolved.element : resolved.kind === 'var' ? this.fresh() : object;
+        if (resolved.kind === 'var') this.unify(object, { kind: 'option', element, absence: 'both' }, node.span);
+        const field = this.fresh();
+        this.fields.push({ object: element, field: node.field, result: field, where: node.span });
+        return { kind: 'option', element: field, absence: 'undefined' };
+      }
+      case 'coalesce': {
+        const left = this.expr(node.left, env);
+        const right = this.expr(node.right, env, expected);
+        const resolved = this.resolve(left);
+        if (resolved.kind === 'option') this.unify(resolved.element, right, node.span);
+        else if (resolved.kind === 'var') this.coalesces.push({ left, right, where: node.span });
+        else this.unify(left, right, node.span);
+        return right;
+      }
+      case 'lambda': {
+        const want = expected && this.resolve(expected);
+        const params = node.params.map((param, index) => param.type ? this.declared(param.type) : want?.kind === 'function' ? want.params[index] ?? this.fresh() : this.fresh());
+        const scope = new Map(env);
+        node.params.forEach((param, index) => scope.set(param.name, params[index]));
+        const ret = node.ret ? this.declared(node.ret) : want?.kind === 'function' ? want.ret : this.fresh();
+        this.unify(this.expr(node.body, scope, ret), ret, node.span);
+        const term = { kind: 'function', params, ret };
+        this.lambdas.set(node, term);
+        return term;
       }
       case 'typeOf':
         this.expr(node.arg, env);
@@ -276,13 +458,16 @@ class Inference {
         return this.binary(node, env);
       case 'if': {
         this.unify(this.expr(node.cond, env), BOOL, node.cond.span ?? node.span);
-        const then = this.expr(node.then, env);
-        this.unify(this.expr(node.else, env), then, node.span);
-        return then;
+        const then = this.expr(node.then, env, expected);
+        const otherwise = this.expr(node.else, env, expected);
+        this.unify(otherwise, then, node.span);
+        return this.resolve(otherwise).kind === 'option' ? otherwise : then;
       }
       case 'let': {
-        const value = this.expr(node.value, env);
-        return this.expr(node.body, new Map(env).set(node.name, value));
+        const want = node.type ? this.declared(node.type) : undefined;
+        const value = this.expr(node.value, env, want);
+        if (want) this.unify(value, want, node.span);
+        return this.expr(node.body, new Map(env).set(node.name, want ?? value), expected);
       }
       case 'match':
         return this.match(node, env);
@@ -301,18 +486,50 @@ class Inference {
         return this.fresh();
       case 'print':
         this.expr(node.expr, env);
-        return this.expr(node.body, env);
+        return this.expr(node.body, env, expected);
       case 'ctorObject':
         return this.ctorObject(node, env);
       case 'array': {
+        const want = expected && this.resolve(expected);
+        if (want?.kind === 'tuple' && !node.items.some((item) => item.spread)) {
+          const elements = node.items.map((item, index) => this.expr(item.value, env, want.elements[index]));
+          const term = { kind: 'tuple', elements };
+          this.unify(term, want, node.span);
+          return term;
+        }
         const element = this.fresh();
         if (node.items.every((item) => item.spread)) this.emptyArrays.set(node, element);
         for (const item of node.items) {
-          const value = this.expr(item.value, env);
+          const wanted = want?.kind === 'array' ? item.spread ? want : want.element : undefined;
+          const value = this.expr(item.value, env, wanted);
           this.unify(value, item.spread ? { kind: 'array', element } : element, item.value.span ?? node.span);
         }
         return { kind: 'array', element };
       }
+      case 'record':
+        return this.record(node, env, expected);
+      case 'set': {
+        const element = expected?.kind === 'set' ? expected.element : this.fresh();
+        if (node.items) this.unify(this.expr(node.items, env, { kind: 'array', element }), { kind: 'array', element }, node.span);
+        return { kind: 'set', element };
+      }
+      case 'map': {
+        const key = expected?.kind === 'map' ? expected.key : this.fresh();
+        const value = expected?.kind === 'map' ? expected.value : this.fresh();
+        const pair = { kind: 'tuple', elements: [key, value] };
+        if (node.entries) this.unify(this.expr(node.entries, env, { kind: 'array', element: pair }), { kind: 'array', element: pair }, node.span);
+        return { kind: 'map', key, value };
+      }
+      case 'method': {
+        const object = this.expr(node.object, env);
+        const args = node.args.map((arg) => this.expr(arg, env));
+        const result = this.fresh();
+        this.methods.push({ object, args, op: node.op, result, where: node.span });
+        return result;
+      }
+      case 'stringPoints':
+        this.unify(this.expr(node.object, env), STRING, node.span);
+        return { kind: 'array', element: STRING };
       case 'math':
         // Math takes Numbers: an argument of no known type is one, and the checker refuses any other.
         for (const item of node.args) {
@@ -336,8 +553,8 @@ class Inference {
   }
 
   call(path, args, env, where) {
-    const argTypes = args.map((arg) => this.expr(arg, env));
     const signature = this.signature(path);
+    const argTypes = args.map((arg, index) => this.expr(arg, env, signature?.params[index]));
     if (!signature || !acceptArgumentCount(signature.defaults, args.length)) return this.fresh();
     argTypes.forEach((type, index) => this.unify(type, signature.params[index], args[index].span ?? where));
     return signature.ret;
@@ -372,8 +589,10 @@ class Inference {
       const scope = new Map(env);
       row.patterns.forEach((pattern, index) => this.pattern(pattern, scrutinees[index], scope, row.span ?? node.span));
       const body = this.expr(row.body, scope);
-      if (result) this.unify(body, result, row.span ?? node.span);
-      else result = body;
+      if (result) {
+        this.unify(body, result, row.span ?? node.span);
+        if (this.resolve(body).kind === 'option') result = body;
+      } else result = body;
     }
     return result ?? this.fresh();
   }
@@ -418,6 +637,109 @@ class Inference {
       if (declared) this.unify(type, this.field(declared), where ?? node.span);
     }
     return { kind: 'data', name };
+  }
+
+  record(node, env, expected) {
+    const want = expected && this.resolve(expected);
+    const fields = new Map();
+    const entries = [];
+    let unknownSpread = false;
+    for (const entry of node.entries) {
+      if (entry.spread) {
+        const type = this.expr(entry.value, env);
+        entries.push({ spread: true, type });
+        const source = this.resolve(type);
+        if (source.kind === 'var') unknownSpread = true;
+        else {
+          if (source.kind !== 'record') throw typeError('an object spread needs a known record shape', entry.value.span ?? node.span);
+          for (const field of source.fields) fields.set(field.name, field.type);
+        }
+      } else {
+        const declared = want?.kind === 'record' ? want.fields.find((field) => field.name === entry.name)?.type : undefined;
+        const value = this.expr(entry.value, env, declared);
+        if (declared) this.unify(value, declared, entry.value.span ?? node.span);
+        fields.set(entry.name, declared ?? value);
+        entries.push({ spread: false, name: entry.name, type: declared ?? value });
+      }
+    }
+    const term = { kind: 'record', fields: [...fields].map(([name, type]) => ({ name, type })), ...(unknownSpread && { open: true }) };
+    if (unknownSpread) this.recordSpreads.push({ term, entries, where: node.span });
+    this.records.set(node, term);
+    return term;
+  }
+
+  methodStep({ object, args, op, result, where }) {
+    let receiver = this.resolve(object);
+    if (receiver.kind === 'var') {
+      if (['map', 'flatMap', 'filter', 'find', 'findIndex', 'some', 'every', 'reduce', 'join'].includes(op)) {
+        this.unify(object, { kind: 'array', element: this.fresh() }, where);
+      } else if (['split', 'trim', 'trimStart', 'trimEnd', 'toLowerCase', 'toUpperCase', 'startsWith', 'endsWith', 'charAt', 'charCodeAt', 'substring', 'repeat', 'replace', 'replaceAll'].includes(op)) {
+        this.unify(object, STRING, where);
+      } else return false;
+      receiver = this.resolve(object);
+    }
+    if (receiver.kind === 'string') {
+      if (['includes', 'startsWith', 'endsWith'].includes(op)) {
+        if (args[0]) this.unify(args[0], STRING, where);
+        this.unify(result, BOOL, where);
+      } else if (['indexOf', 'lastIndexOf', 'charCodeAt'].includes(op)) {
+        if (op !== 'charCodeAt' && args[0]) this.unify(args[0], STRING, where);
+        this.unify(result, FLOAT, where);
+      } else if (op === 'split') {
+        if (args[0]) this.unify(args[0], STRING, where);
+        this.unify(result, { kind: 'array', element: STRING }, where);
+      } else this.unify(result, STRING, where);
+      return true;
+    }
+    if (receiver.kind === 'array') {
+      if (['map', 'flatMap', 'filter', 'find', 'findIndex', 'some', 'every', 'forEach'].includes(op)) {
+        const ret = ['filter', 'find', 'findIndex', 'some', 'every'].includes(op) ? BOOL : this.fresh();
+        if (op === 'flatMap') this.unify(ret, { kind: 'array', element: this.fresh() }, where);
+        this.callback(args[0], [receiver.element, FLOAT, receiver], ret, where);
+        const output = op === 'map' ? { kind: 'array', element: ret }
+          : op === 'flatMap' ? ret
+          : op === 'filter' ? receiver
+          : op === 'find' ? { kind: 'option', element: receiver.element, absence: 'undefined' }
+          : op === 'findIndex' ? FLOAT : op === 'forEach' ? UNIT : BOOL;
+        this.unify(result, output, where);
+      } else if (op === 'reduce') {
+        const accumulator = args[1] ?? receiver.element;
+        this.callback(args[0], [accumulator, receiver.element, FLOAT, receiver], accumulator, where);
+        this.unify(result, accumulator, where);
+      } else if (op === 'join') {
+        if (args[0]) this.unify(args[0], STRING, where);
+        this.unify(result, STRING, where);
+      } else if (['includes', 'indexOf', 'lastIndexOf'].includes(op)) {
+        if (args[0]) this.unify(args[0], receiver.element, where);
+        this.unify(result, op === 'includes' ? BOOL : FLOAT, where);
+      } else this.unify(result, receiver, where);
+      return true;
+    }
+    if (receiver.kind === 'map' || receiver.kind === 'set') {
+      const key = receiver.kind === 'map' ? receiver.key : receiver.element;
+      if (args[0] && ['get', 'has', 'delete', 'set', 'add'].includes(op)) this.unify(args[0], key, where);
+      if (op === 'set' && args[1]) this.unify(args[1], receiver.value, where);
+      const output = op === 'get' ? { kind: 'option', element: receiver.value, absence: 'undefined' }
+        : op === 'has' || op === 'delete' ? BOOL
+        : op === 'clear' ? UNIT
+        : op === 'keys' ? { kind: 'array', element: key }
+        : op === 'values' ? { kind: 'array', element: receiver.kind === 'map' ? receiver.value : key }
+        : op === 'entries' ? { kind: 'array', element: { kind: 'tuple', elements: receiver.kind === 'map' ? [receiver.key, receiver.value] : [key, key] } }
+        : receiver;
+      this.unify(result, output, where);
+      return true;
+    }
+    return true;
+  }
+
+  callback(term, params, ret, where) {
+    if (!term) return;
+    const declared = this.resolve(term);
+    if (declared.kind === 'function') {
+      if (declared.params.length > params.length) throw typeError('a callback declares more parameters than its operation supplies', where);
+      declared.params.forEach((param, index) => this.unify(param, params[index], where));
+      this.unify(declared.ret, ret, where);
+    } else this.unify(term, { kind: 'function', params, ret }, where);
   }
 
   prop(prop, env) {

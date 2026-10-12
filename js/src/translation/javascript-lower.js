@@ -104,6 +104,22 @@ function references(node, names) {
     for (const item of node) references(item, names);
     return;
   }
+  if (node.k === 'lambda') {
+    const captured = new Set();
+    references(node.body, captured);
+    for (const param of node.params) captured.delete(param.name);
+    for (const name of captured) names.add(name);
+    for (const param of node.params) if (param.default) references(param.default, names);
+    return;
+  }
+  if (node.k === 'let') {
+    references(node.value, names);
+    const body = new Set();
+    references(node.body, body);
+    body.delete(node.name);
+    for (const name of body) names.add(name);
+    return;
+  }
   if (node.k === 'name' && node.path.length === 1) names.add(node.path[0]);
   for (const [key, value] of Object.entries(node)) {
     if (key !== 'span' && key !== 'type' && key !== 'data') references(value, names);
@@ -222,6 +238,10 @@ class Lowering {
     if (!node || typeof node !== 'object') return node;
     if (Array.isArray(node)) return node.map((item) => this.renamed(item, scope));
     if (node.k === 'name' && node.path.length === 1) return { ...node, path: [lookup(scope, node.path[0])?.ir ?? node.path[0]] };
+    if (node.k === 'lambda') {
+      const inner = [...scope, ...node.params.map((param) => ({ source: param.name, ir: param.name }))];
+      return { ...node, params: node.params.map((param) => ({ ...param, ...(param.default && { default: this.renamed(param.default, scope) }) })), body: this.renamed(node.body, inner) };
+    }
     const copy = {};
     for (const [key, value] of Object.entries(node)) copy[key] = key === 'span' || key === 'type' || key === 'data' ? value : this.renamed(value, scope);
     return copy;
@@ -251,7 +271,14 @@ class Lowering {
       case 'let': {
         const value = this.renamed(statement.value, scope);
         const inner = this.declare(scope, statement.name);
-        return { k: 'let', name: inner.at(-1).ir, value, body: this.seq(list, index + 1, ctx, inner), span: statement.span };
+        const name = inner.at(-1).ir;
+        const body = this.seq(list, index + 1, ctx, inner);
+        if (value.k === 'none' && body.k === 'let' && body.name === name) {
+          const reads = new Set();
+          references(body.value, reads);
+          if (!reads.has(name)) return body;
+        }
+        return { k: 'let', name, value, body, span: statement.span };
       }
       case 'assign':
         return { k: 'let', name: lookup(scope, statement.name).ir, value: this.renamed(statement.value, scope), body: rest(), span: statement.span };
@@ -383,6 +410,25 @@ class Lowering {
     const renamed = { ...node, discriminant };
     const inner = { ...ctx, fall: () => ctx.fall(scope), brk: () => ctx.fall(scope), brkLive: ctx.live };
     const bodies = this.caseBodies(node);
+    if (!node.tagged && node.clauses.some((clause) => clause.tests.some((test) => test.k === 'value'))) {
+      const variable = this.generatedName('switch');
+      let otherwise = ctx.fall(scope);
+      const fallback = node.clauses.findIndex((clause) => clause.tests.some((test) => test.k === 'default'));
+      if (fallback >= 0) otherwise = this.seq(bodies[fallback], 0, inner, scope);
+      for (let index = node.clauses.length - 1; index >= 0; index -= 1) {
+        const tests = node.clauses[index].tests.filter((test) => test.k !== 'default').map((test) => {
+          const value = test.k === 'value' ? this.renamed(test.value, scope)
+            : test.k === 'strLit' ? { k: 'str', value: test.value, span: test.span }
+            : test.k === 'boolLit' ? { k: 'bool', value: test.value, span: test.span }
+            : { k: 'num', value: test.value, ...(test.type && { type: test.type }), span: test.span };
+          return { k: 'binary', op: 'eq', left: named(variable, node.span), right: value, span: test.span ?? node.span };
+        });
+        if (!tests.length) continue;
+        const cond = tests.reduce((left, right) => ({ k: 'binary', op: 'or', left, right, span: node.span }));
+        otherwise = { k: 'if', cond, then: this.seq(bodies[index], 0, inner, scope), else: otherwise, span: node.span };
+      }
+      return { k: 'let', name: variable, value: discriminant, body: otherwise, span: node.span };
+    }
     const rows = [];
     let defaults = [];
     node.clauses.forEach((clause, index) => {
