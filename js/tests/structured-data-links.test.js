@@ -77,6 +77,9 @@ test('standalone reader refuses counterfeit shapes, identities, scalar types and
 test('node, expanded sharing, depth and byte budgets reject bounded counterexamples', () => {
   assert.throws(() => encodeStructuredDataLinks({ x: 'y' }, { nodeLimit: 2 }), /resource limit/u);
   assert.throws(() => encodeStructuredDataLinks([[[1]]], { depthLimit: 1 }), /resource limit/u);
+  assert.throws(() => encodeStructuredDataLinks({ key: 1 }, { depthLimit: 2 }), /resource limit/u);
+  const boundary = encodeStructuredDataLinks({ key: 1 }, { depthLimit: 3 });
+  assert.deepEqual(decodeStructuredDataLinks(boundary.network, boundary.root, { depthLimit: 3 }), { key: 1 });
   assert.throws(() => readStructuredDataLino(structuredDataToLino('long'), { byteLimit: 8 }), /resource limit/u);
   let repeated = 0;
   for (let index = 0; index < 12; index += 1) repeated = [repeated, repeated];

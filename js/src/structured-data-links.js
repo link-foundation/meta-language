@@ -66,8 +66,10 @@ export function encodeStructuredDataLinks(value, options = {}) {
     scalarIds.set(identity, id);
     return id;
   }
-  function string(value) {
+  function string(value, depth) {
+    if (depth > limits.depthLimit) fail('depth resource limit exceeded');
     if (wellFormedString(value)) return scalar('string', value);
+    if (depth + 1 > limits.depthLimit) fail('depth resource limit exceeded');
     const identity = `units\u0000${value}`;
     if (scalarIds.has(identity)) return scalarIds.get(identity);
     const id = insert('units', undefined, Array.from({ length: value.length }, (_, index) => scalar('unit', String(value.charCodeAt(index)))));
@@ -77,7 +79,7 @@ export function encodeStructuredDataLinks(value, options = {}) {
   function encode(item, depth) {
     if (depth > limits.depthLimit) fail('depth resource limit exceeded');
     if (item === null) return scalar('null');
-    if (typeof item === 'string') return string(item);
+    if (typeof item === 'string') return string(item, depth);
     if (typeof item === 'boolean') return scalar('boolean', String(item));
     if (typeof item === 'number') {
       if (!Number.isFinite(item)) fail('a number must be finite binary64');
@@ -99,12 +101,12 @@ export function encodeStructuredDataLinks(value, options = {}) {
     identities.set(item, id);
     active.add(item);
     const references = array ? item.map(child => encode(child, depth + 1))
-      : Object.keys(item).map(name => insert('pair', undefined, [string(name), encode(item[name], depth + 1)]));
+      : Object.keys(item).map(name => insert('pair', undefined, [string(name, depth + 2), encode(item[name], depth + 2)]));
     active.delete(item);
     network.link(id).setReferences(references);
     return id;
   }
-  const body = encode(value, 0);
+  const body = encode(value, 1);
   const root = insert('root', '1', [body]);
   return { network, root };
 }
