@@ -31,8 +31,9 @@ pub mod output;
 pub mod proof;
 pub mod rocq;
 pub mod rust;
-pub mod surface;
 pub mod structured_type_rules;
+pub mod surface;
+pub(crate) mod typed_program_link_rules;
 pub mod types;
 
 /// A source range in UTF-16 code units, as JavaScript string offsets count.
