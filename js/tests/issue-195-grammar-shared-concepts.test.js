@@ -9,7 +9,7 @@
 // (I195-NAMING-NATIVE-GRAMMARS). The Rust twin is
 // rust/tests/unit/issue_195_grammar_shared_concepts.rs.
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -126,9 +126,18 @@ test('rules are shared when two or more native grammars name their concept and l
   for (const record of CONCEPT_RECORDS) {
     const named = report.concepts.find(({ concept }) => concept === record.id);
     if (!named) continue;
-    const constraint = named.shared
+    // Record usage includes every authored native source. The runtime report
+    // contains only shipped catalog grammars; candidates retain their aliases
+    // before they become runtime defaults.
+    const sourceLanguages = [...new Set(record.sourceAliases
+      .filter(({ source }) => source.startsWith('native:'))
+      .map(({ source }) => source.slice('native:'.length)))].sort();
+    const shippedLanguages = sourceLanguages.filter((language) => languages.has(language));
+    assert.deepEqual(named.languages, shippedLanguages, `${record.id} retains exactly its shipped language aliases`);
+    assert.equal(named.shared, shippedLanguages.length > 1, `${record.id} classifies shipped reuse`);
+    const constraint = sourceLanguages.length > 1
       ? 'Native grammars share this concept only where the construct means the same in each language.'
-      : `Only the native ${named.languages[0]}`;
+      : `Only the native ${sourceLanguages[0]}`;
     assert.ok(record.constraints.some((text) => text.toLowerCase().startsWith(constraint.toLowerCase())), `${record.id} states how it is used`);
   }
   observe('I195-GRAMMAR-SHARED-CONCEPTS', FIXTURE, ['languageSpecificConceptsStayInTheirLanguage'], 'shared and language-specific rules');
@@ -257,9 +266,28 @@ test('native rule names are readable English and keep their tree-sitter names as
   const rules = inventory.filter(({ inventory: name }) => name === 'native grammar rule names');
   const references = inventory.filter(({ inventory: name }) => name === 'native grammar concept references');
   const ruleCount = nativeGrammarIds().reduce((sum, grammar) => sum + nativeGrammarRuleConcepts(grammar).length, 0);
-  assert.equal(references.length, ruleCount);
-  assert.ok(rules.length >= ruleCount);
-  assert.deepEqual(new Set(references.map(({ file }) => file)).size, nativeGrammarIds().length);
+  const authoredFiles = readdirSync(path.join(root, 'parity/grammars/native'))
+    .filter((file) => file.endsWith('.lino'))
+    .map((file) => `parity/grammars/native/${file}`)
+    .concat('parity/grammars/native-text.lino').sort();
+  assert.deepEqual([...new Set(references.map(({ file }) => file))].sort(), authoredFiles,
+    'naming checks every authored source, including candidates and shared text rules');
+  let authoredRuleCount = 0;
+  for (const file of authoredFiles) {
+    const grammar = parseGrammarLinks(readFileSync(path.join(root, file), 'utf8'));
+    const expected = [...grammar.rules].map(([name, rule]) => ({ name, concept: rule.concept }));
+    assert.ok(expected.length > 0, `${file} defines native rules`);
+    assert.ok(expected.every(({ concept }) => typeof concept === 'string'), `${file} retains every concept reference`);
+    assert.deepEqual(references.filter((entry) => entry.file === file).map(({ record }) => record),
+      expected.map(({ concept }) => concept), `${file} naming references match its parsed rules exactly`);
+    authoredRuleCount += expected.length;
+  }
+  assert.equal(references.length, authoredRuleCount);
+  assert.ok(rules.length >= authoredRuleCount);
+  const shippedFiles = new Set(Object.values(LANGUAGE_CATALOG.nativeGrammars)
+    .map(({ file }) => `parity/grammars/native/${path.basename(file)}`));
+  assert.equal(references.filter(({ file }) => shippedFiles.has(file)).length, ruleCount,
+    'the shipped subset still names every runtime native rule exactly');
   observe('I195-NAMING-NATIVE-GRAMMARS', NAMING_FIXTURE,
     ['nativeRuleNamesAreEnglish', 'sourceNamesKeptAsAliases', 'oracleKindsPreserved', 'namingCheckCoversNativeGrammars'],
     'native rule names are readable English');

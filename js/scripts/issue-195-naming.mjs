@@ -432,6 +432,27 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `translation.${name === 'is-unsafe-program-field' ? 'detect-unsafe-program-field' : name}`,
   },
   {
+    inventory: 'typed program binding identities',
+    files: ['rust/src/typed_program_links.rs'],
+    extract: (text) => captures(text, /^pub\(crate\) fn (read_typed_program_binding_identities)\(/gmu)
+      .map((name) => name.replaceAll('_', '-')),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'shared rust array runtime',
+    files: ['js/src/translation/emit-rust.js'],
+    extract: (text) => captures(text, /^export function (readRustArrayPrelude)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'typed program expression projections',
+    files: ['js/src/typed-program-expression-projection.js', 'rust/src/typed_program_links/projection.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub\(super\) fn) (projectLinkedProgramExpression|project)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: () => 'translation.project-linked-program-expression',
+  },
+  {
     inventory: 'typed linked program records',
     files: ['js/src/data/typed-program-links-schema.json', 'rust/src/data/typed-program-links-schema.json'],
     extract: (text) => {

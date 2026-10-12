@@ -12793,10 +12793,11 @@
       "id": "grammar.reference-type",
       "phrase": "reference type",
       "role": "concept",
-      "definition": "A rule for a reference type, the construct the upstream grammar names reference_type.",
+      "definition": "A type for access to another value through a reference, retaining the declared language lifetime and mutation permissions.",
       "constraints": [
         "Native grammars share this concept only where the construct means the same in each language.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars.",
+        "Rust borrowing and lifetime rules and CSharp reference scope and readonly rules retain their selected language interpretation; the common reference type name does not prove equivalent operational meaning."
       ],
       "sourceAliases": [
         {
@@ -67409,11 +67410,11 @@
           "name": "whitespace"
         },
         {
-          "source": "native:xml",
+          "source": "native:native-text",
           "name": "whitespace"
         },
         {
-          "source": "native:native-text",
+          "source": "native:xml",
           "name": "whitespace"
         }
       ],
@@ -81543,6 +81544,89 @@
         {
           "source": "Rust primitive value decisions",
           "name": "read_scalar_cell_operation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-program-expression-projection",
+      "phrase": "read program expression projection",
+      "role": "operation",
+      "definition": "Read the declared projection key for a supported checked typed expression variant.",
+      "constraints": [
+        "Only expression projection keys present in the shared schema are admitted.",
+        "Unknown variants retain an empty decision instead of approximating a different construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript typed linked program decisions",
+          "name": "readProgramExpressionProjection"
+        },
+        {
+          "source": "Rust typed linked program decisions",
+          "name": "read_program_expression_projection"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.project-linked-program-expression",
+      "phrase": "project linked program expression",
+      "role": "operation",
+      "definition": "Project a checked typed expression through shared field instructions into the existing surface expression checker.",
+      "constraints": [
+        "The host adapter executes the shared projection fields rather than duplicating semantic checking rules.",
+        "The existing checker still validates types, bindings and semantics after projection.",
+        "Unsupported constructs and instruction modes retain explicit errors; a projection alone is not native runtime evidence."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript typed program expression projection",
+          "name": "projectLinkedProgramExpression"
+        },
+        {
+          "source": "Rust typed program expression projection",
+          "name": "project"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-typed-program-binding-identities",
+      "phrase": "read typed program binding identities",
+      "role": "operation",
+      "definition": "Read the owned lexical binder identities of a completely decoded and validated typed linked program.",
+      "constraints": [
+        "The traversal includes declared parameters and let binders even when their bindings are unused.",
+        "Unreachable relations, counterfeit binding references and unrelated public fields do not confer local binder identity.",
+        "The bounded traversal preserves the distinction between lexical binder roles and arbitrary objects before formal name comparison."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript typed linked program decisions",
+          "name": "readTypedProgramBindingIdentities"
+        },
+        {
+          "source": "Rust typed linked program decisions",
+          "name": "read_typed_program_binding_identities"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "translation.read-rust-array-prelude",
+      "phrase": "read rust array prelude",
+      "role": "operation",
+      "definition": "Read the exact selected Rust array runtime bytes shared with the native target adapter.",
+      "constraints": [
+        "The explicit style selects the existing standard or legacy array runtime.",
+        "Generation retains the exact runtime text selected by the JavaScript emitter in the native adapter data.",
+        "Selecting emitted runtime data does not constitute native compilation or runtime execution evidence."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript Rust target runtime",
+          "name": "readRustArrayPrelude"
         }
       ],
       "formerNames": []
