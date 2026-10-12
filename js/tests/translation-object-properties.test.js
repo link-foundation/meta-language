@@ -7,6 +7,7 @@ import { runInNewContext } from 'node:vm';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
+import frontendCases from './fixtures/translation-cases/frontend-javascript.mjs';
 
 function observe(source, inspect) {
   const lines = [];
@@ -39,7 +40,11 @@ test('prototype-definition object entries are refused without treating them as d
     const source = `function make() { return ${literal}; }`;
     assert.deepEqual(observe(source, "(() => { const item = make(); return [Object.hasOwn(item, '__proto__'), Object.getPrototypeOf(item) === null, item.inherited === 1]; })()").value,
       [false, nullPrototype, inherited], literal);
-    assert.throws(() => parseJavaScript(source), error => error.kind === 'unsupported'
+    const parsed = parseJavaScript(source);
+    const definition = parsed.items.find(item => item.name === 'make').body.prototypeDefinition;
+    assert.ok(definition.value);
+    assert.equal(definition.index, 0);
+    assert.throws(() => checkProgram(parsed), error => error.kind === 'unsupported'
       && error.details.construct === 'object prototype definition' && /prototype-definition syntax/u.test(error.message)
       && source.slice(error.span.start, error.span.end).includes('__pr'), literal);
   }
@@ -92,4 +97,36 @@ test('overwriting computed __proto__ fields retains each value evaluation', () =
 test('nonliteral computed names remain a precise source admission gap', () => {
   assert.throws(() => parseJavaScript("function make(key) { return {[key]: 7}; }"),
     error => error.kind === 'unsupported' && error.details.construct === 'computed object key');
+});
+
+
+test('the original accepted constructor fixture retains its prototype source expression', () => {
+  const source = frontendCases['frontend-javascript-accept-ctor-proto-field'][1];
+  const body = parseJavaScript(source).items.find(item => item.name === 'f').body;
+  assert.equal(body.k, 'ctorObject');
+  assert.equal(body.tag, 'leaf');
+  assert.deepEqual(Object.keys(body.fields), []);
+  assert.equal(body.prototypeDefinition.index, 1);
+  assert.equal(body.prototypeDefinition.value.k, 'ctorObject');
+  assert.equal(body.prototypeDefinition.value.tag, 'leaf');
+  assert.equal(source.slice(body.prototypeDefinition.span.start, body.prototypeDefinition.span.end), '__proto__');
+  assert.deepEqual(observe(source, "(() => { const value = f(0n); return [Object.hasOwn(value, '__proto__'), Object.getPrototypeOf(value).$]; })()").value, [false, 'leaf']);
+  assert.throws(() => checkProgram(parseJavaScript(source)), error => error.kind === 'unsupported' && error.details.construct === 'object prototype definition');
+});
+
+test('unrepresented Object.freeze operands retain their behavior by refusing translation', async () => {
+  const { selfTranslate } = await import('../src/self-translation.js');
+  for (const source of primitiveFixture.freezeSources) {
+    assert.equal(observe(source, 'Object.isFrozen(make())').value, true, source);
+    assert.throws(() => parseJavaScript(source), error => error.kind === 'unsupported' && error.details.construct === 'Object.freeze operand', source);
+    const carried = selfTranslate(source, 'JavaScript', 'Rust');
+    assert.equal(carried.items.find(item => source.slice(item.start, item.end).includes('Object.freeze')).status, 'carried', source);
+    assert.equal(selfTranslate(carried.code, 'Rust', 'JavaScript').code, source);
+  }
+  for (const source of [
+    'const VALUES = Object.freeze([value()]); function value() { return 7; }',
+    'const VALUES = Object.freeze([1]); function make() { return Object.freeze([2]); }',
+    'const Namespace = Object.freeze({read() { return 1; }});',
+  ]) assert.throws(() => parseJavaScript(source, { readonlyModuleConstants: true }),
+    error => error.kind === 'unsupported' && error.details.construct === 'Object.freeze operand', source);
 });

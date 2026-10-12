@@ -144,12 +144,17 @@ impl JavaScriptParser {
         if self.cursor.is("{") {
             return self.destructuring(&start);
         }
-        let (name, value, span) = self.const_binding(&start)?;
+        let (name, value, span) =
+            self.const_binding(&start, self.top_level && self.readonly_module_constants)?;
         Ok(Stmt::Const { name, value, span })
     }
 
     /// `const name = value;` after the `const`.
-    pub(super) fn const_binding(&mut self, start: &Token) -> Result<(String, SExpr, Span)> {
+    pub(super) fn const_binding(
+        &mut self,
+        start: &Token,
+        readonly: bool,
+    ) -> Result<(String, SExpr, Span)> {
         if self.cursor.is("[") {
             return Err(unsupported(
                 "array destructuring",
@@ -162,7 +167,11 @@ impl JavaScriptParser {
         if self.cursor.eat("=").is_none() {
             return Err(self.fail_here("expected = in const"));
         }
-        let value = self.expr()?;
+        let previous = self.readonly_constant_initializer;
+        self.readonly_constant_initializer = readonly;
+        let result = self.expr();
+        self.readonly_constant_initializer = previous;
+        let value = result?;
         if self.cursor.is(",") {
             return Err(unsupported(
                 "several declarators",
@@ -523,7 +532,7 @@ impl JavaScriptParser {
                 ));
             }
             let start = self.cursor.advance();
-            let (name, value, span) = self.const_binding(&start)?;
+            let (name, value, span) = self.const_binding(&start, self.readonly_module_constants)?;
             return Ok(SEffect::Let {
                 name,
                 ty: None,

@@ -491,7 +491,7 @@ function collectLiteralBindings(groups, bind, from, to, decorators) {
   if (bind) for (const group of groups) {
     if (group.kind !== 'item') continue;
     try {
-      const parsed = parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(group.text).code : group.text);
+      const parsed = parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(group.text).code : group.text, { readonlyModuleConstants: family(to) === 'Rust' });
       const effects = parsed.main.effects;
       const effect = effects[0];
       if (effect && acceptLiteralBinding(effect.value?.k ?? '', effect.constant ?? false, effects.length, parsed.items.length)) {
@@ -535,7 +535,7 @@ function translateGroup(group, from, to, decorators, context = {}) {
     // The Rust frontend reads a program, so an item alone gets an empty main.
     const program = checkProgram(family(from) === 'Rust'
       ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`)
-      : parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(text).code : text, context));
+      : parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(text).code : text, { ...context, readonlyModuleConstants: family(to) === 'Rust' }));
     if (context.utf16Strings) program.utf16Strings = true;
     // A top-level constant is a Rust constant; other top-level statements run once, as a program.
     const constants = family(to) === 'Rust' ? emitRustConstants(program) : null;

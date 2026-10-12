@@ -201,5 +201,52 @@
       "explicitFrozen": false,
       "frozen": true
     }
+  ],
+  "freezeOperands": [
+    {
+      "expression": "ctorObject",
+      "readonlyLiteral": false,
+      "accepted": true
+    },
+    {
+      "expression": "ctorObject",
+      "readonlyLiteral": true,
+      "accepted": true
+    },
+    {
+      "expression": "array",
+      "readonlyLiteral": false,
+      "accepted": false
+    },
+    {
+      "expression": "array",
+      "readonlyLiteral": true,
+      "accepted": true
+    },
+    {
+      "expression": "record",
+      "readonlyLiteral": true,
+      "accepted": false
+    },
+    {
+      "expression": "app",
+      "readonlyLiteral": true,
+      "accepted": false
+    },
+    {
+      "expression": "name",
+      "readonlyLiteral": true,
+      "accepted": false
+    },
+    {
+      "expression": "str",
+      "readonlyLiteral": false,
+      "accepted": false
+    }
+  ],
+  "freezeSources": [
+    "/** @typedef {{ $: 'one', value: number } | { $: 'two' }} Item */\n/** @returns {Item} */\nfunction raw() { return {$: 'one', value: 7}; }\n/** @returns {Item} */\nfunction make() { return Object.freeze(raw()); }\n",
+    "function make() { return Object.freeze([1, 2]); }\n",
+    "function make() { return Object.freeze({value: 7}); }\n"
   ]
 }

@@ -18,7 +18,7 @@ import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 import { bindArrayElements, isLiteralBinding, readArrayBinding, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
-import { acceptObjectPropertyDefinition } from './primitive-value-rules.js';
+import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './primitive-value-rules.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
@@ -72,8 +72,10 @@ export function parseJavaScript(source, context = {}) {
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics } = {}) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false } = {}) {
     this.source = source;
+    this.readonlyModuleConstants = readonlyModuleConstants;
+    this.readonlyConstantInitializer = false;
     this.referenceSemantics = referenceSemantics ?? requiresReferenceSemantics(source);
     this.referenceSemanticsEnabled = referenceSemantics !== false;
     // The other items of the module an item may call and read, by name.
@@ -671,7 +673,7 @@ class JavaScriptParser {
   statement() {
     const c = this.cursor;
     const token = c.peek();
-    if (c.is('const')) return this.constStatement();
+    if (c.is('const')) return this.constStatement(this.topLevel && this.readonlyModuleConstants);
     if (c.is('let')) {
       const statements = this.letDeclarations();
       c.eat(';');
@@ -728,7 +730,7 @@ class JavaScriptParser {
     return { s: 'expr', expr, span: span(token, c.peek()) };
   }
 
-  constStatement() {
+  constStatement(readonly = false) {
     const c = this.cursor;
     const start = c.next();
     if (c.is('{')) return this.destructuring(start);
@@ -746,7 +748,10 @@ class JavaScriptParser {
     const name = c.identifier('const');
     reserved(name);
     if (!c.eat('=')) throw this.fail('expected = in const');
-    const value = this.expr();
+    const previous = this.readonlyConstantInitializer;
+    this.readonlyConstantInitializer = readonly;
+    let value;
+    try { value = this.expr(); } finally { this.readonlyConstantInitializer = previous; }
     if (c.is(',')) throw unsupported('several declarators', 'declare one binding per const', span(start, c.peek()));
     c.eat(';');
     this.declareLocal(name.value);
@@ -1178,7 +1183,7 @@ class JavaScriptParser {
     const token = c.peek();
     if (c.is('const')) {
       if (c.is('{', 1)) throw unsupported('top-level destructuring', 'bind each value with const', span(token, c.peek(1)));
-      const binding = this.constStatement();
+      const binding = this.constStatement(this.readonlyModuleConstants);
       if (isLiteralBinding(binding.value)) this.literalBindings.set(binding.name, binding.value);
       return { k: 'let', name: binding.name, value: binding.value, constant: true, span: binding.span };
     }
@@ -1821,8 +1826,11 @@ class JavaScriptParser {
     const fields = Object.create(null);
     const entries = [];
     let duplicate = null;
+    let prototypeDefinition = null;
+    let propertyIndex = 0;
     while (!c.is('}')) {
       let key = c.peek();
+      const index = propertyIndex++;
       if (c.eat('...')) {
         entries.push({ spread: true, value: this.expr() });
         if (!c.eat(',')) break;
@@ -1840,9 +1848,10 @@ class JavaScriptParser {
         c.next();
       }
       if (!acceptObjectPropertyDefinition(key.value, Boolean(computed), c.is(':'))) {
-        throw unsupported('object prototype definition', 'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', span(key, key));
-      }
-      if (key.value === '$') {
+        if (prototypeDefinition) throw new TranslationError('syntax', 'duplicate object prototype definition', span(key, key));
+        c.expect(':', 'object prototype definition');
+        prototypeDefinition = { value: this.expr(), span: span(key, key), index };
+      } else if (key.value === '$') {
         c.expect(':', 'object');
         const value = c.next();
         if (value.kind !== 'string') throw unsupported('computed tag', 'the $ tag is a string literal', span(value, value));
@@ -1860,10 +1869,11 @@ class JavaScriptParser {
       if (!c.eat(',')) break;
     }
     c.expect('}', 'object');
-    if (tag === null) return { k: 'record', entries, span: span(start, c.peek()) };
+    const prototype = prototypeDefinition ? { prototypeDefinition } : {};
+    if (tag === null) return { k: 'record', entries, ...prototype, span: span(start, c.peek()) };
     if (duplicate) throw typeError(`duplicate field ${duplicate.value}`, span(duplicate, duplicate));
     if (entries.some((entry) => entry.spread)) throw unsupported('tagged object spread', 'constructor spreads require a complete tagged field projection', span(start, c.peek()));
-    return { k: 'ctorObject', tag, fields, span: span(start, c.peek()) };
+    return { k: 'ctorObject', tag, fields, ...prototype, span: span(start, c.peek()) };
   }
 
   /**
@@ -1943,7 +1953,15 @@ class JavaScriptParser {
       return { k: 'array', items: args.map(value => ({ spread: arrayForm === 'copy-from', value })), span: called };
     }
     if (name === 'String' && args.length === 1) return { k: 'toString', arg: args[0], span: called };
-    if (name === 'Object.freeze' && args.length === 1) return { ...args[0], ...(args[0].k === 'ctorObject' && { frozen: true }), span: called };
+    if (name === 'Object.freeze' && args.length === 1) {
+      const value = args[0];
+      const literalArray = (item) => ['num', 'bool', 'str', 'none'].includes(item.k)
+        || item.k === 'array' && item.items.every((entry) => !entry.spread && literalArray(entry.value));
+      const readonlyLiteral = this.readonlyConstantInitializer && value.k === 'array' && literalArray(value);
+      if (!acceptObjectFreezeOperand(value.k, readonlyLiteral)) throw unsupported('Object.freeze operand',
+        'freezing this value needs an explicit property-descriptor operation; only direct tagged objects and readonly literal module constants are represented', called);
+      return { ...value, ...(value.k === 'ctorObject' && { frozen: true }), span: called };
+    }
     if (GLOBALS.has(segments[0]) || name === 'String') {
       throw unsupported(name, 'the JavaScript standard library is outside the portable core', called);
     }

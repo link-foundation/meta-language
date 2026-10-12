@@ -893,9 +893,10 @@ fn emit_item(
                 &project_type_script_typing(text)?,
                 context,
                 literal_bindings,
+                family(to) == "Rust",
             )?
         } else {
-            parse_javascript_bound_in(text, context, literal_bindings)?
+            parse_javascript_bound_in(text, context, literal_bindings, family(to) == "Rust")?
         }
     };
     let program = check_program(&surface)?;

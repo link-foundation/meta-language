@@ -53,3 +53,8 @@ export function readScalarCellOperation(expression) {
 export function requireDataObjectFreeze(language, explicitFrozen) {
   return explicitFrozen || language !== 'JavaScript';
 }
+
+/** @param {string} expression @param {boolean} readonlyLiteral @returns {boolean} */
+export function acceptObjectFreezeOperand(expression, readonlyLiteral) {
+  return expression === 'ctorObject' || expression === 'array' && readonlyLiteral;
+}

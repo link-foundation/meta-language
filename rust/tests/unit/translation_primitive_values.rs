@@ -1,8 +1,8 @@
 use meta_language::translate_program;
 use meta_language::translation::primitive_value_rules::{
-    accept_object_property_definition, read_absent_number_value, read_number_display_function,
-    read_number_display_refusal, read_scalar_cell_operation, render_absent_number_expression,
-    require_data_object_freeze,
+    accept_object_freeze_operand, accept_object_property_definition, read_absent_number_value,
+    read_number_display_function, read_number_display_refusal, read_scalar_cell_operation,
+    render_absent_number_expression, require_data_object_freeze,
 };
 use serde_json::Value;
 use std::process::Command;
@@ -23,6 +23,16 @@ fn generated_primitive_value_decisions_match_shared_independent_fixtures() {
                 entry["name"].as_str().unwrap().to_owned(),
                 entry["computed"].as_bool().unwrap(),
                 entry["colon"].as_bool().unwrap()
+            ),
+            entry["accepted"].as_bool().unwrap(),
+            "{entry}"
+        );
+    }
+    for entry in data["freezeOperands"].as_array().unwrap() {
+        assert_eq!(
+            accept_object_freeze_operand(
+                entry["expression"].as_str().unwrap().to_owned(),
+                entry["readonlyLiteral"].as_bool().unwrap()
             ),
             entry["accepted"].as_bool().unwrap(),
             "{entry}"
@@ -77,11 +87,14 @@ fn generated_primitive_value_decisions_match_shared_independent_fixtures() {
 }
 
 #[test]
-fn native_javascript_source_refuses_prototype_definitions_before_creating_constructor_fields() {
+fn native_javascript_source_refuses_prototype_semantics_without_creating_own_fields() {
     let data = fixture();
     for source in data["prototypeSources"].as_array().unwrap() {
         let source = source.as_str().unwrap();
-        let error = meta_language::translation::javascript::parse_javascript(source).unwrap_err();
+        let error = match meta_language::translation::javascript::parse_javascript(source) {
+            Ok(surface) => meta_language::translation::check::check_program(&surface).unwrap_err(),
+            Err(error) => error,
+        };
         assert_eq!(error.kind.as_str(), "unsupported", "{source}: {error}");
         assert_eq!(
             error.construct.as_deref(),
@@ -175,4 +188,58 @@ fn native_rust_source_f64_display_refuses_until_a_faithful_formatter_exists() {
     )
     .unwrap();
     assert_eq!(stringified.diagnostic().unwrap().reason, reason);
+}
+
+#[test]
+fn native_javascript_freeze_gap_preserves_source_and_readonly_module_constants() {
+    use meta_language::self_translate;
+    use meta_language::translation::javascript::parse_javascript;
+    for source in fixture()["freezeSources"].as_array().unwrap() {
+        let source = source.as_str().unwrap();
+        let error = parse_javascript(source).unwrap_err();
+        assert_eq!(error.kind.as_str(), "unsupported", "{source}: {error}");
+        assert!(
+            matches!(
+                error.construct.as_deref(),
+                Some("Object.freeze operand" | "object without a $ tag")
+            ),
+            "{source}: {error}"
+        );
+        let carried = self_translate(source, "JavaScript", "Rust").unwrap();
+        assert!(
+            carried.items.iter().any(|item| item.status == "carried"
+                && source[item.start..item.end].contains("Object.freeze")),
+            "{source}: {}",
+            carried.code
+        );
+        assert_eq!(
+            self_translate(&carried.code, "Rust", "JavaScript")
+                .unwrap()
+                .code,
+            source
+        );
+    }
+    let source = "const MAX_LENGTH = 2048;\nexport const TERM = 'identifier:trigram';\nexport const PAIRS = Object.freeze([['en', 'Hawaii']]);\n";
+    let translated = self_translate(source, "JavaScript", "Rust").unwrap();
+    assert_eq!(
+        translated
+            .items
+            .iter()
+            .map(|item| item.status.as_str())
+            .collect::<Vec<_>>(),
+        vec!["translated", "translated", "translated"]
+    );
+    assert!(
+        translated
+            .code
+            .contains("pub static PAIRS: std::sync::LazyLock<Vec<Vec<String>>>"),
+        "{}",
+        translated.code
+    );
+    assert_eq!(
+        self_translate(&translated.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
 }

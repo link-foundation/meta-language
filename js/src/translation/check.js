@@ -356,6 +356,8 @@ class Checker {
   }
 
   expr(node, env, path, expected, allowLiteral = false) {
+    if (node.prototypeDefinition) throw unsupported('object prototype definition',
+      'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', node.prototypeDefinition.span);
     const innerExpected = expected?.reference ? { ...expected, reference: false } : expected;
     let result = this.exprInner(node, env, path, innerExpected, allowLiteral);
     if (this.referenceSemantics && ['array', 'record', 'set', 'map'].includes(result.type.kind) && !result.type.reference) {

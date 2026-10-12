@@ -6,7 +6,6 @@ use super::{
     Token, TokenCursor, TokenKind, UnaryOp, binary, describe, has_ctor, is_tag_field, joined, node,
     number_literal, span, tokenize, type_error, unsupported, wild,
 };
-use crate::translation::primitive_value_rules::accept_object_property_definition;
 
 impl JavaScriptParser {
     /// Expressions, by JavaScript precedence.
@@ -718,107 +717,6 @@ impl JavaScriptParser {
         Ok(expr)
     }
 
-    /// `{ $: 'node', left, value: v }` constructs the `node` alternative of a data type.
-    pub(super) fn object_literal(&mut self) -> Result<SExpr> {
-        let start = self.cursor.advance();
-        let mut tag = None;
-        let mut fields: Vec<(String, SExpr)> = Vec::new();
-        while !self.cursor.is("}") {
-            let mut key = self.peek();
-            let mut here = Some(span(&key, &key));
-            if self.cursor.is("...") {
-                return Err(unsupported("object spread", "name every field", here));
-            }
-            let computed = self.cursor.eat("[").is_some();
-            if computed {
-                let value = self.expr()?;
-                let close = self.cursor.expect("]", Some("computed object key"))?;
-                let SNode::Str { value } = value.node else {
-                    return Err(unsupported(
-                        "computed object key",
-                        "the portable record shape needs a literal string key",
-                        Some(span(&key, &close)),
-                    ));
-                };
-                key.kind = TokenKind::String;
-                key.value = value;
-                key.end = close.end;
-                here = Some(span(&key, &key));
-            } else {
-                if !matches!(key.kind, TokenKind::Identifier | TokenKind::String) {
-                    return Err(unsupported(
-                        &format!("object key {}", describe(&key)),
-                        "keys are literal names",
-                        here,
-                    ));
-                }
-                self.cursor.advance();
-            }
-            if !accept_object_property_definition(key.value.clone(), computed, self.cursor.is(":"))
-            {
-                return Err(unsupported(
-                    "object prototype definition",
-                    "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
-                    here,
-                ));
-            }
-            if key.value == "$" {
-                self.cursor.expect(":", Some("object"))?;
-                let value = self.cursor.advance();
-                if value.kind != TokenKind::String {
-                    return Err(unsupported(
-                        "computed tag",
-                        "the $ tag is a string literal",
-                        Some(span(&value, &value)),
-                    ));
-                }
-                tag = Some(value.value);
-            } else {
-                if fields.iter().any(|(name, _)| *name == key.value) {
-                    return Err(type_error(format!("duplicate field {}", key.value), here));
-                }
-                if self.cursor.is("(") {
-                    return Err(unsupported(
-                        "method in an object value",
-                        "functions as values are outside the portable core",
-                        here,
-                    ));
-                }
-                let value = if self.cursor.eat(":").is_some() {
-                    self.expr()?
-                } else {
-                    if computed || key.kind != TokenKind::Identifier {
-                        return Err(Self::fail(
-                            "expected : after the object property name",
-                            &key,
-                        ));
-                    }
-                    self.reference(&key)?
-                };
-                fields.push((key.value, value));
-            }
-            if self.cursor.eat(",").is_none() {
-                break;
-            }
-        }
-        self.cursor.expect("}", Some("object"))?;
-        let Some(tag) = tag else {
-            return Err(unsupported(
-                "object without a $ tag",
-                "a portable object is an alternative of a @typedef data type",
-                Some(self.to_here(&start)),
-            ));
-        };
-        Ok(node(
-            SNode::CtorObject {
-                tag,
-                fields,
-                frozen: false,
-            },
-            self.to_here(&start),
-        ))
-    }
-
     pub(super) fn identifier(&mut self) -> Result<SExpr> {
         let token = self.peek();
         let here = Some(span(&token, &token));
@@ -924,12 +822,7 @@ impl JavaScriptParser {
             return Ok(node(SNode::ToString { arg: Box::new(arg) }, called));
         }
         if name == "Object.freeze" && args.len() == 1 {
-            let mut arg = args.remove(0);
-            if let SNode::CtorObject { frozen, .. } = &mut arg.node {
-                *frozen = true;
-            }
-            arg.span = Some(called);
-            return Ok(arg);
+            return self.freeze_object_argument(args.remove(0), called);
         }
         if GLOBALS.contains(&segments[0].as_str()) || name == "String" {
             return Err(unsupported(

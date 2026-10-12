@@ -125,6 +125,10 @@ pub fn require_data_object_freeze(language: String, explicit_frozen: bool) -> bo
     (explicit_frozen || (language != "JavaScript"))
 }
 
+pub fn accept_object_freeze_operand(expression: String, readonly_literal: bool) -> bool {
+    ((expression == "ctorObject") || ((expression == "array") && readonly_literal))
+}
+
 fn ml_main() {}
 
 // Deep recursion in the source is not bounded by a small native stack.

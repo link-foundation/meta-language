@@ -5,7 +5,7 @@ use crate::decorators::DecoratorSet;
 use crate::translation::frontend_rules::{
     accept_binding_scope, accept_literal_binding, accept_module_binding_scope, find_binding_run_end,
 };
-use crate::translation::javascript::{ModuleContext, parse_javascript};
+use crate::translation::javascript::{ModuleContext, parse_javascript_bound_in};
 use crate::translation::surface::{SEffect, SExpr, SNode};
 use std::collections::{HashMap, HashSet};
 
@@ -159,7 +159,12 @@ fn collect_literal_bindings(
                 Some(Err(_)) => continue,
                 None => text,
             };
-            let Ok(parsed) = parse_javascript(source) else {
+            let Ok(parsed) = parse_javascript_bound_in(
+                source,
+                &ModuleContext::default(),
+                &HashMap::new(),
+                family(to) == "Rust",
+            ) else {
                 continue;
             };
             let Some(main) = &parsed.main else {

@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { translateProgram } from '../src/program-translation.js';
 import { referenceOperation } from '../src/translation/reference-model.js';
-import { acceptObjectPropertyDefinition, readAbsentNumberValue, renderAbsentNumberExpression, readNumberDisplayRefusal, readNumberDisplayFunction, readScalarCellOperation, requireDataObjectFreeze } from '../src/translation/primitive-value-rules.js';
+import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition, readAbsentNumberValue, renderAbsentNumberExpression, readNumberDisplayRefusal, readNumberDisplayFunction, readScalarCellOperation, requireDataObjectFreeze } from '../src/translation/primitive-value-rules.js';
+import { checkProgram } from '../src/translation/check.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 
 const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/translation-primitive-values.json', import.meta.url), 'utf8'));
@@ -14,8 +15,9 @@ test('shared source admission distinguishes prototype definitions from actual da
     assert.equal(acceptObjectPropertyDefinition(entry.name, entry.computed, entry.colon), entry.accepted, JSON.stringify(entry));
   }
   for (const source of fixture.prototypeSources) {
-    assert.throws(() => parseJavaScript(source), error => error.kind === 'unsupported' && error.details.construct === 'object prototype definition', source);
+    assert.throws(() => checkProgram(parseJavaScript(source)), error => error.kind === 'unsupported' && error.details.construct === 'object prototype definition', source);
   }
+  for (const entry of fixture.freezeOperands) assert.equal(acceptObjectFreezeOperand(entry.expression, entry.readonlyLiteral), entry.accepted, JSON.stringify(entry));
   for (const entry of fixture.dataObjectFreeze) {
     assert.equal(requireDataObjectFreeze(entry.language, entry.explicitFrozen), entry.frozen, JSON.stringify(entry));
   }
