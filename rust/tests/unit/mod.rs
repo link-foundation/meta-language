@@ -74,6 +74,7 @@ mod issue_195_grammar_feature_union_interchange;
 mod issue_195_grammar_importers;
 mod issue_195_grammar_native_agda;
 mod issue_195_grammar_profile_csharp;
+mod issue_195_grammar_profile_elixir;
 mod issue_195_grammar_native_c;
 mod issue_195_grammar_native_csv;
 mod issue_195_grammar_native_diff;
@@ -218,3 +219,5 @@ mod native_development_oracles;
 mod translation_array_construction;
 mod translation_rust_floating_literals;
 mod grammar_elm_layout_candidate;
+
+mod issue_195_grammar_profile_ruby;
