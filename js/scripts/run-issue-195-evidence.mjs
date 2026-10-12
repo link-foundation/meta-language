@@ -38,6 +38,7 @@ import {
 } from './issue-195-evidence-stages.mjs';
 import { verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
 import { PARITY_ARTIFACT_FILES } from './issue-195-parity-evidence.mjs';
+import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 import { TEST_GROUPS } from './test-groups.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -52,12 +53,11 @@ const artifactsDirectory = path.join(resultsDirectory, 'artifacts');
 const parityDirectory = path.join(resultsDirectory, 'runtime-parity');
 const manifest = await buildIssue195Manifest(root);
 const plan = buildEvidencePlan(manifest, checkpoint);
-const packageMetadata = JSON.parse(await readFile(path.join(root, 'js/package.json'), 'utf8'));
-const grammarLock = JSON.parse(
-  await readFile(path.join(root, 'js/src/vendor/grammars/grammar-lock.json'), 'utf8'),
-);
-const corpusBytes = await readFile(path.join(root, 'parity/fixtures/issue-195-evidence.json'));
-const corpus = JSON.parse(corpusBytes.toString('utf8'));
+const packageMetadata = readProjectData(path.join(root, 'js/package.json'), { format: 'json' });
+const grammarLock = readProjectData(path.join(root, 'js/src/vendor/grammars/grammar-lock.json'));
+const corpusFile = path.join(root, 'parity/fixtures/issue-195-evidence.json');
+const corpusBytes = readProjectFileBytes(corpusFile);
+const corpus = readProjectData(corpusFile);
 const corpusSha256 = createHash('sha256').update(corpusBytes).digest('hex');
 
 const consumerScript = path.join(root, 'js/scripts/run-issue-195-consumer.mjs');

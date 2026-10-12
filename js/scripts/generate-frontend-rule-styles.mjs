@@ -9,6 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DecoratorSet } from '../src/decorators.js';
 import { applyRecordedCompilerFeedback, readCompilerFeedbackCorrections, retainCompilerFeedback } from './compiler-style-feedback.mjs';
+import { readProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const paths = ['frontend_rules.rs', ...readdirSync(join(root, 'rust/src/translation/frontend_rules'))
@@ -64,8 +65,8 @@ try {
     if (process.argv.includes('--check')) {
       throw new Error(diagnostics.filter(({ level }) => level === 'error').map(({ rendered, message }) => rendered ?? message).join('\n'));
     }
-    const feedback = JSON.parse(readFileSync(join(root,
-      'issue-195-artifacts/compiler-feedback/frontend-rules', `round-${round}.json`), 'utf8'));
+    const feedback = readProjectData(join(root,
+      'issue-195-artifacts/compiler-feedback/frontend-rules', `round-${round}.lino`));
     const corrections = readCompilerFeedbackCorrections({ feedback,
       allowedPaths: paths.map(path => `rust/src/translation/${path}`) });
     for (const [path, source] of corrections.inputs) {

@@ -2,10 +2,11 @@
 // Offline feedback consumes only explicit machine-applicable suggestions;
 // rendered log excerpts never acquire invented applicability metadata.
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { DecoratorSet } from '../src/decorators.js';
 import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
+import { readProjectData, writeProjectData } from './project-data.mjs';
 
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
@@ -15,11 +16,10 @@ export function retainCompilerFeedback({ root, group, round, stderr, inputs }) {
     const bytes = readFileSync(path);
     return [path, { relativePath, sha256: digest(bytes), text: bytes.toString('utf8') }];
   }));
-  const output = join(root, 'issue-195-artifacts/compiler-feedback', group, `round-${round}.json`);
-  mkdirSync(dirname(output), { recursive: true });
-  writeFileSync(output, `${JSON.stringify({ schemaVersion: 1, head: process.env.GITHUB_SHA ?? null,
+  const output = join(root, 'issue-195-artifacts/compiler-feedback', group, `round-${round}.lino`);
+  writeProjectData(output, { schemaVersion: 1, head: process.env.GITHUB_SHA ?? null,
     runId: process.env.GITHUB_RUN_ID ?? null, job: process.env.GITHUB_JOB ?? null,
-    compiler: 'clippy-driver', diagnostics, sources }, null, 2)}\n`);
+    compiler: 'clippy-driver', diagnostics, sources });
   return diagnostics;
 }
 
@@ -144,7 +144,7 @@ export function readCompilerFeedbackCorrections({ feedback, allowedPaths }) {
 }
 
 export function applyRecordedCompilerFeedback({ root, feedbackFile, decoratorFile, allowedPaths }) {
-  const feedback = JSON.parse(readFileSync(feedbackFile, 'utf8'));
+  const feedback = readProjectData(feedbackFile);
   const { actions, spans: recordedSpans, deferred, inputs } = readCompilerFeedbackCorrections({ feedback, allowedPaths });
   for (const [path, source] of inputs) {
     const input = feedback.sources[path];

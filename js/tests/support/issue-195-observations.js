@@ -6,7 +6,8 @@
 // record for every fixture. Tests call `recordIssue195Observations` after
 // their assertions hold, so a failing test never produces a record.
 import { createHash } from 'node:crypto';
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync } from 'node:fs';
+import { readProjectFileBytes } from '../../scripts/project-data.mjs';
 
 const repositoryRoot = new URL('../../../', import.meta.url);
 
@@ -33,7 +34,7 @@ export function issue195Slug(value) {
 
 export function issue195FixtureDigest(fixtureFile) {
   if (!digests.has(fixtureFile)) {
-    const bytes = readFileSync(new URL(fixtureFile, repositoryRoot));
+    const bytes = readProjectFileBytes(new URL(fixtureFile, repositoryRoot));
     digests.set(fixtureFile, createHash('sha256').update(bytes).digest('hex'));
   }
   return digests.get(fixtureFile);

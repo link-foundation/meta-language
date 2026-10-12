@@ -4,10 +4,38 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { applyRecordedCompilerFeedback, readCompilerFeedbackCorrections } from '../scripts/compiler-style-feedback.mjs';
+import { applyRecordedCompilerFeedback, readCompilerFeedbackCorrections, retainCompilerFeedback } from '../scripts/compiler-style-feedback.mjs';
+import { readProjectData, readProjectFileBytes, writeProjectData } from '../scripts/project-data.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 
 const sha256 = (source) => createHash('sha256').update(source).digest('hex');
+
+test('retained compiler feedback stores inspectable LiNo without altering diagnostic or source provenance', () => {
+  const root = mkdtempSync(join(tmpdir(), 'meta-language-compiler-feedback-storage-'));
+  try {
+    const source = '// α byte offsets\nfn sample() -> i32 { 2 }\n';
+    const path = join(root, 'generated.rs');
+    const relativePath = 'rust/src/generated.rs';
+    writeFileSync(path, source);
+    const diagnostics = [{ reason: 'compiler-message', message: {
+      level: 'error', code: { code: 'E0308', explanation: null },
+      message: 'mismatched types', spans: [{ file_name: path, byte_start: 0,
+        byte_end: 0, suggestion_applicability: null, suggested_replacement: null }], children: [],
+    } }];
+    const actual = retainCompilerFeedback({ root, group: 'frontend-rules', round: 0,
+      stderr: diagnostics.map(item => JSON.stringify(item)).join('\n') + '\n', inputs: [{ path, relativePath }] });
+    assert.deepEqual(actual, diagnostics);
+    const feedbackFile = join(root, 'issue-195-artifacts/compiler-feedback/frontend-rules/round-0.json');
+    const stored = readProjectData(feedbackFile);
+    assert.deepEqual(stored.diagnostics, diagnostics);
+    assert.deepEqual(stored.sources[path], { relativePath, sha256: sha256(source), text: source });
+    assert.equal(stored.compiler, 'clippy-driver');
+    assert.ok(readProjectFileBytes(feedbackFile).includes(Buffer.from('(term: structured%20data)')),
+      'the retained snapshot has the structured data graph root');
+    assert.equal(readCompilerFeedbackCorrections({ feedback: stored, allowedPaths: [relativePath] }).actions.length, 0,
+      'storing genuine diagnostics cannot promote an unproven suggestion');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 
 test('compiler feedback replays exact byte ranges in unique contexts and refuses stale or unproven suggestions', () => {
   const root = mkdtempSync(join(tmpdir(), 'meta-language-compiler-feedback-test-'));
@@ -26,7 +54,7 @@ test('compiler feedback replays exact byte ranges in unique contexts and refuses
     const path = join(root, 'feedback.json');
     const apply = () => applyRecordedCompilerFeedback({ root, feedbackFile: path,
       decoratorFile: 'styles.lino', allowedPaths: [relativePath] });
-    writeFileSync(path, JSON.stringify(feedback));
+    writeProjectData(path, feedback);
     apply();
     const styles = DecoratorSet.fromLino(readFileSync(join(root, 'styles.lino'), 'utf8'));
     const changed = styles.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source }).source;
@@ -37,14 +65,14 @@ test('compiler feedback replays exact byte ranges in unique contexts and refuses
     assert.throws(apply, /stale/u);
     writeFileSync(join(root, relativePath), source);
     feedback.sources['/ci/generated.rs'].sha256 = '0'.repeat(64);
-    writeFileSync(path, JSON.stringify(feedback));
+    writeProjectData(path, feedback);
     assert.throws(apply, /stale/u);
     feedback.sources['/ci/generated.rs'].sha256 = sha256(source);
     span.suggestion_applicability = 'MaybeIncorrect';
-    writeFileSync(path, JSON.stringify(feedback));
+    writeProjectData(path, feedback);
     assert.throws(apply, /no applicable machine suggestions/u);
     feedback.diagnostics = [{ rendered: 'help: replace true with false', loggedMachineApplicability: false }];
-    writeFileSync(path, JSON.stringify(feedback));
+    writeProjectData(path, feedback);
     assert.throws(apply, /no applicable machine suggestions/u);
     assert.equal(readFileSync(join(root, relativePath), 'utf8'), source, 'offline replay records data and never edits generated Rust');
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -74,8 +102,8 @@ test('compiler feedback keeps multipart suggestions atomic when nested alternati
       writeFileSync(join(root, relativePath), source);
       writeFileSync(join(root, 'styles.lino'), '');
       const feedbackFile = join(root, 'feedback.json');
-      writeFileSync(feedbackFile, JSON.stringify({ schemaVersion: 1, diagnostics,
-        sources: { '/ci/generated.rs': { relativePath, sha256: sha256(source), text: source } } }));
+      writeProjectData(feedbackFile, { schemaVersion: 1, diagnostics,
+        sources: { '/ci/generated.rs': { relativePath, sha256: sha256(source), text: source } } });
       const result = applyRecordedCompilerFeedback({ root, feedbackFile,
         decoratorFile: 'styles.lino', allowedPaths: [relativePath] });
       const styles = DecoratorSet.fromLino(readFileSync(join(root, 'styles.lino'), 'utf8'));
@@ -144,11 +172,12 @@ test('several signature edits preserve full contexts after descending byte offse
 });
 
 test('the retained CI borrow correction is machine-applicable and bound to the owned Unicode decoder', () => {
-  const raw = readFileSync(new URL('../../parity/self-translation/ci-38240388521-frontend-rules-feedback.json', import.meta.url));
-  const review = JSON.parse(readFileSync(new URL('../../parity/self-translation/ci-38240388521-frontend-rule-style-correction.json', import.meta.url), 'utf8'));
+  const feedbackFile = new URL('../../parity/self-translation/ci-38240388521-frontend-rules-feedback.json', import.meta.url);
+  const raw = readProjectFileBytes(feedbackFile);
+  const review = readProjectData(new URL('../../parity/self-translation/ci-38240388521-frontend-rule-style-correction.json', import.meta.url));
   assert.equal(sha256(raw), review.compilerFeedbackSha256);
   assert.equal(review.kind, 'reviewed decorator collision correction');
-  const feedback = JSON.parse(raw);
+  const feedback = readProjectData(feedbackFile);
   assert.equal(feedback.runId, '38240388521');
   assert.equal(feedback.head, '688b2f376011d1504623c422c734fc26135f0f66');
   const { actions, spans } = readCompilerFeedbackCorrections({ feedback,
@@ -169,7 +198,7 @@ test('the retained CI borrow correction is machine-applicable and bound to the o
 });
 
 test('reviewed slice corrections cannot remove borrows after the parameter becomes owned', () => {
-  const review = JSON.parse(readFileSync(new URL('../../parity/self-translation/ci-38240388521-frontend-rule-style-correction.json', import.meta.url), 'utf8'));
+  const review = readProjectData(new URL('../../parity/self-translation/ci-38240388521-frontend-rule-style-correction.json', import.meta.url));
   const actions = review.reviewedStyleActions.filter(action => action.from.startsWith('pub fn ml_read_rust_number_bounds_'));
   assert.equal(actions.length, 3);
   const styles = new DecoratorSet([{ id: 'reviewed-slice-regression', level: 'emitter', actions }]);
