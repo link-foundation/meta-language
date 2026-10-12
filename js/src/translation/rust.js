@@ -12,6 +12,7 @@ import { TranslationError, unsupported } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, STRING, UNIT, rustFixedType } from './types.js';
 import { RustSourceOrigins } from './rust-source-origins.js';
+import { checkProgram } from './check.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -25,8 +26,18 @@ export function parseRust(source) {
   const declarations = new RustParser(tokens);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const parser = new RustParser(tokens, declarations.origins.catalog);
-  parser.aliases = declarations.aliases;
+  const syntax = new RustParser(tokens, declarations.origins.catalog);
+  syntax.origins.collecting = true;
+  syntax.aliases = declarations.aliases;
+  const surface = syntax.file();
+  // Preserve syntax trees and the existing checker's diagnostic precedence
+  // for programs that already cannot enter the canonical semantic core.
+  try { checkProgram(surface); } catch (error) {
+    if (!(error instanceof TranslationError)) throw error;
+    return surface;
+  }
+  const parser = new RustParser(tokens, syntax.origins.catalog);
+  parser.aliases = syntax.aliases;
   return parser.file();
 }
 
@@ -582,6 +593,7 @@ class RustParser {
     while (this.cursor.is('as')) {
       const token = this.cursor.next();
       const to = this.type();
+      if (!this.origins.collecting && this.origins.type.wrappers.length) throw unsupported('source cast', 'numeric casts require a direct source and target value type', span(token, this.cursor.peek()));
       value = { k: 'cast', arg: value, to, flavor: 'exact', span: joined(value, { span: span(token, this.cursor.peek()) }, token) };
     }
     return value;
@@ -663,14 +675,15 @@ class RustParser {
       }
       case 'as_str':
         expect(0);
-        return this.origins.mark(receiver, { type: STRING, path: [...this.modulePath], wrappers: ['reference'] });
+        return this.origins.mark(receiver, { ...this.origins.origin(receiver, this.modulePath), type: STRING, path: [...this.modulePath], wrappers: ['reference'] });
       case 'to_string':
         expect(0);
         return { k: 'toString', arg: receiver, span: range };
       case 'div_euclid':
       case 'rem_euclid':
         expect(1);
-        return { k: 'binary', op: method.value === 'div_euclid' ? 'div' : 'rem', rounding: 'euclid', left: receiver, right: args[0], span: range };
+        this.origins.direct(args[0], this.modulePath, args[0].span);
+        return this.origins.mark({ k: 'binary', op: method.value === 'div_euclid' ? 'div' : 'rem', rounding: 'euclid', left: receiver, right: args[0], span: range }, { ...this.origins.origin(receiver, this.modulePath), wrappers: [] });
       default:
         throw unsupported(`method ${method.value}`, 'outside the portable core', range);
     }
@@ -743,7 +756,7 @@ class RustParser {
       }
       if (name === 'String::from') {
         if (args.length !== 1) throw new TranslationError('type', 'String::from expects 1 argument', range);
-        return { k: 'toString', arg: args[0], span: range };
+        return this.origins.conversion({ k: 'toString', arg: args[0], span: range }, path);
       }
       if (segments.length === 2 && segments[1] === 'from' && rustFixedType(segments[0])) {
         if (args.length !== 1) throw new TranslationError('type', `${name} expects 1 argument`, range);
@@ -784,6 +797,7 @@ class RustParser {
     const token = c.next();
     if (c.is('let')) throw unsupported('if let', 'write a match', span(token, c.peek()));
     const cond = this.expr(path, { noStruct: true });
+    this.origins.direct(cond, path, cond.span);
     const then = this.block(path);
     if (!c.eat('else')) throw unsupported('if without else', 'the value of an if must be defined on both branches', span(token, c.peek()));
     const otherwise = c.is('if') ? this.ifExpr(path) : this.block(path);
@@ -823,7 +837,7 @@ class RustParser {
     if (!rows.length) throw unsupported('empty match', 'uninhabited types are outside the portable core', span(token, c.peek()));
     const origins = rows.map(row => this.origins.origin(row.body, path));
     const result = { k: 'match', scrutinees: [scrutinee], rows, span: span(token, c.peek()) };
-    return this.origins.mark(result, origins.every(origin => this.origins.same(origin, origins[0])) ? origins[0] : { wrappers: [], type: null, path: [] });
+    return this.origins.mark(result, this.origins.join(origins));
   }
 
   /** Patterns: `_`, bindings, literals, `Enum::Variant(p, …)`, `&p` and `name @ p`. */

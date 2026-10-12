@@ -3,11 +3,12 @@
 //! Mirrors `js/src/translation/rust-source-origins.js`. Declarations and lexical
 //! scopes come from the existing parser; value typing remains in the checker.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use super::indirection_rules::{
-    accept_rust_immutable_indirection_layer, accept_rust_source_box_owner,
-    accept_rust_source_indirection_argument,
+    accept_rust_immutable_indirection_layer, accept_rust_source_box_coercion_layer,
+    accept_rust_source_box_owner, accept_rust_source_indirection_argument,
+    read_rust_source_expression_origin,
 };
 use super::{Result, SExpr, SNode, SPattern, SPatternNode, Span, Type, unsupported};
 
@@ -16,6 +17,9 @@ pub(super) struct SourceOrigin {
     pub(super) ty: Option<Type>,
     pub(super) path: Vec<String>,
     pub(super) wrappers: Vec<String>,
+    pub(super) proven: bool,
+    pub(super) diverging: bool,
+    pub(super) uncertain: bool,
 }
 
 impl SourceOrigin {
@@ -24,6 +28,9 @@ impl SourceOrigin {
             ty: None,
             path: Vec::new(),
             wrappers: Vec::new(),
+            proven: false,
+            diverging: false,
+            uncertain: false,
         }
     }
 
@@ -32,6 +39,23 @@ impl SourceOrigin {
             ty: Some(ty),
             path: path.to_vec(),
             wrappers,
+            proven: true,
+            diverging: false,
+            uncertain: false,
+        }
+    }
+
+    pub(super) const fn value() -> Self {
+        Self {
+            proven: true,
+            ..Self::unknown()
+        }
+    }
+
+    const fn uncertain() -> Self {
+        Self {
+            uncertain: true,
+            ..Self::unknown()
         }
     }
 }
@@ -66,6 +90,7 @@ pub(super) struct SourceOrigins {
     // successive wraps and dereferences update the same source evidence.
     expressions: HashMap<Span, SourceOrigin>,
     pattern_references: HashMap<Span, usize>,
+    wildcard_references: VecDeque<usize>,
 }
 
 impl SourceOrigins {
@@ -77,6 +102,7 @@ impl SourceOrigins {
             current_type: SourceOrigin::unknown(),
             expressions: HashMap::new(),
             pattern_references: HashMap::new(),
+            wildcard_references: VecDeque::new(),
         }
     }
 
@@ -195,7 +221,11 @@ impl SourceOrigins {
 
     /// Compare retained source types by their existing declaration identities.
     pub(super) fn same_origin(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
-        if left.wrappers != right.wrappers {
+        if left.proven != right.proven
+            || left.diverging != right.diverging
+            || left.uncertain != right.uncertain
+            || left.wrappers != right.wrappers
+        {
             return false;
         }
         match (&left.ty, &right.ty) {
@@ -244,17 +274,110 @@ impl SourceOrigins {
                 SourceDeclaration::Module | SourceDeclaration::Data => {}
             }
         }
+        if let SNode::Name { path: names } = &node.node {
+            if names.len() == 2
+                && self.lookup(&names[..1], path).is_none()
+                && super::rust_fixed_type(&names[0]).is_some()
+                && ["MIN", "MAX"].contains(&names[1].as_str())
+            {
+                return SourceOrigin::value();
+            }
+        }
         if let SNode::If {
             then, otherwise, ..
         } = &node.node
         {
-            let left = self.origin(then, path);
-            let right = self.origin(otherwise, path);
-            if self.same_origin(&left, &right) {
-                return left;
-            }
+            return self.join(&[self.origin(then, path), self.origin(otherwise, path)]);
         }
-        SourceOrigin::unknown()
+        let operation = match &node.node {
+            SNode::Binary { op, .. } => op.name(),
+            _ => "",
+        };
+        let form = read_rust_source_expression_origin(node.node.kind(), operation);
+        match form.as_str() {
+            "value" => SourceOrigin::value(),
+            "diverging" => SourceOrigin {
+                diverging: true,
+                ..SourceOrigin::value()
+            },
+            "derived-value"
+            | "numeric-cast"
+            | "primitive-operation"
+            | "comparison"
+            | "boolean-operation" => {
+                let nodes: Vec<&SExpr> = match &node.node {
+                    SNode::Unary { arg, .. }
+                    | SNode::Cast { arg, .. }
+                    | SNode::ToString { arg }
+                    | SNode::Show { arg, .. } => vec![arg],
+                    SNode::Binary { left, right, .. } => vec![left, right],
+                    SNode::StringMap { object, .. } => vec![object],
+                    SNode::StringTest { object, search, .. } => vec![object, search],
+                    _ => Vec::new(),
+                };
+                let operands: Vec<_> = nodes
+                    .iter()
+                    .map(|operand| self.origin(operand, path))
+                    .collect();
+                if operands.iter().any(|operand| !operand.proven) {
+                    let uncertain = operands.iter().any(|operand| {
+                        operand.uncertain
+                            || (form != "derived-value" && !operand.wrappers.is_empty())
+                    });
+                    return if uncertain {
+                        SourceOrigin::uncertain()
+                    } else {
+                        SourceOrigin::unknown()
+                    };
+                }
+                if !self.collecting
+                    && ((form == "comparison" && operands[0].wrappers != operands[1].wrappers)
+                        || (form == "primitive-operation"
+                            && operands.iter().any(|operand| {
+                                operand.wrappers.iter().any(|layer| layer == "box")
+                            }))
+                        || (["numeric-cast", "boolean-operation"].contains(&form.as_str())
+                            && operands.iter().any(|operand| !operand.wrappers.is_empty())))
+                {
+                    return SourceOrigin::uncertain();
+                }
+                SourceOrigin::value()
+            }
+            _ => SourceOrigin::unknown(),
+        }
+    }
+
+    pub(super) fn join(&self, origins: &[SourceOrigin]) -> SourceOrigin {
+        let returning: Vec<_> = origins.iter().filter(|origin| !origin.diverging).collect();
+        let Some(first) = returning.first() else {
+            return SourceOrigin {
+                diverging: true,
+                ..SourceOrigin::value()
+            };
+        };
+        if returning
+            .iter()
+            .all(|origin| self.same_origin(origin, first))
+        {
+            return (*first).clone();
+        }
+        if returning
+            .iter()
+            .all(|origin| origin.proven && origin.wrappers == first.wrappers)
+        {
+            return SourceOrigin {
+                wrappers: first.wrappers.clone(),
+                ..SourceOrigin::value()
+            };
+        }
+        if returning
+            .iter()
+            .any(|origin| origin.uncertain || !origin.wrappers.is_empty())
+        {
+            SourceOrigin::uncertain()
+        } else {
+            SourceOrigin::unknown()
+        }
     }
 
     pub(super) fn mark(&mut self, node: &SExpr, origin: SourceOrigin) {
@@ -277,7 +400,7 @@ impl SourceOrigins {
     ) -> Result<()> {
         let mut origin = self.origin(node, path);
         let layer = origin.wrappers.first().map_or("", String::as_str);
-        if !self.collecting && !accept_rust_immutable_indirection_layer(layer) {
+        if !self.collecting && (!origin.proven || !accept_rust_immutable_indirection_layer(layer)) {
             return Err(unsupported(
                 "dereference",
                 "the operand must have a proven immutable reference or standard Box source type",
@@ -316,16 +439,42 @@ impl SourceOrigins {
         if self.collecting {
             return Ok(());
         }
+        if actual.diverging {
+            return Ok(());
+        }
+        if !actual.proven
+            && !actual.uncertain
+            && actual.wrappers.is_empty()
+            && expected.wrappers.is_empty()
+        {
+            return Ok(());
+        }
+        if !actual.proven || !expected.proven {
+            return Err(unsupported(
+                "source indirection",
+                "the source ownership of this value cannot be proved",
+                span,
+            ));
+        }
         let actual = &actual.wrappers;
         let want = &expected.wrappers;
         let indirected = !actual.is_empty() || !want.is_empty();
         let exact = actual == want;
         let borrowed = actual.first().is_some_and(|layer| layer == "reference")
             && want.first().is_some_and(|layer| layer == "reference");
-        let coerced = actual
-            .iter()
-            .filter(|layer| layer.as_str() != "box")
-            .eq(want.iter());
+        let coerced = actual.len().checked_sub(want.len()).is_some_and(|removed| {
+            removed > 0
+                && actual
+                    .iter()
+                    .skip(1)
+                    .take(removed)
+                    .all(|layer| accept_rust_source_box_coercion_layer(layer, true))
+                && actual
+                    .iter()
+                    .take(1)
+                    .chain(actual.iter().skip(removed + 1))
+                    .eq(want.iter())
+        });
         if !accept_rust_source_indirection_argument(indirected, exact, borrowed, coerced) {
             return Err(unsupported(
                 "source indirection",
@@ -334,6 +483,31 @@ impl SourceOrigins {
             ));
         }
         Ok(())
+    }
+
+    pub(super) fn direct(&self, node: &SExpr, path: &[String], span: Option<Span>) -> Result<()> {
+        self.argument(&self.origin(node, path), &SourceOrigin::value(), span)
+    }
+
+    pub(super) fn conversion(&mut self, node: &SExpr, path: &[String]) {
+        let SNode::ToString { arg } = &node.node else {
+            return;
+        };
+        let operand = self.origin(arg, path);
+        let form = read_rust_source_expression_origin(node.node.kind(), "from");
+        let result = if !self.collecting
+            && form == "unboxed-conversion"
+            && operand.wrappers.iter().any(|layer| layer == "box")
+        {
+            SourceOrigin::uncertain()
+        } else if operand.proven {
+            SourceOrigin::value()
+        } else if operand.uncertain {
+            SourceOrigin::uncertain()
+        } else {
+            SourceOrigin::unknown()
+        };
+        self.mark(node, result);
     }
 
     pub(super) fn call(
@@ -365,22 +539,35 @@ impl SourceOrigins {
     pub(super) fn reference_pattern(&mut self, pattern: &SPattern) {
         if let Some(span) = pattern.span {
             *self.pattern_references.entry(span).or_default() += 1;
+        } else if matches!(pattern.node, SPatternNode::Wild) {
+            if let Some(references) = self.wildcard_references.back_mut() {
+                *references += 1;
+            }
         }
     }
 
+    pub(super) fn wildcard_pattern(&mut self) {
+        self.wildcard_references.push_back(0);
+    }
+
     fn pattern(
-        &self,
+        &mut self,
         pattern: &SPattern,
         origin: &SourceOrigin,
         path: &[String],
         result: &mut HashMap<String, SourceOrigin>,
-    ) {
+        source_span: Option<Span>,
+    ) -> Result<()> {
         let mut origin = origin.clone();
-        let references = pattern
-            .span
-            .and_then(|span| self.pattern_references.get(&span))
-            .copied()
-            .unwrap_or_default();
+        let references = if matches!(pattern.node, SPatternNode::Wild) {
+            self.wildcard_references.pop_front().unwrap_or_default()
+        } else {
+            pattern
+                .span
+                .and_then(|span| self.pattern_references.get(&span))
+                .copied()
+                .unwrap_or_default()
+        };
         for _ in 0..references {
             if origin
                 .wrappers
@@ -389,8 +576,28 @@ impl SourceOrigins {
             {
                 origin.wrappers.remove(0);
             } else {
-                origin = SourceOrigin::unknown();
+                if !self.collecting && origin.proven {
+                    return Err(unsupported(
+                        "source pattern",
+                        "a reference pattern requires a proven reference source type",
+                        source_span,
+                    ));
+                }
+                origin = SourceOrigin::uncertain();
             }
+        }
+        if !self.collecting
+            && !matches!(
+                pattern.node,
+                SPatternNode::Wild | SPatternNode::Bind { .. } | SPatternNode::BindOrCtor { .. }
+            )
+            && origin.wrappers.iter().any(|layer| layer == "box")
+        {
+            return Err(unsupported(
+                "source pattern",
+                "an owned Box requires an explicit dereference before a constructor or literal pattern",
+                source_span,
+            ));
         }
         match &pattern.node {
             SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
@@ -435,42 +642,80 @@ impl SourceOrigins {
                     if borrowed && fields.is_some() {
                         field.wrappers.insert(0, "reference".to_owned());
                     }
-                    self.pattern(argument, &field, path, result);
+                    self.pattern(
+                        argument,
+                        &field,
+                        path,
+                        result,
+                        argument.span.or(source_span),
+                    )?;
                 }
             }
             _ => {}
         }
+        Ok(())
     }
 
     pub(super) fn cases(
-        &self,
+        &mut self,
         patterns: &[SPattern],
         scrutinee: &SExpr,
         path: &[String],
-    ) -> HashMap<String, SourceOrigin> {
+    ) -> Result<HashMap<String, SourceOrigin>> {
         let origin = self.origin(scrutinee, path);
         let maps: Vec<_> = patterns
             .iter()
             .map(|pattern| {
                 let mut scope = HashMap::new();
-                self.pattern(pattern, &origin, path, &mut scope);
-                scope
+                self.pattern(
+                    pattern,
+                    &origin,
+                    path,
+                    &mut scope,
+                    pattern.span.or(scrutinee.span),
+                )?;
+                Ok(scope)
             })
-            .collect();
+            .collect::<Result<Vec<_>>>()?;
         let mut scope = self.scope.clone();
         if let Some(first) = maps.first() {
+            let span = patterns
+                .iter()
+                .find_map(|pattern| pattern.span)
+                .or(scrutinee.span);
+            if !self.collecting
+                && maps.len() > 1
+                && maps.iter().any(|map| {
+                    map.len() != first.len() || first.keys().any(|name| !map.contains_key(name))
+                })
+            {
+                return Err(unsupported(
+                    "or-pattern ownership",
+                    "every alternative must bind the same names with the same source ownership",
+                    span,
+                ));
+            }
             for (name, origin) in first {
-                let origin = if maps.iter().all(|map| {
-                    map.get(name)
-                        .is_some_and(|candidate| self.same_origin(origin, candidate))
-                }) {
-                    origin.clone()
-                } else {
-                    SourceOrigin::unknown()
-                };
-                scope.insert(name.clone(), origin);
+                let candidates: Vec<_> = maps
+                    .iter()
+                    .filter_map(|map| map.get(name).cloned())
+                    .collect();
+                if !self.collecting
+                    && maps.len() > 1
+                    && (candidates.len() != maps.len()
+                        || candidates.iter().any(|candidate| {
+                            !candidate.proven || candidate.wrappers != origin.wrappers
+                        }))
+                {
+                    return Err(unsupported(
+                        "or-pattern ownership",
+                        "every alternative must bind the same names with the same source ownership",
+                        span,
+                    ));
+                }
+                scope.insert(name.clone(), self.join(&candidates));
             }
         }
-        scope
+        Ok(scope)
     }
 }

@@ -22,3 +22,60 @@ pub fn accept_rust_source_indirection_argument(
 ) -> bool {
     !indirected || exact || (borrowed && coerced)
 }
+
+/// Admit the corresponding immutable Rust source projection.
+#[must_use]
+pub fn accept_rust_source_box_coercion_layer(layer: &str, initial: bool) -> bool {
+    initial && layer == "box"
+}
+
+/// Admit the corresponding immutable Rust source projection.
+#[must_use]
+pub fn read_rust_source_expression_origin(kind: &str, operation: &str) -> String {
+    if kind == "abort" {
+        String::from("diverging")
+    } else {
+        if (kind == "toString" && (operation == "from")) {
+            String::from("unboxed-conversion")
+        } else {
+            if kind == "cast" {
+                String::from("numeric-cast")
+            } else {
+                if kind == "unary" {
+                    String::from("primitive-operation")
+                } else {
+                    if kind == "binary" {
+                        if operation == "eq"
+                            || operation == "ne"
+                            || operation == "lt"
+                            || operation == "le"
+                            || operation == "gt"
+                            || operation == "ge"
+                        {
+                            String::from("comparison")
+                        } else {
+                            if operation == "and" || operation == "or" {
+                                String::from("boolean-operation")
+                            } else {
+                                String::from("primitive-operation")
+                            }
+                        }
+                    } else {
+                        if (((kind == "num" || kind == "bool") || kind == "unit") || kind == "str")
+                        {
+                            String::from("value")
+                        } else {
+                            if (((kind == "toString" || kind == "show") || kind == "stringMap")
+                                || kind == "stringTest")
+                            {
+                                String::from("derived-value")
+                            } else {
+                                String::from("unknown")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

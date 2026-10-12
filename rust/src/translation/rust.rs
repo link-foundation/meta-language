@@ -96,8 +96,18 @@ pub fn parse_rust(source: &str) -> Result<SProgram> {
     declarations.file()?;
     let mut origins = std::mem::replace(&mut declarations.origins, SourceOrigins::new(None));
     origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
-    let mut parser = RustParser::new(tokens, SourceOrigins::new(Some(origins.catalog)));
-    parser.aliases = declarations.aliases;
+    let mut source_origins = SourceOrigins::new(Some(origins.catalog));
+    source_origins.collecting = true;
+    let mut syntax = RustParser::new(tokens.clone(), source_origins);
+    syntax.aliases = declarations.aliases;
+    let surface = syntax.file()?;
+    // Preserve the existing checker's rejection and syntax-tree contract;
+    // every public Rust source pipeline checks this identical Surface again.
+    if super::check::check_program(&surface).is_err() {
+        return Ok(surface);
+    }
+    let mut parser = RustParser::new(tokens, SourceOrigins::new(Some(syntax.origins.catalog)));
+    parser.aliases = syntax.aliases;
     parser.file()
 }
 

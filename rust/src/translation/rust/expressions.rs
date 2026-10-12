@@ -108,6 +108,13 @@ impl RustParser {
         while self.cursor.is("as") {
             let token = self.cursor.advance();
             let to = self.parse_type()?;
+            if !self.origins.collecting && !self.origins.current_type.wrappers.is_empty() {
+                return Err(unsupported(
+                    "source cast",
+                    "numeric casts require a direct source and target value type",
+                    span(&token, self.cursor.peek()),
+                ));
+            }
             let range = joined(value.span, span(&token, self.cursor.peek()), &token);
             value = SExpr::new(
                 SNode::Cast {
@@ -181,6 +188,11 @@ impl RustParser {
                 self.cursor.expect(")", Some(&method.value))?;
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
+                if ["div_euclid", "rem_euclid"].contains(&method_name) {
+                    if let Some(argument) = args.first() {
+                        self.origins.direct(argument, path, argument.span)?;
+                    }
+                }
                 if ["clone", "to_owned"].contains(&method_name)
                     && origin
                         .wrappers
@@ -190,10 +202,17 @@ impl RustParser {
                     origin.wrappers.remove(0);
                 }
                 if method_name == "as_str" {
-                    origin = SourceOrigin::with_type(STRING, path, vec!["reference".to_owned()]);
+                    origin.ty = Some(STRING);
+                    origin.path = path.to_vec();
+                    origin.wrappers = vec!["reference".to_owned()];
                 }
                 value = method_call(value, &method, args, span(&token, self.cursor.peek()))?;
-                if ["clone", "to_owned", "as_str"].contains(&method_name) {
+                if ["div_euclid", "rem_euclid"].contains(&method_name) {
+                    origin.wrappers.clear();
+                }
+                if ["clone", "to_owned", "as_str", "div_euclid", "rem_euclid"]
+                    .contains(&method_name)
+                {
                     self.origins.mark(&value, origin);
                 }
                 continue;
@@ -397,12 +416,14 @@ impl RustParser {
             if args.len() != 1 {
                 return Err(type_error("String::from expects 1 argument", range));
             }
-            return Ok(SExpr::new(
+            let result = SExpr::new(
                 SNode::ToString {
                     arg: Box::new(args.remove(0)),
                 },
                 range,
-            ));
+            );
+            self.origins.conversion(&result, path);
+            return Ok(result);
         }
         let fixed = rust_fixed_type(&segments[0]);
         if segments.len() == 2
@@ -505,6 +526,7 @@ impl RustParser {
                 no_struct: true,
             },
         )?;
+        self.origins.direct(&cond, path, cond.span)?;
         let then = self.block(path)?;
         if self.cursor.eat("else").is_none() {
             return Err(unsupported(
@@ -555,7 +577,7 @@ impl RustParser {
                 ));
             }
             self.cursor.expect("=>", Some("match arm"))?;
-            let scope = self.origins.cases(&alternatives, &scrutinee, path);
+            let scope = self.origins.cases(&alternatives, &scrutinee, path)?;
             let previous = self.origins.enter(Some(scope));
             for alias in &aliases {
                 self.origins.bind(&alias.name, &alias.value, path, None)?;
@@ -610,14 +632,7 @@ impl RustParser {
             .iter()
             .map(|row| self.origins.origin(&row.body, path))
             .collect::<Vec<_>>();
-        let origin = if origins
-            .iter()
-            .all(|origin| self.origins.same_origin(origin, &origins[0]))
-        {
-            origins[0].clone()
-        } else {
-            SourceOrigin::unknown()
-        };
+        let origin = self.origins.join(&origins);
         let result = SExpr::new(
             SNode::Match {
                 scrutinees: vec![scrutinee],
@@ -643,6 +658,7 @@ impl RustParser {
             return Ok(pattern);
         }
         if self.cursor.eat("_").is_some() {
+            self.origins.wildcard_pattern();
             return Ok(SPattern {
                 node: SPatternNode::Wild,
                 span: None,

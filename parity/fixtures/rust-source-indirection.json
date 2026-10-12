@@ -3070,12 +3070,1273 @@
       },
       "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction choose(left, right, flag) {\n  if (flag) {\n    return left;\n  } else {\n    return right;\n  }\n}\n\nfunction read(packet) {\n  switch (packet.$) {\n    case \"Value\": {\n      const value = packet[\"field0\"];\n      return value;\n    }\n    default: {\n      throw new TypeError(`unexpected constructor ${packet.$}`);\n    }\n  }\n}\n\nfunction main() {\n  console.log(String(read(choose(Object.freeze({ $: \"Value\", [\"field0\"]: 37n }), Object.freeze({ $: \"Value\", [\"field0\"]: 41n }), true))));\n}\n\nmain();\n",
       "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum Packet {\n    Value(u64),\n}\n\npub fn choose(left: crate::Packet, right: crate::Packet, flag: bool) -> crate::Packet {\n    if flag {\n        left.clone()\n    } else {\n        right.clone()\n    }\n}\n\npub fn read(packet: crate::Packet) -> u64 {\n    match packet.clone() {\n        crate::Packet::Value(value) => {\n            value\n        }\n    }\n}\n\nfn ml_main() {\n    println!(\"{}\", (crate::read(crate::choose(crate::Packet::Value(37u64), crate::Packet::Value(41u64), true))).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "id": "outer-reference-box-coercion",
+      "source": "fn read(value:& &u64)->u64{**value} fn main(){let value=43u64;let boxed=Box::new(&value);println!(\"{}\",read(&boxed));}",
+      "output": [
+        "43"
+      ],
+      "surface": {
+        "language": "Rust",
+        "items": [
+          {
+            "k": "fn",
+            "name": "read",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                },
+                "span": {
+                  "start": 8,
+                  "end": 20
+                }
+              }
+            ],
+            "ret": {
+              "kind": "fixed",
+              "bits": 64,
+              "signed": false
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ],
+              "span": {
+                "start": 29,
+                "end": 34
+              }
+            },
+            "span": {
+              "start": 0,
+              "end": 36
+            }
+          }
+        ],
+        "main": {
+          "effects": [
+            {
+              "k": "let",
+              "name": "value",
+              "value": {
+                "k": "num",
+                "value": "43",
+                "span": {
+                  "start": 56,
+                  "end": 61
+                },
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                }
+              },
+              "span": {
+                "start": 46,
+                "end": 62
+              }
+            },
+            {
+              "k": "let",
+              "name": "boxed",
+              "value": {
+                "k": "name",
+                "path": [
+                  "value"
+                ],
+                "span": {
+                  "start": 82,
+                  "end": 87
+                }
+              },
+              "span": {
+                "start": 62,
+                "end": 89
+              }
+            },
+            {
+              "k": "print",
+              "expr": {
+                "k": "show",
+                "arg": {
+                  "k": "app",
+                  "fn": {
+                    "k": "name",
+                    "path": [
+                      "read"
+                    ],
+                    "span": {
+                      "start": 103,
+                      "end": 107
+                    }
+                  },
+                  "args": [
+                    {
+                      "k": "name",
+                      "path": [
+                        "boxed"
+                      ],
+                      "span": {
+                        "start": 109,
+                        "end": 114
+                      }
+                    }
+                  ],
+                  "span": {
+                    "start": 103,
+                    "end": 115
+                  }
+                },
+                "style": "rust",
+                "span": {
+                  "start": 103,
+                  "end": 115
+                }
+              },
+              "style": "rust",
+              "span": {
+                "start": 89,
+                "end": 116
+              }
+            }
+          ],
+          "span": {
+            "start": 36,
+            "end": 38
+          }
+        }
+      },
+      "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction ml_fixed(value, min, max, message) {\n  if (value < min || value > max) throw new RangeError(message);\n  return value;\n}\n\nfunction read(value) {\n  ml_fixed(value, 0n, 18446744073709551615n, \"u64 argument value out of range\");\n  return value;\n}\n\nfunction main() {\n  const value = 43n;\n  const boxed = value;\n  console.log(String(read(boxed)));\n}\n\nmain();\n",
+      "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn read(value: u64) -> u64 {\n    value\n}\n\nfn ml_main() {\n    let value = 43u64;\n    let boxed = value;\n    println!(\"{}\", (crate::read(boxed)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "id": "partial-outer-box-coercion",
+      "source": "fn read(value:&Box<u64>)->u64{**value} fn main(){let boxed=Box::new(Box::new(53u64));println!(\"{}\",read(&boxed));}",
+      "output": [
+        "53"
+      ],
+      "surface": {
+        "language": "Rust",
+        "items": [
+          {
+            "k": "fn",
+            "name": "read",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                },
+                "span": {
+                  "start": 8,
+                  "end": 23
+                }
+              }
+            ],
+            "ret": {
+              "kind": "fixed",
+              "bits": 64,
+              "signed": false
+            },
+            "body": {
+              "k": "name",
+              "path": [
+                "value"
+              ],
+              "span": {
+                "start": 32,
+                "end": 37
+              }
+            },
+            "span": {
+              "start": 0,
+              "end": 39
+            }
+          }
+        ],
+        "main": {
+          "effects": [
+            {
+              "k": "let",
+              "name": "boxed",
+              "value": {
+                "k": "num",
+                "value": "53",
+                "span": {
+                  "start": 77,
+                  "end": 82
+                },
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                }
+              },
+              "span": {
+                "start": 49,
+                "end": 85
+              }
+            },
+            {
+              "k": "print",
+              "expr": {
+                "k": "show",
+                "arg": {
+                  "k": "app",
+                  "fn": {
+                    "k": "name",
+                    "path": [
+                      "read"
+                    ],
+                    "span": {
+                      "start": 99,
+                      "end": 103
+                    }
+                  },
+                  "args": [
+                    {
+                      "k": "name",
+                      "path": [
+                        "boxed"
+                      ],
+                      "span": {
+                        "start": 105,
+                        "end": 110
+                      }
+                    }
+                  ],
+                  "span": {
+                    "start": 99,
+                    "end": 111
+                  }
+                },
+                "style": "rust",
+                "span": {
+                  "start": 99,
+                  "end": 111
+                }
+              },
+              "style": "rust",
+              "span": {
+                "start": 85,
+                "end": 112
+              }
+            }
+          ],
+          "span": {
+            "start": 39,
+            "end": 41
+          }
+        }
+      },
+      "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction ml_fixed(value, min, max, message) {\n  if (value < min || value > max) throw new RangeError(message);\n  return value;\n}\n\nfunction read(value) {\n  ml_fixed(value, 0n, 18446744073709551615n, \"u64 argument value out of range\");\n  return value;\n}\n\nfunction main() {\n  const boxed = 53n;\n  console.log(String(read(boxed)));\n}\n\nmain();\n",
+      "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn read(value: u64) -> u64 {\n    value\n}\n\nfn ml_main() {\n    let boxed = 53u64;\n    println!(\"{}\", (crate::read(boxed)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "id": "diverging-box-branch",
+      "source": "fn choose(value:Box<u64>,flag:bool)->Box<u64>{if flag{value}else{panic!(\"unused\")}} fn main(){println!(\"{}\",*choose(Box::new(59),true));}",
+      "output": [
+        "59"
+      ],
+      "surface": {
+        "language": "Rust",
+        "items": [
+          {
+            "k": "fn",
+            "name": "choose",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                },
+                "span": {
+                  "start": 10,
+                  "end": 24
+                }
+              },
+              {
+                "name": "flag",
+                "type": {
+                  "kind": "bool"
+                },
+                "span": {
+                  "start": 25,
+                  "end": 34
+                }
+              }
+            ],
+            "ret": {
+              "kind": "fixed",
+              "bits": 64,
+              "signed": false
+            },
+            "body": {
+              "k": "if",
+              "cond": {
+                "k": "name",
+                "path": [
+                  "flag"
+                ],
+                "span": {
+                  "start": 49,
+                  "end": 53
+                }
+              },
+              "then": {
+                "k": "name",
+                "path": [
+                  "value"
+                ],
+                "span": {
+                  "start": 54,
+                  "end": 59
+                }
+              },
+              "else": {
+                "k": "abort",
+                "message": "unused",
+                "span": {
+                  "start": 65,
+                  "end": 81
+                }
+              },
+              "span": {
+                "start": 46,
+                "end": 82
+              }
+            },
+            "span": {
+              "start": 0,
+              "end": 84
+            }
+          }
+        ],
+        "main": {
+          "effects": [
+            {
+              "k": "print",
+              "expr": {
+                "k": "show",
+                "arg": {
+                  "k": "app",
+                  "fn": {
+                    "k": "name",
+                    "path": [
+                      "choose"
+                    ],
+                    "span": {
+                      "start": 109,
+                      "end": 115
+                    }
+                  },
+                  "args": [
+                    {
+                      "k": "num",
+                      "value": "59",
+                      "span": {
+                        "start": 125,
+                        "end": 127
+                      }
+                    },
+                    {
+                      "k": "bool",
+                      "value": true,
+                      "span": {
+                        "start": 129,
+                        "end": 133
+                      }
+                    }
+                  ],
+                  "span": {
+                    "start": 109,
+                    "end": 134
+                  }
+                },
+                "style": "rust",
+                "span": {
+                  "start": 109,
+                  "end": 134
+                }
+              },
+              "style": "rust",
+              "span": {
+                "start": 94,
+                "end": 135
+              }
+            }
+          ],
+          "span": {
+            "start": 84,
+            "end": 86
+          }
+        }
+      },
+      "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction ml_fixed(value, min, max, message) {\n  if (value < min || value > max) throw new RangeError(message);\n  return value;\n}\n\nfunction ml_abort(message) {\n  throw new Error(message);\n}\n\nfunction choose(value, flag) {\n  ml_fixed(value, 0n, 18446744073709551615n, \"u64 argument value out of range\");\n  if (flag) {\n    return value;\n  } else {\n    return ml_abort(\"unused\");\n  }\n}\n\nfunction main() {\n  console.log(String(choose(59n, true)));\n}\n\nmain();\n",
+      "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn choose(value: u64, flag: bool) -> u64 {\n    if flag {\n        value\n    } else {\n        panic!(\"{}\", \"unused\")\n    }\n}\n\nfn ml_main() {\n    println!(\"{}\", (crate::choose(59u64, true)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "id": "boxed-numeric-method-autodereference",
+      "source": "fn read(value:Box<u64>)->u64{value.div_euclid(2)} fn main(){println!(\"{}\",read(Box::new(61)));}",
+      "output": [
+        "30"
+      ],
+      "surface": {
+        "language": "Rust",
+        "items": [
+          {
+            "k": "fn",
+            "name": "read",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                },
+                "span": {
+                  "start": 8,
+                  "end": 22
+                }
+              }
+            ],
+            "ret": {
+              "kind": "fixed",
+              "bits": 64,
+              "signed": false
+            },
+            "body": {
+              "k": "binary",
+              "op": "div",
+              "rounding": "euclid",
+              "left": {
+                "k": "name",
+                "path": [
+                  "value"
+                ],
+                "span": {
+                  "start": 29,
+                  "end": 34
+                }
+              },
+              "right": {
+                "k": "num",
+                "value": "2",
+                "span": {
+                  "start": 46,
+                  "end": 47
+                }
+              },
+              "span": {
+                "start": 34,
+                "end": 48
+              }
+            },
+            "span": {
+              "start": 0,
+              "end": 50
+            }
+          }
+        ],
+        "main": {
+          "effects": [
+            {
+              "k": "print",
+              "expr": {
+                "k": "show",
+                "arg": {
+                  "k": "app",
+                  "fn": {
+                    "k": "name",
+                    "path": [
+                      "read"
+                    ],
+                    "span": {
+                      "start": 74,
+                      "end": 78
+                    }
+                  },
+                  "args": [
+                    {
+                      "k": "num",
+                      "value": "61",
+                      "span": {
+                        "start": 88,
+                        "end": 90
+                      }
+                    }
+                  ],
+                  "span": {
+                    "start": 74,
+                    "end": 92
+                  }
+                },
+                "style": "rust",
+                "span": {
+                  "start": 74,
+                  "end": 92
+                }
+              },
+              "style": "rust",
+              "span": {
+                "start": 60,
+                "end": 93
+              }
+            }
+          ],
+          "span": {
+            "start": 50,
+            "end": 52
+          }
+        }
+      },
+      "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction ml_fixed(value, min, max, message) {\n  if (value < min || value > max) throw new RangeError(message);\n  return value;\n}\n\n// Integer division with the source's rounding; by zero it aborts with the message `zero`\n// or, when that is null, is total (x / 0 = 0, x % 0 = x); a machine-integer quotient\n// out of [min, max] aborts with `overflow`, the remainder too.\nfunction ml_divide(a, b, rounding, zero, remainder, bounds) {\n  if (b === 0n) {\n    if (zero !== null) throw new RangeError(zero);\n    return remainder ? a : 0n;\n  }\n  let q = a / b;\n  const r = a - q * b;\n  if (r !== 0n) {\n    if (rounding === 'floor' && (r < 0n) !== (b < 0n)) q -= 1n;\n    if (rounding === 'euclid' && r < 0n) q = b > 0n ? q - 1n : q + 1n;\n  }\n  if (bounds && (q < bounds[0] || q > bounds[1])) throw new RangeError(bounds[2]);\n  return remainder ? a - q * b : q;\n}\n\nfunction read(value) {\n  ml_fixed(value, 0n, 18446744073709551615n, \"u64 argument value out of range\");\n  return ml_divide(value, 2n, 'euclid', \"attempt to divide by zero\", false, [0n, 18446744073709551615n, \"attempt to divide with overflow\"]);\n}\n\nfunction main() {\n  console.log(String(read(61n)));\n}\n\nmain();\n",
+      "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn read(value: u64) -> u64 {\n    value.div_euclid(2u64)\n}\n\nfn ml_main() {\n    println!(\"{}\", (crate::read(61u64)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "id": "boxed-compatible-equality",
+      "source": "fn same(left:Box<u64>,right:Box<u64>)->bool{left==right} fn main(){println!(\"{}\",same(Box::new(67),Box::new(67)));}",
+      "output": [
+        "true"
+      ],
+      "surface": {
+        "language": "Rust",
+        "items": [
+          {
+            "k": "fn",
+            "name": "same",
+            "params": [
+              {
+                "name": "left",
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                },
+                "span": {
+                  "start": 8,
+                  "end": 21
+                }
+              },
+              {
+                "name": "right",
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                },
+                "span": {
+                  "start": 22,
+                  "end": 36
+                }
+              }
+            ],
+            "ret": {
+              "kind": "bool"
+            },
+            "body": {
+              "k": "binary",
+              "op": "eq",
+              "left": {
+                "k": "name",
+                "path": [
+                  "left"
+                ],
+                "span": {
+                  "start": 44,
+                  "end": 48
+                }
+              },
+              "right": {
+                "k": "name",
+                "path": [
+                  "right"
+                ],
+                "span": {
+                  "start": 50,
+                  "end": 55
+                }
+              },
+              "span": {
+                "start": 44,
+                "end": 55
+              }
+            },
+            "span": {
+              "start": 0,
+              "end": 57
+            }
+          }
+        ],
+        "main": {
+          "effects": [
+            {
+              "k": "print",
+              "expr": {
+                "k": "show",
+                "arg": {
+                  "k": "app",
+                  "fn": {
+                    "k": "name",
+                    "path": [
+                      "same"
+                    ],
+                    "span": {
+                      "start": 81,
+                      "end": 85
+                    }
+                  },
+                  "args": [
+                    {
+                      "k": "num",
+                      "value": "67",
+                      "span": {
+                        "start": 95,
+                        "end": 97
+                      }
+                    },
+                    {
+                      "k": "num",
+                      "value": "67",
+                      "span": {
+                        "start": 108,
+                        "end": 110
+                      }
+                    }
+                  ],
+                  "span": {
+                    "start": 81,
+                    "end": 112
+                  }
+                },
+                "style": "rust",
+                "span": {
+                  "start": 81,
+                  "end": 112
+                }
+              },
+              "style": "rust",
+              "span": {
+                "start": 67,
+                "end": 113
+              }
+            }
+          ],
+          "span": {
+            "start": 57,
+            "end": 59
+          }
+        }
+      },
+      "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction ml_fixed(value, min, max, message) {\n  if (value < min || value > max) throw new RangeError(message);\n  return value;\n}\n\nfunction same(left, right) {\n  ml_fixed(left, 0n, 18446744073709551615n, \"u64 argument left out of range\");\n  ml_fixed(right, 0n, 18446744073709551615n, \"u64 argument right out of range\");\n  return (left === right);\n}\n\nfunction main() {\n  console.log(String(same(67n, 67n)));\n}\n\nmain();\n",
+      "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn same(left: u64, right: u64) -> bool {\n    (left == right)\n}\n\nfn ml_main() {\n    println!(\"{}\", (crate::same(67u64, 67u64)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "id": "boxed-display-value",
+      "source": "fn text(value:Box<u64>)->String{value.to_string()} fn main(){println!(\"{}\",text(Box::new(71)));}",
+      "output": [
+        "71"
+      ],
+      "surface": {
+        "language": "Rust",
+        "items": [
+          {
+            "k": "fn",
+            "name": "text",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                },
+                "span": {
+                  "start": 8,
+                  "end": 22
+                }
+              }
+            ],
+            "ret": {
+              "kind": "string"
+            },
+            "body": {
+              "k": "toString",
+              "arg": {
+                "k": "name",
+                "path": [
+                  "value"
+                ],
+                "span": {
+                  "start": 32,
+                  "end": 37
+                }
+              },
+              "span": {
+                "start": 37,
+                "end": 49
+              }
+            },
+            "span": {
+              "start": 0,
+              "end": 51
+            }
+          }
+        ],
+        "main": {
+          "effects": [
+            {
+              "k": "print",
+              "expr": {
+                "k": "show",
+                "arg": {
+                  "k": "app",
+                  "fn": {
+                    "k": "name",
+                    "path": [
+                      "text"
+                    ],
+                    "span": {
+                      "start": 75,
+                      "end": 79
+                    }
+                  },
+                  "args": [
+                    {
+                      "k": "num",
+                      "value": "71",
+                      "span": {
+                        "start": 89,
+                        "end": 91
+                      }
+                    }
+                  ],
+                  "span": {
+                    "start": 75,
+                    "end": 93
+                  }
+                },
+                "style": "rust",
+                "span": {
+                  "start": 75,
+                  "end": 93
+                }
+              },
+              "style": "rust",
+              "span": {
+                "start": 61,
+                "end": 94
+              }
+            }
+          ],
+          "span": {
+            "start": 51,
+            "end": 53
+          }
+        }
+      },
+      "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction ml_fixed(value, min, max, message) {\n  if (value < min || value > max) throw new RangeError(message);\n  return value;\n}\n\nfunction text(value) {\n  ml_fixed(value, 0n, 18446744073709551615n, \"u64 argument value out of range\");\n  return String(value);\n}\n\nfunction main() {\n  console.log(text(71n));\n}\n\nmain();\n",
+      "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn text(value: u64) -> String {\n    value.to_string()\n}\n\nfn ml_main() {\n    println!(\"{}\", crate::text(71u64));\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "id": "explicit-box-literal-pattern",
+      "source": "fn read(value:Box<u64>)->u64{match *value{1=>1,_=>2}} fn main(){println!(\"{}\",read(Box::new(1)));}",
+      "output": [
+        "1"
+      ],
+      "surface": {
+        "language": "Rust",
+        "items": [
+          {
+            "k": "fn",
+            "name": "read",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                },
+                "span": {
+                  "start": 8,
+                  "end": 22
+                }
+              }
+            ],
+            "ret": {
+              "kind": "fixed",
+              "bits": 64,
+              "signed": false
+            },
+            "body": {
+              "k": "match",
+              "scrutinees": [
+                {
+                  "k": "name",
+                  "path": [
+                    "value"
+                  ],
+                  "span": {
+                    "start": 36,
+                    "end": 41
+                  }
+                }
+              ],
+              "rows": [
+                {
+                  "patterns": [
+                    {
+                      "k": "numLit",
+                      "value": "1",
+                      "span": {
+                        "start": 42,
+                        "end": 43
+                      }
+                    }
+                  ],
+                  "body": {
+                    "k": "num",
+                    "value": "1",
+                    "span": {
+                      "start": 45,
+                      "end": 46
+                    }
+                  },
+                  "span": {
+                    "start": 42,
+                    "end": 47
+                  }
+                },
+                {
+                  "patterns": [
+                    {
+                      "k": "wild"
+                    }
+                  ],
+                  "body": {
+                    "k": "num",
+                    "value": "2",
+                    "span": {
+                      "start": 50,
+                      "end": 51
+                    }
+                  },
+                  "span": {
+                    "start": 47,
+                    "end": 51
+                  }
+                }
+              ],
+              "span": {
+                "start": 29,
+                "end": 52
+              }
+            },
+            "span": {
+              "start": 0,
+              "end": 54
+            }
+          }
+        ],
+        "main": {
+          "effects": [
+            {
+              "k": "print",
+              "expr": {
+                "k": "show",
+                "arg": {
+                  "k": "app",
+                  "fn": {
+                    "k": "name",
+                    "path": [
+                      "read"
+                    ],
+                    "span": {
+                      "start": 78,
+                      "end": 82
+                    }
+                  },
+                  "args": [
+                    {
+                      "k": "num",
+                      "value": "1",
+                      "span": {
+                        "start": 92,
+                        "end": 93
+                      }
+                    }
+                  ],
+                  "span": {
+                    "start": 78,
+                    "end": 95
+                  }
+                },
+                "style": "rust",
+                "span": {
+                  "start": 78,
+                  "end": 95
+                }
+              },
+              "style": "rust",
+              "span": {
+                "start": 64,
+                "end": 96
+              }
+            }
+          ],
+          "span": {
+            "start": 54,
+            "end": 56
+          }
+        }
+      },
+      "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction ml_fixed(value, min, max, message) {\n  if (value < min || value > max) throw new RangeError(message);\n  return value;\n}\n\nfunction read(value) {\n  ml_fixed(value, 0n, 18446744073709551615n, \"u64 argument value out of range\");\n  if ((value === 1n)) {\n    return 1n;\n  } else {\n    return 2n;\n  }\n}\n\nfunction main() {\n  console.log(String(read(1n)));\n}\n\nmain();\n",
+      "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn read(value: u64) -> u64 {\n    if (value == (1u64)) {\n        1u64\n    } else {\n        2u64\n    }\n}\n\nfn ml_main() {\n    println!(\"{}\", (crate::read(1u64)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "id": "explicit-box-fieldless-constructor-pattern",
+      "source": "enum Flag{One,Two} fn read(value:Box<Flag>)->u64{match *value{Flag::One=>1,Flag::Two=>2}} fn main(){println!(\"{}\",read(Box::new(Flag::One)));}",
+      "output": [
+        "1"
+      ],
+      "surface": {
+        "language": "Rust",
+        "items": [
+          {
+            "k": "data",
+            "name": "Flag",
+            "ctors": [
+              {
+                "name": "One",
+                "fields": []
+              },
+              {
+                "name": "Two",
+                "fields": []
+              }
+            ],
+            "span": {
+              "start": 0,
+              "end": 19
+            }
+          },
+          {
+            "k": "fn",
+            "name": "read",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "named",
+                  "path": [
+                    "Flag"
+                  ],
+                  "span": {
+                    "start": 37,
+                    "end": 41
+                  }
+                },
+                "span": {
+                  "start": 27,
+                  "end": 42
+                }
+              }
+            ],
+            "ret": {
+              "kind": "fixed",
+              "bits": 64,
+              "signed": false
+            },
+            "body": {
+              "k": "match",
+              "scrutinees": [
+                {
+                  "k": "name",
+                  "path": [
+                    "value"
+                  ],
+                  "span": {
+                    "start": 56,
+                    "end": 61
+                  }
+                }
+              ],
+              "rows": [
+                {
+                  "patterns": [
+                    {
+                      "k": "ctor",
+                      "path": [
+                        "Flag",
+                        "One"
+                      ],
+                      "args": [],
+                      "span": {
+                        "start": 62,
+                        "end": 66
+                      }
+                    }
+                  ],
+                  "body": {
+                    "k": "num",
+                    "value": "1",
+                    "span": {
+                      "start": 73,
+                      "end": 74
+                    }
+                  },
+                  "span": {
+                    "start": 62,
+                    "end": 75
+                  }
+                },
+                {
+                  "patterns": [
+                    {
+                      "k": "ctor",
+                      "path": [
+                        "Flag",
+                        "Two"
+                      ],
+                      "args": [],
+                      "span": {
+                        "start": 75,
+                        "end": 79
+                      }
+                    }
+                  ],
+                  "body": {
+                    "k": "num",
+                    "value": "2",
+                    "span": {
+                      "start": 86,
+                      "end": 87
+                    }
+                  },
+                  "span": {
+                    "start": 75,
+                    "end": 87
+                  }
+                }
+              ],
+              "span": {
+                "start": 49,
+                "end": 88
+              }
+            },
+            "span": {
+              "start": 19,
+              "end": 90
+            }
+          }
+        ],
+        "main": {
+          "effects": [
+            {
+              "k": "print",
+              "expr": {
+                "k": "show",
+                "arg": {
+                  "k": "app",
+                  "fn": {
+                    "k": "name",
+                    "path": [
+                      "read"
+                    ],
+                    "span": {
+                      "start": 114,
+                      "end": 118
+                    }
+                  },
+                  "args": [
+                    {
+                      "k": "name",
+                      "path": [
+                        "Flag",
+                        "One"
+                      ],
+                      "span": {
+                        "start": 128,
+                        "end": 132
+                      }
+                    }
+                  ],
+                  "span": {
+                    "start": 114,
+                    "end": 139
+                  }
+                },
+                "style": "rust",
+                "span": {
+                  "start": 114,
+                  "end": 139
+                }
+              },
+              "style": "rust",
+              "span": {
+                "start": 100,
+                "end": 140
+              }
+            }
+          ],
+          "span": {
+            "start": 90,
+            "end": 92
+          }
+        }
+      },
+      "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction read(value) {\n  switch (value.$) {\n    case \"One\": {\n      return 1n;\n    }\n    case \"Two\": {\n      return 2n;\n    }\n    default: {\n      throw new TypeError(`unexpected constructor ${value.$}`);\n    }\n  }\n}\n\nfunction main() {\n  console.log(String(read(Object.freeze({ $: \"One\" }))));\n}\n\nmain();\n",
+      "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum Flag {\n    One,\n    Two,\n}\n\npub fn read(value: crate::Flag) -> u64 {\n    match value.clone() {\n        crate::Flag::One => {\n            1u64\n        }\n        crate::Flag::Two => {\n            2u64\n        }\n    }\n}\n\nfn ml_main() {\n    println!(\"{}\", (crate::read(crate::Flag::One)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
+    },
+    {
+      "id": "borrowed-reference-wildcard-pattern",
+      "source": "fn read(value:&u64)->u64{match value{&_=>73}} fn main(){println!(\"{}\",read(&1));}",
+      "output": [
+        "73"
+      ],
+      "surface": {
+        "language": "Rust",
+        "items": [
+          {
+            "k": "fn",
+            "name": "read",
+            "params": [
+              {
+                "name": "value",
+                "type": {
+                  "kind": "fixed",
+                  "bits": 64,
+                  "signed": false
+                },
+                "span": {
+                  "start": 8,
+                  "end": 18
+                }
+              }
+            ],
+            "ret": {
+              "kind": "fixed",
+              "bits": 64,
+              "signed": false
+            },
+            "body": {
+              "k": "match",
+              "scrutinees": [
+                {
+                  "k": "name",
+                  "path": [
+                    "value"
+                  ],
+                  "span": {
+                    "start": 31,
+                    "end": 36
+                  }
+                }
+              ],
+              "rows": [
+                {
+                  "patterns": [
+                    {
+                      "k": "wild"
+                    }
+                  ],
+                  "body": {
+                    "k": "num",
+                    "value": "73",
+                    "span": {
+                      "start": 41,
+                      "end": 43
+                    }
+                  },
+                  "span": {
+                    "start": 37,
+                    "end": 43
+                  }
+                }
+              ],
+              "span": {
+                "start": 25,
+                "end": 44
+              }
+            },
+            "span": {
+              "start": 0,
+              "end": 46
+            }
+          }
+        ],
+        "main": {
+          "effects": [
+            {
+              "k": "print",
+              "expr": {
+                "k": "show",
+                "arg": {
+                  "k": "app",
+                  "fn": {
+                    "k": "name",
+                    "path": [
+                      "read"
+                    ],
+                    "span": {
+                      "start": 70,
+                      "end": 74
+                    }
+                  },
+                  "args": [
+                    {
+                      "k": "num",
+                      "value": "1",
+                      "span": {
+                        "start": 76,
+                        "end": 77
+                      }
+                    }
+                  ],
+                  "span": {
+                    "start": 70,
+                    "end": 78
+                  }
+                },
+                "style": "rust",
+                "span": {
+                  "start": 70,
+                  "end": 78
+                }
+              },
+              "style": "rust",
+              "span": {
+                "start": 56,
+                "end": 79
+              }
+            }
+          ],
+          "span": {
+            "start": 46,
+            "end": 48
+          }
+        }
+      },
+      "javascript": "// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction ml_fixed(value, min, max, message) {\n  if (value < min || value > max) throw new RangeError(message);\n  return value;\n}\n\nfunction read(value) {\n  ml_fixed(value, 0n, 18446744073709551615n, \"u64 argument value out of range\");\n  return 73n;\n}\n\nfunction main() {\n  console.log(String(read(1n)));\n}\n\nmain();\n",
+      "rust": "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\npub fn read(value: u64) -> u64 {\n    73u64\n}\n\nfn ml_main() {\n    println!(\"{}\", (crate::read(1u64)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n"
     }
   ],
   "invalid": [
     {
       "id": "scalar-dereference",
       "source": "fn read(value:u64)->u64{*value} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "dereference: the operand must have a proven immutable reference or standard Box source type",
       "span": {
         "start": 24,
@@ -3085,6 +4346,7 @@
     {
       "id": "literal-dereference",
       "source": "fn read()->u64{*1} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "dereference: the operand must have a proven immutable reference or standard Box source type",
       "span": {
         "start": 15,
@@ -3094,33 +4356,37 @@
     {
       "id": "unknown-dereference",
       "source": "fn read()->u64{*missing} fn main(){println!(\"x\");}",
-      "reason": "dereference: the operand must have a proven immutable reference or standard Box source type",
+      "kind": "type",
+      "reason": "unknown name missing",
       "span": {
-        "start": 15,
+        "start": 16,
         "end": 23
       }
     },
     {
       "id": "shadowed-let-origin",
       "source": "fn read(value:Box<u64>)->u64{let value=1;*value} fn main(){println!(\"x\");}",
-      "reason": "dereference: the operand must have a proven immutable reference or standard Box source type",
+      "kind": "type",
+      "reason": "expected u64 but found i32",
       "span": {
-        "start": 41,
-        "end": 47
+        "start": 0,
+        "end": 49
       }
     },
     {
       "id": "shadowed-reference-let-origin",
       "source": "fn read(value:&u64)->u64{let value=1;*value} fn main(){println!(\"x\");}",
-      "reason": "dereference: the operand must have a proven immutable reference or standard Box source type",
+      "kind": "type",
+      "reason": "expected u64 but found i32",
       "span": {
-        "start": 37,
-        "end": 43
+        "start": 0,
+        "end": 45
       }
     },
     {
       "id": "extra-dereference",
       "source": "fn read(value:Box<u64>)->u64{**value} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "dereference: the operand must have a proven immutable reference or standard Box source type",
       "span": {
         "start": 29,
@@ -3130,6 +4396,7 @@
     {
       "id": "forward-shadowed-box-owner",
       "source": "fn read(value:Box<u64>)->u64{*value} enum Box{Value(u64)} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "Box owner: only the unshadowed standard immutable Box is portable",
       "span": {
         "start": 14,
@@ -3139,6 +4406,7 @@
     {
       "id": "aliased-box-owner",
       "source": "enum Actual{Value(u64)} use crate::Actual as Box; fn read(value:Box<u64>)->u64{*value} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "Box owner: only the unshadowed standard immutable Box is portable",
       "span": {
         "start": 64,
@@ -3148,6 +4416,7 @@
     {
       "id": "shadowed-standard-box-owner",
       "source": "mod std{pub mod boxed{pub enum Box{Value(u64)}}} fn read(value:std::boxed::Box<u64>)->u64{*value} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "Box owner: only the unshadowed standard immutable Box is portable",
       "span": {
         "start": 63,
@@ -3157,6 +4426,7 @@
     {
       "id": "unproven-box-initializer",
       "source": "fn read()->u64{let value:Box<u64> =1;*value} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "source indirection: source ownership requires an explicit dereference or matching immutable reference or Box type",
       "span": {
         "start": 35,
@@ -3166,6 +4436,7 @@
     {
       "id": "unproven-reference-initializer",
       "source": "fn read()->u64{let value:&u64=1;*value} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "source indirection: source ownership requires an explicit dereference or matching immutable reference or Box type",
       "span": {
         "start": 30,
@@ -3175,6 +4446,7 @@
     {
       "id": "unproven-box-result",
       "source": "fn boxed()->Box<u64>{1} fn read()->u64{*boxed()} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "source indirection: source ownership requires an explicit dereference or matching immutable reference or Box type",
       "span": {
         "start": 21,
@@ -3184,6 +4456,7 @@
     {
       "id": "missing-owned-box-dereference",
       "source": "enum Tree{Leaf(u64),Branch(Box<Tree>)} fn sum(tree:Tree)->u64{match tree{Tree::Leaf(value)=>value,Tree::Branch(child)=>sum(child)}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "source indirection: source ownership requires an explicit dereference or matching immutable reference or Box type",
       "span": {
         "start": 119,
@@ -3193,6 +4466,7 @@
     {
       "id": "case-origin-does-not-leak",
       "source": "enum Choice{Some(Box<u64>),None} fn read(choice:Choice,value:u64)->u64{match choice{Choice::Some(value)=>*value,Choice::None=>*value}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "dereference: the operand must have a proven immutable reference or standard Box source type",
       "span": {
         "start": 126,
@@ -3202,10 +4476,211 @@
     {
       "id": "mutable-reference",
       "source": "fn read(value:&mut u64)->u64{*value} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
       "reason": "mutable reference: mutation is outside the portable core",
       "span": {
         "start": 14,
         "end": 15
+      }
+    },
+    {
+      "id": "inner-reference-is-not-coercion-site",
+      "source": "fn read(value:& &u64)->u64{**value} fn other()->u64{let boxed=Box::new(47u64);read(& &boxed)} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: source ownership requires an explicit dereference or matching immutable reference or Box type",
+      "span": {
+        "start": 78,
+        "end": 92
+      }
+    },
+    {
+      "id": "or-pattern-ownership-disagreement",
+      "source": "enum Choice{Boxed(Box<u64>),Plain(u64)} fn read(choice:Choice)->u64{match choice{Choice::Boxed(value)|Choice::Plain(value)=>value}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "or-pattern ownership: every alternative must bind the same names with the same source ownership",
+      "span": {
+        "start": 81,
+        "end": 101
+      }
+    },
+    {
+      "id": "if-result-ownership-disagreement",
+      "source": "fn read(value:Box<u64>,flag:bool)->u64{if flag{value}else{1}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 39,
+        "end": 60
+      }
+    },
+    {
+      "id": "match-result-ownership-disagreement",
+      "source": "enum Flag{One,Two} fn read(value:Box<u64>,flag:Flag)->u64{match flag{Flag::One=>value,Flag::Two=>1}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 58,
+        "end": 99
+      }
+    },
+    {
+      "id": "or-pattern-missing-owned-binder",
+      "source": "enum Choice{Boxed(Box<u64>),Empty} fn read(choice:Choice,value:u64)->u64{match choice{Choice::Empty|Choice::Boxed(value)=>value}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "or-pattern ownership: every alternative must bind the same names with the same source ownership",
+      "span": {
+        "start": 86,
+        "end": 92
+      }
+    },
+    {
+      "id": "or-pattern-first-empty-alternative",
+      "source": "fn read(value:u64)->u64{match value{_|other=>1}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "or-pattern ownership: every alternative must bind the same names with the same source ownership",
+      "span": {
+        "start": 38,
+        "end": 43
+      }
+    },
+    {
+      "id": "boxed-arithmetic-operand",
+      "source": "fn read(value:Box<u64>)->u64{value+1} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 29,
+        "end": 36
+      }
+    },
+    {
+      "id": "boxed-negation-operand",
+      "source": "fn read(value:Box<i64>)->i64{-value} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 29,
+        "end": 35
+      }
+    },
+    {
+      "id": "boxed-numeric-cast-source",
+      "source": "fn read(value:Box<u64>)->u64{value as u64} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 29,
+        "end": 41
+      }
+    },
+    {
+      "id": "boxed-numeric-cast-target",
+      "source": "fn read(value:u64)->u64{value as Box<u64>} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source cast: numeric casts require a direct source and target value type",
+      "span": {
+        "start": 30,
+        "end": 41
+      }
+    },
+    {
+      "id": "boxed-incompatible-comparison",
+      "source": "fn read(value:Box<u64>)->bool{value==1} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 30,
+        "end": 38
+      }
+    },
+    {
+      "id": "boxed-boolean-condition",
+      "source": "fn read(value:Box<bool>)->u64{if value{1}else{2}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: source ownership requires an explicit dereference or matching immutable reference or Box type",
+      "span": {
+        "start": 33,
+        "end": 38
+      }
+    },
+    {
+      "id": "boxed-zero-field-constructor-pattern",
+      "source": "enum Flag{One,Two} fn read(value:Box<Flag>)->u64{match value{Flag::One=>1,Flag::Two=>2}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source pattern: an owned Box requires an explicit dereference before a constructor or literal pattern",
+      "span": {
+        "start": 61,
+        "end": 65
+      }
+    },
+    {
+      "id": "boxed-literal-pattern",
+      "source": "fn read(value:Box<u64>)->u64{match value{1=>1,_=>2}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source pattern: an owned Box requires an explicit dereference before a constructor or literal pattern",
+      "span": {
+        "start": 41,
+        "end": 42
+      }
+    },
+    {
+      "id": "operator-uncertainty-through-display",
+      "source": "fn read(value:Box<u64>)->String{(value+1).to_string()} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 41,
+        "end": 53
+      }
+    },
+    {
+      "id": "owned-reference-wildcard-pattern",
+      "source": "fn read(value:u64)->u64{match value{&_=>1}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source pattern: a reference pattern requires a proven reference source type",
+      "span": {
+        "start": 30,
+        "end": 35
+      }
+    },
+    {
+      "id": "owned-reference-constructor-pattern",
+      "source": "enum Packet{Value(u64)} fn read(packet:Packet)->String{match packet{&Packet::Value(value)=>value.to_string()}} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source pattern: a reference pattern requires a proven reference source type",
+      "span": {
+        "start": 69,
+        "end": 89
+      }
+    },
+    {
+      "id": "boxed-standard-string-conversion",
+      "source": "fn read(value:Box<u64>)->String{String::from(value)} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 32,
+        "end": 51
+      }
+    },
+    {
+      "id": "operator-uncertainty-through-numeric-method",
+      "source": "fn read(value:Box<u64>)->u64{(value+1).div_euclid(2)} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 38,
+        "end": 52
+      }
+    },
+    {
+      "id": "operator-uncertainty-through-string-reference",
+      "source": "fn read(value:Box<u64>)->String{(value+1).as_str().to_string()} fn main(){println!(\"x\");}",
+      "kind": "unsupported",
+      "reason": "source indirection: the source ownership of this value cannot be proved",
+      "span": {
+        "start": 50,
+        "end": 62
       }
     }
   ]

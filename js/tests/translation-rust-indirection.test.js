@@ -4,7 +4,8 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { rustSourceIndirectionFixture } from '../scripts/generate-rust-source-indirection-fixtures.mjs';
 import { parseRust } from '../src/translation/rust.js';
-import { acceptRustImmutableIndirectionLayer, acceptRustSourceBoxOwner, acceptRustSourceIndirectionArgument } from '../src/translation/rust-indirection-rules.js';
+import { checkProgram } from '../src/translation/check.js';
+import { acceptRustImmutableIndirectionLayer, acceptRustSourceBoxOwner, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer } from '../src/translation/rust-indirection-rules.js';
 
 const fixture = JSON.parse(readFileSync(new URL('../../parity/fixtures/rust-source-indirection.json', import.meta.url), 'utf8'));
 
@@ -25,11 +26,11 @@ test('source Box and reference proofs preserve recursive values, forward owners 
 
 test('unproven, scalar, mutable, shadowed and leaking source pointer origins refuse precisely', () => {
   for (const entry of fixture.invalid) {
-    assert.throws(() => parseRust(entry.source), error => {
-      assert.equal(error.kind, 'unsupported', entry.id);
+    assert.throws(() => checkProgram(parseRust(entry.source)), error => {
+      assert.equal(error.kind, entry.kind, entry.id);
       assert.equal(error.reason, entry.reason, entry.id);
-      assert.deepEqual(error.span, entry.span, entry.id);
-      assert.ok(error.span.end > error.span.start, entry.id);
+      assert.deepEqual(error.span ?? null, entry.span, entry.id);
+      if (entry.span) assert.ok(error.span.end > error.span.start, entry.id);
       return true;
     });
   }
@@ -46,4 +47,7 @@ test('shared indirection decisions distinguish standard ownership and borrowed B
   assert.equal(acceptRustSourceIndirectionArgument(true, false, false, true), false);
   assert.equal(acceptRustSourceIndirectionArgument(true, false, true, true), true);
   assert.equal(acceptRustSourceIndirectionArgument(true, true, false, false), true);
+  assert.equal(acceptRustSourceBoxCoercionLayer('box', true), true);
+  assert.equal(acceptRustSourceBoxCoercionLayer('box', false), false);
+  assert.equal(acceptRustSourceBoxCoercionLayer('reference', true), false);
 });

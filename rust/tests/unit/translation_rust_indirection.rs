@@ -5,7 +5,6 @@ use std::path::Path;
 use std::process::Command;
 
 use meta_language::translation::check::check_program;
-use meta_language::translation::diagnostics::ErrorKind;
 use meta_language::translation::emit_javascript::emit_javascript;
 use meta_language::translation::emit_rust::emit_rust;
 use meta_language::translation::rust::parse_rust;
@@ -54,8 +53,14 @@ fn unproven_source_indirection_matches_shared_refusal_and_span() {
     for case in fixture["invalid"].as_array().expect("refused sources") {
         let id = case["id"].as_str().expect("fixture identity");
         let source = case["source"].as_str().expect("original Rust source");
-        let error = parse_rust(source).expect_err("unproven ownership must be refused");
-        assert_eq!(error.kind, ErrorKind::Unsupported, "{id}");
+        let error = parse_rust(source)
+            .and_then(|surface| check_program(&surface))
+            .expect_err("unproven ownership must be refused before checked IR emission");
+        assert_eq!(
+            error.kind.as_str(),
+            case["kind"].as_str().expect("shared refusal kind"),
+            "{id}"
+        );
         assert_eq!(
             error.reason,
             case["reason"].as_str().expect("shared refusal"),

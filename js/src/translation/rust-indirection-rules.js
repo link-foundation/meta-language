@@ -14,3 +14,24 @@ export function acceptRustSourceBoxOwner(owner, shadowed) {
 export function acceptRustSourceIndirectionArgument(indirected, exact, borrowed, coerced) {
   return !indirected || exact || (borrowed && coerced);
 }
+
+/** @param {string} layer @param {boolean} initial @returns {boolean} */
+export function acceptRustSourceBoxCoercionLayer(layer, initial) {
+  return initial && layer === 'box';
+}
+
+/** @param {string} kind @param {string} operation @returns {string} */
+export function readRustSourceExpressionOrigin(kind, operation) {
+  if (kind === 'abort') return 'diverging';
+  if (kind === 'toString' && operation === 'from') return 'unboxed-conversion';
+  if (kind === 'cast') return 'numeric-cast';
+  if (kind === 'unary') return 'primitive-operation';
+  if (kind === 'binary') {
+    if (operation === 'eq' || operation === 'ne' || operation === 'lt' || operation === 'le' || operation === 'gt' || operation === 'ge') return 'comparison';
+    if (operation === 'and' || operation === 'or') return 'boolean-operation';
+    return 'primitive-operation';
+  }
+  if (kind === 'num' || kind === 'bool' || kind === 'unit' || kind === 'str') return 'value';
+  if (kind === 'toString' || kind === 'show' || kind === 'stringMap' || kind === 'stringTest') return 'derived-value';
+  return 'unknown';
+}

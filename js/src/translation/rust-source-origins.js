@@ -2,10 +2,12 @@
 // parser collects declarations before validating bodies, retaining its own
 // type, path and pattern records rather than inferring a second typed program.
 import { unsupported } from './diagnostics.js';
-import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxOwner } from './rust-indirection-rules.js';
+import { rustFixedType } from './types.js';
+import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
 
-const unknown = () => ({ wrappers: [], type: null, path: [] });
-const clone = origin => origin && ({ ...origin, wrappers: [...origin.wrappers], path: [...origin.path] });
+const unknown = (uncertain = false) => ({ wrappers: [], type: null, path: [], proven: false, diverging: false, uncertain });
+const value = () => ({ ...unknown(), proven: true });
+const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, ...origin, wrappers: [...origin.wrappers], path: [...origin.path] });
 
 export class RustSourceOrigins {
   constructor(catalog = null) {
@@ -24,7 +26,7 @@ export class RustSourceOrigins {
   }
 
   typed(type, path, wrappers = []) {
-    this.type = { type, path: [...path], wrappers };
+    this.type = { type, path: [...path], wrappers, proven: true, diverging: false, uncertain: false };
     return type;
   }
 
@@ -62,7 +64,7 @@ export class RustSourceOrigins {
   }
 
   same(left, right) {
-    if (!left || !right || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
+    if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
     if (left.type?.kind === 'named' && right.type?.kind === 'named') {
       const leftOwner = this.lookup(left.type.path, left.path);
       const rightOwner = this.lookup(right.type.path, right.path);
@@ -92,12 +94,42 @@ export class RustSourceOrigins {
       const entry = this.lookup(node.k === 'name' ? node.path : node.fn.path, path);
       if (entry?.k === 'fn') return clone(entry.result);
       if (entry?.k === 'ctor') return clone(entry.result);
+      if (node.k === 'name' && node.path.length === 2 && !this.lookup([node.path[0]], path)
+        && rustFixedType(node.path[0]) && ['MIN', 'MAX'].includes(node.path[1])) return value();
     }
     if (node.k === 'if') {
-      const left = this.origin(node.then, path); const right = this.origin(node.else, path);
-      return this.same(left, right) ? left : unknown();
+      return this.join([this.origin(node.then, path), this.origin(node.else, path)]);
+    }
+    const form = readRustSourceExpressionOrigin(node.k, node.op ?? '');
+    if (form === 'value') return value();
+    if (form === 'diverging') return { ...value(), diverging: true };
+    if (form === 'derived-value') {
+      const operands = [node.arg ?? node.object, ...(node.search ? [node.search] : [])].map(operand => this.origin(operand, path));
+      if (operands.some(operand => !operand.proven)) return unknown(operands.some(operand => operand.uncertain));
+      return value();
+    }
+    if (['numeric-cast', 'primitive-operation', 'comparison', 'boolean-operation'].includes(form)) {
+      const operands = (node.arg ? [node.arg] : [node.left, node.right]).map(operand => this.origin(operand, path));
+      if (!this.collecting) {
+        if (operands.some(operand => !operand.proven)) return unknown(operands.some(operand => operand.uncertain || operand.wrappers.length));
+        if (form === 'comparison' && JSON.stringify(operands[0].wrappers) !== JSON.stringify(operands[1].wrappers)) return unknown(true);
+        if (form === 'primitive-operation' && operands.some(operand => operand.wrappers.includes('box'))) return unknown(true);
+        if (['numeric-cast', 'boolean-operation'].includes(form) && operands.some(operand => operand.wrappers.length > 0)) return unknown(true);
+      }
+      return value();
     }
     return unknown();
+  }
+
+  join(origins) {
+    const returning = origins.filter(origin => !origin.diverging);
+    if (!returning.length) return { ...value(), diverging: true };
+    const first = returning[0];
+    if (returning.every(origin => this.same(origin, first))) return clone(first);
+    if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {
+      return { ...value(), wrappers: [...first.wrappers] };
+    }
+    return unknown(returning.some(origin => origin.uncertain || origin.wrappers.length > 0));
   }
 
   mark(node, origin) {
@@ -113,7 +145,7 @@ export class RustSourceOrigins {
 
   dereference(node, path, span) {
     const origin = this.origin(node, path);
-    if (!this.collecting && !acceptRustImmutableIndirectionLayer(origin.wrappers[0] ?? '')) {
+    if (!this.collecting && (!origin.proven || !acceptRustImmutableIndirectionLayer(origin.wrappers[0] ?? ''))) {
       throw unsupported('dereference', 'the operand must have a proven immutable reference or standard Box source type', span);
     }
     origin.wrappers.shift();
@@ -128,15 +160,36 @@ export class RustSourceOrigins {
 
   argument(actualOrigin, expectedOrigin, span) {
     if (this.collecting) return;
+    if (actualOrigin.diverging) return;
+    if (!actualOrigin.proven && !actualOrigin.uncertain && !actualOrigin.wrappers.length && !expectedOrigin.wrappers.length) return;
+    if (!actualOrigin.proven || !expectedOrigin.proven) throw unsupported('source indirection', 'the source ownership of this value cannot be proved', span);
     const actual = actualOrigin.wrappers;
     const want = expectedOrigin.wrappers;
     const indirected = actual.length > 0 || want.length > 0;
     const exact = JSON.stringify(actual) === JSON.stringify(want);
     const borrowed = actual[0] === 'reference' && want[0] === 'reference';
-    const coerced = JSON.stringify(actual.filter(layer => layer !== 'box')) === JSON.stringify(want);
+    const removed = actual.length - want.length;
+    let initial = true;
+    for (const layer of actual.slice(1, removed + 1)) {
+      if (!acceptRustSourceBoxCoercionLayer(layer, initial)) initial = false;
+    }
+    const projected = actual.length ? [actual[0], ...actual.slice(removed + 1)] : [];
+    const coerced = removed > 0 && initial && JSON.stringify(projected) === JSON.stringify(want);
     if (!acceptRustSourceIndirectionArgument(indirected, exact, borrowed, coerced)) {
       throw unsupported('source indirection', 'source ownership requires an explicit dereference or matching immutable reference or Box type', span);
     }
+  }
+
+  direct(node, path, span) {
+    const expected = value();
+    this.argument(this.origin(node, path), expected, span);
+  }
+
+  conversion(node, path) {
+    const operand = this.origin(node.arg, path);
+    const form = readRustSourceExpressionOrigin(node.k, 'from');
+    if (!this.collecting && form === 'unboxed-conversion' && operand.wrappers.includes('box')) return this.mark(node, unknown(true));
+    return this.mark(node, operand.proven ? value() : unknown(operand.uncertain));
   }
 
   // Keep Box ownership contracts until source admission has checked a call;
@@ -158,11 +211,17 @@ export class RustSourceOrigins {
     return pattern;
   }
 
-  pattern(pattern, origin, path, result = new Map()) {
+  pattern(pattern, origin, path, result = new Map(), sourceSpan = pattern.span) {
     origin = clone(origin);
     for (let count = this.patternReferences.get(pattern) ?? 0; count > 0; count -= 1) {
-      if (origin.wrappers[0] !== 'reference') origin = unknown();
+      if (origin.wrappers[0] !== 'reference') {
+        if (!this.collecting && origin.proven) throw unsupported('source pattern', 'a reference pattern requires a proven reference source type', sourceSpan);
+        origin = unknown(true);
+      }
       else origin.wrappers.shift();
+    }
+    if (!this.collecting && !['wild', 'bind', 'bindOrCtor'].includes(pattern.k) && origin.wrappers.includes('box')) {
+      throw unsupported('source pattern', 'an owned Box requires an explicit dereference before a constructor or literal pattern', sourceSpan);
     }
     if (pattern.k === 'bindOrCtor' || pattern.k === 'bind') {
       if (!this.lookup([pattern.name], path)?.fields) result.set(pattern.name, origin);
@@ -175,17 +234,26 @@ export class RustSourceOrigins {
       for (let index = 0; index < pattern.args.length; index += 1) {
         let field = admissible && entry.fields[index] ? clone(entry.fields[index]) : unknown();
         if (borrowed && admissible) field.wrappers.unshift('reference');
-        this.pattern(pattern.args[index], field, path, result);
+        this.pattern(pattern.args[index], field, path, result, pattern.args[index].span ?? sourceSpan);
       }
     }
     return result;
   }
 
   cases(patterns, scrutinee, path) {
-    const maps = patterns.map(pattern => this.pattern(pattern, this.origin(scrutinee, path), path));
+    const maps = patterns.map(pattern => this.pattern(pattern, this.origin(scrutinee, path), path, new Map(), pattern.span ?? scrutinee.span));
     const scope = new Map(this.scope);
+    const span = patterns.find(pattern => pattern.span)?.span ?? scrutinee.span;
+    if (!this.collecting && maps.length > 1 && maps.some(map => map.size !== maps[0].size || [...maps[0].keys()].some(name => !map.has(name)))) {
+      throw unsupported('or-pattern ownership', 'every alternative must bind the same names with the same source ownership', span);
+    }
     for (const [name, origin] of maps[0]) {
-      scope.set(name, maps.every(map => this.same(origin, map.get(name))) ? origin : unknown());
+      const candidates = maps.map(map => map.get(name));
+      if (!this.collecting && maps.length > 1 && (maps.some(map => map.size !== maps[0].size)
+        || candidates.some(candidate => !candidate || !candidate.proven || JSON.stringify(candidate.wrappers) !== JSON.stringify(origin.wrappers)))) {
+        throw unsupported('or-pattern ownership', 'every alternative must bind the same names with the same source ownership', span);
+      }
+      scope.set(name, this.join(candidates.filter(Boolean)));
     }
     return scope;
   }
