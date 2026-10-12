@@ -54,6 +54,13 @@ test('tuple indices are safe nonnegative integers in range, with no array coerci
   assert.equal(acceptTupleIndex(0, 2), true);
   assert.throws(() => checked({ k: 'tupleIndex', object: number(5), index: 0 }, FLOAT), /requires a tuple value/);
   assert.throws(() => checked({ k: 'index', object, index: { k: 'num', value: '1', negative: true } }, FLOAT), /tuple index out of range/);
+  const zero = checked({ k: 'tupleIndex', object, index: -0 }, FLOAT);
+  assert.equal(Object.is(zero.index, -0), false);
+  assert.equal(zero.index, 0);
+  const legacyZero = checked({ k: 'index', object, index: { k: 'num', value: '0', negative: true } }, FLOAT);
+  assert.equal(Object.is(legacyZero.index, -0), false);
+  const signedScalar = checked(product([{ k: 'num', value: '0', negative: true, type: FLOAT }]), tuple([FLOAT]));
+  assert.equal(signedScalar.items[0].value, '-0');
 });
 
 test('selected product models survive checking and refuse contradictory facet edits independently of legacy tuples', () => {
@@ -83,6 +90,10 @@ test('nested product value proofs follow owned bindings and both branches rather
   assert.equal(accepted.items[0].k, 'let');
   assert.equal(accepted.items[0].value.frozen, true);
   assert.equal(accepted.frozen, true);
+  const outerBinding = (value, body = product([{ k: 'name', path: ['inner'] }])) => ({ k: 'let', name: 'inner', value, body });
+  assert.equal(checked(outerBinding(inner(true)), type).body.frozen, true);
+  assert.throws(() => checked(outerBinding(inner(false)), type), /mutable inner tuple/);
+  assert.throws(() => checked(outerBinding(inner(true), outerBinding(inner(false))), type), /mutable inner tuple/);
 });
 
 test('ordinary contextual array tuples and Map entry tuples retain their previous value model', () => {

@@ -9,7 +9,7 @@ import { typeError, unsupported } from './diagnostics.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
-import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation } from './primitive-value-rules.js';
+import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation, readTuplePosition } from './primitive-value-rules.js';
 import { acceptOptionalAbsence } from './structured-type-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import {
@@ -23,6 +23,7 @@ const CONSOLE_STYLES = new Set(['js-console', 'js-format-first', 'js-format-numb
 // Environment entry recording, for a local, the constructor it is known to
 // have matched and the locals naming its fields.
 const KNOWN = Symbol('known constructors');
+const PRODUCT_VALUES = Symbol('known immutable product values');
 /** Natural numeral patterns above this unfold to equality tests rather than successor chains. */
 const NAT_PATTERN_UNFOLD = 16n;
 
@@ -30,8 +31,15 @@ const NAT_PATTERN_UNFOLD = 16n;
 const PREDICATES = new Set(['isInteger', 'isSafeInteger', 'isFinite', 'isNaN']);
 
 /** Binds a local, forgetting constructor facts the new binding shadows. */
-function bindLocal(env, name, type) {
+function bindLocal(env, name, type, immutableProduct = false) {
   env.set(name, type);
+  const products = env.get(PRODUCT_VALUES);
+  if (immutableProduct || products?.has(name)) {
+    const updated = new Map(products);
+    if (immutableProduct) updated.set(name, true);
+    else updated.delete(name);
+    env.set(PRODUCT_VALUES, updated);
+  }
   const known = env.get(KNOWN);
   if (known && [...known].some(([variable, fact]) => variable === name || fact.binds.includes(name))) {
     env.set(KNOWN, new Map([...known].filter(([variable, fact]) => variable !== name && !fact.binds.includes(name))));
@@ -297,7 +305,7 @@ class Checker {
         const expected = effect.type ? this.resolveType(effect.type, [], effect.span) : undefined;
         let value = this.expr(effect.value, env, [], expected);
         if (expected) value = coerce(value, expected, this.language, effect.span);
-        bindLocal(env, effect.name, value.type);
+        bindLocal(env, effect.name, value.type, value.type.kind === 'tuple' && immutableProductValue(value, env.get(PRODUCT_VALUES)));
         effects.push({ k: 'let', name: effect.name, value, ...(effect.constant ? { constant: true } : {}), span: effect.span });
         continue;
       }
@@ -493,7 +501,7 @@ class Checker {
           return want ? coerce(value, want, this.language, item.span ?? node.span) : value;
         });
         const type = expected ?? tuple(items.map(item => item.type));
-        if (node.frozen && (!immutableProductType(type) || items.some(item => !immutableProductValue(item)))) {
+        if (node.frozen && (!immutableProductType(type) || items.some(item => !immutableProductValue(item, env.get(PRODUCT_VALUES))))) {
           throw unsupported('immutable tuple product', 'every element needs the recursive scalar Copy value model; a mutable inner tuple cannot be frozen by its outer product', node.span);
         }
         return { k: 'tuple', items, ...(node.frozen && { frozen: true }), ...(node.productModel !== undefined && { productModel: node.productModel }), type };
@@ -502,7 +510,8 @@ class Checker {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
         if (object.type.kind !== 'tuple') throw typeError('tuple projection requires a tuple value', node.span);
         if (!acceptTupleIndex(node.index, object.type.elements.length)) throw typeError('tuple index out of range', node.span);
-        return { k: 'tupleIndex', object, index: node.index, type: object.type.elements[node.index] };
+        const index = readTuplePosition(node.index);
+        return { k: 'tupleIndex', object, index, type: object.type.elements[index] };
       }
       case 'copySlice': {
         const object = this.expr(node.object, env, path, undefined);
@@ -614,7 +623,7 @@ class Checker {
       case 'index': {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
         if (object.type.kind === 'tuple' && node.index.k === 'num') {
-          const index = Number(node.index.value) * (node.index.negative ? -1 : 1);
+          const index = readTuplePosition(Number(node.index.value) * (node.index.negative ? -1 : 1));
           if (!acceptTupleIndex(index, object.type.elements.length)) throw typeError('tuple index out of range', node.span);
           return { k: 'tupleIndex', object, index, type: object.type.elements[index] };
         }
@@ -678,7 +687,7 @@ class Checker {
         let value = this.expr(node.value, env, path, declared);
         if (declared) value = coerce(value, declared, this.language, node.span);
         const inner = new Map(env);
-        bindLocal(inner, node.name, value.type);
+        bindLocal(inner, node.name, value.type, value.type.kind === 'tuple' && immutableProductValue(value, env.get(PRODUCT_VALUES)));
         const body = this.expr(node.body, inner, path, expected, allowLiteral);
         return { k: 'let', name: node.name, value, body, type: body.type };
       }

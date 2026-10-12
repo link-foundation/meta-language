@@ -9,7 +9,7 @@ use crate::translation::primitive_value_rules::accept_tuple_index;
 use std::collections::HashMap;
 
 /// A tuple-typed result needs an owned value proof; unknown call/parameter origins refuse.
-fn immutable_product_value(value: &Expr, bindings: &HashMap<String, bool>) -> bool {
+pub(super) fn immutable_product_value(value: &Expr, bindings: &HashMap<String, bool>) -> bool {
     if !matches!(value.ty, Type::Tuple { .. }) {
         return true;
     }
@@ -206,7 +206,7 @@ impl Checker {
             && (!ty.immutable_product_type()
                 || values
                     .iter()
-                    .any(|value| !immutable_product_value(value, &HashMap::new())))
+                    .any(|value| !immutable_product_value(value, &env.immutable_products)))
         {
             return Err(unsupported(
                 "immutable tuple product",

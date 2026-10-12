@@ -139,6 +139,10 @@ pub fn accept_tuple_index(index: f64, length: f64) -> bool {
         && (index < length))
 }
 
+pub fn read_tuple_position(index: f64) -> f64 {
+    if (index == (0f64)) { 0f64 } else { index }
+}
+
 fn ml_main() {}
 
 // Deep recursion in the source is not bounded by a small native stack.

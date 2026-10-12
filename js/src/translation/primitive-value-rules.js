@@ -70,3 +70,10 @@ export function acceptImmutableProductKind(kind) {
 export function acceptTupleIndex(index, length) {
   return index >= 0 && index <= 9007199254740991 && index % 1 === 0 && index < length;
 }
+
+/** Natural tuple positions have one zero; floating scalar values retain -0.
+ * @param {number} index @returns {number}
+ */
+export function readTuplePosition(index) {
+  return index === 0 ? 0 : index;
+}

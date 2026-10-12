@@ -221,6 +221,7 @@ struct Fact {
 struct Env {
     vars: HashMap<String, Type>,
     known: HashMap<String, Fact>,
+    immutable_products: HashMap<String, bool>,
 }
 
 impl Env {
@@ -231,6 +232,7 @@ impl Env {
     /// Binds a local, forgetting constructor facts the new binding shadows.
     fn bind_local(&mut self, name: &str, ty: Type) {
         self.vars.insert(name.to_owned(), ty);
+        self.immutable_products.remove(name);
         self.known.retain(|variable, fact| {
             variable != name && !fact.binds.iter().any(|bind| bind == name)
         });

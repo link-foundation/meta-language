@@ -197,6 +197,7 @@ impl Checker {
                             .map(|param| (param.name.clone(), param.ty.clone()))
                             .collect(),
                         known: HashMap::new(),
+                        immutable_products: HashMap::new(),
                     };
                     let body = self.expr(&item.body, &env, path, Some(&ret), false)?;
                     let body = self.coerce(body, &ret, item.span)?;
@@ -219,6 +220,7 @@ impl Checker {
                             .map(|binder| (binder.name.clone(), binder.ty.clone()))
                             .collect(),
                         known: HashMap::new(),
+                        immutable_products: HashMap::new(),
                     };
                     let mut prop = self.prop(&item.prop, &env, path)?;
                     // `theorem t : ∀ n, P n` and `theorem t (n) : P n` state the same
@@ -396,7 +398,12 @@ impl Checker {
                     if let Some(expected) = &expected {
                         value = self.coerce(value, expected, *span)?;
                     }
+                    let immutable_product = matches!(value.ty, Type::Tuple { .. })
+                        && super::arrays::immutable_product_value(&value, &env.immutable_products);
                     env.bind_local(name, value.ty.clone());
+                    if immutable_product {
+                        env.immutable_products.insert(name.clone(), true);
+                    }
                     effects.push(Effect::Let {
                         name: name.clone(),
                         value,

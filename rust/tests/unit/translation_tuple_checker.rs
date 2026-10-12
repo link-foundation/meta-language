@@ -1,7 +1,7 @@
 use meta_language::translation::{
     check::check_program,
     ir::{Decl, Node},
-    primitive_value_rules::accept_tuple_index,
+    primitive_value_rules::{accept_tuple_index, read_tuple_position},
     surface::SProgram,
     types::Type,
 };
@@ -109,6 +109,8 @@ fn selected_product_model_is_retained_and_refuses_a_contradictory_freeze_edit() 
 
 #[test]
 fn products_reject_wrong_shape_and_mutable_inner_values_without_changing_legacy_tuples() {
+    assert_eq!(read_tuple_position(-0.0).to_bits(), 0.0_f64.to_bits());
+    assert_eq!(read_tuple_position(1.0), 1.0);
     for index in [
         -1.0,
         0.5,
@@ -149,6 +151,11 @@ fn products_reject_wrong_shape_and_mutable_inner_values_without_changing_legacy_
     let wrapped = |frozen| json!({"k": "tuple", "frozen": true, "items": [{"k": "let", "name": "inner", "value": {"k": "tuple", "frozen": frozen, "items": [{"k": "num", "value": "5", "type": {"kind": "float"}}]}, "body": {"k": "name", "path": ["inner"]}}]});
     assert!(checked(wrapped(false), inner_type.clone()).is_err());
     assert!(checked(wrapped(true), inner_type).is_ok());
+    let outer_binding = |frozen| json!({"k": "let", "name": "inner", "value": {"k": "tuple", "frozen": frozen, "items": [{"k": "num", "value": "5", "type": {"kind": "float"}}]}, "body": {"k": "tuple", "frozen": true, "items": [{"k": "name", "path": ["inner"]}]}});
+    let nested =
+        json!({"kind": "tuple", "elements": [{"kind": "tuple", "elements": [{"kind": "float"}]}]});
+    assert!(checked(outer_binding(true), nested.clone()).is_ok());
+    assert!(checked(outer_binding(false), nested).is_err());
     assert!(
         checked(
             json!({"k": "tuple", "frozen": true, "items": []}),

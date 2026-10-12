@@ -1,6 +1,6 @@
 //! Expression checking: operators, arithmetic, applications and constructors.
 
-use super::arrays::array_text;
+use super::arrays::{array_text, immutable_product_value};
 use super::{
     BOOL, BinaryOp, Checker, Ctor, Decimal, Decl, Entry, Env, Expr, FLOAT, Flavor, INT, Language,
     LitValue, Node, Param, Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT,
@@ -264,6 +264,11 @@ impl Checker {
                 }
                 let mut inner = env.clone();
                 inner.bind_local(name, value.ty.clone());
+                if matches!(value.ty, Type::Tuple { .. })
+                    && immutable_product_value(&value, &env.immutable_products)
+                {
+                    inner.immutable_products.insert(name.clone(), true);
+                }
                 let body = self.expr(body, &inner, path, expected, allow_literal)?;
                 let ty = body.ty.clone();
                 Ok(Expr::new(
