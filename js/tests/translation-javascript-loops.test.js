@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
+import { format } from 'node:util';
 
 import { translateProgram } from '../src/program-translation.js';
 import { checkProgram } from '../src/translation/check.js';
@@ -69,13 +70,13 @@ test('mutable bindings JavaScript could not run as translated are rejected', () 
     ['function f(n) { for (let i = 0n; i < n; i++) { g = i; } return n; }', 'assignment of g: only local variables declared with let, and parameters, are assignable at 47..51'],
   ];
   for (const [source, message] of cases) {
-    if (source === 'function f(n) { let x; x = n; return x; }') {
+    if (source === 'function f(n) { let x; x = n; return x; }' || source === 'function f(n) { while (n > 0n) { if (n === 3n) return n; n--; } }') {
       const observed = (text) => {
         const output = [];
-        runInNewContext(text, { console: { log: (value) => output.push(String(value)) } });
+        runInNewContext(text, { console: { log: (...values) => output.push(format(...values)) } });
         return output;
       };
-      const runnable = `${source}\nconsole.log(f(17));`;
+      const runnable = `${source}\n${source.includes('while') ? 'console.log(f(4n)); console.log(f(0n));' : 'console.log(f(17));'}`;
       assert.deepEqual(observed(emitJavaScript(checkProgram(parseJavaScript(runnable))).text), observed(runnable));
       assert.equal(translateProgram(runnable, 'JavaScript', 'Rust').diagnostic, null);
       continue;

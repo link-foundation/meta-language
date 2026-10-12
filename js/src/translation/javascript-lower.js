@@ -12,12 +12,14 @@
 // variable in scope are renamed, so no later statement sees them.
 
 import { TranslationError, unsupported } from './diagnostics.js';
+import { mutableClosureCells } from './javascript-cells.js';
 
 const ROOT = 'crate';
-const IMPERATIVE = new Set(['let', 'assign', 'while', 'doWhile', 'for', 'break', 'continue', 'print', 'expr']);
+const IMPERATIVE = new Set(['let', 'assign', 'assignReference', 'while', 'doWhile', 'for', 'break', 'continue', 'print', 'expr']);
 
 /** Whether statements use `let`, assignments, loops, `break`, `continue`, print or discard a value. */
 export function imperative(statements) {
+  if (mutableClosureCells(statements).size) return true;
   return statements.some(function visit(statement) {
     if (IMPERATIVE.has(statement.s)) return true;
     if (statement.s === 'block') return statement.body.some(visit);
@@ -59,6 +61,11 @@ function useStatement(statement, scope, uses) {
         uses.free.add(statement.name);
         uses.assigned.add(statement.name);
       }
+      return;
+    case 'assignReference':
+      read(statement.object);
+      if (statement.index) read(statement.index);
+      read(statement.value);
       return;
     case 'return':
     case 'expr':
@@ -133,8 +140,10 @@ function flat(statements) {
 }
 
 /** The body of the function `name` of `params` from its statements. */
-export function lowerImperative(parser, name, params, statements, where) {
-  const lowering = new Lowering(parser, name);
+export function lowerImperative(parser, name, params, statements, where, externalCells = new Set()) {
+  const cells = union(mutableClosureCells(statements), externalCells);
+  if (cells.size) parser.referenceSemantics = true;
+  const lowering = new Lowering(parser, name, cells);
   const ctx = {
     // A function that finishes without returning returns undefined, the unit value.
     fall: () => ({ k: 'unit', span: where }),
@@ -143,7 +152,13 @@ export function lowerImperative(parser, name, params, statements, where) {
     cont: () => internal('continue outside a loop', where),
     ...dead(),
   };
-  return lowering.seq(flat(statements), 0, ctx, params.map((param) => ({ source: param.name, ir: param.name })));
+  const scope = [...externalCells].filter((cell) => !params.some((param) => param.name === cell)).map((cell) => ({ source: cell, ir: cell, reference: true }));
+  for (const param of params) scope.push({ source: param.name, ir: cells.has(param.name) ? `ml_cell_${param.name}` : param.name, ...(cells.has(param.name) && { reference: true }) });
+  let body = lowering.seq(flat(statements), 0, ctx, scope);
+  for (const param of [...params].reverse()) {
+    if (cells.has(param.name)) body = { k: 'let', name: `ml_cell_${param.name}`, value: { k: 'cellAllocate', value: named(param.name, where), span: where }, body, span: where };
+  }
+  return body;
 }
 
 /**
@@ -227,17 +242,26 @@ function visible(scope) {
 }
 
 class Lowering {
-  constructor(parser, fn) {
+  constructor(parser, fn, cells = new Set()) {
     this.parser = parser;
     this.fn = fn;
     this.renames = 0;
+    this.cells = cells;
   }
 
   /** A copy of a source expression that reads the variables it names in scope. */
   renamed(node, scope) {
     if (!node || typeof node !== 'object') return node;
     if (Array.isArray(node)) return node.map((item) => this.renamed(item, scope));
-    if (node.k === 'name' && node.path.length === 1) return { ...node, path: [lookup(scope, node.path[0])?.ir ?? node.path[0]] };
+    if (node.k === 'name' && node.path.length === 1) {
+      const binding = lookup(scope, node.path[0]);
+      const renamed = { ...node, path: [binding?.ir ?? node.path[0]] };
+      return binding?.reference ? { k: 'cellRead', cell: renamed, span: node.span } : renamed;
+    }
+    if (node.k === 'cellRead' || node.k === 'cellWrite') {
+      const cell = node.cell.k === 'name' && node.cell.path.length === 1 ? { ...node.cell, path: [lookup(scope, node.cell.path[0])?.ir ?? node.cell.path[0]] } : this.renamed(node.cell, scope);
+      return { ...node, cell, ...(node.value && { value: this.renamed(node.value, scope) }), ...(node.body && { body: this.renamed(node.body, scope) }) };
+    }
     if (node.k === 'lambda') {
       const inner = [...scope, ...node.params.map((param) => ({ source: param.name, ir: param.name }))];
       return { ...node, params: node.params.map((param) => ({ ...param, ...(param.default && { default: this.renamed(param.default, scope) }) })), body: this.renamed(node.body, inner) };
@@ -250,7 +274,7 @@ class Lowering {
   /** A declaration in scope; one that shadows a variable in scope gets a new name. */
   declare(scope, source) {
     const ir = lookup(scope, source) ? `ml_${source}_${++this.renames}` : source;
-    return [...scope, { source, ir }];
+    return [...scope, { source, ir, ...(this.cells.has(source) && { reference: true }) }];
   }
 
   /**
@@ -273,6 +297,7 @@ class Lowering {
         const inner = this.declare(scope, statement.name);
         const name = inner.at(-1).ir;
         const body = this.seq(list, index + 1, ctx, inner);
+        if (inner.at(-1).reference) return { k: 'let', name, value: { k: 'cellAllocate', value, span: statement.span }, body, span: statement.span };
         if (value.k === 'none' && body.k === 'let' && body.name === name) {
           const reads = new Set();
           references(body.value, reads);
@@ -280,8 +305,14 @@ class Lowering {
         }
         return { k: 'let', name, value, body, span: statement.span };
       }
-      case 'assign':
-        return { k: 'let', name: lookup(scope, statement.name).ir, value: this.renamed(statement.value, scope), body: rest(), span: statement.span };
+      case 'assign': {
+        const binding = lookup(scope, statement.name);
+        const value = this.renamed(statement.value, scope);
+        if (binding?.reference) return { k: 'cellWrite', cell: named(binding.ir, statement.span), value, body: rest(), span: statement.span };
+        return { k: 'let', name: binding.ir, value, body: rest(), span: statement.span };
+      }
+      case 'assignReference':
+        return { k: 'let', name: this.generatedName('written'), value: { ...this.renamed(statement, scope), k: 'referenceWrite', s: undefined }, body: rest(), span: statement.span };
       case 'return':
         return ctx.ret(this.renamed(statement.expr, scope));
       case 'throw':
@@ -461,7 +492,7 @@ class Lowering {
     const where = statement.span;
     const { assigned } = statementUses([statement]);
     const live = union(ctx.live, exits.brk ? ctx.brkLive : [], exits.cont ? ctx.contLive : []);
-    const carried = visible(scope).filter((entry) => assigned.has(entry.source) && live.has(entry.source));
+    const carried = visible(scope).filter((entry) => !entry.reference && assigned.has(entry.source) && live.has(entry.source));
     if (!exits.brk && !exits.cont && !exits.ret && carried.length === 1) {
       const [variable] = carried;
       const value = lowerWith({ ...ctx, fall: () => named(variable.ir, where) });
@@ -521,7 +552,7 @@ class Lowering {
     const whole = loop.s === 'for' ? { s: 'while', cond: loop.cond ?? { k: 'bool', value: true }, body: [...loop.body, ...loop.update] } : loop;
     const { free, assigned } = statementUses([whole]);
     const params = visible(scope).filter((entry) => free.has(entry.source));
-    const results = params.filter((entry) => assigned.has(entry.source) && !local.has(entry.source) && ctx.live.has(entry.source));
+    const results = params.filter((entry) => !entry.reference && assigned.has(entry.source) && !local.has(entry.source) && ctx.live.has(entry.source));
     const body = this.listExits(flat(loop.body));
     const returns = body.ret > 0;
     const ends = !infinite(loop) || body.brk > 0;
@@ -580,7 +611,7 @@ class Lowering {
     const test = (inner, then, otherwise) => (loop.cond && !infinite(loop)
       ? { k: 'if', cond: this.renamed(loop.cond, inner), then, else: otherwise(), span: where }
       : then);
-    const lowered = new Lowering(this.parser, this.fn);
+    const lowered = new Lowering(this.parser, this.fn, this.cells);
     lowered.renames = this.renames;
     let fnBody;
     if (loop.s === 'doWhile') {

@@ -9,6 +9,7 @@
 import { typeError } from './diagnostics.js';
 import { acceptArgumentCount } from './frontend-rules.js';
 import { BOOL, FLOAT, INT, STRING, UNIT, option } from './types.js';
+import { markSharedReferenceTypes } from './javascript-cells.js';
 
 const ROOT = 'crate';
 const LOGICAL = new Set(['and', 'or']);
@@ -20,10 +21,10 @@ export function inferJavaScriptTypes(program) {
   const functions = [];
   collectFunctions(program.items, [ROOT], functions);
   const untyped = program.items.some((item) => item.k === 'data' && item.ctors.some((ctor) => ctor.fields.some((field) => !field.type)));
-  if (!untyped && functions.every(({ fn }) => fn.ret && fn.params.every((param) => param.type)) && !hasStructuralInference(program)) return program;
+  if (!untyped && functions.every(({ fn }) => fn.ret && fn.params.every((param) => param.type)) && !hasStructuralInference(program)) return markSharedReferenceTypes(program);
   const inference = new Inference(program.items);
   inference.run(functions, program.main, program.externals ?? []);
-  return program;
+  return markSharedReferenceTypes(program);
 }
 
 function collectFunctions(items, path, into) {
@@ -36,7 +37,7 @@ function collectFunctions(items, path, into) {
 function hasStructuralInference(node) {
   if (!node || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(hasStructuralInference);
-  if (['none', 'coalesce', 'optionalField', 'record', 'lambda', 'method', 'map', 'set', 'arrayFrom', 'arrayIsArray', 'copySlice', 'stringPoints', 'functionValue'].includes(node.k)) return true;
+  if (['none', 'coalesce', 'optionalField', 'record', 'lambda', 'method', 'map', 'set', 'arrayFrom', 'arrayIsArray', 'copySlice', 'forOfIterable', 'stringPoints', 'functionValue', 'cellAllocate', 'cellRead', 'cellWrite', 'referenceWrite', 'index'].includes(node.k)) return true;
   if (['option', 'tuple', 'record', 'map', 'set', 'function'].includes(node.kind)) return true;
   return Object.entries(node).some(([key, value]) => key !== 'span' && hasStructuralInference(value));
 }
@@ -65,6 +66,11 @@ class Inference {
     this.collections = new Map();
     this.iterables = [];
     this.indices = [];
+    this.cells = new Map();
+    this.arithmetic = [];
+    this.conditions = [];
+    this.joins = [];
+    this.results = [];
   }
 
   fresh(bigint = false) {
@@ -93,7 +99,7 @@ class Inference {
     if (type.kind === 'named') return { kind: 'data', name: type.path.at(-1) };
     if (type.kind === 'nat') return INT;
     if (type.kind === 'array') return { kind: 'array', element: this.declared(type.element) };
-    if (type.kind === 'option' || type.kind === 'set') return { ...type, element: this.declared(type.element) };
+    if (type.kind === 'option' || type.kind === 'set' || type.kind === 'cell') return { ...type, element: this.declared(type.element) };
     if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.declared(element)) };
     if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.declared(field.type) })) };
     if (type.kind === 'map') return { ...type, key: this.declared(type.key), value: this.declared(type.value) };
@@ -130,7 +136,7 @@ class Inference {
       return;
     }
     if (isInteger(a) && isInteger(b)) return;
-    if (a.kind === 'array' && b.kind === 'array') {
+    if ((a.kind === 'array' && b.kind === 'array') || (a.kind === 'cell' && b.kind === 'cell')) {
       this.unify(a.element, b.element, where);
       return;
     }
@@ -190,7 +196,7 @@ class Inference {
     if (type.kind === 'var') return type.id === id;
     if (seen.has(type)) return false;
     seen.add(type);
-    const children = type.kind === 'array' || type.kind === 'option' || type.kind === 'set' ? [type.element]
+    const children = type.kind === 'array' || type.kind === 'option' || type.kind === 'set' || type.kind === 'cell' ? [type.element]
       : type.kind === 'tuple' ? type.elements
       : type.kind === 'record' ? type.fields.map((field) => field.type)
       : type.kind === 'map' ? [type.key, type.value]
@@ -206,10 +212,14 @@ class Inference {
         : { params: [], defaults: [], ret: this.declared(external.type) });
     }
     for (const { path, fn } of functions) {
+      const ret = this.fresh();
+      const declaredRet = fn.ret ? this.declared(fn.ret) : null;
+      if (declaredRet) this.unify(ret, declaredRet, fn.span);
       this.signatures.set(path.join('.'), {
         params: fn.params.map((param) => this.declared(param.type)),
         defaults: fn.params.map((param) => Boolean(param.default || param.optional)),
-        ret: this.declared(fn.ret),
+        ret,
+        declaredRet,
       });
     }
     for (const { path, fn } of functions) {
@@ -225,6 +235,7 @@ class Inference {
       this.context = path.slice(0, -1);
       const body = this.expr(fn.body, env, signature.ret);
       this.unify(body, signature.ret, fn.span);
+      this.results.push({ fn, signature, body });
       if (!fn.ret && signature.ret.kind === 'var' && this.resolve(body).kind === 'option') this.bindings[signature.ret.id] = body;
     }
     this.context = [ROOT];
@@ -241,11 +252,14 @@ class Inference {
         if (!param.type) param.type = this.surface(signature.params[index], fn.span);
       });
       if (!fn.ret) fn.ret = this.surface(signature.ret, fn.span);
+      const observed = this.results.find((result) => result.fn === fn);
+      if (observed?.signature.declaredRet && this.additionalAbsence(observed.body, observed.signature.declaredRet)) fn.semanticRet = this.surface(observed.body, fn.span);
     }
     for (const [field, term] of this.fieldTerms) field.type = this.surface(term, field.span);
     for (const [node, term] of this.emptyArrays) node.element = this.surface(term, node.span);
     for (const [node, term] of this.records) node.type = this.surface(term, node.span);
     for (const [node, term] of this.collections) node.type = this.surface(term, node.span);
+    for (const [node, term] of this.cells) node.type = this.surface(term, node.span);
     for (const [node, term] of this.lambdas) {
       node.params.forEach((param, index) => { if (!param.type) param.type = this.surface(term.params[index], param.span ?? node.span); });
       node.ret = this.surface(term.ret, node.span);
@@ -295,7 +309,11 @@ class Inference {
       for (const constraint of [...this.indices]) {
         const object = this.resolve(constraint.object);
         if (object.kind === 'var') continue;
-        if (object.kind === 'array') this.unify(constraint.result, object.element, constraint.where);
+        if (object.kind === 'array') {
+          const value = constraint.node.provenInBounds ? object.element : { kind: 'option', element: object.element, absence: 'undefined' };
+          this.unify(constraint.result, value, constraint.where);
+          if (constraint.result.kind === 'var') this.bindings[constraint.result.id] = value;
+        }
         else if (object.kind === 'tuple' && constraint.index.k === 'num') {
           const at = Number(constraint.index.value);
           if (!Number.isInteger(at) || at < 0 || at >= object.elements.length) throw typeError('tuple index out of range', constraint.where);
@@ -303,6 +321,26 @@ class Inference {
         }
         this.indices.splice(this.indices.indexOf(constraint), 1);
         progress = true;
+      }
+      for (const constraint of [...this.arithmetic]) {
+        if (this.arithmeticStep(constraint, false)) {
+          this.arithmetic.splice(this.arithmetic.indexOf(constraint), 1);
+          progress = true;
+        }
+      }
+      for (const constraint of this.joins) {
+        if (this.joinStep(constraint)) progress = true;
+      }
+      for (const { signature, body } of this.results) {
+        if (signature.declaredRet && !this.additionalAbsence(body, signature.declaredRet)) continue;
+        const actual = this.resolve(body);
+        if (actual.kind !== 'option' && !this.additionalAbsence(body, signature.declaredRet)) continue;
+        if (signature.ret.kind === 'var' && this.resolve(signature.ret) !== actual) {
+          if (!this.contains(actual, signature.ret.id)) {
+            this.bindings[signature.ret.id] = actual;
+            progress = true;
+          }
+        }
       }
       for (const constraint of [...this.recordSpreads]) {
         if (constraint.entries.some((entry) => entry.spread && this.resolve(entry.type).kind === 'var')) continue;
@@ -346,13 +384,24 @@ class Inference {
       if (!progress && this.indices.length) {
         const indexed = this.indices.find((constraint) => this.resolve(constraint.object).kind === 'var');
         if (indexed) {
-          this.unify(indexed.object, { kind: 'array', element: indexed.result }, indexed.where);
+          this.unify(indexed.object, { kind: 'array', element: this.fresh() }, indexed.where);
           progress = true;
         }
       }
       if (!progress && this.plus.length) {
         this.plusStep(this.plus.shift(), true);
         progress = true;
+      }
+      if (!progress && this.arithmetic.length) {
+        this.arithmeticStep(this.arithmetic.shift(), true);
+        progress = true;
+      }
+      if (!progress) {
+        const condition = this.conditions.find(({ term }) => this.resolve(term).kind === 'var');
+        if (condition) {
+          this.unify(condition.term, BOOL, condition.where);
+          progress = true;
+        }
       }
     }
     if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
@@ -366,9 +415,70 @@ class Inference {
       return true;
     }
     if (!force && (a.kind === 'var' || b.kind === 'var')) return false;
-    this.unify(left, right, where);
-    this.unify(result, left, where);
+    const x = this.numericValue(left);
+    const y = this.numericValue(right);
+    const first = this.resolve(x);
+    const second = this.resolve(y);
+    if (first.kind === 'string' || second.kind === 'string') throw typeError('nullable string addition needs a string or number result determined by the values', where);
+    this.unify(x, y, where);
+    this.unify(result, x, where);
     return true;
+  }
+
+  numericValue(term) {
+    const type = this.resolve(term);
+    return type.kind === 'option' ? this.numericValue(type.element) : type.kind === 'unit' ? FLOAT : term;
+  }
+
+  arithmeticStep({ left, right, result, where }, force) {
+    const a = this.numericValue(left);
+    const b = right ? this.numericValue(right) : a;
+    if (!force && (this.resolve(a).kind === 'var' || this.resolve(b).kind === 'var')) return false;
+    this.unify(a, b, where);
+    this.unify(result, a, where);
+    return true;
+  }
+
+  join(left, right, where) {
+    const result = this.fresh();
+    this.joins.push({ left, right, result, where });
+    return result;
+  }
+
+  joinStep({ left, right, result, where }) {
+    const a = this.resolve(left);
+    const b = this.resolve(right);
+    let value;
+    if ((a.kind === 'unit') !== (b.kind === 'unit')) {
+      const element = a.kind === 'unit' ? right : left;
+      const current = this.resolve(result);
+      value = current.kind === 'option' && current.element === element && current.absence === 'undefined' ? current : { kind: 'option', element, absence: 'undefined' };
+    } else {
+      this.unify(left, right, where);
+      value = this.resolve(b.kind === 'option' ? right : left);
+    }
+    if (value === result || (value.kind === 'var' && value.id === result.id)) return false;
+    if (this.bindings[result.id] === value) return false;
+    if (this.contains(value, result.id)) return false;
+    this.bindings[result.id] = value;
+    return true;
+  }
+
+  additionalAbsence(actualTerm, declaredTerm) {
+    const actual = this.resolve(actualTerm);
+    if (!declaredTerm) return actual.kind === 'option';
+    const declared = this.resolve(declaredTerm);
+    if (actual.kind === 'option') return declared.kind !== 'option' || ((declared.absence ?? 'both') !== 'both' && actual.absence !== declared.absence) || this.additionalAbsence(actual.element, declared.element);
+    if (actual.kind !== declared.kind) return false;
+    if (actual.kind === 'array' || actual.kind === 'set' || actual.kind === 'cell') return this.additionalAbsence(actual.element, declared.element);
+    if (actual.kind === 'tuple') return actual.elements.some((element, index) => declared.elements[index] && this.additionalAbsence(element, declared.elements[index]));
+    if (actual.kind === 'record') return actual.fields.some((field) => {
+      const matching = declared.fields.find((candidate) => candidate.name === field.name);
+      return matching && this.additionalAbsence(field.type, matching.type);
+    });
+    if (actual.kind === 'map') return this.additionalAbsence(actual.key, declared.key) || this.additionalAbsence(actual.value, declared.value);
+    if (actual.kind === 'function') return this.additionalAbsence(actual.ret, declared.ret);
+    return false;
   }
 
   fieldStep({ object, field, result, where }) {
@@ -409,7 +519,7 @@ class Inference {
     if (type.kind === 'data') return { kind: 'named', path: [ROOT, type.name], span: where };
     if (type.kind === 'array') return { kind: 'array', element: this.surface(type.element, where) };
     if (type.kind === 'option') return option(this.surface(type.element, where), type.absence ?? 'both');
-    if (type.kind === 'set') return { ...type, element: this.surface(type.element, where) };
+    if (type.kind === 'set' || type.kind === 'cell') return { ...type, element: this.surface(type.element, where) };
     if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.surface(element, where)) };
     if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.surface(field.type, where) })) };
     if (type.kind === 'map') return { ...type, key: this.surface(type.key, where), value: this.surface(type.value, where) };
@@ -442,6 +552,38 @@ class Inference {
         return UNIT;
       case 'none':
         return { kind: 'option', element: this.fresh(), absence: node.absence ?? 'both' };
+      case 'cellAllocate': {
+        const element = this.fresh();
+        this.unify(element, this.expr(node.value, env), node.span);
+        const type = { kind: 'cell', element };
+        this.cells.set(node, type);
+        return type;
+      }
+      case 'cellRead': {
+        const cell = this.expr(node.cell, env);
+        const resolved = this.resolve(cell);
+        if (resolved.kind === 'cell') return resolved.element;
+        const element = this.fresh();
+        this.unify(cell, { kind: 'cell', element }, node.span);
+        return element;
+      }
+      case 'cellWrite': {
+        const value = this.expr(node.value, env);
+        const cell = this.expr(node.cell, env);
+        this.unify(cell, { kind: 'cell', element: value }, node.span);
+        const resolved = this.resolve(cell);
+        if (resolved.kind === 'cell' && resolved.element.kind === 'var' && this.resolve(value).kind === 'option') this.bindings[resolved.element.id] = this.resolve(value);
+        return this.expr(node.body, env, expected);
+      }
+      case 'referenceWrite': {
+        const object = this.expr(node.object, env);
+        const value = this.expr(node.value, env);
+        if (node.index) {
+          this.expr(node.index, env);
+          this.unify(object, { kind: 'array', element: value }, node.span);
+        } else this.fields.push({ object, field: node.field, result: value, where: node.span });
+        return value;
+      }
       case 'name': {
         if (node.path.length === 1 && env.has(node.path[0])) return env.get(node.path[0]);
         return this.call(node.path, [], env, node.span);
@@ -455,6 +597,11 @@ class Inference {
         if (!local && node.fn.k === 'name') return this.call(node.fn.path, node.args, env, node.span);
         const fn = local ?? this.expr(node.fn, env);
         const args = node.args.map((arg) => this.expr(arg, env));
+        const resolved = this.resolve(fn);
+        if (resolved.kind === 'function' && resolved.params.length === args.length) {
+          args.forEach((arg, index) => this.unify(arg, resolved.params[index], node.span));
+          return resolved.ret;
+        }
         const ret = this.fresh();
         this.unify(fn, { kind: 'function', params: args, ret }, node.span);
         return ret;
@@ -488,8 +635,9 @@ class Inference {
         const scope = new Map(env);
         node.params.forEach((param, index) => scope.set(param.name, params[index]));
         const ret = node.ret ? this.declared(node.ret) : want?.kind === 'function' ? want.ret : this.fresh();
-        this.unify(this.expr(node.body, scope, ret), ret, node.span);
-        const term = { kind: 'function', params, ret };
+        const body = this.expr(node.body, scope, ret);
+        this.unify(body, ret, node.span);
+        const term = { kind: 'function', params, ret: node.ret ? ret : body };
         this.lambdas.set(node, term);
         return term;
       }
@@ -499,19 +647,20 @@ class Inference {
       case 'unary': {
         const arg = this.expr(node.arg, env);
         if (node.op === 'not') {
-          this.unify(arg, BOOL, node.span);
+          this.conditions.push({ term: arg, where: node.span });
           return BOOL;
         }
-        return arg;
+        const result = this.fresh();
+        this.arithmetic.push({ left: arg, result, where: node.span });
+        return result;
       }
       case 'binary':
         return this.binary(node, env);
       case 'if': {
-        this.unify(this.expr(node.cond, env), BOOL, node.cond.span ?? node.span);
+        this.conditions.push({ term: this.expr(node.cond, env), where: node.cond.span ?? node.span });
         const then = this.expr(node.then, env, expected);
         const otherwise = this.expr(node.else, env, expected);
-        this.unify(otherwise, then, node.span);
-        return this.resolve(otherwise).kind === 'option' ? otherwise : then;
+        return this.join(then, otherwise, node.span);
       }
       case 'let': {
         const want = node.type ? this.declared(node.type) : undefined;
@@ -588,6 +737,13 @@ class Inference {
         return { kind: 'array', element: STRING };
       case 'copySlice':
         return this.expr(node.object, env, expected);
+      case 'forOfIterable': {
+        const object = this.expr(node.object, env);
+        const result = { kind: 'array', element: this.fresh() };
+        this.iterables.push({ object, result, where: node.span });
+        this.collections.set(node, result);
+        return result;
+      }
       case 'arrayFrom': {
         const args = node.args.map((arg) => this.expr(arg, env));
         const result = { kind: 'array', element: expected?.kind === 'array' ? expected.element : this.fresh() };
@@ -608,7 +764,7 @@ class Inference {
         return ['isInteger', 'isSafeInteger', 'isFinite', 'isNaN'].includes(node.op) ? BOOL : FLOAT;
       case 'index': {
         const element = this.fresh();
-        this.indices.push({ object: this.expr(node.object, env), index: node.index, result: element, where: node.object.span ?? node.span });
+        this.indices.push({ object: this.expr(node.object, env), index: node.index, node, result: element, where: node.object.span ?? node.span });
         this.expr(node.index, env);
         return element;
       }
@@ -636,17 +792,17 @@ class Inference {
     const left = this.expr(node.left, env);
     const right = this.expr(node.right, env);
     if (LOGICAL.has(node.op)) {
-      this.unify(left, BOOL, node.left.span ?? node.span);
-      this.unify(right, BOOL, node.right.span ?? node.span);
-      return BOOL;
+      this.conditions.push({ term: left, where: node.left.span ?? node.span });
+      return this.join(left, right, node.span);
     }
     if (ORDER.has(node.op)) {
       this.unify(left, right, node.span);
       return BOOL;
     }
     if (ARITHMETIC.has(node.op)) {
-      this.unify(left, right, node.span);
-      return left;
+      const result = this.fresh();
+      this.arithmetic.push({ left, right, result, where: node.span });
+      return result;
     }
     if (node.op === 'concat') return STRING;
     const result = this.fresh();
@@ -662,8 +818,7 @@ class Inference {
       row.patterns.forEach((pattern, index) => this.pattern(pattern, scrutinees[index], scope, row.span ?? node.span));
       const body = this.expr(row.body, scope);
       if (result) {
-        this.unify(body, result, row.span ?? node.span);
-        if (this.resolve(body).kind === 'option') result = body;
+        result = this.join(body, result, row.span ?? node.span);
       } else result = body;
     }
     return result ?? this.fresh();
@@ -743,7 +898,7 @@ class Inference {
   methodStep({ object, args, op, result, where }) {
     let receiver = this.resolve(object);
     if (receiver.kind === 'var') {
-      if (['map', 'flatMap', 'filter', 'find', 'findIndex', 'some', 'every', 'reduce', 'join'].includes(op)) {
+      if (['map', 'flatMap', 'filter', 'find', 'findIndex', 'some', 'every', 'reduce', 'join', 'push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort', 'fill', 'copyWithin'].includes(op)) {
         this.unify(object, { kind: 'array', element: this.fresh() }, where);
       } else if (['split', 'trim', 'trimStart', 'trimEnd', 'toLowerCase', 'toUpperCase', 'startsWith', 'endsWith', 'charAt', 'charCodeAt', 'codePointAt', 'substring', 'repeat', 'padStart', 'padEnd', 'replace', 'replaceAll'].includes(op)) {
         this.unify(object, STRING, where);
@@ -772,7 +927,29 @@ class Inference {
       return true;
     }
     if (receiver.kind === 'array') {
-      if (['map', 'flatMap', 'filter', 'find', 'findIndex', 'some', 'every', 'forEach'].includes(op)) {
+      if (op === 'push' || op === 'unshift') {
+        for (const arg of args) {
+          this.unify(arg, receiver.element, where);
+          if (receiver.element.kind === 'var' && this.resolve(arg).kind === 'option') this.bindings[receiver.element.id] = this.resolve(arg);
+        }
+        this.unify(result, FLOAT, where);
+      } else if (op === 'pop' || op === 'shift') {
+        this.unify(result, { kind: 'option', element: receiver.element, absence: 'undefined' }, where);
+      } else if (op === 'splice') {
+        for (const arg of args.slice(0, 2)) this.unify(arg, FLOAT, where);
+        for (const arg of args.slice(2)) this.unify(arg, receiver.element, where);
+        this.unify(result, receiver, where);
+      } else if (op === 'fill') {
+        if (args[0]) this.unify(args[0], receiver.element, where);
+        for (const arg of args.slice(1)) this.unify(arg, FLOAT, where);
+        this.unify(result, receiver, where);
+      } else if (op === 'copyWithin') {
+        for (const arg of args) this.unify(arg, FLOAT, where);
+        this.unify(result, receiver, where);
+      } else if (op === 'sort') {
+        if (args[0]) this.callback(args[0], [receiver.element, receiver.element], FLOAT, where);
+        this.unify(result, receiver, where);
+      } else if (['map', 'flatMap', 'filter', 'find', 'findIndex', 'some', 'every', 'forEach'].includes(op)) {
         const ret = ['filter', 'find', 'findIndex', 'some', 'every'].includes(op) ? BOOL : this.fresh();
         if (op === 'flatMap') this.unify(ret, { kind: 'array', element: this.fresh() }, where);
         this.callback(args[0], [receiver.element, FLOAT, receiver], ret, where);
@@ -805,7 +982,10 @@ class Inference {
     if (receiver.kind === 'map' || receiver.kind === 'set') {
       const key = receiver.kind === 'map' ? receiver.key : receiver.element;
       if (args[0] && ['get', 'has', 'delete', 'set', 'add'].includes(op)) this.unify(args[0], key, where);
-      if (op === 'set' && args[1]) this.unify(args[1], receiver.value, where);
+      if (op === 'set' && args[1]) {
+        this.unify(args[1], receiver.value, where);
+        if (receiver.value.kind === 'var' && this.resolve(args[1]).kind === 'option') this.bindings[receiver.value.id] = this.resolve(args[1]);
+      }
       const output = op === 'get' ? { kind: 'option', element: receiver.value, absence: 'undefined' }
         : op === 'has' || op === 'delete' ? BOOL
         : op === 'clear' ? UNIT
