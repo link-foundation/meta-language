@@ -671,6 +671,58 @@
       "updatedAt": "2026-10-12T05:03:01Z",
       "bytes": 5722,
       "sha256": "74ca63f308a8b2c692a340f74d8a3bf4592f33575d69feb11da6ce1f3356d933"
+    },
+    {
+      "key": "externalGrammarStorageRequest",
+      "id": "temporary-external-grammar-inputs-2026-10-12",
+      "title": "Critical direct requirement: upstream external grammar assets stay outside Git and are downloaded temporarily as needed",
+      "role": "Exclude upstream external raw grammars, parsers and WebAssembly download assets from tracked repository files; retain project-generated native Links snapshots and provide temporary pinned downloads with checksum and provenance verification.",
+      "ledgerCoverage": [
+        "I195-EXTERNAL-GRAMMAR-UNTRACKED",
+        "I195-EXTERNAL-GRAMMAR-TEMPORARY-DOWNLOAD"
+      ],
+      "kind": "direct-instruction",
+      "url": "parity/sources/temporary-external-grammar-inputs-2026-10-12.txt",
+      "author": "konard",
+      "createdAt": "2026-10-12T13:12:42.069Z",
+      "updatedAt": "2026-10-12T13:12:42.069Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 122,
+      "sha256": "90e0bc0505350b6da21a318f68d8ab38a4273f2f78d299b820fccc44e66a4652"
+    },
+    {
+      "key": "externalGrammarIgnoreRequest",
+      "id": "ignored-external-grammar-folders-2026-10-12",
+      "title": "Critical direct requirement: ignore every external grammar download folder",
+      "role": "Ensure folders containing temporary external grammar, parser or oracle downloads are ignored by Git without excluding the project-generated native Links snapshots and provenance records.",
+      "ledgerCoverage": [
+        "I195-EXTERNAL-GRAMMAR-IGNORED-DIRECTORY"
+      ],
+      "kind": "direct-instruction",
+      "url": "parity/sources/ignored-external-grammar-folders-2026-10-12.txt",
+      "author": "konard",
+      "createdAt": "2026-10-12T13:12:42.069Z",
+      "updatedAt": "2026-10-12T13:12:42.069Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 78,
+      "sha256": "78daba6451745949ef40193e759907c68294f1bcf18a295a1076a6a57aa23c3b"
+    },
+    {
+      "key": "associativeDataStorageRequest",
+      "id": "associative-data-storage-2026-10-12",
+      "kind": "direct-instruction",
+      "url": "parity/sources/associative-data-storage-2026-10-12.txt",
+      "title": "Critical direct requirement: associative Links storage and automated structured-data conversion with necessary JSON interface exceptions",
+      "role": "Store project-owned structured data and native grammar corpus fixtures as Links Notation through the associative stack, migrate automatically with lossless reconstruction and preserved acceptance scope, and retain JSON only for explicit necessary external interfaces.",
+      "ledgerCoverage": [
+        "I195-ASSOCIATIVE-DATA-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-12T13:14:44.269Z",
+      "updatedAt": "2026-10-12T13:14:44.269Z",
+      "revisionOrigin": "capture time; the conversation does not expose a source timestamp",
+      "bytes": 335,
+      "sha256": "d1b21e601d12ada07132b7a24be33f38b282b0a3d4f52c14bc10e83d10593008"
     }
   ],
   "statusReports": [

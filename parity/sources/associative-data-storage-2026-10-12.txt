@@ -1,0 +1,1 @@
+Files like `parity/fixtures/native-grammars/agda-corpus.json` must be converted to links notation, so we don't use json files, unless absolutely nessesary, instead we should use our associative stack from https://github.com/link-assistant/formal-ai/blob/main/docs/associative-tech-stack.md, convertions should be automated, not manual.

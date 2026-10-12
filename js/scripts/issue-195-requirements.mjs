@@ -74,6 +74,12 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/bidirectional-translation-priority-2026-10-12.txt',
   multiProjectTranslationRequest:
     'parity/sources/multi-project-translation-reuse-2026-10-12.txt',
+  externalGrammarStorageRequest:
+    'parity/sources/temporary-external-grammar-inputs-2026-10-12.txt',
+  externalGrammarIgnoreRequest:
+    'parity/sources/ignored-external-grammar-folders-2026-10-12.txt',
+  associativeDataStorageRequest:
+    'parity/sources/associative-data-storage-2026-10-12.txt',
   grammarInferenceIssue:
     'https://github.com/link-foundation/meta-language/issues/224',
 });

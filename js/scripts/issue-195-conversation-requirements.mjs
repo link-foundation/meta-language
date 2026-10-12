@@ -9,6 +9,9 @@ const originalSource = capture('global-concept-space');
 const dynamicSource = capture('dynamic-knowledge-and-grammar-inference');
 const translationSource = capture('bidirectional-translation-priority');
 const projectSource = capture('multi-project-translation-reuse');
+const externalGrammarSource = capture('temporary-external-grammar-inputs');
+const externalGrammarIgnoreSource = capture('ignored-external-grammar-folders');
+const associativeDataSource = capture('associative-data-storage');
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 function rows(sourceKey, fixture, specification, area, declarations, tooling = false) {
@@ -24,6 +27,30 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
 }
 
 export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
+  ...rows('associativeDataStorageRequest', associativeDataSource, 'associative-data-storage', 'associative-data-storage', [
+    ['I195-ASSOCIATIVE-DATA-STORAGE', 'project-owned structured data stored through the associative Links stack',
+      'Project-owned structured records, including native grammar corpus fixtures such as the Agda corpus, use inspectable Links Notation through the relevant associative stack by default. Generated native grammars, fixture records and shared package data remain reconstructable and usable through the existing public algorithms without hidden authoritative JSON side tables.',
+      ['projectStructuredDataUsesLinksNotation', 'nativeGrammarCorpusStoredAsLinkedRecords', 'associativeStackDataAlgorithmsReused']],
+    ['I195-ASSOCIATIVE-DATA-AUTOMATED-CONVERSION', 'automated lossless conversion of structured data and fixture metadata',
+      'Structured-data migration is automated rather than manually rewriting records. The converter losslessly reconstructs the original values and preserves identities, source order, exact numbers, strings, aliases, required fixtures, acceptance assertions and cross-record references. Both package readers and repository tooling retain their observable behavior, and conversion does not reduce protected requirement scope.',
+      ['structuredDataConversionAutomated', 'convertedValuesLosslesslyReconstructed', 'identitiesOrderNumbersStringsAliasesAndReferencesPreserved', 'fixtureIdsAndAcceptanceAssertionsPreserved', 'packageReadersAndToolingBehaviorPreserved', 'protectedScopeNotReduced']],
+    ['I195-ASSOCIATIVE-DATA-JSON-EXCEPTIONS', 'JSON retained only for necessary declared external interfaces',
+      'JSON remains only where a genuine external standard or source-language JSON interface requires it, with an explicit recorded necessity and boundary. Convenience, an existing JSON file or an opaque payload does not establish an exception; the project-owned authoritative representation remains linked data wherever the interface permits it.',
+      ['jsonExceptionsHaveExplicitNecessity', 'externalJsonInterfaceBoundariesRecorded', 'noConvenienceOrOpaquePayloadException']],
+  ], true),
+  ...rows('externalGrammarStorageRequest', externalGrammarSource, 'temporary-external-grammar-inputs', 'external-grammar-storage', [
+    ['I195-EXTERNAL-GRAMMAR-UNTRACKED', 'upstream external grammar and parser assets excluded from version control',
+      'Upstream external raw grammars, parser sources, compiled parsers and WebAssembly assets are not tracked in the repository. The project-generated native or meta-language Links Notation grammars and prepared snapshots remain permitted and preserve all inherited grammar, provenance and offline production requirements.',
+      ['externalUpstreamAssetsUntracked', 'generatedNativeSnapshotsRetained', 'inheritedOfflineAndProvenanceRequirementsPreserved']],
+    ['I195-EXTERNAL-GRAMMAR-TEMPORARY-DOWNLOAD', 'temporary pinned external grammar inputs with checked provenance',
+      'A reproducible tool downloads upstream external grammar and oracle assets temporarily when import, regeneration or independent tests require them, verifies their pinned checksums and records revision, origin and license provenance. Downloaded inputs remain outside tracked files, temporary assets are cleaned after use, and generated native snapshots remain independently usable without those assets.',
+      ['temporaryDownloaderExecuted', 'pinnedChecksumsVerified', 'downloadProvenanceRetained', 'downloadedAssetsUntracked', 'temporaryAssetsCleaned', 'generatedSnapshotsUsableWithoutDownloads']],
+  ], true),
+  ...rows('externalGrammarIgnoreRequest', externalGrammarIgnoreSource, 'temporary-external-grammar-inputs', 'external-grammar-storage', [
+    ['I195-EXTERNAL-GRAMMAR-IGNORED-DIRECTORY', 'external grammar download folders explicitly ignored by Git',
+      'Every folder used for external grammar, parser or oracle downloads is explicitly covered by Git ignore rules, so ordinary staging cannot add downloaded inputs. Ignore rules preserve the project-generated native Links Notation grammars, source manifests, checksums and provenance records that must remain tracked.',
+      ['externalGrammarDirectoriesIgnored', 'ordinaryStagingExcludesDownloads', 'generatedSnapshotsAndProvenanceRemainTracked']],
+  ], true),
   ...rows('grammarInferenceIssue', inferenceSource, 'dynamic-knowledge-and-language-extension', 'grammar-inference', [
     ['I195-GRAMMAR-INFERENCE-EXISTING-WORK-AUDIT', 'existing inference foundations and JavaScript parity gaps',
       'Audit and reuse the lexical, state-merging, context-free, structural-prior, active-learning and minimization work associated with issues93,114,117 through123 and the existing Rust inference modules. Closed issues do not prove complete capability or remove JavaScript parity obligations.', ['existingInferenceModulesAudited', 'closedIssueEvidenceRechecked', 'javascriptParityGapsRecorded']],

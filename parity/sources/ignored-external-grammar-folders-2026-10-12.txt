@@ -1,0 +1,1 @@
+Folder with external grammars must be in gitignore, if they are needed at all.
