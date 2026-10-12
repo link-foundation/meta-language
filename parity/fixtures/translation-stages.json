@@ -809,12 +809,23 @@
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/void-functions.mjs",
       "parse": {
-        "sha256": "e35da9a3297a0c39cda7ac93b8293fe3bd8661b12958d4ae9b2cd5ef3bf7ab0f"
+        "sha256": "009e745d9635ba4534dc8e0ae11834e4ef60e8ef59c8f2ec008ee4e3abbfcbe2"
       },
       "check": {
-        "error": {
-          "kind": "type",
-          "message": "expected float but found unit at 496..520"
+        "sha256": "c4a982ce77d8d9fc8a146932a02b8a2c2d65ad550c702b84bf0a0c4ce7a6c5b0"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "fe4d857d3688ab8f1d973ce77d38de794237907575788e2c92806f54dcf23fad"
+        },
+        "rust": {
+          "sha256": "059bbe90485a809007b251544d1a50ae6b2db6136bb3725f85cad0d9ff9dfac4"
+        },
+        "lean": {
+          "sha256": "40664035ba91619c53468e4eb30cbf4f9387d5e9de3b2b5611c6cc5ffc6e830a"
+        },
+        "rocq": {
+          "sha256": "8e7de39c21a2687b38aee2e9e8fa50edbd373c71daae2dd82ed9f925f6caecd3"
         }
       }
     },
