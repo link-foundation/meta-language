@@ -100,26 +100,22 @@ pub fn ml_accept_precedence_operand_context_loop28(
         return if ((index < (owner_contexts.len() as f64))
             && (index < (child_contexts.len() as f64)))
         {
-            if match {
+            if ({
                 let ml_logical22 = crate::translation::frontend_rules::ml_array::optional_at(
                     &owner_contexts,
                     crate::translation::frontend_rules::ml_array::number_index(index),
                 );
-                if match ml_logical22.clone() {
-                    Some(ml_present) => ml_present,
-                    None => false,
-                } {
+                if ml_logical22.unwrap_or_default() {
                     crate::translation::frontend_rules::ml_array::optional_at(
                         &child_contexts,
                         crate::translation::frontend_rules::ml_array::number_index(index),
                     )
                 } else {
-                    ml_logical22.clone()
+                    ml_logical22
                 }
-            } {
-                Some(ml_present) => ml_present,
-                None => false,
-            } {
+            })
+            .unwrap_or_default()
+            {
                 crate::translation::frontend_rules::MlAcceptPrecedenceOperandContextLoop28Result::MlAcceptPrecedenceOperandContextLoop28Return(true)
             } else {
                 {

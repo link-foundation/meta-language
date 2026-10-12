@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { acceptArgumentCount, decodeUnicodeEscape, findDocumentationParameterRange, findDefaultParameterReference } from '../src/translation/frontend-rules.js';
+import { acceptArgumentCount, acceptPrecedenceOperandContext, acceptScannerPreemptionBoundary, decodeUnicodeEscape, findDocumentationParameterRange, findDefaultParameterReference } from '../src/translation/frontend-rules.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
@@ -91,4 +91,24 @@ test('documentation names support optional brackets and metadata defaults', () =
     ['[value = 99]', [1, 6]], ['[$value2=anything]', [1, 8]],
     ['[9value]', []], ['[]', []], ['[value', []], ['[value description]', []],
   ]) assert.deepEqual(findDocumentationParameterRange(units(text)), expected, text);
+});
+
+test('reviewed Boolean helper styles preserve boundary flags, bounded context overlap and nullable defaults', () => {
+  for (const virtualToken of [false, true]) for (const atBoundary of [false, true]) {
+    assert.equal(acceptScannerPreemptionBoundary(virtualToken, atBoundary), !(virtualToken && atBoundary));
+  }
+  for (const [owner, child, expected] of [
+    [[], [], false], [[true], [], false], [[], [true], false],
+    [[false, true], [true, false], false], [[false, true], [false, true], true],
+    [[true, false], [true], true], [[false, true], [false], false],
+  ]) assert.equal(acceptPrecedenceOperandContext(owner, child), expected);
+  const strings = readFileSync(new URL('../../rust/src/translation/frontend_rules/strings.rs', import.meta.url), 'utf8');
+  assert.match(strings, /pub const fn accept_scanner_preemption_boundary\(virtual_token: bool, at_boundary: bool\) -> bool/u);
+  const entry = strings.slice(strings.indexOf('pub fn accept_precedence_operand_context('));
+  assert.doesNotMatch(entry, /(?:owner_contexts|child_contexts|ml_s17)\.clone\(\)/u);
+  const continuations = readFileSync(new URL('../../rust/src/translation/frontend_rules/continuations_2.rs', import.meta.url), 'utf8');
+  const loop = continuations.slice(continuations.indexOf('pub fn ml_accept_precedence_operand_context_loop28('), continuations.indexOf('const fn ml_main()'));
+  for (const input of ['owner_contexts', 'child_contexts']) assert.ok(loop.includes(`index < (${input}.len() as f64)`), `bounds for ${input}`);
+  assert.doesNotMatch(loop, /ml_logical22\.clone\(\)/u);
+  assert.equal((loop.match(/\.unwrap_or_default\(\)/gu) ?? []).length, 2, 'both nullable Boolean values default to false');
 });

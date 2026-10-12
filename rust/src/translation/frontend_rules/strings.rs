@@ -88,7 +88,7 @@ pub const fn read_scanner_continuation_action(
     }
 }
 
-pub fn accept_scanner_preemption_boundary(virtual_token: bool, at_boundary: bool) -> bool {
+pub const fn accept_scanner_preemption_boundary(virtual_token: bool, at_boundary: bool) -> bool {
     (!virtual_token || !at_boundary)
 }
 
@@ -327,11 +327,11 @@ pub fn accept_precedence_operand_context(
         {
             let ml_s17 =
                 crate::translation::frontend_rules::ml_accept_precedence_operand_context_loop28(
-                    owner_contexts.clone(),
-                    child_contexts.clone(),
+                    owner_contexts,
+                    child_contexts,
                     index,
                 );
-            match ml_s17.clone() {
+            match ml_s17 {
                 crate::translation::frontend_rules::MlAcceptPrecedenceOperandContextLoop28Result::MlAcceptPrecedenceOperandContextLoop28Done => {
                     false
                 }
