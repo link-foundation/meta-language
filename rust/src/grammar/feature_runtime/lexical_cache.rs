@@ -95,8 +95,11 @@ impl Executor<'_> {
             self.repair_points.is_some(),
         ) && self.accept_fixed_lexical_expression(expr))
         .then(|| (expr as *const Expr as usize, position, state.clone()));
-        if let Some(cached) = key.as_ref().and_then(|key| self.lexical_cache.get(key)) {
-            return Ok(cached.clone());
+        if let Some(cached) = key
+            .as_ref()
+            .and_then(|key| self.lexical_cache.entries.borrow().get(key).cloned())
+        {
+            return Ok(cached);
         }
         self.step()?;
         let frames = self.shared.frames.get() + 1;
@@ -107,11 +110,15 @@ impl Executor<'_> {
         let results = self.evaluate_case(expr, position, state, in_token);
         self.shared.frames.set(frames - 1);
         let results = results?;
+        let cache_has_capacity = self.lexical_cache.entries.borrow().len() < self.shared.memo_limit;
         if let Some(key) = key
-            && self.lexical_cache.len() < self.shared.memo_limit
+            && cache_has_capacity
+            && self.retain_lexical_cache(1 + results.len())
         {
-            self.retain(1 + results.len())?;
-            self.lexical_cache.insert(key, results.clone());
+            self.lexical_cache
+                .entries
+                .borrow_mut()
+                .insert(key, results.clone());
         }
         Ok(results)
     }

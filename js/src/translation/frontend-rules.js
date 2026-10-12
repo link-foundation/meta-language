@@ -591,3 +591,12 @@ export function acceptPrecedenceOperandContext(ownerContexts, childContexts) {
 export function acceptLexicalCacheContext(inToken, quiet, repairing) {
   return inToken && quiet && !repairing;
 }
+
+/**
+ * Optional lexical matches may only occupy the remaining parse memory.
+ * @param {number} cells @param {number} count @param {number} limit
+ * @returns {boolean}
+ */
+export function acceptLexicalCacheReservation(cells, count, limit) {
+  return count <= limit - cells;
+}

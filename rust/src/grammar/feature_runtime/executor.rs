@@ -17,6 +17,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use super::forking::{Lead, Reductions, lookahead_after, reduced_early};
+use super::lexical_cache_memory::LexicalCache;
 use super::lexing::is_keyword;
 use super::operations::{Abort, OpError, State, ValueMachine, evaluate_condition};
 use super::parting::ends_missing;
@@ -129,7 +130,7 @@ pub(super) struct Executor<'c> {
     /// too where the scanner asks what the parse expects.
     pub(super) scanner_memo: HashMap<ScanKey, Option<Rc<Scanned>>>,
     /// Fixed lexical matches in quiet token context, by expression, offset and state.
-    pub(super) lexical_cache: HashMap<(usize, usize, State), Vec<Res>>,
+    pub(super) lexical_cache: Rc<LexicalCache>,
     pub(super) lexical_cache_forms: HashMap<usize, bool>,
     /// The context offset of a scan inside a token or trivia: where the
     /// token's terminal or the trivia started (see `Expectations`).
@@ -227,7 +228,7 @@ impl<'c> Executor<'c> {
             in_extra: InExtra::Outside,
             extra_start: usize::MAX,
             scanner_memo: HashMap::new(),
-            lexical_cache: HashMap::new(),
+            lexical_cache: Rc::new(LexicalCache::default()),
             lexical_cache_forms: HashMap::new(),
             scan_context: None,
             embed_memo: HashMap::new(),
@@ -258,6 +259,9 @@ impl<'c> Executor<'c> {
 
     /// Takes `count` memo cells of the parse's memory budget.
     pub(super) fn retain(&self, count: usize) -> Run<()> {
+        if !self.accepts_lexical_cache_reservation(count) {
+            self.release_lexical_caches();
+        }
         let cells = self.shared.cells.get() + count;
         self.shared.cells.set(cells);
         if cells > self.shared.memory_limit {

@@ -19,8 +19,9 @@ import {
 } from './operations.js';
 import { columnOf, decodeAt, encodeText, quoteText, textOf, utf16View } from './text.js';
 import { acceptFixedLexicalExpression } from './lexical-cache.js';
+import { releaseLexicalCaches, retainLexicalCache } from './lexical-cache-memory.js';
 import { completeRuleContexts } from './precedence-contexts.js';
-import { acceptLexicalCacheContext, acceptPrecedenceOperandContext, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
+import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -98,9 +99,10 @@ export function stepBudget(options, length, memory = memoryBudget(options)) {
  * The memory budget of one parse, shared by its runs, its recovery rounds and
  * its embedded languages: the memo cells it may make, one per rule call it
  * records, one per fixed lexical match cached, and one per result each keeps (`memoryLimit`, default
- * 2000000). The cells are what a parse keeps until it ends (the calls under
- * keyword lexing outlive their run), so they are counted, never released,
- * and a parse that needs more is rejected with `memoryBudget` instead of
+ * 2000000). Rule cells stay counted until the parse ends (the calls under
+ * keyword lexing outlive their run). Optional fixed lexical caches are cleared
+ * when memory is needed, releasing only the cells those discarded entries held.
+ * A parse whose rule cells need more is rejected with `memoryBudget` instead of
  * growing until the process runs out of memory.
  */
 export function memoryBudget(options) {
@@ -2169,8 +2171,7 @@ export class Executor {
     this.chained = new Set();
     this.scannerMemo = new Map();
     this.lexicalCacheForms = new WeakMap();
-    this.lexicalCache = new WeakMap();
-    this.lexicalCacheSize = 0;
+    this.lexicalCache = { entries: new WeakMap(), cells: 0, size: 0 };
     // The requests a scanner's `expected` asks about, and the offset a
     // scanner run in token context answers for (see `Expectations`).
     this.expectations = new Expectations();
@@ -2206,6 +2207,7 @@ export class Executor {
   // Takes `count` memo cells of the parse's memory budget.
   retain(count) {
     const { memory } = this.budget;
+    if (!acceptLexicalCacheReservation(memory.cells, count, memory.limit)) releaseLexicalCaches(memory);
     memory.cells += count;
     if (memory.cells > memory.limit) throw new MemoryBudgetReached();
   }
@@ -2766,15 +2768,17 @@ export class Executor {
     const cacheable = acceptLexicalCacheContext(inToken, this.suppressed > 0, this.repairPoints !== null)
       && acceptFixedLexicalExpression(expression, this.lexicalCacheForms);
     if (!cacheable) return this.evaluateCase(expression, position, state, inToken);
-    let cache = this.lexicalCache.get(expression);
-    if (!cache) this.lexicalCache.set(expression, cache = new Map());
+    const cache = this.lexicalCache.entries.get(expression);
     const key = `${position}|${state.key}`;
-    if (cache.has(key)) return cache.get(key);
+    if (cache?.has(key)) return cache.get(key);
     const results = this.evaluateCase(expression, position, state, inToken);
-    if (this.lexicalCacheSize < this.memoLimit) {
-      this.retain(1 + results.length);
-      this.lexicalCacheSize += 1;
-      cache.set(key, results);
+    if (this.lexicalCache.size < this.memoLimit
+      && retainLexicalCache(this.budget.memory, this.lexicalCache, 1 + results.length)) {
+      // Recursive evaluation may have evicted the map first looked up above.
+      let current = this.lexicalCache.entries.get(expression);
+      if (!current) this.lexicalCache.entries.set(expression, current = new Map());
+      this.lexicalCache.size += 1;
+      current.set(key, results);
     }
     return results;
   }

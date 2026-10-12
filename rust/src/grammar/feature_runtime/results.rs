@@ -11,6 +11,7 @@ use std::rc::Rc;
 
 use super::forking::{GrammarFacts, Lead};
 pub(super) use super::keyword_lexing::KeywordLexing;
+use super::lexical_cache_memory::LexicalCaches;
 use super::operations::{OperationValue, State};
 use super::ordering::settled_order;
 pub(super) use super::ordering::{complete_order, preferred_tokens};
@@ -521,7 +522,8 @@ pub(super) fn content_start(children: &[Rc<Tree>], fallback: usize) -> usize {
 /// embedded-language executor, the record of what the parse expects, and the
 /// memo cells the whole parse took of its memory budget: one per rule call
 /// recorded and one per result such a call keeps, across its runs and repair
-/// rounds, counted and never released (see `Executor::retain`).
+/// rounds, counted and never released (see `Executor::retain`). Optional fixed
+/// lexical caches are counted while retained and may be discarded to free space.
 #[derive(Debug)]
 pub(super) struct Shared {
     pub(super) steps: Cell<usize>,
@@ -529,6 +531,7 @@ pub(super) struct Shared {
     pub(super) frames: Cell<usize>,
     pub(super) memo_limit: usize,
     pub(super) cells: Rc<Cell<usize>>,
+    pub(super) lexical_caches: LexicalCaches,
     pub(super) memory_limit: usize,
     pub(super) expectations: RefCell<Expectations>,
 }

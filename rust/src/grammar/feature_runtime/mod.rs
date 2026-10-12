@@ -16,6 +16,7 @@ mod joins;
 mod keyword_lexing;
 mod lexing;
 mod lexical_cache;
+mod lexical_cache_memory;
 mod load;
 mod operations;
 mod ordering;
@@ -77,9 +78,10 @@ pub struct FeatureParseOptions {
     pub memo_limit: Option<usize>,
     /// The memory budget of the whole parse, its runs, repair rounds and
     /// embedded languages included, in memo cells: one per rule call recorded
-    /// and one per result such a call keeps, counted and never released
-    /// (default 2000000). A parse that needs more is rejected with
-    /// `memoryBudget` instead of growing.
+    /// and one per result such a call keeps, counted and never released.
+    /// Fixed lexical cache cells also count while retained; those optional
+    /// entries may be discarded to free space (default 2000000). A parse
+    /// whose rule cells need more is rejected with `memoryBudget`.
     pub memory_limit: Option<usize>,
     /// Whether a reported ambiguity rejects the input (default false).
     pub reject_ambiguity: Option<bool>,
@@ -460,6 +462,7 @@ fn parse_program(
     // Every run and repair round takes its memo cells of the one budget.
     let memory_limit = options.memory_limit.unwrap_or(DEFAULT_MEMORY_LIMIT);
     let cells = Rc::new(Cell::new(0));
+    let lexical_caches = Rc::new(RefCell::new(Vec::new()));
     // Parses the whole input with a fresh executor. While a scanner's
     // `expected` was answered before the parse made the request it asks
     // about, the parse runs again with the requests so far (see
@@ -473,6 +476,7 @@ fn parse_program(
             frames: Cell::new(0),
             memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
             cells: Rc::clone(&cells),
+            lexical_caches: Rc::clone(&lexical_caches),
             memory_limit,
             expectations: RefCell::new(record),
         };

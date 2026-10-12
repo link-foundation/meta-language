@@ -1,0 +1,12 @@
+{
+  "grammar": "(grammar (start document) (matching longest))\n(extra (ref comment))\n(rule document normal (seq (ref identifier) (literal %3B)))\n(rule identifier token (repeat1 (class plain (range a z))))\n(rule comment token (seq (literal %23) (repeat0 (class plain (range a z))) (literal %0A)))\n",
+  "commentLength": 200,
+  "memoryLimit": 64,
+  "reservations": [
+    { "cells": 0, "count": 1, "limit": 0, "accepted": false },
+    { "cells": 0, "count": 0, "limit": 0, "accepted": true },
+    { "cells": 5, "count": 3, "limit": 8, "accepted": true },
+    { "cells": 5, "count": 4, "limit": 8, "accepted": false },
+    { "cells": 9, "count": 0, "limit": 8, "accepted": false }
+  ]
+}
