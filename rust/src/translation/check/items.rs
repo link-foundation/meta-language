@@ -547,6 +547,13 @@ impl Checker {
                     _ => BinaryOp::Ge,
                 };
                 let (left, right) = self.operands(&pair.left, &pair.right, env, path, prop.span)?;
+                if matches!(left.ty, Type::Tuple { .. }) {
+                    return Err(unsupported(
+                        "comparison of tuples",
+                        "tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements",
+                        prop.span,
+                    ));
+                }
                 if !matches!(op, BinaryOp::Eq | BinaryOp::Ne) && !left.ty.is_ordered() {
                     return Err(type_error(
                         format!("ordering on {}", left.ty.key()),

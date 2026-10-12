@@ -376,6 +376,7 @@ class Checker {
       default: {
         if (!COMPARISONS.has(prop.p)) throw typeError(`unknown proposition ${prop.p}`, prop.span);
         const [left, right] = this.operands(prop.left, prop.right, env, path, prop.span);
+        if (left.type.kind === 'tuple') throw unsupported('comparison of tuples', 'tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements', prop.span);
         if (prop.p !== 'eq' && prop.p !== 'ne' && !isOrdered(left.type)) {
           throw typeError(`ordering on ${typeKey(left.type)}`, prop.span);
         }
@@ -1000,6 +1001,7 @@ class Checker {
         }
       }
       const [left, right] = this.operands(node.left, node.right, env, path, node.span);
+      if (left.type.kind === 'tuple') throw unsupported('comparison of tuples', 'tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements', node.span);
       if (left.type.kind === 'data' || left.type.kind === 'unit') {
         throw unsupported('structural equality of data values', 'comparisons of data values are not in the portable core', node.span);
       }

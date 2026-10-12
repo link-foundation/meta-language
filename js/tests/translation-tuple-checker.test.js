@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { runInNewContext } from 'node:vm';
 
 import { checkProgram } from '../src/translation/check.js';
 import { Scope, containsKind, renameExpr } from '../src/translation/ir.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { acceptTupleIndex } from '../src/translation/primitive-value-rules.js';
 import { BOOL, FLOAT, INT, NAT, STRING, UNIT, array, fixed, immutableProductType, tuple, typeKey } from '../src/translation/types.js';
+import { LinkNetwork } from '../src/network.js';
+import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, TYPED_PROGRAM_LINKS_SCHEMA as schema } from '../src/typed-program-links.js';
 
 const number = value => ({ k: 'num', value: String(value), type: FLOAT });
 const product = (items, frozen = true) => ({ k: 'tuple', items, frozen });
@@ -116,4 +119,33 @@ test('generic traversal and binder renaming retain product positions and freezin
   assert.deepEqual(renamed.items.map(item => item.name), ['first', 'second']);
   assert.equal(containsKind({ k: 'tupleIndex', object: renamed, index: 0, type: FLOAT }, 'var'), true);
   assert.equal(renamed.frozen, true);
+});
+
+test('whole-product equality refuses an unproved identity or structural comparison, including a source-free graph edit', () => {
+  const first = product([number(5), { k: 'bool', value: true }]);
+  for (const op of ['eq', 'ne']) assert.throws(() => checked({ k: 'binary', op, left: first, right: first }, BOOL), /comparison of tuples/);
+  for (const reference of [false, true]) assert.throws(() => checkProgram({ language: 'JavaScript', items: [], main: { effects: [{ k: 'assert', prop: { p: 'eq', left: first, right: first, reference } }] } }), /comparison of tuples/);
+  const source = `function same() { const first = Object.freeze([5, true]); const second = Object.freeze([5, true]); return first[0] === second[0]; }`;
+  assert.equal(runInNewContext(`${source};same();`), true);
+  assert.equal(runInNewContext(source.replace('first[0] === second[0]', 'first === second') + ';same();'), false, 'distinct frozen arrays compare by reference in JavaScript');
+  const { network, root } = createTypedProgramLinks(source, 'JavaScript');
+  const relations = network.fieldRelations();
+  const field = (parent, name) => {
+    const label = schema.fields[name] ?? name;
+    const relation = relations.find(value => value.parent.equals(parent) && value.label === label);
+    assert.ok(relation, `missing ${label}`);
+    return relation;
+  };
+  const binary = relations.find(value => value.label === schema.fields.k && network.link(value.child).metadata().definition === 'binary').parent;
+  const left = field(binary, 'left');
+  const right = field(binary, 'right');
+  const firstVariable = field(left.child, 'object').child;
+  const secondVariable = field(right.child, 'object').child;
+  const tupleType = field(firstVariable, 'type').child;
+  for (const [relation, child] of [[left, firstVariable], [right, secondVariable], [field(binary, 'domain'), tupleType]]) {
+    relation.link.setReferences([relation.parent, relation.link.references()[1], child]);
+  }
+  const edited = LinkNetwork.fromLino(network.toLino());
+  assert.throws(() => decodeTypedProgramLinks(edited, root), /comparison of tuples/);
+  for (const target of ['JavaScript', 'Rust']) assert.throws(() => emitTypedProgramLinks(edited, root, target), /comparison of tuples/);
 });

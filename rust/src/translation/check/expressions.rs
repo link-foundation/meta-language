@@ -437,6 +437,13 @@ impl Checker {
             }
             _ if comparison(op) => {
                 let (left, right) = self.operands(left, right, env, path, span)?;
+                if matches!(left.ty, Type::Tuple { .. }) {
+                    return Err(unsupported(
+                        "comparison of tuples",
+                        "tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements",
+                        span,
+                    ));
+                }
                 if matches!(left.ty, Type::Data { .. } | Type::Unit) {
                     return Err(unsupported(
                         "structural equality of data values",

@@ -166,3 +166,24 @@ fn products_reject_wrong_shape_and_mutable_inner_values_without_changing_legacy_
     let ordinary = checked(json!({"k": "array", "items": [{"spread": false, "value": {"k": "str", "value": "owned"}}]}), json!({"kind": "tuple", "elements": [{"kind": "string"}]})).unwrap();
     assert!(matches!(ordinary.node, Node::Tuple { frozen: false, .. }));
 }
+
+#[test]
+fn tuple_comparisons_need_a_separate_value_or_identity_model() {
+    for op in ["eq", "ne"] {
+        let error = checked(
+            json!({"k": "binary", "op": op, "left": product(), "right": product()}),
+            json!({"kind": "bool"}),
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("comparison of tuples"));
+    }
+    for reference in [false, true] {
+        let surface: SProgram = serde_json::from_value(json!({"language": "JavaScript", "items": [], "main": {"effects": [{"k": "assert", "prop": {"p": "eq", "left": product(), "right": product(), "reference": reference}}]}})).unwrap();
+        assert!(
+            check_program(&surface)
+                .unwrap_err()
+                .to_string()
+                .contains("comparison of tuples")
+        );
+    }
+}
