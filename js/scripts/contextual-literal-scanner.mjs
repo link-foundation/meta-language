@@ -24,7 +24,8 @@ const emit = (token) => `(emit ${token})`;
 export function contextualLiteralScanner({ name, tokens, contentToken, endToken, openGateToken,
   literals, delimiters = [], lexical = [], lineBreakToken, noLineBreakToken, shortInterpolationToken,
   interpolation = '#{', shortInterpolationPattern, escape = '\\', whitespace = '[ \\t\\r\\n]',
-  heredoc, interpolationStartToken = null, interpolationEndToken = null, interpolationClosing = '}' }) {
+  heredoc, interpolationStartToken = null, interpolationEndToken = null, interpolationClosing = '}',
+  lineContinuationPattern = null }) {
   const identifiers = [name, ...tokens, contentToken, endToken, openGateToken, lineBreakToken, noLineBreakToken, shortInterpolationToken];
   if (identifiers.some((value) => typeof value !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$/u.test(value)) || new Set(tokens).size !== tokens.length) throw new TypeError('contextual literal policies need valid unique token names');
   if (!Array.isArray(literals) || !literals.length || !Array.isArray(lexical) || !Array.isArray(delimiters)) throw new TypeError('contextual literals need literal and lexical policy lists');
@@ -38,7 +39,6 @@ export function contextualLiteralScanner({ name, tokens, contentToken, endToken,
   const levels = `${name}_levels`;
   const seen = `${name}_seen`;
   const leading = `${name}_leading`;
-  const crossed = `${name}_crossed`;
   const spaces = pattern(whitespace);
   const horizontal = pattern('[ \\t]');
   const newline = pattern('[\\r\\n]');
@@ -46,10 +46,25 @@ export function contextualLiteralScanner({ name, tokens, contentToken, endToken,
   const clearSeen = set(seen, integer(0));
   const haveContent = equal(variable(seen), integer(1));
   const contentOrFail = branch(haveContent, `mark ${emit(contentToken)}`, 'fail');
-  const modes = literals.flatMap((entry, index) => (entry.delimiter === undefined ? delimiters.map((delimiter) => ({ ...entry, ...delimiter })) : [{ ...entry, opening: entry.delimiter, closing: entry.delimiter }]).map((mode) => ({ ...mode, context: index + 1 })));
+  // Literal tokens and prefixes can share the same body behavior. Remember
+  // that behavior once, so every later token does not test an opening policy
+  // for each of the language's quotation spellings.
+  const bodyModes = [];
+  const bodyContexts = new Map();
+  const policies = literals.map((entry) => {
+    const key = JSON.stringify([entry.interpolated, entry.words, entry.suffixPattern ?? null]);
+    let context = bodyContexts.get(key);
+    if (context === undefined) {
+      context = bodyModes.length + 1;
+      bodyContexts.set(key, context);
+      bodyModes.push({ ...entry, context });
+    }
+    return { ...entry, context };
+  });
+  const modes = policies.flatMap((entry) => entry.delimiter === undefined ? delimiters.map((delimiter) => ({ ...entry, ...delimiter })) : [{ ...entry, opening: entry.delimiter, closing: entry.delimiter }]);
   const closingExpression = `(predicate any (equal matched (top ${closingsStack})))`;
   const openingExpression = `(predicate any (equal matched (top ${openingsStack})))`;
-  const body = literals.map((mode, index) => {
+  const body = bodyModes.map((mode) => {
     const close = next(closingExpression);
     const nested = not(equal(top(openingsStack), top(closingsStack)));
     const decrement = `(push ${levels} (subtract (top ${levels}) (integer 1)))`;
@@ -61,19 +76,25 @@ export function contextualLiteralScanner({ name, tokens, contentToken, endToken,
     const move = branch(all(nested, close), `${replaceLevel(decrement)} advance`, branch(all(nested, next(openingExpression)), `${replaceLevel(increment)} advance`, escaped));
     const wordBoundary = mode.words ? `${branch(next(spaces), contentOrFail)} ` : '';
     const contentMove = mode.interpolated ? branch(next(literal('#')), `mark advance ${branch(next(short), `${branch(haveContent, emit(contentToken))} mark ${emit(shortInterpolationToken)}`)}`, move) : move;
-    return branch(equal(top(contexts), integer(index + 1)), `${clearSeen} (while (not atEnd) (do ${wordBoundary}${branch(all(close, equal(top(levels), integer(1))), finish)} ${special}${contentMove} ${set(seen, integer(1))})) fail`);
+    return branch(equal(top(contexts), integer(mode.context)), `${clearSeen} (while (not atEnd) (do ${wordBoundary}${branch(all(close, equal(top(levels), integer(1))), finish)} ${special}${contentMove} ${set(seen, integer(1))})) fail`);
   }).join(' ');
   // Check token/context eligibility once per policy, before selecting a
   // delimiter. Repeating parser expectation queries for each punctuation
   // delimiter consumes the parse budget without changing the decision.
-  const openings = literals.map((entry, index) => ({ ...entry, context: index + 1 })).toSorted((first, second) => second.prefix.length - first.prefix.length).map((entry) => {
-    const condition = all(valid(entry.token), ...(interpolationStartToken ? [some(not(present(contexts)), equal(top(contexts), integer(0)))] : []), ...(entry.gate === false ? [] : [available(openGateToken)]), ...(entry.guard ? [entry.guard.replaceAll('$leading', variable(leading)).replace(/\(valid ([A-Za-z_]+)\)/gu, (_, token) => available(token))] : []));
-    const choices = modes.filter((mode) => mode.context === entry.context).map((mode) => branch(next(literal(mode.prefix + mode.opening)), `(consume ${literal(mode.prefix + mode.opening)}) (push ${contexts} (integer ${mode.context})) (push ${openingsStack} (text ${encode(mode.opening)})) (push ${closingsStack} (text ${encode(mode.closing)})) (push ${levels} (integer 1)) ${emit(mode.token)}`)).join(' ');
+  const openings = policies.toSorted((first, second) => second.prefix.length - first.prefix.length).map((entry) => {
+    const prefix = entry.prefix + (entry.delimiter ?? '');
+    const condition = all(valid(entry.token), ...(prefix ? [next(literal(prefix))] : []), ...(interpolationStartToken ? [some(not(present(contexts)), equal(top(contexts), integer(0)))] : []), ...(entry.gate === false ? [] : [available(openGateToken)]), ...(entry.guard ? [entry.guard.replaceAll('$leading', variable(leading)).replace(/\(valid ([A-Za-z_]+)\)/gu, (_, token) => available(token))] : []));
+    const choices = modes.filter((mode) => mode.prefix === entry.prefix && mode.token === entry.token && mode.context === entry.context && (entry.delimiter === undefined || mode.opening === entry.delimiter)).map((mode) => branch(next(literal(mode.prefix + mode.opening)), `(consume ${literal(mode.prefix + mode.opening)}) (push ${contexts} (integer ${mode.context})) (push ${openingsStack} (text ${encode(mode.opening)})) (push ${closingsStack} (text ${encode(mode.closing)})) (push ${levels} (integer 1)) ${emit(mode.token)}`)).join(' ');
     return branch(condition, choices);
   }).join(' ');
   const lexicalDecisions = lexical.map((entry) => {
     if (!tokens.includes(entry.token) || typeof entry.pattern !== 'string') throw new TypeError('invalid contextual lexical policy');
-    return branch(all(valid(entry.token), next(pattern(entry.pattern)), ...(entry.guard ? [entry.guard.replaceAll('$leading', variable(leading)).replace(/\(valid ([A-Za-z_]+)\)/gu, (_, token) => available(token))] : [])), `(consume ${pattern(entry.pattern)})${entry.markBeforeSuffix ? ` mark (consume ${literal(entry.markBeforeSuffix)})` : ''}${entry.after ? ` (if (not ${entry.after}) (then fail))` : ''}${entry.following ? ` (if (not (next ${pattern(entry.following)})) (then fail))` : ''} ${emit(entry.token)}`);
+    const tokenPattern = pattern(entry.pattern);
+    const suffix = entry.markBeforeSuffix ? ` ${literal(entry.markBeforeSuffix)}` : '';
+    // Applicability must not consume or fail the whole scanner: a later
+    // lexical policy may be the fallback for the same token and spelling.
+    const probe = entry.following ? `(seq ${tokenPattern}${suffix} (and ${pattern(entry.following)}))` : tokenPattern;
+    return branch(all(valid(entry.token), next(probe), ...(entry.guard ? [entry.guard.replaceAll('$leading', variable(leading)).replace(/\(valid ([A-Za-z_]+)\)/gu, (_, token) => available(token))] : [])), `(consume ${tokenPattern})${entry.markBeforeSuffix ? ` mark (consume ${literal(entry.markBeforeSuffix)})` : ''}${entry.after ? ` (if (not ${entry.after}) (then fail))` : ''} ${emit(entry.token)}`);
   }).join(' ');
   const line = branch(all(valid(lineBreakToken), not(available(noLineBreakToken))), `mark (consume ${literal('\n')}) (while (next ${spaces}) (do advance)) ${branch(next(literal('.')), `advance ${branch(not(next(literal('.'))), 'fail')}`)} ${branch(some(next(literal('&')), next(literal('#'))), 'fail')} ${emit(lineBreakToken)}`);
   let hereRules = '';
@@ -118,11 +139,15 @@ export function contextualLiteralScanner({ name, tokens, contentToken, endToken,
     hereOperations = branch(all(present(labels), not(valid(openGateToken)), some(valid(hereContent), valid(hereEnd), valid(shortInterpolationToken))), `${select} ${bodyScanner}`);
     beginBody = branch(all(present(labels), available(bodyStartToken), next(newline)), `${select} ${branch(equal(top(started), integer(0)), `(pop ${started}) (push ${started} (integer 1)) ${set(activeBodyInterpolation, top(interpolationStack))} ${restore} ${emit(bodyStartToken)}`)} ${restore}`);
   }
-  const skipWhitespace = `${set(leading, integer(0))} ${set(crossed, integer(0))} (while (next ${spaces}) (do ${beginBody} ${branch(next(literal('\n')), line)} (skip ${spaces}) ${set(leading, integer(1))}))`;
-  const transient = [seen, leading, crossed, `${name}_here_seen`, `${name}_level`];
+  if (lineContinuationPattern !== null && (typeof lineContinuationPattern !== 'string' || !lineContinuationPattern || new RegExp(`^(?:${lineContinuationPattern})$`, 'u').test(''))) throw new TypeError('line continuations need a consuming pattern');
+  const continuation = lineContinuationPattern === null ? null : pattern(lineContinuationPattern);
+  const skipPlainWhitespace = `${beginBody} ${branch(next(literal('\n')), line)} (skip ${spaces}) ${set(leading, integer(1))}`;
+  const skipNextWhitespace = continuation === null ? skipPlainWhitespace : branch(next(continuation), `(skip ${continuation}) ${set(leading, integer(1))}`, skipPlainWhitespace);
+  const skipWhitespace = `${set(leading, integer(0))} (while ${continuation === null ? next(spaces) : some(next(spaces), next(continuation))} (do ${skipNextWhitespace}))`;
+  const transient = [seen, leading, `${name}_here_seen`, `${name}_level`];
   const clearTransient = transient.map((key) => set(key, integer(0))).join(' ');
   const operations = `${branch(all(present(contexts), not(valid(openGateToken)), some(valid(contentToken), valid(endToken), valid(shortInterpolationToken))), body)} ${hereOperations} ${skipWhitespace} ${lexicalDecisions} ${openings} fail`.replace(/\(emit ([A-Za-z_]+)\)/gu, (_, token) => `${clearTransient} ${emit(token)}`);
-  const interpolationAllowed = some(...literals.flatMap((mode, index) => mode.interpolated ? [equal(top(contexts), integer(index + 1))] : []), all(not(present(contexts)), equal(variable(activeBodyInterpolation), integer(1))));
+  const interpolationAllowed = some(...bodyModes.flatMap((mode) => mode.interpolated ? [equal(top(contexts), integer(mode.context))] : []), all(not(present(contexts)), equal(variable(activeBodyInterpolation), integer(1))));
   const boundaryRules = interpolationStartToken ? `(rule ${interpolationStartToken} token (predicate ${literal(interpolation)} ${interpolationAllowed}) (action (push ${contexts} (integer 0))))\n(rule ${interpolationEndToken} token ${literal(interpolationClosing)} (action (if (not (equal (top ${contexts}) (integer 0))) (then fail)) (pop ${contexts})))\n` : '';
   return `(scanner ${name} (tokens ${tokens.filter((token) => ![heredoc?.startToken, interpolationStartToken, interpolationEndToken].includes(token)).join(' ')}) (operations ${operations}))\n${hereRules}${boundaryRules}`;
 }
