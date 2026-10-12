@@ -138,3 +138,14 @@ function count() { const values = new Set([1, 1, 2]); return values.size; }
 console.log(keys());
 console.log(count());`);
 });
+
+test('nullable array inference is independent of element order and survives spreads', () => {
+  assertSameOutput(`function numberFirst() { return [1, null, undefined, -0].join('|'); }
+function absenceFirst() { return [null, undefined, 1, -0].join('|'); }
+function spreadAbsence() { return [1, ...[null, undefined], -0].join('|'); }
+function nullableBigints() { return [1n, null, 3n].join('|'); }
+console.log(numberFirst());
+console.log(absenceFirst());
+console.log(spreadAbsence());
+console.log(nullableBigints());`);
+});

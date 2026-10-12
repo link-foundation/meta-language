@@ -36,7 +36,7 @@ function collectFunctions(items, path, into) {
 function hasStructuralInference(node) {
   if (!node || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(hasStructuralInference);
-  if (['none', 'coalesce', 'optionalField', 'record', 'lambda', 'method', 'map', 'set', 'arrayFrom', 'arrayIsArray', 'stringPoints', 'functionValue'].includes(node.k)) return true;
+  if (['none', 'coalesce', 'optionalField', 'record', 'lambda', 'method', 'map', 'set', 'arrayFrom', 'arrayIsArray', 'copySlice', 'stringPoints', 'functionValue'].includes(node.k)) return true;
   if (['option', 'tuple', 'record', 'map', 'set', 'function'].includes(node.kind)) return true;
   return Object.entries(node).some(([key, value]) => key !== 'span' && hasStructuralInference(value));
 }
@@ -55,7 +55,7 @@ class Inference {
     this.signatures = new Map();
     // The types of the fields the translator makes up, which are inferred like parameters.
     this.fieldTerms = new Map();
-    // Array literals with no element of their own, whose element type the rest of the program fixes.
+    // Every homogeneous array keeps its solved element type for contextual checking.
     this.emptyArrays = new Map();
     this.lambdas = new Map();
     this.records = new Map();
@@ -119,7 +119,11 @@ class Inference {
     if (a.kind === 'var' || b.kind === 'var') {
       const [variable, type] = a.kind === 'var' ? [a, b] : [b, a];
       if (this.bigints.has(variable.id) && !isInteger(type)) {
-        throw typeError(`a BigInt is used as ${describe(type)}; JavaScript does not mix BigInt with other types`, where);
+        const value = type.kind === 'option' ? this.resolve(type.element) : type;
+        if (type.kind === 'option' && value.kind === 'var') this.bigints.add(value.id);
+        else if (type.kind !== 'option' || !isInteger(value)) {
+          throw typeError(`a BigInt is used as ${describe(type)}; JavaScript does not mix BigInt with other types`, where);
+        }
       }
       if (this.contains(type, variable.id)) throw typeError('a recursive inferred type needs an explicit data type', where);
       this.bindings[variable.id] = type;
@@ -544,11 +548,13 @@ class Inference {
           return term;
         }
         const element = this.fresh();
-        if (node.items.every((item) => item.spread)) this.emptyArrays.set(node, element);
+        this.emptyArrays.set(node, element);
         for (const item of node.items) {
           const wanted = want?.kind === 'array' ? item.spread ? want : want.element : undefined;
           const value = this.expr(item.value, env, wanted);
           this.unify(value, item.spread ? { kind: 'array', element } : element, item.value.span ?? node.span);
+          const contained = item.spread ? this.resolve(value).element : this.resolve(value);
+          if (contained && this.resolve(contained).kind === 'option') this.bindings[element.id] = this.resolve(contained);
         }
         return { kind: 'array', element };
       }
@@ -580,6 +586,8 @@ class Inference {
       case 'stringPoints':
         this.unify(this.expr(node.object, env), STRING, node.span);
         return { kind: 'array', element: STRING };
+      case 'copySlice':
+        return this.expr(node.object, env, expected);
       case 'arrayFrom': {
         const args = node.args.map((arg) => this.expr(arg, env));
         const result = { kind: 'array', element: expected?.kind === 'array' ? expected.element : this.fresh() };
