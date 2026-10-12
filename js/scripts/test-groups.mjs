@@ -20,9 +20,9 @@ export const TEST_GROUPS = Object.freeze({
   grammar:
     /^(?:grammar-|native-development-oracles$|native-text-grammars$|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|issue-195-merge-real-reconciliation$|unicode-input-|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
   translation:
-    /^(?:translation|typed-program-links$|typescript-erasure$|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation$)/u,
+    /^(?:translation|typed-program-links|typescript-erasure$|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation$)/u,
   conformance:
-    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|global-concept-space$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
+    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|global-concept-space$|formal-concept-definition$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
   downstream:
     /^(?:downstream-|formal-ai-semantic-projections$|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
   tooling:

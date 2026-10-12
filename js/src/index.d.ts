@@ -115,6 +115,8 @@ export type SelfTranslationSignature =
 export interface SelfTranslationOptions {
   /** Uses one UTF-16 string representation across all emitted module items. */
   readonly utf16Strings?: boolean;
+  /** Forces shared reference values across module items; observable identity and mutation also select them automatically. */
+  readonly referenceSemantics?: boolean;
   /** Emitter decorators applied to each translated item. */
   readonly decorators?: unknown;
   /** The module's directory inside its crate, as path segments; the crate root by default. */
@@ -852,7 +854,7 @@ export function translateProgram(
   source: string,
   sourceLanguage: string,
   targetLanguage: string,
-  options?: { utf16Strings?: boolean },
+  options?: { utf16Strings?: boolean; referenceSemantics?: boolean },
 ): ProgramTranslation;
 export function decodeProgramTranslation(
   code: string,
@@ -862,6 +864,47 @@ export function readTranslationProvenance(
   code: string,
   targetLanguage: string,
 ): ReadTranslationProvenance;
+
+/** A source-free checked semantic program with direct declaration and binder links. */
+export interface TypedProgramLinks {
+  readonly network: LinkNetwork;
+  readonly root: LinkId;
+}
+export interface CheckedTypedProgram {
+  readonly language: string;
+  readonly declarations: Map<string, object>;
+  readonly main: object;
+  readonly [field: string]: unknown;
+}
+export interface TypedProgramLinksEmission {
+  readonly code: string;
+  readonly language: 'JavaScript' | 'Rust';
+  readonly mappings: readonly TranslationMapping[];
+  readonly assumptions: readonly TranslationAssumption[];
+  readonly encodings: readonly TranslationEncoding[];
+  readonly theorems: readonly TranslationObligation[];
+}
+/** Imports the supported checked JavaScript or Rust core as editable semantic links. */
+export function createTypedProgramLinks(
+  source: string,
+  language: string,
+  options?: { provenance?: unknown; utf16Strings?: boolean; context?: object },
+): TypedProgramLinks;
+export function encodeTypedProgramLinks(
+  program: CheckedTypedProgram,
+  options?: { provenance?: unknown },
+): TypedProgramLinks;
+export function decodeTypedProgramLinks(
+  network: LinkNetwork,
+  root: LinkIdValue,
+  options?: { nodeLimit?: number; depthLimit?: number },
+): CheckedTypedProgram;
+/** Emits from current links after scope and semantic validation, without source restoration. */
+export function emitTypedProgramLinks(
+  network: LinkNetwork,
+  root: LinkIdValue,
+  target: string,
+): TypedProgramLinksEmission;
 
 export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
 export const PROGRAM_SNAPSHOT_SCHEMA_VERSION: 1;
@@ -1548,12 +1591,48 @@ export interface GlobalConceptSpace {
   failures: Array<{ members: [string, string]; reason: 'unknown-origin' | 'no-one-to-one-proof' }>;
   ambiguities: Array<{ alias: string; meanings: string[] }>;
   redirects: Record<string, string>;
+  formalDefinitions: Record<string, PortableFormalConceptArchive>;
 }
 export interface GlobalConceptOptions {
   previous?: GlobalConceptSpace | null;
   equivalences?: Array<[string, string]>;
   records?: readonly ConceptRecord[];
+  formalDefinitions?: Readonly<Record<string, FormalConceptArchive | PortableFormalConceptArchive>>;
 }
+
+export interface FormalConceptArchive {
+  readonly network: LinkNetwork;
+  readonly root: LinkId;
+}
+export interface PortableFormalConceptArchive {
+  readonly links: string;
+  readonly root: number;
+}
+export interface FormalConceptDefinition {
+  readonly schemaVersion: 1;
+  readonly model: string;
+  readonly shapes: readonly string[];
+  readonly offsets: readonly number[];
+  readonly edges: readonly number[];
+}
+/** Copies a checked operational definition and its declared supported model into links. */
+export function encodeFormalConceptDefinition(
+  value?: CheckedTypedProgram | TypedProgramLinks | object,
+  options?: { model?: string; provenance?: unknown },
+): FormalConceptArchive;
+export function readFormalConceptDefinition(
+  value: FormalConceptArchive | PortableFormalConceptArchive,
+): FormalConceptDefinition;
+/** Returns a closed correspondence under the declared model, or null if none is proved. */
+export function proveFormalConceptEquivalence(
+  first: FormalConceptArchive | PortableFormalConceptArchive,
+  second: FormalConceptArchive | PortableFormalConceptArchive,
+): FormalConceptArchive | null;
+export function verifyFormalConceptEquivalence(
+  first: FormalConceptArchive | PortableFormalConceptArchive,
+  second: FormalConceptArchive | PortableFormalConceptArchive,
+  certificate: FormalConceptArchive | PortableFormalConceptArchive,
+): boolean;
 export const GLOBAL_CONCEPT_PROOF_METHOD: 'recursive-structural-bijection';
 export function createGlobalConceptSpace(sources: readonly GlobalConceptSource[], options?: GlobalConceptOptions): GlobalConceptSpace;
 export function globalConceptSpaceToLinks(space: GlobalConceptSpace): string;

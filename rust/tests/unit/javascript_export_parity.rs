@@ -167,8 +167,10 @@ mod items {
     use meta_language::construct_program as _;
     use meta_language::construct_program_from_fragments as _;
     use meta_language::create_global_concept_space as _;
+    use meta_language::create_typed_program_links as _;
     use meta_language::current_concept_id as _;
     use meta_language::decode_program_translation as _;
+    use meta_language::decode_typed_program_links as _;
     use meta_language::decorate_grammar as _;
     use meta_language::decorate_syntax_tree as _;
     use meta_language::deserialize_grammar as _;
@@ -187,6 +189,9 @@ mod items {
     use meta_language::emit_peggy as _;
     use meta_language::emit_pest as _;
     use meta_language::emit_tree_sitter_json as _;
+    use meta_language::emit_typed_program_links as _;
+    use meta_language::encode_formal_concept_definition as _;
+    use meta_language::encode_typed_program_links as _;
     use meta_language::erase_type_script as _;
     use meta_language::global_concept_space_to_links as _;
     use meta_language::grammar_emitter as _;
@@ -229,7 +234,9 @@ mod items {
     use meta_language::parse_with_grammar as _;
     use meta_language::percent_decode_links_text as _;
     use meta_language::percent_encode_links_text as _;
+    use meta_language::prove_formal_concept_equivalence as _;
     use meta_language::query_by_concept_term as _;
+    use meta_language::read_formal_concept_definition as _;
     use meta_language::read_global_concept_space_links as _;
     use meta_language::read_translation_provenance as _;
     use meta_language::reconstruct_grammar as _;
@@ -263,6 +270,7 @@ mod items {
     use meta_language::translation_contract as _;
     use meta_language::translation_contracts as _;
     use meta_language::validate as _;
+    use meta_language::verify_formal_concept_equivalence as _;
     use meta_language::verify_global_concept_correspondence as _;
 }
 
@@ -541,10 +549,20 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "ProgramRepresentation::serialize_snapshot",
         "method",
     ),
+    (
+        "createTypedProgramLinks",
+        "create_typed_program_links",
+        "function",
+    ),
     ("currentConceptId", "current_concept_id", "function"),
     (
         "decodeProgramTranslation",
         "decode_program_translation",
+        "function",
+    ),
+    (
+        "decodeTypedProgramLinks",
+        "decode_typed_program_links",
         "function",
     ),
     ("decorateGrammar", "decorate_grammar", "function"),
@@ -583,6 +601,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("emitPeggy", "emit_peggy", "function"),
     ("emitPest", "emit_pest", "function"),
     ("emitTreeSitterJson", "emit_tree_sitter_json", "function"),
+    (
+        "emitTypedProgramLinks",
+        "emit_typed_program_links",
+        "function",
+    ),
     ("emit_abnf", "emit_abnf", "function"),
     ("emit_antlr", "emit_antlr", "function"),
     ("emit_bnf", "emit_bnf", "function"),
@@ -591,6 +614,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("emit_lark", "emit_lark", "function"),
     ("emit_pest", "emit_pest", "function"),
     ("emit_tree_sitter_json", "emit_tree_sitter_json", "function"),
+    (
+        "encodeFormalConceptDefinition",
+        "encode_formal_concept_definition",
+        "function",
+    ),
+    (
+        "encodeTypedProgramLinks",
+        "encode_typed_program_links",
+        "function",
+    ),
     ("eraseTypeScript", "erase_type_script", "function"),
     ("fourLanguageSupport", "FOUR_LANGUAGE_SUPPORT", "constant"),
     ("freeze", "LinkNetwork::freeze", "method"),
@@ -718,7 +751,17 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "percent_encode_links_text",
         "function",
     ),
+    (
+        "proveFormalConceptEquivalence",
+        "prove_formal_concept_equivalence",
+        "function",
+    ),
     ("queryByConceptTerm", "query_by_concept_term", "function"),
+    (
+        "readFormalConceptDefinition",
+        "read_formal_concept_definition",
+        "function",
+    ),
     (
         "readGlobalConceptSpaceLinks",
         "read_global_concept_space_links",
@@ -808,6 +851,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("translationContract", "translation_contract", "function"),
     ("translationContracts", "translation_contracts", "function"),
     ("validateGrammar", "validate", "function"),
+    (
+        "verifyFormalConceptEquivalence",
+        "verify_formal_concept_equivalence",
+        "function",
+    ),
     (
         "verifyGlobalConceptCorrespondence",
         "verify_global_concept_correspondence",

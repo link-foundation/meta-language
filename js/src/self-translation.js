@@ -18,6 +18,7 @@ import { TranslationError } from './translation/diagnostics.js';
 import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
+import { requiresReferenceSemantics } from './translation/reference-analysis.js';
 import { tokenize } from './translation/lexer.js';
 import { eraseTypeScript, requiresTypeScriptErasure } from './typescript-erasure.js';
 import { projectTypeScriptTyping } from './typescript-portable-typing.js';
@@ -112,7 +113,7 @@ export function selfTranslationSignatures(source, language, options = {}) {
   return translateModule(source, language, 'Rust', options, true).signatures;
 }
 
-function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false } = {}, signaturesOnly = false) {
+function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false } = {}, signaturesOnly = false) {
   const from = required(sourceLanguage);
   const to = required(targetLanguage);
   const set = decoratorSet(decorators);
@@ -140,10 +141,32 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   const recorded = [];
   let gap = '';
   const groups = groupItems(items, bytes);
+  let references = referenceSemantics || (family(from) === 'JavaScript' && requiresReferenceSemantics(text));
+  const pendingTypes = Object.values(imports).flat();
+  const seenTypes = new Set();
+  while (!references && pendingTypes.length) {
+    const type = pendingTypes.pop();
+    if (!type || typeof type !== 'object' || seenTypes.has(type)) continue;
+    seenTypes.add(type);
+    if (type.reference === true) references = true;
+    else pendingTypes.push(...Object.values(type));
+  }
+  if (!references && family(from) === 'JavaScript') {
+    // An identity observation in one declaration selects the same representation
+    // for its siblings. Inspect inferred values rather than treating scalar
+    // equality as a request for reference identity.
+    for (const group of groups) {
+      if (group.kind !== 'item') continue;
+      try {
+        const projected = from === 'TypeScript' ? projectTypeScriptTyping(group.text).code : group.text;
+        if (parseJavaScript(projected, { moduleDirectory }).referenceSemantics) { references = true; break; }
+      } catch (error) { if (!(error instanceof TranslationError)) throw error; }
+    }
+  }
   const { outs, scans } = family(to) === 'Rust'
-    ? translateBound(groups, from, to, set, { moduleDirectory, imports, utf16Strings: representation })
-    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation })), scans: [] };
-  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, utf16Strings: representation });
+    ? translateBound(groups, from, to, set, { moduleDirectory, imports, utf16Strings: representation, referenceSemantics: references || undefined })
+    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined })), scans: [] };
+  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, utf16Strings: representation, referenceSemantics: references || undefined });
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
   const signatures = results.flatMap(({ out }) => out.status === 'translated' ? (out.signatures ?? []).filter(signature => exportedNames.has(signature.name)) : []);
   if (signaturesOnly) return { signatures };
@@ -207,7 +230,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
  * name that a cycle of items leaves untranslated stays unbound, so its
  * callers are carried with the checker's diagnostic.
  */
-function translateBound(groups, from, to, decorators, { moduleDirectory, imports, utf16Strings }) {
+function translateBound(groups, from, to, decorators, { moduleDirectory, imports, utf16Strings, referenceSemantics }) {
   const scans = groups.map((group) => (group.kind === 'item' ? scanItem(group.text) : null));
   const owners = new Map();
   scans.forEach((scan, index) => {
@@ -220,7 +243,7 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
     if (outs[index] || visiting.has(index)) return;
     const scan = scans[index];
     if (!scan) {
-      outs[index] = translateGroup(groups[index], from, to, decorators, { utf16Strings });
+      outs[index] = translateGroup(groups[index], from, to, decorators, { utf16Strings, referenceSemantics });
       return;
     }
     visiting.add(index);
@@ -242,7 +265,7 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
         if (signature && acceptDeclarationSignature(signature.k === 'const', signature.literal ?? false)) externals.push(signature);
       }
     }
-    outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory, utf16Strings });
+    outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory, utf16Strings, referenceSemantics });
     visiting.delete(index);
   };
   groups.forEach((_, index) => visit(index));

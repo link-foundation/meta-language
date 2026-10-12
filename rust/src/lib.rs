@@ -11,6 +11,7 @@ pub mod decorators;
 pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
+mod formal_concept_definition;
 mod foundation_models;
 mod global_concept_rules;
 mod global_concept_space;
@@ -59,6 +60,7 @@ pub mod substitution;
 pub mod transform;
 pub mod translation;
 pub mod translation_rules;
+mod typed_program_links;
 pub mod verification;
 
 pub use access::{EngineNetwork, ReadOnlyNetwork, ReadOnlyViolation};
@@ -96,6 +98,11 @@ pub use document_formatting::{
     docx_profile_is_recognized, parse_docx_document, parse_docx_package, parse_markup_document,
     parse_pdf_document, pdf_profile_is_recognized, render_docx_document, render_docx_package,
     render_pdf_document,
+};
+pub use formal_concept_definition::{
+    FormalConceptArchive, FormalConceptDefinitionInput, encode_formal_concept_definition,
+    prove_formal_concept_equivalence, read_formal_concept_definition,
+    verify_formal_concept_equivalence,
 };
 pub use foundation_models::{
     CORRESPONDENCE_KINDS, FoundationCorrespondence, FoundationDistinction, FoundationFamily,
@@ -305,6 +312,11 @@ pub use translation_rules::{
     TranslationTemplate,
 };
 pub use tree_sitter_adapter::{GrammarNames, grammar_names};
+pub use typed_program_links::{
+    TypedProgramLinks, TypedProgramLinksEmission, TypedProgramLinksError, TypedProgramLinksLimits,
+    create_typed_program_links, decode_typed_program_links, emit_typed_program_links,
+    encode_typed_program_links,
+};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 mod native_grammar_parser;

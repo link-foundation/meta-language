@@ -63,7 +63,8 @@ export function translateProgram(source, sourceLanguage, targetLanguage, options
   const text = String(source);
   let emitted;
   try {
-    const program = checkProgram(FRONTENDS[sourceSupport.name](text));
+    const context = options.referenceSemantics === true ? { referenceSemantics: true } : {};
+    const program = checkProgram(FRONTENDS[sourceSupport.name](text, context));
     if (options.utf16Strings === true) program.utf16Strings = true;
     emitted = EMITTERS[targetSupport.name](program);
   } catch (error) {
