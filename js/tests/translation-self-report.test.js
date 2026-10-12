@@ -76,8 +76,10 @@ function fixture() {
   const modules = list('js/src').sort().map((module) => {
     const stem = path.posix.relative('js/src', module).replace(/\.js$/u, '').replaceAll('-', '_');
     const nativeStem = stem.replace(/^grammar_runtime\//u, 'grammar/feature_runtime/');
-    const rust = [stem, nativeStem].flatMap(path => [`rust/src/${path}.rs`, `rust/src/${path}/mod.rs`])
-      .find((file) => existsSync(path.join(root, file))) ?? null;
+    const rust = module === 'js/src/typed-program-pattern-bindings.js'
+      ? 'rust/src/typed_program_links/codec_scopes.rs'
+      : [stem, nativeStem].flatMap(path => [`rust/src/${path}.rs`, `rust/src/${path}/mod.rs`])
+        .find((file) => existsSync(path.join(root, file))) ?? null;
     return {
       module, rust, sourceSha256: digest(module), rustSha256: rust ? digest(rust) : null,
       items: { translated: 0, carried: 0, comment: 0 }, milliseconds: 0,
@@ -103,8 +105,15 @@ function verify(report, markdown) {
 
 test('the published report validator covers every source module at the observed commit', () => {
   const report = fixture();
-  assert.equal(report.modules.find(row => row.module === 'js/src/grammar-runtime/lexical-cache.js')?.rust,
-    'rust/src/grammar/feature_runtime/lexical_cache.rs');
+  for (const [module, rust] of [
+    ['js/src/grammar-runtime/lexical-cache.js', 'rust/src/grammar/feature_runtime/lexical_cache.rs'],
+    ['js/src/grammar-runtime/lexical-cache-memory.js', 'rust/src/grammar/feature_runtime/lexical_cache_memory.rs'],
+    ['js/src/typed-program-pattern-bindings.js', 'rust/src/typed_program_links/codec_scopes.rs'],
+  ]) {
+    const row = report.modules.find(row => row.module === module);
+    assert.equal(row?.rust, rust);
+    assert.equal(row.rustSha256, digest(rust));
+  }
   const result = verify(report);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, new RegExp(`${report.modules.length} modules at ${commit}`, 'u'));
@@ -130,6 +139,11 @@ test('incomplete, stale or inconsistent reports cannot record the reporting asse
     [(report) => { report.commit = '2'.repeat(40); }, /commit/u],
     [(report) => { report.modules[0].sourceSha256 = '0'.repeat(64); }, /source hash/u],
     [(report) => { report.modules.find(({ rust }) => rust).rustSha256 = '0'.repeat(64); }, /Rust hash/u],
+    [(report) => {
+      const row = report.modules.find(({ module }) => module === 'js/src/typed-program-pattern-bindings.js');
+      row.rust = null;
+      row.rustSha256 = null;
+    }, /Rust counterpart/u],
     [(report) => { report.modules[0].decorated.sharedLines = 1; }, /measurements/u],
     [(report) => { report.decorators = []; }, /decorators/u],
     [(report) => { report.failures.push({ module: report.modules[0].module, error: 'refused' }); }, /failed modules/u],

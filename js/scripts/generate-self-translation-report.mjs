@@ -36,6 +36,12 @@ import { tokenize } from '../src/translation/lexer.js';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
 const DEFAULT_DECORATORS = 'parity/self-translation/decorators.lino';
+// The native codec keeps pattern graph scope admission in this component.
+// This reviewed association measures its actual bytes; it does not establish
+// that the JavaScript host adapter has been completely self-translated.
+const REVIEWED_COUNTERPARTS = Object.freeze({
+  'js/src/typed-program-pattern-bindings.js': 'rust/src/typed_program_links/codec_scopes.rs',
+});
 
 function option(name) {
   const index = process.argv.indexOf(name);
@@ -87,6 +93,11 @@ function selectedModules() {
 
 /** The hand-written Rust module `module` corresponds to, or null. */
 function counterpart(module) {
+  const reviewed = REVIEWED_COUNTERPARTS[module];
+  if (reviewed) {
+    assert.ok(existsSync(join(root, reviewed)), `${module}: reviewed Rust counterpart is missing: ${reviewed}`);
+    return reviewed;
+  }
   const path = posix.relative('js/src', module).replace(/\.js$/u, '').replaceAll('-', '_');
   // The native grammar hosts use different directory names in the packages.
   const paths = path.startsWith('grammar_runtime/')
