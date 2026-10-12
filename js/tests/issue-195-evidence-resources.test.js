@@ -21,7 +21,11 @@ function job(workflow, id) {
   return workflow.slice(start, end < 0 ? undefined : start + 1 + end);
 }
 
-const needs = (text) => text.match(/\n {4}needs: \[([^\]]*)\]/u)?.[1].split(',').map((name) => name.trim()) ?? [];
+const needs = (text) => {
+  const value = text.match(/\n {4}needs: ([^\n]+)/u)?.[1];
+  if (!value) return [];
+  return value.replace(/^\[|\]$/gu, '').split(',').map((name) => name.trim());
+};
 
 test('the Rust workflow checks all targets and features first and the compiling jobs need it', () => {
   const rust = read(`${WORKFLOWS}/rust.yml`);
@@ -46,9 +50,53 @@ test('CI splits the Rust and JavaScript tests into matrix jobs with their own ti
   for (const prefix of ['grammar_', 'inference_', 'issue_195_generative', 'translation_', 'issue_195_', 'conformance']) {
     assert.ok(filters.remaining.includes(`--skip ${prefix}`), `remaining skips ${prefix}`);
   }
-  const javascript = job(read(`${WORKFLOWS}/js.yml`), 'tests');
-  assert.deepEqual(javascript.match(/group: \[([^\]]*)\]/u)[1].split(', '), Object.keys(TEST_GROUPS));
+  const javascriptWorkflow = read(`${WORKFLOWS}/js.yml`);
+  const acceptanceWorkflow = read(`${WORKFLOWS}/ci.yml`);
+  const javascript = job(javascriptWorkflow, 'tests');
+  const matrixGroups = javascript.match(/group: \[([^\]]*)\]/u)[1].split(', ');
+  const reportGroups = ['report-artifacts'];
+  assert.deepEqual(matrixGroups, Object.keys(TEST_GROUPS).filter((group) => !reportGroups.includes(group)));
+  assert.deepEqual([...matrixGroups, ...reportGroups].sort(), Object.keys(TEST_GROUPS).sort());
+  assert.equal(new Set([...matrixGroups, ...reportGroups]).size, matrixGroups.length + reportGroups.length);
   assert.match(javascript, /scripts\/test-groups\.mjs --run "\$TEST_GROUP"/u);
+  for (const [workflow, id, producer, condition] of [
+    [javascriptWorkflow, 'report-assertions', 'reports', /\n {4}if: \$\{\{ !cancelled\(\) && !inputs\.external_reports \}\}/u],
+    [acceptanceWorkflow, 'self-translation-report-validation', 'self-translation-report', /\n {4}if: \$\{\{ !cancelled\(\) && github\.event_name != 'release' \}\}/u],
+  ]) {
+    const reports = job(workflow, id);
+    assert.deepEqual(needs(reports), [producer], `${id} waits for the complete report shards`);
+    assert.match(reports, condition);
+    assert.match(reports, /\n {4}timeout-minutes: \d+\n/u);
+    assert.doesNotMatch(reports, /continue-on-error: true/u);
+    assert.doesNotMatch(reports, /generate-self-translation-report\.mjs/u);
+    assert.match(reports, /pattern: self-translation-report-\$\{\{ github\.sha \}\}-\*/u);
+    assert.match(reports, /ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: \$\{\{ github\.workspace \}\}\/issue-195-artifacts\/self-translation-report/u);
+    assert.equal([...reports.matchAll(/scripts\/test-groups\.mjs --run report-artifacts/gu)].length, 1);
+    assert.equal([...workflow.matchAll(/scripts\/test-groups\.mjs --run report-artifacts/gu)].length, 1);
+    const download = reports.indexOf('actions/download-artifact@');
+    assert.ok(download >= 0, `${id} downloads the generated reports`);
+    assert.ok(download < reports.indexOf('scripts/test-groups.mjs --run report-artifacts'));
+    assert.match(job(workflow, producer), /shard: \[1, 2, 3, 4, 5, 6, 7, 8\]/u);
+  }
+  // A standalone run validates its own reports; reusable CI supplies them to
+  // its dedicated required job, so neither path repeats the report module work.
+  assert.match(job(javascriptWorkflow, 'reports'), /\n {4}if: \$\{\{ !inputs\.external_reports \}\}/u);
+  assert.match(job(acceptanceWorkflow, 'js'), /external_reports: true/u);
+  const packageGate = job(javascriptWorkflow, 'test');
+  assert.deepEqual(needs(packageGate), ['tests', 'report-assertions']);
+  assert.match(packageGate, /REPORTS_RESULT: \$\{\{ needs\.report-assertions\.result \}\}/u);
+  assert.match(packageGate, /EXTERNAL_REPORTS: \$\{\{ inputs\.external_reports \}\}/u);
+  assert.match(packageGate, /if \[ "\$TESTS_RESULT" != "success" \]; then[\s\S]*?exit 1/u);
+  assert.match(packageGate, /if \[ "\$EXTERNAL_REPORTS" != "true" \] && \[ "\$REPORTS_RESULT" != "success" \]; then[\s\S]*?exit 1/u);
+  for (const id of ['rust', 'candidates', 'runtime-parity', 'acceptance']) {
+    const prerequisites = needs(job(acceptanceWorkflow, id));
+    assert.ok(prerequisites.includes('js'), `${id} needs the normal JavaScript groups`);
+    assert.ok(prerequisites.includes('self-translation-report-validation'), `${id} needs the dedicated report assertions`);
+  }
+  const aggregate = job(acceptanceWorkflow, 'acceptance');
+  assert.match(aggregate, /\n {4}if: \$\{\{ always\(\) \}\}/u);
+  assert.match(aggregate, /REPORTS_RESULT: \$\{\{ needs\.self-translation-report-validation\.result \}\}/u);
+  assert.match(aggregate, /\[ "\$REPORTS_RESULT" = failure \] \|\| \[ "\$REPORTS_RESULT" = cancelled \]/u);
   assert.deepEqual(partitionProblems(partitionTests(testFiles())), []);
   assert.match(javascript, /\n {4}timeout-minutes: \d+\n/u);
   assert.match(rust, /timeout-minutes: \$\{\{ matrix\.os == 'windows-latest' && matrix\.suite == 'grammar' && 30 \|\| 15 \}\}/u);
