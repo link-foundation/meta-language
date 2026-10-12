@@ -171,6 +171,7 @@ mod translation_math;
 mod translation_mutual_recursion;
 mod translation_printing;
 mod translation_primitive_values;
+mod translation_prototype_definitions;
 mod translation_rocq;
 mod translation_rules;
 mod translation_rust_frontend;

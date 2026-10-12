@@ -433,7 +433,7 @@
     },
     {
       "source": "_bare_argument_unparenthesized_call",
-      "native": "bare_argument_unparenthesized_call"
+      "native": "bare_argument_call_without_parentheses"
     },
     {
       "source": "_bare_argument_parenthesized_call",
@@ -441,11 +441,11 @@
     },
     {
       "source": "_bare_argument_local_unparenthesized_call",
-      "native": "bare_argument_local_unparenthesized_call"
+      "native": "bare_argument_local_call_without_parentheses"
     },
     {
       "source": "_bare_argument_remote_unparenthesized_call",
-      "native": "bare_argument_remote_unparenthesized_call"
+      "native": "bare_argument_remote_call_without_parentheses"
     },
     {
       "source": "_bare_argument_local_parenthesized_call",
@@ -473,7 +473,7 @@
     },
     {
       "source": "_postfix_unparenthesized_call",
-      "native": "postfix_unparenthesized_call"
+      "native": "postfix_call_without_parentheses"
     },
     {
       "source": "_postfix_parenthesized_call",
@@ -509,7 +509,7 @@
     },
     {
       "source": "_attribute_unparenthesized_call",
-      "native": "attribute_unparenthesized_call"
+      "native": "attribute_call_without_parentheses"
     },
     {
       "source": "_attribute_parenthesized_call",
@@ -517,7 +517,7 @@
     },
     {
       "source": "_attribute_local_unparenthesized_call",
-      "native": "attribute_local_unparenthesized_call"
+      "native": "attribute_local_call_without_parentheses"
     },
     {
       "source": "_attribute_block_call",
@@ -537,7 +537,7 @@
     },
     {
       "source": "_postfix_attribute_unparenthesized_call",
-      "native": "postfix_attribute_unparenthesized_call"
+      "native": "postfix_attribute_call_without_parentheses"
     },
     {
       "source": "_postfix_attribute_parenthesized_call",

@@ -4423,7 +4423,14 @@
         "char": "character_literal",
         "source": "source_document",
         "map": "map_literal",
-        "nil": "absence_literal"
+        "nil": "absence_literal",
+        "_bare_argument_unparenthesized_call": "bare_argument_call_without_parentheses",
+        "_bare_argument_local_unparenthesized_call": "bare_argument_local_call_without_parentheses",
+        "_bare_argument_remote_unparenthesized_call": "bare_argument_remote_call_without_parentheses",
+        "_postfix_unparenthesized_call": "postfix_call_without_parentheses",
+        "_attribute_unparenthesized_call": "attribute_call_without_parentheses",
+        "_attribute_local_unparenthesized_call": "attribute_local_call_without_parentheses",
+        "_postfix_attribute_unparenthesized_call": "postfix_attribute_call_without_parentheses"
       },
       "scannerFamilies": [
         {
@@ -6055,6 +6062,42 @@
     }
   },
   "concepts": {
+    "legacyAliases": {
+      "grammar.null-capable-type-test-expression": [
+        { "source": "native:csharp", "name": "null_admitting_type_test_expression" }
+      ],
+      "grammar.bare-argument-call-without-parentheses": [
+        { "source": "native:elixir", "name": "bare_argument_unparenthesized_call" }
+      ],
+      "grammar.bare-argument-local-call-without-parentheses": [
+        { "source": "native:elixir", "name": "bare_argument_local_unparenthesized_call" }
+      ],
+      "grammar.bare-argument-remote-call-without-parentheses": [
+        { "source": "native:elixir", "name": "bare_argument_remote_unparenthesized_call" }
+      ],
+      "grammar.postfix-call-without-parentheses": [
+        { "source": "native:elixir", "name": "postfix_unparenthesized_call" }
+      ],
+      "grammar.attribute-call-without-parentheses": [
+        { "source": "native:elixir", "name": "attribute_unparenthesized_call" }
+      ],
+      "grammar.attribute-local-call-without-parentheses": [
+        { "source": "native:elixir", "name": "attribute_local_unparenthesized_call" }
+      ],
+      "grammar.postfix-attribute-call-without-parentheses": [
+        { "source": "native:elixir", "name": "postfix_attribute_unparenthesized_call" }
+      ]
+    },
+    "formerNames": {
+      "grammar.null-capable-type-test-expression": ["grammar.null-admitting-type-test-expression"],
+      "grammar.bare-argument-call-without-parentheses": ["grammar.bare-argument-unparenthesized-call"],
+      "grammar.bare-argument-local-call-without-parentheses": ["grammar.bare-argument-local-unparenthesized-call"],
+      "grammar.bare-argument-remote-call-without-parentheses": ["grammar.bare-argument-remote-unparenthesized-call"],
+      "grammar.postfix-call-without-parentheses": ["grammar.postfix-unparenthesized-call"],
+      "grammar.attribute-call-without-parentheses": ["grammar.attribute-unparenthesized-call"],
+      "grammar.attribute-local-call-without-parentheses": ["grammar.attribute-local-unparenthesized-call"],
+      "grammar.postfix-attribute-call-without-parentheses": ["grammar.postfix-attribute-unparenthesized-call"]
+    },
     "definitions": {
       "grammar.collection-comprehension": "An expression that constructs a collection by mapping and optionally filtering the elements of another collection.",
       "grammar.reference-type": "A type for access to another value through a reference, retaining the declared language lifetime and mutation permissions."
