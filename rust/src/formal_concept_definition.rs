@@ -10,12 +10,14 @@ use serde_json::{Value, json};
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::translation::ir::Program;
 use crate::typed_program_links::{
-    decode_typed_program_links, emit_typed_program_links,
-    encode_typed_program_links_with_provenance,
+    emit_typed_program_links, encode_typed_program_links_with_provenance,
+    read_typed_program_binding_identities,
 };
 
 mod graph;
-use graph::{Graph, correspondence, data, fields, graph, snapshot, verify_pairs};
+use graph::{
+    Graph, correspondence, data, exclude_binding_names, fields, graph, snapshot, verify_pairs,
+};
 
 const LANGUAGE: &str = "meta-language formal definition";
 const SCHEMA: &str = "1";
@@ -168,7 +170,8 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
     }
     let mut exclusions = std::collections::BTreeSet::from([(value.root, "provenance".to_owned())]);
     if model == "checked typed program" {
-        decode_typed_program_links(network, body).map_err(|error| error.to_string())?;
+        let bindings = read_typed_program_binding_identities(network, body)
+            .map_err(|error| error.to_string())?;
         // Supported operations must have both actual target interpretations.
         // The existing adapters diagnose unknown constructs, rather than
         // granting equality from matching but uninterpretable host payloads.
@@ -181,11 +184,12 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
                 {
                     exclusions.insert((parent, relation.label.clone()));
                 }
-                if relation.label == "binding reference" {
-                    exclusions.insert((relation.child, "name".to_owned()));
-                }
             }
         }
+        // Alpha equivalence applies only to actual owned binders established
+        // by the checked scope walk. Unreachable relation links cannot mark
+        // semantic field names or public declarations as lexical bindings.
+        exclude_binding_names(network, body, &mut exclusions, &bindings)?;
     } else if correspondence(&graph(network, body, &Default::default())?, &expected_graph).is_none()
     {
         return Err(

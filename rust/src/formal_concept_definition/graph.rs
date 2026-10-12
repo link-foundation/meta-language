@@ -34,6 +34,60 @@ impl Graph {
     }
 }
 
+pub(super) fn exclude_binding_names(
+    network: &LinkNetwork,
+    body: LinkId,
+    exclusions: &mut BTreeSet<(LinkId, String)>,
+    bindings: &[LinkId],
+) -> Result<(), String> {
+    let semantic = graph(network, body, exclusions)?;
+    let mut protected = BTreeSet::new();
+    let mut pending = Vec::new();
+    for entry in &semantic.entries {
+        let record = entry
+            .fields
+            .iter()
+            .find(|field| field.label == "construct kind")
+            .and_then(|field| network.link(field.child))
+            .is_some_and(|link| link.metadata().definition() == Some("record"));
+        for field in &entry.fields {
+            if matches!(
+                field.label.as_str(),
+                "type" | "domain" | "return type" | "from" | "to" | "constructors"
+            ) {
+                pending.push(field.child);
+            }
+            if record && matches!(field.label.as_str(), "fields" | "entries") {
+                let list = network
+                    .link(field.child)
+                    .ok_or("a formal record has no field list")?;
+                protected.extend(list.references().iter().copied());
+            }
+        }
+    }
+    let mut visited_types = BTreeSet::new();
+    let mut at = 0;
+    while at < pending.len() {
+        let id = pending[at];
+        at += 1;
+        if !visited_types.insert(id) {
+            continue;
+        }
+        protected.insert(id);
+        if let Some(index) = semantic.indices.get(&id) {
+            let entry = &semantic.entries[*index];
+            pending.extend(entry.references.iter().copied());
+            pending.extend(entry.fields.iter().map(|field| field.child));
+        }
+    }
+    for binding in bindings {
+        if semantic.indices.contains_key(binding) && !protected.contains(binding) {
+            exclusions.insert((*binding, "name".to_owned()));
+        }
+    }
+    Ok(())
+}
+
 pub(super) fn data(network: &mut LinkNetwork, value: &Value) -> Result<LinkId, String> {
     match value {
         Value::Array(values) => {
