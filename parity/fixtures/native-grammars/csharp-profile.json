@@ -4941,6 +4941,10 @@
     "null_capable_type_test_expression": "_nullable_type_test_expression",
     "qualified_name_type_pattern": "_qualified_name_type_pattern",
     "qualified_name_disjunction_pattern": "_qualified_name_disjunction_pattern",
+    "lambda_context_parameter_list": "_lambda_context_parameter_list",
+    "lambda_context_parameter": "_lambda_context_parameter",
+    "lambda_context_parameter_type_with_modifiers": "_lambda_context__parameter_type_with_modifiers",
+    "lambda_context_type": "_lambda_context_type",
     "optional_semicolon": "_optional_semi"
   },
   "oracle": "crates.io tree-sitter-c-sharp 0.23.5",

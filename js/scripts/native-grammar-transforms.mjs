@@ -10,10 +10,15 @@ import { transformOrderedFieldAlternatives } from './native-field-alternatives.m
 import { applyDeclarationSourceTransform } from './native-csharp-declarations.mjs';
 import { applyRootSourceTransform } from './native-csharp-roots.mjs';
 import { applySourceContextPreference } from './native-source-preferences.mjs';
+import { transformSymbolChoiceContext } from './native-symbol-choice-context.mjs';
 
 export function transformNativeSource(source, transformations = []) {
   const grammar = structuredClone(source);
   for (const decision of transformations) {
+    if (decision.family === 'symbol-choice-context') {
+      transformSymbolChoiceContext(grammar, decision);
+      continue;
+    }
     if (decision.family === 'ordered-field-alternatives') {
       transformOrderedFieldAlternatives(grammar, decision);
       continue;
@@ -178,7 +183,8 @@ export function transformNativeSource(source, transformations = []) {
     }
     if (decision.family === 'symbol-pattern-exclusion') {
       const { rule, symbol, pattern, occurrence = null, count, immediate = false } = decision;
-      if (![rule, symbol].every((name) => Object.hasOwn(grammar.rules, name)) || typeof pattern !== 'string' || !pattern
+      const declared = Object.hasOwn(grammar.rules, symbol) || (grammar.externals ?? []).some(external => external.type === 'SYMBOL' && external.name === symbol);
+      if (!Object.hasOwn(grammar.rules, rule) || !declared || typeof pattern !== 'string' || !pattern
         || !Number.isSafeInteger(count) || count <= 0 || typeof immediate !== 'boolean'
         || occurrence !== null && (!Number.isSafeInteger(occurrence) || occurrence <= 0)) throw new TypeError('symbol pattern exclusions need existing rules, a pattern and exact positive occurrence counts');
       let seen = 0;

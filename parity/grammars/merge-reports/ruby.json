@@ -16,7 +16,7 @@
   ],
   "scanner": {
     "file": "parity/grammars/scanners/ruby.lino",
-    "sha256": "f32ffe65a784704a352e4665c6d640890fe99290e1cb93d4fe67c494cab00729",
+    "sha256": "ebaac93fb13fe5e239fb5fd5a165bf7fac03d42da6fcefa8b3e87bb5ec86a948",
     "ports": {
       "path": "src/scanner.c",
       "file": "parity/grammars/sources/tree-sitter-ruby-0.23.1.scanner.c.gz",
@@ -650,7 +650,7 @@
     {
       "family": "rule-prefix-exclusion",
       "rule": "_statement",
-      "pattern": "(?:else|elsif|end|when|rescue|ensure)",
+      "pattern": "(?:else|elsif|end|when|rescue|ensure|in)",
       "continuationPattern": "(?:[^\\x00-\\x1F\\s:;`\"'@$#.,|^&<=>+\\-*/\\\\%?!~()\\[\\]{}]|[!?])",
       "reason": "The pinned lexer reserves block continuation and closing keywords; prevent a competing identifier statement from retaining a rejected keyword interpretation as an ambiguity."
     },
@@ -688,6 +688,68 @@
       "count": 2,
       "reason": "The pinned parser shifts a curly block onto the closest ordinary call before reducing its receiver-only call prefix at binding level56. Record that continuation priority while retaining all two source alternatives and lower do-block binding.",
       "dynamic": 1
+    },
+    {
+      "family": "symbol-pattern-exclusion",
+      "rule": "_function_identifier_call",
+      "symbol": "_function_identifier",
+      "pattern": "defined\\?",
+      "count": 1,
+      "reason": "The reserved defined? operator takes the unary production in receiverless expression positions; preserve actual receiver method calls and method declarations with that spelling."
+    },
+    {
+      "family": "symbol-pattern-exclusion",
+      "rule": "call",
+      "symbol": "_function_identifier",
+      "pattern": "defined\\?",
+      "count": 5,
+      "reason": "The reserved defined? operator takes the unary production in receiverless expression positions; preserve actual receiver method calls and method declarations with that spelling."
+    },
+    {
+      "family": "symbol-pattern-exclusion",
+      "rule": "command_call",
+      "symbol": "_function_identifier",
+      "pattern": "defined\\?",
+      "count": 1,
+      "reason": "The reserved defined? operator takes the unary production in receiverless expression positions; preserve actual receiver method calls and method declarations with that spelling."
+    },
+    {
+      "family": "symbol-pattern-exclusion",
+      "rule": "command_call_with_block",
+      "symbol": "_function_identifier",
+      "pattern": "defined\\?",
+      "count": 2,
+      "reason": "The reserved defined? operator takes the unary production in receiverless expression positions; preserve actual receiver method calls and method declarations with that spelling."
+    },
+    {
+      "family": "rule-variant-precedence",
+      "rule": "command_binary",
+      "fields": {
+        "left": "_expression",
+        "right": "_expression"
+      },
+      "associativity": "left",
+      "value": -1,
+      "count": 1,
+      "reason": "The pinned parser reduces a command argument before low-binding and/or operators. Preserve their left association and all parenthesized binary arguments and higher-binding Boolean operators."
+    },
+    {
+      "family": "symbol-pattern-exclusion",
+      "rule": "binary",
+      "symbol": "_forward_slash",
+      "pattern": "[ \\t\\r]*(?:#[^\\n]*)?\\n",
+      "immediate": true,
+      "count": 1,
+      "reason": "An unescaped line break ends the preceding operand before a new regular expression; preserve same-line division and explicit backslash line continuation."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "call"
+      ],
+      "symbol": "argument_list",
+      "value": 1,
+      "reason": "Prefer the existing immediate parenthesized argument list on a complete ordinary call over treating those parentheses as a command argument; preserve separated command arguments and all existing call alternatives."
     }
   ],
   "approximations": [],

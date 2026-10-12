@@ -1189,7 +1189,12 @@
           "rust/tests/unit/native_text_grammars.rs",
           "parity/grammars/native-text-specification.json",
           "parity/grammars/native-text.lino",
-          "parity/fixtures/native-text-grammars.json"
+          "parity/fixtures/native-text-grammars.json",
+          "rust/src/grammar/feature_runtime/lexical_cache.rs",
+          "rust/src/grammar/feature_runtime/precedence_contexts.rs",
+          "rust/tests/unit/grammar_lexical_cache.rs",
+          "rust/tests/unit/grammar_aliased_extras.rs",
+          "parity/fixtures/grammar-aliased-extras.json"
         ]
       },
       "javascript": {
@@ -1300,7 +1305,11 @@
           "js/tests/native-text-grammars.test.js",
           "parity/grammars/native-text-specification.json",
           "parity/grammars/native-text.lino",
-          "parity/fixtures/native-text-grammars.json"
+          "parity/fixtures/native-text-grammars.json",
+          "js/src/grammar-runtime/lexical-cache.js",
+          "js/tests/grammar-lexical-cache.test.js",
+          "js/tests/grammar-aliased-extras.test.js",
+          "parity/fixtures/grammar-aliased-extras.json"
         ]
       }
     },

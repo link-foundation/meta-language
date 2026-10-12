@@ -1015,6 +1015,11 @@ sources. Both acceptance suites verify the complete published reports before
 recording the per-module difference assertion; a small local report test alone
 cannot supply that evidence.
 
+A separate JavaScript test group checks these published reports after all
+report shards finish. It uses the producers' exact checkout and source hashes,
+reuses their measurements, and must pass before Rust or delivery stages start.
+Standalone JavaScript workflow runs produce and check their own report shards.
+
 Real target-tool interchange reports identify the emitted target format, its
 tool and version, the accepted and rejected corpus inputs and any failed cycle.
 A Peggy report verifies the Peggy target only; it cannot satisfy the obligation

@@ -8290,6 +8290,62 @@
     },
     {
       "category": "generator",
+      "name": "js/scripts/generate-ruby-expression-syntax-fixture.mjs",
+      "declaredIn": [
+        "js/scripts/generate-ruby-expression-syntax-fixture.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-ruby-expression-syntax-fixture.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
+      "name": "js/scripts/generate-ruby-heredoc-fixture.mjs",
+      "declaredIn": [
+        "js/scripts/generate-ruby-heredoc-fixture.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-ruby-heredoc-fixture.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
+      "name": "js/scripts/generate-ruby-literal-ci-regressions.mjs",
+      "declaredIn": [
+        "js/scripts/generate-ruby-literal-ci-regressions.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-ruby-literal-ci-regressions.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
+      "name": "js/scripts/generate-ruby-pattern-fixture.mjs",
+      "declaredIn": [
+        "js/scripts/generate-ruby-pattern-fixture.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "id": "generator js/scripts/generate-ruby-pattern-fixture.mjs@script",
+      "dependsOn": []
+    },
+    {
+      "category": "generator",
       "name": "js/scripts/generate-rust-array-runtime.mjs",
       "declaredIn": [
         "js/scripts/generate-rust-array-runtime.mjs"
@@ -8809,6 +8865,7 @@
       "name": "actions/download-artifact",
       "declaredIn": [
         ".github/workflows/ci.yml",
+        ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
       ],
       "pinned": "v8",

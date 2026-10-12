@@ -184,7 +184,7 @@
       "_before_unary_op"
     ]
   },
-  "rules": 123,
+  "rules": 128,
   "keywords": [],
   "renamed": [
     {
@@ -560,6 +560,26 @@
       "native": "postfix_unary_operand"
     },
     {
+      "source": "_guard_binary_expression",
+      "native": "guard_binary_expression"
+    },
+    {
+      "source": "_guard_argument_expression",
+      "native": "guard_argument_expression"
+    },
+    {
+      "source": "_guard_argument_list",
+      "native": "guard_argument_list"
+    },
+    {
+      "source": "_guard_complete_call",
+      "native": "guard_complete_call"
+    },
+    {
+      "source": "_initial_separator",
+      "native": "initial_separator"
+    },
+    {
       "source": "_not_in",
       "native": "membership_negation_operator"
     },
@@ -612,7 +632,7 @@
         "concept": "grammar.comment"
       }
     ],
-    "generated": 114
+    "generated": 119
   },
   "sourceTransforms": [
     {
@@ -700,15 +720,6 @@
       "reason": "The single unary sign cannot consume the first character of a longer subtraction or arrow operator."
     },
     {
-      "family": "literal-continuation-exclusion",
-      "rules": [
-        "operator_identifier"
-      ],
-      "literal": "/",
-      "continuationPattern": "/",
-      "reason": "An operator identifier slash does not split the stepped range operator."
-    },
-    {
       "family": "keyword-context-variant",
       "rule": "_expression",
       "symbol": "anonymous_function",
@@ -756,7 +767,13 @@
         "alias:arguments:_stab_clause_arguments_with_parentheses",
         "alias:arguments:_stab_clause_arguments_without_parentheses"
       ],
-      "reason": "A guarded clause preserves the binary guard node and its argument list. Parenthesized argument productions precede a generic block expression with the same delimiters."
+      "reason": "A guarded clause preserves the binary guard node and its argument list. Parenthesized argument productions precede a generic block expression with the same delimiters.",
+      "followingPatterns": {
+        "alias:binary_operator:_stab_clause_arguments_with_parentheses_with_guard": "->",
+        "alias:binary_operator:_stab_clause_arguments_without_parentheses_with_guard": "->",
+        "alias:arguments:_stab_clause_arguments_with_parentheses": "->",
+        "alias:arguments:_stab_clause_arguments_without_parentheses": "->"
+      }
     },
     {
       "family": "argument-suffix-context",
@@ -1327,6 +1344,89 @@
       "reason": "The source explicitly aliases reserved remote property words to identifiers. Prefer that exact source alternative over competing generic identifier and operator interpretations while preserving every ordinary, symbolic, string and character-list property production. Match complete source words so longer and suffixed identifiers retain the ordinary identifier alternative.",
       "literalContinuationPattern": "[\\p{ID_Continue}?!]",
       "literalContinuationFlags": "u"
+    },
+    {
+      "family": "field-expression-context",
+      "clones": [
+        {
+          "rule": "binary_operator",
+          "helper": "_guard_binary_expression",
+          "precedences": {
+            "values": [
+              20,
+              30,
+              40,
+              50,
+              70,
+              80,
+              90,
+              100,
+              110,
+              120,
+              130,
+              140,
+              150,
+              160,
+              170,
+              180,
+              190
+            ],
+            "count": 19
+          },
+          "references": {
+            "_expression": "_guard_argument_expression"
+          }
+        },
+        {
+          "rule": "_expression",
+          "helper": "_guard_argument_expression",
+          "references": {
+            "binary_operator": "_guard_binary_expression",
+            "call": "_guard_complete_call"
+          }
+        },
+        {
+          "rule": "_stab_clause_arguments_without_parentheses",
+          "helper": "_guard_argument_list",
+          "references": {
+            "_expression": "_guard_argument_expression"
+          }
+        },
+        {
+          "rule": "_postfix_call",
+          "helper": "_guard_complete_call"
+        }
+      ],
+      "fields": [
+        {
+          "rule": "_stab_clause_arguments_without_parentheses_with_guard",
+          "field": "left",
+          "symbol": "_stab_clause_arguments_without_parentheses",
+          "helper": "_guard_argument_list",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "family": "literal-continuation-exclusion",
+      "rules": [
+        "_guard_binary_expression"
+      ],
+      "literal": "<",
+      "continuationPattern": "-"
+    },
+    {
+      "family": "symbol-choice-context",
+      "rule": "source",
+      "symbol": "_terminator",
+      "occurrence": 1,
+      "count": 3,
+      "helper": "_initial_separator",
+      "alternatives": [
+        "_newline_before_binary_operator",
+        "_newline_before_comment"
+      ],
+      "reason": "Preserve leading source layout through the initial separator without changing later terminator continuation guards."
     }
   ],
   "approximations": [],

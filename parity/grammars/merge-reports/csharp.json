@@ -51,7 +51,7 @@
       "raw_string_content"
     ]
   },
-  "rules": 289,
+  "rules": 293,
   "keywords": [
     "Cdecl",
     "Fastcall",
@@ -626,6 +626,22 @@
     {
       "source": "_qualified_name_disjunction_pattern",
       "native": "qualified_name_disjunction_pattern"
+    },
+    {
+      "source": "_lambda_context_parameter_list",
+      "native": "lambda_context_parameter_list"
+    },
+    {
+      "source": "_lambda_context_parameter",
+      "native": "lambda_context_parameter"
+    },
+    {
+      "source": "_lambda_context__parameter_type_with_modifiers",
+      "native": "lambda_context_parameter_type_with_modifiers"
+    },
+    {
+      "source": "_lambda_context_type",
+      "native": "lambda_context_type"
     }
   ],
   "expandedWords": [
@@ -686,7 +702,7 @@
         "concept": "grammar.comment"
       }
     ],
-    "generated": 279
+    "generated": 283
   },
   "sourceTransforms": [
     {
@@ -950,6 +966,138 @@
         "and"
       ],
       "reason": "Preserve the original designated-parenthesis alias and its child layout before falling back to recursive positional patterns."
+    },
+    {
+      "family": "symbol-keyword-exclusion",
+      "rule": "_constant_pattern_value_body",
+      "symbol": "_name_invocation_pattern",
+      "keywordRules": [
+        "implicit_type"
+      ],
+      "keywordPatterns": true,
+      "wordRule": "_identifier_token",
+      "count": 1,
+      "reason": "Preserve the implicit type keyword in a type-test function before positional arguments instead of treating it as a callable constant name; retain every original invocation alternative."
+    },
+    {
+      "family": "symbol-complete-context",
+      "rules": [
+        "subpattern"
+      ],
+      "symbol": "pattern",
+      "outerContext": true,
+      "preferredSymbol": "_constant_pattern_value_body",
+      "alias": "constant_pattern",
+      "boundaries": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": ")"
+            },
+            {
+              "type": "STRING",
+              "value": "{"
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": ")"
+            },
+            {
+              "type": "STRING",
+              "value": ","
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": ")"
+            },
+            {
+              "type": "STRING",
+              "value": "]"
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": ")"
+            },
+            {
+              "type": "STRING",
+              "value": ";"
+            }
+          ]
+        }
+      ],
+      "count": 1,
+      "reason": "Select a complete constant positional subpattern when the closing clause continues into a property clause or an enclosing list or expression boundary; preserve designated qualified type and disjunction interpretations."
+    },
+    {
+      "family": "context-rule-variants",
+      "rules": [
+        "parameter_list",
+        "parameter",
+        "_parameter_type_with_modifiers",
+        "type"
+      ],
+      "insertInto": [
+        "_lambda_parameters"
+      ],
+      "prefix": "_lambda_context_",
+      "opaqueRules": [
+        "parameter_list"
+      ],
+      "reason": "Isolate lambda parameter type preferences from method and delegate declarations, retaining original parameter alternatives in the cloned list."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "_lambda_context_type"
+      ],
+      "symbol": "ref_type",
+      "value": 1,
+      "reason": "Preserve the pinned plain-reference lambda type tree while the existing two modifier preferences still select ref readonly aliases."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "_lambda_context_parameter",
+      "pattern": "scoped",
+      "continuationPattern": "[A-Za-z0-9_]",
+      "reason": "Retain the original scoped-modifier parameter alternative; a longer scoped-prefixed identifier remains eligible for the lambda type preference."
+    },
+    {
+      "family": "rule-prefix-exclusion",
+      "rule": "_lambda_context_parameter",
+      "pattern": "\\[",
+      "reason": "Retain the original attributed lambda parameter production and its modifier aliases, including trivia inside attribute arguments."
+    },
+    {
+      "family": "symbol-complete-context",
+      "rules": [
+        "_lambda_context_parameter_list"
+      ],
+      "symbol": "parameter",
+      "preferredSymbol": "_lambda_context_parameter",
+      "alias": "parameter",
+      "boundaries": [
+        ",",
+        ")"
+      ],
+      "count": 2,
+      "reason": "Select a complete lambda parameter at its comma or closing parenthesis, preserving the original alternative for each parameter independently."
     }
   ],
   "approximations": [],

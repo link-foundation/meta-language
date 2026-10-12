@@ -680,6 +680,13 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `translation.${name}`,
   },
   {
+    inventory: 'associative foundation audit operations',
+    files: ['js/scripts/associative-stack-sources.mjs'],
+    extract: (text) => captures(text, /^export function ([a-zA-Z][a-zA-Z_]+)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `foundation.${name}`,
+  },
+  {
     inventory: 'frontend decision operations',
     files: ['js/src/translation/frontend-rules.js', 'rust/src/translation/frontend_rules.rs', 'rust/src/translation/frontend_rules/strings.rs'],
     extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)

@@ -4049,7 +4049,8 @@
         "preproc_nullable": "preprocessor_null_policy_directive",
         "preproc_define": "preprocessor_definition_directive",
         "preproc_undef": "preprocessor_removal_directive",
-        "_nullable_type_test_expression": "null_capable_type_test_expression"
+        "_nullable_type_test_expression": "null_capable_type_test_expression",
+        "_lambda_context__parameter_type_with_modifiers": "lambda_context_parameter_type_with_modifiers"
       },
       "scannerFamilies": [
         {
@@ -4340,6 +4341,138 @@
             "and"
           ],
           "reason": "Preserve the original designated-parenthesis alias and its child layout before falling back to recursive positional patterns."
+        },
+        {
+          "family": "symbol-keyword-exclusion",
+          "rule": "_constant_pattern_value_body",
+          "symbol": "_name_invocation_pattern",
+          "keywordRules": [
+            "implicit_type"
+          ],
+          "keywordPatterns": true,
+          "wordRule": "_identifier_token",
+          "count": 1,
+          "reason": "Preserve the implicit type keyword in a type-test function before positional arguments instead of treating it as a callable constant name; retain every original invocation alternative."
+        },
+        {
+          "family": "symbol-complete-context",
+          "rules": [
+            "subpattern"
+          ],
+          "symbol": "pattern",
+          "outerContext": true,
+          "preferredSymbol": "_constant_pattern_value_body",
+          "alias": "constant_pattern",
+          "boundaries": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": ")"
+                },
+                {
+                  "type": "STRING",
+                  "value": "{"
+                }
+              ]
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": ")"
+                },
+                {
+                  "type": "STRING",
+                  "value": ","
+                }
+              ]
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": ")"
+                },
+                {
+                  "type": "STRING",
+                  "value": "]"
+                }
+              ]
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": ")"
+                },
+                {
+                  "type": "STRING",
+                  "value": ";"
+                }
+              ]
+            }
+          ],
+          "count": 1,
+          "reason": "Select a complete constant positional subpattern when the closing clause continues into a property clause or an enclosing list or expression boundary; preserve designated qualified type and disjunction interpretations."
+        },
+        {
+          "family": "context-rule-variants",
+          "rules": [
+            "parameter_list",
+            "parameter",
+            "_parameter_type_with_modifiers",
+            "type"
+          ],
+          "insertInto": [
+            "_lambda_parameters"
+          ],
+          "prefix": "_lambda_context_",
+          "opaqueRules": [
+            "parameter_list"
+          ],
+          "reason": "Isolate lambda parameter type preferences from method and delegate declarations, retaining original parameter alternatives in the cloned list."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "_lambda_context_type"
+          ],
+          "symbol": "ref_type",
+          "value": 1,
+          "reason": "Preserve the pinned plain-reference lambda type tree while the existing two modifier preferences still select ref readonly aliases."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "_lambda_context_parameter",
+          "pattern": "scoped",
+          "continuationPattern": "[A-Za-z0-9_]",
+          "reason": "Retain the original scoped-modifier parameter alternative; a longer scoped-prefixed identifier remains eligible for the lambda type preference."
+        },
+        {
+          "family": "rule-prefix-exclusion",
+          "rule": "_lambda_context_parameter",
+          "pattern": "\\[",
+          "reason": "Retain the original attributed lambda parameter production and its modifier aliases, including trivia inside attribute arguments."
+        },
+        {
+          "family": "symbol-complete-context",
+          "rules": [
+            "_lambda_context_parameter_list"
+          ],
+          "symbol": "parameter",
+          "preferredSymbol": "_lambda_context_parameter",
+          "alias": "parameter",
+          "boundaries": [
+            ",",
+            ")"
+          ],
+          "count": 2,
+          "reason": "Select a complete lambda parameter at its comma or closing parenthesis, preserving the original alternative for each parameter independently."
         }
       ],
       "concepts": {
@@ -4814,15 +4947,6 @@
           "reason": "The single unary sign cannot consume the first character of a longer subtraction or arrow operator."
         },
         {
-          "family": "literal-continuation-exclusion",
-          "rules": [
-            "operator_identifier"
-          ],
-          "literal": "/",
-          "continuationPattern": "/",
-          "reason": "An operator identifier slash does not split the stepped range operator."
-        },
-        {
           "family": "keyword-context-variant",
           "rule": "_expression",
           "symbol": "anonymous_function",
@@ -4870,7 +4994,13 @@
             "alias:arguments:_stab_clause_arguments_with_parentheses",
             "alias:arguments:_stab_clause_arguments_without_parentheses"
           ],
-          "reason": "A guarded clause preserves the binary guard node and its argument list. Parenthesized argument productions precede a generic block expression with the same delimiters."
+          "reason": "A guarded clause preserves the binary guard node and its argument list. Parenthesized argument productions precede a generic block expression with the same delimiters.",
+          "followingPatterns": {
+            "alias:binary_operator:_stab_clause_arguments_with_parentheses_with_guard": "->",
+            "alias:binary_operator:_stab_clause_arguments_without_parentheses_with_guard": "->",
+            "alias:arguments:_stab_clause_arguments_with_parentheses": "->",
+            "alias:arguments:_stab_clause_arguments_without_parentheses": "->"
+          }
         },
         {
           "family": "argument-suffix-context",
@@ -5441,6 +5571,89 @@
           "reason": "The source explicitly aliases reserved remote property words to identifiers. Prefer that exact source alternative over competing generic identifier and operator interpretations while preserving every ordinary, symbolic, string and character-list property production. Match complete source words so longer and suffixed identifiers retain the ordinary identifier alternative.",
           "literalContinuationPattern": "[\\p{ID_Continue}?!]",
           "literalContinuationFlags": "u"
+        },
+        {
+          "family": "field-expression-context",
+          "clones": [
+            {
+              "rule": "binary_operator",
+              "helper": "_guard_binary_expression",
+              "precedences": {
+                "values": [
+                  20,
+                  30,
+                  40,
+                  50,
+                  70,
+                  80,
+                  90,
+                  100,
+                  110,
+                  120,
+                  130,
+                  140,
+                  150,
+                  160,
+                  170,
+                  180,
+                  190
+                ],
+                "count": 19
+              },
+              "references": {
+                "_expression": "_guard_argument_expression"
+              }
+            },
+            {
+              "rule": "_expression",
+              "helper": "_guard_argument_expression",
+              "references": {
+                "binary_operator": "_guard_binary_expression",
+                "call": "_guard_complete_call"
+              }
+            },
+            {
+              "rule": "_stab_clause_arguments_without_parentheses",
+              "helper": "_guard_argument_list",
+              "references": {
+                "_expression": "_guard_argument_expression"
+              }
+            },
+            {
+              "rule": "_postfix_call",
+              "helper": "_guard_complete_call"
+            }
+          ],
+          "fields": [
+            {
+              "rule": "_stab_clause_arguments_without_parentheses_with_guard",
+              "field": "left",
+              "symbol": "_stab_clause_arguments_without_parentheses",
+              "helper": "_guard_argument_list",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "family": "literal-continuation-exclusion",
+          "rules": [
+            "_guard_binary_expression"
+          ],
+          "literal": "<",
+          "continuationPattern": "-"
+        },
+        {
+          "family": "symbol-choice-context",
+          "rule": "source",
+          "symbol": "_terminator",
+          "occurrence": 1,
+          "count": 3,
+          "helper": "_initial_separator",
+          "alternatives": [
+            "_newline_before_binary_operator",
+            "_newline_before_comment"
+          ],
+          "reason": "Preserve leading source layout through the initial separator without changing later terminator continuation guards."
         }
       ]
     },
@@ -5794,6 +6007,26 @@
             {
               "opening": "'",
               "closing": "'"
+            },
+            {
+              "opening": "\r",
+              "closing": "",
+              "guard": "(not (valid forward_slash))"
+            },
+            {
+              "opening": "\n",
+              "closing": "",
+              "guard": "(not (valid forward_slash))"
+            },
+            {
+              "opening": " ",
+              "closing": "",
+              "guard": "(not (valid forward_slash))"
+            },
+            {
+              "opening": "\t",
+              "closing": "",
+              "guard": "(not (valid forward_slash))"
             }
           ],
           "lexical": [
@@ -6019,7 +6252,7 @@
         {
           "family": "rule-prefix-exclusion",
           "rule": "_statement",
-          "pattern": "(?:else|elsif|end|when|rescue|ensure)",
+          "pattern": "(?:else|elsif|end|when|rescue|ensure|in)",
           "continuationPattern": "(?:[^\\x00-\\x1F\\s:;`\"'@$#.,|^&<=>+\\-*/\\\\%?!~()\\[\\]{}]|[!?])",
           "reason": "The pinned lexer reserves block continuation and closing keywords; prevent a competing identifier statement from retaining a rejected keyword interpretation as an ambiguity."
         },
@@ -6057,6 +6290,68 @@
           "count": 2,
           "reason": "The pinned parser shifts a curly block onto the closest ordinary call before reducing its receiver-only call prefix at binding level56. Record that continuation priority while retaining all two source alternatives and lower do-block binding.",
           "dynamic": 1
+        },
+        {
+          "family": "symbol-pattern-exclusion",
+          "rule": "_function_identifier_call",
+          "symbol": "_function_identifier",
+          "pattern": "defined\\?",
+          "count": 1,
+          "reason": "The reserved defined? operator takes the unary production in receiverless expression positions; preserve actual receiver method calls and method declarations with that spelling."
+        },
+        {
+          "family": "symbol-pattern-exclusion",
+          "rule": "call",
+          "symbol": "_function_identifier",
+          "pattern": "defined\\?",
+          "count": 5,
+          "reason": "The reserved defined? operator takes the unary production in receiverless expression positions; preserve actual receiver method calls and method declarations with that spelling."
+        },
+        {
+          "family": "symbol-pattern-exclusion",
+          "rule": "command_call",
+          "symbol": "_function_identifier",
+          "pattern": "defined\\?",
+          "count": 1,
+          "reason": "The reserved defined? operator takes the unary production in receiverless expression positions; preserve actual receiver method calls and method declarations with that spelling."
+        },
+        {
+          "family": "symbol-pattern-exclusion",
+          "rule": "command_call_with_block",
+          "symbol": "_function_identifier",
+          "pattern": "defined\\?",
+          "count": 2,
+          "reason": "The reserved defined? operator takes the unary production in receiverless expression positions; preserve actual receiver method calls and method declarations with that spelling."
+        },
+        {
+          "family": "rule-variant-precedence",
+          "rule": "command_binary",
+          "fields": {
+            "left": "_expression",
+            "right": "_expression"
+          },
+          "associativity": "left",
+          "value": -1,
+          "count": 1,
+          "reason": "The pinned parser reduces a command argument before low-binding and/or operators. Preserve their left association and all parenthesized binary arguments and higher-binding Boolean operators."
+        },
+        {
+          "family": "symbol-pattern-exclusion",
+          "rule": "binary",
+          "symbol": "_forward_slash",
+          "pattern": "[ \\t\\r]*(?:#[^\\n]*)?\\n",
+          "immediate": true,
+          "count": 1,
+          "reason": "An unescaped line break ends the preceding operand before a new regular expression; preserve same-line division and explicit backslash line continuation."
+        },
+        {
+          "family": "symbol-dynamic-precedence",
+          "rules": [
+            "call"
+          ],
+          "symbol": "argument_list",
+          "value": 1,
+          "reason": "Prefer the existing immediate parenthesized argument list on a complete ordinary call over treating those parentheses as a command argument; preserve separated command arguments and all existing call alternatives."
         }
       ]
     }
@@ -6064,39 +6359,79 @@
   "concepts": {
     "legacyAliases": {
       "grammar.null-capable-type-test-expression": [
-        { "source": "native:csharp", "name": "null_admitting_type_test_expression" }
+        {
+          "source": "native:csharp",
+          "name": "null_admitting_type_test_expression"
+        }
       ],
       "grammar.bare-argument-call-without-parentheses": [
-        { "source": "native:elixir", "name": "bare_argument_unparenthesized_call" }
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_unparenthesized_call"
+        }
       ],
       "grammar.bare-argument-local-call-without-parentheses": [
-        { "source": "native:elixir", "name": "bare_argument_local_unparenthesized_call" }
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_local_unparenthesized_call"
+        }
       ],
       "grammar.bare-argument-remote-call-without-parentheses": [
-        { "source": "native:elixir", "name": "bare_argument_remote_unparenthesized_call" }
+        {
+          "source": "native:elixir",
+          "name": "bare_argument_remote_unparenthesized_call"
+        }
       ],
       "grammar.postfix-call-without-parentheses": [
-        { "source": "native:elixir", "name": "postfix_unparenthesized_call" }
+        {
+          "source": "native:elixir",
+          "name": "postfix_unparenthesized_call"
+        }
       ],
       "grammar.attribute-call-without-parentheses": [
-        { "source": "native:elixir", "name": "attribute_unparenthesized_call" }
+        {
+          "source": "native:elixir",
+          "name": "attribute_unparenthesized_call"
+        }
       ],
       "grammar.attribute-local-call-without-parentheses": [
-        { "source": "native:elixir", "name": "attribute_local_unparenthesized_call" }
+        {
+          "source": "native:elixir",
+          "name": "attribute_local_unparenthesized_call"
+        }
       ],
       "grammar.postfix-attribute-call-without-parentheses": [
-        { "source": "native:elixir", "name": "postfix_attribute_unparenthesized_call" }
+        {
+          "source": "native:elixir",
+          "name": "postfix_attribute_unparenthesized_call"
+        }
       ]
     },
     "formerNames": {
-      "grammar.null-capable-type-test-expression": ["grammar.null-admitting-type-test-expression"],
-      "grammar.bare-argument-call-without-parentheses": ["grammar.bare-argument-unparenthesized-call"],
-      "grammar.bare-argument-local-call-without-parentheses": ["grammar.bare-argument-local-unparenthesized-call"],
-      "grammar.bare-argument-remote-call-without-parentheses": ["grammar.bare-argument-remote-unparenthesized-call"],
-      "grammar.postfix-call-without-parentheses": ["grammar.postfix-unparenthesized-call"],
-      "grammar.attribute-call-without-parentheses": ["grammar.attribute-unparenthesized-call"],
-      "grammar.attribute-local-call-without-parentheses": ["grammar.attribute-local-unparenthesized-call"],
-      "grammar.postfix-attribute-call-without-parentheses": ["grammar.postfix-attribute-unparenthesized-call"]
+      "grammar.null-capable-type-test-expression": [
+        "grammar.null-admitting-type-test-expression"
+      ],
+      "grammar.bare-argument-call-without-parentheses": [
+        "grammar.bare-argument-unparenthesized-call"
+      ],
+      "grammar.bare-argument-local-call-without-parentheses": [
+        "grammar.bare-argument-local-unparenthesized-call"
+      ],
+      "grammar.bare-argument-remote-call-without-parentheses": [
+        "grammar.bare-argument-remote-unparenthesized-call"
+      ],
+      "grammar.postfix-call-without-parentheses": [
+        "grammar.postfix-unparenthesized-call"
+      ],
+      "grammar.attribute-call-without-parentheses": [
+        "grammar.attribute-unparenthesized-call"
+      ],
+      "grammar.attribute-local-call-without-parentheses": [
+        "grammar.attribute-local-unparenthesized-call"
+      ],
+      "grammar.postfix-attribute-call-without-parentheses": [
+        "grammar.postfix-attribute-unparenthesized-call"
+      ]
     },
     "definitions": {
       "grammar.collection-comprehension": "An expression that constructs a collection by mapping and optionally filtering the elements of another collection.",
