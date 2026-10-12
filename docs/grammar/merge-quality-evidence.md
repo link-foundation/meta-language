@@ -83,7 +83,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 
 | Grammar | Matches | Rows | Bytes | Divergences | Rejections |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `native-agda` | 37 | 464 | 782 | 4 | 7 |
+| `native-agda` | 41 | 556 | 894 | 4 | 7 |
 | `native-c` | 100 | 5348 | 12987 | 0 | 33 |
 | `native-cmake` | 35 | 524 | 870 | 0 | 6 |
 | `native-cpp` | 77 | 1732 | 2272 | 0 | 9 |
@@ -126,7 +126,7 @@ source the oracle recovers from; the native grammar rejects it by default.
 | `native-vb` | 34 | 577 | 1599 | 0 | 3 |
 | `native-xml` | 31 | 495 | 837 | 0 | 7 |
 | `native-zig` | 59 | 1084 | 1548 | 0 | 5 |
-| all | 4092 | 94431 | 206050 | 105 | 674 |
+| all | 4096 | 94523 | 206162 | 105 | 674 |
 
 ## Coverage
 
@@ -140,7 +140,7 @@ language specification and checked against the oracle.
 
 | Grammar | Normal | Atomic | Silent | Token | Exercised visible rules | Checked kinds | Checked fields | Renamed | Expanded words | Approximations | Unsupported |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `native-agda` | 70 | 0 | 46 | 5 | 30 of 70 (43%) | 37 | 0 | 74 | 5 | 0 | 0 |
+| `native-agda` | 70 | 0 | 46 | 5 | 32 of 70 (46%) | 39 | 0 | 74 | 5 | 0 | 0 |
 | `native-c` | 137 | 0 | 32 | 14 | 103 of 137 (75%) | 121 | 38 | 93 | 24 | 0 | 0 |
 | `native-cmake` | 36 | 0 | 8 | 18 | 36 of 36 (100%) | 58 | 0 | 45 | 5 | 0 | 0 |
 | `native-cpp` | 231 | 0 | 57 | 17 | 80 of 231 (35%) | 96 | 26 | 131 | 27 | 0 | 0 |

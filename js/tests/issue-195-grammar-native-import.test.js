@@ -698,6 +698,19 @@ test('contextual keyword exclusions preserve quoted and longer identifier altern
   for (const input of ['* FROMage', '* "FROM"', '* named']) assert.equal(parser.parseTree(input).ok, true, input);
 });
 
+test('contextual keyword exclusions guard every recorded occurrence and reject count drift', () => {
+  const source = { name: 'bindings', extras: [{ type: 'PATTERN', value: '\\s+' }], rules: {
+    document: { type: 'SEQ', members: [{ type: 'SYMBOL', name: 'identifier' }, { type: 'STRING', value: ':' }, { type: 'SYMBOL', name: 'identifier' }] },
+    identifier: { type: 'PATTERN', value: '[a-z]+' },
+  } };
+  const decision = { family: 'symbol-keyword-exclusion', rule: 'document', symbol: 'identifier', keywords: ['where'], wordRule: 'identifier', count: 2 };
+  const transformed = transformNativeSource(source, [decision]);
+  const parser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformed))));
+  assert.equal(parser.parseTree('whereabouts : leaf').ok, true);
+  for (const text of ['where : leaf', 'leaf : where']) assert.equal(parser.parseTree(text).ok, false, text);
+  for (const count of [0, 1, 3]) assert.throws(() => transformNativeSource(source, [{ ...decision, count }]), TypeError);
+});
+
 test('renamed scanner-only tokens retain their original concrete kinds', () => {
   const source = { name: 'comments', externals: [{ type: 'SYMBOL', name: 'comment_open' }], rules: { document: { type: 'SYMBOL', name: 'comment_open' } } };
   const imported = importTreeSitterNative(source, { nameOf: (name) => name === 'comment_open' ? 'comment_opening' : name,

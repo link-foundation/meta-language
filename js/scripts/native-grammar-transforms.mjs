@@ -499,7 +499,8 @@ export function transformNativeSource(source, transformations = []) {
       continue;
     }
     if (decision.family === 'symbol-keyword-exclusion') {
-      const { rule, symbol, keywordRules = [], keywords = [], keywordPatterns = false, wordRule } = decision;
+      const { rule, symbol, keywordRules = [], keywords = [], keywordPatterns = false, wordRule, count = 1 } = decision;
+      if (!Number.isSafeInteger(count) || count <= 0) throw new TypeError('keyword exclusions need a positive contextual symbol count');
       if (!Object.hasOwn(grammar.rules, rule) || !Object.hasOwn(grammar.rules, symbol) || !Object.hasOwn(grammar.rules, wordRule) || typeof keywordPatterns !== 'boolean' || !Array.isArray(keywordRules) || !Array.isArray(keywords) || (!keywordRules.length && !keywords.length) || keywords.some((word) => typeof word !== 'string' || !word) || keywordRules.some((name) => !Object.hasOwn(grammar.rules, name))) throw new TypeError('keyword exclusions need existing target, word and keyword rules');
       const patterns = keywords.map((value) => ({ type: 'STRING', value }));
       const first = (node) => {
@@ -526,7 +527,7 @@ export function transformNativeSource(source, transformations = []) {
         return Object.fromEntries(Object.entries(node).map(([key, child]) => [key, rewrite(child)]));
       };
       grammar.rules[rule] = rewrite(grammar.rules[rule]);
-      if (changes !== 1) throw new TypeError('a keyword exclusion must select one contextual symbol');
+      if (changes !== count) throw new TypeError('a keyword exclusion must select the recorded contextual symbol count');
       continue;
     }
     if (decision.family === 'lift-token-aliases') {

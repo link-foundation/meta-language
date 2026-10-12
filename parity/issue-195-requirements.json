@@ -1619,7 +1619,7 @@
     "planned:repository-directive:i195-grammar-native-agda": {
       "path": "parity/fixtures/native-grammars/agda.json",
       "selector": "docs/vision.md#native-merged-grammars: generated native Agda grammar and pinned independent source corpus",
-      "sha256": "dc199420686b146c60654284e9335ef6100caab9aa8fe7aafa5b7ee73487ec7a"
+      "sha256": "0aea9bb1bc47059d12ac1e16cafe68b747f1bc2df4a0ee335b4d886f306562ea"
     },
     "planned:repository-directive:i195-grammar-native-html": {
       "path": "parity/fixtures/native-grammars/html.json",
@@ -1714,7 +1714,7 @@
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
       "selector": "docs/vision.md#sources-of-truth: register of every requirement source with its revision and content hash",
-      "sha256": "f8a8fb9abe666e667801e27baad851d075b3b472ed54555b584f6a3e25031bc7"
+      "sha256": "c583ba837073d2cae53c7e0ab434573cd1f913df141c63520b65ae9e2f0474b4"
     },
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
@@ -1734,7 +1734,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "cd5855ef4afdbfc029c54915cd92f285ef65abd59631cf6c9a3b608f83f7b17a"
+      "sha256": "1736f5db22382a120cb6e5e4669354655ac97fc8ebfdc0ff1fb1d99cd9b43420"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1744,7 +1744,7 @@
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "cd5855ef4afdbfc029c54915cd92f285ef65abd59631cf6c9a3b608f83f7b17a"
+      "sha256": "1736f5db22382a120cb6e5e4669354655ac97fc8ebfdc0ff1fb1d99cd9b43420"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",
@@ -1989,7 +1989,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "c590e77f84bc51e09cc80383b4da2996c09fb934b396b6de2ed786c54a3e42ae"
+      "sha256": "20eff7cd7a85e241b45f82109fb73661f2dcfec3ff750172b2bf5892f0f64719"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
       "path": "parity/grammars/reconcile/pairs.json",

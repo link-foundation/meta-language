@@ -422,7 +422,7 @@
       "family": "pattern-prefix-exclusion",
       "rule": "id",
       "pattern": "([^\\s\\\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
-      "excludedPattern": "[:=](?![^\\s;.\"(){}@])",
+      "excludedPattern": ";|[:=](?![^\\s;.\"(){}@])",
       "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
       "preserveLexicalIdentity": true
     },
@@ -430,7 +430,7 @@
       "family": "pattern-prefix-exclusion",
       "rule": "_qid",
       "pattern": "(([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*\\.)*([^\\s;\\.\\\"\\(\\)\\{\\}@\\'\\\\_]|\\\\[^\\sa-zA-Z]|_[^\\s;\\.\\\"\\(\\)\\{\\}@])[^\\s;\\.\\\"\\(\\)\\{\\}@]*",
-      "excludedPattern": "[:=](?![^\\s;.\"(){}@])",
+      "excludedPattern": ";|[:=](?![^\\s;.\"(){}@])",
       "reason": "Preserve declaration delimiters as lexical keywords at complete word boundaries instead of accepting a dangling type or definition delimiter as an identifier.",
       "preserveLexicalIdentity": true
     },
@@ -453,6 +453,17 @@
         "in"
       ],
       "wordRule": "id"
+    },
+    {
+      "family": "symbol-keyword-exclusion",
+      "rule": "untyped_binding",
+      "symbol": "bid",
+      "keywords": [
+        "where"
+      ],
+      "wordRule": "id",
+      "reason": "Keep the lambda-clause introducer where separate from an untyped binding at a complete keyword boundary; longer identifiers retain the source binding alternative.",
+      "count": 3
     }
   ],
   "approximations": [],
