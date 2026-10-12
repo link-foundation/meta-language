@@ -19,6 +19,7 @@ import {
   mergeGrammars,
   parseGrammarLinks,
   sharedRuleDecisions,
+  compileGrammar,
 } from '../src/index.js';
 import { Grammar } from '../src/grammar.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
@@ -145,3 +146,79 @@ tag = @{ ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }`);
   assert.deepEqual(sharedRuleDecisions(merge('xml').groups[0]), []);
   observe(['sharedRulesNonZero'], 'the name tier strips a leading language name');
 });
+
+test('reconciliation preserves every source production as an executable alternative', () => {
+  const first = importPest('document = { "first" }');
+  const second = importPest('document = { "second" }');
+  const result = mergeGrammars([
+    { id: 'first-source', language: 'Example', grammar: first },
+    { id: 'second-source', language: 'Example', precedence: 1, grammar: second },
+  ], { reconcile: true });
+  const [group] = result.groups;
+  assert.equal(group.grammar.rules.size, 1);
+  const compiled = compileGrammar(group.grammar);
+  for (const source of ['first', 'second']) assert.ok(compiled.parseTree(source).tree, source);
+  assert.equal(compiled.parseTree('third').tree ?? null, null);
+  assert.deepEqual(group.sourceProductions.map(({ alias, canonical }) => [alias, canonical]), [
+    ['first-source:document', 'document'],
+    ['second-source:document', 'document'],
+  ]);
+  assert.deepEqual(group.grammar.rule('document').sourceNames, [
+    { source: 'first-source', name: 'document' },
+    { source: 'second-source', name: 'document' },
+  ]);
+  assert.deepEqual(group.sourceProductions[0].rule, first.rule('document'));
+  assert.deepEqual(group.sourceProductions[1].rule, second.rule('document'));
+});
+
+test('correspondence cannot erase distinct semantic concepts or rule actions', () => {
+  const literal = { kind: 'literal', value: 'value' };
+  const source = (id, rule) => ({
+    id, language: 'Example', grammar: new Grammar('value', new Map([['value', { kind: 'normal', expression: literal, ...rule }]])),
+  });
+  const concepts = mergeGrammars([
+    source('unknown', { concept: 'unknown-value' }),
+    source('pointer', { concept: 'null-pointer' }),
+  ], { reconcile: true });
+  assert.notEqual(concepts.groups[0].identities['unknown:value'], concepts.groups[0].identities['pointer:value']);
+  assert.equal(concepts.groups[0].grammar.rules.size, 2);
+  const actions = mergeGrammars([
+    source('first', { action: [{ operation: 'set', variable: 'result', value: { operation: 'integer', value: 1 } }] }),
+    source('second', { action: [{ operation: 'set', variable: 'result', value: { operation: 'integer', value: 2 } }] }),
+  ], { reconcile: true });
+  assert.notEqual(actions.groups[0].identities['first:value'], actions.groups[0].identities['second:value']);
+  assert.equal(actions.groups[0].grammar.rules.size, 2);
+});
+
+test('concept and source alias changes invalidate reused merge groups', () => {
+  const source = (concept, name) => ({
+    id: 'source', language: 'Example', grammar: new Grammar('value', new Map([['value', {
+      kind: 'normal', expression: { kind: 'literal', value: 'value' }, concept,
+      sourceNames: [{ source: 'upstream', name }],
+    }]])),
+  });
+  const previous = mergeGrammars([source('first-concept', 'original')]);
+  const concept = mergeGrammars([source('second-concept', 'original')], { previous });
+  assert.deepEqual(concept.recomputed, ['Example@']);
+  assert.equal(concept.groups[0].grammar.rule('value').concept, 'second-concept');
+  const alias = mergeGrammars([source('first-concept', 'renamed')], { previous });
+  assert.deepEqual(alias.recomputed, ['Example@']);
+  assert.deepEqual(alias.groups[0].grammar.rule('value').sourceNames, [{ source: 'upstream', name: 'renamed' }]);
+});
+
+for (const fixture of JSON.parse(read('parity/fixtures/grammar-source-production-union.json')).cases) {
+  test(`shared source union: ${fixture.name}`, () => {
+    const list = fixture.sources.map(({ id, text, format }, precedence) => ({
+      id, language: 'Example', precedence,
+      grammar: format === 'pest' ? importPest(text) : parseGrammarLinks(text),
+    }));
+    const [group] = mergeGrammars(list, { reconcile: true }).groups;
+    assert.equal(group.grammar.rules.size, fixture.rules);
+    const compiled = compileGrammar(group.grammar);
+    for (const source of fixture.accepted) assert.ok(compiled.parseTree(source).tree, source);
+    for (const source of fixture.rejected) assert.equal(compiled.parseTree(source).tree ?? null, null, source);
+    for (const [first, second] of fixture.shared) assert.equal(group.identities[first], group.identities[second]);
+    for (const [first, second] of fixture.distinct ?? []) assert.notEqual(group.identities[first], group.identities[second]);
+    assert.equal(group.sourceProductions.length, list.reduce((count, { grammar }) => count + grammar.rules.size, 0));
+  });
+}

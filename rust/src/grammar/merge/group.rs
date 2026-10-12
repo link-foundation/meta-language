@@ -4,6 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use sha2::{Digest, Sha256};
 
+use super::decisions::{preserve_source_alternatives, wrap_lexical_production};
 use super::declarations::{declarations_text, merge_declarations, rule_fields};
 use super::normalize::{normalize, quote};
 use super::reconcile::reconcile_classes;
@@ -12,11 +13,14 @@ use super::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
     GrammarMergeDecision, GrammarMergeDecisionKind, GrammarMergeError, GrammarMergeFailure,
     GrammarMergeFailureKind, GrammarMergeFailureReason, GrammarMergeNomination,
-    GrammarMergeNominationBasis, GrammarMergeNominationOutcome, GrammarMergeSource,
-    MergedGrammarGroup,
+    GrammarMergeNominationBasis, GrammarMergeNominationOutcome, GrammarMergeProduction,
+    GrammarMergeSource, MergedGrammarGroup,
 };
 use crate::decorators::{DecoratorLevel, DecoratorSet};
-use crate::grammar::{Grammar, GrammarFormat, GrammarRule};
+use crate::grammar::feature::{FeatureExpr, FeatureForm, FieldValue};
+use crate::grammar::{
+    Grammar, GrammarExpr, GrammarFormat, GrammarRule, GrammarSourceName, RuleKind,
+};
 
 pub(super) struct Prepared<'a> {
     pub(super) id: &'a str,
@@ -158,6 +162,25 @@ pub(super) fn group_fingerprint(
             }
             if let Some(doc) = &rule.doc {
                 lines.push(format!("doc {} {}", quote(&rule.name), quote(doc)));
+            }
+            if !rule.source_names.is_empty() {
+                let aliases = rule
+                    .source_names
+                    .iter()
+                    .map(|alias| {
+                        format!(
+                            "{{\"source\":{},\"name\":{}}}",
+                            quote(&alias.source),
+                            quote(&alias.name)
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",");
+                lines.push(format!(
+                    "source-names {} {}",
+                    quote(&rule.name),
+                    quote(&format!("[{aliases}]"))
+                ));
             }
         }
         let declarations = declarations_text(source.grammar.declarations());
@@ -318,18 +341,59 @@ pub(super) fn merge_group(
     let mut grammar = Grammar::new();
     let mut definitions = BTreeMap::new();
     let mut concepts = BTreeMap::new();
+    let mut source_productions = Vec::new();
     for class in &class_order {
         let representative = &nodes[members[class][0]];
-        let source = representative.source;
-        let rename = |name: &str| {
-            if source.has_rule(name) {
-                canonical(source.id, name).clone()
-            } else {
-                name.to_owned()
+        let productions: Vec<GrammarRule> = members[class]
+            .iter()
+            .map(|&position| {
+                let node = &nodes[position];
+                let rename = |name: &str| {
+                    if node.source.has_rule(name) {
+                        canonical(node.source.id, name).clone()
+                    } else {
+                        name.to_owned()
+                    }
+                };
+                let renamed = renamed_rule(node.rule, &rename);
+                source_productions.push(GrammarMergeProduction {
+                    alias: node.alias.clone(),
+                    canonical: names[class].clone(),
+                    source_format: node.source.format().to_owned(),
+                    rule: node.rule.clone(),
+                    renamed_rule: renamed.clone(),
+                });
+                renamed
+            })
+            .collect();
+        let renamed = productions[0].clone();
+        let proven = members[class]
+            .iter()
+            .all(|&position| strict[position] == strict[index[&representative.alias]]);
+        let expression = if preserve_source_alternatives(proven, productions.len() > 1) {
+            GrammarExpr::Choice {
+                ordered: false,
+                alternatives: productions
+                    .iter()
+                    .map(|rule| {
+                        if wrap_lexical_production(
+                            rule.kind == RuleKind::Token,
+                            renamed.kind == RuleKind::Token,
+                        ) {
+                            GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+                                "token",
+                                vec![FieldValue::Expression(rule.expr.clone())],
+                            )))
+                        } else {
+                            rule.expr.clone()
+                        }
+                    })
+                    .collect(),
             }
+        } else {
+            renamed.expr.clone()
         };
-        let renamed = renamed_rule(representative.rule, &rename);
-        let form = normalize(&renamed.expr, &name_label)?;
+        let form = normalize(&expression, &name_label)?;
         definitions.insert(
             *class,
             format!(
@@ -351,10 +415,30 @@ pub(super) fn merge_group(
         if reconcile && let Some(concept) = &concept {
             concepts.insert(*class, concept.clone());
         }
+        let source_names = if members[class].len() > 1 {
+            let mut aliases = Vec::new();
+            for &position in &members[class] {
+                let node = &nodes[position];
+                for alias in std::iter::once(GrammarSourceName {
+                    source: node.source.id.to_owned(),
+                    name: node.rule.name.clone(),
+                })
+                .chain(node.rule.source_names.iter().cloned())
+                {
+                    if !aliases.contains(&alias) {
+                        aliases.push(alias);
+                    }
+                }
+            }
+            aliases
+        } else {
+            renamed.source_names.clone()
+        };
         grammar.add_rule(GrammarRule {
             name: names[class].clone(),
             expr: form.expr(),
             concept,
+            source_names,
             ..renamed
         });
     }
@@ -378,6 +462,37 @@ pub(super) fn merge_group(
     }
     if let Some(first) = start_classes.first() {
         grammar.set_start(names[first].clone());
+        if reconcile && start_classes.len() > 1 {
+            let rule = grammar
+                .rules
+                .iter_mut()
+                .find(|rule| rule.name == names[first])
+                .expect("a start class defines a rule");
+            let mut alternatives = vec![rule.expr.clone()];
+            alternatives.extend(
+                start_classes
+                    .iter()
+                    .skip(1)
+                    .map(|class| GrammarExpr::non_terminal(names[class].clone())),
+            );
+            let form = normalize(
+                &GrammarExpr::Choice {
+                    ordered: false,
+                    alternatives,
+                },
+                &name_label,
+            )?;
+            rule.expr = form.expr();
+            definitions.insert(
+                *first,
+                format!(
+                    "{}:{}{}",
+                    rule.kind.as_str(),
+                    form.text,
+                    rule_fields(rule, &name_label)
+                ),
+            );
+        }
     }
     let formats: BTreeSet<&str> = entry.iter().map(|source| source.format()).collect();
     grammar.source_format = if formats.len() == 1 {
@@ -521,6 +636,7 @@ pub(super) fn merge_group(
         sources: entry.iter().map(|source| source.id.to_owned()).collect(),
         grammar,
         identities,
+        source_productions,
         decisions,
         nominations,
         alternatives,
@@ -549,8 +665,15 @@ fn refine(
             } else {
                 classes[position].to_string()
             };
+            let concept = node
+                .rule
+                .concept
+                .as_ref()
+                .map_or_else(String::new, |concept| {
+                    format!("|concept:{}", quote(concept))
+                });
             keys.push(format!(
-                "{prefix}|{}:{}{}",
+                "{prefix}|{}:{}{}{concept}",
                 node.rule.kind.as_str(),
                 normalize(&node.rule.expr, &label)?.text,
                 rule_fields(node.rule, &label)

@@ -13,9 +13,9 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    GrammarMergeDecisionKind, GrammarMergeOptions, GrammarMergeResult, GrammarMergeSource,
-    assert_merge_shares, import_antlr, import_pest, merge_grammars, parse_grammar_links,
-    shared_rule_decisions,
+    FeatureParseOptions, GrammarMergeDecisionKind, GrammarMergeOptions, GrammarMergeResult,
+    GrammarMergeSource, assert_merge_shares, import_antlr, import_pest, merge_grammars,
+    parse_grammar_links, parse_with_grammar, shared_rule_decisions,
 };
 use serde_json::Value;
 
@@ -321,4 +321,79 @@ fn the_name_tier_compares_rule_names_without_a_leading_name_of_their_language() 
         &["sharedRulesNonZero"],
         "the name tier strips a leading language name",
     );
+}
+
+#[test]
+fn shared_source_production_union_preserves_syntax_and_distinct_meanings() {
+    let fixture: Value = serde_json::from_str(&read(
+        "parity/fixtures/grammar-source-production-union.json",
+    ))
+    .expect("source union fixture");
+    for case in fixture["cases"].as_array().expect("cases") {
+        let list: Vec<GrammarMergeSource> = case["sources"]
+            .as_array()
+            .expect("sources")
+            .iter()
+            .enumerate()
+            .map(|(precedence, source)| {
+                let grammar = if text(source, "format") == "pest" {
+                    import_pest(text(source, "text")).expect("pest source imports")
+                } else {
+                    parse_grammar_links(text(source, "text")).expect("links source imports")
+                };
+                GrammarMergeSource::new(text(source, "id"), "Example", grammar)
+                    .with_precedence(u32::try_from(precedence).expect("small precedence"))
+            })
+            .collect();
+        let result = merge(&list, true);
+        let group = &result.groups[0];
+        assert_eq!(
+            group.grammar.rules().len(),
+            usize::try_from(case["rules"].as_u64().expect("rule count")).expect("small count")
+        );
+        for source in case["accepted"].as_array().expect("accepted") {
+            assert!(
+                parse_with_grammar(
+                    &group.grammar,
+                    source.as_str().expect("source").as_bytes(),
+                    &FeatureParseOptions::default()
+                )
+                .is_ok(),
+                "{}: {source}",
+                text(case, "name")
+            );
+        }
+        for source in case["rejected"].as_array().expect("rejected") {
+            assert!(
+                parse_with_grammar(
+                    &group.grammar,
+                    source.as_str().expect("source").as_bytes(),
+                    &FeatureParseOptions::default()
+                )
+                .is_err(),
+                "{}: {source}",
+                text(case, "name")
+            );
+        }
+        for pair in case["shared"].as_array().expect("shared") {
+            assert_eq!(
+                group.identities[pair[0].as_str().expect("alias")],
+                group.identities[pair[1].as_str().expect("alias")]
+            );
+        }
+        if let Some(pairs) = case["distinct"].as_array() {
+            for pair in pairs {
+                assert_ne!(
+                    group.identities[pair[0].as_str().expect("alias")],
+                    group.identities[pair[1].as_str().expect("alias")]
+                );
+            }
+        }
+        assert_eq!(
+            group.source_productions.len(),
+            list.iter()
+                .map(|source| source.grammar.rules().len())
+                .sum::<usize>()
+        );
+    }
 }

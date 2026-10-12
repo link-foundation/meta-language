@@ -10,6 +10,9 @@ import {
   missingFeatures,
   renderMatrix,
   startingAt,
+  additionalGrammarTexts,
+  importAdditionalGrammar,
+  compareMergeDecisionReports,
 } from '../scripts/run-grammar-bulk-pipeline.mjs';
 import { GRAMMAR_SOURCES } from '../scripts/build-vendored-grammars.mjs';
 import { compileGrammar, importAntlr } from '../src/index.js';
@@ -150,4 +153,49 @@ test('a merge of several sources that shares no rule is listed as a concatenatio
   assert.deepEqual(missingFeatures(row({ rules: 7, sharedRules: 2 })), []);
   assert.deepEqual(missingFeatures(row({ sources: ['tree-sitter'], rules: 4, sharedRules: 0 })), []);
   observe(['missingFeaturesListed'], 'bulk matrix lists a concatenating merge');
+});
+
+test('the additional official Groovy source is pinned, licensed and read without a download', () => {
+  const [source] = additionalGrammarTexts('Groovy');
+  assert.equal(source.id, 'apache-groovy');
+  assert.equal(source.format, 'antlr');
+  assert.equal(source.license, 'Apache-2.0');
+  assert.match(source.revision, /^[0-9a-f]{40}$/u);
+  assert.equal(source.files.length, 2);
+  assert.ok(source.files.every(({ sha256, bytes }) => /^[0-9a-f]{64}$/u.test(sha256) && bytes > 0));
+  assert.match(source.text, /parser grammar GroovyParser/u);
+  assert.match(source.text, /lexer grammar GroovyLexer/u);
+  assert.ok(source.corpora.length > 0);
+});
+
+test('additional grammar formats become native executable rules and retain import failures', async () => {
+  const grammar = await importAdditionalGrammar({ id: 'official', format: 'bnf', entryPoint: 'document', text: '<document> ::= "official"\n' });
+  assert.ok(compileGrammar(grammar).parseTree('official').tree);
+  await assert.rejects(importAdditionalGrammar({ id: 'unknown', format: 'unavailable', text: '' }), /unsupported additional grammar format unavailable/u);
+  await assert.rejects(importAdditionalGrammar({ id: 'official', format: 'bnf', entryPoint: 'absent', text: '<document> ::= "official"\n' }), /no entry point absent/u);
+  const row = { treeSitter: { stage: 'done' }, additionalSources: [{ id: 'official', stage: 'import', error: 'untranslated action', undefinedRules: ['TOKEN'] }] };
+  assert.deepEqual(missingFeatures(row), [
+    { stage: 'additional official import', feature: 'undefined rules: TOKEN' },
+    { stage: 'additional official import', feature: 'untranslated action' },
+  ]);
+});
+
+test('decision reports explain every lost or changed shared correspondence', () => {
+  const decision = (members, basis, definition = 'normal:lit("x")') => ({ kind: 'reconciled', name: 'value', members, basis, definition });
+  const prior = { languages: [{ language: 'Example', treeSitter: { sha256: 'old' }, merge: {
+    sharedRules: 2, decisions: [decision(['a:value', 'b:value'], 'name-correspondence'), decision(['a:word', 'b:word'], 'name-correspondence')],
+  } }] };
+  const next = { languages: [{ language: 'Example', treeSitter: { sha256: 'new' }, merge: {
+    sharedRules: 1, decisions: [decision(['a:value', 'b:value'], 'structural-correspondence-up-to-lexical-roles'),
+      { kind: 'kept-unique', name: 'word', members: ['a:word'], concept: 'unknown-value' },
+      { kind: 'kept-unique', name: 'other-word', members: ['b:word'], concept: 'null-pointer' }],
+  } }] };
+  const [report] = compareMergeDecisionReports(prior, next);
+  assert.equal(report.baselineAvailable, true);
+  assert.equal(report.delta, -1);
+  assert.deepEqual(report.sourceHashes, { previous: ['old', null], current: ['new', null] });
+  assert.deepEqual(report.changes.map(({ kind }) => kind), ['changed-correspondence', 'removed-correspondence']);
+  assert.match(report.changes[1].reason, /explicit semantic concepts/u);
+  assert.equal(report.changes[1].currentMembers.length, 2);
+  assert.equal(compareMergeDecisionReports(null, next)[0].baselineAvailable, false);
 });

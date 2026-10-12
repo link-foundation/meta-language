@@ -18,15 +18,20 @@
 // are fetched at their pinned revisions into GRAMMAR_BULK_CACHE (default: a
 // directory under the system temporary directory).
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gunzipSync } from 'node:zlib';
 import { Grammar } from '../src/grammar.js';
+import { renderGrammarLinks, parseGrammarLinks } from '../src/grammar-links.js';
+import { createGlobalConceptSpace, globalConceptSpaceToLinks } from '../src/global-concept-space.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
 export const GRAMMARS_V4_SOURCES = 'parity/grammars-v4-sources.json';
+export const ADDITIONAL_GRAMMAR_SOURCES = 'parity/grammar-additional-sources.json';
 const readJson = (file) => JSON.parse(readFileSync(join(root, file), 'utf8'));
 const cacheDir = process.env.GRAMMAR_BULK_CACHE ?? join(tmpdir(), 'meta-language-grammar-bulk');
 
@@ -96,8 +101,45 @@ export function startingAt(grammar, name) {
   return new Grammar(name, grammar.rules, grammar.sourceFormat, grammar.declarations);
 }
 
+/** Verified pinned bytes of each additional official or mature grammar. */
+export function additionalGrammarTexts(language) {
+  return (readJson(ADDITIONAL_GRAMMAR_SOURCES).languages[language] ?? []).map((source) => {
+    if (!/^[0-9a-f]{40}$/u.test(source.revision) || !source.license || !source.repository || !source.files?.length) {
+      throw new Error(`${language}: additional source ${source.id} needs pinned provenance and a license`);
+    }
+    const verified = source.files.map((file) => {
+      const stored = readFileSync(join(root, file.file));
+      const bytes = file.file.endsWith('.gz') ? gunzipSync(stored) : stored;
+      const digest = sha256(bytes);
+      if (digest !== file.sha256 || bytes.length !== file.bytes) throw new Error(`${file.file}: pinned source bytes differ`);
+      return { ...file, text: bytes.toString('utf8') };
+    });
+    const texts = verified.filter(({ role }) => role === undefined || role === 'grammar').map(({ text }) => text);
+    const lexerText = verified.filter(({ role }) => role === 'lexer').map(({ text }) => text).join('\n');
+    if (texts.length === 0) throw new Error(`${source.id}: source record contains no grammar files`);
+    return { ...source, text: texts.join('\n'), ...(lexerText ? { lexerText } : {}) };
+  });
+}
+
+/** Import additional formats through the same native intermediate representation. */
+export async function importAdditionalGrammar(source) {
+  const importers = await import('../src/grammar-importers.js');
+  const importerName = { antlr: 'importAntlr', bnf: 'importBnf', ebnf: 'importEbnf', abnf: 'importAbnf', pest: 'importPest', lark: 'importLark', gbnf: 'importGbnf' }[source.format];
+  let grammar;
+  if (importerName) grammar = importers[importerName](source.text);
+  else if (['yacc', 'bison', 'menhir', 'lex', 'lexer'].includes(source.format)) {
+    const importer = await import('../src/grammar-importers/yacc.js');
+    const method = ['lex', 'lexer'].includes(source.format) ? 'importLex' : 'importYacc';
+    const tokenRules = source.lexerText ? [...importer.importLex(source.lexerText).rules.values()] : undefined;
+    grammar = importer[method](source.text, { ...(tokenRules ? { tokenRules } : {}), ...source.options });
+  } else throw new Error(`unsupported additional grammar format ${source.format}`);
+  if (source.entryPoint && !grammar.rule(source.entryPoint)) throw new Error(`${source.id}: no entry point ${source.entryPoint}`);
+  return startingAt(grammar, source.entryPoint ?? null);
+}
+
 const message = (error) => String(error?.message ?? error).split('\n')[0].slice(0, 300);
 const elapsed = (start) => Math.round(performance.now() - start);
+const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 
 // A rejection as `syntax at 3:1, expected "\n" or "\r"`.
 function rejectionText(rejection) {
@@ -139,13 +181,14 @@ export async function bulkLanguageRow(entry, report = () => {}) {
   const { importTreeSitterNative, renderTreeSitterNative } = await import('../src/grammar-importers/tree-sitter-native.js');
   const { nativeRows } = await import('./native-grammar-rows.mjs');
   const oracle = readJson('parity/fixtures/default-cst-expected.json').languages[entry.name]?.positive ?? null;
-  const row = { language: entry.name, grammars: entry.grammars, treeSitter: { stage: 'source' }, grammarsV4: null, merge: null };
+  const row = { language: entry.name, grammars: entry.grammars, treeSitter: { stage: 'source' }, grammarsV4: null, additionalSources: [], merge: null };
   const grammars = [];
 
   const tree = row.treeSitter;
   try {
     const { origin, text, pinned } = await treeSitterGrammarJson(entry.grammars[0]);
     tree.origin = origin;
+    tree.sha256 = sha256(text);
     tree.stage = 'import';
     const json = JSON.parse(text);
     // A pinned source is imported as the shipped native grammar is, with its
@@ -174,6 +217,7 @@ export async function bulkLanguageRow(entry, report = () => {}) {
     const v4 = await grammarsV4Text(entry.name);
     if (v4) {
       row.grammarsV4 = { files: v4.files, stage: 'import' };
+      row.grammarsV4.sha256 = sha256(v4.text);
       report(row);
       const grammar = startingAt(importAntlr(v4.text), v4.entryPoint);
       row.grammarsV4.start = grammar.startRule()?.name;
@@ -186,9 +230,32 @@ export async function bulkLanguageRow(entry, report = () => {}) {
       row.grammarsV4.stage = 'done';
     }
   } catch (error) {
+    row.grammarsV4 ??= { stage: 'source' };
     row.grammarsV4.error = message(error);
   }
   report(row);
+
+  try {
+    for (const source of additionalGrammarTexts(entry.name)) {
+      const stage = { id: source.id, format: source.format, origin: `${source.repository}@${source.revision}`, sha256: sha256(source.text), files: source.files, stage: 'import' };
+      row.additionalSources.push(stage);
+      report(row);
+      try {
+        const grammar = await importAdditionalGrammar(source);
+        stage.rules = grammar.rules.size;
+        stage.undefinedRules = grammar.undefinedNonterminals();
+        stage.stage = 'compile';
+        grammars.push({ id: source.id, grammar });
+        report(row);
+        compileAndParse(stage, grammar, entry.source, compileGrammar);
+        stage.stage = 'done';
+      } catch (error) { stage.error = message(error); }
+      report(row);
+    }
+  } catch (error) {
+    row.additionalSources.push({ id: 'source-register', stage: 'source', error: message(error) });
+    report(row);
+  }
 
   if (grammars.length > 0) {
     try {
@@ -211,13 +278,76 @@ export async function bulkLanguageRow(entry, report = () => {}) {
         sharedBy: Object.fromEntries(['merged', 'structural', 'name'].map((basis) => [basis, shared.filter(({ kind, basis: how }) =>
           (basis === 'merged' ? kind === 'merged' : kind === 'reconciled' && how.startsWith(basis === 'name' ? 'name' : 'structural'))).length])),
         mergeMs: elapsed(start),
+        fingerprints: merged.groups.map(({ key, fingerprint }) => ({ key, fingerprint })),
+        decisions: merged.groups.flatMap(({ decisions }) => decisions),
+        sourceProductions: merged.groups.flatMap(({ sourceProductions }) => sourceProductions),
       };
+      row.nativeGrammar = renderGrammarLinks(merged.groups[0].grammar);
+      row.conceptSources = grammars.map(({ id, grammar }) => ({
+        id: `${entry.name.replace(/[^A-Za-z0-9_-]/gu, '_')}--${id}`,
+        language: entry.name,
+        grammarLinks: renderGrammarLinks(grammar),
+      }));
+      row.globalConcepts = {
+        copiedOrigins: Object.keys(merged.globalConceptSpace.mappings).length,
+        concepts: merged.globalConceptSpace.concepts.length,
+        proofs: merged.globalConceptSpace.proofs.length,
+        failures: merged.globalConceptSpace.failures,
+        ambiguities: merged.globalConceptSpace.ambiguities,
+      };
+      row.merge.stage = 'compile';
+      report(row);
+      compileAndParse(row.merge, merged.groups[0].grammar, entry.source, compileGrammar);
+      row.merge.stage = 'done';
     } catch (error) {
       row.merge.error = message(error);
     }
   }
   report(row);
   return row;
+}
+
+/** Explain each changed shared correspondence against an earlier CI matrix. */
+export function compareMergeDecisionReports(previous, current) {
+  const earlier = new Map((previous?.languages ?? []).map((row) => [row.language, row]));
+  const shared = (row) => new Map((row.merge?.decisions ?? [])
+    .filter(({ kind }) => kind === 'merged' || kind === 'reconciled')
+    .filter(({ members }) => new Set(members.map((alias) => alias.slice(0, alias.indexOf(':')))).size > 1)
+    .map((decision) => [JSON.stringify([...decision.members].sort()), decision]));
+  return current.languages.map((row) => {
+    const prior = earlier.get(row.language);
+    const old = shared(prior ?? {});
+    const now = shared(row);
+    const changed = [];
+    for (const [key, decision] of old) {
+      const next = now.get(key);
+      if (!next) {
+        const currentMembers = decision.members.map((alias) => ({
+          alias,
+          decisions: (row.merge?.decisions ?? []).filter((candidate) => ['merged', 'reconciled', 'kept-unique'].includes(candidate.kind) && candidate.members.includes(alias)),
+        }));
+        const meanings = new Set(currentMembers.flatMap(({ decisions }) => decisions.map(({ concept }) => concept).filter((concept) => concept !== undefined)));
+        const reason = currentMembers.some(({ decisions }) => decisions.length === 0)
+          ? 'a source rule is absent from the current import; compare its source hashes and import diagnostics'
+          : meanings.size > 1 ? 'explicit semantic concepts now distinguish the source productions'
+            : 'the source productions are now kept in distinct correspondence classes; the current definitions and decisions are retained';
+        changed.push({ kind: 'removed-correspondence', members: decision.members, previous: decision, currentMembers, reason });
+      }
+      else if (decision.kind !== next.kind || decision.basis !== next.basis || decision.definition !== next.definition) {
+        changed.push({ kind: 'changed-correspondence', members: decision.members, previous: decision, current: next, reason: 'the current proof basis or preserved production union changed' });
+      }
+    }
+    for (const [key, decision] of now) if (!old.has(key)) changed.push({ kind: 'added-correspondence', members: decision.members, current: decision });
+    return {
+      language: row.language,
+      baselineAvailable: Array.isArray(prior?.merge?.decisions),
+      previousSharedRules: prior?.merge?.sharedRules ?? null,
+      currentSharedRules: row.merge?.sharedRules ?? null,
+      delta: prior?.merge?.sharedRules === undefined || row.merge?.sharedRules === undefined ? null : row.merge.sharedRules - prior.merge.sharedRules,
+      sourceHashes: { previous: [prior?.treeSitter?.sha256 ?? null, prior?.grammarsV4?.sha256 ?? null], current: [row.treeSitter?.sha256 ?? null, row.grammarsV4?.sha256 ?? null] },
+      changes: changed,
+    };
+  });
 }
 
 /** The features a row shows missing, as `{ stage, feature }`. */
@@ -236,7 +366,15 @@ export function missingFeatures(row) {
     if (v4.timedOut) add(`grammars-v4 ${v4.stage}`, 'timed out');
     if (v4.sample === 'rejected') add('grammars-v4 sample', v4.rejection);
   }
+  for (const source of row.additionalSources ?? []) {
+    const stage = `additional ${source.id}`;
+    if (source.undefinedRules?.length) add(`${stage} import`, `undefined rules: ${source.undefinedRules.join(' ')}`);
+    if (source.error) add(`${stage} ${source.stage}`, source.error);
+    if (source.timedOut) add(`${stage} ${source.stage}`, 'timed out');
+    if (source.sample === 'rejected') add(`${stage} sample`, source.rejection);
+  }
   if (merge?.error) add('merge', merge.error);
+  if (merge?.sample === 'rejected') add('merge sample', merge.rejection);
   // A merge of two or more sources that shares no rule only concatenates them
   // (I195-MERGE-REAL-RECONCILIATION).
   if (merge?.stage === 'done' && merge.sources.length > 1 && merge.sharedRules === 0) {
@@ -265,7 +403,7 @@ function runWorker(entry, { timeout, memory }) {
     child.on('close', (code) => {
       clearTimeout(timer);
       // The stage still running when the process ended is the one that failed.
-      const running = [last.merge, last.grammarsV4, last.treeSitter].find((stage) => stage && stage.stage !== 'done' && !stage.error);
+      const running = [last.merge, ...(last.additionalSources ?? []).slice().reverse(), last.grammarsV4, last.treeSitter].find((stage) => stage && stage.stage !== 'done' && !stage.error);
       if (running && (timedOut || code !== 0)) {
         if (timedOut) running.timedOut = true;
         else running.error = message(stderr.trim().split('\n').filter(Boolean).pop() ?? `exit ${code}`);
@@ -338,7 +476,7 @@ function summarize(rows, mapped) {
 }
 
 /** Runs the pipeline over `only` (default: every language) and writes the matrix. */
-export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout = 300, memory = 3072 }) {
+export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout = 300, memory = 3072, previousMatrix = null }) {
   const languages = bulkLanguages().filter(({ name }) => !only || only.includes(name));
   if (only) for (const name of only) if (!languages.some((entry) => entry.name === name)) throw new Error(`${name} is not an inventory language with a grammar`);
   const rows = new Array(languages.length);
@@ -357,6 +495,25 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   const mapped = languages.filter(({ name }) => v4.languages[name]).length;
   const matrix = { grammarsV4Revision: v4.revision, summary: summarize(rows, mapped), grammarsV4Notes: v4.notes, languages: rows };
   mkdirSync(outDir, { recursive: true });
+  const decisionChanges = compareMergeDecisionReports(previousMatrix, matrix);
+  writeFileSync(join(outDir, 'grammar-merge-decision-changes.json'), `${JSON.stringify(decisionChanges, null, 2)}\n`);
+  const importedSources = rows.flatMap((row) => row.conceptSources ?? []);
+  const conceptSpace = createGlobalConceptSpace(importedSources.map(({ grammarLinks, ...source }) => ({ ...source, grammar: parseGrammarLinks(grammarLinks) })));
+  writeFileSync(join(outDir, 'global-concept-space.json'), `${JSON.stringify(conceptSpace, null, 2)}\n`);
+  writeFileSync(join(outDir, 'global-concept-space.lino'), globalConceptSpaceToLinks(conceptSpace));
+  matrix.globalConceptSpace = {
+    copiedOrigins: Object.keys(conceptSpace.mappings).length,
+    concepts: conceptSpace.concepts.length,
+    proofs: conceptSpace.proofs.length,
+    failures: conceptSpace.failures,
+    ambiguities: conceptSpace.ambiguities,
+  };
+  mkdirSync(join(outDir, 'native-grammars'), { recursive: true });
+  for (const row of rows) {
+    if (row.nativeGrammar) writeFileSync(join(outDir, 'native-grammars', `${row.language.replace(/[^A-Za-z0-9_-]/gu, '_')}.lino`), row.nativeGrammar);
+    delete row.nativeGrammar;
+    delete row.conceptSources;
+  }
   writeFileSync(join(outDir, 'grammar-bulk-matrix.json'), `${JSON.stringify(matrix, null, 2)}\n`);
   writeFileSync(join(outDir, 'grammar-bulk-matrix.md'), renderMatrix(matrix));
   return matrix;
@@ -377,12 +534,14 @@ async function main(args) {
   const outDir = option(args, '--out-dir', null);
   if (!outDir) throw new Error('usage: run-grammar-bulk-pipeline.mjs --out-dir DIR [--only A,B] [--jobs N] [--timeout SECONDS]');
   const only = option(args, '--only', null)?.split(',');
+  const previousFile = option(args, '--previous-matrix', null);
   const matrix = await runBulkPipeline({
     outDir: resolve(outDir),
     only,
     jobs: Number(option(args, '--jobs', 2)),
     timeout: Number(option(args, '--timeout', 300)),
     memory: Number(option(args, '--memory', 3072)),
+    previousMatrix: previousFile === null ? null : JSON.parse(readFileSync(resolve(previousFile), 'utf8')),
   });
   process.stdout.write(`${JSON.stringify(matrix.summary)}\n`);
 }

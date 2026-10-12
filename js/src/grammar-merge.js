@@ -12,6 +12,8 @@ import { DecoratorSet, decoratorSet } from './decorators.js';
 import { GrammarMergeError, compareText, normalize, q } from './grammar-merge-normalize.js';
 import { reconcileClasses } from './grammar-reconcile.js';
 import { mapDeclarations, mapReferences, renamedRule } from './grammar-rename.js';
+import { preserveSourceAlternatives, wrapLexicalProduction } from './grammar-merge-decisions.js';
+import { createGlobalConceptSpace } from './global-concept-space.js';
 
 export { GrammarMergeError } from './grammar-merge-normalize.js';
 
@@ -39,7 +41,10 @@ export const GRAMMAR_MERGE_METHOD = 'recursive-structural-bisimulation';
  * `options.reconcile: true` also unites corresponding rules of different
  * sources that are equivalent up to their lexical roles (see
  * grammar-reconcile.js); each such class is a `reconciled` decision, kept by
- * the definition of its first source.
+ * the union of all of its source productions. Correspondence nominates a
+ * shared grammar rule; it is not an equivalence proof for concept identity.
+ * Every source also contributes to `globalConceptSpace`, across language and
+ * edition boundaries; `globalEquivalences` requires exact one-to-one proofs.
  */
 export function mergeGrammars(sources, options = {}) {
   const prepared = prepareSources(sources);
@@ -78,21 +83,28 @@ export function mergeGrammars(sources, options = {}) {
 
   const alternatives = editionAlternatives(groups);
   const failures = requiredFailures(required, groups);
+  const globalConceptSpace = createGlobalConceptSpace(prepared, {
+    previous: options.previous?.globalConceptSpace,
+    equivalences: options.globalEquivalences,
+    records: options.conceptRecords,
+  });
   return {
-    status: failures.length === 0 ? 'complete' : 'incomplete',
+    status: failures.length === 0 && globalConceptSpace.failures.length === 0 ? 'complete' : 'incomplete',
     groups,
     alternatives,
     failures,
     reused,
     recomputed,
+    globalConceptSpace,
   };
 }
 
 /** Throws when a merge left a required equivalence unresolved. */
 export function assertMergeComplete(result) {
-  if (result.failures.length === 0) return result;
-  const detail = result.failures.map(({ members, reason }) => `${members.join(' = ')} (${reason})`).join('; ');
-  throw new GrammarMergeError(`unresolved required equivalence: ${detail}`, result.failures);
+  const failures = [...result.failures, ...(result.globalConceptSpace?.failures ?? [])];
+  if (failures.length === 0) return result;
+  const detail = failures.map(({ members, reason }) => `${members.join(' = ')} (${reason})`).join('; ');
+  throw new GrammarMergeError(`unresolved required equivalence: ${detail}`, failures);
 }
 
 /**
@@ -203,6 +215,8 @@ function groupFingerprint(entry, required, samples, decorators, reconcile) {
     const label = sourceLabel(source, nameLabel);
     for (const rule of source.grammar.rules.values()) {
       lines.push(`rule ${q(rule.name)} ${rule.kind}:${normalize(rule.expression, label).text}${ruleFields(rule, label)}`);
+      if (rule.concept !== undefined) lines.push(`concept ${q(rule.name)} ${q(rule.concept)}`);
+      if (rule.sourceNames !== undefined) lines.push(`source-names ${q(rule.name)} ${q(rule.sourceNames)}`);
     }
     const declarations = declarationsText(grammarDeclarations(source.grammar));
     if (declarations.length > 0) lines.push(`declarations ${q(source.id)} ${q(declarations)}`);
@@ -283,17 +297,43 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities, decorators,
   const rules = new Map();
   const definitions = new Map();
   const concepts = new Map();
+  const sourceProductions = [];
   for (const id of classOrder) {
-    const representative = members.get(id)[0];
-    const rename = (name) => (representative.source.grammar.rules.has(name)
-      ? names.get(classes[index.get(`${representative.source.id}:${name}`)])
-      : name);
-    const renamed = renamedRule(representative.rule, rename);
-    const form = normalize(renamed.expression, nameLabel);
+    const group = members.get(id);
+    const representative = group[0];
+    const productionRules = group.map((node) => {
+      const rename = (name) => (node.source.grammar.rules.has(name)
+        ? names.get(classes[index.get(`${node.source.id}:${name}`)])
+        : name);
+      const rule = renamedRule(node.rule, rename);
+      sourceProductions.push({
+        alias: node.alias,
+        canonical: names.get(id),
+        sourceFormat: formatOf(node.source),
+        rule: node.rule,
+        renamedRule: rule,
+      });
+      return rule;
+    });
+    const renamed = productionRules[0];
+    const proven = group.every((node) => strict[index.get(node.alias)] === strict[index.get(representative.alias)]);
+    const form = normalize(!preserveSourceAlternatives(proven, group.length > 1) ? renamed.expression : {
+      kind: 'choice',
+      ordered: false,
+      items: productionRules.map((rule) => wrapLexicalProduction(rule.kind === 'token', renamed.kind === 'token')
+        ? { kind: 'token', item: rule.expression }
+        : rule.expression),
+    }, nameLabel);
     // A reconciled rule takes the concept record of the first of its rules
     // that has one, so corresponding rules of every source share it.
     const concept = reconcile ? members.get(id).find((node) => node.rule.concept !== undefined)?.rule.concept : undefined;
-    rules.set(names.get(id), { ...renamed, expression: form.expr, ...(concept === undefined ? {} : { concept }) });
+    const sourceNames = group.length === 1 ? renamed.sourceNames : preservedSourceNames(group);
+    rules.set(names.get(id), {
+      ...renamed,
+      expression: form.expr,
+      ...(concept === undefined ? {} : { concept }),
+      ...(sourceNames === undefined ? {} : { sourceNames }),
+    });
     if (concept !== undefined) concepts.set(id, concept);
     definitions.set(id, `${representative.kind}:${form.text}${ruleFields(renamed, nameLabel)}`);
   }
@@ -307,6 +347,18 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities, decorators,
     if (!start) continue;
     const id = classes[index.get(`${source.id}:${start.name}`)];
     if (!startClasses.includes(id)) startClasses.push(id);
+  }
+  if (reconcile && startClasses.length > 1) {
+    const first = startClasses[0];
+    const name = names.get(first);
+    const root = rules.get(name);
+    const form = normalize({
+      kind: 'choice', ordered: false,
+      items: [root.expression, ...startClasses.slice(1).map((id) => ({ kind: 'ref', name: names.get(id) }))],
+    }, nameLabel);
+    const rule = { ...root, expression: form.expr };
+    rules.set(name, rule);
+    definitions.set(first, `${rule.kind}:${form.text}${ruleFields(rule, nameLabel)}`);
   }
   const formats = new Set(entry.sources.map(formatOf));
   const grammar = new Grammar(
@@ -385,10 +437,23 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities, decorators,
     sources: entry.sources.map(({ id }) => id),
     grammar,
     identities,
+    sourceProductions,
     decisions: decorateDecisions(decisions, decorators),
     nominations,
     alternatives,
   };
+}
+
+// Original aliases and upstream aliases remain available after merging. A
+// correspondence never erases the grammar production that nominated it.
+function preservedSourceNames(nodes) {
+  const aliases = new Map();
+  for (const node of nodes) {
+    for (const alias of [{ source: node.source.id, name: node.name }, ...(node.rule.sourceNames ?? [])]) {
+      aliases.set(`${alias.source}\u0000${alias.name}`, { ...alias });
+    }
+  }
+  return [...aliases.values()];
 }
 
 // The decisions the `merge-decision` decorators leave, with `kind` and
@@ -419,7 +484,8 @@ function refine(nodes, index) {
     const current = classes;
     const keys = nodes.map((node, position) => {
       const label = sourceLabel(node.source, (name) => `#${current[index.get(`${node.source.id}:${name}`)]}`);
-      return `${count === 0 ? '' : current[position]}|${node.kind}:${normalize(node.expression, label).text}${ruleFields(node.rule, label)}`;
+      const concept = node.rule.concept === undefined ? '' : `|concept:${q(node.rule.concept)}`;
+      return `${count === 0 ? '' : current[position]}|${node.kind}:${normalize(node.expression, label).text}${ruleFields(node.rule, label)}${concept}`;
     });
     const ranks = new Map([...new Set(keys)].sort(compareText).map((key, rank) => [key, rank]));
     classes = keys.map((key) => ranks.get(key));
