@@ -17,7 +17,7 @@ The requirements are recorded in the issue #195 ledger as
 ```bash
 node scripts/clean-caches.mjs                  # prune to the disk budget
 node scripts/clean-caches.mjs --full           # remove every cache class
-node scripts/clean-caches.mjs --dry-run --json cache-report.json
+node scripts/clean-caches.mjs --dry-run --report cache-report.lino
 node scripts/clean-caches.mjs --list-classes
 node scripts/clean-caches.mjs --help
 ```
@@ -25,9 +25,15 @@ node scripts/clean-caches.mjs --help
 The script works on the git worktree that contains the current directory.
 Outside a git worktree, or without git, it reports `skipped` and exits 0.
 Every run prints the bytes before, after and reclaimed. Real runs also write
-the full report to `.git/meta-language-cache/last-run.json` and append a
-summary to `.git/meta-language-cache/history.jsonl`, which keeps the last 200
+the full report to `.git/meta-language-cache/last-run.lino` and a scoped
+summary record to `.git/meta-language-cache/history.lino`, which keeps the last 200
 runs.
+
+This path works before npm dependencies are installed: a dependency-free writer
+and strict canonical reader share the package's graph model and validation.
+Existing owned JSON histories migrate to scoped LiNo records on the next real
+cleanup. Leases, `cleanup.lock` and scratch markers retain JSON as a concurrent
+coordination protocol, so older processes can still recognize active owners.
 
 | Option | Meaning |
 | --- | --- |
@@ -42,7 +48,8 @@ runs.
 | `--class ID` | clean only this class (repeatable) |
 | `--no-docker` | skip container resources |
 | `--dry-run` | report without removing anything |
-| `--json FILE` | also write the full report to `FILE` |
+| `--report FILE`, `--lino FILE` | also write the full report as structured Links Notation |
+| `--json FILE` | explicitly request the existing JSON output interface |
 
 The exit status is 0 when the cleanup ran, found another cleanup running
 (`busy`) or was skipped; 2 for invalid arguments; 1 for an internal error.
@@ -55,6 +62,7 @@ required category has no class.
 
 | Class | Covers | What it removes |
 | --- | --- | --- |
+| `external-grammar-downloads` | authenticated temporary upstream grammar assets | `.external-grammars`, kept as a warm cache within the disk budget |
 | `rust-target` | Rust debug, release, test, coverage, incremental, linked examples, doc, package and benchmark output; custom target directories | In every Cargo target directory (`rust/target`, `target`, `rust/web/target`, ignored nested `target` directories, `CARGO_TARGET_DIR` and `--target-dir`): incremental state, linked examples, `llvm-cov-target`, `tmp`, `package`, `criterion`, `nextest` and `*.profraw` are transient. `doc` and the profile directories are the warm cache. The whole target directory goes only in full mode. |
 | `javascript` | JavaScript build caches, test coverage, temporary package consumers | `node_modules/.cache`, `coverage`, `.nyc_output`, and `npm pack` tarballs in the repository root and `js/` |
 | `generated-intermediates` | generated parser and compiler intermediates | `rust/web/pkg`, `_site`, and ignored `build`, `.build`, `node_modules`, `target` directories and object files under the vendored grammars |
@@ -121,7 +129,7 @@ report says what was skipped.
 | --- | --- |
 | every commit | `.githooks/pre-commit`, installed by `node scripts/install-dev-hooks.mjs`, runs `clean-caches.mjs --event pre-commit` on every commit, including documentation-only commits. The `clean-caches` hook of `.pre-commit-config.yaml` does the same for `pre-commit run`. |
 | build, test, coverage, benchmark, package | `node scripts/with-cache-cleanup.mjs --event <event> -- <command>` runs the command and cleans afterwards, also when it fails or is interrupted. |
-| end of the acceptance run | `js/scripts/run-issue-195-evidence.mjs` cleans the worktree for the `acceptance` event and records the measurement in `issue-195-results/artifacts/cache-cleanup.json` (`I195-CACHE-CLEANUP-MEASURED`). |
+| end of the acceptance run | `js/scripts/run-issue-195-evidence.mjs` cleans the worktree for the `acceptance` event and records the measurement in `issue-195-results/artifacts/cache-cleanup.lino` (`I195-CACHE-CLEANUP-MEASURED`). |
 | CI teardown | Every CI job that runs cargo, npm or the acceptance scripts ends with an `if: ${{ !cancelled() }}` step running `clean-caches.mjs --event ci-teardown`, so it runs after failures. The workflows avoid `always()` so a cancelled run stops promptly; a cancelled step's wrapper receives the runner's signal and cleans up before it exits. |
 
 The wrapper holds a lease while the command runs. The first `SIGINT`,
@@ -178,7 +186,7 @@ following holds:
 ## Measured disk use
 
 The measured requirement records the real cleanup at the end of the pre-merge
-evidence run. `issue-195-results/artifacts/cache-cleanup.json` holds the
+evidence run. `issue-195-results/artifacts/cache-cleanup.lino` holds the
 report (`beforeBytes`, `afterBytes`, `reclaimedBytes`, `withinBudget`, the
 removed and kept paths), the number of evidence files, and the checks that no
 evidence file changed and that `git status` is unchanged.

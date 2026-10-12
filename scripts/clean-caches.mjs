@@ -14,6 +14,7 @@ import { pathToFileURL } from 'node:url';
 
 import { CACHE_CLASSES } from './lib/cache-classes.mjs';
 import { runCleanup, summarize, UsageError } from './lib/cache-cleanup.mjs';
+import { structuredDataToLino } from './lib/structured-data-bootstrap.mjs';
 
 const USAGE = `usage: node scripts/clean-caches.mjs [options]
 
@@ -32,13 +33,15 @@ const USAGE = `usage: node scripts/clean-caches.mjs [options]
   --no-docker           skip project-labeled container resources
   --dry-run             report what would be removed without removing it
   --json FILE           also write the full report to FILE
+  --report FILE         also write the full report as structured LiNo
+  --lino FILE           same as --report
   --quiet               print only the one-line summary
   --list-classes        print the cache classes and exit
 `;
 
 export function parseArguments(argv) {
   const options = { targetDirectories: [], resultsDirectories: [], protect: [], classes: [] };
-  const output = { json: null, quiet: false, list: false, help: false };
+  const output = { json: null, report: null, quiet: false, list: false, help: false };
   const value = (index, flag) => {
     const next = argv[index + 1];
     if (next === undefined || next.startsWith('--')) throw new UsageError(`${flag} needs a value`);
@@ -61,6 +64,8 @@ export function parseArguments(argv) {
       case '--no-docker': options.docker = false; break;
       case '--dry-run': options.dryRun = true; break;
       case '--json': output.json = value(index, flag); index += 1; break;
+      case '--report':
+      case '--lino': output.report = value(index, flag); index += 1; break;
       case '--quiet': output.quiet = true; break;
       case '--list-classes': output.list = true; break;
       case '--help': case '-h': output.help = true; break;
@@ -113,6 +118,10 @@ export function main(argv = process.argv.slice(2)) {
   if (output.json) {
     mkdirSync(path.dirname(path.resolve(output.json)), { recursive: true });
     writeFileSync(output.json, `${JSON.stringify(report, null, 2)}\n`);
+  }
+  if (output.report) {
+    mkdirSync(path.dirname(path.resolve(output.report)), { recursive: true });
+    writeFileSync(output.report, structuredDataToLino(report));
   }
   if (output.quiet) console.log(summarize(report));
   else printReport(report);

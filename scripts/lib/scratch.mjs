@@ -18,6 +18,8 @@ const repositoryRoot = realpathSync(path.resolve(path.dirname(fileURLToPath(impo
 /** Creates `<tmp>/<prefix>XXXXXX` with a scratch marker and returns its path. */
 export function makeScratchDirectory(prefix, label = prefix.replace(/-+$/u, '')) {
   const directory = mkdtempSync(path.join(os.tmpdir(), prefix));
+  // This established coordination protocol must remain readable by older
+  // cleanup processes while their scratch owners may still be alive.
   writeFileSync(
     path.join(directory, SCRATCH_MARKER),
     `${JSON.stringify({ root: repositoryRoot, ...processIdentity(), label, createdAt: new Date().toISOString() })}\n`,

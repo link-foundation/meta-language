@@ -16,7 +16,6 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import {
-  appendFileSync,
   existsSync,
   linkSync,
   lstatSync,
@@ -25,6 +24,7 @@ import {
   readFileSync,
   readlinkSync,
   realpathSync,
+  renameSync,
   rmSync,
   statSync,
   statfsSync,
@@ -33,6 +33,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { processIdentity, processIdentityAlive, sameProcess } from './process-identity.mjs';
+import { readBootstrapStructuredDataRecords, structuredDataRecordToLino, structuredDataToLino } from './structured-data-bootstrap.mjs';
 
 import {
   BUILDKIT_BUILDER,
@@ -97,6 +98,8 @@ export function assertNoTraversal(value, flag) {
 export class UsageError extends Error {}
 
 // Leases mark active builds, tests and acceptance runs of this worktree.
+// Their JSON identity is a coordination protocol: older active cleanup
+// processes must recognize these leases and the cleanup.lock owner below.
 
 const leaseDirectory = (stateDir) => path.join(stateDir, 'leases');
 
@@ -367,12 +370,24 @@ function listedProcesses() {
     { encoding: 'utf8', timeout: 20000, windowsHide: true })
     : spawnSync('ps', ['-axww', '-o', 'pid=,ppid=,command='], { encoding: 'utf8', timeout: 20000 });
   if (listing.status !== 0 || typeof listing.stdout !== 'string') return null;
+  // The command line cannot delimit an executable path that contains spaces.
+  // POSIX ps exposes that path separately; keep the whole comm column instead
+  // of inferring the path from the command's first whitespace-delimited word.
+  const executableListing = windows ? null : spawnSync('ps', ['-axww', '-o', 'pid=,comm='],
+    { encoding: 'utf8', timeout: 20000 });
+  const executables = new Map();
+  if (executableListing?.status === 0 && typeof executableListing.stdout === 'string') {
+    for (const line of executableListing.stdout.split(/\r?\n/u)) {
+      const match = /^\s*(\d+)\s+(.*)$/u.exec(line);
+      if (match && path.isAbsolute(match[2].trim())) executables.set(Number(match[1]), real(match[2].trim()));
+    }
+  }
   const processes = [];
   for (const line of listing.stdout.split(/\r?\n/u)) {
     const fields = windows ? line.split('\t') : /^\s*(\d+)\s+(\d+)\s+(.*)$/u.exec(line)?.slice(1);
     if (!fields || fields.length < 3 || !/^\d+$/u.test(fields[0])) continue;
     const command = (windows ? fields.slice(3).join('\t') : fields[2]).trim();
-    const program = windows ? fields[2] : command.split(/\s+/u)[0];
+    const program = windows ? fields[2] : executables.get(Number(fields[0])) ?? command.split(/\s+/u)[0];
     processes.push({
       pid: Number(fields[0]),
       ppid: Number(fields[1]),
@@ -837,8 +852,28 @@ function displayPath(root, candidate) {
 
 function persistReport(stateDir, report) {
   mkdirSync(stateDir, { recursive: true });
-  writeFileSync(path.join(stateDir, 'last-run.json'), `${JSON.stringify(report, null, 2)}\n`);
-  const historyFile = path.join(stateDir, 'history.jsonl');
+  const atomicWrite = (file, text) => {
+    const temporary = `${file}.${randomUUID()}.tmp`;
+    try { writeFileSync(temporary, text, { flag: 'wx' }); renameSync(temporary, file); }
+    finally { rmSync(temporary, { force: true }); }
+  };
+  atomicWrite(path.join(stateDir, 'last-run.lino'), structuredDataToLino(report));
+  const historyFile = path.join(stateDir, 'history.lino');
+  let records = [];
+  if (existsSync(historyFile)) {
+    const source = readFileSync(historyFile, 'utf8');
+    readBootstrapStructuredDataRecords(source, { byteLimit: 16 * MB });
+    records = source.split('\n').filter(Boolean).slice(-HISTORY_LIMIT);
+  }
+  // Read the old owned history once; coordination protocols remain JSON so
+  // older active lease/lock/scratch owners can still be recognized safely.
+  const legacyHistory = path.join(stateDir, 'history.jsonl');
+  if (existsSync(legacyHistory)) {
+    const source = readFileSync(legacyHistory, 'utf8');
+    if (Buffer.byteLength(source) > 16 * MB) throw new Error('legacy cache history exceeds its migration byte limit');
+    records.push(...source.split('\n').filter(Boolean).slice(-HISTORY_LIMIT)
+      .map(line => structuredDataRecordToLino(JSON.parse(line)).trimEnd()));
+  }
   const summary = {
     event: report.event,
     mode: report.effectiveMode ?? report.mode,
@@ -848,9 +883,10 @@ function persistReport(stateDir, report) {
     afterBytes: report.afterBytes,
     reclaimedBytes: report.reclaimedBytes,
   };
-  appendFileSync(historyFile, `${JSON.stringify(summary)}\n`);
-  const lines = readFileSync(historyFile, 'utf8').split('\n').filter(Boolean);
-  if (lines.length > HISTORY_LIMIT) writeFileSync(historyFile, `${lines.slice(-HISTORY_LIMIT).join('\n')}\n`);
+  records.push(structuredDataRecordToLino(summary).trimEnd());
+  atomicWrite(historyFile, `${records.slice(-HISTORY_LIMIT).join('\n')}\n`);
+  rmSync(legacyHistory, { force: true });
+  rmSync(path.join(stateDir, 'last-run.json'), { force: true });
 }
 
 /** Human-readable byte count. */

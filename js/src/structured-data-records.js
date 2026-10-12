@@ -1,31 +1,15 @@
 // Each appended record owns an explicit namespace for every data identity and
 // reference. The record remains ordinary inspectable LiNo, not a text payload.
-import { randomUUID } from 'node:crypto';
 import { StreamParser } from 'links-notation';
-import { decodeCanonicalStatements, encodeLinkStatement } from './lino-serialization.js';
+import { decodeCanonicalStatements } from './lino-serialization.js';
 import { Link, LinkId } from './primitives.js';
-import { StructuredDataNetwork, decodeStructuredDataLinks, encodeStructuredDataLinks } from './structured-data-links.js';
+import { StructuredDataNetwork, decodeStructuredDataLinks } from './structured-data-links.js';
+import { structuredDataGraphCost } from './structured-data-graph.js';
 import { acceptStructuredDataRecordField, acceptStructuredDataRecordShape } from './structured-data-link-rules.js';
 
-const language = 'meta-language structured data';
-const failure = message => { throw new TypeError(`structured data record: ${message}`); };
-const namespacePattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
+import { namespacePattern, failure } from './structured-data-record-model.js';
+export { structuredDataRecordToLino } from './structured-data-records-write.js';
 const encoder = new TextEncoder();
-
-/** Encode one bounded, uniquely scoped record for atomic append. */
-export function structuredDataRecordToLino(value, namespace = randomUUID(), limits = {}) {
-  if (!namespacePattern.test(namespace)) failure('invalid namespace');
-  const { network, root } = encodeStructuredDataLinks(value, limits);
-  const statements = network.links().map(link => {
-    const canonical = encodeLinkStatement(link.id(), link.references(), link.metadata());
-    const metadata = canonical.slice(canonical.indexOf(' (meta:'));
-    return `(${namespace}/${link.id()}:${link.references().map(reference => ` ${namespace}/${reference}`).join('')}${metadata}`;
-  });
-  const text = `(${namespace}/record: ${namespace}/${root} ${statements.join(' ')}`
-    + ' (meta: (t: semantic) (n: 1) (term: structured%20data%20record) (def: 1) (lang: meta-language%20structured%20data)))\n';
-  if (encoder.encode(text).length > (limits.byteLimit ?? 128 * 1024 * 1024)) failure('serialized record byte resource limit exceeded');
-  return text;
-}
 
 function frameValue(frame, namespaces, limits) {
   const namespace = frame.id?.replace(/\/record$/u, '');
@@ -72,19 +56,7 @@ function frameValue(frame, namespaces, limits) {
   for (const declaration of decodeCanonicalStatements(local)) network._links.set(declaration.id, new Link(declaration.id, declaration.references, declaration.metadata));
   const root = LinkId.from(localId(references[0].id));
   const value = decodeStructuredDataLinks(network, root, limits);
-  const costs = new Map();
-  const costOf = id => {
-    const key = id.asU64();
-    if (costs.has(key)) return costs.get(key);
-    const link = network.link(id);
-    const cost = { nodes: 1, bytes: encoder.encode(link.metadata().definition ?? '').length };
-    for (const reference of link.references()) {
-      const child = costOf(reference); cost.nodes += child.nodes; cost.bytes += child.bytes;
-    }
-    costs.set(key, cost);
-    return cost;
-  };
-  return { value, cost: costOf(root) };
+  return { value, cost: structuredDataGraphCost(network, root) };
 }
 
 /** A bounded incremental decoder; a callback receives each complete value. */

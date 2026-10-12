@@ -15,7 +15,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-/** File that marks a temporary directory as scratch owned by this repository. */
+/** JSON coordination marker read by older active cleanup processes too. */
 export const SCRATCH_MARKER = '.meta-language-scratch.json';
 
 /** Label that marks Docker containers, images and volumes this repository owns. */
@@ -181,6 +181,13 @@ function discoverJavaScriptCaches(context) {
   return candidates;
 }
 
+function discoverExternalGrammarCache(context) {
+  const candidate = path.join(context.root, '.external-grammars');
+  return existsSync(candidate)
+    ? [{ path: candidate, tier: 'warm', priority: 40, note: 'authenticated temporary upstream grammar downloads' }]
+    : [];
+}
+
 function discoverGeneratedIntermediates(context) {
   const candidates = [];
   for (const relative of ['rust/web/pkg', '_site']) {
@@ -221,7 +228,7 @@ function discoverProofBuilds(context) {
 
 // The evidence runner keeps its raw execution records in `<results>/work`, so
 // only the scratch trees beside them are candidates; the engine also refuses
-// `.json`, `.jsonl` and `.log` files there.
+// `.lino`, legacy JSON protocol records and `.log` files there.
 function discoverAcceptanceScratch(context) {
   const note = 'acceptance scratch: candidate packages, clean consumers and their Rust targets, downstream clones';
   const candidates = [];
@@ -279,6 +286,13 @@ function discoverTemporaryClones(context) {
  * when a required category has no class.
  */
 export const CACHE_CLASSES = Object.freeze([
+  {
+    id: 'external-grammar-downloads',
+    title: 'Authenticated temporary external grammar downloads',
+    covers: ['external-grammar-downloads'],
+    activeSensitive: true,
+    discover: discoverExternalGrammarCache,
+  },
   {
     id: 'rust-target',
     title: 'Cargo target directories, including custom CARGO_TARGET_DIR and --target-dir',

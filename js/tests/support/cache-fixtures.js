@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import { SCRATCH_MARKER } from '../../../scripts/lib/cache-classes.mjs';
 import { recordIssue195Observations } from './issue-195-observations.js';
+import { readBootstrapStructuredDataLino } from '../../../scripts/lib/structured-data-bootstrap.mjs';
 
 export const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 export const CLEAN_CACHES = path.join(REPOSITORY_ROOT, 'scripts/clean-caches.mjs');
@@ -152,6 +153,7 @@ export function populateCaches(fixture) {
   const { root } = fixture;
   makeCargoTarget(path.join(root, 'rust/target'));
   const caches = {
+    externalGrammars: put(root, '.external-grammars/upstream/parser', 4 * KIB),
     rustTarget: path.join(root, 'rust/target'),
     jsCache: put(root, 'js/node_modules/.cache/babel/entry', 8 * KIB),
     jsCoverage: put(root, 'js/coverage/lcov.info', 4 * KIB),
@@ -205,7 +207,20 @@ export function worktreeState(root) {
 }
 
 export function readJson(file) {
+  if (file.endsWith('.lino')) return readBootstrapStructuredDataLino(readFileSync(file, 'utf8'));
+  const linked = file.replace(/\.json$/u, '.lino');
+  if (linked !== file && existsSync(linked)) return readBootstrapStructuredDataLino(readFileSync(linked, 'utf8'));
   return JSON.parse(readFileSync(file, 'utf8'));
+}
+
+/** Own leaf code and the standard ESM package interface, without npm installs. */
+export function copyBootstrapDataModules(root) {
+  mkdirSync(path.join(root, 'js/src'), { recursive: true });
+  copyFileSync(path.join(REPOSITORY_ROOT, 'js/package.json'), path.join(root, 'js/package.json'));
+  for (const name of ['primitives.js', 'lino-serialization-write.js', 'structured-data-encode.js', 'structured-data-graph.js',
+    'structured-data-model.js', 'structured-data-record-model.js', 'structured-data-records-write.js', 'structured-data-link-rules.js']) {
+    copyFileSync(path.join(REPOSITORY_ROOT, 'js/src', name), path.join(root, 'js/src', name));
+  }
 }
 
 /** Runs a repository script with node and returns the spawnSync result. */

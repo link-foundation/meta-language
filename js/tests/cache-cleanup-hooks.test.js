@@ -10,7 +10,7 @@ import { checkBootstrap } from '../../scripts/check-cache-policy.mjs';
 import { boundedEnvironment, boundedJobs } from '../../scripts/with-cache-cleanup.mjs';
 import {
   INSTALL_DEV_HOOKS, REPOSITORY_ROOT, WITH_CACHE_CLEANUP, git, isolatedGitEnvironment, makeBase, makeCargoTarget,
-  makeRepository, observeCacheCleanup, put, readJson,
+  makeRepository, observeCacheCleanup, put, readJson, copyBootstrapDataModules,
 } from './support/cache-fixtures.js';
 
 const POSIX = process.platform !== 'win32';
@@ -27,6 +27,7 @@ function freshClone(t) {
   mkdirSync(upstream);
   git(upstream, ['init', '-q', '-b', 'main'], env);
   cpSync(path.join(REPOSITORY_ROOT, 'scripts'), path.join(upstream, 'scripts'), { recursive: true });
+  copyBootstrapDataModules(upstream);
   cpSync(path.join(REPOSITORY_ROOT, '.githooks'), path.join(upstream, '.githooks'), { recursive: true });
   cpSync(path.join(REPOSITORY_ROOT, '.gitignore'), path.join(upstream, '.gitignore'));
   chmodSync(path.join(upstream, '.githooks/pre-commit'), 0o755);
@@ -45,7 +46,7 @@ function commit(cwd, env, message) {
 }
 
 function lastRun(clone) {
-  const file = path.join(clone, '.git/meta-language-cache/last-run.json');
+  const file = path.join(clone, '.git/meta-language-cache/last-run.lino');
   return existsSync(file) ? readJson(file) : null;
 }
 
