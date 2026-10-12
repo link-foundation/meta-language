@@ -204,6 +204,11 @@ impl Encoder {
         if let Ok(scalar) = String::from_utf16(text) {
             self.scalar("string value", Some(&scalar), depth)
         } else {
+            // The code-unit representation has a child level even when this
+            // string already has an interned identity at a shallower position.
+            if depth >= self.limits.depth_limit {
+                return Err(fail("the value exceeds its structural resource limit"));
+            }
             let key = (
                 "Unicode code unit string".to_owned(),
                 Some(format!("{text:?}")),

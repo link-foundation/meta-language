@@ -56,6 +56,33 @@ fn expected() -> StructuredDataValue {
     ])
 }
 
+#[test]
+fn reused_unpaired_code_unit_strings_obey_depth_at_every_position() {
+    let text = StructuredDataValue::String(vec![0xd800]);
+    let mut boundary = text.clone();
+    for _ in 0..253 {
+        boundary = StructuredDataValue::Array(vec![boundary]);
+    }
+    let accepted = StructuredDataValue::Array(vec![text.clone(), boundary]);
+    let graph = encode_structured_data_links_ordered(&accepted).unwrap();
+    assert_eq!(
+        decode_structured_data_links_ordered(&graph.network, graph.root).unwrap(),
+        accepted
+    );
+    let mut deep = text.clone();
+    for _ in 0..254 {
+        deep = StructuredDataValue::Array(vec![deep]);
+    }
+    // The shallow first occurrence interns its code-unit graph. At the second
+    // occurrence the string is at depth 256, so its unit would be at 257.
+    let value = StructuredDataValue::Array(vec![text, deep]);
+    assert!(
+        encode_structured_data_links_ordered(&value)
+            .unwrap_err()
+            .contains("resource limit")
+    );
+}
+
 fn metadata(term: &str, definition: Option<&str>) -> LinkMetadata {
     let metadata = LinkMetadata::new()
         .with_link_type(LinkType::Semantic)
