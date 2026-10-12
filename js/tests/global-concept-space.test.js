@@ -22,6 +22,7 @@ test('every imported language contributes all productions before proven deduplic
   const input = sources();
   const before = input.map(({ grammar }) => JSON.stringify([...grammar.rules]));
   const space = build(input);
+  assert.deepEqual(space, fixture.expectedSpace);
   assert.equal(space.sources.length, 2);
   assert.equal(Object.keys(space.mappings).length, 6);
   assert.equal(space.concepts.flatMap(({ origins }) => origins).length, 6);
@@ -136,6 +137,7 @@ test('global identities are reproducible, incremental and stable under reorderin
 test('the global links representation retains definitions, source aliases and proof edges', () => {
   const space = build();
   const links = globalConceptSpaceToLinks(space);
+  assert.equal(links, fixture.expectedLinks);
   const parsed = new Parser({ comments: false }).parse(links);
   assert.ok(parsed.length > space.concepts.length);
   assert.match(links, /\(concept-origin .*first%3Aroot/);

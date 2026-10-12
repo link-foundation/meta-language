@@ -1,34 +1,679 @@
 {
   "records": [
-    { "id": "fixture.recursive-expression", "definition": "A finite recursive sequence of the same letter, with one optional nested continuation.", "constraints": ["The continuation binds to the same production."], "sourceAliases": [{"source":"first","name":"root"},{"source":"second","name":"page"}] },
-    { "id": "fixture.letter", "definition": "The single Greek lower case alpha scalar.", "constraints": ["Exactly one Unicode scalar is consumed."], "sourceAliases": [{"source":"first","name":"atom"},{"source":"second","name":"letter"}] }
+    {
+      "id": "fixture.recursive-expression",
+      "definition": "A finite recursive sequence of the same letter, with one optional nested continuation.",
+      "constraints": [
+        "The continuation binds to the same production."
+      ],
+      "sourceAliases": [
+        {
+          "source": "first",
+          "name": "root"
+        },
+        {
+          "source": "second",
+          "name": "page"
+        }
+      ]
+    },
+    {
+      "id": "fixture.letter",
+      "definition": "The single Greek lower case alpha scalar.",
+      "constraints": [
+        "Exactly one Unicode scalar is consumed."
+      ],
+      "sourceAliases": [
+        {
+          "source": "first",
+          "name": "atom"
+        },
+        {
+          "source": "second",
+          "name": "letter"
+        }
+      ]
+    }
   ],
   "sources": [
     {
-      "id": "first", "language": "first-language", "edition": "1",
-      "grammar": {"schemaVersion":1,"start":"root","sourceFormat":"bnf","rules":[
-        {"name":"root","kind":"normal","concept":"fixture.recursive-expression","expression":{"kind":"seq","items":[{"kind":"ref","name":"atom"},{"kind":"optional","item":{"kind":"ref","name":"root"}}]},"sourceNames":[{"source":"upstream:first","name":"original_root"}]},
-        {"name":"atom","kind":"normal","concept":"fixture.letter","expression":{"kind":"literal","value":"α"}},
-        {"name":"unique","kind":"normal","expression":{"kind":"literal","value":"!"}}
-      ]}
+      "id": "first",
+      "language": "first-language",
+      "edition": "1",
+      "grammar": {
+        "schemaVersion": 1,
+        "start": "root",
+        "sourceFormat": "bnf",
+        "rules": [
+          {
+            "name": "root",
+            "kind": "normal",
+            "concept": "fixture.recursive-expression",
+            "expression": {
+              "kind": "seq",
+              "items": [
+                {
+                  "kind": "ref",
+                  "name": "atom"
+                },
+                {
+                  "kind": "optional",
+                  "item": {
+                    "kind": "ref",
+                    "name": "root"
+                  }
+                }
+              ]
+            },
+            "sourceNames": [
+              {
+                "source": "upstream:first",
+                "name": "original_root"
+              }
+            ]
+          },
+          {
+            "name": "atom",
+            "kind": "normal",
+            "concept": "fixture.letter",
+            "expression": {
+              "kind": "literal",
+              "value": "α"
+            }
+          },
+          {
+            "name": "unique",
+            "kind": "normal",
+            "expression": {
+              "kind": "literal",
+              "value": "!"
+            }
+          }
+        ]
+      }
     },
     {
-      "id": "second", "language": "second-language", "edition": "2",
-      "grammar": {"schemaVersion":1,"start":"page","sourceFormat":"ebnf","rules":[
-        {"name":"page","kind":"normal","concept":"fixture.recursive-expression","expression":{"kind":"seq","items":[{"kind":"ref","name":"letter"},{"kind":"optional","item":{"kind":"ref","name":"page"}}]},"sourceNames":[{"source":"upstream:second","name":"original_page"}]},
-        {"name":"letter","kind":"normal","concept":"fixture.letter","expression":{"kind":"literal","value":"α"}},
-        {"name":"unique","kind":"normal","expression":{"kind":"literal","value":"?"}}
-      ]}
+      "id": "second",
+      "language": "second-language",
+      "edition": "2",
+      "grammar": {
+        "schemaVersion": 1,
+        "start": "page",
+        "sourceFormat": "ebnf",
+        "rules": [
+          {
+            "name": "page",
+            "kind": "normal",
+            "concept": "fixture.recursive-expression",
+            "expression": {
+              "kind": "seq",
+              "items": [
+                {
+                  "kind": "ref",
+                  "name": "letter"
+                },
+                {
+                  "kind": "optional",
+                  "item": {
+                    "kind": "ref",
+                    "name": "page"
+                  }
+                }
+              ]
+            },
+            "sourceNames": [
+              {
+                "source": "upstream:second",
+                "name": "original_page"
+              }
+            ]
+          },
+          {
+            "name": "letter",
+            "kind": "normal",
+            "concept": "fixture.letter",
+            "expression": {
+              "kind": "literal",
+              "value": "α"
+            }
+          },
+          {
+            "name": "unique",
+            "kind": "normal",
+            "expression": {
+              "kind": "literal",
+              "value": "?"
+            }
+          }
+        ]
+      }
     }
   ],
-  "equivalences": [["first:root","second:page"],["first:atom","second:letter"]],
+  "equivalences": [
+    [
+      "first:root",
+      "second:page"
+    ],
+    [
+      "first:atom",
+      "second:letter"
+    ]
+  ],
   "proofCases": [
-    {"name":"recursive-renaming","shapes":["seq(letter,optional(self))","literal-alpha","seq(letter,optional(self))","literal-alpha"],"meanings":["recursive-expression","letter","recursive-expression","letter"],"offsets":[0,2,2,4,4],"edges":[1,0,3,2],"first":[0,1],"second":[2,3],"expected":true},
-    {"name":"same-syntax-distinct-meaning","shapes":["literal-null","literal-null"],"meanings":["null-pointer","unknown-value"],"offsets":[0,0,0],"edges":[],"first":[0],"second":[1],"expected":false},
-    {"name":"missing-recursive-correspondence","shapes":["recursive","recursive"],"meanings":["sequence","sequence"],"offsets":[0,1,2],"edges":[0,0],"first":[0],"second":[1],"expected":false},
-    {"name":"non-bijective-correspondence","shapes":["root","leaf","root","leaf","leaf"],"meanings":["sequence","letter","sequence","letter","letter"],"offsets":[0,2,2,4,4,4],"edges":[1,1,3,4],"first":[0,1,1],"second":[2,3,4],"expected":false},
-    {"name":"incomplete-witness","shapes":["root","leaf","root","leaf"],"meanings":["sequence","letter","sequence","letter"],"offsets":[0,1,1,2,2],"edges":[1,3],"first":[0],"second":[2],"expected":false},
-    {"name":"invalid-offset","shapes":["leaf","leaf"],"meanings":["letter","letter"],"offsets":[0,0,9],"edges":[],"first":[0],"second":[1],"expected":false},
-    {"name":"empty-witness","shapes":[],"meanings":[],"offsets":[0],"edges":[],"first":[],"second":[],"expected":false}
-  ]
+    {
+      "name": "recursive-renaming",
+      "shapes": [
+        "seq(letter,optional(self))",
+        "literal-alpha",
+        "seq(letter,optional(self))",
+        "literal-alpha"
+      ],
+      "meanings": [
+        "recursive-expression",
+        "letter",
+        "recursive-expression",
+        "letter"
+      ],
+      "offsets": [
+        0,
+        2,
+        2,
+        4,
+        4
+      ],
+      "edges": [
+        1,
+        0,
+        3,
+        2
+      ],
+      "first": [
+        0,
+        1
+      ],
+      "second": [
+        2,
+        3
+      ],
+      "expected": true
+    },
+    {
+      "name": "same-syntax-distinct-meaning",
+      "shapes": [
+        "literal-null",
+        "literal-null"
+      ],
+      "meanings": [
+        "null-pointer",
+        "unknown-value"
+      ],
+      "offsets": [
+        0,
+        0,
+        0
+      ],
+      "edges": [],
+      "first": [
+        0
+      ],
+      "second": [
+        1
+      ],
+      "expected": false
+    },
+    {
+      "name": "missing-recursive-correspondence",
+      "shapes": [
+        "recursive",
+        "recursive"
+      ],
+      "meanings": [
+        "sequence",
+        "sequence"
+      ],
+      "offsets": [
+        0,
+        1,
+        2
+      ],
+      "edges": [
+        0,
+        0
+      ],
+      "first": [
+        0
+      ],
+      "second": [
+        1
+      ],
+      "expected": false
+    },
+    {
+      "name": "non-bijective-correspondence",
+      "shapes": [
+        "root",
+        "leaf",
+        "root",
+        "leaf",
+        "leaf"
+      ],
+      "meanings": [
+        "sequence",
+        "letter",
+        "sequence",
+        "letter",
+        "letter"
+      ],
+      "offsets": [
+        0,
+        2,
+        2,
+        4,
+        4,
+        4
+      ],
+      "edges": [
+        1,
+        1,
+        3,
+        4
+      ],
+      "first": [
+        0,
+        1,
+        1
+      ],
+      "second": [
+        2,
+        3,
+        4
+      ],
+      "expected": false
+    },
+    {
+      "name": "incomplete-witness",
+      "shapes": [
+        "root",
+        "leaf",
+        "root",
+        "leaf"
+      ],
+      "meanings": [
+        "sequence",
+        "letter",
+        "sequence",
+        "letter"
+      ],
+      "offsets": [
+        0,
+        1,
+        1,
+        2,
+        2
+      ],
+      "edges": [
+        1,
+        3
+      ],
+      "first": [
+        0
+      ],
+      "second": [
+        2
+      ],
+      "expected": false
+    },
+    {
+      "name": "invalid-offset",
+      "shapes": [
+        "leaf",
+        "leaf"
+      ],
+      "meanings": [
+        "letter",
+        "letter"
+      ],
+      "offsets": [
+        0,
+        0,
+        9
+      ],
+      "edges": [],
+      "first": [
+        0
+      ],
+      "second": [
+        1
+      ],
+      "expected": false
+    },
+    {
+      "name": "empty-witness",
+      "shapes": [],
+      "meanings": [],
+      "offsets": [
+        0
+      ],
+      "edges": [],
+      "first": [],
+      "second": [],
+      "expected": false
+    }
+  ],
+  "expectedSpace": {
+    "schemaVersion": 1,
+    "sources": [
+      {
+        "id": "first",
+        "language": "first-language",
+        "edition": "1",
+        "start": "root",
+        "ruleOrder": [
+          "root",
+          "atom",
+          "unique"
+        ],
+        "context": {
+          "matching": null,
+          "settling": null,
+          "imports": [],
+          "modes": [],
+          "extras": [],
+          "conflicts": [],
+          "precedences": [],
+          "macros": [],
+          "scanners": []
+        }
+      },
+      {
+        "id": "second",
+        "language": "second-language",
+        "edition": "2",
+        "start": "page",
+        "ruleOrder": [
+          "page",
+          "letter",
+          "unique"
+        ],
+        "context": {
+          "matching": null,
+          "settling": null,
+          "imports": [],
+          "modes": [],
+          "extras": [],
+          "conflicts": [],
+          "precedences": [],
+          "macros": [],
+          "scanners": []
+        }
+      }
+    ],
+    "concepts": [
+      {
+        "id": "global-concept.b96efc76e03da250156db44fcf288e2ecc520a35a6b421ba4cc63d6dcdc5ba78",
+        "origins": [
+          {
+            "alias": "first:atom",
+            "source": "first",
+            "language": "first-language",
+            "edition": "1",
+            "rule": "atom",
+            "concept": "fixture.letter",
+            "sourceNames": []
+          },
+          {
+            "alias": "second:letter",
+            "source": "second",
+            "language": "second-language",
+            "edition": "2",
+            "rule": "letter",
+            "concept": "fixture.letter",
+            "sourceNames": []
+          }
+        ],
+        "definition": {
+          "kind": "normal",
+          "expression": {
+            "kind": "literal",
+            "value": "α"
+          }
+        },
+        "definitions": [
+          {
+            "origin": "first:atom",
+            "definition": {
+              "kind": "normal",
+              "expression": {
+                "kind": "literal",
+                "value": "α"
+              }
+            }
+          },
+          {
+            "origin": "second:letter",
+            "definition": {
+              "kind": "normal",
+              "expression": {
+                "kind": "literal",
+                "value": "α"
+              }
+            }
+          }
+        ],
+        "proofs": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "global-concept.1b51303f0e8297bc16bdd2a278e56606c84b504a782a72874217141bd276121f",
+        "origins": [
+          {
+            "alias": "first:root",
+            "source": "first",
+            "language": "first-language",
+            "edition": "1",
+            "rule": "root",
+            "concept": "fixture.recursive-expression",
+            "sourceNames": [
+              {
+                "source": "upstream:first",
+                "name": "original_root"
+              }
+            ]
+          },
+          {
+            "alias": "second:page",
+            "source": "second",
+            "language": "second-language",
+            "edition": "2",
+            "rule": "page",
+            "concept": "fixture.recursive-expression",
+            "sourceNames": [
+              {
+                "source": "upstream:second",
+                "name": "original_page"
+              }
+            ]
+          }
+        ],
+        "definition": {
+          "kind": "normal",
+          "expression": {
+            "kind": "seq",
+            "items": [
+              {
+                "kind": "ref",
+                "name": "atom"
+              },
+              {
+                "kind": "optional",
+                "item": {
+                  "kind": "ref",
+                  "name": "root"
+                }
+              }
+            ]
+          }
+        },
+        "definitions": [
+          {
+            "origin": "first:root",
+            "definition": {
+              "kind": "normal",
+              "expression": {
+                "kind": "seq",
+                "items": [
+                  {
+                    "kind": "ref",
+                    "name": "atom"
+                  },
+                  {
+                    "kind": "optional",
+                    "item": {
+                      "kind": "ref",
+                      "name": "root"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "origin": "second:page",
+            "definition": {
+              "kind": "normal",
+              "expression": {
+                "kind": "seq",
+                "items": [
+                  {
+                    "kind": "ref",
+                    "name": "letter"
+                  },
+                  {
+                    "kind": "optional",
+                    "item": {
+                      "kind": "ref",
+                      "name": "page"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "proofs": [
+          1
+        ]
+      },
+      {
+        "id": "global-concept.da0e3b30a4f2a0311a5808fdc4afe9265188b2f0b56e35ffcb06594650e8d8b9",
+        "origins": [
+          {
+            "alias": "first:unique",
+            "source": "first",
+            "language": "first-language",
+            "edition": "1",
+            "rule": "unique",
+            "concept": null,
+            "sourceNames": []
+          }
+        ],
+        "definition": {
+          "kind": "normal",
+          "expression": {
+            "kind": "literal",
+            "value": "!"
+          }
+        },
+        "definitions": [
+          {
+            "origin": "first:unique",
+            "definition": {
+              "kind": "normal",
+              "expression": {
+                "kind": "literal",
+                "value": "!"
+              }
+            }
+          }
+        ],
+        "proofs": []
+      },
+      {
+        "id": "global-concept.08a7ba0703568db65ce50a447f8d0b07fe9465b649db69cace52c85b26bdb8c9",
+        "origins": [
+          {
+            "alias": "second:unique",
+            "source": "second",
+            "language": "second-language",
+            "edition": "2",
+            "rule": "unique",
+            "concept": null,
+            "sourceNames": []
+          }
+        ],
+        "definition": {
+          "kind": "normal",
+          "expression": {
+            "kind": "literal",
+            "value": "?"
+          }
+        },
+        "definitions": [
+          {
+            "origin": "second:unique",
+            "definition": {
+              "kind": "normal",
+              "expression": {
+                "kind": "literal",
+                "value": "?"
+              }
+            }
+          }
+        ],
+        "proofs": []
+      }
+    ],
+    "mappings": {
+      "first:atom": "global-concept.b96efc76e03da250156db44fcf288e2ecc520a35a6b421ba4cc63d6dcdc5ba78",
+      "second:letter": "global-concept.b96efc76e03da250156db44fcf288e2ecc520a35a6b421ba4cc63d6dcdc5ba78",
+      "first:root": "global-concept.1b51303f0e8297bc16bdd2a278e56606c84b504a782a72874217141bd276121f",
+      "second:page": "global-concept.1b51303f0e8297bc16bdd2a278e56606c84b504a782a72874217141bd276121f",
+      "first:unique": "global-concept.da0e3b30a4f2a0311a5808fdc4afe9265188b2f0b56e35ffcb06594650e8d8b9",
+      "second:unique": "global-concept.08a7ba0703568db65ce50a447f8d0b07fe9465b649db69cace52c85b26bdb8c9"
+    },
+    "proofs": [
+      {
+        "method": "recursive-structural-bijection",
+        "first": "first:atom",
+        "second": "second:letter",
+        "correspondence": [
+          [
+            "first:atom",
+            "second:letter"
+          ]
+        ]
+      },
+      {
+        "method": "recursive-structural-bijection",
+        "first": "first:root",
+        "second": "second:page",
+        "correspondence": [
+          [
+            "first:root",
+            "second:page"
+          ],
+          [
+            "first:atom",
+            "second:letter"
+          ]
+        ]
+      }
+    ],
+    "failures": [],
+    "ambiguities": [],
+    "redirects": {}
+  },
+  "expectedLinks": "(global-concept-space (schema-version 1))\n(grammar-origin first first-language 1 (start defined root) (rule-order root atom unique))\n(grammar-origin second second-language 2 (start defined page) (rule-order page letter unique))\n(global-concept global-concept.b96efc76e03da250156db44fcf288e2ecc520a35a6b421ba4cc63d6dcdc5ba78)\n(concept-origin global-concept.b96efc76e03da250156db44fcf288e2ecc520a35a6b421ba4cc63d6dcdc5ba78 first%3Aatom (source first) (language first-language) (edition 1) (rule atom) (meaning fixture.letter))\n(concept-origin global-concept.b96efc76e03da250156db44fcf288e2ecc520a35a6b421ba4cc63d6dcdc5ba78 second%3Aletter (source second) (language second-language) (edition 2) (rule letter) (meaning fixture.letter))\n(concept-definition global-concept.b96efc76e03da250156db44fcf288e2ecc520a35a6b421ba4cc63d6dcdc5ba78 first%3Aatom normal (literal %CE%B1) )\n(concept-definition global-concept.b96efc76e03da250156db44fcf288e2ecc520a35a6b421ba4cc63d6dcdc5ba78 second%3Aletter normal (literal %CE%B1) )\n(global-concept global-concept.1b51303f0e8297bc16bdd2a278e56606c84b504a782a72874217141bd276121f)\n(concept-origin global-concept.1b51303f0e8297bc16bdd2a278e56606c84b504a782a72874217141bd276121f first%3Aroot (source first) (language first-language) (edition 1) (rule root) (meaning fixture.recursive-expression))\n(source-alias first%3Aroot upstream%3Afirst original_root)\n(concept-origin global-concept.1b51303f0e8297bc16bdd2a278e56606c84b504a782a72874217141bd276121f second%3Apage (source second) (language second-language) (edition 2) (rule page) (meaning fixture.recursive-expression))\n(source-alias second%3Apage upstream%3Asecond original_page)\n(concept-definition global-concept.1b51303f0e8297bc16bdd2a278e56606c84b504a782a72874217141bd276121f first%3Aroot normal (seq (ref atom) (optional (ref root))) )\n(concept-definition global-concept.1b51303f0e8297bc16bdd2a278e56606c84b504a782a72874217141bd276121f second%3Apage normal (seq (ref letter) (optional (ref page))) )\n(global-concept global-concept.da0e3b30a4f2a0311a5808fdc4afe9265188b2f0b56e35ffcb06594650e8d8b9)\n(concept-origin global-concept.da0e3b30a4f2a0311a5808fdc4afe9265188b2f0b56e35ffcb06594650e8d8b9 first%3Aunique (source first) (language first-language) (edition 1) (rule unique))\n(concept-definition global-concept.da0e3b30a4f2a0311a5808fdc4afe9265188b2f0b56e35ffcb06594650e8d8b9 first%3Aunique normal (literal %21) )\n(global-concept global-concept.08a7ba0703568db65ce50a447f8d0b07fe9465b649db69cace52c85b26bdb8c9)\n(concept-origin global-concept.08a7ba0703568db65ce50a447f8d0b07fe9465b649db69cace52c85b26bdb8c9 second%3Aunique (source second) (language second-language) (edition 2) (rule unique))\n(concept-definition global-concept.08a7ba0703568db65ce50a447f8d0b07fe9465b649db69cace52c85b26bdb8c9 second%3Aunique normal (literal %3F) )\n(concept-proof recursive-structural-bijection first%3Aatom second%3Aletter (correspondence (first%3Aatom second%3Aletter)))\n(concept-proof recursive-structural-bijection first%3Aroot second%3Apage (correspondence (first%3Aroot second%3Apage) (first%3Aatom second%3Aletter)))\n"
 }
