@@ -51,7 +51,7 @@
       "raw_string_content"
     ]
   },
-  "rules": 284,
+  "rules": 289,
   "keywords": [
     "Cdecl",
     "Fastcall",
@@ -606,6 +606,26 @@
     {
       "source": "preproc_undef",
       "native": "preprocessor_removal_directive"
+    },
+    {
+      "source": "_constant_pattern_value_body",
+      "native": "constant_pattern_value_body"
+    },
+    {
+      "source": "_constant_pattern_test_expression",
+      "native": "constant_pattern_test_expression"
+    },
+    {
+      "source": "_nullable_type_test_expression",
+      "native": "null_capable_type_test_expression"
+    },
+    {
+      "source": "_qualified_name_type_pattern",
+      "native": "qualified_name_type_pattern"
+    },
+    {
+      "source": "_qualified_name_disjunction_pattern",
+      "native": "qualified_name_disjunction_pattern"
     }
   ],
   "expandedWords": [
@@ -666,7 +686,7 @@
         "concept": "grammar.comment"
       }
     ],
-    "generated": 274
+    "generated": 279
   },
   "sourceTransforms": [
     {
@@ -677,6 +697,259 @@
         "expression"
       ],
       "reason": "Prefer the explicit anonymous-object member initializer over parsing its equals sign as an assignment expression, preserving both complete source alternatives."
+    },
+    {
+      "family": "split-character-separator",
+      "pattern": "[\\s\\u00A0\\uFEFF\\u3000]+",
+      "count": 1,
+      "reason": "Partition repeated whitespace into character separators so required directive newlines are claimed before indentation; trivia repetition preserves all accepted whitespace and source bytes."
+    },
+    {
+      "family": "ordered-variants",
+      "rule": "_top_level_item",
+      "variants": [
+        "_top_level_item_no_statement",
+        "global_statement"
+      ],
+      "reason": "Select a complete top-level declaration or directive before its statement wrapper; preserve both source alternatives and the statement fallback."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "non_lvalue_expression"
+      ],
+      "symbol": "collection_expression",
+      "value": 1,
+      "reason": "Prefer a complete collection value over the competing bracketed element-binding alias while preserving all source alternatives and conditional-access binding contexts."
+    },
+    {
+      "family": "optional-prefix-preference",
+      "rule": "attribute_argument",
+      "field": "name",
+      "count": 1,
+      "reason": "Prefer a complete named attribute argument prefix over interpreting its equals sign as an assignment; preserve positional and equality arguments."
+    },
+    {
+      "family": "alias-dynamic-precedence",
+      "rules": [
+        "_parameter_type_with_modifiers"
+      ],
+      "alias": "modifier",
+      "value": 1,
+      "count": 1,
+      "reason": "Prefer parameter modifier aliases over absorbing ref and scoped into the type, retaining unmodified contextual identifier alternatives."
+    },
+    {
+      "family": "repetition-member-precedence",
+      "rule": "_class_declaration_initializer",
+      "count": 1,
+      "precedences": [
+        {
+          "symbol": "parameter_list",
+          "value": -1
+        },
+        {
+          "symbol": "type_parameter_list",
+          "value": -1
+        }
+      ],
+      "reason": "Prefer continuation of an existing base type and its constructor arguments over splitting the same suffix into an additional class header type or parameter list. Preserve every original header production."
+    },
+    {
+      "family": "nested-complete-choice",
+      "rule": "switch_section",
+      "count": 1,
+      "alternatives": [
+        "expression",
+        "prefix:pattern"
+      ],
+      "preferred": "prefix:pattern",
+      "boundary": ":",
+      "reason": "The pinned parser selects a complete pattern and optional guard before a switch label colon. Retain the expression alternative when the complete pattern does not match."
+    },
+    {
+      "family": "symbol-pattern-exclusion",
+      "rule": "binary_expression",
+      "symbol": "expression",
+      "occurrence": 1,
+      "count": 1,
+      "sourceOperator": "&&",
+      "sourceField": "left",
+      "pattern": "\\([\\s\\u00A0\\uFEFF\\u3000]*@?(\\p{XID_Start}|_|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})(\\p{XID_Continue}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*([\\s\\u00A0\\uFEFF\\u3000]*\\.[\\s\\u00A0\\uFEFF\\u3000]*@?(\\p{XID_Start}|_|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})(\\p{XID_Continue}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*)*[\\s\\u00A0\\uFEFF\\u3000]*\\)[\\s\\u00A0\\uFEFF\\u3000]*&&",
+      "reason": "At the first source binary variant, a parenthesized simple or qualified type followed by doubled address-of tokens selects the existing cast and unary productions. Other conjunction operands and all other binary operators retain their source alternatives."
+    },
+    {
+      "family": "symbol-dynamic-precedence",
+      "rules": [
+        "_simple_name"
+      ],
+      "symbol": "generic_name",
+      "value": 1,
+      "reason": "Prefer a complete generic name in expression position over splitting its type argument delimiters into relational operators; retain identifier and ordinary relational alternatives."
+    },
+    {
+      "family": "rule-context-copy",
+      "rule": "constant_pattern",
+      "helper": "_constant_pattern_value_body",
+      "reason": "Copy the original constant alternatives into a private preferred context; retain the full source production as fallback and restrict primitive keywords only in value-name interpretations."
+    },
+    {
+      "family": "symbol-keyword-exclusion",
+      "rule": "_constant_pattern_value_body",
+      "symbol": "_simple_name",
+      "keywordRules": [
+        "predefined_type"
+      ],
+      "wordRule": "_identifier_token",
+      "count": 1,
+      "reason": "Keep primitive type keywords out of bare constant names while preserving primitive-qualified member access and every non-keyword identifier.",
+      "keywordPatterns": true
+    },
+    {
+      "family": "symbol-pattern-exclusion",
+      "symbol": "binary_expression",
+      "count": 1,
+      "reason": "Preserve a primitive type test before a binary operator while retaining constant binary expressions that begin with ordinary names or primitive-qualified member access; the keyword alternatives match the pinned predefined type rule.",
+      "pattern": "(?:bool|byte|char|decimal|double|float|int|long|object|sbyte|short|string|uint|ulong|ushort|nint|nuint|void)(?![\\p{XID_Continue}])(?![\\s\\u00A0\\uFEFF\\u3000]*\\.)",
+      "rule": "_constant_pattern_value_body"
+    },
+    {
+      "family": "symbol-complete-context",
+      "count": 1,
+      "rules": [
+        "expression"
+      ],
+      "symbol": "non_lvalue_expression",
+      "wholeRule": true,
+      "preferredSymbol": "is_pattern_expression",
+      "preferredField": "pattern",
+      "fieldSymbol": "_constant_pattern_value_body",
+      "helper": "_constant_pattern_test_expression",
+      "boundaries": [
+        ";",
+        "?",
+        ")",
+        ",",
+        "]",
+        "}"
+      ],
+      "reason": "Prefer a complete constant-pattern type test at an enclosing expression boundary; retain primitive and structured type tests and every original expression alternative.",
+      "fieldAlias": "constant_pattern"
+    },
+    {
+      "family": "rule-dynamic-precedence",
+      "value": 1,
+      "reason": "Retain the complete constant-pattern interpretation in nested expression contexts when equivalent recursive derivations also expose the type-test fallback.",
+      "rule": "_constant_pattern_test_expression"
+    },
+    {
+      "family": "symbol-complete-context",
+      "rules": [
+        "parenthesized_expression"
+      ],
+      "symbol": "non_lvalue_expression",
+      "preferredSymbol": "_constant_pattern_test_expression",
+      "alias": "is_pattern_expression",
+      "boundaries": [
+        ")"
+      ],
+      "count": 1,
+      "reason": "Preserve a complete constant type-test pattern inside a parenthesized expression before following member access, while retaining every original parenthesized expression."
+    },
+    {
+      "family": "symbol-complete-context",
+      "rules": [
+        "expression"
+      ],
+      "symbol": "non_lvalue_expression",
+      "wholeRule": true,
+      "preferredSymbol": "is_expression",
+      "preferredField": "right",
+      "fieldSymbol": "nullable_type",
+      "helper": "_nullable_type_test_expression",
+      "boundaries": [
+        ";",
+        ")",
+        ",",
+        "]",
+        "}"
+      ],
+      "count": 1,
+      "reason": "Preserve a complete nullable type test before an enclosing expression boundary instead of committing to its question mark as an incomplete conditional operator; retain every original expression alternative."
+    },
+    {
+      "family": "symbol-complete-context",
+      "count": 1,
+      "rules": [
+        "subpattern"
+      ],
+      "symbol": "pattern",
+      "preferredSymbol": "type_pattern",
+      "preferredField": "type",
+      "fieldSymbol": "qualified_name",
+      "helper": "_qualified_name_type_pattern",
+      "boundaries": [
+        ")",
+        ","
+      ],
+      "reason": "Preserve the qualified type interpretation of a complete positional subpattern without changing constant interpretations in ordinary expression patterns."
+    },
+    {
+      "family": "symbol-complete-context",
+      "count": 1,
+      "rules": [
+        "subpattern"
+      ],
+      "symbol": "pattern",
+      "preferredSymbol": "or_pattern",
+      "preferredField": "left",
+      "fieldSymbol": "_qualified_name_type_pattern",
+      "fieldAlias": "type_pattern",
+      "helper": "_qualified_name_disjunction_pattern",
+      "boundaries": [
+        ")",
+        ","
+      ],
+      "reason": "Keep a qualified type on the left of a complete positional disjunction while retaining the original right-hand pattern and all fallback interpretations."
+    },
+    {
+      "family": "symbol-complete-context",
+      "count": 1,
+      "rules": [
+        "pattern"
+      ],
+      "symbol": "recursive_pattern",
+      "preferredSymbol": "parenthesized_pattern",
+      "boundaries": [
+        ";",
+        ")",
+        ",",
+        "}",
+        "?",
+        "or",
+        "and"
+      ],
+      "reason": "Prefer complete parenthesized patterns over a competing positional-clause interpretation while retaining recursive patterns and following variable designations."
+    },
+    {
+      "family": "symbol-complete-context",
+      "count": 1,
+      "rules": [
+        "pattern"
+      ],
+      "symbol": "recursive_pattern",
+      "preferredSymbol": "_parenthesized_pattern_with_designation",
+      "alias": "recursive_pattern",
+      "boundaries": [
+        ";",
+        ")",
+        ",",
+        "}",
+        "?",
+        "or",
+        "and"
+      ],
+      "reason": "Preserve the original designated-parenthesis alias and its child layout before falling back to recursive positional patterns."
     }
   ],
   "approximations": [],

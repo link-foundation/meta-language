@@ -4936,6 +4936,11 @@
     "preprocessor_warning": "preproc_warning",
     "preprocessor_definition_directive": "preproc_define",
     "preprocessor_removal_directive": "preproc_undef",
+    "constant_pattern_value_body": "_constant_pattern_value_body",
+    "constant_pattern_test_expression": "_constant_pattern_test_expression",
+    "null_capable_type_test_expression": "_nullable_type_test_expression",
+    "qualified_name_type_pattern": "_qualified_name_type_pattern",
+    "qualified_name_disjunction_pattern": "_qualified_name_disjunction_pattern",
     "optional_semicolon": "_optional_semi"
   },
   "oracle": "crates.io tree-sitter-c-sharp 0.23.5",

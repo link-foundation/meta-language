@@ -9,6 +9,30 @@ const GRAMMAR: &str = include_str!("../../../parity/grammars/native/csharp.lino"
 const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/csharp-profile.json");
 const CORPUS: &str =
     include_str!("../../../parity/fixtures/native-grammars/csharp-profile-corpus.json");
+const PATTERN_REGRESSIONS: &str =
+    include_str!("../../../parity/fixtures/native-grammars/csharp-pattern-ci.json");
+
+#[test]
+fn csharp_profile_pattern_ci_sources_and_neighboring_contexts_match_shared_snapshots() {
+    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let regressions: Value = serde_json::from_str(PATTERN_REGRESSIONS).unwrap();
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&fixture);
+    let language = tree_sitter_c_sharp::LANGUAGE.into();
+    assert_eq!(cases(&regressions, "cases").len(), 5);
+    assert_eq!(cases(&regressions, "controls").len(), 19);
+    for case in cases(&regressions, "cases")
+        .iter()
+        .chain(cases(&regressions, "controls").iter())
+    {
+        let (expected, recovers) = oracle_rows(&language, source(case));
+        assert!(!recovers, "{}", source(case));
+        assert_eq!(Value::Array(expected), case["rows"], "{}", source(case));
+        let tree = parse(&parser, source(case)).expect("native accepts unambiguous pattern source");
+        assert_eq!(Value::Array(rows.rows(&tree, source(case))), case["rows"]);
+        assert_eq!(rebuilt(&tree), source(case));
+    }
+}
 
 #[test]
 fn csharp_profile_focused_trees_match_the_independent_oracle() {
