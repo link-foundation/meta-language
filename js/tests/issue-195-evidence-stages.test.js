@@ -197,7 +197,8 @@ test('the evidence commands run with bounded build parallelism unless the caller
   assert.doesNotMatch(runner, /Promise\.all\(\s*\[?\s*(?:run|produce)/u);
   // The Rust suite builds only the default features, and each JavaScript test group is its own process.
   assert.doesNotMatch(runner, /--all-features/u);
-  assert.match(runner, /'scripts\/test-groups\.mjs', '--run', group\]/u);
+  assert.match(read('js/scripts/issue-195-javascript-suite-partitions.mjs'), /'scripts\/test-groups\.mjs', '--run', group\]/u);
+  assert.match(runner, /javascriptSuiteCommandArguments\(group, shard\)/u);
   observe('I195-RESOURCE-BOUNDED-SEQUENTIAL-EVIDENCE',
     ['stagesRunSequentially', 'boundedBuildEnvironment', 'defaultFeaturesOnly', 'testGroupsRunSeparately'],
     'the evidence commands run with bounded build parallelism unless the caller set it');

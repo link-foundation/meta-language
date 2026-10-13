@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { lineCoverage, mergeLcov, renderLcov } from '../../scripts/merge-lcov.mjs';
-import { partitionTests } from '../scripts/test-groups.mjs';
+import { partitionGroupFiles, partitionTests, testFiles, TEST_GROUPS } from '../scripts/test-groups.mjs';
 import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -149,7 +149,41 @@ test('both self-translation acceptance suites install Clippy for the generated R
     const setup = acceptance.get(id).steps.find((step) => /dtolnay\/rust-toolchain@/u.test(step.text));
     assert.ok(setup, `${id} sets up Rust`);
     assert.match(setup.text, /components:.*\bclippy\b/u, `${id} installs clippy-driver`);
+    assert.match(setup.text, /components:.*\brustfmt\b/u, `${id} installs the formatter used by generated-source freshness checks`);
   }
+});
+
+test('the JavaScript evidence matrix retains every group and file once with disjoint outputs under the original deadline', () => {
+  const acceptance = jobs('ci.yml');
+  const suite = acceptance.get('javascript-suite');
+  const entries = [...suite.header.matchAll(/- group: ([a-z-]+)\n\s+shard: ([0-9]+\/[0-9]+)\n\s+partition: ([0-9]+-of-[0-9]+)/gu)]
+    .map(([, group, shard, partition]) => ({ group, shard, partition }));
+  const expected = Object.keys(TEST_GROUPS).flatMap(group => {
+    const count = group === 'grammar-native' ? 3 : group === 'conformance' ? 2 : 1;
+    return Array.from({ length: count }, (_, index) => ({ group, shard: `${index + 1}/${count}`, partition: `${index + 1}-of-${count}` }));
+  });
+  assert.deepEqual(entries, expected);
+  const files = partitionTests(testFiles()).groups;
+  const executed = entries.flatMap(({ group, shard }) => partitionGroupFiles(files[group], shard));
+  assert.equal(new Set(executed).size, executed.length);
+  assert.deepEqual(executed.sort(), Object.values(files).flat().sort());
+  assert.match(suite.header, /timeout-minutes: 60\n/u);
+  assert.match(suite.header, /fail-fast: false\n/u);
+  assert.match(suite.header, /group: issue-195-stage-\$\{\{ github.ref \}\}-javascript-suite-\$\{\{ matrix.group \}\}-\$\{\{ matrix.partition \}\}/u);
+  const execute = suite.steps.find(step => step.name === 'Produce the stage evidence');
+  assert.match(execute.text, /JAVASCRIPT_GROUP: \$\{\{ matrix.group \}\}/u);
+  assert.match(execute.text, /JAVASCRIPT_SHARD: \$\{\{ matrix.shard \}\}/u);
+  assert.match(execute.run, /--javascript-group "\$JAVASCRIPT_GROUP"/u);
+  assert.match(execute.run, /--javascript-shard "\$JAVASCRIPT_SHARD"/u);
+  const upload = suite.steps.find(step => step.name === 'Upload the stage outputs');
+  assert.ok(upload.afterFailure);
+  assert.match(upload.text, /name: issue-195-stage-javascript-suite-\$\{\{ matrix.group \}\}-\$\{\{ matrix.partition \}\}-\$\{\{ github.sha \}\}/u);
+  assert.match(upload.text, /issue-195-results\/work\/stage-\*/u);
+  assert.ok(needs(acceptance.get('rust-suite')).includes('javascript-suite'));
+  assert.match(condition(acceptance.get('rust-suite')), /needs.javascript-suite.result == 'success'/u);
+  const download = acceptance.get('acceptance').steps.find(step => /pattern: issue-195-stage-/u.test(step.text));
+  assert.match(download.text, /pattern: issue-195-stage-\*-\$\{\{ github.sha \}\}/u);
+  assert.match(download.text, /merge-multiple: true/u);
 });
 
 test('the live RML head audit runs on main as a non-blocking post-merge report', () => {

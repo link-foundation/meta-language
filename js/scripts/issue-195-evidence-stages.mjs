@@ -16,6 +16,8 @@
 // its JavaScript counterpart) and never reported because that stage failed
 // adds no error of its own: the blocking failure's one error names it.
 
+import { mergeJavaScriptSuitePartitions } from './issue-195-javascript-suite-partitions.mjs';
+
 export const RUNTIMES = Object.freeze(['javascript', 'rust']);
 export const NATIVE_TARGETS = Object.freeze(['JavaScript', 'Rust', 'Lean', 'Rocq']);
 
@@ -24,7 +26,7 @@ export const DECLARED_TOOLCHAINS = Object.freeze({ rustc: '1.99.0', lean: '4.34.
 
 const NATIVE_TOOLS = Object.freeze({ JavaScript: 'node', Rust: 'rustc', Lean: 'lean', Rocq: 'rocq' });
 // The suites' tests run the native toolchains on emitted translations.
-const SUITE_TOOLS = Object.freeze(['node', 'npm', 'rustc', 'cargo', 'lean', 'rocq']);
+const SUITE_TOOLS = Object.freeze(['node', 'npm', 'rustc', 'rustfmt', 'cargo', 'lean', 'rocq']);
 const CARGO_TOOLS = Object.freeze(['node', 'npm', 'rustc', 'cargo']);
 
 /** Bounds for every build and test command the evidence run spawns, unless the caller set them. */
@@ -134,7 +136,8 @@ export function bundleRecords(...records) {
  * produced it, and one error per stage that failed or did not report; a stage
  * skipped because the stage it runs after failed joins that stage's error.
  */
-export function mergeStageRecords({ checkpoint, commit, records }) {
+export function mergeStageRecords({ checkpoint, commit, records, javascriptTestGroups }) {
+  records = mergeJavaScriptSuitePartitions({ checkpoint, commit, records, testGroups: javascriptTestGroups });
   const groups = new Map();
   const stageErrors = [];
   const fail = (stage, error) => stageErrors.push({ stage, error });

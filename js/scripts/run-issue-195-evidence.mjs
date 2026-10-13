@@ -39,8 +39,10 @@ import {
 import { verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
 import { PARITY_ARTIFACT_FILES } from './issue-195-parity-evidence.mjs';
 import { readProjectData, readProjectFileBytes, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
-import { readStructuredDataRecords, structuredDataRecordToLino } from '../src/structured-data-records.js';
-import { TEST_GROUPS } from './test-groups.mjs';
+import { structuredDataRecordToLino } from '../src/structured-data-records.js';
+import { readEvidenceCommandFailureTail } from './issue-195-evidence-command-logs.mjs';
+import { readEvidenceStageExecutionRecords } from './issue-195-evidence-execution-records.mjs';
+import { javascriptSuiteCommandArguments, javascriptSuiteGroupEntries, javascriptSuiteSelection } from './issue-195-javascript-suite-partitions.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const commit = option('--commit', process.env.GITHUB_SHA ?? git(['rev-parse', 'HEAD']));
@@ -84,7 +86,9 @@ if (prepareCandidatesDirectory) {
 const stageName = option('--stage', null);
 const aggregateOnly = process.argv.includes('--aggregate');
 const stages = evidenceStages(checkpoint);
-const selectedStage = stageName ? evidenceStage(checkpoint, stageName) : null;
+const baseStage = stageName ? evidenceStage(checkpoint, stageName) : null;
+const javascriptPartition = javascriptSuiteSelection(process.argv.slice(2), stageName, aggregateOnly);
+const selectedStage = javascriptPartition ? { ...baseStage, name: javascriptPartition.name, javascriptPartition } : baseStage;
 if (selectedStage && aggregateOnly) throw new Error('--stage and --aggregate cannot be combined');
 
 await prepareDirectories();
@@ -149,6 +153,7 @@ async function runStage(stage) {
     stage: stage.name,
     commit,
     checkpoint,
+    ...(stage.javascriptPartition ? { javascriptPartition: stage.javascriptPartition } : {}),
     toolchainVersions,
     groups: Object.fromEntries(groups),
     error,
@@ -164,8 +169,8 @@ async function runStage(stage) {
 }
 
 async function produceStage(stage, failures) {
-  if (stage.name === 'javascript-suite') {
-    return new Map([['suite:javascript', await runJavaScriptSuite(failures)]]);
+  if (stage.name === 'javascript-suite' || stage.javascriptPartition) {
+    return new Map([['suite:javascript', await runJavaScriptSuite(failures, stage.javascriptPartition)]]);
   }
   if (stage.name === 'rust-suite') return new Map([['suite:rust', await runRustSuite(failures)]]);
   if (stage.name === 'runtime-parity') {
@@ -189,14 +194,15 @@ async function produceStage(stage, failures) {
 }
 
 /** Runs each JavaScript test group in its own process, one group after another. */
-async function runJavaScriptSuite(failures) {
+async function runJavaScriptSuite(failures, selection) {
   const records = [];
-  for (const group of Object.keys(TEST_GROUPS)) {
+  for (const { group, shard, label } of javascriptSuiteGroupEntries(selection)) {
+    const args = javascriptSuiteCommandArguments(group, shard);
     const record = await runCommand(
-      `suite-javascript-${group}`,
+      label,
       'node',
-      ['scripts/test-groups.mjs', '--run', group],
-      { cwd: path.join(root, 'js'), allowFailure: true },
+      args,
+      { cwd: path.join(root, 'js'), env: { ...boundedEnvironment(process.env), TEST_GROUP_SHARD: shard ?? '1/1' }, allowFailure: true },
     );
     if (!record.ok) failures.push(`JavaScript test group ${group} failed; see ${record.artifacts[0]}`);
     records.push(record);
@@ -332,53 +338,11 @@ async function aggregateStages() {
  * error of the stage that wrote it.
  */
 async function readStageExecutionRecords(records, stageErrors) {
-  const known = new Set(plan.flatMap(({ cells }) => cells.map(({ cell }) => cell.testId)));
-  const seen = new Set();
-  const accepted = [];
-  for (const stage of stages) {
-    if (!records.has(stage.name)) continue;
-    let contents;
-    try {
-      contents = await readFile(path.join(resultsDirectory, stageFiles(stage.name).observations), 'utf8');
-    } catch (error) {
-      if (error.code === 'ENOENT') continue;
-      throw error;
-    }
-    const problems = [];
-    const namespaces = new Set();
-    contents.split(/\r?\n/u).forEach((line, index) => {
-      if (!line) return;
-      let record;
-      try {
-        const namespace = /^\(([^/\s]+)\/record:/u.exec(line)?.[1];
-        if (namespaces.has(namespace)) throw new Error('duplicate record namespace');
-        const decoded = readStructuredDataRecords(line);
-        if (decoded.length !== 1) throw new Error('one complete record per line is required');
-        namespaces.add(namespace);
-        [record] = decoded;
-      } catch (error) {
-        problems.push(`invalid execution record at line ${index + 1}: ${error.message}`);
-        return;
-      }
-      if (!record || typeof record !== 'object') {
-        problems.push(`execution record at line ${index + 1} is not an object`);
-        return;
-      }
-      if (!known.has(record.testId)) {
-        problems.push(`execution record has unknown testId ${record.testId}`);
-        return;
-      }
-      const key = `${record.testId}\u0000${record.assertionId}\u0000${record.fixtureId}`;
-      if (seen.has(key)) {
-        problems.push(`duplicate execution record ${key.replaceAll('\u0000', ' ')}`);
-        return;
-      }
-      seen.add(key);
-      accepted.push(record);
-    });
-    if (problems.length > 0) stageErrors.push({ stage: stage.name, error: problems.join('; ') });
-  }
-  return accepted;
+  return readEvidenceStageExecutionRecords({
+    records, stageErrors, resultsDirectory,
+    stageNames: stages.map(stage => stage.name),
+    knownTestIds: plan.flatMap(({ cells }) => cells.map(({ cell }) => cell.testId)),
+  });
 }
 
 function option(name, fallback) {
@@ -901,6 +865,9 @@ async function runCommand(
   const rendered = renderCommand(command, args);
   await handle.write(`command: ${rendered}\ncwd: ${cwd}\n\n`);
   console.log(`issue-195 evidence: ${label}`);
+  const started = Date.now();
+  const progress = setInterval(() => console.log(`issue-195 evidence: ${label} running (${Math.floor((Date.now() - started) / 1000)}s); output: ${relative(logPath)}`), 30_000);
+  progress.unref();
   let code;
   try {
     code = await new Promise((resolve, reject) => {
@@ -910,7 +877,11 @@ async function runCommand(
     });
     await handle.write(`\nexit: ${code}\n`);
   } finally {
+    clearInterval(progress);
     await handle.close();
+  }
+  if (code !== 0) {
+    console.error(`issue-195 evidence: actual failure log tail from ${relative(logPath)}\n${await readEvidenceCommandFailureTail(logPath)}`);
   }
   if (code !== 0 && !allowFailure) {
     throw new Error(`${label} failed with exit ${code}; see ${relative(logPath)}`);
