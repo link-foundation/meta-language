@@ -57,6 +57,13 @@ const dataToolingFixtures = {
   'language-grammar-inventory': 'parity/language-grammar-inventory.lino',
 };
 
+const runtimeEntryPoints = {
+  'I195-GRAMMAR-INFERENCE-FORMAL-CONCEPT-INTEGRATION': {
+    javascript: ['js/src/discovered-concept-links.js'],
+    rust: ['rust/src/discovered_concept_links.rs'],
+  },
+};
+
 function rows(sourceKey, fixture, specification, area, declarations, tooling = false) {
   return declarations.map(([id, construct, expectedBehavior, assertions]) => ({
     id, construct, expectedBehavior, assertions, sourceKey, fixture,
@@ -65,7 +72,7 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
     } : {}),
     specification, area,
-    ...(tooling ? { tooling: dataTooling[id]?.tooling ?? null } : { javascript: null, rust: null }),
+    ...(tooling ? { tooling: dataTooling[id]?.tooling ?? null } : (runtimeEntryPoints[id] ?? { javascript: null, rust: null })),
     ...(dataTooling[id] ? {
       additionalFixtures: [
         { id: 'project-data-tooling-contract', path: 'parity/fixtures/project-data-tooling-contract.lino' },

@@ -19,6 +19,9 @@ export * from './language-catalog.js';
 export * from './concept-records.js';
 export * from './concept-distinctions.js';
 export * from './global-concept-space.js';
+export { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
+export { importResourceDescriptionGraph, decodeResourceDescriptionGraph,
+  mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from './resource-description-graphs.js';
 export { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
 export { encodeFormalConceptDefinition, readFormalConceptDefinition, proveFormalConceptEquivalence, verifyFormalConceptEquivalence } from './formal-concept-definition.js';
 export * from './decorators.js';

@@ -128,6 +128,10 @@ before projecting immutable references and standard boxes into the value core.
 It checks the actual owner and consumed pointer layer under that selected model;
 complete trait, borrow, lifetime and destructor semantics remain separate
 obligations.
+Scoped lifetime-only function headers now retain ordered input binders and
+immutable reference spelling. Reference-bearing results with named binders still
+require an instantiation and outlives proof before admission. Type and constant
+generics, lifetime bounds and mutable references remain separate obligations.
 Its shared schema gives abbreviated host fields readable English
 relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported
@@ -136,6 +140,9 @@ certificate carries both premises and every node pair; counterfeit or missing
 premises cannot authorize sharing. These conditional operational witnesses do
 not provide deep formal definitions for every catalog concept or prove arbitrary
 source-language equivalence.
+Formal relation comparison also validates the actual label self-points and
+anonymous relation edges under their declared interpretation. Matching spelling
+cannot hide a different namespace, definition or identity premise.
 Linked text conversion rejects unrepresented array operands and undeclared
 Rust floating-point display before admitting a formal definition. Existing
 record definitions remain available; their admission does not verify complete
@@ -188,17 +195,33 @@ Full RDF and OWL representation, import, conversion and merging are required
 through the same links and concept space, retaining formal axioms, selected
 semantic profiles, identities, provenance, conflicts and unresolved obligations.
 Their semantics remain declared model choices.
+The current structured RDF graph primitive represents terms, statements,
+source-qualified blank nodes, occurrences, archived source graphs and checked
+exact-term merge witnesses as inspectable links. Its selected RDF 1.1 model
+retains literal lexical forms and original language-tag provenance; it does not
+normalize datatype values. Full concrete-syntax import and export, unsupported
+identifier forms and OWL reasoning remain required work.
 
 A shipped prepared snapshot is a starting point. Users can reconstruct the full
 CST and concept space dynamically through link-cli or text and binary Links
 Notation, then use the shared algorithms to extend meta-language with other
 languages. Reload retains complete trees and formal definitions rather than a
 token list or an opaque source envelope. Existing catalog behavior remains intact.
+Full reconstruction records latency and resource use on pinned inputs, with the
+representation, input size and execution environment attached to the measurements.
+Lazy loading and token-only envelopes do not count as a measured complete rebuild;
+the qualitative speed requirement does not invent a numeric deadline.
 Automatic grammar inference and discovery have the separately tracked
 [issue #224](https://github.com/link-foundation/meta-language/issues/224), with
 modern primary research, concrete algorithms, pinned assumptions and independent
 accepted and rejected observations. The issue records scope; it is not inference
 implementation evidence.
+The discovery integration adapter accepts explicit discovered grammar outputs
+and copies their actual recursive formal archives into the global concept graph.
+Reload preserves registered term lookups, rechecks identity certificates and
+retains unresolved alternatives and source provenance. This primitive integrates
+discovery outputs; it does not supply the complete inference engine or formal
+definitions for every catalog concept.
 The lexical inference, state merging, context-free discovery, structural priors,
 active learning and minimization already present in the Rust inference modules
 and their closed issues are audited and extended, with matching JavaScript

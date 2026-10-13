@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 62 | 61 | 1 | 0 |
+| Generators | 70 | 69 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 23 | 0 | 0 | 23 |
+| Published artifact contents | 24 | 0 | 0 | 24 |
 
 ## JavaScript engines
 
@@ -543,9 +543,13 @@ they are.
 | `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-csharp-pattern-fixture.mjs` | `js/scripts/generate-csharp-pattern-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-default-cst-expectations.mjs` | `js/scripts/generate-default-cst-expectations.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-discovered-concept-fixture.mjs` | `js/scripts/generate-discovered-concept-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-discovered-concept-rules.mjs` | `js/scripts/generate-discovered-concept-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-elm-candidate-fixtures.mjs` | `js/scripts/generate-elm-candidate-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-export-parity.mjs` | `js/scripts/generate-export-parity.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-formal-concept-fixtures.mjs` | `js/scripts/generate-formal-concept-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-formal-relation-fixtures.mjs` | `js/scripts/generate-formal-relation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-formal-relation-rules.mjs` | `js/scripts/generate-formal-relation-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-frontend-rule-styles.mjs` | `js/scripts/generate-frontend-rule-styles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-frontend-rules.mjs` | `js/scripts/generate-frontend-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-global-concept-rule-styles.mjs` | `js/scripts/generate-global-concept-rule-styles.mjs` | `script` |  | derived | current |  |
@@ -565,11 +569,14 @@ they are.
 | `js/scripts/generate-product-source-rules.mjs` | `js/scripts/generate-product-source-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-product-unit-fixture.mjs` | `js/scripts/generate-product-unit-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-project-data-tooling-fixture.mjs` | `js/scripts/generate-project-data-tooling-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-fixture.mjs` | `js/scripts/generate-resource-description-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-rules.mjs` | `js/scripts/generate-resource-description-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-pattern-fixture.mjs` | `js/scripts/generate-ruby-pattern-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-runtime.mjs` | `js/scripts/generate-rust-array-runtime.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-indirection-rules.mjs` | `js/scripts/generate-rust-indirection-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-product-rules.mjs` | `js/scripts/generate-rust-product-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `script` |  | derived | current |  |
@@ -585,6 +592,7 @@ they are.
 | `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-links-fixtures.mjs` | `js/scripts/generate-typed-program-links-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-documentation-fixtures.mjs` | `js/scripts/generate-typescript-documentation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
@@ -670,6 +678,7 @@ they are.
 | `src/data/native-text-grammar.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-text-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |

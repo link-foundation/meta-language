@@ -8,6 +8,8 @@ mod concept_ontology;
 mod concept_records;
 pub mod configuration;
 pub mod decorators;
+mod discovered_concept_links;
+mod discovered_concept_rules;
 pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
@@ -47,6 +49,8 @@ pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
 mod reconstruction;
+mod resource_description_graphs;
+mod resource_description_rules;
 pub mod rust_codec;
 mod self_translation;
 mod semantic_translation;
@@ -94,6 +98,10 @@ pub use configuration::{
 pub use decorators::{
     DECORATOR_LEVELS, Decorator, DecoratorAction, DecoratorError, DecoratorLevel, DecoratorRecord,
     DecoratorSet, decorator_record, record_field,
+};
+pub use discovered_concept_links::{
+    DiscoveredConceptGraph, DiscoveredConceptLinks, create_discovered_concept_links,
+    read_discovered_concept_links,
 };
 pub use document_formatting::{
     BlockNode, CROSS_FORMAT_CONCEPT_IDS, CROSS_FORMAT_CONCEPTS, DOCUMENT_FORMATS,
@@ -282,6 +290,11 @@ pub use query_plan::{
     LoweredQueryPlan, QUERY_PLAN_VERSION, QueryAggregate, QueryAggregateFunction,
     QueryAuthorization, QueryComparisonOperator, QueryFilter, QueryOperation, QueryOrder,
     QueryPlan, QuerySortDirection, QuerySourceEvidence, QueryValue,
+};
+pub use resource_description_graphs::{
+    ResourceDescriptionLinks, decode_resource_description_graph,
+    decode_resource_description_graph_with_limit, import_resource_description_graph,
+    merge_resource_description_graphs, verify_resource_description_graph_witnesses,
 };
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,

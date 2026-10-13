@@ -471,6 +471,22 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-global-concept-rules.mjs --check
 
+      - name: Check the generated discovery integration rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-discovered-concept-rules.mjs --check
+
+      - name: Check shared discovered concept graph fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-discovered-concept-fixture.mjs --check
+
+      - name: Check the generated Resource Description Framework rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-resource-description-rules.mjs --check
+
+      - name: Check shared Resource Description Framework graph fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-resource-description-fixture.mjs --check
+
       - name: Check the generated grammar merge decisions against JavaScript
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-grammar-merge-decisions.mjs --check
@@ -498,6 +514,14 @@ jobs:
       - name: Check the generated Rust source indirection rules against JavaScript
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-rust-indirection-rules.mjs --check
+
+      - name: Check shared scoped Rust lifetime fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-function-lifetime-fixtures.mjs --check
+
+      - name: Check shared TypeScript documentation pattern fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
 
       - name: Check the generated Rust source product rules against JavaScript
         if: ${{ !cancelled() }}

@@ -371,6 +371,57 @@ const nativeRuleConcepts = (text) => [...text.matchAll(/^\(rule ([a-z0-9_]+) [^\
  */
 export const NAME_INVENTORIES = Object.freeze([
   {
+    inventory: 'resource description graph roles',
+    files: ['js/src/data/resource-description-schema.json', 'rust/src/data/resource-description-schema.json'],
+    extract: (text) => Object.values(JSON.parse(text).terms).map(name => name.toLowerCase().replaceAll(' ', '-')),
+    recordOf: (name) => `knowledge.${name === 'literal-value' ? 'resource-literal-value' : name}`,
+  },
+  {
+    inventory: 'discovered concept graph roles',
+    files: ['js/src/discovered-concept-rules.js', 'rust/src/discovered_concept_rules.rs'],
+    extract: (text) => [...new Set(captures(text, /term ===? ['"]([^'"]+)['"]/gu)
+      .map(name => name.replaceAll(' ', '-')))],
+    recordOf: (name) => `grammar.${name}`,
+  },
+  {
+    inventory: 'resource description operations',
+    files: ['js/src/resource-description-rules.js', 'js/src/resource-description-graphs.js',
+      'rust/src/resource_description_graphs.rs', 'rust/src/resource_description_rules/part_0.rs',
+      'rust/src/resource_description_rules/part_1.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ((?:resourceDescription|acceptResourceDescription|sameResourceDescription|importResourceDescription|decodeResourceDescription|mergeResourceDescription|verifyResourceDescription)[A-Za-z]+|(?:resource_description|accept_resource_description|same_resource_description|import_resource_description|decode_resource_description|merge_resource_description|verify_resource_description)_[a-z_]+)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `knowledge.${({
+      'resource-description-unit': 'read-resource-description-unit',
+      'resource-description-letter': 'recognize-resource-description-letter',
+      'resource-description-digit': 'recognize-resource-description-digit',
+      'resource-description-hexadecimal': 'recognize-resource-description-hexadecimal',
+      'same-resource-description-term': 'compare-resource-description-term',
+      'decode-resource-description-graph-with-limit': 'decode-resource-description-graph',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'discovery integration operations',
+    files: ['js/src/discovered-concept-links.js', 'rust/src/discovered_concept_links.rs',
+      'js/src/discovered-concept-rules.js', 'rust/src/discovered_concept_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ((?:create|read|accept)(?:DiscoveredConcept[A-Za-z]+|_discovered_concept_[a-z_]+))\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `grammar.${name}`,
+  },
+  {
+    inventory: 'Rust function lifetime fixture',
+    files: ['js/scripts/generate-rust-function-lifetime-fixtures.mjs'],
+    extract: (text) => captures(text, /^export function (rustFunctionLifetimeFixture)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.build-${name}`,
+  },
+  {
+    inventory: 'formal relation identity decisions',
+    files: ['js/src/formal-relation-rules.js', 'rust/src/formal_concept_definition/relation_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `formal.${name.replace('formal-', '')}`,
+  },
+  {
     inventory: 'TypeScript typing projection entry points',
     files: ['js/src/index.js', 'rust/src/self_translation/typescript_portable_typing.rs'],
     extract: (text) => captures(text, /^(?:export function|pub fn) (projectTypeScriptTyping|project_type_script_typing)\(/gmu)

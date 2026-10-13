@@ -31,6 +31,7 @@ include = [
     "src/data/reference-operations.lino",
     "src/data/typed-program-links-schema.lino",
     "src/data/formal-concept-models.lino",
+    "src/data/resource-description-schema.lino",
     "src/translation/runtime/array-*.txt",
     "src/data/language-trigrams.lino",
     "examples/**/*.rs",

@@ -1601,6 +1601,43 @@ export interface GlobalConceptOptions {
   records?: readonly ConceptRecord[];
   formalDefinitions?: Readonly<Record<string, FormalConceptArchive | PortableFormalConceptArchive>>;
 }
+/** Explicit discovery outputs and copied formal archives in one inspectable graph. */
+export interface DiscoveredConceptLinks {
+  network: LinkNetwork;
+  root: LinkId;
+  space: GlobalConceptSpace;
+}
+export interface DiscoveredConceptGraph {
+  sources: GlobalConceptSource[];
+  space: GlobalConceptSpace;
+  formalDefinitions: Record<string, FormalConceptArchive>;
+}
+export function createDiscoveredConceptLinks(
+  sources: readonly GlobalConceptSource[], options?: GlobalConceptOptions,
+): DiscoveredConceptLinks;
+export function readDiscoveredConceptLinks(network: LinkNetwork, root: LinkIdValue): DiscoveredConceptGraph;
+
+/** Structured RDF 1.1 terms; syntax import and OWL entailment are separate operations. */
+export type ResourceDescriptionTerm =
+  | { kind: 'identifier'; value: string }
+  | { kind: 'blank'; value: string; sourceIdentifier?: string }
+  | { kind: 'literal'; value: string; datatype?: string; language?: string };
+export type ResourceDescriptionStatement = [ResourceDescriptionTerm, ResourceDescriptionTerm, ResourceDescriptionTerm];
+export interface ResourceDescriptionLinks { network: LinkNetwork; root: LinkId }
+export interface ResourceDescriptionGraph {
+  model: string;
+  triples: ResourceDescriptionStatement[];
+  occurrences: Array<{ statementIndex: number; sourceIdentifier: string; position: number; sourceLanguage: string }>;
+}
+export function importResourceDescriptionGraph(
+  triples: readonly ResourceDescriptionStatement[],
+  options: { sourceIdentifier: string; network?: LinkNetwork },
+): ResourceDescriptionLinks;
+export function decodeResourceDescriptionGraph(
+  network: LinkNetwork, root: LinkIdValue, options?: { nodeLimit?: number },
+): ResourceDescriptionGraph;
+export function mergeResourceDescriptionGraphs(inputs: readonly ResourceDescriptionLinks[]): ResourceDescriptionLinks;
+export function verifyResourceDescriptionGraphWitnesses(network: LinkNetwork, root: LinkIdValue): boolean;
 
 export interface FormalConceptArchive {
   readonly network: LinkNetwork;

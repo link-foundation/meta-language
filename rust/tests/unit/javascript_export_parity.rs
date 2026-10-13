@@ -166,10 +166,12 @@ mod items {
     use meta_language::concept_records_for_source_name as _;
     use meta_language::construct_program as _;
     use meta_language::construct_program_from_fragments as _;
+    use meta_language::create_discovered_concept_links as _;
     use meta_language::create_global_concept_space as _;
     use meta_language::create_typed_program_links as _;
     use meta_language::current_concept_id as _;
     use meta_language::decode_program_translation as _;
+    use meta_language::decode_resource_description_graph as _;
     use meta_language::decode_structured_data_links as _;
     use meta_language::decode_typed_program_links as _;
     use meta_language::decorate_grammar as _;
@@ -210,6 +212,7 @@ mod items {
     use meta_language::import_grammar_lossless as _;
     use meta_language::import_lark as _;
     use meta_language::import_pest as _;
+    use meta_language::import_resource_description_graph as _;
     use meta_language::import_tree_sitter_json as _;
     use meta_language::language_candidates_for_path as _;
     use meta_language::language_catalog as _;
@@ -220,6 +223,7 @@ mod items {
     use meta_language::lower_graphql as _;
     use meta_language::lower_sql as _;
     use meta_language::merge_grammars as _;
+    use meta_language::merge_resource_description_graphs as _;
     use meta_language::mutate_grammar_start_rule as _;
     use meta_language::native_construct_tree as _;
     use meta_language::native_grammar_concept_reuse as _;
@@ -239,6 +243,7 @@ mod items {
     use meta_language::project_type_script_typing as _;
     use meta_language::prove_formal_concept_equivalence as _;
     use meta_language::query_by_concept_term as _;
+    use meta_language::read_discovered_concept_links as _;
     use meta_language::read_formal_concept_definition as _;
     use meta_language::read_global_concept_space_links as _;
     use meta_language::read_structured_data_lino as _;
@@ -279,6 +284,7 @@ mod items {
     use meta_language::validate as _;
     use meta_language::verify_formal_concept_equivalence as _;
     use meta_language::verify_global_concept_correspondence as _;
+    use meta_language::verify_resource_description_graph_witnesses as _;
 }
 
 /// Every JavaScript export as `(export, Rust path, kind)`.
@@ -546,6 +552,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "createDiscoveredConceptLinks",
+        "create_discovered_concept_links",
+        "function",
+    ),
+    (
         "createGlobalConceptSpace",
         "create_global_concept_space",
         "function",
@@ -565,6 +576,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "decodeProgramTranslation",
         "decode_program_translation",
+        "function",
+    ),
+    (
+        "decodeResourceDescriptionGraph",
+        "decode_resource_description_graph",
         "function",
     ),
     (
@@ -677,6 +693,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("importLark", "import_lark", "function"),
     ("importPest", "import_pest", "function"),
     (
+        "importResourceDescriptionGraph",
+        "import_resource_description_graph",
+        "function",
+    ),
+    (
         "importTreeSitterJson",
         "import_tree_sitter_json",
         "function",
@@ -714,6 +735,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("lowerSql", "lower_sql", "function"),
     ("lower_sql", "lower_sql", "function"),
     ("mergeGrammars", "merge_grammars", "function"),
+    (
+        "mergeResourceDescriptionGraphs",
+        "merge_resource_description_graphs",
+        "function",
+    ),
     (
         "mutateGrammarStartRule",
         "mutate_grammar_start_rule",
@@ -779,6 +805,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("queryByConceptTerm", "query_by_concept_term", "function"),
+    (
+        "readDiscoveredConceptLinks",
+        "read_discovered_concept_links",
+        "function",
+    ),
     (
         "readFormalConceptDefinition",
         "read_formal_concept_definition",
@@ -901,6 +932,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "verifyGlobalConceptCorrespondence",
         "verify_global_concept_correspondence",
+        "function",
+    ),
+    (
+        "verifyResourceDescriptionGraphWitnesses",
+        "verify_resource_description_graph_witnesses",
         "function",
     ),
 ];
