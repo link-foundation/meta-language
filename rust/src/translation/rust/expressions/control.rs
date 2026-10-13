@@ -1,5 +1,6 @@
 //! Expression macros, conditional values, matches and source patterns.
 
+mod completion_panic;
 mod completions;
 
 use super::{
@@ -69,6 +70,13 @@ impl RustParser {
                 Ok(formatted)
             }
             "panic" | "unreachable" | "unimplemented" | "todo" => {
+                if let Some(message) = completion_panic::read_rust_completion_panic_message(
+                    &self.completion_model,
+                    &token.value,
+                    &args,
+                ) {
+                    return Ok(SExpr::new(SNode::Abort { message }, range));
+                }
                 if args.len() > 1 {
                     return Err(unsupported(
                         &format!("{}! arguments", token.value),

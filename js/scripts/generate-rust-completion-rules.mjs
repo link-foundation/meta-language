@@ -12,7 +12,8 @@ const source='// Generated from linked Rust completion policy. Do not edit by ha
  +'/** @param {boolean} proven @param {boolean} indirected @returns {boolean} */\nexport function acceptRustReturnOwnership(proven, indirected) {\n  return proven && !indirected;\n}\n\n'
  +'/** @param {string} thenKind @param {string} otherwiseKind @param {boolean} hasElse @param {boolean} continuation @returns {string} */\nexport function readRustConditionalCompletion(thenKind, otherwiseKind, hasElse, continuation) {\n'
  +policy.actions.map(row=>'  if (thenKind === '+JSON.stringify(row.then)+' && otherwiseKind === '+JSON.stringify(row.otherwise)+' && hasElse === '+row.hasElse+' && continuation === '+row.continuation+') return '+JSON.stringify(row.action)+';').join('\n')
- +'\n  return "unsupported completion";\n}\n';
+ +'\n  return "unsupported completion";\n}\n\n'
+ +'/** @param {string} model @param {string} macroName @param {string} firstKind @param {string} firstValue @param {string} secondKind @param {string} count @returns {boolean} */\nexport function acceptRustCompletionPanicArguments(model, macroName, firstKind, firstValue, secondKind, count) {\n  return model === '+JSON.stringify(policy.model)+' && macroName === '+JSON.stringify(policy.panic.macro)+' && firstKind === '+JSON.stringify(policy.panic.firstKind)+' && firstValue === '+JSON.stringify(policy.panic.template)+' && secondKind === '+JSON.stringify(policy.panic.secondKind)+' && count === '+JSON.stringify(policy.panic.arity)+';\n}\n';
 const javascript=new URL('../src/translation/rust-completion-rules.js',import.meta.url);
 const native=new URL('../../rust/src/translation/rust/completion_rules.rs',import.meta.url);
 const decorators=new URL('../../parity/self-translation/rust-completion-rules-decorators.lino',import.meta.url);
@@ -22,7 +23,7 @@ if(process.argv.includes('--update-styles')){
  const actions=[];
  let styled=raw;
  const replace=(from,to)=>{if(styled.includes(from)){actions.push({op:'replace',field:'source',from,to});styled=styled.split(from).join(to);}};
- for(const name of ['model','then_kind','otherwise_kind'])replace(name+': String',name+': &str');
+ for(const name of ['model','then_kind','otherwise_kind','macro_name','first_kind','first_value','second_kind','count'])replace(name+': String',name+': &str');
  for(const match of raw.matchAll(/^pub fn (\w+)/gmu))replace('pub fn '+match[1],'/// Read the shared closed Rust function completion policy.\n#[must_use]\npub fn '+match[1]);
  // These decisions consist of scalar boolean chains and a closed String
  // result. Flatten grouping and nested else-if without changing execution.

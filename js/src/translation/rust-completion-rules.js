@@ -18,3 +18,8 @@ export function readRustConditionalCompletion(thenKind, otherwiseKind, hasElse, 
   if (thenKind === "value" && otherwiseKind === "value" && hasElse === true && continuation === true) return "discarded conditional value";
   return "unsupported completion";
 }
+
+/** @param {string} model @param {string} macroName @param {string} firstKind @param {string} firstValue @param {string} secondKind @param {string} count @returns {boolean} */
+export function acceptRustCompletionPanicArguments(model, macroName, firstKind, firstValue, secondKind, count) {
+  return model === "closed guarded function returns 1" && macroName === "panic" && firstKind === "str" && firstValue === "{}" && secondKind === "str" && count === "2";
+}

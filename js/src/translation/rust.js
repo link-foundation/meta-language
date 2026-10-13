@@ -2,6 +2,7 @@ import { acceptRustFloatPredicateMethod, acceptRustFloatOperationMethod, acceptR
 import { createRustFloatPredicateExpression, createRustFloatOperationExpression } from './rust-float-predicates.js';
 import { acceptRustCompletionModel } from './rust-completion-rules.js';
 import { readRustFunctionCompletion } from './rust-completions.js';
+import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
 import { readStringMapOperation, readStringTestOperation } from './frontend-rules.js';
 // Rust frontend for the portable core. It reads the subset of Rust the core
 // can represent faithfully: modules with `use` of crate items, enums with
@@ -1077,6 +1078,8 @@ class RustParser {
       case 'unreachable':
       case 'unimplemented':
       case 'todo': {
+        const message = readRustCompletionPanicMessage(this.completionModel, token.value, args);
+        if (message !== null) return { k: 'abort', message, span: range };
         if (args.length > 1) throw unsupported(`${token.value}! arguments`, 'only a literal message is portable', range);
         if (args.length && args[0].k !== 'str') throw unsupported(`${token.value}! message`, 'the message must be a literal', range);
         return { k: 'abort', message: rustMacroMessage(token.value, args.length ? panicText(args[0]) : undefined), span: range };

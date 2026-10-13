@@ -34,3 +34,21 @@ pub fn read_rust_conditional_completion(
         String::from("unsupported completion")
     }
 }
+
+/// Read the shared closed Rust function completion policy.
+#[must_use]
+pub fn accept_rust_completion_panic_arguments(
+    model: &str,
+    macro_name: &str,
+    first_kind: &str,
+    first_value: &str,
+    second_kind: &str,
+    count: &str,
+) -> bool {
+    model == "closed guarded function returns 1"
+        && macro_name == "panic"
+        && first_kind == "str"
+        && first_value == "{}"
+        && second_kind == "str"
+        && count == "2"
+}

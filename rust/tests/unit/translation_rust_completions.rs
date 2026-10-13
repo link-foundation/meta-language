@@ -304,3 +304,105 @@ fn linked_return_edit_and_abort_continuation_change_only_the_selected_branch() {
     assert!(result.stderr.contains("selected failure"));
     assert_eq!(result.stdout.trim(), "safe");
 }
+
+#[test]
+fn canonical_literal_panic_replays_exact_data_and_preserves_default_refusals() {
+    let data = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-completion-panic.lino"
+    ))
+    .unwrap();
+    let model = data["completionModel"].as_str().unwrap();
+    let directory = TemporaryDirectory::new("rust-completion-literal-panic");
+    for (index, case) in data["cases"].as_array().unwrap().iter().enumerate() {
+        let source = case["source"].as_str().unwrap();
+        let message = case["message"].as_str().unwrap();
+        let surface = parse_rust_with_completion_model(source, model).unwrap();
+        assert_eq!(serde_json::to_value(&surface).unwrap(), case["surface"]);
+        let program = check_program(&surface).unwrap();
+        let native =
+            create_typed_program_links_with_rust_completion_model(source, "Rust", model, None)
+                .unwrap();
+        let shared = LinkNetwork::from_lino(case["archive"].as_str().unwrap()).unwrap();
+        let reloaded = LinkNetwork::from_lino(&native.network.to_lino()).unwrap();
+        for (network, root) in [
+            (&shared, LinkId::from_u64(case["root"].as_u64().unwrap())),
+            (&reloaded, native.root),
+        ] {
+            for (target, key) in [("Rust", "rust"), ("JavaScript", "javascript")] {
+                assert_eq!(
+                    emit_typed_program_links(network, root, target)
+                        .unwrap()
+                        .code,
+                    case[key].as_str().unwrap()
+                );
+            }
+        }
+        for key in ["source", "rust", "reverseRust"] {
+            assert_eq!(
+                rust_output(
+                    case[key].as_str().unwrap(),
+                    &directory.0,
+                    &format!("{key}_{index}")
+                ),
+                ["true"]
+            );
+        }
+        assert_eq!(
+            javascript_output(case["originalJavaScript"].as_str().unwrap()),
+            ["true"]
+        );
+        for code in [
+            case["originalJavaScript"].as_str().unwrap(),
+            case["javascript"].as_str().unwrap(),
+        ] {
+            let observed = format!(
+                "{code}\ntry {{ fail(false); }} catch (error) {{ console.log(error.message); }}"
+            );
+            let result =
+                run(Command::new("node").args(["--input-type=module", "--eval", &observed]));
+            assert!(result.ok, "{}", result.stderr);
+            assert_eq!(result.stdout, format!("true\n{message}\n"));
+        }
+        let original = source.replace("fail(true)", "fail(false)");
+        let definitions = emit_rust(&program).unwrap().definitions.join("\n\n");
+        let reimport =
+            parse_rust_with_completion_model(&format!("{definitions}\nfn main(){{}}"), model)
+                .unwrap();
+        assert!(check_program(&reimport).is_ok());
+        let emitted = format!("{definitions}\nfn main(){{fail(false);}}");
+        for (name, code) in [("original", original), ("emitted", emitted)] {
+            let result = run(&mut Command::new(compile_rust(
+                &code,
+                &directory.0,
+                &format!("failed_{name}_{index}"),
+            )));
+            assert!(!result.ok);
+            assert!(result.stdout.is_empty());
+            assert!(result.stderr.contains(message));
+        }
+    }
+    for (case, selected) in data["invalid"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|case| (case, true))
+        .chain([
+            (&data["legacy"], false),
+            (&data["legacy"], true),
+            (&data["defaultCanonical"], false),
+        ])
+    {
+        let source = case["source"].as_str().unwrap();
+        let surface = if selected {
+            parse_rust_with_completion_model(source, model)
+        } else {
+            parse_rust(source)
+        };
+        let error = surface
+            .and_then(|surface| check_program(&surface))
+            .expect_err("only exact selected literal panic data is supported");
+        assert_eq!(error.kind.as_str(), case["kind"].as_str().unwrap());
+        assert_eq!(error.reason, case["reason"].as_str().unwrap());
+        assert_eq!(serde_json::to_value(error.span).unwrap(), case["span"]);
+    }
+}
