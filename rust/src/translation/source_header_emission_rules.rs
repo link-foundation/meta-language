@@ -23,6 +23,14 @@ pub fn accept_rust_source_header_emission_declaration(
 
 /// Apply the shared primitive borrowed header emission policy.
 #[must_use]
+/// Apply the shared primitive borrowed header emission policy.
+#[must_use]
+pub fn accept_rust_source_header_emission_declaration_fields(unrepresented: bool) -> bool {
+    !unrepresented
+}
+
+/// Apply the shared primitive borrowed header emission policy.
+#[must_use]
 pub fn accept_rust_source_header_emission_position(
     kind: &str,
     owner_kind: &str,
