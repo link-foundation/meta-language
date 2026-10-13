@@ -196,9 +196,19 @@ state write. Checked Links reload and scalar transition edits exercise the
 complete original 512-byte binary integer-byte helper and ordinary-name cases.
 Rust source admission remains flat. Structured module edits of the checked loop
 graph retain the original source name while rechecking actual module bindings
-and the full checked declaration identity. State bindings that capture the
-function name require a future anchored declaration reference and retain their
-explicit refusal. The native adapters and tests remain a draft requiring compilation and runtime
+and the full checked declaration identity. The original
+`closed primitive scalar loop 1` profile retains its explicit function-name
+capture refusals. The independently selected `closed declaration scalar loop 1`
+profile owns each synthesized continuation's absolute root and actual declaration
+scope segments, then rechecks its final checked call against the actual declared
+identity. Original source function, parameter and local names remain intact;
+existing emitters retain their hygienic output spelling. The new profile reads
+an emitted single-slot write only through the same scalar Copy, state-slot and
+immutable snapshot proof. Six complete Rust and JavaScript capture sources,
+actual emitted replays, coherent source-free module edits and malformed path or
+null-facet refusals bound this draft. These are declaration-directed transitions
+of source `continue`, not permission for general source calls. The native
+adapters and tests remain a draft requiring compilation and runtime
 parity evidence. The selected JavaScript realm assumes its standard unmodified
 array iterator for transient assignment snapshots. General heap mutation,
 references, effects, nested loops, full generated modules, termination and

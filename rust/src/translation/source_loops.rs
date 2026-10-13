@@ -55,6 +55,16 @@ pub struct ScalarLoopInterface {
     pub result: ScalarLoopInterfaceType,
 }
 
+/// Exact absolute namespace of the declaration owning a scalar continuation.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ScalarLoopContinuation {
+    /// The shared absolute namespace root; independent of any local value name.
+    pub root: String,
+    /// Every actual declaration scope segment followed by the original name.
+    pub path: Vec<String>,
+}
+
 /// An owned proof of one closed scalar loop and its immutable-state lowering.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -74,6 +84,9 @@ pub struct SourceLoop {
     /// The JavaScript interface; Rust instead owns a source signature.
     #[serde(rename = "interface", default, skip_serializing_if = "Option::is_none")]
     pub source_interface: Option<ScalarLoopInterface>,
+    /// Owned declaration target, present only in the declaration-directed profile.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub continuation: Option<ScalarLoopContinuation>,
 }
 
 pub(crate) fn scalar_loop_policy() -> &'static serde_json::Value {
