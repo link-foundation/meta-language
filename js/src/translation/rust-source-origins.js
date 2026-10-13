@@ -5,6 +5,7 @@ import { unsupported } from './diagnostics.js';
 import { rustFixedType } from './types.js';
 import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, acceptRustSourceTextEquality, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
 import { acceptRustImmutableProductType } from './rust-product-rules.js';
+import { acceptRustSourceArrayOwner, acceptRustSourceArrayCoercion } from './rust-array-rules.js';
 
 const unknown = (uncertain = false) => ({ wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
@@ -28,7 +29,7 @@ export class RustSourceOrigins {
 
   typed(type, path, wrappers = [], fields = null, textSourceModel = type.kind === 'string' ? 'owned string' : null) {
     fields ??= type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
-    this.type = { type, path: [...path], wrappers, fields, textSourceModel, copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
+    this.type = { type, path: [...path], wrappers, fields, textSourceModel, ...(type.kind === 'array' && { arraySourceModel: 'owned vector' }), copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
     return type;
   }
 
@@ -102,7 +103,7 @@ export class RustSourceOrigins {
   }
 
   same(left, right) {
-    if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || left.textSourceModel !== right.textSourceModel || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
+    if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || left.textSourceModel !== right.textSourceModel || left.arraySourceModel !== right.arraySourceModel || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
     if (Boolean(left.fields) !== Boolean(right.fields) || (left.fields && (left.fields.length !== right.fields.length || left.fields.some((field, index) => !this.same(field, right.fields[index]))))) return false;
     if (left.type?.kind === 'named' && right.type?.kind === 'named') {
       const leftOwner = this.lookup(left.type.path, left.path);
@@ -125,6 +126,12 @@ export class RustSourceOrigins {
     if (!acceptRustSourceBoxAvailability(owner, target?.k === 'externalCrate')) {
       throw unsupported('Box source crate', 'alloc requires an actual extern crate alloc declaration', span);
     }
+  }
+
+  vector(segments, resolved, path, span) {
+    if (this.collecting) return;
+    const shadowed = [segments[0], resolved[0]].some(name => this.lookup([name], path));
+    if (!acceptRustSourceArrayOwner(resolved.join('::'), shadowed)) throw unsupported('Vec owner', 'only the unshadowed standard vector is admitted by the immutable array model', span);
   }
 
   origin(node, path) {
@@ -174,6 +181,7 @@ export class RustSourceOrigins {
     if (!returning.length) return { ...value(), diverging: true };
     const first = returning[0];
     if (returning.every(origin => this.same(origin, first))) return clone(first);
+    if (returning.some(origin => origin.arraySourceModel)) return { ...unknown(true), arraySourceModel: 'unproved array' };
     if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {
       const fields = returning.every(origin => origin.fields?.length === first.fields?.length) && first.fields
         ? first.fields.map((_, index) => this.join(returning.map(origin => origin.fields[index]))) : null;
@@ -196,6 +204,7 @@ export class RustSourceOrigins {
 
   dereference(node, path, span) {
     const origin = this.origin(node, path);
+    if (!this.collecting && origin.arraySourceModel && origin.wrappers.length === 1) throw unsupported('array dereference', 'moving an owned vector or an unsized slice needs a separate source ownership proof', span);
     if (!this.collecting && (!origin.proven || !acceptRustImmutableIndirectionLayer(origin.wrappers[0] ?? ''))) {
       throw unsupported('dereference', 'the operand must have a proven immutable reference or standard Box source type', span);
     }
@@ -205,6 +214,8 @@ export class RustSourceOrigins {
 
   bind(name, node, path, declared = null) {
     const actual = this.origin(node, path);
+    if (!this.collecting && actual.arraySourceModel && actual.uncertain) throw unsupported('source array join', 'every array alternative needs the same proven source type and ownership', node.span);
+    if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array') throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
     if (declared) this.argument(actual, declared, node.span);
     this.scope.set(name, clone(declared ?? actual));
   }
@@ -219,6 +230,7 @@ export class RustSourceOrigins {
     const indirected = actual.length > 0 || want.length > 0;
     const exact = JSON.stringify(actual) === JSON.stringify(want);
     const borrowed = actual[0] === 'reference' && want[0] === 'reference';
+    if (actualOrigin.arraySourceModel && expectedOrigin.arraySourceModel && !acceptRustSourceArrayCoercion(actualOrigin.arraySourceModel, expectedOrigin.arraySourceModel, borrowed)) throw unsupported('source array coercion', 'an immutable slice cannot become a reference to an owned vector', span);
     const removed = actual.length - want.length;
     let initial = true;
     for (const layer of actual.slice(1, removed + 1)) {
@@ -251,6 +263,7 @@ export class RustSourceOrigins {
     const expected = entry?.k === 'fn' ? entry.parameters : entry?.k === 'ctor' ? entry.fields : null;
     if (!expected || args.length !== expected.length) return;
     for (let index = 0; index < args.length; index += 1) {
+      if (expected[index].arraySourceModel === 'owned vector' && expected[index].wrappers.length === 0) throw unsupported('owned vector argument', 'passing a vector by value needs an explicit consumption proof', span);
       // Immutable reference coercions may dereference Box behind a reference;
       // an owned Box never coerces into its owned inner value.
       this.argument(this.origin(args[index], path), expected[index], span);

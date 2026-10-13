@@ -16,13 +16,14 @@ use super::aborts::rust_macro_message;
 use super::diagnostics::{Result, TranslationError, type_error, unsupported};
 use super::lexer::{Token, TokenCursor, TokenKind, describe, tokenize};
 use super::surface::{
-    BinaryOp, Flavor, Rounding, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem,
-    SMain, SModule, SNode, SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow,
+    BinaryOp, Flavor, Rounding, SArrayItem, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn,
+    SItem, SMain, SModule, SNode, SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow,
     ShowStyle, UnaryOp,
 };
 use super::types::{BOOL, FLOAT, STRING, Type, UNIT, rust_fixed_type};
 use super::{Language, Span};
 
+mod array_rules;
 mod expressions;
 mod indirection_rules;
 mod items;

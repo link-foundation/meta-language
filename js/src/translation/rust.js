@@ -10,10 +10,11 @@ import { readStringMapOperation, readStringTestOperation } from './frontend-rule
 import { rustMacroMessage } from './aborts.js';
 import { TranslationError, unsupported } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
-import { BOOL, FLOAT, STRING, UNIT, rustFixedType, tuple } from './types.js';
+import { BOOL, FLOAT, STRING, UNIT, array, rustFixedType, tuple } from './types.js';
 import { RustSourceOrigins } from './rust-source-origins.js';
 import { acceptRustSourceBoxOwner, acceptRustSourceLifetimeBinding, acceptRustSourceLifetimeReference, acceptRustSourceLifetimeResult } from './rust-indirection-rules.js';
 import { acceptRustTupleIndexSpelling } from './rust-product-rules.js';
+import { acceptRustSourceArrayOwner, acceptRustSourceArrayElement } from './rust-array-rules.js';
 import { checkProgram } from './check.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -201,12 +202,14 @@ class RustParser {
         return;
       }
       const standardBox = full.length > 1 && acceptRustSourceBoxOwner(full.join('::'), false);
-      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox) {
+      const standardVector = full.length > 1 && acceptRustSourceArrayOwner(full.join('::'), false);
+      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector) {
         throw unsupported(`use ${full.join('::')}`, 'only items of this crate can be imported; the standard library is outside the portable core', span(start, c.peek()));
       }
       if (standardBox) this.origins.box(full, full, path, span(start, c.peek()));
+      if (standardVector) this.origins.vector(full, full, path, span(start, c.peek()));
       const alias = c.eat('as') ? c.identifier('use alias').value : segment;
-      aliases.set(alias, standardBox ? full : absolute(full, path, span(start, c.peek())));
+      aliases.set(alias, standardBox || standardVector ? full : absolute(full, path, span(start, c.peek())));
     };
     tree([]);
     c.expect(';', 'use');
@@ -270,6 +273,16 @@ class RustParser {
         sourceLifetime = lifetime.value;
       }
       if (c.is('mut')) throw unsupported('mutable reference', 'mutation is outside the portable core', span(token, c.peek()));
+      if (c.eat('[')) {
+        const elementToken = c.peek();
+        const inner = this.type();
+        this.arrayElement(token, elementToken);
+        c.expect(']', 'immutable slice');
+        const result = this.origins.typed(array(inner), this.modulePath, ['reference']);
+        this.origins.type.arraySourceModel = 'immutable slice';
+        this.origins.type.sourceLifetimes = [sourceLifetime];
+        return result;
+      }
       if (c.is('str')) {
         c.next();
         const result = this.origins.typed(STRING, this.modulePath, ['reference'], null, 'string slice');
@@ -277,9 +290,11 @@ class RustParser {
         return result;
       }
       const inner = this.type();
+      const arraySourceModel = this.origins.type.arraySourceModel;
       const lifetimes = [sourceLifetime, ...(this.origins.type.sourceLifetimes ?? [])];
       const result = this.origins.typed(inner, this.origins.type.path, ['reference', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);
       this.origins.type.sourceLifetimes = lifetimes;
+      if (arraySourceModel) this.origins.type.arraySourceModel = arraySourceModel;
       return result;
     }
     if (c.eat('(')) {
@@ -306,14 +321,25 @@ class RustParser {
     const segments = this.pathSegments('type');
     const name = segments.join('::');
     const resolved = this.resolve(segments, this.modulePath);
+    if (acceptRustSourceArrayOwner(name, false) || acceptRustSourceArrayOwner(resolved.join('::'), false)) {
+      this.origins.vector(segments, resolved, this.modulePath, span(token, c.peek()));
+      c.expect('<', 'Vec');
+      const elementToken = c.peek();
+      const inner = this.type();
+      this.arrayElement(token, elementToken);
+      c.expect('>', 'Vec');
+      return this.origins.typed(array(inner), this.modulePath);
+    }
     if (acceptRustSourceBoxOwner(name, false) || acceptRustSourceBoxOwner(resolved.join('::'), false)) {
       this.origins.box(segments, resolved, this.modulePath, span(token, c.peek()));
       c.expect('<', 'Box');
       const inner = this.type();
       c.expect('>', 'Box');
       const lifetimes = this.origins.type.sourceLifetimes;
+      const arraySourceModel = this.origins.type.arraySourceModel;
       const result = this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);
       if (lifetimes) this.origins.type.sourceLifetimes = lifetimes;
+      if (arraySourceModel) this.origins.type.arraySourceModel = arraySourceModel;
       return result;
     }
     if (c.is('<')) throw unsupported(`type ${name}<…>`, 'generic types are outside the portable core', span(token, c.peek()));
@@ -336,6 +362,11 @@ class RustParser {
       segments.push(c.next().value);
     }
     return segments;
+  }
+
+  arrayElement(token, elementToken) {
+    const shadowed = !this.origins.collecting && elementToken?.kind === 'identifier' && this.origins.lookup([elementToken.value], this.modulePath);
+    if (shadowed || !acceptRustSourceArrayElement(this.origins.type.type?.kind ?? '', this.origins.type.wrappers.length > 0)) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', span(token, this.cursor.peek()));
   }
 
   fn(path) {
@@ -376,6 +407,7 @@ class RustParser {
       if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
       const ret = this.type();
       const sourceResult = this.origins.type;
+      if (ret.kind === 'array') throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
       if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
       this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
@@ -399,6 +431,7 @@ class RustParser {
     c.expect(':', 'const');
     const ret = this.type();
     const sourceResult = this.origins.type;
+    if (ret.kind === 'array') throw unsupported('Rust array constant', 'vector allocation and slice constants require a separate constant evaluation model', span(start, c.peek()));
     this.origins.declaration(name, path, { k: 'fn', parameters: [], result: sourceResult });
     c.expect('=', 'const');
     const body = this.expr(path);
@@ -819,6 +852,20 @@ class RustParser {
       if (args.length !== count) throw new TranslationError('type', `${method.value} expects ${count} arguments but got ${args.length}`, range);
     };
     const mapOperation = readStringMapOperation('Rust', method.value);
+    if (['len', 'is_empty'].includes(method.value)) {
+      const origin = this.origins.origin(receiver, this.modulePath);
+      if (!origin.arraySourceModel) throw unsupported(`method ${method.value}`, 'outside the portable core', range);
+      expect(0);
+      if (!origin.proven || origin.type?.kind !== 'array' || !origin.arraySourceModel) throw unsupported('Rust array read', 'read-only length needs a proven vector or immutable slice source', range);
+      const length = { k: 'length', object: receiver, integer: false, span: range };
+      let node = length;
+      if (method.value === 'len') {
+        const c = this.cursor;
+        if (!c.is('as') || !c.is('f64', 1)) throw unsupported('Rust array length', 'the selected Number length model requires an explicit as f64 conversion', range);
+        c.next(); c.next();
+      } else node = { k: 'binary', op: 'eq', left: length, right: { k: 'num', value: '0', type: FLOAT, span: range }, span: range };
+      return this.origins.mark(node, { type: method.value === 'len' ? FLOAT : BOOL, path: [...this.modulePath], wrappers: [], textSourceModel: null, fields: null, proven: true, copyEvidence: true });
+    }
     if (mapOperation) {
       expect(0);
       return { k: 'stringMap', op: mapOperation, object: receiver, span: range };
@@ -837,12 +884,14 @@ class RustParser {
       case 'to_owned': {
         expect(0);
         const origin = this.origins.origin(receiver, this.modulePath);
+        if (origin.arraySourceModel) throw unsupported('Rust array clone', 'array cloning needs a separate source allocation and ownership proof', range);
         if (origin.wrappers[0] === 'reference') origin.wrappers.shift();
         if (method.value === 'to_owned' && origin.type?.kind === 'string') origin.textSourceModel = 'owned string';
         return this.origins.mark(receiver, origin);
       }
       case 'as_str':
         expect(0);
+        if (this.origins.origin(receiver, this.modulePath).arraySourceModel) throw unsupported('method as_str', 'outside the portable core', range);
         return this.origins.mark(receiver, { ...this.origins.origin(receiver, this.modulePath), type: STRING, textSourceModel: 'string slice', path: [...this.modulePath], wrappers: ['reference'] });
       case 'to_string':
         expect(0);
@@ -912,6 +961,17 @@ class RustParser {
     if (token.kind === 'identifier') {
       const segments = this.pathSegments('expression');
       const name = segments.join('::');
+      const resolved = this.resolve(segments, path);
+      if (c.is('::') && c.is('<', 1) && (acceptRustSourceArrayOwner(name, false) || acceptRustSourceArrayOwner(resolved.join('::'), false))) {
+        this.origins.vector(segments, resolved, path, span(token, c.peek()));
+        c.next(); c.next();
+        const elementToken = c.peek();
+        const element = this.type();
+        this.arrayElement(token, elementToken);
+        c.expect('>', 'Vec constructor'); c.expect('::', 'Vec constructor'); c.expect('new', 'Vec constructor');
+        c.expect('(', 'Vec constructor'); c.expect(')', 'Vec constructor');
+        return this.origins.mark({ k: 'array', items: [], element, span: span(token, c.peek()) }, { type: array(element), path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true });
+      }
       if (c.is('::') && c.is('<', 1)) throw unsupported('turbofish', 'generic functions are outside the portable core', span(token, c.peek()));
       if (c.is('{') && /^[A-Z]/u.test(segments.at(-1)) && !options.noStruct) {
         throw unsupported('struct literal', 'named fields are outside the Rust frontend', span(token, c.peek()));
@@ -954,6 +1014,14 @@ class RustParser {
     const args = this.macroArguments(token, path);
     const range = span(token, this.cursor.peek());
     switch (token.value) {
+      case 'vec': {
+        for (const arg of args) {
+          const origin = this.origins.origin(arg, path);
+          if (origin.wrappers.length || (origin.type && !acceptRustSourceArrayElement(origin.type.kind, false))) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', range);
+        }
+        const element = args.length ? this.origins.origin(args[0], path).type : null;
+        return this.origins.mark({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true });
+      }
       case 'format':
         return { ...this.format(args, token), span: range };
       case 'panic':

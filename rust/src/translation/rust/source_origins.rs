@@ -5,6 +5,7 @@
 
 use std::collections::{HashMap, VecDeque};
 
+use super::array_rules::{accept_rust_source_array_coercion, accept_rust_source_array_owner};
 use super::indirection_rules::{
     accept_rust_immutable_indirection_layer, accept_rust_source_box_availability,
     accept_rust_source_box_coercion_layer, accept_rust_source_box_owner,
@@ -26,6 +27,7 @@ pub(super) struct SourceOrigin {
     pub(super) copy_evidence: bool,
     pub(super) fields: Option<Vec<Self>>,
     pub(super) text_source_model: Option<&'static str>,
+    pub(super) array_source_model: Option<&'static str>,
     /// Spelled source lifetimes, in reference-layer order; None is elision.
     pub(super) source_lifetimes: Vec<Option<String>>,
 }
@@ -42,6 +44,7 @@ impl SourceOrigin {
             copy_evidence: false,
             fields: None,
             text_source_model: None,
+            array_source_model: None,
             source_lifetimes: Vec::new(),
         }
     }
@@ -61,6 +64,7 @@ impl SourceOrigin {
             .is_none_or(|fields| fields.iter().all(Self::direct_copy_value));
         let copy_evidence = accept_rust_immutable_product_type(ty.kind(), children_accepted, false);
         let text_source_model = (ty == super::STRING).then_some("owned string");
+        let array_source_model = matches!(ty, Type::Array { .. }).then_some("owned vector");
         Self {
             ty: Some(ty),
             path: path.to_vec(),
@@ -71,6 +75,7 @@ impl SourceOrigin {
             copy_evidence,
             fields,
             text_source_model,
+            array_source_model,
             source_lifetimes: Vec::new(),
         }
     }
@@ -379,6 +384,30 @@ impl SourceOrigins {
         Ok(())
     }
 
+    pub(super) fn vector_owner(
+        &self,
+        segments: &[String],
+        resolved: &[String],
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<()> {
+        if self.collecting {
+            return Ok(());
+        }
+        let shadowed = [segments.first(), resolved.first()]
+            .into_iter()
+            .flatten()
+            .any(|name| self.lookup(std::slice::from_ref(name), path).is_some());
+        if !accept_rust_source_array_owner(&resolved.join("::"), shadowed) {
+            return Err(unsupported(
+                "Vec owner",
+                "only the unshadowed standard vector is admitted by the immutable array model",
+                span,
+            ));
+        }
+        Ok(())
+    }
+
     /// Compare retained source types by their existing declaration identities.
     pub(super) fn same_origin(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
         if left.proven != right.proven
@@ -387,6 +416,7 @@ impl SourceOrigins {
             || left.wrappers != right.wrappers
             || left.copy_evidence != right.copy_evidence
             || left.text_source_model != right.text_source_model
+            || left.array_source_model != right.array_source_model
         {
             return false;
         }
@@ -574,6 +604,15 @@ impl SourceOrigins {
         }
         if returning
             .iter()
+            .any(|origin| origin.array_source_model.is_some())
+        {
+            return SourceOrigin {
+                array_source_model: Some("unproved array"),
+                ..SourceOrigin::uncertain()
+            };
+        }
+        if returning
+            .iter()
             .all(|origin| origin.proven && origin.wrappers == first.wrappers)
         {
             let fields = first.fields.as_ref().and_then(|fields| {
@@ -643,6 +682,13 @@ impl SourceOrigins {
         span: Option<Span>,
     ) -> Result<()> {
         let mut origin = self.origin(node, path);
+        if !self.collecting && origin.array_source_model.is_some() && origin.wrappers.len() == 1 {
+            return Err(unsupported(
+                "array dereference",
+                "moving an owned vector or an unsized slice needs a separate source ownership proof",
+                span,
+            ));
+        }
         let layer = origin.wrappers.first().map_or("", String::as_str);
         if !self.collecting && (!origin.proven || !accept_rust_immutable_indirection_layer(layer)) {
             return Err(unsupported(
@@ -666,6 +712,24 @@ impl SourceOrigins {
         declared: Option<&SourceOrigin>,
     ) -> Result<()> {
         let actual = self.origin(node, path);
+        if !self.collecting && actual.array_source_model.is_some() && actual.uncertain {
+            return Err(unsupported(
+                "source array join",
+                "every array alternative needs the same proven source type and ownership",
+                node.span,
+            ));
+        }
+        if !self.collecting
+            && actual.array_source_model == Some("owned vector")
+            && actual.wrappers.is_empty()
+            && !matches!(node.node, SNode::Array { .. })
+        {
+            return Err(unsupported(
+                "owned vector binding",
+                "moving a local vector needs an explicit consumption proof",
+                node.span,
+            ));
+        }
         if let Some(declared) = declared {
             self.argument(&actual, declared, node.span)?;
         }
@@ -700,12 +764,23 @@ impl SourceOrigins {
                 span,
             ));
         }
+        let actual_model = actual.array_source_model;
+        let expected_model = expected.array_source_model;
         let actual = &actual.wrappers;
         let want = &expected.wrappers;
         let indirected = !actual.is_empty() || !want.is_empty();
         let exact = actual == want;
         let borrowed = actual.first().is_some_and(|layer| layer == "reference")
             && want.first().is_some_and(|layer| layer == "reference");
+        if let (Some(actual_model), Some(expected_model)) = (actual_model, expected_model)
+            && !accept_rust_source_array_coercion(actual_model, expected_model, borrowed)
+        {
+            return Err(unsupported(
+                "source array coercion",
+                "an immutable slice cannot become a reference to an owned vector",
+                span,
+            ));
+        }
         let coerced = actual.len().checked_sub(want.len()).is_some_and(|removed| {
             removed > 0
                 && actual
@@ -775,6 +850,13 @@ impl SourceOrigins {
         // References can coerce through Box; owned Box cannot become its owned
         // inner value until the source explicitly dereferences it.
         for (argument, expected) in args.iter().zip(&expected) {
+            if expected.array_source_model == Some("owned vector") && expected.wrappers.is_empty() {
+                return Err(unsupported(
+                    "owned vector argument",
+                    "passing a vector by value needs an explicit consumption proof",
+                    span,
+                ));
+            }
             self.argument(&self.origin(argument, path), expected, span)?;
         }
         Ok(())

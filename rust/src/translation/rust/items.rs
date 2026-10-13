@@ -1,5 +1,6 @@
 //! Attributes, items, `use` trees, enums, types, functions, blocks and `main`.
 
+use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
 use super::indirection_rules::{
     accept_rust_source_box_owner, accept_rust_source_lifetime_binding,
     accept_rust_source_lifetime_reference, accept_rust_source_lifetime_result,
@@ -253,7 +254,12 @@ impl RustParser {
             return self.use_tree(&full, start, path);
         }
         let standard_box = full.len() > 1 && accept_rust_source_box_owner(&full.join("::"), false);
-        if !["crate", "super", "self"].contains(&full[0].as_str()) && !standard_box {
+        let standard_vector =
+            full.len() > 1 && accept_rust_source_array_owner(&full.join("::"), false);
+        if !["crate", "super", "self"].contains(&full[0].as_str())
+            && !standard_box
+            && !standard_vector
+        {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
                 "only items of this crate can be imported; the standard library is outside the portable core",
@@ -264,12 +270,16 @@ impl RustParser {
             self.origins
                 .box_owner(&full, &full, path, span(start, c.peek()))?;
         }
+        if standard_vector {
+            self.origins
+                .vector_owner(&full, &full, path, span(start, c.peek()))?;
+        }
         let alias = if c.eat("as").is_some() {
             c.identifier(Some("use alias"))?.value
         } else {
             segment
         };
-        let target = if standard_box {
+        let target = if standard_box || standard_vector {
             full
         } else {
             absolute(&full, path, span(start, c.peek()))?
@@ -417,6 +427,23 @@ impl RustParser {
                     span(&token, self.cursor.peek()),
                 ));
             }
+            if self.cursor.eat("[").is_some() {
+                let element_token = self.peek();
+                let inner = self.parse_type()?;
+                self.array_element(&token, &element_token)?;
+                self.cursor.expect("]", Some("immutable slice"))?;
+                let result = self.origins.typed(
+                    Type::Array {
+                        element: Box::new(inner),
+                        reference: false,
+                    },
+                    &self.module_path,
+                    vec!["reference".to_owned()],
+                );
+                self.origins.current_type.array_source_model = Some("immutable slice");
+                self.origins.current_type.source_lifetimes = vec![source_lifetime];
+                return Ok(result);
+            }
             if self.cursor.is("str") {
                 self.cursor.advance();
                 let result =
@@ -432,6 +459,7 @@ impl RustParser {
             wrappers.extend(origin.wrappers);
             let result = self.origins.typed(inner, &origin.path, wrappers);
             self.origins.current_type.text_source_model = origin.text_source_model;
+            self.origins.current_type.array_source_model = origin.array_source_model;
             self.origins.current_type.source_lifetimes = origin.source_lifetimes;
             self.origins
                 .current_type
@@ -477,6 +505,29 @@ impl RustParser {
         let segments = self.path_segments("type")?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, &self.module_path);
+        if accept_rust_source_array_owner(&name, false)
+            || accept_rust_source_array_owner(&resolved.join("::"), false)
+        {
+            self.origins.vector_owner(
+                &segments,
+                &resolved,
+                &self.module_path,
+                span(&token, self.cursor.peek()),
+            )?;
+            self.cursor.expect("<", Some("Vec"))?;
+            let element_token = self.peek();
+            let inner = self.parse_type()?;
+            self.array_element(&token, &element_token)?;
+            self.cursor.expect(">", Some("Vec"))?;
+            return Ok(self.origins.typed(
+                Type::Array {
+                    element: Box::new(inner),
+                    reference: false,
+                },
+                &self.module_path,
+                Vec::new(),
+            ));
+        }
         if accept_rust_source_box_owner(&name, false)
             || accept_rust_source_box_owner(&resolved.join("::"), false)
         {
@@ -494,6 +545,7 @@ impl RustParser {
             wrappers.extend(origin.wrappers);
             let result = self.origins.typed(inner, &origin.path, wrappers);
             self.origins.current_type.text_source_model = origin.text_source_model;
+            self.origins.current_type.array_source_model = origin.array_source_model;
             self.origins.current_type.source_lifetimes = origin.source_lifetimes;
             return Ok(result);
         }
@@ -542,6 +594,32 @@ impl RustParser {
             segments.push(c.advance().value);
         }
         Ok(segments)
+    }
+
+    pub(super) fn array_element(&self, token: &Token, element_token: &Token) -> Result<()> {
+        let origin = &self.origins.current_type;
+        let shadowed = !self.origins.collecting
+            && element_token.kind == TokenKind::Identifier
+            && self
+                .origins
+                .lookup(
+                    std::slice::from_ref(&element_token.value),
+                    &self.module_path,
+                )
+                .is_some();
+        if shadowed
+            || !accept_rust_source_array_element(
+                origin.ty.as_ref().map_or("", Type::kind),
+                !origin.wrappers.is_empty(),
+            )
+        {
+            return Err(unsupported(
+                "Rust array element",
+                "only direct immutable scalar and owned string elements are admitted",
+                span(token, self.cursor.peek()),
+            ));
+        }
+        Ok(())
     }
 
     pub(super) fn function(&mut self, path: &[String]) -> Result<SFn> {
@@ -637,6 +715,13 @@ impl RustParser {
         }
         let ret = self.parse_type()?;
         let source_result = self.origins.current_type.clone();
+        if matches!(ret, Type::Array { .. }) {
+            return Err(unsupported(
+                "Rust array result",
+                "returning vectors or borrowed slices needs a separate consumption and outlives proof",
+                span(&start, self.cursor.peek()),
+            ));
+        }
         if !accept_rust_source_lifetime_result(
             !self.lifetime_bindings.is_empty(),
             source_result
@@ -693,6 +778,13 @@ impl RustParser {
         self.cursor.expect(":", Some("const"))?;
         let ret = self.parse_type()?;
         let source_result = self.origins.current_type.clone();
+        if matches!(ret, Type::Array { .. }) {
+            return Err(unsupported(
+                "Rust array constant",
+                "vector allocation and slice constants require a separate constant evaluation model",
+                span(&start, self.cursor.peek()),
+            ));
+        }
         self.origins.declaration(
             &name,
             path,

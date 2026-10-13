@@ -1,11 +1,13 @@
 //! Expressions from operator precedence down to paths, macros, `if` and `match`.
 
+use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
 use super::indirection_rules::accept_rust_source_box_owner;
 use super::{
-    Alias, BinaryOp, Flavor, Options, Result, RustParser, SExpr, SNode, SPattern, SPatternNode,
-    SRow, STRING, SourceOrigin, Span, Token, TokenKind, UnaryOp, additive_op, binary,
-    comparison_op, describe, format, is_if_or_match, joined, method_call, multiplicative_op,
-    operator, pattern_value, rust_fixed_type, rust_macro_message, span, type_error, unsupported,
+    Alias, BOOL, BinaryOp, FLOAT, Flavor, Options, Result, RustParser, SArrayItem, SExpr, SNode,
+    SPattern, SPatternNode, SRow, STRING, SourceOrigin, Span, Token, TokenKind, Type, UnaryOp,
+    additive_op, binary, comparison_op, describe, format, is_if_or_match, joined, method_call,
+    multiplicative_op, operator, pattern_value, rust_fixed_type, rust_macro_message, span,
+    type_error, unsupported,
 };
 
 impl RustParser {
@@ -219,6 +221,25 @@ impl RustParser {
                 self.cursor.expect(")", Some(&method.value))?;
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
+                if ["len", "is_empty"].contains(&method_name) {
+                    value = self.array_read(
+                        value,
+                        &method,
+                        args.len(),
+                        path,
+                        span(&token, self.cursor.peek()),
+                    )?;
+                    continue;
+                }
+                if ["clone", "to_owned"].contains(&method_name)
+                    && origin.array_source_model.is_some()
+                {
+                    return Err(unsupported(
+                        "Rust array clone",
+                        "array cloning needs a separate source allocation and ownership proof",
+                        span(&token, self.cursor.peek()),
+                    ));
+                }
                 if ["div_euclid", "rem_euclid"].contains(&method_name) {
                     if let Some(argument) = args.first() {
                         self.origins.direct(argument, path, argument.span)?;
@@ -236,6 +257,13 @@ impl RustParser {
                     origin.text_source_model = Some("owned string");
                 }
                 if method_name == "as_str" {
+                    if origin.array_source_model.is_some() {
+                        return Err(unsupported(
+                            "method as_str",
+                            "outside the portable core",
+                            span(&token, self.cursor.peek()),
+                        ));
+                    }
                     origin.ty = Some(STRING);
                     origin.text_source_model = Some("string slice");
                     origin.path = path.to_vec();
@@ -314,6 +342,84 @@ impl RustParser {
             ));
         }
         Ok(field)
+    }
+
+    fn array_read(
+        &mut self,
+        receiver: SExpr,
+        method: &Token,
+        count: usize,
+        path: &[String],
+        range: Option<Span>,
+    ) -> Result<SExpr> {
+        let origin = self.origins.origin(&receiver, path);
+        if origin.array_source_model.is_none() {
+            return Err(unsupported(
+                &format!("method {}", method.value),
+                "outside the portable core",
+                range,
+            ));
+        }
+        if count != 0 {
+            return Err(type_error(
+                format!("{} expects 0 arguments but got {count}", method.value),
+                range,
+            ));
+        }
+        if !origin.proven || !matches!(origin.ty, Some(Type::Array { .. })) {
+            return Err(unsupported(
+                "Rust array read",
+                "read-only length needs a proven vector or immutable slice source",
+                range,
+            ));
+        }
+        let length = SExpr::new(
+            SNode::Length {
+                object: Box::new(receiver),
+                integer: false,
+            },
+            range,
+        );
+        let result = if method.value == "len" {
+            if !self.cursor.is("as") || !self.cursor.is_at("f64", 1) {
+                return Err(unsupported(
+                    "Rust array length",
+                    "the selected Number length model requires an explicit as f64 conversion",
+                    range,
+                ));
+            }
+            self.cursor.advance();
+            self.cursor.advance();
+            length
+        } else {
+            let zero = SExpr::new(
+                SNode::Num {
+                    value: "0".to_owned(),
+                    ty: Some(FLOAT),
+                    negative: false,
+                    unit: false,
+                },
+                range,
+            );
+            SExpr::new(
+                SNode::Binary {
+                    op: BinaryOp::Eq,
+                    left: Box::new(length),
+                    right: Box::new(zero),
+                    rounding: None,
+                },
+                range,
+            )
+        };
+        self.origins.mark(
+            &result,
+            SourceOrigin::with_type(
+                if method.value == "len" { FLOAT } else { BOOL },
+                path,
+                Vec::new(),
+            ),
+        );
+        Ok(result)
     }
 
     /// Comma-separated expressions up to (not including) the closing `)`.
@@ -464,6 +570,48 @@ impl RustParser {
     ) -> Result<SExpr> {
         let segments = self.path_segments("expression")?;
         let name = segments.join("::");
+        let resolved = self.resolve(&segments, path);
+        if self.cursor.is("::")
+            && self.cursor.is_at("<", 1)
+            && (accept_rust_source_array_owner(&name, false)
+                || accept_rust_source_array_owner(&resolved.join("::"), false))
+        {
+            self.origins.vector_owner(
+                &segments,
+                &resolved,
+                path,
+                span(token, self.cursor.peek()),
+            )?;
+            self.cursor.advance();
+            self.cursor.advance();
+            let element_token = self.peek();
+            let element = self.parse_type()?;
+            self.array_element(token, &element_token)?;
+            self.cursor.expect(">", Some("Vec constructor"))?;
+            self.cursor.expect("::", Some("Vec constructor"))?;
+            self.cursor.expect("new", Some("Vec constructor"))?;
+            self.cursor.expect("(", Some("Vec constructor"))?;
+            self.cursor.expect(")", Some("Vec constructor"))?;
+            let result = SExpr::new(
+                SNode::Array {
+                    items: Vec::new(),
+                    element: Some(element.clone()),
+                },
+                span(token, self.cursor.peek()),
+            );
+            self.origins.mark(
+                &result,
+                SourceOrigin::with_type(
+                    Type::Array {
+                        element: Box::new(element),
+                        reference: false,
+                    },
+                    path,
+                    Vec::new(),
+                ),
+            );
+            return Ok(result);
+        }
         let c = &self.cursor;
         if c.is("::") && c.is_at("<", 1) {
             return Err(unsupported(
@@ -573,6 +721,52 @@ impl RustParser {
         let args = self.macro_arguments(token, path)?;
         let range = span(token, self.cursor.peek());
         match token.value.as_str() {
+            "vec" => {
+                for argument in &args {
+                    let origin = self.origins.origin(argument, path);
+                    if !origin.wrappers.is_empty()
+                        || origin
+                            .ty
+                            .as_ref()
+                            .is_some_and(|ty| !accept_rust_source_array_element(ty.kind(), false))
+                    {
+                        return Err(unsupported(
+                            "Rust array element",
+                            "only direct immutable scalar and owned string elements are admitted",
+                            range,
+                        ));
+                    }
+                }
+                let element = args
+                    .first()
+                    .and_then(|argument| self.origins.origin(argument, path).ty);
+                let mut origin = element.map_or_else(SourceOrigin::value, |element| {
+                    SourceOrigin::with_type(
+                        Type::Array {
+                            element: Box::new(element),
+                            reference: false,
+                        },
+                        path,
+                        Vec::new(),
+                    )
+                });
+                origin.array_source_model = Some("owned vector");
+                let result = SExpr::new(
+                    SNode::Array {
+                        items: args
+                            .into_iter()
+                            .map(|value| SArrayItem {
+                                spread: false,
+                                value,
+                            })
+                            .collect(),
+                        element: None,
+                    },
+                    range,
+                );
+                self.origins.mark(&result, origin);
+                Ok(result)
+            }
             "format" => {
                 let mut formatted = format(args, token)?;
                 formatted.span = range;
