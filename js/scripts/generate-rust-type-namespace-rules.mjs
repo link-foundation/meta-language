@@ -37,7 +37,7 @@ if (!process.argv.includes('--javascript-only')) {
     replace('pub fn accept_rust_type_namespace_fields(', 'pub const fn accept_rust_type_namespace_fields(');
     replace('pub fn accept_rust_type_namespace_anchor(', 'pub const fn accept_rust_type_namespace_anchor(');
     replace('pub fn accept_rust_type_namespace_unit_clone(', 'pub const fn accept_rust_type_namespace_unit_clone(');
-    for (const definition of current.matchAll(/pub fn accept_rust_type_namespace_[\s\S]*?\n\}/gu)) {
+    for (const definition of current.matchAll(/pub(?: const)? fn accept_rust_type_namespace_[\s\S]*?\n\}/gu)) {
       const block = definition[0]; const open = block.indexOf('{');
       let expression = stripRustSourceHeaderStyleParentheses(block.slice(open + 1, -1)).replace(/\((\w+\s*(?:==|!=)\s*"[^"]*")\)/gu, '$1');
       if (block.startsWith('pub fn accept_rust_type_namespace_body_constructor(') || block.startsWith('pub fn accept_rust_type_namespace_body_method(')) {
