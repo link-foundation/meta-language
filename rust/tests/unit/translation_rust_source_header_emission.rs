@@ -300,6 +300,64 @@ fn actual_owner_generated_and_linked_context_premises_cannot_be_erased() {
             "an unknown model precedes the forbidden {label} context"
         );
     }
+    let body = network.link(root).unwrap().references()[0];
+    let directory = field(&network, body, "declarations").1;
+    let entry = network.link(directory).unwrap().references()[0];
+    let declaration = network.link(entry).unwrap().references()[1];
+    let parameters = field(&network, declaration, "parameters").1;
+    let parameter = network.link(parameters).unwrap().references()[0];
+    for value in [false, true] {
+        let mut changed = network.clone();
+        let scalar = changed.insert_link(
+            [],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Semantic)
+                .with_named(true)
+                .with_language("meta-language typed program")
+                .with_term("boolean value")
+                .with_definition(value.to_string()),
+        );
+        changed.insert_field(parameter, "optional", scalar);
+        let restored = LinkNetwork::from_lino(&changed.to_lino()).unwrap();
+        assert!(
+            emit_typed_program_links_with_options(&restored, root, "Rust", &options(&data))
+                .is_err(),
+            "an actual linked optional={value} parameter has no admitted source-header interpretation"
+        );
+    }
+    for (kind, definition) in [
+        ("null value", None),
+        ("number value", Some("0")),
+        ("string value", Some("")),
+        ("boolean value", Some("true")),
+        ("boolean value", Some("false")),
+    ] {
+        let mut changed = network.clone();
+        let mut metadata = LinkMetadata::new()
+            .with_link_type(LinkType::Semantic)
+            .with_named(true)
+            .with_language("meta-language typed program")
+            .with_term(kind);
+        if let Some(value) = definition {
+            metadata = metadata.with_definition(value);
+        }
+        let scalar = changed.insert_link([], metadata);
+        changed.insert_field(declaration, "generated", scalar);
+        let restored = LinkNetwork::from_lino(&changed.to_lino()).unwrap();
+        let emitted =
+            emit_typed_program_links_with_options(&restored, root, "Rust", &options(&data));
+        if kind == "boolean value" && definition == Some("false") {
+            assert!(
+                emitted.is_ok(),
+                "an explicit linked generated=false declaration remains original"
+            );
+        } else {
+            assert!(
+                emitted.is_err(),
+                "an actual linked generated={kind}:{definition:?} cannot become original through truthiness"
+            );
+        }
+    }
 }
 
 #[test]
