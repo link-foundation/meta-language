@@ -1625,10 +1625,20 @@ export type ResourceDescriptionTerm =
   | { kind: 'blank'; value: string; sourceIdentifier?: string }
   | { kind: 'literal'; value: string; datatype?: string; language?: string };
 export type ResourceDescriptionStatement = [ResourceDescriptionTerm, ResourceDescriptionTerm, ResourceDescriptionTerm];
+/** Decoded terms always carry explicit blank scopes and normalized literal metadata. */
+export type DecodedResourceDescriptionTerm =
+  | { kind: 'identifier'; value: string }
+  | { kind: 'blank'; value: string; sourceIdentifier: string }
+  | { kind: 'literal'; value: string; datatype: string; language: string };
+export type DecodedResourceDescriptionStatement = [
+  Exclude<DecodedResourceDescriptionTerm, { kind: 'literal' }>,
+  Extract<DecodedResourceDescriptionTerm, { kind: 'identifier' }>,
+  DecodedResourceDescriptionTerm,
+];
 export interface ResourceDescriptionLinks { network: LinkNetwork; root: LinkId }
 export interface ResourceDescriptionGraph {
   model: string;
-  triples: ResourceDescriptionStatement[];
+  triples: DecodedResourceDescriptionStatement[];
   occurrences: Array<{ statementIndex: number; sourceIdentifier: string; position: number; sourceLanguage: string }>;
 }
 export function importResourceDescriptionGraph(

@@ -17,6 +17,8 @@ test('the exact declared public consumer executes with frozen RDF statements and
   const consumer = await import(pathToFileURL(file).href);
   assert.deepEqual(consumer.contractEvidence, {
     tripleCount: 1, sourceCount: 1, preservedDefinition: true, copiedDefinition: true,
+    blankScope: 'typed consumer', literalDatatype: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#langString',
+    literalLanguage: 'en', predicateKind: 'identifier',
   });
 });
 
