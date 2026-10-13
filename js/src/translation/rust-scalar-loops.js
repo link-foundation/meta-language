@@ -2,7 +2,7 @@
 import { readRuntimeProjectData } from '../project-data-loader.js';
 import { unsupported } from './diagnostics.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
-import {acceptRustScalarLoopModel, acceptScalarLoopLanguage, acceptScalarLoopValueKind, acceptScalarLoopPrimitiveOwner, acceptScalarLoopBinaryOperation, acceptScalarLoopUnaryOperation, acceptScalarLoopMathOperation} from './scalar-loop-rules.js';
+import {acceptRustScalarLoopModel, acceptScalarLoopDeclarationModel, acceptScalarLoopLanguage, acceptScalarLoopValueKind, acceptScalarLoopPrimitiveOwner, acceptScalarLoopBinaryOperation, acceptScalarLoopUnaryOperation, acceptScalarLoopMathOperation} from './scalar-loop-rules.js';
 export {acceptRustScalarLoopModel} from './scalar-loop-rules.js';
 
 export const RUST_SCALAR_LOOP_POLICY = readRuntimeProjectData(new URL('./data/rust-scalar-loops.lino', import.meta.url));
@@ -25,7 +25,8 @@ export function checkRustScalarLoopProof(item, language, declaredName = item.ful
   const proof = item.sourceLoop;
   const exact = (value, fields) => value && typeof value === 'object' && !Array.isArray(value)
     && Object.keys(value).length === fields.length && fields.every(field => Object.hasOwn(value, field));
-  const fields = ['model', 'language', 'sourceName', 'lowering', 'state', 'transitions', ...(language === 'JavaScript' ? ['interface'] : [])];
+  const declarationDirected = acceptScalarLoopDeclarationModel(proof?.model ?? '');
+  const fields = ['model', 'language', 'sourceName', 'lowering', 'state', 'transitions', ...(language === 'JavaScript' ? ['interface'] : []), ...(declarationDirected ? ['continuation'] : [])];
   if (!exact(proof, fields)
     || (!acceptRustScalarLoopModel(proof.model) || !proof.model) || proof.language !== language || !acceptScalarLoopLanguage(language)
     || proof.sourceName !== item.name || proof.lowering !== policy.lowering
@@ -34,6 +35,10 @@ export function checkRustScalarLoopProof(item, language, declaredName = item.ful
   if (item.fullName !== undefined && item.fullName !== declaredName
     || item.modulePath !== undefined && (!Array.isArray(item.modulePath) || item.modulePath.some(segment => typeof segment !== 'string')
       || [...item.modulePath, item.name].join('.') !== declaredName)) fail('the loop identity disagrees with its actual declaration scope', item.span);
+  if (declarationDirected && (!exact(proof.continuation, ['root', 'path'])
+    || proof.continuation.root !== policy.continuationRoot || !Array.isArray(proof.continuation.path)
+    || proof.continuation.path.length !== declaredName.split('.').length
+    || proof.continuation.path.some((segment, index) => typeof segment !== 'string' || !segment || segment !== declaredName.split('.')[index]))) fail('the continuation target disagrees with its actual root-owned declaration scope', item.span);
   if (language === 'Rust') header(item.sourceSignature, item.params, item.ret, language);
   else {
     const signature = proof.interface;
@@ -72,7 +77,12 @@ export function checkRustScalarLoopProof(item, language, declaredName = item.ful
     } else if (node.k === 'app' || node.k === 'call') {
       const target = node.k === 'call' ? node.fn : node.fn?.path?.join('.');
       const transition = proof.transitions[calls++];
-      const ownedTarget = target === declaredName || node.k === 'app' && (target === item.name || target === 'crate.' + declaredName);
+      const ownedTarget = node.k === 'call' ? target === declaredName : declarationDirected
+        ? node.fn?.k === 'name' && Array.isArray(node.fn.path)
+          && node.fn.path.length === proof.continuation.path.length + 1
+          && node.fn.path[0] === proof.continuation.root
+          && proof.continuation.path.every((segment, index) => node.fn.path[index + 1] === segment)
+        : target === declaredName || target === item.name || target === 'crate.' + declaredName;
       if (!tail || !ownedTarget || !exact(transition, ['writes', 'arguments'])
         || !Array.isArray(transition.writes) || !Array.isArray(transition.arguments)
         || node.args.length !== proof.state.length || transition.arguments.length !== proof.state.length) fail('only an owned tail continuation is admitted', node.span);
@@ -136,7 +146,8 @@ export function readRustScalarLoop(parser, path, name, params, ret, signature, m
   header(signature, params, ret, 'Rust');
   const c = parser.cursor, open = c.expect('{', 'scalar loop function');
   c.expect('loop', 'scalar loop');
-  const proof = {model: policy.model, language: policy.language, sourceName: name, lowering: policy.lowering,
+  const proof = {model: parser.scalarLoopModel, language: policy.language, sourceName: name, lowering: policy.lowering,
+    ...(acceptScalarLoopDeclarationModel(parser.scalarLoopModel) ? {continuation: {root: policy.continuationRoot, path: [...path, name]}} : {}),
     state: params.map(param => ({name: param.name, mutable: mutableNames.includes(param.name)})), transitions: []};
   let temporary = 0;
   const state = new Set(params.map(param => param.name));
@@ -158,7 +169,7 @@ export function readRustScalarLoop(parser, path, name, params, ret, signature, m
       if (c.eat('return')) result = completion();
       else if (c.is('{')) result = block(valueAllowed);
       else if (c.is('if')) result = conditional(valueAllowed);
-      else if (c.is('(') || c.is('continue')) result = continuation();
+      else if (c.is('(') || c.is('continue') || proof.continuation && c.peek().kind === 'identifier' && c.is('=', 1)) result = continuation();
       else if (valueAllowed) result = scalarResult(parser.expr(path));
       else fail('a loop path needs an explicit return or scalar continuation', c.peek());
       c.eat(';');
@@ -199,10 +210,22 @@ export function readRustScalarLoop(parser, path, name, params, ret, signature, m
       if (!writes.length || writes.length !== values.length) fail('parallel state writes require one scalar value per slot', range(start, c.peek()));
       if (values.some(value => !parser.origins.immutableProduct(parser.origins.origin(value, path)))) fail('parallel state values require direct scalar Copy ownership', range(start, c.peek()));
     }
+    else if (proof.continuation && c.peek().kind === 'identifier' && c.is('=', 1)) {
+      const target = c.identifier('scalar state slot').value;
+      if (!mutableNames.includes(target)) fail('single writes require a mutable parameter slot', start);
+      let binding;
+      do { binding = `ml_scalar_write${temporary++}`; } while (parser.reservedNames.has(binding));
+      parser.reservedNames.add(binding);
+      writes.push({target, binding});
+      c.expect('=', 'single scalar state write');
+      values.push(parser.expr(path));
+      c.expect(';', 'single scalar state write');
+      if (!parser.origins.immutableProduct(parser.origins.origin(values[0], path))) fail('parallel state values require direct scalar Copy ownership', range(start, c.peek()));
+    }
     c.expect('continue', 'scalar state continuation'); c.expect(';', 'scalar state continuation');
     const arguments_ = params.map(param => writes.find(write => write.target === param.name)?.binding ?? param.name);
     proof.transitions.push({writes, arguments: arguments_});
-    let result = {k: 'app', fn: {k: 'name', path: [name]}, args: arguments_.map(name => ({k: 'name', path: [name]})), span: range(start, c.peek())};
+    let result = {k: 'app', fn: {k: 'name', path: proof.continuation ? [proof.continuation.root, ...proof.continuation.path] : [name]}, args: arguments_.map(name => ({k: 'name', path: [name]})), span: range(start, c.peek())};
     for (let index = writes.length - 1; index >= 0; index--) result = {k: 'let', name: writes[index].binding,
       type: params.find(param => param.name === writes[index].target).type, value: values[index], body: result, span: range(start, c.peek())};
     return result;
