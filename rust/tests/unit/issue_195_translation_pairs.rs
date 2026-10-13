@@ -60,9 +60,8 @@ pub fn corpus() -> &'static Value {
     static CORPUS: OnceLock<Value> = OnceLock::new();
     CORPUS.get_or_init(|| {
         let path = root().join(observations::FOUR_LANGUAGE_FIXTURE);
-        let shared: Value =
-            serde_json::from_str(&fs::read_to_string(path).expect("shared corpus is readable"))
-                .expect("shared corpus is valid JSON");
+        let shared: Value = meta_language::project_data::read_project_data_file(path)
+            .expect("shared corpus is readable project data");
         shared["translationCorpus"].clone()
     })
 }

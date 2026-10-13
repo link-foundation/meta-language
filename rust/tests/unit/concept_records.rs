@@ -37,9 +37,8 @@ fn repository_file(relative: &str) -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(relative);
-    let text = std::fs::read_to_string(&path)
-        .unwrap_or_else(|error| panic!("read {}: {error}", path.display()));
-    serde_json::from_str(&text).expect("the register is JSON")
+    meta_language::project_data::read_project_data_file(&path)
+        .unwrap_or_else(|error| panic!("read {}: {error}", path.display()))
 }
 
 /// The readable phrase an identity spells: its last segment with spaces for hyphens.

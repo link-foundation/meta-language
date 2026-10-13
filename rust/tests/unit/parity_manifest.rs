@@ -1,6 +1,6 @@
 //! Bidirectional enforcement of the shared Rust <-> JavaScript parity manifest.
 //!
-//! `parity/language-features.json` is the single source of truth for the
+//! `parity/language-features.lino` is the single source of truth for the
 //! feature set both language implementations must keep in sync. The JavaScript
 //! side validates it with `js/scripts/check-js-rust-parity.mjs`; this test gives
 //! the Rust side an equivalent guard so the Rust test suite itself fails when the
@@ -19,12 +19,12 @@ use serde_json::Value;
 fn repository_root() -> PathBuf {
     let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     loop {
-        if dir.join("parity/language-features.json").is_file() {
+        if dir.join("parity/language-features.lino").is_file() {
             return dir;
         }
         assert!(
             dir.pop(),
-            "could not locate parity/language-features.json from the crate manifest"
+            "could not locate parity/language-features.lino from the crate manifest"
         );
     }
 }
@@ -32,8 +32,8 @@ fn repository_root() -> PathBuf {
 fn manifest() -> (PathBuf, Value) {
     let root = repository_root();
     let path = root.join("parity/language-features.json");
-    let text = fs::read_to_string(&path).expect("parity manifest should be readable");
-    let value: Value = serde_json::from_str(&text).expect("parity manifest should be valid JSON");
+    let value: Value = meta_language::project_data::read_project_data_file(&path)
+        .expect("parity manifest should be readable project data");
     (root, value)
 }
 

@@ -1,13 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
 use std::path::PathBuf;
 
 use serde_json::Value;
 
 fn repository_json(relative_path: &str) -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(relative_path);
-    serde_json::from_str(&fs::read_to_string(path).expect("shared JSON file is readable"))
-        .expect("shared JSON file is valid")
+    meta_language::project_data::read_project_data_file(path)
+        .expect("shared project data is readable and valid")
 }
 
 fn contains_hand_edited_completion(value: &Value) -> bool {
