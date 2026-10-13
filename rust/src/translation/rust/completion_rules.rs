@@ -3,7 +3,7 @@
 /// Read the shared closed Rust function completion policy.
 #[must_use]
 pub fn accept_rust_completion_model(model: &str) -> bool {
-    model == "" || model == "closed guarded function returns 1"
+    model.is_empty() || model == "closed guarded function returns 1"
 }
 
 /// Read the shared closed Rust function completion policy.
@@ -20,7 +20,7 @@ pub fn read_rust_conditional_completion(
     has_else: bool,
     continuation: bool,
 ) -> String {
-    if then_kind == "returned" && otherwise_kind == "" && !has_else && continuation {
+    if then_kind == "returned" && otherwise_kind.is_empty() && !has_else && continuation {
         String::from("guarded continuation")
     } else if then_kind == "returned" && otherwise_kind == "returned" && has_else && !continuation {
         String::from("returned conditional")

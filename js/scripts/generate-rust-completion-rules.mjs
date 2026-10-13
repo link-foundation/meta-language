@@ -33,6 +33,7 @@ if(process.argv.includes('--update-styles')){
  for(const name of ['has_else','continuation']){
   replace(name+' == false','!'+name);replace(name+' == true',name);
  }
+ for(const name of ['model','otherwise_kind'])replace(name+' == ""',name+'.is_empty()');
  // Record the exact nested-conditional flattening as an emitter decorator.
  while(/\} else \{\n\s+if /u.test(styled)){
   const match=styled.match(/\} else \{\n(\s+)if /u),start=match.index;
