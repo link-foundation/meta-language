@@ -2,7 +2,15 @@
 /// Read the shared closed scalar loop admission.
 #[must_use]
 pub fn accept_rust_scalar_loop_model(model: &str) -> bool {
-    model.is_empty() || model == "closed primitive scalar loop 1"
+    model.is_empty()
+        || model == "closed primitive scalar loop 1"
+        || model == "closed declaration scalar loop 1"
+}
+
+/// Read the shared closed scalar loop admission.
+#[must_use]
+pub fn accept_scalar_loop_declaration_model(model: &str) -> bool {
+    model == "closed declaration scalar loop 1"
 }
 
 /// Read the shared closed scalar loop admission.
