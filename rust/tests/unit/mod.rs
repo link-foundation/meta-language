@@ -196,6 +196,7 @@ mod translation_printing;
 mod translation_prototype_definitions;
 mod translation_rocq;
 mod translation_rules;
+mod translation_rust_anchored_type_owners;
 mod translation_rust_array_results;
 mod translation_rust_arrays;
 mod translation_rust_borrowed_call_interface;
