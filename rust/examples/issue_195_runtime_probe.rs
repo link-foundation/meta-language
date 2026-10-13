@@ -12,6 +12,8 @@ use meta_language::{
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
+#[path = "support/issue_195_probe_canonical.rs"]
+mod probe_canonical;
 #[path = "support/issue_195_probe_wire.rs"]
 mod probe_wire;
 
@@ -359,7 +361,7 @@ fn node_signature(link: &Link) -> String {
         })
     });
     let flags = metadata.flags();
-    serde_json::to_string(&json!({
+    probe_canonical::serialize_canonical_observation(&json!({
         "type": match metadata.link_type() {
             Some(LinkType::Syntax) => "syntax",
             Some(LinkType::Token) => "token",
@@ -376,7 +378,6 @@ fn node_signature(link: &Link) -> String {
             "isExtra": flags.is_extra(),
         },
     }))
-    .expect("node signature serializes")
 }
 
 fn canonical_parent<'a>(network: &'a LinkNetwork, child: &Link) -> Option<&'a Link> {
@@ -521,9 +522,8 @@ fn diagnostic_observations(corpus: &Value) -> Vec<Value> {
         .collect()
 }
 
-fn sorted(mut values: Vec<Value>) -> Vec<Value> {
-    values.sort_by_key(ToString::to_string);
-    values
+fn sorted(values: Vec<Value>) -> Vec<Value> {
+    probe_canonical::sort_observation_values(values)
 }
 
 fn facts(values: &[ProgramFact]) -> Vec<Value> {
