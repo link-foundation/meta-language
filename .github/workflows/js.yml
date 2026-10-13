@@ -611,6 +611,36 @@ jobs:
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         run: node js/scripts/generate-rust-source-signature-fixtures.mjs --check
 
+      - name: Check generated Rust borrowed call interface rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-borrowed-call-interface-rules.mjs --check
+
+      - name: Check shared Rust borrowed call interface fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-borrowed-call-interface-fixtures.mjs --check
+
+      - name: Check generated Rust primitive owner rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-primitive-owner-rules.mjs --check
+
+      - name: Check shared Rust primitive owner fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-primitive-owner-fixtures.mjs --check
+
+      - name: Check generated JavaScript scoped binding emission rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-javascript-scoped-binding-emission-rules.mjs --check
+
+      - name: Check shared JavaScript scoped binding emission fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-javascript-scoped-binding-emission-fixtures.mjs --check
+
       - name: Check generated standard Rust readonly query rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         run: node js/scripts/generate-rust-read-only-query-rules.mjs --check

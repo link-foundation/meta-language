@@ -472,15 +472,32 @@ const ORIGINAL_PACKAGE_STEPS = [
   ["Clean regenerable caches", 'f958ba58a92bd59affdcb579b84fd34e6eb61567c3f40709c773ed163a5b7d5b', 'all'],
 ];
 
-function packageStepSignature(step) {
-  const text = step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '')
+// New generator gates have their own frozen records; the original baseline
+// remains unchanged. Addition hashes also include the exact matrix selector.
+const ADDITIONAL_PACKAGE_STEPS = [
+  ["Check generated Rust borrowed call interface rules", "node scripts/generate-rust-borrowed-call-interface-rules.mjs --check", '1f46a207a6fb3432e56ac6d785eb03f12289040b2ad41472ddf967acbfebf7a4', 'generated'],
+  ["Check shared Rust borrowed call interface fixtures", "node scripts/generate-rust-borrowed-call-interface-fixtures.mjs --check", '64891f2eda98607ed1e13697b4a5627bb0dec2f72806f696cb5a876baf024f00', 'generated'],
+  ["Check generated Rust primitive owner rules", "node scripts/generate-rust-primitive-owner-rules.mjs --check", 'c2846fc406532cf47d014908653cd848fcc246850362c60a9911acf7cd5168e8', 'generated'],
+  ["Check shared Rust primitive owner fixtures", "node scripts/generate-rust-primitive-owner-fixtures.mjs --check", '7ede0060b0523316a65bc9ae7476e4b1fb16f8e417939d26c2a90e68cf0fe6a6', 'generated'],
+  ["Check generated JavaScript scoped binding emission rules", "node scripts/generate-javascript-scoped-binding-emission-rules.mjs --check", '7f0c0306f141f7e8446d6a604c3d6b91c1197f787184e020670178b0a4889571', 'generated'],
+  ["Check shared JavaScript scoped binding emission fixtures", "node scripts/generate-javascript-scoped-binding-emission-fixtures.mjs --check", '995a45b9c2a45647b4a877e7b0a6f2814271611f04a77ce6aaf69bacf2663f2d', 'generated'],
+];
+
+function packageStepSignature(step, includeGroup = false) {
+  const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
+  const text = fields
     .split('\n').filter(line => line.trim() && !/^\s*#/u.test(line))
     .map(line => line.trimEnd()).join('\n');
   return createHash('sha256').update(text).digest('hex');
 }
 
 function checkPackageStepConservation(parsed) {
-  const expected = new Map(ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]));
+  const expected = new Map([
+    ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
+    ...ADDITIONAL_PACKAGE_STEPS.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
+  ]);
+  assert.equal(expected.size, ORIGINAL_PACKAGE_STEPS.length + ADDITIONAL_PACKAGE_STEPS.length,
+    'additive gates cannot shadow an original step or another addition');
   const found = new Map();
   const shared = new Set();
   for (const id of ['package-checks', 'test']) {
@@ -497,7 +514,8 @@ function checkPackageStepConservation(parsed) {
       const owner = id === 'test' ? 'package' : group ?? 'all';
       assert.equal(owner, baseline.owner === 'all' ? (id === 'test' ? 'package' : 'all') : baseline.owner,
         `package step owner changed: ${step.name}`);
-      assert.equal(packageStepSignature(step), baseline.hash, `package step semantics changed: ${step.name}`);
+      if (baseline.addition) assert.equal(step.run.trim(), baseline.command, `additive gate command changed: ${step.name}`);
+      assert.equal(packageStepSignature(step, baseline.addition), baseline.hash, `package step semantics changed: ${step.name}`);
       if (id === 'package-checks') {
         assert.equal((step.text.match(/matrix\.group/gu) ?? []).length, baseline.owner === 'all' ? 0 : 1,
           `package step has an ambiguous group selector: ${step.name}`);
@@ -588,5 +606,31 @@ test('the final package gate requires all five partitions, all test groups and s
       assert.equal(execute({ [key]: result }).status, 1, `${key}=${result} must fail the package gate`);
     }
     assert.equal(execute({ PACKAGE_CHECKS_RESULT: result, EXTERNAL_REPORTS: 'true', REPORTS_RESULT: 'skipped' }).status, 1);
+  }
+});
+
+test('every frozen generator addition rejects omission, duplication, condition, command, directory and owner edits', () => {
+  const mutate = (name, change) => {
+    const parsed = jobs('js.yml');
+    const steps = parsed.get('package-checks').steps;
+    const index = steps.findIndex(step => step.name === name);
+    assert.ok(index >= 0, `required additive gate missing: ${name}`);
+    change(steps, index);
+    assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
+  };
+  for (const [name] of ADDITIONAL_PACKAGE_STEPS) {
+    mutate(name, (steps, index) => steps.splice(index, 1));
+    mutate(name, (steps, index) => steps.push({ ...steps[index] }));
+    for (const [before, after] of [
+      ['!cancelled()', 'success()'],
+      ['--check', '--javascript-only'],
+      ['working-directory: js', 'working-directory: .'],
+      ["matrix.group == 'generated'", "matrix.group == 'contracts'"],
+      ['working-directory: js', 'continue-on-error: true\n        working-directory: js'],
+    ]) {
+      mutate(name, (steps, index) => {
+        steps[index].text = steps[index].text.replace(before, after);
+      });
+    }
   }
 });
