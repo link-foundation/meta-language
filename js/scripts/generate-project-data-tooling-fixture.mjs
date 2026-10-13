@@ -2,7 +2,23 @@
 // Immutable independent inputs for tooling evidence, not successful results.
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
-import { checkProjectData, writeProjectData } from './project-data.mjs';
+import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
+
+const stageRefreshReceiptPath = 'parity/fixtures/translation-stage-refresh-receipt.lino';
+const stageRefreshReceipt = readProjectData(new URL('../../' + stageRefreshReceiptPath, import.meta.url));
+const priorStageRefreshes = [
+  { program: 'check/rust-match-tuple', stages: ['parse'] },
+  { program: 'frontend-rust/frontend-rust-typeTuple', stages: ['parse', 'check', 'emit'] },
+  { program: 'frontend-rust/frontend-rust-letTuple', stages: ['parse', 'check'] },
+  { program: 'frontend-rust/frontend-rust-methodNotIdentifier', stages: ['parse', 'check'] },
+  { program: 'frontend-rust/frontend-rust-tuple', stages: ['parse', 'check'] },
+  { program: 'frontend-rust/frontend-rust-patternTuple', stages: ['parse'] },
+];
+const stageRefreshes = new Map(priorStageRefreshes.map(({program, stages}) => [program, [...stages]]));
+for (const {program, stages} of stageRefreshReceipt.refreshes) {
+  const selected = new Set([...(stageRefreshes.get(program) ?? []), ...stages]);
+  stageRefreshes.set(program, ['parse', 'check', 'emit'].filter(stage => selected.has(stage)));
+}
 
 export const projectDataToolingContract = Object.freeze({
   schemaVersion: 1,
@@ -17,14 +33,8 @@ export const projectDataToolingContract = Object.freeze({
     { logicalPaths: ['parity/fixtures/native-grammar-concept-reuse.json'],
       command: ['node', 'js/scripts/build-native-grammar-concept-reuse.mjs', '--check'] },
     { logicalPaths: ['parity/fixtures/translation-stages.json'],
-      translationStageRefresh: [
-        { program: 'check/rust-match-tuple', stages: ['parse'] },
-        { program: 'frontend-rust/frontend-rust-typeTuple', stages: ['parse', 'check', 'emit'] },
-        { program: 'frontend-rust/frontend-rust-letTuple', stages: ['parse', 'check'] },
-        { program: 'frontend-rust/frontend-rust-methodNotIdentifier', stages: ['parse', 'check'] },
-        { program: 'frontend-rust/frontend-rust-tuple', stages: ['parse', 'check'] },
-        { program: 'frontend-rust/frontend-rust-patternTuple', stages: ['parse'] },
-      ],
+      translationStageRefreshReceipt: stageRefreshReceiptPath,
+      translationStageRefresh: [...stageRefreshes].map(([program, stages]) => ({program, stages})),
       command: ['node', 'js/scripts/build-translation-stage-fixtures.mjs', '--check'] },
   ],
   protectedScopeBaselines: ['950efbee452da0853e272d841445eb85caa2d81f',

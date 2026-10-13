@@ -523,6 +523,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
 
+      - name: Authenticate reviewed generated-stage migration refreshes
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-translation-stage-refresh-receipt.mjs --check
+
       - name: Check the generated Rust source product rules against JavaScript
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-rust-product-rules.mjs --check
