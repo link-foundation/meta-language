@@ -403,7 +403,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'shared numeric function model declaration',
     files: ['js/src/shared-numeric-function-model.js', 'rust/src/shared_numeric_function_model.rs'],
-    extract: (text) => captures(text, /^(?:export|pub\(crate\)) const (SHARED_NUMERIC_FUNCTION_MODEL)\b/gmu)
+    extract: (text) => captures(text, /^(?:export|pub(?:\(crate\))?) const (SHARED_NUMERIC_FUNCTION_MODEL)\b/gmu)
       .map(name => name.replaceAll('_', '-').toLowerCase()),
     recordOf: () => 'translation.closed-binary-floating-point-function',
   },
@@ -1057,6 +1057,14 @@ export const NAME_INVENTORIES = Object.freeze([
       .filter((name) => !name.startsWith('ml_'))
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'frontend source operand comparison premises',
+    files: ['js/src/translation/frontend-rules.js', 'rust/src/translation/frontend_rules/strings.rs'],
+    extract: (text) => captures(text, /^(?:export function acceptPrecedenceOperandHead|pub const fn accept_precedence_operand_head)\(([^)]*)\)/gmu)
+      .flatMap(parameters => [...parameters.matchAll(/\b(sourceRuleMatches|sourceReductionMatches|source_rule_matches|source_reduction_matches)\b/gu)].map(([, name]) => name))
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.precedence-operand-${name === 'source-rule-matches' ? 'source-rule-match' : 'source-reduction-match'}`,
   },
   {
     inventory: 'TypeScript erasure decisions',
