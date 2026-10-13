@@ -1330,6 +1330,13 @@ The Rust evidence suite starts only after the entire JavaScript matrix passes.
 Both suites provision their required formatter and compiler tools. Failure
 tails and periodic command progress are retained in live CI output.
 
+Package validation runs five required parallel check groups: native imports,
+native fixtures, grammar, contracts and generated code. Each group retains the
+ten-minute deadline and its own setup and cleanup. The final package job requires
+every group, every JavaScript test partition and the complete report assertion
+job before packaging or publication. Frozen step-conservation checks retain every
+original command, condition and artifact owner exactly once across the groups.
+
 The JavaScript package checks also compile the generated shared frontend rules
 as a standalone Rust module with the crate's Clippy lint groups and warnings
 denied. This checks the generated interface without building the crate's
