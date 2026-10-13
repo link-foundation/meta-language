@@ -8,6 +8,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 import {
   FORMAL_AI_PROBE_ASSERTIONS,
@@ -229,7 +230,7 @@ const liveSkip = !reportPath
     : false;
 
 test('the CI workload report holds every assertion for the installed npm package', { skip: liveSkip }, () => {
-  const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+  const report = readProjectData(reportPath);
   assert.equal(report.requirementId, FORMAL_AI_WORKLOAD_REQUIREMENT);
   assert.equal(report.fixture, FORMAL_AI_WORKLOAD_FIXTURE);
   const { problems, observed } = validateFormalAiWorkloadReport(report, fixture, 'javascript');
