@@ -383,7 +383,60 @@ export const NAME_INVENTORIES = Object.freeze([
       'js/src/translation/rust-scalar-parameters.js', 'rust/src/translation/rust/scalar_parameters.rs'],
     extract: (text) => captures(text, /^(?:export function|pub\(super\) fn) ([a-zA-Z_]+)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
-    recordOf: (name) => `translation.${name === 'expression' ? 'create-rust-floating-point-predicate-expression' : name.replaceAll('float-predicate', 'floating-point-predicate')}`,
+    recordOf: (name) => `translation.${name === 'expression' ? 'create-rust-floating-point-predicate-expression' : name === 'operation-expression' ? 'create-rust-floating-point-operation-expression' : name === 'constant-expression' ? 'create-rust-floating-point-constant-expression' : name.replaceAll('float-predicate', 'floating-point-predicate').replaceAll('float-operation', 'floating-point-operation').replaceAll('float-constant', 'floating-point-constant')}`,
+  },
+  {
+    inventory: 'Rust floating point linked template operations',
+    files: ['js/src/translation/rust-float-predicates.js', 'rust/src/translation/rust/float_predicates.rs'],
+    extract: (text) => captures(text, /^(?:function|fn) (createRustFloatTemplateExpression|policy|instantiate|selected_expression)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${({
+      'create-rust-float-template-expression': 'create-rust-floating-point-template-expression',
+      'instantiate': 'create-rust-floating-point-template-expression',
+      'policy': 'read-rust-floating-point-expression-policy',
+      'selected-expression': 'create-rust-selected-floating-point-expression',
+    })[name]}`,
+  },
+  {
+    inventory: 'Rust completion admission operations',
+    files: ['js/src/translation/rust-completion-rules.js', 'rust/src/translation/rust/completion_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'Rust closed completion source operations',
+    files: ['js/src/translation/rust-completions.js', 'rust/src/translation/rust/expressions/control/completions.rs'],
+    extract: (text) => captures(text, /^\s*(?:export function|function|(?:pub\([^)]*\) )?fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${({
+      'read-rust-function-completion': 'read-rust-function-completion',
+      'closed-function-completion': 'read-rust-function-completion',
+      'range': 'read-rust-completion-source-span',
+      'block': 'read-rust-block-completion',
+      'completion-block': 'read-rust-block-completion',
+      'sequence': 'read-rust-sequence-completion',
+      'completion-sequence': 'read-rust-sequence-completion',
+      'conditional': 'read-rust-conditional-completion-expression',
+      'conditional-completion': 'read-rust-conditional-completion-expression',
+      'return-completion': 'read-rust-return-completion',
+      'tail-completion': 'read-rust-tail-completion',
+      'completion-continuation': 'read-rust-completion-continuation',
+    })[name]}`,
+  },
+  {
+    inventory: 'Rust completion panic message operations',
+    files: ['js/src/translation/rust-completion-panic.js', 'rust/src/translation/rust/expressions/control/completion_panic.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub\(super\) fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'Rust source model parser entry points',
+    files: ['js/src/translation/rust.js', 'rust/src/translation/rust.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: () => 'translation.parse-rust-source-models',
   },
   {
     inventory: 'formal function selector boundary',
@@ -410,7 +463,7 @@ export const NAME_INVENTORIES = Object.freeze([
     files: ['js/src/translation/rust-float-predicate-rules.js', 'rust/src/translation/rust/float_predicate_rules.rs'],
     extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z_]+)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
-    recordOf: (name) => `translation.${name.replaceAll('float-predicate', 'floating-point-predicate')}`,
+    recordOf: (name) => `translation.${name.replaceAll('float-predicate', 'floating-point-predicate').replaceAll('float-operation', 'floating-point-operation').replaceAll('float-constant', 'floating-point-constant')}`,
   },
   {
     inventory: 'Rust read only scalar parameter operations',
@@ -635,6 +688,13 @@ export const NAME_INVENTORIES = Object.freeze([
     extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z][a-zA-Z_]+)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name === 'is-unsafe-program-field' ? 'detect-unsafe-program-field' : name}`,
+  },
+  {
+    inventory: 'typed Rust source model factory operations',
+    files: ['rust/src/typed_program_links.rs'],
+    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_array_result_model|create_typed_program_links_with_rust_completion_model|create_typed_program_links_with_rust_source_models)\(/gmu)
+      .map(name => name.replaceAll('_', '-')),
+    recordOf: () => 'translation.create-typed-program-links',
   },
   {
     inventory: 'typed program binding identities',
