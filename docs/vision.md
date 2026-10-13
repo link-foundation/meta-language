@@ -155,10 +155,15 @@ including braces, escapes, empty text and Unicode. Dynamic formatting, other
 templates and custom `Display` behavior require separate source proofs.
 Proven unshadowed primitive binary64 (`f64`) receivers use shared linked
 expression templates for predicates and `abs`, `floor`, `ceil` and `trunc`, with
-one receiver evaluation. Operation fixtures compare non-NaN results by exact
-bits, including signed zero, subnormal values and infinities; NaN is compared by
-class. Shared operation fixtures exercise reimport of their actual emitted
-function definitions in both directions, including typed negative-zero bindings
+one receiver evaluation. The same exact unshadowed primitive owner admits the
+associated value paths `f64::NAN`, `f64::INFINITY` and `f64::NEG_INFINITY`.
+Their lowered numeric expressions inherit binary64 source evidence for predicate
+and operation chains. Qualified or imported owners, custom owners and broader
+constant evaluation require independent source proofs.
+Operation fixtures compare non-NaN results by exact bits, including signed zero,
+subnormal values and infinities; NaN is compared by class. Shared operation
+fixtures exercise reimport of their actual emitted function definitions in both
+directions, including typed negative-zero bindings
 and explicit array-length conversion to unshadowed `f64` under the Number length
 model. Source-free operation-link edits alter emitted behavior. Custom or
 shadowed owners, `f32`, implicit indirect
