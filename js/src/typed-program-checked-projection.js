@@ -49,6 +49,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       ctors: entry.ctors.map(constructor => ({ name: constructor.name,
         fields: constructor.fields.map(field => ({ name: field.name, type: projectType(field.type) })),
       })), span: entry.span, ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
+      ...(entry.sourceUnitCloneDerivation!==undefined?{sourceUnitCloneDerivation:entry.sourceUnitCloneDerivation}:{}),
     };
     if (entry.k !== 'fn') throw new TypeError(`the linked declaration ${entry.k} has no checked surface projection`);
     return { k: 'fn', name: entry.name,

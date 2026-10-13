@@ -25,6 +25,7 @@ const cases = [
   ['named-reference', "enum f64{Only}fn header<'a>(value:&'a f64)->bool{true}fn main(){}", 'header', data('f64'), ['f64'], ['f64'], bool, ['bool'], ['bool'], [], null, null, ['reference'], ['a']],
   ['string-token-datatype', 'enum str{Only}fn header(value:&str)->bool{true}fn main(){}', 'header', data('str'), ['str'], ['str'], bool, ['bool'], ['bool'], [], null, null, ['reference'], [null]],
   ['fixed-token-datatype', 'enum u8{Only}fn keep(value:u8)->u8{value}fn main(){}', 'keep', data('u8'), ['u8'], ['u8'], data('u8'), ['u8'], ['u8'], []],
+  ['forward-string-token-datatype', 'fn header(value:str)->bool{true}enum str{Only}fn main(){}', 'header', data('str'), ['str'], ['str'], bool, ['bool'], ['bool'], []],
 ];
 const refused = [
   ['root-super', 'enum f64{Only}fn header(value:super::f64)->bool{true}fn main(){}'],
@@ -44,11 +45,53 @@ const refused = [
   ['constructor-type', 'enum Choice{Only}fn keep(value:Choice::Only)->bool{true}fn main(){}'],
   ['shared-module-type-identity', 'enum Choice{Only}mod Choice{fn keep(value:crate::Choice)->bool{true}}fn main(){}'],
   ['same-type-value-identity', 'enum f64{Only}fn f64()->bool{true}fn keep(value:f64)->bool{true}fn main(){}'],
+  ['boolean-string-from', 'fn bad()->bool{String::from(true)=="true"}fn main(){}'],
+  ['datatype-string-from', 'enum String{Only}fn bad()->bool{String::from("x")=="x"}fn main(){}'],
+  ['unproved-standard-string-from', 'fn good()->bool{String::from("x")=="x"}fn main(){}'],
+  ['unboxed-primitive-string-slice', 'fn header(value:str)->bool{true}fn main(){}'],
+  ['datatype-signed-from', 'enum i64{Only}fn bad()->bool{i64::from(1i32)==1i64}fn main(){}'],
+  ['datatype-byte-from', 'enum u8{Only}fn keep()->bool{u8::from(1u8)==1u8}fn main(){}'],
+  ['datatype-word-from', 'enum u32{Only}fn keep()->bool{u32::from(1u32)==1u32}fn main(){}'],
 ];
 const output = code => { const lines = []; vm.runInNewContext(code, {console:{log:(...args)=>lines.push(args.map(String).join(' '))}}, {timeout:1000}); return lines; };
 const schema = readProjectData(new URL('../src/data/typed-program-links-schema.lino', import.meta.url));
 export function rustTypeNamespaceField(network, parent, name) {
   return network.fieldRelations().find(row => row.parent.equals(parent) && row.label === (schema.fields[name] ?? name.replace(/[A-Z]/gu, letter => ` ${letter.toLowerCase()}`)))?.child;
+}
+export function rustTypeNamespaceTraitFixture() {
+  const cases=['Clone','Clone, Debug, PartialEq, Eq'].map((traits,index)=>{
+    const source=`#[derive(${traits})]enum Choice{Only}fn keep(value:Choice)->Choice{value.clone()}fn main(){let value=keep(Choice::Only);println!("{}",match value{Choice::Only=>true});}`;
+    const archive=createTypedProgramLinks(source,'Rust',{rustTypeNamespaceModel:typeNamespaceModel}),loaded=LinkNetwork.fromLino(archive.network.toLino());
+    const expected=decodeTypedProgramLinks(loaded,archive.root).declarations.get('Choice').sourceUnitCloneDerivation;
+    assert.deepEqual(expected.attribute.traits,traits.split(', '));assert.deepEqual(expected.owner,['Choice']);assert.deepEqual(expected.constructorNames,['Only']);assert.equal(expected.attribute.span.start,0);assert.equal(expected.attribute.span.end,source.indexOf('enum'));
+    assert.deepEqual(output(emitTypedProgramLinks(loaded,archive.root,'JavaScript').code),['true']);
+    return{id:index?'combined-unit-clone':'single-unit-clone',source,expected,output:['true'],archive:archive.network.toLino(),root:archive.root.asU64()};
+  });
+  const sources=[
+    ['datatype-clone','enum Choice{Only}fn bad(value:Choice)->Choice{value.clone()}fn main(){}'],
+    ['datatype-to-owned','enum Choice{Only}fn bad(value:Choice)->Choice{value.to_owned()}fn main(){}'],
+    ['primitive-to-string','fn bad()->bool{true.to_string()=="true"}fn main(){}'],
+    ['datatype-as-string-slice','enum Choice{Only}fn bad(value:Choice)->bool{let text=value.as_str();true}fn main(){}'],
+    ['unproved-derived-clone','#[derive(Clone)]enum Choice{Only(f64)}fn bad(value:Choice)->Choice{value.clone()}fn main(){}'],
+    ['unproved-primitive-clone','fn keep(value:f64)->f64{value.clone()}fn main(){}'],
+  ];
+  const invalid=sources.map(([id,source])=>{
+    assert.doesNotThrow(()=>checkProgram(parseRust(source)),`${id}: unchanged legacy parsing`);
+    try{checkProgram(parseRust(source,{typeNamespaceModel}));}catch(error){return{id,source,kind:error.kind,reason:error.reason,span:error.span??null};}
+    throw new Error(`unproved selected trait method admitted: ${id}`);
+  });
+  const malformed=[];
+  for(const [id,edit] of [
+    ['null-derivation',(n,proof)=>{const row=n.fieldRelations().find(value=>value.child.equals(proof));const nil=n.links().find(value=>value.metadata().term===schema.scalars.null);row.link.setReferences([...row.link.references().slice(0,2),nil.id()]);}],
+    ['foreign-derivation-model',(n,proof)=>{const value=rustTypeNamespaceField(n,proof,'model');n.link(value).setMetadata(n.link(value).metadata().withDefinition('foreign clone derivation'));}],
+    ['missing-clone-argument',(n,proof)=>{const argument=n.link(rustTypeNamespaceField(n,rustTypeNamespaceField(n,proof,'attribute'),'traits')).references()[0];n.link(argument).setMetadata(n.link(argument).metadata().withDefinition('Debug'));}],
+  ]){
+    const base=cases[0],network=LinkNetwork.fromLino(base.archive),proof=network.fieldRelations().find(row=>row.label===schema.fields.sourceUnitCloneDerivation).child;
+    edit(network,proof);
+    for(const target of ['JavaScript','Rust'])assert.throws(()=>emitTypedProgramLinks(LinkNetwork.fromLino(network.toLino()),base.root,target),undefined,id);
+    malformed.push({id,archive:network.toLino(),root:base.root});
+  }
+  return{schemaVersion:1,typeNamespaceModel,scope:'selected method calls require a separately owned actual method implementation; only attached standard field-free datatype Clone derives establish the bounded clone premise',cases,invalid,malformed};
 }
 export function rustTypeNamespaceFixture() {
   const entries = cases.map(([id, source, functionName, parameterType, parameterOwner, parameterSpelling, resultType, resultOwner, resultSpelling, lines, callFunction, callTarget, wrappers=[], lifetimes=[]]) => {
@@ -110,6 +153,14 @@ export function rustTypeNamespaceFixture() {
     edit(`generated-${id}`,(n,fn,p)=>n.insertFieldRelation(fn,'generated',scalar(n,p,kind,text)));
   }
   for(const value of ['false','true'])edit(`optional-${value}`,(n,fn,p)=>n.insertFieldRelation(n.link(field(n,fn,'params')).references()[0],'optional',scalar(n,p,'boolean',value)));
+  {
+    const entry=entries.find(value=>value.id==='closest-type'),network=LinkNetwork.fromLino(entry.archive);
+    const fn=network.fieldRelations().find(row=>row.label==='full name'&&network.link(row.child).metadata().definition===entry.functionName).parent;
+    const proof=field(network,fn,'sourceTypeNamespace'),spelling=network.link(field(network,proof,'parameters')).references()[0];
+    set(network,network.link(spelling).references()[0],'nested.f64');
+    for(const target of ['JavaScript','Rust'])assert.throws(()=>emitTypedProgramLinks(LinkNetwork.fromLino(network.toLino()),entry.root,target),undefined,'joined-type-segment');
+    malformed.push({id:'joined-type-segment',archive:network.toLino(),root:entry.root});
+  }
   const network = LinkNetwork.fromLino(base.archive);
   const fn = network.fieldRelations().find(row => row.label==='full name' && network.link(row.child).metadata().definition===base.functionName).parent;
   const facet = field(network,fn,'sourceTypeNamespace'), spelling = network.link(field(network,facet,'parameters')).references()[0];
@@ -123,5 +174,8 @@ export function rustTypeNamespaceFixture() {
 if (process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   const file=new URL('../../parity/fixtures/rust-type-namespace.lino',import.meta.url),fixture=rustTypeNamespaceFixture();
   if(process.argv.includes('--check'))checkProjectData(file,fixture);else writeProjectData(file,fixture);
+  const traitsFile=new URL('../../parity/fixtures/rust-type-namespace-traits.lino',import.meta.url),traits=rustTypeNamespaceTraitFixture();
+  if(process.argv.includes('--check'))checkProjectData(traitsFile,traits);else writeProjectData(traitsFile,traits);
   console.log(`Rust type namespace: ${fixture.cases.length} actual source bindings, ${fixture.invalid.length} source refusals, ${fixture.malformed.length} source-free corruptions`);
+  console.log(`Rust type namespace traits: ${traits.invalid.length} precise unproved method refusals`);
 }
