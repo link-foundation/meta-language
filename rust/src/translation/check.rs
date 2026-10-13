@@ -433,6 +433,7 @@ impl Checker {
         };
         super::source_primitive_owners::validate_source_primitive_owners(&program)?;
         super::source_empty_options::validate_source_empty_options(&program)?;
+        super::source_type_namespaces::validate_source_type_namespaces(&program)?;
         Ok(program)
     }
 
