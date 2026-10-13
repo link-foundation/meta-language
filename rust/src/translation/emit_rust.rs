@@ -23,7 +23,7 @@ use super::frontend_rules::{
     accept_constant_emission, constant_binding_form, render_constant_binding,
 };
 use super::ir::{
-    Binder, ByZero, Decl, Effect, Expr, LitValue, Node, Pattern, Program, Prop, Semantics,
+    Binder, ByZero, Decl, Effect, Expr, LitValue, Node, Pattern, Program, Prop, Scope, Semantics,
     rename_function, rename_main, rename_theorem, tail_loop,
 };
 use super::surface::{BinaryOp, External, Flavor, Rounding, SImport, UnaryOp};
@@ -534,8 +534,15 @@ pub fn emit_rust_with_options(
 ) -> Result<Emitted> {
     let mut emitter = rust_emitter(program);
     if let Some(model) = options.source_header_model {
-        emitter.source_headers =
-            super::source_header_emission::read_rust_source_header_emission(program, model)?;
+        if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model) {
+            let interface =
+                super::borrowed_call_interface::read_rust_borrowed_call_interface(program, model)?;
+            emitter.source_headers = interface.headers;
+            emitter.borrowed_call_targets = Some(interface.targets);
+        } else {
+            emitter.source_headers =
+                super::source_header_emission::read_rust_source_header_emission(program, model)?;
+        }
     }
     emitter.file()
 }
@@ -571,6 +578,8 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         preludes: BTreeSet::new(),
         loop_params: None,
         source_headers: BTreeMap::new(),
+        borrowed_call_targets: None,
+        borrowed_call_scope: None,
     }
 }
 
@@ -687,6 +696,10 @@ struct RustEmitter<'p> {
     loop_params: Option<(String, Vec<String>)>,
     /// Validated owned source signatures selected before interface rendering.
     source_headers: BTreeMap<String, super::source_signatures::SourceSignature>,
+    /// Actual owned leaf signatures for the selected direct-call interface.
+    borrowed_call_targets: Option<BTreeMap<String, super::source_signatures::SourceSignature>>,
+    /// Per-function hygienic names, reserved against every argument and binder.
+    borrowed_call_scope: Option<Scope<'p>>,
 }
 
 fn is_copy(ty: &Type, product_model: Option<&str>) -> bool {
