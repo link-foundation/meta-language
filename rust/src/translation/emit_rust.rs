@@ -12,7 +12,7 @@
 //!
 //! Mirrors `js/src/translation/emit-rust.js`.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use super::Language;
@@ -514,7 +514,30 @@ fn camel(name: &str) -> String {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_rust(program: &Program) -> Result<Emitted> {
-    rust_emitter(program).file()
+    emit_rust_with_options(program, RustEmissionOptions::default())
+}
+
+/// Optional explicit source-interface interpretations for Rust emission.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct RustEmissionOptions<'a> {
+    /// Preserve primitive immutable-reference headers under the selected model.
+    pub source_header_model: Option<&'a str>,
+}
+
+/// Emit a checked program with an explicitly selected source-header model.
+///
+/// # Errors
+/// Refuses unsupported models, interfaces and contexts before rendering.
+pub fn emit_rust_with_options(
+    program: &Program,
+    options: RustEmissionOptions<'_>,
+) -> Result<Emitted> {
+    let mut emitter = rust_emitter(program);
+    if let Some(model) = options.source_header_model {
+        emitter.source_headers =
+            super::source_header_emission::read_rust_source_header_emission(program, model)?;
+    }
+    emitter.file()
 }
 
 /// The Rust emitter of `program`, with every name of the module's other items
@@ -547,6 +570,7 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         theorem_checks: Vec::new(),
         preludes: BTreeSet::new(),
         loop_params: None,
+        source_headers: BTreeMap::new(),
     }
 }
 
@@ -661,6 +685,8 @@ struct RustEmitter<'p> {
     /// The lifted loop being emitted as a loop, and its parameters, which
     /// each call to it assigns before the next iteration.
     loop_params: Option<(String, Vec<String>)>,
+    /// Validated owned source signatures selected before interface rendering.
+    source_headers: BTreeMap<String, super::source_signatures::SourceSignature>,
 }
 
 fn is_copy(ty: &Type, product_model: Option<&str>) -> bool {
@@ -742,7 +768,7 @@ fn rust_string(text: &str) -> String {
     format!("\"{}\"", rust_escape(text))
 }
 
-fn indent(text: &str, depth: usize) -> String {
+pub(super) fn indent(text: &str, depth: usize) -> String {
     let pad = "    ".repeat(depth);
     text.split('\n')
         .map(|line| {
