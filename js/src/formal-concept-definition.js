@@ -5,6 +5,7 @@ import { LinkNetwork } from './network.js';
 import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from './typed-program-links.js';
 import { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
+import { acceptFormalRelationEdgeIdentity, acceptFormalRelationIdentity, acceptFormalRelationLabelIdentity } from './formal-relation-rules.js';
 
 const LANGUAGE = 'meta-language formal definition';
 const SCHEMA = '1';
@@ -36,14 +37,33 @@ function data(network, value) {
 
 function fields(network) {
   const result = new Map();
-  for (const relation of network.fieldRelations()) {
+  for (const link of network.links()) {
+    if (link.metadata().linkType !== LinkType.Field) continue;
+    const references = link.references();
+    // Label points are vertices, not outgoing labeled relations.
+    if (references.length === 0 || references.length === 1 && key(references[0]) === key(link.id())) continue;
+    const labelId = references[1];
+    const labelLink = labelId === undefined ? null : network.link(labelId);
+    const label = labelLink?.metadata().term ?? '';
+    const relation = { link, parent: references[0], label, labelId, child: references[2] };
     const parent = key(relation.parent);
     if (!result.has(parent)) result.set(parent, []);
-    if (result.get(parent).some(({ label }) => label === relation.label)) throw new TypeError('a formal definition contains a duplicate relation label');
     result.get(parent).push(relation);
   }
   for (const relations of result.values()) relations.sort((first, second) => first.label < second.label ? -1 : first.label > second.label ? 1 : 0);
   return result;
+}
+
+function admittedRelation(network, relation, sameLabelIdentity) {
+  const label = relation.labelId === undefined ? null : network.link(relation.labelId);
+  const value = label?.metadata();
+  const edge = relation.link.metadata();
+  const labelAdmitted = acceptFormalRelationLabelIdentity(value?.linkType ?? '', value?.definition ?? '', value?.term !== undefined,
+    value?.language !== undefined, value?.named ?? false,
+    label != null && label.references().length === 1 && key(label.references()[0]) === key(relation.labelId));
+  const relationAdmitted = acceptFormalRelationEdgeIdentity(edge.linkType ?? '', edge.language !== undefined, edge.term !== undefined,
+    edge.definition !== undefined, edge.named ?? false, relation.link.references().length);
+  return acceptFormalRelationIdentity(labelAdmitted, relationAdmitted, sameLabelIdentity);
 }
 
 // Ordered references and labeled relations are both edges. Sharing and cycles
@@ -56,6 +76,7 @@ function graph(network, root, exclusions = new Set()) {
   const offsets = [0];
   const edges = [];
   const entries = [];
+  const labelIdentities = new Map();
   const edge = (id) => {
     const identity = key(id);
     if (!indices.has(identity)) { indices.set(identity, pending.length); pending.push(LinkId.from(id)); }
@@ -68,7 +89,16 @@ function graph(network, root, exclusions = new Set()) {
     if (!link) throw new TypeError('a formal definition contains a dangling reference');
     const value = link.metadata();
     const positional = link.references();
-    const selected = (relations.get(key(id)) ?? []).filter(({ label }) => !exclusions.has(`${key(id)}:${label}`));
+    const outgoing = relations.get(key(id)) ?? [];
+    const labels = new Set();
+    for (const relation of outgoing) {
+      const previous = labelIdentities.get(relation.label);
+      if (!admittedRelation(network, relation, previous === undefined || previous === key(relation.labelId))) throw new TypeError('a formal definition contains an unsupported relation identity');
+      if (labels.has(relation.label)) throw new TypeError('a formal definition contains a duplicate relation label');
+      labels.add(relation.label);
+      labelIdentities.set(relation.label, key(relation.labelId));
+    }
+    const selected = outgoing.filter(({ label }) => !exclusions.has(`${key(id)}:${label}`));
     const shape = canonical([value.linkType, value.language ?? null, value.term ?? null, value.definition ?? null, value.named ?? null, positional.length, selected.map(({ label }) => label)]);
     shapes.push(shape);
     entries.push({ id, metadata: value, references: positional, fields: selected });

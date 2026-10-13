@@ -227,3 +227,26 @@ test('shared formal archives preserve primitives, recursive references and check
   };
   for (const [requirementId, verified] of Object.entries(assertions)) recordIssue195Observations({ requirementId, suffix: 'behavior', fixtureId: 'formal-concept-definitions', fixtureFile, assertions: verified, testName: 'shared formal archives preserve primitives, recursive references and checked correspondence premises' });
 });
+
+test('formal namespace and label identities cannot be erased from recursive proof premises', () => {
+  const fixture = readProjectData(new URL('../../parity/fixtures/formal-concept-relation-identities.lino', import.meta.url));
+  for (const definition of fixture.definitions) {
+    assert.deepEqual(readFormalConceptDefinition(definition.archive), definition.prepared, definition.name);
+    const proof = proveFormalConceptEquivalence(definition.archive, definition.archive);
+    assert.ok(proof, definition.name);
+    assert.equal(verifyFormalConceptEquivalence(definition.archive, definition.archive, reload(proof)), true);
+  }
+  for (const rejection of fixture.rejections) {
+    const original = fixture.definitions[rejection.first].archive;
+    const proof = proveFormalConceptEquivalence(original, original);
+    assert.throws(() => readFormalConceptDefinition(rejection.archive), undefined, rejection.name);
+    assert.equal(proveFormalConceptEquivalence(original, rejection.archive), null, rejection.name);
+    assert.equal(verifyFormalConceptEquivalence(original, rejection.archive, proof), false, rejection.name);
+  }
+  const original = fixture.definitions[0].archive;
+  for (const entry of fixture.invalidCertificates) assert.equal(verifyFormalConceptEquivalence(original, original, entry.certificate), false, entry.name);
+  assert.deepEqual(readFormalConceptDefinition(fixture.disconnectedArchive), fixture.definitions[0].prepared);
+  const proof = proveFormalConceptEquivalence(original, fixture.disconnectedArchive);
+  assert.ok(proof, 'unreachable foreign namespace and duplicate-label records remain outside the premise');
+  assert.equal(verifyFormalConceptEquivalence(original, fixture.disconnectedArchive, reload(proof)), true);
+});

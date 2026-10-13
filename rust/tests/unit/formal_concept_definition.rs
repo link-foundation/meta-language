@@ -228,3 +228,65 @@ fn unknown_counterfeit_cyclic_dangling_and_duplicate_bases_are_refused() {
         "unknown_counterfeit_cyclic_dangling_and_duplicate_bases_are_refused",
     );
 }
+
+#[test]
+fn namespace_and_label_identities_remain_explicit_in_recursive_premises() {
+    let fixture = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/formal-concept-relation-identities.lino"
+    ))
+    .unwrap();
+    let definitions = fixture["definitions"].as_array().unwrap();
+    let archives = definitions
+        .iter()
+        .map(|entry| FormalConceptArchive::from_json(&entry["archive"]).unwrap())
+        .collect::<Vec<_>>();
+    for (entry, archive) in definitions.iter().zip(&archives) {
+        assert_eq!(
+            read_formal_concept_definition(&entry["archive"]).unwrap(),
+            entry["prepared"],
+            "{}",
+            entry["name"]
+        );
+        let proof = prove_formal_concept_equivalence(archive, archive).unwrap();
+        assert!(verify_formal_concept_equivalence(archive, archive, &proof));
+    }
+    for entry in fixture["rejections"].as_array().unwrap() {
+        let original = &archives[entry["first"].as_u64().unwrap() as usize];
+        let altered = FormalConceptArchive::from_json(&entry["archive"]).unwrap();
+        let proof = prove_formal_concept_equivalence(original, original).unwrap();
+        assert!(
+            read_formal_concept_definition(&entry["archive"]).is_err(),
+            "{}",
+            entry["name"]
+        );
+        assert!(
+            prove_formal_concept_equivalence(original, &altered).is_none(),
+            "{}",
+            entry["name"]
+        );
+        assert!(
+            !verify_formal_concept_equivalence(original, &altered, &proof),
+            "{}",
+            entry["name"]
+        );
+    }
+    for entry in fixture["invalidCertificates"].as_array().unwrap() {
+        let certificate = FormalConceptArchive::from_json(&entry["certificate"]).unwrap();
+        assert!(
+            !verify_formal_concept_equivalence(&archives[0], &archives[0], &certificate),
+            "{}",
+            entry["name"]
+        );
+    }
+    assert_eq!(
+        read_formal_concept_definition(&fixture["disconnectedArchive"]).unwrap(),
+        definitions[0]["prepared"]
+    );
+    let disconnected = FormalConceptArchive::from_json(&fixture["disconnectedArchive"]).unwrap();
+    let proof = prove_formal_concept_equivalence(&archives[0], &disconnected).unwrap();
+    assert!(verify_formal_concept_equivalence(
+        &archives[0],
+        &disconnected,
+        &proof
+    ));
+}

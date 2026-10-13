@@ -15,6 +15,7 @@ use crate::typed_program_links::{
 };
 
 mod graph;
+mod relation_rules;
 use graph::{
     Graph, correspondence, data, exclude_binding_names, fields, graph, snapshot, verify_pairs,
 };
@@ -179,7 +180,7 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
         // granting equality from matching but uninterpretable host payloads.
         emit_typed_program_links(network, body, "JavaScript").map_err(|error| error.to_string())?;
         emit_typed_program_links(network, body, "Rust").map_err(|error| error.to_string())?;
-        for (parent, relations) in fields(network)? {
+        for (parent, relations) in fields(network) {
             for relation in relations {
                 if relation.label == "source span"
                     || (parent == body && relation.label == "provenance")

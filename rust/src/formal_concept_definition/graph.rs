@@ -5,6 +5,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::{Value, json};
 
 use super::metadata;
+use super::relation_rules::{
+    accept_formal_relation_edge_identity, accept_formal_relation_identity,
+    accept_formal_relation_label_identity,
+};
 use crate::global_concept_rules::verify_global_concept_correspondence;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 
@@ -12,6 +16,8 @@ use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 pub(super) struct Field {
     pub label: String,
     pub child: LinkId,
+    relation: LinkId,
+    label_id: Option<LinkId>,
 }
 
 struct Entry {
@@ -124,32 +130,75 @@ pub(super) fn data(network: &mut LinkNetwork, value: &Value) -> Result<LinkId, S
     }
 }
 
-pub(super) fn fields(network: &LinkNetwork) -> Result<BTreeMap<LinkId, Vec<Field>>, String> {
+pub(super) fn fields(network: &LinkNetwork) -> BTreeMap<LinkId, Vec<Field>> {
     let mut result: BTreeMap<LinkId, Vec<Field>> = BTreeMap::new();
     for link in network.links() {
-        if link.metadata().link_type() != Some(LinkType::Field) || link.references().len() != 3 {
+        if link.metadata().link_type() != Some(LinkType::Field) {
             continue;
         }
         let references = link.references();
-        let Some(label) = network
-            .link(references[1])
-            .and_then(|link| link.metadata().term())
-        else {
+        if references.is_empty() || references.len() == 1 && references[0] == link.id() {
             continue;
-        };
-        let relations = result.entry(references[0]).or_default();
-        if relations.iter().any(|field| field.label == label) {
-            return Err("a formal definition contains a duplicate relation label".to_owned());
         }
+        let label_id = references.get(1).copied();
+        let label = label_id
+            .and_then(|id| network.link(id))
+            .and_then(|label| label.metadata().term())
+            .unwrap_or_default();
+        let relations = result.entry(references[0]).or_default();
         relations.push(Field {
             label: label.to_owned(),
-            child: references[2],
+            child: references.get(2).copied().unwrap_or(references[0]),
+            relation: link.id(),
+            label_id,
         });
     }
     for relations in result.values_mut() {
         relations.sort_by(|a, b| a.label.encode_utf16().cmp(b.label.encode_utf16()));
     }
-    Ok(result)
+    result
+}
+
+fn admitted_relation(network: &LinkNetwork, field: &Field, same_label_identity: bool) -> bool {
+    let label = field.label_id.and_then(|id| network.link(id));
+    let value = label.map(|link| link.metadata());
+    let edge = network
+        .link(field.relation)
+        .expect("indexed relation exists");
+    let label_admitted = accept_formal_relation_label_identity(
+        if value.is_some_and(|meta| meta.link_type() == Some(LinkType::Field)) {
+            "Field".to_owned()
+        } else {
+            String::new()
+        },
+        value
+            .and_then(|meta| meta.definition())
+            .unwrap_or_default()
+            .to_owned(),
+        value.is_some_and(|meta| meta.term().is_some()),
+        value.is_some_and(|meta| meta.language().is_some()),
+        value.is_some_and(LinkMetadata::is_named),
+        label.is_some_and(|link| {
+            link.references().len() == 1 && Some(link.references()[0]) == field.label_id
+        }),
+    );
+    let relation_admitted = accept_formal_relation_edge_identity(
+        if edge.metadata().link_type() == Some(LinkType::Field) {
+            "Field".to_owned()
+        } else {
+            String::new()
+        },
+        edge.metadata().language().is_some(),
+        edge.metadata().term().is_some(),
+        edge.metadata().definition().is_some(),
+        edge.metadata().is_named(),
+        if edge.references().len() == 3 {
+            3.0
+        } else {
+            0.0
+        },
+    );
+    accept_formal_relation_identity(label_admitted, relation_admitted, same_label_identity)
 }
 
 pub(super) fn graph(
@@ -157,13 +206,14 @@ pub(super) fn graph(
     root: LinkId,
     exclusions: &BTreeSet<(LinkId, String)>,
 ) -> Result<Graph, String> {
-    let relations = fields(network)?;
+    let relations = fields(network);
     let mut pending = vec![root];
     let mut indices = BTreeMap::from([(root, 0)]);
     let mut shapes = Vec::new();
     let mut offsets = vec![0];
     let mut edges = Vec::new();
     let mut entries = Vec::new();
+    let mut label_identities = BTreeMap::new();
     let mut at = 0;
     while at < pending.len() {
         if pending.len() > 100_000 {
@@ -175,10 +225,27 @@ pub(super) fn graph(
             .ok_or("a formal definition contains a dangling reference")?;
         let value = link.metadata();
         let positional = link.references();
-        let selected = relations
-            .get(&id)
-            .into_iter()
-            .flatten()
+        let outgoing = relations.get(&id).map_or(&[][..], Vec::as_slice);
+        let mut labels = BTreeSet::new();
+        for field in outgoing {
+            let same_identity = label_identities
+                .get(&field.label)
+                .is_none_or(|previous| Some(*previous) == field.label_id);
+            if !admitted_relation(network, field, same_identity) {
+                return Err(
+                    "a formal definition contains an unsupported relation identity".to_owned(),
+                );
+            }
+            if !labels.insert(&field.label) {
+                return Err("a formal definition contains a duplicate relation label".to_owned());
+            }
+            label_identities.insert(
+                field.label.clone(),
+                field.label_id.expect("admitted label exists"),
+            );
+        }
+        let selected = outgoing
+            .iter()
             .filter(|relation| !exclusions.contains(&(id, relation.label.clone())))
             .cloned()
             .collect::<Vec<_>>();
