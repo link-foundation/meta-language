@@ -455,28 +455,23 @@ pub fn accept_resource_description_unicode(units: &[f64]) -> bool {
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn accept_resource_description_identifier_character(code: f64, query: bool) -> bool {
-    if (super::resource_description_letter(code) || super::resource_description_digit(code)) {
-        true
-    } else if ((((code == (45f64)) || (code == (46f64))) || (code == (95f64)))
-        || (code == (126f64)))
+    if (super::resource_description_letter(code) || super::resource_description_digit(code))
+        || (((((code == (45f64)) || (code == (46f64))) || (code == (95f64))) || (code == (126f64)))
+            || ((((((((((((code == (33f64)) || (code == (36f64))) || (code == (38f64)))
+                || (code == (39f64)))
+                || (code == (40f64)))
+                || (code == (41f64)))
+                || (code == (42f64)))
+                || (code == (43f64)))
+                || (code == (44f64)))
+                || (code == (59f64)))
+                || (code == (61f64)))
+                || (((((160f64..=55295f64).contains(&code))
+                    || ((63744f64..=64975f64).contains(&code)))
+                    || ((65008f64..=65519f64).contains(&code)))
+                    || (((65536f64..=983_037f64).contains(&code))
+                        && ((code % 65536f64) <= (65533f64))))))
     {
-        true
-    } else if (((((((((((code == (33f64)) || (code == (36f64))) || (code == (38f64)))
-        || (code == (39f64)))
-        || (code == (40f64)))
-        || (code == (41f64)))
-        || (code == (42f64)))
-        || (code == (43f64)))
-        || (code == (44f64)))
-        || (code == (59f64)))
-        || (code == (61f64)))
-    {
-        true
-    } else if ((((160f64..=55295f64).contains(&code)) || ((63744f64..=64975f64).contains(&code)))
-        || ((65008f64..=65519f64).contains(&code)))
-    {
-        true
-    } else if (((65536f64..=983_037f64).contains(&code)) && ((code % 65536f64) <= (65533f64))) {
         true
     } else {
         (query
@@ -671,33 +666,31 @@ pub fn accept_resource_description_language(units: &[f64], grandfathered: bool) 
                                                                                 part_5
                                                                             };
                                                                             {
-                                                                                let part_10 = if ((((part_7 < (starts_2.len() as f64)) && ((super::resource_description_unit(&lengths_2, part_7)) == (2f64))) && super::resource_description_letter(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7)))) && super::resource_description_letter(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7) + 1f64))) {
+                                                                                let part_9 = if ((part_7 < (starts_2.len() as f64)) && (((((super::resource_description_unit(&lengths_2, part_7)) == (2f64)) && super::resource_description_letter(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7)))) && super::resource_description_letter(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7) + 1f64))) || (((((super::resource_description_unit(&lengths_2, part_7)) == (3f64)) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7)))) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7) + 1f64))) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7) + 2f64))))) {
                                                                                     { (part_7 + 1f64) }
-                                                                                } else if (((((part_7 < (starts_2.len() as f64)) && ((super::resource_description_unit(&lengths_2, part_7)) == (3f64))) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7)))) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7) + 1f64))) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7) + 2f64))) {
-                                                                                        { (part_7 + 1f64) }
-                                                                                    } else {
-                                                                                        part_7
-                                                                                    };
+                                                                                } else {
+                                                                                    part_7
+                                                                                };
                                                                                 {
                                                                                     let variants = Vec::<f64>::new();
                                                                                     {
-                                                                                        let ml_s15 = super::ml_accept_resource_description_language_loop17(units, starts_2.clone(), lengths_2.clone(), part_10, variants);
+                                                                                        let ml_s15 = super::ml_accept_resource_description_language_loop17(units, starts_2.clone(), lengths_2.clone(), part_9, variants);
                                                                                         match ml_s15 {
-                                                                                            super::MlAcceptResourceDescriptionLanguageLoop17Result::MlAcceptResourceDescriptionLanguageLoop17Done(part_11) => {
+                                                                                            super::MlAcceptResourceDescriptionLanguageLoop17Result::MlAcceptResourceDescriptionLanguageLoop17Done(part_10) => {
                                                                                                 {
                                                                                                     let singletons = Vec::<f64>::new();
                                                                                                     {
-                                                                                                        let ml_s16 = super::ml_accept_resource_description_language_loop18(units, starts_2.clone(), lengths_2.clone(), part_11, singletons);
+                                                                                                        let ml_s16 = super::ml_accept_resource_description_language_loop18(units, starts_2.clone(), lengths_2.clone(), part_10, singletons);
                                                                                                         match ml_s16 {
-                                                                                                            super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Done(part_12) => {
-                                                                                                                if (part_12 == (starts_2.len() as f64)) {
+                                                                                                            super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Done(part_11) => {
+                                                                                                                if (part_11 == (starts_2.len() as f64)) {
                                                                                                                     super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(true)
-                                                                                                                } else if (((super::resource_description_unit(&lengths_2, part_12)) != (1f64)) || (((super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_12))) != (88f64)) && ((super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_12))) != (120f64)))) {
+                                                                                                                } else if (((super::resource_description_unit(&lengths_2, part_11)) != (1f64)) || (((super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_11))) != (88f64)) && ((super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_11))) != (120f64)))) {
                                                                                                                         super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(false)
                                                                                                                     } else {
                                                                                                                         {
-                                                                                                                            let next_part_position = (part_12 + 1f64);
-                                                                                                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(next_part_position)
+                                                                                                                            let part_12 = (part_11 + 1f64);
+                                                                                                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(part_12)
                                                                                                                         }
                                                                                                                     }
                                                                                                             }
@@ -727,8 +720,8 @@ pub fn accept_resource_description_language(units: &[f64], grandfathered: bool) 
                                                 }
                                             };
                                         match ml_s13 {
-                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(part_14) => {
-                                                (part_14 < (starts_2.len() as f64))
+                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(next_part_position) => {
+                                                (next_part_position < (starts_2.len() as f64))
                                             }
                                             super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(ml_result12) => {
                                                 ml_result12

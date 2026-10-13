@@ -1,4 +1,4 @@
-// Reviewed source-structure corrections for the CI14 resource policy modules.
+// Reviewed source-structure corrections for the resource policy modules.
 // These are human-reviewed transformations, not machine-applicable diagnostics.
 import assert from 'node:assert/strict';
 import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
@@ -14,6 +14,8 @@ const operator = node => children(node).find(child => child.field === 'operator'
 const tokenText = text => tokenize(text, 'Rust').tokens.map(token => token.kind === 'number' ? token.raw.replaceAll('_', '') : token.raw).join('');
 const repeats = node => ['loop_expression', 'while_expression', 'for_expression'].includes(node.term)
   || (node.children ?? []).some(repeats);
+const hasConditionBinding = node => ['let_condition', 'let_chain'].includes(node.term)
+  || (node.children ?? []).some(hasConditionBinding);
 
 export function reuseResourceArrayPrelude(source, provider) {
   const normalize = text => tokenText(text.replace(/#\[must_use\]\s*/gu, '').replace(/\bconst fn integer\b/gu, 'fn integer'))
@@ -62,8 +64,21 @@ function reviewedPass(source) {
     if (op !== '&&') return null;
     return a.flatMap(x => b.filter(y => Object.keys(x).every(key => y[key] === undefined || y[key] === x[key])).map(y => ({ ...x, ...y })));
   };
-  const visit = (node, parent) => {
-    for (const child of node.children ?? []) visit(child, node);
+  const visit = (node, parent, floatParameters = new Set()) => {
+    if (node.term === 'function_item') {
+      floatParameters = new Set(children(field(node, 'parameters') ?? {}).filter(parameter =>
+        parameter.term === 'parameter' && field(parameter, 'pattern')?.term === 'identifier'
+        && field(parameter, 'type')?.term === 'primitive_type' && text(field(parameter, 'type')) === 'f64')
+        .map(parameter => text(field(parameter, 'pattern'))));
+      const excludeBindings = value => {
+        if (!value) return;
+        if (value.field === 'pattern') for (const token of tokenize(text(value), 'Rust').tokens) floatParameters.delete(token.raw);
+        if (value.term === 'closure_expression') floatParameters.clear();
+        for (const child of value.children ?? []) excludeBindings(child);
+      };
+      excludeBindings(field(node, 'body'));
+    }
+    for (const child of node.children ?? []) visit(child, node, floatParameters);
     if (node.term === 'function_item') {
       const original = text(node);
       const tokens = tokenize(original, 'Rust').tokens;
@@ -95,6 +110,52 @@ function reviewedPass(source) {
         }
       }
     }
+    if (node.term === 'binary_expression' && operator(node) === '||') {
+      // Only plain f64 parameter equality reads qualify. No calls, bindings,
+      // ordered comparisons, or overloaded equality can change evaluation.
+      const scalarEquality = value => value?.term === 'binary_expression' && operator(value) === '=='
+        && unwrap(field(value, 'left'))?.term === 'identifier'
+        && floatParameters.has(text(unwrap(field(value, 'left'))))
+        && number(field(value, 'right')) !== null && Number.isFinite(number(field(value, 'right')));
+      const scalarTerms = expression => {
+        const value = unwrap(expression);
+        if (scalarEquality(value)) return [[value]];
+        if (value?.term !== 'binary_expression') return null;
+        const op = operator(value);
+        if (!['&&', '||'].includes(op)) return null;
+        const left = scalarTerms(field(value, 'left')), right = scalarTerms(field(value, 'right'));
+        if (!left || !right) return null;
+        if ((op === '||' ? left.length + right.length : left.length * right.length) > 256) return null;
+        return op === '||' ? [...left, ...right] : left.flatMap(a => right.map(b => [...a, ...b]));
+      };
+      const terms = scalarTerms(node);
+      if (terms) {
+        const atoms = new Map(terms.flatMap(term => term.map(atom => [tokenText(text(atom)), text(atom)])));
+        const canonical = [...new Map(terms.map(term => {
+          const keys = [...new Set(term.map(atom => tokenText(text(atom))))].sort();
+          return [keys.join('\0'), keys];
+        })).values()].sort((a, b) => a.join('\0') < b.join('\0') ? -1 : 1);
+        const factor = values => {
+          if (values.some(term => !term.length)) return 'true';
+          const counts = new Map();
+          for (const term of values) for (const key of term) counts.set(key, (counts.get(key) ?? 0) + 1);
+          const shared = [...counts].filter(([, count]) => count > 1)
+            .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0];
+          if (!shared) return values.map(term => term.map(key => '(' + atoms.get(key) + ')').join(' && ')).join(' || ');
+          const remaining = factor(values.filter(term => term.includes(shared)).map(term => term.filter(key => key !== shared)));
+          const grouped = '(' + atoms.get(shared) + ')' + (remaining === 'true' ? '' : ' && (' + remaining + ')');
+          const other = values.filter(term => !term.includes(shared));
+          return other.length ? '(' + grouped + ') || (' + factor(other) + ')' : grouped;
+        };
+        const counts = new Map();
+        for (const term of canonical) for (const key of term) counts.set(key, (counts.get(key) ?? 0) + 1);
+        const replacement = [...counts.values()].some(count => count > 1) ? factor(canonical) : text(node);
+        // Stable scalar normal form avoids alternating partial factorizations.
+        // Grouping alone remains the formatter/grouping pass's responsibility.
+        if (tokenText(replacement).replace(/[()]/gu, '') !== tokenText(text(node)).replace(/[()]/gu, '')) add(node, replacement,
+          'factor repeated pure finite-literal f64 equality premises, preserving NaN and signed-zero equality');
+      }
+    }
     if (node.term === 'binary_expression' && operator(node) === '+') {
       const left = field(node, 'left'), right = field(node, 'right');
       const product = [left, right].map(unwrap).find(value => value?.term === 'binary_expression' && operator(value) === '*'
@@ -113,6 +174,40 @@ function reviewedPass(source) {
     }
     if (node.term !== 'if_expression') return;
     const condition = unwrap(field(node, 'condition')), consequence = field(node, 'consequence'), alternate = alternative(node);
+    const scalar = expression => {
+      const value = unwrap(expression);
+      if (value?.term === 'identifier') return floatParameters.has(text(value));
+      if (number(value) !== null && Number.isFinite(number(value))) return true;
+      if (value?.term === 'binary_expression' && ['+', '-', '*', '/', '%'].includes(operator(value))) return scalar(field(value, 'left')) && scalar(field(value, 'right'));
+      return false;
+    };
+    const simpleBoolean = expression => {
+      const value = unwrap(expression);
+      if (value?.term === 'boolean_literal') return true;
+      if (value?.term === 'binary_expression') {
+        const op = operator(value);
+        if (['&&', '||'].includes(op)) return simpleBoolean(field(value, 'left')) && simpleBoolean(field(value, 'right'));
+        return ['==', '!=', '<', '<=', '>', '>='].includes(op) && scalar(field(value, 'left')) && scalar(field(value, 'right'));
+      }
+      if (value?.term !== 'call_expression') return false;
+      const callee = field(value, 'function'), args = children(field(value, 'arguments')).filter(child => !['(', ')', ','].includes(child.term));
+      if (['identifier', 'scoped_identifier'].includes(callee.term)) return args.every(scalar);
+      if (callee.term !== 'field_expression' || text(field(callee, 'field')) !== 'contains') return false;
+      const range = unwrap(field(callee, 'value'));
+      return range?.term === 'range_expression' && children(range).filter(child => !['..', '..='].includes(child.term)).every(scalar)
+        && args.length === 1 && args[0].term === 'reference_expression' && scalar(field(args[0], 'value'));
+    };
+    if (alternate?.term === 'if_expression' && !hasConditionBinding(condition)
+      && !hasConditionBinding(field(alternate, 'condition'))
+      // Arbitrary borrowed temporaries can have observable Drop timing across
+      // condition boundaries. Admit only scalar arguments/results and ranges.
+      && simpleBoolean(condition) && simpleBoolean(field(alternate, 'condition'))
+      && tokenText(text(consequence)) === tokenText(text(field(alternate, 'consequence')))) {
+      const fallback = alternative(alternate);
+      add(node, 'if (' + text(field(node, 'condition')) + ') || (' + text(field(alternate, 'condition')) + ') '
+        + text(consequence) + (fallback ? ' else ' + text(fallback) : ''),
+      'merge adjacent identical branches with the same short-circuit condition order and no condition bindings');
+    }
     if (alternate?.term === 'block') {
       let positive;
       if (condition.term === 'unary_expression' && children(condition)[0]?.term === '!') positive = text(children(condition)[1]);

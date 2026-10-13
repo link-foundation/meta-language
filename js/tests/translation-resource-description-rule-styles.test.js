@@ -139,6 +139,10 @@ test('owned read-only arrays remain available across repeated continuation calls
   runInNewContext(emitJavaScript(checkProgram(parseJavaScript(source, { referenceSemantics: false }))).text,
     replay, { timeout: 1_000 });
   for (const [value, expected] of [
+    ['en-US', true],
+    ['en-419', true],
+    ['en-4A9', false],
+    ['en-U1', false],
     ['sl-rozaj-biske-nedis', true],
     ['sl-rozaj-biske-biske', false],
     ['sl-rozaj-biske-ROZAJ', false],
@@ -151,4 +155,50 @@ test('owned read-only arrays remain available across repeated continuation calls
     assert.equal(replay.acceptResourceDescriptionLanguage(input, false), expected, value);
     assert.deepEqual(input, original, value + ': ordered read-only input');
   }
+});
+
+test('reviewed Boolean factoring preserves scalar boundaries and adjacent branch evaluation order', () => {
+  const original = `
+    fn transition(state: f64, kind: f64) -> bool {
+      ((state == 0f64) && (kind == 1f64)) || ((state == 0f64) && (kind == 2f64))
+        || ((state == 2f64) && (kind == 1f64)) || ((state == 2f64) && (kind == 2f64))
+        || ((state == 2f64) && (kind == 3f64))
+    }
+    fn first(code: f64) -> bool { code == 1f64 }
+    fn second(code: f64) -> bool { code == 2f64 }
+    fn adjacent(code: f64) -> f64 {
+      if first(code) { 1f64 } else if second(code) { 1f64 } else { 0f64 }
+    }
+    fn main() {}
+  `;
+  const reviewed = reviewResourceDescriptionStyles(original, value => value).source;
+  assert.notEqual(reviewed, original);
+  assert.equal(reviewResourceDescriptionStyles(reviewed, value => value).source, reviewed);
+  assert.equal(tokenize(reviewed, 'Rust').tokens.filter(token => token.raw === 'state').length, 3);
+  const replay = value => {
+    const context = {};
+    runInNewContext(emitJavaScript(checkProgram(parseRust(value))).text, context, { timeout: 1_000 });
+    return context;
+  };
+  const before = replay(original), after = replay(reviewed);
+  const boundaries = [-Infinity, -1, -0, 0, 0.5, 1, 2, 3, 4, Infinity, NaN];
+  for (const state of boundaries) for (const kind of boundaries) {
+    assert.equal(after.transition(state, kind), before.transition(state, kind), `state=${state}, kind=${kind}`);
+  }
+  for (const first of [false, true]) for (const second of [false, true]) {
+    const observations = [before, after].map(context => {
+      const calls = [];
+      context.first = code => { calls.push(['first', code]); return first; };
+      context.second = code => { calls.push(['second', code]); return second; };
+      return { result: context.adjacent(7), calls };
+    });
+    assert.deepEqual(observations[1], observations[0]);
+    assert.deepEqual(observations[0].calls.map(([name]) => name), first ? ['first'] : ['first', 'second']);
+  }
+  const binding = 'pub fn binding(value: Option<f64>) -> f64 { if let Some(first) = value { first } else if let Some(first) = value { first } else { 0f64 } }';
+  assert.equal(reviewResourceDescriptionStyles(binding, value => value).source, binding);
+  const overloaded = 'pub fn other(state: Other, kind: Other) -> bool { (state == 0f64 && kind == 1f64) || (state == 0f64 && kind == 2f64) }';
+  assert.equal(reviewResourceDescriptionStyles(overloaded, value => value).source, overloaded);
+  const temporary = 'pub fn temporary() -> bool { if holder().check() { true } else if other().check() { true } else { false } }';
+  assert.equal(reviewResourceDescriptionStyles(temporary, value => value).source, temporary);
 });
