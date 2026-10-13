@@ -17,8 +17,9 @@ if (process.argv.includes('--update-styles')) {
     { op: 'replace', field: 'source', from: 'owner: String', to: 'owner: &str' },
     { op: 'replace', field: 'source', from: 'kind: String', to: 'kind: &str' },
     { op: 'replace', field: 'source', from: 'operation: String', to: 'operation: &str' },
+    { op: 'replace', field: 'source', from: 'name: String', to: 'name: &str' },
   ];
-  for (const name of ['accept_rust_immutable_indirection_layer', 'accept_rust_source_box_owner', 'accept_rust_source_indirection_argument', 'accept_rust_source_box_coercion_layer', 'read_rust_source_expression_origin', 'accept_rust_source_box_availability', 'accept_rust_source_text_equality']) {
+  for (const name of ['accept_rust_immutable_indirection_layer', 'accept_rust_source_box_owner', 'accept_rust_source_indirection_argument', 'accept_rust_source_box_coercion_layer', 'read_rust_source_expression_origin', 'accept_rust_source_box_availability', 'accept_rust_source_text_equality', 'accept_rust_source_lifetime_binding', 'accept_rust_source_lifetime_reference', 'accept_rust_source_lifetime_result']) {
     actions.push({ op: 'replace', field: 'source', from: `pub fn ${name}`, to: `/// Admit the corresponding immutable Rust source projection.\n#[must_use]\npub fn ${name}` });
   }
   // These functions contain only Boolean expressions, so parentheses added
@@ -48,6 +49,15 @@ if (process.argv.includes('--update-styles')) {
     const from = line.trim();
     const to = '(operation == "eq" || operation == "ne") && ((left_direct_string && right_borrowed_slice) || (right_direct_string && left_borrowed_slice))';
     if (from !== to) actions.push({ op: 'replace', field: 'source', from, to });
+  }
+  for (const [index, expression] of [
+    '!duplicate && !bounded && ' + ['static', '_', 'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in', 'let', 'loop', 'match', 'mod', 'move', 'mut', 'pub', 'ref', 'return', 'self', 'Self', 'struct', 'super', 'trait', 'true', 'type', 'unsafe', 'use', 'where', 'while', 'async', 'await', 'dyn', 'abstract', 'become', 'box', 'do', 'final', 'macro', 'override', 'priv', 'typeof', 'unsized', 'virtual', 'yield', 'try', 'gen'].map(name => `name != "${name}"`).join(' && '),
+    'name == "static" || name == "_" || declared',
+    '!named_bindings || !reference_result',
+  ].entries()) {
+    const definition = new DecoratorSet([{ id: 'rust-indirection-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).decorate('emitter', { format: 'Rust', source: definitions[index + 7] }).source;
+    const normalized = definition.replace(/^    .+$/mu, `    ${expression}`);
+    if (normalized !== definition) actions.push({ op: 'replace', field: 'source', from: definition, to: normalized });
   }
   const intermediate = new DecoratorSet([{ id: 'rust-indirection-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).decorate('emitter', { format: 'Rust', source: raw }).source;
   const sourceClassifier = /^pub fn read_rust_source_expression_origin\([\s\S]*?^\}/mu.exec(intermediate)?.[0];

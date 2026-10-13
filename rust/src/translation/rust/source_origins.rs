@@ -26,6 +26,8 @@ pub(super) struct SourceOrigin {
     pub(super) copy_evidence: bool,
     pub(super) fields: Option<Vec<Self>>,
     pub(super) text_source_model: Option<&'static str>,
+    /// Spelled source lifetimes, in reference-layer order; None is elision.
+    pub(super) source_lifetimes: Vec<Option<String>>,
 }
 
 impl SourceOrigin {
@@ -40,6 +42,7 @@ impl SourceOrigin {
             copy_evidence: false,
             fields: None,
             text_source_model: None,
+            source_lifetimes: Vec::new(),
         }
     }
 
@@ -68,6 +71,7 @@ impl SourceOrigin {
             copy_evidence,
             fields,
             text_source_model,
+            source_lifetimes: Vec::new(),
         }
     }
 

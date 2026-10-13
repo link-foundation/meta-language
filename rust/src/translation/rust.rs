@@ -174,6 +174,8 @@ struct RustParser {
     origins: SourceOrigins,
     reserved_binding_names: HashSet<String>,
     next_product_binding: usize,
+    lifetime_bindings: HashSet<String>,
+    lifetime_header: bool,
 }
 
 impl RustParser {
@@ -192,6 +194,8 @@ impl RustParser {
             origins,
             reserved_binding_names,
             next_product_binding: 0,
+            lifetime_bindings: HashSet::new(),
+            lifetime_header: false,
         }
     }
 

@@ -189,6 +189,7 @@ mod translation_rocq;
 mod translation_rules;
 mod translation_rust_frontend;
 mod translation_rust_indirection;
+mod translation_rust_lifetimes;
 mod translation_rust_products;
 mod translation_stages;
 mod translation_structured_types;

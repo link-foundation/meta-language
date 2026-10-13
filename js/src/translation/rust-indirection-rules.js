@@ -45,3 +45,31 @@ export function acceptRustSourceBoxAvailability(owner, declared) {
 export function acceptRustSourceTextEquality(operation, leftDirectString, rightDirectString, leftBorrowedSlice, rightBorrowedSlice) {
   return (operation === 'eq' || operation === 'ne') && ((leftDirectString && rightBorrowedSlice) || (rightDirectString && leftBorrowedSlice));
 }
+
+/** @param {string} name @param {boolean} duplicate @param {boolean} bounded @returns {boolean} */
+export function acceptRustSourceLifetimeBinding(name, duplicate, bounded) {
+  return !duplicate && !bounded && name !== 'static' && name !== '_'
+    && name !== 'as' && name !== 'break' && name !== 'const' && name !== 'continue'
+    && name !== 'crate' && name !== 'else' && name !== 'enum' && name !== 'extern'
+    && name !== 'false' && name !== 'fn' && name !== 'for' && name !== 'if'
+    && name !== 'impl' && name !== 'in' && name !== 'let' && name !== 'loop'
+    && name !== 'match' && name !== 'mod' && name !== 'move' && name !== 'mut'
+    && name !== 'pub' && name !== 'ref' && name !== 'return' && name !== 'self'
+    && name !== 'Self' && name !== 'struct' && name !== 'super' && name !== 'trait'
+    && name !== 'true' && name !== 'type' && name !== 'unsafe' && name !== 'use'
+    && name !== 'where' && name !== 'while' && name !== 'async' && name !== 'await'
+    && name !== 'dyn' && name !== 'abstract' && name !== 'become' && name !== 'box'
+    && name !== 'do' && name !== 'final' && name !== 'macro' && name !== 'override'
+    && name !== 'priv' && name !== 'typeof' && name !== 'unsized' && name !== 'virtual'
+    && name !== 'yield' && name !== 'try' && name !== 'gen';
+}
+
+/** @param {string} name @param {boolean} declared @returns {boolean} */
+export function acceptRustSourceLifetimeReference(name, declared) {
+  return name === 'static' || name === '_' || declared;
+}
+
+/** @param {boolean} namedBindings @param {boolean} referenceResult @returns {boolean} */
+export function acceptRustSourceLifetimeResult(namedBindings, referenceResult) {
+  return !namedBindings || !referenceResult;
+}

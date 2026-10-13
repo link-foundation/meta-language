@@ -1,6 +1,9 @@
 //! Attributes, items, `use` trees, enums, types, functions, blocks and `main`.
 
-use super::indirection_rules::accept_rust_source_box_owner;
+use super::indirection_rules::{
+    accept_rust_source_box_owner, accept_rust_source_lifetime_binding,
+    accept_rust_source_lifetime_reference, accept_rust_source_lifetime_result,
+};
 use super::product_rules::accept_rust_immutable_product_type;
 use super::{
     ACCEPTED_DERIVES, ACCEPTED_LINTS, BOOL, Binding, ItemsEnd, Language, Options, RESERVED_ITEMS,
@@ -384,16 +387,28 @@ impl RustParser {
     pub(super) fn parse_type(&mut self) -> Result<Type> {
         let token = self.peek();
         if self.cursor.eat("&").is_some() {
+            let mut source_lifetime = None;
             if self.cursor.is("'") {
                 self.cursor.advance();
                 let lifetime = self.cursor.identifier(Some("lifetime"))?;
-                if lifetime.value != "static" {
+                if !accept_rust_source_lifetime_reference(
+                    &lifetime.value,
+                    self.lifetime_bindings.contains(&lifetime.value),
+                ) {
                     return Err(unsupported(
                         "lifetime parameter",
-                        "only 'static references are portable",
+                        "a reference needs a declared function lifetime, an elided placeholder, or 'static",
                         span(&token, &lifetime),
                     ));
                 }
+                if self.lifetime_bindings.contains(&lifetime.value) && !self.lifetime_header {
+                    return Err(unsupported(
+                        "local lifetime annotation",
+                        "named lifetimes in body annotations require an explicit region proof",
+                        span(&token, &lifetime),
+                    ));
+                }
+                source_lifetime = Some(lifetime.value);
             }
             if self.cursor.is("mut") {
                 return Err(unsupported(
@@ -408,6 +423,7 @@ impl RustParser {
                     self.origins
                         .typed(STRING, &self.module_path, vec!["reference".to_owned()]);
                 self.origins.current_type.text_source_model = Some("string slice");
+                self.origins.current_type.source_lifetimes = vec![source_lifetime];
                 return Ok(result);
             }
             let inner = self.parse_type()?;
@@ -416,6 +432,11 @@ impl RustParser {
             wrappers.extend(origin.wrappers);
             let result = self.origins.typed(inner, &origin.path, wrappers);
             self.origins.current_type.text_source_model = origin.text_source_model;
+            self.origins.current_type.source_lifetimes = origin.source_lifetimes;
+            self.origins
+                .current_type
+                .source_lifetimes
+                .insert(0, source_lifetime);
             return Ok(result);
         }
         if self.cursor.eat("(").is_some() {
@@ -473,6 +494,7 @@ impl RustParser {
             wrappers.extend(origin.wrappers);
             let result = self.origins.typed(inner, &origin.path, wrappers);
             self.origins.current_type.text_source_model = origin.text_source_model;
+            self.origins.current_type.source_lifetimes = origin.source_lifetimes;
             return Ok(result);
         }
         if self.cursor.is("<") {
@@ -523,14 +545,52 @@ impl RustParser {
     }
 
     pub(super) fn function(&mut self, path: &[String]) -> Result<SFn> {
+        let outer_lifetimes = std::mem::take(&mut self.lifetime_bindings);
+        let outer_header = std::mem::replace(&mut self.lifetime_header, true);
+        let result = self.function_with_lifetimes(path);
+        self.lifetime_bindings = outer_lifetimes;
+        self.lifetime_header = outer_header;
+        result
+    }
+
+    fn function_with_lifetimes(&mut self, path: &[String]) -> Result<SFn> {
         let start = self.cursor.advance();
         let name = self.cursor.identifier(Some("fn"))?.value;
         if self.cursor.is("<") {
-            return Err(unsupported(
-                "generic function",
-                "type parameters are outside the portable core",
-                span(&start, self.cursor.peek()),
-            ));
+            let generic = self.cursor.advance();
+            while !self.cursor.is(">") {
+                if self.cursor.eat("'").is_none() {
+                    return Err(unsupported(
+                        "generic function",
+                        "type parameters are outside the portable core",
+                        span(&start, &generic),
+                    ));
+                }
+                let lifetime = self.cursor.identifier(Some("lifetime"))?;
+                if !accept_rust_source_lifetime_binding(
+                    &lifetime.value,
+                    self.lifetime_bindings.contains(&lifetime.value),
+                    self.cursor.is(":"),
+                ) {
+                    return Err(unsupported(
+                        "function lifetime binding",
+                        "lifetime names must be unique and unconstrained; bounds need their own linked obligations",
+                        span(&lifetime, self.cursor.peek()),
+                    ));
+                }
+                self.lifetime_bindings.insert(lifetime.value);
+                if self.cursor.eat(",").is_none() {
+                    break;
+                }
+            }
+            self.cursor.expect(">", Some("function lifetimes"))?;
+            if self.lifetime_bindings.is_empty() {
+                return Err(unsupported(
+                    "function lifetime binding",
+                    "a lifetime parameter list must contain a named binding",
+                    span(&generic, self.cursor.peek()),
+                ));
+            }
         }
         self.cursor.expect("(", Some("fn"))?;
         let mut params = Vec::new();
@@ -577,6 +637,19 @@ impl RustParser {
         }
         let ret = self.parse_type()?;
         let source_result = self.origins.current_type.clone();
+        if !accept_rust_source_lifetime_result(
+            !self.lifetime_bindings.is_empty(),
+            source_result
+                .wrappers
+                .iter()
+                .any(|layer| layer == "reference"),
+        ) {
+            return Err(unsupported(
+                "function lifetime result",
+                "reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof",
+                span(&start, self.cursor.peek()),
+            ));
+        }
         self.origins.declaration(
             &name,
             path,
@@ -592,6 +665,7 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        self.lifetime_header = false;
         let scope = params
             .iter()
             .zip(source_params)

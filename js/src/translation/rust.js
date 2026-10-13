@@ -12,7 +12,7 @@ import { TranslationError, unsupported } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, STRING, UNIT, rustFixedType, tuple } from './types.js';
 import { RustSourceOrigins } from './rust-source-origins.js';
-import { acceptRustSourceBoxOwner } from './rust-indirection-rules.js';
+import { acceptRustSourceBoxOwner, acceptRustSourceLifetimeBinding, acceptRustSourceLifetimeReference, acceptRustSourceLifetimeResult } from './rust-indirection-rules.js';
 import { acceptRustTupleIndexSpelling } from './rust-product-rules.js';
 import { checkProgram } from './check.js';
 
@@ -53,6 +53,8 @@ class RustParser {
     this.origins = new RustSourceOrigins(catalog);
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.productBindingCount = 0;
+    this.lifetimeBindings = new Set();
+    this.lifetimeHeader = false;
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -259,18 +261,26 @@ class RustParser {
     const c = this.cursor;
     const token = c.peek();
     if (c.eat('&')) {
+      let sourceLifetime = null;
       if (c.is('\'')) {
         c.next();
         const lifetime = c.identifier('lifetime');
-        if (lifetime.value !== 'static') throw unsupported('lifetime parameter', 'only \'static references are portable', span(token, lifetime));
+        if (!acceptRustSourceLifetimeReference(lifetime.value, this.lifetimeBindings.has(lifetime.value))) throw unsupported('lifetime parameter', 'a reference needs a declared function lifetime, an elided placeholder, or \'static', span(token, lifetime));
+        if (this.lifetimeBindings.has(lifetime.value) && !this.lifetimeHeader) throw unsupported('local lifetime annotation', 'named lifetimes in body annotations require an explicit region proof', span(token, lifetime));
+        sourceLifetime = lifetime.value;
       }
       if (c.is('mut')) throw unsupported('mutable reference', 'mutation is outside the portable core', span(token, c.peek()));
       if (c.is('str')) {
         c.next();
-        return this.origins.typed(STRING, this.modulePath, ['reference'], null, 'string slice');
+        const result = this.origins.typed(STRING, this.modulePath, ['reference'], null, 'string slice');
+        this.origins.type.sourceLifetimes = [sourceLifetime];
+        return result;
       }
       const inner = this.type();
-      return this.origins.typed(inner, this.origins.type.path, ['reference', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);
+      const lifetimes = [sourceLifetime, ...(this.origins.type.sourceLifetimes ?? [])];
+      const result = this.origins.typed(inner, this.origins.type.path, ['reference', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);
+      this.origins.type.sourceLifetimes = lifetimes;
+      return result;
     }
     if (c.eat('(')) {
       if (c.eat(')')) return this.origins.typed(UNIT, this.modulePath);
@@ -301,7 +311,10 @@ class RustParser {
       c.expect('<', 'Box');
       const inner = this.type();
       c.expect('>', 'Box');
-      return this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);
+      const lifetimes = this.origins.type.sourceLifetimes;
+      const result = this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);
+      if (lifetimes) this.origins.type.sourceLifetimes = lifetimes;
+      return result;
     }
     if (c.is('<')) throw unsupported(`type ${name}<…>`, 'generic types are outside the portable core', span(token, c.peek()));
     const fixed = segments.length === 1 ? rustFixedType(name) : undefined;
@@ -329,31 +342,53 @@ class RustParser {
     const c = this.cursor;
     const start = c.next();
     const name = c.identifier('fn').value;
-    if (c.is('<')) throw unsupported('generic function', 'type parameters are outside the portable core', span(start, c.peek()));
-    c.expect('(', 'fn');
-    const params = [];
-    const sourceParams = [];
-    while (!c.is(')')) {
-      const paramToken = c.peek();
-      if (c.is('mut')) throw unsupported('mutable parameter', 'mutation is outside the portable core', span(paramToken, paramToken));
-      if (c.is('self') || c.is('&')) throw unsupported('method', 'methods are outside the Rust frontend; declare a free function', span(paramToken, paramToken));
-      const paramName = c.identifier('parameter').value;
-      c.expect(':', 'parameter');
-      params.push({ name: paramName, type: this.type(), span: span(paramToken, c.peek()) });
-      sourceParams.push(this.origins.type);
-      if (!c.eat(',')) break;
+    const outerLifetimes = this.lifetimeBindings;
+    const outerHeader = this.lifetimeHeader;
+    this.lifetimeBindings = new Set();
+    this.lifetimeHeader = true;
+    try {
+      if (c.is('<')) {
+        const generic = c.next();
+        while (!c.is('>')) {
+          if (!c.eat("'")) throw unsupported('generic function', 'type parameters are outside the portable core', span(start, generic));
+          const lifetime = c.identifier('lifetime');
+          if (!acceptRustSourceLifetimeBinding(lifetime.value, this.lifetimeBindings.has(lifetime.value), c.is(':'))) throw unsupported('function lifetime binding', 'lifetime names must be unique and unconstrained; bounds need their own linked obligations', span(lifetime, c.peek()));
+          this.lifetimeBindings.add(lifetime.value);
+          if (!c.eat(',')) break;
+        }
+        c.expect('>', 'function lifetimes');
+        if (!this.lifetimeBindings.size) throw unsupported('function lifetime binding', 'a lifetime parameter list must contain a named binding', span(generic, c.peek()));
+      }
+      c.expect('(', 'fn');
+      const params = [];
+      const sourceParams = [];
+      while (!c.is(')')) {
+        const paramToken = c.peek();
+        if (c.is('mut')) throw unsupported('mutable parameter', 'mutation is outside the portable core', span(paramToken, paramToken));
+        if (c.is('self') || c.is('&')) throw unsupported('method', 'methods are outside the Rust frontend; declare a free function', span(paramToken, paramToken));
+        const paramName = c.identifier('parameter').value;
+        c.expect(':', 'parameter');
+        params.push({ name: paramName, type: this.type(), span: span(paramToken, c.peek()) });
+        sourceParams.push(this.origins.type);
+        if (!c.eat(',')) break;
+      }
+      c.expect(')', 'fn');
+      if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
+      const ret = this.type();
+      const sourceResult = this.origins.type;
+      if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
+      this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
+      if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
+      this.lifetimeHeader = false;
+      const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
+      const body = this.block(path);
+      this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
+      this.origins.scope = previous;
+      return { k: 'fn', name, params, ret, body, span: span(start, c.peek()) };
+    } finally {
+      this.lifetimeBindings = outerLifetimes;
+      this.lifetimeHeader = outerHeader;
     }
-    c.expect(')', 'fn');
-    if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
-    const ret = this.type();
-    const sourceResult = this.origins.type;
-    this.origins.declaration(name, path, { k: 'fn', parameters: sourceParams, result: sourceResult });
-    if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
-    const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
-    const body = this.block(path);
-    this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
-    this.origins.scope = previous;
-    return { k: 'fn', name, params, ret, body, span: span(start, c.peek()) };
   }
 
   /** `const N: T = e;` is a function without parameters. */

@@ -1,0 +1,1 @@
+Rust source translation admits unconstrained lifetime-only function headers and immutable input references in the existing value projection. Lifetime names stay within their declaring function; reference results with lifetime binders, bounds, type or constant parameters, and mutable references retain precise unsupported obligations.
