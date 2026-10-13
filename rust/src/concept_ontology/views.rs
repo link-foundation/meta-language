@@ -199,7 +199,7 @@ impl Builder {
         let mut relations = Vec::new();
         for value in items(&options["relations"])? {
             let kind = text(&value["kind"])?;
-            if !accept_concept_view_relation(role.to_owned(), kind.to_owned()) {
+            if !accept_concept_view_relation(role, kind) {
                 return Err(fail("relation does not belong to the selected view"));
             }
             let source = self.identity(text(&value["source"])?)?;
@@ -321,8 +321,8 @@ impl Reader<'_> {
             || value.span().is_some()
             || value.flags() != crate::LinkFlags::clean()
             || !accept_concept_view_shape(
-                term.to_owned(),
-                link.references().len().to_string(),
+                term,
+                &link.references().len().to_string(),
                 value.definition().is_some(),
             )
         {
@@ -456,7 +456,7 @@ impl Reader<'_> {
                 .metadata()
                 .definition()
                 .ok_or_else(|| fail("foreign relation or classification role"))?;
-            if !accept_concept_view_relation(role.to_owned(), kind.to_owned())
+            if !accept_concept_view_relation(role, kind)
                 || !member_set.contains(&source)
                 || !member_set.contains(&target)
             {
