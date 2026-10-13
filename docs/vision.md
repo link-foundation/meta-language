@@ -135,8 +135,19 @@ Both runtimes validate its arity, types, ownership and exact shape after
 source-free Links reload. Nineteen independently specified headers exercise the
 capture; seven source refusals and ten malformed graph edits check its boundary.
 Body value edits remain executable while the source facet stays intact. Existing
-archives omit this facet by default. Capture does not yet preserve the original
-qualified Rust header through target emission and reimport. Effect threading
+archives omit this facet by default. The independent
+`primitive borrowed Rust function header 1` emission model retains direct
+primitive `f64` and Boolean result headers and direct or multiply borrowed
+immutable primitive parameters. Ordered ASCII lifetime binders and reference
+layers come from the checked owned facet after source-free Links reload.
+Scoped value-copy bindings connect those headers to the checked value body.
+Twelve independently specified headers and actual lifetime, wrapper and body
+edits exercise the boundary. The selected program contains flat leaf functions;
+callers, imports, effects, boxes, mutable or borrowed results and custom type
+owners require further interface proofs. Malformed generated flags,
+unrepresented parameter fields and contradictory context flags refuse before
+emission. Retained headers and value copies establish no general pointer,
+resource or ABI equivalence. Effect threading
 refuses a captured interface rewrite until its signature transformation is
 proved.
 Scoped lifetime-only function headers now retain ordered input binders and
@@ -149,6 +160,16 @@ length conversion explicitly projected to the Number model. Ownership moves,
 borrowed results, mutable arrays and full generated runtime wrappers still need
 their separate obligations. Rust string continuations and CRLF normalization
 use shared checked rules while preserving original source-token spans.
+
+Standard immutable text emptiness and zero-argument `String::new()` use actual
+unshadowed standard owners, including proved imported aliases. Inclusive
+primitive `f64` range membership consumes the complete
+`(start..=end).contains(&value)` query and projects it into scoped bindings and
+comparisons. Bounds and the borrowed argument evaluate once in source order;
+NaN, infinities and signed zero retain the primitive comparison behavior.
+Five shared source cases and eighteen exact refusals cover both runtimes.
+General range values, iterators, custom comparison owners and unsupported
+ownership layers require separate interpretations.
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
 Existing default-profile refusals remain available. The independently selected
