@@ -142,6 +142,10 @@ impl Decoder<'_> {
             let value = self.render(*id, remaining, &mut bytes)?;
             ownership.model_nodes += before_nodes - *remaining;
             ownership.model_bytes += before_bytes - bytes;
+            if value.get("sourceTypeNamespace").is_some() {
+                crate::translation::source_type_namespaces::validate_type_namespace_declaration_record(&value)
+                    .map_err(|failure| error(failure.to_string()))?;
+            }
             let model: Decl = serde_json::from_value(value.clone())
                 .map_err(|failure| error(failure.to_string()))?;
             reject_unknown_fields(

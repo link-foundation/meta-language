@@ -123,11 +123,16 @@ impl RustParser {
         let head = self.source_type_head();
         self.source_owner_frames.push(Vec::new());
         self.primitive_owner_frames.push(Vec::new());
+        self.type_namespace_frames.push(Vec::new());
         let result = self.parse_type_value();
         let children = self
             .source_owner_frames
             .pop()
             .expect("the source type frame is owned");
+        let namespace_children = self
+            .type_namespace_frames
+            .pop()
+            .expect("the type namespace frame is owned");
         let ty = result?;
         let primitive_children = self
             .primitive_owner_frames
@@ -154,6 +159,22 @@ impl RustParser {
             self.source_type_owner(&head, children, &ty)
         };
         self.origins.current_type.source_owner = Some(owner.clone());
+        let namespace_spelling = if head[0] != "&" && head[0] != "(" {
+            head.clone()
+        } else if namespace_children.len() == 1 && !head.iter().any(|part| part == "[") {
+            namespace_children[0].clone()
+        } else if head[0] == "&" && !head.iter().any(|part| part == "[") {
+            vec!["str".to_owned()]
+        } else {
+            Vec::new()
+        };
+        self.origins
+            .current_type
+            .namespace_spelling
+            .clone_from(&namespace_spelling);
+        if let Some(parent) = self.type_namespace_frames.last_mut() {
+            parent.push(namespace_spelling);
+        }
         if let Some(parent) = self.source_owner_frames.last_mut() {
             parent.push(owner);
         }

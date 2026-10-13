@@ -30,6 +30,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
         source_primitive_owners: function.source_primitive_owners.clone(),
         source_empty_option: function.source_empty_option.clone().map(Box::new),
         source_loop: function.source_loop.clone().map(Box::new),
+        source_type_namespace: function.source_type_namespace.clone().map(Box::new),
     }))
 }
 

@@ -94,6 +94,7 @@ impl Checker {
                     source_primitive_owners: function.source_primitive_owners.clone(),
                     source_empty_option: function.source_empty_option.as_deref().cloned(),
                     source_loop: function.source_loop.as_deref().cloned(),
+                    source_type_namespace: function.source_type_namespace.as_deref().cloned(),
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {
                     name: name.clone(),
