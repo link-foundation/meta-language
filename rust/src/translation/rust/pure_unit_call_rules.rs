@@ -2,7 +2,8 @@
 /// Read a shared pure Rust Unit-call admission.
 #[must_use]
 pub fn accept_rust_pure_unit_call_model(model: &str) -> bool {
-    model.is_empty() || model == "closed pure Rust unit calls 1"
+    (model.is_empty() || model == "closed pure Rust unit calls 1")
+        || model == "closed public pure Rust unit calls 1"
 }
 
 /// Read a shared pure Rust Unit-call admission.
@@ -99,6 +100,13 @@ pub fn accept_rust_pure_unit_path_form(form: &str) -> bool {
 #[must_use]
 pub fn accept_rust_pure_unit_context(language: &str, forbidden: bool) -> bool {
     language == "Rust" && !forbidden
+}
+
+/// Read a shared pure Rust Unit-call admission.
+#[must_use]
+pub fn accept_rust_pure_unit_visibility(model: &str, form: &str) -> bool {
+    (model == "closed pure Rust unit calls 1" && form == "private")
+        || (model == "closed public pure Rust unit calls 1" && form == "public")
 }
 
 /// Read a shared pure Rust Unit-call admission.

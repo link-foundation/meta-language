@@ -1,5 +1,5 @@
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
-import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource} from './rust-pure-unit-calls.js';
+import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource,readRustPureUnitItemContext} from './rust-pure-unit-calls.js';
 import {acceptRustEmptyOptionSourceModel} from './rust-empty-option-rules.js';
 import {readRustEmptyOptionResult,readRustEmptyOptionBody,createRustEmptyOptionProof,finishRustEmptyOptionSource} from './rust-empty-options.js';
 import { acceptRustFloatPredicateMethod, acceptRustFloatOperationMethod, acceptRustFloatConstantName, acceptRustFloatConstantOwner, acceptRustFloatPredicateReceiver } from './rust-float-predicate-rules.js';
@@ -50,7 +50,7 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if (!acceptRustSourceSignatureModel(sourceSignatureModel)) throw unsupported('Rust source signature model', 'select the legacy model or Rust source function signature 1');
   if (!acceptRustEmptyOptionSourceModel(emptyOptionSourceModel)) throw unsupported('Rust empty option source model', 'select the legacy model or closed empty primitive Rust option 1');
   if (emptyOptionSourceModel && [arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel].some(Boolean)) throw unsupported('Rust empty option source model', 'the closed empty interpretation requires its independent source profile');
-  if(!acceptRustPureUnitCallModel(pureUnitCallModel))throw unsupported('Rust pure Unit-call model','select the legacy model or closed pure Rust unit calls 1');
+  if(!acceptRustPureUnitCallModel(pureUnitCallModel))throw unsupported('Rust pure Unit-call model','select the legacy model, closed pure Rust unit calls 1 or closed public pure Rust unit calls 1');
   if(pureUnitCallModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel].some(Boolean))throw unsupported('Rust pure Unit-call model','the closed Unit-call interpretation requires its independent source profile');
   const { tokens } = tokenize(source, 'Rust');
   const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,pureUnitCallModel);
@@ -164,7 +164,7 @@ class RustParser {
       this.attributes();
       const start = c.peek();
       this.modulePath = path;
-      if(this.pureUnitCallModel&&(path.length||!c.is('fn')))throw unsupported('Rust pure Unit-call source','only flat private pure Unit functions and one ordinary main are admitted',span(start,c.peek()));
+      readRustPureUnitItemContext(this,path,start);
       this.visibility();
       if (this.emptyOptionSourceModel && (path.length || !c.is('fn'))) throw unsupported('Rust empty option source', 'only flat zero-argument empty leaf functions and an empty main are admitted', span(start,c.peek()));
       if (c.is('mod')) {

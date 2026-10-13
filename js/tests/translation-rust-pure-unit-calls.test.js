@@ -120,4 +120,8 @@ test('hidden record fields and callback-shaped ordered fields cannot be normaliz
  const packet=createTypedProgramLinks(fixture.mutationSource,'Rust',options),program=decodeTypedProgramLinks(packet.network,packet.root);
  let executed=0;Object.defineProperty(program.main.effects,'0',{get(){executed++;throw Error('unrepresented callback was invoked');},enumerable:true});
  assert.throws(()=>encodeTypedProgramLinks(program),/unrepresented own fields or sparse positions/u);assert.equal(executed,0);
+ for(const [role,name] of [['program','main'],['program','declarations'],['program','schemaVersion'],['program','sourceLanguage'],['main','effects']]){
+  const packet=createTypedProgramLinks(fixture.mutationSource,'Rust',options),program=decodeTypedProgramLinks(packet.network,packet.root),owner=role==='program'?program:program.main,value=owner[name];let invoked=0;
+  Object.defineProperty(owner,name,{get(){invoked++;return value;},enumerable:true});assert.throws(()=>encodeTypedProgramLinks(program),/unrepresented own fields/u,role+' '+name);assert.equal(invoked,0,role+' '+name+' callback');
+ }
 });
