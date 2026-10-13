@@ -37,7 +37,7 @@ import { acceptRustScalarLoopModel, readRustScalarLoop } from './rust-scalar-loo
 import { checkProgram } from './check.js';
 import {acceptRustPrimitiveOwnerModel} from './rust-primitive-owner-rules.js';
 import {readRustStandardPrimitivePosition,createRustPrimitiveOwnerProof,acceptRustPrimitiveOwnerImportName} from './rust-primitive-owners.js';
-import {acceptRustOwnedLocalStateModel} from './rust-owned-local-state-rules.js';
+import {acceptRustOwnedLocalStateModel,acceptRustOwnedLocalSourceOperation} from './rust-owned-local-state-rules.js';
 import {readRustOwnedLocalStateBody} from './rust-owned-local-state-reader.js';
 import {RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
 
@@ -946,6 +946,8 @@ class RustParser {
   unary(path, options) {
     const c = this.cursor;
     const token = c.peek();
+    if(this.localValueStateModel&&token.value==='*'&&!acceptRustOwnedLocalSourceOperation('dereference'))throw unsupported('Rust owned local state','source indirection requires a separate ownership interpretation',span(token,token));
+    if(this.localValueStateModel===RUST_OWNED_LOCAL_STATE_POLICY.models.copies&&['&','&&'].includes(token.value)&&!acceptRustOwnedLocalSourceOperation('borrow'))throw unsupported('Rust owned local state','source indirection requires a separate ownership interpretation',span(token,token));
     if (this.scalarLoopActive && ['&', '&&', '*'].includes(token.value)) throw unsupported('Rust scalar loop', 'references and dereferences require a separate loop state model', span(token, token));
     if (c.eat('-')) {
       const arg = this.unary(path, {});
@@ -1221,6 +1223,7 @@ class RustParser {
       if (emptyString) return emptyString;
       const resolvedOwner = segments.length > 1 ? this.resolve(segments.slice(0, -1), path) : [];
       if (segments.at(-1) === 'new' && (acceptRustSourceBoxOwner(segments.slice(0, -1).join('::'), false) || acceptRustSourceBoxOwner(resolvedOwner.join('::'), false))) {
+        if(this.localValueStateModel&&!acceptRustOwnedLocalSourceOperation('box construction'))throw unsupported('Rust owned local state','Box allocation requires a separate source ownership interpretation',range);
         if (args.length !== 1) throw new TranslationError('type', 'Box::new expects 1 argument', range);
         this.origins.box(segments.slice(0, -1), resolvedOwner, path, range);
         return this.origins.wrap(args[0], path, 'box');

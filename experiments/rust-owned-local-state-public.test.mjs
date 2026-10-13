@@ -7,6 +7,7 @@ import {createTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} f
 import {LinkNetwork} from '../js/src/network.js';
 import {emitJavaScript} from '../js/src/translation/emit-javascript.js';
 import {checkRustOwnedLocalStateProof} from '../js/src/translation/rust-owned-local-state.js';
+import {rustOwnedLocalSourceOperationFixture} from './generate-rust-owned-local-source-operation-fixture.mjs';
 const fixture=readProjectData(new URL('./rust-owned-local-state-fixture.lino',import.meta.url));
 test('the public factory selects original and canonical owned text models with exact reloadable facts',()=>{
  for(const entry of fixture.cases){
@@ -42,4 +43,22 @@ test('tuple field receiver records retain their exact shared owned fields before
   assert.throws(()=>checkRustOwnedLocalStateProof(program),/tuple field layout or lexical ownership changed/u);
   assert.throws(()=>emitJavaScript(program),/tuple field layout or lexical ownership changed/u);
  }
+});
+
+test('actual Box and borrowed source operations refuse before names erase their source owners',()=>{
+ const recorded=readProjectData(new URL('./rust-owned-local-source-operation-fixture.lino',import.meta.url));assert.deepEqual(rustOwnedLocalSourceOperationFixture(),recorded);assert.equal(recorded.cases.length,6);
+ const bodyCases=[
+  [fixture.models.moves,'let(mut digits,n)=(text,count);let boxed=Box::new(digits);digits=String::from("new");boxed'],
+  [fixture.models.moves,'let(mut digits,n)=(text,count);let borrowed=&&digits;digits=String::from("new");digits'],
+  [fixture.models.copies,'let boxed=Box::new(text);boxed'],
+  [fixture.models.copies,'*Box::new(text)'],
+  [fixture.models.copies,'let borrowed=&text;String::from("value")'],
+  [fixture.models.copies,'let borrowed=&&text;String::from("value")'],
+ ];
+ for(const[model,body]of bodyCases){const source=`fn bad(text:String,count:i32,flag:bool)->String{${body}}fn main(){}`;assert.throws(()=>createTypedProgramLinks(source,'Rust',{rustOwnedLocalStateModel:model}),/Box allocation|source indirection|references and mutable expression/u);}
+});
+
+test('source indirection refusal archives retain exact full source diagnostics for both text models',()=>{
+ const recorded=readProjectData(new URL('./rust-owned-local-source-operation-fixture.lino',import.meta.url));
+ for(const entry of recorded.cases)assert.throws(()=>createTypedProgramLinks(entry.source,'Rust',{rustOwnedLocalStateModel:entry.model}),error=>{assert.equal(error.kind,entry.kind,entry.name);assert.equal(error.reason,entry.reason,entry.name);assert.deepEqual(error.span??null,entry.span,entry.name);return true;});
 });

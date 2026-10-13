@@ -27,6 +27,7 @@ export function rustOwnedLocalStatePortableRules(){
  + '/** @param {string} kind @param {string} bits @param {boolean} signed @returns {boolean} */\nexport function acceptRustOwnedLocalValueType(kind,bits,signed){return kind === "string" || kind === "bool" || (kind === "fixed" && bits === "32" && signed);}\n'
  + '/** @param {string} kind @returns {boolean} */\nexport function acceptRustOwnedLocalExpression(kind){return '+Object.keys(policy.expressions).map(kind=>'kind === '+JSON.stringify(kind)).join(' || ')+';}\n'
  + '/** @param {string} operation @returns {boolean} */\nexport function acceptRustOwnedLocalBinaryOperation(operation){return operation === "eq";}\n'
+ + '/** @param {string} operation @returns {boolean} */\nexport function acceptRustOwnedLocalSourceOperation(operation){return '+policy.excludedSourceOperations.map(operation=>'operation !== '+JSON.stringify(operation)).join(' && ')+';}\n'
  + '/** @param {Array<number>} units @returns {boolean} */\nexport function acceptRustOwnedLocalTextUnits(units){\n for(let index=0;index<units.length;index++){\n  const unit=units[index]??-1;\n  if(unit>='+ranges.highStart+'&&unit<='+ranges.highEnd+'){\n   index++;\n   const next=units[index]??-1;\n   if(!(next>='+ranges.lowStart+'&&next<='+ranges.lowEnd+'))return false;\n  }else if(unit>='+ranges.lowStart+'&&unit<='+ranges.lowEnd+')return false;\n }\n return true;\n}\n'
  + '/** @returns {string} */\nexport function renderRustOwnedLocalTextInput(){return '+JSON.stringify(textInput.replace('acceptRustOwnedLocalTextInput','ml_ownedTextInput'))+';}\n';
 }
@@ -67,7 +68,7 @@ function generateNativeOwnedLocalStateRules(){
   // These three complete classifier bodies contain only the recorded Boolean
   // comparisons. Removing their grouping keeps && tighter than || and each
   // left-to-right short-circuit decision unchanged.
-  for(const name of ['state_model','value_type','expression']){
+  for(const name of ['state_model','value_type','expression','source_operation']){
    const match=current.match(new RegExp('pub fn accept_rust_owned_local_'+name+'\\([^]*?\\) -> bool \\{\\n([^]*?)\\n\\}', 'u'));
    if(match)replace(match[1],match[1].replace('model.is_empty()','model == \"\"').replace(/[()]/gu,'').replace('model == \"\"','model.is_empty()'));
   }

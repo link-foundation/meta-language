@@ -2,6 +2,7 @@
 import {unsupported} from './diagnostics.js';
 import {RUST_OWNED_LOCAL_STATE_POLICY as policy,ownedLocalType,ownedLocalPair,ownedLocalPosition} from './rust-owned-local-state.js';
 import {sameType} from './types.js';
+import {acceptRustOwnedLocalSourceOperation} from './rust-owned-local-state-rules.js';
 
 const fail=(reason,span)=>{throw unsupported('Rust owned local state',reason,span);};
 const clone=environment=>new Map([...environment].map(([name,value])=>[name,{...value,fields:value.fields?.map(field=>({...field}))}]));
@@ -21,7 +22,7 @@ export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signatur
  const parameterEnvironment=new Map(params.map(parameter=>[parameter.name,{name:parameter.name,type:parameter.type,available:true,mutable:false}]));
  function rawExpression(options={}){
   const start=c.index,expression=parser.expr(path,options);
-  if(c.tokens.slice(start,c.index).some(token=>token.kind==='identifier'&&['mut','ref'].includes(token.value)||token.kind==='punct'&&token.value==='&'))fail('references and mutable expression bindings need a separate ownership interpretation',expression.span);
+  if(c.tokens.slice(start,c.index).some(token=>token.kind==='identifier'&&['mut','ref'].includes(token.value)||token.kind==='punct'&&['&','&&'].includes(token.value)&&!acceptRustOwnedLocalSourceOperation('borrow')))fail('references and mutable expression bindings need a separate ownership interpretation',expression.span);
   return expression;
  }
  function syntaxBlock(){

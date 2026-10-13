@@ -34,6 +34,12 @@ pub fn accept_rust_owned_local_binary_operation(operation: &str) -> bool {
 
 /// Read a shared owned local text state decision.
 #[must_use]
+pub fn accept_rust_owned_local_source_operation(operation: &str) -> bool {
+    operation != "borrow" && operation != "dereference" && operation != "box construction"
+}
+
+/// Read a shared owned local text state decision.
+#[must_use]
 pub fn accept_rust_owned_local_text_units(units: &[f64]) -> bool {
     {
         let index = 0f64;
