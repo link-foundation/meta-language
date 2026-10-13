@@ -266,6 +266,14 @@ closed scalar-loop owner retains its immutable snapshot protocol and keyword
 reservations without reserving unrelated global declaration names in that
 closed scope. Ordinary scopes retain the full global reservation set. This proof
 does not exempt reserved prefixes or permit counterfeit loop ownership.
+Selected emission validates every owned field and its value shape before
+native decoding can discard unknown fields. The entire checked program is
+reconstructed and compared against its semantic projection, including ordinary
+function bodies, recursion metadata and effects. Unknown binding metadata,
+malformed known values and stale semantic facts refuse after serialization and
+reload. A revalidated declaration-owned scalar loop projects its actual
+continuation root and path in both runtimes. Empty-option source ownership can
+compose with scoped emission only after its independent proof validates.
 The default repeated-source refusal remains exact. The native adapter also
 retains the exact `Option(Float, undefined)` type and `None(undefined)` value
 observed in genuine JavaScript output, including lexical and temporal binding
@@ -274,6 +282,21 @@ elements, nonempty option values and null remain outside this bridge. Native
 compilation and executable parity for the combined draft await CI; broader
 runtime-module coverage and a complete intermediate-type fixed point remain
 separate obligations.
+The independently selected `closed empty primitive Rust option 1` source model
+admits flat zero-argument standard `Option<f64>` functions whose complete body
+is an explicitly typed empty constructor, together with an empty main. The
+owned `sourceEmptyOption` facet records actual source, resolved and canonical
+result and constructor paths, type arguments, namespace premises and body
+sites. Eight independently specified owners, thirty-two exact source refusals,
+twenty-nine malformed owned edits and eight raw null or unknown edits bound
+this draft. Actual emitted Rust definitions replay with a canonical empty main;
+the resulting complete JavaScript output reimports and executes. A coherent
+declaration rename exercises source-free editing of this singleton-result
+boundary without inventing a changing empty value. The old generic-type
+refusal remains exact. This separate facet does not broaden the existing Rust
+source-signature model. Nonempty options, other elements, null, imports,
+attributes, full runtime wrappers and other source-model compositions still
+require independent proofs. Native compilation and executable parity run in CI.
 The typed-program adapter's shared schema gives abbreviated host fields readable
 English relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported

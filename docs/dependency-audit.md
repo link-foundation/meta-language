@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 110 | 109 | 1 | 0 |
+| Generators | 112 | 111 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 35 | 0 | 0 | 35 |
+| Published artifact contents | 36 | 0 | 0 | 36 |
 
 ## JavaScript engines
 
@@ -618,6 +618,8 @@ they are.
 | `js/scripts/generate-rust-completion-fixtures.mjs` | `js/scripts/generate-rust-completion-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-rules.mjs` | `js/scripts/generate-rust-completion-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-empty-option-fixtures.mjs` | `js/scripts/generate-rust-empty-option-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-empty-option-rules.mjs` | `js/scripts/generate-rust-empty-option-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-float-constant-fixtures.mjs` | `js/scripts/generate-rust-float-constant-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-float-operation-fixtures.mjs` | `js/scripts/generate-rust-float-operation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-float-predicate-fixtures.mjs` | `js/scripts/generate-rust-float-predicate-fixtures.mjs` | `script` |  | derived | current |  |
@@ -744,6 +746,7 @@ they are.
 | `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-read-only-queries.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
