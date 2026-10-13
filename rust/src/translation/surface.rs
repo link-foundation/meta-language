@@ -750,6 +750,13 @@ pub struct SData {
     /// A data type the translator made up, whose name may use the reserved `ml_` prefix.
     #[serde(default, skip_serializing_if = "is_false")]
     pub generated: bool,
+    /// Optional actual field-free Rust Clone derivation owned by this datatype.
+    #[serde(
+        default,
+        rename = "sourceUnitCloneDerivation",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_unit_clone_derivation: Option<Box<serde_json::Value>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

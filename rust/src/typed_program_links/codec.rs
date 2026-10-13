@@ -554,6 +554,8 @@ pub(super) fn decode_with_binding_identities(
     value["declarations"] = Value::Array(ordered_declarations);
     validate_spans(&value)?;
     scopes::restore_patterns(&mut value)?;
+    crate::translation::source_unit_clone_derivations::validate_unit_clone_records(&value)
+        .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_primitive_owners::validate_primitive_owner_records(&value)
         .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_empty_options::validate_empty_option_records(&value)
