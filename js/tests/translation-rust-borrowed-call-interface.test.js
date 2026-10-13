@@ -179,3 +179,20 @@ test('both selected models refuse source-free parameter spans without dropping s
     }
   }
 });
+
+test('the closed caller model refuses source-free unrepresented primitive expression fields before value rendering', () => {
+  const source = 'fn leaf(value:&f64)->f64{let copied=*value;if copied>0.0{copied}else{1.0}}fn caller(value:f64)->f64{leaf(&value)}fn main(){}';
+  const original = createTypedProgramLinks(source, 'Rust', capture);
+  const targets = [body => body, body => body.body, body => body.body.cond.left, body => body.body.else];
+  for (const target of targets) {
+    for (const [field, scalar] of [['borrowEscape', true], ['opaqueExpression', false]]) {
+      const program = decodeTypedProgramLinks(original.network, original.root);
+      const defaultCode = emitRust(program).text;
+      target(program.declarations.get('leaf').body)[field] = scalar;
+      const archive = encodeTypedProgramLinks(program);
+      const network = LinkNetwork.fromLino(archive.network.toLino());
+      assert.equal(emitTypedProgramLinks(network, archive.root, 'Rust').code, defaultCode);
+      assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', options), /primitive value expression contains unrepresented fields/u, field);
+    }
+  }
+});

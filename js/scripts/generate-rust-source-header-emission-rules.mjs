@@ -21,6 +21,8 @@ source += functionSource('acceptRustSourceHeaderEmissionDeclaration', `${strings
 source += functionSource('acceptRustSourceHeaderEmissionDeclarationFields', '@param {boolean} unrepresented', 'boolean', 'return !unrepresented;');
 source += functionSource('acceptRustSourceHeaderEmissionPosition', `${strings(['kind', 'ownerKind', 'ownerPath'])} @param {boolean} invalidArguments @param {boolean} invalidWrappers @param {boolean} borrowedResult`, 'boolean', `return !invalidArguments && !invalidWrappers && !borrowedResult && ownerKind === "primitive" && (${Object.entries(policy.primitives).map(([kind, path]) => `(kind === ${JSON.stringify(kind)} && ownerPath === ${JSON.stringify(path)})`).join(' || ')});`);
 source += functionSource('acceptRustSourceHeaderEmissionExpression', strings(['kind']), 'boolean', `return ${policy.expressions.map(kind => `kind === ${JSON.stringify(kind)}`).join(' || ')};`);
+source += functionSource('acceptRustSourceHeaderEmissionExpressionField', strings(['kind', 'field']), 'boolean', Object.entries(policy.expressionFields).map(([kind, fields]) => `if (kind === ${JSON.stringify(kind)}) return ${fields.map(field => `field === ${JSON.stringify(field)}`).join(' || ')};`).join(' ') + ' return false;');
+source += functionSource('acceptRustSourceHeaderEmissionSemantics', strings(['semantics']), 'boolean', `return ${policy.expressionSemantics.map(semantics => `semantics === ${JSON.stringify(semantics)}`).join(' || ')};`);
 source += functionSource('acceptRustSourceHeaderEmissionParameter', '@param {boolean} guarded @param {boolean} defaulted @param {boolean} unrepresented', 'boolean', 'return !guarded && !defaulted && !unrepresented;');
 source += functionSource('acceptRustSourceHeaderLifetimeCharacter', '@param {number} character @param {boolean} first', 'boolean', `return (character >= ${policy.lifetimeCharacters.underscore} && character <= ${policy.lifetimeCharacters.underscore}) || ${policy.lifetimeCharacters.letterRanges.map(([from, to]) => `(character >= ${from} && character <= ${to})`).join(' || ')} || (!first && (character >= ${policy.lifetimeCharacters.digitRange[0]} && character <= ${policy.lifetimeCharacters.digitRange[1]}));`);
 source += rule('readRustSourceHeaderPrimitive', ['kind'], Object.entries(policy.primitives).map(([kind, path]) => `if (kind === ${JSON.stringify(kind)}) return ${JSON.stringify(path)};`).join(' ') + ' return "";');
@@ -47,7 +49,7 @@ if (process.argv.includes('--javascript-only')) {
     const replace = (from, to) => {
       if (current.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); current = current.split(from).join(to); }
     };
-    for (const name of ['model', 'language', 'kind', 'owner_kind', 'owner_path', 'lifetime', 'inner', 'name', 'type_', 'dereferenced', 'lifetimes', 'parameters', 'result', 'body']) replace(`${name}: String`, `${name}: &str`);
+    for (const name of ['model', 'language', 'kind', 'field', 'semantics', 'owner_kind', 'owner_path', 'lifetime', 'inner', 'name', 'type_', 'dereferenced', 'lifetimes', 'parameters', 'result', 'body']) replace(`${name}: String`, `${name}: &str`);
     for (const match of raw.matchAll(/^pub fn (\w+)/gmu)) replace(`pub fn ${match[1]}`, `/// Apply the shared primitive borrowed header emission policy.\n#[must_use]\npub fn ${match[1]}`);
     replace('lifetime == ""', 'lifetime.is_empty()'); replace('lifetimes == ""', 'lifetimes.is_empty()');
     for (const condition of ['kind == "float"', 'kind == "bool"', 'lifetime.is_empty()', 'lifetimes.is_empty()']) replace(`if (${condition})`, `if ${condition}`);
@@ -62,6 +64,7 @@ if (process.argv.includes('--javascript-only')) {
       const block = definition[0]; const open = block.indexOf('{');
       let expression = stripRustSourceHeaderStyleParentheses(block.slice(open + 1, -1));
       expression = expression.replace(/\(([0-9]+f64)\)/gu, '$1').replace(/\((\w+\s*(?:==|>=|<=)\s*(?:"[^"]*"|[0-9]+f64))\)/gu, '$1');
+      expression = expression.replace(/(\n[ \t]+)([^\n{}]+)(\n[ \t]*\})/gu, (_match, before, value, after) => before + stripRustSourceHeaderStyleParentheses(value) + after);
       for (const [from, to] of [[policy.lifetimeCharacters.underscore, policy.lifetimeCharacters.underscore], ...policy.lifetimeCharacters.letterRanges, policy.lifetimeCharacters.digitRange]) expression = expression.replaceAll(`character >= ${from}f64 && character <= ${to}f64`, `(${from}f64..=${to}f64).contains(&character)`);
       expression = stripRustSourceHeaderStyleParentheses(expression);
       replace(block, `${block.slice(0, open + 1)}\n    ${expression}\n}`);
