@@ -92,7 +92,7 @@ pub struct TypedProgramLinksEmissionOptions {
     pub java_script_scoped_binding_emission_model: Option<String>,
 }
 
-pub(super) fn validate_checked_program(program: &Program) -> Result<()> {
+pub fn validate_checked_program(program: &Program) -> Result<()> {
     checked::validate(program)
 }
 /// Exact schema shared by both packages.
@@ -116,7 +116,7 @@ fn metadata(term: &str, definition: Option<&str>) -> LinkMetadata {
         result
     }
 }
-pub(super) fn label_of(name: &str) -> String {
+pub fn label_of(name: &str) -> String {
     typed_program_links_schema()["fields"][name]
         .as_str()
         .map_or_else(
@@ -135,7 +135,7 @@ pub(super) fn label_of(name: &str) -> String {
             str::to_owned,
         )
 }
-pub(super) fn field_of(label: &str) -> String {
+pub fn field_of(label: &str) -> String {
     if let Some((field, _)) = typed_program_links_schema()["fields"]
         .as_object()
         .unwrap()
@@ -200,7 +200,7 @@ pub fn decode_typed_program_links_with_limits(
     Ok(program)
 }
 
-pub(super) fn read_typed_program_binding_identities(
+pub fn read_typed_program_binding_identities(
     network: &LinkNetwork,
     root: LinkId,
 ) -> Result<Vec<LinkId>> {

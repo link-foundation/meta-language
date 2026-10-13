@@ -61,8 +61,7 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
             ),
             "name-path" => json!([child]),
             "function-path" => {
-                let mut path = vec![child.clone()];
-                if let Some(Decl::Fn(function)) =
+                let path = if let Some(Decl::Fn(function)) =
                     child.as_str().and_then(|name| program.declaration(name))
                     && let Some(continuation) = function
                         .source_loop
@@ -75,10 +74,12 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                         child.as_str().unwrap(),
                     )
                     .map_err(|failure| error(failure.to_string()))?;
-                    path = std::iter::once(Value::String(continuation.root.clone()))
+                    std::iter::once(Value::String(continuation.root.clone()))
                         .chain(continuation.path.iter().cloned().map(Value::String))
-                        .collect();
-                }
+                        .collect()
+                } else {
+                    vec![child.clone()]
+                };
                 json!({"k":"name", "path":path})
             }
             "array-items" => {
