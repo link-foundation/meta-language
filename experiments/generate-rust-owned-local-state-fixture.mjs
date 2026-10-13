@@ -8,6 +8,7 @@ import {checkProgram} from '../js/src/translation/check.js';
 import {emitRust} from '../js/src/translation/emit-rust.js';
 import {emitJavaScript} from '../js/src/translation/emit-javascript.js';
 import {encodeTypedProgramLinks} from '../js/src/typed-program-links.js';
+import {withRustOwnedLocalAuthenticSource} from './rust-owned-local-authentic-source.mjs';
 const policy=readProjectData(new URL('../js/src/translation/data/rust-owned-local-state.lino',import.meta.url));
 const suffix='fn main(){}';
 const sources=[
@@ -65,9 +66,10 @@ export function rustOwnedLocalStateFixture(){
   throw new Error('unexpected borrowed literal admission '+name);
  });
  const inputValues={validText:['','ASCII\u0000','Ω','😀','\udbff\udfff','\ud7ff\ue000','😀Ω😀'],invalidText:['\ud800','\udfff','x\ud800','\ud800x','\ud800\ud800\udc00','\udc00\ud800','\udbff\ue000']};
- const files=[0,1,2,3].map(index=>{
-  const file=`rust/src/link_network_binary_rules/part_${index}.rs`,bytes=readFileSync(new URL('../'+file,import.meta.url));return{file,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),source:bytes.toString('utf8')};
- }),source=files.map(file=>file.source).join('\n'),diagnostics=[{}, {completionModel:'closed guarded function returns 1'}].map(options=>{
+ const sourceFiles=[0,1,2,3].map(index=>`rust/src/link_network_binary_rules/part_${index}.rs`);
+ const files=withRustOwnedLocalAuthenticSource(sourceFiles,paths=>paths.map((path,index)=>{
+  const bytes=readFileSync(path);return{file:sourceFiles[index],bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),source:bytes.toString('utf8')};
+ })),source=files.map(file=>file.source).join('\n'),diagnostics=[{}, {completionModel:'closed guarded function returns 1'}].map(options=>{
   try{checkProgram(parseRust(source,options));}catch(error){return{options,kind:error.kind,reason:error.reason,span:error.span??null};}throw new Error('full formatter gap was unexpectedly erased');
  });
  return{schemaVersion:1,models:policy.models,scope:policy.interpretation,cases,invalid,borrowedStringRefusals,inputValues,authentic:{files:files.map(({source,...provenance})=>provenance),diagnostics}};
