@@ -105,6 +105,13 @@ pub fn read_number_display_function(kind: String, console_style: bool) -> String
     }
 }
 
+pub fn accept_linked_text_conversion_kind(kind: String) -> bool {
+    (((((((kind == "bool") || (kind == "float")) || (kind == "int")) || (kind == "nat"))
+        || (kind == "fixed"))
+        || (kind == "string"))
+        || (kind == "record"))
+}
+
 pub fn read_scalar_cell_operation(expression: String) -> String {
     if (expression == "cellAllocate") {
         String::from("allocate-reference-cell")

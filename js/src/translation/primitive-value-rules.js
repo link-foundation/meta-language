@@ -41,6 +41,12 @@ export function readNumberDisplayFunction(kind, consoleStyle) {
   return kind === 'float' ? (consoleStyle ? 'js_console' : 'js_number') : '';
 }
 
+/** @param {string} kind @returns {boolean} */
+export function acceptLinkedTextConversionKind(kind) {
+  return kind === 'bool' || kind === 'float' || kind === 'int' || kind === 'nat'
+    || kind === 'fixed' || kind === 'string' || kind === 'record';
+}
+
 /** @param {string} expression @returns {string} */
 export function readScalarCellOperation(expression) {
   if (expression === 'cellAllocate') return 'allocate-reference-cell';

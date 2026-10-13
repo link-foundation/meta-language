@@ -3,6 +3,9 @@ use super::projection::{project as expression, project_type};
 use super::{Result, error, typed_program_links_schema};
 use crate::translation::check::check_program;
 use crate::translation::ir::{Decl, Effect, Item, Program};
+use crate::translation::primitive_value_rules::{
+    accept_linked_text_conversion_kind, read_number_display_refusal,
+};
 use crate::translation::surface::{
     SCtor, SData, SEffect, SField, SFn, SItem, SMain, SParam, SProgram, ShowStyle,
 };
@@ -27,7 +30,11 @@ fn valid_float(value: &str) -> bool {
         .is_match(value)
 }
 
-fn validate_type_records(value: &Value, data_names: &HashSet<&str>) -> Result<()> {
+fn validate_type_records(
+    value: &Value,
+    data_names: &HashSet<&str>,
+    source_language: &str,
+) -> Result<()> {
     if let Some(fields) = value.as_object() {
         if value["k"] == "binary"
             && value
@@ -40,6 +47,19 @@ fn validate_type_records(value: &Value, data_names: &HashSet<&str>) -> Result<()
             ));
         }
         let kind = value["k"].as_str().unwrap_or_default();
+        if kind == "toString" {
+            let argument_kind = value["arg"]["type"]["kind"].as_str().unwrap_or_default();
+            if !accept_linked_text_conversion_kind(argument_kind.to_owned()) {
+                return Err(error(
+                    "a linked text conversion requires a supported scalar or existing record representation",
+                ));
+            }
+            let refusal =
+                read_number_display_refusal(source_language.to_owned(), argument_kind.to_owned());
+            if !refusal.is_empty() {
+                return Err(error(format!("Rust Float display: {refusal}")));
+            }
+        }
         if typed_program_links_schema()["expressionOperations"]
             .get(kind)
             .is_some()
@@ -88,11 +108,11 @@ fn validate_type_records(value: &Value, data_names: &HashSet<&str>) -> Result<()
             ));
         }
         for child in fields.values() {
-            validate_type_records(child, data_names)?;
+            validate_type_records(child, data_names, source_language)?;
         }
     } else if let Some(values) = value.as_array() {
         for child in values {
-            validate_type_records(child, data_names)?;
+            validate_type_records(child, data_names, source_language)?;
         }
     }
     Ok(())
@@ -110,6 +130,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
     validate_type_records(
         &serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?,
         &data_names,
+        program.source_language.as_str(),
     )?;
     if program.schema_version != 1 {
         return Err(error("the linked value is not a checked typed program"));

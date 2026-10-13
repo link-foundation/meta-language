@@ -6,6 +6,71 @@ use meta_language::{
 use serde_json::Value;
 use std::process::Command;
 
+#[test]
+fn linked_text_conversion_rejects_structured_operands_and_unmodeled_rust_display() {
+    let created = create_typed_program_links(
+        "function value(){return String(1);} /** @returns {Array<number>} */ function sequence(){return [1,2];}",
+        "JavaScript",
+    ).unwrap();
+    let record = |kind: &str| {
+        let kind_id = scalar(&created.network, "construct kind", kind);
+        created
+            .network
+            .links()
+            .find_map(|link| match link.references() {
+                [owner, name, child]
+                    if *child == kind_id
+                        && created
+                            .network
+                            .link(*name)
+                            .and_then(|name| name.metadata().term())
+                            == Some("construct kind") =>
+                {
+                    Some(*owner)
+                }
+                _ => None,
+            })
+            .unwrap()
+    };
+    let conversion = record("toString");
+    let sequence = record("array");
+    let (relation, name) = created
+        .network
+        .links()
+        .find_map(|link| match link.references() {
+            [owner, name, _]
+                if *owner == conversion
+                    && created
+                        .network
+                        .link(*name)
+                        .and_then(|name| name.metadata().term())
+                        == Some("argument") =>
+            {
+                Some((link.id(), *name))
+            }
+            _ => None,
+        })
+        .unwrap();
+    let changed = edit_references(&created.network, relation, &[conversion, name, sequence]);
+    for target in ["JavaScript", "Rust"] {
+        assert!(
+            emit_typed_program_links(&changed, created.root, target)
+                .unwrap_err()
+                .message
+                .contains("supported scalar")
+        );
+    }
+    let language = scalar(&created.network, "source language", "JavaScript");
+    let changed = edit_definition(&created.network, language, "Rust");
+    assert!(
+        decode_typed_program_links(&changed, created.root)
+            .unwrap_err()
+            .message
+            .contains("Rust Float display")
+    );
+    assert!(decode_typed_program_links(&created.network, created.root).is_ok());
+}
+
 fn fixture() -> Value {
     read_structured_data_lino(include_str!(
         "../../../parity/fixtures/typed-program-links.lino"

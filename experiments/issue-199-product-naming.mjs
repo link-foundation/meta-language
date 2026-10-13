@@ -36,6 +36,7 @@ const definitions = {
   'grammar.build-native-grammar-fixture-from-parser': 'Build every native fixture row and recovery assertion from an explicit parser and independent source snapshots, retaining duplicate fixture entries.',
   'grammar.refresh-native-default-provenance': 'Refresh selected generated native provider digests while retaining all expected trees and refusing changes to source identities, provider versions or independent oracle receipts.',
   'translation.accept-immutable-product-kind': 'Decide whether a value kind belongs to the supported recursively immutable product model.',
+  'translation.accept-linked-text-conversion-kind': 'Retain scalar and existing record kinds at the linked text conversion boundary while refusing arrays and other unrepresented formatter inputs; kind admission alone does not certify source formatting behavior.',
   'translation.accept-tuple-index': 'Validate a natural tuple position against the actual ordered product arity.',
   'translation.read-tuple-position': 'Read an exact finite natural tuple position and canonicalize signed zero only in this positional role.',
   'translation.join-product-items': 'Join already rendered product operands in their original occurrence order with the target product delimiter.',

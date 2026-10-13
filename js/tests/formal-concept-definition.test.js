@@ -6,6 +6,8 @@ import vm from 'node:vm';
 import { LinkNetwork } from '../src/network.js';
 import { LinkMetadata } from '../src/primitives.js';
 import { createTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
+import { checkProgram } from '../src/translation/check.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
 import { encodeFormalConceptDefinition, readFormalConceptDefinition, proveFormalConceptEquivalence, verifyFormalConceptEquivalence } from '../src/formal-concept-definition.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
@@ -17,6 +19,20 @@ const output = (code) => {
   vm.runInNewContext(code, { console: { log: (...args) => values.push(args.map((value) => value && typeof value === 'object' ? JSON.stringify(value) : String(value)).join(' ')) }, process: { argv: [] } }, { timeout: 1_000 });
   return values;
 };
+
+test('formal definitions refuse forged structured text conversion and undeclared Rust float display', () => {
+  const scalarProgram = () => checkProgram(parseJavaScript('function value(){return String(1)}'));
+  const structured = scalarProgram();
+  structured.declarations.get('value').body.arg = { k: 'array',
+    items: [{ k: 'lit', value: '1', type: { kind: 'float' } }],
+    type: { kind: 'array', element: { kind: 'float' } } };
+  assert.throws(() => encodeFormalConceptDefinition(structured), /text conversion requires a supported scalar/u);
+  const unmodeled = scalarProgram();
+  unmodeled.sourceLanguage = 'Rust';
+  assert.throws(() => encodeFormalConceptDefinition(unmodeled), /Rust Float display/u);
+  const supported = encodeFormalConceptDefinition(scalarProgram());
+  assert.equal(readFormalConceptDefinition(reload(supported)).model, 'checked typed program');
+});
 
 test('recursive operational definitions carry a closed linked correspondence after reload', () => {
   const first = reload(encode('function factorial(n){return n<=1 ? 1 : n*factorial(n-1);} console.log(factorial(4));'));

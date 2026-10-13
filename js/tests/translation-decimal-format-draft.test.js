@@ -52,6 +52,22 @@ test('decimal draft survives source-free LiNo reload and emits executable JS and
   vm.runInContext(javascript, context, { timeout: 1000 });
   assert.equal(vm.runInContext("renderFiniteBinaryDoublePrecision(4503599627370496n,-52n,false,'ecmascript-number-text')", context, { timeout: 1000 }), '1');
   assert.equal(vm.runInContext("renderFiniteBinaryDoublePrecision(0n,-1074n,true,'rust-default-binary-double-precision-text')", context, { timeout: 1000 }), '-0');
+  // Exercise the lowered, reloaded program across the complete existing
+  // pattern set, rather than checking only its original source implementation.
+  for (const value of inputs) {
+    const bits = BigInt('0x' + bitPattern(value));
+    const negative = bits >> 63n !== 0n;
+    const biasedExponent = Number(bits >> 52n & 0x7ffn);
+    const fraction = bits & ((1n << 52n) - 1n);
+    for (const model of models) {
+      const actual = biasedExponent === 0x7ff
+        ? context.renderBinaryDoublePrecisionSpecial(model, fraction === 0n ? 'infinity' : 'not-a-number', negative)
+        : context.renderFiniteBinaryDoublePrecision(biasedExponent === 0 ? fraction : fraction + (1n << 52n),
+          biasedExponent === 0 ? -1074n : BigInt(biasedExponent - 1075), negative, model);
+      const expected = model === models[0] ? String(value) : model === models[1] ? inspect(value) : formatBinaryDoublePrecisionValue(value, model);
+      assert.equal(actual, expected, `${bitPattern(value)} ${model}`);
+    }
+  }
 });
 
 test('CI compares generated decimal rules with actual native Rust display and both JS oracles', {
@@ -85,7 +101,10 @@ pub fn run_decimal_oracle() {
     // Keep the source-free generated program intact in its own Rust module.
     // Its generated entry point and this oracle's host entry point have
     // separate namespaces, while the bit bridge can call private definitions.
-    const nativeSource = `mod decimal_rules {\n${generated}${bridge}\n}\nfn main() { decimal_rules::run_decimal_oracle(); }\n`;
+    // Generated signatures use absolute crate paths for their shared types
+    // and continuations. Re-export their public items at that declared root;
+    // the generated private main remains inside decimal_rules.
+    const nativeSource = `mod decimal_rules {\n${generated}${bridge}\n}\npub use decimal_rules::*;\nfn main() { decimal_rules::run_decimal_oracle(); }\n`;
     writeFileSync(source, nativeSource);
     const compiler = spawnSync('rustc', ['--version'], { encoding: 'utf8', timeout: 30_000 });
     assert.equal(compiler.status, 0, compiler.stderr);

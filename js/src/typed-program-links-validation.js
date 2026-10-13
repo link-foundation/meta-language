@@ -1,7 +1,7 @@
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
-import { readTuplePosition } from './translation/primitive-value-rules.js';
+import { acceptLinkedTextConversionKind, readNumberDisplayRefusal, readTuplePosition } from './translation/primitive-value-rules.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
 import { acceptProgramDivisionRounding, acceptProgramExpressionField, acceptProgramExpressionOperation, acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence, acceptProgramTupleProductModel, readProgramReferenceRole } from './typed-program-link-rules.js';
 
@@ -255,6 +255,9 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'toString') {
       same(node.type, { kind: 'string' }, 'text conversion result type');
+      if (!acceptLinkedTextConversionKind(node.arg?.type?.kind ?? '')) throw new TypeError('a linked text conversion requires a supported scalar or existing record representation');
+      const refusal = readNumberDisplayRefusal(program.sourceLanguage, node.arg.type.kind);
+      if (refusal) throw new TypeError(`Rust Float display: ${refusal}`);
     }
     if (node.k === 'math') {
       const spread = node.op === 'maxOf' || node.op === 'minOf';

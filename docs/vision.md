@@ -136,6 +136,10 @@ certificate carries both premises and every node pair; counterfeit or missing
 premises cannot authorize sharing. These conditional operational witnesses do
 not provide deep formal definitions for every catalog concept or prove arbitrary
 source-language equivalence.
+Linked text conversion rejects unrepresented array operands and undeclared
+Rust floating-point display before admitting a formal definition. Existing
+record definitions remain available; their admission does not verify complete
+source record or console formatting.
 
 ### Ontology and taxonomy entry points
 
