@@ -1,10 +1,10 @@
 // Generate the native source-provenance solver through the checked translator.
 import { readFileSync, writeFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { DecoratorSet } from '../src/decorators.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
+import { formatProductRuleSource, readProductRuleStyleCorrections } from './product-rule-style-corrections.mjs';
 
 const input = new URL('../src/translation/product-source-rules.js', import.meta.url);
 const style = new URL('../../parity/self-translation/product-source-rules-decorators.lino', import.meta.url);
@@ -38,8 +38,10 @@ if (process.argv.includes('--update-styles')) {
   for (const { from, to } of numericLiteralStyles) actions.push({ op: 'replace', field: 'source', from, to });
   writeFileSync(style, new DecoratorSet([{ id: 'product-source-solver-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
 }
-const decorators = DecoratorSet.fromLino(readFileSync(style, 'utf8'));
-for (const action of decorators.decorators.flatMap(definition => definition.actions)) {
+let decorators = DecoratorSet.fromLino(readFileSync(style, 'utf8'));
+const reviewedId = 'reviewed-product-native-lints-285c8b13';
+const base = new DecoratorSet(decorators.decorators.filter(definition => definition.id !== reviewedId));
+for (const action of base.decorators.flatMap(definition => definition.actions)) {
   const numericHeader = action.from === generatedAllowances && action.to === numericAllowances;
   const continuation = continuationStyles.some(style => action.from === style.from && action.to === style.to);
   const numericLiteral = numericLiteralStyles.some(style => action.from === style.from && action.to === style.to);
@@ -49,15 +51,20 @@ for (const action of decorators.decorators.flatMap(definition => definition.acti
     throw new Error('product source solver style must relocate an exact generated declaration');
   }
 }
-const decorated = decorators.decorate('emitter', { format: 'Rust', source: raw }).source;
+const decorated = base.decorate('emitter', { format: 'Rust', source: raw }).source;
 if (/\bcrate::/u.test(decorated)) throw new Error('product source solver retained an unresolved crate-root reference');
-const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {
-  input: decorated, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024,
-});
-if (formatted.error || formatted.status !== 0) throw formatted.error ?? new Error(formatted.stderr);
+const formatted = formatProductRuleSource(decorated);
+const actions = readProductRuleStyleCorrections(formatted, 'source', readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8'));
+if (process.argv.includes('--update-styles')) {
+  decorators = base.add({ id: reviewedId, level: 'emitter', order: 1000, when: [['format', 'Rust'], ['scope', 'formatted-product-library']], actions });
+  writeFileSync(style, decorators.toLino());
+}
+const recorded = decorators.decorators.find(definition => definition.id === reviewedId);
+if (JSON.stringify(recorded?.actions) !== JSON.stringify(actions)) throw new Error('reviewed product source styles are stale; regenerate with --update-styles');
+const reviewed = new DecoratorSet([recorded]).decorate('emitter', { format: 'Rust', scope: 'formatted-product-library', source: formatted }).source;
 const generated = '// Generated from js/src/translation/product-source-rules.js by the checked translator.\n'
   + '// Styles: parity/self-translation/product-source-rules-decorators.lino.\n'
-  + '// Do not edit by hand.\n' + formatted.stdout;
+  + '// Do not edit by hand.\n' + formatProductRuleSource(reviewed);
 if (process.argv.includes('--check')) {
   if (readFileSync(output, 'utf8') !== generated) throw new Error('native product source solver is stale');
 } else writeFileSync(output, generated);

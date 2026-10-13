@@ -76,6 +76,13 @@ test('native solver keeps emitted helper dependencies and relocates exact genera
   assert.match(adapted, /self::ml_array::optional_at/u);
   assert.match(adapted, /self::MlClosure1Loop2Result/u);
   for (const decorator of style.decorators) {
+    if (decorator.id === 'reviewed-product-native-lints-285c8b13') {
+      assert.deepEqual(decorator.when, [['format', 'Rust'], ['scope', 'formatted-product-library']]);
+      assert.ok(decorator.actions.every(action => action.op === 'replace' && action.field === 'source'));
+      assert.ok(decorator.actions.some(action => action.from.startsWith('pub mod ml_array')
+        && action.to === 'pub use crate::translation::frontend_rules::ml_array;'));
+      continue;
+    }
     for (const action of decorator.actions) {
       assert.equal(action.op, 'replace');
       if (action.from === header) {
@@ -108,11 +115,12 @@ test('native solver keeps emitted helper dependencies and relocates exact genera
   assert.match(generated, /Generated from js\/src\/translation\/product-source-rules\.js by the checked translator/u);
   assert.match(generated, /pub fn solve_product_source_facts/u);
   assert.match(generated, /pub mod ml_math/u);
-  assert.match(generated, /pub mod ml_array/u);
+  assert.match(generated, /pub use crate::translation::frontend_rules::ml_array;/u);
   for (const allowance of ['float_cmp', 'cast_precision_loss', 'cast_possible_truncation', 'cast_sign_loss']) assert.match(generated, new RegExp(`clippy::${allowance}\\b`, 'u'));
-  assert.match(generated, /#\[allow\(clippy::too_many_arguments\)\]\npub fn ml_closure1_loop2/u);
+  assert.match(generated, /#\[allow\(clippy::too_many_arguments\)\]\n#\[must_use\]\npub fn ml_closure1_loop2/u);
   assert.doesNotMatch(generated, /clippy::(?:all|pedantic|nursery)\b/u);
   assert.match(generated, /9_007_199_254_740_991\.0/u);
-  assert.match(generated, /9_007_199_254_740_992\.0/u);
-  assert.doesNotMatch(generated, /\bcrate::/u);
+  const arrayProvider = readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8');
+  assert.match(arrayProvider, /9_007_199_254_740_992\.0/u);
+  assert.doesNotMatch(generated.replace('pub use crate::translation::frontend_rules::ml_array;', ''), /\bcrate::/u);
 });

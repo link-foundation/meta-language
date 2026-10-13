@@ -53,7 +53,7 @@ impl super::JavaScriptParser {
                         if imported.kind == super::TokenKind::Identifier
                             && (matches!(previous, "import" | "as")
                                 || (matches!(previous, "{" | ",")
-                                    && !tokens.get(at + 1).is_some_and(|next| next.value == "as")))
+                                    && tokens.get(at + 1).is_none_or(|next| next.value != "as")))
                         {
                             self.global_binding_names.insert(imported.value.clone());
                         }
@@ -108,17 +108,18 @@ pub(super) fn read_javascript_product_index(node: &SExpr) -> f64 {
     }
 }
 
-#[allow(
-    clippy::cast_precision_loss,
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss
-)]
-// The generated bound proves this nonnegative position is within the actual Vec.
+// Number conversion retains the former usize-to-binary64 rounding. The
+// unchanged shared guard runs before the existing numeric index conversion.
 pub(super) fn product_index_position(index: f64, length: usize) -> Option<usize> {
-    accept_tuple_index(index, length as f64).then(|| read_tuple_position(index) as usize)
+    let length = serde_json::Number::from(length)
+        .as_f64()
+        .expect("a native tuple length has a finite binary64 representation");
+    accept_tuple_index(index, length)
+        .then(|| read_tuple_position(index))
+        .and_then(crate::translation::frontend_rules::ml_array::number_index)
 }
 
-fn scalar(ty: &Type) -> bool {
+const fn scalar(ty: &Type) -> bool {
     matches!(
         ty,
         Type::Bool | Type::Float | Type::Fixed { .. } | Type::Unit
@@ -631,16 +632,16 @@ pub(super) fn validate_javascript_products(
         }
     }
     let potential = solve_product_source_facts(
-        facts.potential_bases.clone(),
-        facts.potential_targets.clone(),
-        facts.potential_sources.clone(),
-        facts.potential_conjunctions.clone(),
+        &facts.potential_bases,
+        &facts.potential_targets,
+        &facts.potential_sources,
+        &facts.potential_conjunctions,
     );
     let owned = solve_product_source_facts(
-        facts.bases.clone(),
-        facts.targets.clone(),
-        facts.sources.clone(),
-        facts.conjunctions.clone(),
+        &facts.bases,
+        &facts.targets,
+        &facts.sources,
+        &facts.conjunctions,
     );
     for (id, entry) in facts.entries.iter().enumerate() {
         if potential[id] && !owned[id] {
@@ -865,7 +866,7 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
                 walk_prop(right, admitted);
             }
             super::SPropNode::Not { arg } | super::SPropNode::Forall { body: arg, .. } => {
-                walk_prop(arg, admitted)
+                walk_prop(arg, admitted);
             }
             super::SPropNode::Bool { expr } => walk(expr, admitted),
         }
@@ -874,7 +875,7 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
     for effect in program.main.iter_mut().flat_map(|main| &mut main.effects) {
         match effect {
             SEffect::Let { value, .. } | SEffect::Print { expr: value, .. } => {
-                walk(value, admitted)
+                walk(value, admitted);
             }
             SEffect::Assert { prop, .. } => walk_prop(prop, admitted),
         }

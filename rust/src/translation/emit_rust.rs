@@ -674,7 +674,7 @@ fn is_copy(ty: &Type, product_model: Option<&str>) -> bool {
             .collect(),
         _ => Vec::new(),
     };
-    super::product_emission_rules::accept_tuple_copy_type(ty.kind().to_owned(), fields)
+    super::product_emission_rules::accept_tuple_copy_type(ty.kind(), &fields)
 }
 
 const fn comparison_operator(op: BinaryOp) -> &'static str {

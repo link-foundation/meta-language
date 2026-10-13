@@ -35,9 +35,7 @@ impl RustEmitter<'_> {
                 }
                 Ok(
                     crate::translation::product_emission_rules::render_tuple_value(
-                        "Rust".to_owned(),
-                        texts,
-                        *frozen,
+                        "Rust", &texts, *frozen,
                     ),
                 )
             }
@@ -222,9 +220,9 @@ impl RustEmitter<'_> {
         };
         Ok(
             crate::translation::product_emission_rules::render_tuple_projection(
-                "Rust".to_owned(),
-                text,
-                index.to_string(),
+                "Rust",
+                &text,
+                &index.to_string(),
             ),
         )
     }

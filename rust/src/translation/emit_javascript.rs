@@ -491,7 +491,7 @@ impl<'p> JavaScriptEmitter<'p> {
         match &e.node {
             Node::Lit { value } => literal(&e.ty, value),
             Node::Unit => Ok(super::product_emission_rules::render_java_script_unit(
-                self.program.source_language.as_str().to_owned(),
+                self.program.source_language.as_str(),
             )),
             Node::Tuple {
                 items,
@@ -512,8 +512,8 @@ impl<'p> JavaScriptEmitter<'p> {
                 let texts = self.exprs(items)?;
                 Ok(
                     crate::translation::product_emission_rules::render_tuple_value(
-                        "JavaScript".to_owned(),
-                        texts,
+                        "JavaScript",
+                        &texts,
                         *frozen,
                     ),
                 )
@@ -522,9 +522,9 @@ impl<'p> JavaScriptEmitter<'p> {
                 let text = self.expr(object)?;
                 Ok(
                     crate::translation::product_emission_rules::render_tuple_projection(
-                        "JavaScript".to_owned(),
-                        text,
-                        index.to_string(),
+                        "JavaScript",
+                        &text,
+                        &index.to_string(),
                     ),
                 )
             }
