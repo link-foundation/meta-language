@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 98 | 97 | 1 | 0 |
+| Generators | 99 | 98 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -582,6 +582,7 @@ they are.
 | `js/scripts/generate-global-concept-rules.mjs` | `js/scripts/generate-global-concept-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-global-concept-space-fixture.mjs` | `js/scripts/generate-global-concept-space-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-fixtures.mjs` | `js/scripts/generate-link-network-binary-fixtures.mjs` | `script` |  | derived | current |  |
