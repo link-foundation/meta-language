@@ -11,12 +11,6 @@
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss
 )]
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadResourceDescriptionNTriplesTokenLoop4Result {
-    MlReadResourceDescriptionNTriplesTokenLoop4Done(f64),
-    MlReadResourceDescriptionNTriplesTokenLoop4Return(Vec<f64>),
-}
-
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn ml_read_resource_description_n_triples_token_loop4(

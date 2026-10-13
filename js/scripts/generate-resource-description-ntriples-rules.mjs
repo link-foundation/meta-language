@@ -66,8 +66,10 @@ if (process.argv.includes('--update-styles')) {
   // fallback. Keep the exact value while avoiding a redundant Copy clone.
   replace('(crate::ml_array::optional_at(&units, crate::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64))',
     '(crate::ml_array::optional_at(&units, crate::ml_array::number_index(index))).unwrap_or(-1f64)');
-  for (const match of raw.matchAll(/^([ \t]+)pub fn ([A-Za-z_0-9]+)/gmu)) {
-    replace(match[1] + 'pub fn ' + match[2], match[1] + '#[must_use]\n' + match[1] + 'pub fn ' + match[2]);
+  for (const match of raw.matchAll(/^([ \t]+)pub fn ([A-Za-z_0-9]+)([<(])/gmu)) {
+    if (/#\[must_use\]\s*$/u.test(raw.slice(0, match.index))) continue;
+    const declaration = match[1] + 'pub fn ' + match[2] + match[3];
+    replace(declaration, match[1] + '#[must_use]\n' + declaration);
   }
   for (const name of names) replace('crate::' + name, 'super::' + name);
   // Clippy's pedantic literal style retains every numeric value and suffix.

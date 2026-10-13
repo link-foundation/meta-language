@@ -71,12 +71,10 @@ pub mod ml_math {
     }
 
     #[must_use]
-    #[must_use]
     pub fn max_of(values: &[f64]) -> f64 {
         values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))
     }
 
-    #[must_use]
     #[must_use]
     pub fn min_of(values: &[f64]) -> f64 {
         values.iter().fold(f64::INFINITY, |a, &b| min(a, b))
@@ -784,4 +782,10 @@ pub fn ml_read_resource_description_n_triples_token_loop3(
             index
         };
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadResourceDescriptionNTriplesTokenLoop4Result {
+    MlReadResourceDescriptionNTriplesTokenLoop4Done(f64),
+    MlReadResourceDescriptionNTriplesTokenLoop4Return(Vec<f64>),
 }
