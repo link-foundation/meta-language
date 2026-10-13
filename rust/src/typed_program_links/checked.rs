@@ -7,7 +7,7 @@ use crate::translation::primitive_value_rules::{
     accept_linked_text_conversion_kind, read_number_display_refusal,
 };
 use crate::translation::surface::{
-    SCtor, SData, SEffect, SField, SFn, SItem, SMain, SParam, SProgram, ShowStyle,
+    SCtor, SData, SEffect, SField, SItem, SMain, SProgram, ShowStyle,
 };
 use crate::translation::typed_program_link_rules::{
     accept_program_division_rounding, accept_program_expression_operation,
@@ -17,6 +17,8 @@ use regex::Regex;
 use serde_json::Value;
 use std::collections::HashSet;
 use std::sync::OnceLock;
+
+mod loop_modules;
 
 fn valid_float(value: &str) -> bool {
     static SPELLING: OnceLock<Regex> = OnceLock::new();
@@ -144,12 +146,20 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         ));
     }
     let mut items = Vec::new();
+    let mut seen = HashSet::new();
     for item in &program.items {
+        if let Item::Module { .. } = item {
+            items.push(loop_modules::project_module(item, program, &[], &mut seen)?);
+            continue;
+        }
         let Item::Decl { full_name } = item else {
             return Err(error(
                 "the Rust typed links adapter does not yet recheck module items",
             ));
         };
+        if !seen.insert(full_name.clone()) {
+            return Err(error("the linked declaration item occurs more than once"));
+        }
         let declaration = program
             .declaration(full_name)
             .ok_or_else(|| error("the linked declaration item has no declaration"))?;
@@ -197,31 +207,9 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                 "the Rust typed links adapter does not yet recheck qualified declarations",
             ));
         }
-        items.push(SItem::Fn(SFn {
-            name: function.name.clone(),
-            params: function
-                .params
-                .iter()
-                .map(|parameter| -> Result<SParam> {
-                    Ok(SParam {
-                        name: parameter.name.clone(),
-                        ty: Some(project_type(&parameter.ty)?),
-                        default_value: parameter.default_value.clone(),
-                        guard: parameter.guard.clone(),
-                        span: None,
-                        rocq_type: None,
-                    })
-                })
-                .collect::<Result<_>>()?,
-            ret: Some(project_type(&function.ret)?),
-            body: expression(&function.body, program)?,
-            span: function.span,
-            generated: function.generated,
-            source_signature: function.source_signature.clone(),
-            source_loop: function.source_loop.clone(),
-        }));
+        items.push(loop_modules::project_function(function, program)?);
     }
-    if items.len() != program.declarations.len() {
+    if seen.len() != program.declarations.len() {
         return Err(error(
             "the linked declaration mapping and ordered items disagree",
         ));

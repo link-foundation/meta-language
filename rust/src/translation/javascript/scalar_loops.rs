@@ -1,6 +1,7 @@
 //! Exact emitted loop and immutable write-snapshot parser adapter.
 use super::{
-    JavaScriptParser, Result, SExpr, SItem, SNode, SParam, SProgram, Scope, span, unsupported,
+    JavaScriptParser, Result, SExpr, SItem, SNode, SParam, SProgram, ScanEnd, Scope, span,
+    unsupported,
 };
 use crate::translation::source_loops::{
     ScalarLoopInterface, ScalarLoopInterfaceType, ScalarLoopState, ScalarLoopTransition,
@@ -130,9 +131,11 @@ impl JavaScriptParser {
     }
     fn scalar_loop_block(&mut self, context: &mut LoopState) -> Result<SExpr> {
         let start = self.cursor.expect("{", Some("scalar loop block"))?;
+        let mut tdz = self.scope.tdz.clone();
+        tdz.extend(self.block_declarations(self.cursor.index, ScanEnd::Brace));
         let scope = Scope {
             locals: self.scope.locals.clone(),
-            tdz: HashSet::new(),
+            tdz,
             mutable: self.scope.mutable.clone(),
         };
         let previous = std::mem::replace(&mut self.scope, scope);

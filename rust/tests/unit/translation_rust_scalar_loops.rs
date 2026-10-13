@@ -144,13 +144,23 @@ fn complete_original_names_and_ordered_state_replay_through_both_frontends_and_a
     let source = directory.0.join("observe.rs");
     let executable = directory.0.join("observe");
     fs::write(&source, caller).unwrap();
-    run(Command::new("rustc")
+    let compiled = run(Command::new("rustc")
         .arg("--edition=2024")
         .arg("--test")
         .arg(&source)
         .arg("-o")
         .arg(&executable));
-    run(&mut Command::new(&executable));
+    assert!(
+        compiled.ok,
+        "native loop oracle compilation failed\n{}\n{}",
+        compiled.stdout, compiled.stderr
+    );
+    let observed = run(&mut Command::new(&executable));
+    assert!(
+        observed.ok,
+        "native loop oracle assertions failed\n{}\n{}",
+        observed.stdout, observed.stderr
+    );
 }
 
 #[test]
@@ -180,9 +190,107 @@ fn original_default_and_domain_refusals_stay_explicit() {
         create_typed_program_links_with_javascript_scalar_loop_model(&source, "Rust", model, None)
             .is_err()
     );
-    assert!(parse_rust_with_scalar_loop_model(&source, "another model").is_err());
+    let unknown = parse_rust_with_scalar_loop_model(&source, "another model").unwrap_err();
+    assert_eq!(
+        unknown.reason,
+        "Rust scalar loop model: select the legacy model or closed primitive scalar loop 1"
+    );
+    assert_eq!(unknown.span, None);
     assert!(
         parse_javascript_with_scalar_loop_model("function keep(){return 1;}", "another model")
             .is_err()
     );
+}
+
+#[test]
+fn authentic_emitted_helper_refuses_current_and_future_math_lexical_bindings() {
+    let data = fixture();
+    let model = data["model"].as_str().unwrap();
+    let negatives = data["javaScriptLexicalRefusals"].as_array().unwrap();
+    assert_eq!(negatives.len(), 2);
+    for case in negatives {
+        let source = case["source"].as_str().unwrap();
+        let error = parse_javascript_with_scalar_loop_model(source, model).unwrap_err();
+        assert_eq!(error.reason, case["reason"].as_str().unwrap());
+        assert_eq!(serde_json::to_value(error.span).unwrap(), case["span"]);
+        assert!(
+            create_typed_program_links_with_javascript_scalar_loop_model(
+                source,
+                "JavaScript",
+                model,
+                None
+            )
+            .is_err()
+        );
+    }
+}
+
+#[test]
+fn owned_structured_module_relocation_checks_actual_function_and_namespace_bindings() {
+    let data = fixture();
+    let row = &data["qualifiedLoopGraph"];
+    let network = LinkNetwork::from_lino(row["network"].as_str().unwrap()).unwrap();
+    let root = meta_language::LinkId::from_u64(row["root"].as_str().unwrap().parse().unwrap());
+    let program = decode_typed_program_links(&network, root).unwrap();
+    let Some(meta_language::translation::ir::Decl::Fn(function)) =
+        program.declaration("nested.swap")
+    else {
+        panic!("the actual qualified loop declaration exists");
+    };
+    assert_eq!(function.full_name, "nested.swap");
+    assert_eq!(function.module_path, ["nested"]);
+    assert_eq!(function.source_loop.as_ref().unwrap().source_name, "swap");
+    assert_eq!(
+        emit_javascript(&program).unwrap().definitions.join("\n\n"),
+        row["javaScriptDefinitions"].as_str().unwrap()
+    );
+    assert_eq!(
+        emit_rust(&program).unwrap().definitions.join("\n\n"),
+        row["rustDefinitions"].as_str().unwrap()
+    );
+    assert_eq!(
+        emit_typed_program_links(&network, root, "Rust")
+            .unwrap()
+            .code,
+        emit_rust(&program).unwrap().text
+    );
+    for altered in ["other.swap", "swap"] {
+        let mut forged = program.clone();
+        let meta_language::translation::ir::Decl::Fn(function) = &mut forged.declarations[0] else {
+            unreachable!();
+        };
+        function.full_name = altered.into();
+        assert!(meta_language::encode_typed_program_links(&forged).is_err());
+    }
+    let syntax = format!(
+        "{}\nfn main(){{}}",
+        row["rustDefinitions"].as_str().unwrap()
+    );
+    let refused =
+        parse_rust_with_scalar_loop_model(&syntax, data["model"].as_str().unwrap()).unwrap_err();
+    assert!(
+        refused
+            .reason
+            .contains("the selected scalar state model requires a flat function")
+    );
+}
+
+#[test]
+fn a_parameter_capturing_its_continuation_declaration_requires_an_anchored_reference() {
+    let data = fixture();
+    let model = data["model"].as_str().unwrap();
+    for row in data["bindingCaptureRefusals"].as_array().unwrap() {
+        let language = row["language"].as_str().unwrap();
+        let source = row["source"].as_str().unwrap();
+        let checked = if language == "Rust" {
+            parse_rust_with_scalar_loop_model(source, model)
+                .and_then(|surface| check_program(&surface))
+        } else {
+            parse_javascript_with_scalar_loop_model(source, model)
+                .and_then(|surface| check_program(&surface))
+        };
+        let error = checked.unwrap_err();
+        assert_eq!(error.reason, row["reason"].as_str().unwrap());
+        assert_eq!(serde_json::to_value(error.span).unwrap(), row["span"]);
+    }
 }

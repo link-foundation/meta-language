@@ -33,7 +33,23 @@ fn simple_name(value: &Value) -> Option<&str> {
     }
 }
 
-pub(crate) fn validate_source_loop(item: &impl Serialize, language: &str) -> Result<()> {
+pub fn validate_source_loop(item: &impl Serialize, language: &str) -> Result<()> {
+    validate_in_scope(item, language, None)
+}
+
+pub fn validate_source_loop_at(
+    item: &impl Serialize,
+    language: &str,
+    full_name: &str,
+) -> Result<()> {
+    validate_in_scope(item, language, Some(full_name))
+}
+
+fn validate_in_scope(
+    item: &impl Serialize,
+    language: &str,
+    declared_name: Option<&str>,
+) -> Result<()> {
     let item = serde_json::to_value(item)
         .map_err(|_| fail("loop declaration cannot be represented as checked data"))?;
     if item.get("sourceLoop").is_none() {
@@ -130,7 +146,38 @@ pub(crate) fn validate_source_loop(item: &impl Serialize, language: &str) -> Res
             ));
         }
     }
+    let actual_name = item["fullName"]
+        .as_str()
+        .or(declared_name)
+        .unwrap_or(&proof.source_name);
+    if declared_name.is_some_and(|name| name != actual_name) {
+        return Err(fail(
+            "the loop identity disagrees with its actual declaration scope",
+        ));
+    }
+    if let Some(path) = item.get("modulePath") {
+        let path = path
+            .as_array()
+            .ok_or_else(|| fail("a loop module path needs actual owned segments"))?;
+        let segments = path
+            .iter()
+            .map(Value::as_str)
+            .collect::<Option<Vec<_>>>()
+            .ok_or_else(|| fail("a loop module path has an invalid segment"))?;
+        if segments
+            .into_iter()
+            .chain(std::iter::once(proof.source_name.as_str()))
+            .collect::<Vec<_>>()
+            .join(".")
+            != actual_name
+        {
+            return Err(fail(
+                "the loop identity disagrees with its actual module binding",
+            ));
+        }
+    }
     let mut adapter = TreeAdapter {
+        full_name: actual_name,
         proof: &proof,
         names,
         snapshots: HashSet::new(),
@@ -160,6 +207,7 @@ pub(crate) fn validate_source_loop(item: &impl Serialize, language: &str) -> Res
 
 type Scope<'a> = [(String, Option<&'a Value>)];
 struct TreeAdapter<'a> {
+    full_name: &'a str,
     proof: &'a SourceLoop,
     names: HashSet<String>,
     snapshots: HashSet<String>,
@@ -265,8 +313,14 @@ impl<'a> TreeAdapter<'a> {
         let args = node["args"]
             .as_array()
             .ok_or_else(|| fail("the continuation needs actual argument bindings"))?;
+        let owned_target = target.as_deref().is_some_and(|target| {
+            target == self.full_name
+                || (node["k"] == "app"
+                    && (target == self.proof.source_name
+                        || target.strip_prefix("crate.") == Some(self.full_name)))
+        });
         if !tail
-            || target.as_deref() != Some(self.proof.source_name.as_str())
+            || !owned_target
             || args.len() != self.proof.state.len()
             || transition.arguments.len() != args.len()
         {
