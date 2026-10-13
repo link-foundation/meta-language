@@ -49,7 +49,7 @@ use scope::translate_binding_groups;
 use self::binding::{Binder, declared_signatures};
 use typescript_erasure::requires_type_script_erasure;
 pub use typescript_erasure::{ErasedTypeScript, Erasure, erase_type_script};
-use typescript_portable_typing::project_type_script_typing;
+pub use typescript_portable_typing::project_type_script_typing;
 
 /// The signature of an exported item of a JavaScript or TypeScript module.
 ///

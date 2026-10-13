@@ -178,6 +178,7 @@ mod translation_emit_rust;
 mod translation_foundation;
 mod translation_javascript_frontend;
 mod translation_javascript_loops;
+mod translation_javascript_products;
 mod translation_lean;
 mod translation_math;
 mod translation_mutual_recursion;
@@ -188,6 +189,7 @@ mod translation_rocq;
 mod translation_rules;
 mod translation_rust_frontend;
 mod translation_rust_indirection;
+mod translation_rust_products;
 mod translation_stages;
 mod translation_structured_types;
 mod translation_top_level_statements;
@@ -195,6 +197,7 @@ mod translation_void_functions;
 mod typed_program_algebraic;
 mod typed_program_links;
 mod typescript_erasure;
+mod typescript_portable_typing;
 mod unicode_input_chunks;
 
 #[path = "ci-cd/mod.rs"]

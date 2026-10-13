@@ -1,3 +1,5 @@
+import { projectTypeScriptTyping as projectTypeScriptTypingDetails } from './typescript-portable-typing.js';
+
 export * from './access.js';
 export * from './api-style-fixtures.js';
 export * from './grammar.js';
@@ -37,6 +39,10 @@ export * from './query-plan.js';
 export * from './regions.js';
 export * from './self-translation.js';
 export { eraseTypeScript } from './typescript-erasure.js';
+/** Project supported TypeScript annotations into the shared frontend's JSDoc form. */
+export function projectTypeScriptTyping(source) {
+  return projectTypeScriptTypingDetails(source).code;
+}
 export { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks } from './typed-program-links.js';
 export * from './semantics.js';
 export * from './sql-adapter.js';

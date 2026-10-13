@@ -290,8 +290,8 @@ pub use rust_codec::{
 pub use self_translation::{
     ErasedTypeScript, Erasure, SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError,
     SelfTranslationItem, SelfTranslationOptions, SelfTranslationSignature, erase_type_script,
-    self_translate, self_translate_decorated, self_translate_with, self_translation_language,
-    self_translation_signatures,
+    project_type_script_typing, self_translate, self_translate_decorated, self_translate_with,
+    self_translation_language, self_translation_signatures,
 };
 pub use semantic_translation::{
     ReadTranslationProvenance, SEMANTIC_ENCODING, SEMANTIC_OBSERVATION, SemanticTranslation,

@@ -236,6 +236,7 @@ mod items {
     use meta_language::parse_with_grammar as _;
     use meta_language::percent_decode_links_text as _;
     use meta_language::percent_encode_links_text as _;
+    use meta_language::project_type_script_typing as _;
     use meta_language::prove_formal_concept_equivalence as _;
     use meta_language::query_by_concept_term as _;
     use meta_language::read_formal_concept_definition as _;
@@ -765,6 +766,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "percentEncodeLinksText",
         "percent_encode_links_text",
+        "function",
+    ),
+    (
+        "projectTypeScriptTyping",
+        "project_type_script_typing",
         "function",
     ),
     (

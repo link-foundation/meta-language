@@ -23,12 +23,13 @@ const CASES_FILE: &str = "parity/fixtures/export-parity/cases.lino";
 
 fn language_features() -> (PathBuf, Value) {
     let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    while !dir.join("parity/language-features.json").is_file() {
-        assert!(dir.pop(), "parity/language-features.json should exist");
+    while !dir.join("parity/language-features.lino").is_file() {
+        assert!(dir.pop(), "parity/language-features.lino should exist");
     }
-    let text = fs::read_to_string(dir.join("parity/language-features.json"))
-        .expect("parity/language-features.json should be readable");
-    let features = serde_json::from_str(&text).expect("the features should be JSON");
+    let text = fs::read_to_string(dir.join("parity/language-features.lino"))
+        .expect("parity/language-features.lino should be readable");
+    let features = meta_language::read_structured_data_lino(&text)
+        .expect("the features should be linked structured data");
     (dir, features)
 }
 

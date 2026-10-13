@@ -22,6 +22,15 @@ A language is named by name or extension (`rust`, `rs`, `ts`, `mjs`); without
 `--from`, the CLI takes it from the file extension. `--items` prints one line
 per top-level item instead of the translation.
 
+The public `projectTypeScriptTyping(source)` JavaScript function and
+`project_type_script_typing(&source)` Rust function return the same JavaScript
+source string with supported TypeScript function and alias annotations retained
+as JSDoc. Rust returns a `Result` and JavaScript throws on an unsupported source
+construct; both preserve the shared refusal reason. This projection feeds the
+existing typed frontend. It does not establish support for arbitrary TypeScript
+types or runtime constructs, and does not retain the complete source provenance
+provided by `selfTranslate` and `self_translate`.
+
 ## The output
 
 A translation starts with a header that records the source language and the

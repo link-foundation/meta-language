@@ -134,6 +134,8 @@ export interface ErasedTypeScript {
   erasures: TypeScriptErasure[];
 }
 export function eraseTypeScript(source: string): ErasedTypeScript;
+/** Projects supported TypeScript compile-time annotations into the shared JavaScript frontend's JSDoc form. */
+export function projectTypeScriptTyping(source: string): string;
 
 /**
  * Translates one of meta-language's own modules between JavaScript,

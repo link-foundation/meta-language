@@ -6,6 +6,8 @@ import { spawnSync } from 'node:child_process';
 import { eraseTypeScript } from '../src/typescript-erasure.js';
 import { selfTranslate } from '../src/self-translation.js';
 import { projectTypeScriptTyping } from '../src/typescript-portable-typing.js';
+import { projectTypeScriptTyping as projectPublicTypeScriptTyping } from '../src/index.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 test('shared TypeScript erasure rules and bounded fixtures reproduce exactly', () => {
   assert.equal(readFileSync(new URL('../src/data/typescript-erasure.lino', import.meta.url), 'utf8'),
@@ -90,4 +92,16 @@ test('TypeScript annotations retain string and boolean types in the Rust semanti
   }
   const contradictory = selfTranslate('function answer(): number { return "wrong"; }\n', 'TypeScript', 'Rust');
   assert.ok(contradictory.items.some(({ status }) => status === 'carried'), 'source type contradictions are not erased from checking');
+});
+
+test('public TypeScript typing projection preserves every shared output and refusal', () => {
+  const fixture = readProjectData(new URL('../../parity/fixtures/typescript-erasure.lino', import.meta.url));
+  for (const entry of fixture.cases) {
+    if (typeof entry.typing === 'string') {
+      assert.equal(projectPublicTypeScriptTyping(entry.source), entry.typing, entry.id);
+    } else {
+      assert.throws(() => projectPublicTypeScriptTyping(entry.source),
+        (error) => error.reason === entry.error.reason, entry.id);
+    }
+  }
 });

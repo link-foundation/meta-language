@@ -156,7 +156,12 @@ fn visit(
     Ok(())
 }
 
-pub(super) fn project_type_script_typing(source: &str) -> Result<String, TranslationError> {
+/// Project supported TypeScript annotations into the shared frontend's JSDoc form.
+///
+/// # Errors
+/// Returns the existing annotation or syntax obligation when the source cannot
+/// be projected by the shared typing rules.
+pub fn project_type_script_typing(source: &str) -> Result<String, TranslationError> {
     let root = parse_native("native-typescript", source);
     let ErasedTypeScript { code, erasures } = erase_type_script(source)?;
     let mut projections = Vec::new();
@@ -179,32 +184,4 @@ pub(super) fn project_type_script_typing(source: &str) -> Result<String, Transla
     }
     output.push_str(&code[cursor..]);
     Ok(output)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::project_type_script_typing;
-
-    #[test]
-    fn native_typing_projection_matches_shared_javascript_annotation_spans() {
-        let source = std::fs::read_to_string(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../parity/fixtures/typescript-erasure.lino"),
-        )
-        .expect("shared TypeScript erasure fixture is available in the test checkout");
-        let fixture = crate::structured_data_links::read_structured_data_lino(&source).unwrap();
-        for case in fixture["cases"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter(|case| case["typing"].is_string())
-        {
-            assert_eq!(
-                project_type_script_typing(case["source"].as_str().unwrap()).unwrap(),
-                case["typing"].as_str().unwrap(),
-                "{}",
-                case["id"]
-            );
-        }
-    }
 }

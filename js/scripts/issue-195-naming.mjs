@@ -371,6 +371,13 @@ const nativeRuleConcepts = (text) => [...text.matchAll(/^\(rule ([a-z0-9_]+) [^\
  */
 export const NAME_INVENTORIES = Object.freeze([
   {
+    inventory: 'TypeScript typing projection entry points',
+    files: ['js/src/index.js', 'rust/src/self_translation/typescript_portable_typing.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) (projectTypeScriptTyping|project_type_script_typing)\(/gmu)
+      .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: () => 'translation.project-type-script-typing',
+  },
+  {
     inventory: 'global concept link records',
     files: ['js/src/global-concept-space.js'],
     extract: (text) => captures(text, /(?:head (?:===|!==)|tag !==) '([a-z-]+)'/gu),
