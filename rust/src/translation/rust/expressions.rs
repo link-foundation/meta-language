@@ -644,6 +644,34 @@ impl RustParser {
         let segments = self.path_segments("expression")?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, path);
+        if segments.len() == 2
+            && segments[0] == "f64"
+            && super::float_predicate_rules::accept_rust_float_constant_name(&segments[1])
+        {
+            let range = Some(Span::new(
+                token.start,
+                self.cursor.tokens[self.cursor.index - 1].end,
+            ));
+            let source_owner = vec!["f64".to_owned()];
+            let owner = self.resolve(&source_owner, path);
+            let shadowed = self.origins.lookup(&source_owner, path).is_some()
+                || self.origins.lookup(&owner, path).is_some();
+            if !super::float_predicate_rules::accept_rust_float_constant_owner(
+                &owner.join("::"),
+                shadowed,
+            ) || self.cursor.is("(")
+            {
+                return Err(unsupported(
+                    "Rust binary64 constant",
+                    "associated constants require the exact unshadowed primitive f64 owner and value syntax",
+                    range,
+                ));
+            }
+            let result = super::float_predicates::constant_expression(&segments[1], range)?;
+            self.origins
+                .mark(&result, SourceOrigin::with_type(FLOAT, path, Vec::new()));
+            return Ok(result);
+        }
         if self.cursor.is("::")
             && self.cursor.is_at("<", 1)
             && (accept_rust_source_array_owner(&name, false)

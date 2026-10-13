@@ -1,5 +1,5 @@
-import { acceptRustFloatPredicateMethod, acceptRustFloatOperationMethod, acceptRustFloatPredicateReceiver } from './rust-float-predicate-rules.js';
-import { createRustFloatPredicateExpression, createRustFloatOperationExpression } from './rust-float-predicates.js';
+import { acceptRustFloatPredicateMethod, acceptRustFloatOperationMethod, acceptRustFloatConstantName, acceptRustFloatConstantOwner, acceptRustFloatPredicateReceiver } from './rust-float-predicate-rules.js';
+import { createRustFloatPredicateExpression, createRustFloatOperationExpression, createRustFloatConstantExpression } from './rust-float-predicates.js';
 import { acceptRustCompletionModel } from './rust-completion-rules.js';
 import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
@@ -1012,6 +1012,13 @@ class RustParser {
       const segments = this.pathSegments('expression');
       const name = segments.join('::');
       const resolved = this.resolve(segments, path);
+      if (segments.length === 2 && segments[0] === 'f64' && acceptRustFloatConstantName(segments[1])) {
+        const range = { start: token.start, end: c.tokens[c.index - 1].end };
+        const owner = this.resolve(['f64'], path);
+        const shadowed = Boolean(this.origins.lookup(['f64'], path) || this.origins.lookup(owner, path));
+        if (!acceptRustFloatConstantOwner(owner.join('::'), shadowed) || c.is('(')) throw unsupported('Rust binary64 constant', 'associated constants require the exact unshadowed primitive f64 owner and value syntax', range);
+        return this.origins.mark(createRustFloatConstantExpression(segments[1], range), this.origins.typeOrigin(FLOAT, path));
+      }
       if (c.is('::') && c.is('<', 1) && (acceptRustSourceArrayOwner(name, false) || acceptRustSourceArrayOwner(resolved.join('::'), false))) {
         this.origins.vector(segments, resolved, path, span(token, c.peek()));
         c.next(); c.next();
