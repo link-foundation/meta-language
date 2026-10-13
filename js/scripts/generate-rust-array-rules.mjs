@@ -11,16 +11,19 @@ const output = new URL('../../rust/src/translation/rust/array_rules.rs', import.
 const definitions = emitRust(checkProgram(parseJavaScript(readFileSync(input, 'utf8')))).definitions;
 const raw = definitions.join('\n\n');
 if (process.argv.includes('--update-styles')) {
-  const actions = ['owner', 'kind', 'actual', 'expected'].map(name => ({ op: 'replace', field: 'source', from: `${name}: String`, to: `${name}: &str` }));
+  const actions = ['owner', 'kind', 'actual', 'expected', 'model'].map(name => ({ op: 'replace', field: 'source', from: `${name}: String`, to: `${name}: &str` }));
   const bodies = [
     '!shadowed && (owner == "Vec" || owner == "std::vec::Vec")',
     '!indirected && (kind == "bool" || kind == "float" || kind == "fixed" || kind == "unit" || kind == "string")',
     'actual == expected || (borrowed && actual == "owned vector" && expected == "immutable slice")',
+    'model.is_empty() || model == "immutable fresh scalar vector results 1"',
+    'model == "immutable fresh scalar vector results 1" && owned && fresh && (kind == "bool" || kind == "float" || kind == "fixed" || kind == "unit")',
+    '(kind == "array" && constructor) || ((kind == "let" || kind == "if") && children)',
   ];
   for (const [index, definition] of definitions.entries()) {
     const name = /^pub fn (\w+)/u.exec(definition)?.[1];
     if (!name) throw new Error('the checked array admission has no declaration');
-    actions.push({ op: 'replace', field: 'source', from: `pub fn ${name}`, to: `/// Admit the selected immutable Rust array source model.\n#[must_use]\npub fn ${name}` });
+    actions.push({ op: 'replace', field: 'source', from: `pub fn ${name}(`, to: `/// Admit the selected immutable Rust array source model.\n#[must_use]\npub fn ${name}(` });
     const lines = definition.split('\n').filter(line => line.startsWith('    '));
     if (lines.length !== 1) throw new Error('the checked array admission body changed');
     actions.push({ op: 'replace', field: 'source', from: lines[0].trim(), to: bodies[index] });

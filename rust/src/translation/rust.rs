@@ -97,12 +97,30 @@ fn multiplicative_op(value: &str) -> Option<BinaryOp> {
 /// # Errors
 /// On syntax errors and on constructs outside the portable core.
 pub fn parse_rust(source: &str) -> Result<SProgram> {
+    parse_rust_with_array_result_model(source, "")
+}
+
+/// Read Rust under an explicit versioned scalar vector result admission model.
+///
+/// The empty model retains the original array result refusals. The fresh model
+/// admits constructor tails of owned vectors of direct scalar Copy values.
+///
+/// # Errors
+/// On unknown models, syntax errors and unsupported ownership or result proofs.
+pub fn parse_rust_with_array_result_model(source: &str, model: &str) -> Result<SProgram> {
+    if !array_rules::accept_rust_source_array_result_model(model) {
+        return Err(unsupported(
+            "Rust array result model",
+            "select the legacy model or immutable fresh scalar vector results 1",
+            None,
+        ));
+    }
     let tokens = tokenize(source, Language::Rust)?.tokens;
-    let mut declarations = RustParser::new(tokens.clone(), SourceOrigins::new(None));
+    let mut declarations = RustParser::new(tokens.clone(), SourceOrigins::new(None, model));
     declarations.file()?;
-    let mut origins = std::mem::replace(&mut declarations.origins, SourceOrigins::new(None));
+    let mut origins = std::mem::replace(&mut declarations.origins, SourceOrigins::new(None, model));
     origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
-    let mut source_origins = SourceOrigins::new(Some(origins.catalog));
+    let mut source_origins = SourceOrigins::new(Some(origins.catalog), model);
     source_origins.collecting = true;
     let mut syntax = RustParser::new(tokens.clone(), source_origins);
     syntax.aliases = declarations.aliases;
@@ -112,7 +130,10 @@ pub fn parse_rust(source: &str) -> Result<SProgram> {
     if super::check::check_program(&surface).is_err() {
         return Ok(surface);
     }
-    let mut parser = RustParser::new(tokens, SourceOrigins::new(Some(syntax.origins.catalog)));
+    let mut parser = RustParser::new(
+        tokens,
+        SourceOrigins::new(Some(syntax.origins.catalog), model),
+    );
     parser.aliases = syntax.aliases;
     parser.file()
 }

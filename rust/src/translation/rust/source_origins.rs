@@ -3,9 +3,12 @@
 //! Mirrors `js/src/translation/rust-source-origins.js`. Declarations and lexical
 //! scopes come from the existing parser; value typing remains in the checker.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
-use super::array_rules::{accept_rust_source_array_coercion, accept_rust_source_array_owner};
+use super::array_rules::{
+    accept_rust_fresh_array_result_tail, accept_rust_source_array_coercion,
+    accept_rust_source_array_owner,
+};
 use super::indirection_rules::{
     accept_rust_immutable_indirection_layer, accept_rust_source_box_availability,
     accept_rust_source_box_coercion_layer, accept_rust_source_box_owner,
@@ -32,6 +35,8 @@ pub(super) struct SourceOrigin {
     pub(super) fields: Option<Vec<Self>>,
     pub(super) text_source_model: Option<&'static str>,
     pub(super) array_source_model: Option<&'static str>,
+    /// Constructor or actual call source evidence; cleared on local binding.
+    pub(super) fresh_array_value: Option<Span>,
     /// Spelled source lifetimes, in reference-layer order; None is elision.
     pub(super) source_lifetimes: Vec<Option<String>>,
 }
@@ -51,6 +56,7 @@ impl SourceOrigin {
             text_source_model: None,
             array_source_model: None,
             source_lifetimes: Vec::new(),
+            fresh_array_value: None,
         }
     }
 
@@ -83,6 +89,7 @@ impl SourceOrigin {
             text_source_model,
             array_source_model,
             source_lifetimes: Vec::new(),
+            fresh_array_value: None,
         }
     }
 
@@ -159,6 +166,8 @@ pub(super) struct SourceLookup {
 }
 
 pub(super) struct SourceOrigins {
+    pub(super) array_result_model: String,
+    fresh_calls: HashSet<Span>,
     pub(super) collecting: bool,
     pub(super) catalog: HashMap<String, SourceDeclaration>,
     pub(super) scope: HashMap<String, SourceOrigin>,
@@ -172,8 +181,10 @@ pub(super) struct SourceOrigins {
 }
 
 impl SourceOrigins {
-    pub(super) fn new(catalog: Option<HashMap<String, SourceDeclaration>>) -> Self {
+    pub(super) fn new(catalog: Option<HashMap<String, SourceDeclaration>>, model: &str) -> Self {
         Self {
+            array_result_model: model.to_owned(),
+            fresh_calls: HashSet::new(),
             collecting: catalog.is_none(),
             catalog: catalog.unwrap_or_default(),
             scope: HashMap::new(),
@@ -482,8 +493,13 @@ impl SourceOrigins {
         };
         if let Some(entry) = names.and_then(|names| self.lookup(names, path)) {
             match entry.declaration {
-                SourceDeclaration::Function { result, .. }
-                | SourceDeclaration::Constructor { result, .. } => return result,
+                SourceDeclaration::Function { mut result, .. } => {
+                    result.fresh_array_value = node.span.filter(|span| {
+                        result.fresh_array_value.is_some() && self.fresh_calls.contains(span)
+                    });
+                    return result;
+                }
+                SourceDeclaration::Constructor { result, .. } => return result,
                 SourceDeclaration::ExternalCrate
                 | SourceDeclaration::Module
                 | SourceDeclaration::Data => {}
@@ -607,7 +623,17 @@ impl SourceOrigins {
             .iter()
             .all(|origin| self.same_origin(origin, first))
         {
-            return (*first).clone();
+            return SourceOrigin {
+                fresh_array_value: if returning
+                    .iter()
+                    .all(|origin| origin.fresh_array_value.is_some())
+                {
+                    first.fresh_array_value
+                } else {
+                    None
+                },
+                ..(*first).clone()
+            };
         }
         if returning
             .iter()
@@ -670,9 +696,52 @@ impl SourceOrigins {
         }
     }
 
-    pub(super) fn mark(&mut self, node: &SExpr, origin: SourceOrigin) {
+    pub(super) fn mark(&mut self, node: &SExpr, mut origin: SourceOrigin) {
+        if !self.array_result_model.is_empty()
+            && let SNode::Array { items, .. } = &node.node
+        {
+            origin.fresh_array_value = node.span.filter(|_| {
+                origin.array_source_model == Some("owned vector")
+                    && origin.wrappers.is_empty()
+                    && items.iter().all(|item| {
+                        !item.spread && self.origin(&item.value, &origin.path).direct_copy_value()
+                    })
+            });
+        }
         if let Some(span) = node.span {
             self.expressions.insert(span, origin);
+        }
+    }
+
+    /// Each constructor's scalar evidence was retained in its live source scope.
+    pub(super) fn fresh_array_result(&self, node: &SExpr, path: &[String]) -> bool {
+        let children = match &node.node {
+            SNode::Let { body, .. } => self.fresh_array_result(body, path),
+            SNode::If {
+                then, otherwise, ..
+            } => self.fresh_array_result(then, path) && self.fresh_array_result(otherwise, path),
+            _ => false,
+        };
+        accept_rust_fresh_array_result_tail(
+            node.node.kind(),
+            self.origin(node, path).fresh_array_value.is_some(),
+            children,
+        )
+    }
+
+    pub(super) fn certify_array_result(&mut self, name: &str, path: &[String], span: Option<Span>) {
+        if self.collecting {
+            let full_name = path
+                .iter()
+                .map(String::as_str)
+                .chain([name])
+                .collect::<Vec<_>>()
+                .join(".");
+            if let Some(SourceDeclaration::Function { result, .. }) =
+                self.catalog.get_mut(&full_name)
+            {
+                result.fresh_array_value = span;
+            }
         }
     }
 
@@ -730,6 +799,7 @@ impl SourceOrigins {
             && actual.array_source_model == Some("owned vector")
             && actual.wrappers.is_empty()
             && !matches!(node.node, SNode::Array { .. })
+            && actual.fresh_array_value.is_none()
         {
             return Err(unsupported(
                 "owned vector binding",
@@ -740,8 +810,9 @@ impl SourceOrigins {
         if let Some(declared) = declared {
             self.argument(&actual, declared, node.span)?;
         }
-        self.scope
-            .insert(name.to_owned(), declared.cloned().unwrap_or(actual));
+        let mut binding = declared.cloned().unwrap_or(actual);
+        binding.fresh_array_value = None;
+        self.scope.insert(name.to_owned(), binding);
         Ok(())
     }
 
@@ -837,12 +908,15 @@ impl SourceOrigins {
     }
 
     pub(super) fn call(
-        &self,
+        &mut self,
         segments: &[String],
         args: &[SExpr],
         path: &[String],
         span: Option<Span>,
     ) -> Result<()> {
+        if let Some(span) = span {
+            self.fresh_calls.insert(span);
+        }
         if self.collecting {
             return Ok(());
         }

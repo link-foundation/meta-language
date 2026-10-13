@@ -5,14 +5,16 @@ import { unsupported } from './diagnostics.js';
 import { rustFixedType } from './types.js';
 import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, acceptRustSourceTextEquality, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
 import { acceptRustImmutableProductType } from './rust-product-rules.js';
-import { acceptRustSourceArrayOwner, acceptRustSourceArrayCoercion } from './rust-array-rules.js';
+import { acceptRustSourceArrayOwner, acceptRustSourceArrayCoercion, acceptRustFreshArrayResultTail } from './rust-array-rules.js';
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
 const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null });
 
 export class RustSourceOrigins {
-  constructor(catalog = null) {
+  constructor(catalog = null, arrayResultModel = '') {
+    this.arrayResultModel = arrayResultModel;
+    this.freshCalls = new Set();
     this.collecting = catalog === null;
     this.catalog = catalog ?? new Map();
     this.scope = new Map();
@@ -142,7 +144,7 @@ export class RustSourceOrigins {
     }
     if (node.k === 'name' || (node.k === 'app' && node.fn.k === 'name')) {
       const entry = this.lookup(node.k === 'name' ? node.path : node.fn.path, path);
-      if (entry?.k === 'fn') return clone(entry.result);
+      if (entry?.k === 'fn') return { ...clone(entry.result), freshArrayValue: Boolean(entry.result.freshArrayValue && this.freshCalls.has(`${node.span?.start}:${node.span?.end}`)) };
       if (entry?.k === 'ctor') return clone(entry.result);
       if (node.k === 'name' && node.path.length === 2 && !this.lookup([node.path[0]], path)
         && rustFixedType(node.path[0]) && ['MIN', 'MAX'].includes(node.path[1])) return value(true, rustFixedType(node.path[0]));
@@ -180,7 +182,7 @@ export class RustSourceOrigins {
     const returning = origins.filter(origin => !origin.diverging);
     if (!returning.length) return { ...value(), diverging: true };
     const first = returning[0];
-    if (returning.every(origin => this.same(origin, first))) return clone(first);
+    if (returning.every(origin => this.same(origin, first))) return { ...clone(first), freshArrayValue: returning.every(origin => origin.freshArrayValue) };
     if (returning.some(origin => origin.arraySourceModel)) return { ...unknown(true), arraySourceModel: 'unproved array' };
     if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {
       const fields = returning.every(origin => origin.fields?.length === first.fields?.length) && first.fields
@@ -192,8 +194,19 @@ export class RustSourceOrigins {
   }
 
   mark(node, origin) {
+    if (this.arrayResultModel && node.k === 'array') origin = { ...origin,
+      freshArrayValue: origin.arraySourceModel === 'owned vector' && origin.wrappers.length === 0
+        && node.items.every(item => !item.spread && this.immutableProduct(this.origin(item.value, origin.path))) };
     this.expressions.set(node, clone(origin));
     return node;
+  }
+
+  // The parser retains constructor evidence while each lexical scope is live.
+  // A named vector is never a constructor, even if its binding was fresh.
+  freshArrayResult(node, path) {
+    const children = node.k === 'let' ? this.freshArrayResult(node.body, path)
+      : node.k === 'if' ? this.freshArrayResult(node.then, path) && this.freshArrayResult(node.else, path) : false;
+    return acceptRustFreshArrayResultTail(node.k, Boolean(this.origin(node, path).freshArrayValue), children);
   }
 
   wrap(node, path, layer) {
@@ -215,9 +228,9 @@ export class RustSourceOrigins {
   bind(name, node, path, declared = null) {
     const actual = this.origin(node, path);
     if (!this.collecting && actual.arraySourceModel && actual.uncertain) throw unsupported('source array join', 'every array alternative needs the same proven source type and ownership', node.span);
-    if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array') throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
+    if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
     if (declared) this.argument(actual, declared, node.span);
-    this.scope.set(name, clone(declared ?? actual));
+    this.scope.set(name, { ...clone(declared ?? actual), freshArrayValue: false });
   }
 
   argument(actualOrigin, expectedOrigin, span) {
@@ -258,6 +271,7 @@ export class RustSourceOrigins {
   // Keep Box ownership contracts until source admission has checked a call;
   // ordinary value type unification remains exclusively in the checker.
   call(segments, args, path, span) {
+    this.freshCalls.add(`${span?.start}:${span?.end}`);
     if (this.collecting) return;
     const entry = this.lookup(segments, path);
     const expected = entry?.k === 'fn' ? entry.parameters : entry?.k === 'ctor' ? entry.fields : null;

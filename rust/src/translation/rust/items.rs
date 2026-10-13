@@ -1,6 +1,6 @@
 //! Attributes, items, `use` trees, enums, types, functions, blocks and `main`.
 
-use super::array_rules::accept_rust_source_array_owner;
+use super::array_rules::{accept_rust_source_array_owner, accept_rust_source_array_result};
 use super::indirection_rules::{
     accept_rust_source_box_owner, accept_rust_source_lifetime_binding,
     accept_rust_source_lifetime_result,
@@ -498,7 +498,7 @@ impl RustParser {
             ));
         }
         let ret = self.parse_type()?;
-        let source_result = self.origins.current_type.clone();
+        let mut source_result = self.origins.current_type.clone();
         if !mutable_params.is_empty() {
             let (closed, possible_write) = read_rust_scalar_parameter_body(&self.cursor);
             for (token, type_token, origin) in mutable_params {
@@ -520,7 +520,15 @@ impl RustParser {
                 }
             }
         }
-        if matches!(ret, Type::Array { .. }) {
+        if let Type::Array { element, .. } = &ret
+            && !accept_rust_source_array_result(
+                &self.origins.array_result_model,
+                element.kind(),
+                source_result.array_source_model == Some("owned vector")
+                    && source_result.wrappers.is_empty(),
+                true,
+            )
+        {
             return Err(unsupported(
                 "Rust array result",
                 "returning vectors or borrowed slices needs a separate consumption and outlives proof",
@@ -563,6 +571,24 @@ impl RustParser {
             .collect();
         let previous = self.origins.enter(Some(scope));
         let body = self.block(path)?;
+        if let Type::Array { element, .. } = &ret {
+            if !accept_rust_source_array_result(
+                &self.origins.array_result_model,
+                element.kind(),
+                source_result.array_source_model == Some("owned vector")
+                    && source_result.wrappers.is_empty(),
+                self.origins.fresh_array_result(&body, path),
+            ) {
+                return Err(unsupported(
+                    "fresh Rust array result",
+                    "every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs",
+                    body.span,
+                ));
+            }
+            source_result.fresh_array_value = body.span;
+            self.origins.certify_array_result(&name, path, body.span);
+            self.origins.mark(&body, source_result.clone());
+        }
         self.origins
             .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
         self.origins.scope = previous;
