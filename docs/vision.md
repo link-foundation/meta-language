@@ -1271,6 +1271,16 @@ JavaScript fails. Inside the acceptance workflow, the Rust evidence stages,
 the Rust native translations and the Rust consumers likewise need the
 JavaScript stages.
 
+JavaScript evidence runs in separate group and shard jobs. Each physical
+partition records its exact commit, selected test files, observations and logs
+under a distinct identity. The aggregate requires every declared partition and
+the complete test-file union before accepting the logical JavaScript suite;
+missing, duplicate, mixed or foreign scope remains a gate error. The current
+15 partitions cover all file groups within the existing 60-minute job limit.
+The Rust evidence suite starts only after the entire JavaScript matrix passes.
+Both suites provision their required formatter and compiler tools. Failure
+tails and periodic command progress are retained in live CI output.
+
 The JavaScript package checks also compile the generated shared frontend rules
 as a standalone Rust module with the crate's Clippy lint groups and warnings
 denied. This checks the generated interface without building the crate's
