@@ -444,6 +444,130 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `translation.${name}`,
   },
   {
+    inventory: 'Rust read only query admission operations',
+    files: ['js/src/translation/rust-read-only-query-rules.js', 'rust/src/translation/rust/read_only_query_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'Rust read only query source adapters',
+    files: ['js/src/translation/rust-read-only-queries.js', 'rust/src/translation/rust/expressions/read_only_queries.rs'],
+    extract: (text) => captures(text, /^\s*(?:export function|pub\(super\) fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name.startsWith('read-rust-') ? name : name.replace(/^read-/u, 'read-rust-')}`,
+  },
+  {
+    inventory: 'selected scalar loop admission operations',
+    files: ['js/src/translation/scalar-loop-rules.js', 'rust/src/translation/scalar_loop_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name.replace('-math-operation', '-mathematical-operation')}`,
+  },
+  {
+    inventory: 'selected scalar loop source adapters',
+    files: ['js/src/translation/rust-scalar-loops.js',
+      'rust/src/translation/rust/scalar_loops.rs',
+      'rust/src/translation/source_loops/validation.rs'],
+    extract: (text) => captures(text, /^\s*(?:export function|pub(?:\(super\))? fn) (checkRustScalarLoopProof|readRustScalarLoop|isJavaScriptScalarLoop|readJavaScriptScalarLoop|finishJavaScriptScalarLoops|read_scalar_loop|is_scalar_loop|finish_scalar_loops|validate_source_loop|validate_source_loop_at)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replace('java-script', 'javascript')),
+    recordOf: (name) => `translation.${({
+      'check-rust-scalar-loop-proof': 'check-source-scalar-loop-proof',
+      'validate-source-loop': 'check-source-scalar-loop-proof',
+      'validate-source-loop-at': 'check-source-scalar-loop-proof',
+      'read-scalar-loop': 'read-rust-scalar-loop',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'selected JavaScript scalar loop source adapters',
+    files: ['js/src/translation/javascript-scalar-loops.js', 'rust/src/translation/javascript/scalar_loops.rs'],
+    extract: (text) => captures(text, /^\s*(?:export function|pub\(super\) fn) (isJavaScriptScalarLoop|readJavaScriptScalarLoop|finishJavaScriptScalarLoops|read_scalar_loop|is_scalar_loop|finish_scalar_loops)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replace('java-script', 'javascript')),
+    recordOf: (name) => `translation.${({
+      'is-javascript-scalar-loop': 'detect-javascript-scalar-loop',
+      'is-scalar-loop': 'detect-javascript-scalar-loop',
+      'finish-scalar-loops': 'finish-javascript-scalar-loops',
+      'read-scalar-loop': 'read-javascript-scalar-loop',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'owned scalar loop proof entities',
+    files: ['rust/src/translation/source_loops.rs'],
+    extract: (text) => captures(text, /^pub struct (ScalarLoopState|ScalarLoopWrite|ScalarLoopTransition|ScalarLoopInterfaceType|ScalarLoopInterface|SourceLoop)\b/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.${({
+      'scalar-loop-state': 'scalar-loop-state-slot',
+      'scalar-loop-write': 'scalar-loop-state-assignment',
+      'scalar-loop-transition': 'scalar-loop-state-transition',
+      'source-loop': 'source-scalar-loop-proof',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'scalar loop policy and namespace adapters',
+    files: ['rust/src/translation/source_loops.rs', 'rust/src/typed_program_links/checked/loop_modules.rs'],
+    extract: (text) => captures(text, /^pub\((?:crate|super)\) fn (scalar_loop_policy|scalar_loop_snapshot_binding|project_function|project_module)\(/gmu)
+      .map(name => name.replaceAll('_', '-')),
+    recordOf: (name) => `translation.${({
+      'scalar-loop-policy': 'read-scalar-loop-source-policy',
+      'scalar-loop-snapshot-binding': 'accept-scalar-loop-snapshot-binding',
+      'project-function': 'project-checked-function-surface',
+      'project-module': 'project-scalar-loop-module',
+    })[name]}`,
+  },
+  {
+    inventory: 'Rust source header policy and rendering operations',
+    files: ['js/src/translation/rust-source-header-emission-rules.js', 'rust/src/translation/source_header_emission_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'Rust source header emission adapters',
+    files: ['js/src/translation/rust-source-header-emission.js', 'rust/src/translation/source_header_emission.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn|(?:const )?fn) (readRustSourceHeaderEmission|renderRustSourceHeaderEmission|read_rust_source_header_emission|render_rust_source_header_emission|validate_rust_source_header_emission_model|value_type|policy|semantics_name)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${({
+      'value-type': 'check-rust-source-header-value-type',
+      'policy': 'read-rust-source-header-emission-policy',
+      'semantics-name': 'read-rust-source-header-semantic-qualifier',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'selected source policy declarations',
+    files: ['js/src/translation/rust-scalar-loops.js', 'js/src/translation/rust-source-header-emission.js'],
+    extract: (text) => captures(text, /^export const (RUST_SCALAR_LOOP_POLICY|RUST_SOURCE_HEADER_EMISSION_POLICY)\b/gmu)
+      .map(name => name.replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name === 'rust-scalar-loop-policy' ? 'scalar-loop-source-policy' : 'rust-source-header-emission-policy'}`,
+  },
+  {
+    inventory: 'selected Rust source fixture generators',
+    files: ['js/scripts/generate-rust-read-only-query-fixtures.mjs', 'js/scripts/generate-rust-source-header-emission-fixtures.mjs'],
+    extract: (text) => captures(text, /^export function (rustReadOnlyQueryFixture|rustSourceHeaderEmissionFixture)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `repository.create-${name}`,
+  },
+  {
+    inventory: 'direct Rust program emission operations',
+    files: ['js/src/translation/emit-rust.js', 'rust/src/translation/emit_rust.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) (emitRust|emit_rust|emit_rust_with_options)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: () => 'translation.emit-rust-program',
+  },
+  {
+    inventory: 'native source emission option entities',
+    files: ['rust/src/translation/emit_rust.rs', 'rust/src/typed_program_links.rs', 'js/src/index.d.ts'],
+    extract: (text) => captures(text, /^(?:pub struct|export interface) (RustEmissionOptions|TypedProgramLinksEmissionOptions)\b/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'source header model option roles',
+    files: ['js/src/translation/emit-rust.js', 'rust/src/translation/emit_rust.rs', 'js/src/typed-program-links.js', 'rust/src/typed_program_links.rs'],
+    extract: (text) => [...text.matchAll(/(?:options\.(sourceHeaderModel|rustSourceHeaderEmissionModel)\b|^    pub (source_header_model|rust_source_header_emission_model):)/gmu)].map(([, javascript, native]) => javascript ?? native)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name === 'source-header-model' ? 'rust-source-header-model-option' : 'typed-program-rust-source-header-emission-model-option'}`,
+  },
+  {
     inventory: 'Rust source signature adapter operations',
     files: ['js/src/translation/rust-source-signatures.js', 'rust/src/translation/source_signatures.rs',
       'rust/src/translation/rust/items/source_headers.rs'],
@@ -516,9 +640,16 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'Rust source model parser entry points',
     files: ['js/src/translation/rust.js', 'rust/src/translation/rust.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles|parse_rust_with_scalar_loop_model)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: () => 'translation.parse-rust-source-models',
+  },
+  {
+    inventory: 'JavaScript source model parser entry points',
+    files: ['js/src/translation/javascript.js', 'rust/src/translation/javascript.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) (parseJavaScript|parse_javascript|parse_javascript_in|parse_javascript_with_scalar_loop_model)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: () => 'translation.parse-javascript-source-models',
   },
   {
     inventory: 'formal function selector boundary',
@@ -779,6 +910,20 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: () => 'translation.create-typed-program-links',
   },
   {
+    inventory: 'typed scalar loop source factory operations',
+    files: ['rust/src/typed_program_links.rs'],
+    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_scalar_loop_model|create_typed_program_links_with_javascript_scalar_loop_model|create_typed_program_links_with_scalar_loop_profiles)\(/gmu)
+      .map(name => name.replaceAll('_', '-')),
+    recordOf: () => 'translation.create-typed-program-links',
+  },
+  {
+    inventory: 'typed native program emission option operations',
+    files: ['rust/src/typed_program_links.rs'],
+    extract: (text) => captures(text, /^pub fn (emit_typed_program_links|emit_typed_program_links_with_options)\(/gmu)
+      .map(name => name.replaceAll('_', '-')),
+    recordOf: () => 'translation.emit-typed-program-links',
+  },
+  {
     inventory: 'typed program binding identities',
     files: ['rust/src/typed_program_links.rs'],
     extract: (text) => captures(text, /^pub\((?:crate|super)\) fn (read_typed_program_binding_identities)\(/gmu)
@@ -834,6 +979,7 @@ export const NAME_INVENTORIES = Object.freeze([
       'source-lifetime-bindings': 'translation.program-source-lifetime-binding-list-field',
       'reference-semantics': 'translation.program-reference-semantics-field',
       'rust-source-signature-model': 'translation.program-rust-source-signature-model-field',
+      'source-loop-proof': 'translation.program-source-loop-proof-field',
     })[name] ?? `translation.${name}`,
   },
   {
