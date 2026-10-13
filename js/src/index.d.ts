@@ -892,7 +892,9 @@ export function createTypedProgramLinks(
   language: string,
   options?: { provenance?: unknown; utf16Strings?: boolean; context?: object;
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
-    rustCompletionModel?: 'closed guarded function returns 1' },
+    rustCompletionModel?: 'closed guarded function returns 1';
+    /** Retains owned source header facts; does not promise source ABI emission. */
+    rustSourceSignatureModel?: 'Rust source function signature 1' },
 ): TypedProgramLinks;
 export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,
@@ -1725,6 +1727,12 @@ export function readFormalConceptDefinition(
 /** Extracts the selected checked function and its actual closed recursive dependency links. */
 export type FormalFunctionSelector = string | number | LinkId;
 export function encodeFormalFunctionDefinition(
+  value: TypedProgramLinks | PortableFormalConceptArchive,
+  declaration: FormalFunctionSelector,
+  options?: { provenance?: unknown },
+): FormalConceptArchive;
+/** Selects a closed Number/Boolean function under an explicit shared value model. */
+export function encodeSharedNumericFunctionDefinition(
   value: TypedProgramLinks | PortableFormalConceptArchive,
   declaration: FormalFunctionSelector,
   options?: { provenance?: unknown },

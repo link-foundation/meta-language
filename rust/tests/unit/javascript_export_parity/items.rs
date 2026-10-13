@@ -184,6 +184,7 @@ use meta_language::emit_typed_program_links as _;
 use meta_language::encode_formal_concept_definition as _;
 use meta_language::encode_formal_function_definition as _;
 use meta_language::encode_link_network_binary as _;
+use meta_language::encode_shared_numeric_function_definition as _;
 use meta_language::encode_structured_data_links as _;
 use meta_language::encode_typed_program_links as _;
 use meta_language::erase_type_script as _;

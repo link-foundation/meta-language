@@ -61,6 +61,9 @@ pub mod rust_codec;
 mod self_translation;
 mod semantic_translation;
 pub mod semantics;
+mod shared_numeric_function_links;
+mod shared_numeric_function_model;
+mod shared_numeric_function_rules;
 pub mod snapshots;
 pub mod source;
 mod source_generation;
@@ -327,6 +330,7 @@ pub use semantic_translation::{
     TranslationDiagnostic, TranslationObligation, TranslationProvenance,
 };
 pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
+pub use shared_numeric_function_links::encode_shared_numeric_function_definition;
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot, StructuralDiff};
 pub use source::{ByteRange, Point, SourceSpan};
 pub use sql_adapter::{
@@ -369,7 +373,9 @@ pub use typed_program_links::{
     TypedProgramLinks, TypedProgramLinksEmission, TypedProgramLinksError, TypedProgramLinksLimits,
     create_typed_program_links, create_typed_program_links_with_rust_array_result_model,
     create_typed_program_links_with_rust_completion_model,
-    create_typed_program_links_with_rust_source_models, decode_typed_program_links,
+    create_typed_program_links_with_rust_source_models,
+    create_typed_program_links_with_rust_source_profiles,
+    create_typed_program_links_with_rust_source_signature_model, decode_typed_program_links,
     emit_typed_program_links, encode_typed_program_links,
 };
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};

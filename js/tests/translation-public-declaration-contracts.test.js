@@ -39,3 +39,16 @@ test('the declared combined Rust source profiles execute through the public entr
   assert.ok(packet.network.link(packet.root));
   assert.ok(definition.network.link(definition.root));
 });
+
+test('the declared numeric consumer verifies a Rust and JavaScript correspondence', async (context) => {
+  const source = publicDeclarationConsumers().find(({ name }) =>
+    name === 'valid-shared-numeric-function-correspondence').source;
+  const directory = mkdtempSync(join(tmpdir(), 'meta-language-numeric-consumer-'));
+  context.after(() => rmSync(directory, { recursive: true, force: true }));
+  const file = join(directory, 'consumer.mjs');
+  writeFileSync(file, eraseTypeScript(source).code);
+  const { contractEvidence } = await import(pathToFileURL(file).href);
+  assert.deepEqual(contractEvidence, {
+    matched: true, model: 'closed binary floating point function',
+  });
+});

@@ -101,6 +101,35 @@ const definition:FormalConceptArchive = encodeFormalFunctionDefinition(packet,'v
       name: 'reject-source-text-in-place-of-formal-function-graph', expectedDiagnostics: ['TS2345'],
       source: `import { encodeFormalFunctionDefinition } from ${module};\nencodeFormalFunctionDefinition('opaque source text','function');\n`,
     },
+    {
+      name: 'valid-shared-numeric-function-correspondence', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, encodeSharedNumericFunctionDefinition,
+  proveFormalConceptEquivalence, verifyFormalConceptEquivalence, readFormalConceptDefinition } from ${module};
+import type { FormalConceptArchive } from ${module};
+const rust = createTypedProgramLinks('fn add(x:f64)->f64{let y=x+1f64;y*2f64}fn main(){}','Rust',
+  {rustSourceSignatureModel:'Rust source function signature 1'});
+const javascript = createTypedProgramLinks('/** @param {number} x */ function add(x){const y=x+1;return y*2;}','JavaScript');
+const first:FormalConceptArchive = encodeSharedNumericFunctionDefinition(rust,'add',{provenance:{consumer:'typed'}});
+const second:FormalConceptArchive = encodeSharedNumericFunctionDefinition(
+  {links:javascript.network.toLino(),root:javascript.root.asU64()},'add');
+const certificate:FormalConceptArchive|null = proveFormalConceptEquivalence(first,second);
+if(!certificate)throw new Error('the matched numeric functions need a checked correspondence');
+export const contractEvidence = {matched:verifyFormalConceptEquivalence(first,second,certificate),
+  model:readFormalConceptDefinition(first).model};
+`,
+    },
+    {
+      name: 'reject-source-text-in-place-of-shared-numeric-function-graph', expectedDiagnostics: ['TS2345'],
+      source: `import { encodeSharedNumericFunctionDefinition } from ${module};\nencodeSharedNumericFunctionDefinition('opaque source text','function');\n`,
+    },
+    {
+      name: 'reject-unknown-Rust-source-signature-profile', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('fn main(){}','Rust',{rustSourceSignatureModel:'unknown model'});\n`,
+    },
+    {
+      name: 'reject-undeclared-shared-numeric-function-selector', expectedDiagnostics: ['TS2353'],
+      source: `import { createTypedProgramLinks, encodeSharedNumericFunctionDefinition } from ${module};\nencodeSharedNumericFunctionDefinition(createTypedProgramLinks('fn f()->bool{true}fn main(){}','Rust'),{identity:'f'});\n`,
+    },
   ];
 }
 

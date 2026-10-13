@@ -51,6 +51,7 @@ export function projectTypeScriptTyping(source) {
 }
 export { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks } from './typed-program-links.js';
 export { encodeFormalFunctionDefinition } from './formal-function-links.js';
+export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
 export * from './semantics.js';
 export * from './sql-adapter.js';
 export * from './substitution.js';

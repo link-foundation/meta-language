@@ -408,6 +408,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "encodeSharedNumericFunctionDefinition",
+        "encode_shared_numeric_function_definition",
+        "function",
+    ),
+    (
         "encodeStructuredDataLinks",
         "encode_structured_data_links",
         "function",

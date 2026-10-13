@@ -615,6 +615,22 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-formal-function-fixtures.mjs --check
 
+      - name: Check generated shared numeric function rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-shared-numeric-function-rules.mjs --check
+
+      - name: Check generated Rust source signature rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-source-signature-rules.mjs --check
+
+      - name: Check shared Rust source signature fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-source-signature-fixtures.mjs --check
+
+      - name: Check shared numeric function definition fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-shared-numeric-function-fixtures.mjs --check
+
       - name: Check strict public declaration consumers
         if: ${{ !cancelled() }}
         run: node js/scripts/check-public-declaration-contracts.mjs --compiler js/node_modules/.bin/tsc

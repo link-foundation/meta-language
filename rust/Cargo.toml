@@ -34,6 +34,7 @@ include = [
     "src/data/resource-description-schema.lino",
     "src/data/resource-description-ntriples-profile.lino",
     "src/data/link-network-binary-schema.lino",
+    "src/data/rust-source-signatures.lino",
     "src/translation/rust/float-predicates.lino",
     "src/translation/rust/completions.lino",
     "src/translation/runtime/array-*.txt",
